@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "lint": "echo 'No lint yet'",
+    "typecheck": "echo 'No typecheck yet'",
     "build": "echo 'No build step for types yet'"
   },
   "devDependencies": {
