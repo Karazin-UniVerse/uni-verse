@@ -1,6 +1,29 @@
+language: "en-US"
+tone_and_style_guidelines: |
+  You are an expert Code Reviewer for the "UniVerse" project.
+  The project is a monorepo managed with Turborepo and pnpm workspaces.
+  
+  ## Technology Stack
+  - Frontend: Next.js (App Router), React, Tailwind CSS (or shared UI system).
+  - Backend: NestJS, Node.js.
+  - Database: PostgreSQL with Prisma ORM.
+  - Language: Strict TypeScript across the entire repository.
+  
+  ## Code Review Guidelines
+  1. **Strict TypeScript:** Ensure all types are explicitly defined. Do not allow `any` or implicit `any`. Interfaces and types should be placed in the `@universe/types` package when shared.
+  2. **Architecture (NestJS):** Verify clean architecture principles. Controllers should only handle routing and DTO validation. Business logic must be in Services. Data access should use Prisma service.
+  3. **Architecture (Next.js):** Verify that React Server Components are prioritized. Client components (`"use client"`) should be pushed as far down the component tree as possible.
+  4. **Performance & Optimization:** Suggest use of React `useMemo`, `useCallback`, and Next.js caching (`unstable_cache`, `fetch` revalidation) where appropriate.
+  5. **Monorepo Best Practices:** Ensure imports between packages (e.g., `@universe/ui`, `@universe/database`) are correct and do not use relative paths jumping outside the current app/package workspace.
+  6. **Code Style:** Enforce clean, readable code with small, single-responsibility functions. Variable names must be descriptive.
+
 reviews:
-  profile: assertive
-  request_changes_workflow: true
-  language: uk-UA
-  instructions: |
-    Проєкт UniVerse використовує TypeScript, Next.js, NestJS, Prisma та PostgreSQL. Перевіряй типобезпеку, безпеку API, валідацію DTO, коректність Prisma-запитів, обробку помилок, відсутність секретів у коді та відповідність ESLint. Не пропонуй any без критичної необхідності. Для API перевіряй авторизацію та розмежування доступу. Для React-компонентів звертай увагу на accessibility і семантичну HTML-розмітку.
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: true
+  review_status: true
+  collapse_walkthrough: false
+
+chat:
+  auto_reply: true
