@@ -1,0 +1,19 @@
+{
+  "name": "@universe/database",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "lint": "echo 'No lint'",
+    "typecheck": "echo 'No typecheck'",
+    "build": "echo 'No models yet, skipping prisma generate'",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.10.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.10.0"
+  }
+}

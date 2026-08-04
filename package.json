@@ -1,0 +1,22 @@
+{
+  "name": "uni-verse",
+  "private": true,
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "pnpm --filter @universe/database prisma:generate",
+    "db:migrate": "pnpm --filter @universe/database prisma:migrate",
+    "db:studio": "pnpm --filter @universe/database prisma:studio"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.0",
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.0"
+  }
+}

@@ -1,0 +1,6 @@
+reviews:
+  profile: assertive
+  request_changes_workflow: true
+  language: uk-UA
+  instructions: |
+    Проєкт UniVerse використовує TypeScript, Next.js, NestJS, Prisma та PostgreSQL. Перевіряй типобезпеку, безпеку API, валідацію DTO, коректність Prisma-запитів, обробку помилок, відсутність секретів у коді та відповідність ESLint. Не пропонуй any без критичної необхідності. Для API перевіряй авторизацію та розмежування доступу. Для React-компонентів звертай увагу на accessibility і семантичну HTML-розмітку.
