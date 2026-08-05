@@ -11,10 +11,18 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 
 ## Coding Style & Best Practices
 
-### 1. TypeScript & Typing
+### 1. Code Style & Naming Conventions
+- **Variables/Functions**: Use `camelCase`.
+- **Classes/Components**: Use `PascalCase`.
+- **Constants**: Use `UPPER_SNAKE_CASE`.
 - Always write strict TypeScript. Avoid `any`, `unknown` (unless strictly necessary), and implicit types.
 - Shared interfaces, types, and DTOs should be placed in the `@universe/types` package to be imported by both frontend and backend.
 - Favor explicit return types for all functions.
+
+### 2. UI Components Architecture (`packages/ui`)
+- All shared UI components MUST be placed inside `packages/ui/src/components/`.
+- **Design System Components**: Core, simple, and reusable components (like buttons, inputs) go into `packages/ui/src/components/una/`.
+- **Complex Components**: Composite, business-logic-heavy, or non-design system components go into `packages/ui/src/components/complex/`.
 
 ### 2. Backend (NestJS)
 - Follow Clean Architecture.
@@ -33,7 +41,11 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 - Keep packages isolated. Do not use relative paths `../../../` to access code outside of the current workspace. Use the package names instead (e.g., `import { Button } from '@universe/ui'`).
 - Ensure `package.json` dependencies correctly reference workspace packages (`"workspace:*"`).
 
-### 5. General AI Instructions
+### 5. Git Flow & Commits
+- **Branch Naming**: Use standard prefixes such as `feature/`, `bugfix/`, `hotfix/`, `chore/` followed by a descriptive name (e.g., `feature/user-auth`).
+- **Commit Messages**: Follow Conventional Commits format (e.g., `feat: add user login`, `fix: correct typo in header`, `chore: update dependencies`).
+
+### 6. General AI Instructions
 - Before generating code, think through the architecture and how it fits into the monorepo structure.
 - When fixing bugs, explain *why* the bug occurred before providing the code.
 - Write clean, self-documenting code. Add comments only for complex logic or business rules.
