@@ -5,16 +5,20 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "lint": "turbo lint",
+    "lint": "oxlint --deny-warnings",
+    "lint:ox": "oxlint --deny-warnings",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "prepare": "husky",
     "db:generate": "pnpm --filter @universe/database prisma:generate",
     "db:migrate": "pnpm --filter @universe/database prisma:migrate",
     "db:studio": "pnpm --filter @universe/database prisma:studio"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
     "oxlint": "^1.77.0",
     "prettier": "^3.5.0",
     "turbo": "^2.4.0",

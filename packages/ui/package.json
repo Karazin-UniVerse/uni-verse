@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "lint": "echo 'No lint yet'",
+    "lint": "oxlint",
     "typecheck": "echo 'No typecheck yet'",
     "build": "echo 'No build step for ui yet'"
   },
