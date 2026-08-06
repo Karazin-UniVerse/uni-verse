@@ -1,6 +1,6 @@
 import type { Meta } from '@storybook/react';
 import React from 'react';
-import Button from '../buttons/SimpleButton/Button';
+import Button from '../una/Button/Button';
 
 const meta: Meta = {
   title: 'Slides/Buttons',

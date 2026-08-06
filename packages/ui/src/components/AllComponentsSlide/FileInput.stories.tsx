@@ -1,6 +1,6 @@
 import type { Meta } from '@storybook/react';
 import React from 'react';
-import FileInput from '../inputs/FileInput/FileInput';
+import FileInput from '../una/inputs/FileInput/FileInput';
 
 const meta: Meta = {
   title: 'Slides/FileInput',

@@ -1,8 +1,8 @@
 import type { Meta } from '@storybook/react';
 import React from 'react';
-import { SimpleForm } from '../SimpleForm/SimpleForm';
-import SimpleInput from '../inputs/SimpleInput/SimpleInput';
-import Button from '../buttons/SimpleButton/Button';
+import { SimpleForm } from '../una/Form/SimpleForm';
+import SimpleInput from '../una/inputs/TextInput/SimpleInput';
+import Button from '../una/Button/Button';
 
 const meta: Meta = {
   title: 'Slides/SimpleForm',

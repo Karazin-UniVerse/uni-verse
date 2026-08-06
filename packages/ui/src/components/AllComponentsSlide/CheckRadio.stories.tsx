@@ -1,7 +1,7 @@
 import type { Meta } from '@storybook/react';
 import React from 'react';
-import CheckBox from '../inputs/CheckBox/CheckBox';
-import RadioButton from '../inputs/RadioButton/RadioButton';
+import CheckBox from '../una/inputs/CheckBox/CheckBox';
+import RadioButton from '../una/inputs/RadioButton/RadioButton';
 
 const meta: Meta = {
   title: 'Slides/CheckAndRadio',
