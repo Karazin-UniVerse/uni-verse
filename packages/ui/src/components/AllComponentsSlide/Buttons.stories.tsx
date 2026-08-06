@@ -41,12 +41,12 @@ export const Variants = () => (
         </Button>
       </Labelled>
       <Labelled label="Link">
-        <Button variant="primary" isLink href="#">
+        <Button variant="primary" size="medium" isLink href="#">
           Link
         </Button>
       </Labelled>
       <Labelled label="Transparent">
-        <Button variant="primary" isTransparent>
+        <Button variant="primary" size="medium" isTransparent>
           Transparent
         </Button>
       </Labelled>

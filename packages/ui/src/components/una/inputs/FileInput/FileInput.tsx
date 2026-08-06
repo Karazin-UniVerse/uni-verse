@@ -2,6 +2,7 @@ import React, {
   forwardRef,
   useState,
   useRef,
+  useEffect,
   useImperativeHandle,
   type InputHTMLAttributes,
   type DragEvent,
@@ -77,23 +78,45 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
         setInternalFiles(newFiles);
       }
       onFilesChange?.(newFiles);
+
+      // Synchronize native input's FileList
+      if (inputRef.current && newFiles.length === 0) {
+        inputRef.current.value = '';
+      }
     };
+
+    // Synchronize native input when currentFiles changes
+    useEffect(() => {
+      if (inputRef.current && currentFiles.length === 0) {
+        inputRef.current.value = '';
+      }
+    }, [currentFiles]);
 
     const validateAndFilterFiles = (
       incomingFiles: File[],
     ): { validFiles: File[]; error: string | null } => {
       let err: string | null = null;
 
-      if (maxFiles && currentFiles.length + incomingFiles.length > maxFiles) {
-        err = `Maximum ${maxFiles} file${maxFiles > 1 ? 's' : ''} allowed.`;
-      }
-
+      // Filter size-invalid files first
       const valid: File[] = [];
       for (const file of incomingFiles) {
         if (maxSize && file.size > maxSize) {
           err = `File "${file.name}" exceeds maximum allowed size of ${formatBytes(maxSize)}.`;
         } else {
           valid.push(file);
+        }
+      }
+
+      // Apply file-count limit after size filtering
+      if (maxFiles !== undefined) {
+        const remaining = maxFiles - currentFiles.length;
+        if (remaining <= 0) {
+          err = `Maximum ${maxFiles} file${maxFiles > 1 ? 's' : ''} allowed.`;
+          return { validFiles: [], error: err };
+        }
+        if (valid.length > remaining) {
+          err = `Maximum ${maxFiles} file${maxFiles > 1 ? 's' : ''} allowed.`;
+          return { validFiles: valid.slice(0, remaining), error: err };
         }
       }
 

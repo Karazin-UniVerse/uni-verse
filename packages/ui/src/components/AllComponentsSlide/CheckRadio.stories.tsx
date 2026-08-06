@@ -23,19 +23,19 @@ export const Variants = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <LabeledRow
         label="Checkbox unchecked"
-        control={<CheckBox variant="primary" checked={false} />}
+        control={<CheckBox variant="primary" checked={false} readOnly />}
       />
       <LabeledRow
         label="Checkbox checked"
-        control={<CheckBox variant="primary" checked={true} />}
+        control={<CheckBox variant="primary" checked={true} readOnly />}
       />
       <LabeledRow
         label="Radio unchecked"
-        control={<RadioButton variant="primary" checked={false} />}
+        control={<RadioButton variant="primary" checked={false} readOnly />}
       />
       <LabeledRow
         label="Radio checked"
-        control={<RadioButton variant="primary" checked={true} />}
+        control={<RadioButton variant="primary" checked={true} readOnly />}
       />
     </div>
   </div>

@@ -34,7 +34,7 @@ export default function CustomDateTime({
   const [isOpen, setIsOpen] = useState(false);
   const [viewDate, setViewDate] = useState(selected || new Date());
   const containerRef = useRef<HTMLDivElement>(null);
-  const timeListRef = useRef<HTMLUListElement>(null);
+  const timeListRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (selected) {
@@ -52,16 +52,17 @@ export default function CustomDateTime({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (isOpen && selected && timeListRef.current) {
+      const selectedEl = timeListRef.current.querySelector(`.${css.selected}`);
+      if (selectedEl) {
+        selectedEl.scrollIntoView({ block: 'center' });
+      }
+    }
+  }, [isOpen, selected]);
+
   const handleInputClick = () => {
     setIsOpen(!isOpen);
-    if (!isOpen && timeListRef.current && selected) {
-      setTimeout(() => {
-        const selectedEl = timeListRef.current?.querySelector(`.${css.selected}`);
-        if (selectedEl) {
-          selectedEl.scrollIntoView({ block: 'center' });
-        }
-      }, 0);
-    }
   };
 
   // Calendar logic
@@ -133,15 +134,24 @@ export default function CustomDateTime({
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setIsOpen(!isOpen);
+    }
+  };
+
   return (
     <div className={css.wrapper} ref={containerRef}>
-      <SimpleInput
-        {...props}
-        size={size}
-        value={formatDateTime(selected)}
-        onClick={handleInputClick}
-        readOnly
-      />
+      <div role="button" tabIndex={0} onClick={handleInputClick} onKeyDown={handleKeyDown}>
+        <SimpleInput
+          {...props}
+          size={size}
+          value={formatDateTime(selected)}
+          readOnly
+          tabIndex={-1}
+        />
+      </div>
 
       {isOpen && (
         <div className={clsx(css.popper, css[`size-${size}`])}>
@@ -223,23 +233,24 @@ export default function CustomDateTime({
 
           <div className={css.timeContainer}>
             <div className={css.timeHeader}>Time</div>
-            <ul className={css.timeList} ref={timeListRef}>
+            <div className={css.timeList} ref={timeListRef}>
               {timeOptions.map((t) => {
                 const isSelected =
                   selected &&
                   selected.getHours() === t.hours &&
                   selected.getMinutes() === t.minutes;
                 return (
-                  <li
+                  <button
                     key={`${t.hours}-${t.minutes}`}
+                    type="button"
                     className={clsx(css.timeItem, isSelected && css.selected)}
                     onClick={() => handleTimeClick(t.hours, t.minutes)}
                   >
                     {formatTime(t.hours, t.minutes)}
-                  </li>
+                  </button>
                 );
               })}
-            </ul>
+            </div>
           </div>
         </div>
       )}

@@ -165,6 +165,9 @@
   --accent-secondary-hover: var(--gray-200);
   --accent-secondary-active: var(--gray-300);
   --accent-text-on-secondary: var(--neutral-text-primary);
+
+  /* Focus Ring */
+  --focus-ring-color: rgba(52, 102, 231, 0.4);
 }
 
 /* -----------------------------------------
@@ -189,6 +192,9 @@
   --accent-secondary-hover: var(--gray-600);
   --accent-secondary-active: var(--gray-500);
   --accent-text-on-secondary: var(--neutral-text-primary);
+
+  /* Focus Ring */
+  --focus-ring-color: rgba(52, 102, 231, 0.5);
 }
 
 /* -----------------------------------------

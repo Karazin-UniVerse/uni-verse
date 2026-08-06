@@ -58,12 +58,12 @@ export const All = () => (
           </Button>
         </Labelled>
         <Labelled label="Link">
-          <Button variant="primary" isLink href="#">
+          <Button variant="primary" size="medium" isLink href="#">
             Link
           </Button>
         </Labelled>
         <Labelled label="Transparent">
-          <Button variant="primary" isTransparent>
+          <Button variant="primary" size="medium" isTransparent>
             Transparent
           </Button>
         </Labelled>
@@ -112,10 +112,10 @@ export const All = () => (
     <div>
       <h2>Date / Time</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <Labelled label="CustomDateTime">
-          <CustomDateTime />
-        </Labelled>
         <Labelled label="SimpleDateTime">
+          <SimpleDateTime />
+        </Labelled>
+        <Labelled label="SimpleDateTime (secondary)">
           <SimpleDateTime />
         </Labelled>
       </div>

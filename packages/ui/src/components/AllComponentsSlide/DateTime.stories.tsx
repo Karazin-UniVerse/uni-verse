@@ -21,10 +21,10 @@ export const Variants = () => (
   <div style={{ padding: 24 }}>
     <h2>Date / Time — варианты</h2>
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <Labelled label="CustomDateTime">
-        <CustomDateTime />
-      </Labelled>
       <Labelled label="SimpleDateTime">
+        <SimpleDateTime />
+      </Labelled>
+      <Labelled label="SimpleDateTime (secondary)">
         <SimpleDateTime />
       </Labelled>
     </div>
