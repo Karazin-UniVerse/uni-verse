@@ -8,3 +8,4 @@ coverage
 .turbo
 .DS_Store
 /packages/ui/storybook-static/
+/.idea/
