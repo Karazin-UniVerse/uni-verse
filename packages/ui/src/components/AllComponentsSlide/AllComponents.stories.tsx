@@ -1,14 +1,14 @@
 import type { Meta } from '@storybook/react';
 import React from 'react';
 
-import Button from '../buttons/SimpleButton/Button';
-import SimpleInput from '../inputs/SimpleInput/SimpleInput';
-import FileInput from '../inputs/FileInput/FileInput';
-import CustomDateTime from '../inputs/CustomDateTime/CustomDateTime';
-import SimpleDateTime from '../inputs/SimpleDateTime/SimpleDateTime';
-import CheckBox from '../inputs/CheckBox/CheckBox';
-import RadioButton from '../inputs/RadioButton/RadioButton';
-import { SimpleForm } from '../SimpleForm/SimpleForm';
+import Button from '../una/Button/Button';
+import SimpleInput from '../una/inputs/TextInput/SimpleInput';
+import FileInput from '../una/inputs/FileInput/FileInput';
+import CustomDateTime from '../una/inputs/DateTimePicker/CustomDateTime';
+import SimpleDateTime from '../una/inputs/DateTimePicker/SimpleDateTime';
+import CheckBox from '../una/inputs/CheckBox/CheckBox';
+import RadioButton from '../una/inputs/RadioButton/RadioButton';
+import { SimpleForm } from '../una/Form/SimpleForm';
 
 const meta: Meta = {
   title: 'Slides/All Components',
@@ -125,16 +125,28 @@ export const All = () => (
       <h2>Checkbox / Radio</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <Labelled label="Checkbox (unchecked)">
-          <CheckBox checked={false} label="Check me" />
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <CheckBox variant="primary" checked={false} />
+            <span>Check me</span>
+          </label>
         </Labelled>
         <Labelled label="Checkbox (checked)">
-          <CheckBox checked={true} label="Checked" />
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <CheckBox variant="primary" checked={true} />
+            <span>Checked</span>
+          </label>
         </Labelled>
         <Labelled label="Radio (unchecked)">
-          <RadioButton checked={false} label="Option A" />
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <RadioButton variant="primary" checked={false} name="allcomp" />
+            <span>Option A</span>
+          </label>
         </Labelled>
         <Labelled label="Radio (checked)">
-          <RadioButton checked={true} label="Option B" />
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <RadioButton variant="primary" checked={true} name="allcomp" />
+            <span>Option B</span>
+          </label>
         </Labelled>
       </div>
     </div>

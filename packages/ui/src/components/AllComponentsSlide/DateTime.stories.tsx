@@ -1,7 +1,7 @@
 import type { Meta } from '@storybook/react';
 import React from 'react';
-import CustomDateTime from '../inputs/CustomDateTime/CustomDateTime';
-import SimpleDateTime from '../inputs/SimpleDateTime/SimpleDateTime';
+import CustomDateTime from '../una/inputs/DateTimePicker/CustomDateTime';
+import SimpleDateTime from '../una/inputs/DateTimePicker/SimpleDateTime';
 
 const meta: Meta = {
   title: 'Slides/DateTime',
