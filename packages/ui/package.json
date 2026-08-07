@@ -16,9 +16,11 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "sass": "^1.102.0"
+  },
+  "peerDependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.2.1",
