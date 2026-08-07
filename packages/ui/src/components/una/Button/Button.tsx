@@ -41,7 +41,7 @@ type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
  * <Button isLink href="/docs" variant="secondary">Docs</Button>
  * ```
  */
-export default function Button({
+export function Button({
   variant,
   size = 'small',
   children,

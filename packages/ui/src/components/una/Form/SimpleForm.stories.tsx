@@ -1,8 +1,8 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { SimpleForm } from './SimpleForm';
-import SimpleInput from '../inputs/TextInput/SimpleInput';
-import Button from '../Button/Button';
+import { TextInput } from '../inputs/TextInput/TextInput';
+import { Button } from '../Button/Button';
 
 const meta = {
   title: 'Components/Form',
@@ -30,8 +30,8 @@ export const Simple: Story = {
     variant: 'simple',
     children: (
       <>
-        <SimpleInput type="text" name="username" placeholder="Enter your username" required />
-        <SimpleInput type="password" name="password" placeholder="Enter your password" required />
+        <TextInput type="text" name="username" placeholder="Enter your username" required />
+        <TextInput type="password" name="password" placeholder="Enter your password" required />
         <Button variant="primary" size="medium" type="submit">
           Login
         </Button>
@@ -46,8 +46,8 @@ export const CustomGap: Story = {
     variant: 'simple',
     children: (
       <>
-        <SimpleInput type="email" name="email" placeholder="Email address" required />
-        <SimpleInput type="text" name="subject" placeholder="Subject" />
+        <TextInput type="email" name="email" placeholder="Email address" required />
+        <TextInput type="text" name="subject" placeholder="Subject" />
         <Button variant="primary" size="medium" type="submit">
           Send Message
         </Button>
@@ -87,12 +87,7 @@ export const CardForm: Story = {
         >
           Get our latest news delivered to your inbox.
         </p>
-        <SimpleInput
-          type="email"
-          name="newsletter_email"
-          placeholder="Your email address"
-          required
-        />
+        <TextInput type="email" name="newsletter_email" placeholder="Your email address" required />
         <Button variant="primary" size="medium" type="submit">
           Subscribe
         </Button>

@@ -9,3 +9,4 @@ coverage
 .DS_Store
 /packages/ui/storybook-static/
 /.idea/
+/packages/uni-hub/repomix-output.xml

@@ -30,7 +30,7 @@ export interface SimpleFormProps extends Omit<
  * Example:
  * ```tsx
  * <SimpleForm onData={data => console.log(data)}>
- *   <SimpleInput name="email" />
+ *   <TextInput name="email" />
  *   <Button type="submit" variant="primary">Send</Button>
  * </SimpleForm>
  * ```
