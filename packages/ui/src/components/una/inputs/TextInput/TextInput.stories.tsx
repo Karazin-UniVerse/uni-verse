@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
-import SimpleInput from './SimpleInput';
+import TextInput from './TextInput';
 
-const meta: Meta<typeof SimpleInput> = {
-  title: 'Components/Inputs/SimpleInput',
-  component: SimpleInput,
+const meta: Meta<typeof TextInput> = {
+  title: 'Components/Inputs/TextInput',
+  component: TextInput,
   tags: ['autodocs'],
   argTypes: {
     variant: {
@@ -25,7 +25,7 @@ const meta: Meta<typeof SimpleInput> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof SimpleInput>;
+type Story = StoryObj<typeof TextInput>;
 
 export const Primary: Story = {
   args: {

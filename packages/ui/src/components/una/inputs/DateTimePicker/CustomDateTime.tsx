@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import clsx from 'clsx';
 import css from './CustomDateTime.module.scss';
-import SimpleInput, { type SimpleInputProps } from '../TextInput/SimpleInput';
+import { TextInput, type SimpleInputProps } from '../TextInput/TextInput';
 
 export interface CustomDateTimeProps extends Omit<SimpleInputProps, 'onChange' | 'value'> {
   selected: Date | null;
@@ -25,7 +25,7 @@ const MONTHS = [
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-export default function CustomDateTime({
+export function CustomDateTime({
   selected,
   onChange,
   size = 'medium',
@@ -144,13 +144,7 @@ export default function CustomDateTime({
   return (
     <div className={css.wrapper} ref={containerRef}>
       <div role="button" tabIndex={0} onClick={handleInputClick} onKeyDown={handleKeyDown}>
-        <SimpleInput
-          {...props}
-          size={size}
-          value={formatDateTime(selected)}
-          readOnly
-          tabIndex={-1}
-        />
+        <TextInput {...props} size={size} value={formatDateTime(selected)} readOnly tabIndex={-1} />
       </div>
 
       {isOpen && (
