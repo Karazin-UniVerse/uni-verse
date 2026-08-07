@@ -9,6 +9,10 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "dependencies": {
     "clsx": "^2.1.1",
     "react": "^18.2.0",
