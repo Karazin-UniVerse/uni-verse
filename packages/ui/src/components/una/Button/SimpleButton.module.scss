@@ -1,5 +1,4 @@
 .btn {
-  outline: none;
   cursor: pointer;
   border: 1px solid transparent; /* Add a transparent border for consistent sizing */
   border-radius: var(--border-radius-medium);
@@ -11,6 +10,9 @@
 
   &:focus-visible {
     box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: 2px;
+
   }
 }
 
@@ -18,7 +20,6 @@
   text-decoration: none;
 }
 
-/* Primary Button Styles */
 .primary {
   background-color: var(--btn-primary-bg);
   color: var(--btn-primary-text);
