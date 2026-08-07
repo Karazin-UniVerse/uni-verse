@@ -1,8 +1,8 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { SimpleForm } from './SimpleForm';
-import TextInput from '../inputs/TextInput/TextInput';
-import Button from '../Button/Button';
+import { TextInput } from '../inputs/TextInput/TextInput';
+import { Button } from '../Button/Button';
 
 const meta = {
   title: 'Components/Form',
