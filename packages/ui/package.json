@@ -9,9 +9,9 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
-  "main": "./src/index.ts",
+  "main": "./index.ts",
   "exports": {
-    ".": "./src/index.ts",
+    ".": "./index.ts",
     "./vars.scss": "./vars.scss"
   },
   "dependencies": {

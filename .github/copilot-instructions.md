@@ -78,3 +78,7 @@ Output requirements for Review:
 - Rate findings by severity.
 - For every issue found, quote the exact lines, explain the concrete maintenance burden it introduces, and provide a simpler, direct replacement snippet.
 - Prefer NO finding over a weak or speculative nitpick. If the code is clean, simple, and matches the intent, output "LGTM - No architectural bloat detected."
+
+### 8. Design System Strict Rules (UniDesign)
+
+All strict rules regarding the usage of colors, typography, spacing, shadows, and animations are documented in `docs/design-system-rules.md`. You MUST read this document and strictly adhere to its rules when working on UI components.

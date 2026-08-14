@@ -2,8 +2,8 @@
   "name": "@universe/database",
   "version": "0.1.0",
   "private": true,
-  "main": "./src/client/index.js",
-  "types": "./src/client/index.d.ts",
+  "main": "./client/index.js",
+  "types": "./client/index.d.ts",
   "scripts": {
     "lint": "echo 'No lint'",
     "typecheck": "echo 'No typecheck'",
