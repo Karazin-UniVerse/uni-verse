@@ -12,9 +12,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky",
-    "db:generate": "pnpm --filter @universe/database prisma:generate",
-    "db:migrate": "pnpm --filter @universe/database prisma:migrate",
-    "db:studio": "pnpm --filter @universe/database prisma:studio"
+    "db:generate": "pnpm --filter @universe/backend db:generate",
+    "db:migrate": "pnpm --filter @universe/backend db:push",
+    "db:studio": "pnpm --filter @universe/backend db:studio"
   },
   "devDependencies": {
     "husky": "^9.1.7",
