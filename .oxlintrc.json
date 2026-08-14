@@ -15,6 +15,9 @@
     "**/node_modules/**",
     "**/dist/**",
     "**/.next/**",
-    "**/packages/database/src/client/**"
+    "**/packages/database/client/**",
+    "**/.agents/**",
+    "**/agent/**",
+    "**/.claude/**"
   ]
 }
