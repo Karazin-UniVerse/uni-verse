@@ -1,0 +1,31 @@
+export interface Course {
+  id: number;
+  shortname: string;
+  fullname: string;
+  displayname: string;
+  enrolledusercount: number;
+  idnumber: string;
+  visible: 0 | 1;
+  summary: string;
+  summaryformat: number;
+  format: string;
+  courseimage: string;
+  showgrades: boolean;
+  lang: string;
+  enablecompletion: boolean;
+  completionhascriteria: boolean;
+  completionusertracked: boolean;
+  category: number;
+  progress: number | null;
+  completed: boolean | null;
+  startdate: number;
+  enddate: number;
+  marker: number;
+  lastaccess: number;
+  isfavourite: boolean;
+  hidden: boolean;
+  overviewfiles: Array<unknown>;
+  showactivitydates: boolean;
+  showcompletionconditions: boolean | null;
+  timemodified: number;
+}
