@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class UploadFileDto {
   @ApiProperty({ example: 'assignment.pdf' })
@@ -13,5 +13,8 @@ export class UploadFileDto {
   })
   @IsString()
   @IsNotEmpty()
+  @Matches(/^(data:.*?;base64,)?[A-Za-z0-9+/=]+$/, {
+    message: 'filebase64 must be a valid base64 or data URL base64 string',
+  })
   filebase64: string;
 }

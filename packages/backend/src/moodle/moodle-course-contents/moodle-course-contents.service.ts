@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { MoodleClientService } from '../moodle-client/moodle.client.service';
 import { getWsFunctionName } from '../../utils/wsfunctions';
+import { CourseContentDto } from './moodle-course-contents-dto';
 
 @Injectable()
 export class MoodleCourseContentsService {
@@ -9,12 +10,12 @@ export class MoodleCourseContentsService {
   async getCourseContents(
     moodleToken: string,
     courseId: number,
-  ): Promise<unknown[]> {
+  ): Promise<CourseContentDto[]> {
     if (!moodleToken) {
       throw new BadRequestException('Token is not provided');
     }
 
-    return this.moodleClient.client<unknown[]>(
+    return this.moodleClient.client<CourseContentDto[]>(
       getWsFunctionName('getCourseContents'),
       moodleToken,
       undefined,

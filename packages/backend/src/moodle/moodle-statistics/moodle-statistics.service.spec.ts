@@ -5,7 +5,7 @@ import { MoodleCoursesService } from '../moodle-courses/moodle-courses.service';
 describe('MoodleStatisticsService', () => {
   let service: MoodleStatisticsService;
 
-  const mockCoursesService = {
+  const MOCK_COURSES_SERVICE = {
     getCourses: jest.fn(),
   };
 
@@ -13,7 +13,7 @@ describe('MoodleStatisticsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MoodleStatisticsService,
-        { provide: MoodleCoursesService, useValue: mockCoursesService },
+        { provide: MoodleCoursesService, useValue: MOCK_COURSES_SERVICE },
       ],
     }).compile();
 
@@ -30,7 +30,7 @@ describe('MoodleStatisticsService', () => {
 
   describe('getStatistics', () => {
     it('should return count of courses', async () => {
-      mockCoursesService.getCourses.mockResolvedValue([{}, {}]);
+      MOCK_COURSES_SERVICE.getCourses.mockResolvedValue([{}, {}]);
       const result = await service.getStatistics('token', 'id');
       expect(result.total).toBe(2);
     });

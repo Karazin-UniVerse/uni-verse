@@ -41,10 +41,10 @@ describe('MoodleFilesService', () => {
 
     it('should handle fetch failure', async () => {
       process.env.MOODLE_BASEURL = 'https://moodle.test';
-      global.fetch = jest.fn().mockResolvedValue({
+      jest.spyOn(global, 'fetch').mockResolvedValueOnce({
         ok: false,
         statusText: 'Not Found',
-      });
+      } as Response);
       await expect(
         service.uploadFile('token', 'test.txt', 'base64'),
       ).rejects.toThrow(InternalServerErrorException);
@@ -52,11 +52,11 @@ describe('MoodleFilesService', () => {
 
     it('should handle moodle exception', async () => {
       process.env.MOODLE_BASEURL = 'https://moodle.test';
-      global.fetch = jest.fn().mockResolvedValue({
+      jest.spyOn(global, 'fetch').mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({ exception: 'moodle_exception', message: 'Error' }),
-      });
+      } as Response);
       await expect(
         service.uploadFile('token', 'test.txt', 'base64'),
       ).rejects.toThrow(BadRequestException);

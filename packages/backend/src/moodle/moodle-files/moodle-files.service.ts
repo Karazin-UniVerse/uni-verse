@@ -20,6 +20,11 @@ export class MoodleFilesService {
     if (!baseUrl) {
       throw new InternalServerErrorException('MOODLE_BASEURL not configured');
     }
+    if (!baseUrl.startsWith('https://')) {
+      throw new InternalServerErrorException(
+        'MOODLE_BASEURL must be a secure URL (https://)',
+      );
+    }
 
     const base64Data = filebase64.includes(',')
       ? filebase64.split(',')[1]

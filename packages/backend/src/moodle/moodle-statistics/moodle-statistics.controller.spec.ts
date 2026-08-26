@@ -5,14 +5,14 @@ import { MoodleStatisticsService } from './moodle-statistics.service';
 describe('MoodleStatisticsController', () => {
   let controller: MoodleStatisticsController;
 
-  const mockService = {
+  const MOCK_SERVICE = {
     getStatistics: jest.fn(),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MoodleStatisticsController],
-      providers: [{ provide: MoodleStatisticsService, useValue: mockService }],
+      providers: [{ provide: MoodleStatisticsService, useValue: MOCK_SERVICE }],
     }).compile();
 
     controller = module.get<MoodleStatisticsController>(

@@ -40,9 +40,9 @@ export class MoodleClientService {
     moodleId?: string,
     params?: Record<string, unknown>,
   ): Promise<T> {
-    const timeout = Number(this.timeout) || 5000;
-    if (isNaN(timeout) || (timeout <= 0 && !isFinite(timeout))) {
-      throw new Error('MOODLE_TIMEOUT must be a positive finite number ');
+    const timeout = Number(this.timeout);
+    if (!Number.isFinite(timeout) || timeout <= 0) {
+      throw new Error('MOODLE_TIMEOUT must be a positive finite number');
     }
 
     const url = new URL(`${this.baseurl}/webservice/rest/server.php`);
