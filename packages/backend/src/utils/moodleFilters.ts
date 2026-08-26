@@ -1,16 +1,35 @@
+const HTML_ENTITIES: Record<string, string> = {
+  '&nbsp;': ' ',
+  '&quot;': '"',
+  '&#039;': "'",
+  '&apos;': "'",
+  '&lt;': '<',
+  '&gt;': '>',
+  '&amp;': '&',
+};
+
 /**
- * Normalizes text by removing HTML tags, decoding entities, and collapsing whitespace.
+ * Normalizes text by iteratively removing HTML tags, decoding entities in a single pass, and collapsing whitespace.
  */
 export function normalizeMoodleText(text?: string | null): string {
   if (!text) return '';
-  return text
-    .replace(/<[^>]*>?/gm, '') // Strip HTML tags
-    .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
-    .replace(/&amp;/g, '&') // Replace &amp; with &
-    .replace(/&quot;/g, '"') // Replace &quot; with "
-    .replace(/&#039;/g, "'") // Replace &#039; with '
-    .replace(/\s+/g, ' ') // Collapse multiple whitespaces
-    .trim();
+
+  let cleaned = text;
+  let prev = '';
+
+  // Iteratively strip HTML tags to prevent incomplete sanitization (e.g. nested tags)
+  while (cleaned !== prev) {
+    prev = cleaned;
+    cleaned = cleaned.replace(/<[^>]*>/g, ' ');
+  }
+
+  // Single-pass replacement prevents double-unescaping vulnerabilities
+  cleaned = cleaned.replace(
+    /&(?:nbsp|quot|#039|apos|lt|gt|amp);/gi,
+    (match) => HTML_ENTITIES[match.toLowerCase()] ?? match,
+  );
+
+  return cleaned.replace(/\s+/g, ' ').trim();
 }
 
 export interface Course {
