@@ -77,16 +77,17 @@ export class AuthService {
 
     const moodleToken = await this.getCreds.getToken(dto.email, dto.password);
     const rawMoodleId = await this.getCreds.getUserId(moodleToken);
+    const moodleId = String(rawMoodleId);
 
     await this.userService.updateUser(user.id, {
       token: moodleToken,
-      moodleId: String(rawMoodleId),
+      moodleId: moodleId,
     });
     const tokens = await this.getTokens(
       user.id,
       user.email,
-      user.token ?? undefined,
-      user.moodleId ?? undefined,
+      moodleToken,
+      moodleId,
     );
     await this.updateRtHash(user.id, tokens.refresh_token);
     return tokens;

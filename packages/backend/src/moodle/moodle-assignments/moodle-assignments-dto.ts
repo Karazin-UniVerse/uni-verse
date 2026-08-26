@@ -95,9 +95,4 @@ export class GetAssignmentsQueryDto {
   @Type(() => Number)
   @IsNumber()
   dateTo?: number;
-
-  @ApiPropertyOptional({ enum: ['asc', 'desc'] })
-  @IsOptional()
-  @IsString()
-  sortByStatus?: string;
 }

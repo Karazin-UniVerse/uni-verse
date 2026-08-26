@@ -1,4 +1,4 @@
-const wsfunctions: Record<string, string> = {
+const WS_FUNCTIONS: Record<string, string> = {
   getCourses: 'core_enrol_get_users_courses',
   getCourseContents: 'core_course_get_contents',
   getGrades: 'gradereport_overview_get_course_grades',
@@ -9,8 +9,6 @@ const wsfunctions: Record<string, string> = {
   getNotifications: 'message_popup_get_popup_notifications',
 };
 
-export function getWsFunctionName(wsfunction: string) {
-  return wsfunctions[wsfunction];
+export function getWsFunctionName(wsfunction: string): string {
+  return WS_FUNCTIONS[wsfunction];
 }
-
-//console.log(getWsFunctionName('getCourses'));

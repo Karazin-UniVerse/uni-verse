@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 export type JwtPayload = {
-  idz: string;
+  sub: string;
   email: string;
   moodleToken?: string;
   moodleId?: string;
@@ -23,7 +23,7 @@ export class AtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  validate(payload: JwtPayload) {
+  validate(payload: JwtPayload): JwtPayload {
     return payload;
   }
 }

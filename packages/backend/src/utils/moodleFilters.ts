@@ -17,8 +17,7 @@ export interface Course {
   fullname: string;
   shortname?: string;
   progress?: number | null;
-  // allow other fields when present
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export type CourseStatus =
@@ -28,6 +27,10 @@ export interface CourseFilters {
   status?: CourseStatus;
   year?: string | number;
   semester?: string | number;
+}
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /**
@@ -41,18 +44,27 @@ export function matchesYearAndSemester(
 ): boolean {
   const target = (text || '').toLowerCase();
 
-  if (year) {
+  if (year !== undefined && year !== null && String(year).trim() !== '') {
     const rawYear = String(year).trim().replace('-', '/');
+    // Only accept numeric years and formats like 2025 or 2025/2026
+    if (!/^(\d{2,4})(\/\d{2,4})?$/.test(rawYear)) {
+      return false;
+    }
+
     if (rawYear.includes('/')) {
       const [y1, y2] = rawYear.split('/');
+      const escY1 = escapeRegex(y1);
+      const escY1Short = escapeRegex(y1.slice(-2));
+      const escY2 = escapeRegex(y2);
+      const escY2Short = escapeRegex(y2.slice(-2));
       const pattern = new RegExp(
-        `(?:^|[\\s\\-_/.])(?:${y1}|${y1.slice(-2)})[/-](?:${y2}|${y2.slice(-2)})(?=[\\s\\-_/.]|$)`,
+        `(?:^|[\\s\\-_/.])(?:${escY1}|${escY1Short})[/-](?:${escY2}|${escY2Short})(?=[\\s\\-_/.]|$)`,
         'i',
       );
       if (!pattern.test(target)) return false;
     } else {
-      const fullYear = rawYear;
-      const shortYear = fullYear.slice(-2);
+      const fullYear = escapeRegex(rawYear);
+      const shortYear = escapeRegex(rawYear.slice(-2));
       const yearPattern = new RegExp(
         `(?:^|[\\s\\-_/.])(?:${fullYear}|${shortYear})(?=[\\s\\-_/.]|$)`,
         'i',
@@ -61,11 +73,18 @@ export function matchesYearAndSemester(
     }
   }
 
-  if (semester) {
-    const sem = String(semester);
-    // Ищем цифру семестра, окруженную разделителями или словами sem/сем
+  if (
+    semester !== undefined &&
+    semester !== null &&
+    String(semester).trim() !== ''
+  ) {
+    const semStr = String(semester).trim();
+    if (!/^[1-9]\d*$/.test(semStr)) {
+      return false;
+    }
+    const escSem = escapeRegex(semStr);
     const semesterPattern = new RegExp(
-      `(?:^|[\\s\\-_/.])(?:${sem})(?:\\s*(?:sem|сем|семестр|semester)|[\\s\\-_/.]|$)`,
+      `(?:^|[\\s\\-_/.])(?:${escSem})(?:\\s*(?:sem|сем|семестр|semester)|[\\s\\-_/.]|$)`,
       'i',
     );
     if (!semesterPattern.test(target)) return false;

@@ -5,8 +5,8 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 
-const logger = new Logger('Main');
-const config = new DocumentBuilder()
+const LOGGER = new Logger('Main');
+const SWAGGER_CONFIG = new DocumentBuilder()
   .setTitle('UniHub API')
   .setDescription(
     'UniHub / UniVerse API documentation for Moodle integration and core services',
@@ -18,7 +18,7 @@ const config = new DocumentBuilder()
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const document = SwaggerModule.createDocument(app, config);
+  const document = SwaggerModule.createDocument(app, SWAGGER_CONFIG);
   SwaggerModule.setup('api', app, document);
 
   app.use(morgan('dev'));
@@ -31,7 +31,7 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
-  logger.log(`Backend server running on http://localhost:${port}`);
-  logger.log(`Swagger documentation available at http://localhost:${port}/api`);
+  LOGGER.log(`Backend server running on http://localhost:${port}`);
+  LOGGER.log(`Swagger documentation available at http://localhost:${port}/api`);
 }
 void bootstrap();
