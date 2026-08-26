@@ -5,7 +5,7 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../../database/src/client"
+  output   = "../../database/client"
 }
 
 enum Role {
@@ -16,16 +16,19 @@ enum Role {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  name          String?
-  passwordHash  String?
-  role          Role      @default(USER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String       @id @default(uuid())
+  email        String       @unique
+  name         String?
+  password     String
+  role         Role         @default(STUDENT)
+  token        String?
+  moodleId     String?
+  refreshToken String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
-  courses       Course[]  @relation("CourseInstructors")
-  enrollments   Enrollment[]
+  courses      Course[]     @relation("CourseInstructors")
+  enrollments  Enrollment[]
 }
 
 model Course {
