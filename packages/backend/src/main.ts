@@ -20,7 +20,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (
+      _origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
       // Allow requests from any origin or without origin (mobile/curl/local)
       callback(null, true);
     },
