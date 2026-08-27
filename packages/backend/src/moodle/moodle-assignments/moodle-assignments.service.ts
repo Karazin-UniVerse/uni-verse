@@ -114,7 +114,7 @@ export class MoodleAssignmentsService {
       getWsFunctionName('saveAssignmentSubmission'),
       moodleToken,
       undefined,
-      { assignid: assignId, plugindata },
+      { assignmentid: assignId, plugindata },
     );
   }
 }
