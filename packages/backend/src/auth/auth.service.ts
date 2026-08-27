@@ -84,12 +84,19 @@ export class AuthService {
       );
     }
 
-    let user = await this.userService.findByEmail(dto.email);
+    const emailToUse = dto.email.includes('@')
+      ? dto.email
+      : `${dto.email}@student.karazin.ua`;
+
+    let user =
+      (await this.userService.findByEmail(dto.email)) ||
+      (await this.userService.findByEmail(emailToUse)) ||
+      (await this.userService.findByMoodleId(moodleId));
 
     if (!user) {
       const hash = await bcrypt.hash(dto.password, 10);
       user = await this.userService.createUser({
-        email: dto.email,
+        email: emailToUse,
         password: hash,
         token: moodleToken,
         moodleId: moodleId,

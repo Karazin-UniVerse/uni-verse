@@ -29,6 +29,17 @@ export class UserService {
     }
   }
 
+  async findByMoodleId(moodleId: string): Promise<User | null> {
+    try {
+      return await this.prisma.user.findFirst({ where: { moodleId } });
+    } catch {
+      for (const u of this.inMemoryUsers.values()) {
+        if (u.moodleId === moodleId) return u;
+      }
+      return null;
+    }
+  }
+
   async findById(id: string): Promise<User | null> {
     try {
       return await this.prisma.user.findUnique({ where: { id } });
