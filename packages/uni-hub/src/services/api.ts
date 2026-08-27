@@ -10,7 +10,11 @@ import type {
   CourseSection,
 } from '../types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+    ? 'https://p01--backend--jm9qjnmpm4m2.code.run'
+    : 'http://localhost:3001');
 
 const api = axios.create({
   baseURL: API_BASE_URL,

@@ -1,4 +1,4 @@
-﻿FROM node:20-alpine AS base
+FROM node:20-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
@@ -7,6 +7,8 @@ FROM base AS builder
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
 COPY . .
+ARG NEXT_PUBLIC_API_URL=https://p01--backend--jm9qjnmpm4m2.code.run
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN pnpm install
 RUN pnpm --filter @universe/uni-hub build
 
