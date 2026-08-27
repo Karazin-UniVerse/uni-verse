@@ -19,14 +19,12 @@ function isMoodleException(data: unknown): data is MoodleException {
 
 @Injectable()
 export class MoodleClientService {
-  private readonly baseurl = process.env.MOODLE_BASEURL || '';
-  private readonly timeout = process.env.MOODLE_TIMEOUT;
+  private readonly baseurl =
+    process.env.MOODLE_BASEURL || 'http://moodle.universemvp.tech';
+  private readonly timeout = process.env.MOODLE_TIMEOUT || '15000';
   private readonly logger = new Logger(MoodleClientService.name);
 
   constructor() {
-    if (!this.baseurl) {
-      throw new Error('MOODLE_BASEURL environment variable is not set');
-    }
     if (
       !this.baseurl.startsWith('https://') &&
       !this.baseurl.startsWith('http://')
@@ -34,9 +32,6 @@ export class MoodleClientService {
       throw new Error(
         'MOODLE_BASEURL must be a valid URL (http:// or https://)',
       );
-    }
-    if (!this.timeout) {
-      throw new Error('MOODLE_TIMEOUT environment variable is not set');
     }
   }
   async client<T = unknown>(

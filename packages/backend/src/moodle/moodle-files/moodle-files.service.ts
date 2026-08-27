@@ -16,10 +16,8 @@ export class MoodleFilesService {
       throw new BadRequestException('Token is not provided');
     }
 
-    const baseUrl = process.env.MOODLE_BASEURL;
-    if (!baseUrl) {
-      throw new InternalServerErrorException('MOODLE_BASEURL not configured');
-    }
+    const baseUrl =
+      process.env.MOODLE_BASEURL || 'http://moodle.universemvp.tech';
     if (!baseUrl.startsWith('https://') && !baseUrl.startsWith('http://')) {
       throw new InternalServerErrorException(
         'MOODLE_BASEURL must be a valid URL (http:// or https://)',

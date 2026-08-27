@@ -14,10 +14,9 @@ interface MoodleUserIdResponse {
 @Injectable()
 export class GetCreds {
   private getBaseUrl(): string {
-    return (process.env.MOODLE_BASEURL || 'https://moodle.karazin.ua').replace(
-      /\/$/,
-      '',
-    );
+    return (
+      process.env.MOODLE_BASEURL || 'http://moodle.universemvp.tech'
+    ).replace(/\/$/, '');
   }
 
   async getToken(email: string, password: string): Promise<string> {
