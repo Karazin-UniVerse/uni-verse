@@ -1,0 +1,79 @@
+.page {
+  min-height: 100vh;
+  background: var(--bg-color);
+  position: relative;
+}
+
+.themeBar {
+  position: absolute;
+  top: var(--space-24);
+  right: var(--space-24);
+  z-index: 2;
+}
+
+.center {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-24);
+}
+
+.card {
+  width: min(400px, 100%);
+}
+
+.brand {
+  text-align: center;
+  margin-bottom: var(--space-8);
+
+  h1 {
+    margin: 0 0 var(--space-8);
+    font: var(--font-heading);
+  }
+
+  p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-sm);
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.label {
+  font-size: var(--font-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.inputWrap {
+  position: relative;
+
+  input {
+    padding-left: 40px;
+  }
+}
+
+.icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.error {
+  margin: 0;
+  color: var(--error-color);
+  font-size: var(--font-sm);
+}
+
+.submit {
+  width: 100%;
+}

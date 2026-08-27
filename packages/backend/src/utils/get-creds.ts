@@ -13,6 +13,13 @@ interface MoodleUserIdResponse {
 
 @Injectable()
 export class GetCreds {
+  private getBaseUrl(): string {
+    return (process.env.MOODLE_BASEURL || 'https://moodle.karazin.ua').replace(
+      /\/$/,
+      '',
+    );
+  }
+
   async getToken(email: string, password: string): Promise<string> {
     if (!email || !password) {
       throw new Error('Email and password are required');
@@ -24,7 +31,7 @@ export class GetCreds {
       service: 'moodle_mobile_app',
     });
 
-    const response = await fetch('https://moodle.karazin.ua/login/token.php', {
+    const response = await fetch(`${this.getBaseUrl()}/login/token.php`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -50,7 +57,7 @@ export class GetCreds {
     }
 
     const response = await fetch(
-      `https://moodle.karazin.ua/webservice/rest/server.php?wstoken=${encodeURIComponent(token)}&wsfunction=core_webservice_get_site_info&moodlewsrestformat=json`,
+      `${this.getBaseUrl()}/webservice/rest/server.php?wstoken=${encodeURIComponent(token)}&wsfunction=core_webservice_get_site_info&moodlewsrestformat=json`,
     );
 
     const data = (await response.json()) as MoodleUserIdResponse;

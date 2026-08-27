@@ -1,0 +1,30 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--border-radius-full);
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--box-shadow-small);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-md);
+  color: var(--text-primary);
+  user-select: none;
+}
+
+.flame {
+  display: inline-flex;
+  color: var(--warning-color);
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
+  min-width: 1.25ch;
+}
+
+.label {
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+}

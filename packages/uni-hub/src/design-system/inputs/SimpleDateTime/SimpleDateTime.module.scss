@@ -1,0 +1,152 @@
+.datePickerWrapper {
+  width: 100%;
+}
+
+.popper {
+  padding-top: var(--space-8);
+}
+
+.calendar {
+  font-family: var(--font-family-base), sans-serif;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-medium);
+  box-shadow: var(--shadow-medium);
+  color: var(--text-primary);
+
+  :global(.react-datepicker__header) {
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+    padding-top: var(--space-8);
+  }
+
+  :global(.react-datepicker__current-month),
+  :global(.react-datepicker-time__header),
+  :global(.react-datepicker-year-header) {
+    color: var(--text-primary);
+    font-size: var(--font-md);
+    font-weight: bold;
+  }
+
+  :global(.react-datepicker__day-name) {
+    color: var(--text-secondary);
+    width: 2rem;
+    line-height: 2rem;
+  }
+
+  :global(.react-datepicker__day--disabled) {
+    color: var(--text-disabled);
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  :global(.react-datepicker__navigation-icon::before) {
+    border-color: var(--text-primary);
+  }
+
+  :global(.react-datepicker__navigation:hover .react-datepicker__navigation-icon::before) {
+    border-color: var(--accent-primary);
+  }
+
+  :global(.react-datepicker__time-container) {
+    border-left: 1px solid var(--border-color);
+    background-color: var(--bg-surface);
+  }
+
+  :global(.react-datepicker__time) {
+    background-color: var(--bg-surface);
+  }
+
+  :global(.react-datepicker__month-select),
+  :global(.react-datepicker__year-select) {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-small, 4px);
+    padding: 2px 4px;
+  }
+
+  :global(.react-datepicker__time-list-item) {
+    color: var(--text-secondary);
+    height: auto;
+    padding: var(--space-4) var(--space-16);
+  }
+
+  :global(.react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item:hover) {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  :global(.react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected) {
+    background-color: var(--accent-primary);
+    color: var(--accent-text-on-primary);
+    font-weight: bold;
+  }
+
+  :global(.react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected:hover) {
+    background-color: var(--accent-primary);
+    color: var(--accent-text-on-primary);
+  }
+}
+
+.day {
+  color: var(--text-secondary);
+  width: 2rem;
+  line-height: 2rem;
+  border-radius: 50%;
+}
+
+.selectedDay {
+  composes: day;
+}
+
+.calendar {
+  & .day:hover {
+    background-color: var(--bg-hover);
+    border-radius: 50%;
+  }
+
+  :global(.react-datepicker__day--selected),
+  :global(.react-datepicker__day--keyboard-selected),
+  & .selectedDay {
+    background-color: var(--accent-primary);
+    color: var(--accent-text-on-primary);
+    border-radius: 50%;
+    
+    &:hover {
+      background-color: var(--accent-primary);
+      color: var(--accent-text-on-primary);
+      border-radius: 50%;
+    }
+  }
+}
+
+.calendar-small {
+  :global(.react-datepicker__current-month),
+  :global(.react-datepicker-time__header),
+  :global(.react-datepicker-year-header) {
+    font-size: var(--font-sm);
+  }
+
+  :global(.react-datepicker__day-name),
+  :global(.react-datepicker__day) {
+    width: 1.5rem;
+    line-height: 1.5rem;
+    font-size: var(--font-sm);
+  }
+}
+
+.calendar-large {
+  :global(.react-datepicker__current-month),
+  :global(.react-datepicker-time__header),
+  :global(.react-datepicker-year-header) {
+    font-size: var(--font-lg);
+  }
+
+  :global(.react-datepicker__day-name),
+  :global(.react-datepicker__day) {
+    width: 2.5rem;
+    line-height: 2.5rem;
+    font-size: var(--font-lg);
+  }
+}

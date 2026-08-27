@@ -1,0 +1,19 @@
+.empty {
+  padding: var(--space-40) var(--space-16);
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.icon {
+  color: var(--text-disabled);
+  flex-shrink: 0;
+}
+
+.empty p {
+  margin: 0;
+}

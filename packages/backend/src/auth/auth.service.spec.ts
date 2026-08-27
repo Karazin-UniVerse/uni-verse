@@ -77,8 +77,10 @@ describe('AuthService', () => {
     expect(mockUserService.updateUser).toHaveBeenCalled();
   });
 
-  it('login throws ForbiddenException when user not found', async () => {
-    mockUserService.findByEmail.mockResolvedValue(null);
+  it('login throws ForbiddenException when Moodle credentials fail', async () => {
+    mockGetCreds.getToken.mockRejectedValue(
+      new Error('Invalid Moodle credentials'),
+    );
     const dto: LoginDto = { email: 'x', password: 'p' };
     await expect(authService.login(dto)).rejects.toThrow();
   });

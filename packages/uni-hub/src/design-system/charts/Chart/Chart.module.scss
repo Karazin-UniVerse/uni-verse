@@ -1,0 +1,130 @@
+.wrap {
+  width: 100%;
+  min-width: 0;
+  background: var(--chart-bg, var(--bg-surface));
+  border: 1px solid var(--chart-border, var(--border-color));
+  border-radius: var(--border-radius-large);
+  padding: var(--space-16);
+  box-sizing: border-box;
+  overflow: hidden;
+  box-shadow: var(--chart-glow, none);
+  transition:
+    background-color var(--transition-medium) var(--ease-standard),
+    border-color var(--transition-medium) var(--ease-standard),
+    box-shadow var(--transition-medium) var(--ease-standard),
+    color var(--transition-medium) var(--ease-standard);
+}
+
+.title {
+  margin: 0 0 var(--space-8);
+  font-family: var(--font-family-heading), var(--font-family-base), sans-serif;
+  font-size: var(--font-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--chart-title, var(--text-primary));
+  letter-spacing: 0.01em;
+}
+
+.chart {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  color: var(--chart-empty, var(--text-secondary));
+  font-size: var(--font-sm);
+  font-family: var(--font-family-regular), var(--font-family-base), sans-serif;
+}
+
+.tooltip {
+  background: var(--chart-tooltip-bg, var(--bg-color));
+  border: 1px solid var(--chart-tooltip-border, var(--border-color));
+  border-radius: var(--border-radius-medium);
+  padding: var(--space-8) var(--space-12);
+  box-shadow: var(--box-shadow-medium);
+  color: var(--chart-tooltip-text, var(--text-primary));
+  font-family: var(--font-family-regular), var(--font-family-base), sans-serif;
+  font-size: var(--font-sm);
+  line-height: 1.4;
+  max-width: 240px;
+}
+
+.tooltipLabel {
+  color: var(--chart-tooltip-muted, var(--text-secondary));
+  margin-bottom: var(--space-2);
+  word-break: break-word;
+}
+
+.tooltipRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  color: var(--chart-tooltip-text, var(--text-primary));
+  font-weight: var(--font-weight-medium);
+}
+
+.tooltipSwatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: var(--chart-glow, none);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-8) var(--space-16);
+  margin-top: var(--space-8);
+  font-size: var(--font-xs);
+  color: var(--chart-legend, var(--text-secondary));
+  font-family: var(--font-family-regular), var(--font-family-base), sans-serif;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.legendSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  box-shadow: var(--chart-glow, none);
+}
+
+:global([data-theme='cyberpunk']) {
+  .wrap {
+    border-width: 1px;
+    background-image:
+      linear-gradient(135deg, rgba(0, 240, 255, 0.04), transparent 40%),
+      linear-gradient(225deg, rgba(255, 0, 85, 0.05), transparent 35%);
+  }
+
+  .title {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 8px rgba(252, 238, 10, 0.35);
+  }
+
+  .tooltip {
+    box-shadow: var(--box-shadow-medium);
+  }
+
+  .legendSwatch,
+  .tooltipSwatch {
+    border-radius: 0;
+  }
+
+  .chart :global(.recharts-bar-rectangle),
+  .chart :global(.recharts-sector) {
+    filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.45));
+  }
+}
