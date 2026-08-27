@@ -27,8 +27,13 @@ export class MoodleClientService {
     if (!this.baseurl) {
       throw new Error('MOODLE_BASEURL environment variable is not set');
     }
-    if (!this.baseurl.startsWith('https://')) {
-      throw new Error('MOODLE_BASEURL must be a secure URL (https://)');
+    if (
+      !this.baseurl.startsWith('https://') &&
+      !this.baseurl.startsWith('http://')
+    ) {
+      throw new Error(
+        'MOODLE_BASEURL must be a valid URL (http:// or https://)',
+      );
     }
     if (!this.timeout) {
       throw new Error('MOODLE_TIMEOUT environment variable is not set');
