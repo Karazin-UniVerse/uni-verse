@@ -462,8 +462,16 @@ const DashboardPage: React.FC = () => {
                 <div className={styles.muted}>{item.courseName}</div>
               </div>
               <div className={styles.nearestDeadline}>
-                <Tag tone="warning">Срок: {new Date(item.duedate * 1000).toLocaleDateString()}</Tag>
-                {item.duedate > 0 && <LiveCountdown targetUnixSec={item.duedate} />}
+                {item.duedate && item.duedate > 0 ? (
+                  <>
+                    <Tag tone="warning">
+                      Срок: {new Date(item.duedate * 1000).toLocaleDateString()}
+                    </Tag>
+                    <LiveCountdown targetUnixSec={item.duedate} />
+                  </>
+            ) : (
+              <Tag tone="neutral">Без терміну</Tag>
+            )}
               </div>
             </div>
             <div
