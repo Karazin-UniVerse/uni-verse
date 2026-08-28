@@ -28,7 +28,12 @@ export const LiveCountdown: React.FC<LiveCountdownProps> = ({ targetUnixSec, cla
   const diff = targetMs - now;
 
   const tone = useMemo(() => {
-    if (diff <= 0) return 'danger';
+    if (diff <= 0) return (
+      <span className={`${styles.countdown} ${styles.danger} $(className ?? ''}`} title="Термін сплив">
+        <Clock size={14} aria-hidden />
+        <span className={styles.time}>Термін сплив</span>
+      </span>
+    );
     if (diff < SIX_HOURS_MS) return 'warning';
     return 'ok';
   }, [diff]);
