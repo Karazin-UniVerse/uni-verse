@@ -103,6 +103,21 @@ const DashboardPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [hideCompleted, setHideCompleted] = useState(false);
 
+  const handleDateChange =
+    (setter: React.Dispatch<React.SetStateAction<string>>) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
+      if (!val) {
+        setter('');
+        return;
+      }
+      const [yearStr] = val.split('-');
+      if (yearStr && yearStr.length > 4) {
+        return;
+      }
+      setter(val);
+    };
+
   const [isAssignmentModalVisible, setIsAssignmentModalVisible] = useState(false);
   const [selectedAssignmentModule, setSelectedAssignmentModule] = useState<CourseModule | null>(
     null,
@@ -131,8 +146,18 @@ const DashboardPage: React.FC = () => {
     setLoading(true);
     try {
       const params: Record<string, string | number> = { sortByDate: sortOrder };
-      if (dateFrom) params.dateFrom = Math.floor(new Date(dateFrom).getTime() / 1000);
-      if (dateTo) params.dateTo = Math.floor(new Date(dateTo).getTime() / 1000);
+      if (dateFrom) {
+        const fromDate = new Date(dateFrom);
+        if (!Number.isNaN(fromDate.getTime()) && fromDate.getFullYear() <= 2099) {
+          params.dateFrom = Math.floor(fromDate.getTime() / 1000);
+        }
+      }
+      if (dateTo) {
+        const toDate = new Date(dateTo);
+        if (!Number.isNaN(toDate.getTime()) && toDate.getFullYear() <= 2099) {
+          params.dateTo = Math.floor(toDate.getTime() / 1000);
+        }
+      }
       if (hideCompleted) params.status = 'not_completed';
 
       const [coursesRes, gradesRes, assignmentsRes, eventsRes, notificationsRes, statsRes] =
@@ -406,15 +431,19 @@ const DashboardPage: React.FC = () => {
         <SimpleInput
           type="date"
           size="medium"
+          min="2000-01-01"
+          max="2099-12-31"
           value={dateFrom}
-          onChange={(e) => setDateFrom(e.target.value)}
+          onChange={handleDateChange(setDateFrom)}
           aria-label="Дата от"
         />
         <SimpleInput
           type="date"
           size="medium"
+          min="2000-01-01"
+          max="2099-12-31"
           value={dateTo}
-          onChange={(e) => setDateTo(e.target.value)}
+          onChange={handleDateChange(setDateTo)}
           aria-label="Дата до"
         />
         <Select

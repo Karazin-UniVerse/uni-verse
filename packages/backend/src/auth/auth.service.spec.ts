@@ -22,7 +22,8 @@ describe('AuthService', () => {
   const mockGetCreds = {
     getToken: jest.fn(),
     getUserId: jest.fn(),
-  } as jest.Mocked<Pick<GetCreds, 'getToken' | 'getUserId'>>;
+    getBaseUrl: jest.fn(),
+  } as unknown as jest.Mocked<GetCreds>;
   const mockJwtService = { signAsync: jest.fn() } as jest.Mocked<
     Pick<JwtService, 'signAsync'>
   >;
