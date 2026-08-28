@@ -498,9 +498,9 @@ const DashboardPage: React.FC = () => {
                     </Tag>
                     <LiveCountdown targetUnixSec={item.duedate} />
                   </>
-            ) : (
-              <Tag tone="neutral">Без терміну</Tag>
-            )}
+                ) : (
+                  <Tag tone="default">Без терміну</Tag>
+                )}
               </div>
             </div>
             <div
