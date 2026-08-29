@@ -1,1 +1,16 @@
-* @TipTop230
+# ==============================================================================
+# UniVerse & UniHub Monorepo Code Owners
+# ==============================================================================
+
+# Global fallback maintainers
+* @brodion-230 @Skyzary
+
+# ── Backend Owners (Vova + Timur) ──
+/packages/backend/              @Skyzary timurkadaas@gmail.com
+/packages/database/             @Skyzary timurkadaas@gmail.com
+/Dockerfile                     @Skyzary timurkadaas@gmail.com
+
+# ── Frontend Owners (Vova + ReDL) ──
+/packages/uni-hub/              @Skyzary @iamredl-lab
+/packages/ui/                   @Skyzary @iamredl-lab
+/Dockerfile.frontend            @Skyzary @iamredl-lab
