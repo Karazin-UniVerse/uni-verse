@@ -1,0 +1,68 @@
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-8);
+  border-radius: var(--border-radius-small);
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-medium);
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.default {
+  background: var(--accent-secondary);
+}
+
+.success {
+  border-color: var(--green-300);
+  background: var(--green-50);
+  color: var(--green-800);
+}
+
+.warning {
+  border-color: #fcd34d;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.info {
+  border-color: var(--blue-300);
+  background: var(--blue-50);
+  color: var(--blue-800);
+}
+
+.danger {
+  border-color: var(--red-300);
+  background: var(--red-50);
+  color: var(--red-800);
+}
+
+:global([data-theme='dark']) .success,
+:global([data-theme='cyberpunk']) .success {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--green-300);
+  border-color: var(--green-700);
+}
+
+:global([data-theme='dark']) .warning,
+:global([data-theme='cyberpunk']) .warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-color: #92400e;
+}
+
+:global([data-theme='dark']) .info,
+:global([data-theme='cyberpunk']) .info {
+  background: rgba(52, 102, 231, 0.2);
+  color: var(--blue-300);
+  border-color: var(--blue-700);
+}
+
+:global([data-theme='dark']) .danger,
+:global([data-theme='cyberpunk']) .danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--red-300);
+  border-color: var(--red-700);
+}
