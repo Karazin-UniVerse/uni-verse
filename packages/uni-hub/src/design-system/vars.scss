@@ -1,0 +1,410 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+/* ==========================================================================
+   1. BASE & LAYOUT TOKENS (Non-thematic)
+   ========================================================================== */
+:root {
+  /* Spacing & Sizing (The 8pt Grid) */
+  --space-2: 2px;
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+  --space-64: 64px;
+
+  /* Padding & Margin to change! */
+  --padding-small: var(--space-8);
+  --padding-medium: var(--space-16);
+  --padding-large: var(--space-24);
+  --margin-small: var(--space-8);
+  --margin-medium: var(--space-16);
+  --margin-large: var(--space-24);
+  --gap-small: var(--space-8);
+  --gap-medium: var(--space-16);
+  --gap-large: var(--space-24);
+
+  /* Typography */
+  --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-family-heading: var(--font-family-base);
+  --font-family-regular: var(--font-family-base);
+
+  --font-xs: 12px;
+  --font-sm: 14px;
+  --font-md: 16px;
+  --font-lg: 18px;
+  --font-xl: 20px;
+  --font-xxl: 24px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  --line-height-md: 24px;
+
+  /* Font Shorthand Abstractions */
+  --font-heading: var(--font-weight-bold) var(--font-xxl)/1.2 var(--font-family-heading);
+  --font-regular: var(--font-weight-regular) var(--font-md)/1.5 var(--font-family-regular);
+
+  /* Radii & Borders */
+  --border-radius-small: 4px;
+  --border-radius-medium: 8px;
+  --border-radius-large: 12px;
+  --border-radius-full: 9999px;
+
+  /* Shadows & Elevations */
+  --box-shadow-small: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --box-shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --box-shadow-large: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Transitions */
+  --transition-small: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 150ms;
+  --transition-medium: 250ms;
+  --transition-slow: 400ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Focus Ring */
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+}
+
+/* ==========================================================================
+   2. COLOR PALETTES (Raw values)
+   ========================================================================== */
+
+:root {
+  /* Neutral Palette (Grayscale) */
+  --gray-50: #f8f9fa;
+  --gray-100: #f1f3f5;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-500: #adb5bd;
+  --gray-600: #868e96;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --gray-900: #212529;
+
+  /* Blue Palette */
+  --blue-50: #edf1fe;
+  --blue-100: #e0e6fe;
+  --blue-200: #c5d3fc;
+  --blue-300: #a1b7fa;
+  --blue-400: #7794f6;
+  --blue-500: #3466e7;
+  --blue-600: #164bd7;
+  --blue-700: #123898;
+  --blue-800: #102e7a;
+  --blue-900: #0f2860;
+
+  /* Red Palette */
+  --red-50: #fef2f2;
+  --red-100: #fee2e2;
+  --red-200: #fecaca;
+  --red-300: #fca5a5;
+  --red-400: #f87171;
+  --red-500: #ef4444;
+  --red-600: #dc2626;
+  --red-700: #b91c1c;
+  --red-800: #991b1b;
+  --red-900: #7f1d1d;
+
+  /* Green Palette */
+  --green-50: #f0fdf4;
+  --green-100: #dcfce7;
+  --green-200: #bbf7d0;
+  --green-300: #86efac;
+  --green-400: #4ade80;
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --green-700: #15803d;
+  --green-800: #166534;
+  --green-900: #14532d;
+
+  /* Purple Palette */
+  --purple-50: #faf5ff;
+  --purple-100: #f3e8ff;
+  --purple-200: #e9d5ff;
+  --purple-300: #d8b4fe;
+  --purple-400: #c084fc;
+  --purple-500: #a855f7;
+  --purple-600: #9333ea;
+  --purple-700: #7e22ce;
+  --purple-800: #6b21a8;
+  --purple-900: #581c87;
+
+  /* Feedback Colors (Static) */
+  --success-color: var(--green-500);
+  --error-color: var(--red-500);
+  --warning-color: #f59e0b; /* Consider adding a yellow palette */
+  --info-color: var(--blue-500);
+}
+
+/* ==========================================================================
+   3. THEME DEFINITIONS (Light / Dark Modes)
+   ========================================================================== */
+
+/* -----------------------------------------
+   Light Theme (Default)
+   ----------------------------------------- */
+:root,
+[data-theme="light"] {
+  /* Neutral Colors */
+  --neutral-bg: #ffffff;
+  --neutral-surface: var(--gray-50);
+  --neutral-border: var(--gray-200);
+  --neutral-text-primary: var(--gray-900);
+  --neutral-text-secondary: var(--gray-600);
+  --neutral-text-disabled: var(--gray-400);
+
+  --accent-primary: var(--blue-600);
+  --accent-primary-hover: var(--blue-700);
+  --accent-primary-active: var(--blue-800);
+  --accent-text-on-primary: #ffffff;
+
+  --accent-secondary: var(--gray-100);
+  --accent-secondary-hover: var(--gray-200);
+  --accent-secondary-active: var(--gray-300);
+  --accent-text-on-secondary: var(--neutral-text-primary);
+
+  --focus-ring-color: rgba(22, 75, 215, 0.35);
+  --bg-hover: var(--gray-100);
+
+  /* Chart tokens */
+  --chart-bg: var(--neutral-surface);
+  --chart-border: var(--neutral-border);
+  --chart-grid: var(--gray-200);
+  --chart-tick: var(--neutral-text-secondary);
+  --chart-axis: var(--neutral-border);
+  --chart-tooltip-bg: var(--neutral-bg);
+  --chart-tooltip-border: var(--neutral-border);
+  --chart-tooltip-text: var(--neutral-text-primary);
+  --chart-tooltip-muted: var(--neutral-text-secondary);
+  --chart-legend: var(--neutral-text-secondary);
+  --chart-empty: var(--neutral-text-secondary);
+  --chart-title: var(--neutral-text-primary);
+  --chart-success: var(--green-500);
+  --chart-warning: #f59e0b;
+  --chart-danger: var(--red-500);
+  --chart-info: var(--blue-500);
+  --chart-series-1: var(--accent-primary);
+  --chart-series-2: var(--chart-success);
+  --chart-series-3: var(--chart-warning);
+  --chart-series-4: var(--chart-danger);
+  --chart-series-5: var(--chart-info);
+  --chart-glow: none;
+  --chart-bar-radius: var(--border-radius-small);
+}
+
+/* -----------------------------------------
+   Dark Theme
+   ----------------------------------------- */
+[data-theme="dark"] {
+  /* Neutral Colors */
+  --neutral-bg: #121212;
+  --neutral-surface: var(--gray-800);
+  --neutral-border: var(--gray-700);
+  --neutral-text-primary: var(--gray-50);
+  --neutral-text-secondary: var(--gray-400);
+  --neutral-text-disabled: var(--gray-600);
+
+  /* Accent Colors */
+  --accent-primary: var(--blue-600);
+  --accent-primary-hover: var(--blue-700);
+  --accent-primary-active: var(--blue-800);
+  --accent-text-on-primary: #ffffff;
+
+  --accent-secondary: var(--gray-700);
+  --accent-secondary-hover: var(--gray-600);
+  --accent-secondary-active: var(--gray-500);
+  --accent-text-on-secondary: var(--neutral-text-primary);
+
+  --focus-ring-color: rgba(119, 148, 246, 0.45);
+  --bg-hover: var(--gray-700);
+
+  /* Chart tokens */
+  --chart-bg: var(--neutral-surface);
+  --chart-border: var(--neutral-border);
+  --chart-grid: rgba(255, 255, 255, 0.08);
+  --chart-tick: var(--neutral-text-secondary);
+  --chart-axis: var(--neutral-border);
+  --chart-tooltip-bg: #1a1a1a;
+  --chart-tooltip-border: var(--neutral-border);
+  --chart-tooltip-text: var(--neutral-text-primary);
+  --chart-tooltip-muted: var(--neutral-text-secondary);
+  --chart-legend: var(--neutral-text-secondary);
+  --chart-empty: var(--neutral-text-secondary);
+  --chart-title: var(--neutral-text-primary);
+  --chart-success: var(--green-400);
+  --chart-warning: #fbbf24;
+  --chart-danger: var(--red-400);
+  --chart-info: var(--blue-400);
+  --chart-series-1: var(--blue-400);
+  --chart-series-2: var(--chart-success);
+  --chart-series-3: var(--chart-warning);
+  --chart-series-4: var(--chart-danger);
+  --chart-series-5: var(--chart-info);
+  --chart-glow: none;
+  --chart-bar-radius: var(--border-radius-small);
+}
+
+/* -----------------------------------------
+   Cyberpunk Theme
+   ----------------------------------------- */
+[data-theme="cyberpunk"] {
+  /* Cyberpunk Neon Palette */
+  --cyberpunk-black: #0b0b0e;
+  --cyberpunk-dark: #121217;
+  --cyberpunk-yellow: #fcee0a;
+  --cyberpunk-cyan: #00f0ff;
+  --cyberpunk-pink: #ff0055;
+  --cyberpunk-purple: #3f1651;
+  --cyberpunk-gray: #1b1c22;
+  --cyberpunk-text-dim: #70778c;
+
+  /* Neutral Colors override */
+  --neutral-bg: var(--cyberpunk-black);
+  --neutral-surface: var(--cyberpunk-dark);
+  --neutral-border: var(--cyberpunk-pink);
+  --neutral-text-primary: var(--cyberpunk-yellow);
+  --neutral-text-secondary: var(--cyberpunk-cyan);
+  --neutral-text-disabled: var(--cyberpunk-text-dim);
+
+  /* Accent Colors override */
+  --accent-primary: var(--cyberpunk-yellow);
+  --accent-primary-hover: var(--cyberpunk-cyan);
+  --accent-primary-active: var(--cyberpunk-pink);
+  --accent-text-on-primary: var(--cyberpunk-black);
+
+  --accent-secondary: var(--cyberpunk-gray);
+  --accent-secondary-hover: var(--cyberpunk-purple);
+  --accent-secondary-active: var(--cyberpunk-pink);
+  --accent-text-on-secondary: var(--cyberpunk-cyan);
+
+  /* Override component/semantic variables directly to enforce priority */
+  --bg-color: var(--cyberpunk-black);
+  --bg-surface: var(--cyberpunk-dark);
+  --text-primary: var(--cyberpunk-yellow);
+  --text-secondary: var(--cyberpunk-cyan);
+  --text-disabled: var(--cyberpunk-text-dim);
+  --border-color: var(--cyberpunk-pink);
+
+  /* Primary SimpleButton Overrides */
+  --btn-primary-bg: var(--cyberpunk-yellow);
+  --btn-primary-hover: var(--cyberpunk-cyan);
+  --btn-primary-active: var(--cyberpunk-pink);
+  --btn-primary-text: var(--cyberpunk-black);
+  --btn-primary-disabled: var(--cyberpunk-gray);
+
+  /* Secondary SimpleButton Overrides */
+  --btn-secondary-bg: var(--cyberpunk-black);
+  --btn-secondary-hover: var(--cyberpunk-gray);
+  --btn-secondary-active: var(--cyberpunk-purple);
+  --btn-secondary-text: var(--cyberpunk-cyan);
+
+  /* Radii & Borders (Sharp retro-futuristic corners) */
+  --border-radius-small: 0px;
+  --border-radius-medium: 0px;
+  --border-radius-large: 0px;
+  --border-radius-full: 0px;
+
+  /* Shadows & Glowing Effects */
+  --box-shadow-small: 0 0 5px rgba(0, 240, 255, 0.4);
+  --box-shadow-medium: 0 0 10px rgba(255, 0, 85, 0.5), 0 0 20px rgba(0, 240, 255, 0.2);
+  --box-shadow-large: 0 0 15px rgba(252, 238, 10, 0.6), 0 0 30px rgba(255, 0, 85, 0.4);
+
+  --focus-ring-color: rgba(255, 0, 85, 0.7);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 1px;
+  --bg-hover: var(--cyberpunk-gray);
+
+  /* Cyberpunk Font stack overrides */
+  --font-family-heading: 'Orbitron', sans-serif;
+  --font-family-regular: 'Share Tech Mono', monospace;
+
+  /* Font Shorthand Abstractions */
+  --font-heading: var(--font-weight-bold) var(--font-xxl)/1.1 var(--font-family-heading);
+  --font-regular: var(--font-weight-regular) var(--font-md)/1.4 var(--font-family-regular);
+
+  /* Chart tokens */
+  --chart-bg: var(--cyberpunk-dark);
+  --chart-border: var(--cyberpunk-cyan);
+  --chart-grid: rgba(0, 240, 255, 0.18);
+  --chart-tick: var(--cyberpunk-cyan);
+  --chart-axis: rgba(255, 0, 85, 0.55);
+  --chart-tooltip-bg: var(--cyberpunk-black);
+  --chart-tooltip-border: var(--cyberpunk-pink);
+  --chart-tooltip-text: var(--cyberpunk-yellow);
+  --chart-tooltip-muted: var(--cyberpunk-cyan);
+  --chart-legend: var(--cyberpunk-cyan);
+  --chart-empty: var(--cyberpunk-text-dim);
+  --chart-title: var(--cyberpunk-yellow);
+  --chart-success: var(--cyberpunk-cyan);
+  --chart-warning: var(--cyberpunk-yellow);
+  --chart-danger: var(--cyberpunk-pink);
+  --chart-info: #7c5cff;
+  --chart-series-1: var(--cyberpunk-yellow);
+  --chart-series-2: var(--cyberpunk-cyan);
+  --chart-series-3: var(--cyberpunk-pink);
+  --chart-series-4: #7c5cff;
+  --chart-series-5: #00ff88;
+  --chart-glow: 0 0 12px rgba(0, 240, 255, 0.35), 0 0 24px rgba(255, 0, 85, 0.18);
+  --chart-bar-radius: 0px;
+}
+
+
+:root,
+/* ==========================================================================
+   5. COMPONENT & SEMANTIC ALIASES
+   ========================================================================== */
+:root {
+  /* General UI */
+  --bg-color: var(--neutral-bg);
+  --bg-surface: var(--neutral-surface);
+  --text-primary: var(--neutral-text-primary);
+  --text-secondary: var(--neutral-text-secondary);
+  --text-disabled: var(--neutral-text-disabled);
+  --border-color: var(--neutral-border);
+
+  /* Primary SimpleButton */
+  --btn-primary-bg: var(--accent-primary);
+  --btn-primary-hover: var(--accent-primary-hover);
+  --btn-primary-active: var(--accent-primary-active);
+  --btn-primary-text: var(--accent-text-on-primary);
+  --btn-primary-disabled: var(--neutral-surface);
+
+  /* Secondary SimpleButton */
+  --btn-secondary-bg: var(--accent-secondary);
+  --btn-secondary-hover: var(--accent-secondary-hover);
+  --btn-secondary-active: var(--accent-secondary-active);
+  --btn-secondary-text: var(--accent-text-on-secondary);
+}
+
+/* ==========================================================================
+   6. GLOBAL BASE STYLES
+   ========================================================================== */
+html, body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: var(--font-family-regular), var(--font-family-base), sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  box-sizing: border-box;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-heading), var(--font-family-base), sans-serif;
+  color: var(--text-primary);
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}

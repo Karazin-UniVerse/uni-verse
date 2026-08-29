@@ -1,0 +1,19 @@
+.switcher {
+  display: inline-flex;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.option {
+  gap: var(--space-4);
+}
+
+.compactLabel {
+  margin-left: var(--space-8);
+}
+
+@media (max-width: 1024px) {
+  .compactLabel {
+    display: none;
+  }
+}
