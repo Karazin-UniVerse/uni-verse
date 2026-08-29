@@ -2,7 +2,7 @@ FROM node:20-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN apk add --no-cache libc6-compat openssl
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@10.0.0 --activate
 
 FROM base AS builder
 WORKDIR /app

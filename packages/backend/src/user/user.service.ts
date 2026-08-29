@@ -51,11 +51,16 @@ export class UserService {
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     try {
       return await this.prisma.user.create({ data: createUserDto });
-    } catch (err: any) {
-      if (
-        err?.code === 'P2002' ||
-        err?.name === 'PrismaClientValidationError'
-      ) {
+    } catch (err: unknown) {
+      const code =
+        typeof err === 'object' && err !== null && 'code' in err
+          ? (err as { code: string }).code
+          : '';
+      const name =
+        typeof err === 'object' && err !== null && 'name' in err
+          ? (err as { name: string }).name
+          : '';
+      if (code === 'P2002' || name === 'PrismaClientValidationError') {
         throw err;
       }
       const newUser: User = {
@@ -95,8 +100,12 @@ export class UserService {
         where: { id },
         data: updateUserDto,
       });
-    } catch (err: any) {
-      if (err?.code === 'P2025') {
+    } catch (err: unknown) {
+      const code =
+        typeof err === 'object' && err !== null && 'code' in err
+          ? (err as { code: string }).code
+          : '';
+      if (code === 'P2025') {
         throw err;
       }
       const existing = this.inMemoryUsers.get(id);
