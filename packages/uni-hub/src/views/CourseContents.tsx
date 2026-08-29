@@ -10,13 +10,13 @@ import {
   ArrowLeft,
   ChevronDown,
 } from 'lucide-react';
-import { SimpleButton } from '../design-system';
-import { moodleApi } from '../services/api';
-import type { CourseSection, CourseModule } from '../types';
-import AssignmentModal from '../components/AssignmentModal';
-import { useToast } from '../components/ui/Toast';
-import { Spinner } from '../components/ui/Spinner';
-import { Empty } from '../components/ui/Empty';
+import { SimpleButton } from '@/design-system';
+import { moodleApi } from '@/services/api';
+import type { CourseSection, CourseModule } from '@/types';
+import AssignmentModal from '@/components/AssignmentModal';
+import { useToast } from '@/components/ui/Toast';
+import { Spinner } from '@/components/ui/Spinner';
+import { Empty } from '@/components/ui/Empty';
 import styles from './CourseContents.module.scss';
 
 const getModuleIcon = (modname: string) => {
@@ -99,16 +99,16 @@ const CourseContents: React.FC = () => {
           variant="secondary"
           size="medium"
           isTransparent
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate('/dashboard?tab=courses')}
         >
-          <ArrowLeft size={16} /> Назад в дашборд
+          <ArrowLeft size={16} /> Назад до курсів
         </SimpleButton>
       </header>
 
       <main className={styles.content}>
         <nav className={styles.breadcrumb} aria-label="Хлебные крошки">
-          <button type="button" onClick={() => navigate('/dashboard')}>
-            Дашборд
+          <button type="button" onClick={() => navigate('/dashboard?tab=courses')}>
+            Курсы
           </button>
           <span>/</span>
           <span>Содержимое курса</span>

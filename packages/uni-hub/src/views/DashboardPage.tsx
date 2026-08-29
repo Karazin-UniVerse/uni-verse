@@ -15,9 +15,9 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { SimpleButton, SimpleInput, CheckBox } from '../design-system';
-import { moodleApi } from '../services/api';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { SimpleButton, SimpleInput, CheckBox } from '@/design-system';
+import { moodleApi } from '@/services/api';
 import type {
   Course,
   Grade,
@@ -26,37 +26,36 @@ import type {
   Notification,
   CourseStatistics,
   CourseModule,
-} from '../types';
-import AssignmentModal from '../components/AssignmentModal';
-import ScheduleView from '../components/ScheduleView';
-import { GradesChart } from '../components/GradesChart';
-import { AssignmentsDonut } from '../components/AssignmentsDonut';
-import { DashboardSkeleton } from '../components/DashboardSkeleton';
-import { StreakBadge } from '../components/gamification/StreakBadge';
-import { ContextualGreeting } from '../components/gamification/ContextualGreeting';
-import { LiveCountdown } from '../components/gamification/LiveCountdown';
-import { BadgeSystem } from '../components/gamification/BadgeSystem';
-import { GradeSimulator, GradeSimulatorTrigger } from '../components/gamification/GradeSimulator';
-import { ThemeSwitcher } from '../theme/ThemeSwitcher';
-import { useToast } from '../components/ui/Toast';
-import { Spinner } from '../components/ui/Spinner';
-import { Tag } from '../components/ui/Tag';
-import { Empty } from '../components/ui/Empty';
-import { Select } from '../components/ui/Select';
-import { ProgressBar } from '../components/ui/ProgressBar';
-import { useCountUp } from '../hooks/useCountUp';
-import { useNow } from '../hooks/useNow';
-import { useGamificationStore } from '../store/useGamificationStore';
-import {
-  getValidGrades,
-  getGradeTone,
-  getGradeCourseName,
-  getGradeRawValue,
-} from '../utils/grades';
-import { playClick } from '../utils/soundEffects';
+} from '@/types';
+import AssignmentModal from '@/components/AssignmentModal';
+import ScheduleView from '@/components/ScheduleView';
+import { GradesChart } from '@/components/GradesChart';
+import { AssignmentsDonut } from '@/components/AssignmentsDonut';
+import { DashboardSkeleton } from '@/components/DashboardSkeleton';
+import { StreakBadge } from '@/components/gamification/StreakBadge';
+import { ContextualGreeting } from '@/components/gamification/ContextualGreeting';
+import { LiveCountdown } from '@/components/gamification/LiveCountdown';
+import { BadgeSystem } from '@/components/gamification/BadgeSystem';
+import { GradeSimulator, GradeSimulatorTrigger } from '@/components/gamification/GradeSimulator';
+import { ThemeSwitcher } from '@/theme/ThemeSwitcher';
+import { useToast } from '@/components/ui/Toast';
+import { Spinner } from '@/components/ui/Spinner';
+import { Tag } from '@/components/ui/Tag';
+import { Empty } from '@/components/ui/Empty';
+import { Select } from '@/components/ui/Select';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { useCountUp } from '@/hooks/useCountUp';
+import { useNow } from '@/hooks/useNow';
+import { useGamificationStore } from '@/store/useGamificationStore';
+import { getValidGrades, getGradeTone, getGradeCourseName, getGradeRawValue } from '@/utils/grades';
+import { playClick } from '@/utils/soundEffects';
 import styles from './DashboardPage.module.scss';
 
 type NavKey = 'overview' | 'courses' | 'grades' | 'assignments' | 'schedule' | 'events';
+
+const NAV_KEYS: NavKey[] = ['overview', 'courses', 'grades', 'assignments', 'schedule', 'events'];
+
+const isNavKey = (value: string): value is NavKey => NAV_KEYS.includes(value as NavKey);
 
 const cardMotion = {
   whileHover: { scale: 1.02, y: -2 },
@@ -66,6 +65,7 @@ const cardMotion = {
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const toast = useToast();
   const checkIn = useGamificationStore((s) => s.checkIn);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
@@ -196,6 +196,13 @@ const DashboardPage: React.FC = () => {
     checkIn();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
+
+  useEffect(() => {
+    const requestedTab = searchParams.get('tab');
+    if (requestedTab && isNavKey(requestedTab)) {
+      setActiveKey(requestedTab);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!localStorage.getItem('isLoggedIn')) {
