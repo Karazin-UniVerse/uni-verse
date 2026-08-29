@@ -50,21 +50,26 @@
 }
 
 .rowTop {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-8);
-  align-items: baseline;
+  align-items: center;
 }
 
 .name {
   font-weight: var(--font-weight-medium);
   font-size: var(--font-sm);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .score {
   font-variant-numeric: tabular-nums;
   color: var(--text-secondary);
   font-size: var(--font-sm);
+  flex-shrink: 0;
 }
 
 .slider {
@@ -78,3 +83,19 @@
   font-size: var(--font-xs);
   color: var(--text-secondary);
 }
+
+@media (max-width: 480px) {
+  .forecast,
+  .row {
+    padding: var(--space-12);
+  }
+
+  .forecastValue {
+    font-size: var(--font-xl);
+  }
+
+  .rowTop {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
