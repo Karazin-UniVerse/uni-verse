@@ -24,34 +24,38 @@ export class MoodleAssignmentsService {
     if (!moodleToken || !moodleId) {
       throw new BadRequestException('Token or user ID are not provided');
     }
-    const data = await this.moodleClient.client<MoodleAssignmentsResponse>(
-      getWsFunctionName('getAssignments'),
-      moodleToken,
-      undefined,
-    );
-
-    const assignments: AssignmentItemDto[] = [];
-    data.courses?.forEach((course) => {
-      const year = extractAcademicYear(
-        `${course.fullname} ${course.shortname}`,
+    try {
+      const data = await this.moodleClient.client<MoodleAssignmentsResponse>(
+        getWsFunctionName('getAssignments'),
+        moodleToken,
+        undefined,
       );
-      const semester =
-        extractSemester(course.fullname) ?? extractSemester(course.shortname);
 
-      course.assignments?.forEach((assign) => {
-        assignments.push({
-          id: assign.id,
-          courseName: course.fullname,
-          name: assign.name,
-          duedate: assign.duedate,
-          description: normalizeMoodleText(assign.intro),
-          year,
-          semester,
+      const assignments: AssignmentItemDto[] = [];
+      data?.courses?.forEach((course) => {
+        const year = extractAcademicYear(
+          `${course.fullname} ${course.shortname}`,
+        );
+        const semester =
+          extractSemester(course.fullname) ?? extractSemester(course.shortname);
+
+        course.assignments?.forEach((assign) => {
+          assignments.push({
+            id: assign.id,
+            courseName: course.fullname,
+            name: assign.name,
+            duedate: assign.duedate,
+            description: normalizeMoodleText(assign.intro),
+            year,
+            semester,
+          });
         });
       });
-    });
 
-    return assignments;
+      return assignments;
+    } catch {
+      return [];
+    }
   }
 
   async getSubmissionStatus(
@@ -110,7 +114,7 @@ export class MoodleAssignmentsService {
       getWsFunctionName('saveAssignmentSubmission'),
       moodleToken,
       undefined,
-      { assignid: assignId, plugindata },
+      { assignmentid: assignId, plugindata },
     );
   }
 }
