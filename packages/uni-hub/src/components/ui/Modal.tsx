@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
-import { SimpleButton } from '../../design-system';
 import styles from './Modal.module.scss';
 
 type ModalProps = {
@@ -38,16 +37,14 @@ export const Modal: React.FC<ModalProps> = ({ open, title, onClose, children, wi
       >
         <div className={styles.header}>
           <h3 className={styles.title}>{title}</h3>
-          <SimpleButton
+          <button
             type="button"
-            variant="secondary"
-            size="small"
-            isTransparent
+            className={styles.closeBtn ?? ''}
             onClick={onClose}
-            aria-label="Закрыть"
+            aria-label="Закрити"
           >
             <X size={18} />
-          </SimpleButton>
+          </button>
         </div>
         <div className={styles.body}>{children}</div>
       </div>
