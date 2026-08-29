@@ -17,11 +17,11 @@ describe('MoodleClientService', () => {
     process.env = OLD_ENV;
   });
 
-  it('constructor throws when MOODLE_BASEURL not https', () => {
-    process.env.MOODLE_BASEURL = 'http://insecure.example.com';
+  it('constructor throws when MOODLE_BASEURL not http/https', () => {
+    process.env.MOODLE_BASEURL = 'ftp://insecure.example.com';
     process.env.MOODLE_TIMEOUT = '1000';
     expect(() => new MoodleClientService()).toThrow(
-      'MOODLE_BASEURL must be a secure URL',
+      'MOODLE_BASEURL must be a valid URL (http:// or https://)',
     );
   });
 

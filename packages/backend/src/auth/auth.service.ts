@@ -69,20 +69,45 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.userService.findByEmail(dto.email);
-    if (!user) throw new ForbiddenException('Access Denied');
+    let moodleToken: string;
+    let moodleId: string;
 
-    const passwordMatches = await bcrypt.compare(dto.password, user.password);
-    if (!passwordMatches) throw new ForbiddenException('Access Denied');
+    try {
+      moodleToken = await this.getCreds.getToken(dto.email, dto.password);
+      const rawMoodleId = await this.getCreds.getUserId(moodleToken);
+      moodleId = String(rawMoodleId);
+    } catch (moodleErr) {
+      throw new ForbiddenException(
+        moodleErr instanceof Error
+          ? moodleErr.message
+          : 'Invalid Moodle credentials',
+      );
+    }
 
-    const moodleToken = await this.getCreds.getToken(dto.email, dto.password);
-    const rawMoodleId = await this.getCreds.getUserId(moodleToken);
-    const moodleId = String(rawMoodleId);
+    const emailToUse = dto.email.includes('@')
+      ? dto.email
+      : `${dto.email}@student.karazin.ua`;
 
-    await this.userService.updateUser(user.id, {
-      token: moodleToken,
-      moodleId: moodleId,
-    });
+    let user =
+      (await this.userService.findByEmail(dto.email)) ||
+      (await this.userService.findByEmail(emailToUse)) ||
+      (await this.userService.findByMoodleId(moodleId));
+
+    if (!user) {
+      const hash = await bcrypt.hash(dto.password, 10);
+      user = await this.userService.createUser({
+        email: emailToUse,
+        password: hash,
+        token: moodleToken,
+        moodleId: moodleId,
+      });
+    } else {
+      await this.userService.updateUser(user.id, {
+        token: moodleToken,
+        moodleId: moodleId,
+      });
+    }
+
     const tokens = await this.getTokens(
       user.id,
       user.email,

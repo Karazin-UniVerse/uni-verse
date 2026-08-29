@@ -152,8 +152,7 @@ const config = {
       value: 'prisma-client-js',
     },
     output: {
-      value:
-        'C:\\Users\\TipTop230\\.gemini\\antigravity\\scratch\\uni-verse\\packages\\database\\client',
+      value: 'C:\\Users\\TipTop230\\WebstormProjects\\uni-verse\\packages\\database\\client',
       fromEnvVar: null,
     },
     config: {
@@ -168,11 +167,12 @@ const config = {
     ],
     previewFeatures: [],
     sourceFilePath:
-      'C:\\Users\\TipTop230\\.gemini\\antigravity\\scratch\\uni-verse\\packages\\backend\\prisma\\schema.prisma',
+      'C:\\Users\\TipTop230\\WebstormProjects\\uni-verse\\packages\\backend\\prisma\\schema.prisma',
     isCustomOutput: true,
   },
   relativeEnvPaths: {
     rootEnvPath: null,
+    schemaEnvPath: '../../backend/.env',
   },
   relativePath: '../../backend/prisma',
   clientVersion: '5.10.0',

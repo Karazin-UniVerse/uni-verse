@@ -32,8 +32,8 @@ describe('MoodleFilesService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('should throw InternalServerErrorException if MOODLE_BASEURL missing', async () => {
-      delete process.env.MOODLE_BASEURL;
+    it('should throw InternalServerErrorException if MOODLE_BASEURL is invalid', async () => {
+      process.env.MOODLE_BASEURL = 'ftp://invalid-url';
       await expect(
         service.uploadFile('token', 'test.txt', 'base64'),
       ).rejects.toThrow(InternalServerErrorException);
