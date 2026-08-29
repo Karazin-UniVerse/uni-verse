@@ -16,23 +16,31 @@ export class MoodleNotificationsService {
       throw new BadRequestException('Token or user ID are not provided');
     }
 
-    const data = await this.moodleClient.client<MoodleNotificationsResponse>(
-      getWsFunctionName('getNotifications'),
-      moodleToken,
-      moodleId,
-    );
+    try {
+      const data = await this.moodleClient.client<MoodleNotificationsResponse>(
+        getWsFunctionName('getNotifications'),
+        moodleToken,
+        undefined,
+        { useridto: moodleId },
+      );
 
-    const notifications = (data?.notifications || []).map((n) => ({
-      id: n.id,
-      subject: n.subject,
-      fullmessage: n.fullmessage,
-      timecreated: n.timecreated,
-      read: n.read,
-    }));
+      const notifications = (data?.notifications || []).map((n) => ({
+        id: n.id,
+        subject: n.subject,
+        fullmessage: n.fullmessage,
+        timecreated: n.timecreated,
+        read: n.read,
+      }));
 
-    return {
-      notifications,
-      unreadcount: data?.unreadcount || 0,
-    };
+      return {
+        notifications,
+        unreadcount: data?.unreadcount || 0,
+      };
+    } catch {
+      return {
+        notifications: [],
+        unreadcount: 0,
+      };
+    }
   }
 }

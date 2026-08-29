@@ -22,7 +22,8 @@ describe('AuthService', () => {
   const mockGetCreds = {
     getToken: jest.fn(),
     getUserId: jest.fn(),
-  } as jest.Mocked<Pick<GetCreds, 'getToken' | 'getUserId'>>;
+    getBaseUrl: jest.fn(),
+  } as unknown as jest.Mocked<GetCreds>;
   const mockJwtService = { signAsync: jest.fn() } as jest.Mocked<
     Pick<JwtService, 'signAsync'>
   >;
@@ -77,8 +78,10 @@ describe('AuthService', () => {
     expect(mockUserService.updateUser).toHaveBeenCalled();
   });
 
-  it('login throws ForbiddenException when user not found', async () => {
-    mockUserService.findByEmail.mockResolvedValue(null);
+  it('login throws ForbiddenException when Moodle credentials fail', async () => {
+    mockGetCreds.getToken.mockRejectedValue(
+      new Error('Invalid Moodle credentials'),
+    );
     const dto: LoginDto = { email: 'x', password: 'p' };
     await expect(authService.login(dto)).rejects.toThrow();
   });
