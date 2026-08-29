@@ -171,13 +171,19 @@ const DashboardPage: React.FC = () => {
         ]);
 
       setData({
-        courses: coursesRes.data,
-        grades: gradesRes.data.grades,
-        assignments: assignmentsRes.data,
-        events: eventsRes.data,
-        notifications: notificationsRes.data.notifications,
-        unreadCount: notificationsRes.data.unreadCount,
-        statistics: statsRes.data,
+        courses: Array.isArray(coursesRes?.data) ? coursesRes.data : [],
+        grades: Array.isArray(gradesRes?.data?.grades)
+          ? gradesRes.data.grades
+          : Array.isArray(gradesRes?.data)
+            ? (gradesRes.data as unknown as Grade[])
+            : [],
+        assignments: Array.isArray(assignmentsRes?.data) ? assignmentsRes.data : [],
+        events: Array.isArray(eventsRes?.data) ? eventsRes.data : [],
+        notifications: Array.isArray(notificationsRes?.data?.notifications)
+          ? notificationsRes.data.notifications
+          : [],
+        unreadCount: notificationsRes?.data?.unreadCount || 0,
+        statistics: statsRes?.data || null,
       });
       setHasLoadedOnce(true);
     } catch (error) {
@@ -514,9 +520,9 @@ const DashboardPage: React.FC = () => {
               className={styles.htmlSnippet}
               dangerouslySetInnerHTML={{
                 __html:
-                  item.description.length > 200
-                    ? item.description.substring(0, 200) + '...'
-                    : item.description,
+                  (item.description || '').length > 200
+                    ? (item.description || '').substring(0, 200) + '...'
+                    : item.description || '',
               }}
             />
           </motion.button>
@@ -565,13 +571,23 @@ const DashboardPage: React.FC = () => {
       <Empty description="События не найдены" />
     );
 
-  const contentMap: Record<NavKey, React.ReactNode> = {
-    overview: renderOverview(),
-    courses: renderCourses(),
-    grades: renderGrades(),
-    assignments: renderAssignments(),
-    events: renderEvents(),
-    schedule: <ScheduleView />,
+  const renderActiveContent = () => {
+    switch (activeKey) {
+      case 'overview':
+        return renderOverview();
+      case 'courses':
+        return renderCourses();
+      case 'grades':
+        return renderGrades();
+      case 'assignments':
+        return renderAssignments();
+      case 'events':
+        return renderEvents();
+      case 'schedule':
+        return <ScheduleView />;
+      default:
+        return renderOverview();
+    }
   };
 
   return (
@@ -684,9 +700,9 @@ const DashboardPage: React.FC = () => {
                             className={styles.muted}
                             dangerouslySetInnerHTML={{
                               __html:
-                                item.message.length > 100
-                                  ? item.message.substring(0, 100) + '...'
-                                  : item.message,
+                                (item.message || '').length > 100
+                                  ? (item.message || '').substring(0, 100) + '...'
+                                  : item.message || '',
                             }}
                           />
                           <div className={styles.notifTime}>
@@ -731,7 +747,7 @@ const DashboardPage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                {contentMap[activeKey]}
+                {renderActiveContent()}
               </motion.div>
             </>
           )}
