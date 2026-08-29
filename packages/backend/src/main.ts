@@ -41,14 +41,22 @@ async function bootstrap() {
       if (!origin) {
         return callback(null, true);
       }
-      if (
-        allowedOrigins.includes(origin) ||
-        origin.endsWith('.universemvp.tech') ||
-        origin.endsWith('.karazin.ua') ||
-        origin.includes('localhost') ||
-        origin.includes('127.0.0.1')
-      ) {
-        return callback(null, true);
+      try {
+        const parsed = new URL(origin);
+        const host = parsed.hostname;
+        if (
+          allowedOrigins.includes(origin) ||
+          host.endsWith('.universemvp.tech') ||
+          host === 'universemvp.tech' ||
+          host.endsWith('.karazin.ua') ||
+          host === 'karazin.ua' ||
+          host === 'localhost' ||
+          host === '127.0.0.1'
+        ) {
+          return callback(null, true);
+        }
+      } catch {
+        // Ignore invalid URL
       }
       return callback(null, false);
     },

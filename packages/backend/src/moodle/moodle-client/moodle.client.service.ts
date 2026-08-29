@@ -19,15 +19,15 @@ function isMoodleException(data: unknown): data is MoodleException {
 
 @Injectable()
 export class MoodleClientService {
-  private readonly baseurl =
+  private readonly baseUrl =
     process.env.MOODLE_BASEURL || 'https://moodle.karazin.ua';
   private readonly timeout = process.env.MOODLE_TIMEOUT || '15000';
   private readonly logger = new Logger(MoodleClientService.name);
 
   constructor() {
     if (
-      !this.baseurl.startsWith('https://') &&
-      !this.baseurl.startsWith('http://')
+      !this.baseUrl.startsWith('https://') &&
+      !this.baseUrl.startsWith('http://')
     ) {
       throw new Error(
         'MOODLE_BASEURL must be a valid URL (http:// or https://)',
@@ -45,7 +45,7 @@ export class MoodleClientService {
       throw new Error('MOODLE_TIMEOUT must be a positive finite number');
     }
 
-    const url = new URL(`${this.baseurl}/webservice/rest/server.php`);
+    const url = new URL(`${this.baseUrl}/webservice/rest/server.php`);
     url.searchParams.set('wstoken', moodleToken ?? '');
     url.searchParams.set('wsfunction', wsfunction);
     url.searchParams.set('moodlewsrestformat', 'json');
