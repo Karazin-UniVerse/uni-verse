@@ -89,14 +89,15 @@
 .activePill {
   position: absolute;
   inset: 0;
-  background: var(--accent-secondary);
+  background: var(--accent-primary);
   border-radius: var(--border-radius-medium);
+  opacity: 0.15;
   z-index: 0;
 }
 
 .active {
-  color: var(--accent-primary);
-  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .collapsed .navItem {
@@ -117,6 +118,10 @@
   width: 100%;
   justify-content: flex-start;
   gap: var(--space-8);
+}
+
+.logoutBtn {
+  color: var(--text-primary);
 }
 
 .collapsed .themeBtn,
