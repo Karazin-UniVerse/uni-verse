@@ -1,0 +1,80 @@
+.checkBox {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--font-xl);
+  height: var(--font-xl);
+  border-radius: var(--border-radius-small);
+  border: 2px solid var(--border-color);
+  outline: none;
+  cursor: pointer;
+  position: relative;
+  transition: border-color var(--transition-small), background-color var(--transition-small), box-shadow var(--transition-small);
+  margin: 0;
+  background-color: var(--bg-surface); /* Use surface color for default state */
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg) scale(0);
+    width: var(--space-4);
+    height: var(--space-12);
+    border: solid var(--accent-text-on-primary); /* White checkmark */
+    border-width: 0 2px 2px 0;
+    transition: transform var(--transition-small);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+  }
+
+  &:checked::after {
+    transform: translate(-50%, -50%) rotate(45deg) scale(1);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    border-color: var(--neutral-text-disabled);
+    background-color: var(--neutral-surface);
+
+    &:checked {
+      background-color: var(--neutral-text-disabled);
+    }
+  }
+}
+
+/* Primary Variant */
+.primary {
+  &:hover:not(:disabled) {
+    border-color: var(--accent-primary-hover);
+  }
+
+  &:checked:not(:disabled) {
+    border-color: var(--accent-primary);
+    background-color: var(--accent-primary);
+  }
+
+  &:checked:hover:not(:disabled) {
+     background-color: var(--accent-primary-hover);
+     border-color: var(--accent-primary-hover);
+  }
+}
+
+/* Secondary Variant - uses neutral colors for a more subtle look */
+.secondary {
+  &:hover:not(:disabled) {
+    border-color: var(--neutral-text-secondary);
+  }
+
+  &:checked:not(:disabled) {
+    border-color: var(--neutral-text-primary);
+    background-color: var(--neutral-text-primary);
+  }
+
+  &:checked:hover:not(:disabled) {
+     background-color: var(--neutral-text-secondary);
+     border-color: var(--neutral-text-secondary);
+  }
+}
