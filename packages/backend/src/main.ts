@@ -22,16 +22,35 @@ async function bootstrap() {
     bodyParser: false,
   });
 
-  app.useBodyParser('json', { limit: '50mb' });
-  app.useBodyParser('urlencoded', { extended: true, limit: '50mb' });
+  app.useBodyParser('json', { limit: '10mb' });
+  app.useBodyParser('urlencoded', { extended: true, limit: '10mb' });
+
+  const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://universemvp.tech',
+    'http://universemvp.tech',
+  ].filter(Boolean) as string[];
 
   app.enableCors({
     origin: (
-      _origin: string | undefined,
+      origin: string | undefined,
       callback: (err: Error | null, allow?: boolean) => void,
     ) => {
-      // Allow requests from any origin or without origin (mobile/curl/local)
-      callback(null, true);
+      if (!origin) {
+        return callback(null, true);
+      }
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.universemvp.tech') ||
+        origin.endsWith('.karazin.ua') ||
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1')
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],

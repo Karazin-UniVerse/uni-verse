@@ -20,7 +20,7 @@ function isMoodleException(data: unknown): data is MoodleException {
 @Injectable()
 export class MoodleClientService {
   private readonly baseurl =
-    process.env.MOODLE_BASEURL || 'http://moodle.universemvp.tech';
+    process.env.MOODLE_BASEURL || 'https://moodle.karazin.ua';
   private readonly timeout = process.env.MOODLE_TIMEOUT || '15000';
   private readonly logger = new Logger(MoodleClientService.name);
 

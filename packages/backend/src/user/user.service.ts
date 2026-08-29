@@ -51,7 +51,13 @@ export class UserService {
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     try {
       return await this.prisma.user.create({ data: createUserDto });
-    } catch {
+    } catch (err: any) {
+      if (
+        err?.code === 'P2002' ||
+        err?.name === 'PrismaClientValidationError'
+      ) {
+        throw err;
+      }
       const newUser: User = {
         id: randomUUID(),
         email: createUserDto.email,
@@ -89,19 +95,14 @@ export class UserService {
         where: { id },
         data: updateUserDto,
       });
-    } catch {
-      const existing = this.inMemoryUsers.get(id) ?? {
-        id,
-        email: 'student@karazin.ua',
-        name: null,
-        password: '',
-        role: Role.STUDENT,
-        token: null,
-        moodleId: null,
-        refreshToken: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+    } catch (err: any) {
+      if (err?.code === 'P2025') {
+        throw err;
+      }
+      const existing = this.inMemoryUsers.get(id);
+      if (!existing) {
+        throw err;
+      }
       const updated: User = {
         ...existing,
         ...updateUserDto,
