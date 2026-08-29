@@ -30,6 +30,27 @@
   overflow: hidden;
 }
 
+.wrap,
+.chart {
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+
+  :global(.recharts-wrapper),
+  :global(.recharts-surface),
+  :global(svg) {
+    outline: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -webkit-tap-highlight-color: transparent;
+
+    &:focus,
+    &:focus-visible {
+      outline: none !important;
+    }
+  }
+}
+
 .empty {
   display: flex;
   align-items: center;
