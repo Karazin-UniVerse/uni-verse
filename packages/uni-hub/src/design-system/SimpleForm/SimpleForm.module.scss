@@ -1,0 +1,14 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-medium);
+  width: 100%;
+}
+.card {
+  background-color: var(--neutral-surface);
+  padding: var(--padding-large);
+  border-radius: var(--border-radius-large);
+  box-shadow: var(--box-shadow-medium);
+  width: 350px;
+  border: 1px solid var(--neutral-border);
+}
