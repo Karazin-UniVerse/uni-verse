@@ -1,4 +1,3 @@
-import axios from 'axios';
 import type {
   AuthResponse,
   Course,
@@ -16,45 +15,57 @@ const API_BASE_URL =
     ? 'https://p01--backend--jm9qjnmpm4m2.code.run'
     : 'http://localhost:3001');
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true,
-});
+async function request<T>(
+  endpoint: string,
+  options: RequestInit = {},
+  retries = 2,
+): Promise<{ data: T }> {
+  const url = `${API_BASE_URL}${endpoint}`;
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
 
-// Request interceptor to attach Bearer token
-api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('accessToken');
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  let attempt = 0;
+  while (attempt <= retries) {
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = (await response.json()) as T;
+      return { data };
+    } catch (err) {
+      if (attempt < retries) {
+        attempt++;
+        const delay = attempt * 500;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } else {
+        throw err;
+      }
     }
   }
-  return config;
-});
 
-// Response interceptor with retry logic
-api.interceptors.response.use(undefined, async (err) => {
-  const { config } = err;
-  if (!config || !config.retryCount) {
-    config.retryCount = 0;
-  }
-
-  const MAX_RETRIES = 2;
-  if (config.retryCount < MAX_RETRIES) {
-    config.retryCount += 1;
-    const delay = config.retryCount * 500;
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    return api(config);
-  }
-
-  return Promise.reject(err);
-});
+  throw new Error('Request failed');
+}
 
 export const authApi = {
   login: async (email: string, password: string) => {
-    const res = await api.post<AuthResponse>('/auth/login', {
-      email,
-      password,
+    const res = await request<AuthResponse>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
     });
     if (res.data?.access_token) {
       localStorage.setItem('accessToken', res.data.access_token);
@@ -64,7 +75,7 @@ export const authApi = {
   },
   logout: async () => {
     try {
-      await api.post('/auth/logout');
+      await request('/auth/logout', { method: 'POST' });
     } finally {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('isLoggedIn');
@@ -82,24 +93,36 @@ export interface GetAssignmentsParams {
 }
 
 export const moodleApi = {
-  getCourses: () => api.get<Course[]>('/moodle/courses'),
-  getGrades: () => api.get<{ grades: Grade[] }>('/moodle/grades'),
-  getAssignments: (params?: GetAssignmentsParams) =>
-    api.get<Assignment[]>('/moodle/assignments', { params }),
-  getEvents: () => api.get<MoodleEvent[]>('/moodle/events'),
-  getNotifications: () => api.get<NotificationsResponse>('/moodle/notifications'),
-  getStatistics: () => api.get<CourseStatistics>('/moodle/statistics'),
+  getCourses: () => request<Course[]>('/moodle/courses'),
+  getGrades: () => request<{ grades: Grade[] }>('/moodle/grades'),
+  getAssignments: (params?: GetAssignmentsParams) => {
+    const query = params
+      ? '?' +
+        new URLSearchParams(
+          Object.entries(params)
+            .filter(([_, v]) => v !== undefined)
+            .map(([k, v]) => [k, String(v)]),
+        ).toString()
+      : '';
+    return request<Assignment[]>(`/moodle/assignments${query}`);
+  },
+  getEvents: () => request<MoodleEvent[]>('/moodle/events'),
+  getNotifications: () => request<NotificationsResponse>('/moodle/notifications'),
+  getStatistics: () => request<CourseStatistics>('/moodle/statistics'),
   getCourseContents: (courseId: number) =>
-    api.get<CourseSection[]>(`/moodle/courses/${courseId}/contents`),
+    request<CourseSection[]>(`/moodle/courses/${courseId}/contents`),
   getAssignmentStatus: (assignId: number) =>
-    api.get<unknown>(`/moodle/assignments/${assignId}/status`),
+    request<unknown>(`/moodle/assignments/${assignId}/status`),
   submitAssignment: (assignId: number, text?: string, fileItemId?: number) =>
-    api.post<unknown>(`/moodle/assignments/${assignId}/submission`, {
-      text,
-      fileItemId,
+    request<unknown>(`/moodle/assignments/${assignId}/submission`, {
+      method: 'POST',
+      body: JSON.stringify({ text, fileItemId }),
     }),
   uploadFile: (filename: string, filebase64: string) =>
-    api.post<unknown>('/moodle/files/upload', { filename, filebase64 }),
+    request<unknown>('/moodle/files/upload', {
+      method: 'POST',
+      body: JSON.stringify({ filename, filebase64 }),
+    }),
 };
 
-export default api;
+export default { request, authApi, moodleApi };
