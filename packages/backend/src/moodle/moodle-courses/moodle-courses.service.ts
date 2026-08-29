@@ -12,20 +12,24 @@ export class MoodleCoursesService {
     if (!token || !moodleId) {
       throw new BadRequestException('token or user id are not provided');
     }
-    const data = await this.moodleClient.client<Course[]>(
-      getWsFunctionName('getCourses'),
-      token,
-      moodleId,
-    );
-    if (!Array.isArray(data)) {
+    try {
+      const data = await this.moodleClient.client<Course[]>(
+        getWsFunctionName('getCourses'),
+        token,
+        moodleId,
+      );
+      if (!Array.isArray(data)) {
+        return [];
+      }
+      return data.map((c: Course) => ({
+        id: c.id,
+        fullname: c.fullname,
+        shortname: c.shortname,
+        summary: normalizeMoodleText(c.summary),
+        progress: c.progress,
+      }));
+    } catch {
       return [];
     }
-    return data.map((c: Course) => ({
-      id: c.id,
-      fullname: c.fullname,
-      shortname: c.shortname,
-      summary: normalizeMoodleText(c.summary),
-      progress: c.progress,
-    }));
   }
 }
