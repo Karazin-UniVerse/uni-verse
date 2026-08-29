@@ -1,0 +1,64 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  padding: var(--space-24);
+  animation: overlayIn var(--transition-medium) var(--ease-standard);
+}
+
+.dialog {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-large);
+  box-shadow: var(--box-shadow-large);
+  max-width: min(96vw, 900px);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: dialogIn var(--transition-medium) var(--ease-standard);
+}
+
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dialogIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding: var(--space-16) var(--space-24);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.title {
+  margin: 0;
+  font: var(--font-heading);
+  font-size: var(--font-xl);
+}
+
+.body {
+  padding: var(--space-24);
+  overflow: auto;
+}
