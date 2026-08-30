@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+@import 'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap';
 
 /* ==========================================================================
    1. BASE & LAYOUT TOKENS (Non-thematic)
@@ -28,7 +28,7 @@
   --gap-large: var(--space-24);
 
   /* Typography */
-  --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif;
   --font-family-heading: var(--font-family-base);
   --font-family-regular: var(--font-family-base);
 
@@ -355,7 +355,6 @@
 }
 
 
-:root,
 /* ==========================================================================
    5. COMPONENT & SEMANTIC ALIASES
    ========================================================================== */
