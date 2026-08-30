@@ -25,13 +25,8 @@ export class MoodleClientService {
   private readonly logger = new Logger(MoodleClientService.name);
 
   constructor() {
-    if (
-      !this.baseUrl.startsWith('https://') &&
-      !this.baseUrl.startsWith('http://')
-    ) {
-      throw new Error(
-        'MOODLE_BASEURL must be a valid URL (http:// or https://)',
-      );
+    if (!this.baseUrl.startsWith('https://')) {
+      throw new Error('MOODLE_BASEURL must be a secure URL (https://)');
     }
   }
   async client<T = unknown>(
