@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useRouter } from 'next/navigation';
 import {
   File,
   Folder,
@@ -37,8 +39,9 @@ const getModuleIcon = (modname: string) => {
 };
 
 const CourseContents: React.FC = () => {
-  const { courseId } = useParams<{ courseId: string }>();
-  const navigate = useNavigate();
+  const params = useParams();
+  const courseId = (params?.courseId as string) || '';
+  const router = useRouter();
   const toast = useToast();
 
   const [sections, setSections] = useState<CourseSection[]>([]);
@@ -99,7 +102,7 @@ const CourseContents: React.FC = () => {
           variant="secondary"
           size="medium"
           isTransparent
-          onClick={() => navigate('/dashboard?tab=courses')}
+          onClick={() => router.push('/?tab=courses')}
         >
           <ArrowLeft size={16} /> Назад до курсів
         </SimpleButton>
@@ -107,7 +110,7 @@ const CourseContents: React.FC = () => {
 
       <main className={styles.content}>
         <nav className={styles.breadcrumb} aria-label="Хлебные крошки">
-          <button type="button" onClick={() => navigate('/dashboard?tab=courses')}>
+          <button type="button" onClick={() => router.push('/?tab=courses')}>
             Курсы
           </button>
           <span>/</span>

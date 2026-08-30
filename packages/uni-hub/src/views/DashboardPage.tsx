@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -15,7 +17,7 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { SimpleButton, SimpleInput, CheckBox } from '@/design-system';
 import { moodleApi } from '@/services/api';
 import type {
@@ -64,8 +66,8 @@ const cardMotion = {
 } as const;
 
 const DashboardPage: React.FC = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const checkIn = useGamificationStore((s) => s.checkIn);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
@@ -196,12 +198,12 @@ const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     if (!localStorage.getItem('isLoggedIn')) {
-      navigate('/login');
+      router.push('/login');
       return;
     }
     checkIn();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]);
+  }, [router]);
 
   useEffect(() => {
     const requestedTab = searchParams.get('tab');
@@ -216,7 +218,7 @@ const DashboardPage: React.FC = () => {
     }
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate, sortOrder, dateFrom, dateTo, hideCompleted]);
+  }, [router, sortOrder, dateFrom, dateTo, hideCompleted]);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -230,7 +232,7 @@ const DashboardPage: React.FC = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
-    navigate('/login');
+    router.push('/login');
   };
 
   const menuItems: { key: NavKey; icon: React.ReactNode; label: string }[] = [
@@ -375,7 +377,7 @@ const DashboardPage: React.FC = () => {
               isTransparent
               onClick={() => {
                 playClick(soundEnabled);
-                navigate(`/courses/${course.id}/contents`);
+                router.push(`/courses/${course.id}/contents`);
               }}
             >
               Просмотр контента

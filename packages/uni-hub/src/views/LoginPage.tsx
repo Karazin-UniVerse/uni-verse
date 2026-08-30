@@ -1,6 +1,8 @@
+'use client';
+
 import React, { useState } from 'react';
 import { User, Lock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { SimpleButton, SimpleInput, SimpleForm } from '../design-system';
 import { ThemeSwitcher } from '../theme/ThemeSwitcher';
 import { useToast } from '../components/ui/Toast';
@@ -12,7 +14,7 @@ const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const router = useRouter();
   const toast = useToast();
 
   const handleLogin = async () => {
@@ -35,7 +37,7 @@ const LoginPage: React.FC = () => {
       if (res.data?.token) {
         localStorage.setItem('moodleToken', res.data.token);
       }
-      navigate('/dashboard');
+      router.push('/');
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
