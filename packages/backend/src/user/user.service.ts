@@ -63,6 +63,8 @@ export class UserService {
       if (code === 'P2002' || name === 'PrismaClientValidationError') {
         throw err;
       }
+      // Fallback: When Prisma/PostgreSQL is disconnected (offline demo/testing),
+      // store user in-memory with generated UUID and current timestamp.
       const newUser: User = {
         id: randomUUID(),
         email: createUserDto.email,
