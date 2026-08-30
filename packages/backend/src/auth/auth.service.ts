@@ -89,9 +89,9 @@ export class AuthService {
 
     const user = await (async () => {
       const existing =
+        (await this.userService.findByMoodleId(moodleId)) ||
         (await this.userService.findByEmail(dto.email)) ||
-        (await this.userService.findByEmail(emailToUse)) ||
-        (await this.userService.findByMoodleId(moodleId));
+        (await this.userService.findByEmail(emailToUse));
 
       if (!existing) {
         const hash = await bcrypt.hash(dto.password, 10);

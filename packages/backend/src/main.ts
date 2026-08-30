@@ -44,14 +44,18 @@ async function bootstrap() {
       try {
         const parsed = new URL(origin);
         const host = parsed.hostname;
+        const isLocal = host === 'localhost' || host === '127.0.0.1';
+        const isSecure = parsed.protocol === 'https:';
+
         if (
-          allowedOrigins.includes(origin) ||
-          host.endsWith('.universemvp.tech') ||
-          host === 'universemvp.tech' ||
-          host.endsWith('.karazin.ua') ||
-          host === 'karazin.ua' ||
-          host === 'localhost' ||
-          host === '127.0.0.1'
+          (isLocal &&
+            (parsed.protocol === 'http:' || parsed.protocol === 'https:')) ||
+          (isSecure &&
+            (host === 'universemvp.tech' ||
+              host.endsWith('.universemvp.tech') ||
+              host === 'karazin.ua' ||
+              host.endsWith('.karazin.ua'))) ||
+          allowedOrigins.includes(origin)
         ) {
           return callback(null, true);
         }
