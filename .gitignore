@@ -8,5 +8,6 @@ coverage
 .turbo
 .DS_Store
 /packages/ui/storybook-static/
+/packages/database/client/
 /.idea/
 /packages/uni-hub/repomix-output.xml

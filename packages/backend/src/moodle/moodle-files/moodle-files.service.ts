@@ -16,11 +16,11 @@ export class MoodleFilesService {
       throw new BadRequestException('Token is not provided');
     }
 
-    const baseUrl =
-      process.env.MOODLE_BASEURL || 'http://moodle.universemvp.tech';
-    if (!baseUrl.startsWith('https://') && !baseUrl.startsWith('http://')) {
+    const baseUrl = process.env.MOODLE_BASEURL || 'https://moodle.karazin.ua';
+
+    if (!baseUrl.startsWith('https://')) {
       throw new InternalServerErrorException(
-        'MOODLE_BASEURL must be a valid URL (http:// or https://)',
+        'MOODLE_BASEURL must be a secure URL (https://)',
       );
     }
 

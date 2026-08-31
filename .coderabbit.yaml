@@ -1,19 +1,25 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: 'en-US'
-knowledge_base:
-  code_guidelines:
-    enabled: true
-    filePatterns:
-      - '.github/copilot-instructions.md'
-      - 'CODE_STYLE.md'
-  mcp:
-    usage: auto
-
 reviews:
-  profile: 'chill'
-  request_changes_workflow: false
-  high_level_summary: true
-  poem: true
-  review_status: true
+  path_instructions:
+    - path: '**/*.{ts,tsx}'
+      instructions: |
+        Code formatting and vertical spacing rules:
+        - Maintain clear vertical spacing (empty lines) between logical code blocks:
+          1. Between variable/constant declarations and subsequent logic blocks.
+          2. Between conditional statements (if/else), loops, and following function calls.
+          3. Always keep an empty line before 'return' statements.
 
-chat:
-  auto_reply: true
+        Example:
+        ```typescript
+        // Good:
+        const user = await this.userService.findById(id);
+
+        if (!user) {
+          throw new NotFoundException('User not found');
+        }
+
+        await this.logService.record(id);
+
+        return user;
+        ```
