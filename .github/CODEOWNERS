@@ -6,9 +6,9 @@
 * @brodion-230 @Skyzary
 
 # ── Backend Owners (Vova + Timur) ──
-/packages/backend/              @Skyzary timurkadaas@gmail.com
-/packages/database/             @Skyzary timurkadaas@gmail.com
-/Dockerfile                     @Skyzary timurkadaas@gmail.com
+/packages/backend/              @Skyzary @TimurDaas
+/packages/database/             @Skyzary @TimurDaas
+/Dockerfile                     @Skyzary @TimurDaas
 
 # ── Frontend Owners (Vova + ReDL) ──
 /packages/uni-hub/              @Skyzary @iamredl-lab
