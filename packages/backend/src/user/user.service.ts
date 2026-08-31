@@ -1,3 +1,4 @@
+import { getPrismaErrorCode, getPrismaErrorName } from '../utils/prisma-error';
 import { Injectable } from '@nestjs/common';
 import { User, Role } from '@universe/database';
 import { PrismaService } from '../prisma/prisma.service';
@@ -9,6 +10,18 @@ export class UserService {
   private readonly inMemoryUsers = new Map<string, User>();
 
   constructor(private readonly prisma: PrismaService) {}
+
+  private findInMemoryBy<K extends keyof User>(
+    key: K,
+    value: User[K],
+  ): User | null {
+    for (const u of this.inMemoryUsers.values()) {
+      if (u[key] === value) {
+        return u;
+      }
+    }
+    return null;
+  }
 
   async getAllUsers(): Promise<User[]> {
     try {
@@ -22,10 +35,7 @@ export class UserService {
     try {
       return await this.prisma.user.findUnique({ where: { email } });
     } catch {
-      for (const u of this.inMemoryUsers.values()) {
-        if (u.email === email) return u;
-      }
-      return null;
+      return this.findInMemoryBy('email', email);
     }
   }
 
@@ -33,10 +43,7 @@ export class UserService {
     try {
       return await this.prisma.user.findFirst({ where: { moodleId } });
     } catch {
-      for (const u of this.inMemoryUsers.values()) {
-        if (u.moodleId === moodleId) return u;
-      }
-      return null;
+      return this.findInMemoryBy('moodleId', moodleId);
     }
   }
 
@@ -52,17 +59,13 @@ export class UserService {
     try {
       return await this.prisma.user.create({ data: createUserDto });
     } catch (err: unknown) {
-      const code =
-        typeof err === 'object' && err !== null && 'code' in err
-          ? (err as { code: string }).code
-          : '';
-      const name =
-        typeof err === 'object' && err !== null && 'name' in err
-          ? (err as { name: string }).name
-          : '';
+      const code = getPrismaErrorCode(err);
+      const name = getPrismaErrorName(err);
+
       if (code === 'P2002' || name === 'PrismaClientValidationError') {
         throw err;
       }
+
       // Fallback: When Prisma/PostgreSQL is disconnected (offline demo/testing),
       // store user in-memory with generated UUID and current timestamp.
       const newUser: User = {
@@ -77,7 +80,9 @@ export class UserService {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
+
       this.inMemoryUsers.set(newUser.id, newUser);
+
       return newUser;
     }
   }
@@ -87,8 +92,13 @@ export class UserService {
       return await this.prisma.user.delete({ where: { id } });
     } catch {
       const existing = this.inMemoryUsers.get(id);
-      if (!existing) throw new Error('User not found');
+
+      if (!existing) {
+        throw new Error('User not found');
+      }
+
       this.inMemoryUsers.delete(id);
+
       return existing;
     }
   }
@@ -103,23 +113,24 @@ export class UserService {
         data: updateUserDto,
       });
     } catch (err: unknown) {
-      const code =
-        typeof err === 'object' && err !== null && 'code' in err
-          ? (err as { code: string }).code
-          : '';
-      if (code === 'P2025') {
+      if (getPrismaErrorCode(err) === 'P2025') {
         throw err;
       }
+
       const existing = this.inMemoryUsers.get(id);
+
       if (!existing) {
         throw err;
       }
+
       const updated: User = {
         ...existing,
         ...updateUserDto,
         updatedAt: new Date(),
       };
+
       this.inMemoryUsers.set(id, updated);
+
       return updated;
     }
   }
