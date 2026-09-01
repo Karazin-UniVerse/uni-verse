@@ -58,6 +58,7 @@ export class MoodleClientService {
     try {
       const response = await fetch(url.toString(), {
         signal: AbortSignal.timeout(timeout),
+        redirect: 'error',
       });
       const data = (await response.json()) as T | MoodleException;
       if (isMoodleException(data)) {

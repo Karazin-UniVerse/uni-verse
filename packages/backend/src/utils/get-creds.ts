@@ -40,6 +40,7 @@ export class GetCreds {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: body.toString(),
+      redirect: 'error',
     });
 
     const text = await response.text();
@@ -61,6 +62,9 @@ export class GetCreds {
 
     const response = await fetch(
       `${this.getBaseUrl()}/webservice/rest/server.php?wstoken=${encodeURIComponent(token)}&wsfunction=core_webservice_get_site_info&moodlewsrestformat=json`,
+      {
+        redirect: 'error',
+      },
     );
 
     const data = (await response.json()) as MoodleUserIdResponse;
