@@ -37,6 +37,7 @@ export class MoodleFilesService {
     const response = await fetch(`${baseUrl}/webservice/upload.php`, {
       method: 'POST',
       body: formData,
+      redirect: 'error',
     });
 
     if (!response.ok) {
