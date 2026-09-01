@@ -17,6 +17,11 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 - **Variables/Functions**: Use `camelCase`.
 - **Classes/Components**: Use `PascalCase`.
 - **Constants**: Use `UPPER_SNAKE_CASE`.
+- **Meaningful Names over Short Abbreviations**: Always use descriptive, self-explanatory names for variables, parameters, and callback arguments. Avoid single-letter or cryptic abbreviations (e.g. use `course` instead of `c`, `user` instead of `u`, `error` instead of `e`).
+- **Vertical Spacing**: Maintain clear vertical spacing (empty lines) between logical code blocks:
+  - Between variable/constant declarations and subsequent logic blocks.
+  - Between conditional statements (`if`/`else`), loops, and following function calls.
+  - Always keep an empty line before `return` statements.
 - Always write strict TypeScript. Avoid `any`, `unknown` (unless strictly necessary), and implicit types.
 - Shared interfaces, types, and DTOs should be placed in the `@universe/types` package to be imported by both frontend and backend.
 - Favor explicit return types for all functions.
