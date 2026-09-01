@@ -24,12 +24,12 @@ export class MoodleNotificationsService {
         { useridto: moodleId },
       );
 
-      const notifications = (data?.notifications || []).map((n) => ({
-        id: n.id,
-        subject: n.subject,
-        fullmessage: n.fullmessage,
-        timecreated: n.timecreated,
-        read: n.read,
+      const notifications = (data?.notifications || []).map((notification) => ({
+        id: notification.id,
+        subject: notification.subject,
+        fullmessage: notification.fullmessage,
+        timecreated: notification.timecreated,
+        read: notification.read,
       }));
 
       return {
