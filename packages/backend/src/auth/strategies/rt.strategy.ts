@@ -7,8 +7,8 @@ import type { Request } from 'express';
 export class RtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   constructor() {
     const secret = process.env.RT_SECRET;
-    if (!secret) {
-      throw new Error('RT_SECRET environment variable is not set');
+    if (!secret || secret === 'your-refresh-token-secret-key') {
+      throw new Error('RT_SECRET environment variable is not set securely');
     }
 
     super({

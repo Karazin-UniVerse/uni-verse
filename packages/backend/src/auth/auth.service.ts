@@ -158,10 +158,19 @@ export class AuthService {
   ) {
     const atSecret = process.env.AT_SECRET;
     const rtSecret = process.env.RT_SECRET;
+    const knownPlaceholders = [
+      'your-access-token-secret-key',
+      'your-refresh-token-secret-key',
+    ];
 
-    if (!atSecret || !rtSecret) {
+    if (
+      !atSecret ||
+      !rtSecret ||
+      knownPlaceholders.includes(atSecret) ||
+      knownPlaceholders.includes(rtSecret)
+    ) {
       throw new Error(
-        'JWT secrets are not configured. Set AT_SECRET and RT_SECRET environment variables.',
+        'JWT secrets are not configured securely. Set valid AT_SECRET and RT_SECRET environment variables.',
       );
     }
 

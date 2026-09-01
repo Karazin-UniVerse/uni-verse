@@ -13,8 +13,8 @@ export type JwtPayload = {
 export class AtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor() {
     const secret = process.env.AT_SECRET;
-    if (!secret) {
-      throw new Error('AT_SECRET environment variable is not set');
+    if (!secret || secret === 'your-access-token-secret-key') {
+      throw new Error('AT_SECRET environment variable is not set securely');
     }
 
     super({
