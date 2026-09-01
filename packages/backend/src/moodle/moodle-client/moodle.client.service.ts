@@ -69,12 +69,12 @@ export class MoodleClientService {
       }
 
       return data;
-    } catch (e) {
-      if (e instanceof Error && e.name === 'TimeoutError') {
+    } catch (error) {
+      if (error instanceof Error && error.name === 'TimeoutError') {
         throw new RequestTimeoutException('Moodle request timeout');
       }
       throw new InternalServerErrorException(
-        e instanceof Error ? e.message : 'Unknown exception',
+        error instanceof Error ? error.message : 'Unknown exception',
       );
     }
   }
