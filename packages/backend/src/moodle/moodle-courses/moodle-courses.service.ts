@@ -21,12 +21,12 @@ export class MoodleCoursesService {
       if (!Array.isArray(data)) {
         return [];
       }
-      return data.map((c: Course) => ({
-        id: c.id,
-        fullname: c.fullname,
-        shortname: c.shortname,
-        summary: normalizeMoodleText(c.summary),
-        progress: c.progress,
+      return data.map((course: Course) => ({
+        id: course.id,
+        fullname: course.fullname,
+        shortname: course.shortname,
+        summary: normalizeMoodleText(course.summary),
+        progress: course.progress,
       }));
     } catch {
       return [];
