@@ -1,6 +1,6 @@
 @import 'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap';
 
-@import './breakpoints.scss';
+@import './breakpoints';
 
 /* ==========================================================================
    1. BASE & LAYOUT TOKENS (Non-thematic)
@@ -30,7 +30,7 @@
   --gap-large: var(--space-24);
 
   /* Typography */
-  --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif;
+  --font-family-base: -apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif;
   --font-family-heading: var(--font-family-base);
   --font-family-regular: var(--font-family-base);
 
@@ -200,6 +200,32 @@
   --chart-bar-radius: var(--border-radius-small);
 }
 
+/* ==========================================================================
+   4. COMPONENT & SEMANTIC ALIASES
+   ========================================================================== */
+:root {
+  /* General UI */
+  --bg-color: var(--neutral-bg);
+  --bg-surface: var(--neutral-surface);
+  --text-primary: var(--neutral-text-primary);
+  --text-secondary: var(--neutral-text-secondary);
+  --text-disabled: var(--neutral-text-disabled);
+  --border-color: var(--neutral-border);
+
+  /* Primary SimpleButton */
+  --btn-primary-bg: var(--accent-primary);
+  --btn-primary-hover: var(--accent-primary-hover);
+  --btn-primary-active: var(--accent-primary-active);
+  --btn-primary-text: var(--accent-text-on-primary);
+  --btn-primary-disabled: var(--neutral-surface);
+
+  /* Secondary SimpleButton */
+  --btn-secondary-bg: var(--accent-secondary);
+  --btn-secondary-hover: var(--accent-secondary-hover);
+  --btn-secondary-active: var(--accent-secondary-active);
+  --btn-secondary-text: var(--accent-text-on-secondary);
+}
+
 /* -----------------------------------------
    Dark Theme
    ----------------------------------------- */
@@ -358,33 +384,7 @@
 
 
 /* ==========================================================================
-   5. COMPONENT & SEMANTIC ALIASES
-   ========================================================================== */
-:root {
-  /* General UI */
-  --bg-color: var(--neutral-bg);
-  --bg-surface: var(--neutral-surface);
-  --text-primary: var(--neutral-text-primary);
-  --text-secondary: var(--neutral-text-secondary);
-  --text-disabled: var(--neutral-text-disabled);
-  --border-color: var(--neutral-border);
-
-  /* Primary SimpleButton */
-  --btn-primary-bg: var(--accent-primary);
-  --btn-primary-hover: var(--accent-primary-hover);
-  --btn-primary-active: var(--accent-primary-active);
-  --btn-primary-text: var(--accent-text-on-primary);
-  --btn-primary-disabled: var(--neutral-surface);
-
-  /* Secondary SimpleButton */
-  --btn-secondary-bg: var(--accent-secondary);
-  --btn-secondary-hover: var(--accent-secondary-hover);
-  --btn-secondary-active: var(--accent-secondary-active);
-  --btn-secondary-text: var(--accent-text-on-secondary);
-}
-
-/* ==========================================================================
-   6. GLOBAL BASE STYLES
+   5. GLOBAL BASE STYLES
    ========================================================================== */
 html, body {
   background-color: var(--bg-color);

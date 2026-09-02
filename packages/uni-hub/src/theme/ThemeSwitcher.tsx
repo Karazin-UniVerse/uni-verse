@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sun, Moon, Zap } from 'lucide-react';
+import clsx from 'clsx';
 import { useTheme, type AppTheme } from './ThemeContext';
 import styles from './ThemeSwitcher.module.scss';
 
@@ -28,7 +29,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     return (
       <button
         type="button"
-        className={`${styles.compactBtn ?? ''} ${className ?? ''}`}
+        className={clsx(styles.compactBtn, className)}
         onClick={cycleTheme}
         aria-label={`Тема: ${themeMetadata.label}. Перемкнути`}
         title={themeMetadata.label}
@@ -40,7 +41,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
   }
 
   return (
-    <div className={`${styles.switcher} ${className ?? ''}`} role="group" aria-label="Вибір теми">
+    <div className={clsx(styles.switcher, className)} role="group" aria-label="Вибір теми">
       {(Object.keys(THEME_META) as AppTheme[]).map((themeOption) => {
         const themeMetadata = THEME_META[themeOption];
         const isSelectedTheme = theme === themeOption;
@@ -49,7 +50,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
           <button
             key={themeOption}
             type="button"
-            className={`${styles.option} ${isSelectedTheme ? styles.active : ''}`}
+            className={clsx(styles.option, isSelectedTheme && styles.active)}
             onClick={() => setTheme(themeOption)}
             aria-pressed={isSelectedTheme}
           >
