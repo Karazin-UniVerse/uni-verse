@@ -5,27 +5,20 @@ export function getGradeCourseName(grade: Grade): string {
 }
 
 export function getGradeRawValue(grade: Grade): number | null {
-  if (grade.rawGrade !== undefined && grade.rawGrade !== null) {
-    const parsed =
-      typeof grade.rawGrade === 'number'
-        ? grade.rawGrade
-        : Number.parseFloat(String(grade.rawGrade));
+  const candidateValues = [grade.rawGrade, grade.rawgrade, grade.grade];
 
-    return Number.isFinite(parsed) ? parsed : null;
+  for (const candidate of candidateValues) {
+    if (candidate !== undefined && candidate !== null && candidate !== '') {
+      const parsed =
+        typeof candidate === 'number' ? candidate : Number.parseFloat(String(candidate));
+
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
   }
 
-  if (grade.rawgrade !== undefined && grade.rawgrade !== null) {
-    const parsed =
-      typeof grade.rawgrade === 'number'
-        ? grade.rawgrade
-        : Number.parseFloat(String(grade.rawgrade));
-
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-
-  const parsed = Number.parseFloat(String(grade.grade || ''));
-
-  return Number.isFinite(parsed) ? parsed : null;
+  return null;
 }
 
 export function getValidGrades(grades: Grade[]): Grade[] {
@@ -34,8 +27,13 @@ export function getValidGrades(grades: Grade[]): Grade[] {
   }
 
   return grades.filter((grade) => {
-    const raw = getGradeRawValue(grade);
-    const isZero = grade.grade === '0' || grade.grade === '0.00' || raw === 0;
+    const rawValue = getGradeRawValue(grade);
+
+    if (rawValue === null) {
+      return false;
+    }
+
+    const isZero = grade.grade === '0' || grade.grade === '0.00' || rawValue === 0;
     const isEmpty = !grade.grade || grade.grade === '-';
 
     return !isZero && !isEmpty;

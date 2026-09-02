@@ -71,7 +71,7 @@ function ChartTooltip({ active, payload, label, valueLabel }: ChartTooltipProps)
   const color = typeof item.color === 'string' ? item.color : undefined;
 
   return (
-    <div className={css.tooltip}>
+    <div className={css.tooltip} role="status" aria-live="assertive">
       {label !== null && label !== undefined && label !== '' && (
         <div className={css.tooltipLabel}>{String(label)}</div>
       )}
