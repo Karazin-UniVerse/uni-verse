@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { Assignment, Grade } from '../types';
 import { getValidGrades } from '../utils/grades';
 import Chart from '../design-system/charts/Chart/Chart';
@@ -17,7 +17,15 @@ const COLORS = {
 } as const;
 
 export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments, grades }) => {
-  const [nowSec] = useState(() => Math.floor(Date.now() / 1000));
+  const [nowSec, setNowSec] = useState(() => Math.floor(Date.now() / 1000));
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNowSec(Math.floor(Date.now() / 1000));
+    }, 30000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const segments = useMemo(() => {
     if (assignments.length === 0) {
