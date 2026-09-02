@@ -1,19 +1,40 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: 'en-US'
-knowledge_base:
-  code_guidelines:
-    enabled: true
-    filePatterns:
-      - '.github/copilot-instructions.md'
-      - 'CODE_STYLE.md'
-  mcp:
-    usage: auto
-
 reviews:
-  profile: 'chill'
-  request_changes_workflow: false
-  high_level_summary: true
-  poem: true
-  review_status: true
+  path_instructions:
+    - path: '**/*.{ts,tsx}'
+      instructions: |
+        Code formatting, naming, and vertical spacing rules:
 
-chat:
-  auto_reply: true
+        1. Meaningful Names over Short Abbreviations:
+           - Always use descriptive, self-explanatory names for variables, parameters, and callback arguments.
+           - Avoid single-letter or cryptic abbreviations (e.g. use `course` instead of `c`, `user` instead of `u`, `error` instead of `e`, `response` instead of `res`).
+           
+           Example:
+           ```typescript
+           // Bad:
+           const names = data.map((c: Course) => c.fullname);
+           
+           // Good:
+           const names = data.map((course: Course) => course.fullname);
+           ```
+
+        2. Vertical Spacing (Padding lines between statements):
+           - Maintain clear vertical spacing (empty lines) between logical code blocks:
+             - Between variable/constant declarations and subsequent logic blocks.
+             - Between conditional statements (if/else), loops, and following function calls.
+             - Always keep an empty line before 'return' statements.
+
+           Example:
+           ```typescript
+           // Good:
+           const user = await this.userService.findById(id);
+
+           if (!user) {
+             throw new NotFoundException('User not found');
+           }
+
+           await this.logService.record(id);
+
+           return user;
+           ```

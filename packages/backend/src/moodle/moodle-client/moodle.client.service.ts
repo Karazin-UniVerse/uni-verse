@@ -19,19 +19,14 @@ function isMoodleException(data: unknown): data is MoodleException {
 
 @Injectable()
 export class MoodleClientService {
-  private readonly baseurl = process.env.MOODLE_BASEURL || '';
-  private readonly timeout = process.env.MOODLE_TIMEOUT;
+  private readonly baseUrl =
+    process.env.MOODLE_BASEURL || 'https://moodle.karazin.ua';
+  private readonly timeout = process.env.MOODLE_TIMEOUT || '15000';
   private readonly logger = new Logger(MoodleClientService.name);
 
   constructor() {
-    if (!this.baseurl) {
-      throw new Error('MOODLE_BASEURL environment variable is not set');
-    }
-    if (!this.baseurl.startsWith('https://')) {
+    if (!this.baseUrl.startsWith('https://')) {
       throw new Error('MOODLE_BASEURL must be a secure URL (https://)');
-    }
-    if (!this.timeout) {
-      throw new Error('MOODLE_TIMEOUT environment variable is not set');
     }
   }
   async client<T = unknown>(
@@ -45,7 +40,7 @@ export class MoodleClientService {
       throw new Error('MOODLE_TIMEOUT must be a positive finite number');
     }
 
-    const url = new URL(`${this.baseurl}/webservice/rest/server.php`);
+    const url = new URL(`${this.baseUrl}/webservice/rest/server.php`);
     url.searchParams.set('wstoken', moodleToken ?? '');
     url.searchParams.set('wsfunction', wsfunction);
     url.searchParams.set('moodlewsrestformat', 'json');
@@ -63,6 +58,7 @@ export class MoodleClientService {
     try {
       const response = await fetch(url.toString(), {
         signal: AbortSignal.timeout(timeout),
+        redirect: 'error',
       });
       const data = (await response.json()) as T | MoodleException;
       if (isMoodleException(data)) {
@@ -74,12 +70,12 @@ export class MoodleClientService {
       }
 
       return data;
-    } catch (e) {
-      if (e instanceof Error && e.name === 'TimeoutError') {
+    } catch (error) {
+      if (error instanceof Error && error.name === 'TimeoutError') {
         throw new RequestTimeoutException('Moodle request timeout');
       }
       throw new InternalServerErrorException(
-        e instanceof Error ? e.message : 'Unknown exception',
+        error instanceof Error ? error.message : 'Unknown exception',
       );
     }
   }

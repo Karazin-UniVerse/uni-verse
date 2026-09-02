@@ -6,7 +6,6 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { GetCreds } from '../utils/get-creds';
-import { User } from '@universe/database';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 
@@ -24,39 +23,40 @@ export class AuthService {
       throw new BadRequestException('User with this email already exists');
     }
 
-    let moodleToken = '';
-    let moodleId = '';
-    try {
-      moodleToken = await this.getCreds.getToken(dto.email, dto.password);
-      const rawMoodleId = await this.getCreds.getUserId(moodleToken);
-      moodleId = String(rawMoodleId);
-    } catch (error) {
-      throw new BadRequestException(
-        `Moodle Authentication failed: ${(error as Error).message}`,
-      );
-    }
+    const { moodleToken, moodleId } = await (async () => {
+      try {
+        const token = await this.getCreds.getToken(dto.email, dto.password);
+        const rawMoodleId = await this.getCreds.getUserId(token);
+        return { moodleToken: token, moodleId: String(rawMoodleId) };
+      } catch (error) {
+        throw new BadRequestException(
+          `Moodle Authentication failed: ${(error as Error).message}`,
+        );
+      }
+    })();
 
     const passwordHash = await this.hashData(dto.password);
 
-    let user: User;
-    try {
-      user = await this.userService.createUser({
-        email: dto.email,
-        password: passwordHash,
-        token: moodleToken,
-        moodleId: moodleId,
-      });
-    } catch (error) {
-      if (
-        error &&
-        typeof error === 'object' &&
-        'code' in error &&
-        (error as { code: string }).code === 'P2002'
-      ) {
-        throw new BadRequestException('User with this email already exists');
+    const user = await (async () => {
+      try {
+        return await this.userService.createUser({
+          email: dto.email,
+          password: passwordHash,
+          token: moodleToken,
+          moodleId: moodleId,
+        });
+      } catch (error) {
+        if (
+          error &&
+          typeof error === 'object' &&
+          'code' in error &&
+          (error as { code: string }).code === 'P2002'
+        ) {
+          throw new BadRequestException('User with this email already exists');
+        }
+        throw error;
       }
-      throw error;
-    }
+    })();
 
     const tokens = await this.getTokens(
       user.id,
@@ -69,20 +69,47 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.userService.findByEmail(dto.email);
-    if (!user) throw new ForbiddenException('Access Denied');
+    const { moodleToken, moodleId } = await (async () => {
+      try {
+        const token = await this.getCreds.getToken(dto.email, dto.password);
+        const rawMoodleId = await this.getCreds.getUserId(token);
+        return { moodleToken: token, moodleId: String(rawMoodleId) };
+      } catch (moodleErr) {
+        throw new ForbiddenException(
+          moodleErr instanceof Error
+            ? moodleErr.message
+            : 'Invalid Moodle credentials',
+        );
+      }
+    })();
 
-    const passwordMatches = await bcrypt.compare(dto.password, user.password);
-    if (!passwordMatches) throw new ForbiddenException('Access Denied');
+    const emailToUse = dto.email.includes('@')
+      ? dto.email
+      : `${dto.email}@student.karazin.ua`;
 
-    const moodleToken = await this.getCreds.getToken(dto.email, dto.password);
-    const rawMoodleId = await this.getCreds.getUserId(moodleToken);
-    const moodleId = String(rawMoodleId);
+    const user = await (async () => {
+      const existing =
+        (await this.userService.findByMoodleId(moodleId)) ||
+        (await this.userService.findByEmail(dto.email)) ||
+        (await this.userService.findByEmail(emailToUse));
 
-    await this.userService.updateUser(user.id, {
-      token: moodleToken,
-      moodleId: moodleId,
-    });
+      if (!existing) {
+        const hash = await bcrypt.hash(dto.password, 10);
+        return await this.userService.createUser({
+          email: emailToUse,
+          password: hash,
+          token: moodleToken,
+          moodleId: moodleId,
+        });
+      }
+
+      await this.userService.updateUser(existing.id, {
+        token: moodleToken,
+        moodleId: moodleId,
+      });
+      return existing;
+    })();
+
     const tokens = await this.getTokens(
       user.id,
       user.email,
@@ -131,10 +158,19 @@ export class AuthService {
   ) {
     const atSecret = process.env.AT_SECRET;
     const rtSecret = process.env.RT_SECRET;
+    const knownPlaceholders = [
+      'your-access-token-secret-key',
+      'your-refresh-token-secret-key',
+    ];
 
-    if (!atSecret || !rtSecret) {
+    if (
+      !atSecret ||
+      !rtSecret ||
+      knownPlaceholders.includes(atSecret) ||
+      knownPlaceholders.includes(rtSecret)
+    ) {
       throw new Error(
-        'JWT secrets are not configured. Set AT_SECRET and RT_SECRET environment variables.',
+        'JWT secrets are not configured securely. Set valid AT_SECRET and RT_SECRET environment variables.',
       );
     }
 

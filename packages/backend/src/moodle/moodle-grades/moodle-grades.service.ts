@@ -30,11 +30,13 @@ export class MoodleGradesService {
     }
 
     const [gradesResponse, coursesData] = await Promise.all([
-      this.moodleClient.client<MoodleOverviewGradesResponse>(
-        getWsFunctionName('getGrades'),
-        token,
-        moodleId,
-      ),
+      this.moodleClient
+        .client<MoodleOverviewGradesResponse>(
+          getWsFunctionName('getGrades'),
+          token,
+          moodleId,
+        )
+        .catch(() => ({ grades: [] }) as MoodleOverviewGradesResponse),
       this.moodleClient
         .client<Course[]>(getWsFunctionName('getCourses'), token, moodleId)
         .catch(() => [] as Course[]),
@@ -43,7 +45,7 @@ export class MoodleGradesService {
     const rawGrades = gradesResponse?.grades || [];
     const courseMap = new Map<number, Course>();
     if (Array.isArray(coursesData)) {
-      coursesData.forEach((c) => courseMap.set(c.id, c));
+      coursesData.forEach((course) => courseMap.set(course.id, course));
     }
 
     const mappedGrades: MoodleGradeItemDto[] = rawGrades.map((item) => {

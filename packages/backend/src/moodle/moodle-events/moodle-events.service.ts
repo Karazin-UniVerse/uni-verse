@@ -16,20 +16,24 @@ export class MoodleEventsService {
       throw new BadRequestException('Token or user ID are not provided');
     }
 
-    const data = await this.moodleClient.client<MoodleUpcomingEventsResponse>(
-      getWsFunctionName('getUpcomingEvents'),
-      moodleToken,
-      moodleId,
-    );
+    try {
+      const data = await this.moodleClient.client<MoodleUpcomingEventsResponse>(
+        getWsFunctionName('getUpcomingEvents'),
+        moodleToken,
+        undefined,
+      );
 
-    return (data?.events || []).map((event) => ({
-      id: event.id,
-      name: event.name,
-      description: event.description,
-      timestart: event.timestart,
-      timeduration: event.timeduration,
-      eventtype: event.eventtype,
-      courseName: event.course ? event.course.fullname : undefined,
-    }));
+      return (data?.events || []).map((event) => ({
+        id: event.id,
+        name: event.name,
+        description: event.description,
+        timestart: event.timestart,
+        timeduration: event.timeduration,
+        eventtype: event.eventtype,
+        courseName: event.course ? event.course.fullname : undefined,
+      }));
+    } catch {
+      return [];
+    }
   }
 }

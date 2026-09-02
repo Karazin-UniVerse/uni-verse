@@ -16,10 +16,8 @@ export class MoodleFilesService {
       throw new BadRequestException('Token is not provided');
     }
 
-    const baseUrl = process.env.MOODLE_BASEURL;
-    if (!baseUrl) {
-      throw new InternalServerErrorException('MOODLE_BASEURL not configured');
-    }
+    const baseUrl = process.env.MOODLE_BASEURL || 'https://moodle.karazin.ua';
+
     if (!baseUrl.startsWith('https://')) {
       throw new InternalServerErrorException(
         'MOODLE_BASEURL must be a secure URL (https://)',
@@ -39,6 +37,7 @@ export class MoodleFilesService {
     const response = await fetch(`${baseUrl}/webservice/upload.php`, {
       method: 'POST',
       body: formData,
+      redirect: 'error',
     });
 
     if (!response.ok) {
