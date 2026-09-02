@@ -23,36 +23,38 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
   const { theme, setTheme, cycleTheme } = useTheme();
 
   if (compact) {
-    const meta = THEME_META[theme];
+    const themeMetadata = THEME_META[theme];
+
     return (
       <button
         type="button"
         className={`${styles.compactBtn ?? ''} ${className ?? ''}`}
         onClick={cycleTheme}
-        aria-label={`Тема: ${meta.label}. Перемкнути`}
-        title={meta.label}
+        aria-label={`Тема: ${themeMetadata.label}. Перемкнути`}
+        title={themeMetadata.label}
       >
-        {meta.icon}
-        {showLabel && <span className={styles.compactLabel}>{meta.label}</span>}
+        {themeMetadata.icon}
+        {showLabel && <span className={styles.compactLabel}>{themeMetadata.label}</span>}
       </button>
     );
   }
 
   return (
     <div className={`${styles.switcher} ${className ?? ''}`} role="group" aria-label="Вибір теми">
-      {(Object.keys(THEME_META) as AppTheme[]).map((key) => {
-        const meta = THEME_META[key];
-        const active = theme === key;
+      {(Object.keys(THEME_META) as AppTheme[]).map((themeOption) => {
+        const themeMetadata = THEME_META[themeOption];
+        const isSelectedTheme = theme === themeOption;
+
         return (
           <button
-            key={key}
+            key={themeOption}
             type="button"
-            className={`${styles.option} ${active ? styles.active : ''}`}
-            onClick={() => setTheme(key)}
-            aria-pressed={active}
+            className={`${styles.option} ${isSelectedTheme ? styles.active : ''}`}
+            onClick={() => setTheme(themeOption)}
+            aria-pressed={isSelectedTheme}
           >
-            {meta.icon}
-            <span>{meta.label}</span>
+            {themeMetadata.icon}
+            <span>{themeMetadata.label}</span>
           </button>
         );
       })}

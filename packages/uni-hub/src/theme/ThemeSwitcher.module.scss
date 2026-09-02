@@ -1,3 +1,5 @@
+@import '../design-system/breakpoints.scss';
+
 .switcher {
   display: inline-flex;
   gap: var(--space-8);
@@ -53,7 +55,7 @@
   margin-left: var(--space-8);
   display: none;
 
-  @media (min-width: 640px) {
+  @include respond-to('sm') {
     display: inline;
   }
 }
