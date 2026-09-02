@@ -1,0 +1,16 @@
+﻿frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/uni-hub/**'
+          - 'packages/ui/**'
+          - '**/*.tsx'
+          - '**/*.jsx'
+          - 'Dockerfile.frontend'
+
+backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/backend/**'
+          - 'packages/database/**'
+          - '**/prisma/**'
+          - 'Dockerfile'
