@@ -23,18 +23,18 @@ export type ChartDatum = {
 };
 
 export type ChartProps = {
-  type?: 'bar' | 'donut';
   data: ChartDatum[];
+  height?: number;
+  title?: string;
+  className?: string;
+  type?: 'bar' | 'donut';
   /** For bar charts: horizontal bars (category on Y) or vertical bars (category on X) */
   layout?: 'horizontal' | 'vertical';
   domain?: [number, number];
-  height?: number;
-  title?: string;
   emptyDescription?: string;
   valueLabel?: string;
   showLegend?: boolean;
   animate?: boolean;
-  className?: string;
   /** Y-axis label width for horizontal bar charts */
   categoryWidth?: number;
   maxCategoryLength?: number;
@@ -101,17 +101,17 @@ function ChartLegend({ items }: { items: { name: string; color: string }[] }) {
 }
 
 export default function Chart({
-  type = 'bar',
   data,
-  layout = 'horizontal',
-  domain = [0, 100],
   height,
   title,
+  className,
+  type = 'bar',
+  layout = 'horizontal',
+  domain = [0, 100],
   emptyDescription = 'Нет данных',
   valueLabel = 'Значение',
   showLegend = type === 'donut',
   animate = false,
-  className,
   categoryWidth = Y_AXIS_WIDTH,
   maxCategoryLength = LABEL_MAX,
   rowHeight = 44,
@@ -124,11 +124,12 @@ export default function Chart({
 
   const chartData = useMemo(
     () =>
-      data.map((d, i) => {
-        const fallback = theme.series[i % theme.series.length];
-        const raw = d.color ?? DEFAULT_SERIES_VARS[i % DEFAULT_SERIES_VARS.length];
+      data.map((datum, index) => {
+        const fallback = theme.series[index % theme.series.length];
+        const raw = datum.color ?? DEFAULT_SERIES_VARS[index % DEFAULT_SERIES_VARS.length];
+
         return {
-          ...d,
+          ...datum,
           color: resolveCssColor(rootEl, raw, fallback),
         };
       }),
