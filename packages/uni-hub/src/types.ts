@@ -70,7 +70,7 @@ export interface CourseModule {
   modname: string;
   description?: string;
   instance?: number;
-  contents?: any[];
+  contents?: unknown[];
 }
 
 export interface CourseSection {

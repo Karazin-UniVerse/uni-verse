@@ -17,6 +17,7 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 - **Variables/Functions**: Use `camelCase`.
 - **Classes/Components**: Use `PascalCase`.
 - **Constants**: Use `UPPER_SNAKE_CASE`.
+- **Props & Parameter Order**: In type/interface definitions and component destructuring, declare fields without default values first, followed by optional fields and fields with default values.
 - **Meaningful Names over Short Abbreviations**: Always use descriptive, self-explanatory names for variables, parameters, and callback arguments. Avoid single-letter or cryptic abbreviations (e.g. use `course` instead of `c`, `user` instead of `u`, `error` instead of `e`).
 - **Vertical Spacing**: Maintain clear vertical spacing (empty lines) between logical code blocks:
   - Between variable/constant declarations and subsequent logic blocks.

@@ -38,3 +38,24 @@ reviews:
 
            return user;
            ```
+
+        3. Component Props & Parameter Order:
+           - In type/interface definitions and component destructuring, declare fields without default values first, followed by optional fields and fields with default values.
+           
+           Example:
+           ```typescript
+           // Good:
+           export type ComponentProps = {
+             data: Item[];
+             height?: number;
+             title?: string;
+             variant?: string;
+           };
+
+           export function Component({
+             data,
+             height,
+             title,
+             variant = 'default',
+           }: ComponentProps) { ... }
+           ```

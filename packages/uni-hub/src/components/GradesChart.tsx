@@ -17,12 +17,13 @@ export const GradesChart: React.FC<GradesChartProps> = ({ grades }) => {
 
   const chartData = useMemo(
     () =>
-      validGrades.map((g) => {
-        const val = getGradeRawValue(g) ?? 0;
+      validGrades.map((grade) => {
+        const gradeValue = getGradeRawValue(grade) ?? 0;
+
         return {
-          name: getGradeCourseName(g) || 'Курс',
-          value: val,
-          color: getGradeBarColor(val),
+          name: getGradeCourseName(grade) || 'Курс',
+          value: gradeValue,
+          color: getGradeBarColor(gradeValue),
         };
       }),
     [validGrades],
