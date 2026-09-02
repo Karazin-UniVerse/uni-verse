@@ -34,19 +34,21 @@
 .chart {
   user-select: none;
   -webkit-user-select: none;
-  outline: none;
 
   :global(.recharts-wrapper),
   :global(.recharts-surface),
   :global(svg) {
-    outline: none !important;
     user-select: none !important;
     -webkit-user-select: none !important;
     -webkit-tap-highlight-color: transparent;
 
-    &:focus,
+    &:focus {
+      outline: none;
+    }
+
     &:focus-visible {
-      outline: none !important;
+      outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, var(--accent-primary));
+      outline-offset: var(--focus-ring-offset, 2px);
     }
   }
 }
@@ -77,7 +79,7 @@
 .tooltipLabel {
   color: var(--chart-tooltip-muted, var(--text-secondary));
   margin-bottom: var(--space-2);
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .tooltipRow {
