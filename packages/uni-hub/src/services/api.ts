@@ -15,6 +15,23 @@ const API_BASE_URL =
     ? 'https://p01--backend--jm9qjnmpm4m2.code.run'
     : 'http://localhost:3001');
 
+function isSecureOrLoopback(targetUrl: string): boolean {
+  try {
+    const fallbackOrigin =
+      typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+    const parsed = new URL(targetUrl, fallbackOrigin);
+
+    return (
+      parsed.protocol === 'https:' ||
+      parsed.hostname === 'localhost' ||
+      parsed.hostname === '127.0.0.1' ||
+      parsed.hostname === '::1'
+    );
+  } catch {
+    return false;
+  }
+}
+
 async function request<T>(
   endpoint: string,
   options: RequestInit = {},
@@ -28,7 +45,7 @@ async function request<T>(
     ...(options.headers as Record<string, string>),
   };
 
-  if (token) {
+  if (token && isSecureOrLoopback(url)) {
     headers.Authorization = `Bearer ${token}`;
   }
 
