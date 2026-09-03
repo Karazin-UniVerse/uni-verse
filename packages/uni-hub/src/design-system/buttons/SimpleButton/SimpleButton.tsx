@@ -1,29 +1,33 @@
-import type { ButtonHTMLAttributes, AnchorHTMLAttributes, ReactNode } from 'react';
-import css from './SimpleButton.module.scss';
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react';
 import clsx from 'clsx';
+import css from './SimpleButton.module.scss';
 
 type BaseProps = {
   children: ReactNode;
   variant: 'primary' | 'secondary';
-  size: 'small' | 'medium' | 'large';
   className?: string;
   isTransparent?: boolean;
+  size?: 'small' | 'medium' | 'large';
 };
 
 export type ButtonAsButtonProps = BaseProps & {
   isLink?: false;
 } & ButtonHTMLAttributes<HTMLButtonElement>;
-type ButtonAsLinkProps = BaseProps & { isLink: true } & AnchorHTMLAttributes<HTMLAnchorElement>;
 
-type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
+export type ButtonAsLinkProps = BaseProps & {
+  href: string;
+  isLink: true;
+} & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'>;
+
+export type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
 
 export default function SimpleButton({
-  variant,
-  size = 'small',
   children,
+  variant,
   className,
   isLink = false,
   isTransparent = false,
+  size = 'small',
   ...props
 }: ButtonProps) {
   const classes = clsx(
@@ -36,15 +40,19 @@ export default function SimpleButton({
   );
 
   if (isLink) {
+    const linkProps = props as AnchorHTMLAttributes<HTMLAnchorElement>;
+
     return (
-      <a className={classes} {...(props as AnchorHTMLAttributes<HTMLAnchorElement>)}>
+      <a className={classes} {...linkProps}>
         {children}
       </a>
     );
   }
 
+  const { type = 'button', ...buttonProps } = props as ButtonHTMLAttributes<HTMLButtonElement>;
+
   return (
-    <button className={classes} {...(props as ButtonHTMLAttributes<HTMLButtonElement>)}>
+    <button type={type} className={classes} {...buttonProps}>
       {children}
     </button>
   );
