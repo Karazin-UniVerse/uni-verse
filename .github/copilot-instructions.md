@@ -31,6 +31,7 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 - All shared UI components MUST be placed inside `packages/ui/src/components/`.
 - **Design System Components**: Core, simple, and reusable components (like buttons, inputs) go into `packages/ui/src/components/una/`.
 - **Complex Components**: Composite, business-logic-heavy, or non-design system components go into `packages/ui/src/components/complex/`.
+- **Component Types Extraction (`.types.ts`)**: For React UI components with non-trivial prop interfaces or data models, extract types into a co-located `<ComponentName>.types.ts` file (e.g. `Chart.types.ts` adjacent to `Chart.tsx`). Re-export types from the component file or module index for backwards compatibility. Do NOT create separate `.types.ts` files for simple utilities, single helper functions, or trivial components to avoid unnecessary fragmentation.
 
 ### 2. Backend (NestJS)
 
@@ -63,6 +64,10 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 - When fixing bugs, explain _why_ the bug occurred before providing the code.
 - Write clean, self-documenting code. Add comments only for complex logic or business rules.
 - Prefer smaller, focused PRs and commits.
+- **No Premature Backwards Compatibility / Legacy Shims (No "Backtracking")**:
+  - When moving, renaming, or refactoring code (such as migrating components into `@universe/ui` or renaming functions/mixins), **never** create backwards-compatibility aliases, re-export proxies, wrapper functions, or deprecated shim files (e.g., `export { Button as SimpleButton } from '@universe/ui'` inside deprecated paths).
+  - Directly update all call sites, imports, and usages across the entire codebase to the new location/name.
+  - Completely delete obsolete files and aliases. We are an active internal monorepo with no external library consumers — maintain zero legacy dead code and zero transitional proxy layers.
 
 ### 7. AI Code Review Culture & Complexity Management
 
@@ -77,6 +82,7 @@ Evaluate the code strictly against these failure modes:
 5. **REGRESSION PREVENTION:** Look critically at whether the proposed changes break existing logic elsewhere in the system.
 6. **SECURITY:** Review the code from a security perspective. Flag any potential vulnerabilities (e.g., injections, insecure data handling, missing authorization).
 7. **ACCESSIBILITY (a11y):** Review UI components from an accessibility perspective. Ensure proper ARIA roles, keyboard navigability, and sufficient contrast.
+8. **LEGACY SHIMS & RETROACTIVE RE-EXPORTS (Backtracking):** Flag any backwards-compatibility aliases, proxy re-exports, or transitional wrapper shims introduced during refactoring. Require the author to update all consumer imports directly and remove obsolete files.
 
 Output requirements for Review:
 
