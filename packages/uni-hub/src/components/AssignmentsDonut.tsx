@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { Assignment, Grade } from '../types';
-import { getValidGrades } from '../utils/grades';
+import { getGradeCourseName, getValidGrades } from '../utils/grades';
 import Chart from '../design-system/charts/Chart/Chart';
 
 type AssignmentsDonutProps = {
@@ -34,7 +34,7 @@ export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments,
 
     const gradedCourses = new Set(
       getValidGrades(grades)
-        .map((grade) => (grade.courseName || grade.course_name || '').trim().toLowerCase())
+        .map((grade) => getGradeCourseName(grade).toLowerCase())
         .filter(Boolean),
     );
 
