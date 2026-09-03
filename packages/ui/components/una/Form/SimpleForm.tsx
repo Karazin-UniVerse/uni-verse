@@ -71,3 +71,5 @@ export const SimpleForm: React.FC<SimpleFormProps> = ({
     </form>
   );
 };
+
+export default SimpleForm;

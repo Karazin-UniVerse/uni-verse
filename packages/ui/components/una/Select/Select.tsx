@@ -17,3 +17,5 @@ export const Select: React.FC<SelectProps> = ({ value, onChange, options, classN
     ))}
   </select>
 );
+
+export default Select;
