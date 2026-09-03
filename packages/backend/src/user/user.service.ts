@@ -20,6 +20,7 @@ export class UserService {
         return u;
       }
     }
+
     return null;
   }
 
@@ -137,6 +138,7 @@ export class UserService {
 
   async getUserTokenFromDB(email: string): Promise<string | null> {
     const user = await this.findByEmail(email);
+
     return user?.token ?? null;
   }
 }

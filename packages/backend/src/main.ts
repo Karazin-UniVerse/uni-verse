@@ -29,6 +29,7 @@ async function bootstrap() {
   app.enableCors(getCorsConfig());
 
   const document = SwaggerModule.createDocument(app, SWAGGER_CONFIG);
+
   SwaggerModule.setup('api', app, document);
 
   app.use(morgan('dev'));
@@ -36,6 +37,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const port = process.env.PORT ?? 3001;
+
   await app.listen(port);
   LOGGER.log(`Backend server running on http://localhost:${port}`);
   LOGGER.log(`Swagger documentation available at http://localhost:${port}/api`);

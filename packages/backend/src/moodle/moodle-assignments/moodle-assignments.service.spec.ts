@@ -42,6 +42,7 @@ describe('MoodleAssignmentsService', () => {
     it('should handle empty courses', async () => {
       mockMoodleClientService.client.mockResolvedValue({ courses: [] });
       const result = await service.getAssignments('token', 'id');
+
       expect(result).toEqual([]);
     });
 
@@ -58,6 +59,7 @@ describe('MoodleAssignmentsService', () => {
         ],
       });
       const result = await service.getAssignments('token', 'id');
+
       expect(result.length).toBe(1);
       expect(result[0].name).toBe('A1');
     });
@@ -73,6 +75,7 @@ describe('MoodleAssignmentsService', () => {
         feedback: { grade: { grade: '95.50' } },
       });
       const result = await service.getSubmissionStatus('token', 'id', 1);
+
       expect(result.status).toBe('graded');
       expect(result.grade).toBe('95.5');
     });

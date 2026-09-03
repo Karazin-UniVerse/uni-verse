@@ -16,6 +16,7 @@ const THEMES: AppTheme[] = ['light', 'dark', 'cyberpunk'];
 
 function applyTheme(theme: AppTheme) {
   const root = document.documentElement;
+
   if (theme === 'light') {
     root.removeAttribute('data-theme');
   } else {
@@ -27,10 +28,13 @@ function readStoredTheme(): AppTheme {
   if (typeof window === 'undefined') {
     return 'light';
   }
+
   const stored = localStorage.getItem(STORAGE_KEY);
+
   if (stored === 'light' || stored === 'dark' || stored === 'cyberpunk') {
     return stored;
   }
+
   return 'light';
 }
 
@@ -49,6 +53,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const cycleTheme = useCallback(() => {
     setThemeState((prev) => {
       const idx = THEMES.indexOf(prev);
+
       return THEMES[(idx + 1) % THEMES.length];
     });
   }, []);
@@ -60,8 +65,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
 export function useTheme() {
   const ctx = useContext(ThemeContext);
+
   if (!ctx) {
     throw new Error('useTheme must be used within ThemeProvider');
   }
+
   return ctx;
 }

@@ -44,6 +44,7 @@ describe('MoodleNotificationsService', () => {
     it('should return empty list if no data', async () => {
       mockMoodleClientService.client.mockResolvedValue({});
       const result = await service.getNotifications('token', 'id');
+
       expect(result.notifications).toEqual([]);
       expect(result.unreadcount).toBe(0);
     });

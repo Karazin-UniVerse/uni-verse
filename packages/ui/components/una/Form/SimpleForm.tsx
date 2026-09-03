@@ -23,6 +23,8 @@ export interface SimpleFormProps extends Omit<
  * `onData` is invoked with an aggregated object where repeated keys become arrays.
  *
  * Props:
+ * @param children
+ * @param className
  * @param {(formData: FormData) => void | Promise<void>} [action] - Optional async action executed on submit.
  * @param {(data: Record<string, FormDataEntryValue | FormDataEntryValue[]>) => void} [onData] - Callback receiving a plain object of form values.
  * @param {'simple'|'card'} [variant='card'] - Visual variant for form container.
@@ -34,6 +36,7 @@ export interface SimpleFormProps extends Omit<
  *   <Button type="submit" variant="primary">Send</Button>
  * </SimpleForm>
  * ```
+ * @param props
  */
 export const SimpleForm: React.FC<SimpleFormProps> = ({
   children,
@@ -59,9 +62,11 @@ export const SimpleForm: React.FC<SimpleFormProps> = ({
       for (const [key, value] of entries) {
         if (key in data) {
           const existing = data[key];
+
           data[key] = Array.isArray(existing) ? [...existing, value] : [existing, value];
         } else {
           const allValues = entries.filter(([k]) => k === key).map(([, v]) => v);
+
           data[key] = allValues.length > 1 ? allValues : value;
         }
       }

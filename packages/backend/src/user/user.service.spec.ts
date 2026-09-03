@@ -53,6 +53,7 @@ describe('UserService', () => {
       ...dto,
       refreshToken: null,
     };
+
     mockUser.create.mockResolvedValue(created);
     await expect(service.createUser(dto)).resolves.toEqual(created);
     expect(mockUser.create).toHaveBeenCalledWith({ data: dto });

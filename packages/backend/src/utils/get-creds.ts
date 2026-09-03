@@ -17,9 +17,11 @@ export class GetCreds {
     const url = (
       process.env.MOODLE_BASEURL || 'https://moodle.karazin.ua'
     ).replace(/\/$/, '');
+
     if (!url.startsWith('https://')) {
       throw new Error('MOODLE_BASEURL must use the secure https:// protocol');
     }
+
     return url;
   }
 

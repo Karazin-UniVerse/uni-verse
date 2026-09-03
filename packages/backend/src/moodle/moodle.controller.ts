@@ -54,6 +54,7 @@ export class MoodleController {
       moodleToken,
       moodleId,
     );
+
     return filterCourses(courses, { status, year, semester });
   }
 

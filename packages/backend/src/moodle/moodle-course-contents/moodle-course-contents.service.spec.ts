@@ -41,6 +41,7 @@ describe('MoodleCourseContentsService', () => {
     it('should fetch contents', async () => {
       mockMoodleClientService.client.mockResolvedValue([{}]);
       const result = await service.getCourseContents('token', 1);
+
       expect(result).toHaveLength(1);
     });
   });
