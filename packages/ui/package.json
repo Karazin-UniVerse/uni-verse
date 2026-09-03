@@ -12,7 +12,8 @@
   "main": "./index.ts",
   "exports": {
     ".": "./index.ts",
-    "./vars.scss": "./vars.scss"
+    "./vars.scss": "./vars.scss",
+    "./breakpoints.scss": "./breakpoints.scss"
   },
   "dependencies": {
     "clsx": "^2.1.1",
