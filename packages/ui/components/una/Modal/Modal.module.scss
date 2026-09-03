@@ -7,7 +7,7 @@
   justify-content: center;
   z-index: 900;
   padding: var(--space-24);
-  animation: overlayIn var(--transition-medium) var(--ease-standard);
+  animation: overlay-in var(--transition-medium) var(--ease-standard);
 }
 
 .dialog {
@@ -20,10 +20,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: dialogIn var(--transition-medium) var(--ease-standard);
+  animation: dialog-in var(--transition-medium) var(--ease-standard);
 }
 
-@keyframes overlayIn {
+@keyframes overlay-in {
   from {
     opacity: 0;
   }
@@ -32,7 +32,7 @@
   }
 }
 
-@keyframes dialogIn {
+@keyframes dialog-in {
   from {
     opacity: 0;
     transform: scale(0.96);

@@ -17,7 +17,7 @@
   background: var(--bg-surface);
   color: var(--text-primary);
   font-size: var(--font-sm);
-  animation: slideIn var(--transition-medium) var(--ease-standard);
+  animation: slide-in var(--transition-medium) var(--ease-standard);
 }
 
 .success {
@@ -32,7 +32,7 @@
   border-color: var(--info-color);
 }
 
-@keyframes slideIn {
+@keyframes slide-in {
   from {
     opacity: 0;
     transform: translateX(16px) translateY(-4px);
