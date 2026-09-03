@@ -16,33 +16,9 @@ import clsx from 'clsx';
 import css from './Chart.module.scss';
 import { resolveCssColor, useChartTheme } from './useChartTheme';
 
-export type ChartDatum = {
-  name: string;
-  value: number;
-  color?: string;
-};
+import type { ChartDatum, ChartProps } from './Chart.types';
 
-export type ChartProps = {
-  data: ChartDatum[];
-  height?: number;
-  title?: string;
-  className?: string;
-  type?: 'bar' | 'donut';
-  /** For bar charts: horizontal bars (category on Y) or vertical bars (category on X) */
-  layout?: 'horizontal' | 'vertical';
-  domain?: [number, number];
-  emptyDescription?: string;
-  valueLabel?: string;
-  showLegend?: boolean;
-  animate?: boolean;
-  /** Y-axis label width for horizontal bar charts */
-  categoryWidth?: number;
-  maxCategoryLength?: number;
-  rowHeight?: number;
-  maxBarSize?: number;
-  innerRadius?: number;
-  outerRadius?: number;
-};
+export type { ChartDatum, ChartProps } from './Chart.types';
 
 const DEFAULT_SERIES_VARS = [
   'var(--chart-series-1)',

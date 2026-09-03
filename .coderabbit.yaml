@@ -59,3 +59,18 @@ reviews:
              variant = 'default',
            }: ComponentProps) { ... }
            ```
+
+        4. Component Types Extraction:
+           - For complex components with substantial prop interfaces or domain types, extract them into a co-located `<ComponentName>.types.ts` file.
+           - Re-export types from the component file or module index for backwards compatibility.
+           
+           Example:
+           ```typescript
+           // Chart.types.ts
+           export type ChartDatum = { ... };
+           export type ChartProps = { ... };
+
+           // Chart.tsx
+           export type { ChartDatum, ChartProps } from './Chart.types';
+           ```
+
