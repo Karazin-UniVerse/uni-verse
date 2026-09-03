@@ -24,6 +24,7 @@ export class MoodleAssignmentsService {
     if (!moodleToken || !moodleId) {
       throw new BadRequestException('Token or user ID are not provided');
     }
+
     try {
       const data = await this.moodleClient.client<MoodleAssignmentsResponse>(
         getWsFunctionName('getAssignments'),
@@ -32,6 +33,7 @@ export class MoodleAssignmentsService {
       );
 
       const assignments: AssignmentItemDto[] = [];
+
       data?.courses?.forEach((course) => {
         const year = extractAcademicYear(
           `${course.fullname} ${course.shortname}`,
@@ -80,8 +82,10 @@ export class MoodleAssignmentsService {
       data?.feedback?.grade?.gradefordisplay ?? data?.feedback?.grade?.grade;
 
     let grade: string | undefined;
+
     if (rawGrade !== undefined && rawGrade !== null) {
       const num = Number(rawGrade);
+
       grade = !isNaN(num) ? parseFloat(rawGrade).toString() : rawGrade;
     }
 
@@ -106,6 +110,7 @@ export class MoodleAssignmentsService {
     if (text !== undefined) {
       plugindata['onlinetext_editor'] = { text, format: 1, itemid: 0 };
     }
+
     if (fileItemId !== undefined) {
       plugindata['files_filemanager'] = fileItemId;
     }

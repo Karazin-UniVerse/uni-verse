@@ -19,6 +19,7 @@ export class AuthService {
 
   async register(dto: RegisterDto) {
     const existingUser = await this.userService.findByEmail(dto.email);
+
     if (existingUser) {
       throw new BadRequestException('User with this email already exists');
     }
@@ -27,6 +28,7 @@ export class AuthService {
       try {
         const token = await this.getCreds.getToken(dto.email, dto.password);
         const rawMoodleId = await this.getCreds.getUserId(token);
+
         return { moodleToken: token, moodleId: String(rawMoodleId) };
       } catch (error) {
         throw new BadRequestException(
@@ -54,6 +56,7 @@ export class AuthService {
         ) {
           throw new BadRequestException('User with this email already exists');
         }
+
         throw error;
       }
     })();
@@ -64,7 +67,9 @@ export class AuthService {
       user.token ?? undefined,
       user.moodleId ?? undefined,
     );
+
     await this.updateRtHash(user.id, tokens.refresh_token);
+
     return tokens;
   }
 
@@ -73,6 +78,7 @@ export class AuthService {
       try {
         const token = await this.getCreds.getToken(dto.email, dto.password);
         const rawMoodleId = await this.getCreds.getUserId(token);
+
         return { moodleToken: token, moodleId: String(rawMoodleId) };
       } catch (moodleErr) {
         throw new ForbiddenException(
@@ -95,6 +101,7 @@ export class AuthService {
 
       if (!existing) {
         const hash = await bcrypt.hash(dto.password, 10);
+
         return await this.userService.createUser({
           email: emailToUse,
           password: hash,
@@ -107,6 +114,7 @@ export class AuthService {
         token: moodleToken,
         moodleId: moodleId,
       });
+
       return existing;
     })();
 
@@ -116,7 +124,9 @@ export class AuthService {
       moodleToken,
       moodleId,
     );
+
     await this.updateRtHash(user.id, tokens.refresh_token);
+
     return tokens;
   }
 
@@ -126,10 +136,12 @@ export class AuthService {
 
   async refreshTokens(userId: string, rt: string) {
     const user = await this.userService.findById(userId);
+
     if (!user || !user.refreshToken)
       throw new ForbiddenException('Access Denied');
 
     const rtMatches = await bcrypt.compare(rt, user.refreshToken);
+
     if (!rtMatches) throw new ForbiddenException('Access Denied');
 
     const tokens = await this.getTokens(
@@ -137,12 +149,15 @@ export class AuthService {
       user.email,
       user.token ?? undefined,
     );
+
     await this.updateRtHash(user.id, tokens.refresh_token);
+
     return tokens;
   }
 
   async updateRtHash(userId: string, rt: string) {
     const hash = await this.hashData(rt);
+
     await this.userService.updateUser(userId, { refreshToken: hash });
   }
 

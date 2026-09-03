@@ -14,6 +14,7 @@ export class MoodleStatisticsService {
       moodleToken,
       moodleId,
     );
+
     return { total: courses.length };
   }
 }

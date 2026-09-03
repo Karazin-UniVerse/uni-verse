@@ -43,6 +43,7 @@ describe('MoodleController', () => {
       { id: 1, fullname: 'Course 1' },
     ]);
     const res = await controller.getCourses('42', 'token');
+
     expect(mockCoursesService.getCourses).toHaveBeenCalledWith('token', '42');
     expect(res).toEqual([{ id: 1, fullname: 'Course 1' }]);
   });
@@ -51,9 +52,11 @@ describe('MoodleController', () => {
     const mockGradesRes = {
       grades: [{ courseId: 1, courseName: 'Course 1', grade: '90.00' }],
     };
+
     mockGradesService.getGeneralGrades.mockResolvedValueOnce(mockGradesRes);
 
     const res = await controller.getGrades('42', 'token');
+
     expect(mockGradesService.getGeneralGrades).toHaveBeenCalledWith(
       'token',
       '42',

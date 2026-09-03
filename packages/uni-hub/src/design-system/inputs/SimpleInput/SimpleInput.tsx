@@ -9,7 +9,7 @@ export interface SimpleInputProps extends Omit<InputHTMLAttributes<HTMLInputElem
 }
 
 const SimpleInput = forwardRef<HTMLInputElement, SimpleInputProps>(
-  ({ variant = 'primary', size = 'medium', isTransparent = false, className, ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'medium', isTransparent = false, ...props }, ref) => {
     const classes = clsx(
       css.input,
       variant && css[variant],
@@ -17,6 +17,7 @@ const SimpleInput = forwardRef<HTMLInputElement, SimpleInputProps>(
       isTransparent && css['is-transparent'],
       className,
     );
+
     return <input {...props} ref={ref} className={classes} />;
   },
 );

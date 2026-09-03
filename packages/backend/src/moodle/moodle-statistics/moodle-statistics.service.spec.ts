@@ -32,6 +32,7 @@ describe('MoodleStatisticsService', () => {
     it('should return count of courses', async () => {
       MOCK_COURSES_SERVICE.getCourses.mockResolvedValue([{}, {}]);
       const result = await service.getStatistics('token', 'id');
+
       expect(result.total).toBe(2);
     });
   });

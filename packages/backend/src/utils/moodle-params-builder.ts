@@ -23,5 +23,6 @@ export function buildMoodleParams(
   };
 
   process(prefix, params);
+
   return result;
 }

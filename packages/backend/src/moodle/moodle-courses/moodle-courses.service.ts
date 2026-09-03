@@ -12,15 +12,18 @@ export class MoodleCoursesService {
     if (!token || !moodleId) {
       throw new BadRequestException('token or user id are not provided');
     }
+
     try {
       const data = await this.moodleClient.client<Course[]>(
         getWsFunctionName('getCourses'),
         token,
         moodleId,
       );
+
       if (!Array.isArray(data)) {
         return [];
       }
+
       return data.map((course: Course) => ({
         id: course.id,
         fullname: course.fullname,

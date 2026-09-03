@@ -26,6 +26,8 @@ type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
  *
  * Props:
  * @param {'primary'|'secondary'} variant - Visual variant determining color/style.
+ * @param children
+ * @param className
  * @param {'small'|'medium'|'large'} [size='small'] - Size token used for padding and font.
  * @param {boolean} [isLink=false] - Render as an anchor element instead of a button.
  * @param {boolean} [isTransparent=false] - Render a transparent style variant.
@@ -43,9 +45,9 @@ type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
  */
 export function Button({
   variant,
-  size = 'small',
   children,
   className,
+  size = 'small',
   isLink = false,
   isTransparent = false,
   ...props

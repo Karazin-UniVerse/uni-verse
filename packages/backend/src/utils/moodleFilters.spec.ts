@@ -10,12 +10,14 @@ describe('moodleFilters', () => {
     it('should strip standard HTML tags and collapse whitespace', () => {
       const input =
         '<p>Hello   <strong>World</strong></p>&nbsp;<span>Test</span>';
+
       expect(normalizeMoodleText(input)).toBe('Hello World Test');
     });
 
     it('should strip script tags and other HTML elements', () => {
       const malicious = '<script>alert("xss")</script><p>Clean content</p>';
       const result = normalizeMoodleText(malicious);
+
       expect(result).not.toContain('<script>');
       expect(result).not.toContain('</script>');
       expect(result).toBe('alert("xss") Clean content');
@@ -23,6 +25,7 @@ describe('moodleFilters', () => {
 
     it('should prevent double-unescaping', () => {
       const doubleEscaped = '&amp;quot;';
+
       // &amp; is decoded to &, but the resulting &quot; must NOT be decoded to "
       expect(normalizeMoodleText(doubleEscaped)).toBe('&quot;');
     });

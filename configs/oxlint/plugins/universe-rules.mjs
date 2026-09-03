@@ -2,12 +2,14 @@ function unwrapDeclaration(node) {
   if (node && node.type === 'ExportNamedDeclaration' && node.declaration) {
     return node.declaration;
   }
-  return node;
+  
+return node;
 }
 
 function isControlFlow(node) {
   if (!node) return false;
-  return [
+  
+return [
     'IfStatement',
     'ForStatement',
     'ForInStatement',
@@ -21,14 +23,16 @@ function isControlFlow(node) {
 
 function isIgnoredBoundary(node) {
   if (!node) return false;
-  return ['BreakStatement', 'ContinueStatement', 'DebuggerStatement', 'EmptyStatement'].includes(
+  
+return ['BreakStatement', 'ContinueStatement', 'DebuggerStatement', 'EmptyStatement'].includes(
     node.type,
   );
 }
 
 function checkStatements(context, statements) {
   if (!statements || statements.length < 2) return;
-  const sourceCode = context.sourceCode || context.getSourceCode();
+  
+const sourceCode = context.sourceCode || context.getSourceCode();
 
   for (let i = 0; i < statements.length - 1; i++) {
     const prev = statements[i];
@@ -40,7 +44,8 @@ function checkStatements(context, statements) {
     const firstNodeOrComment = comments.length > 0 ? comments[0] : next;
     const nextLoc = firstNodeOrComment.loc || sourceCode.getLoc(firstNodeOrComment);
     const prevLoc = prev.loc || sourceCode.getLoc(prev);
-    if (!nextLoc || !prevLoc) continue;
+    
+if (!nextLoc || !prevLoc) continue;
 
     const nextStartLine = nextLoc.start.line;
     const prevEndLine = prevLoc.end.line;
@@ -58,7 +63,8 @@ function checkStatements(context, statements) {
     const isNextReturn = nextUnwrapped.type === 'ReturnStatement';
 
     let reason = null;
-    if (isNextReturn) {
+    
+if (isNextReturn) {
       reason = 'Expected empty line before return statement.';
     } else if (isPrevVar && !isNextVar) {
       reason = 'Expected empty line between variable declarations and subsequent logic blocks.';
@@ -81,15 +87,18 @@ function checkStatements(context, statements) {
 function checkObjectPattern(context, node) {
   const sourceCode = context.sourceCode || context.getSourceCode();
   const properties = node.properties;
-  if (!properties || properties.length < 2) return;
+  
+if (!properties || properties.length < 2) return;
 
   let seenDefault = false;
   const misplacedProps = [];
 
   for (const prop of properties) {
     if (prop.type === 'RestElement') continue;
-    const hasDefault = prop.value && prop.value.type === 'AssignmentPattern';
-    if (hasDefault) {
+    
+const hasDefault = prop.value && prop.value.type === 'AssignmentPattern';
+    
+if (hasDefault) {
       seenDefault = true;
     } else if (seenDefault) {
       misplacedProps.push(prop);
@@ -126,11 +135,13 @@ function checkObjectPattern(context, node) {
       const isMultiline = firstProp.loc.start.line !== lastProp.loc.end.line;
 
       let reordered;
-      if (isMultiline) {
+      
+if (isMultiline) {
         const lineText = sourceCode.lines[firstProp.loc.start.line - 1] || '';
         const indentMatch = lineText.match(/^\s*/);
         const indent = indentMatch ? indentMatch[0] : '  ';
-        reordered = [...nonDefaults, ...defaults, ...rests].join(`,\n${indent}`);
+        
+reordered = [...nonDefaults, ...defaults, ...rests].join(`,\n${indent}`);
       } else {
         reordered = [...nonDefaults, ...defaults, ...rests].join(', ');
       }
@@ -142,7 +153,8 @@ function checkObjectPattern(context, node) {
   for (let i = 1; i < misplacedProps.length; i++) {
     const prop = misplacedProps[i];
     const name = (prop.key && (prop.key.name || prop.key.value)) || sourceCode.getText(prop);
-    context.report({
+    
+context.report({
       node: prop,
       message: `Props without default values ('${name}') must be declared before props with default values.`,
     });
@@ -151,7 +163,8 @@ function checkObjectPattern(context, node) {
 
 function checkParams(context, params) {
   if (!params) return;
-  for (const param of params) {
+  
+for (const param of params) {
     if (param.type === 'ObjectPattern') {
       checkObjectPattern(context, param);
     } else if (param.type === 'AssignmentPattern' && param.left.type === 'ObjectPattern') {
@@ -229,18 +242,22 @@ export default {
           ImportDeclaration(node) {
             const filePath =
               context.filename || (context.getFilename && context.getFilename()) || '';
-            // Only enforce inside packages/uni-hub
+            
+// Only enforce inside packages/uni-hub
             if (filePath && !filePath.replace(/\\/g, '/').includes('packages/uni-hub')) {
               return;
             }
 
             const importPath = node.source && node.source.value;
-            if (typeof importPath === 'string') {
+            
+if (typeof importPath === 'string') {
               const utilsMatch = importPath.match(/^(\.\.\/)+utils\/(.*)$/);
-              if (utilsMatch) {
+              
+if (utilsMatch) {
                 const subPath = utilsMatch[2];
                 const replacement = `@uni-hub/utils/${subPath}`;
-                context.report({
+                
+context.report({
                   node: node.source,
                   message: `Use package alias '${replacement}' instead of relative path '${importPath}'.`,
                   fix(fixer) {

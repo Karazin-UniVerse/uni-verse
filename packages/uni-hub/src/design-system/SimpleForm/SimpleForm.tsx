@@ -26,6 +26,7 @@ export const SimpleForm: React.FC<SimpleFormProps> = ({
 
     if (onData) {
       const data = Object.fromEntries(formData.entries());
+
       onData(data);
     }
   };

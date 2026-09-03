@@ -8,12 +8,7 @@ type SpinnerProps = {
   tip?: string;
 };
 
-export const Spinner: React.FC<SpinnerProps> = ({
-  ariaLabel,
-  className,
-  size = 'medium',
-  tip,
-}) => {
+export const Spinner: React.FC<SpinnerProps> = ({ ariaLabel, className, tip, size = 'medium' }) => {
   const accessibleLabel = tip || ariaLabel || 'Завантаження...';
 
   return (

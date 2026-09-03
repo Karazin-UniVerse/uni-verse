@@ -48,13 +48,16 @@ export function CustomDateTime({
         setIsOpen(false);
       }
     };
+
     document.addEventListener('mousedown', handleClickOutside);
+
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   useEffect(() => {
     if (isOpen && selected && timeListRef.current) {
       const selectedEl = timeListRef.current.querySelector(`.${css.selected}`);
+
       if (selectedEl) {
         selectedEl.scrollIntoView({ block: 'center' });
       }
@@ -73,34 +76,41 @@ export function CustomDateTime({
   const daysInPrevMonth = new Date(year, month, 0).getDate();
 
   const days: { day: number; isCurrentMonth: boolean; monthOffset: number }[] = [];
+
   // Prev month days
   for (let i = firstDay - 1; i >= 0; i--) {
     days.push({ day: daysInPrevMonth - i, isCurrentMonth: false, monthOffset: -1 });
   }
+
   // Current month days
   for (let i = 1; i <= daysInMonth; i++) {
     days.push({ day: i, isCurrentMonth: true, monthOffset: 0 });
   }
+
   // Next month days
   const remaining = 42 - days.length;
+
   for (let i = 1; i <= remaining; i++) {
     days.push({ day: i, isCurrentMonth: false, monthOffset: 1 });
   }
 
   const handleDayClick = (dayInfo: (typeof days)[0]) => {
     const newDate = new Date(year, month + dayInfo.monthOffset, dayInfo.day);
+
     if (selected) {
       newDate.setHours(selected.getHours());
       newDate.setMinutes(selected.getMinutes());
     } else {
       newDate.setHours(0, 0, 0, 0);
     }
+
     onChange(newDate);
     setViewDate(newDate);
   };
 
   const handleTimeClick = (hours: number, minutes: number) => {
     const newDate = selected ? new Date(selected) : new Date(viewDate);
+
     newDate.setHours(hours);
     newDate.setMinutes(minutes);
     newDate.setSeconds(0);
@@ -110,6 +120,7 @@ export function CustomDateTime({
 
   // Time options (every 15 mins)
   const timeOptions = [];
+
   for (let h = 0; h < 24; h++) {
     for (let m = 0; m < 60; m += 15) {
       timeOptions.push({ hours: h, minutes: m });
@@ -122,12 +133,16 @@ export function CustomDateTime({
 
   const formatDateTime = (d: Date | null) => {
     if (!d) return '';
+
     const dateStr = `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
     let h = d.getHours();
     const m = d.getMinutes().toString().padStart(2, '0');
     const ampm = h >= 12 ? 'PM' : 'AM';
+
     h = h % 12;
-    h = h ? h : 12; // the hour '0' should be '12'
+    h = h ? h : 12;
+
+    // the hour '0' should be '12'
     return `${dateStr} ${h}:${m} ${ampm}`;
   };
 
@@ -233,6 +248,7 @@ export function CustomDateTime({
                   selected &&
                   selected.getHours() === t.hours &&
                   selected.getMinutes() === t.minutes;
+
                 return (
                   <button
                     key={`${t.hours}-${t.minutes}`}

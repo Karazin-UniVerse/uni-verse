@@ -24,6 +24,7 @@ function unlockScroll(id: string) {
   }
 
   const index = modalStack.lastIndexOf(id);
+
   if (index !== -1) {
     modalStack.splice(index, 1);
   }
@@ -85,10 +86,12 @@ export const Modal: React.FC<ModalProps> = ({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         const isTopmost = modalStack[modalStack.length - 1] === modalId;
+
         if (isTopmost) {
           event.stopPropagation();
           onCloseRef.current();
         }
+
         return;
       }
 
@@ -98,6 +101,7 @@ export const Modal: React.FC<ModalProps> = ({
 
         if (focusableElements.length === 0) {
           event.preventDefault();
+
           return;
         }
 

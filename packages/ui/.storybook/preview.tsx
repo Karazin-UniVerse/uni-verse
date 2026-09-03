@@ -42,9 +42,11 @@ export const globalTypes = {
 export const decorators = [
   (Story: any, context: any) => {
     const theme = context.globals?.theme ?? 'light';
+
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('data-theme', theme);
     }
+
     return <Story />;
   },
 ];

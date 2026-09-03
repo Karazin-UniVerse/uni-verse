@@ -27,6 +27,7 @@ type Story = StoryObj<typeof CustomDateTime>;
 
 const InteractiveTemplate = (args: any) => {
   const [date, setDate] = useState<Date | null>(new Date());
+
   return (
     <div style={{ minHeight: '400px' }}>
       <CustomDateTime {...args} selected={date} onChange={setDate} />

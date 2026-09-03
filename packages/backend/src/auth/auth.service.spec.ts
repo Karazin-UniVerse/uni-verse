@@ -63,6 +63,7 @@ describe('AuthService', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+
     mockUserService.createUser.mockResolvedValue(createdUser);
     mockJwtService.signAsync
       .mockResolvedValueOnce('access-token')
@@ -72,6 +73,7 @@ describe('AuthService', () => {
 
     const dto = { email: 'a@b.com', password: 'p' };
     const tokens = await authService.register(dto);
+
     expect(tokens).toHaveProperty('access_token', 'access-token');
     expect(tokens).toHaveProperty('refresh_token', 'refresh-token');
     expect(mockUserService.createUser).toHaveBeenCalled();
@@ -83,6 +85,7 @@ describe('AuthService', () => {
       new Error('Invalid Moodle credentials'),
     );
     const dto: LoginDto = { email: 'x', password: 'p' };
+
     await expect(authService.login(dto)).rejects.toThrow();
   });
 });
