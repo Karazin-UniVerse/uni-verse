@@ -2,10 +2,11 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   RequestTimeoutException,
 } from '@nestjs/common';
 import { buildMoodleParams } from '../../utils/moodle-params-builder';
-import { Logger } from '@nestjs/common';
+
 export interface MoodleException {
   exception: string;
   errorcode: string;
@@ -29,6 +30,7 @@ export class MoodleClientService {
       throw new Error('MOODLE_BASEURL must be a secure URL (https://)');
     }
   }
+
   async client<T = unknown>(
     wsfunction: string,
     moodleToken?: string,
@@ -36,11 +38,13 @@ export class MoodleClientService {
     params?: Record<string, unknown>,
   ): Promise<T> {
     const timeout = Number(this.timeout);
+
     if (!Number.isFinite(timeout) || timeout <= 0) {
       throw new Error('MOODLE_TIMEOUT must be a positive finite number');
     }
 
     const url = new URL(`${this.baseUrl}/webservice/rest/server.php`);
+
     url.searchParams.set('wstoken', moodleToken ?? '');
     url.searchParams.set('wsfunction', wsfunction);
     url.searchParams.set('moodlewsrestformat', 'json');
@@ -49,34 +53,41 @@ export class MoodleClientService {
       ...params,
     };
     const queryPairs = buildMoodleParams(combinedParams);
+
     queryPairs.forEach(([key, val]) => {
       url.searchParams.append(key, val);
     });
     this.logger.debug(
       `Sending request to Moodle [${wsfunction}] with params: ${JSON.stringify(params)}`,
     );
+
+    let data: T | MoodleException;
+
     try {
       const response = await fetch(url.toString(), {
         signal: AbortSignal.timeout(timeout),
         redirect: 'error',
       });
-      const data = (await response.json()) as T | MoodleException;
-      if (isMoodleException(data)) {
-        this.logger.error(
-          `Moodle Exception [${wsfunction}]: ${data.message} (code: ${data.errorcode})`,
-          data.debuginfo ?? '',
-        );
-        throw new BadRequestException(data.message);
-      }
 
-      return data;
+      data = (await response.json()) as T | MoodleException;
     } catch (error) {
       if (error instanceof Error && error.name === 'TimeoutError') {
         throw new RequestTimeoutException('Moodle request timeout');
       }
+
       throw new InternalServerErrorException(
         error instanceof Error ? error.message : 'Unknown exception',
       );
     }
+
+    if (isMoodleException(data)) {
+      this.logger.error(
+        `Moodle Exception [${wsfunction}]: ${data.message} (code: ${data.errorcode})`,
+        data.debuginfo ?? '',
+      );
+      throw new BadRequestException(data.message);
+    }
+
+    return data;
   }
 }
