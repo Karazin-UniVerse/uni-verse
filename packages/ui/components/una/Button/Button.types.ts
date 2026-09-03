@@ -2,7 +2,7 @@ import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'reac
 
 export type BaseProps = {
   children: ReactNode;
-  variant: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary';
   className?: string;
   isTransparent?: boolean;
   size?: 'small' | 'medium' | 'large';

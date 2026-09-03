@@ -12,7 +12,7 @@ import css from './Button.module.scss';
  */
 export function Button({
   children,
-  variant,
+  variant = 'primary',
   className,
   isLink = false,
   isTransparent = false,

@@ -5,5 +5,3 @@ export interface TextInputProps extends Omit<InputHTMLAttributes<HTMLInputElemen
   size?: 'small' | 'medium' | 'large';
   isTransparent?: boolean;
 }
-
-export type SimpleInputProps = TextInputProps;

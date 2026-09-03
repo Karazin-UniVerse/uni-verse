@@ -1,11 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import SimpleSlider from './SimpleSlider';
+import { SimpleSlider } from './SimpleSlider';
 
 const meta: Meta<typeof SimpleSlider> = {
   title: 'Components/Inputs/SimpleSlider',
   component: SimpleSlider,
   tags: ['autodocs'],
   argTypes: {
+    onChange: { action: 'changed' },
     min: {
       control: 'number',
     },
@@ -34,6 +35,7 @@ export const Default: Story = {
     max: 100,
     step: 1,
     disabled: false,
+    onChange: () => {},
   },
 };
 
@@ -41,5 +43,6 @@ export const Disabled: Story = {
   args: {
     value: 30,
     disabled: true,
+    onChange: () => {},
   },
 };
