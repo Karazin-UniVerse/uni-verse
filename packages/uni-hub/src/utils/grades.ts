@@ -1,7 +1,10 @@
 import type { Grade } from '../types';
 
 export function getGradeCourseName(grade: Grade): string {
-  return grade.courseName || grade.course_name || '';
+  const courseName = grade.courseName?.trim();
+  const fallbackCourseName = grade.course_name?.trim();
+
+  return courseName || fallbackCourseName || '';
 }
 
 export function getGradeRawValue(grade: Grade): number | null {
