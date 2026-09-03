@@ -53,15 +53,15 @@ Commits are guarded by Husky in [`.husky/pre-commit`](../../.husky/pre-commit) e
 ```javascript
 // lint-staged.config.cjs
 module.exports = {
-  '*.{ts,tsx,js,jsx}': ['oxlint --fix --deny-warnings', 'prettier --write'],
+  '*.{ts,tsx,js,jsx}': ['node configs/oxlint/lint-staged.cjs', 'prettier --write'],
   '*.{json,md,yml,yaml}': ['prettier --write'],
 };
 ```
 
-1. **Pre-commit Trigger**: On `git commit`, `lint-staged` runs `oxlint --fix --deny-warnings` on staged files.
+1. **Pre-commit Trigger**: On `git commit`, `lint-staged` runs `node configs/oxlint/lint-staged.cjs` on staged files.
 2. **Automatic Fixes**: Fixable violations (spacing, import aliases, prop ordering) are corrected automatically in place.
 3. **Format**: `prettier --write` formats the modified files and stages them.
-4. **Commit Blocking**: If unfixable errors or warnings remain, Oxlint exits with code `1`, and Git **aborts the commit**.
+4. **Commit Availability**: If warnings or errors remain, Oxlint reports them in the terminal for developer awareness, but does not abort the commit (state: **available to commit**).
 
 ---
 
