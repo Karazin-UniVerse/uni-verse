@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import type { Grade } from '@uni-hub/types';
-import { BADGES, evaluateBadgeUnlocks } from '@uni-hub/gamification/badges';
+import { BADGES } from '@uni-hub/constants/gamification';
+import { evaluateBadgeUnlocks } from '@uni-hub/utils/gamification';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { useToast } from '@uni-hub/components/ui/Toast';
 

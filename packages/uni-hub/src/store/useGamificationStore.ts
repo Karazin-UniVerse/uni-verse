@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { BadgeId } from '../gamification/types';
-import { shiftDateKey, toLocalDateKey } from '../gamification/badges';
+import type { BadgeId } from '@uni-hub/constants/gamification';
+import { shiftDateKey, toLocalDateKey } from '@uni-hub/utils/gamification';
 import { fireConfetti } from '../utils/confetti';
 import { playSuccess } from '../utils/soundEffects';
 

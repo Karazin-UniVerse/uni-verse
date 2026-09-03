@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import type { Assignment } from '@uni-hub/types';
-import type { TimeOfDay } from '@uni-hub/gamification/types';
+import type { TimeOfDay } from '@uni-hub/constants/gamification';
 import { useNow } from '@uni-hub/hooks/useNow';
 import styles from './ContextualGreeting.module.scss';
 
