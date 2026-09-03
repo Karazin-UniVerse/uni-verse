@@ -1,7 +1,7 @@
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 import clsx from 'clsx';
 import type { ButtonProps } from './Button.types';
-import css from './SimpleButton.module.scss';
+import css from './Button.module.scss';
 
 export type {
   BaseProps,

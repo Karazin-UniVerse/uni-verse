@@ -23,7 +23,7 @@
   text-decoration: none;
 }
 
-/* Primary SimpleButton Styles */
+/* Primary Button Styles */
 .primary {
   background-color: var(--btn-primary-bg);
   color: var(--btn-primary-text);
@@ -47,7 +47,7 @@
   }
 }
 
-/* Secondary SimpleButton Styles */
+/* Secondary Button Styles */
 .secondary {
   background-color: var(--btn-secondary-bg);
   color: var(--btn-secondary-text);
@@ -69,7 +69,7 @@
   }
 }
 
-/* Transparent/Ghost SimpleButton Styles */
+/* Transparent/Ghost Button Styles */
 .is-transparent {
   background-color: transparent;
   color: var(--accent-primary); /* Use the main accent color for text */
