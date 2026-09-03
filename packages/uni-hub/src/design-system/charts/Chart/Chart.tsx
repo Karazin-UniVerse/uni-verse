@@ -16,7 +16,7 @@ import clsx from 'clsx';
 import css from './Chart.module.scss';
 import { resolveCssColor, useChartTheme } from './useChartTheme';
 
-import type { ChartDatum, ChartProps } from './Chart.types';
+import type { ChartProps } from './Chart.types';
 
 export type { ChartDatum, ChartProps } from './Chart.types';
 
