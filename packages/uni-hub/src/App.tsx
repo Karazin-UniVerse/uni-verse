@@ -29,8 +29,14 @@ const App: React.FC = () => {
         <Router>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/courses/:courseId/contents" element={<CourseContents />} />
+            <Route
+              path="/dashboard"
+              element={isLoggedIn ? <DashboardPage /> : <Navigate to="/login" replace />}
+            />
+            <Route
+              path="/courses/:courseId/contents"
+              element={isLoggedIn ? <CourseContents /> : <Navigate to="/login" replace />}
+            />
             <Route
               path="/"
               element={<Navigate to={isLoggedIn ? '/dashboard' : '/login'} replace />}
