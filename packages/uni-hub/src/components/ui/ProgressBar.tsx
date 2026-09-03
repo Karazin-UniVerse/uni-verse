@@ -20,9 +20,9 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
 }) => {
   const [width, setWidth] = useState(0);
 
-  const normalizedMax = Math.max(0, max);
-  const normalizedValue = Math.max(0, Math.min(normalizedMax, value));
-  const percentage = normalizedMax > 0 ? (normalizedValue / normalizedMax) * 100 : 0;
+  const safeMax = Number.isFinite(max) ? Math.max(0, max) : 100;
+  const safeValue = Number.isFinite(value) ? Math.max(0, Math.min(safeMax, value)) : 0;
+  const percentage = safeMax > 0 ? (safeValue / safeMax) * 100 : 0;
 
   useEffect(() => {
     const animationFrameId = requestAnimationFrame(() => setWidth(percentage));
@@ -38,9 +38,9 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
       role="progressbar"
       aria-label={defaultAriaLabel}
       aria-labelledby={ariaLabelledBy}
-      aria-valuenow={normalizedValue}
+      aria-valuenow={safeValue}
       aria-valuemin={0}
-      aria-valuemax={normalizedMax}
+      aria-valuemax={safeMax}
       aria-valuetext={`${Math.round(percentage)}%`}
     >
       <div className={`${styles.fill} ${styles[tone]}`} style={{ width: `${width}%` }} />

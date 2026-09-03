@@ -2,30 +2,33 @@ import React, { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 import styles from './Modal.module.scss';
 
-let activeModalCount = 0;
+const modalStack: string[] = [];
 let previousBodyOverflow = '';
 
-function lockScroll() {
+function lockScroll(id: string) {
   if (typeof document === 'undefined') {
     return;
   }
 
-  if (activeModalCount === 0) {
+  if (modalStack.length === 0) {
     previousBodyOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
   }
 
-  activeModalCount += 1;
+  modalStack.push(id);
 }
 
-function unlockScroll() {
+function unlockScroll(id: string) {
   if (typeof document === 'undefined') {
     return;
   }
 
-  activeModalCount = Math.max(0, activeModalCount - 1);
+  const index = modalStack.lastIndexOf(id);
+  if (index !== -1) {
+    modalStack.splice(index, 1);
+  }
 
-  if (activeModalCount === 0) {
+  if (modalStack.length === 0) {
     document.body.style.overflow = previousBodyOverflow;
   }
 }
@@ -54,7 +57,13 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
   const titleId = useId();
+  const modalId = useId();
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!open) {
@@ -62,7 +71,7 @@ export const Modal: React.FC<ModalProps> = ({
     }
 
     previouslyFocusedElementRef.current = document.activeElement as HTMLElement | null;
-    lockScroll();
+    lockScroll(modalId);
 
     const dialogElement = dialogRef.current;
 
@@ -75,12 +84,17 @@ export const Modal: React.FC<ModalProps> = ({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose();
+        const isTopmost = modalStack[modalStack.length - 1] === modalId;
+        if (isTopmost) {
+          event.stopPropagation();
+          onCloseRef.current();
+        }
         return;
       }
 
       if (event.key === 'Tab' && dialogRef.current) {
-        const focusableElements = dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+        const focusableElements =
+          dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
 
         if (focusableElements.length === 0) {
           event.preventDefault();
@@ -108,13 +122,13 @@ export const Modal: React.FC<ModalProps> = ({
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      unlockScroll();
+      unlockScroll(modalId);
 
       if (previouslyFocusedElementRef.current && previouslyFocusedElementRef.current.focus) {
         previouslyFocusedElementRef.current.focus();
       }
     };
-  }, [open, onClose]);
+  }, [open, modalId]);
 
   if (!open) {
     return null;
