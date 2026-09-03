@@ -21,8 +21,12 @@
     "paths": {
       "@/*": ["./src/*"],
       "@uni-hub/*": ["./src/*"],
-      "@una/design-system": ["./src/design-system"],
-      "@una/*": ["./src/components/ui/*", "./src/*"]
+      "@ui/*": ["./src/components/ui/*"],
+      "@una/*": [
+        "./src/components/ui/components/una/*",
+        "../ui/components/una/*",
+        "./src/design-system/*"
+      ]
     }
   },
   "include": [

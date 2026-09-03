@@ -2,11 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import type { Assignment, Grade } from '@uni-hub/types';
 import { getGradeCourseName, getGradeRawValue, getGradeTone, getValidGrades } from '@uni-hub/utils/grades';
 import { useCountUp } from '@uni-hub/hooks/useCountUp';
-import { Modal } from '@una/Modal';
-import { Select } from '@una/Select';
-import { Empty } from '@una/Empty';
-import { ProgressBar } from '@una/ProgressBar';
-import { SimpleButton, SimpleSlider } from '@una/design-system';
+import { Modal } from '@ui/Modal';
+import { Select } from '@ui/Select';
+import { Empty } from '@ui/Empty';
+import { ProgressBar } from '@ui/ProgressBar';
+import { SimpleButton, SimpleSlider } from '@uni-hub/design-system';
 import styles from './GradeSimulator.module.scss';
 
 const DEFAULT_SCORE = 75;
