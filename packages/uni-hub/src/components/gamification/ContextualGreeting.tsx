@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import type { Assignment } from '../../types';
 import type { TimeOfDay } from '../../gamification/types';
+import { useNow } from '../../hooks/useNow';
 import styles from './ContextualGreeting.module.scss';
 
 type ContextualGreetingProps = {
@@ -15,21 +16,31 @@ const GREETINGS: Record<TimeOfDay, string> = {
 };
 
 function getTimeOfDay(hour: number): TimeOfDay {
-  if (hour >= 5 && hour < 12) return 'morning';
-  if (hour >= 12 && hour < 18) return 'day';
-  if (hour >= 18 && hour < 22) return 'evening';
+  if (hour >= 5 && hour < 12) {
+    return 'morning';
+  }
+
+  if (hour >= 12 && hour < 18) {
+    return 'day';
+  }
+
+  if (hour >= 18 && hour < 22) {
+    return 'evening';
+  }
+
   return 'night';
 }
 
 export const ContextualGreeting: React.FC<ContextualGreetingProps> = ({ assignments }) => {
-  const [hour] = useState(() => new Date().getHours());
-  const [nowSec] = useState(() => Math.floor(Date.now() / 1000));
+  const nowMs = useNow(30000);
+  const hour = new Date(nowMs).getHours();
+  const nowSec = Math.floor(nowMs / 1000);
 
   const timeOfDay = getTimeOfDay(hour);
 
   const cta = useMemo(() => {
     const upcoming = assignments
-      .filter((a) => a.duedate > nowSec)
+      .filter((assignment) => assignment.duedate > nowSec)
       .sort((a, b) => a.duedate - b.duedate);
 
     if (upcoming.length === 0) {
@@ -38,6 +49,7 @@ export const ContextualGreeting: React.FC<ContextualGreetingProps> = ({ assignme
 
     const nearest = upcoming[0];
     const hoursLeft = Math.max(1, Math.ceil((nearest.duedate - nowSec) / 3600));
+
     return `До «${nearest.name}» осталось ${hoursLeft} ч. Успеем?`;
   }, [assignments, nowSec]);
 

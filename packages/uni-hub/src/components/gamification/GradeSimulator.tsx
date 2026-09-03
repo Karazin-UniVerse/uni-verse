@@ -1,82 +1,125 @@
-import React, { useMemo, useState } from 'react';
-import type { Assignment, Grade } from '@/types';
-import { computeSimulatedFinal } from '@/utils/gradeMath';
-import { getValidGrades, getGradeTone, getGradeCourseName, getGradeRawValue } from '@/utils/grades';
-import { useCountUp } from '@/hooks/useCountUp';
+import React, { useEffect, useMemo, useState } from 'react';
+import type { Assignment, Grade } from '../../types';
+import { getGradeCourseName, getGradeRawValue, getGradeTone, getValidGrades } from '../../utils/grades';
+import { useCountUp } from '../../hooks/useCountUp';
 import { Modal } from '../ui/Modal';
-import { Select } from '../ui/Select';
+import SimpleButton from '../../design-system/buttons/SimpleButton/SimpleButton';
+import SimpleSlider from '../../design-system/inputs/SimpleSlider/SimpleSlider';
 import { ProgressBar } from '../ui/ProgressBar';
-import { Empty } from '../ui/Empty';
-import { SimpleButton, SimpleSlider } from '../../design-system';
+import Select from '../../design-system/inputs/Select/Select';
+import Empty from '../../design-system/Empty/Empty';
 import styles from './GradeSimulator.module.scss';
 
+const DEFAULT_SCORE = 75;
 const MIN_SCORE = 0;
 const MAX_SCORE = 100;
-const DEFAULT_SCORE = 75;
 
-const clampScore = (value: number): number => {
-  if (!Number.isFinite(value)) {
-    return DEFAULT_SCORE;
-  }
+export function clampScore(score: number): number {
+  if (Number.isNaN(score)) return DEFAULT_SCORE;
+  return Math.max(MIN_SCORE, Math.min(MAX_SCORE, score));
+}
 
-  return Math.min(MAX_SCORE, Math.max(MIN_SCORE, value));
-};
+export function computeSimulatedFinal(currentScore: number, remainingScores: number[]): number {
+  if (remainingScores.length === 0) return currentScore;
+  const simulatedAvg =
+    remainingScores.reduce((sum, val) => sum + val, 0) / remainingScores.length;
+  return currentScore * 0.7 + simulatedAvg * 0.3;
+}
 
 type GradeSimulatorProps = {
-  open: boolean;
-  onClose: () => void;
-  grades: Grade[];
   assignments: Assignment[];
+  grades: Grade[];
+  onClose: () => void;
+  open: boolean;
 };
 
 export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
-  open,
-  onClose,
-  grades,
   assignments,
+  grades,
+  onClose,
+  open,
 }) => {
   const validGrades = useMemo(() => getValidGrades(grades), [grades]);
 
+  const uniqueGrades = useMemo(() => {
+    const seenCourseNames = new Set<string>();
+    const uniqueList: Grade[] = [];
+
+    for (const grade of validGrades) {
+      const name = getGradeCourseName(grade).trim();
+
+      if (name && !seenCourseNames.has(name.toLowerCase())) {
+        seenCourseNames.add(name.toLowerCase());
+        uniqueList.push(grade);
+      }
+    }
+
+    return uniqueList;
+  }, [validGrades]);
+
   const courseOptions = useMemo(
     () =>
-      validGrades.map((g) => {
-        const name = getGradeCourseName(g);
+      uniqueGrades.map((grade) => {
+        const name = getGradeCourseName(grade).trim();
+
         return {
           value: name,
           label: name,
         };
       }),
-    [validGrades],
+    [uniqueGrades],
   );
 
   const [courseName, setCourseName] = useState('');
-  const selectedCourse = courseName || courseOptions[0]?.value || '';
 
-  const currentGrade = validGrades.find((g) => getGradeCourseName(g) === selectedCourse);
+  const isSelectedCourseValid = courseOptions.some((option) => option.value === courseName);
+  const selectedCourse = isSelectedCourseValid
+    ? courseName
+    : courseOptions[0]?.value || '';
+
+  useEffect(() => {
+    if (courseName && !isSelectedCourseValid && courseOptions.length > 0) {
+      setCourseName(courseOptions[0].value);
+    }
+  }, [courseName, isSelectedCourseValid, courseOptions]);
+
+  const currentGrade = uniqueGrades.find(
+    (grade) => getGradeCourseName(grade).trim().toLowerCase() === selectedCourse.trim().toLowerCase(),
+  );
+
   const currentScore = currentGrade
     ? (getGradeRawValue(currentGrade) ?? (Number.parseFloat(currentGrade.grade) || 0))
     : 0;
 
   const remaining = useMemo(() => {
-    if (!selectedCourse) return [];
+    if (!selectedCourse) {
+      return [];
+    }
+
     const key = selectedCourse.trim().toLowerCase();
-    return assignments.filter((a) => (a.courseName || '').trim().toLowerCase() === key);
+
+    return assignments.filter(
+      (assignment) => (assignment.courseName || '').trim().toLowerCase() === key,
+    );
   }, [assignments, selectedCourse]);
 
   const [scores, setScores] = useState<Record<number, number>>({});
 
-  const remainingValues = remaining.map((a) => clampScore(scores[a.id] ?? DEFAULT_SCORE));
+  const remainingValues = remaining.map((assignment) =>
+    clampScore(scores[assignment.id] ?? DEFAULT_SCORE),
+  );
+
   const finalScore = computeSimulatedFinal(currentScore, remainingValues);
   const animatedFinal = useCountUp(Math.round(finalScore), 400, open);
   const tone = getGradeTone(finalScore);
 
   const setScore = (id: number, value: number) => {
-    setScores((prev) => ({ ...prev, [id]: clampScore(value) }));
+    setScores((previousScores) => ({ ...previousScores, [id]: clampScore(value) }));
   };
 
   return (
     <Modal open={open} onClose={onClose} title="Симулятор оценок — «Что, если?»" width={560}>
-      {validGrades.length === 0 ? (
+      {uniqueGrades.length === 0 ? (
         <Empty description="Нет оценок для симуляции" />
       ) : (
         <div className={styles.body}>
@@ -101,13 +144,14 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
             <Empty description="Нет заданий по этому курсу — показываем только текущую оценку" />
           ) : (
             <div className={styles.list}>
-              {remaining.map((a) => {
-                const value = scores[a.id] ?? 75;
+              {remaining.map((assignment) => {
+                const value = scores[assignment.id] ?? 75;
+
                 return (
-                  <label key={a.id} className={styles.row}>
+                  <label key={assignment.id} className={styles.row}>
                     <div className={styles.rowTop}>
-                      <span className={styles.name} title={a.name}>
-                        {a.name}
+                      <span className={styles.name} title={assignment.name}>
+                        {assignment.name}
                       </span>
                       <span className={styles.score}>{value}</span>
                     </div>
@@ -115,7 +159,7 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
                       min={MIN_SCORE}
                       max={MAX_SCORE}
                       value={value}
-                      onChange={(val) => setScore(a.id, val)}
+                      onChange={(score) => setScore(assignment.id, score)}
                     />
                   </label>
                 );
