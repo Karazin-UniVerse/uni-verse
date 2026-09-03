@@ -61,7 +61,8 @@ reviews:
            ```
 
         4. Component Types Extraction:
-           - For complex components with substantial prop interfaces or domain types, extract them into a co-located `<ComponentName>.types.ts` file.
+           - For complex React UI components with substantial prop interfaces or domain types, extract them into a co-located `<ComponentName>.types.ts` file.
+           - Do not create separate `.types.ts` files for simple utility functions, single helpers, or trivial components to avoid unnecessary fragmentation.
            - Re-export types from the component file or module index for backwards compatibility.
            
            Example:
@@ -73,4 +74,3 @@ reviews:
            // Chart.tsx
            export type { ChartDatum, ChartProps } from './Chart.types';
            ```
-
