@@ -29,7 +29,7 @@ export const SimpleSlider: React.FC<SimpleSliderProps> = ({
       step={step}
       value={value}
       disabled={disabled}
-      onChange={(e) => onChange(Number(e.target.value))}
+      onChange={(event) => onChange(Number(event.target.value))}
       className={clsx(styles.slider, className)}
     />
   );

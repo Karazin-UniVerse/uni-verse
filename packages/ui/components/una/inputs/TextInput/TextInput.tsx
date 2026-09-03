@@ -49,3 +49,6 @@ export const TextInput = forwardRef<HTMLInputElement, SimpleInputProps>(
 );
 
 TextInput.displayName = 'TextInput';
+
+export const SimpleInput = TextInput;
+export default TextInput;

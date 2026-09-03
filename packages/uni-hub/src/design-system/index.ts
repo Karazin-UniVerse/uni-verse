@@ -1,1 +1,1 @@
-export * from './breakpoints';
+export * from '@universe/ui';

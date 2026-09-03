@@ -32,15 +32,18 @@ export function CustomDateTime({
   ...props
 }: CustomDateTimeProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [prevSelected, setPrevSelected] = useState(selected);
   const [viewDate, setViewDate] = useState(selected || new Date());
   const containerRef = useRef<HTMLDivElement>(null);
   const timeListRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  if (selected !== prevSelected) {
+    setPrevSelected(selected);
+
     if (selected) {
       setViewDate(selected);
     }
-  }, [selected]);
+  }
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

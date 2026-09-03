@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+@import 'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap';
+
+@import './breakpoints';
 
 /* ==========================================================================
    1. BASE & LAYOUT TOKENS (Non-thematic)
@@ -28,7 +30,7 @@
   --gap-large: var(--space-24);
 
   /* Typography */
-  --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-family-base: -apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif;
   --font-family-heading: var(--font-family-base);
   --font-family-regular: var(--font-family-base);
 
@@ -60,7 +62,10 @@
 
   /* Transitions */
   --transition-small: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-medium: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 150ms;
+  --transition-medium: 250ms;
+  --transition-slow: 400ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Focus Ring */
   --focus-ring-width: 3px;
@@ -166,8 +171,59 @@
   --accent-secondary-active: var(--gray-300);
   --accent-text-on-secondary: var(--neutral-text-primary);
 
-  /* Focus Ring */
-  --focus-ring-color: rgba(52, 102, 231, 0.4);
+  --focus-ring-color: rgba(22, 75, 215, 0.35);
+  --bg-hover: var(--gray-100);
+
+  /* Chart tokens */
+  --chart-bg: var(--neutral-surface);
+  --chart-border: var(--neutral-border);
+  --chart-grid: var(--gray-200);
+  --chart-tick: var(--neutral-text-secondary);
+  --chart-axis: var(--neutral-border);
+  --chart-tooltip-bg: var(--neutral-bg);
+  --chart-tooltip-border: var(--neutral-border);
+  --chart-tooltip-text: var(--neutral-text-primary);
+  --chart-tooltip-muted: var(--neutral-text-secondary);
+  --chart-legend: var(--neutral-text-secondary);
+  --chart-empty: var(--neutral-text-secondary);
+  --chart-title: var(--neutral-text-primary);
+  --chart-success: var(--green-500);
+  --chart-warning: #f59e0b;
+  --chart-danger: var(--red-500);
+  --chart-info: var(--blue-500);
+  --chart-series-1: var(--accent-primary);
+  --chart-series-2: var(--chart-success);
+  --chart-series-3: var(--chart-warning);
+  --chart-series-4: var(--chart-danger);
+  --chart-series-5: var(--chart-info);
+  --chart-glow: none;
+  --chart-bar-radius: var(--border-radius-small);
+}
+
+/* ==========================================================================
+   4. COMPONENT & SEMANTIC ALIASES
+   ========================================================================== */
+:root {
+  /* General UI */
+  --bg-color: var(--neutral-bg);
+  --bg-surface: var(--neutral-surface);
+  --text-primary: var(--neutral-text-primary);
+  --text-secondary: var(--neutral-text-secondary);
+  --text-disabled: var(--neutral-text-disabled);
+  --border-color: var(--neutral-border);
+
+  /* Primary SimpleButton */
+  --btn-primary-bg: var(--accent-primary);
+  --btn-primary-hover: var(--accent-primary-hover);
+  --btn-primary-active: var(--accent-primary-active);
+  --btn-primary-text: var(--accent-text-on-primary);
+  --btn-primary-disabled: var(--neutral-surface);
+
+  /* Secondary SimpleButton */
+  --btn-secondary-bg: var(--accent-secondary);
+  --btn-secondary-hover: var(--accent-secondary-hover);
+  --btn-secondary-active: var(--accent-secondary-active);
+  --btn-secondary-text: var(--accent-text-on-secondary);
 }
 
 /* -----------------------------------------
@@ -193,8 +249,33 @@
   --accent-secondary-active: var(--gray-500);
   --accent-text-on-secondary: var(--neutral-text-primary);
 
-  /* Focus Ring */
-  --focus-ring-color: rgba(52, 102, 231, 0.5);
+  --focus-ring-color: rgba(119, 148, 246, 0.45);
+  --bg-hover: var(--gray-700);
+
+  /* Chart tokens */
+  --chart-bg: var(--neutral-surface);
+  --chart-border: var(--neutral-border);
+  --chart-grid: rgba(255, 255, 255, 0.08);
+  --chart-tick: var(--neutral-text-secondary);
+  --chart-axis: var(--neutral-border);
+  --chart-tooltip-bg: #1a1a1a;
+  --chart-tooltip-border: var(--neutral-border);
+  --chart-tooltip-text: var(--neutral-text-primary);
+  --chart-tooltip-muted: var(--neutral-text-secondary);
+  --chart-legend: var(--neutral-text-secondary);
+  --chart-empty: var(--neutral-text-secondary);
+  --chart-title: var(--neutral-text-primary);
+  --chart-success: var(--green-400);
+  --chart-warning: #fbbf24;
+  --chart-danger: var(--red-400);
+  --chart-info: var(--blue-400);
+  --chart-series-1: var(--blue-400);
+  --chart-series-2: var(--chart-success);
+  --chart-series-3: var(--chart-warning);
+  --chart-series-4: var(--chart-danger);
+  --chart-series-5: var(--chart-info);
+  --chart-glow: none;
+  --chart-bar-radius: var(--border-radius-small);
 }
 
 /* -----------------------------------------
@@ -238,14 +319,14 @@
   --text-disabled: var(--cyberpunk-text-dim);
   --border-color: var(--cyberpunk-pink);
 
-  /* Primary Button Overrides */
+  /* Primary SimpleButton Overrides */
   --btn-primary-bg: var(--cyberpunk-yellow);
   --btn-primary-hover: var(--cyberpunk-cyan);
   --btn-primary-active: var(--cyberpunk-pink);
   --btn-primary-text: var(--cyberpunk-black);
   --btn-primary-disabled: var(--cyberpunk-gray);
 
-  /* Secondary Button Overrides */
+  /* Secondary SimpleButton Overrides */
   --btn-secondary-bg: var(--cyberpunk-black);
   --btn-secondary-hover: var(--cyberpunk-gray);
   --btn-secondary-active: var(--cyberpunk-purple);
@@ -262,10 +343,10 @@
   --box-shadow-medium: 0 0 10px rgba(255, 0, 85, 0.5), 0 0 20px rgba(0, 240, 255, 0.2);
   --box-shadow-large: 0 0 15px rgba(252, 238, 10, 0.6), 0 0 30px rgba(255, 0, 85, 0.4);
 
-  /* Focus Ring */
   --focus-ring-color: rgba(255, 0, 85, 0.7);
   --focus-ring-width: 2px;
   --focus-ring-offset: 1px;
+  --bg-hover: var(--cyberpunk-gray);
 
   /* Cyberpunk Font stack overrides */
   --font-family-heading: 'Orbitron', sans-serif;
@@ -274,45 +355,44 @@
   /* Font Shorthand Abstractions */
   --font-heading: var(--font-weight-bold) var(--font-xxl)/1.1 var(--font-family-heading);
   --font-regular: var(--font-weight-regular) var(--font-md)/1.4 var(--font-family-regular);
+
+  /* Chart tokens */
+  --chart-bg: var(--cyberpunk-dark);
+  --chart-border: var(--cyberpunk-cyan);
+  --chart-grid: rgba(0, 240, 255, 0.18);
+  --chart-tick: var(--cyberpunk-cyan);
+  --chart-axis: rgba(255, 0, 85, 0.55);
+  --chart-tooltip-bg: var(--cyberpunk-black);
+  --chart-tooltip-border: var(--cyberpunk-pink);
+  --chart-tooltip-text: var(--cyberpunk-yellow);
+  --chart-tooltip-muted: var(--cyberpunk-cyan);
+  --chart-legend: var(--cyberpunk-cyan);
+  --chart-empty: var(--cyberpunk-text-dim);
+  --chart-title: var(--cyberpunk-yellow);
+  --chart-success: var(--cyberpunk-cyan);
+  --chart-warning: var(--cyberpunk-yellow);
+  --chart-danger: var(--cyberpunk-pink);
+  --chart-info: #7c5cff;
+  --chart-series-1: var(--cyberpunk-yellow);
+  --chart-series-2: var(--cyberpunk-cyan);
+  --chart-series-3: var(--cyberpunk-pink);
+  --chart-series-4: #7c5cff;
+  --chart-series-5: #00ff88;
+  --chart-glow: 0 0 12px rgba(0, 240, 255, 0.35), 0 0 24px rgba(255, 0, 85, 0.18);
+  --chart-bar-radius: 0px;
 }
 
 
-:root,
 /* ==========================================================================
-   5. COMPONENT & SEMANTIC ALIASES
-   ========================================================================== */
-:root {
-  /* General UI */
-  --bg-color: var(--neutral-bg);
-  --bg-surface: var(--neutral-surface);
-  --text-primary: var(--neutral-text-primary);
-  --text-secondary: var(--neutral-text-secondary);
-  --text-disabled: var(--neutral-text-disabled);
-  --border-color: var(--neutral-border);
-
-  /* Primary Button */
-  --btn-primary-bg: var(--accent-primary);
-  --btn-primary-hover: var(--accent-primary-hover);
-  --btn-primary-active: var(--accent-primary-active);
-  --btn-primary-text: var(--accent-text-on-primary);
-  --btn-primary-disabled: var(--neutral-surface);
-
-  /* Secondary Button */
-  --btn-secondary-bg: var(--accent-secondary);
-  --btn-secondary-hover: var(--accent-secondary-hover);
-  --btn-secondary-active: var(--accent-secondary-active);
-  --btn-secondary-text: var(--accent-text-on-secondary);
-}
-
-/* ==========================================================================
-   6. GLOBAL BASE STYLES
+   5. GLOBAL BASE STYLES
    ========================================================================== */
 html, body {
   background-color: var(--bg-color);
   color: var(--text-primary);
   font-family: var(--font-family-regular), var(--font-family-base), sans-serif;
   margin: 0;
-  padding: var(--space-16);
+  padding: 0;
+  min-height: 100vh;
   box-sizing: border-box;
   transition: background-color 200ms ease, color 200ms ease;
 }

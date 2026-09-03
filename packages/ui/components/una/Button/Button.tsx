@@ -1,53 +1,40 @@
 import type { ButtonHTMLAttributes, AnchorHTMLAttributes, ReactNode } from 'react';
-import css from './SimpleButton.module.scss';
 import clsx from 'clsx';
-import React from 'react';
+import css from './SimpleButton.module.scss';
 
 type BaseProps = {
   children: ReactNode;
   variant: 'primary' | 'secondary';
-  size: 'small' | 'medium' | 'large';
   className?: string;
   isTransparent?: boolean;
+  size?: 'small' | 'medium' | 'large';
 };
 
 export type ButtonAsButtonProps = BaseProps & {
   isLink?: false;
 } & ButtonHTMLAttributes<HTMLButtonElement>;
-type ButtonAsLinkProps = BaseProps & { isLink: true } & AnchorHTMLAttributes<HTMLAnchorElement>;
 
-type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
+export type ButtonAsLinkProps = BaseProps & {
+  href: string;
+  isLink: true;
+} & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'>;
+
+export type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
+
 /**
- * Button
+ * Button / SimpleButton
  *
  * Accessible button component that supports both native <button> usage and
  * link-like behavior. It accepts the design system `variant` and `size`
  * tokens and forwards all native element attributes.
- *
- * Props:
- * @param {'primary'|'secondary'} variant - Visual variant determining color/style.
- * @param {'small'|'medium'|'large'} [size='small'] - Size token used for padding and font.
- * @param {boolean} [isLink=false] - Render as an anchor element instead of a button.
- * @param {boolean} [isTransparent=false] - Render a transparent style variant.
- * @param {React.ButtonHTMLAttributes<HTMLButtonElement> | React.AnchorHTMLAttributes<HTMLAnchorElement>} props - Native element attributes forwarded.
- *
- * Examples:
- * ```tsx
- * // Regular button
- * <Button variant="primary" size="medium" onClick={() => alert('clicked')}>Save</Button>
- *
- *
- * // Link-style button
- * <Button isLink href="/docs" variant="secondary">Docs</Button>
- * ```
  */
 export function Button({
-  variant,
-  size = 'small',
   children,
+  variant,
   className,
   isLink = false,
   isTransparent = false,
+  size = 'small',
   ...props
 }: ButtonProps) {
   const classes = clsx(
@@ -60,16 +47,23 @@ export function Button({
   );
 
   if (isLink) {
+    const linkProps = props as AnchorHTMLAttributes<HTMLAnchorElement>;
+
     return (
-      <a className={classes} {...(props as AnchorHTMLAttributes<HTMLAnchorElement>)}>
+      <a className={classes} {...linkProps}>
         {children}
       </a>
     );
   }
 
+  const { type = 'button', ...buttonProps } = props as ButtonHTMLAttributes<HTMLButtonElement>;
+
   return (
-    <button className={classes} {...(props as ButtonHTMLAttributes<HTMLButtonElement>)}>
+    <button type={type} className={classes} {...buttonProps}>
       {children}
     </button>
   );
 }
+
+export const SimpleButton = Button;
+export default Button;
