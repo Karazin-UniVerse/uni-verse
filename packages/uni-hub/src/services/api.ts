@@ -61,68 +61,103 @@ async function request<T>(
   throw new Error('Request failed');
 }
 
-export const authApi = {
-  login: async (email: string, password: string) => {
-    const res = await request<AuthResponse>('/auth/login', {
+export class AuthApi {
+  async login(email: string, password: string): Promise<{ data: AuthResponse }> {
+    const response = await request<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    if (res.data?.access_token) {
-      localStorage.setItem('accessToken', res.data.access_token);
+
+    if (response.data?.access_token) {
+      localStorage.setItem('accessToken', response.data.access_token);
       localStorage.setItem('isLoggedIn', 'true');
     }
-    return res;
-  },
-  logout: async () => {
+
+    return response;
+  }
+
+  async logout(): Promise<void> {
     try {
       await request('/auth/logout', { method: 'POST' });
     } finally {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('isLoggedIn');
     }
-  },
-};
-
-export interface GetAssignmentsParams {
-  status?: 'completed' | 'not_completed';
-  year?: string;
-  semester?: string;
-  sortByDate?: 'asc' | 'desc';
-  dateFrom?: number;
-  dateTo?: number;
+  }
 }
 
-export const moodleApi = {
-  getCourses: () => request<Course[]>('/moodle/courses'),
-  getGrades: () => request<{ grades: Grade[] }>('/moodle/grades'),
-  getAssignments: (params?: GetAssignmentsParams) => {
+export const authApi = new AuthApi();
+
+export interface GetAssignmentsParams {
+  dateFrom?: number;
+  dateTo?: number;
+  semester?: string;
+  sortByDate?: 'asc' | 'desc';
+  status?: 'completed' | 'not_completed';
+  year?: string;
+}
+
+export class MoodleApi {
+  getCourses(): Promise<{ data: Course[] }> {
+    return request<Course[]>('/moodle/courses');
+  }
+
+  getGrades(): Promise<{ data: { grades: Grade[] } }> {
+    return request<{ grades: Grade[] }>('/moodle/grades');
+  }
+
+  getAssignments(params?: GetAssignmentsParams): Promise<{ data: Assignment[] }> {
     const query = params
       ? '?' +
         new URLSearchParams(
           Object.entries(params)
-            .filter(([_, v]) => v !== undefined)
-            .map(([k, v]) => [k, String(v)]),
+            .filter(([_, value]) => value !== undefined)
+            .map(([key, value]) => [key, String(value)]),
         ).toString()
       : '';
+
     return request<Assignment[]>(`/moodle/assignments${query}`);
-  },
-  getEvents: () => request<MoodleEvent[]>('/moodle/events'),
-  getNotifications: () => request<NotificationsResponse>('/moodle/notifications'),
-  getStatistics: () => request<CourseStatistics>('/moodle/statistics'),
-  getCourseContents: (courseId: number) =>
-    request<CourseSection[]>(`/moodle/courses/${courseId}/contents`),
-  getAssignmentStatus: (assignId: number) =>
-    request<unknown>(`/moodle/assignments/${assignId}/status`),
-  submitAssignment: (assignId: number, text?: string, fileItemId?: number) =>
-    request<unknown>(`/moodle/assignments/${assignId}/submission`, {
+  }
+
+  getEvents(): Promise<{ data: MoodleEvent[] }> {
+    return request<MoodleEvent[]>('/moodle/events');
+  }
+
+  getNotifications(): Promise<{ data: NotificationsResponse }> {
+    return request<NotificationsResponse>('/moodle/notifications');
+  }
+
+  getStatistics(): Promise<{ data: CourseStatistics }> {
+    return request<CourseStatistics>('/moodle/statistics');
+  }
+
+  getCourseContents(courseId: number): Promise<{ data: CourseSection[] }> {
+    return request<CourseSection[]>(`/moodle/courses/${courseId}/contents`);
+  }
+
+  getAssignmentStatus(assignId: number): Promise<{ data: unknown }> {
+    return request<unknown>(`/moodle/assignments/${assignId}/status`);
+  }
+
+  submitAssignment(
+    assignId: number,
+    text?: string,
+    fileItemId?: number,
+  ): Promise<{ data: unknown }> {
+    return request<unknown>(`/moodle/assignments/${assignId}/submission`, {
       method: 'POST',
       body: JSON.stringify({ text, fileItemId }),
-    }),
-  uploadFile: (filename: string, filebase64: string) =>
-    request<unknown>('/moodle/files/upload', {
+    });
+  }
+
+  uploadFile(filename: string, filebase64: string): Promise<{ data: unknown }> {
+    return request<unknown>('/moodle/files/upload', {
       method: 'POST',
       body: JSON.stringify({ filename, filebase64 }),
-    }),
-};
+    });
+  }
+}
 
-export default { request, authApi, moodleApi };
+export const moodleApi = new MoodleApi();
+
+export default { request, authApi, moodleApi, AuthApi, MoodleApi };
