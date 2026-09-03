@@ -2,8 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { BadgeId } from '@uni-hub/constants/gamification';
 import { shiftDateKey, toLocalDateKey } from '@uni-hub/utils/gamification';
-import { fireConfetti } from '../utils/confetti';
-import { playSuccess } from '../utils/soundEffects';
+import { fireConfetti } from '@uni-hub/utils/confetti';
+import { playSuccess } from '@uni-hub/utils/soundEffects';
 
 type GamificationState = {
   currentStreak: number;
