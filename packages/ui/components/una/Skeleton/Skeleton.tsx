@@ -3,8 +3,6 @@ import styles from './Skeleton.module.scss';
 
 import type { SkeletonProps } from './Skeleton.types';
 
-export type { SkeletonProps } from './Skeleton.types';
-
 export const Skeleton: React.FC<SkeletonProps> = ({ width, height, className, style }) => (
   <div
     className={`${styles.skeleton} ${className ?? ''}`}
@@ -12,3 +10,5 @@ export const Skeleton: React.FC<SkeletonProps> = ({ width, height, className, st
     aria-hidden
   />
 );
+
+export default Skeleton;

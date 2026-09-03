@@ -3,13 +3,6 @@ import clsx from 'clsx';
 import type { ButtonProps } from './Button.types';
 import css from './Button.module.scss';
 
-export type {
-  BaseProps,
-  ButtonAsButtonProps,
-  ButtonAsLinkProps,
-  ButtonProps,
-} from './Button.types';
-
 /**
  * Button
  *

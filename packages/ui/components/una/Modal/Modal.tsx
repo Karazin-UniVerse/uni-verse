@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
+import type { ModalProps } from './Modal.types';
 import styles from './Modal.module.scss';
 
 const modalStack: string[] = [];
@@ -32,10 +33,6 @@ function unlockScroll(id: string) {
     document.body.style.overflow = previousBodyOverflow;
   }
 }
-
-import type { ModalProps } from './Modal.types';
-
-export type { ModalProps } from './Modal.types';
 
 const FOCUSABLE_SELECTOR =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';

@@ -1,12 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import clsx from 'clsx';
 import css from './CustomDateTime.module.scss';
-import { TextInput, type SimpleInputProps } from '../TextInput/TextInput';
-
-export interface CustomDateTimeProps extends Omit<SimpleInputProps, 'onChange' | 'value'> {
-  selected: Date | null;
-  onChange: (date: Date | null) => void;
-}
+import { TextInput } from '../TextInput/TextInput';
+import type { CustomDateTimeProps } from './DateTimePicker.types';
 
 const MONTHS = [
   'January',

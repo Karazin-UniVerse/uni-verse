@@ -3,8 +3,6 @@ import styles from './Select.module.scss';
 
 import type { SelectProps } from './Select.types';
 
-export type { Option, SelectProps } from './Select.types';
-
 export const Select: React.FC<SelectProps> = ({ value, onChange, options, className, ...rest }) => (
   <select
     className={`${styles.select} ${className ?? ''}`}

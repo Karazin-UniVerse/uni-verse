@@ -3,8 +3,6 @@ import { forwardRef } from 'react';
 import type { TextInputProps } from './TextInput.types';
 import css from './TextInput.module.scss';
 
-export type { TextInputProps, SimpleInputProps } from './TextInput.types';
-
 /**
  * Simple React TextInput component.
  *

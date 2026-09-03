@@ -3,8 +3,6 @@ import styles from './Toast.module.scss';
 
 import type { ToastApi, ToastItem, ToastKind, ToastProviderProps } from './Toast.types';
 
-export type { ToastApi, ToastItem, ToastKind, ToastProviderProps } from './Toast.types';
-
 const ToastContext = createContext<ToastApi | null>(null);
 
 let toastId = 0;

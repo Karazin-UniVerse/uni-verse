@@ -3,8 +3,6 @@ import clsx from 'clsx';
 import type { SimpleSliderProps } from './SimpleSlider.types';
 import styles from './SimpleSlider.module.scss';
 
-export type { SimpleSliderProps } from './SimpleSlider.types';
-
 export const SimpleSlider: React.FC<SimpleSliderProps> = ({
   value,
   onChange,

@@ -4,8 +4,6 @@ import clsx from 'clsx';
 
 import type { SimpleFormProps } from './SimpleForm.types';
 
-export type { SimpleFormProps } from './SimpleForm.types';
-
 /**
  * SimpleForm
  *
