@@ -8,7 +8,7 @@ const meta: Meta<typeof GradeSimulator> = {
   component: GradeSimulator,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType) => (
       <div style={{ minHeight: '350px', padding: '24px' }}>
         <Story />
       </div>
@@ -57,7 +57,7 @@ const mockAssignments: Assignment[] = [
 ];
 
 export const Default: Story = {
-  render: (args) => {
+  render: (args: React.ComponentProps<typeof GradeSimulator>) => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [open, setOpen] = useState(true);
     return (
@@ -75,7 +75,7 @@ export const Default: Story = {
 };
 
 export const Empty: Story = {
-  render: (args) => {
+  render: (args: React.ComponentProps<typeof GradeSimulator>) => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [open, setOpen] = useState(true);
     return (
@@ -93,7 +93,7 @@ export const Empty: Story = {
 };
 
 export const WithoutAssignments: Story = {
-  render: (args) => {
+  render: (args: React.ComponentProps<typeof GradeSimulator>) => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [open, setOpen] = useState(true);
     return (
