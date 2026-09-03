@@ -3,11 +3,10 @@ import type { Assignment, Grade } from '../../types';
 import { getGradeCourseName, getGradeRawValue, getGradeTone, getValidGrades } from '../../utils/grades';
 import { useCountUp } from '../../hooks/useCountUp';
 import { Modal } from '../ui/Modal';
-import SimpleButton from '../../design-system/buttons/SimpleButton/SimpleButton';
-import SimpleSlider from '../../design-system/inputs/SimpleSlider/SimpleSlider';
+import { Select } from '../ui/Select';
+import { Empty } from '../ui/Empty';
 import { ProgressBar } from '../ui/ProgressBar';
-import Select from '../../design-system/inputs/Select/Select';
-import Empty from '../../design-system/Empty/Empty';
+import { SimpleButton, SimpleSlider } from '../../design-system';
 import styles from './GradeSimulator.module.scss';
 
 const DEFAULT_SCORE = 75;
