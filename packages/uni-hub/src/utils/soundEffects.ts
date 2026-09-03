@@ -1,43 +1,75 @@
-let audioCtx: AudioContext | null = null;
+let audioContextInstance: AudioContext | null = null;
 
-function getCtx(): AudioContext | null {
-  if (typeof window === 'undefined') return null;
-  const AC =
+function getAudioContext(): AudioContext | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const AudioContextConstructor =
     window.AudioContext ||
     (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  if (!AC) return null;
-  if (!audioCtx) audioCtx = new AC();
-  return audioCtx;
+
+  if (!AudioContextConstructor) {
+    return null;
+  }
+
+  if (!audioContextInstance) {
+    audioContextInstance = new AudioContextConstructor();
+  }
+
+  return audioContextInstance;
 }
 
-function tone(freq: number, duration: number, type: OscillatorType, gain = 0.04, when = 0) {
-  const ctx = getCtx();
-  if (!ctx) return;
-  if (ctx.state === 'suspended') void ctx.resume();
+function playTone(
+  frequency: number,
+  duration: number,
+  oscillatorType: OscillatorType,
+  gain = 0.04,
+  delaySeconds = 0,
+): void {
+  const audioContext = getAudioContext();
 
-  const osc = ctx.createOscillator();
-  const g = ctx.createGain();
-  osc.type = type;
-  osc.frequency.value = freq;
-  g.gain.value = gain;
-  osc.connect(g);
-  g.connect(ctx.destination);
+  if (!audioContext) {
+    return;
+  }
 
-  const t0 = ctx.currentTime + when;
-  g.gain.setValueAtTime(gain, t0);
-  g.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
-  osc.start(t0);
-  osc.stop(t0 + duration);
+  if (audioContext.state === 'suspended') {
+    void audioContext.resume();
+  }
+
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+
+  oscillator.type = oscillatorType;
+  oscillator.frequency.value = frequency;
+  gainNode.gain.value = gain;
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+
+  const startTime = audioContext.currentTime + delaySeconds;
+
+  gainNode.gain.setValueAtTime(gain, startTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+  oscillator.start(startTime);
+  oscillator.stop(startTime + duration);
 }
 
 export function playClick(enabled: boolean): void {
-  if (!enabled) return;
-  tone(660, 0.05, 'sine', 0.03);
+  if (!enabled) {
+    return;
+  }
+
+  playTone(660, 0.05, 'sine', 0.03);
 }
 
 export function playSuccess(enabled: boolean): void {
-  if (!enabled) return;
-  tone(523.25, 0.09, 'triangle', 0.045, 0);
-  tone(659.25, 0.1, 'triangle', 0.04, 0.08);
-  tone(783.99, 0.14, 'triangle', 0.035, 0.16);
+  if (!enabled) {
+    return;
+  }
+
+  playTone(523.25, 0.09, 'triangle', 0.045, 0);
+  playTone(659.25, 0.1, 'triangle', 0.04, 0.08);
+  playTone(783.99, 0.14, 'triangle', 0.035, 0.16);
 }
