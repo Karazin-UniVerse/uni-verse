@@ -28,3 +28,10 @@ $breakpoints: (
   }
 }
 
+/// Backwards-compatible alias for wider-than
+@mixin respond-to($breakpoint) {
+  @include wider-than($breakpoint) {
+    @content;
+  }
+}
+
