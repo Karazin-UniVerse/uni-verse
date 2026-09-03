@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import type { Assignment } from '../../types';
-import type { TimeOfDay } from '../../gamification/types';
-import { useNow } from '../../hooks/useNow';
+import type { Assignment } from '@uni-hub/types';
+import type { TimeOfDay } from '@uni-hub/gamification/types';
+import { useNow } from '@uni-hub/hooks/useNow';
 import styles from './ContextualGreeting.module.scss';
 
 type ContextualGreetingProps = {

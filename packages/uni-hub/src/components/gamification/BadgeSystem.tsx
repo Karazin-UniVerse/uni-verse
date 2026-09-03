@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import type { Grade } from '../../types';
-import { BADGES, evaluateBadgeUnlocks } from '../../gamification/badges';
-import { useGamificationStore } from '../../store/useGamificationStore';
-import { useToast } from '../ui/Toast';
+import type { Grade } from '@uni-hub/types';
+import { BADGES, evaluateBadgeUnlocks } from '@uni-hub/gamification/badges';
+import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
+import { useToast } from '@uni-hub/components/ui/Toast';
 
 type BadgeSystemProps = {
   grades: Grade[];

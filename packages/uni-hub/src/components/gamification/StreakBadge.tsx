@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
 import { Flame } from 'lucide-react';
-import { useGamificationStore } from '../../store/useGamificationStore';
+import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import styles from './StreakBadge.module.scss';
 
 function getDaysPlural(count: number): string {
