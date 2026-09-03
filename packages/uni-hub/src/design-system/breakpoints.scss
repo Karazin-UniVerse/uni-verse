@@ -17,7 +17,7 @@ $breakpoints: (
   'xxl': $breakpoint-xxl,
 );
 
-@mixin respond-to($breakpoint) {
+@mixin wider-than($breakpoint) {
   $value: map-get($breakpoints, $breakpoint);
   @if $value {
     @media (min-width: $value) {
@@ -27,3 +27,4 @@ $breakpoints: (
     @warn "Unknown breakpoint: #{$breakpoint}.";
   }
 }
+

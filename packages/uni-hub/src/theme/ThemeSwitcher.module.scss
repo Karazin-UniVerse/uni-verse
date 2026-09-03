@@ -55,8 +55,9 @@
   margin-left: var(--space-8);
   display: none;
 
-  @include respond-to('sm') {
+  @include wider-than('sm') {
     display: inline;
   }
 }
+
 
