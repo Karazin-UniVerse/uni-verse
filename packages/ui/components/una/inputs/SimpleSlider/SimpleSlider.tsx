@@ -1,16 +1,9 @@
 import React from 'react';
 import clsx from 'clsx';
+import type { SimpleSliderProps } from './SimpleSlider.types';
 import styles from './SimpleSlider.module.scss';
 
-export type SimpleSliderProps = {
-  value: number;
-  onChange: (value: number) => void;
-  min?: number;
-  max?: number;
-  step?: number;
-  disabled?: boolean;
-  className?: string;
-};
+export type { SimpleSliderProps } from './SimpleSlider.types';
 
 export const SimpleSlider: React.FC<SimpleSliderProps> = ({
   value,

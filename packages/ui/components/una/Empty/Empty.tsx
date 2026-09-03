@@ -2,9 +2,9 @@ import React from 'react';
 import { FolderOpen } from 'lucide-react';
 import styles from './Empty.module.scss';
 
-type EmptyProps = {
-  description?: string;
-};
+import type { EmptyProps } from './Empty.types';
+
+export type { EmptyProps } from './Empty.types';
 
 export const Empty: React.FC<EmptyProps> = ({ description = 'Нет данных' }) => (
   <div className={styles.empty}>

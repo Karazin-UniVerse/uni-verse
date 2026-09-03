@@ -1,9 +1,9 @@
 import clsx from 'clsx';
-import React, { type InputHTMLAttributes } from 'react';
+import React from 'react';
 import css from './CheckBox.module.scss';
-interface CheckBoxProps extends InputHTMLAttributes<HTMLInputElement> {
-  variant: 'primary' | 'secondary';
-}
+import type { CheckBoxProps } from './CheckBox.types';
+
+export type { CheckBoxProps } from './CheckBox.types';
 export function CheckBox({ variant, className, ...props }: CheckBoxProps) {
   const classes = clsx(css.checkBox, variant && css[variant], className);
   return <input {...props} type="checkbox" className={classes}></input>;

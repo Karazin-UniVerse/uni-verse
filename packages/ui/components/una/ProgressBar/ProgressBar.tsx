@@ -1,14 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import styles from './ProgressBar.module.scss';
 
-type ProgressBarProps = {
-  value: number;
-  ariaLabel?: string;
-  ariaLabelledBy?: string;
-  className?: string;
-  max?: number;
-  tone?: 'success' | 'warning' | 'danger' | 'info';
-};
+import type { ProgressBarProps } from './ProgressBar.types';
+
+export type { ProgressBarProps } from './ProgressBar.types';
 
 export const ProgressBar: React.FC<ProgressBarProps> = ({
   value,

@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   text-decoration: none; /* Remove underline from links styled as buttons */
-  transition: var(--transition-fast);
+  transition: var(--transition-small);
 
   &:focus {
     outline: none;

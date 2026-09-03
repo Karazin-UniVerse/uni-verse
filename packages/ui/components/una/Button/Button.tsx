@@ -1,28 +1,17 @@
-import type { ButtonHTMLAttributes, AnchorHTMLAttributes, ReactNode } from 'react';
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 import clsx from 'clsx';
+import type { ButtonProps } from './Button.types';
 import css from './SimpleButton.module.scss';
 
-type BaseProps = {
-  children: ReactNode;
-  variant: 'primary' | 'secondary';
-  className?: string;
-  isTransparent?: boolean;
-  size?: 'small' | 'medium' | 'large';
-};
-
-export type ButtonAsButtonProps = BaseProps & {
-  isLink?: false;
-} & ButtonHTMLAttributes<HTMLButtonElement>;
-
-export type ButtonAsLinkProps = BaseProps & {
-  href: string;
-  isLink: true;
-} & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'>;
-
-export type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
+export type {
+  BaseProps,
+  ButtonAsButtonProps,
+  ButtonAsLinkProps,
+  ButtonProps,
+} from './Button.types';
 
 /**
- * Button / SimpleButton
+ * Button
  *
  * Accessible button component that supports both native <button> usage and
  * link-like behavior. It accepts the design system `variant` and `size`
@@ -65,5 +54,4 @@ export function Button({
   );
 }
 
-export const SimpleButton = Button;
 export default Button;

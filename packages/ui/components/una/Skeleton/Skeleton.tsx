@@ -1,12 +1,9 @@
 import React from 'react';
 import styles from './Skeleton.module.scss';
 
-type SkeletonProps = {
-  width?: string | number;
-  height?: string | number;
-  className?: string;
-  style?: React.CSSProperties;
-};
+import type { SkeletonProps } from './Skeleton.types';
+
+export type { SkeletonProps } from './Skeleton.types';
 
 export const Skeleton: React.FC<SkeletonProps> = ({ width, height, className, style }) => (
   <div

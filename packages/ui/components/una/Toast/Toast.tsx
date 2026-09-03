@@ -1,25 +1,15 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import styles from './Toast.module.scss';
 
-type ToastKind = 'success' | 'error' | 'info';
+import type { ToastApi, ToastItem, ToastKind, ToastProviderProps } from './Toast.types';
 
-type ToastItem = {
-  id: number;
-  kind: ToastKind;
-  text: string;
-};
-
-type ToastApi = {
-  success: (text: string) => void;
-  error: (text: string) => void;
-  info: (text: string) => void;
-};
+export type { ToastApi, ToastItem, ToastKind, ToastProviderProps } from './Toast.types';
 
 const ToastContext = createContext<ToastApi | null>(null);
 
 let toastId = 0;
 
-export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [items, setItems] = useState<ToastItem[]>([]);
 
   const push = useCallback((kind: ToastKind, text: string) => {
