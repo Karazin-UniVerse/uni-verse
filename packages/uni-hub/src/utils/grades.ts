@@ -12,11 +12,20 @@ export function getGradeRawValue(grade: Grade): number | null {
 
   for (const candidate of candidateValues) {
     if (candidate !== undefined && candidate !== null && candidate !== '') {
-      const parsed =
-        typeof candidate === 'number' ? candidate : Number.parseFloat(String(candidate));
+      if (typeof candidate === 'number') {
+        if (Number.isFinite(candidate)) {
+          return candidate;
+        }
+      } else {
+        const trimmed = String(candidate).trim();
 
-      if (Number.isFinite(parsed)) {
-        return parsed;
+        if (trimmed !== '' && !Number.isNaN(Number(trimmed))) {
+          const parsed = Number(trimmed);
+
+          if (Number.isFinite(parsed)) {
+            return parsed;
+          }
+        }
       }
     }
   }
