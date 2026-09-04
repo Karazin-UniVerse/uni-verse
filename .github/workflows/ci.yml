@@ -5,11 +5,18 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - uses: pnpm/action-setup@v4
         with:
           version: 10.0.0
@@ -21,4 +28,14 @@ jobs:
       - run: pnpm --filter @universe/backend db:generate
       - run: pnpm lint
       - run: pnpm typecheck
+      - name: Run Backend Tests with Coverage
+        run: |
+          pnpm --filter @universe/backend test:cov
+          node -e "const fs=require('fs');const p='packages/backend/coverage/lcov.info';if(fs.existsSync(p)){let c=fs.readFileSync(p,'utf8');c=c.split('SF:src/').join('SF:packages/backend/src/').split('SF:src\\\\').join('SF:packages/backend/src/');fs.writeFileSync(p,c);console.log('Normalized lcov paths for SonarCloud');}"
       - run: pnpm build
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
