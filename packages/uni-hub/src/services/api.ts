@@ -53,10 +53,13 @@ export function buildQueryString(params?: Record<string, unknown>): string {
   return queryString ? `?${queryString}` : '';
 }
 
+const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
+
 async function request<T>(
   endpoint: string,
   options: RequestInit = {},
   retries = 2,
+  timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
 ): Promise<{ data: T }> {
   const url = `${API_BASE_URL}${endpoint}`;
   const token = isBrowser ? localStorage.getItem('accessToken') : null;
@@ -72,11 +75,24 @@ async function request<T>(
 
   let attempt = 0;
   while (attempt <= retries) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    const onCallerAbort = () => controller.abort();
+    if (options.signal) {
+      if (options.signal.aborted) {
+        controller.abort();
+      } else {
+        options.signal.addEventListener('abort', onCallerAbort, { once: true });
+      }
+    }
+
     try {
       const response = await fetch(url, {
         ...options,
         headers,
         credentials: 'include',
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -86,12 +102,21 @@ async function request<T>(
       const data = (await response.json()) as T;
       return { data };
     } catch (err) {
+      if (options.signal?.aborted) {
+        throw err;
+      }
+
       if (attempt < retries) {
         attempt++;
         const delay = attempt * 500;
         await new Promise((resolve) => setTimeout(resolve, delay));
       } else {
         throw err;
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      if (options.signal) {
+        options.signal.removeEventListener('abort', onCallerAbort);
       }
     }
   }

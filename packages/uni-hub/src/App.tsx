@@ -42,6 +42,10 @@ const App: React.FC = () => {
               path="/"
               element={<Navigate to={isLoggedIn ? '/dashboard' : '/login'} replace />}
             />
+            <Route
+              path="*"
+              element={<Navigate to={isLoggedIn ? '/dashboard' : '/login'} replace />}
+            />
           </Routes>
         </Router>
       </ToastProvider>
