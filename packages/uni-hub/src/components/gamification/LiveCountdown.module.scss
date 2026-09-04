@@ -1,0 +1,59 @@
+.countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-sm);
+  font-weight: var(--font-weight-medium);
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--border-radius-medium);
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  transition:
+    color var(--transition-medium) var(--ease-standard),
+    background-color var(--transition-medium) var(--ease-standard),
+    border-color var(--transition-medium) var(--ease-standard);
+}
+
+.ok {
+  color: var(--text-secondary);
+}
+
+.warning {
+  color: #92400e;
+  background: rgba(245, 158, 11, 0.15);
+  border-color: var(--warning-color);
+  animation: pulseWarn 1.2s var(--ease-standard) infinite;
+}
+
+.danger {
+  color: var(--red-700);
+  background: rgba(239, 68, 68, 0.12);
+  border-color: var(--error-color);
+  animation: pulseWarn 0.9s var(--ease-standard) infinite;
+}
+
+:global([data-theme='dark']) .warning,
+:global([data-theme='cyberpunk']) .warning {
+  color: #fbbf24;
+}
+
+:global([data-theme='dark']) .danger,
+:global([data-theme='cyberpunk']) .danger {
+  color: var(--red-300);
+}
+
+@keyframes pulseWarn {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+
+.time {
+  letter-spacing: 0.02em;
+}
