@@ -74,7 +74,6 @@ reviews:
            // Chart.tsx
            export type { ChartDatum, ChartProps } from './Chart.types';
            ```
-
         5. Ban Legacy Re-export Shims & Backwards-Compatibility Proxies (No Backtracking):
            - Never introduce backwards-compatible aliases, proxy re-exports, or transitional wrapper shims when refactoring or moving files (e.g. re-exporting new package members from deprecated paths).
            - All consumers must be updated directly to new import paths, and obsolete files must be removed completely.
