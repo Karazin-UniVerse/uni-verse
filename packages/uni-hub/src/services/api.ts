@@ -8,17 +8,17 @@ import type {
   CourseStatistics,
   CourseSection,
 } from '../types';
+import { isBrowser } from '../utils/browser';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+  (isBrowser && window.location.hostname !== 'localhost'
     ? 'https://p01--backend--jm9qjnmpm4m2.code.run'
     : 'http://localhost:3001');
 
 function isSecureOrLoopback(targetUrl: string): boolean {
   try {
-    const fallbackOrigin =
-      typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+    const fallbackOrigin = isBrowser ? window.location.origin : 'http://localhost';
     const parsed = new URL(targetUrl, fallbackOrigin);
 
     return (
@@ -32,13 +32,34 @@ function isSecureOrLoopback(targetUrl: string): boolean {
   }
 }
 
+/**
+ * Builds a query string from a parameters dictionary, omitting undefined or null fields.
+ */
+export function buildQueryString(params?: Record<string, unknown>): string {
+  if (!params) {
+    return '';
+  }
+
+  const searchParams = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== '') {
+      searchParams.append(key, String(value));
+    }
+  }
+
+  const queryString = searchParams.toString();
+
+  return queryString ? `?${queryString}` : '';
+}
+
 async function request<T>(
   endpoint: string,
   options: RequestInit = {},
   retries = 2,
 ): Promise<{ data: T }> {
   const url = `${API_BASE_URL}${endpoint}`;
-  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  const token = isBrowser ? localStorage.getItem('accessToken') : null;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -124,16 +145,9 @@ export class MoodleApi {
   }
 
   getAssignments(params?: GetAssignmentsParams): Promise<{ data: Assignment[] }> {
-    const query = params
-      ? '?' +
-        new URLSearchParams(
-          Object.entries(params)
-            .filter(([_, value]) => value !== undefined)
-            .map(([key, value]) => [key, String(value)]),
-        ).toString()
-      : '';
-
-    return request<Assignment[]>(`/moodle/assignments${query}`);
+    return request<Assignment[]>(
+      `/moodle/assignments${buildQueryString(params as Record<string, unknown>)}`,
+    );
   }
 
   getEvents(): Promise<{ data: MoodleEvent[] }> {
