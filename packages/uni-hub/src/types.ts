@@ -63,14 +63,36 @@ export interface CourseStatistics {
   total: number;
 }
 
+export const COURSE_MODULE_NAMES = {
+  RESOURCE: 'resource',
+  FOLDER: 'folder',
+  ASSIGN: 'assign',
+  QUIZ: 'quiz',
+  FORUM: 'forum',
+} as const;
+
+export type CourseModuleName =
+  (typeof COURSE_MODULE_NAMES)[keyof typeof COURSE_MODULE_NAMES] | (string & {});
+
+export interface CourseModuleFile {
+  filename?: string;
+  fileurl?: string;
+  filesize?: number;
+  timecreated?: number;
+  timemodified?: number;
+  mimetype?: string;
+}
+
 export interface CourseModule {
   id: number;
   url?: string;
   name: string;
-  modname: string;
+  modname: CourseModuleName;
   description?: string;
   instance?: number;
-  contents?: unknown[];
+  contents?: CourseModuleFile[];
+  duedate?: number;
+  dueUnixSec?: number;
 }
 
 export interface CourseSection {
