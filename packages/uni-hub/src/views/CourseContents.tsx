@@ -12,24 +12,29 @@ import {
 } from 'lucide-react';
 import { SimpleButton } from '@/design-system';
 import { moodleApi } from '@/services/api';
-import type { CourseSection, CourseModule } from '@/types';
+import {
+  COURSE_MODULE_NAMES,
+  type CourseSection,
+  type CourseModule,
+  type CourseModuleName,
+} from '@/types';
 import AssignmentModal from '@/components/AssignmentModal';
 import { useToast } from '@/components/ui/Toast';
 import { Spinner } from '@/components/ui/Spinner';
 import { Empty } from '@/components/ui/Empty';
 import styles from './CourseContents.module.scss';
 
-const getModuleIcon = (modname: string) => {
+const getModuleIcon = (modname: CourseModuleName) => {
   switch (modname) {
-    case 'resource':
+    case COURSE_MODULE_NAMES.RESOURCE:
       return <File size={22} />;
-    case 'folder':
+    case COURSE_MODULE_NAMES.FOLDER:
       return <Folder size={22} />;
-    case 'assign':
+    case COURSE_MODULE_NAMES.ASSIGN:
       return <FileEdit size={22} />;
-    case 'quiz':
+    case COURSE_MODULE_NAMES.QUIZ:
       return <HelpCircle size={22} />;
-    case 'forum':
+    case COURSE_MODULE_NAMES.FORUM:
       return <MessageSquare size={22} />;
     default:
       return <LayoutGrid size={22} />;
@@ -74,7 +79,7 @@ const CourseContents: React.FC = () => {
   }, [courseId, toast]);
 
   const handleModuleClick = (mod: CourseModule) => {
-    if (mod.modname === 'assign') {
+    if (mod.modname === COURSE_MODULE_NAMES.ASSIGN) {
       setSelectedModule(mod);
       setModalVisible(true);
     } else if (mod.url) {
@@ -138,7 +143,8 @@ const CourseContents: React.FC = () => {
                     {open && (
                       <ul className={styles.moduleList}>
                         {section.modules.map((mod) => {
-                          const clickable = mod.modname === 'assign' || Boolean(mod.url);
+                          const clickable =
+                            mod.modname === COURSE_MODULE_NAMES.ASSIGN || Boolean(mod.url);
                           return (
                             <li key={mod.id}>
                               <button

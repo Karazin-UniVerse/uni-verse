@@ -23,6 +23,13 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>?/gm, '').trim();
 }
 
+export const ASSIGNMENT_STATUS_LABELS: Record<string, string> = {
+  submitted: 'Сдано на проверку',
+  graded: 'Оценено',
+  new: 'Нет попытки',
+  draft: 'Черновик',
+};
+
 const AssignmentModal: React.FC<AssignmentModalProps> = ({
   visible,
   onClose,
@@ -149,14 +156,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
       : null;
   const canSubmit = !status || status.status === 'new' || status.status === 'draft';
 
-  const statusLabel =
-    status?.status === 'submitted'
-      ? 'Сдано на проверку'
-      : status?.status === 'graded'
-        ? 'Оценено'
-        : status?.status === 'new'
-          ? 'Нет попытки'
-          : status?.status;
+  const statusLabel = (status?.status && ASSIGNMENT_STATUS_LABELS[status.status]) || status?.status;
 
   const moodleUrl =
     module?.url ||
