@@ -19,7 +19,6 @@
     "react": "^19.2.8",
     "react-datepicker": "^9.1.0",
     "react-dom": "^19.2.8",
-    "react-router-dom": "^7.18.3",
     "recharts": "^3.10.1",
     "sass": "^1.102.0",
     "zustand": "^5.0.15"
