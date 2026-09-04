@@ -16,7 +16,7 @@ export function useCountUp(target: number, duration = 800, enabled = true): numb
   const rafRef = useRef(0);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || duration <= 0) {
       displayedValueRef.current = target;
       prevTargetRef.current = target;
       setValue(target);
@@ -29,7 +29,9 @@ export function useCountUp(target: number, duration = 800, enabled = true): numb
     }
 
     const from = displayedValueRef.current;
+
     prevTargetRef.current = target;
+
     const startTime = performance.now();
 
     const tick = (currentTime: number) => {

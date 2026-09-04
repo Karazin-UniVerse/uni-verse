@@ -29,7 +29,10 @@ export const useGamificationStore = create<GamificationState>()(
       checkIn: () => {
         const today = toLocalDateKey();
         const { lastActiveDate, currentStreak } = get();
-        if (lastActiveDate === today) return;
+
+        if (lastActiveDate === today) {
+          return;
+        }
 
         const yesterday = shiftDateKey(today, -1);
         const nextStreak = lastActiveDate === yesterday ? currentStreak + 1 : 1;
@@ -45,8 +48,13 @@ export const useGamificationStore = create<GamificationState>()(
 
       unlockBadge: (id) => {
         const { unlockedBadges } = get();
-        if (unlockedBadges.includes(id)) return false;
+
+        if (unlockedBadges.includes(id)) {
+          return false;
+        }
+
         set({ unlockedBadges: [...unlockedBadges, id] });
+
         return true;
       },
 

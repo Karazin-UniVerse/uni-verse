@@ -34,7 +34,9 @@ function playTone(
   }
 
   if (audioContext.state === 'suspended') {
-    void audioContext.resume();
+    void audioContext.resume().catch(() => {
+      // Ignore autoplay restriction rejections
+    });
   }
 
   const oscillator = audioContext.createOscillator();
