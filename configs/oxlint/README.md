@@ -48,20 +48,17 @@ Detects redundant duplicate module imports and exports:
 
 ## 3. Git Hook & Pre-commit Workflow
 
-Commits are guarded by Husky in [`.husky/pre-commit`](../../.husky/pre-commit) executing `lint-staged`:
+Commits are guarded by Husky in [`.husky/pre-commit`](../../.husky/pre-commit) executing `pnpm lint:fix` and `lint-staged`:
 
-```javascript
-// lint-staged.config.cjs
-module.exports = {
-  '*.{ts,tsx,js,jsx}': ['node configs/oxlint/lint-staged.cjs', 'prettier --write'],
-  '*.{json,md,yml,yaml}': ['prettier --write'],
-};
+```sh
+# .husky/pre-commit
+pnpm lint:fix
+npx lint-staged
 ```
 
-1. **Pre-commit Trigger**: On `git commit`, `lint-staged` runs `node configs/oxlint/lint-staged.cjs` on staged files.
-2. **Automatic Fixes**: Fixable violations (spacing, import aliases, prop ordering) are corrected automatically in place.
-3. **Format**: `prettier --write` formats the modified files and stages them.
-4. **Commit Availability**: If warnings or errors remain, Oxlint reports them in the terminal for developer awareness, but does not abort the commit (state: **available to commit**).
+1. **Pre-commit Lint & Fix**: On `git commit`, `pnpm lint:fix` runs `oxlint --fix --deny-warnings` across the project to automatically fix issues and deny warnings.
+2. **Staged Files Processing**: `lint-staged` runs on staged files to ensure in-place fixes and formatting.
+3. **Format**: `prettier --write` formats modified files and stages them.
 
 ---
 
