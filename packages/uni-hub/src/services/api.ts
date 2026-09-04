@@ -7,8 +7,8 @@ import type {
   NotificationsResponse,
   CourseStatistics,
   CourseSection,
-} from '../types';
-import { isBrowser } from '../utils/browser';
+} from '@uni-hub/types';
+import { isBrowser } from '@uni-hub/utils/browser';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
