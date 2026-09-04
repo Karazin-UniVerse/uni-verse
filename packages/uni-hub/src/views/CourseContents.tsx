@@ -58,12 +58,15 @@ const CourseContents: React.FC = () => {
 
     const fetchContents = async () => {
       setLoading(true);
+
       try {
         const response = await moodleApi.getCourseContents(parseInt(courseId, 10));
         const validSections = response.data.filter(
           (section: CourseSection) => section.name && section.modules && section.modules.length > 0,
         );
+
         setSections(validSections);
+
         if (validSections.length > 0) {
           setOpenSections(new Set([validSections[0].id.toString()]));
         }
@@ -90,8 +93,10 @@ const CourseContents: React.FC = () => {
   const toggleSection = (id: string) => {
     setOpenSections((prev) => {
       const next = new Set(prev);
+
       if (next.has(id)) next.delete(id);
       else next.add(id);
+
       return next;
     });
   };
@@ -129,6 +134,7 @@ const CourseContents: React.FC = () => {
               {sections.map((section) => {
                 const key = section.id.toString();
                 const open = openSections.has(key);
+
                 return (
                   <div key={key} className={styles.section}>
                     <button
@@ -145,6 +151,7 @@ const CourseContents: React.FC = () => {
                         {section.modules.map((mod) => {
                           const clickable =
                             mod.modname === COURSE_MODULE_NAMES.ASSIGN || Boolean(mod.url);
+
                           return (
                             <li key={mod.id}>
                               <button
