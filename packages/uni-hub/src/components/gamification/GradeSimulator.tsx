@@ -27,7 +27,9 @@ export function clampScore(score: number): number {
 export function computeSimulatedFinal(currentScore: number, remainingScores: number[]): number {
   if (remainingScores.length === 0) return currentScore;
 
-  const simulatedAvg = remainingScores.reduce((sum, val) => sum + val, 0) / remainingScores.length;
+  const simulatedAvg =
+    remainingScores.reduce((sum, remainingScore) => sum + remainingScore, 0) /
+    remainingScores.length;
 
   return currentScore * 0.7 + simulatedAvg * 0.3;
 }

@@ -42,22 +42,40 @@ Prevents deep or ambiguous relative parent imports within packages:
 Detects redundant duplicate module imports and exports:
 
 - `no-duplicate-imports` with `{ "includeExports": true }` flags files that import and re-export the same module redundantly (e.g. `import type { X } from './Y'` and `export type { X } from './Y'`).
-- Prevents commits with unresolved duplicate statements.
+
+### Situation 6: Unused Imports (`universe/no-unused-imports`)
+
+Enforces removal of unused imports:
+
+- Flags any imported identifier that is not referenced in the module (while correctly recognizing React in JSX environments).
+- Level: `error`.
+
+### Situation 7: End of File Newline (`universe/eol-last`)
+
+Enforces that every file ends with a trailing newline character.
+
+- **Autofix (`--fix`)**: Automatically appends the newline if missing.
+- Level: `error`.
+
+### Situation 8: Maximum Line Length (`universe/max-len`)
+
+Enforces that source lines do not exceed the configured length (`code: 120`), ignoring long URLs, imports, and strings.
+
+- Level: `error`.
 
 ---
 
 ## 3. Git Hook & Pre-commit Workflow
 
-Commits are guarded by Husky in [`.husky/pre-commit`](../../.husky/pre-commit) executing `pnpm lint:fix` and `lint-staged`:
+Commits are guarded by Husky in [`.husky/pre-commit`](../../.husky/pre-commit) executing `npx lint-staged`:
 
 ```sh
 # .husky/pre-commit
-pnpm lint:fix
 npx lint-staged
 ```
 
-1. **Pre-commit Lint & Fix**: On `git commit`, `pnpm lint:fix` runs `oxlint --fix --deny-warnings` across the project to automatically fix issues and deny warnings.
-2. **Staged Files Processing**: `lint-staged` runs on staged files to ensure in-place fixes and formatting.
+1. **Scoped Staged Processing**: `lint-staged` runs `oxlint --fix --deny-warnings` and `prettier --write` scoped strictly to staged files to ensure in-place fixes and formatting without affecting unrelated working directory changes.
+2. **Quality Guarantee**: If any unfixable warnings or errors remain, the hook aborts the commit.
 3. **Format**: `prettier --write` formats modified files and stages them.
 
 ---

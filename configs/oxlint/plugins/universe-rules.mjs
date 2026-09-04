@@ -2,14 +2,14 @@ function unwrapDeclaration(node) {
   if (node && node.type === 'ExportNamedDeclaration' && node.declaration) {
     return node.declaration;
   }
-  
-return node;
+
+  return node;
 }
 
 function isControlFlow(node) {
   if (!node) return false;
-  
-return [
+
+  return [
     'IfStatement',
     'ForStatement',
     'ForInStatement',
@@ -23,16 +23,16 @@ return [
 
 function isIgnoredBoundary(node) {
   if (!node) return false;
-  
-return ['BreakStatement', 'ContinueStatement', 'DebuggerStatement', 'EmptyStatement'].includes(
+
+  return ['BreakStatement', 'ContinueStatement', 'DebuggerStatement', 'EmptyStatement'].includes(
     node.type,
   );
 }
 
 function checkStatements(context, statements) {
   if (!statements || statements.length < 2) return;
-  
-const sourceCode = context.sourceCode || context.getSourceCode();
+
+  const sourceCode = context.sourceCode || context.getSourceCode();
 
   for (let i = 0; i < statements.length - 1; i++) {
     const prev = statements[i];
@@ -44,8 +44,8 @@ const sourceCode = context.sourceCode || context.getSourceCode();
     const firstNodeOrComment = comments.length > 0 ? comments[0] : next;
     const nextLoc = firstNodeOrComment.loc || sourceCode.getLoc(firstNodeOrComment);
     const prevLoc = prev.loc || sourceCode.getLoc(prev);
-    
-if (!nextLoc || !prevLoc) continue;
+
+    if (!nextLoc || !prevLoc) continue;
 
     const nextStartLine = nextLoc.start.line;
     const prevEndLine = prevLoc.end.line;
@@ -63,8 +63,8 @@ if (!nextLoc || !prevLoc) continue;
     const isNextReturn = nextUnwrapped.type === 'ReturnStatement';
 
     let reason = null;
-    
-if (isNextReturn) {
+
+    if (isNextReturn) {
       reason = 'Expected empty line before return statement.';
     } else if (isPrevVar && !isNextVar) {
       reason = 'Expected empty line between variable declarations and subsequent logic blocks.';
@@ -151,8 +151,8 @@ function isSafeToReorder(sourceCode, node, properties) {
       if (prop.value.left.type !== 'Identifier') {
         return false;
       }
-      
-if (!isPureLiteral(prop.value.right)) {
+
+      if (!isPureLiteral(prop.value.right)) {
         return false;
       }
     } else {
@@ -256,8 +256,8 @@ function checkObjectPattern(context, node) {
 
 function checkParams(context, params) {
   if (!params) return;
-  
-for (const param of params) {
+
+  for (const param of params) {
     if (param.type === 'ObjectPattern') {
       checkObjectPattern(context, param);
     } else if (param.type === 'AssignmentPattern' && param.left.type === 'ObjectPattern') {
@@ -335,27 +335,166 @@ export default {
           ImportDeclaration(node) {
             const filePath =
               context.filename || (context.getFilename && context.getFilename()) || '';
-            
-// Only enforce inside packages/uni-hub
+
+            // Only enforce inside packages/uni-hub
             if (filePath && !filePath.replace(/\\/g, '/').includes('packages/uni-hub')) {
               return;
             }
 
             const importPath = node.source && node.source.value;
-            
-if (typeof importPath === 'string') {
+
+            if (typeof importPath === 'string') {
               const utilsMatch = importPath.match(/^(\.\.\/)+utils\/(.*)$/);
-              
-if (utilsMatch) {
+
+              if (utilsMatch) {
                 const subPath = utilsMatch[2];
                 const replacement = `@uni-hub/utils/${subPath}`;
-                
-context.report({
+
+                context.report({
                   node: node.source,
                   message: `Use package alias '${replacement}' instead of relative path '${importPath}'.`,
                   fix(fixer) {
                     return fixer.replaceText(node.source, `'${replacement}'`);
                   },
+                });
+              }
+            }
+          },
+        };
+      },
+    },
+    'no-unused-imports': {
+      meta: {
+        type: 'problem',
+        docs: {
+          description: 'Disallow unused imports.',
+        },
+        messages: {},
+      },
+      create(context) {
+        return {
+          Program(node) {
+            const sourceCode = context.sourceCode || context.getSourceCode();
+            const text = sourceCode.text || (sourceCode.getText ? sourceCode.getText() : '');
+
+            if (!text || !node.body) return;
+
+            const importDeclarations = node.body.filter(
+              (stmt) => stmt.type === 'ImportDeclaration',
+            );
+
+            for (const imp of importDeclarations) {
+              if (!imp.specifiers || imp.specifiers.length === 0) continue;
+
+              const before = text.slice(0, imp.range[0]);
+              const after = text.slice(imp.range[1]);
+              const restOfFile = before + after;
+
+              for (const spec of imp.specifiers) {
+                const importedName = spec.local && spec.local.name;
+
+                if (!importedName) continue;
+
+                // If React is imported and JSX is used in the file, consider React used
+                if (importedName === 'React' && /<[a-zA-Z0-9_]+(\s|\/|>)/.test(restOfFile)) {
+                  continue;
+                }
+
+                const nameRegex = new RegExp(`\\b${importedName}\\b`);
+
+                if (!nameRegex.test(restOfFile)) {
+                  context.report({
+                    node: spec,
+                    message: `Import '${importedName}' is defined but never used.`,
+                  });
+                }
+              }
+            }
+          },
+        };
+      },
+    },
+    'eol-last': {
+      meta: {
+        type: 'layout',
+        fixable: 'whitespace',
+        docs: {
+          description: 'Require newline at the end of files (EOF/EOL).',
+        },
+        messages: {},
+      },
+      create(context) {
+        return {
+          Program(node) {
+            const sourceCode = context.sourceCode || context.getSourceCode();
+            const text = sourceCode.text || (sourceCode.getText ? sourceCode.getText() : '');
+
+            if (text.length > 0 && !text.endsWith('\n')) {
+              context.report({
+                node,
+                message: 'Newline required at end of file (eol-last).',
+                fix(fixer) {
+                  return fixer.insertTextAfter(node, '\n');
+                },
+              });
+            }
+          },
+        };
+      },
+    },
+    'max-len': {
+      meta: {
+        type: 'layout',
+        schema: [
+          {
+            type: 'object',
+            properties: {
+              code: {
+                type: 'integer',
+              },
+            },
+            additionalProperties: false,
+          },
+        ],
+        docs: {
+          description: 'Enforce a maximum line length.',
+        },
+        messages: {},
+      },
+      create(context) {
+        const config = (context.options && context.options[0]) || {};
+        const maxLen = config.code || 120;
+
+        return {
+          Program(node) {
+            const sourceCode = context.sourceCode || context.getSourceCode();
+            const lines =
+              sourceCode.lines ||
+              (sourceCode.text
+                ? sourceCode.text.split(/\r?\n/)
+                : sourceCode.getText().split(/\r?\n/));
+
+            for (let i = 0; i < lines.length; i++) {
+              const line = lines[i];
+
+              if (line.length > maxLen) {
+                if (/https?:\/\//.test(line)) continue;
+
+                if (/^\s*import\s+.+from\s+['"].+['"];?$/.test(line)) continue;
+
+                if (/^\s*(\/\/|\/\*|\*)/.test(line)) continue;
+
+                if (/['"`]/.test(line) && line.replace(/['"`].*?['"`]/g, '').length <= maxLen) {
+                  continue;
+                }
+
+                context.report({
+                  node,
+                  loc: {
+                    start: { line: i + 1, column: maxLen },
+                    end: { line: i + 1, column: line.length },
+                  },
+                  message: `Line ${i + 1} exceeds the maximum line length of ${maxLen} (current: ${line.length}).`,
                 });
               }
             }

@@ -15,7 +15,10 @@
     "import/no-duplicates": "error",
     "universe/vertical-spacing": "error",
     "universe/destructuring-props-order": "error",
-    "universe/enforce-package-utils-alias": "error"
+    "universe/enforce-package-utils-alias": "error",
+    "universe/no-unused-imports": "error",
+    "universe/eol-last": "error",
+    "universe/max-len": ["error", { "code": 120 }]
   },
   "overrides": [
     {

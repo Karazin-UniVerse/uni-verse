@@ -10,8 +10,8 @@ type LiveCountdownProps = {
 
 const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
 
-function pad(n: number): string {
-  return String(Math.max(0, n)).padStart(2, '0');
+function pad(value: number): string {
+  return String(Math.max(0, value)).padStart(2, '0');
 }
 
 function formatRemaining(ms: number): string {

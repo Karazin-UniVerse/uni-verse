@@ -11,17 +11,15 @@ let oxlintCli;
 
 try {
   const oxlintPkgDir = path.dirname(require.resolve('oxlint/package.json'));
-  
-oxlintCli = path.join(oxlintPkgDir, 'dist/cli.js');
+
+  oxlintCli = path.join(oxlintPkgDir, 'dist/cli.js');
 } catch {
   oxlintCli = path.resolve(__dirname, '../../node_modules/oxlint/dist/cli.js');
 }
 
-// Run oxlint with auto-fix enabled across staged files.
-// Output warnings/errors to stdout/stderr so the developer is aware,
-// but exit with code 0 so the commit state remains available (non-blocking).
-spawnSync(process.execPath, [oxlintCli, '--fix', ...files], {
+// Run oxlint with auto-fix and strict warning checks scoped to staged files.
+const result = spawnSync(process.execPath, [oxlintCli, '--fix', '--deny-warnings', ...files], {
   stdio: 'inherit',
 });
 
-process.exit(0);
+process.exit(result.status ?? 0);
