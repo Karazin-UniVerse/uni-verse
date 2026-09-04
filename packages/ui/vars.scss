@@ -1,6 +1,6 @@
-@import 'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap';
+@forward './breakpoints';
 
-@import './breakpoints';
+@import 'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap';
 
 /* ==========================================================================
    1. BASE & LAYOUT TOKENS (Non-thematic)
