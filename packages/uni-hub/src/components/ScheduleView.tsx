@@ -5,14 +5,9 @@ import { Tag } from './ui/Tag';
 import { Empty } from './ui/Empty';
 import styles from './ScheduleView.module.scss';
 
-interface ScheduleEvent {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  type: 'lecture' | 'practice' | 'exam' | 'other';
-  location: string;
-}
+import type { ScheduleEvent } from './ScheduleView.types';
+
+export type { ScheduleEvent } from './ScheduleView.types';
 
 const addDays = (date: Date, days: number) => {
   const d = new Date(date);
@@ -89,18 +84,18 @@ const DUMMY_EVENTS = generateDummyEvents();
 const exportToICS = (events: ScheduleEvent[]) => {
   const formatDateICS = (date: Date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 
-  let icsContent = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//UNiVerse//Schedule//EN\n';
+  let icsContent = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//UNiVerse//Schedule//EN\r\n';
   events.forEach((event) => {
-    icsContent += 'BEGIN:VEVENT\n';
-    icsContent += `UID:${event.id}@universe.com\n`;
-    icsContent += `DTSTAMP:${formatDateICS(new Date())}\n`;
-    icsContent += `DTSTART:${formatDateICS(event.start)}\n`;
-    icsContent += `DTEND:${formatDateICS(event.end)}\n`;
-    icsContent += `SUMMARY:${event.title}\n`;
-    icsContent += `LOCATION:${event.location}\n`;
-    icsContent += 'END:VEVENT\n';
+    icsContent += 'BEGIN:VEVENT\r\n';
+    icsContent += `UID:${event.id}@universe.com\r\n`;
+    icsContent += `DTSTAMP:${formatDateICS(new Date())}\r\n`;
+    icsContent += `DTSTART:${formatDateICS(event.start)}\r\n`;
+    icsContent += `DTEND:${formatDateICS(event.end)}\r\n`;
+    icsContent += `SUMMARY:${event.title}\r\n`;
+    icsContent += `LOCATION:${event.location}\r\n`;
+    icsContent += 'END:VEVENT\r\n';
   });
-  icsContent += 'END:VCALENDAR';
+  icsContent += 'END:VCALENDAR\r\n';
 
   const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -110,6 +105,7 @@ const exportToICS = (events: ScheduleEvent[]) => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 const getTypeName = (type: string) => {
