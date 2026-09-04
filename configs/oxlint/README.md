@@ -28,7 +28,7 @@ Enforces vertical blank lines between logical sections of code to ensure readabi
 Enforces the convention that required properties must appear before optional properties:
 
 - In function and React component parameter destructuring (`ObjectPattern`), properties without default values (`data`, `height`, `className`) must appear before properties with default values (`type = 'bar'`, `layout = 'horizontal'`).
-- **Autofix (`--fix`)**: Safely reorders properties so non-defaults precede defaults without altering runtime semantics.
+- **Autofix (`--fix`)**: Safely reorders properties with pure literal defaults. Automatically falls back to report-only whenever function calls, variable references, rest elements, or comments are present to guarantee semantic safety.
 
 ### Situation 4: Intra-Package Import Aliasing (`universe/enforce-package-utils-alias` & `no-restricted-imports`)
 

@@ -84,21 +84,103 @@ if (isNextReturn) {
   }
 }
 
+function isPureLiteral(expr) {
+  if (!expr) return false;
+
+  if (expr.type === 'Literal') {
+    return true;
+  }
+
+  if (
+    expr.type === 'Identifier' &&
+    (expr.name === 'undefined' || expr.name === 'NaN' || expr.name === 'Infinity')
+  ) {
+    return true;
+  }
+
+  if (
+    expr.type === 'UnaryExpression' &&
+    (expr.operator === '-' || expr.operator === '+' || expr.operator === 'void')
+  ) {
+    return isPureLiteral(expr.argument);
+  }
+
+  if (expr.type === 'ArrayExpression') {
+    return expr.elements.every(
+      (el) => el !== null && el.type !== 'SpreadElement' && isPureLiteral(el),
+    );
+  }
+
+  if (expr.type === 'ObjectExpression') {
+    return expr.properties.every(
+      (p) =>
+        p.type === 'Property' &&
+        !p.computed &&
+        (p.key.type === 'Identifier' || p.key.type === 'Literal') &&
+        isPureLiteral(p.value),
+    );
+  }
+
+  return false;
+}
+
+function isSafeToReorder(sourceCode, node, properties) {
+  // 1. If any comments exist inside the destructuring pattern, do not auto-fix to avoid deleting comments
+  if (sourceCode.getCommentsInside && sourceCode.getCommentsInside(node).length > 0) {
+    return false;
+  }
+
+  for (const prop of properties) {
+    // 2. Do not auto-fix if RestElement (...rest) is present
+    if (prop.type === 'RestElement') {
+      return false;
+    }
+
+    // 3. Do not auto-fix if property key is computed (e.g. [KEY])
+    if (prop.computed) {
+      return false;
+    }
+
+    // 4. Must be standard Property
+    if (prop.type !== 'Property') {
+      return false;
+    }
+
+    // 5. Default properties: must be simple AssignmentPattern with pure literal value
+    if (prop.value && prop.value.type === 'AssignmentPattern') {
+      if (prop.value.left.type !== 'Identifier') {
+        return false;
+      }
+      
+if (!isPureLiteral(prop.value.right)) {
+        return false;
+      }
+    } else {
+      // 6. Non-default properties: must be simple identifier (no nested patterns like { user: { name } })
+      if (prop.value && prop.value.type !== 'Identifier') {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 function checkObjectPattern(context, node) {
   const sourceCode = context.sourceCode || context.getSourceCode();
   const properties = node.properties;
-  
-if (!properties || properties.length < 2) return;
+
+  if (!properties || properties.length < 2) return;
 
   let seenDefault = false;
   const misplacedProps = [];
 
   for (const prop of properties) {
     if (prop.type === 'RestElement') continue;
-    
-const hasDefault = prop.value && prop.value.type === 'AssignmentPattern';
-    
-if (hasDefault) {
+
+    const hasDefault = prop.value && prop.value.type === 'AssignmentPattern';
+
+    if (hasDefault) {
       seenDefault = true;
     } else if (seenDefault) {
       misplacedProps.push(prop);
@@ -107,57 +189,68 @@ if (hasDefault) {
 
   if (misplacedProps.length === 0) return;
 
-  const firstMisplaced = misplacedProps[0];
-  const propName =
-    (firstMisplaced.key && (firstMisplaced.key.name || firstMisplaced.key.value)) ||
-    sourceCode.getText(firstMisplaced);
+  const canAutofix = isSafeToReorder(sourceCode, node, properties);
 
-  context.report({
-    node: firstMisplaced,
-    message: `Props without default values ('${propName}') must be declared before props with default values.`,
-    fix(fixer) {
-      const nonDefaults = [];
-      const defaults = [];
-      const rests = [];
+  if (canAutofix) {
+    const firstMisplaced = misplacedProps[0];
+    const propName =
+      (firstMisplaced.key && (firstMisplaced.key.name || firstMisplaced.key.value)) ||
+      sourceCode.getText(firstMisplaced);
 
-      for (const p of properties) {
-        if (p.type === 'RestElement') {
-          rests.push(sourceCode.getText(p));
-        } else if (p.value && p.value.type === 'AssignmentPattern') {
-          defaults.push(sourceCode.getText(p));
-        } else {
-          nonDefaults.push(sourceCode.getText(p));
+    context.report({
+      node: firstMisplaced,
+      message: `Props without default values ('${propName}') must be declared before props with default values.`,
+      fix(fixer) {
+        const nonDefaults = [];
+        const defaults = [];
+
+        for (const p of properties) {
+          if (p.value && p.value.type === 'AssignmentPattern') {
+            defaults.push(sourceCode.getText(p));
+          } else {
+            nonDefaults.push(sourceCode.getText(p));
+          }
         }
-      }
 
-      const firstProp = properties[0];
-      const lastProp = properties[properties.length - 1];
-      const isMultiline = firstProp.loc.start.line !== lastProp.loc.end.line;
+        const firstProp = properties[0];
+        const lastProp = properties[properties.length - 1];
+        const isMultiline = firstProp.loc.start.line !== lastProp.loc.end.line;
 
-      let reordered;
-      
-if (isMultiline) {
-        const lineText = sourceCode.lines[firstProp.loc.start.line - 1] || '';
-        const indentMatch = lineText.match(/^\s*/);
-        const indent = indentMatch ? indentMatch[0] : '  ';
-        
-reordered = [...nonDefaults, ...defaults, ...rests].join(`,\n${indent}`);
-      } else {
-        reordered = [...nonDefaults, ...defaults, ...rests].join(', ');
-      }
+        let reordered;
 
-      return fixer.replaceTextRange([firstProp.range[0], lastProp.range[1]], reordered);
-    },
-  });
+        if (isMultiline) {
+          const lineText = sourceCode.lines[firstProp.loc.start.line - 1] || '';
+          const indentMatch = lineText.match(/^\s*/);
+          const indent = indentMatch ? indentMatch[0] : '  ';
 
-  for (let i = 1; i < misplacedProps.length; i++) {
-    const prop = misplacedProps[i];
-    const name = (prop.key && (prop.key.name || prop.key.value)) || sourceCode.getText(prop);
-    
-context.report({
-      node: prop,
-      message: `Props without default values ('${name}') must be declared before props with default values.`,
+          reordered = [...nonDefaults, ...defaults].join(`,\n${indent}`);
+        } else {
+          reordered = [...nonDefaults, ...defaults].join(', ');
+        }
+
+        return fixer.replaceTextRange([firstProp.range[0], lastProp.range[1]], reordered);
+      },
     });
+
+    for (let i = 1; i < misplacedProps.length; i++) {
+      const prop = misplacedProps[i];
+      const name = (prop.key && (prop.key.name || prop.key.value)) || sourceCode.getText(prop);
+
+      context.report({
+        node: prop,
+        message: `Props without default values ('${name}') must be declared before props with default values.`,
+      });
+    }
+  } else {
+    // If not safe to reorder, report all misplaced props without fix (report-only)
+    for (const prop of misplacedProps) {
+      const name = (prop.key && (prop.key.name || prop.key.value)) || sourceCode.getText(prop);
+
+      context.report({
+        node: prop,
+        message: `Props without default values ('${name}') must be declared before props with default values.`,
+      });
+    }
   }
 }
 
