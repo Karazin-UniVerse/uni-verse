@@ -1,6 +1,8 @@
 /* ==========================================================================
    GLOBAL RESPONSIVE BREAKPOINTS (UniDesign System)
    ========================================================================== */
+@use 'sass:map';
+
 $breakpoint-xs: 480px;
 $breakpoint-sm: 640px;
 $breakpoint-md: 768px;
@@ -18,7 +20,7 @@ $breakpoints: (
 );
 
 @mixin wider-than($breakpoint) {
-  $value: map-get($breakpoints, $breakpoint);
+  $value: map.get($breakpoints, $breakpoint);
   @if $value {
     @media (min-width: $value) {
       @content;

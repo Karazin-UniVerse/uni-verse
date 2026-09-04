@@ -1,4 +1,4 @@
-@import '../../../../ui/breakpoints.scss';
+@use '../../../ui/breakpoints.scss' as *;
 
 .switcher {
   display: inline-flex;
@@ -59,5 +59,3 @@
     display: inline;
   }
 }
-
-
