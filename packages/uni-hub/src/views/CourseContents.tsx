@@ -13,18 +13,16 @@ import {
   ArrowLeft,
   ChevronDown,
 } from 'lucide-react';
-import { SimpleButton } from '@/design-system';
-import { moodleApi } from '@/services/api';
+import { Button as SimpleButton, Spinner, Empty } from '@una';
+import { useToast } from '@ui/Toast';
+import { moodleApi } from '@uni-hub/services/api';
 import {
   COURSE_MODULE_NAMES,
   type CourseSection,
   type CourseModule,
   type CourseModuleName,
-} from '@/types';
-import AssignmentModal from '@/components/AssignmentModal';
-import { useToast } from '@/components/ui/Toast';
-import { Spinner } from '@/components/ui/Spinner';
-import { Empty } from '@/components/ui/Empty';
+} from '@uni-hub/types';
+import AssignmentModal from '@uni-hub/components/AssignmentModal';
 import styles from './CourseContents.module.scss';
 
 const getModuleIcon = (modname: CourseModuleName) => {

@@ -8,7 +8,7 @@
   outline: none;
   cursor: pointer;
   position: relative;
-  transition: border-color var(--transition-small), box-shadow var(--transition-small);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   margin: 0;
   background-color: var(--bg-surface);
 
@@ -21,7 +21,7 @@
     width: var(--space-12);
     height: var(--space-12);
     border-radius: var(--border-radius-full);
-    transition: transform var(--transition-small), background-color var(--transition-small);
+    transition: transform var(--transition-fast), background-color var(--transition-fast);
   }
 
   &:focus-visible {

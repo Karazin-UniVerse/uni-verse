@@ -19,10 +19,10 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
       "@uni-hub/*": ["./src/*"],
-      "@ui/*": ["./src/components/ui/*"],
-      "@una/*": ["../ui/components/una/*", "./src/design-system/*"]
+      "@ui/*": ["./src/components/ui/*", "../ui/components/una/*", "../ui/*"],
+      "@una": ["../ui/components/una/index.ts"],
+      "@una/*": ["../ui/components/una/*"]
     }
   },
   "include": [

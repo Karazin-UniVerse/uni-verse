@@ -12,10 +12,14 @@
   "main": "./index.ts",
   "exports": {
     ".": "./index.ts",
-    "./vars.scss": "./vars.scss"
+    "./una": "./components/una/index.ts",
+    "./una/*": "./components/una/*",
+    "./vars.scss": "./vars.scss",
+    "./breakpoints.scss": "./breakpoints.scss"
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "lucide-react": "^1.34.0",
     "sass": "^1.102.0"
   },
   "peerDependencies": {

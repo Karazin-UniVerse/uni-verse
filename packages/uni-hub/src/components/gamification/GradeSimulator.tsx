@@ -7,11 +7,7 @@ import {
   getValidGrades,
 } from '@uni-hub/utils/grades';
 import { useCountUp } from '@uni-hub/hooks/useCountUp';
-import { Modal } from '@ui/Modal';
-import { Select } from '@ui/Select';
-import { Empty } from '@ui/Empty';
-import { ProgressBar } from '@ui/ProgressBar';
-import { SimpleButton, SimpleSlider } from '@uni-hub/design-system';
+import { Modal, Select, Empty, ProgressBar, Button as SimpleButton, SimpleSlider } from '@una';
 import styles from './GradeSimulator.module.scss';
 
 const DEFAULT_SCORE = 75;

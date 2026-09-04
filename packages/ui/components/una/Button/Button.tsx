@@ -1,21 +1,8 @@
-import React, { type ButtonHTMLAttributes, type AnchorHTMLAttributes, type ReactNode } from 'react';
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 import clsx from 'clsx';
-import css from './SimpleButton.module.scss';
+import type { ButtonProps } from './Button.types';
+import css from './Button.module.scss';
 
-type BaseProps = {
-  children: ReactNode;
-  variant: 'primary' | 'secondary';
-  size: 'small' | 'medium' | 'large';
-  className?: string;
-  isTransparent?: boolean;
-};
-
-export type ButtonAsButtonProps = BaseProps & {
-  isLink?: false;
-} & ButtonHTMLAttributes<HTMLButtonElement>;
-type ButtonAsLinkProps = BaseProps & { isLink: true } & AnchorHTMLAttributes<HTMLAnchorElement>;
-
-type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
 /**
  * Button
  *
@@ -37,15 +24,14 @@ type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
  * // Regular button
  * <Button variant="primary" size="medium" onClick={() => alert('clicked')}>Save</Button>
  *
- *
  * // Link-style button
  * <Button isLink href="/docs" variant="secondary">Docs</Button>
  * ```
  */
 export function Button({
-  variant,
   children,
   className,
+  variant = 'primary',
   size = 'small',
   isLink = false,
   isTransparent = false,
@@ -61,16 +47,22 @@ export function Button({
   );
 
   if (isLink) {
+    const linkProps = props as AnchorHTMLAttributes<HTMLAnchorElement>;
+
     return (
-      <a className={classes} {...(props as AnchorHTMLAttributes<HTMLAnchorElement>)}>
+      <a className={classes} {...linkProps}>
         {children}
       </a>
     );
   }
 
+  const { type = 'button', ...buttonProps } = props as ButtonHTMLAttributes<HTMLButtonElement>;
+
   return (
-    <button className={classes} {...(props as ButtonHTMLAttributes<HTMLButtonElement>)}>
+    <button type={type} className={classes} {...buttonProps}>
       {children}
     </button>
   );
 }
+
+export default Button;

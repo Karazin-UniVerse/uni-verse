@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react';
-import { SimpleButton, RadioButton } from '../design-system';
-import { Tag, Empty } from './ui';
+import { Button as SimpleButton, RadioButton, Tag, Empty } from '@una';
 import styles from './ScheduleView.module.scss';
 
 import type { ScheduleEvent } from './ScheduleView.types';

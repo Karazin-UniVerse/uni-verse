@@ -3,9 +3,11 @@
 import React, { useState } from 'react';
 import { User, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { SimpleButton, SimpleInput, SimpleForm } from '@uni-hub/design-system';
+import { Button } from '@una/Button';
+import { TextInput } from '@una/inputs/TextInput';
+import { SimpleForm } from '@una/Form';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
-import { useToast } from '@ui/Toast';
+import { useToast } from '@una/Toast';
 import { authApi } from '@uni-hub/services/api';
 import styles from './LoginPage.module.scss';
 
@@ -72,7 +74,7 @@ const LoginPage: React.FC = () => {
             <span className={styles.label}>Имя пользователя</span>
             <div className={styles.inputWrap}>
               <User size={16} className={styles.icon} />
-              <SimpleInput
+              <TextInput
                 name="username"
                 size="large"
                 placeholder="Имя пользователя"
@@ -87,7 +89,7 @@ const LoginPage: React.FC = () => {
             <span className={styles.label}>Пароль</span>
             <div className={styles.inputWrap}>
               <Lock size={16} className={styles.icon} />
-              <SimpleInput
+              <TextInput
                 name="password"
                 type="password"
                 size="large"
@@ -101,7 +103,7 @@ const LoginPage: React.FC = () => {
 
           {error && <p className={styles.error}>{error}</p>}
 
-          <SimpleButton
+          <Button
             type="submit"
             variant="primary"
             size="large"
@@ -109,7 +111,7 @@ const LoginPage: React.FC = () => {
             className={styles.submit}
           >
             {loading ? 'Вход...' : 'Войти'}
-          </SimpleButton>
+          </Button>
         </SimpleForm>
       </div>
     </div>

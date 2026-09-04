@@ -2,14 +2,7 @@ import React from 'react';
 import css from './SimpleForm.module.scss';
 import clsx from 'clsx';
 
-export interface SimpleFormProps extends Omit<
-  React.FormHTMLAttributes<HTMLFormElement>,
-  'action' | 'onSubmit'
-> {
-  action?: (formData: FormData) => void | Promise<void>;
-  onData?: (data: Record<string, FormDataEntryValue | FormDataEntryValue[]>) => void;
-  variant?: 'simple' | 'card';
-}
+import type { SimpleFormProps } from './SimpleForm.types';
 
 /**
  * SimpleForm
@@ -83,3 +76,5 @@ export const SimpleForm: React.FC<SimpleFormProps> = ({
     </form>
   );
 };
+
+export default SimpleForm;

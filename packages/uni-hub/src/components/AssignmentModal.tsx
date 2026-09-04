@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Download, ExternalLink } from 'lucide-react';
-import { SimpleButton, FileInput, SimpleForm } from '../design-system';
+import { Button as SimpleButton, FileInput, SimpleForm, Modal, Spinner, Tag } from '@una';
+import { useToast } from '@ui/Toast';
 import { moodleApi } from '../services/api';
 import type { CourseModule } from '../types';
-import { Modal } from './ui/Modal';
-import { Spinner } from './ui/Spinner';
-import { Tag } from './ui/Tag';
-import { useToast } from './ui/Toast';
+
 import { useGamificationStore } from '../store/useGamificationStore';
 import { BADGES } from '../constants/gamification';
 import styles from './AssignmentModal.module.scss';

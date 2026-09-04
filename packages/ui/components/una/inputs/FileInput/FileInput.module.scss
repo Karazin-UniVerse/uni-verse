@@ -23,7 +23,7 @@
   border: 2px dashed var(--border-color);
   border-radius: var(--border-radius-medium);
   background-color: var(--bg-surface);
-  transition: var(--transition-small);
+  transition: var(--transition-fast);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -99,7 +99,7 @@
   justify-content: center;
   margin-bottom: var(--space-8);
   color: var(--text-secondary);
-  transition: transform var(--transition-small), color var(--transition-small);
+  transition: transform var(--transition-fast), color var(--transition-fast);
 }
 
 .dropzoneText {
@@ -224,7 +224,7 @@
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-medium);
   font-size: var(--font-sm);
-  transition: var(--transition-small);
+  transition: var(--transition-fast);
 
   &:hover {
     border-color: var(--gray-400);
@@ -276,7 +276,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: var(--transition-small);
+  transition: var(--transition-fast);
 
   &:hover {
     color: var(--error-color);

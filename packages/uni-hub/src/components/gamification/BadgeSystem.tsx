@@ -10,10 +10,7 @@ type BadgeSystemProps = {
   submittedBeforeDeadline?: boolean;
 };
 
-export const BadgeSystem: React.FC<BadgeSystemProps> = ({
-  grades,
-  submittedBeforeDeadline,
-}) => {
+export const BadgeSystem: React.FC<BadgeSystemProps> = ({ grades, submittedBeforeDeadline }) => {
   const toast = useToast();
   const unlockedBadges = useGamificationStore((state) => state.unlockedBadges);
   const unlockBadge = useGamificationStore((state) => state.unlockBadge);

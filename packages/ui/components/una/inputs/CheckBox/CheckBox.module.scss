@@ -8,7 +8,7 @@
   outline: none;
   cursor: pointer;
   position: relative;
-  transition: border-color var(--transition-small), background-color var(--transition-small), box-shadow var(--transition-small);
+  transition: border-color var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
   margin: 0;
   background-color: var(--bg-surface); /* Use surface color for default state */
 
@@ -22,7 +22,7 @@
     height: var(--space-12);
     border: solid var(--accent-text-on-primary); /* White checkmark */
     border-width: 0 2px 2px 0;
-    transition: transform var(--transition-small);
+    transition: transform var(--transition-fast);
   }
 
   &:focus-visible {

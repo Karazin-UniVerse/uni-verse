@@ -18,8 +18,18 @@ import {
   VolumeX,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { SimpleButton, SimpleInput, CheckBox } from '@/design-system';
-import { moodleApi } from '@/services/api';
+import {
+  Button as SimpleButton,
+  TextInput as SimpleInput,
+  CheckBox,
+  Spinner,
+  Tag,
+  Empty,
+  Select,
+  ProgressBar,
+} from '@una';
+import { useToast } from '@ui/Toast';
+import { moodleApi } from '@uni-hub/services/api';
 import type {
   Course,
   Grade,
@@ -28,29 +38,31 @@ import type {
   Notification,
   CourseStatistics,
   CourseModule,
-} from '@/types';
-import AssignmentModal from '@/components/AssignmentModal';
-import ScheduleView from '@/components/ScheduleView';
-import { GradesChart } from '@/components/GradesChart';
-import { AssignmentsDonut } from '@/components/AssignmentsDonut';
-import { DashboardSkeleton } from '@/components/DashboardSkeleton';
-import { StreakBadge } from '@/components/gamification/StreakBadge';
-import { ContextualGreeting } from '@/components/gamification/ContextualGreeting';
-import { LiveCountdown } from '@/components/gamification/LiveCountdown';
-import { BadgeSystem } from '@/components/gamification/BadgeSystem';
-import { GradeSimulator, GradeSimulatorTrigger } from '@/components/gamification/GradeSimulator';
-import { ThemeSwitcher } from '@/theme/ThemeSwitcher';
-import { useToast } from '@/components/ui/Toast';
-import { Spinner } from '@/components/ui/Spinner';
-import { Tag } from '@/components/ui/Tag';
-import { Empty } from '@/components/ui/Empty';
-import { Select } from '@/components/ui/Select';
-import { ProgressBar } from '@/components/ui/ProgressBar';
-import { useCountUp } from '@/hooks/useCountUp';
-import { useNow } from '@/hooks/useNow';
-import { useGamificationStore } from '@/store/useGamificationStore';
-import { getValidGrades, getGradeTone, getGradeCourseName, getGradeRawValue } from '@/utils/grades';
-import { playClick } from '@/utils/soundEffects';
+} from '@uni-hub/types';
+import AssignmentModal from '@uni-hub/components/AssignmentModal';
+import ScheduleView from '@uni-hub/components/ScheduleView';
+import { GradesChart } from '@uni-hub/components/GradesChart';
+import { AssignmentsDonut } from '@uni-hub/components/AssignmentsDonut';
+import { DashboardSkeleton } from '@uni-hub/components/DashboardSkeleton';
+import { StreakBadge } from '@uni-hub/components/gamification/StreakBadge';
+import { ContextualGreeting } from '@uni-hub/components/gamification/ContextualGreeting';
+import { LiveCountdown } from '@uni-hub/components/gamification/LiveCountdown';
+import { BadgeSystem } from '@uni-hub/components/gamification/BadgeSystem';
+import {
+  GradeSimulator,
+  GradeSimulatorTrigger,
+} from '@uni-hub/components/gamification/GradeSimulator';
+import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
+import { useCountUp } from '@uni-hub/hooks/useCountUp';
+import { useNow } from '@uni-hub/hooks/useNow';
+import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
+import {
+  getValidGrades,
+  getGradeTone,
+  getGradeCourseName,
+  getGradeRawValue,
+} from '@uni-hub/utils/grades';
+import { playClick } from '@uni-hub/utils/soundEffects';
 import styles from './DashboardPage.module.scss';
 
 type NavKey = 'overview' | 'courses' | 'grades' | 'assignments' | 'schedule' | 'events';
