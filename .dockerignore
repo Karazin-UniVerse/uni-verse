@@ -1,0 +1,10 @@
+node_modules
+.git
+.github
+.next
+dist
+build
+coverage
+*.log
+.turbo
+.idea

@@ -11,7 +11,7 @@ WORKDIR /app
 COPY . .
 ARG NEXT_PUBLIC_API_URL=https://p01--backend--jm9qjnmpm4m2.code.run
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-RUN pnpm install
+RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @universe/uni-hub build
 
 FROM base AS runner
@@ -24,4 +24,5 @@ COPY --from=builder --chown=node:node /app /app
 USER node
 EXPOSE 3000
 
-CMD ["pnpm", "--filter", "@universe/uni-hub", "start"]
+WORKDIR /app/packages/uni-hub
+CMD ["./node_modules/.bin/next", "start"]

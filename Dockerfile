@@ -9,7 +9,7 @@ RUN corepack enable && corepack prepare pnpm@10.0.0 --activate
 FROM base AS builder
 WORKDIR /app
 COPY . .
-RUN pnpm install
+RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @universe/backend build
 
 FROM base AS runner
@@ -22,4 +22,5 @@ COPY --from=builder --chown=node:node /app /app
 USER node
 EXPOSE 3001
 
-CMD ["pnpm", "--filter", "@universe/backend", "start:prod"]
+WORKDIR /app/packages/backend
+CMD ["node", "dist/main"]
