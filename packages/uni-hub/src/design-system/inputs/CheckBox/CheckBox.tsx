@@ -10,5 +10,6 @@ export default function CheckBox({ variant, ...props }: CheckBoxProps) {
     variant && css[variant],
     props.className && css[props.className],
   );
+
   return <input {...props} type="checkbox" className={classes}></input>;
 }

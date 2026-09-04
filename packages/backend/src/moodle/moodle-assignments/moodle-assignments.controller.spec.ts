@@ -48,6 +48,7 @@ describe('MoodleAssignmentsController', () => {
     const result = await controller.getAssignments('token', 'id', {
       status: 'completed',
     });
+
     expect(result.length).toBe(1);
     expect(result[0].id).toBe(1);
   });

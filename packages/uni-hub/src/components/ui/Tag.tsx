@@ -7,7 +7,8 @@ type TagProps = {
   className?: string;
 };
 
-export const Tag: React.FC<TagProps> = ({ children, tone = 'default', className }) => {
+export const Tag: React.FC<TagProps> = ({ children, className, tone = 'default' }) => {
   const toneClass = tone === 'neutral' ? styles.default : styles[tone];
+
   return <span className={`${styles.tag} ${toneClass} ${className ?? ''}`}>{children}</span>;
 };

@@ -17,9 +17,9 @@ type ThemeSwitcherProps = {
 };
 
 export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
+  className,
   compact = false,
   showLabel = true,
-  className,
 }) => {
   const { theme, setTheme, cycleTheme } = useTheme();
 

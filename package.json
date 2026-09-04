@@ -7,6 +7,7 @@
     "build": "turbo build",
     "lint": "oxlint --deny-warnings",
     "lint:ox": "oxlint --deny-warnings",
+    "lint:fix": "oxlint --fix --deny-warnings",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "format": "prettier --write .",

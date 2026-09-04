@@ -44,6 +44,7 @@ export class MoodleAssignmentsController {
       moodleToken,
       moodleId,
     );
+
     return this.filterAndSortAssignments(assignments, query);
   }
 
@@ -89,28 +90,35 @@ export class MoodleAssignmentsController {
     if (query.year) {
       result = result.filter((assignment) => assignment.year === query.year);
     }
+
     if (query.semester) {
       result = result.filter(
         (assignment) => String(assignment.semester) === query.semester,
       );
     }
+
     if (query.status === 'completed') {
       const now = Date.now() / 1000;
+
       result = result.filter((assignment) => assignment.duedate < now);
     } else if (query.status === 'not_completed') {
       const now = Date.now() / 1000;
+
       result = result.filter((assignment) => assignment.duedate >= now);
     }
+
     if (query.dateFrom) {
       result = result.filter(
         (assignment) => assignment.duedate >= query.dateFrom!,
       );
     }
+
     if (query.dateTo) {
       result = result.filter(
         (assignment) => assignment.duedate <= query.dateTo!,
       );
     }
+
     if (query.sortByDate) {
       result.sort((a, b) =>
         query.sortByDate === 'asc'

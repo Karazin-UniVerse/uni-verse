@@ -6,11 +6,13 @@ import styles from './ScheduleView.module.scss';
 
 import type { ScheduleEvent } from './ScheduleView.types';
 
-export type { ScheduleEvent } from './ScheduleView.types';
+export type { ScheduleEvent };
 
 const addDays = (date: Date, days: number) => {
   const d = new Date(date);
+
   d.setDate(d.getDate() + days);
+
   return d;
 };
 
@@ -18,8 +20,10 @@ const startOfWeek = (date: Date) => {
   const d = new Date(date);
   const day = d.getDay();
   const diff = day === 0 ? -6 : 1 - day;
+
   d.setDate(d.getDate() + diff);
   d.setHours(0, 0, 0, 0);
+
   return d;
 };
 
@@ -43,14 +47,18 @@ const generateDummyEvents = (): ScheduleEvent[] => {
 
   for (let i = -15; i <= 15; i++) {
     const currentDate = addDays(now, i);
+
     if (currentDate.getDay() === 0) continue;
 
     const eventsCount = Math.floor(Math.random() * 3) + 1;
+
     for (let j = 0; j < eventsCount; j++) {
       const hour = 9 + j * 2 + Math.floor(Math.random() * 2);
       const start = new Date(currentDate);
+
       start.setHours(hour, 0, 0, 0);
       const end = new Date(currentDate);
+
       end.setHours(hour + 1, 30, 0, 0);
       const subjectIndex = (((i + j) % subjects.length) + subjects.length) % subjects.length;
 
@@ -66,6 +74,7 @@ const generateDummyEvents = (): ScheduleEvent[] => {
   }
 
   const examDay = addDays(now, 5);
+
   events.push({
     id: 'evt-exam',
     title: 'Экзамен по Программированию',
@@ -84,6 +93,7 @@ const exportToICS = (events: ScheduleEvent[]) => {
   const formatDateICS = (date: Date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 
   let icsContent = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//UNiVerse//Schedule//EN\r\n';
+
   events.forEach((event) => {
     icsContent += 'BEGIN:VEVENT\r\n';
     icsContent += `UID:${event.id}@universe.com\r\n`;
@@ -99,6 +109,7 @@ const exportToICS = (events: ScheduleEvent[]) => {
   const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
+
   link.href = url;
   link.setAttribute('download', 'schedule.ics');
   document.body.appendChild(link);
@@ -137,7 +148,9 @@ export const ScheduleView: React.FC = () => {
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
   const [selectedDate, setSelectedDate] = useState(() => {
     const d = new Date();
+
     d.setHours(0, 0, 0, 0);
+
     return d;
   });
 
@@ -151,11 +164,13 @@ export const ScheduleView: React.FC = () => {
     const month = selectedDate.getMonth();
     const first = new Date(year, month, 1);
     const start = startOfWeek(first);
+
     return Array.from({ length: 42 }, (_, i) => addDays(start, i));
   }, [selectedDate]);
 
   const renderDayView = () => {
     const events = getEventsForDate(selectedDate);
+
     return (
       <section className={styles.panel}>
         <h3>
@@ -217,6 +232,7 @@ export const ScheduleView: React.FC = () => {
           {days.map((day) => {
             const events = getEventsForDate(day);
             const isToday = isSameDay(day, new Date());
+
             return (
               <div
                 key={day.toISOString()}
@@ -252,6 +268,7 @@ export const ScheduleView: React.FC = () => {
 
   const renderMonthView = () => {
     const currentMonth = selectedDate.getMonth();
+
     return (
       <div className={styles.month}>
         <div className={styles.monthNav}>
@@ -287,6 +304,7 @@ export const ScheduleView: React.FC = () => {
             const events = getEventsForDate(day);
             const inMonth = day.getMonth() === currentMonth;
             const isToday = isSameDay(day, new Date());
+
             return (
               <button
                 key={day.toISOString()}

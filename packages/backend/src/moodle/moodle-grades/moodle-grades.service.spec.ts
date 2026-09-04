@@ -60,9 +60,11 @@ describe('MoodleGradesService', () => {
         if (wsfunction === 'gradereport_overview_get_course_grades') {
           return Promise.resolve(mockGradesResponse);
         }
+
         if (wsfunction === 'core_enrol_get_users_courses') {
           return Promise.resolve(mockCoursesResponse);
         }
+
         return Promise.resolve(null);
       });
 
@@ -72,6 +74,7 @@ describe('MoodleGradesService', () => {
       expect(result.grades).toHaveLength(2);
 
       const grade1 = result.grades[0];
+
       expect(grade1.courseId).toBe(101);
       expect(grade1.courseName).toBe(
         "Об'єктно-орієнтоване програмування 2025/2026 сем 2",
@@ -82,6 +85,7 @@ describe('MoodleGradesService', () => {
       expect(grade1.semester).toBe(2);
 
       const grade2 = result.grades[1];
+
       expect(grade2.courseId).toBe(102);
       expect(grade2.grade).toBe('75.00');
       expect(grade2.rawGrade).toBe('75.00000');

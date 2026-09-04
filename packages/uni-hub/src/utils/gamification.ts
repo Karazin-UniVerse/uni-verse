@@ -1,6 +1,5 @@
 import type { Grade } from '@uni-hub/types';
-import type { BadgeId } from '@uni-hub/constants/gamification';
-import { SEMESTER_MASTER_THRESHOLD } from '@uni-hub/constants/gamification';
+import { type BadgeId, SEMESTER_MASTER_THRESHOLD } from '@uni-hub/constants/gamification';
 import { getGradeRawValue, getValidGrades } from './grades';
 
 /** Local calendar day as YYYY-MM-DD */
@@ -41,20 +40,21 @@ export function evaluateBadgeUnlocks(input: {
   unlocked: BadgeId[];
   submittedBeforeDeadline?: boolean;
 }): BadgeId[] {
-  const next: BadgeId[] = [];
-  const hasBadge = (id: BadgeId) => input.unlocked.includes(id) || next.includes(id);
+  const newlyUnlocked: BadgeId[] = [];
+  const hasBadge = (badgeId: BadgeId) =>
+    input.unlocked.includes(badgeId) || newlyUnlocked.includes(badgeId);
 
   if (!hasBadge('NIGHT_OWL') && input.checkedInAtNight) {
-    next.push('NIGHT_OWL');
+    newlyUnlocked.push('NIGHT_OWL');
   }
 
   if (!hasBadge('SEMESTER_MASTER') && isSemesterMaster(input.grades)) {
-    next.push('SEMESTER_MASTER');
+    newlyUnlocked.push('SEMESTER_MASTER');
   }
 
   if (!hasBadge('DEADLINE_SNIPER') && input.submittedBeforeDeadline) {
-    next.push('DEADLINE_SNIPER');
+    newlyUnlocked.push('DEADLINE_SNIPER');
   }
 
-  return next;
+  return newlyUnlocked;
 }

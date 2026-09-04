@@ -1,7 +1,6 @@
-import type { ButtonHTMLAttributes, AnchorHTMLAttributes, ReactNode } from 'react';
-import css from './SimpleButton.module.scss';
+import React, { type ButtonHTMLAttributes, type AnchorHTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
-import React from 'react';
+import css from './SimpleButton.module.scss';
 
 type BaseProps = {
   children: ReactNode;
@@ -26,6 +25,8 @@ type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
  *
  * Props:
  * @param {'primary'|'secondary'} variant - Visual variant determining color/style.
+ * @param children
+ * @param className
  * @param {'small'|'medium'|'large'} [size='small'] - Size token used for padding and font.
  * @param {boolean} [isLink=false] - Render as an anchor element instead of a button.
  * @param {boolean} [isTransparent=false] - Render a transparent style variant.
@@ -43,9 +44,9 @@ type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
  */
 export function Button({
   variant,
-  size = 'small',
   children,
   className,
+  size = 'small',
   isLink = false,
   isTransparent = false,
   ...props

@@ -36,7 +36,7 @@ export interface SimpleInputProps extends Omit<InputHTMLAttributes<HTMLInputElem
  * @remarks All additional HTML attributes are proxied directly to the input.
  */
 export const TextInput = forwardRef<HTMLInputElement, SimpleInputProps>(
-  ({ variant = 'primary', size = 'medium', isTransparent = false, className, ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'medium', isTransparent = false, ...props }, ref) => {
     const classes = clsx(
       css.input,
       variant && css[variant],
@@ -44,6 +44,7 @@ export const TextInput = forwardRef<HTMLInputElement, SimpleInputProps>(
       isTransparent && css['is-transparent'],
       className,
     );
+
     return <input {...props} ref={ref} className={classes} />;
   },
 );

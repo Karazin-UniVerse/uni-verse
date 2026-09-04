@@ -31,6 +31,7 @@ export class MoodleFilesService {
     const blob = new Blob([buffer]);
 
     const formData = new FormData();
+
     formData.append('token', moodleToken);
     formData.append('file_1', blob, filename);
 

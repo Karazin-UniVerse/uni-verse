@@ -10,15 +10,15 @@ import {
   CartesianGrid,
   PieChart,
   Pie,
+  type TooltipContentProps,
 } from 'recharts';
-import type { TooltipContentProps } from 'recharts';
 import clsx from 'clsx';
 import css from './Chart.module.scss';
 import { resolveCssColor, useChartTheme } from './useChartTheme';
 
-import type { ChartProps } from './Chart.types';
+import type { ChartDatum, ChartProps } from './Chart.types';
 
-export type { ChartDatum, ChartProps } from './Chart.types';
+export type { ChartDatum, ChartProps };
 
 const DEFAULT_SERIES_VARS = [
   'var(--chart-series-1)',
@@ -33,6 +33,7 @@ const LABEL_MAX = 22;
 
 function truncateLabel(value: string, max: number): string {
   if (value.length <= max) return value;
+
   return `${value.slice(0, max - 1)}…`;
 }
 
@@ -64,6 +65,7 @@ function ChartTooltip({ active, payload, label, valueLabel }: ChartTooltipProps)
 
 function ChartLegend({ items }: { items: { name: string; color: string }[] }) {
   if (items.length === 0) return null;
+
   return (
     <div className={css.legend}>
       {items.map((item) => (

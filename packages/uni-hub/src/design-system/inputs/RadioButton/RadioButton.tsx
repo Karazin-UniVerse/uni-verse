@@ -10,5 +10,6 @@ export default function RadioButton({ variant, ...props }: RadioButtonProps) {
     variant && css[variant],
     props.className && css[props.className],
   );
+
   return <input {...props} type="radio" className={classes}></input>;
 }

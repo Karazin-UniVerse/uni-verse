@@ -32,6 +32,7 @@ type Story = StoryObj<typeof FileInput>;
 
 const InteractiveTemplate = (args: any) => {
   const [files, setFiles] = useState<File[]>([]);
+
   return (
     <div style={{ maxWidth: '500px', padding: '20px' }}>
       <FileInput {...args} files={files} onFilesChange={setFiles} />

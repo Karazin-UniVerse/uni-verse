@@ -21,6 +21,7 @@ interface AssignmentModalProps {
 
 function stripHtml(html: string): string {
   const doc = new DOMParser().parseFromString(html, 'text/html');
+
   return (doc.body.textContent ?? '').trim();
 }
 
@@ -48,9 +49,12 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
   const fetchStatus = async () => {
     if (!module?.instance) return;
+
     setLoading(true);
+
     try {
       const response = await moodleApi.getAssignmentStatus(module.instance);
+
       setStatus(response.data as { status?: string; grade?: string } | null);
     } catch (error) {
       console.error(error);
@@ -65,6 +69,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
     if (visible && module?.instance) {
       const currentInstance = module.instance;
+
       setLoading(true);
       moodleApi
         .getAssignmentStatus(currentInstance)
@@ -101,8 +106,10 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
     if (!text.trim() && files.length === 0) {
       setFormError('Пожалуйста, введите текст решения или прикрепите файл');
+
       return;
     }
+
     setFormError('');
     setSubmitting(true);
     let fileItemId: number | undefined;
@@ -113,6 +120,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         const actualFile = files[0];
         const base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
+
           reader.readAsDataURL(actualFile);
           reader.onload = () => resolve(reader.result as string);
           reader.onerror = (error) => reject(error);
@@ -120,6 +128,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
         const uploadRes = await moodleApi.uploadFile(actualFile.name, base64);
         const uploaded = uploadRes.data as Array<{ itemid?: number }> | undefined;
+
         if (Array.isArray(uploaded) && uploaded.length > 0) {
           fileItemId = uploaded[0].itemid;
         }
@@ -131,6 +140,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
       const deadline = dueUnixSec ?? module?.dueUnixSec ?? module?.duedate;
       const nowSec = Math.floor(Date.now() / 1000);
+
       if (deadline !== null && deadline !== undefined && deadline > 0 && nowSec <= deadline) {
         if (useGamificationStore.getState().unlockBadge('DEADLINE_SNIPER')) {
           toast.success(
@@ -202,6 +212,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
               <ul className={styles.fileList}>
                 {module.contents.map((file, idx: number) => {
                   const url = (file.fileurl || '') + (tokenStr ? `?token=${tokenStr}` : '');
+
                   return (
                     <li key={`${file.filename}-${idx}`} className={styles.fileItem}>
                       <span>{file.filename}</span>

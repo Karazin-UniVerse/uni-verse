@@ -60,6 +60,7 @@ export const Default: Story = {
   render: (args: React.ComponentProps<typeof GradeSimulator>) => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [open, setOpen] = useState(true);
+
     return (
       <>
         <GradeSimulatorTrigger onOpen={() => setOpen(true)} />
@@ -78,6 +79,7 @@ export const Empty: Story = {
   render: (args: React.ComponentProps<typeof GradeSimulator>) => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [open, setOpen] = useState(true);
+
     return (
       <>
         <GradeSimulatorTrigger onOpen={() => setOpen(true)} />
@@ -96,6 +98,7 @@ export const WithoutAssignments: Story = {
   render: (args: React.ComponentProps<typeof GradeSimulator>) => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [open, setOpen] = useState(true);
+
     return (
       <>
         <GradeSimulatorTrigger onOpen={() => setOpen(true)} />

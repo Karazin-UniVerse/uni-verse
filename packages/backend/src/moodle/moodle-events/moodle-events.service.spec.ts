@@ -42,6 +42,7 @@ describe('MoodleEventsService', () => {
     it('should return empty array if no events', async () => {
       mockMoodleClientService.client.mockResolvedValue({});
       const result = await service.getUpcomingEvents('token', 'id');
+
       expect(result).toEqual([]);
     });
 
@@ -58,6 +59,7 @@ describe('MoodleEventsService', () => {
         ],
       });
       const result = await service.getUpcomingEvents('token', 'id');
+
       expect(result.length).toBe(1);
       expect(result[0].name).toBe('Event');
       expect(result[0].courseName).toBe('C');

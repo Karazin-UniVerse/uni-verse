@@ -34,6 +34,7 @@ export class UserController {
   @Get()
   async getAllUsers(): Promise<UserResponseDto[]> {
     const users = await this.userService.getAllUsers();
+
     return users.map(toUserResponse);
   }
 
@@ -47,7 +48,9 @@ export class UserController {
     if (createUserDto?.password) {
       createUserDto.password = await bcrypt.hash(createUserDto.password, 10);
     }
+
     const created = await this.userService.createUser(createUserDto);
+
     return toUserResponse(created);
   }
 
@@ -57,6 +60,7 @@ export class UserController {
   @Delete(':id')
   async deleteUser(@Param('id') id: string): Promise<UserResponseDto> {
     const deleted = await this.userService.deleteUser(id);
+
     return toUserResponse(deleted);
   }
 
@@ -72,7 +76,9 @@ export class UserController {
     if (updateUserDto?.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
     }
+
     const updated = await this.userService.updateUser(id, updateUserDto);
+
     return toUserResponse(updated);
   }
 }
