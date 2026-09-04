@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LoginPage from './views/LoginPage';
 import { ThemeProvider } from './theme/ThemeContext';
 import { ToastProvider } from './components/ui/Toast';
+import { isBrowser } from './utils/browser';
 
 // Placeholder views for subsequent feature stacks (stack-8: CourseContents, stack-10: DashboardPage)
 const DashboardPage: React.FC = () => <div style={{ padding: '24px' }}>Dashboard</div>;
@@ -21,7 +22,7 @@ const App: React.FC = () => {
     return null;
   }
 
-  const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem('isLoggedIn') === 'true';
+  const isLoggedIn = isBrowser && localStorage.getItem('isLoggedIn') === 'true';
 
   return (
     <ThemeProvider>
