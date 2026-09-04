@@ -65,6 +65,7 @@ export function matchesYearAndSemester(
 
   if (year !== undefined && year !== null && String(year).trim() !== '') {
     const rawYear = String(year).trim().replace('-', '/');
+
     // Only accept numeric years and formats like 2025 or 2025/2026
     if (!/^(\d{2,4})(\/\d{2,4})?$/.test(rawYear)) {
       return false;
@@ -80,6 +81,7 @@ export function matchesYearAndSemester(
         `(?:^|[\\s\\-_/.])(?:${escY1}|${escY1Short})[/-](?:${escY2}|${escY2Short})(?=[\\s\\-_/.]|$)`,
         'i',
       );
+
       if (!pattern.test(target)) return false;
     } else {
       const fullYear = escapeRegex(rawYear);
@@ -88,6 +90,7 @@ export function matchesYearAndSemester(
         `(?:^|[\\s\\-_/.])(?:${fullYear}|${shortYear})(?=[\\s\\-_/.]|$)`,
         'i',
       );
+
       if (!yearPattern.test(target)) return false;
     }
   }
@@ -98,14 +101,17 @@ export function matchesYearAndSemester(
     String(semester).trim() !== ''
   ) {
     const semStr = String(semester).trim();
+
     if (!/^[1-9]\d*$/.test(semStr)) {
       return false;
     }
+
     const escSem = escapeRegex(semStr);
     const semesterPattern = new RegExp(
       `(?:^|[\\s\\-_/.])(?:${escSem})(?:\\s*(?:sem|сем|семестр|semester)|[\\s\\-_/.]|$)`,
       'i',
     );
+
     if (!semesterPattern.test(target)) return false;
   }
 
@@ -125,23 +131,28 @@ export function extractAcademicYear(
 
   // 1. Повний формат: "2025/2026" або "2025-2026"
   const fullPairMatch = text.match(/(20\d{2})[/-](20\d{2})/);
+
   if (fullPairMatch) {
     return `${fullPairMatch[1]}/${fullPairMatch[2]}`;
   }
 
   // 2. Скорочений формат пари: "2025/26" або "2025-26"
   const shortPairMatch = text.match(/(20(\d{2}))[/-](\d{2})/);
+
   if (shortPairMatch) {
     const startYear = parseInt(shortPairMatch[1], 10);
     const endSuffix = parseInt(shortPairMatch[3], 10);
     const century = startYear - (startYear % 100);
+
     return `${startYear}/${century + endSuffix}`;
   }
 
   // 3. Одиночний 4-значний рік: "2025"
   const singleYearMatch = text.match(/(?:^|[\s\-_/.])(20\d{2})(?:[\s\-_/.]|$)/);
+
   if (singleYearMatch) {
     const y = parseInt(singleYearMatch[1], 10);
+
     return `${y}/${y + 1}`;
   }
 
@@ -149,7 +160,9 @@ export function extractAcademicYear(
   if (startdate && startdate > 0) {
     const date = new Date(startdate * 1000);
     const year = date.getUTCFullYear();
-    const month = date.getUTCMonth() + 1; // 1 - 12
+    const month = date.getUTCMonth() + 1;
+
+    // 1 - 12
     return month >= 8 ? `${year}/${year + 1}` : `${year - 1}/${year}`;
   }
 
@@ -161,6 +174,7 @@ export function extractAcademicYear(
  */
 export function extractYear(name: string): number | null {
   const match = name.match(/20\d{2}/);
+
   return match ? parseInt(match[0], 10) : null;
 }
 
@@ -171,6 +185,7 @@ export function extractSemester(name: string): number | null {
   const match = name.match(
     /(?:^|[\s\-_/])([12])(?:\s*(?:sem|сем|семестр|semester)|[\s\-_/]|$)/i,
   );
+
   return match ? parseInt(match[1], 10) : null;
 }
 

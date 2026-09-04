@@ -23,12 +23,17 @@ const MAX_SCORE = 100;
 
 export function clampScore(score: number): number {
   if (Number.isNaN(score)) return DEFAULT_SCORE;
+
   return Math.max(MIN_SCORE, Math.min(MAX_SCORE, score));
 }
 
 export function computeSimulatedFinal(currentScore: number, remainingScores: number[]): number {
   if (remainingScores.length === 0) return currentScore;
-  const simulatedAvg = remainingScores.reduce((sum, val) => sum + val, 0) / remainingScores.length;
+
+  const simulatedAvg =
+    remainingScores.reduce((sum, remainingScore) => sum + remainingScore, 0) /
+    remainingScores.length;
+
   return currentScore * 0.7 + simulatedAvg * 0.3;
 }
 

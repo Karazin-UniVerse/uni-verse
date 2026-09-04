@@ -1,8 +1,8 @@
 import React from 'react';
+import type { SpinnerProps } from './Spinner.types';
 import styles from './Spinner.module.scss';
 
-import type { SpinnerProps } from './Spinner.types';
-export const Spinner: React.FC<SpinnerProps> = ({ ariaLabel, className, size = 'medium', tip }) => {
+export const Spinner: React.FC<SpinnerProps> = ({ ariaLabel, className, tip, size = 'medium' }) => {
   const accessibleLabel = tip || ariaLabel || 'Завантаження...';
 
   return (

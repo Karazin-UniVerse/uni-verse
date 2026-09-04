@@ -14,34 +14,36 @@ import type { FileInputProps } from './FileInput.types';
 
 function formatBytes(bytes: number, decimals = 1): string {
   if (bytes === 0) return '0 B';
+
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
+
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
 export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
   (
     {
-      variant = 'primary',
-      size = 'medium',
       label,
       hint,
-      dragText = 'Drag & drop files here, or',
-      browseText = 'browse',
       error: externalError,
       maxSize,
       maxFiles,
       files: controlledFiles,
       onFilesChange,
       onChange,
-      showFileList = true,
-      multiple = false,
-      disabled = false,
       accept,
       className,
       id,
+      variant = 'primary',
+      size = 'medium',
+      dragText = 'Drag & drop files here, or',
+      browseText = 'browse',
+      showFileList = true,
+      multiple = false,
+      disabled = false,
       ...props
     },
     ref,
@@ -59,6 +61,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
       if (controlledFiles === undefined) {
         setInternalFiles(newFiles);
       }
+
       onFilesChange?.(newFiles);
 
       // Synchronize native input's FileList
@@ -81,6 +84,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
 
       // Filter size-invalid files first
       const valid: File[] = [];
+
       for (const file of incomingFiles) {
         if (maxSize && file.size > maxSize) {
           err = `File "${file.name}" exceeds maximum allowed size of ${formatBytes(maxSize)}.`;
@@ -92,12 +96,16 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
       // Apply file-count limit after size filtering
       if (maxFiles !== undefined) {
         const remaining = maxFiles - currentFiles.length;
+
         if (remaining <= 0) {
           err = `Maximum ${maxFiles} file${maxFiles > 1 ? 's' : ''} allowed.`;
+
           return { validFiles: [], error: err };
         }
+
         if (valid.length > remaining) {
           err = `Maximum ${maxFiles} file${maxFiles > 1 ? 's' : ''} allowed.`;
+
           return { validFiles: valid.slice(0, remaining), error: err };
         }
       }
@@ -107,7 +115,9 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
 
     const handleFilesAdded = (incomingList: FileList | File[]) => {
       if (disabled) return;
+
       const incomingArray = Array.from(incomingList);
+
       if (incomingArray.length === 0) return;
 
       const filesToProcess = multiple ? incomingArray : [incomingArray[0]];
@@ -128,12 +138,14 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
       if (e.target.files) {
         handleFilesAdded(e.target.files);
       }
+
       onChange?.(e);
     };
 
     const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
+
       if (!disabled) {
         setIsDragging(true);
       }
@@ -149,6 +161,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(false);
+
       if (!disabled && e.dataTransfer.files) {
         handleFilesAdded(e.dataTransfer.files);
       }
@@ -156,8 +169,11 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
 
     const handleRemoveFile = (indexToRemove: number) => {
       if (disabled) return;
+
       const updated = currentFiles.filter((_, idx) => idx !== indexToRemove);
+
       updateFiles(updated);
+
       if (inputRef.current) {
         inputRef.current.value = '';
       }
@@ -165,7 +181,9 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
 
     const handleClearAll = () => {
       if (disabled) return;
+
       updateFiles([]);
+
       if (inputRef.current) {
         inputRef.current.value = '';
       }

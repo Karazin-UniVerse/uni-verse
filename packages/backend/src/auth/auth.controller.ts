@@ -36,7 +36,9 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const tokens = await this.authService.register(dto);
+
     this.setRefreshTokenCookie(res, tokens.refresh_token);
+
     return { access_token: tokens.access_token };
   }
 
@@ -50,7 +52,9 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const tokens = await this.authService.login(dto);
+
     this.setRefreshTokenCookie(res, tokens.refresh_token);
+
     return { access_token: tokens.access_token };
   }
 
@@ -65,6 +69,7 @@ export class AuthController {
   ) {
     await this.authService.logout(userId);
     res.clearCookie('refreshToken');
+
     return { message: 'Logged out successfully' };
   }
 
@@ -81,7 +86,9 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const tokens = await this.authService.refreshTokens(userId, refreshToken);
+
     this.setRefreshTokenCookie(res, tokens.refresh_token);
+
     return { access_token: tokens.access_token };
   }
 

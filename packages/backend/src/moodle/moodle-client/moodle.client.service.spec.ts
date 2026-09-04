@@ -3,6 +3,7 @@ jest.mock('../../utils/moodle-params-builder', () => ({
     Object.entries(params).map(([key, value]) => [key, String(value)]),
 }));
 
+import { BadRequestException } from '@nestjs/common';
 import { MoodleClientService } from './moodle.client.service';
 
 describe('MoodleClientService', () => {
@@ -40,6 +41,7 @@ describe('MoodleClientService', () => {
       'someFunction',
       { a: 1 },
     );
+
     expect(res).toEqual({ ok: true });
     expect(fetchMock).toHaveBeenCalled();
   });
@@ -49,11 +51,32 @@ describe('MoodleClientService', () => {
     process.env.MOODLE_TIMEOUT = '1';
     const svc = new MoodleClientService();
     const error = new Error('Timeout');
+
     error.name = 'TimeoutError';
     jest.spyOn(global, 'fetch').mockRejectedValue(error);
 
     await expect(svc.client('t', '1', 'f', {})).rejects.toThrow(
       'Moodle request timeout',
+    );
+  });
+
+  it('client throws BadRequestException when response is MoodleException', async () => {
+    process.env.MOODLE_BASEURL = 'https://example.com';
+    process.env.MOODLE_TIMEOUT = '1000';
+    const svc = new MoodleClientService();
+
+    jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          exception: 'moodle_exception',
+          errorcode: 'invalidtoken',
+          message: 'Invalid token',
+        }),
+      ),
+    );
+
+    await expect(svc.client('someFunction', 'token')).rejects.toThrow(
+      BadRequestException,
     );
   });
 });

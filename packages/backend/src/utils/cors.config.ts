@@ -17,6 +17,7 @@ export const getCorsConfig = (): CorsOptions => {
       if (!origin) {
         return callback(null, true);
       }
+
       try {
         const parsed = new URL(origin);
         const host = parsed.hostname;
@@ -38,6 +39,7 @@ export const getCorsConfig = (): CorsOptions => {
       } catch {
         // Ignore invalid URL
       }
+
       return callback(null, false);
     },
     credentials: true,

@@ -6,11 +6,11 @@ import styles from './SimpleSlider.module.scss';
 export const SimpleSlider: React.FC<SimpleSliderProps> = ({
   value,
   onChange,
+  className,
   min = 0,
   max = 100,
   step = 1,
   disabled = false,
-  className,
 }) => {
   return (
     <input

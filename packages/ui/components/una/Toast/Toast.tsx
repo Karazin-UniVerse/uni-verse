@@ -12,6 +12,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
 
   const push = useCallback((kind: ToastKind, text: string) => {
     const id = ++toastId;
+
     setItems((prev) => [...prev, { id, kind, text }]);
     window.setTimeout(() => {
       setItems((prev) => prev.filter((t) => t.id !== id));
@@ -43,8 +44,10 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
 
 export function useToast() {
   const ctx = useContext(ToastContext);
+
   if (!ctx) {
     throw new Error('useToast must be used within ToastProvider');
   }
+
   return ctx;
 }

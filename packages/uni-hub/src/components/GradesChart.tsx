@@ -5,7 +5,7 @@ import {
   getGradeBarColor,
   getGradeCourseName,
   getGradeRawValue,
-} from '../utils/grades';
+} from '@uni-hub/utils/grades';
 import Chart from '../design-system/charts/Chart/Chart';
 
 type GradesChartProps = {

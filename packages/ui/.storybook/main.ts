@@ -22,4 +22,5 @@ const config: StorybookConfig = {
   ],
   framework: getAbsolutePath('@storybook/react-vite'),
 };
+
 export default config;

@@ -1,2 +1,2 @@
-export { Empty, default } from './Empty';
-export type { EmptyProps } from './Empty.types';
+export * from './Empty';
+export * from './Empty.types';

@@ -1,2 +1,2 @@
-export { FileInput, default } from './FileInput';
-export type { FileInputProps } from './FileInput.types';
+export * from './FileInput';
+export * from './FileInput.types';

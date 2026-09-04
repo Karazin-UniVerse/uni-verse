@@ -33,6 +33,7 @@ function readThemeKey(): string {
 
 function readVar(styles: CSSStyleDeclaration, name: string, fallback: string): string {
   const value = styles.getPropertyValue(name).trim();
+
   return value || fallback;
 }
 
@@ -47,6 +48,7 @@ export function useChartTheme(container: HTMLElement | null): ChartThemeTokens {
     if (!container) return;
 
     const styles = getComputedStyle(container);
+
     setTokens({
       themeKey: readThemeKey(),
       grid: readVar(styles, CHART_TOKEN_KEYS[0], FALLBACK.grid),
@@ -66,6 +68,7 @@ export function useChartTheme(container: HTMLElement | null): ChartThemeTokens {
     resolve();
 
     const observer = new MutationObserver(resolve);
+
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['data-theme'],
@@ -84,12 +87,16 @@ export function resolveCssColor(
   fallback: string,
 ): string {
   if (!color) return fallback;
+
   if (!container) return color.startsWith('var(') ? fallback : color;
 
   if (color.startsWith('var(')) {
     const match = color.match(/^var\(\s*([^),\s]+)/);
+
     if (!match) return fallback;
+
     const value = getComputedStyle(container).getPropertyValue(match[1]).trim();
+
     return value || fallback;
   }
 

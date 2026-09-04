@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
-import CustomDateTime from './CustomDateTime';
+import { CustomDateTime } from './CustomDateTime';
 
 const meta: Meta<typeof CustomDateTime> = {
   title: 'Components/Inputs/CustomDateTime',
@@ -27,6 +27,7 @@ type Story = StoryObj<typeof CustomDateTime>;
 
 const InteractiveTemplate = (args: any) => {
   const [date, setDate] = useState<Date | null>(new Date());
+
   return (
     <div style={{ minHeight: '400px' }}>
       <CustomDateTime {...args} selected={date} onChange={setDate} />

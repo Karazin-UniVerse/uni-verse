@@ -7,6 +7,7 @@ import type { Request } from 'express';
 export class RtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   constructor() {
     const secret = process.env.RT_SECRET;
+
     if (!secret || secret === 'your-refresh-token-secret-key') {
       throw new Error('RT_SECRET environment variable is not set securely');
     }
@@ -15,9 +16,11 @@ export class RtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
       jwtFromRequest: ExtractJwt.fromExtractors([
         (request: Request) => {
           const data = request?.cookies?.refreshToken as string | undefined;
+
           if (!data) {
             return null;
           }
+
           return data;
         },
       ]),
@@ -31,6 +34,7 @@ export class RtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
     payload: Record<string, unknown>,
   ): Record<string, unknown> & { refreshToken: string } {
     const refreshToken = req.cookies.refreshToken as string;
+
     return { ...payload, refreshToken };
   }
 }

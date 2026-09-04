@@ -1,2 +1,2 @@
-export { TextInput, default } from './TextInput';
-export type { TextInputProps } from './TextInput.types';
+export * from './TextInput';
+export * from './TextInput.types';

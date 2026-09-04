@@ -44,6 +44,7 @@ export class MoodleGradesService {
 
     const rawGrades = gradesResponse?.grades || [];
     const courseMap = new Map<number, Course>();
+
     if (Array.isArray(coursesData)) {
       coursesData.forEach((course) => courseMap.set(course.id, course));
     }

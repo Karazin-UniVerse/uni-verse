@@ -4,8 +4,10 @@
 export function getPrismaErrorCode(err: unknown): string {
   if (typeof err === 'object' && err !== null && 'code' in err) {
     const code = (err as { code: unknown }).code;
+
     return typeof code === 'string' ? code : '';
   }
+
   return '';
 }
 
@@ -15,7 +17,9 @@ export function getPrismaErrorCode(err: unknown): string {
 export function getPrismaErrorName(err: unknown): string {
   if (typeof err === 'object' && err !== null && 'name' in err) {
     const name = (err as { name: unknown }).name;
+
     return typeof name === 'string' ? name : '';
   }
+
   return '';
 }

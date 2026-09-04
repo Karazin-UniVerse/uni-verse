@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "react", "unicorn", "oxc"],
+  "plugins": ["typescript", "react", "unicorn", "oxc", "import"],
+  "jsPlugins": ["./configs/oxlint/plugins/universe-rules.mjs"],
   "env": {
     "browser": true,
     "node": true,
@@ -9,8 +10,34 @@
   "rules": {
     "no-unused-vars": "warn",
     "no-console": ["warn", { "allow": ["warn", "error", "info"] }],
-    "eqeqeq": "error"
+    "eqeqeq": "error",
+    "no-duplicate-imports": ["error", { "includeExports": true }],
+    "import/no-duplicates": "error",
+    "universe/vertical-spacing": "error",
+    "universe/destructuring-props-order": "error",
+    "universe/enforce-package-utils-alias": "error",
+    "universe/no-unused-imports": "error",
+    "universe/eol-last": "error",
+    "universe/max-len": ["error", { "code": 120 }]
   },
+  "overrides": [
+    {
+      "files": ["packages/uni-hub/**/*.{ts,tsx,js,jsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["../utils/*", "../utils/**"],
+                "message": "Use package alias '@uni-hub/utils/...' instead of relative '../utils/...' path."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
   "ignorePatterns": [
     "**/node_modules/**",
     "**/dist/**",
