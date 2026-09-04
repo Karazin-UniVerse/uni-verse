@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -12,6 +16,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: pnpm/action-setup@v4
         with:
           version: 10.0.0
@@ -27,7 +32,6 @@ jobs:
         run: |
           pnpm --filter @universe/backend test:cov
           node -e "const fs=require('fs');const p='packages/backend/coverage/lcov.info';if(fs.existsSync(p)){let c=fs.readFileSync(p,'utf8');c=c.split('SF:src/').join('SF:packages/backend/src/').split('SF:src\\\\').join('SF:packages/backend/src/');fs.writeFileSync(p,c);console.log('Normalized lcov paths for SonarCloud');}"
-        continue-on-error: true
       - run: pnpm build
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v3
