@@ -20,26 +20,34 @@ const LoginPage: React.FC = () => {
 
     if (!username.trim()) {
       setError('Пожалуйста, введите имя пользователя');
+
       return;
     }
+
     if (!password) {
       setError('Пожалуйста, введите пароль');
+
       return;
     }
 
     setLoading(true);
+
     try {
       const res = await authApi.login(username, password);
+
       toast.success('Вход выполнен успешно');
       localStorage.setItem('isLoggedIn', 'true');
+
       if (res.data?.token) {
         localStorage.setItem('moodleToken', res.data.token);
       }
+
       navigate('/dashboard');
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
         'Ошибка входа. Проверьте учетные данные.';
+
       toast.error(message);
     } finally {
       setLoading(false);
