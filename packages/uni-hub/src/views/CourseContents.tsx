@@ -174,6 +174,7 @@ const CourseContents: React.FC = () => {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         module={selectedModule}
+        dueUnixSec={selectedModule?.dueUnixSec ?? selectedModule?.duedate}
       />
     </div>
   );

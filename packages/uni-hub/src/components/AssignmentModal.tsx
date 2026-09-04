@@ -8,7 +8,7 @@ import { Spinner } from './ui/Spinner';
 import { Tag } from './ui/Tag';
 import { useToast } from './ui/Toast';
 import { useGamificationStore } from '../store/useGamificationStore';
-import { BADGES } from '../gamification/badges';
+import { BADGES } from '../constants/gamification';
 import styles from './AssignmentModal.module.scss';
 
 interface AssignmentModalProps {
@@ -17,6 +17,10 @@ interface AssignmentModalProps {
   module: CourseModule | null;
   /** Unix seconds deadline for DEADLINE_SNIPER unlock */
   dueUnixSec?: number;
+}
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>?/gm, '').trim();
 }
 
 const AssignmentModal: React.FC<AssignmentModalProps> = ({
@@ -49,16 +53,40 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
   };
 
   useEffect(() => {
+    let cancelled = false;
+
     if (visible && module?.instance) {
-      fetchStatus();
+      const currentInstance = module.instance;
+      setLoading(true);
+      moodleApi
+        .getAssignmentStatus(currentInstance)
+        .then((response) => {
+          if (!cancelled) {
+            setStatus(response.data as { status?: string; grade?: string } | null);
+          }
+        })
+        .catch((error) => {
+          if (!cancelled) {
+            console.error(error);
+            toast.error('Не удалось загрузить статус задания');
+          }
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setLoading(false);
+          }
+        });
     } else {
       setStatus(null);
       setText('');
       setFiles([]);
       setFormError('');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, module]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [visible, module?.instance, toast]);
 
   const handleSubmit = async () => {
     if (!module?.instance) return;
@@ -93,13 +121,9 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
       toast.success('Решение успешно отправлено');
       useGamificationStore.getState().triggerCelebration();
 
+      const deadline = dueUnixSec ?? module?.dueUnixSec ?? module?.duedate;
       const nowSec = Math.floor(Date.now() / 1000);
-      if (
-        dueUnixSec !== null &&
-        dueUnixSec !== undefined &&
-        dueUnixSec > 0 &&
-        nowSec <= dueUnixSec
-      ) {
+      if (deadline !== null && deadline !== undefined && deadline > 0 && nowSec <= deadline) {
         if (useGamificationStore.getState().unlockBadge('DEADLINE_SNIPER')) {
           toast.success(
             `Ачивка: ${BADGES.DEADLINE_SNIPER.title} — ${BADGES.DEADLINE_SNIPER.description}`,
@@ -119,7 +143,10 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     }
   };
 
-  const tokenStr = localStorage.getItem('moodleToken');
+  const tokenStr =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('accessToken') || localStorage.getItem('moodleToken')
+      : null;
   const canSubmit = !status || status.status === 'new' || status.status === 'draft';
 
   const statusLabel =
@@ -162,10 +189,9 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
           {module?.description && (
             <section>
               <h4>Описание</h4>
-              <div
-                className={styles.box}
-                dangerouslySetInnerHTML={{ __html: module.description }}
-              />
+              <div className={styles.box} style={{ whiteSpace: 'pre-wrap' }}>
+                {stripHtml(module.description)}
+              </div>
             </section>
           )}
 
@@ -173,26 +199,24 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
             <section>
               <h4>Прикрепленные файлы</h4>
               <ul className={styles.fileList}>
-                {module.contents.map(
-                  (file: { filename?: string; fileurl?: string }, idx: number) => {
-                    const url = (file.fileurl || '') + (tokenStr ? `?token=${tokenStr}` : '');
-                    return (
-                      <li key={`${file.filename}-${idx}`} className={styles.fileItem}>
-                        <span>{file.filename}</span>
-                        <SimpleButton
-                          isLink
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          variant="primary"
-                          size="small"
-                        >
-                          <Download size={14} /> Скачать
-                        </SimpleButton>
-                      </li>
-                    );
-                  },
-                )}
+                {module.contents.map((file, idx: number) => {
+                  const url = (file.fileurl || '') + (tokenStr ? `?token=${tokenStr}` : '');
+                  return (
+                    <li key={`${file.filename}-${idx}`} className={styles.fileItem}>
+                      <span>{file.filename}</span>
+                      <SimpleButton
+                        isLink
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        variant="primary"
+                        size="small"
+                      >
+                        <Download size={14} /> Скачать
+                      </SimpleButton>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           )}

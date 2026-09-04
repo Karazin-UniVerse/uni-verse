@@ -63,6 +63,15 @@ export interface CourseStatistics {
   total: number;
 }
 
+export interface CourseModuleFile {
+  filename?: string;
+  fileurl?: string;
+  filesize?: number;
+  timecreated?: number;
+  timemodified?: number;
+  mimetype?: string;
+}
+
 export interface CourseModule {
   id: number;
   url?: string;
@@ -70,7 +79,9 @@ export interface CourseModule {
   modname: string;
   description?: string;
   instance?: number;
-  contents?: unknown[];
+  contents?: CourseModuleFile[];
+  duedate?: number;
+  dueUnixSec?: number;
 }
 
 export interface CourseSection {
