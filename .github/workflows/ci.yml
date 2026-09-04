@@ -27,8 +27,9 @@ jobs:
         run: pnpm --filter @universe/backend test:cov
         continue-on-error: true
       - run: pnpm build
-      - name: SonarQube Cloud Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
