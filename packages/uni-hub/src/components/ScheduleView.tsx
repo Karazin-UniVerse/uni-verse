@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SimpleButton, RadioButton } from '../design-system';
-import { Tag } from './ui/Tag';
-import { Empty } from './ui/Empty';
+import { Tag, Empty } from './ui';
 import styles from './ScheduleView.module.scss';
 
 import type { ScheduleEvent } from './ScheduleView.types';
@@ -134,7 +133,7 @@ const getTypeTone = (type: string): 'info' | 'success' | 'danger' | 'default' =>
   }
 };
 
-const ScheduleView: React.FC = () => {
+export const ScheduleView: React.FC = () => {
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
   const [selectedDate, setSelectedDate] = useState(() => {
     const d = new Date();
