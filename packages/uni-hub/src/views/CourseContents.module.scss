@@ -24,13 +24,15 @@
   color: var(--text-secondary);
   font-size: var(--font-sm);
 
-  button {
+  button,
+  a {
     background: none;
     border: none;
     color: var(--accent-primary);
     cursor: pointer;
     font: inherit;
     padding: 0;
+    text-decoration: none;
 
     &:hover {
       text-decoration: underline;
