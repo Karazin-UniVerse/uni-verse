@@ -1,6 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { Assignment, Grade } from '@uni-hub/types';
-import { getGradeCourseName, getGradeRawValue, getGradeTone, getValidGrades } from '@uni-hub/utils/grades';
+import {
+  getGradeCourseName,
+  getGradeRawValue,
+  getGradeTone,
+  getValidGrades,
+} from '@uni-hub/utils/grades';
 import { useCountUp } from '@uni-hub/hooks/useCountUp';
 import { Modal } from '@ui/Modal';
 import { Select } from '@ui/Select';
@@ -15,13 +20,15 @@ const MAX_SCORE = 100;
 
 export function clampScore(score: number): number {
   if (Number.isNaN(score)) return DEFAULT_SCORE;
+
   return Math.max(MIN_SCORE, Math.min(MAX_SCORE, score));
 }
 
 export function computeSimulatedFinal(currentScore: number, remainingScores: number[]): number {
   if (remainingScores.length === 0) return currentScore;
-  const simulatedAvg =
-    remainingScores.reduce((sum, val) => sum + val, 0) / remainingScores.length;
+
+  const simulatedAvg = remainingScores.reduce((sum, val) => sum + val, 0) / remainingScores.length;
+
   return currentScore * 0.7 + simulatedAvg * 0.3;
 }
 
@@ -72,9 +79,7 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
   const [courseName, setCourseName] = useState('');
 
   const isSelectedCourseValid = courseOptions.some((option) => option.value === courseName);
-  const selectedCourse = isSelectedCourseValid
-    ? courseName
-    : courseOptions[0]?.value || '';
+  const selectedCourse = isSelectedCourseValid ? courseName : courseOptions[0]?.value || '';
 
   useEffect(() => {
     if (courseName && !isSelectedCourseValid && courseOptions.length > 0) {
@@ -83,7 +88,8 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
   }, [courseName, isSelectedCourseValid, courseOptions]);
 
   const currentGrade = uniqueGrades.find(
-    (grade) => getGradeCourseName(grade).trim().toLowerCase() === selectedCourse.trim().toLowerCase(),
+    (grade) =>
+      getGradeCourseName(grade).trim().toLowerCase() === selectedCourse.trim().toLowerCase(),
   );
 
   const currentScore = currentGrade

@@ -6,6 +6,7 @@ export function useNow(intervalMs = 1000): number {
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), intervalMs);
+
     return () => window.clearInterval(id);
   }, [intervalMs]);
 

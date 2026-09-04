@@ -1,6 +1,5 @@
 import type { Grade } from '@uni-hub/types';
-import type { BadgeId } from '@uni-hub/constants/gamification';
-import { SEMESTER_MASTER_THRESHOLD } from '@uni-hub/constants/gamification';
+import { type BadgeId, SEMESTER_MASTER_THRESHOLD } from '@uni-hub/constants/gamification';
 import { getGradeRawValue, getValidGrades } from './grades';
 
 /** Local calendar day as YYYY-MM-DD */

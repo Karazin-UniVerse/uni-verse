@@ -1,12 +1,24 @@
+import SimpleButton from './buttons/SimpleButton/SimpleButton';
+import SimpleInput, { type SimpleInputProps } from './inputs/SimpleInput/SimpleInput';
+import CheckBox from './inputs/CheckBox/CheckBox';
+import RadioButton from './inputs/RadioButton/RadioButton';
+import FileInput from './inputs/FileInput/FileInput';
+import Chart, { type ChartProps, type ChartDatum } from './charts/Chart/Chart';
+import { SimpleForm } from './SimpleForm/SimpleForm';
+import SimpleSlider, { type SimpleSliderProps } from './inputs/SimpleSlider/SimpleSlider';
+
 export * from './breakpoints';
-export { default as SimpleButton } from './buttons/SimpleButton/SimpleButton';
-export { default as SimpleInput } from './inputs/SimpleInput/SimpleInput';
-export type { SimpleInputProps } from './inputs/SimpleInput/SimpleInput';
-export { default as CheckBox } from './inputs/CheckBox/CheckBox';
-export { default as RadioButton } from './inputs/RadioButton/RadioButton';
-export { default as FileInput } from './inputs/FileInput/FileInput';
-export { default as Chart } from './charts/Chart/Chart';
-export type { ChartProps, ChartDatum } from './charts/Chart/Chart';
-export { SimpleForm } from './SimpleForm/SimpleForm';
-export { default as SimpleSlider } from './inputs/SimpleSlider/SimpleSlider';
-export type { SimpleSliderProps } from './inputs/SimpleSlider/SimpleSlider';
+export {
+  SimpleButton,
+  SimpleInput,
+  type SimpleInputProps,
+  CheckBox,
+  RadioButton,
+  FileInput,
+  Chart,
+  type ChartProps,
+  type ChartDatum,
+  SimpleForm,
+  SimpleSlider,
+  type SimpleSliderProps,
+};
