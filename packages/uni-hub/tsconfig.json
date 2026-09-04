@@ -20,7 +20,8 @@
     ],
     "paths": {
       "@uni-hub/*": ["./src/*"],
-      "@ui/*": ["./src/components/ui/*"],
+      "@ui/*": ["./src/components/ui/*", "../ui/components/una/*", "../ui/*"],
+      "@una": ["../ui/components/una/index.ts"],
       "@una/*": ["../ui/components/una/*"]
     }
   },

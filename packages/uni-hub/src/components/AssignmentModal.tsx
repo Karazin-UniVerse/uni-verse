@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Download, ExternalLink } from 'lucide-react';
-import {
-  Button as SimpleButton,
-  FileInput,
-  SimpleForm,
-  Modal,
-  Spinner,
-  Tag,
-  useToast,
-} from '@universe/ui';
+import { Button as SimpleButton, FileInput, SimpleForm, Modal, Spinner, Tag } from '@una';
+import { useToast } from '@ui/Toast';
 import { moodleApi } from '../services/api';
 import type { CourseModule } from '../types';
 

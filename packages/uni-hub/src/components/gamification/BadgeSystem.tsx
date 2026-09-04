@@ -3,7 +3,7 @@ import type { Grade } from '@uni-hub/types';
 import { BADGES } from '@uni-hub/constants/gamification';
 import { evaluateBadgeUnlocks } from '@uni-hub/utils/gamification';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
-import { useToast } from '@universe/ui';
+import { useToast } from '@ui/Toast';
 
 type BadgeSystemProps = {
   grades: Grade[];

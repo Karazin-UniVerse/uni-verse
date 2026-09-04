@@ -12,6 +12,8 @@
   "main": "./index.ts",
   "exports": {
     ".": "./index.ts",
+    "./una": "./components/una/index.ts",
+    "./una/*": "./components/una/*",
     "./vars.scss": "./vars.scss",
     "./breakpoints.scss": "./breakpoints.scss"
   },

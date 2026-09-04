@@ -22,13 +22,13 @@ import {
   Button as SimpleButton,
   TextInput as SimpleInput,
   CheckBox,
-  useToast,
   Spinner,
   Tag,
   Empty,
   Select,
   ProgressBar,
-} from '@universe/ui';
+} from '@una';
+import { useToast } from '@ui/Toast';
 import { moodleApi } from '@uni-hub/services/api';
 import type {
   Course,
