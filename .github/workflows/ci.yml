@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
         with:
           version: 10.0.0
@@ -21,4 +23,12 @@ jobs:
       - run: pnpm --filter @universe/backend db:generate
       - run: pnpm lint
       - run: pnpm typecheck
+      - name: Run Backend Tests with Coverage
+        run: pnpm --filter @universe/backend test:cov
+        continue-on-error: true
       - run: pnpm build
+      - name: SonarQube Cloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
