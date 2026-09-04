@@ -10,4 +10,3 @@ export * from './components/una/Skeleton';
 export * from './components/una/Spinner';
 export * from './components/una/Tag';
 export * from './components/una/Toast';
-export * from './breakpoints';
