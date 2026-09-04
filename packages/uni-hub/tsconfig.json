@@ -21,7 +21,6 @@
     "paths": {
       "@/*": ["./src/*"],
       "@uni-hub/*": ["./src/*"],
-      "@ui/*": ["../ui/components/una/*"],
       "@una/*": ["../ui/components/una/*"]
     }
   },

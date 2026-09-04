@@ -19,7 +19,7 @@
   color: var(--neutral-text-primary);
   font-size: var(--font-sm);
   cursor: pointer;
-  transition: var(--transition-small);
+  transition: var(--transition-fast);
 
   &:hover {
     background: var(--bg-hover);
@@ -43,7 +43,7 @@
   background: transparent;
   color: var(--neutral-text-primary);
   cursor: pointer;
-  transition: var(--transition-small);
+  transition: var(--transition-fast);
 
   &:hover {
     background: var(--bg-hover);
