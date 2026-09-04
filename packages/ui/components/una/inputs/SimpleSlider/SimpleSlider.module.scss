@@ -25,7 +25,7 @@
     border: 2px solid var(--bg-surface, #ffffff);
     box-shadow: var(--box-shadow-small, 0 1px 3px rgba(0,0,0,0.15));
     cursor: pointer;
-    transition: transform var(--transition-small, 0.1s) ease, background-color var(--transition-small, 0.1s) ease;
+    transition: transform var(--transition-fast, 0.1s) ease, background-color var(--transition-fast, 0.1s) ease;
 
     &:hover {
       transform: scale(1.2);
@@ -41,7 +41,7 @@
     border: 2px solid var(--bg-surface, #ffffff);
     box-shadow: var(--box-shadow-small, 0 1px 3px rgba(0,0,0,0.15));
     cursor: pointer;
-    transition: transform var(--transition-small, 0.1s) ease, background-color var(--transition-small, 0.1s) ease;
+    transition: transform var(--transition-fast, 0.1s) ease, background-color var(--transition-fast, 0.1s) ease;
 
     &:hover {
       transform: scale(1.2);

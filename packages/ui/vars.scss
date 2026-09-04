@@ -63,7 +63,6 @@
   /* Transitions */
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --transition-fast: 150ms var(--ease-standard);
-  --transition-small: var(--transition-fast);
   --transition-medium: 250ms var(--ease-standard);
   --transition-slow: 400ms var(--ease-standard);
 

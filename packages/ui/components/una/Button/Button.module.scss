@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   text-decoration: none; /* Remove underline from links styled as buttons */
-  transition: var(--transition-small);
+  transition: var(--transition-fast);
 
   &:focus {
     outline: none;
@@ -89,7 +89,7 @@
 .small {
   padding: var(--space-4) var(--space-8);
   font-size: var(--font-sm);
-  transition: var(--transition-small);
+  transition: var(--transition-fast);
 }
 
 .medium {
