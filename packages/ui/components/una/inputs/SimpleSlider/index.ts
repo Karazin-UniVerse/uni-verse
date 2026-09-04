@@ -1,3 +1,2 @@
-export * from './SimpleSlider';
-export * from './SimpleSlider.types';
-export { default } from './SimpleSlider';
+export { SimpleSlider, default } from './SimpleSlider';
+export type { SimpleSliderProps } from './SimpleSlider.types';

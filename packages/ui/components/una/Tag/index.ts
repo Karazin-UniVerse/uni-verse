@@ -1,3 +1,2 @@
-export * from './Tag';
-export * from './Tag.types';
-export { default } from './Tag';
+export { Tag, default } from './Tag';
+export type { TagProps, TagTone } from './Tag.types';

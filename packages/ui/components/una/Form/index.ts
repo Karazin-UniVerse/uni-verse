@@ -1,3 +1,2 @@
-export * from './SimpleForm';
-export * from './SimpleForm.types';
-export { default } from './SimpleForm';
+export { SimpleForm, default } from './SimpleForm';
+export type { SimpleFormProps } from './SimpleForm.types';

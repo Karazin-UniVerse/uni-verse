@@ -1,3 +1,3 @@
-export * from './CustomDateTime';
-export * from './SimpleDateTime';
-export * from './DateTimePicker.types';
+export { CustomDateTime } from './CustomDateTime';
+export { SimpleDateTime } from './SimpleDateTime';
+export type { CustomDateTimeProps } from './DateTimePicker.types';
