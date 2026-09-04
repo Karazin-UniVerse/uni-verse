@@ -17,6 +17,7 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 - **Variables/Functions**: Use `camelCase`.
 - **Classes/Components**: Use `PascalCase`.
 - **Constants**: Use `UPPER_SNAKE_CASE`.
+- **Props & Parameter Order**: In type/interface definitions and component destructuring, declare fields without default values first, followed by optional fields and fields with default values.
 - **Meaningful Names over Short Abbreviations**: Always use descriptive, self-explanatory names for variables, parameters, and callback arguments. Avoid single-letter or cryptic abbreviations (e.g. use `course` instead of `c`, `user` instead of `u`, `error` instead of `e`).
 - **Vertical Spacing**: Maintain clear vertical spacing (empty lines) between logical code blocks:
   - Between variable/constant declarations and subsequent logic blocks.
@@ -31,6 +32,7 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 - All shared UI components MUST be placed inside `packages/ui/src/components/`.
 - **Design System Components**: Core, simple, and reusable components (like buttons, inputs) go into `packages/ui/src/components/una/`.
 - **Complex Components**: Composite, business-logic-heavy, or non-design system components go into `packages/ui/src/components/complex/`.
+- **Component Types Extraction (`.types.ts`)**: For React UI components with non-trivial prop interfaces or data models, extract types into a co-located `<ComponentName>.types.ts` file (e.g. `Chart.types.ts` adjacent to `Chart.tsx`). Re-export types from the component file or module index for backwards compatibility. Do NOT create separate `.types.ts` files for simple utilities, single helper functions, or trivial components to avoid unnecessary fragmentation.
 
 ### 2. Backend (NestJS)
 
