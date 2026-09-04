@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
-import CustomDateTime from './CustomDateTime';
+import { CustomDateTime } from './CustomDateTime';
 
 const meta: Meta<typeof CustomDateTime> = {
   title: 'Components/Inputs/CustomDateTime',

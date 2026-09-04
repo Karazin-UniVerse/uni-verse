@@ -1,7 +1,6 @@
-import type { ButtonHTMLAttributes, AnchorHTMLAttributes, ReactNode } from 'react';
-import css from './SimpleButton.module.scss';
+import React, { type ButtonHTMLAttributes, type AnchorHTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
-import React from 'react';
+import css from './SimpleButton.module.scss';
 
 type BaseProps = {
   children: ReactNode;
