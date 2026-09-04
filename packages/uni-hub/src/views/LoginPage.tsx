@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { User, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { SimpleButton, SimpleInput, SimpleForm } from '@/design-system';
-import { ThemeSwitcher } from '@/theme/ThemeSwitcher';
+import { SimpleButton, SimpleInput, SimpleForm } from '@uni-hub/design-system';
+import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { useToast } from '@ui/Toast';
-import { authApi } from '@/services/api';
+import { authApi } from '@uni-hub/services/api';
 import styles from './LoginPage.module.scss';
 
 const LoginPage: React.FC = () => {

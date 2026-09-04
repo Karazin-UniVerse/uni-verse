@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LoginPage from '@/views/LoginPage';
-import { ThemeProvider } from '@/theme/ThemeContext';
+import LoginPage from '@uni-hub/views/LoginPage';
+import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
 import { ToastProvider } from '@ui/Toast';
 import { isBrowser } from '@uni-hub/utils/browser';
 
