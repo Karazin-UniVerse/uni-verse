@@ -30,8 +30,8 @@ jobs:
           QA_WEBHOOK: ${{ secrets.QA_DEPLOY_WEBHOOK_URL }}
         run: |
           if [ -z "$QA_WEBHOOK" ]; then
-            echo "::error::QA_DEPLOY_WEBHOOK_URL secret is not configured."
-            exit 1
+            echo "::notice::QA_DEPLOY_WEBHOOK_URL is not configured. Webhook skipped (automatic deployment is handled directly by hosting provider)."
+            exit 0
           fi
           echo "Triggering deployment to QA environment..."
           curl -f -X POST --connect-timeout 10 --max-time 30 "$QA_WEBHOOK"
@@ -54,8 +54,8 @@ jobs:
           STAGE_WEBHOOK: ${{ secrets.STAGE_DEPLOY_WEBHOOK_URL }}
         run: |
           if [ -z "$STAGE_WEBHOOK" ]; then
-            echo "::error::STAGE_DEPLOY_WEBHOOK_URL secret is not configured."
-            exit 1
+            echo "::notice::STAGE_DEPLOY_WEBHOOK_URL is not configured. Webhook skipped."
+            exit 0
           fi
           echo "Triggering deployment to Stage environment..."
           curl -f -X POST --connect-timeout 10 --max-time 30 "$STAGE_WEBHOOK"
