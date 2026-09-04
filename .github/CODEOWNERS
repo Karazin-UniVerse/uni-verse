@@ -1,16 +1,20 @@
-# ==============================================================================
-# UniVerse & UniHub Monorepo Code Owners
-# ==============================================================================
+# Global codeowners
+* @brodion-230 @iamredl-lab @RiderTr
 
-# Global fallback maintainers
-* @brodion-230 @Skyzary
+# CI/CD, Workflows and System Configuration
+/.github/                 @brodion-230 @iamredl-lab @RiderTr
+/configs/                 @brodion-230 @iamredl-lab @RiderTr
+/Dockerfile*              @brodion-230 @iamredl-lab @RiderTr
+/.dockerignore            @brodion-230 @iamredl-lab @RiderTr
+/package.json             @brodion-230 @iamredl-lab @RiderTr
+/pnpm-lock.yaml           @brodion-230 @iamredl-lab @RiderTr
+/pnpm-workspace.yaml      @brodion-230 @iamredl-lab @RiderTr
+/turbo.json               @brodion-230 @iamredl-lab @RiderTr
+/sonar-project.properties @brodion-230 @iamredl-lab @RiderTr
+/.oxlintrc.json           @brodion-230 @iamredl-lab @RiderTr
 
-# ── Backend Owners (Vova + Timur) ──
-/packages/backend/              @Skyzary @TimurDaas
-/packages/database/             @Skyzary @TimurDaas
-/Dockerfile                     @Skyzary @TimurDaas
-
-# ── Frontend Owners (Vova + ReDL) ──
-/packages/uni-hub/              @Skyzary @iamredl-lab
-/packages/ui/                   @Skyzary @iamredl-lab
-/Dockerfile.frontend            @Skyzary @iamredl-lab
+# Monorepo packages
+/packages/backend/        @brodion-230 @Skyzary @RiderTr @iamredl-lab
+/packages/uni-hub/        @brodion-230 @iamredl-lab @RiderTr
+/packages/ui/             @RiderTr @brodion-230 @iamredl-lab
+/packages/database/       @brodion-230 @Skyzary @RiderTr @iamredl-lab
