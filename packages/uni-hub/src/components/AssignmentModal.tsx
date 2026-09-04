@@ -20,13 +20,8 @@ interface AssignmentModalProps {
 }
 
 function stripHtml(html: string): string {
-  let sanitized = html;
-  let previous: string;
-  do {
-    previous = sanitized;
-    sanitized = sanitized.replace(/<[^>]*>/g, '');
-  } while (sanitized !== previous);
-  return sanitized.trim();
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return (doc.body.textContent ?? '').trim();
 }
 
 export const ASSIGNMENT_STATUS_LABELS: Record<string, string> = {
