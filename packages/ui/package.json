@@ -19,8 +19,8 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
-    "lucide-react": "^1.34.0",
-    "sass": "^1.102.0"
+    "lucide-react": "^1.39.0",
+    "sass": "^1.103.1"
   },
   "peerDependencies": {
     "react": "^19.2.8",
