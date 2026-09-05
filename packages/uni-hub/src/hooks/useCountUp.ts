@@ -10,10 +10,21 @@ function easeOutCubic(progress: number): number {
  * Synchronizes displayed value when disabled or interrupted early.
  */
 export function useCountUp(target: number, duration = 800, enabled = true): number {
+  const [prevTarget, setPrevTarget] = useState(target);
+  const [prevEnabled, setPrevEnabled] = useState(enabled);
   const [value, setValue] = useState(target);
   const displayedValueRef = useRef(target);
   const prevTargetRef = useRef(target);
   const rafRef = useRef(0);
+
+  if (target !== prevTarget || enabled !== prevEnabled) {
+    setPrevTarget(target);
+    setPrevEnabled(enabled);
+
+    if (!enabled || duration <= 0) {
+      setValue(target);
+    }
+  }
 
   useEffect(() => {
     if (!enabled || duration <= 0) {
