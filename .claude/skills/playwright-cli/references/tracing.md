@@ -89,14 +89,16 @@ playwright-cli tracing-stop
 
 ### Capturing Evidence
 
+> **Warning:** Tracing records DOM snapshots, screenshots, network activity, and input actions. Never record real payment credentials, secrets, or personal data in traces.
+
 ```bash
 # Record a complete user flow for documentation
 playwright-cli tracing-start
 
 playwright-cli open https://app.example.com/checkout
-playwright-cli fill e1 "4111111111111111"
-playwright-cli fill e2 "12/25"
-playwright-cli fill e3 "123"
+playwright-cli fill e1 "0000-0000-0000-0000"
+playwright-cli fill e2 "01/99"
+playwright-cli fill e3 "000"
 playwright-cli click e4
 
 playwright-cli tracing-stop

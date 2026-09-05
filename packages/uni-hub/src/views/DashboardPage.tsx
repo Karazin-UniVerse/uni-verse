@@ -92,6 +92,7 @@ const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const siderRef = useRef<HTMLElement>(null);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();
@@ -261,6 +262,34 @@ const DashboardPage: React.FC = () => {
 
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) {
+      return;
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMobileMenuOpen(false);
+
+        const menuBtn = document.querySelector<HTMLButtonElement>(`.${styles.mobileMenuBtn}`);
+
+        menuBtn?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    const firstFocusable = siderRef.current?.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+
+    firstFocusable?.focus();
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mobileMenuOpen]);
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
@@ -638,7 +667,7 @@ const DashboardPage: React.FC = () => {
           aria-label="Закрыть меню"
         />
       )}
-      <aside className={styles.sider}>
+      <aside ref={siderRef} className={styles.sider} aria-label="Навигация">
         <div className={styles.brand}>
           <span>{collapsed ? 'U' : 'UNiVerse'}</span>
           <SimpleButton

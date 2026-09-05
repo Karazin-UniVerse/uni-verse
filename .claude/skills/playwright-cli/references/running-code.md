@@ -25,13 +25,13 @@ import/export/require syntax is not supported.
 ```bash
 # Grant geolocation permission and set location
 playwright-cli run-code "async page => {
-  await page.context().grantPermissions(['geolocation']);
+  await page.context().grantPermissions(['geolocation'], { origin: 'https://example.com' });
   await page.context().setGeolocation({ latitude: 37.7749, longitude: -122.4194 });
 }"
 
 # Set location to London
 playwright-cli run-code "async page => {
-  await page.context().grantPermissions(['geolocation']);
+  await page.context().grantPermissions(['geolocation'], { origin: 'https://example.com' });
   await page.context().setGeolocation({ latitude: 51.5074, longitude: -0.1278 });
 }"
 
@@ -51,7 +51,7 @@ playwright-cli run-code "async page => {
     'notifications',
     'camera',
     'microphone'
-  ]);
+  ], { origin: 'https://example.com' });
 }"
 
 # Grant permissions for specific origin
@@ -144,7 +144,7 @@ playwright-cli run-code "async page => {
 ```bash
 # Read clipboard (requires permission)
 playwright-cli run-code "async page => {
-  await page.context().grantPermissions(['clipboard-read']);
+  await page.context().grantPermissions(['clipboard-read'], { origin: 'https://example.com' });
   return await page.evaluate(() => navigator.clipboard.readText());
 }"
 
@@ -217,6 +217,7 @@ playwright-cli run-code "async page => {
 
 ```bash
 # Login and save state
+# NOTE: Add auth.json to .gitignore, never share state files containing secrets, and clean up after use.
 playwright-cli run-code "async page => {
   await page.goto('https://example.com/login');
   await page.getByRole('textbox', { name: 'Email' }).fill('user@example.com');
@@ -238,3 +239,5 @@ playwright-cli run-code "async page => {
   return results;
 }"
 ```
+
+> **Security Note:** Generated authentication-state files such as `auth.json` contain sensitive session tokens. Always add `auth.json` to `.gitignore`, never commit or share state files, and delete them after automation is complete.

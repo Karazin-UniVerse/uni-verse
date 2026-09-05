@@ -294,12 +294,12 @@ Goal: take a spec file and produce Playwright test files. Optionally update the 
 
 ### 2.2 Generate one scenario
 
-For each target scenario, in sequence (never in parallel — scenarios share the seed session):
+For each target scenario, run the seed test to start generation:
 
 ```bash
 PLAYWRIGHT_HTML_OPEN=never npx playwright test <seed-file> --debug=cli   # background
 playwright-cli attach tw-XXXX
-# resume
+playwright-cli resume
 ```
 
 **Do not** just open the app url with playwright-cli, always go through the test to capture any custom setup done there.
@@ -322,7 +322,7 @@ Collect the generated code and write the test file at the path given in the spec
 ```ts
 // spec: specs/basic-operations.plan.md
 // seed: tests/seed.spec.ts
-import { test, expect } from './fixtures'; // or '@playwright/test' if no fixtures file
+import { test, expect } from '../fixtures'; // or '@playwright/test' if no fixtures file
 
 test.describe('Signing in and out', () => {
   test('should sign in', async ({ page }) => {
@@ -348,12 +348,12 @@ Rules:
 - **One test per file.** File path, describe name, and test name come verbatim from the spec (minus the ordinal).
 - Prefix each numbered step with a `// N. <step text>` comment before its actions.
 - Use the describe group name verbatim from the spec (no `1.` ordinal).
-- Import from `./fixtures` if the project has one; otherwise `@playwright/test`.
+- Import from `../fixtures` if the project has one; otherwise `@playwright/test`.
 - **Important**: close the CLI session and stop the background test before moving to the next scenario.
 
 ### 2.3 Generate multiple scenarios
 
-Loop 2.2 over the targeted scenarios one at a time, restarting the seed between each so every test starts from a clean page. This is safe to parallelise due to unique generated session names - just make sure each test run is stopped.
+Loop 2.2 over the targeted scenarios, restarting the seed between each so every test starts from a clean page. While each `--debug=cli` test run generates an isolated `tw-XXXX` browser session, parallel scenario generation is only safe when application or backend state is independent; otherwise, generate scenarios sequentially. Always ensure each test run and CLI session is stopped when finished.
 
 ### 2.4 Run generated tests
 

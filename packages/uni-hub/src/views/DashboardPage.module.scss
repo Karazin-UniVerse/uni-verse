@@ -600,12 +600,16 @@
     width: 240px;
     z-index: 1000;
     transform: translateX(-100%);
-    transition: transform var(--transition-medium) var(--ease-standard);
+    visibility: hidden;
+    transition:
+      transform var(--transition-medium) var(--ease-standard),
+      visibility var(--transition-medium) var(--ease-standard);
     box-shadow: var(--box-shadow-large);
   }
 
   .layout.mobileOpen .sider {
     transform: translateX(0);
+    visibility: visible;
   }
 
   .mobileOverlay {

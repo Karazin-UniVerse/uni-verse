@@ -268,8 +268,8 @@ playwright-cli open https://example.com
 
 ## Security Notes
 
-- Never commit storage state files containing auth tokens
-- Add `*.auth-state.json` to `.gitignore`
-- Delete state files after automation completes
-- Use environment variables for sensitive data
+- Never commit storage state files containing auth tokens or session data
+- Add `*.auth-state.json`, `auth.json`, `my-session.json`, and `storage-state-*.json` to `.gitignore`
+- Delete state files after automation completes and never share authentication-state files
+- Use environment variables for sensitive credentials
 - By default, sessions run in-memory mode which is safer for sensitive operations
