@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { Assignment, Grade } from '@uni-hub/types';
 import {
   getGradeCourseName,
@@ -78,12 +78,6 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
 
   const isSelectedCourseValid = courseOptions.some((option) => option.value === courseName);
   const selectedCourse = isSelectedCourseValid ? courseName : courseOptions[0]?.value || '';
-
-  useEffect(() => {
-    if (courseName && !isSelectedCourseValid && courseOptions.length > 0) {
-      setCourseName(courseOptions[0].value);
-    }
-  }, [courseName, isSelectedCourseValid, courseOptions]);
 
   const currentGrade = uniqueGrades.find(
     (grade) =>

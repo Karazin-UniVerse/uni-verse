@@ -68,7 +68,11 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     if (visible && module?.instance) {
       const currentInstance = module.instance;
 
-      setLoading(true);
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setLoading(true);
+        }
+      });
       moodleApi
         .getAssignmentStatus(currentInstance)
         .then((response) => {
@@ -88,10 +92,14 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
           }
         });
     } else {
-      setStatus(null);
-      setText('');
-      setFiles([]);
-      setFormError('');
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setStatus(null);
+          setText('');
+          setFiles([]);
+          setFormError('');
+        }
+      });
     }
 
     return () => {

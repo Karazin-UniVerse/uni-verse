@@ -1,0 +1,48 @@
+name: Code Freeze Check
+
+on:
+  pull_request:
+    branches: [develop]
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  check-code-freeze:
+    name: Verify Code Freeze Status
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Check Code Freeze State
+        env:
+          VARS_FREEZE: ${{ vars.CODE_FREEZE }}
+          HAS_BYPASS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'hotfix') || contains(github.event.pull_request.labels.*.name, 'freeze-bypass') }}
+        run: |
+          if git ls-remote --exit-code --tags origin refs/tags/code-freeze >/dev/null 2>&1; then
+            TAG_EXISTS=1
+          else
+            status=$?
+            if [ "$status" -eq 2 ]; then
+              TAG_EXISTS=0
+            else
+              echo "::error::Failed to query git tags from remote repository (exit code: $status). Failing closed to prevent unsafe merge."
+              exit "$status"
+            fi
+          fi
+
+          if [ "$TAG_EXISTS" -eq 1 ] || [ "$VARS_FREEZE" = "true" ]; then
+            if [ "$HAS_BYPASS_LABEL" = "true" ]; then
+              echo "::notice::Code Freeze is active, but bypass label ('hotfix' / 'freeze-bypass') detected. Allowing PR."
+              exit 0
+            fi
+
+            echo "::error title=Code Freeze Active::Merging into 'develop' is currently BLOCKED because release testing is in progress on Stage."
+            echo "To allow this PR during freeze, add 'hotfix' or 'freeze-bypass' label, or unfreeze via 'Toggle Code Freeze' action."
+            exit 1
+          fi
+
+          echo "Code Freeze is inactive. PR into 'develop' is allowed."
+          exit 0

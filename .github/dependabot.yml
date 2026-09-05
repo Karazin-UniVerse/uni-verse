@@ -1,0 +1,160 @@
+version: 2
+updates:
+  # =========================================================================
+  # 1. Monorepo Package Dependencies (pnpm + Turborepo)
+  # =========================================================================
+  - package-ecosystem: 'npm'
+    directory: '/'
+    target-branch: 'develop'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '05:00'
+      timezone: 'UTC'
+    open-pull-requests-limit: 10
+    rebase-strategy: 'auto'
+    labels:
+      - 'dependencies'
+      - 'javascript'
+    commit-message:
+      prefix: 'chore(deps)'
+      prefix-development: 'chore(deps-dev)'
+    groups:
+      # Group NestJS dependencies (backend framework modules)
+      nestjs:
+        applies-to: version-updates
+        update-types:
+          - 'minor'
+          - 'patch'
+        patterns:
+          - '@nestjs/*'
+
+      # Group React & Next.js ecosystem
+      react-next:
+        applies-to: version-updates
+        update-types:
+          - 'minor'
+          - 'patch'
+        patterns:
+          - 'next'
+          - 'react'
+          - 'react-*'
+          - '@types/react'
+          - '@types/react-*'
+
+      # Group Prisma ORM packages (CLI & client must remain aligned)
+      prisma:
+        applies-to: version-updates
+        update-types:
+          - 'minor'
+          - 'patch'
+        patterns:
+          - '@prisma/*'
+          - 'prisma'
+
+      # Group Testing & QA suites (Jest, Vitest, Playwright, Storybook)
+      testing:
+        applies-to: version-updates
+        update-types:
+          - 'minor'
+          - 'patch'
+        patterns:
+          - 'jest'
+          - '@types/jest'
+          - 'ts-jest'
+          - 'vitest'
+          - '@vitest/*'
+          - 'supertest'
+          - '@types/supertest'
+          - 'playwright'
+          - 'storybook'
+          - '@storybook/*'
+          - '@chromatic-com/*'
+
+      # Group Linters, Formatters, & Repo Tooling
+      tooling:
+        applies-to: version-updates
+        update-types:
+          - 'minor'
+          - 'patch'
+        patterns:
+          - 'eslint*'
+          - '@eslint/*'
+          - 'typescript-eslint'
+          - 'prettier*'
+          - 'oxlint'
+          - 'husky'
+          - 'lint-staged'
+          - 'turbo'
+          - 'typescript'
+
+      # Non-breaking minor & patch bumps for production dependencies
+      prod-minor-patch:
+        applies-to: version-updates
+        dependency-type: 'production'
+        update-types:
+          - 'minor'
+          - 'patch'
+        patterns:
+          - '*'
+
+      # Non-breaking minor & patch bumps for devDependencies
+      dev-minor-patch:
+        applies-to: version-updates
+        dependency-type: 'development'
+        update-types:
+          - 'minor'
+          - 'patch'
+        patterns:
+          - '*'
+
+  # =========================================================================
+  # 2. GitHub Actions CI/CD Workflows
+  # =========================================================================
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    target-branch: 'develop'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '05:00'
+      timezone: 'UTC'
+    open-pull-requests-limit: 5
+    rebase-strategy: 'auto'
+    labels:
+      - 'dependencies'
+      - 'github-actions'
+    commit-message:
+      prefix: 'chore(ci)'
+    groups:
+      actions:
+        applies-to: version-updates
+        patterns:
+          - '*'
+
+  # =========================================================================
+  # 3. Docker Base Images (/Dockerfile & /Dockerfile.frontend)
+  # =========================================================================
+  - package-ecosystem: 'docker'
+    directory: '/'
+    target-branch: 'develop'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '05:00'
+      timezone: 'UTC'
+    open-pull-requests-limit: 5
+    rebase-strategy: 'auto'
+    labels:
+      - 'dependencies'
+      - 'docker'
+    commit-message:
+      prefix: 'chore(docker)'
+    ignore:
+      - dependency-name: 'node'
+        update-types: ['version-update:semver-major']
+    groups:
+      docker:
+        applies-to: version-updates
+        patterns:
+          - '*'
