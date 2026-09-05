@@ -14,6 +14,10 @@ on:
         options:
           - qa
           - stage
+      stage_branch:
+        description: 'Branch to deploy to Stage (default: main)'
+        required: false
+        default: 'main'
 
 permissions: {}
 
@@ -53,6 +57,7 @@ jobs:
         env:
           STAGE_WEBHOOK: ${{ secrets.STAGE_DEPLOY_WEBHOOK_URL }}
           NF_TOKEN: ${{ secrets.NORTHFLANK_API_TOKEN }}
+          STAGE_BRANCH: ${{ inputs.stage_branch || 'main' }}
         run: |
           if [ -n "$STAGE_WEBHOOK" ]; then
             echo "Triggering backend deployment to Stage via Webhook..."
@@ -61,11 +66,11 @@ jobs:
           fi
 
           if [ -n "$NF_TOKEN" ]; then
-            echo "Triggering backend deployment to Stage via Northflank REST API..."
+            echo "Triggering backend deployment to Stage (branch: $STAGE_BRANCH)..."
             curl -f -X POST "https://api.northflank.com/v1/projects/universe-jewel/services/backend-stage/build" \
               -H "Authorization: Bearer $NF_TOKEN" \
               -H "Content-Type: application/json" \
-              -d '{"branch":"main"}' \
+              -d "{\"branch\":\"$STAGE_BRANCH\"}" \
               --connect-timeout 10 --max-time 30
             exit 0
           fi
@@ -76,14 +81,15 @@ jobs:
       - name: Trigger Stage Frontend Deploy
         env:
           NF_TOKEN: ${{ secrets.NORTHFLANK_API_TOKEN }}
+          STAGE_BRANCH: ${{ inputs.stage_branch || 'main' }}
         run: |
           if [ -z "$NF_TOKEN" ]; then
             echo "::notice::NORTHFLANK_API_TOKEN is not configured. Frontend deploy skipped."
             exit 0
           fi
-          echo "Triggering frontend deployment to Stage via Northflank REST API..."
+          echo "Triggering frontend deployment to Stage (branch: $STAGE_BRANCH)..."
           curl -f -X POST "https://api.northflank.com/v1/projects/universe-jewel/services/frontend-stage/build" \
             -H "Authorization: Bearer $NF_TOKEN" \
             -H "Content-Type: application/json" \
-            -d '{"branch":"main"}' \
+            -d "{\"branch\":\"$STAGE_BRANCH\"}" \
             --connect-timeout 10 --max-time 30
