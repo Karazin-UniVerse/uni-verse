@@ -23,12 +23,18 @@ updates:
       # Group NestJS dependencies (backend framework modules)
       nestjs:
         applies-to: version-updates
+        update-types:
+          - 'minor'
+          - 'patch'
         patterns:
           - '@nestjs/*'
 
       # Group React & Next.js ecosystem
       react-next:
         applies-to: version-updates
+        update-types:
+          - 'minor'
+          - 'patch'
         patterns:
           - 'next'
           - 'react'
@@ -39,6 +45,9 @@ updates:
       # Group Prisma ORM packages (CLI & client must remain aligned)
       prisma:
         applies-to: version-updates
+        update-types:
+          - 'minor'
+          - 'patch'
         patterns:
           - '@prisma/*'
           - 'prisma'
@@ -46,6 +55,9 @@ updates:
       # Group Testing & QA suites (Jest, Vitest, Playwright, Storybook)
       testing:
         applies-to: version-updates
+        update-types:
+          - 'minor'
+          - 'patch'
         patterns:
           - 'jest'
           - '@types/jest'
@@ -62,6 +74,9 @@ updates:
       # Group Linters, Formatters, & Repo Tooling
       tooling:
         applies-to: version-updates
+        update-types:
+          - 'minor'
+          - 'patch'
         patterns:
           - 'eslint*'
           - '@eslint/*'
@@ -135,6 +150,9 @@ updates:
       - 'docker'
     commit-message:
       prefix: 'chore(docker)'
+    ignore:
+      - dependency-name: 'node'
+        update-types: ['version-update:semver-major']
     groups:
       docker:
         applies-to: version-updates
