@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -252,8 +252,8 @@ const DashboardPage: React.FC = () => {
   }, [router, sortOrder, dateFrom, dateTo, hideCompleted]);
 
   useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+    const onClick = (event: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
         setNotifOpen(false);
       }
     };
@@ -263,33 +263,89 @@ const DashboardPage: React.FC = () => {
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
+  const closeMobileMenu = useCallback(() => {
+    setMobileMenuOpen(false);
+
+    const menuButton = document.querySelector<HTMLButtonElement>(`.${styles.mobileMenuBtn}`);
+
+    menuButton?.focus();
+  }, []);
+
   useEffect(() => {
     if (!mobileMenuOpen) {
       return;
     }
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setMobileMenuOpen(false);
+    const getFocusableElements = (): HTMLElement[] => {
+      if (!siderRef.current) {
+        return [];
+      }
 
-        const menuBtn = document.querySelector<HTMLButtonElement>(`.${styles.mobileMenuBtn}`);
+      const elements = siderRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
 
-        menuBtn?.focus();
+      return Array.from(elements).filter((element) => {
+        if (typeof element.checkVisibility === 'function') {
+          return element.checkVisibility();
+        }
+
+        return element.offsetParent !== null;
+      });
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeMobileMenu();
+
+        return;
+      }
+
+      if (event.key === 'Tab') {
+        const focusableElements = getFocusableElements();
+
+        if (focusableElements.length === 0) {
+          event.preventDefault();
+
+          return;
+        }
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (event.shiftKey) {
+          if (
+            document.activeElement === firstElement ||
+            !siderRef.current?.contains(document.activeElement)
+          ) {
+            event.preventDefault();
+
+            lastElement?.focus();
+          }
+        } else {
+          if (
+            document.activeElement === lastElement ||
+            !siderRef.current?.contains(document.activeElement)
+          ) {
+            event.preventDefault();
+
+            firstElement?.focus();
+          }
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
 
-    const firstFocusable = siderRef.current?.querySelector<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-    );
+    const visibleFocusables = getFocusableElements();
+    const firstFocusable = visibleFocusables[0];
 
     firstFocusable?.focus();
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [mobileMenuOpen]);
+  }, [closeMobileMenu, mobileMenuOpen]);
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
@@ -663,19 +719,19 @@ const DashboardPage: React.FC = () => {
         <button
           type="button"
           className={styles.mobileOverlay}
-          onClick={() => setMobileMenuOpen(false)}
+          onClick={closeMobileMenu}
           aria-label="Закрыть меню"
         />
       )}
-      <aside ref={siderRef} className={styles.sider} aria-label="Навигация">
+      <aside ref={siderRef} id="dashboard-sidebar" className={styles.sider} aria-label="Навигация">
         <div className={styles.brand}>
-          <span>{collapsed ? 'U' : 'UNiVerse'}</span>
+          <span>{collapsed && !mobileMenuOpen ? 'U' : 'UNiVerse'}</span>
           <SimpleButton
             type="button"
             variant="secondary"
             size="small"
             isTransparent
-            onClick={() => setCollapsed((v) => !v)}
+            onClick={() => setCollapsed((previous) => !previous)}
             aria-label={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
           >
             {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
@@ -691,7 +747,7 @@ const DashboardPage: React.FC = () => {
               onClick={() => {
                 playClick(soundEnabled);
                 setActiveKey(item.key);
-                setMobileMenuOpen(false);
+                closeMobileMenu();
               }}
               title={item.label}
             >
@@ -703,13 +759,17 @@ const DashboardPage: React.FC = () => {
                 />
               )}
               {item.icon}
-              {!collapsed && <span>{item.label}</span>}
+              {(!collapsed || mobileMenuOpen) && <span>{item.label}</span>}
             </button>
           ))}
         </nav>
 
         <div className={styles.siderFooter}>
-          <ThemeSwitcher compact showLabel={!collapsed} className={styles.themeBtn} />
+          <ThemeSwitcher
+            compact
+            showLabel={!collapsed || mobileMenuOpen}
+            className={styles.themeBtn}
+          />
           <SimpleButton
             type="button"
             variant="secondary"
@@ -719,12 +779,16 @@ const DashboardPage: React.FC = () => {
             className={styles.logoutBtn}
           >
             <LogOut size={18} />
-            {!collapsed && <span>Выйти</span>}
+            {(!collapsed || mobileMenuOpen) && <span>Выйти</span>}
           </SimpleButton>
         </div>
       </aside>
 
-      <div className={styles.main}>
+      <div
+        className={styles.main}
+        inert={mobileMenuOpen ? true : undefined}
+        aria-hidden={mobileMenuOpen}
+      >
         <header className={styles.header}>
           <div className={styles.headerLeft}>
             <SimpleButton
@@ -735,6 +799,8 @@ const DashboardPage: React.FC = () => {
               className={styles.mobileMenuBtn}
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Открыть меню"
+              aria-expanded={mobileMenuOpen}
+              aria-controls="dashboard-sidebar"
             >
               <Menu size={20} />
             </SimpleButton>

@@ -297,7 +297,7 @@ Goal: take a spec file and produce Playwright test files. Optionally update the 
 For each target scenario, run the seed test to start generation:
 
 ```bash
-PLAYWRIGHT_HTML_OPEN=never npx playwright test <seed-file> --debug=cli   # background
+PLAYWRIGHT_HTML_OPEN=never npx playwright test <seed-file> --debug=cli &
 playwright-cli attach tw-XXXX
 playwright-cli resume
 ```
