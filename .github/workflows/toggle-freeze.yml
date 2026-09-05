@@ -33,6 +33,13 @@ jobs:
             git push origin refs/tags/code-freeze --force
             echo "::notice title=Code Freeze Active::🧊 Code Freeze УВІМКНЕНО! Тег 'code-freeze' створено. Злиття в 'develop' заблоковано."
           else
-            git push origin --delete code-freeze 2>/dev/null || true
+            if git ls-remote --exit-code --tags origin refs/tags/code-freeze >/dev/null 2>&1; then
+              git push origin --delete refs/tags/code-freeze
+            else
+              status=$?
+              if [ "$status" -ne 2 ]; then
+                exit "$status"
+              fi
+            fi
             echo "::notice title=Code Freeze Inactive::☀️ Code Freeze ЗНЯТО! Тег 'code-freeze' видалено. 'develop' відкрито для злиття."
           fi

@@ -13,14 +13,27 @@ jobs:
     name: Verify Code Freeze Status
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Check Code Freeze State
         env:
           VARS_FREEZE: ${{ vars.CODE_FREEZE }}
           HAS_BYPASS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'hotfix') || contains(github.event.pull_request.labels.*.name, 'freeze-bypass') }}
         run: |
-          TAG_EXISTS=$(git ls-remote --tags origin refs/tags/code-freeze | grep -c "refs/tags/code-freeze" || true)
+          if git ls-remote --exit-code --tags origin refs/tags/code-freeze >/dev/null 2>&1; then
+            TAG_EXISTS=1
+          else
+            status=$?
+            if [ "$status" -eq 2 ]; then
+              TAG_EXISTS=0
+            else
+              echo "::error::Failed to query git tags from remote repository (exit code: $status). Failing closed to prevent unsafe merge."
+              exit "$status"
+            fi
+          fi
 
-          if [ "$TAG_EXISTS" -gt 0 ] || [ "$VARS_FREEZE" = "true" ]; then
+          if [ "$TAG_EXISTS" -eq 1 ] || [ "$VARS_FREEZE" = "true" ]; then
             if [ "$HAS_BYPASS_LABEL" = "true" ]; then
               echo "::notice::Code Freeze is active, but bypass label ('hotfix' / 'freeze-bypass') detected. Allowing PR."
               exit 0
