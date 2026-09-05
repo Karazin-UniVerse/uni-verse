@@ -65,7 +65,7 @@ export function useChartTheme(container: HTMLElement | null): ChartThemeTokens {
   }, [container]);
 
   useEffect(() => {
-    resolve();
+    const handle = requestAnimationFrame(resolve);
 
     const observer = new MutationObserver(resolve);
 
@@ -74,7 +74,10 @@ export function useChartTheme(container: HTMLElement | null): ChartThemeTokens {
       attributeFilter: ['data-theme'],
     });
 
-    return () => observer.disconnect();
+    return () => {
+      cancelAnimationFrame(handle);
+      observer.disconnect();
+    };
   }, [resolve]);
 
   return tokens;

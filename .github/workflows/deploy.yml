@@ -57,7 +57,7 @@ jobs:
         env:
           STAGE_WEBHOOK: ${{ secrets.STAGE_DEPLOY_WEBHOOK_URL }}
           NF_TOKEN: ${{ secrets.NORTHFLANK_API_TOKEN }}
-          STAGE_BRANCH: ${{ inputs.stage_branch || 'develop' }}
+          STAGE_BRANCH: ${{ inputs.stage_branch || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || 'develop' }}
         run: |
           if [ -n "$STAGE_WEBHOOK" ]; then
             echo "Triggering backend deployment to Stage via Webhook..."
@@ -66,12 +66,47 @@ jobs:
           fi
 
           if [ -n "$NF_TOKEN" ]; then
-            echo "Triggering backend deployment to Stage (branch: $STAGE_BRANCH)..."
-            curl -f -X POST "https://api.northflank.com/v1/projects/universe-jewel/services/backend-stage/build" \
+            echo "Triggering backend deployment to Stage (branch/ref: $STAGE_BRANCH)..."
+
+            COMMIT_SHA=""
+            if [ -n "$STAGE_BRANCH" ]; then
+              COMMIT_SHA=$(git ls-remote "https://github.com/${{ github.repository }}" "refs/heads/${STAGE_BRANCH}" 2>/dev/null | cut -f1)
+              if [ -z "$COMMIT_SHA" ]; then
+                COMMIT_SHA=$(git ls-remote "https://github.com/${{ github.repository }}" "refs/tags/${STAGE_BRANCH}^{}" 2>/dev/null | cut -f1)
+              fi
+              if [ -z "$COMMIT_SHA" ]; then
+                COMMIT_SHA=$(git ls-remote "https://github.com/${{ github.repository }}" "refs/tags/${STAGE_BRANCH}" 2>/dev/null | cut -f1)
+              fi
+              if [ ${#STAGE_BRANCH} -eq 40 ]; then
+                COMMIT_SHA="$STAGE_BRANCH"
+              fi
+            fi
+
+            if [ -z "$COMMIT_SHA" ]; then
+              echo "::error::Could not resolve commit SHA for ref '$STAGE_BRANCH'"
+              exit 1
+            fi
+
+            PAYLOAD="{\"sha\":\"$COMMIT_SHA\"}"
+            echo "Target commit SHA: $COMMIT_SHA"
+
+            RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST \
+              "https://api.northflank.com/v1/projects/universe-jewel/services/backend-stage/build" \
               -H "Authorization: Bearer $NF_TOKEN" \
               -H "Content-Type: application/json" \
-              -d "{\"branch\":\"$STAGE_BRANCH\"}" \
-              --connect-timeout 10 --max-time 30
+              -d "$PAYLOAD" \
+              --connect-timeout 10 --max-time 30)
+
+            HTTP_BODY=$(echo "$RESPONSE" | sed -e '$d')
+            HTTP_STATUS=$(echo "$RESPONSE" | tail -n1 | cut -d':' -f2)
+
+            echo "Response Status: $HTTP_STATUS"
+            echo "Response Body: $HTTP_BODY"
+
+            if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
+              echo "::error::Northflank Backend deploy failed with HTTP $HTTP_STATUS: $HTTP_BODY"
+              exit 1
+            fi
             exit 0
           fi
 
@@ -81,15 +116,50 @@ jobs:
       - name: Trigger Stage Frontend Deploy
         env:
           NF_TOKEN: ${{ secrets.NORTHFLANK_API_TOKEN }}
-          STAGE_BRANCH: ${{ inputs.stage_branch || 'develop' }}
+          STAGE_BRANCH: ${{ inputs.stage_branch || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || 'develop' }}
         run: |
           if [ -z "$NF_TOKEN" ]; then
             echo "::notice::NORTHFLANK_API_TOKEN is not configured. Frontend deploy skipped."
             exit 0
           fi
-          echo "Triggering frontend deployment to Stage (branch: $STAGE_BRANCH)..."
-          curl -f -X POST "https://api.northflank.com/v1/projects/universe-jewel/services/frontend-stage/build" \
+          echo "Triggering frontend deployment to Stage (branch/ref: $STAGE_BRANCH)..."
+
+          COMMIT_SHA=""
+          if [ -n "$STAGE_BRANCH" ]; then
+            COMMIT_SHA=$(git ls-remote "https://github.com/${{ github.repository }}" "refs/heads/${STAGE_BRANCH}" 2>/dev/null | cut -f1)
+            if [ -z "$COMMIT_SHA" ]; then
+              COMMIT_SHA=$(git ls-remote "https://github.com/${{ github.repository }}" "refs/tags/${STAGE_BRANCH}^{}" 2>/dev/null | cut -f1)
+            fi
+            if [ -z "$COMMIT_SHA" ]; then
+              COMMIT_SHA=$(git ls-remote "https://github.com/${{ github.repository }}" "refs/tags/${STAGE_BRANCH}" 2>/dev/null | cut -f1)
+            fi
+            if [ ${#STAGE_BRANCH} -eq 40 ]; then
+              COMMIT_SHA="$STAGE_BRANCH"
+            fi
+          fi
+
+          if [ -z "$COMMIT_SHA" ]; then
+            echo "::error::Could not resolve commit SHA for ref '$STAGE_BRANCH'"
+            exit 1
+          fi
+
+          PAYLOAD="{\"sha\":\"$COMMIT_SHA\"}"
+          echo "Target commit SHA: $COMMIT_SHA"
+
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST \
+            "https://api.northflank.com/v1/projects/universe-jewel/services/frontend-stage/build" \
             -H "Authorization: Bearer $NF_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "{\"branch\":\"$STAGE_BRANCH\"}" \
-            --connect-timeout 10 --max-time 30
+            -d "$PAYLOAD" \
+            --connect-timeout 10 --max-time 30)
+
+          HTTP_BODY=$(echo "$RESPONSE" | sed -e '$d')
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1 | cut -d':' -f2)
+
+          echo "Response Status: $HTTP_STATUS"
+          echo "Response Body: $HTTP_BODY"
+
+          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
+            echo "::error::Northflank Frontend deploy failed with HTTP $HTTP_STATUS: $HTTP_BODY"
+            exit 1
+          fi
