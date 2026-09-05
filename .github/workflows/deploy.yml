@@ -15,9 +15,9 @@ on:
           - qa
           - stage
       stage_branch:
-        description: 'Branch to deploy to Stage (default: main)'
+        description: 'Branch to deploy to Stage (default: develop)'
         required: false
-        default: 'main'
+        default: 'develop'
 
 permissions: {}
 
@@ -57,7 +57,7 @@ jobs:
         env:
           STAGE_WEBHOOK: ${{ secrets.STAGE_DEPLOY_WEBHOOK_URL }}
           NF_TOKEN: ${{ secrets.NORTHFLANK_API_TOKEN }}
-          STAGE_BRANCH: ${{ inputs.stage_branch || 'main' }}
+          STAGE_BRANCH: ${{ inputs.stage_branch || 'develop' }}
         run: |
           if [ -n "$STAGE_WEBHOOK" ]; then
             echo "Triggering backend deployment to Stage via Webhook..."
@@ -81,7 +81,7 @@ jobs:
       - name: Trigger Stage Frontend Deploy
         env:
           NF_TOKEN: ${{ secrets.NORTHFLANK_API_TOKEN }}
-          STAGE_BRANCH: ${{ inputs.stage_branch || 'main' }}
+          STAGE_BRANCH: ${{ inputs.stage_branch || 'develop' }}
         run: |
           if [ -z "$NF_TOKEN" ]; then
             echo "::notice::NORTHFLANK_API_TOKEN is not configured. Frontend deploy skipped."
