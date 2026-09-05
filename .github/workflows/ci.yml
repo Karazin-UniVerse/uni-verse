@@ -34,7 +34,7 @@ jobs:
           node -e "const fs=require('fs');const p='packages/backend/coverage/lcov.info';if(fs.existsSync(p)){let c=fs.readFileSync(p,'utf8');c=c.split('SF:src/').join('SF:packages/backend/src/').split('SF:src\\\\').join('SF:packages/backend/src/');fs.writeFileSync(p,c);console.log('Normalized lcov paths for SonarCloud');}"
       - run: pnpm build
       - name: SonarCloud Scan
-        if: ${{ secrets.SONAR_TOKEN != '' }}
+        if: github.actor != 'dependabot[bot]' && secrets.SONAR_TOKEN != ''
         uses: SonarSource/sonarcloud-github-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
