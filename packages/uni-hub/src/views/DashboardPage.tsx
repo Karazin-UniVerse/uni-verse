@@ -311,26 +311,24 @@ const DashboardPage: React.FC = () => {
         }
 
         const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
+        const lastElement = focusableElements.at(-1);
 
-        if (event.shiftKey) {
-          if (
-            document.activeElement === firstElement ||
-            !siderRef.current?.contains(document.activeElement)
-          ) {
-            event.preventDefault();
+        const isOutsideOrFirst =
+          document.activeElement === firstElement ||
+          !siderRef.current?.contains(document.activeElement);
 
-            lastElement?.focus();
-          }
-        } else {
-          if (
-            document.activeElement === lastElement ||
-            !siderRef.current?.contains(document.activeElement)
-          ) {
-            event.preventDefault();
+        const isOutsideOrLast =
+          document.activeElement === lastElement ||
+          !siderRef.current?.contains(document.activeElement);
 
-            firstElement?.focus();
-          }
+        if (event.shiftKey && isOutsideOrFirst) {
+          event.preventDefault();
+
+          lastElement?.focus();
+        } else if (!event.shiftKey && isOutsideOrLast) {
+          event.preventDefault();
+
+          firstElement?.focus();
         }
       }
     };
