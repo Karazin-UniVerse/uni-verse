@@ -19,7 +19,6 @@ export function useCountUp(target: number, duration = 800, enabled = true): numb
     if (!enabled || duration <= 0) {
       displayedValueRef.current = target;
       prevTargetRef.current = target;
-      setValue(target);
 
       return;
     }
@@ -53,6 +52,10 @@ export function useCountUp(target: number, duration = 800, enabled = true): numb
 
     return () => cancelAnimationFrame(rafRef.current);
   }, [target, duration, enabled]);
+
+  if (!enabled || duration <= 0) {
+    return target;
+  }
 
   return value;
 }
