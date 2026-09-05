@@ -631,7 +631,12 @@ const DashboardPage: React.FC = () => {
     >
       <BadgeSystem grades={data.grades} />
       {mobileMenuOpen && (
-        <div className={styles.mobileOverlay} onClick={() => setMobileMenuOpen(false)} />
+        <button
+          type="button"
+          className={styles.mobileOverlay}
+          onClick={() => setMobileMenuOpen(false)}
+          aria-label="Закрыть меню"
+        />
       )}
       <aside className={styles.sider}>
         <div className={styles.brand}>
@@ -693,7 +698,7 @@ const DashboardPage: React.FC = () => {
       <div className={styles.main}>
         <header className={styles.header}>
           <div className={styles.headerLeft}>
-            <Button
+            <SimpleButton
               type="button"
               variant="secondary"
               size="medium"

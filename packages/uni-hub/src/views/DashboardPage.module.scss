@@ -615,6 +615,9 @@
     background: rgba(0, 0, 0, 0.4);
     z-index: 999;
     backdrop-filter: blur(2px);
+    border: none;
+    padding: 0;
+    cursor: pointer;
   }
 
   .mobileMenuBtn {
