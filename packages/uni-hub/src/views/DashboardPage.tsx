@@ -693,7 +693,7 @@ const DashboardPage: React.FC = () => {
       <div className={styles.main}>
         <header className={styles.header}>
           <div className={styles.headerLeft}>
-            <SimpleButton
+            <Button
               type="button"
               variant="secondary"
               size="medium"
