@@ -49,13 +49,26 @@ jobs:
     environment:
       name: stage
     steps:
-      - name: Trigger Stage Deploy Webhook
+      - name: Trigger Stage Deploy
         env:
           STAGE_WEBHOOK: ${{ secrets.STAGE_DEPLOY_WEBHOOK_URL }}
+          NF_TOKEN: ${{ secrets.NORTHFLANK_API_TOKEN }}
         run: |
-          if [ -z "$STAGE_WEBHOOK" ]; then
-            echo "::notice::STAGE_DEPLOY_WEBHOOK_URL is not configured. Webhook skipped."
+          if [ -n "$STAGE_WEBHOOK" ]; then
+            echo "Triggering deployment to Stage via Webhook..."
+            curl -f -X POST --connect-timeout 10 --max-time 30 "$STAGE_WEBHOOK"
             exit 0
           fi
-          echo "Triggering deployment to Stage environment..."
-          curl -f -X POST --connect-timeout 10 --max-time 30 "$STAGE_WEBHOOK"
+
+          if [ -n "$NF_TOKEN" ]; then
+            echo "Triggering deployment to Stage via Northflank REST API..."
+            curl -f -X POST "https://api.northflank.com/v1/projects/universe-jewel/services/combined/backend-stage/builds" \
+              -H "Authorization: Bearer $NF_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d '{}' \
+              --connect-timeout 10 --max-time 30
+            exit 0
+          fi
+
+          echo "::notice::Neither STAGE_DEPLOY_WEBHOOK_URL nor NORTHFLANK_API_TOKEN is configured. Stage deploy skipped."
+          exit 0
