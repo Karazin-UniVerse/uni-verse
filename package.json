@@ -22,7 +22,7 @@
     "lint-staged": "^15.4.3",
     "oxlint": "^1.77.0",
     "prettier": "^3.5.0",
-    "sass-embedded": "^1.100.0",
+    "sass-embedded": "^1.103.1",
     "turbo": "^2.4.0",
     "typescript": "^5.7.0"
   }
