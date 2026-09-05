@@ -552,6 +552,14 @@
   }
 }
 
+.mobileMenuBtn {
+  display: none;
+}
+
+.mobileOverlay {
+  display: none;
+}
+
 @media (max-width: 1024px) {
   .layout {
     grid-template-columns: 72px 1fr;
@@ -563,15 +571,75 @@
     grid-template-columns: 1fr;
   }
 
-  .brand span,
-  .navItem span,
-  .logoutBtn span {
+  /* Don't hide text if menu is explicitly open on mobile */
+  .layout:not(.mobileOpen) .brand span,
+  .layout:not(.mobileOpen) .navItem span,
+  .layout:not(.mobileOpen) .logoutBtn span {
     display: none;
   }
 
-  .navItem,
-  .themeBtn,
-  .logoutBtn {
+  .layout:not(.mobileOpen) .navItem,
+  .layout:not(.mobileOpen) .themeBtn,
+  .layout:not(.mobileOpen) .logoutBtn {
     justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  .sider {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 240px;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform var(--transition-medium) var(--ease-standard);
+    box-shadow: var(--box-shadow-large);
+  }
+
+  .layout.mobileOpen .sider {
+    transform: translateX(0);
+  }
+
+  .mobileOverlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 999;
+    backdrop-filter: blur(2px);
+  }
+
+  .mobileMenuBtn {
+    display: flex;
+  }
+  
+  /* Hide the toggle button inside the sider on mobile, since we use overlay/hamburger */
+  .brand button {
+    display: none;
+  }
+
+  .main {
+    flex: 1;
+    width: 100%;
+  }
+
+  .header {
+    padding: 0 var(--space-12);
+  }
+
+  .headerRight {
+    gap: var(--space-8);
+  }
+
+  .user span:last-child {
+    display: none;
   }
 }

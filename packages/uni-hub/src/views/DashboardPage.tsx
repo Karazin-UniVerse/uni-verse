@@ -16,6 +16,7 @@ import {
   PanelLeftOpen,
   Volume2,
   VolumeX,
+  Menu,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -86,6 +87,7 @@ const DashboardPage: React.FC = () => {
   const setSoundEnabled = useGamificationStore((s) => s.setSoundEnabled);
 
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeKey, setActiveKey] = useState<NavKey>('overview');
   const [loading, setLoading] = useState(true);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -624,8 +626,13 @@ const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className={`${styles.layout} ${collapsed ? styles.collapsed : ''}`}>
+    <div
+      className={`${styles.layout} ${collapsed ? styles.collapsed : ''} ${mobileMenuOpen ? styles.mobileOpen : ''}`}
+    >
       <BadgeSystem grades={data.grades} />
+      {mobileMenuOpen && (
+        <div className={styles.mobileOverlay} onClick={() => setMobileMenuOpen(false)} />
+      )}
       <aside className={styles.sider}>
         <div className={styles.brand}>
           <span>{collapsed ? 'U' : 'UNiVerse'}</span>
@@ -650,6 +657,7 @@ const DashboardPage: React.FC = () => {
               onClick={() => {
                 playClick(soundEnabled);
                 setActiveKey(item.key);
+                setMobileMenuOpen(false);
               }}
               title={item.label}
             >
@@ -685,6 +693,17 @@ const DashboardPage: React.FC = () => {
       <div className={styles.main}>
         <header className={styles.header}>
           <div className={styles.headerLeft}>
+            <SimpleButton
+              type="button"
+              variant="secondary"
+              size="medium"
+              isTransparent
+              className={styles.mobileMenuBtn}
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Открыть меню"
+            >
+              <Menu size={20} />
+            </SimpleButton>
             <StreakBadge />
           </div>
           <div className={styles.headerRight}>
