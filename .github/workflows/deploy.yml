@@ -14,6 +14,10 @@ on:
         options:
           - qa
           - stage
+      stage_branch:
+        description: 'Branch to deploy to Stage (default: develop)'
+        required: false
+        default: 'develop'
 
 permissions: {}
 
@@ -49,13 +53,43 @@ jobs:
     environment:
       name: stage
     steps:
-      - name: Trigger Stage Deploy Webhook
+      - name: Trigger Stage Backend Deploy
         env:
           STAGE_WEBHOOK: ${{ secrets.STAGE_DEPLOY_WEBHOOK_URL }}
+          NF_TOKEN: ${{ secrets.NORTHFLANK_API_TOKEN }}
+          STAGE_BRANCH: ${{ inputs.stage_branch || 'develop' }}
         run: |
-          if [ -z "$STAGE_WEBHOOK" ]; then
-            echo "::notice::STAGE_DEPLOY_WEBHOOK_URL is not configured. Webhook skipped."
+          if [ -n "$STAGE_WEBHOOK" ]; then
+            echo "Triggering backend deployment to Stage via Webhook..."
+            curl -f -X POST --connect-timeout 10 --max-time 30 "$STAGE_WEBHOOK"
             exit 0
           fi
-          echo "Triggering deployment to Stage environment..."
-          curl -f -X POST --connect-timeout 10 --max-time 30 "$STAGE_WEBHOOK"
+
+          if [ -n "$NF_TOKEN" ]; then
+            echo "Triggering backend deployment to Stage (branch: $STAGE_BRANCH)..."
+            curl -f -X POST "https://api.northflank.com/v1/projects/universe-jewel/services/backend-stage/build" \
+              -H "Authorization: Bearer $NF_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"branch\":\"$STAGE_BRANCH\"}" \
+              --connect-timeout 10 --max-time 30
+            exit 0
+          fi
+
+          echo "::notice::Neither STAGE_DEPLOY_WEBHOOK_URL nor NORTHFLANK_API_TOKEN is configured. Backend deploy skipped."
+          exit 0
+
+      - name: Trigger Stage Frontend Deploy
+        env:
+          NF_TOKEN: ${{ secrets.NORTHFLANK_API_TOKEN }}
+          STAGE_BRANCH: ${{ inputs.stage_branch || 'develop' }}
+        run: |
+          if [ -z "$NF_TOKEN" ]; then
+            echo "::notice::NORTHFLANK_API_TOKEN is not configured. Frontend deploy skipped."
+            exit 0
+          fi
+          echo "Triggering frontend deployment to Stage (branch: $STAGE_BRANCH)..."
+          curl -f -X POST "https://api.northflank.com/v1/projects/universe-jewel/services/frontend-stage/build" \
+            -H "Authorization: Bearer $NF_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"branch\":\"$STAGE_BRANCH\"}" \
+            --connect-timeout 10 --max-time 30
