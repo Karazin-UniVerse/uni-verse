@@ -13,19 +13,21 @@ jobs:
     name: Verify Code Freeze Status
     runs-on: ubuntu-latest
     steps:
-      - name: Check Code Freeze
+      - name: Check Code Freeze State
         env:
-          IS_FROZEN: ${{ vars.CODE_FREEZE }}
+          VARS_FREEZE: ${{ vars.CODE_FREEZE }}
           HAS_BYPASS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'hotfix') || contains(github.event.pull_request.labels.*.name, 'freeze-bypass') }}
         run: |
-          if [ "$IS_FROZEN" = "true" ]; then
+          TAG_EXISTS=$(git ls-remote --tags origin refs/tags/code-freeze | grep -c "refs/tags/code-freeze" || true)
+
+          if [ "$TAG_EXISTS" -gt 0 ] || [ "$VARS_FREEZE" = "true" ]; then
             if [ "$HAS_BYPASS_LABEL" = "true" ]; then
               echo "::notice::Code Freeze is active, but bypass label ('hotfix' / 'freeze-bypass') detected. Allowing PR."
               exit 0
             fi
 
             echo "::error title=Code Freeze Active::Merging into 'develop' is currently BLOCKED because release testing is in progress on Stage."
-            echo "To allow this PR during freeze, add 'hotfix' or 'freeze-bypass' label, or set CODE_FREEZE=false in repository variables."
+            echo "To allow this PR during freeze, add 'hotfix' or 'freeze-bypass' label, or unfreeze via 'Toggle Code Freeze' action."
             exit 1
           fi
 

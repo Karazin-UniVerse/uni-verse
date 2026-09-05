@@ -1,0 +1,38 @@
+name: Toggle Code Freeze
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Дія для гілки develop'
+        required: true
+        type: choice
+        default: 'freeze'
+        options:
+          - 'freeze'
+          - 'unfreeze'
+
+permissions:
+  contents: write
+
+jobs:
+  toggle-freeze:
+    name: Toggle Code Freeze State
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Apply Freeze or Unfreeze
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if [ "${{ inputs.action }}" = "freeze" ]; then
+            git tag -f code-freeze
+            git push origin refs/tags/code-freeze --force
+            echo "::notice title=Code Freeze Active::🧊 Code Freeze УВІМКНЕНО! Тег 'code-freeze' створено. Злиття в 'develop' заблоковано."
+          else
+            git push origin --delete code-freeze 2>/dev/null || true
+            echo "::notice title=Code Freeze Inactive::☀️ Code Freeze ЗНЯТО! Тег 'code-freeze' видалено. 'develop' відкрито для злиття."
+          fi
