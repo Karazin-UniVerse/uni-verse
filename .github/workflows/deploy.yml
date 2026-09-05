@@ -49,19 +49,19 @@ jobs:
     environment:
       name: stage
     steps:
-      - name: Trigger Stage Deploy
+      - name: Trigger Stage Backend Deploy
         env:
           STAGE_WEBHOOK: ${{ secrets.STAGE_DEPLOY_WEBHOOK_URL }}
           NF_TOKEN: ${{ secrets.NORTHFLANK_API_TOKEN }}
         run: |
           if [ -n "$STAGE_WEBHOOK" ]; then
-            echo "Triggering deployment to Stage via Webhook..."
+            echo "Triggering backend deployment to Stage via Webhook..."
             curl -f -X POST --connect-timeout 10 --max-time 30 "$STAGE_WEBHOOK"
             exit 0
           fi
 
           if [ -n "$NF_TOKEN" ]; then
-            echo "Triggering deployment to Stage via Northflank REST API..."
+            echo "Triggering backend deployment to Stage via Northflank REST API..."
             curl -f -X POST "https://api.northflank.com/v1/projects/universe-jewel/services/backend-stage/build" \
               -H "Authorization: Bearer $NF_TOKEN" \
               -H "Content-Type: application/json" \
@@ -70,5 +70,20 @@ jobs:
             exit 0
           fi
 
-          echo "::notice::Neither STAGE_DEPLOY_WEBHOOK_URL nor NORTHFLANK_API_TOKEN is configured. Stage deploy skipped."
+          echo "::notice::Neither STAGE_DEPLOY_WEBHOOK_URL nor NORTHFLANK_API_TOKEN is configured. Backend deploy skipped."
           exit 0
+
+      - name: Trigger Stage Frontend Deploy
+        env:
+          NF_TOKEN: ${{ secrets.NORTHFLANK_API_TOKEN }}
+        run: |
+          if [ -z "$NF_TOKEN" ]; then
+            echo "::notice::NORTHFLANK_API_TOKEN is not configured. Frontend deploy skipped."
+            exit 0
+          fi
+          echo "Triggering frontend deployment to Stage via Northflank REST API..."
+          curl -f -X POST "https://api.northflank.com/v1/projects/universe-jewel/services/frontend-stage/build" \
+            -H "Authorization: Bearer $NF_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"branch":"main"}' \
+            --connect-timeout 10 --max-time 30
