@@ -5,6 +5,18 @@
 /* ==========================================================================
    1. BASE & LAYOUT TOKENS (Non-thematic)
    ========================================================================== */
+// SCSS Token Variables ($ tokens)
+$space-2: 2px;
+$space-4: 4px;
+$space-8: 8px;
+$space-12: 12px;
+$space-16: 16px;
+$space-24: 24px;
+$space-32: 32px;
+$space-40: 40px;
+$space-48: 48px;
+$space-64: 64px;
+
 :root {
   /* Spacing & Sizing (The 8pt Grid) */
   --space-2: 2px;

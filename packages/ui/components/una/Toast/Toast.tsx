@@ -42,6 +42,8 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   );
 };
 
+export const Toast = ToastProvider;
+
 export function useToast() {
   const ctx = useContext(ToastContext);
 
