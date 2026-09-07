@@ -262,6 +262,9 @@ importers:
 
   packages/uni-hub:
     dependencies:
+      '@universe/core':
+        specifier: workspace:*
+        version: link:../core
       '@universe/ui':
         specifier: workspace:*
         version: link:../ui
