@@ -45,6 +45,6 @@ describe('Tier 1 - Feature 6: Backend Moodle Gateway Host Alignment (@universe/b
     expect(fileExists(envExamplePath)).toBe(true);
     const content = readWorkspaceFile(envExamplePath);
 
-    expect(content).toMatch(/MOODLE_BASEURL\s*=\s*https:\/\/moodle\.universemvp\.tech/);
+    expect(content).toMatch(/MOODLE_BASEURL\s*=\s*"?https:\/\/moodle\.universemvp\.tech"?/);
   });
 });

@@ -63,27 +63,29 @@ tests/e2e/
 
 | Фіча / Вимога                          | Специфікація                                                                                                                                 | Статус тестів  | Цільовий майлстоун |
 | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | ------------------ |
-| **F1: Shared Core Domain Models**      | `StudentProfile`, `CurriculumItem`, `StudentRecordBookItem`, `AssignmentItem`, `ScheduleItem`, `LmsConnectionStatus` у `packages/types`      | Очікує M1      | M1                 |
-| **F2: Grade & Scale Calculations**     | `calculateEctsGrade` (A–F) та `calculateTraditionalGrade` (відмінно/добре/задовільно/зараховано)                                             | Очікує M1      | M1                 |
-| **F3: Types Package Exports**          | Експорти в `packages/types/package.json` та конфігурація `tsconfig.json`                                                                     | Очікує M1      | M1                 |
-| **F4: UI 11 Component Public Exports** | Експорт `Button`, `Modal`, `ProgressBar`, `Tag`, `Select`, `Input`, `Form`, `Spinner`, `Skeleton`, `Toast`, `Empty` у `packages/ui/index.ts` | Очікує M2      | M2                 |
+| **F1: Shared Core Domain Models**      | `StudentProfile`, `CurriculumItem`, `StudentRecordBookItem`, `AssignmentItem`, `ScheduleItem`, `LmsConnectionStatus` у `packages/types`      | **PASS (6/6)** | M1                 |
+| **F2: Grade & Scale Calculations**     | `calculateEctsGrade` (A–F) та `calculateTraditionalGrade` (відмінно/добре/задовільно/зараховано)                                             | **PASS (6/6)** | M1                 |
+| **F3: Types Package Exports**          | Експорти в `packages/types/package.json` та конфігурація `tsconfig.json`                                                                     | **PASS**       | M1                 |
+| **F4: UI 11 Component Public Exports** | Експорт `Button`, `Modal`, `ProgressBar`, `Tag`, `Select`, `Input`, `Form`, `Spinner`, `Skeleton`, `Toast`, `Empty` у `packages/ui/index.ts` | **PASS (6/6)** | M2                 |
 | **F5: SCSS Tokens Public Exports**     | Експорт `./vars.scss` та `./breakpoints.scss` у `packages/ui/package.json`                                                                   | **PASS (5/5)** | M2                 |
-| **F6: Backend Moodle Host Alignment**  | За замовчуванням `https://moodle.universemvp.tech` у `MoodleClientService`, файлах та env                                                    | Очікує M3      | M3                 |
+| **F6: Backend Moodle Host Alignment**  | За замовчуванням `https://moodle.universemvp.tech` у `MoodleClientService`, файлах та env                                                    | **PASS (5/5)** | M3                 |
 | **F7: Backend DTOs Alignment**         | Відповідність ендпоінтів `/moodle/*` контрактам спільних типів                                                                               | **PASS (5/5)** | M3                 |
-| **F8: UniHub Dependencies Alignment**  | Додано `@universe/types` та `@universe/ui` у залежності `packages/uni-hub`                                                                   | Очікує M4      | M4                 |
+| **F8: UniHub Dependencies Alignment**  | Додано `@universe/types` та `@universe/ui` у залежності `packages/uni-hub`                                                                   | **PASS (5/5)** | M4                 |
 | **F9: UniHub API Service Alignment**   | `packages/uni-hub/src/services/api.ts` з типізованими методами                                                                               | **PASS (5/5)** | M4                 |
-| **F10: 5 Canonical Ukrainian Tabs**    | «Картка студента / Огляд», «Індивідуальний план», «Заліковка та бали», «Розклад занять», «Завдання»                                          | Очікує M4      | M4                 |
-| **F11: Sidebar Footer Moodle Link**    | Посилання `🔗 moodle.universemvp.tech` із зеленим індикатором активності у `siderFooter`                                                     | Очікує M4      | M4                 |
-| **F12: 3-Tier Gradebook Display**      | 100-бальна оцінка + ECTS літера (A–F) + традиційна оцінка («відмінно», «добре»...)                                                           | Очікує M4      | M4                 |
-| **F13: Fix Legacy URLs in UniHub**     | Заміна застарілого `moodle.karazin.ua` на `moodle.universemvp.tech` в `AssignmentModal`                                                      | Очікує M4      | M4                 |
+| **F10: 5 Canonical Ukrainian Tabs**    | «Картка студента / Огляд», «Індивідуальний план», «Заліковка та бали», «Розклад занять», «Завдання»                                          | **PASS (6/6)** | M4                 |
+| **F11: Sidebar Footer Moodle Link**    | Посилання `🔗 moodle.universemvp.tech` із зеленим індикатором активності у `siderFooter`                                                     | **PASS (5/5)** | M4                 |
+| **F12: 3-Tier Gradebook Display**      | 100-бальна оцінка + ECTS літера (A–F) + традиційна оцінка («відмінно», «добре»...)                                                           | **PASS (5/5)** | M4                 |
+| **F13: Fix Legacy URLs in UniHub**     | Заміна застарілого `moodle.karazin.ua` на `moodle.universemvp.tech` в `AssignmentModal`                                                      | **PASS (5/5)** | M4                 |
 
 ---
 
-## 4. Результати базового прогону (Baseline Execution Results)
+## 4. Результати виконання тестового комплексу (Execution Results)
 
 - **Загальна кількість тестів**: 110
-- **Пройдено успішно (PASS)**: 86
-- **Очікують імплементації (FAIL)**: 24 (свідчать про строгість і відсутність фіктивних тестів)
-- **Час виконання**: 1.14 с
+- **Пройдено успішно (PASS)**: 110 (100%)
+- **Не пройдено (FAIL)**: 0 (код повернення 0)
+- **Тестові файли**: 21 passed (21 total)
+- **Час виконання**: ~0.95 с
 - **Статичний аналіз коду (Linter / Oxlint)**: 0 помилок, 0 попереджень (`Found 0 warnings and 0 errors`)
 - **Форматування коду (Prettier)**: 100% відповідність (`All matched files use Prettier code style!`)
+- **Статус готовності**: 100% READY (Acceptance Criteria 100% Met)
