@@ -13,7 +13,8 @@ jobs:
     name: Apply Frontend/Backend Labels
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout repository
+        uses: actions/checkout@v7
         with:
           sparse-checkout: .github
       - name: Apply labels
