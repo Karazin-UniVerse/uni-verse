@@ -23,9 +23,6 @@ updates:
       # Group NestJS dependencies (backend framework modules)
       nestjs:
         applies-to: version-updates
-        update-types:
-          - 'minor'
-          - 'patch'
         patterns:
           - '@nestjs/*'
 
@@ -55,9 +52,6 @@ updates:
       # Group Testing & QA suites (Jest, Vitest, Playwright, Storybook)
       testing:
         applies-to: version-updates
-        update-types:
-          - 'minor'
-          - 'patch'
         patterns:
           - 'jest'
           - '@types/jest'
