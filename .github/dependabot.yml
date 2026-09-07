@@ -23,9 +23,6 @@ updates:
       # Group NestJS dependencies (backend framework modules)
       nestjs:
         applies-to: version-updates
-        update-types:
-          - 'minor'
-          - 'patch'
         patterns:
           - '@nestjs/*'
 
