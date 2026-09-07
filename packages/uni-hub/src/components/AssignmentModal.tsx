@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Download, ExternalLink } from 'lucide-react';
-import { Button as SimpleButton, FileInput, SimpleForm, Modal, Spinner, Tag } from '@una';
-import { useToast } from '@ui/Toast';
+import {
+  Button as SimpleButton,
+  FileInput,
+  SimpleForm,
+  Modal,
+  Spinner,
+  Tag,
+  useToast,
+} from '@universe/ui';
 import { moodleApi } from '../services/api';
 import type { CourseModule } from '../types';
 
@@ -178,7 +185,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
   const moodleUrl =
     module?.url ||
     (module?.instance
-      ? `https://moodle.karazin.ua/mod/assign/view.php?a=${module.instance}`
+      ? `https://moodle.universemvp.tech/mod/assign/view.php?a=${module.instance}`
       : undefined);
 
   return (

@@ -3,7 +3,7 @@ export interface ScheduleEvent {
   title: string;
   start: Date;
   end: Date;
-  type: 'lecture' | 'practice' | 'exam' | 'other';
+  type: 'lecture' | 'lab' | 'practice' | 'exam' | 'other';
   location: string;
 }
 

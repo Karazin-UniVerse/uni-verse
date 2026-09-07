@@ -3,11 +3,8 @@
 import React, { useState } from 'react';
 import { User, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@una/Button';
-import { TextInput } from '@una/inputs/TextInput';
-import { SimpleForm } from '@una/Form';
+import { Button, TextInput, SimpleForm, useToast } from '@universe/ui';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
-import { useToast } from '@una/Toast';
 import { authApi } from '@uni-hub/services/api';
 import styles from './LoginPage.module.scss';
 
