@@ -29,6 +29,13 @@ describe('getCorsConfig', () => {
     });
   });
 
+  it('allows secure https universemvp.tech and subdomains', (done) => {
+    originValidator('https://moodle.universemvp.tech', (err, allow) => {
+      expect(allow).toBe(true);
+      done();
+    });
+  });
+
   it('rejects untrusted domains', (done) => {
     originValidator('https://attacker.com', (err, allow) => {
       expect(allow).toBe(false);
