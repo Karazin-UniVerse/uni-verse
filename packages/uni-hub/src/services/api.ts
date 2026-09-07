@@ -1,3 +1,14 @@
+import {
+  type StudentProfile,
+  type CurriculumItem,
+  type StudentRecordBookItem,
+  type GradeRecord,
+  type AssignmentItem,
+  type ScheduleItem,
+  type LmsConnectionStatus,
+  calculateEctsGrade,
+  calculateTraditionalGrade,
+} from '@universe/types';
 import type {
   AuthResponse,
   Course,
@@ -9,6 +20,17 @@ import type {
   CourseSection,
 } from '@uni-hub/types';
 import { isBrowser } from '@uni-hub/utils/browser';
+
+export type {
+  StudentProfile,
+  CurriculumItem,
+  StudentRecordBookItem,
+  GradeRecord,
+  AssignmentItem,
+  ScheduleItem,
+  LmsConnectionStatus,
+};
+export { calculateEctsGrade, calculateTraditionalGrade };
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||

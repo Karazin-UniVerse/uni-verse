@@ -1,5 +1,5 @@
 import React from 'react';
-import { Skeleton } from '@una';
+import { Skeleton } from '@universe/ui';
 import pageStyles from '../views/DashboardPage.module.scss';
 import styles from './DashboardSkeleton.module.scss';
 

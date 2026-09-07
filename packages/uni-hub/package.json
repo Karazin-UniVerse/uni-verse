@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@universe/types": "workspace:*",
     "@universe/ui": "workspace:*",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",

@@ -15,7 +15,7 @@ interface MoodleUserIdResponse {
 export class GetCreds {
   private getBaseUrl(): string {
     const url = (
-      process.env.MOODLE_BASEURL || 'https://moodle.karazin.ua'
+      process.env.MOODLE_BASEURL || 'https://moodle.universemvp.tech'
     ).replace(/\/$/, '');
 
     if (!url.startsWith('https://')) {

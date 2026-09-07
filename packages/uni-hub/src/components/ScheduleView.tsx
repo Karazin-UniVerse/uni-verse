@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button as SimpleButton, RadioButton, Tag, Empty } from '@una';
+import { Button as SimpleButton, RadioButton, Tag, Empty } from '@universe/ui';
 import styles from './ScheduleView.module.scss';
 
 import type { ScheduleEvent } from './ScheduleView.types';
@@ -32,33 +32,56 @@ const isSameDay = (a: Date, b: Date) =>
   a.getDate() === b.getDate();
 
 const formatDate = (date: Date, options: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat('ru-RU', options).format(date);
+  new Intl.DateTimeFormat('uk-UA', options).format(date);
 
 const formatTime = (date: Date) =>
-  new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' }).format(date);
+  new Intl.DateTimeFormat('uk-UA', { hour: '2-digit', minute: '2-digit' }).format(date);
+
+const KARAZIN_PAIRS = [
+  { startHour: 8, startMin: 30, endHour: 10, endMin: 5, label: '1 пара (08:30 – 10:05)' },
+  { startHour: 10, startMin: 20, endHour: 11, endMin: 55, label: '2 пара (10:20 – 11:55)' },
+  { startHour: 12, startMin: 10, endHour: 13, endMin: 45, label: '3 пара (12:10 – 13:45)' },
+  { startHour: 14, startMin: 0, endHour: 15, endMin: 35, label: '4 пара (14:00 – 15:35)' },
+  { startHour: 15, startMin: 50, endHour: 17, endMin: 25, label: '5 пара (15:50 – 17:25)' },
+];
 
 const generateDummyEvents = (): ScheduleEvent[] => {
   const events: ScheduleEvent[] = [];
   const now = new Date();
-  const subjects = ['Математика', 'Физика', 'Программирование', 'Базы данных', 'Английский язык'];
-  const locations = ['Ауд. 101', 'Ауд. 202', 'Лаборатория 3', 'Онлайн', 'Ауд. 404'];
-  const types: ScheduleEvent['type'][] = ['lecture', 'practice', 'practice', 'lecture', 'other'];
+  const subjects = [
+    'Паралельні та розподілені обчислення',
+    'Алгоритми та структури даних',
+    'Організація баз даних',
+    'Архітектура компʼютерів',
+    'Іноземна мова за профспрямуванням',
+    'Дискретна математика',
+  ];
+  const locations = [
+    'Ауд. 6-45 (Головний корпус)',
+    'Компʼютерний клас 3-12',
+    'Лабораторія ШІ та аналізу даних',
+    'Дистанційно (Zoom / Meet)',
+    'Ауд. 505 (ННІ КН та ШІ)',
+  ];
+  const types: ScheduleEvent['type'][] = ['lecture', 'lab', 'practice', 'lecture', 'lab', 'other'];
 
   for (let i = -15; i <= 15; i++) {
     const currentDate = addDays(now, i);
 
-    if (currentDate.getDay() === 0) continue;
+    if (currentDate.getDay() === 0) {
+      continue;
+    }
 
-    const eventsCount = Math.floor(Math.random() * 3) + 1;
+    const pairsCount = Math.floor(Math.random() * 3) + 1;
 
-    for (let j = 0; j < eventsCount; j++) {
-      const hour = 9 + j * 2 + Math.floor(Math.random() * 2);
+    for (let j = 0; j < pairsCount; j++) {
+      const pair = KARAZIN_PAIRS[j % KARAZIN_PAIRS.length];
       const start = new Date(currentDate);
 
-      start.setHours(hour, 0, 0, 0);
+      start.setHours(pair.startHour, pair.startMin, 0, 0);
       const end = new Date(currentDate);
 
-      end.setHours(hour + 1, 30, 0, 0);
+      end.setHours(pair.endHour, pair.endMin, 0, 0);
       const subjectIndex = (((i + j) % subjects.length) + subjects.length) % subjects.length;
 
       events.push({
@@ -73,14 +96,20 @@ const generateDummyEvents = (): ScheduleEvent[] => {
   }
 
   const examDay = addDays(now, 5);
+  const examStart = new Date(examDay);
+
+  examStart.setHours(10, 20, 0, 0);
+  const examEnd = new Date(examDay);
+
+  examEnd.setHours(13, 45, 0, 0);
 
   events.push({
     id: 'evt-exam',
-    title: 'Экзамен по Программированию',
-    start: new Date(examDay.setHours(10, 0, 0, 0)),
-    end: new Date(addDays(now, 5).setHours(14, 0, 0, 0)),
+    title: 'Іспит: Паралельні та розподілені обчислення',
+    start: examStart,
+    end: examEnd,
     type: 'exam',
-    location: 'Ауд. 505',
+    location: 'Ауд. 505 (ННІ КН та ШІ)',
   });
 
   return events;
@@ -95,7 +124,7 @@ const exportToICS = (events: ScheduleEvent[]) => {
 
   events.forEach((event) => {
     icsContent += 'BEGIN:VEVENT\r\n';
-    icsContent += `UID:${event.id}@universe.com\r\n`;
+    icsContent += `UID:${event.id}@universemvp.tech\r\n`;
     icsContent += `DTSTAMP:${formatDateICS(new Date())}\r\n`;
     icsContent += `DTSTART:${formatDateICS(event.start)}\r\n`;
     icsContent += `DTEND:${formatDateICS(event.end)}\r\n`;
@@ -110,7 +139,7 @@ const exportToICS = (events: ScheduleEvent[]) => {
   const link = document.createElement('a');
 
   link.href = url;
-  link.setAttribute('download', 'schedule.ics');
+  link.setAttribute('download', 'karazin-schedule.ics');
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -120,20 +149,24 @@ const exportToICS = (events: ScheduleEvent[]) => {
 const getTypeName = (type: string) => {
   switch (type) {
     case 'lecture':
-      return 'Лекция';
+      return 'Лекція';
+    case 'lab':
+      return 'Лабораторна робота';
     case 'practice':
-      return 'Практика';
+      return 'Практичне заняття';
     case 'exam':
-      return 'Экзамен';
+      return 'Іспит';
     default:
-      return 'Другое';
+      return 'Консультація';
   }
 };
 
-const getTypeTone = (type: string): 'info' | 'success' | 'danger' | 'default' => {
+const getTypeTone = (type: string): 'info' | 'warning' | 'success' | 'danger' | 'default' => {
   switch (type) {
     case 'lecture':
       return 'info';
+    case 'lab':
+      return 'warning';
     case 'practice':
       return 'success';
     case 'exam':
@@ -173,8 +206,7 @@ export const ScheduleView: React.FC = () => {
     return (
       <section className={styles.panel}>
         <h3>
-          Расписание на{' '}
-          {formatDate(selectedDate, { day: 'numeric', month: 'long', year: 'numeric' })}
+          Розклад на {formatDate(selectedDate, { day: 'numeric', month: 'long', year: 'numeric' })}
         </h3>
         {events.length > 0 ? (
           <ul className={styles.timeline}>
@@ -192,7 +224,7 @@ export const ScheduleView: React.FC = () => {
             ))}
           </ul>
         ) : (
-          <Empty description="На этот день нет занятий" />
+          <Empty description="На цей день занять немає" />
         )}
       </section>
     );
@@ -211,7 +243,7 @@ export const ScheduleView: React.FC = () => {
             size="medium"
             onClick={() => setSelectedDate(addDays(selectedDate, -7))}
           >
-            <ChevronLeft size={16} /> Предыдущая неделя
+            <ChevronLeft size={16} /> Попередній тиждень
           </SimpleButton>
           <h3>
             {formatDate(weekStart, { day: 'numeric', month: 'short' })} –{' '}
@@ -223,7 +255,7 @@ export const ScheduleView: React.FC = () => {
             size="medium"
             onClick={() => setSelectedDate(addDays(selectedDate, 7))}
           >
-            Следующая неделя <ChevronRight size={16} />
+            Наступний тиждень <ChevronRight size={16} />
           </SimpleButton>
         </div>
 
@@ -255,7 +287,7 @@ export const ScheduleView: React.FC = () => {
                     ))}
                   </ul>
                 ) : (
-                  <p className={styles.freeDay}>Свободный день</p>
+                  <p className={styles.freeDay}>Вільний день</p>
                 )}
               </div>
             );
@@ -294,7 +326,7 @@ export const ScheduleView: React.FC = () => {
           </SimpleButton>
         </div>
         <div className={styles.weekdays}>
-          {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((d) => (
+          {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((d) => (
             <div key={d}>{d}</div>
           ))}
         </div>
@@ -333,11 +365,11 @@ export const ScheduleView: React.FC = () => {
   return (
     <div className={styles.root}>
       <div className={styles.toolbar}>
-        <div className={styles.viewSwitch} role="radiogroup" aria-label="Режим расписания">
+        <div className={styles.viewSwitch} role="radiogroup" aria-label="Режим розкладу">
           {(
             [
-              ['month', 'Месяц'],
-              ['week', 'Неделя'],
+              ['month', 'Місяць'],
+              ['week', 'Тиждень'],
               ['day', 'День'],
             ] as const
           ).map(([value, label]) => (
@@ -360,7 +392,7 @@ export const ScheduleView: React.FC = () => {
           size="medium"
           onClick={() => exportToICS(DUMMY_EVENTS)}
         >
-          <Download size={16} /> Экспорт в iCal
+          <Download size={16} /> Експорт у iCal
         </SimpleButton>
       </div>
 

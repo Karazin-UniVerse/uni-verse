@@ -16,7 +16,8 @@ export class MoodleFilesService {
       throw new BadRequestException('Token is not provided');
     }
 
-    const baseUrl = process.env.MOODLE_BASEURL || 'https://moodle.karazin.ua';
+    const baseUrl =
+      process.env.MOODLE_BASEURL || 'https://moodle.universemvp.tech';
 
     if (!baseUrl.startsWith('https://')) {
       throw new InternalServerErrorException(

@@ -7,7 +7,16 @@ import {
   getValidGrades,
 } from '@uni-hub/utils/grades';
 import { useCountUp } from '@uni-hub/hooks/useCountUp';
-import { Modal, Select, Empty, ProgressBar, Button as SimpleButton, SimpleSlider } from '@una';
+import {
+  Modal,
+  Select,
+  Empty,
+  ProgressBar,
+  Button as SimpleButton,
+  SimpleSlider,
+  Tag,
+} from '@universe/ui';
+import { calculateEctsGrade, calculateTraditionalGrade } from '@universe/types';
 import styles from './GradeSimulator.module.scss';
 
 const DEFAULT_SCORE = 75;
@@ -115,30 +124,44 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Симулятор оценок — «Что, если?»" width={560}>
+    <Modal open={open} onClose={onClose} title="Симулятор оцінок — «Що, якщо?»" width={560}>
       {uniqueGrades.length === 0 ? (
-        <Empty description="Нет оценок для симуляции" />
+        <Empty description="Немає оцінок для симуляції" />
       ) : (
         <div className={styles.body}>
           <p className={styles.hint}>
-            Текущая оценка курса — 70% итога. Гипотетические работы делят оставшиеся 30%.
+            Поточний бал дисципліни складає 70% підсумку. Гіпотетичні роботи розподіляють решту 30%.
           </p>
 
           <Select
             value={selectedCourse}
             onChange={setCourseName}
             options={courseOptions}
-            aria-label="Курс"
+            aria-label="Дисципліна"
           />
 
           <div className={styles.forecast}>
-            <div className={styles.forecastLabel}>Прогноз итога</div>
-            <div className={styles.forecastValue}>{animatedFinal}</div>
+            <div className={styles.forecastLabel}>
+              Прогноз підсумкового результату (100-бальна шкала & ECTS)
+            </div>
+            <div
+              className={styles.forecastValue}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                justifyContent: 'center',
+              }}
+            >
+              <span>{animatedFinal} / 100</span>
+              <Tag tone={tone}>ECTS: {calculateEctsGrade(finalScore)}</Tag>
+              <Tag tone="neutral">{calculateTraditionalGrade(finalScore)}</Tag>
+            </div>
             <ProgressBar value={finalScore} tone={tone} />
           </div>
 
           {remaining.length === 0 ? (
-            <Empty description="Нет заданий по этому курсу — показываем только текущую оценку" />
+            <Empty description="Немає завдань з цієї дисципліни — відображається поточний бал" />
           ) : (
             <div className={styles.list}>
               {remaining.map((assignment) => {
@@ -175,6 +198,6 @@ type GradeSimulatorTriggerProps = {
 
 export const GradeSimulatorTrigger: React.FC<GradeSimulatorTriggerProps> = ({ onOpen }) => (
   <SimpleButton type="button" variant="secondary" size="small" onClick={onOpen}>
-    Что, если?
+    Симулятор балів (Що, якщо?)
   </SimpleButton>
 );

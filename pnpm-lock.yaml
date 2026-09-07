@@ -62,6 +62,9 @@ importers:
       '@universe/database':
         specifier: workspace:*
         version: link:../database
+      '@universe/types':
+        specifier: workspace:*
+        version: link:../types
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
@@ -183,8 +186,14 @@ importers:
 
   packages/types:
     devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.3
+      '@universe/typescript-config':
+        specifier: workspace:*
+        version: link:../../configs/config-typescript
       typescript:
-        specifier: ^5.0.0
+        specifier: ^5.7.0
         version: 5.9.3
 
   packages/ui:
@@ -247,6 +256,9 @@ importers:
 
   packages/uni-hub:
     dependencies:
+      '@universe/types':
+        specifier: workspace:*
+        version: link:../types
       '@universe/ui':
         specifier: workspace:*
         version: link:../ui

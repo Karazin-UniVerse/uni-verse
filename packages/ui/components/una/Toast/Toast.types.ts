@@ -17,3 +17,5 @@ export type ToastApi = {
 export type ToastProviderProps = {
   children: ReactNode;
 };
+
+export type ToastProps = ToastProviderProps;
