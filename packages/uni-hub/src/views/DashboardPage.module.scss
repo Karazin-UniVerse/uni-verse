@@ -113,6 +113,65 @@
   gap: var(--space-8);
 }
 
+.moodleStatusLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--border-radius-medium);
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: var(--font-xs);
+  transition: all var(--transition-fast) var(--ease-standard);
+
+  &:hover {
+    background: rgba(34, 197, 94, 0.16);
+    border-color: rgba(34, 197, 94, 0.4);
+    text-decoration: none;
+  }
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--border-radius-full);
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+  animation: pulseGreen 2s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulseGreen {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+.moodleHost {
+  font-family: var(--font-mono, monospace);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.moodleCompactIcon {
+  font-size: 14px;
+}
+
+.collapsed .moodleStatusLink {
+  justify-content: center;
+  padding: var(--space-8);
+}
+
 .themeBtn,
 .logoutBtn {
   width: 100%;
@@ -650,3 +709,118 @@
     display: none;
   }
 }
+
+.studentCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-large);
+  padding: var(--space-20);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  box-shadow: var(--box-shadow-small);
+}
+
+.studentCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.studentIdentity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+}
+
+.studentAvatarLarge {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--border-radius-full);
+  background: var(--accent-primary);
+  color: var(--accent-text-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-lg);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.studentMainInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
+  h3 {
+    margin: 0;
+    font-size: var(--font-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+}
+
+.studentTags {
+  display: flex;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.studentGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-12) var(--space-16);
+  padding-top: var(--space-12);
+  border-top: 1px solid var(--border-color);
+}
+
+.studentField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fieldLabel {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fieldValue {
+  font-size: var(--font-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.courseMetaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  margin: var(--space-8) 0;
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+
+.courseTeacher {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-8);
+}
+
+.gradeEctsCell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.score100Cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 140px;
+}
+
