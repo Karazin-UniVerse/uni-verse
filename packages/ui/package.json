@@ -35,7 +35,7 @@
     "@storybook/react-vite": "^10.5.10",
     "@types/react": "^19.2.18",
     "@vitest/browser-playwright": "^4.1.11",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/coverage-v8": "^5.0.0",
     "playwright": "^1.62.1",
     "storybook": "^10.5.10",
     "typescript": "^5.0.0",
