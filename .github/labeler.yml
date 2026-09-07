@@ -1,4 +1,4 @@
-﻿frontend:
+frontend:
   - changed-files:
       - any-glob-to-any-file:
           - 'packages/uni-hub/**'
