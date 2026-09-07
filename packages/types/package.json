@@ -8,6 +8,6 @@
     "build": "echo 'No build step for types yet'"
   },
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^7.0.2"
   }
 }
