@@ -10,6 +10,6 @@
     "build": "echo 'Client is built by backend generator'"
   },
   "dependencies": {
-    "@prisma/client": "^5.10.0"
+    "@prisma/client": "^7.10.0"
   }
 }
