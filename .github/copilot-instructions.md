@@ -29,12 +29,16 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 
 ### 2. UI Components Architecture (`packages/ui`)
 
-- All shared UI components MUST be placed inside `packages/ui/src/components/`.
-- **Design System Components**: Core, simple, and reusable components (like buttons, inputs) go into `packages/ui/src/components/una/`.
-- **Complex Components**: Composite, business-logic-heavy, or non-design system components go into `packages/ui/src/components/complex/`.
+- All shared UI components MUST be placed inside `packages/ui/components/`.
+- **Design System Components (`@una`)**: Core, simple, and reusable design system components (buttons, inputs, modal, toast, etc.) reside in `packages/ui/components/una/`.
+  - **Do NOT export Una components from the `@universe/ui` root (`packages/ui/index.ts`)**.
+  - Always consume Una components separately via the `@una` alias (e.g., `import { Button, Tag } from '@una';` or `@universe/ui/una`).
+  - Keep the root `packages/ui/index.ts` reserved strictly for top-level non-Una library exports (such as complex components and hooks).
+- **No Unnecessary Component Aliases**: Export and use components by their canonical names (e.g., `ToastProvider` for toast context, not `Toast = ToastProvider`).
+- **Complex Components**: Composite, business-logic-heavy, or non-design system components go into `packages/ui/components/complex/`.
 - **Component Types Extraction (`.types.ts`)**: For React UI components with non-trivial prop interfaces or data models, extract types into a co-located `<ComponentName>.types.ts` file (e.g. `Chart.types.ts` adjacent to `Chart.tsx`). Re-export types from the component file or module index for backwards compatibility. Do NOT create separate `.types.ts` files for simple utilities, single helper functions, or trivial components to avoid unnecessary fragmentation.
 
-### 2. Backend (NestJS)
+### 3. Backend (NestJS)
 
 - Follow Clean Architecture.
 - **Controllers** should only handle HTTP routing, request parsing, and response formatting.
@@ -42,24 +46,24 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 - **Prisma** should be injected as a service for database access (managed via the `@universe/database` package).
 - Always use dependency injection and keep modules highly cohesive.
 
-### 3. Frontend (Next.js & React)
+### 4. Frontend (Next.js & React)
 
 - Prioritize **React Server Components (RSC)**. Use client components (`"use client"`) only when interactivity or browser APIs (like `useState`, `useEffect`, `window`) are required.
 - Push the `"use client"` directive as far down the component tree as possible (to the leaf nodes).
 - Use Tailwind CSS for styling. Follow a mobile-first responsive design approach.
 - Optimize performance using Next.js caching (`fetch` cache, `unstable_cache`) and React hooks (`useMemo`, `useCallback`) where appropriate.
 
-### 4. Monorepo (Turborepo)
+### 5. Monorepo (Turborepo)
 
-- Keep packages isolated. Do not use relative paths `../../../` to access code outside of the current workspace. Use the package names instead (e.g., `import { Button } from '@universe/ui'`).
+- Keep packages isolated. Do not use relative paths `../../../` to access code outside of the current workspace. Use the package names instead (e.g., `import { Button } from '@una'`).
 - Ensure `package.json` dependencies correctly reference workspace packages (`"workspace:*"`).
 
-### 5. Git Flow & Commits
+### 6. Git Flow & Commits
 
 - **Branch Naming**: Use standard prefixes such as `feature/`, `bugfix/`, `hotfix/`, `chore/` followed by a descriptive name (e.g., `feature/user-auth`).
 - **Commit Messages**: Follow Conventional Commits format (e.g., `feat: add user login`, `fix: correct typo in header`, `chore: update dependencies`).
 
-### 6. General AI Instructions
+### 7. General AI Instructions
 
 - Before generating code, think through the architecture and how it fits into the monorepo structure.
 - When fixing bugs, explain _why_ the bug occurred before providing the code.
@@ -70,7 +74,7 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
   - Directly update all call sites, imports, and usages across the entire codebase to the new location/name.
   - Completely delete obsolete files and aliases. We are an active internal monorepo with no external library consumers — maintain zero legacy dead code and zero transitional proxy layers.
 
-### 7. AI Code Review Culture & Complexity Management
+### 8. AI Code Review Culture & Complexity Management
 
 Since we actively use AI for code generation, you (as an AI Reviewer) must enforce a strict, uncompromising review culture to keep the codebase clean, simple, and maintainable. Act as a rigorous Principal Software Engineer.
 
@@ -91,6 +95,6 @@ Output requirements for Review:
 - For every issue found, quote the exact lines, explain the concrete maintenance burden it introduces, and provide a simpler, direct replacement snippet.
 - Prefer NO finding over a weak or speculative nitpick. If the code is clean, simple, and matches the intent, output "LGTM - No architectural bloat detected."
 
-### 8. Design System Strict Rules (UniDesign)
+### 9. Design System Strict Rules (UniDesign)
 
 All strict rules regarding the usage of colors, typography, spacing, shadows, and animations are documented in `docs/design-system-rules.md`. You MUST read this document and strictly adhere to its rules when working on UI components.
