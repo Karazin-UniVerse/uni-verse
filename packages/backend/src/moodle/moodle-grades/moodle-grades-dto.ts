@@ -43,27 +43,33 @@ export class MoodleGradeItemDto implements Partial<StudentRecordBookItem> {
   })
   rawGrade: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 95,
-    description: 'Підсумковий бал за 100-бальною шкалою (0-100)',
+    nullable: true,
+    description:
+      'Підсумковий бал за 100-бальною шкалою (0-100) або null для невиставлених оцінок',
   })
-  totalScore: number;
+  totalScore?: number | null;
 
   @ApiPropertyOptional({
     example: 95,
+    nullable: true,
     description: 'Числовий бал (аліас для totalScore)',
   })
-  score?: number;
+  score?: number | null;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'A',
+    nullable: true,
     enum: ['A', 'B', 'C', 'D', 'E', 'Fx', 'F'],
-    description: 'Оцінка за шкалою ECTS (A-F)',
+    description:
+      'Оцінка за шкалою ECTS (A-F) або null для невиставлених оцінок',
   })
-  ectsGrade: EctsGrade;
+  ectsGrade?: EctsGrade | null;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'відмінно',
+    nullable: true,
     enum: [
       'відмінно',
       'добре',
@@ -72,9 +78,10 @@ export class MoodleGradeItemDto implements Partial<StudentRecordBookItem> {
       'зараховано',
       'не зараховано',
     ],
-    description: 'Оцінка за національною шкалою України',
+    description:
+      'Оцінка за національною шкалою України або null для невиставлених оцінок',
   })
-  traditionalGrade: TraditionalGrade;
+  traditionalGrade?: TraditionalGrade | null;
 
   @ApiPropertyOptional({
     example: 'exam',
@@ -85,9 +92,11 @@ export class MoodleGradeItemDto implements Partial<StudentRecordBookItem> {
 
   @ApiPropertyOptional({
     example: true,
-    description: 'Чи зараховано дисципліну (бал >= 60)',
+    nullable: true,
+    description:
+      'Чи зараховано дисципліну (бал >= 60) або null для невиставлених оцінок',
   })
-  isPassed?: boolean;
+  isPassed?: boolean | null;
 
   @ApiPropertyOptional({
     example: null,

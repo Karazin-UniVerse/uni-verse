@@ -186,11 +186,41 @@ describe('MoodleGradesService', () => {
       expect(result.grades[5].traditionalGrade).toBe('не зараховано');
       expect(result.grades[5].isPassed).toBe(false);
 
-      // 207: '-' -> 0, F, незадовільно
-      expect(result.grades[6].totalScore).toBe(0);
-      expect(result.grades[6].ectsGrade).toBe('F');
-      expect(result.grades[6].traditionalGrade).toBe('незадовільно');
-      expect(result.grades[6].isPassed).toBe(false);
+      // 207: '-' -> null score, null ECTS, null traditional grade, null isPassed
+      expect(result.grades[6].totalScore).toBeNull();
+      expect(result.grades[6].score).toBeNull();
+      expect(result.grades[6].ectsGrade).toBeNull();
+      expect(result.grades[6].traditionalGrade).toBeNull();
+      expect(result.grades[6].isPassed).toBeNull();
+    });
+
+    it('should omit invented metadata when courses data is unavailable or unmapped', async () => {
+      mockMoodleClient.client.mockImplementation((wsfunction: string) => {
+        if (wsfunction === 'gradereport_overview_get_course_grades') {
+          return Promise.resolve({
+            grades: [{ courseid: 999, grade: '80.00', rawgrade: '80.00000' }],
+          });
+        }
+
+        if (wsfunction === 'core_enrol_get_users_courses') {
+          return Promise.reject(new Error('Course API down'));
+        }
+
+        return Promise.resolve(null);
+      });
+
+      const result = await service.getGeneralGrades('valid_token', '42');
+
+      expect(result.grades).toHaveLength(1);
+
+      const grade = result.grades[0];
+
+      expect(grade.courseName).toBe('Курс ID 999');
+      expect(grade.courseCode).toBeUndefined();
+      expect(grade.credits).toBeUndefined();
+      expect(grade.academicYear).toBeUndefined();
+      expect(grade.semester).toBeUndefined();
+      expect(grade.year).toBeNull();
     });
 
     it('should handle empty grades list gracefully', async () => {
@@ -215,11 +245,17 @@ describe('MoodleGradesService', () => {
       expect(parseGradeScore('-', '64.00')).toBe(64);
     });
 
-    it('should return 0 when both are missing or invalid', () => {
-      expect(parseGradeScore(null, null)).toBe(0);
-      expect(parseGradeScore('-', '-')).toBe(0);
-      expect(parseGradeScore('', '')).toBe(0);
-      expect(parseGradeScore('invalid', 'n/a')).toBe(0);
+    it('should return null when both are missing or invalid', () => {
+      expect(parseGradeScore(null, null)).toBeNull();
+      expect(parseGradeScore('-', '-')).toBeNull();
+      expect(parseGradeScore('', '')).toBeNull();
+      expect(parseGradeScore('invalid', 'n/a')).toBeNull();
+    });
+
+    it('should correctly parse numeric 0 score distinct from null', () => {
+      expect(parseGradeScore(0, '0')).toBe(0);
+      expect(parseGradeScore('0.00000', null)).toBe(0);
+      expect(parseGradeScore(null, '0.00')).toBe(0);
     });
 
     it('should clamp values between 0 and 100', () => {
