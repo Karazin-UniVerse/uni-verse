@@ -1,5 +1,13 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: 'en-US'
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - '.github/copilot-instructions.md'
+      - 'CODE_STYLE.md'
+  mcp:
+    usage: enabled
 reviews:
   path_instructions:
     - path: '**/*.{ts,tsx}'
