@@ -11,7 +11,12 @@ describe('PrismaService', () => {
   });
 
   afterEach(() => {
-    process.env.DATABASE_URL = originalDatabaseUrl;
+    if (originalDatabaseUrl === undefined) {
+      delete process.env.DATABASE_URL;
+    } else {
+      process.env.DATABASE_URL = originalDatabaseUrl;
+    }
+
     jest.restoreAllMocks();
   });
 

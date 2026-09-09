@@ -107,6 +107,7 @@ describe('UniHub API Service', () => {
       const res = await moodleApi.getCourses();
 
       expect(res.data).toEqual(mockCourses);
+      expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain('/moodle/courses');
     });
 
     it('getGrades should request /moodle/grades', async () => {
@@ -120,6 +121,7 @@ describe('UniHub API Service', () => {
       const res = await moodleApi.getGrades();
 
       expect(res.data).toEqual(mockGrades);
+      expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain('/moodle/grades');
     });
 
     it('getAssignments should serialize parameters into query string', async () => {
@@ -153,7 +155,12 @@ describe('UniHub API Service', () => {
       await moodleApi.getNotifications();
       await moodleApi.getStatistics();
 
-      expect(global.fetch).toHaveBeenCalledTimes(3);
+      const fetchMock = vi.mocked(global.fetch);
+
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(fetchMock.mock.calls[0][0]).toContain('/moodle/events');
+      expect(fetchMock.mock.calls[1][0]).toContain('/moodle/notifications');
+      expect(fetchMock.mock.calls[2][0]).toContain('/moodle/statistics');
     });
 
     it('getCourseContents and getAssignmentStatus should query parametrized routes', async () => {

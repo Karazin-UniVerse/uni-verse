@@ -178,27 +178,27 @@ describe('Tier 3 - Non-Moodle Platform & Core Integration Suite', () => {
   });
 
   describe('Scenario 3: UI Design System & Component Assembly Contracts', () => {
-    it('should verify UI design system atomic exports for application views', () => {
+    it('should verify UI design system atomic exports for application views', async () => {
       expect(fileExists('packages/ui/components/una/index.ts')).toBe(true);
-      const unaContent = readWorkspaceFile('packages/ui/components/una/index.ts');
 
-      const expectedExports = [
-        'Button',
-        'Modal',
-        'ProgressBar',
-        'Tag',
-        'Select',
-        'inputs',
-        'Form',
-        'Spinner',
-        'Skeleton',
-        'Toast',
-        'Empty',
-      ];
+      const una = await import('../../../packages/ui/components/una');
 
-      for (const comp of expectedExports) {
-        expect(unaContent).toMatch(new RegExp(`export\\s*\\*\\s*from\\s*['"]\\./${comp}['"]`));
-      }
+      expect(una.Button).toBeDefined();
+      expect(una.Modal).toBeDefined();
+      expect(una.ProgressBar).toBeDefined();
+      expect(una.Tag).toBeDefined();
+      expect(una.Select).toBeDefined();
+      expect(una.Spinner).toBeDefined();
+      expect(una.Skeleton).toBeDefined();
+      expect(una.Empty).toBeDefined();
+      expect(una.SimpleForm).toBeDefined();
+      expect(una.TextInput).toBeDefined();
+      expect(una.CheckBox).toBeDefined();
+      expect(una.RadioButton).toBeDefined();
+      expect(una.SimpleSlider).toBeDefined();
+      expect(una.FileInput).toBeDefined();
+      expect(una.ToastProvider).toBeDefined();
+      expect(una.useToast).toBeDefined();
     });
 
     it('should verify SCSS tokens and responsive breakpoints exist for offline styling', () => {
@@ -226,7 +226,7 @@ describe('Tier 3 - Non-Moodle Platform & Core Integration Suite', () => {
       );
 
       // Verify password is not exposed on UserResponseDto
-      const userResponseMatch = dtoContent.match(/export class UserResponseDto\s*\{([^}]+)\}/s);
+      const userResponseMatch = dtoContent.match(/export class UserResponseDto\s*\{([\s\S]*?)\n\}/);
 
       expect(userResponseMatch).not.toBeNull();
       const userResponseFields = userResponseMatch ? userResponseMatch[1] : '';

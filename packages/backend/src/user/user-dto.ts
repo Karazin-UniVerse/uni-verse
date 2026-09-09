@@ -53,11 +53,6 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   name?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  refreshToken?: string | null;
 }
 
 export class UserResponseDto {
