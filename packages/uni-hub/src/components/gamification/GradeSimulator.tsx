@@ -7,7 +7,8 @@ import {
   getValidGrades,
 } from '@uni-hub/utils/grades';
 import { useCountUp } from '@uni-hub/hooks/useCountUp';
-import { Modal, Select, Empty, ProgressBar, Button as SimpleButton, SimpleSlider } from '@una';
+import { Modal, Select, Empty, ProgressBar, Button as SimpleButton, SimpleSlider, Tag } from '@una';
+import { calculateEctsGrade, calculateTraditionalGrade } from '@core/types';
 import styles from './GradeSimulator.module.scss';
 
 const DEFAULT_SCORE = 75;
@@ -107,38 +108,58 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
   );
 
   const finalScore = computeSimulatedFinal(currentScore, remainingValues);
-  const animatedFinal = useCountUp(Math.round(finalScore), 400, open);
-  const tone = getGradeTone(finalScore);
+  const roundedFinalScore = Math.round(finalScore);
+  const animatedFinal = useCountUp(roundedFinalScore, 400, open);
+  const tone = getGradeTone(roundedFinalScore);
 
   const setScore = (id: number, value: number) => {
     setScores((previousScores) => ({ ...previousScores, [id]: clampScore(value) }));
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Симулятор оценок — «Что, если?»" width={560}>
+    <Modal open={open} onClose={onClose} title="Симулятор оцінок — «Що, якщо?»" width={560}>
       {uniqueGrades.length === 0 ? (
-        <Empty description="Нет оценок для симуляции" />
+        <Empty description="Немає оцінок для симуляції" />
       ) : (
         <div className={styles.body}>
           <p className={styles.hint}>
-            Текущая оценка курса — 70% итога. Гипотетические работы делят оставшиеся 30%.
+            Поточний бал дисципліни складає 70% підсумку. Гіпотетичні роботи розподіляють решту 30%.
           </p>
 
           <Select
             value={selectedCourse}
             onChange={setCourseName}
             options={courseOptions}
-            aria-label="Курс"
+            aria-label="Дисципліна"
           />
 
           <div className={styles.forecast}>
-            <div className={styles.forecastLabel}>Прогноз итога</div>
-            <div className={styles.forecastValue}>{animatedFinal}</div>
-            <ProgressBar value={finalScore} tone={tone} />
+            <div className={styles.forecastLabel}>
+              Прогноз підсумкового результату (100-бальна шкала & ECTS)
+            </div>
+            <div
+              className={styles.forecastValue}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                justifyContent: 'center',
+              }}
+            >
+              <span>{animatedFinal} / 100</span>
+              <Tag tone={tone}>ECTS: {calculateEctsGrade(roundedFinalScore)}</Tag>
+              <Tag tone="neutral">
+                {calculateTraditionalGrade(
+                  roundedFinalScore,
+                  currentGrade?.controlType ?? undefined,
+                )}
+              </Tag>
+            </div>
+            <ProgressBar value={roundedFinalScore} tone={tone} />
           </div>
 
           {remaining.length === 0 ? (
-            <Empty description="Нет заданий по этому курсу — показываем только текущую оценку" />
+            <Empty description="Немає завдань з цієї дисципліни — відображається поточний бал" />
           ) : (
             <div className={styles.list}>
               {remaining.map((assignment) => {
@@ -156,7 +177,7 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
                       min={MIN_SCORE}
                       max={MAX_SCORE}
                       value={value}
-                      onChange={(score) => setScore(assignment.id, score)}
+                      onChange={(score: number) => setScore(assignment.id, score)}
                     />
                   </label>
                 );
@@ -175,6 +196,6 @@ type GradeSimulatorTriggerProps = {
 
 export const GradeSimulatorTrigger: React.FC<GradeSimulatorTriggerProps> = ({ onOpen }) => (
   <SimpleButton type="button" variant="secondary" size="small" onClick={onOpen}>
-    Что, если?
+    Симулятор балів (Що, якщо?)
   </SimpleButton>
 );

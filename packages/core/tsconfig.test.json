@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "typeRoots": ["../../packages/backend/node_modules/@types"]
+  },
+  "include": ["types/**/*", "index.ts"]
+}

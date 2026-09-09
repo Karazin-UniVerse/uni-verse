@@ -1,4 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  calculateEctsGrade,
+  calculateTraditionalGrade,
+  type ControlType,
+} from '@universe/core/types';
 import { getWsFunctionName } from '../../utils/wsfunctions';
 import { MoodleClientService } from '../moodle-client/moodle.client.service';
 import {
@@ -15,6 +20,66 @@ import {
 interface MoodleOverviewGradesResponse {
   grades: GeneralGrade[];
   warnings?: Array<unknown>;
+}
+
+export function parseGradeScore(
+  rawGrade?: string | number | null,
+  grade?: string | null,
+): number | null {
+  const tryParse = (val?: string | number | null): number | null => {
+    if (val === undefined || val === null) {
+      return null;
+    }
+
+    const str = String(val).trim().replace(',', '.');
+
+    if (str === '' || str === '-') {
+      return null;
+    }
+
+    const num = parseFloat(str);
+
+    if (!isNaN(num) && isFinite(num)) {
+      return Math.min(100, Math.max(0, Math.round(num * 100) / 100));
+    }
+
+    return null;
+  };
+
+  const parsedRaw = tryParse(rawGrade);
+
+  if (parsedRaw !== null) {
+    return parsedRaw;
+  }
+
+  const parsedGrade = tryParse(grade);
+
+  if (parsedGrade !== null) {
+    return parsedGrade;
+  }
+
+  return null;
+}
+
+export function detectControlType(
+  courseName?: string,
+  shortname?: string,
+): ControlType {
+  const text = `${courseName || ''} ${shortname || ''}`.toLowerCase();
+
+  if (text.includes('диф') || text.includes('differentiated')) {
+    return 'differentiated_credit';
+  }
+
+  if (
+    text.includes('залік') ||
+    text.includes('credit') ||
+    text.includes('зачет')
+  ) {
+    return 'credit';
+  }
+
+  return 'exam';
 }
 
 @Injectable()
@@ -63,13 +128,37 @@ export class MoodleGradesService {
           extractSemester(course.shortname || '')
         : null;
 
+      const controlType = detectControlType(
+        course?.fullname,
+        course?.shortname,
+      );
+      const totalScore = parseGradeScore(item.rawgrade, item.grade);
+      const hasScore = totalScore !== null;
+      const ectsGrade = hasScore ? calculateEctsGrade(totalScore) : null;
+      const traditionalGrade = hasScore
+        ? calculateTraditionalGrade(totalScore, controlType)
+        : null;
+      const isPassed = hasScore ? totalScore >= 60 : null;
+
       return {
+        id: item.courseid,
         courseId: item.courseid,
         courseName,
+        courseCode: course?.shortname || undefined,
+        credits: undefined,
         grade: item.grade || '-',
         rawGrade: item.rawgrade,
-        year,
-        semester,
+        totalScore,
+        score: totalScore,
+        ectsGrade,
+        traditionalGrade,
+        controlType,
+        isPassed,
+        currentScore: null,
+        examScore: null,
+        year: year || null,
+        academicYear: year || undefined,
+        semester: semester ?? undefined,
       };
     });
 
