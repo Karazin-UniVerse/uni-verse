@@ -144,8 +144,8 @@ export async function request<T>(
   options: RequestInit = {},
   retries?: number,
 ): Promise<{ data: T }> {
-  const effectiveRetries =
-    retries !== undefined ? retries : isRetryableMethod(options.method) ? 2 : 0;
+  const defaultRetries = isRetryableMethod(options.method) ? 2 : 0;
+  const effectiveRetries = retries ?? defaultRetries;
   const url = `${getApiBaseUrl()}${endpoint}`;
   const headers = buildHeaders(url, options.headers);
   const timeoutMs = getRequestTimeoutMs();
