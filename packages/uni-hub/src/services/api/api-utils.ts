@@ -28,7 +28,8 @@ export function isSecureOrLoopback(targetUrl: string): boolean {
       parsed.protocol === 'https:' ||
       parsed.hostname === 'localhost' ||
       parsed.hostname === '127.0.0.1' ||
-      parsed.hostname === '::1'
+      parsed.hostname === '::1' ||
+      parsed.hostname === '[::1]'
     );
   } catch {
     return false;

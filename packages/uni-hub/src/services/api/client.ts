@@ -1,6 +1,18 @@
 import { isBrowser } from '@uni-hub/utils/browser';
 import { isSecureOrLoopback } from '@uni-hub/services/api/api-utils';
 
+export class HttpError extends Error {
+  readonly status: number;
+  readonly statusText: string;
+
+  constructor(status: number, statusText: string) {
+    super(`HTTP error ${status}: ${statusText}`);
+    this.name = 'HttpError';
+    this.status = status;
+    this.statusText = statusText;
+  }
+}
+
 export async function executeAttempt<T>(
   url: string,
   options: RequestInit,
@@ -27,7 +39,7 @@ export async function executeAttempt<T>(
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+      throw new HttpError(response.status, response.statusText);
     }
 
     const data = (await response.json()) as T;
@@ -70,7 +82,32 @@ function buildHeaders(url: string, customHeaders?: HeadersInit): Record<string, 
 }
 
 function getRequestTimeoutMs(): number {
-  return Number(process.env.MOODLE_TIMEOUT || '30000');
+  const raw =
+    (isBrowser ? process.env.NEXT_PUBLIC_MOODLE_TIMEOUT : process.env.MOODLE_TIMEOUT) ||
+    process.env.NEXT_PUBLIC_MOODLE_TIMEOUT ||
+    process.env.MOODLE_TIMEOUT ||
+    '30000';
+  const parsed = Number(raw);
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 30000;
+}
+
+function isRetryableMethod(method?: string): boolean {
+  if (!method) {
+    return true;
+  }
+
+  const upper = method.toUpperCase();
+
+  return upper === 'GET' || upper === 'HEAD' || upper === 'OPTIONS';
+}
+
+function isRetryableError(err: unknown): boolean {
+  if (err instanceof HttpError) {
+    return err.status === 429 || err.status >= 500;
+  }
+
+  return true;
 }
 
 async function handleRetry(
@@ -79,7 +116,7 @@ async function handleRetry(
   retries: number,
   signal?: AbortSignal | null,
 ): Promise<void> {
-  if (signal?.aborted || attempt >= retries) {
+  if (signal?.aborted || attempt >= retries || !isRetryableError(err)) {
     throw err;
   }
 
@@ -91,17 +128,19 @@ async function handleRetry(
 export async function request<T>(
   endpoint: string,
   options: RequestInit = {},
-  retries = 2,
+  retries?: number,
 ): Promise<{ data: T }> {
+  const effectiveRetries =
+    retries !== undefined ? retries : isRetryableMethod(options.method) ? 2 : 0;
   const url = `${getApiBaseUrl()}${endpoint}`;
   const headers = buildHeaders(url, options.headers);
   const timeoutMs = getRequestTimeoutMs();
 
-  for (let attempt = 0; attempt <= retries; attempt++) {
+  for (let attempt = 0; attempt <= effectiveRetries; attempt++) {
     try {
       return await executeAttempt<T>(url, options, headers, timeoutMs);
     } catch (err) {
-      await handleRetry(err, attempt, retries, options.signal);
+      await handleRetry(err, attempt, effectiveRetries, options.signal);
     }
   }
 

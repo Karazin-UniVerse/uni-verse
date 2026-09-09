@@ -1,6 +1,7 @@
 node_modules
 .env
-!.env
+.env.*
+!.env.example
 .next
 dist
 coverage
@@ -10,3 +11,4 @@ coverage
 /packages/database/client/
 /.idea/
 /packages/uni-hub/repomix-output.xml
+*.tsbuildinfo
