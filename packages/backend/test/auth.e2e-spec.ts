@@ -213,23 +213,27 @@ describe('AuthController (HTTP Integration / E2E)', () => {
     });
 
     it('should reject login if credentials fail validation with 403', async () => {
-      await request(app.getHttpServer())
+      const res = await request(app.getHttpServer())
         .post('/auth/login')
         .send({
           email: 'badcreds@karazin.ua',
           password: 'invalid-creds',
         })
         .expect(403);
+
+      expect(res.status).toBe(403);
     });
 
     it('should reject login if payload is malformed with 400', async () => {
-      await request(app.getHttpServer())
+      const res = await request(app.getHttpServer())
         .post('/auth/login')
         .send({
           email: '',
           password: '',
         })
         .expect(400);
+
+      expect(res.status).toBe(400);
     });
   });
 
@@ -273,11 +277,19 @@ describe('AuthController (HTTP Integration / E2E)', () => {
     });
 
     it('should reject refresh without cookie', async () => {
-      await request(app.getHttpServer()).post('/auth/refresh').expect(401);
+      const res = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .expect(401);
+
+      expect(res.status).toBe(401);
     });
 
     it('should reject logout without Bearer token', async () => {
-      await request(app.getHttpServer()).post('/auth/logout').expect(401);
+      const res = await request(app.getHttpServer())
+        .post('/auth/logout')
+        .expect(401);
+
+      expect(res.status).toBe(401);
     });
   });
 });

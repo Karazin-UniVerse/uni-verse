@@ -37,9 +37,9 @@ export function parseGradeScore(
       return null;
     }
 
-    const num = parseFloat(str);
+    const num = Number.parseFloat(str);
 
-    if (!isNaN(num) && isFinite(num)) {
+    if (!Number.isNaN(num) && Number.isFinite(num)) {
       return Math.min(100, Math.max(0, Math.round(num * 100) / 100));
     }
 

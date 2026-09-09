@@ -116,7 +116,9 @@ describe('UserController (HTTP Integration / E2E)', () => {
 
   describe('GET /user', () => {
     it('should reject unauthenticated requests with 401', async () => {
-      await request(app.getHttpServer()).get('/user').expect(401);
+      const res = await request(app.getHttpServer()).get('/user').expect(401);
+
+      expect(res.status).toBe(401);
     });
 
     it('should return empty list when no users exist', async () => {
@@ -157,10 +159,12 @@ describe('UserController (HTTP Integration / E2E)', () => {
 
   describe('POST /user', () => {
     it('should reject unauthenticated creation with 401', async () => {
-      await request(app.getHttpServer())
+      const res = await request(app.getHttpServer())
         .post('/user')
         .send({ email: 'new@karazin.ua', password: 'Password123' })
         .expect(401);
+
+      expect(res.status).toBe(401);
     });
 
     it('should create new user with hashed password and return sanitized user', async () => {
@@ -190,13 +194,15 @@ describe('UserController (HTTP Integration / E2E)', () => {
     });
 
     it('should reject user creation when required email is missing or invalid', async () => {
-      await request(app.getHttpServer())
+      const res = await request(app.getHttpServer())
         .post('/user')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           name: 'Only Name Provided',
         })
         .expect(400);
+
+      expect(res.status).toBe(400);
     });
   });
 
