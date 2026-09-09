@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
-import type { Grade } from '../types';
+import type { Grade } from '@uni-hub/types';
 import {
   getValidGrades,
   getGradeBarColor,
   getGradeCourseName,
   getGradeRawValue,
 } from '@uni-hub/utils/grades';
-import Chart from '../design-system/charts/Chart/Chart';
+import Chart from '@uni-hub/design-system/charts/Chart/Chart';
 
 type GradesChartProps = {
   grades: Grade[];
