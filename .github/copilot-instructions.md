@@ -32,7 +32,7 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 - All shared UI components MUST be placed inside `packages/ui/components/`.
 - **Design System Components (`@una`)**: Core, simple, and reusable design system components (buttons, inputs, modal, toast, etc.) reside in `packages/ui/components/una/`.
   - **Do NOT export Una components from the `@universe/ui` root (`packages/ui/index.ts`)**.
-  - Always consume Una components separately via the `@una` alias (e.g., `import { Button, Tag } from '@una';` or `@universe/ui/una`).
+  - Always consume Una components separately via the `@una` alias (e.g., `import { Button, Tag } from '@una';`).
   - Keep the root `packages/ui/index.ts` reserved strictly for top-level non-Una library exports (such as complex components and hooks).
 - **No Unnecessary Component Aliases**: Export and use components by their canonical names (e.g., `ToastProvider` for toast context, not `Toast = ToastProvider`).
 - **Complex Components**: Composite, business-logic-heavy, or non-design system components go into `packages/ui/components/complex/`.
