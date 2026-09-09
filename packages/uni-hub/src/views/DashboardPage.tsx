@@ -128,6 +128,22 @@ function getExamScoreDisplay(
   return String(examScore);
 }
 
+function getCourseSummary(course: Course | CurriculumItem): string {
+  const rawSummary = (course as any).summary;
+
+  if (typeof rawSummary === 'string' && rawSummary.trim().length > 0) {
+    return rawSummary;
+  }
+
+  const desc = (course as CurriculumItem).description;
+
+  if (typeof desc === 'string' && desc.trim().length > 0) {
+    return desc;
+  }
+
+  return 'Навчальна дисципліна індивідуального плану';
+}
+
 interface GradeTableRowProps {
   grade: any;
   index: number;
@@ -902,12 +918,7 @@ const DashboardPage: React.FC = () => {
                   Викладач: <strong>{instructor}</strong>
                 </div>
               )}
-              <p className={styles.courseSummary}>
-                {typeof (course as any).summary === 'string' && (course as any).summary
-                  ? (course as any).summary
-                  : (course as CurriculumItem).description ||
-                    'Навчальна дисципліна індивідуального плану'}
-              </p>
+              <p className={styles.courseSummary}>{getCourseSummary(course)}</p>
               {progress !== undefined && progress !== null && (
                 <div style={{ margin: 'var(--space-12) 0' }}>
                   <div

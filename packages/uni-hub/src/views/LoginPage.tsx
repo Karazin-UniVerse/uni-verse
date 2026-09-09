@@ -8,6 +8,13 @@ import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { authApi } from '@uni-hub/services/api';
 import styles from './LoginPage.module.scss';
 
+function extractErrorMessage(err: unknown): string {
+  const responseData = (err as { response?: { data?: { error?: string; message?: string } } })
+    ?.response?.data;
+
+  return responseData?.message || responseData?.error || 'Помилка входу. Перевірте облікові дані.';
+}
+
 const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
@@ -36,39 +43,7 @@ const LoginPage: React.FC = () => {
     try {
       const res = await authApi.login(username, password);
 
-      const cleanUsername = username.trim();
-      const email = cleanUsername.includes('@')
-        ? cleanUsername
-        : `${cleanUsername}@student.karazin.ua`;
-
       toast.success('Вхід виконано успішно');
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('username', cleanUsername);
-      localStorage.setItem('userEmail', email);
-
-      if (res.data?.access_token) {
-        try {
-          const parts = res.data.access_token.split('.');
-
-          if (parts[1]) {
-            const payload = JSON.parse(atob(parts[1]));
-
-            if (payload.email) {
-              localStorage.setItem('userEmail', payload.email);
-            }
-
-            if (payload.moodleId) {
-              localStorage.setItem('moodleId', String(payload.moodleId));
-            }
-
-            if (payload.moodleToken) {
-              localStorage.setItem('moodleToken', payload.moodleToken);
-            }
-          }
-        } catch {
-          // ignore
-        }
-      }
 
       if (res.data?.token) {
         localStorage.setItem('moodleToken', res.data.token);
@@ -76,13 +51,7 @@ const LoginPage: React.FC = () => {
 
       router.push('/');
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { error?: string; message?: string } } })?.response?.data
-          ?.message ||
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
-        'Помилка входу. Перевірте облікові дані.';
-
-      toast.error(message);
+      toast.error(extractErrorMessage(err));
     } finally {
       setLoading(false);
     }
