@@ -1,4 +1,4 @@
-export * from '@universe/core/types';
+export * from '@core/types';
 import type {
   AuthResponse,
   Course,

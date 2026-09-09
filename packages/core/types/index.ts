@@ -98,18 +98,18 @@ export interface StudentRecordBookItem {
   courseId: number;
   courseName: string;
   courseCode?: string;
-  credits: number;
-  semester: number;
-  academicYear: string;
-  controlType: ControlType;
-  currentScore: number | null;
+  credits?: number;
+  semester?: number;
+  academicYear?: string;
+  controlType?: ControlType;
+  currentScore?: number | null;
   examScore?: number | null;
-  totalScore: number;
-  ectsGrade: EctsGrade;
-  traditionalGrade: TraditionalGrade;
+  totalScore?: number | null;
+  ectsGrade?: EctsGrade | null;
+  traditionalGrade?: TraditionalGrade | null;
   date?: string;
   instructorName?: string;
-  isPassed: boolean;
+  isPassed?: boolean | null;
   rawGrade?: string | number | null;
 }
 
