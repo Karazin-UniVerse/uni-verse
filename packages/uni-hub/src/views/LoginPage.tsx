@@ -20,13 +20,13 @@ const LoginPage: React.FC = () => {
     setError('');
 
     if (!username.trim()) {
-      setError('Пожалуйста, введите имя пользователя');
+      setError('Будь ласка, введіть імʼя користувача або email');
 
       return;
     }
 
     if (!password) {
-      setError('Пожалуйста, введите пароль');
+      setError('Будь ласка, введіть пароль');
 
       return;
     }
@@ -36,8 +36,39 @@ const LoginPage: React.FC = () => {
     try {
       const res = await authApi.login(username, password);
 
-      toast.success('Вход выполнен успешно');
+      const cleanUsername = username.trim();
+      const email = cleanUsername.includes('@')
+        ? cleanUsername
+        : `${cleanUsername}@student.karazin.ua`;
+
+      toast.success('Вхід виконано успішно');
       localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('username', cleanUsername);
+      localStorage.setItem('userEmail', email);
+
+      if (res.data?.access_token) {
+        try {
+          const parts = res.data.access_token.split('.');
+
+          if (parts[1]) {
+            const payload = JSON.parse(atob(parts[1]));
+
+            if (payload.email) {
+              localStorage.setItem('userEmail', payload.email);
+            }
+
+            if (payload.moodleId) {
+              localStorage.setItem('moodleId', String(payload.moodleId));
+            }
+
+            if (payload.moodleToken) {
+              localStorage.setItem('moodleToken', payload.moodleToken);
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
 
       if (res.data?.token) {
         localStorage.setItem('moodleToken', res.data.token);
@@ -46,8 +77,10 @@ const LoginPage: React.FC = () => {
       router.push('/');
     } catch (err: unknown) {
       const message =
+        (err as { response?: { data?: { error?: string; message?: string } } })?.response?.data
+          ?.message ||
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
-        'Ошибка входа. Проверьте учетные данные.';
+        'Помилка входу. Перевірте облікові дані.';
 
       toast.error(message);
     } finally {
@@ -64,17 +97,17 @@ const LoginPage: React.FC = () => {
         <SimpleForm variant="card" className={styles.card} action={handleLogin}>
           <div className={styles.brand}>
             <h1>UNiVerse</h1>
-            <p>Войдите в свой аккаунт Moodle</p>
+            <p>Увійдіть у свій акаунт Moodle</p>
           </div>
 
           <label className={styles.field}>
-            <span className={styles.label}>Имя пользователя</span>
+            <span className={styles.label}>Імʼя користувача або корпоративний email</span>
             <div className={styles.inputWrap}>
               <User size={16} className={styles.icon} />
               <TextInput
                 name="username"
                 size="large"
-                placeholder="Имя пользователя"
+                placeholder="melnyk.bogdan@student.karazin.ua"
                 value={username}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                 autoComplete="username"
@@ -90,7 +123,7 @@ const LoginPage: React.FC = () => {
                 name="password"
                 type="password"
                 size="large"
-                placeholder="Пароль"
+                placeholder="Введіть пароль"
                 value={password}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 autoComplete="current-password"
@@ -107,7 +140,7 @@ const LoginPage: React.FC = () => {
             disabled={loading}
             className={styles.submit}
           >
-            {loading ? 'Вход...' : 'Войти'}
+            {loading ? 'Вхід...' : 'Увійти'}
           </Button>
         </SimpleForm>
       </div>

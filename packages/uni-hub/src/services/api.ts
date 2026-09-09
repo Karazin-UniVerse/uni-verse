@@ -149,8 +149,37 @@ export class AuthApi {
     });
 
     if (response.data?.access_token) {
+      const cleanUsername = email.trim();
+      const userEmail = cleanUsername.includes('@')
+        ? cleanUsername
+        : `${cleanUsername}@student.karazin.ua`;
+
       localStorage.setItem('accessToken', response.data.access_token);
       localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('username', cleanUsername);
+      localStorage.setItem('userEmail', userEmail);
+
+      try {
+        const parts = response.data.access_token.split('.');
+
+        if (parts[1]) {
+          const payload = JSON.parse(atob(parts[1]));
+
+          if (payload.email) {
+            localStorage.setItem('userEmail', payload.email);
+          }
+
+          if (payload.moodleId) {
+            localStorage.setItem('moodleId', String(payload.moodleId));
+          }
+
+          if (payload.moodleToken) {
+            localStorage.setItem('moodleToken', payload.moodleToken);
+          }
+        }
+      } catch {
+        // ignore
+      }
     }
 
     return response;
@@ -162,6 +191,10 @@ export class AuthApi {
     } finally {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('username');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('moodleId');
+      localStorage.removeItem('moodleToken');
     }
   }
 }

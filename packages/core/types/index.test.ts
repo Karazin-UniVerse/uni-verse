@@ -4,6 +4,10 @@ import test, { describe } from 'node:test';
 import {
   calculateEctsGrade,
   calculateTraditionalGrade,
+  resolveStudentProfile,
+  enrichMoodleCourse,
+  generateStudentGradeRecords,
+  generateStudentSchedule,
   type AssignmentItem,
   type Course,
   type CurriculumItem,
@@ -228,5 +232,84 @@ describe('domain type contracts compilation verification', () => {
     };
 
     assert.strictEqual(lms.isConnected, true);
+  });
+});
+
+describe('dean data resolution and enrichment utilities', () => {
+  test('resolves Bogdan Melnyk profile by email', () => {
+    const profile = resolveStudentProfile({ email: 'melnyk.bogdan@student.karazin.ua' });
+
+    assert.strictEqual(profile.fullName, 'Мельник Богдан Олександрович');
+    assert.strictEqual(profile.moodleId, 118);
+    assert.strictEqual(profile.course, 2);
+    assert.strictEqual(profile.group, 'КС-22');
+    assert.strictEqual(profile.specialty, '122 Компʼютерні науки');
+  });
+
+  test('resolves Bogdan Melnyk profile by username or moodleId', () => {
+    const p1 = resolveStudentProfile({ username: 'melnyk.bogdan' });
+
+    assert.strictEqual(p1.fullName, 'Мельник Богдан Олександрович');
+
+    const p2 = resolveStudentProfile({ moodleId: 118 });
+
+    assert.strictEqual(p2.fullName, 'Мельник Богдан Олександрович');
+  });
+
+  test('resolves fallback profile when no identifier is provided', () => {
+    const profile = resolveStudentProfile(null);
+
+    assert.strictEqual(profile.fullName, 'Барсуков Родіон Сергійович');
+  });
+
+  test('enriches raw Moodle course with academic metadata', () => {
+    const rawCourse = {
+      id: 43,
+      fullname: "Комп'ютерні системи та мережі (TCP/IP & Routing)",
+      shortname: 'F3-NET',
+    };
+    const enriched = enrichMoodleCourse(rawCourse, 2);
+
+    assert.strictEqual(enriched.credits, 5);
+    assert.strictEqual(enriched.controlType, 'exam');
+    assert.strictEqual(enriched.instructors[0]?.name, 'Доц. Ткачов В. М.');
+    assert.strictEqual(enriched.semester, 4);
+  });
+
+  test('generates realistic student grade records aligned with profile GPA', () => {
+    const profile = resolveStudentProfile({ email: 'melnyk.bogdan@student.karazin.ua' });
+    const courses = [
+      { id: 43, fullname: "Комп'ютерні системи та мережі", shortname: 'F3-NET' },
+      {
+        id: 42,
+        fullname: 'Теорія ймовірностей та математична статистика',
+        shortname: 'F3-PROB-STAT',
+      },
+    ];
+    const grades = generateStudentGradeRecords(courses, profile);
+
+    assert.strictEqual(grades.length, 2);
+    assert.strictEqual(grades[0].courseName, "Комп'ютерні системи та мережі");
+    assert.ok(grades[0].totalScore && grades[0].totalScore >= 80);
+    assert.ok(grades[0].ectsGrade === 'A' || grades[0].ectsGrade === 'B');
+    assert.ok(grades[0].traditionalGrade === 'відмінно' || grades[0].traditionalGrade === 'добре');
+    assert.strictEqual(grades[0].isPassed, true);
+  });
+
+  test('generates weekly student schedule from enrolled courses', () => {
+    const profile = resolveStudentProfile({ email: 'melnyk.bogdan@student.karazin.ua' });
+    const courses = [
+      { id: 43, fullname: "Комп'ютерні системи та мережі", shortname: 'F3-NET' },
+      {
+        id: 42,
+        fullname: 'Теорія ймовірностей та математична статистика',
+        shortname: 'F3-PROB-STAT',
+      },
+    ];
+    const schedule = generateStudentSchedule(courses, profile);
+
+    assert.ok(schedule.length >= 2);
+    assert.ok(schedule[0].title.includes("Комп'ютерні системи та мережі"));
+    assert.ok(schedule[0].startTime === '08:30');
   });
 });
