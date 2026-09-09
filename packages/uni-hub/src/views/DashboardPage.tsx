@@ -113,7 +113,10 @@ function parseGradeScore(gradeItem: any): number {
   return !Number.isNaN(parsed) && parsed >= 0 ? Math.min(100, Math.round(parsed)) : 0;
 }
 
-function getExamScoreDisplay(examScore: unknown, controlType?: ControlType): string {
+function getExamScoreDisplay(
+  examScore: number | string | null | undefined,
+  controlType?: ControlType,
+): string {
   if (controlType === 'credit' || examScore === undefined || examScore === null) {
     return '—';
   }
