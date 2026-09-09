@@ -6,6 +6,7 @@
     "lint": "oxlint",
     "typecheck": "tsc --noEmit",
     "build": "echo 'No build step for ui yet'",
+    "test": "vitest run --config vitest.unit.config.mts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
