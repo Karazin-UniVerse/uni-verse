@@ -19,6 +19,11 @@ export interface GetAssignmentsParams {
   year?: string;
 }
 
+export interface AssignmentStatus {
+  status: string;
+  grade?: string;
+}
+
 export class MoodleApi {
   getCourses(): Promise<{ data: Course[] }> {
     return request<Course[]>('/moodle/courses');
@@ -50,8 +55,8 @@ export class MoodleApi {
     return request<CourseSection[]>(`/moodle/courses/${courseId}/contents`);
   }
 
-  getAssignmentStatus(assignId: number): Promise<{ data: unknown }> {
-    return request<unknown>(`/moodle/assignments/${assignId}/status`);
+  getAssignmentStatus(assignId: number): Promise<{ data: AssignmentStatus }> {
+    return request<AssignmentStatus>(`/moodle/assignments/${assignId}/status`);
   }
 
   submitAssignment(
