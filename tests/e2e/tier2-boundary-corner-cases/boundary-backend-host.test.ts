@@ -1,14 +1,31 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
+import { MoodleClientService } from '../../../packages/backend/src/moodle/moodle-client/moodle.client.service';
 import { readWorkspaceFile } from '../test-helpers';
 
 describe('Tier 2 - Feature 6: Boundary & Corner Cases in Backend Host Validation', () => {
-  const servicePath = 'packages/backend/src/moodle/moodle-client/moodle.client.service.ts';
+  const originalMoodleUrl = process.env.MOODLE_BASEURL;
+  const originalTimeout = process.env.MOODLE_TIMEOUT;
+
+  afterEach(() => {
+    if (originalMoodleUrl !== undefined) {
+      process.env.MOODLE_BASEURL = originalMoodleUrl;
+    } else {
+      delete process.env.MOODLE_BASEURL;
+    }
+
+    if (originalTimeout !== undefined) {
+      process.env.MOODLE_TIMEOUT = originalTimeout;
+    } else {
+      delete process.env.MOODLE_TIMEOUT;
+    }
+  });
 
   it('F6-B1: Backend Moodle client constructor must throw if protocol is http:// instead of https://', () => {
-    const content = readWorkspaceFile(servicePath);
+    process.env.MOODLE_BASEURL = 'http://insecure.example.com';
 
-    expect(content).toMatch(/!this\.baseUrl\.startsWith\(['"]https:\/\//);
-    expect(content).toMatch(/throw new Error\(/);
+    expect(() => new MoodleClientService()).toThrow(
+      'MOODLE_BASEURL must be a secure URL (https://)',
+    );
   });
 
   it('F6-B2: Host URL normalization: URL instance should handle trailing slashes seamlessly', () => {
@@ -26,10 +43,14 @@ describe('Tier 2 - Feature 6: Boundary & Corner Cases in Backend Host Validation
     expect(url1.pathname).toBe(url2.pathname);
   });
 
-  it('F6-B3: Backend should reject invalid or non-numeric timeout values', () => {
-    const content = readWorkspaceFile(servicePath);
+  it('F6-B3: Backend should reject invalid or non-numeric timeout values', async () => {
+    process.env.MOODLE_BASEURL = 'https://moodle.universemvp.tech';
+    process.env.MOODLE_TIMEOUT = 'invalid-timeout';
+    const client = new MoodleClientService();
 
-    expect(content).toMatch(/!Number\.isFinite\(timeout\)\s*\|\|\s*timeout\s*<=\s*0/);
+    await expect(client.client('core_webservice_get_site_info')).rejects.toThrow(
+      'MOODLE_TIMEOUT must be a positive finite number',
+    );
   });
 
   it('F6-B4: Host with custom secure port (https://moodle.universemvp.tech:443) remains valid https', () => {
