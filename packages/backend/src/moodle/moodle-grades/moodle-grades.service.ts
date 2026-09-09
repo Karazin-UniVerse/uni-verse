@@ -25,7 +25,7 @@ interface MoodleOverviewGradesResponse {
 export function parseGradeScore(
   rawGrade?: string | number | null,
   grade?: string | null,
-): number {
+): number | null {
   const tryParse = (val?: string | number | null): number | null => {
     if (val === undefined || val === null) {
       return null;
@@ -58,7 +58,7 @@ export function parseGradeScore(
     return parsedGrade;
   }
 
-  return 0;
+  return null;
 }
 
 export function detectControlType(
@@ -133,19 +133,19 @@ export class MoodleGradesService {
         course?.shortname,
       );
       const totalScore = parseGradeScore(item.rawgrade, item.grade);
-      const ectsGrade = calculateEctsGrade(totalScore);
-      const traditionalGrade = calculateTraditionalGrade(
-        totalScore,
-        controlType,
-      );
-      const isPassed = totalScore >= 60;
+      const hasScore = totalScore !== null;
+      const ectsGrade = hasScore ? calculateEctsGrade(totalScore) : null;
+      const traditionalGrade = hasScore
+        ? calculateTraditionalGrade(totalScore, controlType)
+        : null;
+      const isPassed = hasScore ? totalScore >= 60 : null;
 
       return {
         id: item.courseid,
         courseId: item.courseid,
         courseName,
-        courseCode: course?.shortname,
-        credits: 4,
+        courseCode: course?.shortname || undefined,
+        credits: undefined,
         grade: item.grade || '-',
         rawGrade: item.rawgrade,
         totalScore,
@@ -156,9 +156,9 @@ export class MoodleGradesService {
         isPassed,
         currentScore: null,
         examScore: null,
-        year,
-        academicYear: year || '2025/2026',
-        semester: semester ?? 1,
+        year: year || null,
+        academicYear: year || undefined,
+        semester: semester ?? undefined,
       };
     });
 
