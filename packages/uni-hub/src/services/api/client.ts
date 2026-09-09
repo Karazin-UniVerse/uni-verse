@@ -12,12 +12,10 @@ export async function executeAttempt<T>(
 
   const onCallerAbort = () => controller.abort();
 
-  if (options.signal) {
-    if (options.signal.aborted) {
-      controller.abort();
-    } else {
-      options.signal.addEventListener('abort', onCallerAbort, { once: true });
-    }
+  if (options.signal?.aborted) {
+    controller.abort();
+  } else if (options.signal) {
+    options.signal.addEventListener('abort', onCallerAbort, { once: true });
   }
 
   try {
@@ -44,51 +42,66 @@ export async function executeAttempt<T>(
   }
 }
 
-export async function request<T>(
-  endpoint: string,
-  options: RequestInit = {},
-  retries = 2,
-): Promise<{ data: T }> {
-  const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL ||
-    (isBrowser && window.location.hostname !== 'localhost'
-      ? 'https://p01--backend--jm9qjnmpm4m2.code.run'
-      : 'http://localhost:3001');
+function getApiBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
 
-  const url = `${API_BASE_URL}${endpoint}`;
-  const token = isBrowser ? localStorage.getItem('accessToken') : null;
+  if (isBrowser && window.location.hostname !== 'localhost') {
+    return 'https://p01--backend--jm9qjnmpm4m2.code.run';
+  }
 
+  return 'http://localhost:3001';
+}
+
+function buildHeaders(url: string, customHeaders?: HeadersInit): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string>),
+    ...(customHeaders as Record<string, string>),
   };
+
+  const token = isBrowser ? localStorage.getItem('accessToken') : null;
 
   if (token && isSecureOrLoopback(url)) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  if (!process.env.MOODLE_TIMEOUT) {
-    process.env.MOODLE_TIMEOUT = '30000';
+  return headers;
+}
+
+function getRequestTimeoutMs(): number {
+  return Number(process.env.MOODLE_TIMEOUT || '30000');
+}
+
+async function handleRetry(
+  err: unknown,
+  attempt: number,
+  retries: number,
+  signal?: AbortSignal | null,
+): Promise<void> {
+  if (signal?.aborted || attempt >= retries) {
+    throw err;
   }
 
-  let attempt = 0;
+  const delay = (attempt + 1) * 500;
 
-  while (attempt <= retries) {
+  await new Promise((resolve) => setTimeout(resolve, delay));
+}
+
+export async function request<T>(
+  endpoint: string,
+  options: RequestInit = {},
+  retries = 2,
+): Promise<{ data: T }> {
+  const url = `${getApiBaseUrl()}${endpoint}`;
+  const headers = buildHeaders(url, options.headers);
+  const timeoutMs = getRequestTimeoutMs();
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      return await executeAttempt<T>(url, options, headers, Number(process.env.MOODLE_TIMEOUT));
+      return await executeAttempt<T>(url, options, headers, timeoutMs);
     } catch (err) {
-      if (options.signal?.aborted) {
-        throw err;
-      }
-
-      if (attempt < retries) {
-        attempt++;
-        const delay = attempt * 500;
-
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      } else {
-        throw err;
-      }
+      await handleRetry(err, attempt, retries, options.signal);
     }
   }
 

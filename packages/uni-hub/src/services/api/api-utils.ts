@@ -8,7 +8,9 @@ export function buildQueryString(params?: Record<string, unknown>): string {
   const searchParams = new URLSearchParams();
 
   for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== null && value !== '') {
+    if (typeof value === 'string' && value.length > 0) {
+      searchParams.append(key, value);
+    } else if (typeof value === 'number' || typeof value === 'boolean') {
       searchParams.append(key, String(value));
     }
   }
