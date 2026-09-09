@@ -243,6 +243,53 @@ export function calculateTraditionalGrade(
 }
 
 /**
+ * Calculates the academic weighted GPA / rating score based on course credits and final scores:
+ * Formula: sum(score_i * credits_i) / sum(credits_i)
+ * Returns score rounded to 1 decimal place, or null if no scored items exist.
+ */
+export function calculateWeightedGpa(
+  grades: Array<{
+    totalScore?: number | null;
+    currentScore?: number | null;
+    examScore?: number | null;
+    credits?: number;
+    grade?: string | number | null;
+  }>,
+): number | null {
+  if (!grades || grades.length === 0) {
+    return null;
+  }
+
+  let totalWeightedScore = 0;
+  let totalCredits = 0;
+
+  for (const item of grades) {
+    const rawScore =
+      item.totalScore ??
+      (typeof item.grade === 'number'
+        ? item.grade
+        : typeof item.grade === 'string'
+          ? Number.parseFloat(item.grade)
+          : null);
+
+    if (rawScore !== null && !Number.isNaN(rawScore) && rawScore >= 0) {
+      const credits = item.credits && item.credits > 0 ? item.credits : 4;
+
+      totalWeightedScore += rawScore * credits;
+      totalCredits += credits;
+    }
+  }
+
+  if (totalCredits === 0) {
+    return null;
+  }
+
+  return Math.round((totalWeightedScore / totalCredits) * 10) / 10;
+}
+
+export const calculateRatingScore = calculateWeightedGpa;
+
+/**
  * Canonical fallback student profile (Rodion Barsukov)
  */
 export const DEFAULT_STUDENT_PROFILE: StudentProfile = {

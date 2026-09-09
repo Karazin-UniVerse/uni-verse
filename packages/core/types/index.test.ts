@@ -4,6 +4,7 @@ import test, { describe } from 'node:test';
 import {
   calculateEctsGrade,
   calculateTraditionalGrade,
+  calculateWeightedGpa,
   resolveStudentProfile,
   enrichMoodleCourse,
   generateStudentGradeRecords,
@@ -105,6 +106,33 @@ describe('calculateTraditionalGrade', () => {
       assert.strictEqual(calculateTraditionalGrade(65, 'differentiated_credit'), 'задовільно');
       assert.strictEqual(calculateTraditionalGrade(40, 'differentiated_credit'), 'незадовільно');
     });
+  });
+});
+
+describe('calculateWeightedGpa', () => {
+  test('returns null for empty or invalid input', () => {
+    assert.strictEqual(calculateWeightedGpa([]), null);
+    assert.strictEqual(calculateWeightedGpa(null as any), null);
+  });
+
+  test('calculates weighted average score according to credits', () => {
+    const grades = [
+      { totalScore: 90, credits: 5 },
+      { totalScore: 80, credits: 5 },
+    ];
+    const gpa = calculateWeightedGpa(grades);
+
+    assert.strictEqual(gpa, 85);
+  });
+
+  test('correctly weights courses with unequal credits', () => {
+    const grades = [
+      { totalScore: 100, credits: 5 },
+      { totalScore: 60, credits: 3 },
+    ];
+    const gpa = calculateWeightedGpa(grades);
+
+    assert.strictEqual(gpa, 85);
   });
 });
 

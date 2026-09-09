@@ -17,7 +17,6 @@ import {
   VolumeX,
   Menu,
   GraduationCap,
-  Award,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -38,6 +37,7 @@ import {
   type ControlType,
   calculateEctsGrade,
   calculateTraditionalGrade,
+  calculateWeightedGpa,
   resolveStudentProfile,
   enrichMoodleCourse,
   generateStudentGradeRecords,
@@ -395,6 +395,25 @@ const DashboardPage: React.FC = () => {
       .sort((a, b) => a.duedate - b.duedate)[0];
   }, [data.assignments, nowMs]);
 
+  const currentGradeRecords = useMemo(() => {
+    const rawValid = getValidGrades(data.grades);
+
+    if (rawValid.length > 0) {
+      return rawValid;
+    }
+
+    return generateStudentGradeRecords(
+      data.courses.length > 0 ? data.courses : mockKarazinCurriculum,
+      activeStudentProfile,
+    );
+  }, [data.grades, data.courses, activeStudentProfile]);
+
+  const ratingScore = useMemo(() => {
+    const computed = calculateWeightedGpa(currentGradeRecords as any);
+
+    return computed ?? activeStudentProfile.gpa;
+  }, [currentGradeRecords, activeStudentProfile.gpa]);
+
   const fetchData = async () => {
     setLoading(true);
 
@@ -696,10 +715,6 @@ const DashboardPage: React.FC = () => {
               <Tag tone="warning">Демо-дані</Tag>
               <Tag tone="success">Денна форма</Tag>
               <Tag tone="info">Бюджет</Tag>
-              <Tag tone="success">
-                <Award size={12} style={{ marginRight: 4 }} />
-                Відмінник (Академічна стипендія)
-              </Tag>
             </div>
           </div>
 
@@ -739,7 +754,7 @@ const DashboardPage: React.FC = () => {
             </div>
             <div className={styles.studentField}>
               <span className={styles.fieldLabel}>Рейтинговий бал (GPA)</span>
-              <span className={styles.fieldValue}>{activeStudentProfile.gpa} / 100</span>
+              <span className={styles.fieldValue}>{ratingScore} / 100</span>
             </div>
             <div className={styles.studentField}>
               <span className={styles.fieldLabel}>Академічний статус</span>
@@ -929,14 +944,7 @@ const DashboardPage: React.FC = () => {
   };
 
   const renderGrades = () => {
-    const rawValidGrades = getValidGrades(data.grades);
-    const validGrades =
-      rawValidGrades.length > 0
-        ? rawValidGrades
-        : generateStudentGradeRecords(
-            data.courses.length > 0 ? data.courses : mockKarazinCurriculum,
-            activeStudentProfile,
-          );
+    const validGrades = currentGradeRecords;
 
     return (
       <div className={styles.gradesStack}>
