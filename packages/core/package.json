@@ -5,15 +5,20 @@
   "scripts": {
     "lint": "oxlint",
     "typecheck": "tsc -p tsconfig.test.json",
-    "build": "echo 'No build step for core yet'",
+    "build": "tsc -p tsconfig.json",
     "test": "node --test types/index.test.ts"
   },
-  "main": "./index.ts",
-  "types": "./index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./index.ts",
-    "./types": "./types/index.ts",
-    "./types/*": "./types/*.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/types/index.js"
+    }
   },
   "devDependencies": {
     "typescript": "^5.0.0"

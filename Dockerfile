@@ -10,7 +10,7 @@ FROM base AS builder
 WORKDIR /app
 COPY . .
 RUN pnpm install --frozen-lockfile
-RUN pnpm --filter @universe/backend build
+RUN pnpm --filter @universe/core build && pnpm --filter @universe/backend build
 
 FROM base AS runner
 WORKDIR /app
