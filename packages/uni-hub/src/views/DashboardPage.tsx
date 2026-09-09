@@ -30,7 +30,7 @@ import {
   Select,
   ProgressBar,
   useToast,
-} from '@universe/ui';
+} from '@una';
 import { moodleApi } from '@uni-hub/services/api';
 import {
   type StudentProfile,
@@ -38,7 +38,7 @@ import {
   type ControlType,
   calculateEctsGrade,
   calculateTraditionalGrade,
-} from '@universe/core/types';
+} from '@core/types';
 import type {
   Course,
   Grade,
@@ -80,7 +80,8 @@ const NAV_KEYS: NavKey[] = ['overview', 'courses', 'grades', 'schedule', 'assign
 
 const isNavKey = (value: string): value is NavKey => NAV_KEYS.includes(value as NavKey);
 
-const defaultStudentProfile: StudentProfile = {
+// TODO(#65): replace with API-provided profile once the endpoint exists.
+const fallbackStudentProfile: StudentProfile = {
   id: 'karazin-student-001',
   moodleId: 4021,
   fullName: 'Барсуков Родіон Сергійович',
@@ -241,6 +242,8 @@ const DashboardPage: React.FC = () => {
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
+  const activeStudentProfile = studentProfile ?? fallbackStudentProfile;
 
   const [data, setData] = useState<{
     courses: Course[];
@@ -373,6 +376,16 @@ const DashboardPage: React.FC = () => {
       router.push('/login');
 
       return;
+    }
+
+    const savedUser = localStorage.getItem('username');
+
+    if (savedUser && savedUser !== fallbackStudentProfile.fullName) {
+      setStudentProfile({
+        ...fallbackStudentProfile,
+        fullName: savedUser,
+        email: savedUser.includes('@') ? savedUser : `${savedUser}@karazin.ua`,
+      });
     }
 
     checkIn();
@@ -512,10 +525,10 @@ const DashboardPage: React.FC = () => {
               <GraduationCap size={26} />
             </div>
             <div className={styles.studentMainInfo}>
-              <h3>{defaultStudentProfile.fullName}</h3>
+              <h3>{activeStudentProfile.fullName}</h3>
               <div className={styles.muted}>
-                Спеціальність {defaultStudentProfile.specialty} •{' '}
-                {defaultStudentProfile.educationalProgram}
+                Спеціальність {activeStudentProfile.specialty} •{' '}
+                {activeStudentProfile.educationalProgram}
               </div>
             </div>
           </div>
@@ -532,35 +545,35 @@ const DashboardPage: React.FC = () => {
         <div className={styles.studentGrid}>
           <div className={styles.studentField}>
             <span className={styles.fieldLabel}>Факультет / Інститут</span>
-            <span className={styles.fieldValue}>{defaultStudentProfile.faculty}</span>
+            <span className={styles.fieldValue}>{activeStudentProfile.faculty}</span>
           </div>
           <div className={styles.studentField}>
             <span className={styles.fieldLabel}>Кафедра</span>
-            <span className={styles.fieldValue}>{defaultStudentProfile.department}</span>
+            <span className={styles.fieldValue}>{activeStudentProfile.department}</span>
           </div>
           <div className={styles.studentField}>
             <span className={styles.fieldLabel}>Курс / Академічна група</span>
             <span className={styles.fieldValue}>
-              {defaultStudentProfile.course} курс, група {defaultStudentProfile.group}
+              {activeStudentProfile.course} курс, група {activeStudentProfile.group}
             </span>
           </div>
           <div className={styles.studentField}>
             <span className={styles.fieldLabel}>Студентський квиток</span>
-            <span className={styles.fieldValue}>{defaultStudentProfile.studentCardNumber}</span>
+            <span className={styles.fieldValue}>{activeStudentProfile.studentCardNumber}</span>
           </div>
           <div className={styles.studentField}>
             <span className={styles.fieldLabel}>Залікова книжка</span>
-            <span className={styles.fieldValue}>{defaultStudentProfile.recordBookNumber}</span>
+            <span className={styles.fieldValue}>{activeStudentProfile.recordBookNumber}</span>
           </div>
           <div className={styles.studentField}>
             <span className={styles.fieldLabel}>Здобуто кредитів ECTS</span>
             <span className={styles.fieldValue}>
-              {defaultStudentProfile.totalCreditsEarned} ECTS
+              {activeStudentProfile.totalCreditsEarned} ECTS
             </span>
           </div>
           <div className={styles.studentField}>
             <span className={styles.fieldLabel}>Рейтинговий бал (GPA)</span>
-            <span className={styles.fieldValue}>{defaultStudentProfile.gpa} / 100</span>
+            <span className={styles.fieldValue}>{activeStudentProfile.gpa} / 100</span>
           </div>
           <div className={styles.studentField}>
             <span className={styles.fieldLabel}>Академічний статус</span>
@@ -600,7 +613,7 @@ const DashboardPage: React.FC = () => {
           <div className={styles.statLabel}>Рейтинговий бал (GPA)</div>
           <div className={styles.statValue}>
             <GraduationCap size={20} />
-            {defaultStudentProfile.gpa}
+            {activeStudentProfile.gpa}
           </div>
         </div>
       </div>
@@ -713,10 +726,12 @@ const DashboardPage: React.FC = () => {
     return (
       <div className={styles.courseGrid}>
         {coursesList.map((course, index) => {
-          const credits = (course as any).credits || 5;
-          const controlType: ControlType = (course as any).controlType || 'exam';
-          const instructor = (course as any).instructors?.[0]?.name || 'Кафедра ММАД';
-          const progress = (course as any).progress ?? 75;
+          const isCurriculum = 'credits' in course;
+          const curriculum = isCurriculum ? (course as CurriculumItem) : null;
+          const credits = curriculum?.credits;
+          const controlType: ControlType | undefined = curriculum?.controlType;
+          const instructor = curriculum?.instructors?.[0]?.name;
+          const progress = curriculum?.progress;
 
           return (
             <motion.article
@@ -734,38 +749,46 @@ const DashboardPage: React.FC = () => {
                   </Tag>
                 </span>
               </div>
-              <div className={styles.courseMetaRow}>
-                <Tag tone="neutral">{credits} ECTS</Tag>
-                <Tag tone={controlType === 'exam' ? 'info' : 'success'}>
-                  {controlType === 'exam'
-                    ? 'Іспит'
-                    : controlType === 'credit'
-                      ? 'Залік'
-                      : 'Диф. залік'}
-                </Tag>
-              </div>
-              <div className={styles.courseTeacher}>
-                Викладач: <strong>{instructor}</strong>
-              </div>
+              {(credits !== undefined || controlType !== undefined) && (
+                <div className={styles.courseMetaRow}>
+                  {credits !== undefined && <Tag tone="neutral">{credits} ECTS</Tag>}
+                  {controlType && (
+                    <Tag tone={controlType === 'exam' ? 'info' : 'success'}>
+                      {controlType === 'exam'
+                        ? 'Іспит'
+                        : controlType === 'credit'
+                          ? 'Залік'
+                          : 'Диф. залік'}
+                    </Tag>
+                  )}
+                </div>
+              )}
+              {instructor && (
+                <div className={styles.courseTeacher}>
+                  Викладач: <strong>{instructor}</strong>
+                </div>
+              )}
               <p className={styles.courseSummary}>
                 {'summary' in course && course.summary
                   ? course.summary
                   : 'Навчальна дисципліна індивідуального плану'}
               </p>
-              <div style={{ margin: 'var(--space-12) 0' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: 'var(--font-xs)',
-                    marginBottom: '4px',
-                  }}
-                >
-                  <span className={styles.muted}>Прогрес освоєння</span>
-                  <span>{progress}%</span>
+              {progress !== undefined && progress !== null && (
+                <div style={{ margin: 'var(--space-12) 0' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: 'var(--font-xs)',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    <span className={styles.muted}>Прогрес освоєння</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <ProgressBar value={progress} tone={progress >= 60 ? 'success' : 'warning'} />
                 </div>
-                <ProgressBar value={progress} tone={progress >= 60 ? 'success' : 'warning'} />
-              </div>
+              )}
               <SimpleButton
                 type="button"
                 variant="secondary"
@@ -880,40 +903,44 @@ const DashboardPage: React.FC = () => {
                       : Number.parseFloat(g.grade);
                 const totalScore =
                   !Number.isNaN(numVal) && numVal >= 0 ? Math.min(100, Math.round(numVal)) : 0;
-                const controlType: ControlType =
-                  g.controlType || (totalScore > 80 ? 'exam' : 'credit');
+                const controlType: ControlType | undefined = g.controlType;
                 const ects = calculateEctsGrade(totalScore);
-                const trad = calculateTraditionalGrade(totalScore, controlType);
+                const trad = calculateTraditionalGrade(totalScore, controlType ?? undefined);
                 const tone = getGradeTone(totalScore);
 
                 const currentScore =
                   g.currentScore !== undefined && g.currentScore !== null
                     ? String(g.currentScore)
-                    : String(Math.round(totalScore * 0.6));
+                    : '—';
 
                 const examScore =
                   controlType === 'credit'
                     ? '—'
                     : g.examScore !== undefined && g.examScore !== null
                       ? String(g.examScore)
-                      : String(Math.round(totalScore * 0.4));
+                      : '—';
 
-                const credits = g.credits || (totalScore > 85 ? 5 : 4);
+                const creditsDisplay =
+                  g.credits !== undefined && g.credits !== null ? `${g.credits} ECTS` : '—';
 
                 return (
                   <tr key={cName + index} style={{ animationDelay: `${index * 40}ms` }}>
                     <td>
                       <strong>{cName}</strong>
                     </td>
-                    <td>{credits} ECTS</td>
+                    <td>{creditsDisplay}</td>
                     <td>
-                      <Tag tone={controlType === 'exam' ? 'info' : 'neutral'}>
-                        {controlType === 'exam'
-                          ? 'Іспит'
-                          : controlType === 'credit'
-                            ? 'Залік'
-                            : 'Диф. залік'}
-                      </Tag>
+                      {controlType ? (
+                        <Tag tone={controlType === 'exam' ? 'info' : 'neutral'}>
+                          {controlType === 'exam'
+                            ? 'Іспит'
+                            : controlType === 'credit'
+                              ? 'Залік'
+                              : 'Диф. залік'}
+                        </Tag>
+                      ) : (
+                        '—'
+                      )}
                     </td>
                     <td>{currentScore}</td>
                     <td>{examScore}</td>
@@ -1228,11 +1255,14 @@ const DashboardPage: React.FC = () => {
                 </motion.div>
               )}
             </div>
-            <div className={styles.user} title="Барсуков Р. С. (КС12)">
+            <div
+              className={styles.user}
+              title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
+            >
               <span className={styles.avatar}>
                 <User size={16} />
               </span>
-              <span>Барсуков Р. С.</span>
+              <span>{activeStudentProfile.fullName}</span>
             </div>
           </div>
         </header>
