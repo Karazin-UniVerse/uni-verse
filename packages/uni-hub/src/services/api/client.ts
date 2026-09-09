@@ -1,6 +1,9 @@
 import { isBrowser } from '@uni-hub/utils/browser';
 import { isSecureOrLoopback } from '@uni-hub/services/api/api-utils';
 
+/**
+ * Custom error class representing non-2xx HTTP responses, exposing the status code and text.
+ */
 export class HttpError extends Error {
   readonly status: number;
   readonly statusText: string;
@@ -81,6 +84,10 @@ function buildHeaders(url: string, customHeaders?: HeadersInit): Record<string, 
   return headers;
 }
 
+/**
+ * Resolves request timeout from environment variables with fallback to 30000ms.
+ * Checks NEXT_PUBLIC_MOODLE_TIMEOUT for browser execution and validates against NaN.
+ */
 function getRequestTimeoutMs(): number {
   const raw =
     (isBrowser ? process.env.NEXT_PUBLIC_MOODLE_TIMEOUT : process.env.MOODLE_TIMEOUT) ||
@@ -92,6 +99,9 @@ function getRequestTimeoutMs(): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 30000;
 }
 
+/**
+ * Checks if an HTTP method is idempotent and safe to retry automatically.
+ */
 function isRetryableMethod(method?: string): boolean {
   if (!method) {
     return true;
@@ -102,6 +112,10 @@ function isRetryableMethod(method?: string): boolean {
   return upper === 'GET' || upper === 'HEAD' || upper === 'OPTIONS';
 }
 
+/**
+ * Checks if an error is transient and safe to retry.
+ * Avoids retrying 4xx client errors (except 429 rate limiting).
+ */
 function isRetryableError(err: unknown): boolean {
   if (err instanceof HttpError) {
     return err.status === 429 || err.status >= 500;

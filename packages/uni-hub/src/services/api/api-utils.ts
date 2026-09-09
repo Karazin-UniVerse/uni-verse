@@ -19,6 +19,10 @@ export function buildQueryString(params?: Record<string, unknown>): string {
 
   return queryString ? `?${queryString}` : '';
 }
+/**
+ * Determines whether a URL is secure (HTTPS) or points to a local loopback interface
+ * (IPv4 localhost/127.0.0.1 or IPv6 ::1/[::1]).
+ */
 export function isSecureOrLoopback(targetUrl: string): boolean {
   try {
     const fallbackOrigin = isBrowser ? window.location.origin : '';
