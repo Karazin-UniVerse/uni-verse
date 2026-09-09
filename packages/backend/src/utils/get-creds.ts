@@ -14,9 +14,7 @@ interface MoodleUserIdResponse {
 @Injectable()
 export class GetCreds {
   private getBaseUrl(): string {
-    const url = (
-      process.env.MOODLE_BASEURL || 'https://moodle.karazin.ua'
-    ).replace(/\/$/, '');
+    const url = (process.env.MOODLE_BASEURL || '').trim().replace(/\/$/, '');
 
     if (!url.startsWith('https://')) {
       throw new Error('MOODLE_BASEURL must use the secure https:// protocol');

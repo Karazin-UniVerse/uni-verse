@@ -1,0 +1,22 @@
+{
+  "name": "@universe/core",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "lint": "oxlint",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "build": "echo 'No build step for core yet'",
+    "test": "node --test types/index.test.ts"
+  },
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./types": "./types/index.ts",
+    "./types/*": "./types/*.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "type": "module"
+}

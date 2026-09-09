@@ -1,3 +1,4 @@
+export * from '@core/types';
 import type {
   AuthResponse,
   Course,
