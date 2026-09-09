@@ -28,8 +28,13 @@ describe('Tier 4 - Real-World Scenarios: End-to-End User Journeys', () => {
     ];
 
     const mod = await loadTypesModule();
-    const calculateEcts = mod?.calculateEctsGrade || oracleCalculateEctsGrade;
-    const calculateTrad = mod?.calculateTraditionalGrade || oracleCalculateTraditionalGrade;
+
+    expect(mod).not.toBeNull();
+    expect(mod.calculateEctsGrade).toBeDefined();
+    expect(mod.calculateTraditionalGrade).toBeDefined();
+
+    const calculateEcts = mod.calculateEctsGrade;
+    const calculateTrad = mod.calculateTraditionalGrade;
 
     const evaluatedBook = semesterCourses.map((c) => {
       const total = c.current + (c.exam ?? 0);
@@ -45,7 +50,11 @@ describe('Tier 4 - Real-World Scenarios: End-to-End User Journeys', () => {
 
     expect(evaluatedBook[0].totalScore).toBe(91);
     expect(evaluatedBook[0].ectsGrade).toBe('A');
+    expect(evaluatedBook[0].ectsGrade).toBe(oracleCalculateEctsGrade(evaluatedBook[0].totalScore));
     expect(evaluatedBook[0].traditionalGrade).toBe('відмінно');
+    expect(evaluatedBook[0].traditionalGrade).toBe(
+      oracleCalculateTraditionalGrade(evaluatedBook[0].totalScore, semesterCourses[0].controlType),
+    );
 
     expect(evaluatedBook[1].totalScore).toBe(82);
     expect(evaluatedBook[1].ectsGrade).toBe('B');
@@ -106,15 +115,23 @@ describe('Tier 4 - Real-World Scenarios: End-to-End User Journeys', () => {
 
   it('Scenario 4: End-of-Semester Differential Control Assessment', async () => {
     const mod = await loadTypesModule();
-    const calculateTrad = mod?.calculateTraditionalGrade || oracleCalculateTraditionalGrade;
+
+    expect(mod).not.toBeNull();
+    expect(mod.calculateTraditionalGrade).toBeDefined();
+
+    const calculateTrad = mod.calculateTraditionalGrade;
 
     // Exam grade: 73.8 -> 73.8 rounded / boundary -> 'задовільно'
     expect(calculateTrad(73, 'exam')).toBe('задовільно');
+    expect(calculateTrad(73, 'exam')).toBe(oracleCalculateTraditionalGrade(73, 'exam'));
     // Credit grade: 61 -> 'зараховано'
     expect(calculateTrad(61, 'credit')).toBe('зараховано');
+    expect(calculateTrad(61, 'credit')).toBe(oracleCalculateTraditionalGrade(61, 'credit'));
     // Academic failure: 45 -> 'незадовільно' (exam) & 'не зараховано' (credit)
     expect(calculateTrad(45, 'exam')).toBe('незадовільно');
+    expect(calculateTrad(45, 'exam')).toBe(oracleCalculateTraditionalGrade(45, 'exam'));
     expect(calculateTrad(45, 'credit')).toBe('не зараховано');
+    expect(calculateTrad(45, 'credit')).toBe(oracleCalculateTraditionalGrade(45, 'credit'));
   });
 
   it('Scenario 5: LMS Gateway Degradation & Fault-Tolerant Feedback', () => {

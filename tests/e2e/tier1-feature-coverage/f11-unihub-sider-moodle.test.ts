@@ -32,8 +32,15 @@ describe('Tier 1 - Feature 11: Sidebar Footer Moodle Status Indicator (@universe
 
   it('F11-5: siderFooter external link should have target="_blank" and rel="noopener noreferrer"', () => {
     const content = readWorkspaceFile(dashboardPath);
+    const moodleAnchorMatch = content.match(
+      /<a\b[^>]*href=['"]https:\/\/moodle\.universemvp\.tech['"][^>]*>/,
+    );
 
-    expect(content).toMatch(/target=['"]_blank['"]/);
-    expect(content).toMatch(/rel=['"][^'"]*noopener[^'"]*['"]/);
+    expect(moodleAnchorMatch).not.toBeNull();
+    const anchorTag = moodleAnchorMatch![0];
+
+    expect(anchorTag).toMatch(/target=['"]_blank['"]/);
+    expect(anchorTag).toMatch(/rel=['"][^'"]*noopener[^'"]*['"]/);
+    expect(anchorTag).toMatch(/rel=['"][^'"]*noreferrer[^'"]*['"]/);
   });
 });

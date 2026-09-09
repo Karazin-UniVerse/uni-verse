@@ -5,7 +5,7 @@ import type {
   StudentRecordBookItem,
   AssignmentItem,
   LmsConnectionStatus,
-} from '../../packages/core/types/index';
+} from '../../../packages/core/types/index';
 
 describe('Tier 2 - Feature 1: Boundary & Corner Cases in Domain Models', () => {
   it('F1-B1: StudentRecordBookItem with null examScore (continuous assessment only)', () => {

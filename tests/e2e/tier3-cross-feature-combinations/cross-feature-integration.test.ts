@@ -21,16 +21,19 @@ describe('Tier 3 - Cross-Feature Combinations & Contracts Integration', () => {
     // 2. Domain model calculation (F1 + F2)
     const totalScore = (rawMoodleGrade.currentScore ?? 0) + (rawMoodleGrade.examScore ?? 0);
     const mod = await loadTypesModule();
-    const ects = mod?.calculateEctsGrade
-      ? mod.calculateEctsGrade(totalScore)
-      : oracleCalculateEctsGrade(totalScore);
-    const trad = mod?.calculateTraditionalGrade
-      ? mod.calculateTraditionalGrade(totalScore, rawMoodleGrade.controlType)
-      : oracleCalculateTraditionalGrade(totalScore, rawMoodleGrade.controlType);
+
+    expect(mod).not.toBeNull();
+    expect(mod.calculateEctsGrade).toBeDefined();
+    expect(mod.calculateTraditionalGrade).toBeDefined();
+
+    const ects = mod.calculateEctsGrade(totalScore);
+    const trad = mod.calculateTraditionalGrade(totalScore, rawMoodleGrade.controlType);
 
     expect(totalScore).toBe(94);
     expect(ects).toBe('A');
+    expect(ects).toBe(oracleCalculateEctsGrade(totalScore));
     expect(trad).toBe('відмінно');
+    expect(trad).toBe(oracleCalculateTraditionalGrade(totalScore, rawMoodleGrade.controlType));
 
     // 3. Digital Gradebook representation (F12)
     const gradeRecord = {
@@ -63,12 +66,10 @@ describe('Tier 3 - Cross-Feature Combinations & Contracts Integration', () => {
   it('Combination 3 (F6 + F11 + F13): Unified LMS Host Consistency Across Monorepo', () => {
     const canonicalHost = 'https://moodle.universemvp.tech';
 
-    // 1. Backend client default
-    const backendClient = readWorkspaceFile(
-      'packages/backend/src/moodle/moodle-client/moodle.client.service.ts',
-    );
+    // 1. Backend client configuration in root .env.example
+    const envConfig = readWorkspaceFile('.env.example');
 
-    expect(backendClient).toContain(canonicalHost);
+    expect(envConfig).toContain(`MOODLE_BASEURL="${canonicalHost}"`);
 
     // 2. Sider footer link
     const siderPage = readWorkspaceFile('packages/uni-hub/src/views/DashboardPage.tsx');

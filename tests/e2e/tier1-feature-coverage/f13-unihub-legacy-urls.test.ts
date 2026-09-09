@@ -28,8 +28,12 @@ describe('Tier 1 - Feature 13: Fix Hardcoded Legacy URLs in UniHub (@universe/un
 
   it('F13-5: AssignmentModal external link should be secured with target="_blank" and rel="noopener noreferrer"', () => {
     const content = readWorkspaceFile(modalPath);
+    const moodleLinkMatch = content.match(/<(?:SimpleButton|a)\b[^>]*href=\{moodleUrl\}[^>]*>/);
 
-    expect(content).toMatch(/target="_blank"/);
-    expect(content).toMatch(/rel="noopener noreferrer"/);
+    expect(moodleLinkMatch).not.toBeNull();
+    const linkTag = moodleLinkMatch![0];
+
+    expect(linkTag).toMatch(/target="_blank"/);
+    expect(linkTag).toMatch(/rel="noopener noreferrer"/);
   });
 });

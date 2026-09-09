@@ -1,27 +1,56 @@
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, it, expect } from 'vitest';
+import { ProgressBar } from '../../../packages/ui/components/una/ProgressBar';
+import { Tag, type TagTone } from '../../../packages/ui/components/una/Tag';
+import { Modal } from '../../../packages/ui/components/una/Modal';
 import { readWorkspaceFile } from '../test-helpers';
 
 describe('Tier 2 - Feature 4 & 5: Boundary & Corner Cases in UI Components & Tokens', () => {
   it('F4-B1: ProgressBar boundary clamp: 0% and 100% values', () => {
-    const clampProgress = (val: number) => Math.max(0, Math.min(100, val));
+    const htmlZero = renderToStaticMarkup(React.createElement(ProgressBar, { value: 0 }));
 
-    expect(clampProgress(0)).toBe(0);
-    expect(clampProgress(100)).toBe(100);
-    expect(clampProgress(-15)).toBe(0);
-    expect(clampProgress(120)).toBe(100);
+    expect(htmlZero).toContain('aria-valuenow="0"');
+    expect(htmlZero).toContain('aria-valuetext="0%"');
+
+    const htmlHundred = renderToStaticMarkup(React.createElement(ProgressBar, { value: 100 }));
+
+    expect(htmlHundred).toContain('aria-valuenow="100"');
+    expect(htmlHundred).toContain('aria-valuetext="100%"');
+
+    const htmlNegative = renderToStaticMarkup(React.createElement(ProgressBar, { value: -15 }));
+
+    expect(htmlNegative).toContain('aria-valuenow="0"');
+    expect(htmlNegative).toContain('aria-valuetext="0%"');
+
+    const htmlOverflow = renderToStaticMarkup(React.createElement(ProgressBar, { value: 120 }));
+
+    expect(htmlOverflow).toContain('aria-valuenow="100"');
+    expect(htmlOverflow).toContain('aria-valuetext="100%"');
   });
 
   it('F4-B2: Tag component supports standard feedback tones', () => {
-    const validTones = ['default', 'success', 'warning', 'danger', 'info', 'primary'];
+    const validTones: TagTone[] = ['default', 'neutral', 'success', 'warning', 'info', 'danger'];
 
-    expect(validTones).toContain('success');
-    expect(validTones).toContain('warning');
+    validTones.forEach((tone) => {
+      const html = renderToStaticMarkup(React.createElement(Tag, { tone }, `Tone ${tone}`));
+
+      expect(html).toContain(`Tone ${tone}`);
+    });
   });
 
   it('F4-B3: Modal component should support controlled open/close boolean states', () => {
-    const isVisible: boolean = false;
+    const closedHtml = renderToStaticMarkup(
+      React.createElement(Modal, { open: false, onClose: () => {} }, 'Hidden Modal Content'),
+    );
 
-    expect(typeof isVisible).toBe('boolean');
+    expect(closedHtml).toBe('');
+
+    const openHtml = renderToStaticMarkup(
+      React.createElement(Modal, { open: true, onClose: () => {} }, 'Visible Modal Content'),
+    );
+
+    expect(openHtml).toContain('Visible Modal Content');
   });
 
   it('F5-B1: Breakpoints SCSS should define media query bounds for standard mobile/desktop', () => {
