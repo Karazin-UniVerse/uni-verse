@@ -76,11 +76,107 @@ import styles from './DashboardPage.module.scss';
 
 type NavKey = 'overview' | 'courses' | 'grades' | 'schedule' | 'assignments';
 
-const NAV_KEYS: NavKey[] = ['overview', 'courses', 'grades', 'schedule', 'assignments'];
+const NAV_KEYS = new Set<string>(['overview', 'courses', 'grades', 'schedule', 'assignments']);
 
-const isNavKey = (value: string): value is NavKey => NAV_KEYS.includes(value as NavKey);
+const isNavKey = (value: string): value is NavKey => NAV_KEYS.has(value);
 
-// TODO(#65): replace with API-provided profile once the endpoint exists.
+function getControlTypeLabel(controlType: ControlType): string {
+  switch (controlType) {
+    case 'exam':
+      return 'Іспит';
+    case 'credit':
+      return 'Залік';
+    case 'differentiated_credit':
+      return 'Диф. залік';
+    default:
+      return 'Іспит';
+  }
+}
+
+function parseGradeScore(gradeItem: any): number {
+  const rawVal = getGradeRawValue(gradeItem);
+
+  if (rawVal !== null && rawVal !== undefined) {
+    const parsed = Number(rawVal);
+
+    return !Number.isNaN(parsed) && parsed >= 0 ? Math.min(100, Math.round(parsed)) : 0;
+  }
+
+  if (gradeItem.totalScore !== undefined && gradeItem.totalScore !== null) {
+    const parsed = Number(gradeItem.totalScore);
+
+    return !Number.isNaN(parsed) && parsed >= 0 ? Math.min(100, Math.round(parsed)) : 0;
+  }
+
+  const parsed = Number.parseFloat(gradeItem.grade);
+
+  return !Number.isNaN(parsed) && parsed >= 0 ? Math.min(100, Math.round(parsed)) : 0;
+}
+
+function getExamScoreDisplay(examScore: unknown, controlType?: ControlType): string {
+  if (controlType === 'credit' || examScore === undefined || examScore === null) {
+    return '—';
+  }
+
+  return String(examScore);
+}
+
+interface GradeTableRowProps {
+  grade: any;
+  index: number;
+}
+
+const GradeTableRow: React.FC<GradeTableRowProps> = ({ grade, index }) => {
+  const cName = getGradeCourseName(grade) || grade.courseName || `Дисципліна #${index + 1}`;
+  const totalScore = parseGradeScore(grade);
+  const controlType: ControlType | undefined = grade.controlType;
+  const ects = calculateEctsGrade(totalScore);
+  const trad = calculateTraditionalGrade(totalScore, controlType ?? undefined);
+  const tone = getGradeTone(totalScore);
+
+  const currentScore =
+    grade.currentScore !== undefined && grade.currentScore !== null
+      ? String(grade.currentScore)
+      : '—';
+
+  const examScore = getExamScoreDisplay(grade.examScore, controlType);
+  const creditsDisplay =
+    grade.credits !== undefined && grade.credits !== null ? `${grade.credits} ECTS` : '—';
+
+  return (
+    <tr style={{ animationDelay: `${index * 40}ms` }}>
+      <td>
+        <strong>{cName}</strong>
+      </td>
+      <td>{creditsDisplay}</td>
+      <td>
+        {controlType ? (
+          <Tag tone={controlType === 'exam' ? 'info' : 'neutral'}>
+            {getControlTypeLabel(controlType)}
+          </Tag>
+        ) : (
+          '—'
+        )}
+      </td>
+      <td>{currentScore}</td>
+      <td>{examScore}</td>
+      <td>
+        <div className={styles.score100Cell}>
+          <span style={{ fontWeight: 600, minWidth: '32px' }}>{totalScore}</span>
+          <ProgressBar value={totalScore} tone={tone} className={styles.gradeProgress} />
+        </div>
+      </td>
+      <td>
+        <Tag tone={tone}>{ects}</Tag>
+      </td>
+      <td>
+        <Tag tone={totalScore >= 60 ? 'success' : 'danger'}>{trad}</Tag>
+      </td>
+    </tr>
+  );
+};
+
+// NOTE(#65): api-provided profile will replace this fallback once the endpoint exists.
 const fallbackStudentProfile: StudentProfile = {
   id: 'karazin-student-001',
   moodleId: 4021,
@@ -516,136 +612,191 @@ const DashboardPage: React.FC = () => {
     { key: 'assignments', icon: <FileEdit size={18} />, label: 'Завдання' },
   ];
 
-  const renderOverview = () => (
-    <div className={styles.stack}>
-      <section className={styles.studentCard}>
-        <div className={styles.studentCardTop}>
-          <div className={styles.studentIdentity}>
-            <div className={styles.studentAvatarLarge}>
-              <GraduationCap size={26} />
-            </div>
-            <div className={styles.studentMainInfo}>
-              <h3>{activeStudentProfile.fullName}</h3>
-              <div className={styles.muted}>
-                Спеціальність {activeStudentProfile.specialty} •{' '}
-                {activeStudentProfile.educationalProgram}
+  const renderOverview = () => {
+    const overviewCourses = (data.courses.length > 0 ? data.courses : mockKarazinCurriculum).slice(
+      0,
+      3,
+    );
+
+    const renderUpcomingEvents = () => {
+      if (data.events.length > 0) {
+        return (
+          <div className={styles.list}>
+            {data.events.slice(0, 4).map((event, index) => (
+              <div
+                key={event.id}
+                className={styles.listItem}
+                style={{ animationDelay: `${index * 40}ms` }}
+              >
+                <div className={styles.listTitle}>
+                  {event.url ? (
+                    <a href={event.url} target="_blank" rel="noopener noreferrer">
+                      {event.name}
+                    </a>
+                  ) : (
+                    event.name
+                  )}
+                </div>
+                <div
+                  className={styles.muted}
+                  dangerouslySetInnerHTML={{ __html: event.formattedtime }}
+                />
+              </div>
+            ))}
+          </div>
+        );
+      }
+
+      if (data.assignments.length > 0) {
+        return (
+          <div className={styles.list}>
+            {data.assignments.slice(0, 4).map((assign, index) => (
+              <div
+                key={assign.id}
+                className={styles.listItem}
+                style={{ animationDelay: `${index * 40}ms` }}
+              >
+                <div className={styles.listTitle}>{assign.name}</div>
+                <div className={styles.muted}>
+                  {assign.courseName} • Дедлайн:{' '}
+                  {new Date(assign.duedate * 1000).toLocaleDateString('uk-UA')}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      }
+
+      return <Empty description="Подій та дедлайнів не знайдено" />;
+    };
+
+    return (
+      <div className={styles.stack}>
+        <section className={styles.studentCard}>
+          <div className={styles.studentCardTop}>
+            <div className={styles.studentIdentity}>
+              <div className={styles.studentAvatarLarge}>
+                <GraduationCap size={26} />
+              </div>
+              <div className={styles.studentMainInfo}>
+                <h3>{activeStudentProfile.fullName}</h3>
+                <div className={styles.muted}>
+                  Спеціальність {activeStudentProfile.specialty} •{' '}
+                  {activeStudentProfile.educationalProgram}
+                </div>
               </div>
             </div>
+            <div className={styles.studentTags}>
+              <Tag tone="warning">Демо-дані</Tag>
+              <Tag tone="success">Денна форма</Tag>
+              <Tag tone="info">Бюджет</Tag>
+              <Tag tone="success">
+                <Award size={12} style={{ marginRight: 4 }} />
+                Відмінник (Академічна стипендія)
+              </Tag>
+            </div>
           </div>
-          <div className={styles.studentTags}>
-            <Tag tone="warning">Демо-дані</Tag>
-            <Tag tone="success">Денна форма</Tag>
-            <Tag tone="info">Бюджет</Tag>
-            <Tag tone="success">
-              <Award size={12} style={{ marginRight: 4 }} />
-              Відмінник (Академічна стипендія)
-            </Tag>
+
+          <p className={styles.muted} style={{ fontSize: 'var(--font-xs)', margin: 0 }}>
+            Академічні реквізити (номер студентського, залікової книжки, факультет) відображаються
+            як демонстраційні дані до підключення профільного API.
+          </p>
+
+          <div className={styles.studentGrid}>
+            <div className={styles.studentField}>
+              <span className={styles.fieldLabel}>Факультет / Інститут</span>
+              <span className={styles.fieldValue}>{activeStudentProfile.faculty}</span>
+            </div>
+            <div className={styles.studentField}>
+              <span className={styles.fieldLabel}>Кафедра</span>
+              <span className={styles.fieldValue}>{activeStudentProfile.department}</span>
+            </div>
+            <div className={styles.studentField}>
+              <span className={styles.fieldLabel}>Курс / Академічна група</span>
+              <span className={styles.fieldValue}>
+                {activeStudentProfile.course} курс, група {activeStudentProfile.group}
+              </span>
+            </div>
+            <div className={styles.studentField}>
+              <span className={styles.fieldLabel}>Студентський квиток</span>
+              <span className={styles.fieldValue}>{activeStudentProfile.studentCardNumber}</span>
+            </div>
+            <div className={styles.studentField}>
+              <span className={styles.fieldLabel}>Залікова книжка</span>
+              <span className={styles.fieldValue}>{activeStudentProfile.recordBookNumber}</span>
+            </div>
+            <div className={styles.studentField}>
+              <span className={styles.fieldLabel}>Здобуто кредитів ECTS</span>
+              <span className={styles.fieldValue}>
+                {activeStudentProfile.totalCreditsEarned} ECTS
+              </span>
+            </div>
+            <div className={styles.studentField}>
+              <span className={styles.fieldLabel}>Рейтинговий бал (GPA)</span>
+              <span className={styles.fieldValue}>{activeStudentProfile.gpa} / 100</span>
+            </div>
+            <div className={styles.studentField}>
+              <span className={styles.fieldLabel}>Академічний статус</span>
+              <span className={styles.fieldValue} style={{ color: '#22c55e' }}>
+                ● Навчається (активний)
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <div className={styles.overviewHero}>
+          <ContextualGreeting assignments={data.assignments} />
+          {nearestDeadline && (
+            <div className={styles.nearestDeadline}>
+              <span className={styles.muted}>Найближчий дедлайн: {nearestDeadline.name}</span>
+              <LiveCountdown targetUnixSec={nearestDeadline.duedate} />
+            </div>
+          )}
+        </div>
+
+        <div className={styles.statGrid}>
+          <div className={styles.statCard} style={{ animationDelay: '0ms' }}>
+            <div className={styles.statLabel}>Всього дисциплін</div>
+            <div className={styles.statValue}>
+              <BookOpen size={20} />
+              {coursesCount}
+            </div>
+          </div>
+          <div className={styles.statCard} style={{ animationDelay: '40ms' }}>
+            <div className={styles.statLabel}>Завдань до виконання</div>
+            <div className={styles.statValue}>
+              <FileEdit size={20} />
+              {assignmentsCount}
+            </div>
+          </div>
+          <div className={styles.statCard} style={{ animationDelay: '80ms' }}>
+            <div className={styles.statLabel}>Рейтинговий бал (GPA)</div>
+            <div className={styles.statValue}>
+              <GraduationCap size={20} />
+              {activeStudentProfile.gpa}
+            </div>
           </div>
         </div>
 
-        <p className={styles.muted} style={{ fontSize: 'var(--font-xs)', margin: 0 }}>
-          Академічні реквізити (номер студентського, залікової книжки, факультет) відображаються як
-          демонстраційні дані до підключення профільного API.
-        </p>
+        <AssignmentsDonut assignments={data.assignments} grades={data.grades} />
 
-        <div className={styles.studentGrid}>
-          <div className={styles.studentField}>
-            <span className={styles.fieldLabel}>Факультет / Інститут</span>
-            <span className={styles.fieldValue}>{activeStudentProfile.faculty}</span>
-          </div>
-          <div className={styles.studentField}>
-            <span className={styles.fieldLabel}>Кафедра</span>
-            <span className={styles.fieldValue}>{activeStudentProfile.department}</span>
-          </div>
-          <div className={styles.studentField}>
-            <span className={styles.fieldLabel}>Курс / Академічна група</span>
-            <span className={styles.fieldValue}>
-              {activeStudentProfile.course} курс, група {activeStudentProfile.group}
-            </span>
-          </div>
-          <div className={styles.studentField}>
-            <span className={styles.fieldLabel}>Студентський квиток</span>
-            <span className={styles.fieldValue}>{activeStudentProfile.studentCardNumber}</span>
-          </div>
-          <div className={styles.studentField}>
-            <span className={styles.fieldLabel}>Залікова книжка</span>
-            <span className={styles.fieldValue}>{activeStudentProfile.recordBookNumber}</span>
-          </div>
-          <div className={styles.studentField}>
-            <span className={styles.fieldLabel}>Здобуто кредитів ECTS</span>
-            <span className={styles.fieldValue}>
-              {activeStudentProfile.totalCreditsEarned} ECTS
-            </span>
-          </div>
-          <div className={styles.studentField}>
-            <span className={styles.fieldLabel}>Рейтинговий бал (GPA)</span>
-            <span className={styles.fieldValue}>{activeStudentProfile.gpa} / 100</span>
-          </div>
-          <div className={styles.studentField}>
-            <span className={styles.fieldLabel}>Академічний статус</span>
-            <span className={styles.fieldValue} style={{ color: '#22c55e' }}>
-              ● Навчається (активний)
-            </span>
-          </div>
-        </div>
-      </section>
-
-      <div className={styles.overviewHero}>
-        <ContextualGreeting assignments={data.assignments} />
-        {nearestDeadline && (
-          <div className={styles.nearestDeadline}>
-            <span className={styles.muted}>Найближчий дедлайн: {nearestDeadline.name}</span>
-            <LiveCountdown targetUnixSec={nearestDeadline.duedate} />
-          </div>
-        )}
-      </div>
-
-      <div className={styles.statGrid}>
-        <div className={styles.statCard} style={{ animationDelay: '0ms' }}>
-          <div className={styles.statLabel}>Всього дисциплін</div>
-          <div className={styles.statValue}>
-            <BookOpen size={20} />
-            {coursesCount}
-          </div>
-        </div>
-        <div className={styles.statCard} style={{ animationDelay: '40ms' }}>
-          <div className={styles.statLabel}>Завдань до виконання</div>
-          <div className={styles.statValue}>
-            <FileEdit size={20} />
-            {assignmentsCount}
-          </div>
-        </div>
-        <div className={styles.statCard} style={{ animationDelay: '80ms' }}>
-          <div className={styles.statLabel}>Рейтинговий бал (GPA)</div>
-          <div className={styles.statValue}>
-            <GraduationCap size={20} />
-            {activeStudentProfile.gpa}
-          </div>
-        </div>
-      </div>
-
-      <AssignmentsDonut assignments={data.assignments} grades={data.grades} />
-
-      <div className={styles.split}>
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <h3>Поточні дисципліни</h3>
-            <SimpleButton
-              type="button"
-              variant="secondary"
-              size="small"
-              isTransparent
-              onClick={() => setActiveKey('courses')}
-            >
-              Всі
-            </SimpleButton>
-          </div>
-          {(data.courses.length > 0 ? data.courses : mockKarazinCurriculum).slice(0, 3).length >
-          0 ? (
-            <div className={styles.list}>
-              {(data.courses.length > 0 ? data.courses : mockKarazinCurriculum)
-                .slice(0, 3)
-                .map((course, index) => (
+        <div className={styles.split}>
+          <section className={styles.panel}>
+            <div className={styles.panelHeader}>
+              <h3>Поточні дисципліни</h3>
+              <SimpleButton
+                type="button"
+                variant="secondary"
+                size="small"
+                isTransparent
+                onClick={() => setActiveKey('courses')}
+              >
+                Всі
+              </SimpleButton>
+            </div>
+            {overviewCourses.length > 0 ? (
+              <div className={styles.list}>
+                {overviewCourses.map((course, index) => (
                   <div
                     key={course.id}
                     className={styles.listItem}
@@ -659,72 +810,31 @@ const DashboardPage: React.FC = () => {
                     </div>
                   </div>
                 ))}
-            </div>
-          ) : (
-            <Empty description="Дисципліни не знайдено" />
-          )}
-        </section>
+              </div>
+            ) : (
+              <Empty description="Дисципліни не знайдено" />
+            )}
+          </section>
 
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <h3>Найближчі події та дедлайни</h3>
-            <SimpleButton
-              type="button"
-              variant="secondary"
-              size="small"
-              isTransparent
-              onClick={() => setActiveKey('assignments')}
-            >
-              Всі
-            </SimpleButton>
-          </div>
-          {data.events.length > 0 ? (
-            <div className={styles.list}>
-              {data.events.slice(0, 4).map((event, index) => (
-                <div
-                  key={event.id}
-                  className={styles.listItem}
-                  style={{ animationDelay: `${index * 40}ms` }}
-                >
-                  <div className={styles.listTitle}>
-                    {event.url ? (
-                      <a href={event.url} target="_blank" rel="noopener noreferrer">
-                        {event.name}
-                      </a>
-                    ) : (
-                      event.name
-                    )}
-                  </div>
-                  <div
-                    className={styles.muted}
-                    dangerouslySetInnerHTML={{ __html: event.formattedtime }}
-                  />
-                </div>
-              ))}
+          <section className={styles.panel}>
+            <div className={styles.panelHeader}>
+              <h3>Найближчі події та дедлайни</h3>
+              <SimpleButton
+                type="button"
+                variant="secondary"
+                size="small"
+                isTransparent
+                onClick={() => setActiveKey('assignments')}
+              >
+                Всі
+              </SimpleButton>
             </div>
-          ) : data.assignments.length > 0 ? (
-            <div className={styles.list}>
-              {data.assignments.slice(0, 4).map((assign, index) => (
-                <div
-                  key={assign.id}
-                  className={styles.listItem}
-                  style={{ animationDelay: `${index * 40}ms` }}
-                >
-                  <div className={styles.listTitle}>{assign.name}</div>
-                  <div className={styles.muted}>
-                    {assign.courseName} • Дедлайн:{' '}
-                    {new Date(assign.duedate * 1000).toLocaleDateString('uk-UA')}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Empty description="Подій та дедлайнів не знайдено" />
-          )}
-        </section>
+            {renderUpcomingEvents()}
+          </section>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderCourses = () => {
     const coursesList = data.courses.length > 0 ? data.courses : mockKarazinCurriculum;
@@ -760,11 +870,7 @@ const DashboardPage: React.FC = () => {
                   {credits !== undefined && <Tag tone="neutral">{credits} ECTS</Tag>}
                   {controlType && (
                     <Tag tone={controlType === 'exam' ? 'info' : 'success'}>
-                      {controlType === 'exam'
-                        ? 'Іспит'
-                        : controlType === 'credit'
-                          ? 'Залік'
-                          : 'Диф. залік'}
+                      {getControlTypeLabel(controlType)}
                     </Tag>
                   )}
                 </div>
@@ -900,74 +1006,8 @@ const DashboardPage: React.FC = () => {
             <tbody>
               {validGrades.map((g: any, index: number) => {
                 const cName = getGradeCourseName(g) || g.courseName || `Дисципліна #${index + 1}`;
-                const rawVal = getGradeRawValue(g);
-                const numVal =
-                  rawVal !== null && rawVal !== undefined
-                    ? Number(rawVal)
-                    : g.totalScore !== undefined
-                      ? g.totalScore
-                      : Number.parseFloat(g.grade);
-                const totalScore =
-                  !Number.isNaN(numVal) && numVal >= 0 ? Math.min(100, Math.round(numVal)) : 0;
-                const controlType: ControlType | undefined = g.controlType;
-                const ects = calculateEctsGrade(totalScore);
-                const trad = calculateTraditionalGrade(totalScore, controlType ?? undefined);
-                const tone = getGradeTone(totalScore);
 
-                const currentScore =
-                  g.currentScore !== undefined && g.currentScore !== null
-                    ? String(g.currentScore)
-                    : '—';
-
-                const examScore =
-                  controlType === 'credit'
-                    ? '—'
-                    : g.examScore !== undefined && g.examScore !== null
-                      ? String(g.examScore)
-                      : '—';
-
-                const creditsDisplay =
-                  g.credits !== undefined && g.credits !== null ? `${g.credits} ECTS` : '—';
-
-                return (
-                  <tr key={cName + index} style={{ animationDelay: `${index * 40}ms` }}>
-                    <td>
-                      <strong>{cName}</strong>
-                    </td>
-                    <td>{creditsDisplay}</td>
-                    <td>
-                      {controlType ? (
-                        <Tag tone={controlType === 'exam' ? 'info' : 'neutral'}>
-                          {controlType === 'exam'
-                            ? 'Іспит'
-                            : controlType === 'credit'
-                              ? 'Залік'
-                              : 'Диф. залік'}
-                        </Tag>
-                      ) : (
-                        '—'
-                      )}
-                    </td>
-                    <td>{currentScore}</td>
-                    <td>{examScore}</td>
-                    <td>
-                      <div className={styles.score100Cell}>
-                        <span style={{ fontWeight: 600, minWidth: '32px' }}>{totalScore}</span>
-                        <ProgressBar
-                          value={totalScore}
-                          tone={tone}
-                          className={styles.gradeProgress}
-                        />
-                      </div>
-                    </td>
-                    <td>
-                      <Tag tone={tone}>{ects}</Tag>
-                    </td>
-                    <td>
-                      <Tag tone={totalScore >= 60 ? 'success' : 'danger'}>{trad}</Tag>
-                    </td>
-                  </tr>
-                );
+                return <GradeTableRow key={cName + index} grade={g} index={index} />;
               })}
             </tbody>
           </table>
