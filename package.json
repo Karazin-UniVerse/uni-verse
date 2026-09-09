@@ -10,6 +10,7 @@
     "lint:fix": "oxlint --fix --deny-warnings",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
+    "test:e2e": "vitest run --config tests/e2e/vitest.config.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky",
@@ -18,12 +19,17 @@
     "db:studio": "pnpm --filter @universe/backend db:studio"
   },
   "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.4.1",
     "oxlint": "^1.81.0",
     "prettier": "^3.5.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "sass-embedded": "^1.103.1",
     "turbo": "^2.10.12",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^5.0.0"
   }
 }

@@ -4,12 +4,13 @@
   "private": true,
   "scripts": {
     "lint": "oxlint",
-    "typecheck": "echo 'No typecheck yet'",
+    "typecheck": "tsc --noEmit",
     "build": "echo 'No build step for ui yet'",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
   "main": "./index.ts",
+  "types": "./index.ts",
   "exports": {
     ".": "./index.ts",
     "./una": "./components/una/index.ts",

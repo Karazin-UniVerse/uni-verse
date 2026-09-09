@@ -1,5 +1,8 @@
-packages/core
+# @universe/core
 
-Core utilities, types and shared logic used by backend and frontend. Consider publishing shared types to @universe/types here.
+Core domain types, contracts, utilities and shared logic used by backend and frontend.
 
-Placeholders for now.
+## Exports
+
+- `@universe/core`: Re-exports core modules.
+- `@universe/core/types`: Shared domain contracts, models, and grade calculation utilities.
