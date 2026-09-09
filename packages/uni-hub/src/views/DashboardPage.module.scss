@@ -686,7 +686,7 @@
   .mobileMenuBtn {
     display: flex;
   }
-  
+
   /* Hide the toggle button inside the sider on mobile, since we use overlay/hamburger */
   .brand button {
     display: none;
@@ -714,7 +714,7 @@
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-large);
-  padding: var(--space-20);
+  padding: var(--space-16);
   display: flex;
   flex-direction: column;
   gap: var(--space-16);
@@ -823,4 +823,3 @@
   gap: var(--space-8);
   min-width: 140px;
 }
-

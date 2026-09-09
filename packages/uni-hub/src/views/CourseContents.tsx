@@ -13,7 +13,7 @@ import {
   ArrowLeft,
   ChevronDown,
 } from 'lucide-react';
-import { Button as SimpleButton, Spinner, Empty, useToast } from '@universe/ui';
+import { Button as SimpleButton, Spinner, Empty, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
 import {
   COURSE_MODULE_NAMES,

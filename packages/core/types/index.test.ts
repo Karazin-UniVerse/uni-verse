@@ -173,6 +173,23 @@ describe('domain type contracts compilation verification', () => {
     assert.strictEqual(gradeRecord.ectsGrade, 'A');
   });
 
+  test('validates ungraded StudentRecordBookItem shape', () => {
+    const ungradedRecord: StudentRecordBookItem = {
+      id: 'rec-2',
+      courseId: 15,
+      courseName: 'Вища математика',
+      totalScore: null,
+      ectsGrade: null,
+      traditionalGrade: null,
+      isPassed: null,
+    };
+
+    assert.strictEqual(ungradedRecord.totalScore, null);
+    assert.strictEqual(ungradedRecord.ectsGrade, null);
+    assert.strictEqual(ungradedRecord.traditionalGrade, null);
+    assert.strictEqual(ungradedRecord.isPassed, null);
+  });
+
   test('validates AssignmentItem shape', () => {
     const assignment: AssignmentItem = {
       id: 42,

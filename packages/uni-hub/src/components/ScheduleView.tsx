@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button as SimpleButton, RadioButton, Tag, Empty } from '@universe/ui';
+import { Button as SimpleButton, RadioButton, Tag, Empty } from '@una';
 import styles from './ScheduleView.module.scss';
 
 import type { ScheduleEvent } from './ScheduleView.types';
@@ -65,27 +65,28 @@ const generateDummyEvents = (): ScheduleEvent[] => {
   ];
   const types: ScheduleEvent['type'][] = ['lecture', 'lab', 'practice', 'lecture', 'lab', 'other'];
 
-  for (let i = -15; i <= 15; i++) {
-    const currentDate = addDays(now, i);
+  for (let dayOffset = -15; dayOffset <= 15; dayOffset++) {
+    const currentDate = addDays(now, dayOffset);
 
     if (currentDate.getDay() === 0) {
       continue;
     }
 
-    const pairsCount = (Math.abs(i) % 3) + 1;
+    const pairsCount = (Math.abs(dayOffset) % 3) + 1;
 
-    for (let j = 0; j < pairsCount; j++) {
-      const pair = KARAZIN_PAIRS[j % KARAZIN_PAIRS.length];
+    for (let pairIndex = 0; pairIndex < pairsCount; pairIndex++) {
+      const pair = KARAZIN_PAIRS[pairIndex % KARAZIN_PAIRS.length];
       const start = new Date(currentDate);
 
       start.setHours(pair.startHour, pair.startMin, 0, 0);
       const end = new Date(currentDate);
 
       end.setHours(pair.endHour, pair.endMin, 0, 0);
-      const subjectIndex = (((i + j) % subjects.length) + subjects.length) % subjects.length;
+      const subjectIndex =
+        (((dayOffset + pairIndex) % subjects.length) + subjects.length) % subjects.length;
 
       events.push({
-        id: `evt-${i}-${j}`,
+        id: `evt-${dayOffset}-${pairIndex}`,
         title: subjects[subjectIndex],
         start,
         end,
@@ -326,8 +327,8 @@ export const ScheduleView: React.FC = () => {
           </SimpleButton>
         </div>
         <div className={styles.weekdays}>
-          {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((d) => (
-            <div key={d}>{d}</div>
+          {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((weekdayLabel) => (
+            <div key={weekdayLabel}>{weekdayLabel}</div>
           ))}
         </div>
         <div className={styles.monthGrid}>
