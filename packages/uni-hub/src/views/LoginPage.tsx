@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { User, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Button, TextInput, SimpleForm, useToast } from '@universe/ui';
+import { Button, TextInput, SimpleForm, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { authApi } from '@uni-hub/services/api';
 import styles from './LoginPage.module.scss';
@@ -76,7 +76,7 @@ const LoginPage: React.FC = () => {
                 size="large"
                 placeholder="Имя пользователя"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                 autoComplete="username"
               />
             </div>
@@ -92,7 +92,7 @@ const LoginPage: React.FC = () => {
                 size="large"
                 placeholder="Пароль"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 autoComplete="current-password"
               />
             </div>

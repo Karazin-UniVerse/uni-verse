@@ -7,16 +7,8 @@ import {
   getValidGrades,
 } from '@uni-hub/utils/grades';
 import { useCountUp } from '@uni-hub/hooks/useCountUp';
-import {
-  Modal,
-  Select,
-  Empty,
-  ProgressBar,
-  Button as SimpleButton,
-  SimpleSlider,
-  Tag,
-} from '@universe/ui';
-import { calculateEctsGrade, calculateTraditionalGrade } from '@universe/core/types';
+import { Modal, Select, Empty, ProgressBar, Button as SimpleButton, SimpleSlider, Tag } from '@una';
+import { calculateEctsGrade, calculateTraditionalGrade } from '@core/types';
 import styles from './GradeSimulator.module.scss';
 
 const DEFAULT_SCORE = 75;
@@ -116,8 +108,9 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
   );
 
   const finalScore = computeSimulatedFinal(currentScore, remainingValues);
-  const animatedFinal = useCountUp(Math.round(finalScore), 400, open);
-  const tone = getGradeTone(finalScore);
+  const roundedFinalScore = Math.round(finalScore);
+  const animatedFinal = useCountUp(roundedFinalScore, 400, open);
+  const tone = getGradeTone(roundedFinalScore);
 
   const setScore = (id: number, value: number) => {
     setScores((previousScores) => ({ ...previousScores, [id]: clampScore(value) }));
@@ -154,10 +147,15 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
               }}
             >
               <span>{animatedFinal} / 100</span>
-              <Tag tone={tone}>ECTS: {calculateEctsGrade(finalScore)}</Tag>
-              <Tag tone="neutral">{calculateTraditionalGrade(finalScore)}</Tag>
+              <Tag tone={tone}>ECTS: {calculateEctsGrade(roundedFinalScore)}</Tag>
+              <Tag tone="neutral">
+                {calculateTraditionalGrade(
+                  roundedFinalScore,
+                  currentGrade?.controlType ?? undefined,
+                )}
+              </Tag>
             </div>
-            <ProgressBar value={finalScore} tone={tone} />
+            <ProgressBar value={roundedFinalScore} tone={tone} />
           </div>
 
           {remaining.length === 0 ? (
@@ -179,7 +177,7 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
                       min={MIN_SCORE}
                       max={MAX_SCORE}
                       value={value}
-                      onChange={(score) => setScore(assignment.id, score)}
+                      onChange={(score: number) => setScore(assignment.id, score)}
                     />
                   </label>
                 );
