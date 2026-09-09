@@ -1,5 +1,5 @@
-export * from './ScheduleView';
-export * from './ScheduleView.types';
-export { default as AssignmentModal } from './AssignmentModal';
-export { AssignmentsDonut } from './AssignmentsDonut';
-export { GradesChart } from './GradesChart';
+export * from './assignments';
+export * from './dashboard';
+export * from './gamification';
+export * from './grades';
+export * from './schedule';
