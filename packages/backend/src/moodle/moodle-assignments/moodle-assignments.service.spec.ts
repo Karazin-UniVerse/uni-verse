@@ -88,6 +88,7 @@ describe('MoodleAssignmentsService', () => {
         },
         feedback: { grade: { grade: 'Passed' } },
       });
+
       const result = await service.getSubmissionStatus('token', 'id', 1);
 
       expect(result.status).toBe('graded');
@@ -101,6 +102,7 @@ describe('MoodleAssignmentsService', () => {
           submission: { status: 'submitted' },
         },
       });
+
       const result = await service.getSubmissionStatus('token', 'id', 1);
 
       expect(result.status).toBe('submitted');

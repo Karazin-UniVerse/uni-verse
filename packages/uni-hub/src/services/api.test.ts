@@ -15,15 +15,15 @@ describe('UniHub API Service', () => {
     // Mock global localStorage
     vi.stubGlobal('localStorage', {
       getItem: vi.fn((key: string) => mockStorage[key] ?? null),
-      setItem: vi.fn((key: string, val: string) => {
-        mockStorage[key] = val;
+      setItem: vi.fn((key: string, value: string) => {
+        mockStorage[key] = value;
       }),
       removeItem: vi.fn((key: string) => {
         delete mockStorage[key];
       }),
       clear: vi.fn(() => {
-        for (const k of Object.keys(mockStorage)) {
-          delete mockStorage[k];
+        for (const storageKey of Object.keys(mockStorage)) {
+          delete mockStorage[storageKey];
         }
       }),
     });
@@ -104,9 +104,9 @@ describe('UniHub API Service', () => {
         json: async () => mockCourses,
       } as Response);
 
-      const res = await moodleApi.getCourses();
+      const response = await moodleApi.getCourses();
 
-      expect(res.data).toEqual(mockCourses);
+      expect(response.data).toEqual(mockCourses);
       expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain('/moodle/courses');
     });
 
@@ -118,9 +118,9 @@ describe('UniHub API Service', () => {
         json: async () => mockGrades,
       } as Response);
 
-      const res = await moodleApi.getGrades();
+      const response = await moodleApi.getGrades();
 
-      expect(res.data).toEqual(mockGrades);
+      expect(response.data).toEqual(mockGrades);
       expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain('/moodle/grades');
     });
 

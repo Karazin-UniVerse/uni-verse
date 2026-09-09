@@ -1,4 +1,4 @@
-﻿import { Test, TestingModule } from '@nestjs/testing';
+import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
@@ -58,14 +58,14 @@ describe('AuthController', () => {
         email: 'test@student.karazin.ua',
         password: 'Password123!',
       };
-      const res = createMockResponse();
+      const response = createMockResponse();
 
       authService.register.mockResolvedValue(mockTokens);
 
-      const result = await controller.register(dto, res);
+      const result = await controller.register(dto, response);
 
       expect(authService.register).toHaveBeenCalledWith(dto);
-      expect(res.cookie).toHaveBeenCalledWith(
+      expect(response.cookie).toHaveBeenCalledWith(
         'refreshToken',
         mockTokens.refresh_token,
         expect.objectContaining({
@@ -84,14 +84,14 @@ describe('AuthController', () => {
         email: 'student@student.karazin.ua',
         password: 'ValidPassword123',
       };
-      const res = createMockResponse();
+      const response = createMockResponse();
 
       authService.login.mockResolvedValue(mockTokens);
 
-      const result = await controller.login(dto, res);
+      const result = await controller.login(dto, response);
 
       expect(authService.login).toHaveBeenCalledWith(dto);
-      expect(res.cookie).toHaveBeenCalledWith(
+      expect(response.cookie).toHaveBeenCalledWith(
         'refreshToken',
         mockTokens.refresh_token,
         expect.objectContaining({
@@ -106,14 +106,14 @@ describe('AuthController', () => {
   describe('logout', () => {
     it('should logout user, clear cookie, and return confirmation message', async () => {
       const userId = 'user-uuid-123';
-      const res = createMockResponse();
+      const response = createMockResponse();
 
       authService.logout.mockResolvedValue(undefined as any);
 
-      const result = await controller.logout(userId, res);
+      const result = await controller.logout(userId, response);
 
       expect(authService.logout).toHaveBeenCalledWith(userId);
-      expect(res.clearCookie).toHaveBeenCalledWith('refreshToken');
+      expect(response.clearCookie).toHaveBeenCalledWith('refreshToken');
       expect(result).toEqual({ message: 'Logged out successfully' });
     });
   });
@@ -122,7 +122,7 @@ describe('AuthController', () => {
     it('should refresh tokens, set new refresh cookie, and return new access token', async () => {
       const userId = 'user-uuid-123';
       const refreshToken = 'current-refresh-token';
-      const res = createMockResponse();
+      const response = createMockResponse();
 
       const newTokens = {
         access_token: 'new-access-token',
@@ -131,13 +131,17 @@ describe('AuthController', () => {
 
       authService.refreshTokens.mockResolvedValue(newTokens);
 
-      const result = await controller.refreshTokens(userId, refreshToken, res);
+      const result = await controller.refreshTokens(
+        userId,
+        refreshToken,
+        response,
+      );
 
       expect(authService.refreshTokens).toHaveBeenCalledWith(
         userId,
         refreshToken,
       );
-      expect(res.cookie).toHaveBeenCalledWith(
+      expect(response.cookie).toHaveBeenCalledWith(
         'refreshToken',
         newTokens.refresh_token,
         expect.objectContaining({

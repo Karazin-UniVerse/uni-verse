@@ -99,17 +99,17 @@ describe('Tier 3 - Non-Moodle Platform & Core Integration Suite', () => {
         },
       ];
 
-      for (const tc of testCases) {
-        const ects = core.calculateEctsGrade(tc.score);
-        const examTrad = core.calculateTraditionalGrade(tc.score, 'exam');
-        const creditTrad = core.calculateTraditionalGrade(tc.score, 'credit');
+      for (const testCase of testCases) {
+        const ects = core.calculateEctsGrade(testCase.score);
+        const examTrad = core.calculateTraditionalGrade(testCase.score, 'exam');
+        const creditTrad = core.calculateTraditionalGrade(testCase.score, 'credit');
 
-        expect(ects).toBe(tc.expectedEcts);
-        expect(ects).toBe(oracleCalculateEctsGrade(tc.score));
-        expect(examTrad).toBe(tc.expectedExam);
-        expect(examTrad).toBe(oracleCalculateTraditionalGrade(tc.score, 'exam'));
-        expect(creditTrad).toBe(tc.expectedCredit);
-        expect(creditTrad).toBe(oracleCalculateTraditionalGrade(tc.score, 'credit'));
+        expect(ects).toBe(testCase.expectedEcts);
+        expect(ects).toBe(oracleCalculateEctsGrade(testCase.score));
+        expect(examTrad).toBe(testCase.expectedExam);
+        expect(examTrad).toBe(oracleCalculateTraditionalGrade(testCase.score, 'exam'));
+        expect(creditTrad).toBe(testCase.expectedCredit);
+        expect(creditTrad).toBe(oracleCalculateTraditionalGrade(testCase.score, 'credit'));
       }
     });
 
@@ -151,16 +151,16 @@ describe('Tier 3 - Non-Moodle Platform & Core Integration Suite', () => {
       let weightedScoreSum = 0;
       let totalCredits = 0;
 
-      const processedBook = termCourses.map((c) => {
-        const ects = core.calculateEctsGrade(c.score);
-        const traditional = core.calculateTraditionalGrade(c.score, c.controlType);
-        const isPassed = c.score >= 60;
+      const processedBook = termCourses.map((course) => {
+        const ects = core.calculateEctsGrade(course.score);
+        const traditional = core.calculateTraditionalGrade(course.score, course.controlType);
+        const isPassed = course.score >= 60;
 
-        weightedScoreSum += c.score * c.credits;
-        totalCredits += c.credits;
+        weightedScoreSum += course.score * course.credits;
+        totalCredits += course.credits;
 
         return {
-          ...c,
+          ...course,
           ects,
           traditional,
           isPassed,
@@ -171,9 +171,11 @@ describe('Tier 3 - Non-Moodle Platform & Core Integration Suite', () => {
 
       expect(totalCredits).toBe(18);
       expect(termGpa).toBe(85);
-      expect(processedBook.every((c) => c.isPassed)).toBe(true);
-      expect(processedBook.find((c) => c.code === 'CS301')?.ects).toBe('A');
-      expect(processedBook.find((c) => c.code === 'CS304')?.traditional).toBe('зараховано');
+      expect(processedBook.every((course) => course.isPassed)).toBe(true);
+      expect(processedBook.find((course) => course.code === 'CS301')?.ects).toBe('A');
+      expect(processedBook.find((course) => course.code === 'CS304')?.traditional).toBe(
+        'зараховано',
+      );
     });
   });
 

@@ -25,9 +25,9 @@ describe('AuthController (HTTP Integration / E2E)', () => {
         }
 
         if (where.email) {
-          for (const u of mockUsers.values()) {
-            if (u.email === where.email) {
-              return u;
+          for (const user of mockUsers.values()) {
+            if (user.email === where.email) {
+              return user;
             }
           }
         }
@@ -35,9 +35,9 @@ describe('AuthController (HTTP Integration / E2E)', () => {
         return null;
       }),
       findFirst: jest.fn().mockImplementation(async ({ where }) => {
-        for (const u of mockUsers.values()) {
-          if (where.moodleId && u.moodleId === where.moodleId) {
-            return u;
+        for (const user of mockUsers.values()) {
+          if (where.moodleId && user.moodleId === where.moodleId) {
+            return user;
           }
         }
 
@@ -92,8 +92,8 @@ describe('AuthController (HTTP Integration / E2E)', () => {
     getBaseUrl: jest.fn().mockReturnValue('https://moodle.karazin.ua'),
     getToken: jest
       .fn()
-      .mockImplementation(async (email: string, pass: string) => {
-        if (pass === 'invalid-creds') {
+      .mockImplementation(async (email: string, password: string) => {
+        if (password === 'invalid-creds') {
           throw new Error('Invalid credentials');
         }
 
@@ -150,7 +150,9 @@ describe('AuthController (HTTP Integration / E2E)', () => {
         string[] | undefined;
 
       expect(cookies).toBeDefined();
-      expect(cookies?.some((c) => c.startsWith('refreshToken='))).toBe(true);
+      expect(
+        cookies?.some((cookie) => cookie.startsWith('refreshToken=')),
+      ).toBe(true);
     });
 
     it('should reject registration when email format is invalid', async () => {
@@ -209,7 +211,9 @@ describe('AuthController (HTTP Integration / E2E)', () => {
       const cookies = res.headers['set-cookie'] as unknown as
         string[] | undefined;
 
-      expect(cookies?.some((c) => c.startsWith('refreshToken='))).toBe(true);
+      expect(
+        cookies?.some((cookie) => cookie.startsWith('refreshToken=')),
+      ).toBe(true);
     });
 
     it('should reject login if credentials fail validation with 403', async () => {
@@ -251,8 +255,8 @@ describe('AuthController (HTTP Integration / E2E)', () => {
       const rawCookies = registerRes.headers[
         'set-cookie'
       ] as unknown as string[];
-      const refreshCookie = rawCookies.find((c) =>
-        c.startsWith('refreshToken='),
+      const refreshCookie = rawCookies.find((cookie) =>
+        cookie.startsWith('refreshToken='),
       );
 
       expect(refreshCookie).toBeDefined();

@@ -17,12 +17,12 @@ describe('AppController (e2e)', () => {
   });
 
   it('/ (GET)', async () => {
-    const res = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer())
       .get('/')
       .expect(200)
       .expect('Hello World!');
 
-    expect(res.text).toBe('Hello World!');
+    expect(response.text).toBe('Hello World!');
   });
 
   afterEach(async () => {

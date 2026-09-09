@@ -276,13 +276,31 @@ describe('AuthService', () => {
 
   describe('getTokens secrets verification', () => {
     it('should throw Error if JWT secrets are placeholders or missing', async () => {
+      // AT_SECRET placeholder
       process.env.AT_SECRET = 'your-access-token-secret-key';
+      process.env.RT_SECRET = 'valid-production-rt-secret';
 
       await expect(
         authService.getTokens('u1', 'test@example.com'),
       ).rejects.toThrow('JWT secrets are not configured securely');
 
+      // AT_SECRET missing
       delete process.env.AT_SECRET;
+
+      await expect(
+        authService.getTokens('u1', 'test@example.com'),
+      ).rejects.toThrow('JWT secrets are not configured securely');
+
+      // RT_SECRET placeholder
+      process.env.AT_SECRET = 'valid-production-at-secret';
+      process.env.RT_SECRET = 'your-refresh-token-secret-key';
+
+      await expect(
+        authService.getTokens('u1', 'test@example.com'),
+      ).rejects.toThrow('JWT secrets are not configured securely');
+
+      // RT_SECRET missing
+      delete process.env.RT_SECRET;
 
       await expect(
         authService.getTokens('u1', 'test@example.com'),

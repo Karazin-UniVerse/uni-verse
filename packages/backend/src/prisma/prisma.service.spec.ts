@@ -25,6 +25,18 @@ describe('PrismaService', () => {
     const fallbackService = new PrismaService();
 
     expect(fallbackService).toBeDefined();
+
+    const adapterConfig = (
+      fallbackService as unknown as {
+        _engineConfig?: {
+          adapter?: { config?: { connectionString?: string } };
+        };
+      }
+    )._engineConfig?.adapter?.config;
+
+    expect(adapterConfig?.connectionString).toBe(
+      'postgresql://postgres:postgres@localhost:5432/postgres',
+    );
   });
 
   describe('onModuleInit', () => {
