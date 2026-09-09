@@ -19,7 +19,7 @@ export function buildQueryString(params?: Record<string, unknown>): string {
 }
 export function isSecureOrLoopback(targetUrl: string): boolean {
   try {
-    const fallbackOrigin = isBrowser ? window.location.origin : 'http://localhost';
+    const fallbackOrigin = isBrowser ? window.location.origin : '';
     const parsed = new URL(targetUrl, fallbackOrigin);
 
     return (
