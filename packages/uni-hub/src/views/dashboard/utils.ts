@@ -19,14 +19,29 @@ export function stripHtml(html?: string | null): string {
     return '';
   }
 
-  return html
-    .replace(/<[^>]*>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#039;|&#39;/g, "'")
+  let insideTag = false;
+  let cleanText = '';
+
+  for (let charIndex = 0; charIndex < html.length; charIndex += 1) {
+    const character = html[charIndex];
+
+    if (character === '<') {
+      insideTag = true;
+    } else if (character === '>') {
+      insideTag = false;
+    } else if (!insideTag) {
+      cleanText += character;
+    }
+  }
+
+  return cleanText
+    .replaceAll('&nbsp;', ' ')
+    .replaceAll('&amp;', '&')
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#039;', "'")
+    .replaceAll('&#39;', "'")
     .trim();
 }
 
