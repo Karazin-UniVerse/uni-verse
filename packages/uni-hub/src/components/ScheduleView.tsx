@@ -45,17 +45,20 @@ const KARAZIN_PAIRS = [
   { startHour: 15, startMin: 50, endHour: 17, endMin: 25, label: '5 пара (15:50 – 17:25)' },
 ];
 
-const generateDummyEvents = (): ScheduleEvent[] => {
+const generateDummyEvents = (customSubjects?: string[]): ScheduleEvent[] => {
   const events: ScheduleEvent[] = [];
   const now = new Date();
-  const subjects = [
-    'Паралельні та розподілені обчислення',
-    'Алгоритми та структури даних',
-    'Організація баз даних',
-    'Архітектура компʼютерів',
-    'Іноземна мова за профспрямуванням',
-    'Дискретна математика',
-  ];
+  const subjects =
+    customSubjects && customSubjects.length > 0
+      ? customSubjects
+      : [
+          'Паралельні та розподілені обчислення',
+          'Алгоритми та структури даних',
+          'Організація баз даних',
+          'Архітектура компʼютерів',
+          'Іноземна мова за профспрямуванням',
+          'Дискретна математика',
+        ];
   const locations = [
     'Ауд. 6-45 (Головний корпус)',
     'Компʼютерний клас 3-12',
@@ -106,7 +109,7 @@ const generateDummyEvents = (): ScheduleEvent[] => {
 
   events.push({
     id: 'evt-exam',
-    title: 'Іспит: Паралельні та розподілені обчислення',
+    title: `Іспит: ${subjects[0]}`,
     start: examStart,
     end: examEnd,
     type: 'exam',
@@ -115,8 +118,6 @@ const generateDummyEvents = (): ScheduleEvent[] => {
 
   return events;
 };
-
-const DUMMY_EVENTS = generateDummyEvents();
 
 const exportToICS = (events: ScheduleEvent[]) => {
   const formatDateICS = (date: Date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -177,7 +178,11 @@ const getTypeTone = (type: string): 'info' | 'warning' | 'success' | 'danger' | 
   }
 };
 
-export const ScheduleView: React.FC = () => {
+export interface ScheduleViewProps {
+  courses?: Array<{ id?: number; fullname?: string; name?: string; shortname?: string }>;
+}
+
+export const ScheduleView: React.FC<ScheduleViewProps> = ({ courses }) => {
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
   const [selectedDate, setSelectedDate] = useState(() => {
     const d = new Date();
@@ -187,10 +192,24 @@ export const ScheduleView: React.FC = () => {
     return d;
   });
 
+  const activeEvents = useMemo(() => {
+    if (courses && courses.length > 0) {
+      const subjectNames = courses
+        .map((c) => c.fullname || c.name || c.shortname || '')
+        .filter(Boolean);
+
+      if (subjectNames.length > 0) {
+        return generateDummyEvents(subjectNames);
+      }
+    }
+
+    return generateDummyEvents();
+  }, [courses]);
+
   const getEventsForDate = (date: Date) =>
-    DUMMY_EVENTS.filter((e) => isSameDay(e.start, date)).sort(
-      (a, b) => a.start.getTime() - b.start.getTime(),
-    );
+    activeEvents
+      .filter((e) => isSameDay(e.start, date))
+      .sort((a, b) => a.start.getTime() - b.start.getTime());
 
   const monthDays = useMemo(() => {
     const year = selectedDate.getFullYear();
@@ -391,7 +410,7 @@ export const ScheduleView: React.FC = () => {
           type="button"
           variant="primary"
           size="medium"
-          onClick={() => exportToICS(DUMMY_EVENTS)}
+          onClick={() => exportToICS(activeEvents)}
         >
           <Download size={16} /> Експорт у iCal
         </SimpleButton>

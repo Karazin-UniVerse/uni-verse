@@ -17,7 +17,6 @@ import {
   VolumeX,
   Menu,
   GraduationCap,
-  Award,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -38,6 +37,11 @@ import {
   type ControlType,
   calculateEctsGrade,
   calculateTraditionalGrade,
+  calculateWeightedGpa,
+  resolveStudentProfile,
+  enrichMoodleCourse,
+  generateStudentGradeRecords,
+  DEFAULT_STUDENT_PROFILE,
 } from '@core/types';
 import type {
   Course,
@@ -124,6 +128,22 @@ function getExamScoreDisplay(
   return String(examScore);
 }
 
+function getCourseSummary(course: Course | CurriculumItem): string {
+  const rawSummary = (course as any).summary;
+
+  if (typeof rawSummary === 'string' && rawSummary.trim().length > 0) {
+    return rawSummary;
+  }
+
+  const desc = (course as CurriculumItem).description;
+
+  if (typeof desc === 'string' && desc.trim().length > 0) {
+    return desc;
+  }
+
+  return 'Навчальна дисципліна індивідуального плану';
+}
+
 interface GradeTableRowProps {
   grade: any;
   index: number;
@@ -180,28 +200,7 @@ const GradeTableRow: React.FC<GradeTableRowProps> = ({ grade, index }) => {
 };
 
 // NOTE(#65): api-provided profile will replace this fallback once the endpoint exists.
-const fallbackStudentProfile: StudentProfile = {
-  id: 'karazin-student-001',
-  moodleId: 4021,
-  fullName: 'Барсуков Родіон Сергійович',
-  email: 'rodion.barsukov@karazin.ua',
-  avatarUrl: 'https://moodle.universemvp.tech/user/pix.php/4021/f1.jpg',
-  studentCardNumber: 'KB-10293847',
-  recordBookNumber: 'ЗК-2024-042',
-  faculty: 'ННІ Компʼютерних наук та штучного інтелекту',
-  department: 'Кафедра математичного моделювання та аналізу даних',
-  specialty: '122 Компʼютерні науки',
-  educationalProgram: 'Компʼютерні науки та інтелектуальні системи',
-  degree: 'bachelor',
-  course: 3,
-  group: 'КС12',
-  studyForm: 'full-time',
-  financing: 'budget',
-  status: 'active',
-  gpa: 92.4,
-  totalCreditsEarned: 120,
-  academicStanding: 'honors',
-};
+const fallbackStudentProfile: StudentProfile = DEFAULT_STUDENT_PROFILE;
 
 const mockKarazinCurriculum: CurriculumItem[] = [
   {
@@ -412,6 +411,25 @@ const DashboardPage: React.FC = () => {
       .sort((a, b) => a.duedate - b.duedate)[0];
   }, [data.assignments, nowMs]);
 
+  const currentGradeRecords = useMemo(() => {
+    const rawValid = getValidGrades(data.grades);
+
+    if (rawValid.length > 0) {
+      return rawValid;
+    }
+
+    return generateStudentGradeRecords(
+      data.courses.length > 0 ? data.courses : mockKarazinCurriculum,
+      activeStudentProfile,
+    );
+  }, [data.grades, data.courses, activeStudentProfile]);
+
+  const ratingScore = useMemo(() => {
+    const computed = calculateWeightedGpa(currentGradeRecords as any);
+
+    return computed ?? activeStudentProfile.gpa;
+  }, [currentGradeRecords, activeStudentProfile.gpa]);
+
   const fetchData = async () => {
     setLoading(true);
 
@@ -478,15 +496,35 @@ const DashboardPage: React.FC = () => {
     }
 
     const savedUser = localStorage.getItem('username');
+    const savedEmail = localStorage.getItem('userEmail');
+    const savedMoodleId = localStorage.getItem('moodleId');
 
-    if (savedUser && savedUser !== fallbackStudentProfile.fullName) {
-      setStudentProfile({
-        ...fallbackStudentProfile,
-        fullName: savedUser,
-        email: savedUser.includes('@') ? savedUser : `${savedUser}@karazin.ua`,
-      });
+    let tokenEmail: string | undefined;
+    let tokenMoodleId: string | undefined;
+    const token = localStorage.getItem('accessToken');
+
+    if (token) {
+      try {
+        const parts = token.split('.');
+
+        if (parts[1]) {
+          const payload = JSON.parse(atob(parts[1]));
+
+          tokenEmail = payload.email;
+          tokenMoodleId = payload.moodleId ? String(payload.moodleId) : undefined;
+        }
+      } catch {
+        // ignore
+      }
     }
 
+    const resolved = resolveStudentProfile({
+      email: savedEmail || tokenEmail,
+      username: savedUser,
+      moodleId: savedMoodleId || tokenMoodleId,
+    });
+
+    setStudentProfile(resolved);
     checkIn();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
@@ -616,10 +654,10 @@ const DashboardPage: React.FC = () => {
   ];
 
   const renderOverview = () => {
-    const overviewCourses = (data.courses.length > 0 ? data.courses : mockKarazinCurriculum).slice(
-      0,
-      3,
-    );
+    const rawCourses = data.courses.length > 0 ? data.courses : mockKarazinCurriculum;
+    const overviewCourses = rawCourses
+      .slice(0, 3)
+      .map((c) => enrichMoodleCourse(c, activeStudentProfile.course));
 
     const renderUpcomingEvents = () => {
       if (data.events.length > 0) {
@@ -693,10 +731,6 @@ const DashboardPage: React.FC = () => {
               <Tag tone="warning">Демо-дані</Tag>
               <Tag tone="success">Денна форма</Tag>
               <Tag tone="info">Бюджет</Tag>
-              <Tag tone="success">
-                <Award size={12} style={{ marginRight: 4 }} />
-                Відмінник (Академічна стипендія)
-              </Tag>
             </div>
           </div>
 
@@ -736,7 +770,7 @@ const DashboardPage: React.FC = () => {
             </div>
             <div className={styles.studentField}>
               <span className={styles.fieldLabel}>Рейтинговий бал (GPA)</span>
-              <span className={styles.fieldValue}>{activeStudentProfile.gpa} / 100</span>
+              <span className={styles.fieldValue}>{ratingScore} / 100</span>
             </div>
             <div className={styles.studentField}>
               <span className={styles.fieldLabel}>Академічний статус</span>
@@ -840,7 +874,8 @@ const DashboardPage: React.FC = () => {
   };
 
   const renderCourses = () => {
-    const coursesList = data.courses.length > 0 ? data.courses : mockKarazinCurriculum;
+    const rawCourses = data.courses.length > 0 ? data.courses : mockKarazinCurriculum;
+    const coursesList = rawCourses.map((c) => enrichMoodleCourse(c, activeStudentProfile.course));
 
     return (
       <div className={styles.courseGrid}>
@@ -883,11 +918,7 @@ const DashboardPage: React.FC = () => {
                   Викладач: <strong>{instructor}</strong>
                 </div>
               )}
-              <p className={styles.courseSummary}>
-                {'summary' in course && course.summary
-                  ? course.summary
-                  : 'Навчальна дисципліна індивідуального плану'}
-              </p>
+              <p className={styles.courseSummary}>{getCourseSummary(course)}</p>
               {progress !== undefined && progress !== null && (
                 <div style={{ margin: 'var(--space-12) 0' }}>
                   <div
@@ -924,66 +955,7 @@ const DashboardPage: React.FC = () => {
   };
 
   const renderGrades = () => {
-    const rawValidGrades = getValidGrades(data.grades);
-    const validGrades =
-      rawValidGrades.length > 0
-        ? rawValidGrades
-        : [
-            {
-              courseName: 'Паралельні та розподілені обчислення',
-              credits: 5,
-              currentScore: 56,
-              examScore: 38,
-              totalScore: 94,
-              controlType: 'exam',
-              grade: '94',
-            },
-            {
-              courseName: 'Алгоритми та структури даних',
-              credits: 5,
-              currentScore: 52,
-              examScore: 39,
-              totalScore: 91,
-              controlType: 'exam',
-              grade: '91',
-            },
-            {
-              courseName: 'Організація баз даних',
-              credits: 4,
-              currentScore: 48,
-              examScore: 34,
-              totalScore: 82,
-              controlType: 'exam',
-              grade: '82',
-            },
-            {
-              courseName: 'Архітектура компʼютерів',
-              credits: 4,
-              currentScore: 45,
-              examScore: 32,
-              totalScore: 77,
-              controlType: 'differentiated_credit',
-              grade: '77',
-            },
-            {
-              courseName: 'Іноземна мова за профспрямуванням',
-              credits: 3,
-              currentScore: 85,
-              examScore: null,
-              totalScore: 85,
-              controlType: 'credit',
-              grade: '85',
-            },
-            {
-              courseName: 'Фізичне виховання',
-              credits: 2,
-              currentScore: 75,
-              examScore: null,
-              totalScore: 75,
-              controlType: 'credit',
-              grade: '75',
-            },
-          ];
+    const validGrades = currentGradeRecords;
 
     return (
       <div className={styles.gradesStack}>
@@ -1123,7 +1095,9 @@ const DashboardPage: React.FC = () => {
       case 'grades':
         return renderGrades();
       case 'schedule':
-        return <ScheduleView />;
+        return (
+          <ScheduleView courses={data.courses.length > 0 ? data.courses : mockKarazinCurriculum} />
+        );
       case 'assignments':
         return renderAssignments();
       default:

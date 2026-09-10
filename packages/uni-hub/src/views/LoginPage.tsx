@@ -8,6 +8,13 @@ import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { authApi } from '@uni-hub/services/api';
 import styles from './LoginPage.module.scss';
 
+function extractErrorMessage(err: unknown): string {
+  const responseData = (err as { response?: { data?: { error?: string; message?: string } } })
+    ?.response?.data;
+
+  return responseData?.message || responseData?.error || 'Помилка входу. Перевірте облікові дані.';
+}
+
 const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
@@ -20,13 +27,13 @@ const LoginPage: React.FC = () => {
     setError('');
 
     if (!username.trim()) {
-      setError('Пожалуйста, введите имя пользователя');
+      setError('Будь ласка, введіть імʼя користувача або email');
 
       return;
     }
 
     if (!password) {
-      setError('Пожалуйста, введите пароль');
+      setError('Будь ласка, введіть пароль');
 
       return;
     }
@@ -36,8 +43,7 @@ const LoginPage: React.FC = () => {
     try {
       const res = await authApi.login(username, password);
 
-      toast.success('Вход выполнен успешно');
-      localStorage.setItem('isLoggedIn', 'true');
+      toast.success('Вхід виконано успішно');
 
       if (res.data?.token) {
         localStorage.setItem('moodleToken', res.data.token);
@@ -45,11 +51,7 @@ const LoginPage: React.FC = () => {
 
       router.push('/');
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
-        'Ошибка входа. Проверьте учетные данные.';
-
-      toast.error(message);
+      toast.error(extractErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -64,17 +66,17 @@ const LoginPage: React.FC = () => {
         <SimpleForm variant="card" className={styles.card} action={handleLogin}>
           <div className={styles.brand}>
             <h1>UNiVerse</h1>
-            <p>Войдите в свой аккаунт Moodle</p>
+            <p>Увійдіть у свій акаунт Moodle</p>
           </div>
 
           <label className={styles.field}>
-            <span className={styles.label}>Имя пользователя</span>
+            <span className={styles.label}>Імʼя користувача або корпоративний email</span>
             <div className={styles.inputWrap}>
               <User size={16} className={styles.icon} />
               <TextInput
                 name="username"
                 size="large"
-                placeholder="Имя пользователя"
+                placeholder="melnyk.bogdan@student.karazin.ua"
                 value={username}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                 autoComplete="username"
@@ -90,7 +92,7 @@ const LoginPage: React.FC = () => {
                 name="password"
                 type="password"
                 size="large"
-                placeholder="Пароль"
+                placeholder="Введіть пароль"
                 value={password}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 autoComplete="current-password"
@@ -107,7 +109,7 @@ const LoginPage: React.FC = () => {
             disabled={loading}
             className={styles.submit}
           >
-            {loading ? 'Вход...' : 'Войти'}
+            {loading ? 'Вхід...' : 'Увійти'}
           </Button>
         </SimpleForm>
       </div>

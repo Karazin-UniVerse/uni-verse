@@ -141,6 +141,50 @@ async function request<T>(
   throw new Error('Request failed');
 }
 
+function parseJwtPayload(token: string): Record<string, any> | null {
+  try {
+    const parts = token.split('.');
+
+    if (parts[1]) {
+      return JSON.parse(atob(parts[1]));
+    }
+  } catch {
+    // ignore
+  }
+
+  return null;
+}
+
+function persistUserSession(accessToken: string, emailOrUsername: string): void {
+  const cleanUsername = emailOrUsername.trim();
+  const userEmail = cleanUsername.includes('@')
+    ? cleanUsername
+    : `${cleanUsername}@student.karazin.ua`;
+
+  localStorage.setItem('accessToken', accessToken);
+  localStorage.setItem('isLoggedIn', 'true');
+  localStorage.setItem('username', cleanUsername);
+  localStorage.setItem('userEmail', userEmail);
+
+  const payload = parseJwtPayload(accessToken);
+
+  if (!payload) {
+    return;
+  }
+
+  if (payload.email) {
+    localStorage.setItem('userEmail', payload.email);
+  }
+
+  if (payload.moodleId) {
+    localStorage.setItem('moodleId', String(payload.moodleId));
+  }
+
+  if (payload.moodleToken) {
+    localStorage.setItem('moodleToken', payload.moodleToken);
+  }
+}
+
 export class AuthApi {
   async login(email: string, password: string): Promise<{ data: AuthResponse }> {
     const response = await request<AuthResponse>('/auth/login', {
@@ -149,8 +193,7 @@ export class AuthApi {
     });
 
     if (response.data?.access_token) {
-      localStorage.setItem('accessToken', response.data.access_token);
-      localStorage.setItem('isLoggedIn', 'true');
+      persistUserSession(response.data.access_token, email);
     }
 
     return response;
@@ -162,6 +205,10 @@ export class AuthApi {
     } finally {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('username');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('moodleId');
+      localStorage.removeItem('moodleToken');
     }
   }
 }
