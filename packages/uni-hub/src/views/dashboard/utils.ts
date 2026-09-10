@@ -22,9 +22,7 @@ export function stripHtml(html?: string | null): string {
   let insideTag = false;
   let cleanText = '';
 
-  for (let charIndex = 0; charIndex < html.length; charIndex += 1) {
-    const character = html[charIndex];
-
+  for (const character of html) {
     if (character === '<') {
       insideTag = true;
     } else if (character === '>') {
