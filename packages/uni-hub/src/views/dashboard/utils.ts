@@ -14,11 +14,27 @@ export function getControlTypeLabel(controlType: ControlType): string {
   }
 }
 
-export function parseGradeScore(gradeItem: any): number {
-  const rawVal = getGradeRawValue(gradeItem);
+export function stripHtml(html?: string | null): string {
+  if (!html) {
+    return '';
+  }
 
-  if (rawVal !== null && rawVal !== undefined) {
-    const parsed = Number(rawVal);
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;|&#39;/g, "'")
+    .trim();
+}
+
+export function parseGradeScore(gradeItem: any): number {
+  const rawValue = getGradeRawValue(gradeItem);
+
+  if (rawValue !== null && rawValue !== undefined) {
+    const parsed = Number(rawValue);
 
     return !Number.isNaN(parsed) && parsed >= 0 ? Math.min(100, Math.round(parsed)) : 0;
   }

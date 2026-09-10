@@ -17,11 +17,11 @@ interface GradeTableRowProps {
 }
 
 const GradeTableRow: React.FC<GradeTableRowProps> = ({ grade, index }) => {
-  const cName = getGradeCourseName(grade) || grade.courseName || `Дисципліна #${index + 1}`;
+  const courseName = getGradeCourseName(grade) || grade.courseName || `Дисципліна #${index + 1}`;
   const totalScore = parseGradeScore(grade);
   const controlType: ControlType | undefined = grade.controlType;
   const ects = calculateEctsGrade(totalScore);
-  const trad = calculateTraditionalGrade(totalScore, controlType ?? undefined);
+  const traditionalGrade = calculateTraditionalGrade(totalScore, controlType ?? undefined);
   const tone = getGradeTone(totalScore);
 
   const currentScore =
@@ -36,7 +36,7 @@ const GradeTableRow: React.FC<GradeTableRowProps> = ({ grade, index }) => {
   return (
     <tr style={{ animationDelay: `${index * 40}ms` }}>
       <td>
-        <strong>{cName}</strong>
+        <strong>{courseName}</strong>
       </td>
       <td>{creditsDisplay}</td>
       <td>
@@ -60,7 +60,7 @@ const GradeTableRow: React.FC<GradeTableRowProps> = ({ grade, index }) => {
         <Tag tone={tone}>{ects}</Tag>
       </td>
       <td>
-        <Tag tone={totalScore >= 60 ? 'success' : 'danger'}>{trad}</Tag>
+        <Tag tone={totalScore >= 60 ? 'success' : 'danger'}>{traditionalGrade}</Tag>
       </td>
     </tr>
   );
@@ -92,10 +92,11 @@ export const GradesTab: React.FC<GradesTabProps> = ({ grades, onOpenSimulator })
             </tr>
           </thead>
           <tbody>
-            {validGrades.map((g: any, index: number) => {
-              const cName = getGradeCourseName(g) || g.courseName || `Дисципліна #${index + 1}`;
+            {validGrades.map((gradeItem: any, index: number) => {
+              const courseName =
+                getGradeCourseName(gradeItem) || gradeItem.courseName || `Дисципліна #${index + 1}`;
 
-              return <GradeTableRow key={cName + index} grade={g} index={index} />;
+              return <GradeTableRow key={courseName + index} grade={gradeItem} index={index} />;
             })}
           </tbody>
         </table>

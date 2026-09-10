@@ -8,17 +8,13 @@ import type {
   CourseStatistics,
 } from '@uni-hub/types';
 
-export type NavKey = 'overview' | 'courses' | 'grades' | 'schedule' | 'assignments';
+export const NAV_KEYS = ['overview', 'courses', 'grades', 'schedule', 'assignments'] as const;
 
-export const NAV_KEYS = new Set<string>([
-  'overview',
-  'courses',
-  'grades',
-  'schedule',
-  'assignments',
-]);
+export type NavKey = (typeof NAV_KEYS)[number];
 
-export const isNavKey = (value: string): value is NavKey => NAV_KEYS.has(value);
+const NAV_KEYS_SET: ReadonlySet<string> = new Set(NAV_KEYS);
+
+export const isNavKey = (value: string): value is NavKey => NAV_KEYS_SET.has(value);
 
 export interface DashboardData {
   courses: Course[];

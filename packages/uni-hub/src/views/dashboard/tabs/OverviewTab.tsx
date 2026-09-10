@@ -10,6 +10,7 @@ import { useCountUp } from '@uni-hub/hooks/useCountUp';
 import { useNow } from '@uni-hub/hooks/useNow';
 import type { OverviewTabProps } from '../types';
 import { mockKarazinCurriculum } from '../constants';
+import { stripHtml } from '../utils';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export const OverviewTab: React.FC<OverviewTabProps> = ({
@@ -30,7 +31,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const nearestDeadline = useMemo(() => {
     const nowSec = Math.floor(nowMs / 1000);
 
-    return assignments.filter((a) => a.duedate > nowSec).sort((a, b) => a.duedate - b.duedate)[0];
+    return assignments
+      .filter((assignment) => assignment.duedate > nowSec)
+      .sort(
+        (firstAssignment, secondAssignment) => firstAssignment.duedate - secondAssignment.duedate,
+      )[0];
   }, [assignments, nowMs]);
 
   const overviewCourses = (courses.length > 0 ? courses : mockKarazinCurriculum).slice(0, 3);
@@ -54,10 +59,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   event.name
                 )}
               </div>
-              <div
-                className={styles.muted}
-                dangerouslySetInnerHTML={{ __html: event.formattedtime }}
-              />
+              <div className={styles.muted}>{stripHtml(event.formattedtime)}</div>
             </div>
           ))}
         </div>
@@ -67,16 +69,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     if (assignments.length > 0) {
       return (
         <div className={styles.list}>
-          {assignments.slice(0, 4).map((assign, index) => (
+          {assignments.slice(0, 4).map((assignment, index) => (
             <div
-              key={assign.id}
+              key={assignment.id}
               className={styles.listItem}
               style={{ animationDelay: `${index * 40}ms` }}
             >
-              <div className={styles.listTitle}>{assign.name}</div>
+              <div className={styles.listTitle}>{assignment.name}</div>
               <div className={styles.muted}>
-                {assign.courseName} • Дедлайн:{' '}
-                {new Date(assign.duedate * 1000).toLocaleDateString('uk-UA')}
+                {assignment.courseName} • Дедлайн:{' '}
+                {new Date(assignment.duedate * 1000).toLocaleDateString('uk-UA')}
               </div>
             </div>
           ))}

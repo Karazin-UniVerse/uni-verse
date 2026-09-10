@@ -6,6 +6,7 @@ import { Menu, Volume2, VolumeX, Bell, User } from 'lucide-react';
 import { Button as SimpleButton, Tag, Empty } from '@una';
 import { StreakBadge } from '@uni-hub/components/gamification';
 import type { DashboardHeaderProps } from '../types';
+import { stripHtml } from '../utils';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
@@ -69,7 +70,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             variant="secondary"
             size="medium"
             isTransparent
-            onClick={() => setNotifOpen((v) => !v)}
+            onClick={() => setNotifOpen((isOpen) => !isOpen)}
             aria-label="Сповіщення"
           >
             <Bell size={18} />
@@ -89,26 +90,24 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               </div>
               <div className={styles.notifList}>
                 {notifications.length > 0 ? (
-                  notifications.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`${styles.notifItem} ${item.read ? '' : styles.unread}`}
-                    >
-                      <div className={styles.notifSubject}>{item.subject}</div>
+                  notifications.map((item) => {
+                    const message = stripHtml(item.message);
+
+                    return (
                       <div
-                        className={styles.muted}
-                        dangerouslySetInnerHTML={{
-                          __html:
-                            (item.message || '').length > 100
-                              ? (item.message || '').substring(0, 100) + '...'
-                              : item.message || '',
-                        }}
-                      />
-                      <div className={styles.notifTime}>
-                        {new Date(item.timecreated * 1000).toLocaleString('uk-UA')}
+                        key={item.id}
+                        className={`${styles.notifItem} ${item.read ? '' : styles.unread}`}
+                      >
+                        <div className={styles.notifSubject}>{item.subject}</div>
+                        <div className={styles.muted}>
+                          {message.length > 100 ? `${message.substring(0, 100)}...` : message}
+                        </div>
+                        <div className={styles.notifTime}>
+                          {new Date(item.timecreated * 1000).toLocaleString('uk-UA')}
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <Empty description="Немає сповіщень" />
                 )}
