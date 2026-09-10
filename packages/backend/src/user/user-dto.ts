@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty()
@@ -8,36 +8,51 @@ export class CreateUserDto {
   email: string;
 
   @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
   name?: string;
 
-  @ApiProperty()
-  @IsNotEmpty({ message: 'Password is required' })
-  password: string;
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  password?: string;
 
-  @ApiProperty()
-  @IsNotEmpty({ message: 'Token is required' })
-  token: string;
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  token?: string;
 
-  @ApiProperty()
-  @IsNotEmpty({ message: 'Moodle ID is required' })
-  moodleId: string;
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  moodleId?: string;
 }
 
 export class UpdateUserDto {
-  @ApiProperty()
-  moodleId: string;
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  moodleId?: string;
 
-  @ApiProperty()
-  token: string;
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  token?: string;
 
-  @ApiProperty()
-  password: string;
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  password?: string;
 
-  @ApiProperty()
-  email: string;
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
 
-  @ApiProperty()
-  refreshToken: string | null;
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  name?: string;
 }
 
 export class UserResponseDto {
