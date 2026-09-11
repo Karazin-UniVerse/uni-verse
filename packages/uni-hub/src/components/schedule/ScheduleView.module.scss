@@ -198,6 +198,11 @@
   }
 }
 
+.moreEvents {
+  display: inline-flex;
+  font-size: var(--font-xs);
+}
+
 .outMonth {
   opacity: 0.45;
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Skeleton } from '@una';
-import pageStyles from '../views/DashboardPage.module.scss';
+import pageStyles from '@uni-hub/views/DashboardPage.module.scss';
 import styles from './DashboardSkeleton.module.scss';
 
 export const DashboardSkeleton: React.FC = () => (

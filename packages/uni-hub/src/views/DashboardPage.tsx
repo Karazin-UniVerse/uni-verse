@@ -48,19 +48,18 @@ import type {
   CourseStatistics,
   CourseModule,
 } from '@uni-hub/types';
-import AssignmentModal from '@uni-hub/components/AssignmentModal';
-import ScheduleView from '@uni-hub/components/ScheduleView';
-import { GradesChart } from '@uni-hub/components/GradesChart';
-import { AssignmentsDonut } from '@uni-hub/components/AssignmentsDonut';
-import { DashboardSkeleton } from '@uni-hub/components/DashboardSkeleton';
-import { StreakBadge } from '@uni-hub/components/gamification/StreakBadge';
-import { ContextualGreeting } from '@uni-hub/components/gamification/ContextualGreeting';
-import { LiveCountdown } from '@uni-hub/components/gamification/LiveCountdown';
-import { BadgeSystem } from '@uni-hub/components/gamification/BadgeSystem';
+import { AssignmentModal, AssignmentsDonut } from '@uni-hub/components/assignments';
+import { DashboardSkeleton } from '@uni-hub/components/dashboard';
 import {
+  BadgeSystem,
+  ContextualGreeting,
   GradeSimulator,
   GradeSimulatorTrigger,
-} from '@uni-hub/components/gamification/GradeSimulator';
+  LiveCountdown,
+  StreakBadge,
+} from '@uni-hub/components/gamification';
+import { GradesChart } from '@uni-hub/components/grades';
+import { ScheduleView } from '@uni-hub/components/schedule';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { useCountUp } from '@uni-hub/hooks/useCountUp';
 import { useNow } from '@uni-hub/hooks/useNow';
