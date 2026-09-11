@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { Assignment, Grade } from '@uni-hub/types';
 import { getGradeCourseName, getValidGrades } from '@uni-hub/utils/grades';
-import Chart from '@uni-hub/design-system/charts/Chart/Chart';
+import { Chart } from '@una';
 
 type AssignmentsDonutProps = {
   assignments: Assignment[];

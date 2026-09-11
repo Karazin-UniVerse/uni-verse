@@ -6,7 +6,7 @@ import {
   getGradeCourseName,
   getGradeRawValue,
 } from '@uni-hub/utils/grades';
-import Chart from '@uni-hub/design-system/charts/Chart/Chart';
+import { Chart } from '@una';
 
 type GradesChartProps = {
   grades: Grade[];

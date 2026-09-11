@@ -1,4 +1,5 @@
-﻿export * from './Button';
+export * from './Button';
+export * from './Chart';
 export * from './Empty';
 export * from './Form';
 export * from './inputs';
