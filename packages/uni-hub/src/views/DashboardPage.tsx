@@ -5,12 +5,37 @@ import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Spinner, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
-import type { StudentProfile } from '@core/types';
-import type { CourseModule, Grade } from '@uni-hub/types';
-import { AssignmentModal } from '@uni-hub/components/assignments';
+import {
+  type StudentProfile,
+  type CurriculumItem,
+  type ControlType,
+  calculateEctsGrade,
+  calculateTraditionalGrade,
+} from '@core/types';
+import type {
+  Course,
+  Grade,
+  Assignment,
+  MoodleEvent,
+  Notification,
+  CourseStatistics,
+  CourseModule,
+} from '@uni-hub/types';
+import { AssignmentModal, AssignmentsDonut } from '@uni-hub/components/assignments';
 import { DashboardSkeleton } from '@uni-hub/components/dashboard';
+import {
+  BadgeSystem,
+  ContextualGreeting,
+  GradeSimulator,
+  GradeSimulatorTrigger,
+  LiveCountdown,
+  StreakBadge,
+} from '@uni-hub/components/gamification';
+import { GradesChart } from '@uni-hub/components/grades';
 import { ScheduleView } from '@uni-hub/components/schedule';
-import { BadgeSystem, GradeSimulator } from '@uni-hub/components/gamification';
+import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
+import { useCountUp } from '@uni-hub/hooks/useCountUp';
+import { useNow } from '@uni-hub/hooks/useNow';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import {
   type NavKey,

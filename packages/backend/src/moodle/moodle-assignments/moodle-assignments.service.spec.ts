@@ -79,5 +79,34 @@ describe('MoodleAssignmentsService', () => {
       expect(result.status).toBe('graded');
       expect(result.grade).toBe('95.5');
     });
+
+    it('should return rawGrade directly when grade is not a numeric string', async () => {
+      mockMoodleClientService.client.mockResolvedValue({
+        lastattempt: {
+          gradingstatus: 'graded',
+          submission: { status: 'submitted' },
+        },
+        feedback: { grade: { grade: 'Passed' } },
+      });
+
+      const result = await service.getSubmissionStatus('token', 'id', 1);
+
+      expect(result.status).toBe('graded');
+      expect(result.grade).toBe('Passed');
+    });
+
+    it('should return submission status when grading is incomplete and grade is absent', async () => {
+      mockMoodleClientService.client.mockResolvedValue({
+        lastattempt: {
+          gradingstatus: 'notgraded',
+          submission: { status: 'submitted' },
+        },
+      });
+
+      const result = await service.getSubmissionStatus('token', 'id', 1);
+
+      expect(result.status).toBe('submitted');
+      expect(result.grade).toBeUndefined();
+    });
   });
 });
