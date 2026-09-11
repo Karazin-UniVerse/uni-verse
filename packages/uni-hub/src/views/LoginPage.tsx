@@ -8,7 +8,7 @@ import { TextInput } from '@una/inputs/TextInput';
 import { SimpleForm } from '@una/Form';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { useToast } from '@una/Toast';
-import { authApi } from '@uni-hub/services/api';
+import { authApi } from '@uni-hub/services/api/auth-api';
 import styles from './LoginPage.module.scss';
 
 const LoginPage: React.FC = () => {

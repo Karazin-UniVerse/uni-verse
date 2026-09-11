@@ -30,7 +30,7 @@ import {
   ProgressBar,
 } from '@una';
 import { useToast } from '@ui/Toast';
-import { moodleApi } from '@uni-hub/services/api';
+import { moodleApi } from '@uni-hub/services/api/moodle-api';
 import type {
   Course,
   Grade,

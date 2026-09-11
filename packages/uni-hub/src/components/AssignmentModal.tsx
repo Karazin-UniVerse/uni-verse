@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Download, ExternalLink } from 'lucide-react';
 import { Button as SimpleButton, FileInput, SimpleForm, Modal, Spinner, Tag } from '@una';
 import { useToast } from '@ui/Toast';
-import { moodleApi } from '../services/api';
+import { moodleApi, type AssignmentStatus } from '../services/api/moodle-api';
 import type { CourseModule } from '../types';
 
 import { useGamificationStore } from '../store/useGamificationStore';
@@ -39,7 +39,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
-  const [status, setStatus] = useState<{ status?: string; grade?: string } | null>(null);
+  const [status, setStatus] = useState<AssignmentStatus | null>(null);
   const [text, setText] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [formError, setFormError] = useState('');
@@ -53,7 +53,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     try {
       const response = await moodleApi.getAssignmentStatus(module.instance);
 
-      setStatus(response.data as { status?: string; grade?: string } | null);
+      setStatus(response.data);
     } catch (error) {
       console.error(error);
       toast.error('Не удалось загрузить статус задания');
@@ -77,10 +77,10 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         .getAssignmentStatus(currentInstance)
         .then((response) => {
           if (!cancelled) {
-            setStatus(response.data as { status?: string; grade?: string } | null);
+            setStatus(response.data);
           }
         })
-        .catch((error) => {
+        .catch((error: unknown) => {
           if (!cancelled) {
             console.error(error);
             toast.error('Не удалось загрузить статус задания');

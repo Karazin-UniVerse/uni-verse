@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { Button as SimpleButton, Spinner, Empty } from '@una';
 import { useToast } from '@ui/Toast';
-import { moodleApi } from '@uni-hub/services/api';
+import { moodleApi } from '@uni-hub/services/api/moodle-api';
 import {
   COURSE_MODULE_NAMES,
   type CourseSection,
