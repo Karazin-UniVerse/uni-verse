@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { User, Role } from '@universe/database';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, UpdateUserDto } from './user-dto';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 
 @Injectable()
 export class UserService {
@@ -15,9 +15,9 @@ export class UserService {
     key: K,
     value: User[K],
   ): User | null {
-    for (const u of this.inMemoryUsers.values()) {
-      if (u[key] === value) {
-        return u;
+    for (const user of this.inMemoryUsers.values()) {
+      if (user[key] === value) {
+        return user;
       }
     }
 

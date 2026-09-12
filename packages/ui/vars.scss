@@ -1,7 +1,5 @@
 @forward './breakpoints';
 
-@import 'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap';
-
 /* ==========================================================================
    1. BASE & LAYOUT TOKENS (Non-thematic)
    ========================================================================== */
@@ -82,13 +80,11 @@ $space-64: 64px;
   /* Focus Ring */
   --focus-ring-width: 3px;
   --focus-ring-offset: 2px;
-}
 
-/* ==========================================================================
-   2. COLOR PALETTES (Raw values)
-   ========================================================================== */
+  /* ==========================================================================
+     2. COLOR PALETTES (Raw values)
+     ========================================================================== */
 
-:root {
   /* Neutral Palette (Grayscale) */
   --gray-50: #f8f9fa;
   --gray-100: #f1f3f5;
@@ -153,6 +149,7 @@ $space-64: 64px;
   --success-color: var(--green-500);
   --error-color: var(--red-500);
   --warning-color: #f59e0b; /* Consider adding a yellow palette */
+  --warning-light: #fbbf24;
   --info-color: var(--blue-500);
 }
 
@@ -210,12 +207,11 @@ $space-64: 64px;
   --chart-series-5: var(--chart-info);
   --chart-glow: none;
   --chart-bar-radius: var(--border-radius-small);
-}
 
-/* ==========================================================================
-   4. COMPONENT & SEMANTIC ALIASES
-   ========================================================================== */
-:root {
+  /* ==========================================================================
+     4. COMPONENT & SEMANTIC ALIASES
+     ========================================================================== */
+
   /* General UI */
   --bg-color: var(--neutral-bg);
   --bg-surface: var(--neutral-surface);

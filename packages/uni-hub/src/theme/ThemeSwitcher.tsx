@@ -16,7 +16,7 @@ type ThemeSwitcherProps = {
   className?: string;
 };
 
-export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
+export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
   className,
   compact = false,
   showLabel = true,
@@ -41,7 +41,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
   }
 
   return (
-    <div className={clsx(styles.switcher, className)} role="group" aria-label="Вибір теми">
+    <fieldset className={clsx(styles.switcher, className)} aria-label="Вибір теми">
       {(Object.keys(THEME_META) as AppTheme[]).map((themeOption) => {
         const themeMetadata = THEME_META[themeOption];
         const isSelectedTheme = theme === themeOption;
@@ -59,6 +59,6 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
           </button>
         );
       })}
-    </div>
+    </fieldset>
   );
 };

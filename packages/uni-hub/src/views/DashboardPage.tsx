@@ -34,6 +34,57 @@ const PAGE_TITLES: Record<NavKey, string> = {
   assignments: 'Завдання',
 };
 
+type GradesApiResponse = Awaited<ReturnType<typeof moodleApi.getGrades>>;
+
+function parseDateFilterSeconds(dateString?: string): number | null {
+  if (!dateString) {
+    return null;
+  }
+
+  const dateParts = dateString.split('-');
+
+  if (dateParts.length !== 3) {
+    return null;
+  }
+
+  const [yearStr, monthStr, dayStr] = dateParts;
+  const expectedYear = Number.parseInt(yearStr, 10);
+  const expectedMonth = Number.parseInt(monthStr, 10);
+  const expectedDay = Number.parseInt(dayStr, 10);
+
+  const parsedDate = new Date(dateString);
+
+  if (
+    Number.isNaN(parsedDate.getTime()) ||
+    parsedDate.getFullYear() > 2099 ||
+    parsedDate.getUTCFullYear() > 2099
+  ) {
+    return null;
+  }
+
+  const matchesUtc =
+    parsedDate.getUTCFullYear() === expectedYear &&
+    parsedDate.getUTCMonth() + 1 === expectedMonth &&
+    parsedDate.getUTCDate() === expectedDay;
+  const matchesLocal =
+    parsedDate.getFullYear() === expectedYear &&
+    parsedDate.getMonth() + 1 === expectedMonth &&
+    parsedDate.getDate() === expectedDay;
+
+  if (!matchesUtc && !matchesLocal) {
+    return null;
+  }
+
+  return Math.floor(parsedDate.getTime() / 1000);
+}
+
+function resolveGradesResponse(gradesResponse?: GradesApiResponse | null): Grade[] {
+  if (Array.isArray(gradesResponse?.data?.grades)) {
+    return gradesResponse.data.grades;
+  }
+
+  return [];
+}
 const DashboardPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -84,24 +135,20 @@ const DashboardPage: React.FC = () => {
 
     try {
       const params: Record<string, string | number> = { sortByDate: sortOrder };
+      const fromTimestamp = parseDateFilterSeconds(dateFrom);
+      const toTimestamp = parseDateFilterSeconds(dateTo);
 
-      if (dateFrom) {
-        const fromDate = new Date(dateFrom);
-
-        if (!Number.isNaN(fromDate.getTime()) && fromDate.getFullYear() <= 2099) {
-          params.dateFrom = Math.floor(fromDate.getTime() / 1000);
-        }
+      if (fromTimestamp !== null) {
+        params.dateFrom = fromTimestamp;
       }
 
-      if (dateTo) {
-        const toDate = new Date(dateTo);
-
-        if (!Number.isNaN(toDate.getTime()) && toDate.getFullYear() <= 2099) {
-          params.dateTo = Math.floor(toDate.getTime() / 1000);
-        }
+      if (toTimestamp !== null) {
+        params.dateTo = toTimestamp;
       }
 
-      if (hideCompleted) params.status = 'not_completed';
+      if (hideCompleted) {
+        params.status = 'not_completed';
+      }
 
       const [coursesRes, gradesRes, assignmentsRes, eventsRes, notificationsRes, statsRes] =
         await Promise.all([
@@ -115,11 +162,7 @@ const DashboardPage: React.FC = () => {
 
       setData({
         courses: Array.isArray(coursesRes?.data) ? coursesRes.data : [],
-        grades: Array.isArray(gradesRes?.data?.grades)
-          ? gradesRes.data.grades
-          : Array.isArray(gradesRes?.data)
-            ? (gradesRes.data as unknown as Grade[])
-            : [],
+        grades: resolveGradesResponse(gradesRes),
         assignments: Array.isArray(assignmentsRes?.data) ? assignmentsRes.data : [],
         events: Array.isArray(eventsRes?.data) ? eventsRes.data : [],
         notifications: Array.isArray(notificationsRes?.data?.notifications)

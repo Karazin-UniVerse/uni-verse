@@ -13,9 +13,7 @@ function getAudioContext(): AudioContext | null {
     return null;
   }
 
-  if (!audioContextInstance) {
-    audioContextInstance = new AudioContextConstructor();
-  }
+  audioContextInstance ??= new AudioContextConstructor();
 
   return audioContextInstance;
 }
