@@ -12,9 +12,9 @@ import { RegisterDto, LoginDto } from './dto/auth.dto';
 @Injectable()
 export class AuthService {
   constructor(
-    private userService: UserService,
-    private getCreds: GetCreds,
-    private jwtService: JwtService,
+    private readonly userService: UserService,
+    private readonly getCreds: GetCreds,
+    private readonly jwtService: JwtService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -137,12 +137,15 @@ export class AuthService {
   async refreshTokens(userId: string, rt: string) {
     const user = await this.userService.findById(userId);
 
-    if (!user || !user.refreshToken)
+    if (!user?.refreshToken) {
       throw new ForbiddenException('Access Denied');
+    }
 
     const rtMatches = await bcrypt.compare(rt, user.refreshToken);
 
-    if (!rtMatches) throw new ForbiddenException('Access Denied');
+    if (!rtMatches) {
+      throw new ForbiddenException('Access Denied');
+    }
 
     const tokens = await this.getTokens(
       user.id,
@@ -173,16 +176,16 @@ export class AuthService {
   ) {
     const atSecret = process.env.AT_SECRET;
     const rtSecret = process.env.RT_SECRET;
-    const knownPlaceholders = [
+    const knownPlaceholders = new Set([
       'your-access-token-secret-key',
       'your-refresh-token-secret-key',
-    ];
+    ]);
 
     if (
       !atSecret ||
       !rtSecret ||
-      knownPlaceholders.includes(atSecret) ||
-      knownPlaceholders.includes(rtSecret)
+      knownPlaceholders.has(atSecret) ||
+      knownPlaceholders.has(rtSecret)
     ) {
       throw new Error(
         'JWT secrets are not configured securely. Set valid AT_SECRET and RT_SECRET environment variables.',

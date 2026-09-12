@@ -31,7 +31,27 @@ import type { SimpleFormProps } from './SimpleForm.types';
  * ```
  * @param props
  */
-export const SimpleForm: React.FC<SimpleFormProps> = ({
+function parseFormData(
+  formData: FormData,
+): Record<string, FormDataEntryValue | FormDataEntryValue[]> {
+  const data: Record<string, FormDataEntryValue | FormDataEntryValue[]> = {};
+
+  for (const [key, value] of formData.entries()) {
+    const existing = data[key];
+
+    if (existing === undefined) {
+      data[key] = value;
+    } else if (Array.isArray(existing)) {
+      data[key] = [...existing, value];
+    } else {
+      data[key] = [existing, value];
+    }
+  }
+
+  return data;
+}
+
+export const SimpleForm: React.FC<Readonly<SimpleFormProps>> = ({
   children,
   className,
   action,
@@ -39,7 +59,7 @@ export const SimpleForm: React.FC<SimpleFormProps> = ({
   variant = 'card',
   ...props
 }) => {
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget);
@@ -49,22 +69,7 @@ export const SimpleForm: React.FC<SimpleFormProps> = ({
     }
 
     if (onData) {
-      const data: Record<string, FormDataEntryValue | FormDataEntryValue[]> = {};
-      const entries = Array.from(formData.entries());
-
-      for (const [key, value] of entries) {
-        if (key in data) {
-          const existing = data[key];
-
-          data[key] = Array.isArray(existing) ? [...existing, value] : [existing, value];
-        } else {
-          const allValues = entries.filter(([k]) => k === key).map(([, v]) => v);
-
-          data[key] = allValues.length > 1 ? allValues : value;
-        }
-      }
-
-      onData(data);
+      onData(parseFormData(formData));
     }
   };
 

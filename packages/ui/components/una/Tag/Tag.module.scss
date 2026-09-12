@@ -49,7 +49,7 @@
 :global([data-theme='dark']) .warning,
 :global([data-theme='cyberpunk']) .warning {
   background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
+  color: var(--warning-light, #fbbf24);
   border-color: #92400e;
 }
 

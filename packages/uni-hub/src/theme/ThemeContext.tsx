@@ -18,9 +18,9 @@ function applyTheme(theme: AppTheme) {
   const root = document.documentElement;
 
   if (theme === 'light') {
-    root.removeAttribute('data-theme');
+    delete root.dataset.theme;
   } else {
-    root.setAttribute('data-theme', theme);
+    root.dataset.theme = theme;
   }
 }
 
@@ -38,37 +38,33 @@ function readStoredTheme(): AppTheme {
   return 'light';
 }
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<AppTheme>(() => readStoredTheme());
+export const ThemeProvider: React.FC<Readonly<{ children: React.ReactNode }>> = ({ children }) => {
+  const [theme, setTheme] = useState<AppTheme>(() => readStoredTheme());
 
   useEffect(() => {
     applyTheme(theme);
     localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);
 
-  const setTheme = useCallback((next: AppTheme) => {
-    setThemeState(next);
-  }, []);
-
   const cycleTheme = useCallback(() => {
-    setThemeState((prev) => {
-      const idx = THEMES.indexOf(prev);
+    setTheme((prevTheme) => {
+      const currentIndex = THEMES.indexOf(prevTheme);
 
-      return THEMES[(idx + 1) % THEMES.length];
+      return THEMES[(currentIndex + 1) % THEMES.length];
     });
   }, []);
 
-  const value = useMemo(() => ({ theme, setTheme, cycleTheme }), [theme, setTheme, cycleTheme]);
+  const value = useMemo(() => ({ theme, setTheme, cycleTheme }), [theme, cycleTheme]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };
 
 export function useTheme() {
-  const ctx = useContext(ThemeContext);
+  const context = useContext(ThemeContext);
 
-  if (!ctx) {
+  if (!context) {
     throw new Error('useTheme must be used within ThemeProvider');
   }
 
-  return ctx;
+  return context;
 }

@@ -143,7 +143,7 @@ const exportToICS = (events: ScheduleEvent[]) => {
   link.setAttribute('download', 'karazin-schedule.ics');
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
+  link.remove();
   URL.revokeObjectURL(url);
 };
 

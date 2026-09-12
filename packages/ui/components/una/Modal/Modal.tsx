@@ -38,6 +38,31 @@ function unlockScroll(id: string) {
 const FOCUSABLE_SELECTOR =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+function handleFocusTrap(event: KeyboardEvent, container: HTMLElement | null): void {
+  if (event.key !== 'Tab' || !container) {
+    return;
+  }
+
+  const focusableElements = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+
+  if (focusableElements.length === 0) {
+    event.preventDefault();
+
+    return;
+  }
+
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
+
+  if (event.shiftKey && document.activeElement === firstElement) {
+    lastElement.focus();
+    event.preventDefault();
+  } else if (!event.shiftKey && document.activeElement === lastElement) {
+    firstElement.focus();
+    event.preventDefault();
+  }
+}
+
 export const Modal: React.FC<ModalProps> = ({
   children,
   onClose,
@@ -76,7 +101,7 @@ export const Modal: React.FC<ModalProps> = ({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        const isTopmost = modalStack[modalStack.length - 1] === modalId;
+        const isTopmost = modalStack.at(-1) === modalId;
 
         if (isTopmost) {
           event.stopPropagation();
@@ -86,31 +111,7 @@ export const Modal: React.FC<ModalProps> = ({
         return;
       }
 
-      if (event.key === 'Tab' && dialogRef.current) {
-        const focusableElements =
-          dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
-
-        if (focusableElements.length === 0) {
-          event.preventDefault();
-
-          return;
-        }
-
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-
-        if (event.shiftKey) {
-          if (document.activeElement === firstElement) {
-            lastElement.focus();
-            event.preventDefault();
-          }
-        } else {
-          if (document.activeElement === lastElement) {
-            firstElement.focus();
-            event.preventDefault();
-          }
-        }
-      }
+      handleFocusTrap(event, dialogRef.current);
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -119,9 +120,7 @@ export const Modal: React.FC<ModalProps> = ({
       document.removeEventListener('keydown', handleKeyDown);
       unlockScroll(modalId);
 
-      if (previouslyFocusedElementRef.current && previouslyFocusedElementRef.current.focus) {
-        previouslyFocusedElementRef.current.focus();
-      }
+      previouslyFocusedElementRef.current?.focus?.();
     };
   }, [open, modalId]);
 
@@ -131,8 +130,14 @@ export const Modal: React.FC<ModalProps> = ({
 
   const dialogAriaLabel = title ? undefined : ariaLabel || 'Діалогове вікно';
 
+  const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className={styles.overlay} onClick={onClose} role="presentation">
+    <div className={styles.overlay} onClick={handleOverlayClick}>
       <div
         ref={dialogRef}
         className={`${styles.dialog} ${className ?? ''}`}
@@ -142,7 +147,6 @@ export const Modal: React.FC<ModalProps> = ({
         aria-labelledby={title ? titleId : undefined}
         aria-label={dialogAriaLabel}
         tabIndex={-1}
-        onClick={(event) => event.stopPropagation()}
       >
         <div className={styles.header}>
           {title && (

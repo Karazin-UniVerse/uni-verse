@@ -8,6 +8,24 @@ const HTML_ENTITIES: Record<string, string> = {
   '&amp;': '&',
 };
 
+function stripHtmlTags(input: string): string {
+  let insideTag = false;
+  let buffer = '';
+
+  for (const char of input) {
+    if (char === '<') {
+      insideTag = true;
+      buffer += ' ';
+    } else if (char === '>') {
+      insideTag = false;
+    } else if (!insideTag) {
+      buffer += char;
+    }
+  }
+
+  return buffer;
+}
+
 /**
  * Normalizes text by iteratively removing HTML tags, decoding entities in a single pass, and collapsing whitespace.
  */
@@ -20,7 +38,7 @@ export function normalizeMoodleText(text?: string | null): string {
   // Iteratively strip HTML tags to prevent incomplete sanitization (e.g. nested tags)
   while (cleaned !== prev) {
     prev = cleaned;
-    cleaned = cleaned.replace(/<[^>]*>/g, ' ');
+    cleaned = stripHtmlTags(cleaned);
   }
 
   // Single-pass replacement prevents double-unescaping vulnerabilities
@@ -49,7 +67,55 @@ export interface CourseFilters {
 }
 
 function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return str.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+}
+
+function matchesYear(target: string, year: string | number): boolean {
+  const rawYear = String(year).trim().replace('-', '/');
+
+  // Only accept numeric years and formats like 2025 or 2025/2026
+  if (!/^(\d{2,4})(\/\d{2,4})?$/.test(rawYear)) {
+    return false;
+  }
+
+  if (rawYear.includes('/')) {
+    const [yearPart1, yearPart2] = rawYear.split('/');
+    const escYear1 = escapeRegex(yearPart1);
+    const escYear1Short = escapeRegex(yearPart1.slice(-2));
+    const escYear2 = escapeRegex(yearPart2);
+    const escYear2Short = escapeRegex(yearPart2.slice(-2));
+    const pattern = new RegExp(
+      String.raw`(?:^|[\s\-_/.])(?:${escYear1}|${escYear1Short})[/-](?:${escYear2}|${escYear2Short})(?=[\s\-_/.]|$)`,
+      'i',
+    );
+
+    return pattern.test(target);
+  }
+
+  const fullYear = escapeRegex(rawYear);
+  const shortYear = escapeRegex(rawYear.slice(-2));
+  const yearPattern = new RegExp(
+    String.raw`(?:^|[\s\-_/.])(?:${fullYear}|${shortYear})(?=[\s\-_/.]|$)`,
+    'i',
+  );
+
+  return yearPattern.test(target);
+}
+
+function matchesSemester(target: string, semester: string | number): boolean {
+  const semStr = String(semester).trim();
+
+  if (!/^[1-9]\d*$/.test(semStr)) {
+    return false;
+  }
+
+  const escSem = escapeRegex(semStr);
+  const semesterPattern = new RegExp(
+    String.raw`(?:^|[\s\-_/.])(?:${escSem})(?:\s*(?:sem|сем|семестр|semester)|[\s\-_/.]|$)`,
+    'i',
+  );
+
+  return semesterPattern.test(target);
 }
 
 /**
@@ -63,56 +129,22 @@ export function matchesYearAndSemester(
 ): boolean {
   const target = (text || '').toLowerCase();
 
-  if (year !== undefined && year !== null && String(year).trim() !== '') {
-    const rawYear = String(year).trim().replace('-', '/');
-
-    // Only accept numeric years and formats like 2025 or 2025/2026
-    if (!/^(\d{2,4})(\/\d{2,4})?$/.test(rawYear)) {
-      return false;
-    }
-
-    if (rawYear.includes('/')) {
-      const [y1, y2] = rawYear.split('/');
-      const escY1 = escapeRegex(y1);
-      const escY1Short = escapeRegex(y1.slice(-2));
-      const escY2 = escapeRegex(y2);
-      const escY2Short = escapeRegex(y2.slice(-2));
-      const pattern = new RegExp(
-        `(?:^|[\\s\\-_/.])(?:${escY1}|${escY1Short})[/-](?:${escY2}|${escY2Short})(?=[\\s\\-_/.]|$)`,
-        'i',
-      );
-
-      if (!pattern.test(target)) return false;
-    } else {
-      const fullYear = escapeRegex(rawYear);
-      const shortYear = escapeRegex(rawYear.slice(-2));
-      const yearPattern = new RegExp(
-        `(?:^|[\\s\\-_/.])(?:${fullYear}|${shortYear})(?=[\\s\\-_/.]|$)`,
-        'i',
-      );
-
-      if (!yearPattern.test(target)) return false;
-    }
+  if (
+    year !== undefined &&
+    year !== null &&
+    String(year).trim() !== '' &&
+    !matchesYear(target, year)
+  ) {
+    return false;
   }
 
   if (
     semester !== undefined &&
     semester !== null &&
-    String(semester).trim() !== ''
+    String(semester).trim() !== '' &&
+    !matchesSemester(target, semester)
   ) {
-    const semStr = String(semester).trim();
-
-    if (!/^[1-9]\d*$/.test(semStr)) {
-      return false;
-    }
-
-    const escSem = escapeRegex(semStr);
-    const semesterPattern = new RegExp(
-      `(?:^|[\\s\\-_/.])(?:${escSem})(?:\\s*(?:sem|сем|семестр|semester)|[\\s\\-_/.]|$)`,
-      'i',
-    );
-
-    if (!semesterPattern.test(target)) return false;
+    return false;
   }
 
   return true;
@@ -130,30 +162,30 @@ export function extractAcademicYear(
   const text = name || '';
 
   // 1. Повний формат: "2025/2026" або "2025-2026"
-  const fullPairMatch = text.match(/(20\d{2})[/-](20\d{2})/);
+  const fullPairMatch = /(20\d{2})[/-](20\d{2})/.exec(text);
 
   if (fullPairMatch) {
     return `${fullPairMatch[1]}/${fullPairMatch[2]}`;
   }
 
   // 2. Скорочений формат пари: "2025/26" або "2025-26"
-  const shortPairMatch = text.match(/(20(\d{2}))[/-](\d{2})/);
+  const shortPairMatch = /(20(\d{2}))[/-](\d{2})/.exec(text);
 
   if (shortPairMatch) {
-    const startYear = parseInt(shortPairMatch[1], 10);
-    const endSuffix = parseInt(shortPairMatch[3], 10);
+    const startYear = Number.parseInt(shortPairMatch[1], 10);
+    const endSuffix = Number.parseInt(shortPairMatch[3], 10);
     const century = startYear - (startYear % 100);
 
     return `${startYear}/${century + endSuffix}`;
   }
 
   // 3. Одиночний 4-значний рік: "2025"
-  const singleYearMatch = text.match(/(?:^|[\s\-_/.])(20\d{2})(?:[\s\-_/.]|$)/);
+  const singleYearMatch = /(?:^|[\s\-_/.])(20\d{2})(?:[\s\-_/.]|$)/.exec(text);
 
   if (singleYearMatch) {
-    const y = parseInt(singleYearMatch[1], 10);
+    const yearNumber = Number.parseInt(singleYearMatch[1], 10);
 
-    return `${y}/${y + 1}`;
+    return `${yearNumber}/${yearNumber + 1}`;
   }
 
   // 4. Fallback: визначення за датою старту курсу в Moodle
@@ -173,20 +205,46 @@ export function extractAcademicYear(
  * Extracts year (legacy helper, returns first 4-digit year as number)
  */
 export function extractYear(name: string): number | null {
-  const match = name.match(/20\d{2}/);
+  const match = /20\d{2}/.exec(name);
 
-  return match ? parseInt(match[0], 10) : null;
+  return match ? Number.parseInt(match[0], 10) : null;
 }
 
 /**
  * Extracts semester (helper)
  */
 export function extractSemester(name: string): number | null {
-  const match = name.match(
-    /(?:^|[\s\-_/])([12])(?:\s*(?:sem|сем|семестр|semester)|[\s\-_/]|$)/i,
-  );
+  const match =
+    /(?:^|[\s\-_/])([12])(?:\s*(?:sem|сем|семестр|semester)|[\s\-_/]|$)/i.exec(
+      name,
+    );
 
-  return match ? parseInt(match[1], 10) : null;
+  return match ? Number.parseInt(match[1], 10) : null;
+}
+
+function matchesCourseStatus(
+  progressValue: unknown,
+  status?: CourseFilters['status'],
+): boolean {
+  if (!status) {
+    return true;
+  }
+
+  const numeric = typeof progressValue === 'number' ? progressValue : 0;
+  const progress = numeric > 1 ? numeric : numeric * 100;
+
+  switch (status) {
+    case 'completed':
+      return progress >= 100;
+    case 'not_completed':
+      return progress < 100;
+    case 'in_progress':
+      return progress > 0 && progress < 100;
+    case 'not_started':
+      return progress <= 0;
+    default:
+      return true;
+  }
 }
 
 /**
@@ -204,27 +262,6 @@ export function filterCourses(
       return false;
     }
 
-    if (filters.status) {
-      const p = course.progress;
-      const numeric = typeof p === 'number' ? p : 0;
-      const progress = numeric > 1 ? numeric : numeric * 100;
-
-      switch (filters.status) {
-        case 'completed':
-          if (progress < 100) return false;
-          break;
-        case 'not_completed':
-          if (progress >= 100) return false;
-          break;
-        case 'in_progress':
-          if (progress <= 0 || progress >= 100) return false;
-          break;
-        case 'not_started':
-          if (progress > 0) return false;
-          break;
-      }
-    }
-
-    return true;
+    return matchesCourseStatus(course.progress, filters.status);
   });
 }

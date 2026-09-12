@@ -28,7 +28,7 @@ const FALLBACK: ChartThemeTokens = {
 };
 
 function readThemeKey(): string {
-  return document.documentElement.getAttribute('data-theme') || 'light';
+  return document.documentElement.dataset.theme || 'light';
 }
 
 function readVar(styles: CSSStyleDeclaration, name: string, fallback: string): string {
@@ -83,6 +83,8 @@ export function useChartTheme(container: HTMLElement | null): ChartThemeTokens {
   return tokens;
 }
 
+const VAR_PATTERN = /^var\(\s*([^),\s]+)/;
+
 /** Resolve `var(--token)` / raw color against a container's computed styles. */
 export function resolveCssColor(
   container: HTMLElement | null,
@@ -94,7 +96,7 @@ export function resolveCssColor(
   if (!container) return color.startsWith('var(') ? fallback : color;
 
   if (color.startsWith('var(')) {
-    const match = color.match(/^var\(\s*([^),\s]+)/);
+    const match = VAR_PATTERN.exec(color);
 
     if (!match) return fallback;
 

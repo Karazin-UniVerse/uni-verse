@@ -15,12 +15,58 @@ import type { FileInputProps } from './FileInput.types';
 function formatBytes(bytes: number, decimals = 1): string {
   if (bytes === 0) return '0 B';
 
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
+  const bytesPerUnit = 1024;
+  const decimalPlaces = Math.max(0, decimals);
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const unitIndex = Math.floor(Math.log(bytes) / Math.log(bytesPerUnit));
 
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+  return `${Number.parseFloat((bytes / Math.pow(bytesPerUnit, unitIndex)).toFixed(decimalPlaces))} ${sizes[unitIndex]}`;
+}
+
+function validateFileSizes(
+  incomingFiles: File[],
+  maxSize?: number,
+): { validFiles: File[]; error: string | null } {
+  let error: string | null = null;
+  const validFiles: File[] = [];
+
+  for (const file of incomingFiles) {
+    if (maxSize && file.size > maxSize) {
+      error = `File "${file.name}" exceeds maximum allowed size of ${formatBytes(maxSize)}.`;
+    } else {
+      validFiles.push(file);
+    }
+  }
+
+  return { validFiles, error };
+}
+
+function applyFileCountLimit(
+  files: File[],
+  maxFiles: number | undefined,
+  currentCount: number,
+): { validFiles: File[]; error: string | null } {
+  if (maxFiles === undefined) {
+    return { validFiles: files, error: null };
+  }
+
+  const remaining = maxFiles - currentCount;
+
+  if (remaining <= 0) {
+    return {
+      validFiles: [],
+      error: `Maximum ${maxFiles} file${maxFiles > 1 ? 's' : ''} allowed.`,
+    };
+  }
+
+  if (files.length > remaining) {
+    return {
+      validFiles: files.slice(0, remaining),
+      error: `Maximum ${maxFiles} file${maxFiles > 1 ? 's' : ''} allowed.`,
+    };
+  }
+
+  return { validFiles: files, error: null };
 }
 
 export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
@@ -45,7 +91,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
       multiple = false,
       disabled = false,
       ...props
-    },
+    }: Readonly<FileInputProps>,
     ref,
   ) => {
     const [internalFiles, setInternalFiles] = useState<File[]>([]);
@@ -55,7 +101,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
 
     useImperativeHandle(ref, () => inputRef.current as HTMLInputElement);
 
-    const currentFiles = controlledFiles !== undefined ? controlledFiles : internalFiles;
+    const currentFiles = controlledFiles ?? internalFiles;
 
     const updateFiles = (newFiles: File[]) => {
       if (controlledFiles === undefined) {
@@ -80,37 +126,13 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
     const validateAndFilterFiles = (
       incomingFiles: File[],
     ): { validFiles: File[]; error: string | null } => {
-      let err: string | null = null;
+      const sizeResult = validateFileSizes(incomingFiles, maxSize);
+      const countResult = applyFileCountLimit(sizeResult.validFiles, maxFiles, currentFiles.length);
 
-      // Filter size-invalid files first
-      const valid: File[] = [];
-
-      for (const file of incomingFiles) {
-        if (maxSize && file.size > maxSize) {
-          err = `File "${file.name}" exceeds maximum allowed size of ${formatBytes(maxSize)}.`;
-        } else {
-          valid.push(file);
-        }
-      }
-
-      // Apply file-count limit after size filtering
-      if (maxFiles !== undefined) {
-        const remaining = maxFiles - currentFiles.length;
-
-        if (remaining <= 0) {
-          err = `Maximum ${maxFiles} file${maxFiles > 1 ? 's' : ''} allowed.`;
-
-          return { validFiles: [], error: err };
-        }
-
-        if (valid.length > remaining) {
-          err = `Maximum ${maxFiles} file${maxFiles > 1 ? 's' : ''} allowed.`;
-
-          return { validFiles: valid.slice(0, remaining), error: err };
-        }
-      }
-
-      return { validFiles: valid, error: err };
+      return {
+        validFiles: countResult.validFiles,
+        error: sizeResult.error ?? countResult.error,
+      };
     };
 
     const handleFilesAdded = (incomingList: FileList | File[]) => {
@@ -134,43 +156,43 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
       }
     };
 
-    const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files) {
-        handleFilesAdded(e.target.files);
+    const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+      if (event.target.files) {
+        handleFilesAdded(event.target.files);
       }
 
-      onChange?.(e);
+      onChange?.(event);
     };
 
-    const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
+    const handleDragOver = (event: DragEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
 
       if (!disabled) {
         setIsDragging(true);
       }
     };
 
-    const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
+    const handleDragLeave = (event: DragEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
       setIsDragging(false);
     };
 
-    const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
+    const handleDrop = (event: DragEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
       setIsDragging(false);
 
-      if (!disabled && e.dataTransfer.files) {
-        handleFilesAdded(e.dataTransfer.files);
+      if (!disabled && event.dataTransfer.files) {
+        handleFilesAdded(event.dataTransfer.files);
       }
     };
 
     const handleRemoveFile = (indexToRemove: number) => {
       if (disabled) return;
 
-      const updated = currentFiles.filter((_, idx) => idx !== indexToRemove);
+      const updated = currentFiles.filter((_, index) => index !== indexToRemove);
 
       updateFiles(updated);
 
@@ -195,9 +217,9 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
       }
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if ((e.key === 'Enter' || e.key === ' ') && !disabled) {
-        e.preventDefault();
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+      if ((event.key === 'Enter' || event.key === ' ') && !disabled) {
+        event.preventDefault();
         inputRef.current?.click();
       }
     };
@@ -223,31 +245,30 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
           </label>
         )}
 
-        <div
+        <input
+          {...props}
+          id={id}
+          ref={inputRef}
+          type="file"
+          multiple={multiple}
+          disabled={disabled}
+          accept={accept}
+          onChange={handleInputChange}
+          className={css.hiddenInput}
+          tabIndex={-1}
+        />
+
+        <button
+          type="button"
           className={dropzoneClasses}
           onClick={handleDropzoneClick}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onKeyDown={handleKeyDown}
-          tabIndex={disabled ? -1 : 0}
-          role="button"
-          aria-disabled={disabled}
+          disabled={disabled}
           aria-label={typeof label === 'string' ? label : 'File Upload'}
         >
-          <input
-            {...props}
-            id={id}
-            ref={inputRef}
-            type="file"
-            multiple={multiple}
-            disabled={disabled}
-            accept={accept}
-            onChange={handleInputChange}
-            className={css.hiddenInput}
-            tabIndex={-1}
-          />
-
           <div className={css.iconContainer}>
             <svg
               viewBox="0 0 24 24"
@@ -269,7 +290,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
             </span>
             {hint && <span className={css.hintText}>{hint}</span>}
           </div>
-        </div>
+        </button>
 
         {displayError && <div className={css.errorText}>{displayError}</div>}
 
@@ -284,8 +305,8 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
               )}
             </div>
             <ul className={css.fileList}>
-              {currentFiles.map((file, idx) => (
-                <li key={`${file.name}-${idx}`} className={css.fileItem}>
+              {currentFiles.map((file, index) => (
+                <li key={`${file.name}-${index}`} className={css.fileItem}>
                   <div className={css.fileInfo}>
                     <div className={css.fileIcon}>
                       <svg
@@ -313,9 +334,9 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
                     <button
                       type="button"
                       className={css.removeButton}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveFile(idx);
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleRemoveFile(index);
                       }}
                       title="Remove file"
                       aria-label={`Remove ${file.name}`}

@@ -3,7 +3,7 @@
   flex-direction: column;
   width: 100%;
   gap: var(--space-8);
-  font-family: var(--font-family-base), sans-serif ;
+  font-family: var(--font-family-base), sans-serif;
   box-sizing: border-box;
 }
 
@@ -20,6 +20,8 @@
   position: relative;
   width: 100%;
   box-sizing: border-box;
+  font-family: inherit;
+  font-size: inherit;
   border: 2px dashed var(--border-color);
   border-radius: var(--border-radius-medium);
   background-color: var(--bg-surface);
@@ -76,7 +78,9 @@
     background-color: var(--neutral-surface);
     border-color: var(--border-color);
 
-    .mainText, .browseLink, .hintText {
+    .mainText,
+    .browseLink,
+    .hintText {
       color: var(--text-disabled);
     }
   }
@@ -99,7 +103,9 @@
   justify-content: center;
   margin-bottom: var(--space-8);
   color: var(--text-secondary);
-  transition: transform var(--transition-fast), color var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .dropzoneText {
@@ -120,7 +126,6 @@
   color: var(--accent-primary);
   text-decoration: none;
   font-weight: var(--font-weight-medium);
-
 }
 
 .hintText {

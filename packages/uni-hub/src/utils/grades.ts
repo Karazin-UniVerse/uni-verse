@@ -7,26 +7,34 @@ export function getGradeCourseName(grade: Grade): string {
   return courseName || fallbackCourseName || '';
 }
 
+function parseCandidateValue(candidate: unknown): number | null {
+  if (candidate === undefined || candidate === null || candidate === '') {
+    return null;
+  }
+
+  if (typeof candidate === 'number') {
+    return Number.isFinite(candidate) ? candidate : null;
+  }
+
+  const trimmed = String(candidate).trim();
+
+  if (trimmed === '') {
+    return null;
+  }
+
+  const parsed = Number(trimmed);
+
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export function getGradeRawValue(grade: Grade): number | null {
   const candidateValues = [grade.rawGrade, grade.rawgrade, grade.grade];
 
   for (const candidate of candidateValues) {
-    if (candidate !== undefined && candidate !== null && candidate !== '') {
-      if (typeof candidate === 'number') {
-        if (Number.isFinite(candidate)) {
-          return candidate;
-        }
-      } else {
-        const trimmed = String(candidate).trim();
+    const parsed = parseCandidateValue(candidate);
 
-        if (trimmed !== '' && !Number.isNaN(Number(trimmed))) {
-          const parsed = Number(trimmed);
-
-          if (Number.isFinite(parsed)) {
-            return parsed;
-          }
-        }
-      }
+    if (parsed !== null) {
+      return parsed;
     }
   }
 

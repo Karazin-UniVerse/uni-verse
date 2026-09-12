@@ -61,7 +61,7 @@ const CourseContents: React.FC = () => {
       setLoading(true);
 
       try {
-        const response = await moodleApi.getCourseContents(parseInt(courseId, 10));
+        const response = await moodleApi.getCourseContents(Number.parseInt(courseId, 10));
         const validSections = response.data.filter(
           (section: CourseSection) => section.name && section.modules && section.modules.length > 0,
         );
@@ -82,12 +82,12 @@ const CourseContents: React.FC = () => {
     fetchContents();
   }, [courseId, toast]);
 
-  const handleModuleClick = (mod: CourseModule) => {
-    if (mod.modname === COURSE_MODULE_NAMES.ASSIGN) {
-      setSelectedModule(mod);
+  const handleModuleClick = (courseModule: CourseModule) => {
+    if (courseModule.modname === COURSE_MODULE_NAMES.ASSIGN) {
+      setSelectedModule(courseModule);
       setModalVisible(true);
-    } else if (mod.url) {
-      window.open(mod.url, '_blank', 'noopener,noreferrer');
+    } else if (courseModule.url) {
+      window.open(courseModule.url, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -100,6 +100,67 @@ const CourseContents: React.FC = () => {
 
       return next;
     });
+  };
+
+  const renderSections = () => {
+    if (loading) {
+      return <Spinner size="large" tip="Загрузка содержимого..." />;
+    }
+
+    if (sections.length === 0) {
+      return <Empty description="В этом курсе пока нет доступных материалов." />;
+    }
+
+    return (
+      <div className={styles.sections}>
+        {sections.map((section) => {
+          const key = section.id.toString();
+          const open = openSections.has(key);
+
+          return (
+            <div key={key} className={styles.section}>
+              <button
+                type="button"
+                className={styles.sectionHeader}
+                onClick={() => toggleSection(key)}
+                aria-expanded={open}
+              >
+                <span>{section.name}</span>
+                <ChevronDown size={18} className={open ? styles.chevronOpen : ''} />
+              </button>
+              {open && (
+                <ul className={styles.moduleList}>
+                  {section.modules.map((courseModule) => {
+                    const clickable =
+                      courseModule.modname === COURSE_MODULE_NAMES.ASSIGN ||
+                      Boolean(courseModule.url);
+
+                    return (
+                      <li key={courseModule.id}>
+                        <button
+                          type="button"
+                          className={`${styles.moduleItem} ${clickable ? styles.clickable : ''}`}
+                          onClick={() => handleModuleClick(courseModule)}
+                          disabled={!clickable}
+                        >
+                          <span className={styles.moduleIcon}>
+                            {getModuleIcon(courseModule.modname)}
+                          </span>
+                          <span>
+                            <span className={styles.moduleName}>{courseModule.name}</span>
+                            <span className={styles.moduleType}>Тип: {courseModule.modname}</span>
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -126,59 +187,7 @@ const CourseContents: React.FC = () => {
         <div className={styles.panel}>
           <h1>Содержимое курса</h1>
 
-          {loading ? (
-            <Spinner size="large" tip="Загрузка содержимого..." />
-          ) : sections.length > 0 ? (
-            <div className={styles.sections}>
-              {sections.map((section) => {
-                const key = section.id.toString();
-                const open = openSections.has(key);
-
-                return (
-                  <div key={key} className={styles.section}>
-                    <button
-                      type="button"
-                      className={styles.sectionHeader}
-                      onClick={() => toggleSection(key)}
-                      aria-expanded={open}
-                    >
-                      <span>{section.name}</span>
-                      <ChevronDown size={18} className={open ? styles.chevronOpen : ''} />
-                    </button>
-                    {open && (
-                      <ul className={styles.moduleList}>
-                        {section.modules.map((mod) => {
-                          const clickable =
-                            mod.modname === COURSE_MODULE_NAMES.ASSIGN || Boolean(mod.url);
-
-                          return (
-                            <li key={mod.id}>
-                              <button
-                                type="button"
-                                className={`${styles.moduleItem} ${clickable ? styles.clickable : ''}`}
-                                onClick={() => handleModuleClick(mod)}
-                                disabled={!clickable}
-                              >
-                                <span className={styles.moduleIcon}>
-                                  {getModuleIcon(mod.modname)}
-                                </span>
-                                <span>
-                                  <span className={styles.moduleName}>{mod.name}</span>
-                                  <span className={styles.moduleType}>Тип: {mod.modname}</span>
-                                </span>
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <Empty description="В этом курсе пока нет доступных материалов." />
-          )}
+          {renderSections()}
         </div>
       </main>
 

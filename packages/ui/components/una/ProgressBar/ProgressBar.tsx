@@ -3,7 +3,7 @@ import styles from './ProgressBar.module.scss';
 
 import type { ProgressBarProps } from './ProgressBar.types';
 
-export const ProgressBar: React.FC<ProgressBarProps> = ({
+export const ProgressBar: React.FC<Readonly<ProgressBarProps>> = ({
   value,
   ariaLabel,
   ariaLabelledBy,
@@ -26,7 +26,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   const defaultAriaLabel = !ariaLabel && !ariaLabelledBy ? 'Прогрес' : ariaLabel;
 
   return (
-    <div
+    <progress
       className={`${styles.track} ${className ?? ''}`}
       role="progressbar"
       aria-label={defaultAriaLabel}
@@ -35,9 +35,11 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
       aria-valuemin={0}
       aria-valuemax={safeMax}
       aria-valuetext={`${Math.round(percentage)}%`}
+      value={safeValue}
+      max={safeMax}
     >
       <div className={`${styles.fill} ${styles[tone]}`} style={{ width: `${width}%` }} />
-    </div>
+    </progress>
   );
 };
 

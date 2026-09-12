@@ -26,7 +26,7 @@ export function CustomDateTime({
   onChange,
   size = 'medium',
   ...props
-}: CustomDateTimeProps) {
+}: Readonly<CustomDateTimeProps>) {
   const [isOpen, setIsOpen] = useState(false);
   const [prevSelected, setPrevSelected] = useState(selected);
   const [viewDate, setViewDate] = useState(selected || new Date());
@@ -77,20 +77,20 @@ export function CustomDateTime({
   const days: { day: number; isCurrentMonth: boolean; monthOffset: number }[] = [];
 
   // Prev month days
-  for (let i = firstDay - 1; i >= 0; i--) {
-    days.push({ day: daysInPrevMonth - i, isCurrentMonth: false, monthOffset: -1 });
+  for (let offset = firstDay - 1; offset >= 0; offset--) {
+    days.push({ day: daysInPrevMonth - offset, isCurrentMonth: false, monthOffset: -1 });
   }
 
   // Current month days
-  for (let i = 1; i <= daysInMonth; i++) {
-    days.push({ day: i, isCurrentMonth: true, monthOffset: 0 });
+  for (let dayNumber = 1; dayNumber <= daysInMonth; dayNumber++) {
+    days.push({ day: dayNumber, isCurrentMonth: true, monthOffset: 0 });
   }
 
   // Next month days
   const remaining = 42 - days.length;
 
-  for (let i = 1; i <= remaining; i++) {
-    days.push({ day: i, isCurrentMonth: false, monthOffset: 1 });
+  for (let dayNumber = 1; dayNumber <= remaining; dayNumber++) {
+    days.push({ day: dayNumber, isCurrentMonth: false, monthOffset: 1 });
   }
 
   const handleDayClick = (dayInfo: (typeof days)[0]) => {
@@ -120,46 +120,48 @@ export function CustomDateTime({
   // Time options (every 15 mins)
   const timeOptions = [];
 
-  for (let h = 0; h < 24; h++) {
-    for (let m = 0; m < 60; m += 15) {
-      timeOptions.push({ hours: h, minutes: m });
+  for (let hours = 0; hours < 24; hours++) {
+    for (let minutes = 0; minutes < 60; minutes += 15) {
+      timeOptions.push({ hours, minutes });
     }
   }
 
-  const formatTime = (h: number, m: number) => {
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+  const formatTime = (hours: number, minutes: number) => {
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
 
-  const formatDateTime = (d: Date | null) => {
-    if (!d) return '';
+  const formatDateTime = (date: Date | null) => {
+    if (!date) return '';
 
-    const dateStr = `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-    let h = d.getHours();
-    const m = d.getMinutes().toString().padStart(2, '0');
-    const ampm = h >= 12 ? 'PM' : 'AM';
+    const dateStr = `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+    const rawHours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const ampm = rawHours >= 12 ? 'PM' : 'AM';
+    const displayHours = rawHours % 12 || 12;
 
-    h = h % 12;
-    h = h ? h : 12;
-
-    // the hour '0' should be '12'
-    return `${dateStr} ${h}:${m} ${ampm}`;
+    return `${dateStr} ${displayHours}:${minutes} ${ampm}`;
   };
 
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
+  const years = Array.from({ length: 21 }, (_, index) => currentYear - 10 + index);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
       setIsOpen(!isOpen);
     }
   };
 
   return (
     <div className={css.wrapper} ref={containerRef}>
-      <div role="button" tabIndex={0} onClick={handleInputClick} onKeyDown={handleKeyDown}>
-        <TextInput {...props} size={size} value={formatDateTime(selected)} readOnly tabIndex={-1} />
-      </div>
+      <TextInput
+        {...props}
+        size={size}
+        value={formatDateTime(selected)}
+        readOnly
+        onClick={handleInputClick}
+        onKeyDown={handleKeyDown}
+      />
 
       {isOpen && (
         <div className={clsx(css.popper, css[`size-${size}`])}>
@@ -176,22 +178,22 @@ export function CustomDateTime({
                 <select
                   className={css.select}
                   value={month}
-                  onChange={(e) => setViewDate(new Date(year, Number(e.target.value), 1))}
+                  onChange={(event) => setViewDate(new Date(year, Number(event.target.value), 1))}
                 >
-                  {MONTHS.map((m, i) => (
-                    <option key={m} value={i}>
-                      {m}
+                  {MONTHS.map((monthName, monthIndex) => (
+                    <option key={monthName} value={monthIndex}>
+                      {monthName}
                     </option>
                   ))}
                 </select>
                 <select
                   className={css.select}
                   value={year}
-                  onChange={(e) => setViewDate(new Date(Number(e.target.value), month, 1))}
+                  onChange={(event) => setViewDate(new Date(Number(event.target.value), month, 1))}
                 >
-                  {years.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
+                  {years.map((yearOption) => (
+                    <option key={yearOption} value={yearOption}>
+                      {yearOption}
                     </option>
                   ))}
                 </select>
@@ -206,33 +208,32 @@ export function CustomDateTime({
             </div>
 
             <div className={css.dayNames}>
-              {WEEKDAYS.map((d) => (
-                <div key={d} className={css.dayName}>
-                  {d}
+              {WEEKDAYS.map((weekday) => (
+                <div key={weekday} className={css.dayName}>
+                  {weekday}
                 </div>
               ))}
             </div>
 
             <div className={css.daysGrid}>
-              {days.map((d, i) => {
+              {days.map((dayInfo) => {
                 const isSelected =
-                  selected &&
-                  selected.getDate() === d.day &&
-                  selected.getMonth() === (month + d.monthOffset + 12) % 12 &&
-                  selected.getFullYear() === year + Math.floor((month + d.monthOffset) / 12);
+                  selected?.getDate() === dayInfo.day &&
+                  selected.getMonth() === (month + dayInfo.monthOffset + 12) % 12 &&
+                  selected.getFullYear() === year + Math.floor((month + dayInfo.monthOffset) / 12);
 
                 return (
                   <button
-                    key={i}
+                    key={`${dayInfo.monthOffset}-${dayInfo.day}`}
                     type="button"
                     className={clsx(
                       css.day,
-                      !d.isCurrentMonth && css.outside,
+                      !dayInfo.isCurrentMonth && css.outside,
                       isSelected && css.selected,
                     )}
-                    onClick={() => handleDayClick(d)}
+                    onClick={() => handleDayClick(dayInfo)}
                   >
-                    {d.day}
+                    {dayInfo.day}
                   </button>
                 );
               })}
@@ -242,20 +243,19 @@ export function CustomDateTime({
           <div className={css.timeContainer}>
             <div className={css.timeHeader}>Time</div>
             <div className={css.timeList} ref={timeListRef}>
-              {timeOptions.map((t) => {
+              {timeOptions.map((timeOption) => {
                 const isSelected =
-                  selected &&
-                  selected.getHours() === t.hours &&
-                  selected.getMinutes() === t.minutes;
+                  selected?.getHours() === timeOption.hours &&
+                  selected.getMinutes() === timeOption.minutes;
 
                 return (
                   <button
-                    key={`${t.hours}-${t.minutes}`}
+                    key={`${timeOption.hours}-${timeOption.minutes}`}
                     type="button"
                     className={clsx(css.timeItem, isSelected && css.selected)}
-                    onClick={() => handleTimeClick(t.hours, t.minutes)}
+                    onClick={() => handleTimeClick(timeOption.hours, timeOption.minutes)}
                   >
-                    {formatTime(t.hours, t.minutes)}
+                    {formatTime(timeOption.hours, timeOption.minutes)}
                   </button>
                 );
               })}
