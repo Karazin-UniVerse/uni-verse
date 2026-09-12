@@ -78,7 +78,7 @@ function ChartLegend({ items }: { items: { name: string; color: string }[] }) {
   );
 }
 
-export default function Chart({
+export function Chart({
   data,
   height,
   title,
@@ -235,3 +235,5 @@ export default function Chart({
     </div>
   );
 }
+
+export default Chart;
