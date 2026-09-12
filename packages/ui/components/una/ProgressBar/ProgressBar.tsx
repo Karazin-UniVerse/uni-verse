@@ -26,7 +26,7 @@ export const ProgressBar: React.FC<Readonly<ProgressBarProps>> = ({
   const defaultAriaLabel = !ariaLabel && !ariaLabelledBy ? 'Прогрес' : ariaLabel;
 
   return (
-    <progress
+    <div
       className={`${styles.track} ${className ?? ''}`}
       role="progressbar"
       aria-label={defaultAriaLabel}
@@ -35,11 +35,9 @@ export const ProgressBar: React.FC<Readonly<ProgressBarProps>> = ({
       aria-valuemin={0}
       aria-valuemax={safeMax}
       aria-valuetext={`${Math.round(percentage)}%`}
-      value={safeValue}
-      max={safeMax}
     >
       <div className={`${styles.fill} ${styles[tone]}`} style={{ width: `${width}%` }} />
-    </progress>
+    </div>
   );
 };
 

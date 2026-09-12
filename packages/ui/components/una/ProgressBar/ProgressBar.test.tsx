@@ -30,4 +30,10 @@ describe('UNA ProgressBar Component', () => {
     expect(html).toContain('aria-label="Успішність студента"');
     expect(html).toContain('academic-progress');
   });
+
+  it('should render tone class on fill element', () => {
+    const html = renderToString(<ProgressBar value={60} tone="success" />);
+
+    expect(html).toContain('success');
+  });
 });

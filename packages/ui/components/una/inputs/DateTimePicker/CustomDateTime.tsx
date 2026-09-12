@@ -131,15 +131,17 @@ export function CustomDateTime({
   };
 
   const formatDateTime = (date: Date | null) => {
-    if (!date) return '';
+    if (!date) {
+      return '';
+    }
 
-    const dateStr = `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+    const formattedDate = `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
     const rawHours = date.getHours();
     const minutes = date.getMinutes().toString().padStart(2, '0');
-    const ampm = rawHours >= 12 ? 'PM' : 'AM';
+    const meridiem = rawHours >= 12 ? 'PM' : 'AM';
     const displayHours = rawHours % 12 || 12;
 
-    return `${dateStr} ${displayHours}:${minutes} ${ampm}`;
+    return `${formattedDate} ${displayHours}:${minutes} ${meridiem}`;
   };
 
   const currentYear = new Date().getFullYear();

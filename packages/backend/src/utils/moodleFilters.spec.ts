@@ -35,6 +35,16 @@ describe('moodleFilters', () => {
       expect(normalizeMoodleText(undefined)).toBe('');
       expect(normalizeMoodleText('')).toBe('');
     });
+
+    it('should preserve comparison expressions and incomplete markup', () => {
+      expect(normalizeMoodleText('Score < 50')).toBe('Score < 50');
+      expect(normalizeMoodleText('Score < 50 and rating > 10')).toBe(
+        'Score < 50 and rating > 10',
+      );
+      expect(normalizeMoodleText('<incomplete tag without closing')).toBe(
+        '<incomplete tag without closing',
+      );
+    });
   });
 
   describe('matchesYearAndSemester', () => {

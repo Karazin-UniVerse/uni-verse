@@ -114,21 +114,21 @@ const CourseContents: React.FC = () => {
     return (
       <div className={styles.sections}>
         {sections.map((section) => {
-          const key = section.id.toString();
-          const open = openSections.has(key);
+          const sectionId = section.id.toString();
+          const isSectionOpen = openSections.has(sectionId);
 
           return (
-            <div key={key} className={styles.section}>
+            <div key={sectionId} className={styles.section}>
               <button
                 type="button"
                 className={styles.sectionHeader}
-                onClick={() => toggleSection(key)}
-                aria-expanded={open}
+                onClick={() => toggleSection(sectionId)}
+                aria-expanded={isSectionOpen}
               >
                 <span>{section.name}</span>
-                <ChevronDown size={18} className={open ? styles.chevronOpen : ''} />
+                <ChevronDown size={18} className={isSectionOpen ? styles.chevronOpen : ''} />
               </button>
-              {open && (
+              {isSectionOpen && (
                 <ul className={styles.moduleList}>
                   {section.modules.map((courseModule) => {
                     const clickable =

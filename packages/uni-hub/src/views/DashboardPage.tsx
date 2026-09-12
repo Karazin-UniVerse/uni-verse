@@ -34,25 +34,53 @@ const PAGE_TITLES: Record<NavKey, string> = {
   assignments: 'Завдання',
 };
 
+type GradesApiResponse = Awaited<ReturnType<typeof moodleApi.getGrades>>;
+
 function parseDateFilterSeconds(dateString?: string): number | null {
-  if (!dateString) return null;
+  if (!dateString) {
+    return null;
+  }
+
+  const dateParts = dateString.split('-');
+
+  if (dateParts.length !== 3) {
+    return null;
+  }
+
+  const [yearStr, monthStr, dayStr] = dateParts;
+  const expectedYear = Number.parseInt(yearStr, 10);
+  const expectedMonth = Number.parseInt(monthStr, 10);
+  const expectedDay = Number.parseInt(dayStr, 10);
 
   const parsedDate = new Date(dateString);
 
-  if (Number.isNaN(parsedDate.getTime()) || parsedDate.getFullYear() > 2099) {
+  if (
+    Number.isNaN(parsedDate.getTime()) ||
+    parsedDate.getFullYear() > 2099 ||
+    parsedDate.getUTCFullYear() > 2099
+  ) {
+    return null;
+  }
+
+  const matchesUtc =
+    parsedDate.getUTCFullYear() === expectedYear &&
+    parsedDate.getUTCMonth() + 1 === expectedMonth &&
+    parsedDate.getUTCDate() === expectedDay;
+  const matchesLocal =
+    parsedDate.getFullYear() === expectedYear &&
+    parsedDate.getMonth() + 1 === expectedMonth &&
+    parsedDate.getDate() === expectedDay;
+
+  if (!matchesUtc && !matchesLocal) {
     return null;
   }
 
   return Math.floor(parsedDate.getTime() / 1000);
 }
 
-function resolveGradesResponse(gradesResponse: any): Grade[] {
+function resolveGradesResponse(gradesResponse?: GradesApiResponse | null): Grade[] {
   if (Array.isArray(gradesResponse?.data?.grades)) {
     return gradesResponse.data.grades;
-  }
-
-  if (Array.isArray(gradesResponse?.data)) {
-    return gradesResponse.data as unknown as Grade[];
   }
 
   return [];

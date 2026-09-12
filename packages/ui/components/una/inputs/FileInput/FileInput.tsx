@@ -192,9 +192,9 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
     const handleRemoveFile = (indexToRemove: number) => {
       if (disabled) return;
 
-      const updated = currentFiles.filter((_, index) => index !== indexToRemove);
+      const updatedFiles = currentFiles.filter((_, index) => index !== indexToRemove);
 
-      updateFiles(updated);
+      updateFiles(updatedFiles);
 
       if (inputRef.current) {
         inputRef.current.value = '';

@@ -1,4 +1,4 @@
-import type { Grade } from '../types';
+import type { Grade, GradeValue } from '../types';
 
 export function getGradeCourseName(grade: Grade): string {
   const courseName = grade.courseName?.trim();
@@ -7,7 +7,7 @@ export function getGradeCourseName(grade: Grade): string {
   return courseName || fallbackCourseName || '';
 }
 
-function parseCandidateValue(candidate: unknown): number | null {
+function parseCandidateValue(candidate: GradeValue | undefined): number | null {
   if (candidate === undefined || candidate === null || candidate === '') {
     return null;
   }

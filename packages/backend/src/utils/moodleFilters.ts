@@ -9,21 +9,7 @@ const HTML_ENTITIES: Record<string, string> = {
 };
 
 function stripHtmlTags(input: string): string {
-  let insideTag = false;
-  let buffer = '';
-
-  for (const char of input) {
-    if (char === '<') {
-      insideTag = true;
-      buffer += ' ';
-    } else if (char === '>') {
-      insideTag = false;
-    } else if (!insideTag) {
-      buffer += char;
-    }
-  }
-
-  return buffer;
+  return input.replace(/<\/?(?:[a-zA-Z][^>]*|!--[\s\S]*?--|![^>]*)>/g, ' ');
 }
 
 /**
@@ -79,13 +65,13 @@ function matchesYear(target: string, year: string | number): boolean {
   }
 
   if (rawYear.includes('/')) {
-    const [yearPart1, yearPart2] = rawYear.split('/');
-    const escYear1 = escapeRegex(yearPart1);
-    const escYear1Short = escapeRegex(yearPart1.slice(-2));
-    const escYear2 = escapeRegex(yearPart2);
-    const escYear2Short = escapeRegex(yearPart2.slice(-2));
+    const [firstYear, secondYear] = rawYear.split('/');
+    const escapedFirstYear = escapeRegex(firstYear);
+    const escapedFirstYearShort = escapeRegex(firstYear.slice(-2));
+    const escapedSecondYear = escapeRegex(secondYear);
+    const escapedSecondYearShort = escapeRegex(secondYear.slice(-2));
     const pattern = new RegExp(
-      String.raw`(?:^|[\s\-_/.])(?:${escYear1}|${escYear1Short})[/-](?:${escYear2}|${escYear2Short})(?=[\s\-_/.]|$)`,
+      String.raw`(?:^|[\s\-_/.])(?:${escapedFirstYear}|${escapedFirstYearShort})[/-](?:${escapedSecondYear}|${escapedSecondYearShort})(?=[\s\-_/.]|$)`,
       'i',
     );
 
@@ -103,15 +89,15 @@ function matchesYear(target: string, year: string | number): boolean {
 }
 
 function matchesSemester(target: string, semester: string | number): boolean {
-  const semStr = String(semester).trim();
+  const semesterText = String(semester).trim();
 
-  if (!/^[1-9]\d*$/.test(semStr)) {
+  if (!/^[1-9]\d*$/.test(semesterText)) {
     return false;
   }
 
-  const escSem = escapeRegex(semStr);
+  const escapedSemester = escapeRegex(semesterText);
   const semesterPattern = new RegExp(
-    String.raw`(?:^|[\s\-_/.])(?:${escSem})(?:\s*(?:sem|сем|семестр|semester)|[\s\-_/.]|$)`,
+    String.raw`(?:^|[\s\-_/.])(?:${escapedSemester})(?:\s*(?:sem|сем|семестр|semester)|[\s\-_/.]|$)`,
     'i',
   );
 
@@ -223,7 +209,7 @@ export function extractSemester(name: string): number | null {
 }
 
 function matchesCourseStatus(
-  progressValue: unknown,
+  progressValue: Course['progress'],
   status?: CourseFilters['status'],
 ): boolean {
   if (!status) {
