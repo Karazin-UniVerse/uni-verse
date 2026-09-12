@@ -73,6 +73,7 @@ export const Modal: React.FC<ModalProps> = ({
   width = 700,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
   const titleId = useId();
@@ -114,10 +115,20 @@ export const Modal: React.FC<ModalProps> = ({
       handleFocusTrap(event, dialogRef.current);
     };
 
+    const overlayElement = overlayRef.current;
+
+    const handleOverlayClick = (event: MouseEvent) => {
+      if (event.target === overlayElement) {
+        onCloseRef.current();
+      }
+    };
+
     document.addEventListener('keydown', handleKeyDown);
+    overlayElement?.addEventListener('click', handleOverlayClick);
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
+      overlayElement?.removeEventListener('click', handleOverlayClick);
       unlockScroll(modalId);
 
       previouslyFocusedElementRef.current?.focus?.();
@@ -130,14 +141,8 @@ export const Modal: React.FC<ModalProps> = ({
 
   const dialogAriaLabel = title ? undefined : ariaLabel || 'Діалогове вікно';
 
-  const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.target === event.currentTarget) {
-      onClose();
-    }
-  };
-
   return (
-    <div className={styles.overlay} onClick={handleOverlayClick}>
+    <div ref={overlayRef} className={styles.overlay}>
       <div
         ref={dialogRef}
         className={`${styles.dialog} ${className ?? ''}`}
