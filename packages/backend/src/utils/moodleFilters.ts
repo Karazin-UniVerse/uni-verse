@@ -30,7 +30,7 @@ export function normalizeMoodleText(text?: string | null): string {
   // Single-pass replacement prevents double-unescaping vulnerabilities
   cleaned = cleaned.replace(
     /&(?:nbsp|quot|#039|apos|lt|gt|amp);/gi,
-    (match) => HTML_ENTITIES[match.toLowerCase()] ?? match,
+    (match) => HTML_ENTITIES[match.toLowerCase()],
   );
 
   return cleaned.replace(/\s+/g, ' ').trim();
