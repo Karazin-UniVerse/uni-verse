@@ -8,7 +8,7 @@ export const DashboardSkeleton: React.FC = () => (
     <section className={pageStyles.studentCard}>
       <div className={pageStyles.studentCardTop}>
         <div className={pageStyles.studentIdentity}>
-          <Skeleton height={48} width={48} style={{ borderRadius: '50%' }} />
+          <Skeleton height={48} width={48} borderRadius="50%" />
           <div className={pageStyles.studentMainInfo}>
             <Skeleton height={20} width={200} className={styles.mb} />
             <Skeleton height={14} width={150} />
