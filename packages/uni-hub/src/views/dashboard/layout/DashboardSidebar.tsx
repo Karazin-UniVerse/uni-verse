@@ -195,7 +195,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             className={styles.moodleStatusLink}
-            title="Moodle LMS (активно) - остання синхронізація: щойно"
+            title="Moodle LMS (підключено)"
           >
             <span className={styles.statusDot} aria-hidden />
             {!collapsed || mobileMenuOpen ? (

@@ -55,7 +55,13 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   return (
     <div className={styles.stack}>
       <div className={styles.mobileFilterToggle}>
-        <SimpleButton onClick={() => setFiltersOpen(!filtersOpen)} variant="secondary" size="small">
+        <SimpleButton
+          type="button"
+          onClick={() => setFiltersOpen(!filtersOpen)}
+          variant="secondary"
+          size="small"
+          aria-expanded={filtersOpen}
+        >
           <Filter size={16} /> {filtersOpen ? 'Сховати фільтри' : 'Фільтри'}
         </SimpleButton>
       </div>

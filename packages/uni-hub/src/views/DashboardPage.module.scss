@@ -773,6 +773,11 @@
   .user span:last-child {
     display: none;
   }
+
+  .content {
+    padding: var(--space-16);
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .studentCard {
