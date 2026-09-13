@@ -62,3 +62,28 @@
   padding: var(--space-24);
   overflow: auto;
 }
+
+@media (max-width: 768px) {
+  .overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  
+  .dialog {
+    width: 100% !important;
+    max-width: 100%;
+    border-radius: var(--border-radius-large) var(--border-radius-large) 0 0;
+    max-height: 90vh;
+    animation: slide-up var(--transition-medium) var(--ease-standard);
+    margin-bottom: 0;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
