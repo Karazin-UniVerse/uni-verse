@@ -3,6 +3,11 @@ import { Skeleton } from '@una';
 import pageStyles from '@uni-hub/views/DashboardPage.module.scss';
 import styles from './DashboardSkeleton.module.scss';
 
+const SKELETON_STUDENT_FIELDS = ['sf1', 'sf2', 'sf3', 'sf4', 'sf5', 'sf6', 'sf7', 'sf8'];
+const SKELETON_STAT_CARDS = ['st1', 'st2', 'st3'];
+const SKELETON_PANEL1_ITEMS = ['p1-1', 'p1-2', 'p1-3'];
+const SKELETON_PANEL2_ITEMS = ['p2-1', 'p2-2', 'p2-3', 'p2-4'];
+
 export const DashboardSkeleton: React.FC = () => (
   <div className={pageStyles.stack} aria-busy="true" aria-label="Загрузка данных">
     <section className={pageStyles.studentCard}>
@@ -20,8 +25,8 @@ export const DashboardSkeleton: React.FC = () => (
         </div>
       </div>
       <div className={pageStyles.studentGrid}>
-        {[...Array(8)].map((_, i) => (
-          <div key={i} className={pageStyles.studentField}>
+        {SKELETON_STUDENT_FIELDS.map((id) => (
+          <div key={id} className={pageStyles.studentField}>
             <Skeleton height={12} width={100} className={styles.mb} />
             <Skeleton height={16} width={140} />
           </div>
@@ -34,8 +39,8 @@ export const DashboardSkeleton: React.FC = () => (
     </div>
 
     <div className={pageStyles.statGrid}>
-      {[0, 1, 2].map((i) => (
-        <div key={i} className={pageStyles.statCard}>
+      {SKELETON_STAT_CARDS.map((id) => (
+        <div key={id} className={pageStyles.statCard}>
           <Skeleton height={14} width="40%" className={styles.mb} />
           <Skeleton height={28} width="55%" />
         </div>
@@ -46,8 +51,8 @@ export const DashboardSkeleton: React.FC = () => (
       <section className={pageStyles.panel}>
         <Skeleton height={20} width="45%" className={styles.mb} />
         <div className={pageStyles.list}>
-          {[0, 1, 2].map((i) => (
-            <div key={i} className={pageStyles.listItem}>
+          {SKELETON_PANEL1_ITEMS.map((id) => (
+            <div key={id} className={pageStyles.listItem}>
               <Skeleton height={16} width="70%" className={styles.mb} />
               <Skeleton height={12} width="40%" />
             </div>
@@ -57,8 +62,8 @@ export const DashboardSkeleton: React.FC = () => (
       <section className={pageStyles.panel}>
         <Skeleton height={20} width="55%" className={styles.mb} />
         <div className={pageStyles.list}>
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className={pageStyles.listItem}>
+          {SKELETON_PANEL2_ITEMS.map((id) => (
+            <div key={id} className={pageStyles.listItem}>
               <Skeleton height={16} width="65%" className={styles.mb} />
               <Skeleton height={12} width="35%" />
             </div>
