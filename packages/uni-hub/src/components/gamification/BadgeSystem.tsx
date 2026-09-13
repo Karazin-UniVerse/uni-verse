@@ -14,6 +14,7 @@ export const BadgeSystem: React.FC<BadgeSystemProps> = ({ grades, submittedBefor
   const toast = useToast();
   const unlockedBadges = useGamificationStore((state) => state.unlockedBadges);
   const unlockBadge = useGamificationStore((state) => state.unlockBadge);
+  const triggerCelebration = useGamificationStore((state) => state.triggerCelebration);
   const lastCheckInWasNight = useGamificationStore((state) => state.lastCheckInWasNight);
   const notifiedRef = useRef<Set<string>>(new Set(unlockedBadges));
 
@@ -33,9 +34,18 @@ export const BadgeSystem: React.FC<BadgeSystemProps> = ({ grades, submittedBefor
         const badge = BADGES[id];
 
         toast.success(`Ачивка: ${badge.title} — ${badge.description}`);
+        triggerCelebration();
       }
     }
-  }, [grades, unlockedBadges, lastCheckInWasNight, submittedBeforeDeadline, unlockBadge, toast]);
+  }, [
+    grades,
+    unlockedBadges,
+    lastCheckInWasNight,
+    submittedBeforeDeadline,
+    unlockBadge,
+    triggerCelebration,
+    toast,
+  ]);
 
   return null;
 };
