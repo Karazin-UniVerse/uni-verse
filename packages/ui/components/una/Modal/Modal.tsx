@@ -131,8 +131,9 @@ export const Modal: React.FC<ModalProps> = ({
 
   const dialogAriaLabel = title ? undefined : ariaLabel || 'Діалогове вікно';
 
+  // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
   return (
-    <div className={styles.overlay} onClick={onClose} role="presentation">
+    <div className={styles.overlay} onClick={onClose}>
       <div
         ref={dialogRef}
         className={`${styles.dialog} ${className ?? ''}`}
@@ -142,6 +143,7 @@ export const Modal: React.FC<ModalProps> = ({
         aria-labelledby={title ? titleId : undefined}
         aria-label={dialogAriaLabel}
         tabIndex={-1}
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events
         onClick={(event) => event.stopPropagation()}
       >
         <div className={styles.header}>

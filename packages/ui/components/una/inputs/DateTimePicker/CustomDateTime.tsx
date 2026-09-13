@@ -157,9 +157,16 @@ export function CustomDateTime({
 
   return (
     <div className={css.wrapper} ref={containerRef}>
-      <div role="button" tabIndex={0} onClick={handleInputClick} onKeyDown={handleKeyDown}>
-        <TextInput {...props} size={size} value={formatDateTime(selected)} readOnly tabIndex={-1} />
-      </div>
+      <TextInput
+        {...props}
+        size={size}
+        value={formatDateTime(selected)}
+        readOnly
+        onClick={handleInputClick}
+        onKeyDown={handleKeyDown}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+      />
 
       {isOpen && (
         <div className={clsx(css.popper, css[`size-${size}`])}>
