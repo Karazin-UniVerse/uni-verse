@@ -130,17 +130,19 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </div>
 
         <div className={styles.userWrap} ref={userRef}>
-          <div
+          <button
+            type="button"
             className={styles.user}
             title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
             onClick={() => setUserMenuOpen((open) => !open)}
-            style={{ cursor: 'pointer' }}
+            aria-haspopup="true"
+            aria-expanded={userMenuOpen}
           >
             <span className={styles.avatar}>
               <User size={16} />
             </span>
             <span>{activeStudentProfile.fullName}</span>
-          </div>
+          </button>
 
           {userMenuOpen && (
             <motion.div
