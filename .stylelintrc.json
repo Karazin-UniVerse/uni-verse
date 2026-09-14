@@ -1,10 +1,7 @@
 {
+  "extends": ["stylelint-config-standard", "stylelint-config-standard-scss"],
   "rules": {
-    "selector-pseudo-class-no-unknown": [
-      true,
-      {
-        "ignorePseudoClasses": ["global", "local"]
-      }
-    ]
+    "keyframe-declaration-no-important": true,
+    "declaration-no-important": true
   }
 }
