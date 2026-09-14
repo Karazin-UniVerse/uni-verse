@@ -687,8 +687,8 @@
     flex-direction: row;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     background: color-mix(in srgb, var(--bg-surface) 65%, transparent);
-    backdrop-filter: blur(20px) saturate(150%);
-    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    backdrop-filter: blur(40px) saturate(150%);
+    -webkit-backdrop-filter: blur(40px) saturate(150%);
     border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
     border-radius: 32px;
   }
