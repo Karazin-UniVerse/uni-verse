@@ -233,7 +233,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--space-24);
-  background: color-mix(in srgb, var(--bg-color) 80%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 65%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--card-border);
