@@ -1,23 +1,23 @@
-## 🔗 Задача в Notion
+## Notion Task
 
-- Посилання: [TR-XXX: Назва задачі](https://www.notion.so/...)
+- Link: [TR-XXX: Task Name](https://www.notion.so/...)
 
-## 📝 Опис змін
+## Description
 
 -
 
-## 🛠 Тип змін
+## Type of Change
 
-- [ ] `feat`: новий функціонал
-- [ ] `fix`: виправлення дефекту
-- [ ] `style`: зміни в UI / стилях
-- [ ] `refactor`: оптимізація / рефакторинг коду
-- [ ] `chore`: оновлення залежностей, CI/CD або документації
+- [ ] `feat`: new feature
+- [ ] `fix`: bug fix
+- [ ] `style`: UI / styling changes
+- [ ] `refactor`: code optimization / refactoring
+- [ ] `chore`: dependencies, CI/CD, or documentation update
 
-## ✅ Чеклист перевірки перед мерджем
+## Pre-merge Checklist
 
-- [ ] Код відповідає вимогам задачі в Notion
-- [ ] Лінтер проходить без зауважень (`pnpm lint`)
-- [ ] Типізація проходить без помилок (`pnpm typecheck`)
-- [ ] Білд успішно збирається (`pnpm build`)
-- [ ] Тести проходять успішно (`pnpm test`)
+- [ ] Code meets requirements described in the Notion task
+- [ ] Linter passes with zero warnings (`pnpm lint`)
+- [ ] Type check passes with zero errors (`pnpm typecheck`)
+- [ ] Build succeeds (`pnpm build`)
+- [ ] Tests pass successfully (`pnpm test`)
