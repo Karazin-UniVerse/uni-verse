@@ -197,15 +197,19 @@
 .logoutBtn {
   width: 100%;
   -webkit-tap-highlight-color: transparent;
-  justify-content: flex-start;
-  gap: var(--space-12);
+  justify-content: flex-start !important;
+  gap: var(--space-12) !important;
   padding: var(--space-12) var(--space-16) !important;
   border-radius: var(--border-radius-medium) !important;
   color: var(--text-secondary) !important;
   font-weight: 400 !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
 
   &:hover {
     color: var(--text-primary) !important;
+    background: var(--bg-hover) !important;
+    border-color: var(--border-color) !important;
   }
 }
 

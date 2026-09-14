@@ -53,9 +53,5 @@
 }
 
 .compactLabel {
-  display: none;
-
-  @include wider-than('sm') {
-    display: inline;
-  }
+  display: inline;
 }
