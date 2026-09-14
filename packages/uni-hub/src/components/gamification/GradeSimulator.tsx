@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import clsx from 'clsx';
 import type { Assignment, Grade } from '@uni-hub/types';
 import {
   getGradeCourseName,
@@ -8,28 +9,20 @@ import {
 } from '@uni-hub/utils/grades';
 import { useCountUp } from '@uni-hub/hooks/useCountUp';
 import { Modal, Select, Empty, ProgressBar, Button as SimpleButton, SimpleSlider, Tag } from '@una';
-import { calculateEctsGrade, calculateTraditionalGrade } from '@core/types';
+import {
+  calculateAccumulatedGrade,
+  calculateExamTargets,
+  clampScore,
+  computeSimulatedFinal,
+  MAX_EXAM,
+  MAX_SEMESTER_CREDIT,
+  MAX_SEMESTER_EXAM,
+  MIN_EXAM_ADMISSION,
+  type ControlType,
+} from '@uni-hub/utils/gradeMath';
 import styles from './GradeSimulator.module.scss';
 
-const DEFAULT_SCORE = 75;
-const MIN_SCORE = 0;
-const MAX_SCORE = 100;
-
-export function clampScore(score: number): number {
-  if (Number.isNaN(score)) return DEFAULT_SCORE;
-
-  return Math.max(MIN_SCORE, Math.min(MAX_SCORE, score));
-}
-
-export function computeSimulatedFinal(currentScore: number, remainingScores: number[]): number {
-  if (remainingScores.length === 0) return currentScore;
-
-  const simulatedAvg =
-    remainingScores.reduce((sum, remainingScore) => sum + remainingScore, 0) /
-    remainingScores.length;
-
-  return currentScore * 0.7 + simulatedAvg * 0.3;
-}
+export { clampScore, computeSimulatedFinal };
 
 type GradeSimulatorProps = {
   assignments: Assignment[];
@@ -85,11 +78,64 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
       getGradeCourseName(grade).trim().toLowerCase() === selectedCourse.trim().toLowerCase(),
   );
 
-  const currentScore = currentGrade
-    ? (getGradeRawValue(currentGrade) ?? (Number.parseFloat(currentGrade.grade) || 0))
-    : 0;
+  const controlType: ControlType = currentGrade?.controlType ?? 'exam';
+  const isExam = controlType === 'exam';
+  const maxSemester = isExam ? MAX_SEMESTER_EXAM : MAX_SEMESTER_CREDIT;
 
-  const remaining = useMemo(() => {
+  // Base scores extracted from grade record
+  const baseSemester = useMemo(() => {
+    if (!currentGrade) {
+      return isExam ? 45 : 75;
+    }
+
+    if (currentGrade.currentScore !== undefined && currentGrade.currentScore !== null) {
+      return clampScore(Number(currentGrade.currentScore), 0, maxSemester);
+    }
+
+    const raw = getGradeRawValue(currentGrade);
+
+    if (raw !== null) {
+      return clampScore(raw, 0, maxSemester);
+    }
+
+    const parsed = Number.parseFloat(currentGrade.grade);
+
+    return clampScore(Number.isNaN(parsed) ? 45 : parsed, 0, maxSemester);
+  }, [currentGrade, isExam, maxSemester]);
+
+  const baseExam = useMemo(() => {
+    if (!currentGrade || !isExam) {
+      return 30;
+    }
+
+    if (currentGrade.examScore !== undefined && currentGrade.examScore !== null) {
+      return clampScore(Number(currentGrade.examScore), 0, MAX_EXAM);
+    }
+
+    return 30;
+  }, [currentGrade, isExam]);
+
+  const [semesterOverrides, setSemesterOverrides] = useState<Record<string, number>>({});
+  const [examOverrides, setExamOverrides] = useState<Record<string, number>>({});
+
+  const semesterScore = semesterOverrides[selectedCourse] ?? baseSemester;
+  const examScore = examOverrides[selectedCourse] ?? baseExam;
+
+  const setSemesterScore = (val: number) => {
+    setSemesterOverrides((prev) => ({
+      ...prev,
+      [selectedCourse]: clampScore(val, 0, maxSemester),
+    }));
+  };
+
+  const setExamScore = (val: number) => {
+    setExamOverrides((prev) => ({
+      ...prev,
+      [selectedCourse]: clampScore(val, 0, MAX_EXAM),
+    }));
+  };
+
+  const remainingAssignments = useMemo(() => {
     if (!selectedCourse) {
       return [];
     }
@@ -101,41 +147,210 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
     );
   }, [assignments, selectedCourse]);
 
-  const [scores, setScores] = useState<Record<number, number>>({});
+  const [assignmentScores, setAssignmentScores] = useState<Record<number, number>>({});
 
-  const remainingValues = remaining.map((assignment) =>
-    clampScore(scores[assignment.id] ?? DEFAULT_SCORE),
-  );
+  const setAssignmentScore = (id: number, value: number) => {
+    setAssignmentScores((prev) => {
+      const updated = { ...prev, [id]: clampScore(value, 0, 100) };
 
-  const finalScore = computeSimulatedFinal(currentScore, remainingValues);
-  const roundedFinalScore = Math.round(finalScore);
-  const animatedFinal = useCountUp(roundedFinalScore, 400, open);
-  const tone = getGradeTone(roundedFinalScore);
+      if (remainingAssignments.length > 0) {
+        const avg =
+          remainingAssignments.reduce((sum, a) => sum + (updated[a.id] ?? 75), 0) /
+          remainingAssignments.length;
+        // Proportionally simulate semester score based on assignment progress
+        const simulated = Math.round(baseSemester + (avg * (maxSemester - baseSemester)) / 100);
 
-  const setScore = (id: number, value: number) => {
-    setScores((previousScores) => ({ ...previousScores, [id]: clampScore(value) }));
+        setSemesterScore(clampScore(simulated, 0, maxSemester));
+      }
+
+      return updated;
+    });
   };
 
+  // Compute university accumulation result
+  const accumulationResult = useMemo(
+    () =>
+      calculateAccumulatedGrade({
+        semesterScore,
+        controlType,
+        examScore: isExam ? examScore : null,
+      }),
+    [semesterScore, controlType, examScore, isExam],
+  );
+
+  const examTargets = useMemo(
+    () => (isExam ? calculateExamTargets(semesterScore) : []),
+    [isExam, semesterScore],
+  );
+
+  const isAdmitted = !isExam || semesterScore >= MIN_EXAM_ADMISSION;
+  const animatedFinal = useCountUp(accumulationResult.totalScore, 400, open);
+  const tone = getGradeTone(accumulationResult.totalScore);
+
   return (
-    <Modal open={open} onClose={onClose} title="Симулятор оцінок — «Що, якщо?»" width={560}>
+    <Modal open={open} onClose={onClose} title="Симулятор оцінок — «Що, якщо?»" width={580}>
       {uniqueGrades.length === 0 ? (
         <Empty description="Немає оцінок для симуляції" />
       ) : (
         <div className={styles.body}>
-          <p className={styles.hint}>
-            Поточний бал дисципліни складає 70% підсумку. Гіпотетичні роботи розподіляють решту 30%.
-          </p>
+          <div className={styles.courseHeader}>
+            <div className={styles.courseHeaderTop}>
+              <span className={styles.sectionTitle}>Оберіть дисципліну:</span>
+              <Tag tone={isExam ? 'info' : 'neutral'}>
+                {isExam ? 'Іспит (60 семестр + 40 екзамен)' : 'Залік (100 б. накопичувально)'}
+              </Tag>
+            </div>
+            <Select
+              value={selectedCourse}
+              onChange={setCourseName}
+              options={courseOptions}
+              aria-label="Дисципліна"
+            />
+          </div>
 
-          <Select
-            value={selectedCourse}
-            onChange={setCourseName}
-            options={courseOptions}
-            aria-label="Дисципліна"
-          />
+          {isExam && (
+            <div
+              className={clsx(
+                styles.admissionBanner,
+                isAdmitted ? styles.admissionBannerSuccess : styles.admissionBannerDanger,
+              )}
+            >
+              <span>{isAdmitted ? '🟢' : '🔴'}</span>
+              <span>
+                {isAdmitted
+                  ? `Допущено до іспиту (${semesterScore} / 60 б. — поріг допуску 30 б. досягнуто)`
+                  : `Не допущено до іспиту (${semesterScore} / 60 б. — бракує ${
+                      MIN_EXAM_ADMISSION - semesterScore
+                    } б. для допуску)`}
+              </span>
+            </div>
+          )}
 
+          {/* Semester score adjustment */}
+          <div className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <span className={styles.sectionTitle}>
+                {isExam ? 'Семестровий бал (поточна робота)' : 'Накопичений семестровий бал'}
+              </span>
+              <span className={styles.sectionValue}>
+                {semesterScore} / {maxSemester} б.
+              </span>
+            </div>
+            <SimpleSlider
+              aria-label="Семестровий бал"
+              min={0}
+              max={maxSemester}
+              value={semesterScore}
+              onChange={setSemesterScore}
+            />
+          </div>
+
+          {/* Exam score adjustment for exam courses */}
+          {isExam && (
+            <div className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <span className={styles.sectionTitle}>
+                  Екзаменаційний бал (підсумковий контроль)
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className={styles.sectionValue}>{examScore} / 40 б.</span>
+                  <Tag tone={examScore >= 20 ? 'success' : 'danger'}>
+                    {examScore >= 20 ? 'Складено (≥ 20 б.)' : 'Не складено (< 20 б.)'}
+                  </Tag>
+                </div>
+              </div>
+              <SimpleSlider
+                aria-label="Екзаменаційний бал"
+                min={0}
+                max={MAX_EXAM}
+                value={examScore}
+                disabled={!isAdmitted}
+                onChange={setExamScore}
+              />
+            </div>
+          )}
+
+          {/* Exam Targets Grid */}
+          {isExam && (
+            <div className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <span className={styles.sectionTitle}>
+                  Цільові бали на іспиті («Що потрібно для оцінки?»)
+                </span>
+                <span className={styles.hint}>Мін. екзамену: 20 б.</span>
+              </div>
+              <div className={styles.targetsGrid}>
+                {examTargets.map((target) => {
+                  const isCurrentAchieved =
+                    isAdmitted &&
+                    accumulationResult.isCoursePassed &&
+                    accumulationResult.ectsGrade === target.grade;
+                  const isUnreachable = !isAdmitted || !target.isAchievable;
+
+                  return (
+                    <div
+                      key={target.grade}
+                      className={clsx(
+                        styles.targetCard,
+                        isCurrentAchieved && styles.targetCardActive,
+                        isUnreachable && styles.targetCardUnreachable,
+                      )}
+                    >
+                      <span className={styles.targetGrade}>{target.grade}</span>
+                      <span className={styles.targetPoints}>≥ {target.minTotalScore} б.</span>
+                      <span className={styles.targetStatus}>
+                        {!isAdmitted
+                          ? 'Недопуск'
+                          : !target.isAchievable
+                            ? 'Недосяжно'
+                            : `${target.requiredExamScore} б.`}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Remaining course assignments simulation if present */}
+          {remainingAssignments.length > 0 && (
+            <div className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <span className={styles.sectionTitle}>
+                  Окремі завдання семестру ({remainingAssignments.length})
+                </span>
+                <span className={styles.hint}>Впливають на семестровий бал</span>
+              </div>
+              <div className={styles.list}>
+                {remainingAssignments.map((assignment) => {
+                  const val = assignmentScores[assignment.id] ?? 75;
+
+                  return (
+                    <label key={assignment.id} className={styles.row}>
+                      <div className={styles.rowTop}>
+                        <span className={styles.name} title={assignment.name}>
+                          {assignment.name}
+                        </span>
+                        <span className={styles.score}>{val} %</span>
+                      </div>
+                      <SimpleSlider
+                        aria-label={`Бал за завдання ${assignment.name}`}
+                        min={0}
+                        max={100}
+                        value={val}
+                        onChange={(score: number) => setAssignmentScore(assignment.id, score)}
+                      />
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Final forecast section */}
           <div className={styles.forecast}>
             <div className={styles.forecastLabel}>
-              Прогноз підсумкового результату (100-бальна шкала & ECTS)
+              Прогноз підсумкового результату (100-бальна накопичувальна шкала & ECTS)
             </div>
             <div
               className={styles.forecastValue}
@@ -147,43 +362,14 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
               }}
             >
               <span>{animatedFinal} / 100</span>
-              <Tag tone={tone}>ECTS: {calculateEctsGrade(roundedFinalScore)}</Tag>
-              <Tag tone="neutral">
-                {calculateTraditionalGrade(
-                  roundedFinalScore,
-                  currentGrade?.controlType ?? undefined,
-                )}
+              <Tag tone={tone}>ECTS: {accumulationResult.ectsGrade}</Tag>
+              <Tag tone={accumulationResult.isCoursePassed ? 'neutral' : 'danger'}>
+                {accumulationResult.traditionalGrade}
               </Tag>
             </div>
-            <ProgressBar value={roundedFinalScore} tone={tone} />
+            <ProgressBar value={accumulationResult.totalScore} tone={tone} />
+            <p className={styles.statusMessage}>{accumulationResult.statusMessage}</p>
           </div>
-
-          {remaining.length === 0 ? (
-            <Empty description="Немає завдань з цієї дисципліни — відображається поточний бал" />
-          ) : (
-            <div className={styles.list}>
-              {remaining.map((assignment) => {
-                const value = scores[assignment.id] ?? 75;
-
-                return (
-                  <label key={assignment.id} className={styles.row}>
-                    <div className={styles.rowTop}>
-                      <span className={styles.name} title={assignment.name}>
-                        {assignment.name}
-                      </span>
-                      <span className={styles.score}>{value}</span>
-                    </div>
-                    <SimpleSlider
-                      min={MIN_SCORE}
-                      max={MAX_SCORE}
-                      value={value}
-                      onChange={(score: number) => setScore(assignment.id, score)}
-                    />
-                  </label>
-                );
-              })}
-            </div>
-          )}
         </div>
       )}
     </Modal>
