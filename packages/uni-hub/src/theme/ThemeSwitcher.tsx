@@ -46,12 +46,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
   }
 
   return (
-    <div
-      className={clsx(styles.switcher, className)}
-      role="group"
-      aria-label="Вибір теми"
-      suppressHydrationWarning
-    >
+    <div className={clsx(styles.switcher, className)} suppressHydrationWarning>
       {(Object.keys(THEME_META) as AppTheme[]).map((themeOption) => {
         const themeMetadata = THEME_META[themeOption];
         const isSelectedTheme = theme === themeOption;

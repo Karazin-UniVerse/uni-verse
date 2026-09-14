@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Spinner, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
 import { type StudentProfile } from '@core/types';
-import type { Course, Grade, CourseModule } from '@uni-hub/types';
+import type { Grade, CourseModule } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
 import { DashboardSkeleton } from '@uni-hub/components/dashboard';
 import { BadgeSystem, GradeSimulator } from '@uni-hub/components/gamification';
@@ -17,8 +17,6 @@ import {
   type DashboardData,
   isNavKey,
   fallbackStudentProfile,
-  mockKarazinCurriculum,
-  mockFallbackGrades,
   DashboardSidebar,
   DashboardHeader,
   OverviewTab,
@@ -85,21 +83,6 @@ const DashboardPage: React.FC = () => {
     setLoading(true);
 
     try {
-      if (localStorage.getItem('accessToken') === 'demo-token') {
-        setData({
-          courses: mockKarazinCurriculum as unknown as Course[],
-          grades: mockFallbackGrades as unknown as Grade[],
-          assignments: [],
-          events: [],
-          notifications: [],
-          unreadCount: 0,
-          statistics: null,
-        });
-        setHasLoadedOnce(true);
-
-        return;
-      }
-
       const params: Record<string, string | number> = { sortByDate: sortOrder };
 
       if (dateFrom) {
