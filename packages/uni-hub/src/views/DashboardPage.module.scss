@@ -387,7 +387,7 @@
   background: var(--bg-surface);
   border: 1px solid var(--card-border);
   border-radius: 16px;
-  padding: var(--space-24);
+  padding: var(--space-32);
   box-shadow: var(--card-shadow);
   animation: fadeUp var(--transition-medium) var(--ease-standard) both;
   transition:
@@ -424,7 +424,7 @@
   background: var(--bg-surface);
   border: 1px solid var(--card-border);
   border-radius: 16px;
-  padding: var(--space-24);
+  padding: var(--space-32);
   box-shadow: var(--card-shadow);
 }
 
@@ -482,7 +482,7 @@
   background: var(--bg-surface);
   border: 1px solid var(--card-border);
   border-radius: 16px;
-  padding: var(--space-24);
+  padding: var(--space-32);
   display: flex;
   flex-direction: column;
   gap: var(--space-16);
@@ -551,7 +551,7 @@
   background: var(--bg-surface);
   border: 1px solid var(--card-border);
   border-radius: 16px;
-  padding: var(--space-20);
+  padding: var(--space-32);
   box-shadow: var(--card-shadow);
   cursor: pointer;
   font: inherit;
@@ -779,7 +779,7 @@
   background: var(--bg-surface);
   border: 1px solid var(--card-border); /* Ледь помітна рамка замість різкої */
   border-radius: 16px; /* Збільшене заокруглення */
-  padding: var(--space-24);
+  padding: var(--space-32);
   display: flex;
   flex-direction: column;
   gap: var(--space-16);

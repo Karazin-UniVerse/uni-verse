@@ -341,6 +341,11 @@ $space-64: 64px;
   --text-disabled: var(--cyberpunk-text-dim);
   --border-color: var(--cyberpunk-pink);
 
+  /* Cards */
+  --card-border: rgba(0, 240, 255, 0.4);
+  --card-shadow: 0 0 8px rgba(255, 0, 85, 0.15);
+  --card-shadow-hover: 0 0 15px rgba(0, 240, 255, 0.4);
+
   /* Primary Button Overrides */
   --btn-primary-bg: var(--cyberpunk-yellow);
   --btn-primary-hover: var(--cyberpunk-cyan);
