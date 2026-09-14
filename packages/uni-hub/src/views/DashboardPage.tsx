@@ -18,6 +18,7 @@ import {
   isNavKey,
   fallbackStudentProfile,
   DashboardSidebar,
+  MobileBottomNav,
   DashboardHeader,
   OverviewTab,
   CoursesTab,
@@ -254,6 +255,11 @@ const DashboardPage: React.FC = () => {
         onSelectKey={setActiveKey}
         soundEnabled={soundEnabled}
         onLogout={handleLogout}
+      />
+      <MobileBottomNav
+        activeKey={activeKey}
+        onSelectKey={setActiveKey}
+        soundEnabled={soundEnabled}
       />
 
       <div

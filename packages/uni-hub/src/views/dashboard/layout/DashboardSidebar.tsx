@@ -18,7 +18,12 @@ import { playClick } from '@uni-hub/utils/soundEffects';
 import type { DashboardSidebarProps, NavKey } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
-const menuItems: { key: NavKey; icon: React.ReactNode; label: string; shortLabel: string }[] = [
+export const NAV_ITEMS: {
+  key: NavKey;
+  icon: React.ReactNode;
+  label: string;
+  shortLabel: string;
+}[] = [
   {
     key: 'overview',
     icon: <LayoutDashboard size={18} />,
@@ -158,7 +163,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         </div>
 
         <nav className={styles.nav}>
-          {menuItems.map((item) => (
+          {NAV_ITEMS.map((item) => (
             <button
               key={item.key}
               type="button"

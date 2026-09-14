@@ -7,3 +7,4 @@ export * from './tabs/OverviewTab';
 export * from './tabs/CoursesTab';
 export * from './tabs/GradesTab';
 export * from './tabs/AssignmentsTab';
+export * from './layout/MobileBottomNav';
