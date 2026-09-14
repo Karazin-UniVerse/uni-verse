@@ -5,6 +5,7 @@ import {
   extractYear,
   extractSemester,
   filterCourses,
+  CourseStatus,
 } from './moodleFilters';
 
 describe('moodleFilters', () => {
@@ -141,12 +142,19 @@ describe('moodleFilters', () => {
         { fullname: 'Course 5', progress: null },
       ];
 
+      expect(
+        filterCourses(courses, { status: CourseStatus.COMPLETED }),
+      ).toHaveLength(1);
+      expect(
+        filterCourses(courses, { status: CourseStatus.NOT_COMPLETED }),
+      ).toHaveLength(4);
+      expect(
+        filterCourses(courses, { status: CourseStatus.IN_PROGRESS }),
+      ).toHaveLength(2);
+      expect(
+        filterCourses(courses, { status: CourseStatus.NOT_STARTED }),
+      ).toHaveLength(2);
       expect(filterCourses(courses, { status: 'completed' })).toHaveLength(1);
-      expect(filterCourses(courses, { status: 'not_completed' })).toHaveLength(
-        4,
-      );
-      expect(filterCourses(courses, { status: 'in_progress' })).toHaveLength(2);
-      expect(filterCourses(courses, { status: 'not_started' })).toHaveLength(2);
       expect(filterCourses(courses, { status: 'other' as any })).toHaveLength(
         5,
       );

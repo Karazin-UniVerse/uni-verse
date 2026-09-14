@@ -43,11 +43,15 @@ export interface Course {
   [key: string]: unknown;
 }
 
-export type CourseStatus =
-  'completed' | 'not_completed' | 'in_progress' | 'not_started';
+export enum CourseStatus {
+  COMPLETED = 'completed',
+  NOT_COMPLETED = 'not_completed',
+  IN_PROGRESS = 'in_progress',
+  NOT_STARTED = 'not_started',
+}
 
 export interface CourseFilters {
-  status?: CourseStatus;
+  status?: CourseStatus | `${CourseStatus}`;
   year?: string | number;
   semester?: string | number;
 }
@@ -220,13 +224,13 @@ function matchesCourseStatus(
   const progress = numeric > 1 ? numeric : numeric * 100;
 
   switch (status) {
-    case 'completed':
+    case CourseStatus.COMPLETED:
       return progress >= 100;
-    case 'not_completed':
+    case CourseStatus.NOT_COMPLETED:
       return progress < 100;
-    case 'in_progress':
+    case CourseStatus.IN_PROGRESS:
       return progress > 0 && progress < 100;
-    case 'not_started':
+    case CourseStatus.NOT_STARTED:
       return progress <= 0;
     default:
       return true;
