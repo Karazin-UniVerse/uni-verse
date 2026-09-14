@@ -51,6 +51,15 @@
   border-bottom: 1px solid var(--border-color);
 }
 
+.collapsed .brand {
+  justify-content: center;
+  padding: 0;
+  
+  span {
+    display: none;
+  }
+}
+
 .nav {
   flex: 1;
   display: flex;
