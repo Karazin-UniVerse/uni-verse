@@ -84,6 +84,12 @@ async function executeAttempt<T>(
     });
 
     if (!response.ok) {
+      if (response.status === 401 && isBrowser) {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('moodleToken');
+      }
+
       throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
     }
 

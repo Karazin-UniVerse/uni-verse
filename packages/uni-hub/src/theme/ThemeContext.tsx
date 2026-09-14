@@ -1,4 +1,12 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 
 export type AppTheme = 'light' | 'dark' | 'cyberpunk';
 
@@ -24,11 +32,17 @@ function applyTheme(theme: AppTheme) {
   }
 }
 
-function readStoredTheme(): AppTheme {
-  if (typeof window === 'undefined') {
-    return 'light';
-  }
+const subscribeToTheme = (callback: () => void) => {
+  window.addEventListener('storage', callback);
+  window.addEventListener('theme-change', callback);
 
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener('theme-change', callback);
+  };
+};
+
+const getThemeSnapshot = (): AppTheme => {
   const stored = localStorage.getItem(STORAGE_KEY);
 
   if (stored === 'light' || stored === 'dark' || stored === 'cyberpunk') {
@@ -36,27 +50,37 @@ function readStoredTheme(): AppTheme {
   }
 
   return 'light';
-}
+};
+
+const getThemeServerSnapshot = (): AppTheme => 'light';
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<AppTheme>(() => readStoredTheme());
+  const storedTheme = useSyncExternalStore(
+    subscribeToTheme,
+    getThemeSnapshot,
+    getThemeServerSnapshot,
+  );
+  const [overrideTheme, setOverrideTheme] = useState<AppTheme | null>(null);
+  const theme = overrideTheme ?? storedTheme;
 
   useEffect(() => {
     applyTheme(theme);
-    localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);
 
   const setTheme = useCallback((next: AppTheme) => {
-    setThemeState(next);
+    setOverrideTheme(next);
+    localStorage.setItem(STORAGE_KEY, next);
+    applyTheme(next);
+    window.dispatchEvent(new Event('theme-change'));
   }, []);
 
   const cycleTheme = useCallback(() => {
-    setThemeState((prev) => {
-      const idx = THEMES.indexOf(prev);
+    const currentTheme = overrideTheme ?? getThemeSnapshot();
+    const idx = THEMES.indexOf(currentTheme);
+    const nextTheme = THEMES[(idx + 1) % THEMES.length];
 
-      return THEMES[(idx + 1) % THEMES.length];
-    });
-  }, []);
+    setTheme(nextTheme);
+  }, [overrideTheme, setTheme]);
 
   const value = useMemo(() => ({ theme, setTheme, cycleTheme }), [theme, setTheme, cycleTheme]);
 

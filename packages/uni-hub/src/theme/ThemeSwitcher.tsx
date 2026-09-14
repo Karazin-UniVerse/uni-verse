@@ -29,19 +29,29 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     return (
       <button
         type="button"
+        suppressHydrationWarning
         className={clsx(styles.compactBtn, className)}
         onClick={cycleTheme}
         aria-label={`Тема: ${themeMetadata.label}. Перемкнути`}
         title={themeMetadata.label}
       >
         {themeMetadata.icon}
-        {showLabel && <span className={styles.compactLabel}>{themeMetadata.label}</span>}
+        {showLabel && (
+          <span className={styles.compactLabel} suppressHydrationWarning>
+            {themeMetadata.label}
+          </span>
+        )}
       </button>
     );
   }
 
   return (
-    <div className={clsx(styles.switcher, className)} role="group" aria-label="Вибір теми">
+    <div
+      className={clsx(styles.switcher, className)}
+      role="group"
+      aria-label="Вибір теми"
+      suppressHydrationWarning
+    >
       {(Object.keys(THEME_META) as AppTheme[]).map((themeOption) => {
         const themeMetadata = THEME_META[themeOption];
         const isSelectedTheme = theme === themeOption;
@@ -50,6 +60,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
           <button
             key={themeOption}
             type="button"
+            suppressHydrationWarning
             className={clsx(styles.option, isSelectedTheme && styles.active)}
             onClick={() => setTheme(themeOption)}
             aria-pressed={isSelectedTheme}

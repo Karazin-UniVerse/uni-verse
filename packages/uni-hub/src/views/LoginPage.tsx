@@ -107,7 +107,24 @@ const LoginPage: React.FC = () => {
             disabled={loading}
             className={styles.submit}
           >
-            {loading ? 'Вход...' : 'Войти'}
+            {loading ? 'Вхід...' : 'Войти'}
+          </Button>
+
+          <Button
+            type="button"
+            variant="secondary"
+            size="large"
+            onClick={() => {
+              localStorage.setItem('isLoggedIn', 'true');
+              localStorage.setItem('accessToken', 'demo-token');
+              localStorage.setItem('username', 'Барсуков Родіон Сергійович');
+              toast.success('Вхід у демо-режимі');
+              router.push('/');
+            }}
+            className={styles.submit}
+            style={{ marginTop: '8px' }}
+          >
+            Демо-режим (огляд інтерфейсу)
           </Button>
         </SimpleForm>
       </div>
