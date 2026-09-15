@@ -6,6 +6,7 @@ knowledge_base:
     filePatterns:
       - '.github/copilot-instructions.md'
       - 'CODE_STYLE.md'
+      - '.agents/instructions/karazin-edean.md'
   mcp:
     usage: enabled
 reviews:

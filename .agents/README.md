@@ -4,8 +4,9 @@ This directory contains reusable AI agent skills and role templates for the Kara
 
 ## Structure
 
+- `instructions/`: Architecture guidelines and quality enforcement for development.
+  - `karazin-edean.md`: Guidelines and anti-pattern prevention for UniVerse E-Dean development.
 - `skills/`: Project and community agent skills (standard `SKILL.md` format).
-  - `karazin-edean/`: Guidelines and anti-pattern prevention for UniVerse E-Dean development.
   - `skill-creator/`: Anthropic skill creator and benchmarking framework.
   - `brainstorming/`: Structured ideation framework.
   - `frontend-design/`: Frontend design and styling instructions.

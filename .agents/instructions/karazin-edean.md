@@ -1,11 +1,6 @@
----
-name: karazin-edean
-description: Guidelines, architecture, and quality assurance workflows for developing the Karazin UniVerse E-Dean student portal (uni-hub), NestJS Moodle gateway (@universe/backend), Una UI design system (@universe/ui), and core domain contracts (@universe/core). Use when implementing or refactoring E-Dean features, grade calculations, Ukrainian navigation tabs, Moodle LMS API services, or reviewing PRs in the Karazin-UniVerse repository to prevent AI anti-patterns (wrong package imports, duplicated exports, SonarCloud violations).
----
+# Karazin UniVerse E-Dean Development & Review Guidelines
 
-# Karazin UniVerse E-Dean Development & Review Skill
-
-This skill guides development, code review, and quality enforcement across the Karazin UniVerse monorepo (pnpm + Turborepo), specifically for the E-Dean Office (UniHub) and Moodle LMS integration layer.
+This document guides development, code review, and quality enforcement across the Karazin UniVerse monorepo (pnpm + Turborepo), specifically for the E-Dean Office (UniHub) and Moodle LMS integration layer.
 
 ## Monorepo Architecture & Package Boundaries
 
@@ -18,7 +13,7 @@ uni-verse/
 │   ├── backend/        # @universe/backend - NestJS Moodle LMS gateway proxy
 │   └── uni-hub/        # @universe/uni-hub - Next.js 16 App Router student portal
 ├── tests/e2e/          # Standalone requirement-driven integration test suite (Vitest)
-└── .agents/            # Agent skills and reusable agent role templates
+└── .agents/            # Agent instructions, skills, and reusable agent role templates
 ```
 
 ### Critical Rules & Anti-Patterns to Prevent
