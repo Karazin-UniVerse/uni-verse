@@ -29,11 +29,11 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     return (
       <button
         type="button"
-        suppressHydrationWarning
         className={clsx(styles.compactBtn, className)}
         onClick={cycleTheme}
         aria-label={`Тема: ${themeMetadata.label}. Перемкнути`}
         title={themeMetadata.label}
+        suppressHydrationWarning
       >
         {themeMetadata.icon}
         {showLabel && (
@@ -55,10 +55,10 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
           <button
             key={themeOption}
             type="button"
-            suppressHydrationWarning
             className={clsx(styles.option, isSelectedTheme && styles.active)}
             onClick={() => setTheme(themeOption)}
             aria-pressed={isSelectedTheme}
+            suppressHydrationWarning
           >
             {themeMetadata.icon}
             <span>{themeMetadata.label}</span>

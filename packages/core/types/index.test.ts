@@ -4,6 +4,8 @@ import test, { describe } from 'node:test';
 import {
   calculateEctsGrade,
   calculateTraditionalGrade,
+  isLoggedIn,
+  RESPONSE_CODES,
   type AssignmentItem,
   type Course,
   type CurriculumItem,
@@ -228,5 +230,26 @@ describe('domain type contracts compilation verification', () => {
     };
 
     assert.strictEqual(lms.isConnected, true);
+  });
+
+  test('validates RESPONSE_CODES values', () => {
+    assert.strictEqual(RESPONSE_CODES.UNAUTHORIZED, 401);
+    assert.strictEqual(RESPONSE_CODES.OK, 200);
+    assert.strictEqual(RESPONSE_CODES.FORBIDDEN, 403);
+    assert.strictEqual(RESPONSE_CODES.NOT_FOUND, 404);
+  });
+
+  test('isLoggedIn checks session correctly', () => {
+    const mockStorage = (items: Record<string, string>) => ({
+      getItem: (key: string) => items[key] ?? null,
+    });
+
+    assert.strictEqual(
+      isLoggedIn(mockStorage({ isLoggedIn: 'true', accessToken: 'token123' })),
+      true,
+    );
+    assert.strictEqual(isLoggedIn(mockStorage({ isLoggedIn: 'true' })), false);
+    assert.strictEqual(isLoggedIn(mockStorage({ accessToken: 'token123' })), false);
+    assert.strictEqual(isLoggedIn(mockStorage({})), false);
   });
 });

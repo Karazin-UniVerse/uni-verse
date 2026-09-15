@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Spinner, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
-import { type StudentProfile } from '@core/types';
+import { isLoggedIn, type StudentProfile } from '@core/types';
 import type { Grade, CourseModule } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
 import { DashboardSkeleton } from '@uni-hub/components/dashboard';
@@ -148,7 +148,7 @@ const DashboardPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!localStorage.getItem('isLoggedIn') || !localStorage.getItem('accessToken')) {
+    if (!isLoggedIn()) {
       router.push('/login');
 
       return;
@@ -176,7 +176,7 @@ const DashboardPage: React.FC = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!localStorage.getItem('isLoggedIn') || !localStorage.getItem('accessToken')) {
+    if (!isLoggedIn()) {
       return;
     }
 
