@@ -1,7 +1,9 @@
+@use '@universe/ui/breakpoints.scss' as *;
+
 .container {
   display: none;
 
-  @media (max-width: 768px) {
+  @include narrower-than('md') {
     display: flex;
     position: fixed;
     bottom: var(--space-16);

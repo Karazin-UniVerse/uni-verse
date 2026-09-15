@@ -3,14 +3,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Filter } from 'lucide-react';
-import {
-  TextInput as SimpleInput,
-  Select,
-  CheckBox,
-  Tag,
-  Empty,
-  Button as SimpleButton,
-} from '@una';
+import { TextInput, Select, CheckBox, Tag, Empty, Button } from '@una';
 import { LiveCountdown } from '@uni-hub/components/gamification';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { AssignmentsTabProps } from '../types';
@@ -55,12 +48,18 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   return (
     <div className={styles.stack}>
       <div className={styles.mobileFilterToggle}>
-        <SimpleButton onClick={() => setFiltersOpen(!filtersOpen)} variant="secondary" size="small">
+        <Button
+          type="button"
+          onClick={() => setFiltersOpen(!filtersOpen)}
+          variant="secondary"
+          size="small"
+          aria-expanded={filtersOpen}
+        >
           <Filter size={16} /> {filtersOpen ? 'Сховати фільтри' : 'Фільтри'}
-        </SimpleButton>
+        </Button>
       </div>
       <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
-        <SimpleInput
+        <TextInput
           type="date"
           size="medium"
           min="2000-01-01"
@@ -69,7 +68,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
           onChange={handleDateChange(onDateFromChange)}
           aria-label="Дата від"
         />
-        <SimpleInput
+        <TextInput
           type="date"
           size="medium"
           min="2000-01-01"

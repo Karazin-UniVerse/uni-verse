@@ -48,6 +48,7 @@ export const Modal: React.FC<ModalProps> = ({
   width = 700,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
   const titleId = useId();
@@ -65,23 +66,9 @@ export const Modal: React.FC<ModalProps> = ({
     previouslyFocusedElementRef.current = document.activeElement as HTMLElement | null;
     lockScroll(modalId);
 
-    const dialogElement = dialogRef.current;
-
-    if (dialogElement) {
-      const focusableElements = dialogElement.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
-      const firstFocusableElement = focusableElements[0] || dialogElement;
-
-      firstFocusableElement.focus();
-    }
-
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        const isTopmost = modalStack[modalStack.length - 1] === modalId;
-
-        if (isTopmost) {
-          event.stopPropagation();
-          onCloseRef.current();
-        }
+        onCloseRef.current();
 
         return;
       }
@@ -101,22 +88,38 @@ export const Modal: React.FC<ModalProps> = ({
 
         if (event.shiftKey) {
           if (document.activeElement === firstElement) {
-            lastElement.focus();
+            lastElement?.focus();
             event.preventDefault();
           }
         } else {
           if (document.activeElement === lastElement) {
-            firstElement.focus();
+            firstElement?.focus();
             event.preventDefault();
           }
         }
       }
     };
 
+    const overlayElement = overlayRef.current;
+    const handleOverlayClick = (event: MouseEvent) => {
+      if (event.target === overlayElement) {
+        onCloseRef.current();
+      }
+    };
+
+    if (overlayElement) {
+      overlayElement.addEventListener('click', handleOverlayClick);
+    }
+
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
+
+      if (overlayElement) {
+        overlayElement.removeEventListener('click', handleOverlayClick);
+      }
+
       unlockScroll(modalId);
 
       if (previouslyFocusedElementRef.current && previouslyFocusedElementRef.current.focus) {
@@ -131,20 +134,21 @@ export const Modal: React.FC<ModalProps> = ({
 
   const dialogAriaLabel = title ? undefined : ariaLabel || 'Діалогове вікно';
 
-  // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
   return (
-    <div className={styles.overlay} onClick={onClose}>
+    <div ref={overlayRef} className={styles.overlay}>
       <div
         ref={dialogRef}
         className={`${styles.dialog} ${className ?? ''}`}
-        style={{ width }}
+        style={
+          {
+            '--modal-dialog-width': typeof width === 'number' ? `${width}px` : width,
+          } as React.CSSProperties
+        }
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
         aria-label={dialogAriaLabel}
         tabIndex={-1}
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events
-        onClick={(event) => event.stopPropagation()}
       >
         <div className={styles.header}>
           {title && (

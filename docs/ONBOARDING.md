@@ -1,126 +1,126 @@
 # 🚀 UNiVerse - Onboarding Guide
 
-Добро пожаловать в проект **UNiVerse**!
-Это руководство поможет вам понять архитектуру проекта, используемый стек технологий, логику работы основных модулей, функций и условий.
+Welcome to the **UNiVerse** project!
+This guide will help you understand the project architecture, tech stack, and the logic behind the main modules, functions, and workflows.
 
 ---
 
-## 🏗 Общая Архитектура
+## 🏗 High-Level Architecture
 
-Проект организован как **Monorepo** с использованием **pnpm** и **Turborepo**.
+The project is structured as a **Monorepo** managed with **pnpm** and **Turborepo**.
 
 - **Frontend** (`../packages/uni-hub`): Next.js, React 19, Tailwind CSS, Zustand.
 - **Backend** (`../packages/backend`): NestJS, REST API, Prisma.
 - **Database** (`../packages/database`): PostgreSQL, Prisma.
-- **UI** (`../packages/ui`): Общие UI-компоненты.
+- **UI** (`../packages/ui`): Shared UI component library (`@una`).
 
 ---
 
-## ⚙️ Backend Модули (`../packages/backend/src`)
+## ⚙️ Backend Modules (`../packages/backend/src`)
 
-Бэкенд построен на модульной архитектуре NestJS.
+The backend follows NestJS modular architecture.
 
-### 1. `AuthModule` (Авторизация)
+### 1. `AuthModule` (Authentication)
 
-Отвечает за безопасность и доступ к API.
+Handles API security and access control.
 
-- **Функции:** Логин (`/auth/login`), логаут, проверка JWT-токенов.
-- **Инструменты:** Использует Passport.js со стратегией JWT. Включает кастомные декораторы (например, `@GetUser`), которые извлекают данные пользователя (в т.ч. `moodleId`, `moodleToken`) из запроса.
+- **Endpoints:** Login (`/auth/login`), logout, JWT verification.
+- **Tools:** Passport.js with JWT strategy. Includes custom decorators (e.g., `@GetUser`) to extract authenticated user credentials (including `moodleId`, `moodleToken`) from the request.
 
-### 2. `UserModule` (Пользователи)
+### 2. `UserModule` (User Management)
 
-Отвечает за управление учетными записями, профилями и ролями пользователей (`STUDENT`, `INSTRUCTOR`, `ADMIN`).
+Manages user accounts, profiles, and role-based access (`STUDENT`, `INSTRUCTOR`, `ADMIN`).
 
-### 3. `MoodleModule` (Интеграция с Moodle)
+### 3. `MoodleModule` (Moodle LMS Integration)
 
-Это самый объемный модуль, выступающий в роли прокси и агрегатора данных из Moodle API. Состоит из множества подмодулей:
+The largest module, acting as a proxy and aggregator for Moodle API data. It includes the following submodules:
 
-- **`moodle-courses`**: Получение списка курсов пользователя (`/moodle/courses`).
-  - _Условия фильтрации:_ Поддерживает фильтрацию по статусу (`status`: `completed`, `not_completed`, `in_progress`, `not_started`), году (`year`) и семестру (`semester`). За фильтрацию отвечает утилита `filterCourses`.
-- **`moodle-grades`**: Получение общих оценок по всем курсам (`/moodle/grades`).
-- **`moodle-assignments`**: Работа с заданиями.
-  - _Функции:_ Получение списка заданий (`/moodle/assignments`), проверка статуса (`/status`) и отправка решений (`/submission`).
-  - _Условия сортировки и фильтрации:_ Принимает параметры `sortByDate` (`asc`/`desc`), `dateFrom`, `dateTo`, а также фильтрацию по статусу завершенности.
-- **`moodle-events`**: Получение календаря и событий (`/moodle/events`).
-- **`moodle-course-contents`**: Получение детального содержимого конкретного курса (`/moodle/courses/:id/contents`).
-- **`moodle-files`**: Загрузка файлов в Moodle (`/moodle/files/upload`).
-- **`moodle-notifications` & `moodle-statistics`**: Уведомления и агрегированная статистика по успеваемости студента.
-
----
-
-## 🎨 Frontend Модули (`../packages/uni-hub/src`)
-
-Клиентская часть имеет четкую структуру по папкам.
-
-### 1. `services/api.ts` (API Клиент)
-
-Обертка над Axios для общения с бэкендом.
-
-- **Функции:** `authApi` (логин/логаут) и `moodleApi` (запросы к Moodle-модулям бэкенда).
-- **Условия (Interceptors):**
-  - _Request Interceptor:_ Автоматически добавляет заголовок `Authorization: Bearer <token>` к каждому запросу.
-  - _Response Interceptor:_ Реализует механизм повторных запросов (Retry Logic) при ошибках (максимум 2 попытки с увеличивающейся задержкой).
-
-### 2. `views` (Страницы)
-
-- **`DashboardPage`**: Главная страница студента. Агрегирует расписание, график оценок, список дедлайнов (заданий) и виджеты статистики.
-- **`CourseContents`**: Страница просмотра секций и материалов конкретного курса.
-- **`LoginPage`**: Экран авторизации пользователя.
-
-### 3. `components` (UI Компоненты)
-
-- **Графики:** `AssignmentsDonut` и `GradesChart` — компоненты визуализации данных с использованием библиотеки `recharts`.
-- **Взаимодействие:** `AssignmentModal` — модальное окно для просмотра деталей задания и отправки файлов/текста решения.
-- **Отображение:** `ScheduleView` — календарное представление событий, `DashboardSkeleton` — плейсхолдеры для состояния загрузки.
-
-### 4. `store` & `gamification` (Состояние и Геймификация)
-
-- **`useGamificationStore.ts`**: Zustand-хранилище, отвечающее за геймификацию. Хранит баллы пользователя, его уровень и заработанные достижения (badges).
-- **`badges.ts`**: Логика и условия получения достижений.
-
-### 5. `hooks` (Пользовательские хуки)
-
-- **`useCountUp`**: Хук для плавной анимации чисел (например, при начислении баллов или изменении оценки).
-- **`useNow`**: Хук, возвращающий текущее время с заданным интервалом обновления (используется для таймеров и дедлайнов).
+- **`moodle-courses`**: Fetches user courses (`/moodle/courses`).
+  - _Filter conditions:_ Supports filtering by status (`status`: `completed`, `not_completed`, `in_progress`, `not_started`), academic year (`year`), and semester (`semester`) via the `filterCourses` utility.
+- **`moodle-grades`**: Retrieves overall course grades (`/moodle/grades`).
+- **`moodle-assignments`**: Assignment operations.
+  - _Functions:_ Fetch assignment list (`/moodle/assignments`), check submission status (`/status`), and submit assignment solutions (`/submission`).
+  - _Sorting & filtering:_ Accepts `sortByDate` (`asc`/`desc`), `dateFrom`, `dateTo`, and completion status filters.
+- **`moodle-events`**: Fetches calendar events and deadlines (`/moodle/events`).
+- **`moodle-course-contents`**: Fetches detailed course content and sections (`/moodle/courses/:id/contents`).
+- **`moodle-files`**: Uploads files to Moodle (`/moodle/files/upload`).
+- **`moodle-notifications` & `moodle-statistics`**: Student notifications and aggregated performance statistics.
 
 ---
 
-## 🧰 Утилиты (Utils)
+## 🎨 Frontend Modules (`../packages/uni-hub/src`)
 
-В проекте широко используются утилиты для инкапсуляции специфической логики и переиспользуемого кода.
+The client-side architecture is organized into clear domain directories.
+
+### 1. `services/api.ts` (API Client)
+
+An Axios wrapper for backend communication.
+
+- **Services:** `authApi` (login/logout) and `moodleApi` (backend Moodle endpoints).
+- **Interceptors:**
+  - _Request Interceptor:_ Automatically injects the `Authorization: Bearer <token>` header into every outgoing request.
+  - _Response Interceptor:_ Implements retry logic on transient errors (up to 2 retries with exponential backoff).
+
+### 2. `views` (Pages)
+
+- **`DashboardPage`**: Main student portal dashboard. Aggregates schedule, grade trends, upcoming assignments, and performance metrics.
+- **`CourseContents`**: Course sections and learning materials viewer.
+- **`LoginPage`**: User login and authentication view.
+
+### 3. `components` (UI Components)
+
+- **Charts:** `AssignmentsDonut` and `GradesChart` — data visualization components built with `recharts`.
+- **Modals & Dialogs:** `AssignmentModal` — modal window for inspecting assignment details and submitting files/text solutions.
+- **Views & States:** `ScheduleView` — academic timetable and calendar event renderer, `DashboardSkeleton` — placeholder skeleton for loading states.
+
+### 4. `store` & `gamification` (State & Gamification)
+
+- **`useGamificationStore.ts`**: Zustand store managing gamification state (user points, levels, and earned badges).
+- **`badges.ts`**: Awarding conditions and badge evaluation logic.
+
+### 5. `hooks` (Custom Hooks)
+
+- **`useCountUp`**: Smoothly animates numeric transitions (e.g. points accrual or grade score changes).
+- **`useNow`**: Provides reactive current timestamp with a configurable update interval (used for deadline counters and timers).
+
+---
+
+## 🧰 Utilities (Utils)
+
+The project encapsulates domain logic and reusable helpers into utility functions.
 
 ### Backend Utils (`../packages/backend/src/utils`)
 
-- **`get-creds.ts` (`GetCreds`)**: Сервис для получения учетных данных из Moodle. Делает запросы к `/login/token.php` для получения токена по логину/паролю и к `core_webservice_get_site_info` для извлечения `userid` из Moodle.
-- **`moodle-params-builder.ts` (`buildMoodleParams`)**: Функция для сериализации сложных объектов и массивов в плоский список пар `[ключ, значение]`, который необходим для корректного общения с API Moodle (Rest format).
-- **`moodleFilters.ts`**: Набор инструментов для обработки данных из Moodle:
-  - `normalizeMoodleText` — очистка текста от HTML-тегов и декодирование сущностей (entities) за один проход, чтобы избежать уязвимостей.
-  - Функции парсинга (`extractAcademicYear`, `matchesYearAndSemester`) — используют регулярные выражения для извлечения академического года (например, "2025/2026") и семестра из названий курсов.
-  - `filterCourses` — фильтрует массив курсов на основе их статуса прохождения (`progress`) и временных рамок.
-- **`wsfunctions.ts`**: Константы с названиями функций Web Services Moodle (например, `core_enrol_get_users_courses`).
+- **`get-creds.ts` (`GetCreds`)**: Service to retrieve user credentials from Moodle. Queries `/login/token.php` for user token and `core_webservice_get_site_info` to extract Moodle `userid`.
+- **`moodle-params-builder.ts` (`buildMoodleParams`)**: Serializes nested objects and arrays into flat key-value pairs required by Moodle REST Web Services.
+- **`moodleFilters.ts`**: Moodle data processing tools:
+  - `normalizeMoodleText` — strips HTML tags and decodes entities safely in a single pass.
+  - Parsing helpers (`extractAcademicYear`, `matchesYearAndSemester`) — extract academic years (e.g. "2025/2026") and semesters from course titles using regex.
+  - `filterCourses` — filters courses according to completion progress and academic timeline.
+- **`wsfunctions.ts`**: Constants containing Moodle Web Service function names (e.g., `core_enrol_get_users_courses`).
 
 ### Frontend Utils (`../packages/uni-hub/src/utils`)
 
-- **`confetti.ts`**: Функция `fireConfetti`, которая запускает анимацию конфетти. Используется для поощрения в рамках геймификации.
-- **`gradeMath.ts` (`computeSimulatedFinal`)**: Математическая логика для калькулятора "А что если?" (симуляция финальной оценки). Рассчитывает гипотетическую оценку (70% текущая, 30% оставшиеся баллы), ограничивая значения (clamp).
-- **`soundEffects.ts` (`playSuccess`, `playClick`)**: Синтезатор звуковых эффектов через `Web Audio API` (`AudioContext`, `OscillatorNode`). Генерирует звуки успеха и кликов без использования внешних аудиофайлов.
-- **`grades.ts`**: Вспомогательные функции для парсинга и форматирования оценок и баллов.
+- **`confetti.ts`**: `fireConfetti` triggers visual confetti particle effects for achievement rewards.
+- **`gradeMath.ts` (`computeSimulatedFinal`)**: Mathematical formula for the "What-if?" grade simulator, calculating hypothetical final grades with clamping.
+- **`soundEffects.ts` (`playSuccess`, `playClick`)**: Synthesizes UI audio via the `Web Audio API` (`AudioContext`, `OscillatorNode`) without requiring external audio assets.
+- **`grades.ts`**: Helper utilities for parsing, normalizing, and formatting academic grades and scores.
 
 ---
 
-## 🗄 База данных (Prisma Schema)
+## 🗄 Database (Prisma Schema)
 
-В `schema.prisma` определены связи:
+The database schema (`schema.prisma`) defines core models and relations:
 
-- **`User`**: Содержит системную информацию (email, password, role) и токены для связи с Moodle (`moodleId`, `moodleToken`).
-- **`Course`**: Внутренние курсы (созданные пользователями с ролью `INSTRUCTOR`).
-- **`Enrollment`**: Таблица связей "многие-ко-многим" (пользователи подписаны на курсы).
+- **`User`**: Account identity (email, password, role) and Moodle integration tokens (`moodleId`, `moodleToken`).
+- **`Course`**: Internal courses created by users with the `INSTRUCTOR` role.
+- **`Enrollment`**: Many-to-many junction model linking users to enrolled courses.
 
 ---
 
-## 🚀 Как запустить проект локально
+## 🚀 Local Development Setup
 
-1. Установите зависимости: `pnpm install`
-2. Настройте `.env` (укажите `DATABASE_URL`)
-3. Подготовьте БД: `pnpm db:generate && pnpm db:migrate`
-4. Запустите проект: `pnpm dev` (запускает frontend и backend параллельно).
+1. Install dependencies: `pnpm install`
+2. Configure `.env` (set `DATABASE_URL` and required variables)
+3. Prepare database: `pnpm db:generate && pnpm db:migrate`
+4. Start development servers: `pnpm dev` (runs frontend and backend concurrently).

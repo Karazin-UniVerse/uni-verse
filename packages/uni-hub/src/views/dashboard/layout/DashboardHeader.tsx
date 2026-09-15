@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, Volume2, VolumeX, Bell, User } from 'lucide-react';
-import { Button as SimpleButton, Tag, Empty } from '@una';
+import { Button, Tag, Empty } from '@una';
 import { StreakBadge } from '@uni-hub/components/gamification';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import type { DashboardHeaderProps } from '../types';
@@ -48,7 +48,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   return (
     <header className={styles.header}>
       <div className={styles.headerLeft}>
-        <SimpleButton
+        <Button
           type="button"
           variant="secondary"
           size="medium"
@@ -60,12 +60,12 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           aria-controls="dashboard-sidebar"
         >
           <Menu size={20} />
-        </SimpleButton>
+        </Button>
         <StreakBadge />
       </div>
 
       <div className={styles.headerRight}>
-        <SimpleButton
+        <Button
           type="button"
           variant="secondary"
           size="medium"
@@ -75,10 +75,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           className={styles.desktopOnly}
         >
           {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-        </SimpleButton>
+        </Button>
 
         <div className={styles.notifWrap} ref={notifRef}>
-          <SimpleButton
+          <Button
             type="button"
             variant="secondary"
             size="medium"
@@ -88,7 +88,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           >
             <Bell size={18} />
             {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
-          </SimpleButton>
+          </Button>
 
           {notifOpen && (
             <motion.div
@@ -162,7 +162,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                 </div>
 
                 <div className={styles.mobileOnlyItem}>
-                  <SimpleButton
+                  <Button
                     type="button"
                     variant="secondary"
                     size="small"
@@ -175,7 +175,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                       <VolumeX size={16} style={{ marginRight: 8 }} />
                     )}
                     {soundEnabled ? 'Вимкнути звук' : 'Увімкнути звук'}
-                  </SimpleButton>
+                  </Button>
                 </div>
 
                 <div className={styles.mobileOnlyItem} style={{ marginBottom: 8 }}>
@@ -191,7 +191,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                 </div>
 
                 <div className={styles.mobileOnlyItem}>
-                  <SimpleButton
+                  <Button
                     type="button"
                     variant="secondary"
                     size="small"
@@ -203,7 +203,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                     }}
                   >
                     Вийти
-                  </SimpleButton>
+                  </Button>
                 </div>
               </div>
             </motion.div>
