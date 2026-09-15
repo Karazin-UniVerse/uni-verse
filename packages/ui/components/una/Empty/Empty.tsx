@@ -6,7 +6,7 @@ import type { EmptyProps } from './Empty.types';
 
 export const Empty: React.FC<EmptyProps> = ({ icon, description = 'Нет данных' }) => (
   <div className={styles.empty}>
-    {icon ? icon : <FolderOpen size={48} className={styles.icon} aria-hidden />}
+    {icon ?? <FolderOpen size={48} className={styles.icon} aria-hidden />}
     <p>{description}</p>
   </div>
 );

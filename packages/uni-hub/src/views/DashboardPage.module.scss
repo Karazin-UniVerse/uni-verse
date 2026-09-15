@@ -289,7 +289,11 @@
   display: flex;
   align-items: center;
   gap: var(--space-8);
+  font-family: inherit;
+  font-size: var(--font-sm);
   font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  text-align: left;
   padding: var(--space-4) var(--space-16) var(--space-4) var(--space-4);
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
