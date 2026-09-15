@@ -58,7 +58,12 @@ export class UserService {
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     try {
-      return await this.prisma.user.create({ data: createUserDto });
+      return await this.prisma.user.create({
+        data: {
+          ...createUserDto,
+          password: createUserDto.password ?? '',
+        },
+      });
     } catch (err: unknown) {
       const code = getPrismaErrorCode(err);
       const name = getPrismaErrorName(err);
@@ -73,7 +78,7 @@ export class UserService {
         id: randomUUID(),
         email: createUserDto.email,
         name: createUserDto.name ?? null,
-        password: createUserDto.password,
+        password: createUserDto.password ?? '',
         role: Role.STUDENT,
         token: createUserDto.token ?? null,
         moodleId: createUserDto.moodleId ?? null,

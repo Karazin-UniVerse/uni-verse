@@ -8,28 +8,28 @@ import type { ScheduleEvent } from './ScheduleView.types';
 export type { ScheduleEvent };
 
 const addDays = (date: Date, days: number) => {
-  const d = new Date(date);
+  const dateCopy = new Date(date);
 
-  d.setDate(d.getDate() + days);
+  dateCopy.setDate(dateCopy.getDate() + days);
 
-  return d;
+  return dateCopy;
 };
 
 const startOfWeek = (date: Date) => {
-  const d = new Date(date);
-  const day = d.getDay();
+  const dateCopy = new Date(date);
+  const day = dateCopy.getDay();
   const diff = day === 0 ? -6 : 1 - day;
 
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
+  dateCopy.setDate(dateCopy.getDate() + diff);
+  dateCopy.setHours(0, 0, 0, 0);
 
-  return d;
+  return dateCopy;
 };
 
-const isSameDay = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() &&
-  a.getMonth() === b.getMonth() &&
-  a.getDate() === b.getDate();
+const isSameDay = (leftDate: Date, rightDate: Date) =>
+  leftDate.getFullYear() === rightDate.getFullYear() &&
+  leftDate.getMonth() === rightDate.getMonth() &&
+  leftDate.getDate() === rightDate.getDate();
 
 const formatDate = (date: Date, options: Intl.DateTimeFormatOptions) =>
   new Intl.DateTimeFormat('uk-UA', options).format(date);
@@ -180,16 +180,16 @@ const getTypeTone = (type: string): 'info' | 'warning' | 'success' | 'danger' | 
 export const ScheduleView: React.FC = () => {
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
   const [selectedDate, setSelectedDate] = useState(() => {
-    const d = new Date();
+    const initialDate = new Date();
 
-    d.setHours(0, 0, 0, 0);
+    initialDate.setHours(0, 0, 0, 0);
 
-    return d;
+    return initialDate;
   });
 
   const getEventsForDate = (date: Date) =>
-    DUMMY_EVENTS.filter((e) => isSameDay(e.start, date)).sort(
-      (a, b) => a.start.getTime() - b.start.getTime(),
+    DUMMY_EVENTS.filter((event) => isSameDay(event.start, date)).sort(
+      (firstEvent, secondEvent) => firstEvent.start.getTime() - secondEvent.start.getTime(),
     );
 
   const monthDays = useMemo(() => {
@@ -198,7 +198,7 @@ export const ScheduleView: React.FC = () => {
     const first = new Date(year, month, 1);
     const start = startOfWeek(first);
 
-    return Array.from({ length: 42 }, (_, i) => addDays(start, i));
+    return Array.from({ length: 42 }, (_, dayIndex) => addDays(start, dayIndex));
   }, [selectedDate]);
 
   const renderDayView = () => {
@@ -233,7 +233,7 @@ export const ScheduleView: React.FC = () => {
 
   const renderWeekView = () => {
     const weekStart = startOfWeek(selectedDate);
-    const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+    const days = Array.from({ length: 7 }, (_, dayIndex) => addDays(weekStart, dayIndex));
 
     return (
       <div className={styles.week}>
@@ -354,6 +354,11 @@ export const ScheduleView: React.FC = () => {
                       <Tag tone={getTypeTone(event.type)}>{event.title}</Tag>
                     </li>
                   ))}
+                  {events.length > 3 && (
+                    <li className={styles.moreEvents}>
+                      <Tag tone="default">+{events.length - 3}</Tag>
+                    </li>
+                  )}
                 </ul>
               </button>
             );

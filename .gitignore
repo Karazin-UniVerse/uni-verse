@@ -11,3 +11,4 @@ coverage
 /packages/database/client/
 /.idea/
 /packages/uni-hub/repomix-output.xml
+*.tsbuildinfo

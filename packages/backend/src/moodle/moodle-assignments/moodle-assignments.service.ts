@@ -86,7 +86,9 @@ export class MoodleAssignmentsService {
     if (rawGrade !== undefined && rawGrade !== null) {
       const num = Number(rawGrade);
 
-      grade = !isNaN(num) ? parseFloat(rawGrade).toString() : rawGrade;
+      grade = !Number.isNaN(num)
+        ? Number.parseFloat(rawGrade).toString()
+        : rawGrade;
     }
 
     const finalStatus =

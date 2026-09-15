@@ -21,7 +21,7 @@ import {
   type CourseModule,
   type CourseModuleName,
 } from '@uni-hub/types';
-import AssignmentModal from '@uni-hub/components/AssignmentModal';
+import { AssignmentModal } from '@uni-hub/components/assignments';
 import styles from './CourseContents.module.scss';
 
 const getModuleIcon = (modname: CourseModuleName) => {
