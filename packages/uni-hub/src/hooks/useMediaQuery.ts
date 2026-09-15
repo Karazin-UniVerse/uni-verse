@@ -1,12 +1,28 @@
 import { useSyncExternalStore } from 'react';
+import { BREAKPOINTS, type Breakpoint } from '@universe/core';
+import { isBrowser } from '@uni-hub/utils/browser';
+
+function resolveQuery(queryOrBreakpoint: string | Breakpoint): string {
+  if (queryOrBreakpoint in BREAKPOINTS) {
+    return `(max-width: ${BREAKPOINTS[queryOrBreakpoint as Breakpoint]}px)`;
+  }
+
+  return queryOrBreakpoint;
+}
 
 /**
  * Performant hook to observe CSS media queries using useSyncExternalStore.
+ * Accepts full CSS media query strings or shared breakpoint tokens ('sm', 'md', etc.).
  * Avoids window resize thrashing and handles SSR gracefully.
  */
-export function useMediaQuery(query: string, serverFallback = false): boolean {
+export function useMediaQuery(
+  queryOrBreakpoint: string | Breakpoint,
+  serverFallback = false,
+): boolean {
+  const query = resolveQuery(queryOrBreakpoint);
+
   const subscribe = (callback: () => void) => {
-    if (typeof window === 'undefined' || !window.matchMedia) {
+    if (!isBrowser || !window.matchMedia) {
       return () => {};
     }
 
@@ -18,7 +34,7 @@ export function useMediaQuery(query: string, serverFallback = false): boolean {
   };
 
   const getSnapshot = () => {
-    if (typeof window === 'undefined' || !window.matchMedia) {
+    if (!isBrowser || !window.matchMedia) {
       return serverFallback;
     }
 

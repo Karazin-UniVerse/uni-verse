@@ -179,7 +179,7 @@ const getTypeTone = (type: string): 'info' | 'warning' | 'success' | 'danger' | 
 };
 
 export const ScheduleView: React.FC = () => {
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useMediaQuery('md');
   const [selectedViewMode, setSelectedViewMode] = useState<'month' | 'week' | 'day' | null>(null);
   const viewMode = selectedViewMode ?? (isMobile ? 'day' : 'month');
 

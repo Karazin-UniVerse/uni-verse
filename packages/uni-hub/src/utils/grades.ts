@@ -1,4 +1,4 @@
-import { GradeScoreThreshold } from '@universe/core';
+import { GRADES_THRESHOLD } from '@universe/core';
 import type { Grade } from '../types';
 
 export function getGradeCourseName(grade: Grade): string {
@@ -58,15 +58,15 @@ export function getGradeTone(rawgrade: number | null): 'success' | 'warning' | '
     return 'warning';
   }
 
-  if (rawgrade >= GradeScoreThreshold.EXCELLENT) {
+  if (rawgrade >= GRADES_THRESHOLD.EXCELLENT) {
     return 'success';
   }
 
-  if (rawgrade >= GradeScoreThreshold.GOOD) {
+  if (rawgrade >= GRADES_THRESHOLD.GOOD) {
     return 'success'; // Or 'info' if supported, but sticking to 3-tier
   }
 
-  if (rawgrade >= GradeScoreThreshold.SATISFACTORY) {
+  if (rawgrade >= GRADES_THRESHOLD.SATISFACTORY) {
     return 'warning';
   }
 
@@ -78,11 +78,11 @@ export function getGradeBarColor(rawgrade: number | null): string {
     return 'var(--chart-warning)';
   }
 
-  if (rawgrade >= GradeScoreThreshold.GOOD) {
+  if (rawgrade >= GRADES_THRESHOLD.GOOD) {
     return 'var(--chart-success)';
   }
 
-  if (rawgrade >= GradeScoreThreshold.SATISFACTORY) {
+  if (rawgrade >= GRADES_THRESHOLD.SATISFACTORY) {
     return 'var(--chart-warning)';
   }
 
