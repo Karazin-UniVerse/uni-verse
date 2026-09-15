@@ -77,9 +77,7 @@ const LoginPage: React.FC = () => {
                 size="large"
                 placeholder="Имя пользователя"
                 value={username}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setUsername(event.target.value)
-                }
+                onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
               />
             </div>
@@ -96,9 +94,7 @@ const LoginPage: React.FC = () => {
                 size="large"
                 placeholder="Пароль"
                 value={password}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setPassword(event.target.value)
-                }
+                onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
               />
             </div>

@@ -59,7 +59,7 @@ export const SimpleForm: React.FC<Readonly<SimpleFormProps>> = ({
   variant = 'card',
   ...props
 }) => {
-  const handleSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
+  const handleSubmit: React.FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget);
