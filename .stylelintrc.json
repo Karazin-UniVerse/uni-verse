@@ -1,10 +1,7 @@
 {
   "rules": {
-    "selector-pseudo-class-no-unknown": [
-      true,
-      {
-        "ignorePseudoClasses": ["global", "local"]
-      }
-    ]
+    "selector-pseudo-class-no-unknown": [true, { "ignorePseudoClasses": ["global", "local"] }],
+    "color-no-hex": true,
+    "color-named": "never"
   }
 }

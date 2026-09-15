@@ -13,12 +13,28 @@
     "eqeqeq": "error",
     "no-duplicate-imports": ["error", { "includeExports": true }],
     "import/no-duplicates": "error",
+
+    "react/jsx-key": "error",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    "react/no-direct-mutation-state": "error",
+    "import/no-cycle": "error",
+    "typescript/no-explicit-any": "warn",
+
     "universe/vertical-spacing": "error",
     "universe/destructuring-props-order": "error",
     "universe/enforce-package-utils-alias": "error",
     "universe/no-unused-imports": "error",
     "universe/eol-last": "error",
-    "universe/max-len": ["error", { "code": 120 }]
+    "universe/max-len": ["error", { "code": 120 }],
+
+    "universe/nestjs-require-api-response-type": "error",
+    "universe/nestjs-require-bearer-auth-decorator": "error",
+    "universe/nestjs-controller-return-type": "error",
+    "universe/una-primitive-purity": "error",
+    "universe/nestjs-controller-no-prisma": "error",
+    "universe/no-empty-catch-in-services": "error",
+    "universe/core-package-isolation": "error"
   },
   "overrides": [
     {
@@ -31,6 +47,54 @@
               {
                 "group": ["../utils/*", "../utils/**"],
                 "message": "Use package alias '@uni-hub/utils/...' instead of relative '../utils/...' path."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/ui/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@uni-hub/**", "@universe/backend/**", "@universe/database/**"],
+                "message": "UI package cannot depend on application packages. Design system must remain independent."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/backend/**/*.{ts}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["react", "react-dom", "next", "next/**", "@uni-hub/**"],
+                "message": "Backend cannot import frontend or React libraries."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/core/**/*.{ts}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@nestjs/**", "react", "react-dom", "next", "@universe/backend/**"],
+                "message": "@universe/core is a pure domain contract package."
               }
             ]
           }
