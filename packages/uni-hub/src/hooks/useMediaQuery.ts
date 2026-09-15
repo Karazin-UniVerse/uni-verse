@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { BREAKPOINTS, type Breakpoint } from '@universe/core';
 import { isBrowser } from '@uni-hub/utils/browser';
 
-function resolveQuery(queryOrBreakpoint: string | Breakpoint): string {
+function resolveQuery(queryOrBreakpoint: string): string {
   if (queryOrBreakpoint in BREAKPOINTS) {
     return `(max-width: ${BREAKPOINTS[queryOrBreakpoint as Breakpoint]}px)`;
   }
@@ -15,10 +15,9 @@ function resolveQuery(queryOrBreakpoint: string | Breakpoint): string {
  * Accepts full CSS media query strings or shared breakpoint tokens ('sm', 'md', etc.).
  * Avoids window resize thrashing and handles SSR gracefully.
  */
-export function useMediaQuery(
-  queryOrBreakpoint: string | Breakpoint,
-  serverFallback = false,
-): boolean {
+export function useMediaQuery(breakpoint: Breakpoint, serverFallback?: boolean): boolean;
+export function useMediaQuery(query: string, serverFallback?: boolean): boolean;
+export function useMediaQuery(queryOrBreakpoint: string, serverFallback = false): boolean {
   const query = resolveQuery(queryOrBreakpoint);
 
   const subscribe = (callback: () => void) => {
