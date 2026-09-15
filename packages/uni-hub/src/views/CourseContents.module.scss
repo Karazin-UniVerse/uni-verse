@@ -148,7 +148,7 @@
   font-size: var(--font-sm);
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .content {
     padding: var(--space-16);
   }
