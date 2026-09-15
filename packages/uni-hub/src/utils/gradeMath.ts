@@ -1,35 +1,11 @@
+export * from '@core/types';
 import {
   calculateAccumulatedGrade,
-  calculateExamTargets,
   MAX_EXAM,
   MAX_SEMESTER_CREDIT,
   MAX_SEMESTER_EXAM,
-  MIN_EXAM_ADMISSION,
-  MIN_EXAM_PASS,
-  MIN_PASSING_SCORE,
   type ControlType,
-  type ExamTargetRequirement,
-  type GradeAccumulationParams,
-  type GradeAccumulationResult,
 } from '@core/types';
-
-export {
-  calculateAccumulatedGrade,
-  calculateExamTargets,
-  MAX_EXAM,
-  MAX_SEMESTER_CREDIT,
-  MAX_SEMESTER_EXAM,
-  MIN_EXAM_ADMISSION,
-  MIN_EXAM_PASS,
-  MIN_PASSING_SCORE,
-};
-
-export type {
-  ControlType,
-  ExamTargetRequirement,
-  GradeAccumulationParams,
-  GradeAccumulationResult,
-};
 
 /**
  * Clamps a numerical value between min and max bounds.
