@@ -14,6 +14,19 @@ export type TraditionalGrade =
 /** Final control types in higher education curriculum */
 export type ControlType = 'exam' | 'credit' | 'differentiated_credit';
 
+/**
+ * Standard university grading threshold boundaries (100-point scale)
+ */
+export const GradeScoreThreshold = {
+  EXCELLENT: 90,
+  VERY_GOOD: 82,
+  GOOD: 75,
+  SATISFACTORY: 60,
+  FAIL_RETAKE: 35,
+} as const;
+
+export type GradeScoreThreshold = (typeof GradeScoreThreshold)[keyof typeof GradeScoreThreshold];
+
 /** Academic status of a student */
 export type StudentAcademicStatus = 'active' | 'academic_leave' | 'expelled' | 'graduated';
 

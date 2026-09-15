@@ -4,6 +4,7 @@ import test, { describe } from 'node:test';
 import {
   calculateEctsGrade,
   calculateTraditionalGrade,
+  GradeScoreThreshold,
   type AssignmentItem,
   type Course,
   type CurriculumItem,
@@ -228,5 +229,13 @@ describe('domain type contracts compilation verification', () => {
     };
 
     assert.strictEqual(lms.isConnected, true);
+  });
+
+  test('validates GradeScoreThreshold enum values', () => {
+    assert.strictEqual(GradeScoreThreshold.EXCELLENT, 90);
+    assert.strictEqual(GradeScoreThreshold.VERY_GOOD, 82);
+    assert.strictEqual(GradeScoreThreshold.GOOD, 75);
+    assert.strictEqual(GradeScoreThreshold.SATISFACTORY, 60);
+    assert.strictEqual(GradeScoreThreshold.FAIL_RETAKE, 35);
   });
 });
