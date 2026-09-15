@@ -98,3 +98,7 @@ Output requirements for Review:
 ### 9. Design System Strict Rules (UniDesign)
 
 All strict rules regarding the usage of colors, typography, spacing, shadows, and animations are documented in `docs/design-system-rules.md`. You MUST read this document and strictly adhere to its rules when working on UI components.
+
+### 10. Karazin E-Dean Guidelines & Architecture
+
+All architecture guidelines, package boundaries, Moodle LMS API conventions, and quality enforcement rules for E-Dean features are documented in `.agents/instructions/karazin-edean.md`. AI assistants and developers must adhere to these guidelines when working on E-Dean components, shared domain contracts, or gateway endpoints.
