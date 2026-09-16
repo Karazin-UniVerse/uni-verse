@@ -52,6 +52,12 @@ describe('AuthController', () => {
     expect(controller).toBeDefined();
   });
 
+  it('should be instantiable directly with constructor', () => {
+    const directController = new AuthController(authService);
+
+    expect(directController).toBeDefined();
+  });
+
   describe('register', () => {
     it('should register user, set refresh cookie, and return access token', async () => {
       const dto: RegisterDto = {

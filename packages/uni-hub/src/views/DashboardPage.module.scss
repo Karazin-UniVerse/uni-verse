@@ -716,7 +716,7 @@
     top: auto;
     height: 64px;
     width: auto;
-    z-index: 1000;
+    z-index: 100;
     transform: none;
     visibility: visible;
     flex-direction: row;
@@ -807,6 +807,10 @@
 
   .user span:last-child {
     display: none;
+  }
+
+  .content {
+    padding-bottom: calc(var(--space-24) + 64px + var(--space-16) + env(safe-area-inset-bottom, 0px));
   }
 }
 

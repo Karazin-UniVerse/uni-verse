@@ -21,8 +21,8 @@
 }
 
 .warning {
-  color: #92400e;
-  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning-text, #92400e);
+  background: var(--warning-bg, rgba(245, 158, 11, 0.15));
   border-color: var(--warning-color);
   animation: pulseWarn 1.2s var(--ease-standard) infinite;
 }
@@ -36,7 +36,7 @@
 
 :global([data-theme='dark']) .warning,
 :global([data-theme='cyberpunk']) .warning {
-  color: #fbbf24;
+  color: var(--warning-light, #fbbf24);
 }
 
 :global([data-theme='dark']) .danger,
