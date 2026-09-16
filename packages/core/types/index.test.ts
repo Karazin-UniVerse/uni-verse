@@ -4,9 +4,9 @@ import test, { describe } from 'node:test';
 import {
   calculateEctsGrade,
   calculateTraditionalGrade,
+  Breakpoint,
   BREAKPOINTS,
   GRADES_THRESHOLD,
-  GradeScoreThreshold,
   type AssignmentItem,
   type Course,
   type CurriculumItem,
@@ -242,12 +242,21 @@ describe('domain type contracts compilation verification', () => {
     assert.strictEqual(BREAKPOINTS.xxl, 1536);
   });
 
+  test('validates Breakpoint enum values', () => {
+    assert.strictEqual(Breakpoint.xs, 'xs');
+    assert.strictEqual(Breakpoint.sm, 'sm');
+    assert.strictEqual(Breakpoint.md, 'md');
+    assert.strictEqual(Breakpoint.lg, 'lg');
+    assert.strictEqual(Breakpoint.xl, 'xl');
+    assert.strictEqual(Breakpoint.xxl, 'xxl');
+    assert.strictEqual(Breakpoint.MD, 'md');
+  });
+
   test('validates GRADES_THRESHOLD enum values', () => {
     assert.strictEqual(GRADES_THRESHOLD.EXCELLENT, 90);
     assert.strictEqual(GRADES_THRESHOLD.VERY_GOOD, 82);
-    assert.strictEqual(GRADES_THRESHOLD.GOOD, 75);
+    assert.strictEqual(GRADES_THRESHOLD.GOOD, 74);
     assert.strictEqual(GRADES_THRESHOLD.SATISFACTORY, 60);
     assert.strictEqual(GRADES_THRESHOLD.FAIL_RETAKE, 35);
-    assert.strictEqual(GradeScoreThreshold.GOOD, 75);
   });
 });

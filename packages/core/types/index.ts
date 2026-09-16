@@ -15,8 +15,25 @@ export type TraditionalGrade =
 export type ControlType = 'exam' | 'credit' | 'differentiated_credit';
 
 /**
- * Standard responsive breakpoints (in pixels) matching design system SCSS tokens
+ * Standard responsive breakpoints matching design system SCSS tokens
  */
+export const Breakpoint = {
+  xs: 'xs',
+  sm: 'sm',
+  md: 'md',
+  lg: 'lg',
+  xl: 'xl',
+  xxl: 'xxl',
+  XS: 'xs',
+  SM: 'sm',
+  MD: 'md',
+  LG: 'lg',
+  XL: 'xl',
+  XXL: 'xxl',
+} as const;
+
+export type Breakpoint = (typeof Breakpoint)[keyof typeof Breakpoint];
+
 export const BREAKPOINTS = {
   xs: 480,
   sm: 640,
@@ -26,7 +43,7 @@ export const BREAKPOINTS = {
   xxl: 1536,
 } as const;
 
-export type Breakpoint = keyof typeof BREAKPOINTS;
+export type BreakpointKey = keyof typeof BREAKPOINTS;
 
 /**
  * Standard university grading threshold boundaries (100-point scale)
@@ -34,16 +51,12 @@ export type Breakpoint = keyof typeof BREAKPOINTS;
 export const GRADES_THRESHOLD = {
   EXCELLENT: 90,
   VERY_GOOD: 82,
-  GOOD: 75,
+  GOOD: 74,
   SATISFACTORY: 60,
   FAIL_RETAKE: 35,
 } as const;
 
 export type GradesThreshold = (typeof GRADES_THRESHOLD)[keyof typeof GRADES_THRESHOLD];
-
-export const GradeScoreThreshold = GRADES_THRESHOLD;
-
-export type GradeScoreThreshold = GradesThreshold;
 
 /** Academic status of a student */
 export type StudentAcademicStatus = 'active' | 'academic_leave' | 'expelled' | 'graduated';
