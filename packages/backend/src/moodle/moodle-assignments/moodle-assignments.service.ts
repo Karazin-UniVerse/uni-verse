@@ -29,7 +29,6 @@ export class MoodleAssignmentsService {
       const data = await this.moodleClient.client<MoodleAssignmentsResponse>(
         getWsFunctionName('getAssignments'),
         moodleToken,
-        undefined,
       );
 
       const assignments: AssignmentItemDto[] = [];
