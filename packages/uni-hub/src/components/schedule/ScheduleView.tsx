@@ -178,7 +178,13 @@ const getTypeTone = (type: string): 'info' | 'warning' | 'success' | 'danger' | 
 };
 
 export const ScheduleView: React.FC = () => {
-  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
+  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      return 'day';
+    }
+
+    return 'month';
+  });
   const [selectedDate, setSelectedDate] = useState(() => {
     const initialDate = new Date();
 

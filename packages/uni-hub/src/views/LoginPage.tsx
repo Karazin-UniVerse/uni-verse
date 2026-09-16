@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button, TextInput, SimpleForm, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { authApi } from '@uni-hub/services/api';
+import { motion } from 'framer-motion';
 import styles from './LoginPage.module.scss';
 
 const LoginPage: React.FC = () => {
@@ -58,10 +59,10 @@ const LoginPage: React.FC = () => {
   return (
     <div className={styles.page}>
       <div className={styles.themeBar}>
-        <ThemeSwitcher />
+        <ThemeSwitcher compact />
       </div>
       <div className={styles.center}>
-        <SimpleForm variant="card" className={styles.card} action={handleLogin}>
+        <SimpleForm className={styles.card} action={handleLogin}>
           <div className={styles.brand}>
             <h1>UNiVerse</h1>
             <p>Войдите в свой аккаунт Moodle</p>
@@ -102,15 +103,17 @@ const LoginPage: React.FC = () => {
 
           {error && <p className={styles.error}>{error}</p>}
 
-          <Button
-            type="submit"
-            variant="primary"
-            size="large"
-            disabled={loading}
-            className={styles.submit}
-          >
-            {loading ? 'Вход...' : 'Войти'}
-          </Button>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button
+              type="submit"
+              variant="primary"
+              size="large"
+              disabled={loading}
+              className={styles.submit}
+            >
+              {loading ? 'Вход...' : 'Войти'}
+            </Button>
+          </motion.div>
         </SimpleForm>
       </div>
     </div>

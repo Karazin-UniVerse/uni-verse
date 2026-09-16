@@ -3,8 +3,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, Volume2, VolumeX, Bell, User } from 'lucide-react';
-import { Button as SimpleButton, Tag, Empty } from '@una';
+import { Button, Tag, Empty } from '@una';
 import { StreakBadge } from '@uni-hub/components/gamification';
+import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import type { DashboardHeaderProps } from '../types';
 import { stripHtml } from '../utils';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
@@ -20,11 +21,17 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 }) => {
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
         setNotifOpen(false);
+      }
+
+      if (userRef.current && !userRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
       }
     };
 
@@ -33,10 +40,15 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn');
+    window.location.href = '/login';
+  };
+
   return (
     <header className={styles.header}>
       <div className={styles.headerLeft}>
-        <SimpleButton
+        <Button
           type="button"
           variant="secondary"
           size="medium"
@@ -48,24 +60,25 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           aria-controls="dashboard-sidebar"
         >
           <Menu size={20} />
-        </SimpleButton>
+        </Button>
         <StreakBadge />
       </div>
 
       <div className={styles.headerRight}>
-        <SimpleButton
+        <Button
           type="button"
           variant="secondary"
           size="medium"
           isTransparent
           onClick={onToggleSound}
           aria-label={soundEnabled ? 'Вимкнути звук' : 'Увімкнути звук'}
+          className={styles.desktopOnly}
         >
           {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-        </SimpleButton>
+        </Button>
 
         <div className={styles.notifWrap} ref={notifRef}>
-          <SimpleButton
+          <Button
             type="button"
             variant="secondary"
             size="medium"
@@ -75,7 +88,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           >
             <Bell size={18} />
             {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
-          </SimpleButton>
+          </Button>
 
           {notifOpen && (
             <motion.div
@@ -116,14 +129,85 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           )}
         </div>
 
-        <div
-          className={styles.user}
-          title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
-        >
-          <span className={styles.avatar}>
-            <User size={16} />
-          </span>
-          <span>{activeStudentProfile.fullName}</span>
+        <div className={styles.userWrap} ref={userRef}>
+          <button
+            type="button"
+            className={styles.user}
+            title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
+            onClick={() => setUserMenuOpen((open) => !open)}
+            aria-expanded={userMenuOpen}
+            aria-haspopup="true"
+          >
+            <span className={styles.avatar}>
+              <User size={16} />
+            </span>
+            <span>{activeStudentProfile.fullName}</span>
+          </button>
+
+          {userMenuOpen && (
+            <motion.div
+              className={styles.userDropdown}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.15 }}
+            >
+              <div className={styles.userDropdownHeader}>
+                <strong>{activeStudentProfile.fullName}</strong>
+                <div className={styles.muted}>{activeStudentProfile.group}</div>
+              </div>
+
+              <div className={styles.userDropdownBody}>
+                <div className={styles.mobileOnlyItem}>
+                  <ThemeSwitcher compact={false} showLabel={true} />
+                </div>
+
+                <div className={styles.mobileOnlyItem}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="small"
+                    onClick={onToggleSound}
+                    style={{ width: '100%', justifyContent: 'flex-start' }}
+                  >
+                    {soundEnabled ? (
+                      <Volume2 size={16} style={{ marginRight: 8 }} />
+                    ) : (
+                      <VolumeX size={16} style={{ marginRight: 8 }} />
+                    )}
+                    {soundEnabled ? 'Вимкнути звук' : 'Увімкнути звук'}
+                  </Button>
+                </div>
+
+                <div className={styles.mobileOnlyItem} style={{ marginBottom: 8 }}>
+                  <a
+                    href="https://moodle.universemvp.tech"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.moodleStatusLink}
+                  >
+                    <span className={styles.statusDot} aria-hidden />
+                    <span>Moodle LMS</span>
+                  </a>
+                </div>
+
+                <div className={styles.mobileOnlyItem}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="small"
+                    onClick={handleLogout}
+                    style={{
+                      width: '100%',
+                      justifyContent: 'flex-start',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    Вийти
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     </header>

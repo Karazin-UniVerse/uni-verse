@@ -40,6 +40,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: var(--space-8);
   padding: var(--space-4) var(--space-8);
   border-radius: var(--border-radius-small);
   border: 1px solid transparent;
@@ -55,10 +56,5 @@
 }
 
 .compactLabel {
-  margin-left: var(--space-8);
-  display: none;
-
-  @include wider-than('sm') {
-    display: inline;
-  }
+  display: inline;
 }

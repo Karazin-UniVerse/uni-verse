@@ -220,6 +220,11 @@ $space-64: 64px;
   --text-disabled: var(--neutral-text-disabled);
   --border-color: var(--neutral-border);
 
+  /* Cards */
+  --card-border: rgba(0, 0, 0, 0.05);
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  --card-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.06);
+
   /* Primary Button */
   --btn-primary-bg: var(--accent-primary);
   --btn-primary-hover: var(--accent-primary-hover);
@@ -245,6 +250,11 @@ $space-64: 64px;
   --neutral-text-primary: var(--gray-50);
   --neutral-text-secondary: var(--gray-400);
   --neutral-text-disabled: var(--gray-600);
+
+  /* Cards */
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --card-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.6);
 
   /* Accent Colors */
   --accent-primary: var(--blue-600);
@@ -326,6 +336,11 @@ $space-64: 64px;
   --text-secondary: var(--cyberpunk-cyan);
   --text-disabled: var(--cyberpunk-text-dim);
   --border-color: var(--cyberpunk-pink);
+
+  /* Cards */
+  --card-border: rgba(0, 240, 255, 0.4);
+  --card-shadow: 0 0 8px rgba(255, 0, 85, 0.15);
+  --card-shadow-hover: 0 0 15px rgba(0, 240, 255, 0.4);
 
   /* Primary Button Overrides */
   --btn-primary-bg: var(--cyberpunk-yellow);

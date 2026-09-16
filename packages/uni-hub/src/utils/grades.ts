@@ -65,11 +65,15 @@ export function getGradeTone(rawgrade: number | null): 'success' | 'warning' | '
     return 'warning';
   }
 
-  if (rawgrade >= 80) {
+  if (rawgrade >= 90) {
     return 'success';
   }
 
-  if (rawgrade >= 50) {
+  if (rawgrade >= 75) {
+    return 'success'; // Or 'info' if supported, but sticking to 3-tier
+  }
+
+  if (rawgrade >= 60) {
     return 'warning';
   }
 
@@ -81,11 +85,11 @@ export function getGradeBarColor(rawgrade: number | null): string {
     return 'var(--chart-warning)';
   }
 
-  if (rawgrade >= 80) {
+  if (rawgrade >= 75) {
     return 'var(--chart-success)';
   }
 
-  if (rawgrade >= 50) {
+  if (rawgrade >= 60) {
     return 'var(--chart-warning)';
   }
 

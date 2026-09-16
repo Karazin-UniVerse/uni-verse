@@ -1,3 +1,6 @@
+import type { ReactNode } from 'react';
+
 export type EmptyProps = {
-  description?: string;
+  description?: ReactNode;
+  icon?: ReactNode;
 };
