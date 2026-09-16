@@ -7,6 +7,6 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "include": ["types/**/*", "index.ts"],
+  "include": ["types/**/*", "constants/**/*", "auth/**/*", "index.ts"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }

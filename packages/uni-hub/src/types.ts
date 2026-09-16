@@ -9,14 +9,16 @@ export interface Course {
   semester?: number | null;
 }
 
+export type GradeValue = string | number | null;
+
 export interface Grade {
   courseId?: number;
   courseName?: string;
   course_name?: string;
   grade: string;
-  rawGrade?: string | number | null;
-  rawgrade?: string | number | null;
-  year?: string | number | null;
+  rawGrade?: GradeValue;
+  rawgrade?: GradeValue;
+  year?: GradeValue;
   semester?: number | null;
   controlType?: ControlType;
 }

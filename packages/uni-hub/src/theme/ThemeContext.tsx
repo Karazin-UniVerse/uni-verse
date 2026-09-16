@@ -25,9 +25,9 @@ function applyTheme(theme: AppTheme) {
   const root = document.documentElement;
 
   if (theme === 'light') {
-    root.removeAttribute('data-theme');
+    delete root.dataset.theme;
   } else {
-    root.setAttribute('data-theme', theme);
+    root.dataset.theme = theme;
   }
 }
 
@@ -53,7 +53,7 @@ const getThemeSnapshot = (): AppTheme => {
 
 const getThemeServerSnapshot = (): AppTheme => 'light';
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const ThemeProvider: React.FC<Readonly<{ children: React.ReactNode }>> = ({ children }) => {
   const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getThemeServerSnapshot);
 
   useEffect(() => {
@@ -80,11 +80,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 };
 
 export function useTheme() {
-  const ctx = useContext(ThemeContext);
+  const context = useContext(ThemeContext);
 
-  if (!ctx) {
+  if (!context) {
     throw new Error('useTheme must be used within ThemeProvider');
   }
 
-  return ctx;
+  return context;
 }
