@@ -4,7 +4,6 @@ import test, { describe } from 'node:test';
 import {
   calculateEctsGrade,
   calculateTraditionalGrade,
-  Breakpoint,
   BREAKPOINTS,
   GRADES_THRESHOLD,
   type AssignmentItem,
@@ -240,16 +239,6 @@ describe('domain type contracts compilation verification', () => {
     assert.strictEqual(BREAKPOINTS.lg, 1024);
     assert.strictEqual(BREAKPOINTS.xl, 1280);
     assert.strictEqual(BREAKPOINTS.xxl, 1536);
-  });
-
-  test('validates Breakpoint enum values', () => {
-    assert.strictEqual(Breakpoint.xs, 'xs');
-    assert.strictEqual(Breakpoint.sm, 'sm');
-    assert.strictEqual(Breakpoint.md, 'md');
-    assert.strictEqual(Breakpoint.lg, 'lg');
-    assert.strictEqual(Breakpoint.xl, 'xl');
-    assert.strictEqual(Breakpoint.xxl, 'xxl');
-    assert.strictEqual(Breakpoint.MD, 'md');
   });
 
   test('validates GRADES_THRESHOLD enum values', () => {

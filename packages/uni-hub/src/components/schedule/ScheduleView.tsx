@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button as SimpleButton, RadioButton, Tag, Empty } from '@una';
-import { Breakpoint } from '@universe/core';
+import { BREAKPOINTS } from '@universe/core';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import styles from './ScheduleView.module.scss';
 
@@ -180,7 +180,7 @@ const getTypeTone = (type: string): 'info' | 'warning' | 'success' | 'danger' | 
 };
 
 export const ScheduleView: React.FC = () => {
-  const isMobile = useMediaQuery(Breakpoint.MD, 'less');
+  const isMobile = useMediaQuery(BREAKPOINTS.md, 'less');
   const [selectedViewMode, setSelectedViewMode] = useState<'month' | 'week' | 'day' | null>(null);
   const viewMode = selectedViewMode ?? (isMobile ? 'day' : 'month');
 

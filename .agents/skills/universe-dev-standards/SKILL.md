@@ -51,18 +51,19 @@ uni-verse/
   ```
 - When renaming or unifying an identifier, update all call sites across the entire repository directly. Maintain zero transitional dead code.
 
-### B. Responsive Breakpoint Enums & `useMediaQuery`
+### B. Responsive Breakpoints & `useMediaQuery`
 
 - **Rule**: Never use magic numbers (`768`) or raw string literals (`'md'`) directly for breakpoints in TypeScript logic.
-- Always use the `Breakpoint` enum/const object from `@universe/core`:
+- Always use the `BREAKPOINTS` constant map from `@universe/core`:
   ```ts
-  import { Breakpoint } from '@universe/core';
+  import { BREAKPOINTS } from '@universe/core';
   import { useMediaQuery } from '@uni-hub/hooks/useMediaQuery';
 
-  // ✅ Pass the enum and comparison indicator ('less' | 'wider')
-  const isMobile = useMediaQuery(Breakpoint.MD, 'less');
-  const isDesktop = useMediaQuery(Breakpoint.LG, 'wider');
+  // ✅ Pass the breakpoint from BREAKPOINTS and comparison indicator ('less' | 'wider')
+  const isMobile = useMediaQuery(BREAKPOINTS.md, 'less');
+  const isDesktop = useMediaQuery(BREAKPOINTS.lg, 'wider');
   ```
+- Do not create duplicate objects (e.g. do NOT maintain a separate `const Breakpoint = { md: 'md' }` alongside `BREAKPOINTS = { md: 768 }`). `BREAKPOINTS` is the single canonical source of truth for breakpoints.
 - In SCSS, mirror this using the design system mixins from `breakpoints.scss`:
   ```scss
   @use '@universe/ui/vars' as *;

@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
-import { Breakpoint } from '@universe/core';
+import { BREAKPOINTS } from '@universe/core';
 import { useMediaQuery } from './useMediaQuery';
 
 describe('useMediaQuery hook', () => {
   it('returns serverFallback when rendered in SSR / Node environment', () => {
     const TestComponent = () => {
-      const isMatched = useMediaQuery(Breakpoint.MD, 'less', false);
+      const isMatched = useMediaQuery(BREAKPOINTS.md, 'less', false);
 
       return React.createElement('div', { 'data-testid': 'result' }, String(isMatched));
     };
@@ -19,7 +19,7 @@ describe('useMediaQuery hook', () => {
 
   it('respects true serverFallback in SSR / Node environment', () => {
     const TestComponent = () => {
-      const isMatched = useMediaQuery(Breakpoint.MD, 'wider', true);
+      const isMatched = useMediaQuery(BREAKPOINTS.md, 'wider', true);
 
       return React.createElement('div', { 'data-testid': 'result' }, String(isMatched));
     };

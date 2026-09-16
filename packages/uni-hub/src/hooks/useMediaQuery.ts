@@ -4,9 +4,18 @@ import { isBrowser } from '@uni-hub/utils/browser';
 
 export type MediaComparison = 'less' | 'wider' | 'narrower';
 
-function resolveQuery(queryOrBreakpoint: string, comparison: MediaComparison = 'less'): string {
+function resolveQuery(
+  queryOrBreakpoint: string | number,
+  comparison: MediaComparison = 'less',
+): string {
+  if (typeof queryOrBreakpoint === 'number') {
+    return comparison === 'wider'
+      ? `(min-width: ${queryOrBreakpoint}px)`
+      : `(max-width: ${queryOrBreakpoint}px)`;
+  }
+
   if (queryOrBreakpoint in BREAKPOINTS) {
-    const px = BREAKPOINTS[queryOrBreakpoint as keyof typeof BREAKPOINTS];
+    const px = BREAKPOINTS[queryOrBreakpoint as Breakpoint];
 
     return comparison === 'wider' ? `(min-width: ${px}px)` : `(max-width: ${px}px)`;
   }
@@ -16,18 +25,18 @@ function resolveQuery(queryOrBreakpoint: string, comparison: MediaComparison = '
 
 /**
  * Performant hook to observe CSS media queries using useSyncExternalStore.
- * Accepts breakpoint enum/tokens (e.g. Breakpoint.MD) with flexible direction ('less' | 'wider'),
+ * Accepts breakpoint values/tokens (e.g. BREAKPOINTS.md or 'md') with flexible direction ('less' | 'wider'),
  * or full CSS media query strings.
  * Avoids window resize thrashing and handles SSR gracefully.
  */
 export function useMediaQuery(
-  breakpoint: Breakpoint,
+  breakpoint: Breakpoint | number,
   comparison?: MediaComparison,
   serverFallback?: boolean,
 ): boolean;
 export function useMediaQuery(query: string, serverFallback?: boolean): boolean;
 export function useMediaQuery(
-  queryOrBreakpoint: string,
+  queryOrBreakpoint: string | number,
   comparisonOrFallback?: MediaComparison | boolean,
   serverFallback = false,
 ): boolean {
