@@ -25,6 +25,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   onOpenAssignment,
 }) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const isFiltered = Boolean(dateFrom || dateTo);
 
   const handleDateChange =
     (setter: (value: string) => void) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,6 +135,8 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
             </motion.button>
           );
         })
+      ) : isFiltered ? (
+        <Empty description="Завдань за обраними фільтрами не знайдено" />
       ) : (
         <Empty
           description="Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉"

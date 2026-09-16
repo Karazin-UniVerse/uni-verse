@@ -34,16 +34,12 @@ export type Breakpoint = keyof typeof BREAKPOINTS;
 export const GRADES_THRESHOLD = {
   EXCELLENT: 90,
   VERY_GOOD: 82,
-  GOOD: 75,
+  GOOD: 74,
   SATISFACTORY: 60,
   FAIL_RETAKE: 35,
 } as const;
 
 export type GradesThreshold = (typeof GRADES_THRESHOLD)[keyof typeof GRADES_THRESHOLD];
-
-export const GradeScoreThreshold = GRADES_THRESHOLD;
-
-export type GradeScoreThreshold = GradesThreshold;
 
 /** Academic status of a student */
 export type StudentAcademicStatus = 'active' | 'academic_leave' | 'expelled' | 'graduated';

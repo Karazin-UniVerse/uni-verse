@@ -66,9 +66,25 @@ export const Modal: React.FC<ModalProps> = ({
     previouslyFocusedElementRef.current = document.activeElement as HTMLElement | null;
     lockScroll(modalId);
 
+    const frameId = requestAnimationFrame(() => {
+      if (!dialogRef.current) {
+        return;
+      }
+
+      const firstFocusable = dialogRef.current.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+
+      if (firstFocusable) {
+        firstFocusable.focus();
+      } else {
+        dialogRef.current.focus();
+      }
+    });
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onCloseRef.current();
+        if (modalStack[modalStack.length - 1] === modalId) {
+          onCloseRef.current();
+        }
 
         return;
       }
@@ -114,6 +130,7 @@ export const Modal: React.FC<ModalProps> = ({
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
+      cancelAnimationFrame(frameId);
       document.removeEventListener('keydown', handleKeyDown);
 
       if (overlayElement) {

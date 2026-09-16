@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useId } from 'react';
 import clsx from 'clsx';
 import css from './CustomDateTime.module.scss';
 import { TextInput } from '../TextInput/TextInput';
@@ -27,6 +27,7 @@ export function CustomDateTime({
   size = 'medium',
   ...props
 }: CustomDateTimeProps) {
+  const pickerDialogId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [prevSelected, setPrevSelected] = useState(selected);
   const [viewDate, setViewDate] = useState(selected || new Date());
@@ -166,10 +167,16 @@ export function CustomDateTime({
         onKeyDown={handleKeyDown}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
+        aria-controls={isOpen ? pickerDialogId : undefined}
       />
 
       {isOpen && (
-        <div className={clsx(css.popper, css[`size-${size}`])}>
+        <div
+          id={pickerDialogId}
+          role="dialog"
+          aria-label="Date and time picker"
+          className={clsx(css.popper, css[`size-${size}`])}
+        >
           <div className={css.calendar}>
             <div className={css.header}>
               <button
