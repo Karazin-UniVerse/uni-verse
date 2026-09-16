@@ -19,15 +19,15 @@
     "db:studio": "pnpm --filter @universe/backend db:studio"
   },
   "devDependencies": {
-    "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "husky": "^9.1.7",
-    "lint-staged": "^17.4.1",
-    "oxlint": "^1.81.0",
+    "lint-staged": "^17.5.1",
+    "oxlint": "^1.82.0",
     "prettier": "^3.5.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "sass-embedded": "^1.103.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "sass-embedded": "^1.104.1",
     "turbo": "^2.10.12",
     "typescript": "^5.7.0",
     "vitest": "^5.0.0"
