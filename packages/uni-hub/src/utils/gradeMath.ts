@@ -1,4 +1,3 @@
-export * from '@core/types';
 import {
   calculateAccumulatedGrade,
   MAX_EXAM,
@@ -10,12 +9,12 @@ import {
 /**
  * Clamps a numerical value between min and max bounds.
  */
-export function clampScore(n: number, min = 0, max = 100): number {
-  if (Number.isNaN(n) || !Number.isFinite(n)) {
+export function clampScore(score: number, min = 0, max = 100): number {
+  if (Number.isNaN(score) || !Number.isFinite(score)) {
     return min;
   }
 
-  return Math.min(max, Math.max(min, n));
+  return Math.min(max, Math.max(min, score));
 }
 
 /**
@@ -37,14 +36,14 @@ export function computeSimulatedFinal(
   if (controlType === 'credit' || controlType === 'differentiated_credit') {
     if (Array.isArray(examScoreOrRemaining) && examScoreOrRemaining.length > 0) {
       const remainingSum = examScoreOrRemaining.reduce(
-        (acc, val) => acc + clampScore(val, 0, 100),
+        (accumulator, currentScore) => accumulator + clampScore(currentScore, 0, 100),
         0,
       );
-      const avg = remainingSum / examScoreOrRemaining.length;
+      const averagePercent = remainingSum / examScoreOrRemaining.length;
 
       return Math.min(
         MAX_SEMESTER_CREDIT,
-        Math.round(safeSemester + (avg * (MAX_SEMESTER_CREDIT - safeSemester)) / 100),
+        Math.round(safeSemester + (averagePercent * (MAX_SEMESTER_CREDIT - safeSemester)) / 100),
       );
     }
 

@@ -253,114 +253,114 @@ describe('calculateAccumulatedGrade', () => {
 
   describe('exam grading', () => {
     test('denies admission when semesterScore < 30', () => {
-      const res = calculateAccumulatedGrade({
+      const result = calculateAccumulatedGrade({
         semesterScore: 28,
         controlType: 'exam',
         examScore: 35,
       });
 
-      assert.strictEqual(res.isAdmittedToExam, false);
-      assert.strictEqual(res.isExamPassed, false);
-      assert.strictEqual(res.isCoursePassed, false);
-      assert.strictEqual(res.traditionalGrade, 'незадовільно');
-      assert.strictEqual(res.totalScore, 28);
-      assert.match(res.statusMessage, /Не допущено до іспиту/);
-      assert.match(res.statusMessage, /бракує 2 б\./);
+      assert.strictEqual(result.isAdmittedToExam, false);
+      assert.strictEqual(result.isExamPassed, false);
+      assert.strictEqual(result.isCoursePassed, false);
+      assert.strictEqual(result.traditionalGrade, 'незадовільно');
+      assert.strictEqual(result.totalScore, 28);
+      assert.match(result.statusMessage, /Не допущено до іспиту/);
+      assert.match(result.statusMessage, /бракує 2 б\./);
     });
 
     test('admits student when semesterScore >= 30 but exam has not been taken yet', () => {
-      const res = calculateAccumulatedGrade({
+      const result = calculateAccumulatedGrade({
         semesterScore: 45,
         controlType: 'exam',
       });
 
-      assert.strictEqual(res.isAdmittedToExam, true);
-      assert.strictEqual(res.isExamPassed, false);
-      assert.strictEqual(res.isCoursePassed, false);
-      assert.strictEqual(res.totalScore, 45);
-      assert.match(res.statusMessage, /Допущено до іспиту/);
+      assert.strictEqual(result.isAdmittedToExam, true);
+      assert.strictEqual(result.isExamPassed, false);
+      assert.strictEqual(result.isCoursePassed, false);
+      assert.strictEqual(result.totalScore, 45);
+      assert.match(result.statusMessage, /Допущено до іспиту/);
     });
 
     test('fails student if exam score < 20 even if sum is >= 60', () => {
-      const res = calculateAccumulatedGrade({
+      const result = calculateAccumulatedGrade({
         semesterScore: 55,
         controlType: 'exam',
         examScore: 18,
       });
 
-      assert.strictEqual(res.isAdmittedToExam, true);
-      assert.strictEqual(res.isExamPassed, false);
-      assert.strictEqual(res.isCoursePassed, false);
-      assert.strictEqual(res.totalScore, 73);
-      assert.strictEqual(res.ectsGrade, 'Fx');
-      assert.strictEqual(res.traditionalGrade, 'незадовільно');
-      assert.match(res.statusMessage, /менше 20 б\./);
+      assert.strictEqual(result.isAdmittedToExam, true);
+      assert.strictEqual(result.isExamPassed, false);
+      assert.strictEqual(result.isCoursePassed, false);
+      assert.strictEqual(result.totalScore, 73);
+      assert.strictEqual(result.ectsGrade, 'Fx');
+      assert.strictEqual(result.traditionalGrade, 'незадовільно');
+      assert.match(result.statusMessage, /менше 20 б\./);
     });
 
     test('passes student when semester >= 30 and exam >= 20 and total >= 60', () => {
-      const res = calculateAccumulatedGrade({
+      const result = calculateAccumulatedGrade({
         semesterScore: 50,
         controlType: 'exam',
         examScore: 35,
       });
 
-      assert.strictEqual(res.isAdmittedToExam, true);
-      assert.strictEqual(res.isExamPassed, true);
-      assert.strictEqual(res.isCoursePassed, true);
-      assert.strictEqual(res.totalScore, 85);
-      assert.strictEqual(res.ectsGrade, 'B');
-      assert.strictEqual(res.traditionalGrade, 'добре');
+      assert.strictEqual(result.isAdmittedToExam, true);
+      assert.strictEqual(result.isExamPassed, true);
+      assert.strictEqual(result.isCoursePassed, true);
+      assert.strictEqual(result.totalScore, 85);
+      assert.strictEqual(result.ectsGrade, 'B');
+      assert.strictEqual(result.traditionalGrade, 'добре');
     });
 
     test('assigns A when totalScore >= 90', () => {
-      const res = calculateAccumulatedGrade({
+      const result = calculateAccumulatedGrade({
         semesterScore: 58,
         controlType: 'exam',
         examScore: 38,
       });
 
-      assert.strictEqual(res.isCoursePassed, true);
-      assert.strictEqual(res.totalScore, 96);
-      assert.strictEqual(res.ectsGrade, 'A');
-      assert.strictEqual(res.traditionalGrade, 'відмінно');
+      assert.strictEqual(result.isCoursePassed, true);
+      assert.strictEqual(result.totalScore, 96);
+      assert.strictEqual(result.ectsGrade, 'A');
+      assert.strictEqual(result.traditionalGrade, 'відмінно');
     });
 
     test('handles semester score clamping (max 60, min 0)', () => {
-      const res = calculateAccumulatedGrade({
+      const result = calculateAccumulatedGrade({
         semesterScore: 75,
         controlType: 'exam',
         examScore: 30,
       });
 
-      assert.strictEqual(res.totalScore, 90);
-      assert.strictEqual(res.ectsGrade, 'A');
+      assert.strictEqual(result.totalScore, 90);
+      assert.strictEqual(result.ectsGrade, 'A');
     });
   });
 
   describe('credit and differentiated credit grading', () => {
     test('passes credit course when semesterScore >= 60', () => {
-      const res = calculateAccumulatedGrade({
+      const result = calculateAccumulatedGrade({
         semesterScore: 85,
         controlType: 'credit',
       });
 
-      assert.strictEqual(res.totalScore, 85);
-      assert.strictEqual(res.isCoursePassed, true);
-      assert.strictEqual(res.ectsGrade, 'B');
-      assert.strictEqual(res.traditionalGrade, 'зараховано');
-      assert.strictEqual(res.isAdmittedToExam, true);
+      assert.strictEqual(result.totalScore, 85);
+      assert.strictEqual(result.isCoursePassed, true);
+      assert.strictEqual(result.ectsGrade, 'B');
+      assert.strictEqual(result.traditionalGrade, 'зараховано');
+      assert.strictEqual(result.isAdmittedToExam, true);
     });
 
     test('fails credit course when semesterScore < 60', () => {
-      const res = calculateAccumulatedGrade({
+      const result = calculateAccumulatedGrade({
         semesterScore: 54,
         controlType: 'credit',
       });
 
-      assert.strictEqual(res.totalScore, 54);
-      assert.strictEqual(res.isCoursePassed, false);
-      assert.strictEqual(res.ectsGrade, 'Fx');
-      assert.strictEqual(res.traditionalGrade, 'не зараховано');
+      assert.strictEqual(result.totalScore, 54);
+      assert.strictEqual(result.isCoursePassed, false);
+      assert.strictEqual(result.ectsGrade, 'Fx');
+      assert.strictEqual(result.traditionalGrade, 'не зараховано');
     });
 
     test('correctly evaluates differentiated credit tiers', () => {
@@ -398,7 +398,7 @@ describe('calculateAccumulatedGrade', () => {
 describe('calculateExamTargets', () => {
   test('calculates accurate required scores for high semester score (56/60)', () => {
     const targets = calculateExamTargets(56);
-    const targetMap = new Map(targets.map((t) => [t.grade, t]));
+    const targetMap = new Map(targets.map((target) => [target.grade, target]));
 
     // A (90): 90 - 56 = 34
     assert.strictEqual(targetMap.get('A')?.requiredExamScore, 34);
@@ -419,7 +419,7 @@ describe('calculateExamTargets', () => {
 
   test('marks unreachable targets for low semester score (40/60)', () => {
     const targets = calculateExamTargets(40);
-    const targetMap = new Map(targets.map((t) => [t.grade, t]));
+    const targetMap = new Map(targets.map((target) => [target.grade, target]));
 
     // A (90): 90 - 40 = 50 > 40 -> unreachable
     assert.strictEqual(targetMap.get('A')?.requiredExamScore, 50);
@@ -438,9 +438,21 @@ describe('calculateExamTargets', () => {
     assert.strictEqual(targetMap.get('E')?.isAchievable, true);
   });
 
+  test('marks all targets unachievable when semester score is below admission threshold (< 30)', () => {
+    const targets = calculateExamTargets(25);
+    const targetMap = new Map(targets.map((target) => [target.grade, target]));
+
+    // Grade E requires 60 - 25 = 35 <= 40, but student is not admitted to exam
+    assert.strictEqual(targetMap.get('E')?.isAchievable, false);
+    assert.strictEqual(targetMap.get('D')?.isAchievable, false);
+    assert.strictEqual(targetMap.get('C')?.isAchievable, false);
+    assert.strictEqual(targetMap.get('B')?.isAchievable, false);
+    assert.strictEqual(targetMap.get('A')?.isAchievable, false);
+  });
+
   test('clamps maximum semester score to 60', () => {
     const targets = calculateExamTargets(70);
-    const targetA = targets.find((t) => t.grade === 'A');
+    const targetA = targets.find((target) => target.grade === 'A');
 
     // Clamped to 60: 90 - 60 = 30
     assert.strictEqual(targetA?.requiredExamScore, 30);

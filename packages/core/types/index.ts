@@ -417,6 +417,7 @@ export function calculateAccumulatedGrade(
  */
 export function calculateExamTargets(semesterScore: number): ExamTargetRequirement[] {
   const clampedSemester = Math.max(0, Math.min(MAX_SEMESTER_EXAM, Math.round(semesterScore)));
+  const isAdmittedToExam = clampedSemester >= MIN_EXAM_ADMISSION;
 
   const targets: Array<{ grade: EctsGrade; minTotalScore: number }> = [
     { grade: 'A', minTotalScore: 90 },
@@ -429,7 +430,7 @@ export function calculateExamTargets(semesterScore: number): ExamTargetRequireme
   return targets.map(({ grade, minTotalScore }) => {
     const rawNeeded = minTotalScore - clampedSemester;
     const requiredExamScore = Math.max(MIN_EXAM_PASS, rawNeeded);
-    const isAchievable = requiredExamScore <= MAX_EXAM;
+    const isAchievable = isAdmittedToExam && requiredExamScore <= MAX_EXAM;
 
     return {
       grade,

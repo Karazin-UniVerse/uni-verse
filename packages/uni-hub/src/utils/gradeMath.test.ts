@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  clampScore,
-  computeSimulatedFinal,
-  calculateAccumulatedGrade,
-  calculateExamTargets,
-} from './gradeMath';
+import { clampScore, computeSimulatedFinal } from './gradeMath';
 
 describe('gradeMath utils', () => {
   describe('clampScore', () => {
@@ -40,17 +35,6 @@ describe('gradeMath utils', () => {
       const total = computeSimulatedFinal(50, [100, 100], 'credit');
 
       expect(total).toBe(100);
-    });
-  });
-
-  describe('re-exports from core', () => {
-    it('exports calculateAccumulatedGrade and calculateExamTargets', () => {
-      expect(typeof calculateAccumulatedGrade).toBe('function');
-      expect(typeof calculateExamTargets).toBe('function');
-
-      const targets = calculateExamTargets(50);
-
-      expect(targets).toHaveLength(5);
     });
   });
 });

@@ -8,11 +8,11 @@ import {
   getValidGrades,
 } from '@uni-hub/utils/grades';
 import { useCountUp } from '@uni-hub/hooks/useCountUp';
-import { Modal, Select, Empty, ProgressBar, Button as SimpleButton, SimpleSlider, Tag } from '@una';
+import { Modal, Select, Empty, ProgressBar, Button, SimpleSlider, Tag } from '@una';
+import { clampScore } from '@uni-hub/utils/gradeMath';
 import {
   calculateAccumulatedGrade,
   calculateExamTargets,
-  clampScore,
   MAX_EXAM,
   MAX_SEMESTER_CREDIT,
   MAX_SEMESTER_EXAM,
@@ -20,7 +20,7 @@ import {
   type ControlType,
   type ExamTargetRequirement,
   type GradeAccumulationResult,
-} from '@uni-hub/utils/gradeMath';
+} from '@core/types';
 import styles from './GradeSimulator.module.scss';
 
 function getUniqueGrades(validGrades: Grade[]): Grade[] {
@@ -180,7 +180,7 @@ const RemainingAssignmentsSection: React.FC<RemainingAssignmentsSectionProps> = 
       </div>
       <div className={styles.list}>
         {remainingAssignments.map((assignment) => {
-          const val = assignmentScores[assignment.id] ?? 75;
+          const score = assignmentScores[assignment.id] ?? 75;
 
           return (
             <label key={assignment.id} className={styles.row}>
@@ -188,14 +188,14 @@ const RemainingAssignmentsSection: React.FC<RemainingAssignmentsSectionProps> = 
                 <span className={styles.name} title={assignment.name}>
                   {assignment.name}
                 </span>
-                <span className={styles.score}>{val} %</span>
+                <span className={styles.score}>{score} %</span>
               </div>
               <SimpleSlider
                 aria-label={`Бал за завдання ${assignment.name}`}
                 min={0}
                 max={100}
-                value={val}
-                onChange={(score: number) => onScoreChange(assignment.id, score)}
+                value={score}
+                onChange={(newScore: number) => onScoreChange(assignment.id, newScore)}
               />
             </label>
           );
@@ -261,17 +261,17 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
   const semesterScore = semesterOverrides[selectedCourse] ?? baseSemester;
   const examScore = examOverrides[selectedCourse] ?? baseExam;
 
-  const setSemesterScore = (val: number) => {
+  const setSemesterScore = (score: number) => {
     setSemesterOverrides((prev) => ({
       ...prev,
-      [selectedCourse]: clampScore(val, 0, maxSemester),
+      [selectedCourse]: clampScore(score, 0, maxSemester),
     }));
   };
 
-  const setExamScore = (val: number) => {
+  const setExamScore = (score: number) => {
     setExamOverrides((prev) => ({
       ...prev,
-      [selectedCourse]: clampScore(val, 0, MAX_EXAM),
+      [selectedCourse]: clampScore(score, 0, MAX_EXAM),
     }));
   };
 
@@ -289,21 +289,26 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
 
   const [assignmentScores, setAssignmentScores] = useState<Record<number, number>>({});
 
-  const setAssignmentScore = (id: number, value: number) => {
-    setAssignmentScores((prev) => {
-      const updated = { ...prev, [id]: clampScore(value, 0, 100) };
+  const setAssignmentScore = (id: number, score: number) => {
+    const updatedScores = {
+      ...assignmentScores,
+      [id]: clampScore(score, 0, 100),
+    };
 
-      if (remainingAssignments.length > 0) {
-        const avg =
-          remainingAssignments.reduce((sum, a) => sum + (updated[a.id] ?? 75), 0) /
-          remainingAssignments.length;
-        const simulated = Math.round(baseSemester + (avg * (maxSemester - baseSemester)) / 100);
+    setAssignmentScores(updatedScores);
 
-        setSemesterScore(clampScore(simulated, 0, maxSemester));
-      }
+    if (remainingAssignments.length > 0) {
+      const averagePercent =
+        remainingAssignments.reduce(
+          (sum, assignment) => sum + (updatedScores[assignment.id] ?? 75),
+          0,
+        ) / remainingAssignments.length;
+      const simulatedSemester = Math.round(
+        baseSemester + (averagePercent * (maxSemester - baseSemester)) / 100,
+      );
 
-      return updated;
-    });
+      setSemesterScore(simulatedSemester);
+    }
   };
 
   const accumulationResult = useMemo(
@@ -444,7 +449,7 @@ type GradeSimulatorTriggerProps = {
 };
 
 export const GradeSimulatorTrigger: React.FC<GradeSimulatorTriggerProps> = ({ onOpen }) => (
-  <SimpleButton type="button" variant="secondary" size="small" onClick={onOpen}>
+  <Button type="button" variant="secondary" size="small" onClick={onOpen}>
     Симулятор балів (Що, якщо?)
-  </SimpleButton>
+  </Button>
 );
