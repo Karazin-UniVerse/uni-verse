@@ -68,32 +68,34 @@ const LoginPage: React.FC = () => {
             <p>Войдите в свой аккаунт Moodle</p>
           </div>
 
-          <label className={styles.field}>
+          <label htmlFor="login-username" className={styles.field}>
             <span className={styles.label}>Имя пользователя</span>
             <div className={styles.inputWrap}>
               <User size={16} className={styles.icon} />
               <TextInput
+                id="login-username"
                 name="username"
                 size="large"
                 placeholder="Имя пользователя"
                 value={username}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+                onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
               />
             </div>
           </label>
 
-          <label className={styles.field}>
+          <label htmlFor="login-password" className={styles.field}>
             <span className={styles.label}>Пароль</span>
             <div className={styles.inputWrap}>
               <Lock size={16} className={styles.icon} />
               <TextInput
+                id="login-password"
                 name="password"
                 type="password"
                 size="large"
                 placeholder="Пароль"
                 value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
               />
             </div>

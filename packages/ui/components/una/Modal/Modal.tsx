@@ -38,6 +38,31 @@ function unlockScroll(id: string) {
 const FOCUSABLE_SELECTOR =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+function handleFocusTrap(event: KeyboardEvent, container: HTMLElement | null): void {
+  if (event.key !== 'Tab' || !container) {
+    return;
+  }
+
+  const focusableElements = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+
+  if (focusableElements.length === 0) {
+    event.preventDefault();
+
+    return;
+  }
+
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
+
+  if (event.shiftKey && document.activeElement === firstElement) {
+    lastElement.focus();
+    event.preventDefault();
+  } else if (!event.shiftKey && document.activeElement === lastElement) {
+    firstElement.focus();
+    event.preventDefault();
+  }
+}
+
 export const Modal: React.FC<ModalProps> = ({
   children,
   onClose,
@@ -82,66 +107,37 @@ export const Modal: React.FC<ModalProps> = ({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        if (modalStack.at(-1) === modalId) {
+        const isTopmost = modalStack.at(-1) === modalId;
+
+        if (isTopmost) {
+          event.stopPropagation();
           onCloseRef.current();
         }
 
         return;
       }
 
-      if (event.key === 'Tab' && dialogRef.current) {
-        const focusableElements =
-          dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
-
-        if (focusableElements.length === 0) {
-          event.preventDefault();
-
-          return;
-        }
-
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-
-        if (event.shiftKey) {
-          if (document.activeElement === firstElement) {
-            lastElement?.focus();
-            event.preventDefault();
-          }
-        } else {
-          if (document.activeElement === lastElement) {
-            firstElement?.focus();
-            event.preventDefault();
-          }
-        }
-      }
+      handleFocusTrap(event, dialogRef.current);
     };
 
     const overlayElement = overlayRef.current;
+
     const handleOverlayClick = (event: MouseEvent) => {
       if (event.target === overlayElement) {
         onCloseRef.current();
       }
     };
 
-    if (overlayElement) {
-      overlayElement.addEventListener('click', handleOverlayClick);
-    }
-
     document.addEventListener('keydown', handleKeyDown);
+    overlayElement?.addEventListener('click', handleOverlayClick);
 
     return () => {
       cancelAnimationFrame(frameId);
       document.removeEventListener('keydown', handleKeyDown);
-
-      if (overlayElement) {
-        overlayElement.removeEventListener('click', handleOverlayClick);
-      }
-
+      overlayElement?.removeEventListener('click', handleOverlayClick);
       unlockScroll(modalId);
 
-      if (previouslyFocusedElementRef.current && previouslyFocusedElementRef.current.focus) {
-        previouslyFocusedElementRef.current.focus();
-      }
+      previouslyFocusedElementRef.current?.focus?.();
     };
   }, [open, modalId]);
 
