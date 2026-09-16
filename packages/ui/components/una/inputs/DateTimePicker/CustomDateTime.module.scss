@@ -8,6 +8,8 @@
   top: calc(100% + var(--space-8));
   left: 0;
   z-index: 100;
+  margin: 0;
+  padding: 0;
   font-family: var(--font-family-base), sans-serif;
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);

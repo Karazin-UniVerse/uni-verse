@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useSyncExternalStore } from 'react';
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button as SimpleButton, RadioButton, Tag, Empty } from '@una';
 import styles from './ScheduleView.module.scss';
@@ -177,8 +177,26 @@ const getTypeTone = (type: string): 'info' | 'warning' | 'success' | 'danger' | 
   }
 };
 
+const subscribeMobile = (callback: () => void) => {
+  const media = window.matchMedia('(max-width: 768px)');
+
+  media.addEventListener('change', callback);
+
+  return () => media.removeEventListener('change', callback);
+};
+
+const getMobileSnapshot = () => window.matchMedia('(max-width: 768px)').matches;
+const getMobileServerSnapshot = () => false;
+
 export const ScheduleView: React.FC = () => {
-  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
+  const isMobile = useSyncExternalStore(
+    subscribeMobile,
+    getMobileSnapshot,
+    getMobileServerSnapshot,
+  );
+  const [selectedViewMode, setSelectedViewMode] = useState<'month' | 'week' | 'day' | null>(null);
+  const viewMode = selectedViewMode ?? (isMobile ? 'day' : 'month');
+
   const [selectedDate, setSelectedDate] = useState(() => {
     const initialDate = new Date();
 
@@ -344,7 +362,7 @@ export const ScheduleView: React.FC = () => {
                 className={`${styles.monthCell} ${inMonth ? '' : styles.outMonth} ${isToday ? styles.today : ''}`}
                 onClick={() => {
                   setSelectedDate(day);
-                  setViewMode('day');
+                  setSelectedViewMode('day');
                 }}
               >
                 <span className={styles.dayNum}>{day.getDate()}</span>
@@ -385,7 +403,7 @@ export const ScheduleView: React.FC = () => {
                 name="schedule-view"
                 value={value}
                 checked={viewMode === value}
-                onChange={() => setViewMode(value)}
+                onChange={() => setSelectedViewMode(value)}
               />
               {label}
             </label>

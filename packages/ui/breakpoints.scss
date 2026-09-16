@@ -29,3 +29,14 @@ $breakpoints: (
     @warn "Unknown breakpoint: #{$breakpoint}.";
   }
 }
+
+@mixin narrower-than($breakpoint) {
+  $value: map.get($breakpoints, $breakpoint);
+  @if $value {
+    @media (max-width: $value) {
+      @content;
+    }
+  } @else {
+    @warn "Unknown breakpoint: #{$breakpoint}.";
+  }
+}

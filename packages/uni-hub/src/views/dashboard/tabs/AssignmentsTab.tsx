@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { TextInput as SimpleInput, Select, CheckBox, Tag, Empty } from '@una';
+import { Filter } from 'lucide-react';
+import { TextInput, Select, CheckBox, Tag, Empty, Button } from '@una';
 import { LiveCountdown } from '@uni-hub/components/gamification';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { AssignmentsTabProps } from '../types';
@@ -23,6 +24,9 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   soundEnabled,
   onOpenAssignment,
 }) => {
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const isFiltered = Boolean(dateFrom || dateTo);
+
   const handleDateChange =
     (setter: (value: string) => void) => (event: React.ChangeEvent<HTMLInputElement>) => {
       const value = event.target.value;
@@ -42,10 +46,30 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
       setter(value);
     };
 
+  const emptyState = isFiltered ? (
+    <Empty description="Завдань за обраними фільтрами не знайдено" />
+  ) : (
+    <Empty
+      description="Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉"
+      icon={<span style={{ fontSize: '48px' }}>🏖️</span>}
+    />
+  );
+
   return (
     <div className={styles.stack}>
-      <div className={styles.filters}>
-        <SimpleInput
+      <div className={styles.mobileFilterToggle}>
+        <Button
+          type="button"
+          onClick={() => setFiltersOpen(!filtersOpen)}
+          variant="secondary"
+          size="small"
+          aria-expanded={filtersOpen}
+        >
+          <Filter size={16} /> {filtersOpen ? 'Сховати фільтри' : 'Фільтри'}
+        </Button>
+      </div>
+      <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
+        <TextInput
           type="date"
           size="medium"
           min="2000-01-01"
@@ -54,7 +78,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
           onChange={handleDateChange(onDateFromChange)}
           aria-label="Дата від"
         />
-        <SimpleInput
+        <TextInput
           type="date"
           size="medium"
           min="2000-01-01"
@@ -81,48 +105,46 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         </label>
       </div>
 
-      {assignments.length > 0 ? (
-        assignments.map((item) => {
-          const description = stripHtml(item.description);
+      {assignments.length > 0
+        ? assignments.map((item) => {
+            const description = stripHtml(item.description);
 
-          return (
-            <motion.button
-              key={item.id}
-              type="button"
-              className={styles.assignmentCard}
-              {...cardMotion}
-              onClick={() => {
-                playClick(soundEnabled);
-                onOpenAssignment(item);
-              }}
-            >
-              <div className={styles.assignmentTop}>
-                <div>
-                  <div className={styles.listTitle}>{item.name}</div>
-                  <div className={styles.muted}>{item.courseName}</div>
+            return (
+              <motion.button
+                key={item.id}
+                type="button"
+                className={styles.assignmentCard}
+                {...cardMotion}
+                onClick={() => {
+                  playClick(soundEnabled);
+                  onOpenAssignment(item);
+                }}
+              >
+                <div className={styles.assignmentTop}>
+                  <div>
+                    <div className={styles.listTitle}>{item.name}</div>
+                    <div className={styles.muted}>{item.courseName}</div>
+                  </div>
+                  <div className={styles.nearestDeadline}>
+                    {item.duedate && item.duedate > 0 ? (
+                      <>
+                        <Tag tone="warning">
+                          Дедлайн: {new Date(item.duedate * 1000).toLocaleDateString('uk-UA')}
+                        </Tag>
+                        <LiveCountdown targetUnixSec={item.duedate} />
+                      </>
+                    ) : (
+                      <Tag tone="default">Без терміну</Tag>
+                    )}
+                  </div>
                 </div>
-                <div className={styles.nearestDeadline}>
-                  {item.duedate && item.duedate > 0 ? (
-                    <>
-                      <Tag tone="warning">
-                        Дедлайн: {new Date(item.duedate * 1000).toLocaleDateString('uk-UA')}
-                      </Tag>
-                      <LiveCountdown targetUnixSec={item.duedate} />
-                    </>
-                  ) : (
-                    <Tag tone="default">Без терміну</Tag>
-                  )}
+                <div className={styles.htmlSnippet}>
+                  {description.length > 200 ? `${description.substring(0, 200)}...` : description}
                 </div>
-              </div>
-              <div className={styles.htmlSnippet}>
-                {description.length > 200 ? `${description.substring(0, 200)}...` : description}
-              </div>
-            </motion.button>
-          );
-        })
-      ) : (
-        <Empty description="Завдання не знайдено" />
-      )}
+              </motion.button>
+            );
+          })
+        : emptyState}
     </div>
   );
 };
