@@ -82,7 +82,7 @@ export const Modal: React.FC<ModalProps> = ({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        if (modalStack[modalStack.length - 1] === modalId) {
+        if (modalStack.at(-1) === modalId) {
           onCloseRef.current();
         }
 

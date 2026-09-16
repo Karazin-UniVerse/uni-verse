@@ -46,6 +46,15 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
       setter(value);
     };
 
+  const emptyState = isFiltered ? (
+    <Empty description="Завдань за обраними фільтрами не знайдено" />
+  ) : (
+    <Empty
+      description="Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉"
+      icon={<span style={{ fontSize: '48px' }}>🏖️</span>}
+    />
+  );
+
   return (
     <div className={styles.stack}>
       <div className={styles.mobileFilterToggle}>
@@ -96,53 +105,46 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         </label>
       </div>
 
-      {assignments.length > 0 ? (
-        assignments.map((item) => {
-          const description = stripHtml(item.description);
+      {assignments.length > 0
+        ? assignments.map((item) => {
+            const description = stripHtml(item.description);
 
-          return (
-            <motion.button
-              key={item.id}
-              type="button"
-              className={styles.assignmentCard}
-              {...cardMotion}
-              onClick={() => {
-                playClick(soundEnabled);
-                onOpenAssignment(item);
-              }}
-            >
-              <div className={styles.assignmentTop}>
-                <div>
-                  <div className={styles.listTitle}>{item.name}</div>
-                  <div className={styles.muted}>{item.courseName}</div>
+            return (
+              <motion.button
+                key={item.id}
+                type="button"
+                className={styles.assignmentCard}
+                {...cardMotion}
+                onClick={() => {
+                  playClick(soundEnabled);
+                  onOpenAssignment(item);
+                }}
+              >
+                <div className={styles.assignmentTop}>
+                  <div>
+                    <div className={styles.listTitle}>{item.name}</div>
+                    <div className={styles.muted}>{item.courseName}</div>
+                  </div>
+                  <div className={styles.nearestDeadline}>
+                    {item.duedate && item.duedate > 0 ? (
+                      <>
+                        <Tag tone="warning">
+                          Дедлайн: {new Date(item.duedate * 1000).toLocaleDateString('uk-UA')}
+                        </Tag>
+                        <LiveCountdown targetUnixSec={item.duedate} />
+                      </>
+                    ) : (
+                      <Tag tone="default">Без терміну</Tag>
+                    )}
+                  </div>
                 </div>
-                <div className={styles.nearestDeadline}>
-                  {item.duedate && item.duedate > 0 ? (
-                    <>
-                      <Tag tone="warning">
-                        Дедлайн: {new Date(item.duedate * 1000).toLocaleDateString('uk-UA')}
-                      </Tag>
-                      <LiveCountdown targetUnixSec={item.duedate} />
-                    </>
-                  ) : (
-                    <Tag tone="default">Без терміну</Tag>
-                  )}
+                <div className={styles.htmlSnippet}>
+                  {description.length > 200 ? `${description.substring(0, 200)}...` : description}
                 </div>
-              </div>
-              <div className={styles.htmlSnippet}>
-                {description.length > 200 ? `${description.substring(0, 200)}...` : description}
-              </div>
-            </motion.button>
-          );
-        })
-      ) : isFiltered ? (
-        <Empty description="Завдань за обраними фільтрами не знайдено" />
-      ) : (
-        <Empty
-          description="Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉"
-          icon={<span style={{ fontSize: '48px' }}>🏖️</span>}
-        />
-      )}
+              </motion.button>
+            );
+          })
+        : emptyState}
     </div>
   );
 };

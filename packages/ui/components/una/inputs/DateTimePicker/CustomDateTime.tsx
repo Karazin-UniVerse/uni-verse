@@ -171,9 +171,9 @@ export function CustomDateTime({
       />
 
       {isOpen && (
-        <div
+        <dialog
+          open
           id={pickerDialogId}
-          role="dialog"
           aria-label="Date and time picker"
           className={clsx(css.popper, css[`size-${size}`])}
         >
@@ -275,7 +275,7 @@ export function CustomDateTime({
               })}
             </div>
           </div>
-        </div>
+        </dialog>
       )}
     </div>
   );
