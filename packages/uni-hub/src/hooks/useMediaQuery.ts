@@ -1,13 +1,10 @@
 import { useSyncExternalStore } from 'react';
-import { BREAKPOINTS, type Breakpoint, type BreakpointKey } from '@universe/core';
+import { BREAKPOINTS, type Breakpoint } from '@universe/core';
 import { isBrowser } from '@uni-hub/utils/browser';
 
 export type MediaComparison = 'less' | 'wider' | 'narrower';
 
-function resolveQuery(
-  queryOrBreakpoint: string | Breakpoint | BreakpointKey,
-  comparison: MediaComparison = 'less',
-): string {
+function resolveQuery(queryOrBreakpoint: string, comparison: MediaComparison = 'less'): string {
   if (queryOrBreakpoint in BREAKPOINTS) {
     const px = BREAKPOINTS[queryOrBreakpoint as keyof typeof BREAKPOINTS];
 
@@ -24,24 +21,20 @@ function resolveQuery(
  * Avoids window resize thrashing and handles SSR gracefully.
  */
 export function useMediaQuery(
-  breakpoint: Breakpoint | BreakpointKey,
+  breakpoint: Breakpoint,
   comparison?: MediaComparison,
   serverFallback?: boolean,
 ): boolean;
 export function useMediaQuery(query: string, serverFallback?: boolean): boolean;
 export function useMediaQuery(
-  queryOrBreakpoint: string | Breakpoint | BreakpointKey,
-  comparisonOrFallback: MediaComparison | boolean = 'less',
+  queryOrBreakpoint: string,
+  comparisonOrFallback?: MediaComparison | boolean,
   serverFallback = false,
 ): boolean {
-  let comparison: MediaComparison = 'less';
-  let fallback = serverFallback;
-
-  if (typeof comparisonOrFallback === 'string') {
-    comparison = comparisonOrFallback;
-  } else if (typeof comparisonOrFallback === 'boolean') {
-    fallback = comparisonOrFallback;
-  }
+  const comparison: MediaComparison =
+    typeof comparisonOrFallback === 'string' ? comparisonOrFallback : 'less';
+  const fallback =
+    typeof comparisonOrFallback === 'boolean' ? comparisonOrFallback : serverFallback;
 
   const query = resolveQuery(queryOrBreakpoint, comparison);
 
