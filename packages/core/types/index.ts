@@ -267,5 +267,5 @@ export function isLoggedIn(storage?: { getItem: (key: string) => string | null }
     return false;
   }
 
-  return Boolean(store.getItem('isLoggedIn') && store.getItem('accessToken'));
+  return store.getItem('isLoggedIn') === 'true' && Boolean(store.getItem('accessToken'));
 }

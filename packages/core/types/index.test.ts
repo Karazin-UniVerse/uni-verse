@@ -248,6 +248,10 @@ describe('domain type contracts compilation verification', () => {
       isLoggedIn(mockStorage({ isLoggedIn: 'true', accessToken: 'token123' })),
       true,
     );
+    assert.strictEqual(
+      isLoggedIn(mockStorage({ isLoggedIn: 'false', accessToken: 'token123' })),
+      false,
+    );
     assert.strictEqual(isLoggedIn(mockStorage({ isLoggedIn: 'true' })), false);
     assert.strictEqual(isLoggedIn(mockStorage({ accessToken: 'token123' })), false);
     assert.strictEqual(isLoggedIn(mockStorage({})), false);

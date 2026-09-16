@@ -4,7 +4,6 @@ import React, {
   useContext,
   useEffect,
   useMemo,
-  useState,
   useSyncExternalStore,
 } from 'react';
 
@@ -55,32 +54,25 @@ const getThemeSnapshot = (): AppTheme => {
 const getThemeServerSnapshot = (): AppTheme => 'light';
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const storedTheme = useSyncExternalStore(
-    subscribeToTheme,
-    getThemeSnapshot,
-    getThemeServerSnapshot,
-  );
-  const [overrideTheme, setOverrideTheme] = useState<AppTheme | null>(null);
-  const theme = overrideTheme ?? storedTheme;
+  const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getThemeServerSnapshot);
 
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
 
   const setTheme = useCallback((next: AppTheme) => {
-    setOverrideTheme(next);
     localStorage.setItem(STORAGE_KEY, next);
     applyTheme(next);
     window.dispatchEvent(new Event('theme-change'));
   }, []);
 
   const cycleTheme = useCallback(() => {
-    const currentTheme = overrideTheme ?? getThemeSnapshot();
-    const idx = THEMES.indexOf(currentTheme);
-    const nextTheme = THEMES[(idx + 1) % THEMES.length];
+    const currentTheme = getThemeSnapshot();
+    const currentThemeIndex = THEMES.indexOf(currentTheme);
+    const nextTheme = THEMES[(currentThemeIndex + 1) % THEMES.length];
 
     setTheme(nextTheme);
-  }, [overrideTheme, setTheme]);
+  }, [setTheme]);
 
   const value = useMemo(() => ({ theme, setTheme, cycleTheme }), [theme, setTheme, cycleTheme]);
 
