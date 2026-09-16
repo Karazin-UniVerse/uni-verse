@@ -38,10 +38,8 @@
   :global(.recharts-wrapper),
   :global(.recharts-surface),
   :global(svg) {
-    /* stylelint-disable declaration-no-important */
-    user-select: none !important;
-    -webkit-user-select: none !important;
-    /* stylelint-enable declaration-no-important */
+    user-select: none;
+    -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
 
     &:focus {
