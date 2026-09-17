@@ -97,7 +97,9 @@ function calculateDefaultHeight(
 const renderBarShape = (
   props: React.ComponentProps<typeof Rectangle> & { payload?: { color?: string } },
 ) => {
-  return <Rectangle {...props} fill={props.payload?.color ?? props.fill} />;
+  const { key: _key, ...restProps } = props as Record<string, unknown>;
+
+  return <Rectangle {...restProps} fill={(props.payload?.color ?? props.fill) as string} />;
 };
 
 export function Chart({

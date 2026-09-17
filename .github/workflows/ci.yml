@@ -29,6 +29,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @universe/backend db:generate
       - run: pnpm lint
+      - run: pnpm lint:style
       - run: pnpm typecheck
       - name: Run Backend Tests with Coverage
         run: |

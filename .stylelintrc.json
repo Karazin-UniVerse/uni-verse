@@ -1,9 +1,31 @@
 {
+  "extends": ["stylelint-config-standard", "stylelint-config-standard-scss"],
   "rules": {
+    "keyframe-declaration-no-important": true,
+    "declaration-no-important": true,
     "selector-pseudo-class-no-unknown": [
       true,
       {
         "ignorePseudoClasses": ["global", "local"]
+      }
+    ],
+    "selector-class-pattern": [
+      "^[a-z][a-zA-Z0-9_-]+$",
+      {
+        "message": "Expected class selector to be camelCase, kebab-case, or BEM"
+      }
+    ],
+    "keyframes-name-pattern": [
+      "^[a-z][a-zA-Z0-9_-]+$",
+      {
+        "message": "Expected keyframe name to be camelCase or kebab-case"
+      }
+    ],
+    "property-no-vendor-prefix": null,
+    "scss/at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": ["theme"]
       }
     ]
   }
