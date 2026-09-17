@@ -84,7 +84,7 @@
   color: var(--text-secondary);
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .forecast,
   .row {
     padding: var(--space-12);
@@ -98,4 +98,3 @@
     grid-template-columns: minmax(0, 1fr) auto;
   }
 }
-
