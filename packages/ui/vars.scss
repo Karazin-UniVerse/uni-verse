@@ -180,6 +180,12 @@ $space-64: 64px;
   --focus-ring-color: rgb(22 75 215 / 35%);
   --bg-hover: var(--gray-100);
 
+  /* RGB color channels for alpha blending and mesh gradients */
+  --primary-rgb: 0, 112, 243;
+  --secondary-rgb: 121, 40, 202;
+  --surface-rgb: 255, 255, 255;
+  --text-primary-rgb: 0, 0, 0;
+
   /* Chart tokens */
   --chart-bg: var(--neutral-surface);
   --chart-border: var(--neutral-border);
@@ -255,6 +261,12 @@ $space-64: 64px;
   --focus-ring-color: rgb(119 148 246 / 45%);
   --bg-hover: var(--gray-700);
 
+  /* RGB color channels for alpha blending and mesh gradients */
+  --primary-rgb: 119, 148, 246;
+  --secondary-rgb: 168, 85, 247;
+  --surface-rgb: 52, 58, 64;
+  --text-primary-rgb: 248, 249, 250;
+
   /* Chart tokens */
   --chart-bg: var(--neutral-surface);
   --chart-border: var(--neutral-border);
@@ -312,6 +324,12 @@ $space-64: 64px;
   --accent-secondary-hover: var(--cyberpunk-purple);
   --accent-secondary-active: var(--cyberpunk-pink);
   --accent-text-on-secondary: var(--cyberpunk-cyan);
+
+  /* RGB color channels for alpha blending and mesh gradients */
+  --primary-rgb: 0, 240, 255;
+  --secondary-rgb: 255, 0, 85;
+  --surface-rgb: 18, 18, 23;
+  --text-primary-rgb: 252, 238, 10;
 
   /* Override component/semantic variables directly to enforce priority */
   --bg-color: var(--cyberpunk-black);

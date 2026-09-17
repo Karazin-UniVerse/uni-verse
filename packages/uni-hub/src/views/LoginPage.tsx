@@ -63,7 +63,7 @@ const LoginPage: React.FC = () => {
       <div className={styles.center}>
         <SimpleForm variant="card" className={styles.card} action={handleLogin}>
           <div className={styles.brand}>
-            <h1>UNiVerse</h1>
+            <h1>UNiHub</h1>
             <p>Войдите в свой аккаунт Moodle</p>
           </div>
 
