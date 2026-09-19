@@ -1,4 +1,3 @@
-import { GRADES_THRESHOLD } from '@universe/core';
 import type { Grade, GradeValue } from '../types';
 
 export function getGradeCourseName(grade: Grade): string {
@@ -61,20 +60,25 @@ export function getValidGrades(grades: Grade[]): Grade[] {
   });
 }
 
+/**
+ * Ukrainian national grading system thresholds:
+ * - >= 74: 'добре' / 'відмінно' (Good / Excellent) -> success / green
+ * - >= 60: 'задовільно' / 'зараховано' (Satisfactory / Pass) -> warning / orange
+ * - < 60: 'незадовільно' / 'не зараховано' (Fail) -> danger / red
+ */
+const GRADE_GOOD_THRESHOLD = 74;
+const GRADE_PASS_THRESHOLD = 60;
+
 export function getGradeTone(rawgrade: number | null): 'success' | 'warning' | 'danger' {
   if (rawgrade === null || rawgrade === undefined) {
     return 'warning';
   }
 
-  if (rawgrade >= GRADES_THRESHOLD.EXCELLENT) {
+  if (rawgrade >= GRADE_GOOD_THRESHOLD) {
     return 'success';
   }
 
-  if (rawgrade >= GRADES_THRESHOLD.GOOD) {
-    return 'success'; // Or 'info' if supported, but sticking to 3-tier
-  }
-
-  if (rawgrade >= GRADES_THRESHOLD.SATISFACTORY) {
+  if (rawgrade >= GRADE_PASS_THRESHOLD) {
     return 'warning';
   }
 
@@ -86,11 +90,11 @@ export function getGradeBarColor(rawgrade: number | null): string {
     return 'var(--chart-warning)';
   }
 
-  if (rawgrade >= GRADES_THRESHOLD.GOOD) {
+  if (rawgrade >= GRADE_GOOD_THRESHOLD) {
     return 'var(--chart-success)';
   }
 
-  if (rawgrade >= GRADES_THRESHOLD.SATISFACTORY) {
+  if (rawgrade >= GRADE_PASS_THRESHOLD) {
     return 'var(--chart-warning)';
   }
 

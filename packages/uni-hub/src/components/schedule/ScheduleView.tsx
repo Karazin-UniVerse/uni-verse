@@ -180,7 +180,7 @@ const getTypeTone = (type: string): 'info' | 'warning' | 'success' | 'danger' | 
 };
 
 export const ScheduleView: React.FC = () => {
-  const isMobile = useMediaQuery(BREAKPOINTS.md, 'less');
+  const isMobile = useMediaQuery('less', BREAKPOINTS.md);
   const [selectedViewMode, setSelectedViewMode] = useState<'month' | 'week' | 'day' | null>(null);
   const viewMode = selectedViewMode ?? (isMobile ? 'day' : 'month');
 
