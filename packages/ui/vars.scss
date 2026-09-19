@@ -223,6 +223,11 @@ $space-64: 64px;
   --text-disabled: var(--neutral-text-disabled);
   --border-color: var(--neutral-border);
 
+  /* Cards */
+  --card-border: rgb(0 0 0 / 5%);
+  --card-shadow: 0 4px 12px rgb(0 0 0 / 3%);
+  --card-shadow-hover: 0 8px 24px rgb(0 0 0 / 6%);
+
   /* Primary Button */
   --btn-primary-bg: var(--accent-primary);
   --btn-primary-hover: var(--accent-primary-hover);
@@ -248,6 +253,11 @@ $space-64: 64px;
   --neutral-text-primary: var(--gray-50);
   --neutral-text-secondary: var(--gray-400);
   --neutral-text-disabled: var(--gray-600);
+
+  /* Cards */
+  --card-border: rgb(255 255 255 / 8%);
+  --card-shadow: 0 4px 12px rgb(0 0 0 / 40%);
+  --card-shadow-hover: 0 8px 24px rgb(0 0 0 / 60%);
 
   /* Accent Colors */
   --accent-primary: var(--blue-600);

@@ -146,7 +146,11 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         ref={dialogRef}
         className={`${styles.dialog} ${className ?? ''}`}
-        style={{ width }}
+        style={
+          {
+            '--modal-dialog-width': typeof width === 'number' ? `${width}px` : width,
+          } as React.CSSProperties
+        }
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}

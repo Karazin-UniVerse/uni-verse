@@ -1,8 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { TextInput as SimpleInput, Select, CheckBox, Tag, Empty } from '@una';
+import { Filter } from 'lucide-react';
+import {
+  TextInput as SimpleInput,
+  Select,
+  CheckBox,
+  Tag,
+  Empty,
+  Button as SimpleButton,
+} from '@una';
 import { LiveCountdown } from '@uni-hub/components/gamification';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { AssignmentsTabProps } from '../types';
@@ -23,6 +31,8 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   soundEnabled,
   onOpenAssignment,
 }) => {
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
   const handleDateChange =
     (setter: (value: string) => void) => (event: React.ChangeEvent<HTMLInputElement>) => {
       const value = event.target.value;
@@ -44,7 +54,18 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
 
   return (
     <div className={styles.stack}>
-      <div className={styles.filters}>
+      <div className={styles.mobileFilterToggle}>
+        <SimpleButton
+          type="button"
+          onClick={() => setFiltersOpen(!filtersOpen)}
+          variant="secondary"
+          size="small"
+          aria-expanded={filtersOpen}
+        >
+          <Filter size={16} /> {filtersOpen ? 'Сховати фільтри' : 'Фільтри'}
+        </SimpleButton>
+      </div>
+      <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
         <SimpleInput
           type="date"
           size="medium"
@@ -121,7 +142,10 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
           );
         })
       ) : (
-        <Empty description="Завдання не знайдено" />
+        <Empty
+          description="Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉"
+          icon={<span style={{ fontSize: '48px' }}>🏖️</span>}
+        />
       )}
     </div>
   );

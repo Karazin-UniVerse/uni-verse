@@ -14,6 +14,20 @@ export type TraditionalGrade =
 /** Final control types in higher education curriculum */
 export type ControlType = 'exam' | 'credit' | 'differentiated_credit';
 
+/**
+ * Standard responsive breakpoints (in pixels) matching design system SCSS tokens
+ */
+export const BREAKPOINTS = {
+  xs: 480,
+  sm: 640,
+  md: 768,
+  lg: 1024,
+  xl: 1280,
+  xxl: 1536,
+} as const;
+
+export type Breakpoint = keyof typeof BREAKPOINTS;
+
 /** Academic status of a student */
 export type StudentAcademicStatus = 'active' | 'academic_leave' | 'expelled' | 'graduated';
 
