@@ -163,6 +163,8 @@ export function CustomDateTime({
         readOnly
         onClick={handleInputClick}
         onKeyDown={handleKeyDown}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
       />
 
       {isOpen && (

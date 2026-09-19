@@ -169,6 +169,7 @@ export class AuthApi {
     } finally {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('moodleToken');
     }
   }
 }

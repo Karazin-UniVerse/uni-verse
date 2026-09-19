@@ -9,7 +9,6 @@ $breakpoint-md: 768px;
 $breakpoint-lg: 1024px;
 $breakpoint-xl: 1280px;
 $breakpoint-xxl: 1536px;
-
 $breakpoints: (
   'xs': $breakpoint-xs,
   'sm': $breakpoint-sm,
@@ -21,8 +20,21 @@ $breakpoints: (
 
 @mixin wider-than($breakpoint) {
   $value: map.get($breakpoints, $breakpoint);
+
   @if $value {
     @media (min-width: $value) {
+      @content;
+    }
+  } @else {
+    @warn "Unknown breakpoint: #{$breakpoint}.";
+  }
+}
+
+@mixin narrower-than($breakpoint) {
+  $value: map.get($breakpoints, $breakpoint);
+
+  @if $value {
+    @media (max-width: $value) {
       @content;
     }
   } @else {

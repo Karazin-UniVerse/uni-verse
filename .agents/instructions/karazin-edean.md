@@ -21,6 +21,7 @@ uni-verse/
 1. **Shared Types & Domain Models**:
    - Always import shared types from `@universe/core/types` (e.g. `StudentProfile`, `GradeRecord`, `calculateEctsGrade`).
    - NEVER create a standalone `packages/types/package.json` — all core types reside in `@universe/core`.
+   - NEVER introduce redundant aliases or duplicate exports for backwards compatibility (e.g. `export const GradeScoreThreshold = GRADES_THRESHOLD; export type GradeScoreThreshold = GradesThreshold;`). Use a single canonical identifier everywhere.
    - When re-exporting in libraries/services, use `export * from '@universe/core/types'` to prevent ESLint `no-duplicate-imports` and SonarCloud `typescript:S7763`.
 
 2. **Backend Moodle Gateway (`@universe/backend`)**:

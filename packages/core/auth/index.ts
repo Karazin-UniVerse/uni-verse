@@ -1,9 +1,6 @@
-/**
- * Determines whether the current execution context is a browser.
- */
-export function isBrowser(): boolean {
-  return typeof window !== 'undefined';
-}
+import { isBrowser } from '../browser.ts';
+
+export { isBrowser };
 
 /**
  * Checks whether an active user session exists in local storage.
