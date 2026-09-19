@@ -33,9 +33,14 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
         onClick={cycleTheme}
         aria-label={`Тема: ${themeMetadata.label}. Перемкнути`}
         title={themeMetadata.label}
+        suppressHydrationWarning
       >
         {themeMetadata.icon}
-        {showLabel && <span className={styles.compactLabel}>{themeMetadata.label}</span>}
+        {showLabel && (
+          <span className={styles.compactLabel} suppressHydrationWarning>
+            {themeMetadata.label}
+          </span>
+        )}
       </button>
     );
   }
@@ -53,6 +58,7 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
             className={clsx(styles.option, isSelectedTheme && styles.active)}
             onClick={() => setTheme(themeOption)}
             aria-pressed={isSelectedTheme}
+            suppressHydrationWarning
           >
             {themeMetadata.icon}
             <span>{themeMetadata.label}</span>

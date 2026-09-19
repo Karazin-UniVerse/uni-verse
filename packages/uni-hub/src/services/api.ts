@@ -1,4 +1,5 @@
 export * from '@core/types';
+import { RESPONSE_CODES } from '@core/constants';
 import type {
   AuthResponse,
   Course,
@@ -84,6 +85,12 @@ async function executeAttempt<T>(
     });
 
     if (!response.ok) {
+      if (response.status === RESPONSE_CODES.UNAUTHORIZED && isBrowser) {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('moodleToken');
+      }
+
       throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
     }
 
