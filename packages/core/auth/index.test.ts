@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict';
 import test, { describe } from 'node:test';
-import { isLoggedIn } from './index.ts';
+import { isBrowser, isLoggedIn } from './index.ts';
 
 describe('auth utilities', () => {
+  test('isBrowser returns false in Node test environment', () => {
+    assert.strictEqual(isBrowser(), false);
+  });
   test('isLoggedIn checks session correctly', () => {
     const mockStorage = (items: Record<string, string>) => ({
       getItem: (key: string) => items[key] ?? null,
