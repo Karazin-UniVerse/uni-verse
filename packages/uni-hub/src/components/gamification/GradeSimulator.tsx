@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import clsx from 'clsx';
 import type { Assignment, Grade } from '@uni-hub/types';
 import {
   getGradeCourseName,
@@ -11,16 +10,16 @@ import { useCountUp } from '@uni-hub/hooks/useCountUp';
 import { Modal, Select, Empty, ProgressBar, Button, SimpleSlider, Tag } from '@una';
 import { clampScore } from '@uni-hub/utils/gradeMath';
 import {
-  calculateAccumulatedGrade,
-  calculateExamTargets,
   MAX_EXAM,
   MAX_SEMESTER_CREDIT,
   MAX_SEMESTER_EXAM,
   MIN_EXAM_ADMISSION,
-  type ControlType,
-  type ExamTargetRequirement,
-  type GradeAccumulationResult,
-} from '@core/types';
+} from '@core/constants';
+import { calculateAccumulatedGrade, calculateExamTargets } from '@core/utils';
+import type { ControlType } from '@core/types';
+import { AdmissionBanner } from './AdmissionBanner';
+import { ExamTargetsGrid } from './ExamTargetsGrid';
+import { RemainingAssignmentsSection } from './RemainingAssignmentsSection';
 import styles from './GradeSimulator.module.scss';
 
 function getUniqueGrades(validGrades: Grade[]): Grade[] {
@@ -74,136 +73,6 @@ function getBaseExam(currentGrade?: Grade, isExam = true): number {
 
   return 30;
 }
-
-function getTargetStatusText(target: ExamTargetRequirement, isAdmitted: boolean): string {
-  if (!isAdmitted) {
-    return 'Недопуск';
-  }
-
-  if (!target.isAchievable) {
-    return 'Недосяжно';
-  }
-
-  return `${target.requiredExamScore} б.`;
-}
-
-type AdmissionBannerProps = {
-  isAdmitted: boolean;
-  semesterScore: number;
-};
-
-const AdmissionBanner: React.FC<AdmissionBannerProps> = ({ isAdmitted, semesterScore }) => (
-  <div
-    className={clsx(
-      styles.admissionBanner,
-      isAdmitted ? styles.admissionBannerSuccess : styles.admissionBannerDanger,
-    )}
-  >
-    <span>{isAdmitted ? '🟢' : '🔴'}</span>
-    <span>
-      {isAdmitted
-        ? `Допущено до іспиту (${semesterScore} / 60 б. — поріг допуску 30 б. досягнуто)`
-        : `Не допущено до іспиту (${semesterScore} / 60 б. — бракує ${
-            MIN_EXAM_ADMISSION - semesterScore
-          } б. для допуску)`}
-    </span>
-  </div>
-);
-
-type ExamTargetsGridProps = {
-  examTargets: ExamTargetRequirement[];
-  isAdmitted: boolean;
-  accumulationResult: GradeAccumulationResult;
-};
-
-const ExamTargetsGrid: React.FC<ExamTargetsGridProps> = ({
-  examTargets,
-  isAdmitted,
-  accumulationResult,
-}) => (
-  <div className={styles.section}>
-    <div className={styles.sectionHeader}>
-      <span className={styles.sectionTitle}>
-        Цільові бали на іспиті («Що потрібно для оцінки?»)
-      </span>
-      <span className={styles.hint}>Мін. екзамену: 20 б.</span>
-    </div>
-    <div className={styles.targetsGrid}>
-      {examTargets.map((target) => {
-        const isCurrentAchieved =
-          isAdmitted &&
-          accumulationResult.isCoursePassed &&
-          accumulationResult.ectsGrade === target.grade;
-        const isUnreachable = !isAdmitted || !target.isAchievable;
-
-        return (
-          <div
-            key={target.grade}
-            className={clsx(
-              styles.targetCard,
-              isCurrentAchieved && styles.targetCardActive,
-              isUnreachable && styles.targetCardUnreachable,
-            )}
-          >
-            <span className={styles.targetGrade}>{target.grade}</span>
-            <span className={styles.targetPoints}>≥ {target.minTotalScore} б.</span>
-            <span className={styles.targetStatus}>{getTargetStatusText(target, isAdmitted)}</span>
-          </div>
-        );
-      })}
-    </div>
-  </div>
-);
-
-type RemainingAssignmentsSectionProps = {
-  remainingAssignments: Assignment[];
-  assignmentScores: Record<number, number>;
-  onScoreChange: (id: number, score: number) => void;
-};
-
-const RemainingAssignmentsSection: React.FC<RemainingAssignmentsSectionProps> = ({
-  remainingAssignments,
-  assignmentScores,
-  onScoreChange,
-}) => {
-  if (remainingAssignments.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className={styles.section}>
-      <div className={styles.sectionHeader}>
-        <span className={styles.sectionTitle}>
-          Окремі завдання семестру ({remainingAssignments.length})
-        </span>
-        <span className={styles.hint}>Впливають на семестровий бал</span>
-      </div>
-      <div className={styles.list}>
-        {remainingAssignments.map((assignment) => {
-          const score = assignmentScores[assignment.id] ?? 75;
-
-          return (
-            <label key={assignment.id} className={styles.row}>
-              <div className={styles.rowTop}>
-                <span className={styles.name} title={assignment.name}>
-                  {assignment.name}
-                </span>
-                <span className={styles.score}>{score} %</span>
-              </div>
-              <SimpleSlider
-                aria-label={`Бал за завдання ${assignment.name}`}
-                min={0}
-                max={100}
-                value={score}
-                onChange={(newScore: number) => onScoreChange(assignment.id, newScore)}
-              />
-            </label>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
 
 type GradeSimulatorProps = {
   assignments: Assignment[];

@@ -1,8 +1,10 @@
 /**
  * @universe/types
- * Core domain models, shared contracts, and grade calculation utilities
+ * Core domain models, shared contracts, and types
  * for the Karazin UniVerse platform (UniHub, NestJS Gateway, Moodle LMS).
  */
+
+import { BREAKPOINTS } from '../constants/index.ts';
 
 /** ECTS Grade scale (European Credit Transfer and Accumulation System) */
 export type EctsGrade = 'A' | 'B' | 'C' | 'D' | 'E' | 'Fx' | 'F';
@@ -13,6 +15,8 @@ export type TraditionalGrade =
 
 /** Final control types in higher education curriculum */
 export type ControlType = 'exam' | 'credit' | 'differentiated_credit';
+
+export type Breakpoint = keyof typeof BREAKPOINTS;
 
 /** Academic status of a student */
 export type StudentAcademicStatus = 'active' | 'academic_leave' | 'expelled' | 'graduated';
@@ -171,96 +175,6 @@ export interface LmsConnectionStatus {
 }
 
 /**
- * Calculates the ECTS letter grade based on a 100-point scale:
- * - >= 90: 'A'
- * - >= 82: 'B'
- * - >= 74: 'C'
- * - >= 64: 'D'
- * - >= 60: 'E'
- * - >= 35: 'Fx'
- * - < 35: 'F'
- */
-export function calculateEctsGrade(score: number): EctsGrade {
-  if (score >= 90) {
-    return 'A';
-  }
-
-  if (score >= 82) {
-    return 'B';
-  }
-
-  if (score >= 74) {
-    return 'C';
-  }
-
-  if (score >= 64) {
-    return 'D';
-  }
-
-  if (score >= 60) {
-    return 'E';
-  }
-
-  if (score >= 35) {
-    return 'Fx';
-  }
-
-  return 'F';
-}
-
-/**
- * Calculates the traditional Ukrainian national grade based on score and control type:
- * - For credit ('credit'):
- *   - >= 60: 'зараховано'
- *   - < 60: 'не зараховано'
- * - For exam ('exam') and differentiated credit ('differentiated_credit'):
- *   - >= 90: 'відмінно'
- *   - >= 74: 'добре'
- *   - >= 60: 'задовільно'
- *   - < 60: 'незадовільно'
- */
-export function calculateTraditionalGrade(
-  score: number,
-  controlType: ControlType = 'exam',
-): TraditionalGrade {
-  if (controlType === 'credit') {
-    return score >= 60 ? 'зараховано' : 'не зараховано';
-  }
-
-  if (score >= 90) {
-    return 'відмінно';
-  }
-
-  if (score >= 74) {
-    return 'добре';
-  }
-
-  if (score >= 60) {
-    return 'задовільно';
-  }
-
-  return 'незадовільно';
-}
-
-/** Maximum points allocated for semester work in an exam-based course */
-export const MAX_SEMESTER_EXAM = 60;
-
-/** Minimum semester points required to be admitted to the exam */
-export const MIN_EXAM_ADMISSION = 30;
-
-/** Maximum points allocated for the final exam */
-export const MAX_EXAM = 40;
-
-/** Minimum points required on the exam to pass */
-export const MIN_EXAM_PASS = 20;
-
-/** Maximum points allocated for credit / differentiated credit courses */
-export const MAX_SEMESTER_CREDIT = 100;
-
-/** Minimum overall score required to pass a course */
-export const MIN_PASSING_SCORE = 60;
-
-/**
  * Parameters for calculating accumulated course grades
  */
 export interface GradeAccumulationParams {
@@ -292,151 +206,6 @@ export interface ExamTargetRequirement {
   isAchievable: boolean;
 }
 
-/**
- * Calculates the accumulated course grade based on university credit-modular regulations.
- *
- * Rules:
- * - Exam ('exam'):
- *   - Semester score max 60 points. Admission requires at least 30 points.
- *   - If semesterScore < 30: student is not admitted, exam cannot be taken, course failed.
- *   - Exam score max 40 points. Passing the exam requires at least 20 points.
- *   - If examScore < 20: exam failed (Fx / незадовільно) regardless of total points.
- *   - If admitted and exam passed: totalScore = semesterScore + examScore.
- *   - If exam not yet taken (examScore is null/undefined): totalScore = semesterScore.
- * - Credit ('credit') & Differentiated Credit ('differentiated_credit'):
- *   - Semester score max 100 points.
- *   - Total score = semesterScore.
- *   - Passing score >= 60.
- */
-export function calculateAccumulatedGrade(
-  params: GradeAccumulationParams,
-): GradeAccumulationResult {
-  const controlType: ControlType = params.controlType ?? 'exam';
-  const rawSemester = Number.isFinite(params.semesterScore) ? params.semesterScore : 0;
-
-  if (controlType === 'credit' || controlType === 'differentiated_credit') {
-    const totalScore = Math.max(0, Math.min(MAX_SEMESTER_CREDIT, Math.round(rawSemester)));
-    const isCoursePassed = totalScore >= MIN_PASSING_SCORE;
-    const ectsGrade = calculateEctsGrade(totalScore);
-    const traditionalGrade = calculateTraditionalGrade(totalScore, controlType);
-
-    const statusMessage = isCoursePassed
-      ? controlType === 'credit'
-        ? 'Зараховано за результатами семестру'
-        : 'Диференційований залік складено'
-      : controlType === 'credit'
-        ? 'Не зараховано (необхідно мін. 60 б.)'
-        : 'Не складено (необхідно мін. 60 б.)';
-
-    return {
-      totalScore,
-      ectsGrade,
-      traditionalGrade,
-      isAdmittedToExam: true,
-      isExamPassed: true,
-      isCoursePassed,
-      statusMessage,
-    };
-  }
-
-  // Exam control type
-  const semesterScore = Math.max(0, Math.min(MAX_SEMESTER_EXAM, Math.round(rawSemester)));
-  const isAdmittedToExam = semesterScore >= MIN_EXAM_ADMISSION;
-  const rawExam = params.examScore;
-  const hasExamScore = rawExam !== null && rawExam !== undefined && !Number.isNaN(rawExam);
-
-  if (!isAdmittedToExam) {
-    const missingPoints = MIN_EXAM_ADMISSION - semesterScore;
-
-    return {
-      totalScore: semesterScore,
-      ectsGrade: calculateEctsGrade(semesterScore),
-      traditionalGrade: 'незадовільно',
-      isAdmittedToExam: false,
-      isExamPassed: false,
-      isCoursePassed: false,
-      statusMessage: `Не допущено до іспиту (бракує ${missingPoints} б. для допуску)`,
-    };
-  }
-
-  if (!hasExamScore) {
-    return {
-      totalScore: semesterScore,
-      ectsGrade: calculateEctsGrade(semesterScore),
-      traditionalGrade: 'незадовільно',
-      isAdmittedToExam: true,
-      isExamPassed: false,
-      isCoursePassed: false,
-      statusMessage: 'Допущено до іспиту (очікується складання екзамену)',
-    };
-  }
-
-  const examScore = Math.max(0, Math.min(MAX_EXAM, Math.round(rawExam)));
-  const isExamPassed = examScore >= MIN_EXAM_PASS;
-  const totalScore = Math.min(100, semesterScore + examScore);
-
-  if (!isExamPassed) {
-    return {
-      totalScore,
-      ectsGrade: 'Fx',
-      traditionalGrade: 'незадовільно',
-      isAdmittedToExam: true,
-      isExamPassed: false,
-      isCoursePassed: false,
-      statusMessage: 'Іспит не складено (менше 20 б. на екзамені)',
-    };
-  }
-
-  const isCoursePassed = totalScore >= MIN_PASSING_SCORE;
-  const ectsGrade = calculateEctsGrade(totalScore);
-  const traditionalGrade = calculateTraditionalGrade(totalScore, 'exam');
-
-  return {
-    totalScore,
-    ectsGrade,
-    traditionalGrade,
-    isAdmittedToExam: true,
-    isExamPassed: true,
-    isCoursePassed,
-    statusMessage: 'Іспит успішно складено',
-  };
-}
-
-/**
- * Calculates minimum exam points required for each passing ECTS grade (A, B, C, D, E).
- *
- * Requirements per grade:
- * - A: >= 90 points
- * - B: >= 82 points
- * - C: >= 74 points
- * - D: >= 64 points
- * - E: >= 60 points
- *
- * Each target requires at least MIN_EXAM_PASS (20) points and at most MAX_EXAM (40) points.
- * If requiredExamScore > MAX_EXAM (40), isAchievable is false.
- */
-export function calculateExamTargets(semesterScore: number): ExamTargetRequirement[] {
-  const clampedSemester = Math.max(0, Math.min(MAX_SEMESTER_EXAM, Math.round(semesterScore)));
-  const isAdmittedToExam = clampedSemester >= MIN_EXAM_ADMISSION;
-
-  const targets: Array<{ grade: EctsGrade; minTotalScore: number }> = [
-    { grade: 'A', minTotalScore: 90 },
-    { grade: 'B', minTotalScore: 82 },
-    { grade: 'C', minTotalScore: 74 },
-    { grade: 'D', minTotalScore: 64 },
-    { grade: 'E', minTotalScore: 60 },
-  ];
-
-  return targets.map(({ grade, minTotalScore }) => {
-    const rawNeeded = minTotalScore - clampedSemester;
-    const requiredExamScore = Math.max(MIN_EXAM_PASS, rawNeeded);
-    const isAchievable = isAdmittedToExam && requiredExamScore <= MAX_EXAM;
-
-    return {
-      grade,
-      minTotalScore,
-      requiredExamScore,
-      isAchievable,
-    };
-  });
-}
+// Re-export constants and calculation utilities for convenience and backwards compatibility
+export * from '../constants/index.ts';
+export * from '../utils/index.ts';

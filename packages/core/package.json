@@ -6,18 +6,26 @@
     "lint": "oxlint",
     "typecheck": "tsc -p tsconfig.test.json",
     "build": "tsc -p tsconfig.json",
-    "test": "node --test types/index.test.ts"
+    "test": "node --test"
   },
   "main": "./dist/index.js",
-  "types": "./index.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./index.ts",
+      "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
     "./types": {
-      "types": "./types/index.ts",
+      "types": "./dist/types/index.d.ts",
       "default": "./dist/types/index.js"
+    },
+    "./constants": {
+      "types": "./dist/constants/index.d.ts",
+      "default": "./dist/constants/index.js"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "default": "./dist/utils/index.js"
     }
   },
   "devDependencies": {

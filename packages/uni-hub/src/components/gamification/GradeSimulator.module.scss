@@ -122,14 +122,14 @@
 
 :global([data-theme='dark']) .admissionBannerSuccess,
 :global([data-theme='cyberpunk']) .admissionBannerSuccess {
-  background: rgba(34, 197, 94, 0.15);
+  background: rgb(34 197 94 / 15%);
   border-color: var(--green-700);
   color: var(--green-300);
 }
 
 :global([data-theme='dark']) .admissionBannerDanger,
 :global([data-theme='cyberpunk']) .admissionBannerDanger {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgb(239 68 68 / 15%);
   border-color: var(--red-700);
   color: var(--red-300);
 }
@@ -185,7 +185,7 @@
 
 .targetCardActive {
   border-color: var(--accent-primary);
-  background: rgba(59, 130, 246, 0.08);
+  background: rgb(59 130 246 / 8%);
   box-shadow: 0 0 0 1px var(--accent-primary);
 }
 
@@ -216,7 +216,7 @@
   text-align: center;
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .forecast,
   .row,
   .section {
@@ -235,5 +235,3 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
-
-

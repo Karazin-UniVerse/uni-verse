@@ -5,7 +5,7 @@
   border-radius: var(--border-radius-small);
   font-size: var(--font-xs);
   font-weight: var(--font-weight-medium);
-  border: 1px solid var(--border-color);
+  border: 1px solid transparent; /* Remove visible border for soft badges */
   background: var(--bg-surface);
   color: var(--text-primary);
   white-space: nowrap;
@@ -16,53 +16,46 @@
 }
 
 .success {
-  border-color: var(--green-300);
   background: var(--green-50);
   color: var(--green-800);
 }
 
 .warning {
-  border-color: #fcd34d;
   background: #fffbeb;
   color: #92400e;
 }
 
 .info {
-  border-color: var(--blue-300);
   background: var(--blue-50);
   color: var(--blue-800);
 }
 
 .danger {
-  border-color: var(--red-300);
   background: var(--red-50);
   color: var(--red-800);
 }
 
 :global([data-theme='dark']) .success,
 :global([data-theme='cyberpunk']) .success {
-  background: rgba(34, 197, 94, 0.15);
+  background: rgb(34 197 94 / 15%);
   color: var(--green-300);
-  border-color: var(--green-700);
 }
 
 :global([data-theme='dark']) .warning,
 :global([data-theme='cyberpunk']) .warning {
-  background: rgba(245, 158, 11, 0.15);
+  background: rgb(245 158 11 / 15%);
   color: var(--warning-light, #fbbf24);
   border-color: #92400e;
 }
 
 :global([data-theme='dark']) .info,
 :global([data-theme='cyberpunk']) .info {
-  background: rgba(52, 102, 231, 0.2);
+  background: rgb(52 102 231 / 20%);
   color: var(--blue-300);
-  border-color: var(--blue-700);
 }
 
 :global([data-theme='dark']) .danger,
 :global([data-theme='cyberpunk']) .danger {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgb(239 68 68 / 15%);
   color: var(--red-300);
-  border-color: var(--red-700);
 }

@@ -18,12 +18,32 @@ import { playClick } from '@uni-hub/utils/soundEffects';
 import type { DashboardSidebarProps, NavKey } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
-const menuItems: { key: NavKey; icon: React.ReactNode; label: string }[] = [
-  { key: 'overview', icon: <LayoutDashboard size={18} />, label: 'Картка студента / Огляд' },
-  { key: 'courses', icon: <BookOpen size={18} />, label: 'Індивідуальний план' },
-  { key: 'grades', icon: <ClipboardList size={18} />, label: 'Заліковка та бали' },
-  { key: 'schedule', icon: <CalendarDays size={18} />, label: 'Розклад занять' },
-  { key: 'assignments', icon: <FileEdit size={18} />, label: 'Завдання' },
+const menuItems: { key: NavKey; icon: React.ReactNode; label: string; shortLabel: string }[] = [
+  {
+    key: 'overview',
+    icon: <LayoutDashboard size={18} />,
+    label: 'Картка студента / Огляд',
+    shortLabel: 'Огляд',
+  },
+  {
+    key: 'courses',
+    icon: <BookOpen size={18} />,
+    label: 'Індивідуальний план',
+    shortLabel: 'Курси',
+  },
+  {
+    key: 'grades',
+    icon: <ClipboardList size={18} />,
+    label: 'Заліковка та бали',
+    shortLabel: 'Оцінки',
+  },
+  {
+    key: 'schedule',
+    icon: <CalendarDays size={18} />,
+    label: 'Розклад занять',
+    shortLabel: 'Розклад',
+  },
+  { key: 'assignments', icon: <FileEdit size={18} />, label: 'Завдання', shortLabel: 'Завдання' },
 ];
 
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
@@ -149,6 +169,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 onCloseMobileMenu();
               }}
               title={item.label}
+              aria-label={item.label}
             >
               {activeKey === item.key && (
                 <motion.div
@@ -158,7 +179,12 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 />
               )}
               {item.icon}
-              {(!collapsed || mobileMenuOpen) && <span>{item.label}</span>}
+              {(!collapsed || mobileMenuOpen) && (
+                <>
+                  <span className={styles.desktopLabel}>{item.label}</span>
+                  <span className={styles.mobileLabel}>{item.shortLabel}</span>
+                </>
+              )}
             </button>
           ))}
         </nav>
@@ -169,7 +195,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             className={styles.moodleStatusLink}
-            title="Moodle LMS: moodle.universemvp.tech (активно)"
+            title="Moodle LMS (підключено)"
           >
             <span className={styles.statusDot} aria-hidden />
             {!collapsed || mobileMenuOpen ? (
