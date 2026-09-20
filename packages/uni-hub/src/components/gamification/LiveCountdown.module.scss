@@ -22,14 +22,14 @@
 
 .warning {
   color: var(--warning-text, #92400e);
-  background: var(--warning-bg, rgba(245, 158, 11, 0.15));
+  background: var(--warning-bg, rgb(245 158 11 / 15%));
   border-color: var(--warning-color);
   animation: pulseWarn 1.2s var(--ease-standard) infinite;
 }
 
 .danger {
   color: var(--red-700);
-  background: rgba(239, 68, 68, 0.12);
+  background: rgb(239 68 68 / 12%);
   border-color: var(--error-color);
   animation: pulseWarn 0.9s var(--ease-standard) infinite;
 }
@@ -49,6 +49,7 @@
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.72;
   }

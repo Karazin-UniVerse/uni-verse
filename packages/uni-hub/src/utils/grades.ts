@@ -61,17 +61,19 @@ export function getValidGrades(grades: Grade[]): Grade[] {
   });
 }
 
+/**
+ * Ukrainian national grading system thresholds:
+ * - >= 74: 'добре' / 'відмінно' (Good / Excellent) -> success / green
+ * - >= 60: 'задовільно' / 'зараховано' (Satisfactory / Pass) -> warning / orange
+ * - < 60: 'незадовільно' / 'не зараховано' (Fail) -> danger / red
+ */
 export function getGradeTone(rawgrade: number | null): 'success' | 'warning' | 'danger' {
   if (rawgrade === null || rawgrade === undefined) {
     return 'warning';
   }
 
-  if (rawgrade >= GRADES_THRESHOLD.EXCELLENT) {
-    return 'success';
-  }
-
   if (rawgrade >= GRADES_THRESHOLD.GOOD) {
-    return 'success'; // Or 'info' if supported, but sticking to 3-tier
+    return 'success';
   }
 
   if (rawgrade >= GRADES_THRESHOLD.SATISFACTORY) {

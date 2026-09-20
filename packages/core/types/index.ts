@@ -40,7 +40,6 @@ export const GRADES_THRESHOLD = {
 } as const;
 
 export type GradesThreshold = (typeof GRADES_THRESHOLD)[keyof typeof GRADES_THRESHOLD];
-
 /** Academic status of a student */
 export type StudentAcademicStatus = 'active' | 'academic_leave' | 'expelled' | 'graduated';
 

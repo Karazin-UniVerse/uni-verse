@@ -240,7 +240,6 @@ describe('domain type contracts compilation verification', () => {
     assert.strictEqual(BREAKPOINTS.xl, 1280);
     assert.strictEqual(BREAKPOINTS.xxl, 1536);
   });
-
   test('validates GRADES_THRESHOLD enum values', () => {
     assert.strictEqual(GRADES_THRESHOLD.EXCELLENT, 90);
     assert.strictEqual(GRADES_THRESHOLD.VERY_GOOD, 82);

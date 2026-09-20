@@ -6,6 +6,7 @@ import { Menu, Volume2, VolumeX, Bell, User } from 'lucide-react';
 import { Button, Tag, Empty } from '@una';
 import { StreakBadge } from '@uni-hub/components/gamification';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
+import { authApi } from '@uni-hub/services/api';
 import type { DashboardHeaderProps } from '../types';
 import { stripHtml } from '../utils';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
@@ -40,9 +41,16 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+    } catch {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('moodleToken');
+    } finally {
+      window.location.href = '/login';
+    }
   };
 
   return (
@@ -134,8 +142,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             type="button"
             className={styles.user}
             title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
+            aria-label="Меню профілю користувача"
             onClick={() => setUserMenuOpen((open) => !open)}
-            aria-haspopup="true"
+            aria-haspopup="menu"
             aria-expanded={userMenuOpen}
           >
             <span className={styles.avatar}>
@@ -147,6 +156,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           {userMenuOpen && (
             <motion.div
               className={styles.userDropdown}
+              role="menu"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.15 }}
@@ -166,6 +176,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                     type="button"
                     variant="secondary"
                     size="small"
+                    role="menuitem"
                     onClick={onToggleSound}
                     style={{ width: '100%', justifyContent: 'flex-start' }}
                   >
@@ -195,6 +206,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                     type="button"
                     variant="secondary"
                     size="small"
+                    role="menuitem"
                     onClick={handleLogout}
                     style={{
                       width: '100%',

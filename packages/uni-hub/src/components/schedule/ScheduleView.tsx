@@ -1,6 +1,8 @@
-import React, { useMemo, useState, useSyncExternalStore } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button as SimpleButton, RadioButton, Tag, Empty } from '@una';
+import { BREAKPOINTS } from '@universe/core';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import styles from './ScheduleView.module.scss';
 
 import type { ScheduleEvent } from './ScheduleView.types';
@@ -177,23 +179,8 @@ const getTypeTone = (type: string): 'info' | 'warning' | 'success' | 'danger' | 
   }
 };
 
-const subscribeMobile = (callback: () => void) => {
-  const media = window.matchMedia('(max-width: 768px)');
-
-  media.addEventListener('change', callback);
-
-  return () => media.removeEventListener('change', callback);
-};
-
-const getMobileSnapshot = () => window.matchMedia('(max-width: 768px)').matches;
-const getMobileServerSnapshot = () => false;
-
 export const ScheduleView: React.FC = () => {
-  const isMobile = useSyncExternalStore(
-    subscribeMobile,
-    getMobileSnapshot,
-    getMobileServerSnapshot,
-  );
+  const isMobile = useMediaQuery('less', BREAKPOINTS.md);
   const [selectedViewMode, setSelectedViewMode] = useState<'month' | 'week' | 'day' | null>(null);
   const viewMode = selectedViewMode ?? (isMobile ? 'day' : 'month');
 

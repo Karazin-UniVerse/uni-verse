@@ -1,0 +1,9 @@
+node_modules
+.next
+dist
+storybook-static
+coverage
+.turbo
+pnpm-lock.yaml
+.agents
+.claude

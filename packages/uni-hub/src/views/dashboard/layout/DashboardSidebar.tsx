@@ -12,7 +12,7 @@ import {
   PanelLeftOpen,
   LogOut,
 } from 'lucide-react';
-import { Button as SimpleButton } from '@una';
+import { Button } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { DashboardSidebarProps, NavKey } from '../types';
@@ -150,7 +150,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       <aside ref={siderRef} id="dashboard-sidebar" className={styles.sider} aria-label="Навігація">
         <div className={styles.brand}>
           <span>{collapsed && !mobileMenuOpen ? 'U' : 'UNiVerse'}</span>
-          <SimpleButton
+          <Button
             type="button"
             variant="secondary"
             size="small"
@@ -159,7 +159,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             aria-label={collapsed ? 'Розгорнути меню' : 'Згорнути меню'}
           >
             {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-          </SimpleButton>
+          </Button>
         </div>
 
         <nav className={styles.nav}>
@@ -200,7 +200,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             className={styles.moodleStatusLink}
-            title="Відкрити Moodle LMS"
+            title="Moodle LMS (підключено)"
           >
             <span className={styles.statusDot} aria-hidden />
             {!collapsed || mobileMenuOpen ? (
@@ -214,7 +214,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             showLabel={!collapsed || mobileMenuOpen}
             className={styles.themeBtn}
           />
-          <SimpleButton
+          <Button
             type="button"
             variant="secondary"
             size="medium"
@@ -224,7 +224,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           >
             <LogOut size={18} />
             {(!collapsed || mobileMenuOpen) && <span>Вийти</span>}
-          </SimpleButton>
+          </Button>
         </div>
       </aside>
     </>

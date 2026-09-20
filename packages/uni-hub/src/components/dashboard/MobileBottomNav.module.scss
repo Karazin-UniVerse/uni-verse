@@ -11,7 +11,7 @@
     right: var(--space-16);
     height: 64px;
     z-index: 1000;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 32px rgb(0 0 0 / 12%);
     background: color-mix(in srgb, var(--bg-surface) 65%, transparent);
     backdrop-filter: blur(40px) saturate(150%);
     -webkit-backdrop-filter: blur(40px) saturate(150%);
@@ -52,7 +52,7 @@
   border: none;
   cursor: pointer;
   position: relative;
-  
+
   &.active {
     color: var(--accent-primary);
   }
