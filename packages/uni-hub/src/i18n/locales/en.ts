@@ -13,6 +13,10 @@ export const en = {
   'login.password': 'Password',
   'login.submit': 'Sign In',
   'login.loading': 'Signing in...',
+  'login.success': 'Signed in successfully',
+  'login.invalidCredentials': 'Login failed. Please check your credentials.',
+  'login.enterUsernameError': 'Please enter a username',
+  'login.enterPasswordError': 'Please enter a password',
 
   // Themes
   'theme.light': 'Light',
@@ -37,6 +41,8 @@ export const en = {
   'sidebar.moodleConnected': 'Moodle LMS (connected)',
   'header.notifications': 'Notifications',
   'header.notifications.empty': 'No notifications',
+  'dashboard.sessionExpired': 'Session expired or invalid. Please sign in again.',
+  'dashboard.loadError': 'Failed to load data. Please ensure the backend is running.',
 
   // Greetings
   'greeting.morning': 'Good morning',
@@ -126,6 +132,9 @@ export const en = {
   'grades.unsatisfactory': 'Unsatisfactory',
   'grades.passed': 'Passed',
   'grades.failed': 'Failed',
+  'grades.chartValue': 'Grade',
+  'grades.chartEmpty': 'No grades found',
+  'grades.defaultCourse': 'Course',
 
   // Grade Simulator
   'simulator.modalTitle': 'Grade Simulator — "What if?"',
@@ -200,4 +209,7 @@ export const en = {
   'assignmentModal.statusGraded': 'Graded',
   'assignmentModal.statusNew': 'No attempt',
   'assignmentModal.statusDraft': 'Draft',
+
+  // Gamification
+  'badge.unlocked': 'Achievement',
 } as const satisfies Record<TranslationKey, string>;

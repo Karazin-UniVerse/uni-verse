@@ -71,6 +71,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
       <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
         <SimpleInput
           type="date"
+          lang={language === 'en' ? 'en-US' : 'uk-UA'}
           size="medium"
           min="2000-01-01"
           max="2099-12-31"
@@ -80,6 +81,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         />
         <SimpleInput
           type="date"
+          lang={language === 'en' ? 'en-US' : 'uk-UA'}
           size="medium"
           min="2000-01-01"
           max="2099-12-31"

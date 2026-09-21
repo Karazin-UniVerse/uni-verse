@@ -7,12 +7,14 @@ import {
   getGradeRawValue,
 } from '@uni-hub/utils/grades';
 import { Chart } from '@una';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 
 type GradesChartProps = {
   grades: Grade[];
 };
 
 export const GradesChart: React.FC<GradesChartProps> = ({ grades }) => {
+  const { t } = useLanguage();
   const validGrades = useMemo(() => getValidGrades(grades), [grades]);
 
   const chartData = useMemo(
@@ -21,12 +23,12 @@ export const GradesChart: React.FC<GradesChartProps> = ({ grades }) => {
         const gradeValue = getGradeRawValue(grade) ?? 0;
 
         return {
-          name: getGradeCourseName(grade) || 'Курс',
+          name: getGradeCourseName(grade) || t('grades.defaultCourse'),
           value: gradeValue,
           color: getGradeBarColor(gradeValue),
         };
       }),
-    [validGrades],
+    [validGrades, t],
   );
 
   return (
@@ -35,8 +37,8 @@ export const GradesChart: React.FC<GradesChartProps> = ({ grades }) => {
       layout="horizontal"
       data={chartData}
       domain={[0, 100]}
-      valueLabel="Оценка"
-      emptyDescription="Оценки не найдены"
+      valueLabel={t('grades.chartValue')}
+      emptyDescription={t('grades.chartEmpty')}
     />
   );
 };

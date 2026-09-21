@@ -7,6 +7,7 @@ import { Button, TextInput, SimpleForm, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { authApi } from '@uni-hub/services/api';
 import { motion } from 'framer-motion';
 import styles from './LoginPage.module.scss';
@@ -16,21 +17,21 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
   const router = useRouter();
   const toast = useToast();
 
   const handleLogin = async () => {
-    setError('');
+    setErrorKey(null);
 
     if (!username.trim()) {
-      setError('Пожалуйста, введите имя пользователя');
+      setErrorKey('login.enterUsernameError');
 
       return;
     }
 
     if (!password) {
-      setError('Пожалуйста, введите пароль');
+      setErrorKey('login.enterPasswordError');
 
       return;
     }
@@ -40,7 +41,7 @@ const LoginPage: React.FC = () => {
     try {
       const res = await authApi.login(username, password);
 
-      toast.success('Вход выполнен успешно');
+      toast.success(t('login.success'));
       localStorage.setItem('isLoggedIn', 'true');
 
       if (res.data?.token) {
@@ -49,9 +50,9 @@ const LoginPage: React.FC = () => {
 
       router.push('/');
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
-        'Ошибка входа. Проверьте учетные данные.';
+      const serverError = (err as { response?: { data?: { error?: string } } })?.response?.data
+        ?.error;
+      const message = serverError || t('login.invalidCredentials');
 
       toast.error(message);
     } finally {
@@ -107,7 +108,7 @@ const LoginPage: React.FC = () => {
             </div>
           </label>
 
-          {error && <p className={styles.error}>{error}</p>}
+          {errorKey && <p className={styles.error}>{t(errorKey)}</p>}
 
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button

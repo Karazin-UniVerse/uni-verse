@@ -11,6 +11,10 @@ export const uk = {
   'login.password': 'Пароль',
   'login.submit': 'Увійти',
   'login.loading': 'Вхід...',
+  'login.success': 'Вхід виконано успішно',
+  'login.invalidCredentials': 'Помилка входу. Перевірте облікові дані.',
+  'login.enterUsernameError': "Будь ласка, введіть ім'я користувача",
+  'login.enterPasswordError': 'Будь ласка, введіть пароль',
 
   // Themes
   'theme.light': 'Світла',
@@ -35,6 +39,9 @@ export const uk = {
   'sidebar.moodleConnected': 'Moodle LMS (підключено)',
   'header.notifications': 'Сповіщення',
   'header.notifications.empty': 'Немає сповіщень',
+  'dashboard.sessionExpired': 'Сесія застаріла або недійсна. Будь ласка, увійдіть знову.',
+  'dashboard.loadError':
+    'Помилка завантаження даних. Будь ласка, переконайтеся, що бекенд запущено.',
 
   // Greetings
   'greeting.morning': 'Доброго ранку',
@@ -124,6 +131,9 @@ export const uk = {
   'grades.unsatisfactory': 'незадовільно',
   'grades.passed': 'зараховано',
   'grades.failed': 'не зараховано',
+  'grades.chartValue': 'Оцінка',
+  'grades.chartEmpty': 'Оцінки не знайдено',
+  'grades.defaultCourse': 'Курс',
 
   // Grade Simulator
   'simulator.modalTitle': 'Симулятор оцінок — «Що, якщо?»',
@@ -197,6 +207,9 @@ export const uk = {
   'assignmentModal.statusGraded': 'Оцінено',
   'assignmentModal.statusNew': 'Немає спроби',
   'assignmentModal.statusDraft': 'Чернетка',
+
+  // Gamification
+  'badge.unlocked': 'Досягнення',
 } as const;
 
 export type TranslationKey = keyof typeof uk;

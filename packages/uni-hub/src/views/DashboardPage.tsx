@@ -134,66 +134,6 @@ const DashboardPage: React.FC = () => {
     data.events.length > 0 ||
     hasLoadedOnce;
 
-  const fetchData = async () => {
-    setLoading(true);
-
-    try {
-      const params: Record<string, string | number> = { sortByDate: sortOrder };
-      const fromTimestamp = parseDateFilterSeconds(dateFrom);
-      const toTimestamp = parseDateFilterSeconds(dateTo);
-
-      if (fromTimestamp !== null) {
-        params.dateFrom = fromTimestamp;
-      }
-
-      if (toTimestamp !== null) {
-        params.dateTo = toTimestamp;
-      }
-
-      if (hideCompleted) {
-        params.status = 'not_completed';
-      }
-
-      const [coursesRes, gradesRes, assignmentsRes, eventsRes, notificationsRes, statsRes] =
-        await Promise.all([
-          moodleApi.getCourses(),
-          moodleApi.getGrades(),
-          moodleApi.getAssignments(params),
-          moodleApi.getEvents(),
-          moodleApi.getNotifications(),
-          moodleApi.getStatistics(),
-        ]);
-
-      setData({
-        courses: Array.isArray(coursesRes?.data) ? coursesRes.data : [],
-        grades: resolveGradesResponse(gradesRes),
-        assignments: Array.isArray(assignmentsRes?.data) ? assignmentsRes.data : [],
-        events: Array.isArray(eventsRes?.data) ? eventsRes.data : [],
-        notifications: Array.isArray(notificationsRes?.data?.notifications)
-          ? notificationsRes.data.notifications
-          : [],
-        unreadCount: notificationsRes?.data?.unreadCount || 0,
-        statistics: statsRes?.data || null,
-      });
-      setHasLoadedOnce(true);
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('401')) {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('moodleToken');
-        toast.error('Сесія застаріла або недійсна. Будь ласка, увійдіть знову.');
-        router.push('/login');
-
-        return;
-      }
-
-      console.error(error);
-      toast.error('Помилка завантаження даних. Будь ласка, переконайтеся, що бекенд запущено.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (!isLoggedIn()) {
       router.push('/login');
@@ -227,7 +167,79 @@ const DashboardPage: React.FC = () => {
       return;
     }
 
+    let cancelled = false;
+
+    const fetchData = async () => {
+      setLoading(true);
+
+      try {
+        const params: Record<string, string | number> = { sortByDate: sortOrder };
+        const fromTimestamp = parseDateFilterSeconds(dateFrom);
+        const toTimestamp = parseDateFilterSeconds(dateTo);
+
+        if (fromTimestamp !== null) {
+          params.dateFrom = fromTimestamp;
+        }
+
+        if (toTimestamp !== null) {
+          params.dateTo = toTimestamp;
+        }
+
+        if (hideCompleted) {
+          params.status = 'not_completed';
+        }
+
+        const [coursesRes, gradesRes, assignmentsRes, eventsRes, notificationsRes, statsRes] =
+          await Promise.all([
+            moodleApi.getCourses(),
+            moodleApi.getGrades(),
+            moodleApi.getAssignments(params),
+            moodleApi.getEvents(),
+            moodleApi.getNotifications(),
+            moodleApi.getStatistics(),
+          ]);
+
+        if (cancelled) return;
+
+        setData({
+          courses: Array.isArray(coursesRes?.data) ? coursesRes.data : [],
+          grades: resolveGradesResponse(gradesRes),
+          assignments: Array.isArray(assignmentsRes?.data) ? assignmentsRes.data : [],
+          events: Array.isArray(eventsRes?.data) ? eventsRes.data : [],
+          notifications: Array.isArray(notificationsRes?.data?.notifications)
+            ? notificationsRes.data.notifications
+            : [],
+          unreadCount: notificationsRes?.data?.unreadCount || 0,
+          statistics: statsRes?.data || null,
+        });
+        setHasLoadedOnce(true);
+      } catch (error) {
+        if (cancelled) return;
+
+        if (error instanceof Error && error.message.includes('401')) {
+          localStorage.removeItem('isLoggedIn');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('moodleToken');
+          toast.error(t('dashboard.sessionExpired'));
+          router.push('/login');
+
+          return;
+        }
+
+        console.error(error);
+        toast.error(t('dashboard.loadError'));
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
     fetchData();
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router, sortOrder, dateFrom, dateTo, hideCompleted]);
 

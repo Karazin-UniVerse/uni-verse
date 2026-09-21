@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -58,14 +58,25 @@ const CourseContents: React.FC = () => {
   const [selectedModule, setSelectedModule] = useState<CourseModule | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
+  const tRef = useRef(t);
+
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
+
   useEffect(() => {
     if (!courseId) return;
+
+    let cancelled = false;
 
     const fetchContents = async () => {
       setLoading(true);
 
       try {
         const response = await moodleApi.getCourseContents(Number.parseInt(courseId, 10));
+
+        if (cancelled) return;
+
         const validSections = response.data.filter(
           (section: CourseSection) => section.name && section.modules && section.modules.length > 0,
         );
@@ -76,15 +87,23 @@ const CourseContents: React.FC = () => {
           setOpenSections(new Set([validSections[0].id.toString()]));
         }
       } catch (error) {
+        if (cancelled) return;
+
         console.error(error);
-        toast.error(t('courseContents.loadError'));
+        toast.error(tRef.current('courseContents.loadError'));
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     fetchContents();
-  }, [courseId, t, toast]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [courseId, toast]);
 
   const handleModuleClick = (courseModule: CourseModule) => {
     if (courseModule.modname === COURSE_MODULE_NAMES.ASSIGN) {
