@@ -5,11 +5,14 @@ import { User, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button, TextInput, SimpleForm, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
+import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi } from '@uni-hub/services/api';
 import { motion } from 'framer-motion';
 import styles from './LoginPage.module.scss';
 
 const LoginPage: React.FC = () => {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -61,22 +64,25 @@ const LoginPage: React.FC = () => {
       <div className={styles.themeBar}>
         <ThemeSwitcher compact />
       </div>
+      <div className={styles.languageBar}>
+        <LanguageSwitcher variant="glass" placement="bottom-up" />
+      </div>
       <div className={styles.center}>
         <SimpleForm className={styles.card} action={handleLogin}>
           <div className={styles.brand}>
-            <h1>UNiHub</h1>
-            <p>Войдите в свой аккаунт Moodle</p>
+            <h1>{t('login.title')}</h1>
+            <p>{t('login.subtitle')}</p>
           </div>
 
           <label htmlFor="login-username" className={styles.field}>
-            <span className={styles.label}>Имя пользователя</span>
+            <span className={styles.label}>{t('login.username')}</span>
             <div className={styles.inputWrap}>
               <User size={16} className={styles.icon} />
               <TextInput
                 id="login-username"
                 name="username"
                 size="large"
-                placeholder="Имя пользователя"
+                placeholder={t('login.username')}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
@@ -85,7 +91,7 @@ const LoginPage: React.FC = () => {
           </label>
 
           <label htmlFor="login-password" className={styles.field}>
-            <span className={styles.label}>Пароль</span>
+            <span className={styles.label}>{t('login.password')}</span>
             <div className={styles.inputWrap}>
               <Lock size={16} className={styles.icon} />
               <TextInput
@@ -93,7 +99,7 @@ const LoginPage: React.FC = () => {
                 name="password"
                 type="password"
                 size="large"
-                placeholder="Пароль"
+                placeholder={t('login.password')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
@@ -111,7 +117,7 @@ const LoginPage: React.FC = () => {
               disabled={loading}
               className={styles.submit}
             >
-              {loading ? 'Вход...' : 'Войти'}
+              {loading ? t('login.loading') : t('login.submit')}
             </Button>
           </motion.div>
         </SimpleForm>

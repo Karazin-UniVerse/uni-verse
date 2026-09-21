@@ -190,8 +190,10 @@
   padding: var(--space-8);
 }
 
+.siderFooter .langBtn,
 .siderFooter .themeBtn,
 .siderFooter .logoutBtn,
+.langBtn,
 .themeBtn,
 .logoutBtn {
   width: 100%;
@@ -208,8 +210,10 @@
   }
 }
 
+.collapsed .siderFooter .langBtn,
 .collapsed .siderFooter .themeBtn,
 .collapsed .siderFooter .logoutBtn,
+.collapsed .langBtn,
 .collapsed .themeBtn,
 .collapsed .logoutBtn {
   justify-content: center;

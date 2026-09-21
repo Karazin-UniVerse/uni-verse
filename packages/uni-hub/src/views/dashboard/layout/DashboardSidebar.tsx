@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
+import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { DashboardSidebarProps, NavKey } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
@@ -209,6 +210,13 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
               <span className={styles.moodleCompactIcon}>🔗</span>
             )}
           </a>
+          <LanguageSwitcher
+            compact
+            showLabel={!collapsed || mobileMenuOpen}
+            variant="sider"
+            placement="bottom-up-left"
+            className={styles.langBtn}
+          />
           <ThemeSwitcher
             compact
             showLabel={!collapsed || mobileMenuOpen}
