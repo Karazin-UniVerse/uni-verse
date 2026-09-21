@@ -8,47 +8,23 @@ import {
   MIN_PASSING_SCORE,
 } from '../constants/grades.ts';
 
-/** ECTS Grade scale (European Credit Transfer and Accumulation System) */
-export type EctsGrade = 'A' | 'B' | 'C' | 'D' | 'E' | 'Fx' | 'F';
+import type {
+  ControlType,
+  EctsGrade,
+  ExamTargetRequirement,
+  GradeAccumulationParams,
+  GradeAccumulationResult,
+  TraditionalGrade,
+} from '../types/index.ts';
 
-/** Traditional Ukrainian national grading scale */
-export type TraditionalGrade =
-  'відмінно' | 'добре' | 'задовільно' | 'незадовільно' | 'зараховано' | 'не зараховано';
-
-/** Final control types in higher education curriculum */
-export type ControlType = 'exam' | 'credit' | 'differentiated_credit';
-
-/**
- * Input parameters for accumulated grade evaluation
- */
-export interface GradeAccumulationParams {
-  semesterScore: number;
-  controlType?: ControlType;
-  examScore?: number | null;
-}
-
-/**
- * Result of accumulated grade calculation according to university regulations
- */
-export interface GradeAccumulationResult {
-  totalScore: number;
-  ectsGrade: EctsGrade;
-  traditionalGrade: TraditionalGrade;
-  isAdmittedToExam: boolean;
-  isExamPassed: boolean;
-  isCoursePassed: boolean;
-  statusMessage: string;
-}
-
-/**
- * Exam target requirement for achieving a specific ECTS grade
- */
-export interface ExamTargetRequirement {
-  grade: EctsGrade;
-  minTotalScore: number;
-  requiredExamScore: number;
-  isAchievable: boolean;
-}
+export type {
+  ControlType,
+  EctsGrade,
+  ExamTargetRequirement,
+  GradeAccumulationParams,
+  GradeAccumulationResult,
+  TraditionalGrade,
+};
 
 /**
  * Calculates the ECTS letter grade based on a 100-point scale:

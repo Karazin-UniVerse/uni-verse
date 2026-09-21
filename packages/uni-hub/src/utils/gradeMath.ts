@@ -13,6 +13,31 @@ export function clampScore(score: number, min = 0, max = 100): number {
 }
 
 /**
+ * Projects a semester score based on the base semester score, max allowed semester score,
+ * and the scores (percentages 0-100) of remaining assignments.
+ */
+export function projectSemesterWithAssignments(
+  baseSemester: number,
+  maxSemester: number,
+  assignmentPercentages: number[],
+): number {
+  if (!Array.isArray(assignmentPercentages) || assignmentPercentages.length === 0) {
+    return baseSemester;
+  }
+
+  const sum = assignmentPercentages.reduce(
+    (accumulator, score) => accumulator + clampScore(score, 0, 100),
+    0,
+  );
+  const averagePercent = sum / assignmentPercentages.length;
+
+  return Math.min(
+    maxSemester,
+    Math.round(baseSemester + (averagePercent * (maxSemester - baseSemester)) / 100),
+  );
+}
+
+/**
  * Calculates the simulated final grade based on the university's accumulation system.
  * - For exams: total = semester points (max 60) + exam points (max 40)
  * - For credits: total = semester points (max 100)
@@ -30,15 +55,10 @@ export function computeSimulatedFinal(
 
   if (controlType === 'credit' || controlType === 'differentiated_credit') {
     if (Array.isArray(examScoreOrRemaining) && examScoreOrRemaining.length > 0) {
-      const remainingSum = examScoreOrRemaining.reduce(
-        (accumulator, currentScore) => accumulator + clampScore(currentScore, 0, 100),
-        0,
-      );
-      const averagePercent = remainingSum / examScoreOrRemaining.length;
-
-      return Math.min(
+      return projectSemesterWithAssignments(
+        safeSemester,
         MAX_SEMESTER_CREDIT,
-        Math.round(safeSemester + (averagePercent * (MAX_SEMESTER_CREDIT - safeSemester)) / 100),
+        examScoreOrRemaining,
       );
     }
 

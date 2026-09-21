@@ -7,8 +7,8 @@ import {
   getValidGrades,
 } from '@uni-hub/utils/grades';
 import { useCountUp } from '@uni-hub/hooks/useCountUp';
-import { Modal, Select, Empty, ProgressBar, Button, SimpleSlider, Tag } from '@una';
-import { clampScore } from '@uni-hub/utils/gradeMath';
+import { Modal, Select, Empty, ProgressBar, SimpleSlider, Tag } from '@una';
+import { clampScore, projectSemesterWithAssignments } from '@uni-hub/utils/gradeMath';
 import {
   MAX_EXAM,
   MAX_SEMESTER_CREDIT,
@@ -170,13 +170,13 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
     setAssignmentScores(updatedScores);
 
     if (remainingAssignments.length > 0) {
-      const averagePercent =
-        remainingAssignments.reduce(
-          (sum, assignment) => sum + (updatedScores[assignment.id] ?? 75),
-          0,
-        ) / remainingAssignments.length;
-      const simulatedSemester = Math.round(
-        baseSemester + (averagePercent * (maxSemester - baseSemester)) / 100,
+      const percentages = remainingAssignments.map(
+        (assignment) => updatedScores[assignment.id] ?? 75,
+      );
+      const simulatedSemester = projectSemesterWithAssignments(
+        baseSemester,
+        maxSemester,
+        percentages,
       );
 
       setSemesterScore(simulatedSemester);
@@ -254,7 +254,7 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
           <div className={styles.section}>
             <div className={styles.sectionHeader}>
               <span className={styles.sectionTitle}>Екзаменаційний бал (підсумковий контроль)</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className={styles.sectionValueGroup}>
                 <span className={styles.sectionValue}>{examScore} / 40 б.</span>
                 <Tag tone={examScore >= 20 ? 'success' : 'danger'}>
                   {examScore >= 20 ? 'Складено (≥ 20 б.)' : 'Не складено (< 20 б.)'}
@@ -293,15 +293,7 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
           <div className={styles.forecastLabel}>
             Прогноз підсумкового результату (100-бальна накопичувальна шкала & ECTS)
           </div>
-          <div
-            className={styles.forecastValue}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              justifyContent: 'center',
-            }}
-          >
+          <div className={styles.forecastValue}>
             <span>{animatedFinal} / 100</span>
             <Tag tone={tone}>ECTS: {accumulationResult.ectsGrade}</Tag>
             <Tag tone={accumulationResult.isCoursePassed ? 'neutral' : 'danger'}>
@@ -315,13 +307,3 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
     </Modal>
   );
 };
-
-type GradeSimulatorTriggerProps = {
-  onOpen: () => void;
-};
-
-export const GradeSimulatorTrigger: React.FC<GradeSimulatorTriggerProps> = ({ onOpen }) => (
-  <Button type="button" variant="secondary" size="small" onClick={onOpen}>
-    Симулятор балів (Що, якщо?)
-  </Button>
-);

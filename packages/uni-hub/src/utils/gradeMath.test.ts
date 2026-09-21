@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { clampScore, computeSimulatedFinal } from './gradeMath';
+import { clampScore, computeSimulatedFinal, projectSemesterWithAssignments } from './gradeMath';
 
 describe('gradeMath utils', () => {
   describe('clampScore', () => {
@@ -8,6 +8,19 @@ describe('gradeMath utils', () => {
       expect(clampScore(-5, 0, 100)).toBe(0);
       expect(clampScore(120, 0, 100)).toBe(100);
       expect(clampScore(Number.NaN, 0, 100)).toBe(0);
+    });
+  });
+
+  describe('projectSemesterWithAssignments', () => {
+    it('returns baseSemester when assignments array is empty', () => {
+      expect(projectSemesterWithAssignments(40, 60, [])).toBe(40);
+    });
+
+    it('projects semester score based on assignment scores', () => {
+      // 40 base + 50% of remaining 20 points (60-40) = 40 + 10 = 50
+      expect(projectSemesterWithAssignments(40, 60, [50])).toBe(50);
+      // 30 base + 100% of remaining 30 points (60-30) = 60
+      expect(projectSemesterWithAssignments(30, 60, [100, 100])).toBe(60);
     });
   });
 

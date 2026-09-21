@@ -3,6 +3,7 @@ export * from './BadgeSystem';
 export * from './ContextualGreeting';
 export * from './ExamTargetsGrid';
 export * from './GradeSimulator';
+export * from './GradeSimulatorTrigger';
 export * from './LiveCountdown';
 export * from './RemainingAssignmentsSection';
 export * from './StreakBadge';

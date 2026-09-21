@@ -1,11 +1,3 @@
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-12);
-  align-items: center;
-  margin-bottom: var(--space-16);
-}
-
 .body {
   display: flex;
   flex-direction: column;
@@ -28,6 +20,10 @@
 }
 
 .forecastValue {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  justify-content: center;
   font-size: var(--font-xxl);
   font-weight: var(--font-weight-bold);
   font-variant-numeric: tabular-nums;
@@ -70,12 +66,6 @@
   color: var(--text-secondary);
   font-size: var(--font-sm);
   flex-shrink: 0;
-}
-
-.slider {
-  width: 100%;
-  accent-color: var(--accent-primary);
-  cursor: pointer;
 }
 
 .hint {
@@ -162,6 +152,12 @@
   font-weight: var(--font-weight-bold);
   font-size: var(--font-sm);
   color: var(--text-primary);
+}
+
+.sectionValueGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
 }
 
 .targetsGrid {
