@@ -91,14 +91,19 @@ export const Modal: React.FC<ModalProps> = ({
     previouslyFocusedElementRef.current = document.activeElement as HTMLElement | null;
     lockScroll(modalId);
 
-    const dialogElement = dialogRef.current;
+    const frameId = requestAnimationFrame(() => {
+      if (!dialogRef.current) {
+        return;
+      }
 
-    if (dialogElement) {
-      const focusableElements = dialogElement.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
-      const firstFocusableElement = focusableElements[0] || dialogElement;
+      const firstFocusable = dialogRef.current.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
 
-      firstFocusableElement.focus();
-    }
+      if (firstFocusable) {
+        firstFocusable.focus();
+      } else {
+        dialogRef.current.focus();
+      }
+    });
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -127,6 +132,7 @@ export const Modal: React.FC<ModalProps> = ({
     overlayElement?.addEventListener('click', handleOverlayClick);
 
     return () => {
+      cancelAnimationFrame(frameId);
       document.removeEventListener('keydown', handleKeyDown);
       overlayElement?.removeEventListener('click', handleOverlayClick);
       unlockScroll(modalId);
@@ -146,7 +152,11 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         ref={dialogRef}
         className={`${styles.dialog} ${className ?? ''}`}
-        style={{ width }}
+        style={
+          {
+            '--modal-dialog-width': typeof width === 'number' ? `${width}px` : width,
+          } as React.CSSProperties
+        }
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}

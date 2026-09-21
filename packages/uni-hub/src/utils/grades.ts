@@ -1,3 +1,4 @@
+import { GRADES_THRESHOLD } from '@universe/core';
 import type { Grade, GradeValue } from '../types';
 
 export function getGradeCourseName(grade: Grade): string {
@@ -60,20 +61,22 @@ export function getValidGrades(grades: Grade[]): Grade[] {
   });
 }
 
+/**
+ * Karazin University grading system thresholds:
+ * - >= 70: 'добре' / 'відмінно' (Good / Excellent, 70-100) -> success / green
+ * - >= 50: 'задовільно' / 'зараховано' (Satisfactory / Pass, 50-69) -> warning / orange
+ * - < 50: 'незадовільно' / 'не зараховано' (Fail, 0-49) -> danger / red
+ */
 export function getGradeTone(rawgrade: number | null): 'success' | 'warning' | 'danger' {
   if (rawgrade === null || rawgrade === undefined) {
     return 'warning';
   }
 
-  if (rawgrade >= 90) {
+  if (rawgrade >= GRADES_THRESHOLD.GOOD) {
     return 'success';
   }
 
-  if (rawgrade >= 75) {
-    return 'success'; // Or 'info' if supported, but sticking to 3-tier
-  }
-
-  if (rawgrade >= 60) {
+  if (rawgrade >= GRADES_THRESHOLD.SATISFACTORY) {
     return 'warning';
   }
 
@@ -85,11 +88,11 @@ export function getGradeBarColor(rawgrade: number | null): string {
     return 'var(--chart-warning)';
   }
 
-  if (rawgrade >= 75) {
+  if (rawgrade >= GRADES_THRESHOLD.GOOD) {
     return 'var(--chart-success)';
   }
 
-  if (rawgrade >= 60) {
+  if (rawgrade >= GRADES_THRESHOLD.SATISFACTORY) {
     return 'var(--chart-warning)';
   }
 

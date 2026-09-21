@@ -1,7 +1,9 @@
+@use '../../../breakpoints.scss' as *;
+
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgb(0 0 0 / 45%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -15,6 +17,7 @@
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-large);
   box-shadow: var(--box-shadow-large);
+  width: var(--modal-dialog-width, 700px);
   max-width: min(96vw, 900px);
   max-height: 90vh;
   display: flex;
@@ -27,6 +30,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -37,6 +41,7 @@
     opacity: 0;
     transform: scale(0.96);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -63,14 +68,14 @@
   overflow: auto;
 }
 
-@media (max-width: 768px) {
+@include narrower-than('md') {
   .overlay {
     align-items: flex-end;
     padding: 0;
   }
-  
+
   .dialog {
-    width: 100% !important;
+    width: 100%;
     max-width: 100%;
     border-radius: var(--border-radius-large) var(--border-radius-large) 0 0;
     max-height: 90vh;
@@ -83,6 +88,7 @@
   from {
     transform: translateY(100%);
   }
+
   to {
     transform: translateY(0);
   }

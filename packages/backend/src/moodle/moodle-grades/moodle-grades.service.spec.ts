@@ -160,11 +160,11 @@ describe('MoodleGradesService', () => {
       expect(result.grades[1].traditionalGrade).toBe('задовільно');
       expect(result.grades[1].isPassed).toBe(true);
 
-      // 203: 55 -> Fx, незадовільно
+      // 203: 55 -> Fx (ECTS), задовільно (Karazin 50..69)
       expect(result.grades[2].totalScore).toBe(55);
       expect(result.grades[2].ectsGrade).toBe('Fx');
-      expect(result.grades[2].traditionalGrade).toBe('незадовільно');
-      expect(result.grades[2].isPassed).toBe(false);
+      expect(result.grades[2].traditionalGrade).toBe('задовільно');
+      expect(result.grades[2].isPassed).toBe(true);
 
       // 204: 30 -> F, незадовільно
       expect(result.grades[3].totalScore).toBe(30);

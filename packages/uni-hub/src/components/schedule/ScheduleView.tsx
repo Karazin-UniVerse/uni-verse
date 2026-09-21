@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button as SimpleButton, RadioButton, Tag, Empty } from '@una';
+import { BREAKPOINTS } from '@universe/core';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import styles from './ScheduleView.module.scss';
 
 import type { ScheduleEvent } from './ScheduleView.types';
@@ -178,13 +180,10 @@ const getTypeTone = (type: string): 'info' | 'warning' | 'success' | 'danger' | 
 };
 
 export const ScheduleView: React.FC = () => {
-  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>(() => {
-    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
-      return 'day';
-    }
+  const isMobile = useMediaQuery('less', BREAKPOINTS.md);
+  const [selectedViewMode, setSelectedViewMode] = useState<'month' | 'week' | 'day' | null>(null);
+  const viewMode = selectedViewMode ?? (isMobile ? 'day' : 'month');
 
-    return 'month';
-  });
   const [selectedDate, setSelectedDate] = useState(() => {
     const initialDate = new Date();
 
@@ -350,7 +349,7 @@ export const ScheduleView: React.FC = () => {
                 className={`${styles.monthCell} ${inMonth ? '' : styles.outMonth} ${isToday ? styles.today : ''}`}
                 onClick={() => {
                   setSelectedDate(day);
-                  setViewMode('day');
+                  setSelectedViewMode('day');
                 }}
               >
                 <span className={styles.dayNum}>{day.getDate()}</span>
@@ -391,7 +390,7 @@ export const ScheduleView: React.FC = () => {
                 name="schedule-view"
                 value={value}
                 checked={viewMode === value}
-                onChange={() => setViewMode(value)}
+                onChange={() => setSelectedViewMode(value)}
               />
               {label}
             </label>

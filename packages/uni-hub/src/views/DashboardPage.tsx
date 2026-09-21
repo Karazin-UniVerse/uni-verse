@@ -5,10 +5,11 @@ import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Spinner, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
-import { type StudentProfile } from '@core/types';
+import { isLoggedIn } from '@core/auth';
+import type { StudentProfile } from '@core/types';
 import type { Grade, CourseModule } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
-import { DashboardSkeleton } from '@uni-hub/components/dashboard';
+import { DashboardSkeleton, MobileBottomNav } from '@uni-hub/components/dashboard';
 import { BadgeSystem, GradeSimulator } from '@uni-hub/components/gamification';
 import { ScheduleView } from '@uni-hub/components/schedule';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
@@ -173,6 +174,16 @@ const DashboardPage: React.FC = () => {
       });
       setHasLoadedOnce(true);
     } catch (error) {
+      if (error instanceof Error && error.message.includes('401')) {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('moodleToken');
+        toast.error('Сесія застаріла або недійсна. Будь ласка, увійдіть знову.');
+        router.push('/login');
+
+        return;
+      }
+
       console.error(error);
       toast.error('Помилка завантаження даних. Будь ласка, переконайтеся, що бекенд запущено.');
     } finally {
@@ -181,7 +192,7 @@ const DashboardPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!localStorage.getItem('isLoggedIn')) {
+    if (!isLoggedIn()) {
       router.push('/login');
 
       return;
@@ -209,7 +220,7 @@ const DashboardPage: React.FC = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!localStorage.getItem('isLoggedIn')) {
+    if (!isLoggedIn()) {
       return;
     }
 
@@ -297,6 +308,11 @@ const DashboardPage: React.FC = () => {
         onSelectKey={setActiveKey}
         soundEnabled={soundEnabled}
         onLogout={handleLogout}
+      />
+      <MobileBottomNav
+        activeKey={activeKey}
+        onSelectKey={setActiveKey}
+        soundEnabled={soundEnabled}
       />
 
       <div
