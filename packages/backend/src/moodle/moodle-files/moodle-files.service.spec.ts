@@ -8,6 +8,8 @@ import {
 describe('MoodleFilesService', () => {
   let service: MoodleFilesService;
 
+  let fetchSpy: jest.SpyInstance;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [MoodleFilesService],
@@ -15,10 +17,11 @@ describe('MoodleFilesService', () => {
 
     service = module.get<MoodleFilesService>(MoodleFilesService);
     process.env.MOODLE_BASEURL = 'https://moodle.test';
+    fetchSpy = jest.spyOn(global, 'fetch');
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    fetchSpy.mockReset();
   });
 
   it('should be defined', () => {
@@ -41,7 +44,7 @@ describe('MoodleFilesService', () => {
 
     it('should handle fetch failure', async () => {
       process.env.MOODLE_BASEURL = 'https://moodle.test';
-      jest.spyOn(global, 'fetch').mockResolvedValueOnce({
+      fetchSpy.mockResolvedValueOnce({
         ok: false,
         statusText: 'Not Found',
       } as Response);
@@ -52,7 +55,7 @@ describe('MoodleFilesService', () => {
 
     it('should handle moodle exception', async () => {
       process.env.MOODLE_BASEURL = 'https://moodle.test';
-      jest.spyOn(global, 'fetch').mockResolvedValueOnce({
+      fetchSpy.mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({ exception: 'moodle_exception', message: 'Error' }),

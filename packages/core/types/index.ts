@@ -27,7 +27,20 @@ export const BREAKPOINTS = {
 } as const;
 
 export type Breakpoint = keyof typeof BREAKPOINTS;
+/**
+ * Karazin University grading threshold boundaries (100-point scale):
+ * - 90..100: відмінно (A)
+ * - 70..89: добре (B, C)
+ * - 50..69: задовільно / зараховано (D, E)
+ * - 0..49: незадовільно / не зараховано (F / Fx)
+ */
+export const GRADES_THRESHOLD = {
+  EXCELLENT: 90,
+  GOOD: 70,
+  SATISFACTORY: 50,
+} as const;
 
+export type GradesThreshold = (typeof GRADES_THRESHOLD)[keyof typeof GRADES_THRESHOLD];
 /** Academic status of a student */
 export type StudentAcademicStatus = 'active' | 'academic_leave' | 'expelled' | 'graduated';
 
@@ -223,33 +236,33 @@ export function calculateEctsGrade(score: number): EctsGrade {
 }
 
 /**
- * Calculates the traditional Ukrainian national grade based on score and control type:
+ * Calculates the traditional Ukrainian national grade based on Karazin University scale:
  * - For credit ('credit'):
- *   - >= 60: 'зараховано'
- *   - < 60: 'не зараховано'
+ *   - >= 50: 'зараховано'
+ *   - < 50: 'не зараховано'
  * - For exam ('exam') and differentiated credit ('differentiated_credit'):
- *   - >= 90: 'відмінно'
- *   - >= 74: 'добре'
- *   - >= 60: 'задовільно'
- *   - < 60: 'незадовільно'
+ *   - 90..100: 'відмінно'
+ *   - 70..89: 'добре'
+ *   - 50..69: 'задовільно'
+ *   - 0..49: 'незадовільно'
  */
 export function calculateTraditionalGrade(
   score: number,
   controlType: ControlType = 'exam',
 ): TraditionalGrade {
   if (controlType === 'credit') {
-    return score >= 60 ? 'зараховано' : 'не зараховано';
+    return score >= GRADES_THRESHOLD.SATISFACTORY ? 'зараховано' : 'не зараховано';
   }
 
-  if (score >= 90) {
+  if (score >= GRADES_THRESHOLD.EXCELLENT) {
     return 'відмінно';
   }
 
-  if (score >= 74) {
+  if (score >= GRADES_THRESHOLD.GOOD) {
     return 'добре';
   }
 
-  if (score >= 60) {
+  if (score >= GRADES_THRESHOLD.SATISFACTORY) {
     return 'задовільно';
   }
 
