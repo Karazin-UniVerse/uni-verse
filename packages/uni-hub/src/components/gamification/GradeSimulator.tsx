@@ -9,6 +9,8 @@ import {
 import { useCountUp } from '@uni-hub/hooks/useCountUp';
 import { Modal, Select, Empty, ProgressBar, Button as SimpleButton, SimpleSlider, Tag } from '@una';
 import { calculateEctsGrade, calculateTraditionalGrade } from '@core/types';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { getTraditionalGradeLabel } from '@uni-hub/views/dashboard/utils';
 import styles from './GradeSimulator.module.scss';
 
 const DEFAULT_SCORE = 75;
@@ -44,6 +46,7 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
   onClose,
   open,
 }) => {
+  const { t } = useLanguage();
   const validGrades = useMemo(() => getValidGrades(grades), [grades]);
 
   const uniqueGrades = useMemo(() => {
@@ -117,26 +120,22 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Симулятор оцінок — «Що, якщо?»" width={560}>
+    <Modal open={open} onClose={onClose} title={t('simulator.modalTitle')} width={560}>
       {uniqueGrades.length === 0 ? (
-        <Empty description="Немає оцінок для симуляції" />
+        <Empty description={t('simulator.empty')} />
       ) : (
         <div className={styles.body}>
-          <p className={styles.hint}>
-            Поточний бал дисципліни складає 70% підсумку. Гіпотетичні роботи розподіляють решту 30%.
-          </p>
+          <p className={styles.hint}>{t('simulator.hint')}</p>
 
           <Select
             value={selectedCourse}
             onChange={setCourseName}
             options={courseOptions}
-            aria-label="Дисципліна"
+            aria-label={t('grades.discipline')}
           />
 
           <div className={styles.forecast}>
-            <div className={styles.forecastLabel}>
-              Прогноз підсумкового результату (100-бальна шкала & ECTS)
-            </div>
+            <div className={styles.forecastLabel}>{t('simulator.forecast')}</div>
             <div
               className={styles.forecastValue}
               style={{
@@ -149,9 +148,12 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
               <span>{animatedFinal} / 100</span>
               <Tag tone={tone}>ECTS: {calculateEctsGrade(roundedFinalScore)}</Tag>
               <Tag tone="neutral">
-                {calculateTraditionalGrade(
-                  roundedFinalScore,
-                  currentGrade?.controlType ?? undefined,
+                {getTraditionalGradeLabel(
+                  calculateTraditionalGrade(
+                    roundedFinalScore,
+                    currentGrade?.controlType ?? undefined,
+                  ),
+                  t,
                 )}
               </Tag>
             </div>
@@ -159,7 +161,7 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
           </div>
 
           {remaining.length === 0 ? (
-            <Empty description="Немає завдань з цієї дисципліни — відображається поточний бал" />
+            <Empty description={t('simulator.noAssignments')} />
           ) : (
             <div className={styles.list}>
               {remaining.map((assignment) => {
@@ -194,8 +196,12 @@ type GradeSimulatorTriggerProps = {
   onOpen: () => void;
 };
 
-export const GradeSimulatorTrigger: React.FC<GradeSimulatorTriggerProps> = ({ onOpen }) => (
-  <SimpleButton type="button" variant="secondary" size="small" onClick={onOpen}>
-    Симулятор балів (Що, якщо?)
-  </SimpleButton>
-);
+export const GradeSimulatorTrigger: React.FC<GradeSimulatorTriggerProps> = ({ onOpen }) => {
+  const { t } = useLanguage();
+
+  return (
+    <SimpleButton type="button" variant="secondary" size="small" onClick={onOpen}>
+      {t('grades.simulatorBtn')}
+    </SimpleButton>
+  );
+};

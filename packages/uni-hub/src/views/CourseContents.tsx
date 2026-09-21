@@ -15,6 +15,9 @@ import {
 } from 'lucide-react';
 import { Button as SimpleButton, Spinner, Empty, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
+import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import {
   COURSE_MODULE_NAMES,
   type CourseSection,
@@ -46,6 +49,7 @@ const CourseContents: React.FC = () => {
   const courseId = (params?.courseId as string) || '';
   const router = useRouter();
   const toast = useToast();
+  const { t } = useLanguage();
 
   const [sections, setSections] = useState<CourseSection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,14 +77,14 @@ const CourseContents: React.FC = () => {
         }
       } catch (error) {
         console.error(error);
-        toast.error('Не удалось загрузить содержимое курса');
+        toast.error(t('courseContents.loadError'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchContents();
-  }, [courseId, toast]);
+  }, [courseId, t, toast]);
 
   const handleModuleClick = (courseModule: CourseModule) => {
     if (courseModule.modname === COURSE_MODULE_NAMES.ASSIGN) {
@@ -104,11 +108,11 @@ const CourseContents: React.FC = () => {
 
   const renderSections = () => {
     if (loading) {
-      return <Spinner size="large" tip="Загрузка содержимого..." />;
+      return <Spinner size="large" tip={t('courseContents.loading')} />;
     }
 
     if (sections.length === 0) {
-      return <Empty description="В этом курсе пока нет доступных материалов." />;
+      return <Empty description={t('courseContents.empty')} />;
     }
 
     return (
@@ -148,7 +152,9 @@ const CourseContents: React.FC = () => {
                           </span>
                           <span>
                             <span className={styles.moduleName}>{courseModule.name}</span>
-                            <span className={styles.moduleType}>Тип: {courseModule.modname}</span>
+                            <span className={styles.moduleType}>
+                              {t('courseContents.moduleType')}: {courseModule.modname}
+                            </span>
                           </span>
                         </button>
                       </li>
@@ -173,19 +179,24 @@ const CourseContents: React.FC = () => {
           isTransparent
           onClick={() => router.push('/?tab=courses')}
         >
-          <ArrowLeft size={16} /> Назад до курсів
+          <ArrowLeft size={16} /> {t('courseContents.back')}
         </SimpleButton>
+
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <LanguageSwitcher />
+          <ThemeSwitcher />
+        </div>
       </header>
 
       <main className={styles.content}>
-        <nav className={styles.breadcrumb} aria-label="Хлебные крошки">
-          <Link href="/?tab=courses">Курсы</Link>
+        <nav className={styles.breadcrumb} aria-label={t('courseContents.breadcrumbs')}>
+          <Link href="/?tab=courses">{t('courseContents.breadcrumbs')}</Link>
           <span>/</span>
-          <span>Содержимое курса</span>
+          <span>{t('courseContents.title')}</span>
         </nav>
 
         <div className={styles.panel}>
-          <h1>Содержимое курса</h1>
+          <h1>{t('courseContents.title')}</h1>
 
           {renderSections()}
         </div>

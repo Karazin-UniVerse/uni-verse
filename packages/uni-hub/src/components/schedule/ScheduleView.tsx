@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button as SimpleButton, RadioButton, Tag, Empty } from '@una';
 import { BREAKPOINTS } from '@universe/core';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import styles from './ScheduleView.module.scss';
 
@@ -32,12 +33,6 @@ const isSameDay = (leftDate: Date, rightDate: Date) =>
   leftDate.getFullYear() === rightDate.getFullYear() &&
   leftDate.getMonth() === rightDate.getMonth() &&
   leftDate.getDate() === rightDate.getDate();
-
-const formatDate = (date: Date, options: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat('uk-UA', options).format(date);
-
-const formatTime = (date: Date) =>
-  new Intl.DateTimeFormat('uk-UA', { hour: '2-digit', minute: '2-digit' }).format(date);
 
 const KARAZIN_PAIRS = [
   { startHour: 8, startMin: 30, endHour: 10, endMin: 5, label: '1 пара (08:30 – 10:05)' },
@@ -149,21 +144,6 @@ const exportToICS = (events: ScheduleEvent[]) => {
   URL.revokeObjectURL(url);
 };
 
-const getTypeName = (type: string) => {
-  switch (type) {
-    case 'lecture':
-      return 'Лекція';
-    case 'lab':
-      return 'Лабораторна робота';
-    case 'practice':
-      return 'Практичне заняття';
-    case 'exam':
-      return 'Іспит';
-    default:
-      return 'Консультація';
-  }
-};
-
 const getTypeTone = (type: string): 'info' | 'warning' | 'success' | 'danger' | 'default' => {
   switch (type) {
     case 'lecture':
@@ -181,6 +161,9 @@ const getTypeTone = (type: string): 'info' | 'warning' | 'success' | 'danger' | 
 
 export const ScheduleView: React.FC = () => {
   const isMobile = useMediaQuery('less', BREAKPOINTS.md);
+  const { language, t } = useLanguage();
+  const locale = language === 'en' ? 'en-US' : 'uk-UA';
+
   const [selectedViewMode, setSelectedViewMode] = useState<'month' | 'week' | 'day' | null>(null);
   const viewMode = selectedViewMode ?? (isMobile ? 'day' : 'month');
 
@@ -191,6 +174,38 @@ export const ScheduleView: React.FC = () => {
 
     return initialDate;
   });
+
+  const formatDate = (date: Date, options: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat(locale, options).format(date);
+
+  const formatTime = (date: Date) =>
+    new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(date);
+
+  const getTypeName = (type: string) => {
+    switch (type) {
+      case 'lecture':
+        return t('schedule.typeLecture');
+      case 'lab':
+        return t('schedule.typeLab');
+      case 'practice':
+        return t('schedule.typePractice');
+      case 'exam':
+        return t('schedule.typeExam');
+      default:
+        return t('schedule.typeOther');
+    }
+  };
+
+  const weekdays = useMemo(() => {
+    const monday = new Date(2024, 0, 1);
+
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = addDays(monday, index);
+      const raw = new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(date);
+
+      return raw.charAt(0).toUpperCase() + raw.slice(1);
+    });
+  }, [locale]);
 
   const getEventsForDate = (date: Date) =>
     DUMMY_EVENTS.filter((event) => isSameDay(event.start, date)).sort(
@@ -212,7 +227,8 @@ export const ScheduleView: React.FC = () => {
     return (
       <section className={styles.panel}>
         <h3>
-          Розклад на {formatDate(selectedDate, { day: 'numeric', month: 'long', year: 'numeric' })}
+          {t('schedule.scheduleFor')}{' '}
+          {formatDate(selectedDate, { day: 'numeric', month: 'long', year: 'numeric' })}
         </h3>
         {events.length > 0 ? (
           <ul className={styles.timeline}>
@@ -230,7 +246,7 @@ export const ScheduleView: React.FC = () => {
             ))}
           </ul>
         ) : (
-          <Empty description="На цей день занять немає" />
+          <Empty description={t('schedule.noClasses')} />
         )}
       </section>
     );
@@ -249,7 +265,7 @@ export const ScheduleView: React.FC = () => {
             size="medium"
             onClick={() => setSelectedDate(addDays(selectedDate, -7))}
           >
-            <ChevronLeft size={16} /> Попередній тиждень
+            <ChevronLeft size={16} /> {t('schedule.prevWeek')}
           </SimpleButton>
           <h3>
             {formatDate(weekStart, { day: 'numeric', month: 'short' })} –{' '}
@@ -261,7 +277,7 @@ export const ScheduleView: React.FC = () => {
             size="medium"
             onClick={() => setSelectedDate(addDays(selectedDate, 7))}
           >
-            Наступний тиждень <ChevronRight size={16} />
+            {t('schedule.nextWeek')} <ChevronRight size={16} />
           </SimpleButton>
         </div>
 
@@ -293,7 +309,7 @@ export const ScheduleView: React.FC = () => {
                     ))}
                   </ul>
                 ) : (
-                  <p className={styles.freeDay}>Вільний день</p>
+                  <p className={styles.freeDay}>{t('schedule.freeDay')}</p>
                 )}
               </div>
             );
@@ -332,7 +348,7 @@ export const ScheduleView: React.FC = () => {
           </SimpleButton>
         </div>
         <div className={styles.weekdays}>
-          {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((weekdayLabel) => (
+          {weekdays.map((weekdayLabel) => (
             <div key={weekdayLabel}>{weekdayLabel}</div>
           ))}
         </div>
@@ -376,12 +392,16 @@ export const ScheduleView: React.FC = () => {
   return (
     <div className={styles.root}>
       <div className={styles.toolbar}>
-        <div className={styles.viewSwitch} role="radiogroup" aria-label="Режим розкладу">
+        <div
+          className={styles.viewSwitch}
+          role="radiogroup"
+          aria-label={t('schedule.viewModeAria')}
+        >
           {(
             [
-              ['month', 'Місяць'],
-              ['week', 'Тиждень'],
-              ['day', 'День'],
+              ['month', t('schedule.modeMonth')],
+              ['week', t('schedule.modeWeek')],
+              ['day', t('schedule.modeDay')],
             ] as const
           ).map(([value, label]) => (
             <label key={value} className={styles.radioLabel}>
@@ -403,7 +423,7 @@ export const ScheduleView: React.FC = () => {
           size="medium"
           onClick={() => exportToICS(DUMMY_EVENTS)}
         >
-          <Download size={16} /> Експорт у iCal
+          <Download size={16} /> {t('schedule.exportICal')}
         </SimpleButton>
       </div>
 

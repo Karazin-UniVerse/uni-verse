@@ -7,6 +7,7 @@ import { BookOpen } from 'lucide-react';
 import { Button as SimpleButton, Tag, ProgressBar } from '@una';
 import type { CurriculumItem, ControlType } from '@core/types';
 import { playClick } from '@uni-hub/utils/soundEffects';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { CoursesTabProps } from '../types';
 import { mockKarazinCurriculum, cardMotion } from '../constants';
 import { getControlTypeLabel } from '../utils';
@@ -14,6 +15,7 @@ import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export const CoursesTab: React.FC<CoursesTabProps> = ({ courses, soundEnabled }) => {
   const router = useRouter();
+  const { t } = useLanguage();
   const coursesList = courses.length > 0 ? courses : mockKarazinCurriculum;
 
   return (
@@ -45,18 +47,18 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({ courses, soundEnabled })
             {(credits !== undefined || controlType !== undefined) && (
               <div className={styles.courseMetaRow}>
                 {credits !== undefined && <Tag tone="neutral">{credits} ECTS</Tag>}
-                {controlType && <Tag tone="neutral">{getControlTypeLabel(controlType)}</Tag>}
+                {controlType && <Tag tone="neutral">{getControlTypeLabel(controlType, t)}</Tag>}
               </div>
             )}
             {instructor && (
               <div className={styles.courseTeacher}>
-                Викладач: <strong>{instructor}</strong>
+                {t('courses.instructor')}: <strong>{instructor}</strong>
               </div>
             )}
             <p className={styles.courseSummary}>
               {'summary' in course && course.summary
                 ? course.summary
-                : 'Навчальна дисципліна індивідуального плану'}
+                : t('courses.curriculumSubject')}
             </p>
             {progress !== undefined && progress !== null && (
               <div>
@@ -68,7 +70,7 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({ courses, soundEnabled })
                     marginBottom: '4px',
                   }}
                 >
-                  <span className={styles.muted}>Прогрес освоєння</span>
+                  <span className={styles.muted}>{t('courses.progress')}</span>
                   <span>{progress}%</span>
                 </div>
                 <ProgressBar value={progress} tone={progress >= 60 ? 'success' : 'warning'} />
@@ -84,7 +86,7 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({ courses, soundEnabled })
                 router.push(`/courses/${course.id}/contents`);
               }}
             >
-              Перегляд матеріалів курсу
+              {t('courses.viewMaterials')}
             </SimpleButton>
           </motion.article>
         );

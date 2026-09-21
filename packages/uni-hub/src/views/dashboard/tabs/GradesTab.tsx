@@ -11,9 +11,15 @@ import {
 import { GradesChart } from '@uni-hub/components/grades';
 import { GradeSimulatorTrigger } from '@uni-hub/components/gamification';
 import { getValidGrades, getGradeTone, getGradeCourseName } from '@uni-hub/utils/grades';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { GradesTabProps } from '../types';
 import { mockFallbackGrades } from '../constants';
-import { getControlTypeLabel, parseGradeScore, getExamScoreDisplay } from '../utils';
+import {
+  getControlTypeLabel,
+  getTraditionalGradeLabel,
+  parseGradeScore,
+  getExamScoreDisplay,
+} from '../utils';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 interface GradeTableRowProps {
@@ -22,11 +28,14 @@ interface GradeTableRowProps {
 }
 
 const GradeTableRow: React.FC<GradeTableRowProps> = ({ grade, index }) => {
-  const courseName = getGradeCourseName(grade) || grade.courseName || `Дисципліна #${index + 1}`;
+  const { t } = useLanguage();
+  const courseName =
+    getGradeCourseName(grade) || grade.courseName || `${t('grades.discipline')} #${index + 1}`;
   const totalScore = parseGradeScore(grade);
   const controlType: ControlType | undefined = grade.controlType;
   const ects = calculateEctsGrade(totalScore);
-  const traditionalGrade = calculateTraditionalGrade(totalScore, controlType ?? undefined);
+  const rawTraditional = calculateTraditionalGrade(totalScore, controlType ?? undefined);
+  const traditionalGrade = getTraditionalGradeLabel(rawTraditional, t);
   const tone = getGradeTone(totalScore);
 
   const currentScore =
@@ -47,7 +56,7 @@ const GradeTableRow: React.FC<GradeTableRowProps> = ({ grade, index }) => {
       <td>
         {controlType ? (
           <Tag tone={controlType === 'exam' ? 'info' : 'neutral'}>
-            {getControlTypeLabel(controlType)}
+            {getControlTypeLabel(controlType, t)}
           </Tag>
         ) : (
           '—'
@@ -74,13 +83,14 @@ const GradeTableRow: React.FC<GradeTableRowProps> = ({ grade, index }) => {
 };
 
 export const GradesTab: React.FC<GradesTabProps> = ({ grades, onOpenSimulator }) => {
+  const { t } = useLanguage();
   const rawValidGrades = getValidGrades(grades);
   const validGrades = rawValidGrades.length > 0 ? rawValidGrades : mockFallbackGrades;
 
   return (
     <div className={styles.gradesStack}>
       <div className={styles.pageTitleRow} style={{ marginBottom: 0 }}>
-        <span className={styles.muted}>Електронна залікова книжка та симулятор оцінок</span>
+        <span className={styles.muted}>{t('grades.subtitle')}</span>
         <GradeSimulatorTrigger onOpen={onOpenSimulator} />
       </div>
       <GradesChart grades={validGrades as any} />
@@ -88,20 +98,22 @@ export const GradesTab: React.FC<GradesTabProps> = ({ grades, onOpenSimulator })
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Дисципліна</th>
-              <th>Кредити ECTS</th>
-              <th>Форма контролю</th>
-              <th>Поточний бал (0–60)</th>
-              <th>Екзамен (0–40)</th>
-              <th>Підсумковий 100-бальний бал</th>
-              <th>Оцінка ECTS</th>
-              <th>Традиційна (національна) оцінка</th>
+              <th>{t('grades.colCourse')}</th>
+              <th>{t('grades.colCredits')}</th>
+              <th>{t('grades.colControl')}</th>
+              <th>{t('grades.colCurrent')}</th>
+              <th>{t('grades.colExam')}</th>
+              <th>{t('grades.colFinal')}</th>
+              <th>{t('grades.colEcts')}</th>
+              <th>{t('grades.colTraditional')}</th>
             </tr>
           </thead>
           <tbody>
             {validGrades.map((gradeItem: any, index: number) => {
               const courseName =
-                getGradeCourseName(gradeItem) || gradeItem.courseName || `Дисципліна #${index + 1}`;
+                getGradeCourseName(gradeItem) ||
+                gradeItem.courseName ||
+                `${t('grades.discipline')} #${index + 1}`;
 
               return <GradeTableRow key={courseName + index} grade={gradeItem} index={index} />;
             })}

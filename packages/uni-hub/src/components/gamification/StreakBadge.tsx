@@ -1,31 +1,14 @@
 import React, { useEffect } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
 import { Flame } from 'lucide-react';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import styles from './StreakBadge.module.scss';
-
-function getDaysPlural(count: number): string {
-  const abs = Math.abs(count) % 100;
-  const num = abs % 10;
-
-  if (abs > 10 && abs < 20) {
-    return 'дней';
-  }
-
-  if (num > 1 && num < 5) {
-    return 'дня';
-  }
-
-  if (num === 1) {
-    return 'день';
-  }
-
-  return 'дней';
-}
 
 export const StreakBadge: React.FC = () => {
   const streak = useGamificationStore((state) => state.currentStreak);
   const controls = useAnimationControls();
+  const { language, t } = useLanguage();
 
   useEffect(() => {
     void controls.start({
@@ -34,10 +17,37 @@ export const StreakBadge: React.FC = () => {
     });
   }, [streak, controls]);
 
-  const daysLabel = getDaysPlural(streak);
+  const getDaysLabel = (count: number): string => {
+    if (language === 'en') {
+      return Math.abs(count) === 1 ? t('streak.day') : t('streak.daysMany');
+    }
+
+    const abs = Math.abs(count) % 100;
+    const num = abs % 10;
+
+    if (abs > 10 && abs < 20) {
+      return t('streak.daysMany');
+    }
+
+    if (num > 1 && num < 5) {
+      return t('streak.daysFew');
+    }
+
+    if (num === 1) {
+      return t('streak.day');
+    }
+
+    return t('streak.daysMany');
+  };
+
+  const daysLabel = getDaysLabel(streak);
 
   return (
-    <motion.div className={styles.badge} animate={controls} title={`Стрик: ${streak} дн.`}>
+    <motion.div
+      className={styles.badge}
+      animate={controls}
+      title={`${t('streak.title')}: ${streak} ${daysLabel}`}
+    >
       <motion.span
         className={styles.flame}
         animate={{ scale: [1, 1.15, 1] }}
