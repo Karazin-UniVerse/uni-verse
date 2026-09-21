@@ -1,8 +1,11 @@
+@use '@universe/ui/breakpoints.scss' as *;
+
 @keyframes fadeUp {
   from {
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -12,10 +15,11 @@
 @keyframes pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 0 0 rgb(239 68 68 / 40%);
   }
+
   70% {
-    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 6px rgb(239 68 68 / 0%);
   }
 }
 
@@ -119,16 +123,16 @@
   gap: var(--space-8);
   padding: var(--space-8) var(--space-12);
   border-radius: var(--border-radius-medium);
-  background: rgba(34, 197, 94, 0.08);
-  border: 1px solid rgba(34, 197, 94, 0.2);
+  background: rgb(34 197 94 / 8%);
+  border: 1px solid rgb(34 197 94 / 20%);
   color: var(--text-primary);
   text-decoration: none;
   font-size: var(--font-xs);
   transition: all var(--transition-fast) var(--ease-standard);
 
   &:hover {
-    background: rgba(34, 197, 94, 0.16);
-    border-color: rgba(34, 197, 94, 0.4);
+    background: rgb(34 197 94 / 16%);
+    border-color: rgb(34 197 94 / 40%);
     text-decoration: none;
   }
 }
@@ -138,20 +142,22 @@
   height: 8px;
   border-radius: var(--border-radius-full);
   background: #22c55e;
-  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+  box-shadow: 0 0 0 0 rgb(34 197 94 / 50%);
   animation: pulseGreen 2s infinite;
   flex-shrink: 0;
 }
 
 @keyframes pulseGreen {
   0% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+    box-shadow: 0 0 0 0 rgb(34 197 94 / 60%);
   }
+
   70% {
-    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+    box-shadow: 0 0 0 6px rgb(34 197 94 / 0%);
   }
+
   100% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    box-shadow: 0 0 0 0 rgb(34 197 94 / 0%);
   }
 }
 
@@ -619,7 +625,7 @@
   display: none;
 }
 
-@media (max-width: 1024px) {
+@include narrower-than('lg') {
   .layout {
     grid-template-columns: 72px 1fr;
   }
@@ -644,7 +650,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@include narrower-than('md') {
   .layout {
     display: flex;
     flex-direction: column;
@@ -675,7 +681,7 @@
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgb(0 0 0 / 40%);
     z-index: 999;
     backdrop-filter: blur(2px);
     border: none;
