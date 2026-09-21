@@ -80,14 +80,15 @@ uni-verse/
 
 ### C. Academic Grading & Accumulation System
 
-- Boundaries for the 100-point Ukrainian university accumulation scale:
-  - **`EXCELLENT`**: `>= 90` (ECTS: `A`, Exam: `відмінно`)
-  - **`VERY_GOOD`**: `82 – 89` (ECTS: `B`, Exam: `добре`)
-  - **`GOOD`**: `74 – 81` (ECTS: `C`, Exam: `добре`)
-  - **`SATISFACTORY`**: `60 – 73` (ECTS: `D` [64-73] / `E` [60-63], Exam: `задовільно`, Credit: `зараховано`)
-  - **`FAIL_RETAKE`**: `35 – 59` (ECTS: `Fx`, Exam: `незадовільно`, Credit: `не зараховано`)
-  - **`FAIL`**: `< 35` (ECTS: `F`, Exam: `незадовільно`, Credit: `не зараховано`)
-- Threshold constant `GRADES_THRESHOLD.GOOD` is strictly **`74`**.
+- Boundaries for the 100-point Karazin University grading scale:
+  - **`EXCELLENT`**: `90 – 100` (ECTS: `A`, Exam: `відмінно`)
+  - **`GOOD`**: `70 – 89` (ECTS: `B` [82-89] / `C` [70-81], Exam: `добре`)
+  - **`SATISFACTORY`**: `50 – 69` (ECTS: `D` / `E`, Exam: `задовільно`, Credit: `зараховано`)
+  - **`FAIL`**: `0 – 49` (ECTS: `Fx` / `F`, Exam: `незадовільно`, Credit: `не зараховано`)
+- Threshold constants in `GRADES_THRESHOLD`:
+  - `GRADES_THRESHOLD.EXCELLENT = 90`
+  - `GRADES_THRESHOLD.GOOD = 70`
+  - `GRADES_THRESHOLD.SATISFACTORY = 50`
 
 ### D. UI Localization & Vertical Spacing
 
