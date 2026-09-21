@@ -59,7 +59,7 @@ export function parseGradeScore(gradeItem: unknown): number {
     return !Number.isNaN(parsed) && parsed >= 0 ? Math.min(100, Math.round(parsed)) : 0;
   }
 
-  if (item && item.totalScore !== undefined && item.totalScore !== null) {
+  if (item?.totalScore !== undefined && item?.totalScore !== null) {
     const parsed = Number(item.totalScore);
 
     return !Number.isNaN(parsed) && parsed >= 0 ? Math.min(100, Math.round(parsed)) : 0;
