@@ -240,10 +240,10 @@ function matchesCourseStatus(
 /**
  * Filters courses by provided filters.
  */
-export function filterCourses(
-  courses: Course[],
+export function filterCourses<T extends Course = Course>(
+  courses: T[],
   filters: CourseFilters,
-): Course[] {
+): T[] {
   return courses.filter((course) => {
     const combinedName =
       `${course.fullname || ''} ${course.shortname || ''}`.trim();

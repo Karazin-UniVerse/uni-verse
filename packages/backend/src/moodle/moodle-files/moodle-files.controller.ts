@@ -21,7 +21,7 @@ export class MoodleFilesController {
   @Post('upload')
   @ApiOperation({ summary: 'Upload file to draft area' })
   @ApiBody({ type: UploadFileDto })
-  @ApiResponse({ status: 201 })
+  @ApiResponse({ status: 201, type: Object })
   async uploadFile(
     @GetUser('moodleToken') moodleToken: string,
     @Body() dto: UploadFileDto,

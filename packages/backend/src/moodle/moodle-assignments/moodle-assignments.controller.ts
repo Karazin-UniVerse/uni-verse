@@ -67,7 +67,7 @@ export class MoodleAssignmentsController {
   @Post('assignments/:assignId/submission')
   @ApiOperation({ summary: 'Save assignment submission' })
   @ApiParam({ name: 'assignId', type: 'number' })
-  @ApiResponse({ status: 201 })
+  @ApiResponse({ status: 201, type: Object })
   async saveSubmission(
     @GetUser('moodleToken') moodleToken: string,
     @Param('assignId', ParseIntPipe) assignId: number,

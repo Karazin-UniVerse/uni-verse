@@ -11,13 +11,21 @@ import {
 import { GradesChart } from '@uni-hub/components/grades';
 import { GradeSimulatorTrigger } from '@uni-hub/components/gamification';
 import { getValidGrades, getGradeTone, getGradeCourseName } from '@uni-hub/utils/grades';
+import type { Grade } from '@uni-hub/types';
 import type { GradesTabProps } from '../types';
 import { mockFallbackGrades } from '../constants';
 import { getControlTypeLabel, parseGradeScore, getExamScoreDisplay } from '../utils';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
+export type GradeDisplayItem = Grade & {
+  credits?: number | null;
+  currentScore?: number | string | null;
+  examScore?: number | string | null;
+  totalScore?: number | string | null;
+};
+
 interface GradeTableRowProps {
-  grade: any;
+  grade: GradeDisplayItem;
   index: number;
 }
 
@@ -83,7 +91,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({ grades, onOpenSimulator })
         <span className={styles.muted}>Електронна залікова книжка та симулятор оцінок</span>
         <GradeSimulatorTrigger onOpen={onOpenSimulator} />
       </div>
-      <GradesChart grades={validGrades as any} />
+      <GradesChart grades={validGrades as Grade[]} />
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
@@ -99,7 +107,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({ grades, onOpenSimulator })
             </tr>
           </thead>
           <tbody>
-            {validGrades.map((gradeItem: any, index: number) => {
+            {(validGrades as GradeDisplayItem[]).map((gradeItem, index: number) => {
               const courseName =
                 getGradeCourseName(gradeItem) || gradeItem.courseName || `Дисципліна #${index + 1}`;
 
