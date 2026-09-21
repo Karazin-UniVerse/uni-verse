@@ -19,7 +19,12 @@ import { Public } from './decorators/public.decorator';
 import { RtGuard } from './guards/rt.guard';
 import { GetUser } from './decorators/get-user.decorator';
 import type { Response } from 'express';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  AuthResponseDto,
+  LogoutResponseDto,
+} from './dto/auth.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -29,12 +34,16 @@ export class AuthController {
   @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({ status: 201, description: 'User successfully created.' })
+  @ApiResponse({
+    status: 201,
+    type: AuthResponseDto,
+    description: 'User successfully created.',
+  })
   @HttpCode(HttpStatus.CREATED)
   async register(
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
-  ) {
+  ): Promise<AuthResponseDto> {
     const tokens = await this.authService.register(dto);
 
     this.setRefreshTokenCookie(res, tokens.refresh_token);
@@ -45,12 +54,16 @@ export class AuthController {
   @Public()
   @Post('login')
   @ApiOperation({ summary: 'Login user' })
-  @ApiResponse({ status: 200, description: 'User successfully logged in.' })
+  @ApiResponse({
+    status: 200,
+    type: AuthResponseDto,
+    description: 'User successfully logged in.',
+  })
   @HttpCode(HttpStatus.OK)
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
-  ) {
+  ): Promise<AuthResponseDto> {
     const tokens = await this.authService.login(dto);
 
     this.setRefreshTokenCookie(res, tokens.refresh_token);
@@ -61,12 +74,16 @@ export class AuthController {
   @ApiBearerAuth()
   @Post('logout')
   @ApiOperation({ summary: 'Logout user' })
-  @ApiResponse({ status: 200, description: 'User successfully logged out.' })
+  @ApiResponse({
+    status: 200,
+    type: LogoutResponseDto,
+    description: 'User successfully logged out.',
+  })
   @HttpCode(HttpStatus.OK)
   async logout(
     @GetUser('sub') userId: string,
     @Res({ passthrough: true }) res: Response,
-  ) {
+  ): Promise<LogoutResponseDto> {
     await this.authService.logout(userId);
     res.clearCookie('refreshToken');
 
@@ -78,13 +95,17 @@ export class AuthController {
   @ApiCookieAuth()
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token' })
-  @ApiResponse({ status: 200, description: 'Token successfully refreshed.' })
+  @ApiResponse({
+    status: 200,
+    type: AuthResponseDto,
+    description: 'Token successfully refreshed.',
+  })
   @HttpCode(HttpStatus.OK)
   async refreshTokens(
     @GetUser('sub') userId: string,
     @GetUser('refreshToken') refreshToken: string,
     @Res({ passthrough: true }) res: Response,
-  ) {
+  ): Promise<AuthResponseDto> {
     const tokens = await this.authService.refreshTokens(userId, refreshToken);
 
     this.setRefreshTokenCookie(res, tokens.refresh_token);

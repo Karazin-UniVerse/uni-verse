@@ -19,8 +19,9 @@ export class MoodleCoursesDto {
   @ApiPropertyOptional({
     example: 85.5,
     description: 'Прогресс выполнения (в процентах)',
+    nullable: true,
   })
-  progress?: number;
+  progress?: number | null;
 }
 export class MoodleCoursesResponseDto {
   @ApiProperty({

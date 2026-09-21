@@ -38,6 +38,20 @@
   },
   "overrides": [
     {
+      "files": [
+        "**/*.spec.{ts,tsx,js,jsx}",
+        "**/*.test.{ts,tsx,js,jsx}",
+        "**/*.e2e-spec.{ts,tsx,js,jsx}",
+        "**/tests/**",
+        "**/test/**",
+        "**/*.stories.{ts,tsx,js,jsx}",
+        "**/.storybook/**"
+      ],
+      "rules": {
+        "typescript/no-explicit-any": "off"
+      }
+    },
+    {
       "files": ["packages/uni-hub/**/*.{ts,tsx,js,jsx}"],
       "rules": {
         "no-restricted-imports": [

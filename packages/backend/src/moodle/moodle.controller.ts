@@ -1,5 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { MoodleCoursesService } from './moodle-courses/moodle-courses.service';
+import { MoodleCoursesDto } from './moodle-courses/moodle-courses-dto';
 import { MoodleGradesService } from './moodle-grades/moodle-grades.service';
 import { MoodleGradesResponseDto } from './moodle-grades/moodle-grades-dto';
 import { GetUser } from '../auth/decorators/get-user.decorator';
@@ -41,7 +42,11 @@ export class MoodleController {
     type: 'string',
     description: 'Semester number, e.g. 1',
   })
-  @ApiResponse({ status: 200, description: 'Get courses list' })
+  @ApiResponse({
+    status: 200,
+    type: [MoodleCoursesDto],
+    description: 'Get courses list',
+  })
   @ApiResponse({ status: 403, description: 'Unauthorized' })
   async getCourses(
     @GetUser('moodleId') moodleId: string,
@@ -49,7 +54,7 @@ export class MoodleController {
     @Query('status') status?: CourseStatus,
     @Query('year') year?: string,
     @Query('semester') semester?: string,
-  ) {
+  ): Promise<MoodleCoursesDto[]> {
     const courses = await this.moodleCoursesService.getCourses(
       moodleToken,
       moodleId,

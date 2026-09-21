@@ -43,8 +43,15 @@ export function stripHtml(html?: string | null): string {
     .trim();
 }
 
-export function parseGradeScore(gradeItem: any): number {
-  const rawValue = getGradeRawValue(gradeItem);
+export function parseGradeScore(gradeItem: unknown): number {
+  const item = gradeItem as
+    | (Parameters<typeof getGradeRawValue>[0] & {
+        grade?: unknown;
+        totalScore?: unknown;
+      })
+    | null
+    | undefined;
+  const rawValue = item ? getGradeRawValue(item) : null;
 
   if (rawValue !== null && rawValue !== undefined) {
     const parsed = Number(rawValue);
@@ -52,13 +59,13 @@ export function parseGradeScore(gradeItem: any): number {
     return !Number.isNaN(parsed) && parsed >= 0 ? Math.min(100, Math.round(parsed)) : 0;
   }
 
-  if (gradeItem.totalScore !== undefined && gradeItem.totalScore !== null) {
-    const parsed = Number(gradeItem.totalScore);
+  if (item && item.totalScore !== undefined && item.totalScore !== null) {
+    const parsed = Number(item.totalScore);
 
     return !Number.isNaN(parsed) && parsed >= 0 ? Math.min(100, Math.round(parsed)) : 0;
   }
 
-  const parsed = Number.parseFloat(gradeItem.grade);
+  const parsed = Number.parseFloat(String(item?.grade ?? ''));
 
   return !Number.isNaN(parsed) && parsed >= 0 ? Math.min(100, Math.round(parsed)) : 0;
 }
