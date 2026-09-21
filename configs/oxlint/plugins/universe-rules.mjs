@@ -396,7 +396,7 @@ export default {
                 if (!importedName) continue;
 
                 // If React is imported and JSX is used in the file, consider React used
-                if (importedName === 'React' && /<[a-zA-Z0-9_]+([\s\/>])/.test(restOfFile)) {
+                if (importedName === 'React' && /<[a-zA-Z0-9_]+([\s/>])/.test(restOfFile)) {
                   continue;
                 }
 
@@ -509,20 +509,29 @@ export default {
       meta: { type: 'problem', docs: { description: 'Require @ApiResponse to include "type" for Orval codegen.' } },
       create(context) {
         const filename = (context.filename || '').replace(/\\/g, '/');
-        if (!filename.includes('/backend/') || !filename.endsWith('.controller.ts')) return {};
-        return {
+        
+if (!filename.includes('/backend/') || !filename.endsWith('.controller.ts')) return {};
+        
+return {
           MethodDefinition(node) {
             node.decorators?.forEach((d) => {
               const callee = d.expression?.callee;
-              if (callee?.name !== 'ApiResponse') return;
-              const arg = d.expression?.arguments?.[0];
-              if (arg?.type !== 'ObjectExpression') return;
-              const statusProp = arg.properties.find(
+              
+if (callee?.name !== 'ApiResponse') return;
+              
+const arg = d.expression?.arguments?.[0];
+              
+if (arg?.type !== 'ObjectExpression') return;
+              
+const statusProp = arg.properties.find(
                 (p) => p.key?.name === 'status' && [200, 201].includes(p.value?.value),
               );
-              if (!statusProp) return;
-              const hasType = arg.properties.some((p) => p.key?.name === 'type');
-              if (!hasType) {
+              
+if (!statusProp) return;
+              
+const hasType = arg.properties.some((p) => p.key?.name === 'type');
+              
+if (!hasType) {
                 context.report({ node: d, message: '@ApiResponse missing "type" property. Required for Orval type generation.' });
               }
             });
@@ -535,29 +544,41 @@ export default {
       meta: { type: 'problem', docs: { description: 'Endpoints using @GetUser() must have @ApiBearerAuth() or @ApiCookieAuth().' } },
       create(context) {
         const filename = (context.filename || '').replace(/\\/g, '/');
-        if (!filename.includes('/backend/') || !filename.endsWith('.controller.ts')) return {};
-        const HTTP_DECORATORS = ['Get', 'Post', 'Put', 'Delete', 'Patch'];
-        return {
+        
+if (!filename.includes('/backend/') || !filename.endsWith('.controller.ts')) return {};
+        
+const HTTP_DECORATORS = ['Get', 'Post', 'Put', 'Delete', 'Patch'];
+        
+return {
           MethodDefinition(node) {
             const isEndpoint = node.decorators?.some((d) =>
               HTTP_DECORATORS.includes(d.expression?.callee?.name || d.expression?.name || ''),
             );
-            if (!isEndpoint) return;
-            const hasGetUser = node.value.params?.some((p) =>
+            
+if (!isEndpoint) return;
+            
+const hasGetUser = node.value.params?.some((p) =>
               p.decorators?.some((d) => d.expression?.callee?.name === 'GetUser'),
             );
-            if (!hasGetUser) return;
-            const methodHasAuth = node.decorators?.some((d) => {
+            
+if (!hasGetUser) return;
+            
+const methodHasAuth = node.decorators?.some((d) => {
               const name = d.expression?.callee?.name || d.expression?.name;
-              return name === 'ApiBearerAuth' || name === 'ApiCookieAuth';
+              
+return name === 'ApiBearerAuth' || name === 'ApiCookieAuth';
             });
-            if (methodHasAuth) return;
-            const classNode = node.parent?.parent;
+            
+if (methodHasAuth) return;
+            
+const classNode = node.parent?.parent;
             const classHasAuth = classNode?.decorators?.some((d) => {
               const name = d.expression?.callee?.name || d.expression?.name;
-              return name === 'ApiBearerAuth' || name === 'ApiCookieAuth';
+              
+return name === 'ApiBearerAuth' || name === 'ApiCookieAuth';
             });
-            if (!classHasAuth) {
+            
+if (!classHasAuth) {
               context.report({ node, message: 'Endpoint uses @GetUser() but missing @ApiBearerAuth()/@ApiCookieAuth().' });
             }
           },
@@ -569,15 +590,20 @@ export default {
       meta: { type: 'problem', docs: { description: 'Require explicit return types on controller endpoints.' } },
       create(context) {
         const filename = (context.filename || '').replace(/\\/g, '/');
-        if (!filename.includes('/backend/') || !filename.endsWith('.controller.ts')) return {};
-        const HTTP_DECORATORS = ['Get', 'Post', 'Put', 'Delete', 'Patch'];
-        return {
+        
+if (!filename.includes('/backend/') || !filename.endsWith('.controller.ts')) return {};
+        
+const HTTP_DECORATORS = ['Get', 'Post', 'Put', 'Delete', 'Patch'];
+        
+return {
           MethodDefinition(node) {
             const isEndpoint = node.decorators?.some((d) =>
               HTTP_DECORATORS.includes(d.expression?.callee?.name || d.expression?.name || ''),
             );
-            if (!isEndpoint) return;
-            if (!node.value?.returnType) {
+            
+if (!isEndpoint) return;
+            
+if (!node.value?.returnType) {
               context.report({ node, message: `Controller method '${node.key?.name}' must have an explicit return type.` });
             }
           },
@@ -589,17 +615,21 @@ export default {
       meta: { type: 'problem', docs: { description: 'Prevent business imports in una/ design system.' } },
       create(context) {
         const filename = (context.filename || '').replace(/\\/g, '/');
-        if (!filename.includes('/ui/') || !filename.includes('/una/')) return {};
-        const FORBIDDEN_SOURCES = [
+        
+if (!filename.includes('/ui/') || !filename.includes('/una/')) return {};
+        
+const FORBIDDEN_SOURCES = [
           '@uni-hub/services', '@uni-hub/store', '@uni-hub/views',
           'zustand', 'next/navigation', 'next/router',
           '@universe/backend', '@universe/database',
         ];
-        return {
+        
+return {
           ImportDeclaration(node) {
             const src = node.source?.value || '';
             const match = FORBIDDEN_SOURCES.find((f) => src.includes(f));
-            if (match) {
+            
+if (match) {
               context.report({ node, message: `Design System Purity: 'una/' must not import '${src}'.` });
             }
           },
@@ -611,11 +641,14 @@ export default {
       meta: { type: 'problem', docs: { description: 'Controllers must not import PrismaService.' } },
       create(context) {
         const filename = (context.filename || '').replace(/\\/g, '/');
-        if (!filename.includes('/backend/') || !filename.endsWith('.controller.ts')) return {};
-        return {
+        
+if (!filename.includes('/backend/') || !filename.endsWith('.controller.ts')) return {};
+        
+return {
           ImportDeclaration(node) {
             const src = node.source?.value || '';
-            if (src.includes('prisma.service') || src.includes('prisma.module')) {
+            
+if (src.includes('prisma.service') || src.includes('prisma.module')) {
               context.report({ node, message: 'Controllers must not import PrismaService directly.' });
             }
           },
@@ -627,37 +660,52 @@ export default {
       meta: { type: 'problem', docs: { description: 'Disallow catch blocks returning empty data without logging.' } },
       create(context) {
         const filename = (context.filename || '').replace(/\\/g, '/');
-        if (!filename.endsWith('.service.ts')) return {};
-        function isEmptyFallback(arg) {
+        
+if (!filename.endsWith('.service.ts')) return {};
+        
+function isEmptyFallback(arg) {
           if (!arg) return false;
-          if (arg.type === 'ArrayExpression' && arg.elements.length === 0) return true;
-          return !!(arg.type === 'ObjectExpression' && arg.properties.length > 0 &&
+          
+if (arg.type === 'ArrayExpression' && arg.elements.length === 0) return true;
+          
+return !!(arg.type === 'ObjectExpression' && arg.properties.length > 0 &&
             arg.properties.every((p) =>
               (p.value?.type === 'ArrayExpression' && p.value.elements.length === 0) ||
               (p.value?.type === 'Literal' && (p.value.value === 0 || p.value.value === '')),
             ));
 
         }
-        return {
+        
+return {
           CatchClause(node) {
             const body = node.body?.body;
-            if (!body || body.length !== 1) return;
-            const stmt = body[0];
-            if (stmt.type !== 'ReturnStatement') return;
-            if (isEmptyFallback(stmt.argument)) {
+            
+if (!body || body.length !== 1) return;
+            
+const stmt = body[0];
+            
+if (stmt.type !== 'ReturnStatement') return;
+            
+if (isEmptyFallback(stmt.argument)) {
               context.report({ node, message: 'Silent error: catch returns empty data. Add Logger.error() or rethrow.' });
             }
           },
           CallExpression(node) {
             if (node.callee?.type !== 'MemberExpression' || node.callee.property?.name !== 'catch') return;
-            const handler = node.arguments?.[0];
-            if (!handler || (handler.type !== 'ArrowFunctionExpression' && handler.type !== 'FunctionExpression')) return;
-            if (handler.body?.type !== 'BlockStatement' && isEmptyFallback(handler.body)) {
+            
+const handler = node.arguments?.[0];
+            
+if (!handler || (handler.type !== 'ArrowFunctionExpression' && handler.type !== 'FunctionExpression')) return;
+            
+if (handler.body?.type !== 'BlockStatement' && isEmptyFallback(handler.body)) {
               context.report({ node, message: 'Silent error: .catch() returns empty fallback.' });
-              return;
+              
+return;
             }
-            const body = handler.body?.body;
-            if (body?.length === 1 && body[0].type === 'ReturnStatement' && isEmptyFallback(body[0].argument)) {
+            
+const body = handler.body?.body;
+            
+if (body?.length === 1 && body[0].type === 'ReturnStatement' && isEmptyFallback(body[0].argument)) {
               context.report({ node, message: 'Silent error: .catch() returns empty fallback.' });
             }
           },
@@ -669,13 +717,17 @@ export default {
       meta: { type: 'problem', docs: { description: 'Prevent @universe/core from importing app-layer packages.' } },
       create(context) {
         const filename = (context.filename || '').replace(/\\/g, '/');
-        if (!filename.includes('/packages/core/')) return {};
-        const FORBIDDEN = ['@nestjs/', 'prisma', '@prisma/', 'react', 'react-dom', 'next', 'zustand', '@universe/database', 'express'];
-        return {
+        
+if (!filename.includes('/packages/core/')) return {};
+        
+const FORBIDDEN = ['@nestjs/', 'prisma', '@prisma/', 'react', 'react-dom', 'next', 'zustand', '@universe/database', 'express'];
+        
+return {
           ImportDeclaration(node) {
             const src = node.source?.value || '';
             const match = FORBIDDEN.find((f) => src.startsWith(f) || src.includes(f));
-            if (match) {
+            
+if (match) {
               context.report({ node, message: `@universe/core must not import '${src}'.` });
             }
           },
