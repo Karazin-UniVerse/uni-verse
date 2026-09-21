@@ -1,22 +1,15 @@
 /**
  * @universe/types
- * Core domain models, shared contracts, and types
+ * Core domain models, shared contracts, and type declarations
  * for the Karazin UniVerse platform (UniHub, NestJS Gateway, Moodle LMS).
  */
 
-import { BREAKPOINTS } from '../constants/index.ts';
+import type { ControlType, EctsGrade, TraditionalGrade } from '../utils/grades.ts';
 
-/** ECTS Grade scale (European Credit Transfer and Accumulation System) */
-export type EctsGrade = 'A' | 'B' | 'C' | 'D' | 'E' | 'Fx' | 'F';
-
-/** Traditional Ukrainian national grading scale */
-export type TraditionalGrade =
-  'відмінно' | 'добре' | 'задовільно' | 'незадовільно' | 'зараховано' | 'не зараховано';
-
-/** Final control types in higher education curriculum */
-export type ControlType = 'exam' | 'credit' | 'differentiated_credit';
-
-export type Breakpoint = keyof typeof BREAKPOINTS;
+export type * from '../constants/breakpoints.ts';
+export type * from '../constants/grades.ts';
+export type * from '../constants/response-codes.ts';
+export type * from '../utils/grades.ts';
 
 /** Academic status of a student */
 export type StudentAcademicStatus = 'active' | 'academic_leave' | 'expelled' | 'graduated';
@@ -172,36 +165,4 @@ export interface LmsConnectionStatus {
   latencyMs?: number;
   userId?: string | number;
   userTokenValid: boolean;
-}
-
-/**
- * Parameters for calculating accumulated course grades
- */
-export interface GradeAccumulationParams {
-  semesterScore: number;
-  controlType?: ControlType;
-  examScore?: number | null;
-}
-
-/**
- * Result of accumulated grade calculation according to university regulations
- */
-export interface GradeAccumulationResult {
-  totalScore: number;
-  ectsGrade: EctsGrade;
-  traditionalGrade: TraditionalGrade;
-  isAdmittedToExam: boolean;
-  isExamPassed: boolean;
-  isCoursePassed: boolean;
-  statusMessage: string;
-}
-
-/**
- * Exam target requirement for achieving a specific ECTS grade
- */
-export interface ExamTargetRequirement {
-  grade: EctsGrade;
-  minTotalScore: number;
-  requiredExamScore: number;
-  isAchievable: boolean;
 }

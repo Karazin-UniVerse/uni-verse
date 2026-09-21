@@ -1,6 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
-import type { ExamTargetRequirement, GradeAccumulationResult } from '@core/types';
+import type { ExamTargetRequirement, GradeAccumulationResult } from '@core/utils/grades.ts';
 import styles from './GradeSimulator.module.scss';
 
 function getTargetStatusText(target: ExamTargetRequirement, isAdmitted: boolean): string {

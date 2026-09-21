@@ -19,13 +19,29 @@
       "types": "./dist/types/index.d.ts",
       "default": "./dist/types/index.js"
     },
+    "./types/*": {
+      "types": "./dist/types/*.d.ts",
+      "default": "./dist/types/*.js"
+    },
     "./constants": {
       "types": "./dist/constants/index.d.ts",
       "default": "./dist/constants/index.js"
     },
+    "./constants/*": {
+      "types": "./dist/constants/*.d.ts",
+      "default": "./dist/constants/*.js"
+    },
     "./utils": {
       "types": "./dist/utils/index.d.ts",
       "default": "./dist/utils/index.js"
+    },
+    "./utils/*": {
+      "types": "./dist/utils/*.d.ts",
+      "default": "./dist/utils/*.js"
+    },
+    "./auth": {
+      "types": "./dist/auth/index.d.ts",
+      "default": "./dist/auth/index.js"
     }
   },
   "devDependencies": {

@@ -8,6 +8,6 @@
     "sourceMap": true,
     "rewriteRelativeImportExtensions": true
   },
-  "include": ["types/**/*", "constants/**/*", "utils/**/*", "index.ts"],
+  "include": ["types/**/*", "constants/**/*", "utils/**/*", "auth/**/*", "index.ts"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }

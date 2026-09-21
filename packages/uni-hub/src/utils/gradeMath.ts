@@ -1,6 +1,5 @@
-import { MAX_EXAM, MAX_SEMESTER_CREDIT, MAX_SEMESTER_EXAM } from '@core/constants';
-import { calculateAccumulatedGrade } from '@core/utils';
-import type { ControlType } from '@core/types';
+import { MAX_EXAM, MAX_SEMESTER_CREDIT, MAX_SEMESTER_EXAM } from '@core/constants/grades.ts';
+import { calculateAccumulatedGrade, type ControlType } from '@core/utils/grades.ts';
 
 /**
  * Clamps a numerical value between min and max bounds.

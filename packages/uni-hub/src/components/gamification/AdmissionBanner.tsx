@@ -1,6 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
-import { MIN_EXAM_ADMISSION } from '@core/constants';
+import { MIN_EXAM_ADMISSION } from '@core/constants/grades.ts';
 import styles from './GradeSimulator.module.scss';
 
 export type AdmissionBannerProps = {

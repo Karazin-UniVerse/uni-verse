@@ -14,9 +14,12 @@ import {
   MAX_SEMESTER_CREDIT,
   MAX_SEMESTER_EXAM,
   MIN_EXAM_ADMISSION,
-} from '@core/constants';
-import { calculateAccumulatedGrade, calculateExamTargets } from '@core/utils';
-import type { ControlType } from '@core/types';
+} from '@core/constants/grades.ts';
+import {
+  calculateAccumulatedGrade,
+  calculateExamTargets,
+  type ControlType,
+} from '@core/utils/grades.ts';
 import { AdmissionBanner } from './AdmissionBanner';
 import { ExamTargetsGrid } from './ExamTargetsGrid';
 import { RemainingAssignmentsSection } from './RemainingAssignmentsSection';

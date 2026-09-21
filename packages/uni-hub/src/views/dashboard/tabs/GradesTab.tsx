@@ -2,8 +2,12 @@
 
 import React from 'react';
 import { Tag, ProgressBar } from '@una';
-import type { ControlType } from '@core/types';
-import { calculateEctsGrade, calculateTraditionalGrade } from '@core/utils';
+import { GRADES_THRESHOLD } from '@core/constants/grades.ts';
+import {
+  calculateEctsGrade,
+  calculateTraditionalGrade,
+  type ControlType,
+} from '@core/utils/grades.ts';
 import { GradesChart } from '@uni-hub/components/grades';
 import { GradeSimulatorTrigger } from '@uni-hub/components/gamification';
 import { getValidGrades, getGradeTone, getGradeCourseName } from '@uni-hub/utils/grades';
@@ -61,7 +65,9 @@ const GradeTableRow: React.FC<GradeTableRowProps> = ({ grade, index }) => {
         <Tag tone={tone}>{ects}</Tag>
       </td>
       <td>
-        <Tag tone={totalScore >= 60 ? 'success' : 'danger'}>{traditionalGrade}</Tag>
+        <Tag tone={totalScore >= GRADES_THRESHOLD.SATISFACTORY ? 'success' : 'danger'}>
+          {traditionalGrade}
+        </Tag>
       </td>
     </tr>
   );
