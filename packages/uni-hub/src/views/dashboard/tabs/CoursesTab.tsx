@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { BookOpen } from 'lucide-react';
 import { Button, Tag, ProgressBar } from '@una';
 import type { CurriculumItem } from '@core/types';
-import type { ControlType } from '@core/utils/grades.ts';
+import type { ControlType } from '@core/utils/grades';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { CoursesTabProps } from '../types';
 import { mockKarazinCurriculum, cardMotion } from '../constants';

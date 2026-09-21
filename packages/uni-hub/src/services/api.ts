@@ -1,5 +1,5 @@
 export * from '@core/types';
-import { RESPONSE_CODES } from '@core/constants/response-codes.ts';
+import { RESPONSE_CODES } from '@core/constants/response-codes';
 import type {
   AuthResponse,
   Course,

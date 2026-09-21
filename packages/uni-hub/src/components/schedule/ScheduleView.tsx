@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button, RadioButton, Tag, Empty } from '@una';
-import { BREAKPOINTS } from '@core/constants/breakpoints.ts';
+import { BREAKPOINTS } from '@core/constants/breakpoints';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import styles from './ScheduleView.module.scss';
 

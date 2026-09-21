@@ -1,4 +1,4 @@
-import type { ControlType } from '@core/utils/grades.ts';
+import type { ControlType } from '@core/utils/grades';
 
 export interface Course {
   id: number;
