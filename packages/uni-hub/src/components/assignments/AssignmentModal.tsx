@@ -127,7 +127,8 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
           reader.readAsDataURL(actualFile);
           reader.onload = () => resolve(reader.result as string);
-          reader.onerror = (error) => reject(error);
+          reader.onerror = () =>
+            reject(reader.error ?? new Error('Failed to read file as data URL'));
         });
 
         const uploadRes = await moodleApi.uploadFile(actualFile.name, base64);

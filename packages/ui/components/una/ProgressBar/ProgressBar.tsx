@@ -3,7 +3,7 @@ import styles from './ProgressBar.module.scss';
 
 import type { ProgressBarProps } from './ProgressBar.types';
 
-export const ProgressBar: React.FC<ProgressBarProps> = ({
+export const ProgressBar: React.FC<Readonly<ProgressBarProps>> = ({
   value,
   ariaLabel,
   ariaLabelledBy,

@@ -49,7 +49,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-8);
-  padding: 0 var(--space-12);
+  padding: 0 var(--space-16);
   font: var(--font-heading);
   font-size: var(--font-lg);
   border-bottom: 1px solid var(--border-color);
@@ -70,10 +70,11 @@
   align-items: center;
   gap: var(--space-12);
   width: 100%;
+  -webkit-tap-highlight-color: transparent;
   border: none;
   background: transparent;
   color: var(--text-secondary);
-  padding: var(--space-12);
+  padding: var(--space-12) var(--space-16);
   border-radius: var(--border-radius-medium);
   cursor: pointer;
   font: inherit;
@@ -90,23 +91,34 @@
   }
 }
 
+.mobileLabel {
+  display: none;
+}
+
 .activePill {
   position: absolute;
   inset: 0;
-  background: var(--accent-primary);
   border-radius: var(--border-radius-medium);
-  opacity: 0.15;
   z-index: 0;
+  background: color-mix(in srgb, var(--accent-primary) 15%, transparent);
 }
 
 .active {
-  color: var(--text-primary);
   font-weight: 600;
+}
+
+:global([data-theme='light']) .active {
+  color: var(--blue-700);
+}
+
+:global([data-theme='dark']) .active,
+:global([data-theme='cyberpunk']) .active {
+  color: var(--blue-400);
 }
 
 .collapsed .navItem {
   justify-content: center;
-  padding: var(--space-12) var(--space-8);
+  padding: var(--space-12) 0;
 }
 
 .siderFooter {
@@ -121,7 +133,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-8);
-  padding: var(--space-8) var(--space-12);
+  padding: var(--space-8) var(--space-16);
   border-radius: var(--border-radius-medium);
   background: rgb(34 197 94 / 8%);
   border: 1px solid rgb(34 197 94 / 20%);
@@ -178,20 +190,30 @@
   padding: var(--space-8);
 }
 
+.siderFooter .themeBtn,
+.siderFooter .logoutBtn,
 .themeBtn,
 .logoutBtn {
   width: 100%;
+  -webkit-tap-highlight-color: transparent;
   justify-content: flex-start;
-  gap: var(--space-8);
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--border-radius-medium);
+  color: var(--text-secondary);
+  font-weight: 400;
+
+  &:hover {
+    color: var(--text-primary);
+  }
 }
 
-.logoutBtn {
-  color: var(--text-primary);
-}
-
+.collapsed .siderFooter .themeBtn,
+.collapsed .siderFooter .logoutBtn,
 .collapsed .themeBtn,
 .collapsed .logoutBtn {
   justify-content: center;
+  padding: var(--space-12) 0;
 }
 
 .main {
@@ -301,7 +323,7 @@
   right: 0;
   width: 360px;
   max-width: 90vw;
-  background: var(--bg-color);
+  background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-large);
   box-shadow: var(--box-shadow-large);
@@ -372,11 +394,11 @@
 }
 
 .statCard {
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-large);
+  background: var(--bg-surface);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
   padding: var(--space-24);
-  box-shadow: var(--box-shadow-small);
+  box-shadow: var(--card-shadow);
   animation: fadeUp var(--transition-medium) var(--ease-standard) both;
   transition:
     transform var(--transition-fast) var(--ease-standard),
@@ -384,7 +406,7 @@
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: var(--box-shadow-medium);
+    box-shadow: var(--card-shadow-hover);
   }
 }
 
@@ -409,10 +431,11 @@
 }
 
 .panel {
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-large);
-  padding: var(--space-16);
+  background: var(--bg-surface);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: var(--space-24);
+  box-shadow: var(--card-shadow);
 }
 
 .panelHeader {
@@ -466,13 +489,14 @@
 }
 
 .courseCard {
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-large);
-  padding: var(--space-16);
+  background: var(--bg-surface);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: var(--space-24);
   display: flex;
   flex-direction: column;
-  gap: var(--space-12);
+  gap: var(--space-16);
+  box-shadow: var(--card-shadow);
   animation: fadeUp var(--transition-medium) var(--ease-standard) both;
   transition:
     transform var(--transition-fast) var(--ease-standard),
@@ -481,7 +505,7 @@
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: var(--box-shadow-medium);
+    box-shadow: var(--card-shadow-hover);
     border-color: var(--accent-primary);
   }
 }
@@ -534,10 +558,11 @@
 .assignmentCard {
   width: 100%;
   text-align: left;
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-large);
-  padding: var(--space-16);
+  background: var(--bg-surface);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: var(--space-20);
+  box-shadow: var(--card-shadow);
   cursor: pointer;
   font: inherit;
   color: inherit;
@@ -546,7 +571,7 @@
     border-color var(--transition-fast) var(--ease-standard);
 
   &:hover {
-    box-shadow: var(--box-shadow-medium);
+    box-shadow: var(--card-shadow-hover);
     border-color: var(--accent-primary);
   }
 }
@@ -566,7 +591,7 @@
 
 .tableWrap {
   overflow: auto;
-  background: var(--bg-color);
+  background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-large);
 }
@@ -638,7 +663,7 @@
 
   /* Don't hide text if menu is explicitly open on mobile */
   .layout:not(.mobileOpen) .brand span,
-  .layout:not(.mobileOpen) .navItem span,
+  .layout:not(.mobileOpen) .navItem .desktopLabel,
   .layout:not(.mobileOpen) .logoutBtn span {
     display: none;
   }
@@ -659,43 +684,81 @@
 
   .sider {
     position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 240px;
+    inset: auto var(--space-16) var(--space-16) var(--space-16);
+    height: 64px;
+    width: auto;
     z-index: 1000;
-    transform: translateX(-100%);
-    visibility: hidden;
-    transition:
-      transform var(--transition-medium) var(--ease-standard),
-      visibility var(--transition-medium) var(--ease-standard);
-    box-shadow: var(--box-shadow-large);
+    transform: none;
+    visibility: visible;
+    flex-direction: row;
+    box-shadow: 0 8px 32px rgb(0 0 0 / 15%);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 32px;
+  }
+
+  .brand {
+    display: none;
+  }
+
+  .nav {
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: stretch;
+    padding: var(--space-4);
+    width: 100%;
+    gap: var(--space-4);
+    overflow: hidden;
+  }
+
+  .navItem {
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 0;
+    justify-content: center;
+    border-radius: 32px;
+    text-align: center;
+    color: var(--text-secondary);
+
+    .desktopLabel {
+      display: none;
+    }
+
+    .mobileLabel {
+      font-size: 10px;
+      display: block;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      width: 100%;
+      padding: 0 2px;
+    }
+
+    svg {
+      margin: 0 auto;
+    }
+  }
+
+  .activePill {
+    display: block;
+    border-radius: 32px;
+  }
+
+  .siderFooter {
+    display: none; /* Hidden on mobile */
   }
 
   .layout.mobileOpen .sider {
-    transform: translateX(0);
-    visibility: visible;
+    transform: none;
   }
 
   .mobileOverlay {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgb(0 0 0 / 40%);
-    z-index: 999;
-    backdrop-filter: blur(2px);
-    border: none;
-    padding: 0;
-    cursor: pointer;
+    display: none; /* No longer needed for bottom nav */
   }
 
   .mobileMenuBtn {
-    display: flex;
-  }
-
-  /* Hide the toggle button inside the sider on mobile, since we use overlay/hamburger */
-  .brand button {
-    display: none;
+    display: none; /* Hide burger menu */
   }
 
   .main {
@@ -714,17 +777,22 @@
   .user span:last-child {
     display: none;
   }
+
+  .content {
+    padding: var(--space-16);
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .studentCard {
   background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-large);
-  padding: var(--space-16);
+  border: 1px solid var(--card-border); /* Ледь помітна рамка замість різкої */
+  border-radius: 16px; /* Збільшене заокруглення */
+  padding: var(--space-24);
   display: flex;
   flex-direction: column;
   gap: var(--space-16);
-  box-shadow: var(--box-shadow-small);
+  box-shadow: var(--card-shadow); /* М'яка розсіяна тінь */
 }
 
 .studentCardTop {
@@ -806,7 +874,6 @@
   align-items: center;
   gap: var(--space-8);
   flex-wrap: wrap;
-  margin: var(--space-8) 0;
   font-size: var(--font-xs);
   color: var(--text-secondary);
 }
@@ -814,7 +881,6 @@
 .courseTeacher {
   font-size: var(--font-xs);
   color: var(--text-secondary);
-  margin-bottom: var(--space-8);
 }
 
 .gradeEctsCell {
@@ -828,4 +894,108 @@
   align-items: center;
   gap: var(--space-8);
   min-width: 140px;
+}
+
+.mobileSettingsBlock {
+  display: none;
+
+  @include narrower-than('md') {
+    display: flex;
+    gap: var(--space-8);
+    margin-top: var(--space-12);
+    align-items: center;
+    flex-wrap: wrap;
+  }
+}
+
+.desktopOnly {
+  display: block;
+
+  @include narrower-than('md') {
+    display: none;
+  }
+}
+
+.horizontalScrollList {
+  @include narrower-than('md') {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: var(--space-12);
+    padding-bottom: var(--space-8);
+    scroll-snap-type: x mandatory;
+
+    > div {
+      min-width: 240px;
+      scroll-snap-align: start;
+    }
+  }
+}
+
+.mobileFilterToggle {
+  display: none;
+
+  @include narrower-than('md') {
+    display: flex;
+    margin-bottom: var(--space-8);
+  }
+}
+
+@include narrower-than('md') {
+  .filters {
+    display: none;
+    background: var(--bg-surface);
+    padding: var(--space-16);
+    border-radius: var(--border-radius-large);
+    border: 1px solid var(--border-color);
+    flex-direction: column;
+    align-items: stretch;
+    box-shadow: var(--box-shadow-large);
+
+    &.filtersOpen {
+      display: flex;
+    }
+  }
+}
+
+.userWrap {
+  position: relative;
+}
+
+.userDropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 240px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-large);
+  box-shadow: var(--box-shadow-large);
+  z-index: 30;
+  overflow: hidden;
+}
+
+.userDropdownHeader {
+  padding: var(--space-12) var(--space-16);
+  border-bottom: 1px solid var(--border-color);
+
+  strong {
+    display: block;
+    font-size: var(--font-sm);
+  }
+}
+
+.userDropdownBody {
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.mobileOnlyItem {
+  display: none;
+
+  @include narrower-than('md') {
+    display: block;
+  }
 }

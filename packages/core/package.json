@@ -6,7 +6,7 @@
     "lint": "oxlint",
     "typecheck": "tsc -p tsconfig.test.json",
     "build": "tsc -p tsconfig.json",
-    "test": "node --test types/index.test.ts"
+    "test": "node --test"
   },
   "main": "./dist/index.js",
   "types": "./index.ts",
@@ -18,6 +18,18 @@
     "./types": {
       "types": "./types/index.ts",
       "default": "./dist/types/index.js"
+    },
+    "./constants": {
+      "types": "./constants/index.ts",
+      "default": "./dist/constants/index.js"
+    },
+    "./auth": {
+      "types": "./auth/index.ts",
+      "default": "./dist/auth/index.js"
+    },
+    "./browser": {
+      "types": "./browser.ts",
+      "default": "./dist/browser.js"
     }
   },
   "devDependencies": {

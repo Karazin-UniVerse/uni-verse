@@ -73,6 +73,9 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
   - When moving, renaming, or refactoring code (such as migrating components into `@universe/ui` or renaming functions/mixins), **never** create backwards-compatibility aliases, re-export proxies, wrapper functions, or deprecated shim files (e.g., `export { Button as SimpleButton } from '@universe/ui'` inside deprecated paths).
   - Directly update all call sites, imports, and usages across the entire codebase to the new location/name.
   - Completely delete obsolete files and aliases. We are an active internal monorepo with no external library consumers — maintain zero legacy dead code and zero transitional proxy layers.
+- **No Redundant Aliases for Types, Enums, or Constants**:
+  - NEVER introduce redundant aliases or duplicate exports for backwards compatibility (e.g. `export const GradeScoreThreshold = GRADES_THRESHOLD; export type GradeScoreThreshold = GradesThreshold;`).
+  - Enforce a single canonical identifier per entity. When renaming or unifying identifiers, update all call sites across the codebase and remove the previous name completely.
 
 ### 8. AI Code Review Culture & Complexity Management
 

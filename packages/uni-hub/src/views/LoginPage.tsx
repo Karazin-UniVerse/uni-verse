@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button, TextInput, SimpleForm, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { authApi } from '@uni-hub/services/api';
+import { motion } from 'framer-motion';
 import styles from './LoginPage.module.scss';
 
 const LoginPage: React.FC = () => {
@@ -58,41 +59,43 @@ const LoginPage: React.FC = () => {
   return (
     <div className={styles.page}>
       <div className={styles.themeBar}>
-        <ThemeSwitcher />
+        <ThemeSwitcher compact />
       </div>
       <div className={styles.center}>
-        <SimpleForm variant="card" className={styles.card} action={handleLogin}>
+        <SimpleForm className={styles.card} action={handleLogin}>
           <div className={styles.brand}>
-            <h1>UNiVerse</h1>
+            <h1>UNiHub</h1>
             <p>Войдите в свой аккаунт Moodle</p>
           </div>
 
-          <label className={styles.field}>
+          <label htmlFor="login-username" className={styles.field}>
             <span className={styles.label}>Имя пользователя</span>
             <div className={styles.inputWrap}>
               <User size={16} className={styles.icon} />
               <TextInput
+                id="login-username"
                 name="username"
                 size="large"
                 placeholder="Имя пользователя"
                 value={username}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+                onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
               />
             </div>
           </label>
 
-          <label className={styles.field}>
+          <label htmlFor="login-password" className={styles.field}>
             <span className={styles.label}>Пароль</span>
             <div className={styles.inputWrap}>
               <Lock size={16} className={styles.icon} />
               <TextInput
+                id="login-password"
                 name="password"
                 type="password"
                 size="large"
                 placeholder="Пароль"
                 value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
               />
             </div>
@@ -100,15 +103,17 @@ const LoginPage: React.FC = () => {
 
           {error && <p className={styles.error}>{error}</p>}
 
-          <Button
-            type="submit"
-            variant="primary"
-            size="large"
-            disabled={loading}
-            className={styles.submit}
-          >
-            {loading ? 'Вход...' : 'Войти'}
-          </Button>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button
+              type="submit"
+              variant="primary"
+              size="large"
+              disabled={loading}
+              className={styles.submit}
+            >
+              {loading ? 'Вход...' : 'Войти'}
+            </Button>
+          </motion.div>
         </SimpleForm>
       </div>
     </div>

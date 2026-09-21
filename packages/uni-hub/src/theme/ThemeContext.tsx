@@ -1,4 +1,11 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+} from 'react';
 
 export type AppTheme = 'light' | 'dark' | 'cyberpunk';
 
@@ -18,17 +25,23 @@ function applyTheme(theme: AppTheme) {
   const root = document.documentElement;
 
   if (theme === 'light') {
-    root.removeAttribute('data-theme');
+    delete root.dataset.theme;
   } else {
-    root.setAttribute('data-theme', theme);
+    root.dataset.theme = theme;
   }
 }
 
-function readStoredTheme(): AppTheme {
-  if (typeof window === 'undefined') {
-    return 'light';
-  }
+const subscribeToTheme = (callback: () => void) => {
+  window.addEventListener('storage', callback);
+  window.addEventListener('theme-change', callback);
 
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener('theme-change', callback);
+  };
+};
+
+const getThemeSnapshot = (): AppTheme => {
   const stored = localStorage.getItem(STORAGE_KEY);
 
   if (stored === 'light' || stored === 'dark' || stored === 'cyberpunk') {
@@ -36,27 +49,30 @@ function readStoredTheme(): AppTheme {
   }
 
   return 'light';
-}
+};
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<AppTheme>(() => readStoredTheme());
+const getThemeServerSnapshot = (): AppTheme => 'light';
+
+export const ThemeProvider: React.FC<Readonly<{ children: React.ReactNode }>> = ({ children }) => {
+  const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getThemeServerSnapshot);
 
   useEffect(() => {
     applyTheme(theme);
-    localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);
 
   const setTheme = useCallback((next: AppTheme) => {
-    setThemeState(next);
+    localStorage.setItem(STORAGE_KEY, next);
+    applyTheme(next);
+    window.dispatchEvent(new Event('theme-change'));
   }, []);
 
   const cycleTheme = useCallback(() => {
-    setThemeState((prev) => {
-      const idx = THEMES.indexOf(prev);
+    const currentTheme = getThemeSnapshot();
+    const currentThemeIndex = THEMES.indexOf(currentTheme);
+    const nextTheme = THEMES[(currentThemeIndex + 1) % THEMES.length];
 
-      return THEMES[(idx + 1) % THEMES.length];
-    });
-  }, []);
+    setTheme(nextTheme);
+  }, [setTheme]);
 
   const value = useMemo(() => ({ theme, setTheme, cycleTheme }), [theme, setTheme, cycleTheme]);
 
@@ -64,11 +80,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 };
 
 export function useTheme() {
-  const ctx = useContext(ThemeContext);
+  const context = useContext(ThemeContext);
 
-  if (!ctx) {
+  if (!context) {
     throw new Error('useTheme must be used within ThemeProvider');
   }
 
-  return ctx;
+  return context;
 }

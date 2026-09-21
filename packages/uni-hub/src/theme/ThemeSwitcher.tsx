@@ -16,7 +16,7 @@ type ThemeSwitcherProps = {
   className?: string;
 };
 
-export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
+export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
   className,
   compact = false,
   showLabel = true,
@@ -33,15 +33,20 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         onClick={cycleTheme}
         aria-label={`Тема: ${themeMetadata.label}. Перемкнути`}
         title={themeMetadata.label}
+        suppressHydrationWarning
       >
         {themeMetadata.icon}
-        {showLabel && <span className={styles.compactLabel}>{themeMetadata.label}</span>}
+        {showLabel && (
+          <span className={styles.compactLabel} suppressHydrationWarning>
+            {themeMetadata.label}
+          </span>
+        )}
       </button>
     );
   }
 
   return (
-    <div className={clsx(styles.switcher, className)} role="group" aria-label="Вибір теми">
+    <fieldset className={clsx(styles.switcher, className)} aria-label="Вибір теми">
       {(Object.keys(THEME_META) as AppTheme[]).map((themeOption) => {
         const themeMetadata = THEME_META[themeOption];
         const isSelectedTheme = theme === themeOption;
@@ -53,12 +58,13 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
             className={clsx(styles.option, isSelectedTheme && styles.active)}
             onClick={() => setTheme(themeOption)}
             aria-pressed={isSelectedTheme}
+            suppressHydrationWarning
           >
             {themeMetadata.icon}
             <span>{themeMetadata.label}</span>
           </button>
         );
       })}
-    </div>
+    </fieldset>
   );
 };

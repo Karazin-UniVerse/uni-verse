@@ -10,7 +10,7 @@ import {
   ApiTags,
   ApiQuery,
 } from '@nestjs/swagger';
-import { filterCourses, type CourseStatus } from '../utils/moodleFilters';
+import { filterCourses, CourseStatus } from '../utils/moodleFilters';
 
 @ApiTags('moodle')
 @Controller('moodle')
@@ -26,7 +26,7 @@ export class MoodleController {
   @ApiQuery({
     name: 'status',
     required: false,
-    type: 'string',
+    enum: CourseStatus,
     description: 'completed | not_completed | in_progress | not_started',
   })
   @ApiQuery({

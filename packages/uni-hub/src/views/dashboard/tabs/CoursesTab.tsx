@@ -37,7 +37,7 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({ courses, soundEnabled })
               <h3>{'fullname' in course ? course.fullname : (course as CurriculumItem).name}</h3>
               <span className={styles.courseTag}>
                 <BookOpen size={14} aria-hidden />
-                <Tag tone="info">
+                <Tag tone="neutral">
                   {'shortname' in course ? course.shortname : (course as CurriculumItem).code}
                 </Tag>
               </span>
@@ -45,11 +45,7 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({ courses, soundEnabled })
             {(credits !== undefined || controlType !== undefined) && (
               <div className={styles.courseMetaRow}>
                 {credits !== undefined && <Tag tone="neutral">{credits} ECTS</Tag>}
-                {controlType && (
-                  <Tag tone={controlType === 'exam' ? 'info' : 'success'}>
-                    {getControlTypeLabel(controlType)}
-                  </Tag>
-                )}
+                {controlType && <Tag tone="neutral">{getControlTypeLabel(controlType)}</Tag>}
               </div>
             )}
             {instructor && (
@@ -63,7 +59,7 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({ courses, soundEnabled })
                 : 'Навчальна дисципліна індивідуального плану'}
             </p>
             {progress !== undefined && progress !== null && (
-              <div style={{ margin: 'var(--space-12) 0' }}>
+              <div>
                 <div
                   style={{
                     display: 'flex',

@@ -6,5 +6,12 @@
     "allowImportingTsExtensions": true,
     "typeRoots": ["../../packages/backend/node_modules/@types"]
   },
-  "include": ["types/**/*", "index.ts"]
+  "include": [
+    "types/**/*",
+    "constants/**/*",
+    "auth/**/*",
+    "browser.ts",
+    "browser.test.ts",
+    "index.ts"
+  ]
 }

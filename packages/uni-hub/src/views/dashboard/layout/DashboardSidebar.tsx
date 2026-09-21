@@ -12,18 +12,43 @@ import {
   PanelLeftOpen,
   LogOut,
 } from 'lucide-react';
-import { Button as SimpleButton } from '@una';
+import { Button } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { DashboardSidebarProps, NavKey } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
-const menuItems: { key: NavKey; icon: React.ReactNode; label: string }[] = [
-  { key: 'overview', icon: <LayoutDashboard size={18} />, label: 'Картка студента / Огляд' },
-  { key: 'courses', icon: <BookOpen size={18} />, label: 'Індивідуальний план' },
-  { key: 'grades', icon: <ClipboardList size={18} />, label: 'Заліковка та бали' },
-  { key: 'schedule', icon: <CalendarDays size={18} />, label: 'Розклад занять' },
-  { key: 'assignments', icon: <FileEdit size={18} />, label: 'Завдання' },
+export const NAV_ITEMS: {
+  key: NavKey;
+  icon: React.ReactNode;
+  label: string;
+  shortLabel: string;
+}[] = [
+  {
+    key: 'overview',
+    icon: <LayoutDashboard size={18} />,
+    label: 'Картка студента / Огляд',
+    shortLabel: 'Огляд',
+  },
+  {
+    key: 'courses',
+    icon: <BookOpen size={18} />,
+    label: 'Індивідуальний план',
+    shortLabel: 'Курси',
+  },
+  {
+    key: 'grades',
+    icon: <ClipboardList size={18} />,
+    label: 'Заліковка та бали',
+    shortLabel: 'Оцінки',
+  },
+  {
+    key: 'schedule',
+    icon: <CalendarDays size={18} />,
+    label: 'Розклад занять',
+    shortLabel: 'Розклад',
+  },
+  { key: 'assignments', icon: <FileEdit size={18} />, label: 'Завдання', shortLabel: 'Завдання' },
 ];
 
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
@@ -125,7 +150,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       <aside ref={siderRef} id="dashboard-sidebar" className={styles.sider} aria-label="Навігація">
         <div className={styles.brand}>
           <span>{collapsed && !mobileMenuOpen ? 'U' : 'UNiVerse'}</span>
-          <SimpleButton
+          <Button
             type="button"
             variant="secondary"
             size="small"
@@ -134,11 +159,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             aria-label={collapsed ? 'Розгорнути меню' : 'Згорнути меню'}
           >
             {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-          </SimpleButton>
+          </Button>
         </div>
 
         <nav className={styles.nav}>
-          {menuItems.map((item) => (
+          {NAV_ITEMS.map((item) => (
             <button
               key={item.key}
               type="button"
@@ -149,6 +174,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 onCloseMobileMenu();
               }}
               title={item.label}
+              aria-label={item.label}
             >
               {activeKey === item.key && (
                 <motion.div
@@ -158,7 +184,12 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 />
               )}
               {item.icon}
-              {(!collapsed || mobileMenuOpen) && <span>{item.label}</span>}
+              {(!collapsed || mobileMenuOpen) && (
+                <>
+                  <span className={styles.desktopLabel}>{item.label}</span>
+                  <span className={styles.mobileLabel}>{item.shortLabel}</span>
+                </>
+              )}
             </button>
           ))}
         </nav>
@@ -169,7 +200,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             className={styles.moodleStatusLink}
-            title="Moodle LMS: moodle.universemvp.tech (активно)"
+            title="Moodle LMS (підключено)"
           >
             <span className={styles.statusDot} aria-hidden />
             {!collapsed || mobileMenuOpen ? (
@@ -183,7 +214,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             showLabel={!collapsed || mobileMenuOpen}
             className={styles.themeBtn}
           />
-          <SimpleButton
+          <Button
             type="button"
             variant="secondary"
             size="medium"
@@ -193,7 +224,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           >
             <LogOut size={18} />
             {(!collapsed || mobileMenuOpen) && <span>Вийти</span>}
-          </SimpleButton>
+          </Button>
         </div>
       </aside>
     </>
