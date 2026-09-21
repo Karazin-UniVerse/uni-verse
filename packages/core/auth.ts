@@ -1,4 +1,4 @@
-import { isBrowser } from '../utils/browser.ts';
+import { isBrowser } from './utils/browser.ts';
 
 /**
  * Checks whether an active user session exists in local storage.

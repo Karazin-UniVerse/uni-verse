@@ -6,11 +6,6 @@
 
 import type { ControlType, EctsGrade, TraditionalGrade } from '../utils/grades.ts';
 
-export type * from '../constants/breakpoints.ts';
-export type * from '../constants/grades.ts';
-export type * from '../constants/response-codes.ts';
-export type * from '../utils/grades.ts';
-
 /** Academic status of a student */
 export type StudentAcademicStatus = 'active' | 'academic_leave' | 'expelled' | 'graduated';
 

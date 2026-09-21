@@ -12,13 +12,18 @@ import {
   PanelLeftOpen,
   LogOut,
 } from 'lucide-react';
-import { Button as SimpleButton } from '@una';
+import { Button } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { DashboardSidebarProps, NavKey } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
-const menuItems: { key: NavKey; icon: React.ReactNode; label: string; shortLabel: string }[] = [
+export const NAV_ITEMS: {
+  key: NavKey;
+  icon: React.ReactNode;
+  label: string;
+  shortLabel: string;
+}[] = [
   {
     key: 'overview',
     icon: <LayoutDashboard size={18} />,
@@ -145,7 +150,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       <aside ref={siderRef} id="dashboard-sidebar" className={styles.sider} aria-label="Навігація">
         <div className={styles.brand}>
           <span>{collapsed && !mobileMenuOpen ? 'U' : 'UNiVerse'}</span>
-          <SimpleButton
+          <Button
             type="button"
             variant="secondary"
             size="small"
@@ -154,11 +159,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             aria-label={collapsed ? 'Розгорнути меню' : 'Згорнути меню'}
           >
             {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-          </SimpleButton>
+          </Button>
         </div>
 
         <nav className={styles.nav}>
-          {menuItems.map((item) => (
+          {NAV_ITEMS.map((item) => (
             <button
               key={item.key}
               type="button"
@@ -209,7 +214,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             showLabel={!collapsed || mobileMenuOpen}
             className={styles.themeBtn}
           />
-          <SimpleButton
+          <Button
             type="button"
             variant="secondary"
             size="medium"
@@ -219,7 +224,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           >
             <LogOut size={18} />
             {(!collapsed || mobileMenuOpen) && <span>Вийти</span>}
-          </SimpleButton>
+          </Button>
         </div>
       </aside>
     </>

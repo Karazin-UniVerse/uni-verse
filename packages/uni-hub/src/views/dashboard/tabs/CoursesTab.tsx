@@ -4,8 +4,9 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { BookOpen } from 'lucide-react';
-import { Button as SimpleButton, Tag, ProgressBar } from '@una';
-import type { CurriculumItem, ControlType } from '@core/types';
+import { Button, Tag, ProgressBar } from '@una';
+import type { CurriculumItem } from '@core/types';
+import type { ControlType } from '@core/utils/grades.ts';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { CoursesTabProps } from '../types';
 import { mockKarazinCurriculum, cardMotion } from '../constants';
@@ -74,7 +75,7 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({ courses, soundEnabled })
                 <ProgressBar value={progress} tone={progress >= 60 ? 'success' : 'warning'} />
               </div>
             )}
-            <SimpleButton
+            <Button
               type="button"
               variant="secondary"
               size="small"
@@ -85,7 +86,7 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({ courses, soundEnabled })
               }}
             >
               Перегляд матеріалів курсу
-            </SimpleButton>
+            </Button>
           </motion.article>
         );
       })}
