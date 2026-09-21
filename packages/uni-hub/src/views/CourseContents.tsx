@@ -183,7 +183,7 @@ const CourseContents: React.FC = () => {
         </SimpleButton>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <LanguageSwitcher />
+          <LanguageSwitcher placement="top-down" />
           <ThemeSwitcher />
         </div>
       </header>

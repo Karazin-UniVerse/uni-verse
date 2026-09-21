@@ -16,7 +16,7 @@ export type LanguageSwitcherProps = {
   compact?: boolean;
   showLabel?: boolean;
   variant?: 'default' | 'glass' | 'sider';
-  placement?: 'bottom-up' | 'top-down' | 'bottom-up-left';
+  placement?: 'auto' | 'bottom-up' | 'top-down' | 'bottom-up-left' | 'top-down-left';
   className?: string;
 };
 
@@ -25,14 +25,81 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
   compact = false,
   showLabel = true,
   variant = 'default',
-  placement = 'bottom-up',
+  placement = 'auto',
 }) => {
   const { language, setLanguage, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
+  const [resolvedPlacement, setResolvedPlacement] = useState<
+    'top-down' | 'bottom-up' | 'bottom-up-left' | 'top-down-left'
+  >(() => {
+    if (placement === 'top-down' || placement === 'top-down-left') {
+      return placement;
+    }
+
+    if (placement === 'bottom-up-left') {
+      return 'bottom-up-left';
+    }
+
+    if (placement === 'bottom-up') {
+      return 'bottom-up';
+    }
+
+    return 'top-down';
+  });
+
   const activeLanguage = LANGUAGES.find((lang) => lang.code === language) || LANGUAGES[0];
+
+  const updatePlacement = () => {
+    if (!triggerRef.current) {
+      return;
+    }
+
+    const rect = triggerRef.current.getBoundingClientRect();
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const minHeight = 110;
+
+    if (placement === 'top-down') {
+      setResolvedPlacement('top-down');
+
+      return;
+    }
+
+    if (placement === 'top-down-left') {
+      setResolvedPlacement('top-down-left');
+
+      return;
+    }
+
+    if (placement === 'bottom-up-left') {
+      if (spaceAbove < minHeight && spaceBelow > spaceAbove) {
+        setResolvedPlacement('top-down-left');
+      } else {
+        setResolvedPlacement('bottom-up-left');
+      }
+
+      return;
+    }
+
+    if (placement === 'bottom-up') {
+      if (spaceAbove < minHeight && spaceBelow > spaceAbove) {
+        setResolvedPlacement('top-down');
+      } else {
+        setResolvedPlacement('bottom-up');
+      }
+
+      return;
+    }
+
+    if (spaceAbove >= minHeight && spaceBelow < minHeight) {
+      setResolvedPlacement('bottom-up');
+    } else {
+      setResolvedPlacement('top-down');
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -65,16 +132,26 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
     triggerRef.current?.focus();
   };
 
+  const handleToggle = () => {
+    if (!isOpen) {
+      updatePlacement();
+    }
+
+    setIsOpen((prev) => !prev);
+  };
+
   const getDropdownPlacementClass = () => {
-    if (placement === 'bottom-up-left') {
-      return styles.dropUpLeft;
+    switch (resolvedPlacement) {
+      case 'bottom-up-left':
+        return styles.dropUpLeft;
+      case 'top-down-left':
+        return styles.dropDownLeft;
+      case 'top-down':
+        return styles.dropDown;
+      case 'bottom-up':
+      default:
+        return styles.dropUp;
     }
-
-    if (placement === 'top-down') {
-      return styles.dropDown;
-    }
-
-    return styles.dropUp;
   };
 
   const isCollapsed = compact && !showLabel;
@@ -93,7 +170,7 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
           variant === 'sider' && styles.siderTrigger,
           isCollapsed && styles.collapsedTrigger,
         )}
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={handleToggle}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={`${t('lang.select')}: ${activeLanguage.label}`}

@@ -115,6 +115,12 @@
   left: 0;
 }
 
+.dropDownLeft {
+  bottom: auto;
+  top: calc(100% + var(--space-8));
+  left: 0;
+}
+
 .option {
   display: flex;
   align-items: center;

@@ -177,7 +177,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
               <div className={styles.userDropdownBody}>
                 <div className={styles.mobileOnlyItem} style={{ marginBottom: 6 }}>
-                  <LanguageSwitcher compact={false} />
+                  <LanguageSwitcher compact={false} placement="top-down" />
                 </div>
 
                 <div className={styles.mobileOnlyItem}>
