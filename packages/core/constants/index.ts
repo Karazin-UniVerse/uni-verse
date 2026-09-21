@@ -14,8 +14,6 @@ export const BREAKPOINTS = {
   xxl: 1536,
 } as const;
 
-export type Breakpoint = keyof typeof BREAKPOINTS;
-
 /** Maximum points allocated for semester work in an exam-based course */
 export const MAX_SEMESTER_EXAM = 60;
 

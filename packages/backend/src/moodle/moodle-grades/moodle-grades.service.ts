@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import type { ControlType } from '@universe/core/types';
 import {
   calculateEctsGrade,
   calculateTraditionalGrade,
-  type ControlType,
-} from '@universe/core/types';
+} from '@universe/core/utils';
 import { getWsFunctionName } from '../../utils/wsfunctions';
 import { MoodleClientService } from '../moodle-client/moodle.client.service';
 import {

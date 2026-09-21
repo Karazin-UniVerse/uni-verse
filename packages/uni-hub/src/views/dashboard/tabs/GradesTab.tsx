@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { Tag, ProgressBar } from '@una';
-import { calculateEctsGrade, calculateTraditionalGrade, type ControlType } from '@core/types';
+import type { ControlType } from '@core/types';
+import { calculateEctsGrade, calculateTraditionalGrade } from '@core/utils';
 import { GradesChart } from '@uni-hub/components/grades';
 import { GradeSimulatorTrigger } from '@uni-hub/components/gamification';
 import { getValidGrades, getGradeTone, getGradeCourseName } from '@uni-hub/utils/grades';

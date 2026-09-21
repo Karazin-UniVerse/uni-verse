@@ -205,7 +205,3 @@ export interface ExamTargetRequirement {
   requiredExamScore: number;
   isAchievable: boolean;
 }
-
-// Re-export constants and calculation utilities for convenience and backwards compatibility
-export * from '../constants/index.ts';
-export * from '../utils/index.ts';
