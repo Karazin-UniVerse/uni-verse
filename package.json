@@ -26,16 +26,16 @@
     "@types/react-dom": "^19.3.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.5.1",
-    "oxlint": "^1.82.0",
-    "prettier": "^3.5.0",
+    "oxlint": "^1.83.0",
+    "prettier": "^3.9.8",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "sass-embedded": "^1.104.1",
     "stylelint": "^17.15.0",
     "stylelint-config-standard": "^40.0.0",
     "stylelint-config-standard-scss": "^17.0.0",
-    "turbo": "^2.10.12",
+    "turbo": "^2.10.13",
     "typescript": "^5.7.0",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.1"
   }
 }
