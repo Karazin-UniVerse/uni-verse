@@ -9,7 +9,7 @@ import { isLoggedIn } from '@core/auth';
 import type { StudentProfile } from '@core/types';
 import type { Grade, CourseModule } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
-import { DashboardSkeleton } from '@uni-hub/components/dashboard';
+import { DashboardSkeleton, MobileBottomNav } from '@uni-hub/components/dashboard';
 import { BadgeSystem, GradeSimulator } from '@uni-hub/components/gamification';
 import { ScheduleView } from '@uni-hub/components/schedule';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
@@ -308,6 +308,11 @@ const DashboardPage: React.FC = () => {
         onSelectKey={setActiveKey}
         soundEnabled={soundEnabled}
         onLogout={handleLogout}
+      />
+      <MobileBottomNav
+        activeKey={activeKey}
+        onSelectKey={setActiveKey}
+        soundEnabled={soundEnabled}
       />
 
       <div
