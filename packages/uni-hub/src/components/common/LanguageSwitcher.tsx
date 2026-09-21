@@ -20,6 +20,45 @@ export type LanguageSwitcherProps = {
   className?: string;
 };
 
+type ResolvedPlacement = 'top-down' | 'bottom-up' | 'bottom-up-left' | 'top-down-left';
+
+function getInitialPlacement(placement: LanguageSwitcherProps['placement']): ResolvedPlacement {
+  if (
+    placement === 'bottom-up' ||
+    placement === 'bottom-up-left' ||
+    placement === 'top-down-left'
+  ) {
+    return placement;
+  }
+
+  return 'top-down';
+}
+
+function resolveDropdownPlacement(
+  placement: LanguageSwitcherProps['placement'],
+  rect: DOMRect,
+  windowHeight: number,
+): ResolvedPlacement {
+  if (placement === 'top-down' || placement === 'top-down-left') {
+    return placement;
+  }
+
+  const spaceAbove = rect.top;
+  const spaceBelow = windowHeight - rect.bottom;
+  const minHeight = 110;
+  const shouldFlipDown = spaceAbove < minHeight && spaceBelow > spaceAbove;
+
+  if (placement === 'bottom-up-left') {
+    return shouldFlipDown ? 'top-down-left' : 'bottom-up-left';
+  }
+
+  if (placement === 'bottom-up') {
+    return shouldFlipDown ? 'top-down' : 'bottom-up';
+  }
+
+  return spaceAbove >= minHeight && spaceBelow < minHeight ? 'bottom-up' : 'top-down';
+}
+
 export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
   className,
   compact = false,
@@ -32,23 +71,9 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const [resolvedPlacement, setResolvedPlacement] = useState<
-    'top-down' | 'bottom-up' | 'bottom-up-left' | 'top-down-left'
-  >(() => {
-    if (placement === 'top-down' || placement === 'top-down-left') {
-      return placement;
-    }
-
-    if (placement === 'bottom-up-left') {
-      return 'bottom-up-left';
-    }
-
-    if (placement === 'bottom-up') {
-      return 'bottom-up';
-    }
-
-    return 'top-down';
-  });
+  const [resolvedPlacement, setResolvedPlacement] = useState<ResolvedPlacement>(() =>
+    getInitialPlacement(placement),
+  );
 
   const activeLanguage = LANGUAGES.find((lang) => lang.code === language) || LANGUAGES[0];
 
@@ -58,47 +83,9 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
     }
 
     const rect = triggerRef.current.getBoundingClientRect();
-    const spaceAbove = rect.top;
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const minHeight = 110;
+    const nextPlacement = resolveDropdownPlacement(placement, rect, window.innerHeight);
 
-    if (placement === 'top-down') {
-      setResolvedPlacement('top-down');
-
-      return;
-    }
-
-    if (placement === 'top-down-left') {
-      setResolvedPlacement('top-down-left');
-
-      return;
-    }
-
-    if (placement === 'bottom-up-left') {
-      if (spaceAbove < minHeight && spaceBelow > spaceAbove) {
-        setResolvedPlacement('top-down-left');
-      } else {
-        setResolvedPlacement('bottom-up-left');
-      }
-
-      return;
-    }
-
-    if (placement === 'bottom-up') {
-      if (spaceAbove < minHeight && spaceBelow > spaceAbove) {
-        setResolvedPlacement('top-down');
-      } else {
-        setResolvedPlacement('bottom-up');
-      }
-
-      return;
-    }
-
-    if (spaceAbove >= minHeight && spaceBelow < minHeight) {
-      setResolvedPlacement('bottom-up');
-    } else {
-      setResolvedPlacement('top-down');
-    }
+    setResolvedPlacement(nextPlacement);
   };
 
   useEffect(() => {
