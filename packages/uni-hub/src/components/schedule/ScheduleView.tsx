@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button as SimpleButton, RadioButton, Tag, Empty } from '@una';
-import { BREAKPOINTS } from '@universe/core';
+import { Button, RadioButton, Tag, Empty } from '@una';
+import { BREAKPOINTS } from '@core/constants/breakpoints.ts';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import styles from './ScheduleView.module.scss';
 
@@ -243,26 +243,26 @@ export const ScheduleView: React.FC = () => {
     return (
       <div className={styles.week}>
         <div className={styles.weekNav}>
-          <SimpleButton
+          <Button
             type="button"
             variant="secondary"
             size="medium"
             onClick={() => setSelectedDate(addDays(selectedDate, -7))}
           >
             <ChevronLeft size={16} /> Попередній тиждень
-          </SimpleButton>
+          </Button>
           <h3>
             {formatDate(weekStart, { day: 'numeric', month: 'short' })} –{' '}
             {formatDate(addDays(weekStart, 6), { day: 'numeric', month: 'short', year: 'numeric' })}
           </h3>
-          <SimpleButton
+          <Button
             type="button"
             variant="secondary"
             size="medium"
             onClick={() => setSelectedDate(addDays(selectedDate, 7))}
           >
             Наступний тиждень <ChevronRight size={16} />
-          </SimpleButton>
+          </Button>
         </div>
 
         <div className={styles.weekGrid}>
@@ -309,7 +309,7 @@ export const ScheduleView: React.FC = () => {
     return (
       <div className={styles.month}>
         <div className={styles.monthNav}>
-          <SimpleButton
+          <Button
             type="button"
             variant="secondary"
             size="small"
@@ -318,9 +318,9 @@ export const ScheduleView: React.FC = () => {
             }
           >
             <ChevronLeft size={16} />
-          </SimpleButton>
+          </Button>
           <h3>{formatDate(selectedDate, { month: 'long', year: 'numeric' })}</h3>
-          <SimpleButton
+          <Button
             type="button"
             variant="secondary"
             size="small"
@@ -329,7 +329,7 @@ export const ScheduleView: React.FC = () => {
             }
           >
             <ChevronRight size={16} />
-          </SimpleButton>
+          </Button>
         </div>
         <div className={styles.weekdays}>
           {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((weekdayLabel) => (
@@ -397,14 +397,14 @@ export const ScheduleView: React.FC = () => {
           ))}
         </div>
 
-        <SimpleButton
+        <Button
           type="button"
           variant="primary"
           size="medium"
           onClick={() => exportToICS(DUMMY_EVENTS)}
         >
           <Download size={16} /> Експорт у iCal
-        </SimpleButton>
+        </Button>
       </div>
 
       <div className={styles.body}>

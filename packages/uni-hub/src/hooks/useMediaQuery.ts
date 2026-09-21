@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { BREAKPOINTS, type Breakpoint } from '@universe/core';
+import { BREAKPOINTS, type Breakpoint } from '@core/constants/breakpoints.ts';
 import { isBrowser } from '@uni-hub/utils/browser';
 
 export type MediaComparison = 'less' | 'wider';

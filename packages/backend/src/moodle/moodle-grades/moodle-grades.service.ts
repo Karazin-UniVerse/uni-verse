@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { GRADES_THRESHOLD } from '@universe/core/constants/grades';
+import { GRADES_THRESHOLD } from '@core/constants/grades';
 import {
   calculateEctsGrade,
   calculateTraditionalGrade,
   type ControlType,
-} from '@universe/core/utils/grades';
+} from '@core/utils/grades';
 import { getWsFunctionName } from '../../utils/wsfunctions';
 import { MoodleClientService } from '../moodle-client/moodle.client.service';
 import {

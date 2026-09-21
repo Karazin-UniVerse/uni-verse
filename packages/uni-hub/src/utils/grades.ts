@@ -1,4 +1,4 @@
-import { GRADES_THRESHOLD } from '@universe/core';
+import { GRADES_THRESHOLD } from '@core/constants/grades.ts';
 import type { Grade, GradeValue } from '../types';
 
 export function getGradeCourseName(grade: Grade): string {

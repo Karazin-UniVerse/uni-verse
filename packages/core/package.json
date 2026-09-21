@@ -31,10 +31,6 @@
       "types": "./dist/constants/*.d.ts",
       "default": "./dist/constants/*.js"
     },
-    "./utils": {
-      "types": "./dist/utils/index.d.ts",
-      "default": "./dist/utils/index.js"
-    },
     "./utils/*": {
       "types": "./dist/utils/*.d.ts",
       "default": "./dist/utils/*.js"
