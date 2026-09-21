@@ -1,4 +1,11 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+} from 'react';
 
 export type AppTheme = 'light' | 'dark' | 'cyberpunk';
 
@@ -24,11 +31,17 @@ function applyTheme(theme: AppTheme) {
   }
 }
 
-function readStoredTheme(): AppTheme {
-  if (typeof window === 'undefined') {
-    return 'light';
-  }
+const subscribeToTheme = (callback: () => void) => {
+  window.addEventListener('storage', callback);
+  window.addEventListener('theme-change', callback);
 
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener('theme-change', callback);
+  };
+};
+
+const getThemeSnapshot = (): AppTheme => {
   const stored = localStorage.getItem(STORAGE_KEY);
 
   if (stored === 'light' || stored === 'dark' || stored === 'cyberpunk') {
@@ -36,25 +49,32 @@ function readStoredTheme(): AppTheme {
   }
 
   return 'light';
-}
+};
+
+const getThemeServerSnapshot = (): AppTheme => 'light';
 
 export const ThemeProvider: React.FC<Readonly<{ children: React.ReactNode }>> = ({ children }) => {
-  const [theme, setTheme] = useState<AppTheme>(() => readStoredTheme());
+  const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getThemeServerSnapshot);
 
   useEffect(() => {
     applyTheme(theme);
-    localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);
 
-  const cycleTheme = useCallback(() => {
-    setTheme((prevTheme) => {
-      const currentIndex = THEMES.indexOf(prevTheme);
-
-      return THEMES[(currentIndex + 1) % THEMES.length];
-    });
+  const setTheme = useCallback((next: AppTheme) => {
+    localStorage.setItem(STORAGE_KEY, next);
+    applyTheme(next);
+    window.dispatchEvent(new Event('theme-change'));
   }, []);
 
-  const value = useMemo(() => ({ theme, setTheme, cycleTheme }), [theme, cycleTheme]);
+  const cycleTheme = useCallback(() => {
+    const currentTheme = getThemeSnapshot();
+    const currentThemeIndex = THEMES.indexOf(currentTheme);
+    const nextTheme = THEMES[(currentThemeIndex + 1) % THEMES.length];
+
+    setTheme(nextTheme);
+  }, [setTheme]);
+
+  const value = useMemo(() => ({ theme, setTheme, cycleTheme }), [theme, setTheme, cycleTheme]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };
