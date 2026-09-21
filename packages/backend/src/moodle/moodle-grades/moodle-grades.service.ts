@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   calculateEctsGrade,
   calculateTraditionalGrade,
+  GRADES_THRESHOLD,
   type ControlType,
 } from '@universe/core/types';
 import { getWsFunctionName } from '../../utils/wsfunctions';
@@ -138,7 +139,9 @@ export class MoodleGradesService {
       const traditionalGrade = hasScore
         ? calculateTraditionalGrade(totalScore, controlType)
         : null;
-      const isPassed = hasScore ? totalScore >= 60 : null;
+      const isPassed = hasScore
+        ? totalScore >= GRADES_THRESHOLD.SATISFACTORY
+        : null;
 
       return {
         id: item.courseid,

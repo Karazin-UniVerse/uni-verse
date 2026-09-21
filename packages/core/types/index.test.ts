@@ -5,6 +5,7 @@ import {
   calculateEctsGrade,
   calculateTraditionalGrade,
   BREAKPOINTS,
+  GRADES_THRESHOLD,
   type AssignmentItem,
   type Course,
   type CurriculumItem,
@@ -66,31 +67,31 @@ describe('calculateTraditionalGrade', () => {
       assert.strictEqual(calculateTraditionalGrade(90, 'exam'), 'відмінно');
     });
 
-    test('assigns добре for score in range [74, 90)', () => {
+    test('assigns добре for score in range [70, 90)', () => {
       assert.strictEqual(calculateTraditionalGrade(89.9, 'exam'), 'добре');
-      assert.strictEqual(calculateTraditionalGrade(74, 'exam'), 'добре');
+      assert.strictEqual(calculateTraditionalGrade(70, 'exam'), 'добре');
     });
 
-    test('assigns задовільно for score in range [60, 74)', () => {
-      assert.strictEqual(calculateTraditionalGrade(73.9, 'exam'), 'задовільно');
-      assert.strictEqual(calculateTraditionalGrade(60, 'exam'), 'задовільно');
+    test('assigns задовільно for score in range [50, 70)', () => {
+      assert.strictEqual(calculateTraditionalGrade(69.9, 'exam'), 'задовільно');
+      assert.strictEqual(calculateTraditionalGrade(50, 'exam'), 'задовільно');
     });
 
-    test('assigns незадовільно for score < 60', () => {
-      assert.strictEqual(calculateTraditionalGrade(59.9, 'exam'), 'незадовільно');
+    test('assigns незадовільно for score < 50', () => {
+      assert.strictEqual(calculateTraditionalGrade(49.9, 'exam'), 'незадовільно');
       assert.strictEqual(calculateTraditionalGrade(30, 'exam'), 'незадовільно');
       assert.strictEqual(calculateTraditionalGrade(0, 'exam'), 'незадовільно');
     });
   });
 
   describe('credit grading', () => {
-    test('assigns зараховано for score >= 60', () => {
+    test('assigns зараховано for score >= 50', () => {
       assert.strictEqual(calculateTraditionalGrade(100, 'credit'), 'зараховано');
-      assert.strictEqual(calculateTraditionalGrade(60, 'credit'), 'зараховано');
+      assert.strictEqual(calculateTraditionalGrade(50, 'credit'), 'зараховано');
     });
 
-    test('assigns не зараховано for score < 60', () => {
-      assert.strictEqual(calculateTraditionalGrade(59.9, 'credit'), 'не зараховано');
+    test('assigns не зараховано for score < 50', () => {
+      assert.strictEqual(calculateTraditionalGrade(49.9, 'credit'), 'не зараховано');
       assert.strictEqual(calculateTraditionalGrade(0, 'credit'), 'не зараховано');
     });
   });
@@ -98,8 +99,8 @@ describe('calculateTraditionalGrade', () => {
   describe('differentiated credit grading', () => {
     test('uses standard multi-tier marks for differentiated_credit', () => {
       assert.strictEqual(calculateTraditionalGrade(95, 'differentiated_credit'), 'відмінно');
-      assert.strictEqual(calculateTraditionalGrade(80, 'differentiated_credit'), 'добре');
-      assert.strictEqual(calculateTraditionalGrade(65, 'differentiated_credit'), 'задовільно');
+      assert.strictEqual(calculateTraditionalGrade(75, 'differentiated_credit'), 'добре');
+      assert.strictEqual(calculateTraditionalGrade(55, 'differentiated_credit'), 'задовільно');
       assert.strictEqual(calculateTraditionalGrade(40, 'differentiated_credit'), 'незадовільно');
     });
   });
@@ -238,5 +239,11 @@ describe('domain type contracts compilation verification', () => {
     assert.strictEqual(BREAKPOINTS.lg, 1024);
     assert.strictEqual(BREAKPOINTS.xl, 1280);
     assert.strictEqual(BREAKPOINTS.xxl, 1536);
+  });
+
+  test('validates Karazin GRADES_THRESHOLD values', () => {
+    assert.strictEqual(GRADES_THRESHOLD.EXCELLENT, 90);
+    assert.strictEqual(GRADES_THRESHOLD.GOOD, 70);
+    assert.strictEqual(GRADES_THRESHOLD.SATISFACTORY, 50);
   });
 });
