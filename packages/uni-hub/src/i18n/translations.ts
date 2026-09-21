@@ -1,48 +1,12 @@
+import { uk, type TranslationKey, type Translations } from './locales/uk';
+import { en } from './locales/en';
+
 export type AppLanguage = 'uk' | 'en';
 
 export const TRANSLATIONS = {
-  uk: {
-    'lang.uk': 'Українська',
-    'lang.en': 'English',
-    'lang.select': 'Мова інтерфейсу',
-    'login.title': 'UNiHub',
-    'login.subtitle': 'Увійдіть у свій акаунт Moodle',
-    'login.username': "Ім'я користувача",
-    'login.password': 'Пароль',
-    'login.submit': 'Увійти',
-    'login.loading': 'Вхід...',
-    'theme.light': 'Світла',
-    'theme.dark': 'Темна',
-    'theme.cyberpunk': 'Cyberpunk',
-    'nav.overview': 'Огляд',
-    'nav.courses': 'Курси',
-    'nav.assignments': 'Завдання',
-    'nav.schedule': 'Розклад',
-    'nav.grades': 'Оцінки',
-    'sidebar.logout': 'Вийти',
-    'sidebar.moodleConnected': 'Moodle LMS (підключено)',
-  },
-  en: {
-    'lang.uk': 'Ukrainian',
-    'lang.en': 'English',
-    'lang.select': 'Interface Language',
-    'login.title': 'UNiHub',
-    'login.subtitle': 'Sign in to your Moodle account',
-    'login.username': 'Username',
-    'login.password': 'Password',
-    'login.submit': 'Sign In',
-    'login.loading': 'Signing in...',
-    'theme.light': 'Light',
-    'theme.dark': 'Dark',
-    'theme.cyberpunk': 'Cyberpunk',
-    'nav.overview': 'Overview',
-    'nav.courses': 'Courses',
-    'nav.assignments': 'Assignments',
-    'nav.schedule': 'Schedule',
-    'nav.grades': 'Grades',
-    'sidebar.logout': 'Log out',
-    'sidebar.moodleConnected': 'Moodle LMS (connected)',
-  },
+  uk,
+  en,
 } as const;
 
-export type TranslationKey = keyof typeof TRANSLATIONS.uk;
+export { uk, en };
+export type { TranslationKey, Translations };

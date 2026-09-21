@@ -2,15 +2,17 @@ import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { LanguageProvider, useLanguage } from './LanguageContext';
-import { TRANSLATIONS } from './translations';
+import { TRANSLATIONS, uk, en } from './translations';
 import { LanguageSwitcher } from '../components/common/LanguageSwitcher';
 
 describe('LanguageContext and translations', () => {
   it('has consistent translation keys for uk and en', () => {
-    const ukKeys = Object.keys(TRANSLATIONS.uk).sort();
-    const enKeys = Object.keys(TRANSLATIONS.en).sort();
+    const ukKeys = Object.keys(uk).sort();
+    const enKeys = Object.keys(en).sort();
 
     expect(ukKeys).toEqual(enKeys);
+    expect(Object.keys(TRANSLATIONS.uk).sort()).toEqual(ukKeys);
+    expect(Object.keys(TRANSLATIONS.en).sort()).toEqual(enKeys);
   });
 
   it('renders default Ukrainian language in SSR', () => {
