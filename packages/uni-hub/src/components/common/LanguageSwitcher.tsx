@@ -27,9 +27,10 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
   variant = 'default',
   placement = 'bottom-up',
 }) => {
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const activeLanguage = LANGUAGES.find((lang) => lang.code === language) || LANGUAGES[0];
 
@@ -43,6 +44,7 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsOpen(false);
+        triggerRef.current?.focus();
       }
     };
 
@@ -60,6 +62,7 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
   const handleSelect = (code: AppLanguage) => {
     setLanguage(code);
     setIsOpen(false);
+    triggerRef.current?.focus();
   };
 
   const getDropdownPlacementClass = () => {
@@ -82,6 +85,7 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
       className={clsx(styles.wrapper, variant === 'sider' && styles.fullWidth, className)}
     >
       <button
+        ref={triggerRef}
         type="button"
         className={clsx(
           styles.trigger,
@@ -92,8 +96,8 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
         onClick={() => setIsOpen((prev) => !prev)}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-label={`Вибір мови: ${activeLanguage.label}`}
-        title={`Мова: ${activeLanguage.label}`}
+        aria-label={`${t('lang.select')}: ${activeLanguage.label}`}
+        title={`${t('lang.select')}: ${activeLanguage.label}`}
         suppressHydrationWarning
       >
         <Languages size={18} aria-hidden />
@@ -113,7 +117,7 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
         <div
           className={clsx(styles.dropdown, getDropdownPlacementClass())}
           role="listbox"
-          aria-label="Оберіть мову"
+          aria-label={t('lang.select')}
         >
           {LANGUAGES.map((item) => {
             const isSelected = item.code === language;

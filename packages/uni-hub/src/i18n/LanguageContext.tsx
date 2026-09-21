@@ -39,10 +39,14 @@ const getLanguageSnapshot = (): AppLanguage => {
     return 'uk';
   }
 
-  const stored = localStorage.getItem(STORAGE_KEY);
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
 
-  if (stored === 'uk' || stored === 'en') {
-    return stored;
+    if (stored === 'uk' || stored === 'en') {
+      return stored;
+    }
+  } catch {
+    return 'uk';
   }
 
   return 'uk';
@@ -67,7 +71,12 @@ export const LanguageProvider: React.FC<Readonly<{ children: React.ReactNode }>>
 
   const setLanguage = useCallback((next: AppLanguage) => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, next);
+      try {
+        localStorage.setItem(STORAGE_KEY, next);
+      } catch {
+        // Fallback for sandboxed or storage-restricted environments
+      }
+
       window.dispatchEvent(new Event('language-change'));
     }
   }, []);

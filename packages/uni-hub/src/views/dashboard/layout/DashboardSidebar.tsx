@@ -15,6 +15,7 @@ import {
 import { Button } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { DashboardSidebarProps, NavKey } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
@@ -62,6 +63,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   soundEnabled,
   onLogout,
 }) => {
+  const { t } = useLanguage();
   const siderRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -201,7 +203,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             className={styles.moodleStatusLink}
-            title="Moodle LMS (підключено)"
+            title={t('sidebar.moodleConnected')}
           >
             <span className={styles.statusDot} aria-hidden />
             {!collapsed || mobileMenuOpen ? (
@@ -215,7 +217,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             showLabel={!collapsed || mobileMenuOpen}
             variant="sider"
             placement="bottom-up-left"
-            className={styles.langBtn}
           />
           <ThemeSwitcher
             compact
@@ -231,7 +232,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             className={styles.logoutBtn}
           >
             <LogOut size={18} />
-            {(!collapsed || mobileMenuOpen) && <span>Вийти</span>}
+            {(!collapsed || mobileMenuOpen) && <span>{t('sidebar.logout')}</span>}
           </Button>
         </div>
       </aside>
