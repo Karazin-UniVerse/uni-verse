@@ -1,13 +1,23 @@
+'use client';
+
 import React from 'react';
 import { Sun, Moon, Zap } from 'lucide-react';
 import clsx from 'clsx';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { useTheme, type AppTheme } from './ThemeContext';
 import styles from './ThemeSwitcher.module.scss';
 
-const THEME_META: Record<AppTheme, { label: string; icon: React.ReactNode }> = {
-  light: { label: 'Світла', icon: <Sun size={18} /> },
-  dark: { label: 'Темна', icon: <Moon size={18} /> },
-  cyberpunk: { label: 'Cyberpunk', icon: <Zap size={18} /> },
+const THEME_ICONS: Record<AppTheme, React.ReactNode> = {
+  light: <Sun size={18} />,
+  dark: <Moon size={18} />,
+  cyberpunk: <Zap size={18} />,
+};
+
+const THEME_KEYS: Record<AppTheme, TranslationKey> = {
+  light: 'theme.light',
+  dark: 'theme.dark',
+  cyberpunk: 'theme.cyberpunk',
 };
 
 type ThemeSwitcherProps = {
@@ -22,23 +32,24 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
   showLabel = true,
 }) => {
   const { theme, setTheme, cycleTheme } = useTheme();
+  const { t } = useLanguage();
+
+  const currentThemeLabel = t(THEME_KEYS[theme]);
 
   if (compact) {
-    const themeMetadata = THEME_META[theme];
-
     return (
       <button
         type="button"
         className={clsx(styles.compactBtn, className)}
         onClick={cycleTheme}
-        aria-label={`Тема: ${themeMetadata.label}. Перемкнути`}
-        title={themeMetadata.label}
+        aria-label={`${t('theme.select')}: ${currentThemeLabel}`}
+        title={currentThemeLabel}
         suppressHydrationWarning
       >
-        {themeMetadata.icon}
+        {THEME_ICONS[theme]}
         {showLabel && (
           <span className={styles.compactLabel} suppressHydrationWarning>
-            {themeMetadata.label}
+            {currentThemeLabel}
           </span>
         )}
       </button>
@@ -46,10 +57,10 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
   }
 
   return (
-    <fieldset className={clsx(styles.switcher, className)} aria-label="Вибір теми">
-      {(Object.keys(THEME_META) as AppTheme[]).map((themeOption) => {
-        const themeMetadata = THEME_META[themeOption];
+    <fieldset className={clsx(styles.switcher, className)} aria-label={t('theme.select')}>
+      {(Object.keys(THEME_ICONS) as AppTheme[]).map((themeOption) => {
         const isSelectedTheme = theme === themeOption;
+        const optionLabel = t(THEME_KEYS[themeOption]);
 
         return (
           <button
@@ -60,8 +71,8 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
             aria-pressed={isSelectedTheme}
             suppressHydrationWarning
           >
-            {themeMetadata.icon}
-            <span>{themeMetadata.label}</span>
+            {THEME_ICONS[themeOption]}
+            <span>{optionLabel}</span>
           </button>
         );
       })}

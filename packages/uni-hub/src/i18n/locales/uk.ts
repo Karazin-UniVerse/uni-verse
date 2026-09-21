@@ -11,6 +11,7 @@ export const uk = {
   'theme.light': 'Світла',
   'theme.dark': 'Темна',
   'theme.cyberpunk': 'Cyberpunk',
+  'theme.select': 'Вибір теми',
   'nav.overview': 'Огляд',
   'nav.courses': 'Курси',
   'nav.assignments': 'Завдання',

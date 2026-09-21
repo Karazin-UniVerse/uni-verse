@@ -95,12 +95,14 @@ export const LanguageProvider: React.FC<Readonly<{ children: React.ReactNode }>>
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 };
 
-export function useLanguage() {
+const DEFAULT_CONTEXT: LanguageContextValue = {
+  language: 'uk',
+  setLanguage: () => {},
+  t: (key: TranslationKey): string => TRANSLATIONS.uk[key] || key,
+};
+
+export function useLanguage(): LanguageContextValue {
   const context = useContext(LanguageContext);
 
-  if (!context) {
-    throw new Error('useLanguage must be used within LanguageProvider');
-  }
-
-  return context;
+  return context ?? DEFAULT_CONTEXT;
 }

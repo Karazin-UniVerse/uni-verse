@@ -13,6 +13,7 @@ export const en = {
   'theme.light': 'Light',
   'theme.dark': 'Dark',
   'theme.cyberpunk': 'Cyberpunk',
+  'theme.select': 'Theme selection',
   'nav.overview': 'Overview',
   'nav.courses': 'Courses',
   'nav.assignments': 'Assignments',

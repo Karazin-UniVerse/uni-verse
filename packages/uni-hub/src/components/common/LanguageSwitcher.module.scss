@@ -12,7 +12,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-8);
-  padding: var(--space-6) var(--space-12);
+  padding: var(--space-8) var(--space-12);
   border-radius: var(--border-radius-medium);
   border: 1px solid var(--border-color);
   background: var(--bg-surface);
@@ -98,17 +98,20 @@
 }
 
 .dropUp {
-  bottom: calc(100% + var(--space-6));
+  top: auto;
+  bottom: calc(100% + var(--space-8));
   right: 0;
 }
 
 .dropDown {
-  top: calc(100% + var(--space-6));
+  bottom: auto;
+  top: calc(100% + var(--space-8));
   right: 0;
 }
 
 .dropUpLeft {
-  bottom: calc(100% + var(--space-6));
+  top: auto;
+  bottom: calc(100% + var(--space-8));
   left: 0;
 }
 

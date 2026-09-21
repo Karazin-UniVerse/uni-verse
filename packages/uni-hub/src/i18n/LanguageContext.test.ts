@@ -4,6 +4,8 @@ import { renderToString } from 'react-dom/server';
 import { LanguageProvider, useLanguage } from './LanguageContext';
 import { TRANSLATIONS, uk, en } from './translations';
 import { LanguageSwitcher } from '../components/common/LanguageSwitcher';
+import { ThemeSwitcher } from '../theme/ThemeSwitcher';
+import { ThemeProvider } from '../theme/ThemeContext';
 
 describe('LanguageContext and translations', () => {
   it('has consistent translation keys for uk and en', () => {
@@ -44,5 +46,20 @@ describe('LanguageContext and translations', () => {
 
     expect(html).toContain('Українська');
     expect(html).toContain('button');
+  });
+
+  it('renders translated theme name in ThemeSwitcher', () => {
+    const tree = React.createElement(
+      LanguageProvider,
+      null,
+      React.createElement(
+        ThemeProvider,
+        null,
+        React.createElement(ThemeSwitcher, { compact: true, showLabel: true }),
+      ),
+    );
+    const html = renderToString(tree);
+
+    expect(html).toContain('Світла');
   });
 });
