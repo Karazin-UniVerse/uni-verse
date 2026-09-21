@@ -650,7 +650,7 @@
   display: none;
 }
 
-@media (width <= 1024px) {
+@include narrower-than('lg') {
   .layout {
     grid-template-columns: 72px 1fr;
   }
@@ -675,7 +675,7 @@
   }
 }
 
-@media (width <= 768px) {
+@include narrower-than('md') {
   .layout {
     display: flex;
     flex-direction: column;

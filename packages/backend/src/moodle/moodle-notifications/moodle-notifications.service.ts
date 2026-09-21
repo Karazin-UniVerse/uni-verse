@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { MoodleClientService } from '../moodle-client/moodle.client.service';
 import { getWsFunctionName } from '../../utils/wsfunctions';
 import type { MoodleNotificationsResponse } from '../../types/Notification';
@@ -6,6 +6,8 @@ import { NotificationsResponseDto } from './moodle-notifications-dto';
 
 @Injectable()
 export class MoodleNotificationsService {
+  private readonly logger = new Logger(MoodleNotificationsService.name);
+
   constructor(private readonly moodleClient: MoodleClientService) {}
 
   async getNotifications(
@@ -36,7 +38,9 @@ export class MoodleNotificationsService {
         notifications,
         unreadcount: data?.unreadcount || 0,
       };
-    } catch {
+    } catch (error) {
+      this.logger.error(`Failed to fetch notifications: ${error}`);
+
       return {
         notifications: [],
         unreadcount: 0,

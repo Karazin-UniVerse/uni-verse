@@ -48,5 +48,15 @@ describe('MoodleNotificationsService', () => {
       expect(result.notifications).toEqual([]);
       expect(result.unreadcount).toBe(0);
     });
+
+    it('should catch errors, log them, and return empty list', async () => {
+      mockMoodleClientService.client.mockRejectedValue(
+        new Error('Network failure'),
+      );
+      const result = await service.getNotifications('token', 'id');
+
+      expect(result.notifications).toEqual([]);
+      expect(result.unreadcount).toBe(0);
+    });
   });
 });

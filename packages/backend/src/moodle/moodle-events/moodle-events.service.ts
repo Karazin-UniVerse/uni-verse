@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { MoodleClientService } from '../moodle-client/moodle.client.service';
 import { getWsFunctionName } from '../../utils/wsfunctions';
 import type { MoodleUpcomingEventsResponse } from '../../types/CalendarEvent';
@@ -6,6 +6,8 @@ import { CalendarEventDto } from './moodle-events-dto';
 
 @Injectable()
 export class MoodleEventsService {
+  private readonly logger = new Logger(MoodleEventsService.name);
+
   constructor(private readonly moodleClient: MoodleClientService) {}
 
   async getUpcomingEvents(
@@ -31,7 +33,9 @@ export class MoodleEventsService {
         eventtype: event.eventtype,
         courseName: event.course ? event.course.fullname : undefined,
       }));
-    } catch {
+    } catch (error) {
+      this.logger.error(`Failed to fetch upcoming events: ${error}`);
+
       return [];
     }
   }
