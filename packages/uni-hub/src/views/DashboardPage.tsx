@@ -25,14 +25,16 @@ import {
   GradesTab,
   AssignmentsTab,
 } from './dashboard';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './DashboardPage.module.scss';
 
-const PAGE_TITLES: Record<NavKey, string> = {
-  overview: 'Картка студента / Огляд',
-  courses: 'Індивідуальний план',
-  grades: 'Заліковка та бали',
-  schedule: 'Розклад занять',
-  assignments: 'Завдання',
+const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
+  overview: 'nav.overview.full',
+  courses: 'nav.courses.full',
+  grades: 'nav.grades.full',
+  schedule: 'nav.schedule.full',
+  assignments: 'nav.assignments.full',
 };
 
 type GradesApiResponse = Awaited<ReturnType<typeof moodleApi.getGrades>>;
@@ -93,6 +95,7 @@ const DashboardPage: React.FC = () => {
   const checkIn = useGamificationStore((s) => s.checkIn);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const setSoundEnabled = useGamificationStore((s) => s.setSoundEnabled);
+  const { t } = useLanguage();
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -332,7 +335,7 @@ const DashboardPage: React.FC = () => {
 
         <main className={styles.content}>
           <div className={styles.pageTitleRow}>
-            <h2 className={styles.pageTitle}>{PAGE_TITLES[activeKey]}</h2>
+            <h2 className={styles.pageTitle}>{t(PAGE_TITLE_KEYS[activeKey])}</h2>
           </div>
           {loading && !hasCachedData ? (
             <DashboardSkeleton />

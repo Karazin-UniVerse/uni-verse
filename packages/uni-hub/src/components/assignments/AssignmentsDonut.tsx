@@ -1,5 +1,8 @@
+'use client';
+
 import React, { useEffect, useMemo, useState } from 'react';
 import type { Assignment, Grade } from '@uni-hub/types';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { getGradeCourseName, getValidGrades } from '@uni-hub/utils/grades';
 import { Chart } from '@una';
 
@@ -17,6 +20,7 @@ const COLORS = {
 } as const;
 
 export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments, grades }) => {
+  const { t } = useLanguage();
   const [nowSec, setNowSec] = useState(() => Math.floor(Date.now() / 1000));
 
   useEffect(() => {
@@ -58,27 +62,27 @@ export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments,
     const result: { name: string; value: number; color: string }[] = [];
 
     if (done > 0) {
-      result.push({ name: 'Выполнено', value: done, color: COLORS.done });
+      result.push({ name: t('donut.completed'), value: done, color: COLORS.done });
     }
 
     if (overdue > 0) {
-      result.push({ name: 'Просрочено', value: overdue, color: COLORS.overdue });
+      result.push({ name: t('donut.overdue'), value: overdue, color: COLORS.overdue });
     }
 
     if (inProgress > 0) {
-      result.push({ name: 'В процессе', value: inProgress, color: COLORS.inProgress });
+      result.push({ name: t('donut.inProgress'), value: inProgress, color: COLORS.inProgress });
     }
 
     return result;
-  }, [assignments, grades, nowSec]);
+  }, [assignments, grades, nowSec, t]);
 
   return (
     <Chart
       type="donut"
-      title="Статус заданий"
+      title={t('donut.title')}
       data={segments}
       height={DONUT_CHART_HEIGHT}
-      emptyDescription="Задания не найдены"
+      emptyDescription={t('donut.empty')}
     />
   );
 };
