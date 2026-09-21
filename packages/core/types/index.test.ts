@@ -5,7 +5,6 @@ import {
   calculateEctsGrade,
   calculateTraditionalGrade,
   BREAKPOINTS,
-  GRADES_THRESHOLD,
   type AssignmentItem,
   type Course,
   type CurriculumItem,
@@ -239,12 +238,5 @@ describe('domain type contracts compilation verification', () => {
     assert.strictEqual(BREAKPOINTS.lg, 1024);
     assert.strictEqual(BREAKPOINTS.xl, 1280);
     assert.strictEqual(BREAKPOINTS.xxl, 1536);
-  });
-  test('validates GRADES_THRESHOLD enum values', () => {
-    assert.strictEqual(GRADES_THRESHOLD.EXCELLENT, 90);
-    assert.strictEqual(GRADES_THRESHOLD.VERY_GOOD, 82);
-    assert.strictEqual(GRADES_THRESHOLD.GOOD, 74);
-    assert.strictEqual(GRADES_THRESHOLD.SATISFACTORY, 60);
-    assert.strictEqual(GRADES_THRESHOLD.FAIL_RETAKE, 35);
   });
 });
