@@ -6,6 +6,10 @@
 
 -
 
+### Screenshots / Video (Optional)
+
+<!-- Attach screenshots, GIFs, or video recordings demonstrating UI changes -->
+
 ## Type of Change
 
 - [ ] `feat`: new feature
@@ -16,8 +20,4 @@
 
 ## Pre-merge Checklist
 
-- [ ] Code meets requirements described in the Notion task
-- [ ] Linter passes with zero warnings (`pnpm lint`)
-- [ ] Type check passes with zero errors (`pnpm typecheck`)
-- [ ] Build succeeds (`pnpm build`)
-- [ ] Tests pass successfully (`pnpm test`)
+- [ ] I have conducted a self-review of my code and verified the diff
