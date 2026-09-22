@@ -66,6 +66,35 @@ describe('MoodleAssignmentsService', () => {
       expect(result[0].semester).toBe(1);
     });
 
+    it('should enrich assignments with submission status when includeStatus is true', async () => {
+      mockMoodleClientService.client
+        .mockResolvedValueOnce({
+          courses: [
+            {
+              fullname: 'Algorithms',
+              shortname: 'ALG',
+              assignments: [
+                { id: 1, name: 'A1', duedate: 1234567, intro: 'Test' },
+              ],
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          lastattempt: {
+            gradingstatus: 'graded',
+            submission: { status: 'submitted' },
+          },
+          feedback: { grade: { grade: '95' } },
+        });
+
+      const result = await service.getAssignments('token', 'id', true);
+
+      expect(result.length).toBe(1);
+      expect(result[0].submissionStatus).toBe('graded');
+      expect(result[0].grade).toBe('95');
+      expect(result[0].graded).toBe(true);
+    });
+
     it('should catch errors, log them, and return empty list', async () => {
       mockMoodleClientService.client.mockRejectedValue(
         new Error('Network failure'),

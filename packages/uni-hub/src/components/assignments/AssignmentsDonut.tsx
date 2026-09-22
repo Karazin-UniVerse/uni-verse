@@ -44,7 +44,11 @@ export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments,
 
     for (const assignment of assignments) {
       const courseKey = (assignment.courseName || '').trim().toLowerCase();
-      const isDone = gradedCourses.has(courseKey);
+      const isDone =
+        gradedCourses.has(courseKey) ||
+        assignment.submissionStatus === 'submitted' ||
+        assignment.submissionStatus === 'graded' ||
+        Boolean(assignment.graded);
 
       if (isDone) {
         done += 1;
@@ -58,15 +62,15 @@ export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments,
     const result: { name: string; value: number; color: string }[] = [];
 
     if (done > 0) {
-      result.push({ name: 'Выполнено', value: done, color: COLORS.done });
+      result.push({ name: 'Виконано', value: done, color: COLORS.done });
     }
 
     if (overdue > 0) {
-      result.push({ name: 'Просрочено', value: overdue, color: COLORS.overdue });
+      result.push({ name: 'Прострочено', value: overdue, color: COLORS.overdue });
     }
 
     if (inProgress > 0) {
-      result.push({ name: 'В процессе', value: inProgress, color: COLORS.inProgress });
+      result.push({ name: 'В процесі', value: inProgress, color: COLORS.inProgress });
     }
 
     return result;
@@ -75,10 +79,10 @@ export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments,
   return (
     <Chart
       type="donut"
-      title="Статус заданий"
+      title="Статус завдань"
       data={segments}
       height={DONUT_CHART_HEIGHT}
-      emptyDescription="Задания не найдены"
+      emptyDescription="Завдань не знайдено"
     />
   );
 };

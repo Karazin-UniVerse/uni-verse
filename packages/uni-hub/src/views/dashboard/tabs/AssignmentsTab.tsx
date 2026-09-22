@@ -1,8 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Filter } from 'lucide-react';
+import clsx from 'clsx';
+import {
+  Filter,
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  Award,
+  ChevronRight,
+  Calendar,
+  AlertCircle,
+} from 'lucide-react';
 import {
   TextInput as SimpleInput,
   Select,
@@ -12,11 +22,49 @@ import {
   Button as SimpleButton,
 } from '@una';
 import { LiveCountdown } from '@uni-hub/components/gamification';
+import { useNow } from '@uni-hub/hooks/useNow';
+import { moodleApi } from '@uni-hub/services/api';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { AssignmentsTabProps } from '../types';
 import { cardMotion } from '../constants';
 import { stripHtml } from '../utils';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
+
+type AssignmentStatusInfo = {
+  tone: 'success' | 'danger' | 'info';
+  label: string;
+};
+
+function getAssignmentStatusInfo(
+  status: string,
+  isCompleted: boolean,
+  isOverdue: boolean,
+): AssignmentStatusInfo {
+  if (isCompleted) {
+    return {
+      tone: 'success',
+      label: status === 'graded' ? 'Оцінено' : 'Здано на перевірку',
+    };
+  }
+
+  if (isOverdue) {
+    return { tone: 'danger', label: 'Прострочено' };
+  }
+
+  return { tone: 'info', label: 'В процесі' };
+}
+
+function renderStatusIcon(tone: 'success' | 'danger' | 'info') {
+  if (tone === 'success') {
+    return <CheckCircle2 size={13} style={{ marginRight: 4 }} />;
+  }
+
+  if (tone === 'danger') {
+    return <AlertCircle size={13} style={{ marginRight: 4 }} />;
+  }
+
+  return <Clock size={13} style={{ marginRight: 4 }} />;
+}
 
 export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   assignments,
@@ -32,6 +80,39 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   onOpenAssignment,
 }) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [localStatuses, setLocalStatuses] = useState<
+    Record<number, { status?: string; grade?: string }>
+  >({});
+
+  useEffect(() => {
+    let cancelled = false;
+    const assignmentsNeedingStatus = assignments.filter(
+      (item) => !item.submissionStatus && !localStatuses[item.id],
+    );
+
+    if (assignmentsNeedingStatus.length === 0) return;
+
+    assignmentsNeedingStatus.slice(0, 10).forEach(async (item) => {
+      try {
+        const res = await moodleApi.getAssignmentStatus(item.id);
+
+        if (!cancelled && res?.data) {
+          const data = res.data as { status?: string; grade?: string };
+
+          setLocalStatuses((prev) => ({
+            ...prev,
+            [item.id]: { status: data.status, grade: data.grade },
+          }));
+        }
+      } catch {
+        // Ignore status fetch error for individual item
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [assignments, localStatuses]);
 
   const handleDateChange =
     (setter: (value: string) => void) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,6 +132,18 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
 
       setter(value);
     };
+
+  const visibleAssignments = useMemo(() => {
+    return assignments.filter((item) => {
+      const status = item.submissionStatus ?? localStatuses[item.id]?.status;
+      const isCompleted = status === 'submitted' || status === 'graded' || Boolean(item.graded);
+
+      return !hideCompleted || !isCompleted;
+    });
+  }, [assignments, hideCompleted, localStatuses]);
+
+  const nowMs = useNow(30_000);
+  const nowSec = Math.floor(nowMs / 1000);
 
   return (
     <div className={styles.stack}>
@@ -102,41 +195,75 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         </label>
       </div>
 
-      {assignments.length > 0 ? (
-        assignments.map((item) => {
+      {visibleAssignments.length > 0 ? (
+        visibleAssignments.map((item) => {
           const description = stripHtml(item.description);
+          const status = item.submissionStatus ?? localStatuses[item.id]?.status ?? 'new';
+          const grade = item.grade ?? localStatuses[item.id]?.grade;
+          const isCompleted = status === 'submitted' || status === 'graded' || Boolean(item.graded);
+          const hasDeadline = Boolean(item.duedate && item.duedate > 0);
+          const isOverdue = Boolean(hasDeadline && item.duedate < nowSec);
+          const statusInfo = getAssignmentStatusInfo(status, isCompleted, isOverdue);
 
           return (
             <motion.button
               key={item.id}
               type="button"
-              className={styles.assignmentCard}
+              className={clsx(styles.assignmentCard, isCompleted && styles.assignmentCardCompleted)}
               {...cardMotion}
               onClick={() => {
                 playClick(soundEnabled);
                 onOpenAssignment(item);
               }}
             >
-              <div className={styles.assignmentTop}>
-                <div>
-                  <div className={styles.listTitle}>{item.name}</div>
-                  <div className={styles.muted}>{item.courseName}</div>
+              <div className={styles.assignmentHeaderRow}>
+                <div className={styles.assignmentCourseTag}>
+                  <BookOpen size={13} className={styles.assignmentCourseIcon} />
+                  <span className={styles.assignmentCourseName}>{item.courseName}</span>
                 </div>
-                <div className={styles.nearestDeadline}>
-                  {item.duedate && item.duedate > 0 ? (
-                    <>
-                      <Tag tone="warning">
-                        Дедлайн: {new Date(item.duedate * 1000).toLocaleDateString('uk-UA')}
-                      </Tag>
-                      <LiveCountdown targetUnixSec={item.duedate} />
-                    </>
-                  ) : (
-                    <Tag tone="default">Без терміну</Tag>
+
+                <div className={styles.assignmentBadgesRow}>
+                  <Tag tone={statusInfo.tone}>
+                    {renderStatusIcon(statusInfo.tone)}
+                    {statusInfo.label}
+                  </Tag>
+
+                  {grade && (
+                    <span className={styles.assignmentGradeBadge}>
+                      <Award size={13} style={{ marginRight: 4 }} />
+                      Оцінка: {grade}
+                    </span>
                   )}
                 </div>
               </div>
-              <div className={styles.htmlSnippet}>
-                {description.length > 200 ? `${description.substring(0, 200)}...` : description}
+
+              <h3 className={styles.assignmentTitle}>{item.name}</h3>
+
+              {description && (
+                <p className={styles.assignmentSnippet}>
+                  {description.length > 200 ? `${description.substring(0, 200)}...` : description}
+                </p>
+              )}
+
+              <div className={styles.assignmentFooterRow}>
+                <div className={styles.assignmentDeadlineBox}>
+                  <Calendar size={14} className={styles.calendarIcon} />
+                  {hasDeadline ? (
+                    <>
+                      <span className={styles.deadlineDate}>
+                        Дедлайн: {new Date(item.duedate * 1000).toLocaleDateString('uk-UA')}
+                      </span>
+                      {!isCompleted && !isOverdue && <LiveCountdown targetUnixSec={item.duedate} />}
+                    </>
+                  ) : (
+                    <span className={styles.noDeadlineText}>Без терміну здачі</span>
+                  )}
+                </div>
+
+                <div className={styles.assignmentActionHint}>
+                  <span>Відкрити завдання</span>
+                  <ChevronRight size={14} />
+                </div>
               </div>
             </motion.button>
           );

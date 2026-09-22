@@ -263,6 +263,20 @@
   font: var(--font-heading);
 }
 
+.pageUpdatingIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-4) var(--space-12);
+  border-radius: var(--border-radius-full);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--box-shadow-small);
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  animation: fadeUp 0.2s var(--ease-standard);
+}
+
 .overviewHero {
   display: flex;
   align-items: flex-start;
@@ -371,14 +385,6 @@
   padding: var(--space-24);
   background: var(--neutral-surface);
   position: relative;
-}
-
-.contentLoading {
-  position: absolute;
-  top: var(--space-24);
-  right: var(--space-24);
-  z-index: 5;
-  pointer-events: none;
 }
 
 .stack {
@@ -566,6 +572,9 @@
   cursor: pointer;
   font: inherit;
   color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
   transition:
     box-shadow var(--transition-fast) var(--ease-standard),
     border-color var(--transition-fast) var(--ease-standard);
@@ -573,6 +582,135 @@
   &:hover {
     box-shadow: var(--card-shadow-hover);
     border-color: var(--accent-primary);
+  }
+}
+
+.assignmentCardCompleted {
+  border-color: color-mix(in srgb, var(--success-color, #22c55e) 30%, var(--card-border));
+  background: color-mix(in srgb, var(--success-color, #22c55e) 3%, var(--bg-surface));
+
+  &:hover {
+    border-color: var(--success-color, #22c55e);
+  }
+}
+
+.assignmentHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+}
+
+.assignmentCourseTag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-10);
+  background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-primary) 20%, transparent);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-xs);
+  color: var(--accent-primary);
+  font-weight: var(--font-weight-medium);
+  max-width: 100%;
+}
+
+.assignmentCourseIcon {
+  flex-shrink: 0;
+}
+
+.assignmentCourseName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assignmentBadgesRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.assignmentGradeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-10);
+  background: color-mix(in srgb, var(--success-color, #22c55e) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success-color, #22c55e) 30%, transparent);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--success-color, #22c55e);
+}
+
+.assignmentTitle {
+  margin: 0;
+  font: var(--font-heading);
+  font-size: var(--font-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+.assignmentSnippet {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.assignmentFooterRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding-top: var(--space-10);
+  border-top: 1px solid var(--border-color);
+  margin-top: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.assignmentDeadlineBox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.calendarIcon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.deadlineDate {
+  font-weight: var(--font-weight-medium);
+}
+
+.noDeadlineText {
+  color: var(--text-secondary);
+}
+
+.assignmentActionHint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--accent-primary);
+  margin-left: auto;
+  transition: transform var(--transition-fast) var(--ease-standard);
+
+  .assignmentCard:hover & {
+    transform: translateX(3px);
   }
 }
 

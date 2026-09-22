@@ -43,6 +43,7 @@ export class MoodleAssignmentsController {
     const assignments = await this.assignmentsService.getAssignments(
       moodleToken,
       moodleId,
+      query.includeStatus,
     );
 
     return this.filterAndSortAssignments(assignments, query);
@@ -100,11 +101,31 @@ export class MoodleAssignmentsController {
     if (query.status === 'completed') {
       const now = Date.now() / 1000;
 
-      result = result.filter((assignment) => assignment.duedate < now);
+      result = result.filter((assignment) => {
+        if (
+          assignment.submissionStatus === 'submitted' ||
+          assignment.submissionStatus === 'graded' ||
+          assignment.graded
+        ) {
+          return true;
+        }
+
+        return assignment.duedate > 0 && assignment.duedate < now;
+      });
     } else if (query.status === 'not_completed') {
       const now = Date.now() / 1000;
 
-      result = result.filter((assignment) => assignment.duedate >= now);
+      result = result.filter((assignment) => {
+        if (
+          assignment.submissionStatus === 'submitted' ||
+          assignment.submissionStatus === 'graded' ||
+          assignment.graded
+        ) {
+          return false;
+        }
+
+        return assignment.duedate === 0 || assignment.duedate >= now;
+      });
     }
 
     if (query.dateFrom) {

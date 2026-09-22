@@ -135,7 +135,10 @@ const DashboardPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const params: Record<string, string | number> = { sortByDate: sortOrder };
+      const params: Record<string, string | number | boolean> = {
+        sortByDate: sortOrder,
+        includeStatus: true,
+      };
       const fromTimestamp = parseDateFilterSeconds(dateFrom);
       const toTimestamp = parseDateFilterSeconds(dateTo);
 
@@ -333,25 +336,23 @@ const DashboardPage: React.FC = () => {
         <main className={styles.content}>
           <div className={styles.pageTitleRow}>
             <h2 className={styles.pageTitle}>{PAGE_TITLES[activeKey]}</h2>
+            {loading && hasCachedData && (
+              <div className={styles.pageUpdatingIndicator} role="status" aria-live="polite">
+                <Spinner size="small" tip="Оновлення..." />
+              </div>
+            )}
           </div>
           {loading && !hasCachedData ? (
             <DashboardSkeleton />
           ) : (
-            <>
-              {loading && hasCachedData && (
-                <div className={styles.contentLoading}>
-                  <Spinner size="small" tip="Оновлення..." />
-                </div>
-              )}
-              <motion.div
-                key={activeKey}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                {renderActiveContent()}
-              </motion.div>
-            </>
+            <motion.div
+              key={activeKey}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              {renderActiveContent()}
+            </motion.div>
           )}
 
           <AssignmentModal

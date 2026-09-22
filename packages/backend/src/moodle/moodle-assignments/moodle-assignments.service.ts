@@ -22,6 +22,7 @@ export class MoodleAssignmentsService {
   async getAssignments(
     moodleToken: string,
     moodleId: string,
+    includeStatus = false,
   ): Promise<AssignmentItemDto[]> {
     if (!moodleToken || !moodleId) {
       throw new BadRequestException('Token or user ID are not provided');
@@ -54,6 +55,26 @@ export class MoodleAssignmentsService {
           });
         });
       });
+
+      if (includeStatus && assignments.length > 0) {
+        await Promise.allSettled(
+          assignments.map(async (assign) => {
+            try {
+              const sub = await this.getSubmissionStatus(
+                moodleToken,
+                moodleId,
+                assign.id,
+              );
+
+              assign.submissionStatus = sub.status;
+              assign.grade = sub.grade;
+              assign.graded = sub.status === 'graded';
+            } catch {
+              // Ignore single assignment status fetch failure
+            }
+          }),
+        );
+      }
 
       return assignments;
     } catch (error) {
