@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class SaveSubmissionDto {
@@ -69,6 +69,7 @@ export class AssignmentItemDto {
     description: 'Whether assignment is graded',
   })
   @IsOptional()
+  @IsBoolean()
   graded?: boolean;
 }
 
@@ -125,5 +126,6 @@ export class GetAssignmentsQueryDto {
   })
   @IsOptional()
   @Type(() => Boolean)
+  @IsBoolean()
   includeStatus?: boolean;
 }

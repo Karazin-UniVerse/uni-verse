@@ -57,23 +57,29 @@ export class MoodleAssignmentsService {
       });
 
       if (includeStatus && assignments.length > 0) {
-        await Promise.allSettled(
-          assignments.map(async (assign) => {
-            try {
-              const sub = await this.getSubmissionStatus(
-                moodleToken,
-                moodleId,
-                assign.id,
-              );
+        const chunkSize = 5;
 
-              assign.submissionStatus = sub.status;
-              assign.grade = sub.grade;
-              assign.graded = sub.status === 'graded';
-            } catch {
-              // Ignore single assignment status fetch failure
-            }
-          }),
-        );
+        for (let i = 0; i < assignments.length; i += chunkSize) {
+          const chunk = assignments.slice(i, i + chunkSize);
+
+          await Promise.allSettled(
+            chunk.map(async (assign) => {
+              try {
+                const sub = await this.getSubmissionStatus(
+                  moodleToken,
+                  moodleId,
+                  assign.id,
+                );
+
+                assign.submissionStatus = sub.status;
+                assign.grade = sub.grade;
+                assign.graded = sub.status === 'graded';
+              } catch {
+                // Ignore single assignment status fetch failure
+              }
+            }),
+          );
+        }
       }
 
       return assignments;

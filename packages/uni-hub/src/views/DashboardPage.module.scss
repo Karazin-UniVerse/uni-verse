@@ -586,11 +586,11 @@
 }
 
 .assignmentCardCompleted {
-  border-color: color-mix(in srgb, var(--success-color, #22c55e) 30%, var(--card-border));
-  background: color-mix(in srgb, var(--success-color, #22c55e) 3%, var(--bg-surface));
+  border-color: color-mix(in srgb, var(--success-color) 30%, var(--card-border));
+  background: color-mix(in srgb, var(--success-color) 3%, var(--bg-surface));
 
   &:hover {
-    border-color: var(--success-color, #22c55e);
+    border-color: var(--success-color);
   }
 }
 
@@ -638,12 +638,12 @@
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-4) var(--space-10);
-  background: color-mix(in srgb, var(--success-color, #22c55e) 15%, transparent);
-  border: 1px solid color-mix(in srgb, var(--success-color, #22c55e) 30%, transparent);
+  background: color-mix(in srgb, var(--success-color) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success-color) 30%, transparent);
   border-radius: var(--border-radius-full);
   font-size: var(--font-xs);
   font-weight: var(--font-weight-bold);
-  color: var(--success-color, #22c55e);
+  color: var(--success-color);
 }
 
 .assignmentTitle {
@@ -712,19 +712,6 @@
   .assignmentCard:hover & {
     transform: translateX(3px);
   }
-}
-
-.assignmentTop {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-12);
-  margin-bottom: var(--space-8);
-}
-
-.htmlSnippet {
-  color: var(--text-secondary);
-  font-size: var(--font-sm);
 }
 
 .tableWrap {

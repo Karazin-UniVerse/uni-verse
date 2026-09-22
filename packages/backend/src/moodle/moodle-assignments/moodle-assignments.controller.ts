@@ -102,12 +102,12 @@ export class MoodleAssignmentsController {
       const now = Date.now() / 1000;
 
       result = result.filter((assignment) => {
-        if (
-          assignment.submissionStatus === 'submitted' ||
-          assignment.submissionStatus === 'graded' ||
-          assignment.graded
-        ) {
-          return true;
+        if (assignment.submissionStatus) {
+          return (
+            assignment.submissionStatus === 'submitted' ||
+            assignment.submissionStatus === 'graded' ||
+            Boolean(assignment.graded)
+          );
         }
 
         return assignment.duedate > 0 && assignment.duedate < now;
@@ -116,12 +116,12 @@ export class MoodleAssignmentsController {
       const now = Date.now() / 1000;
 
       result = result.filter((assignment) => {
-        if (
-          assignment.submissionStatus === 'submitted' ||
-          assignment.submissionStatus === 'graded' ||
-          assignment.graded
-        ) {
-          return false;
+        if (assignment.submissionStatus) {
+          return (
+            assignment.submissionStatus !== 'submitted' &&
+            assignment.submissionStatus !== 'graded' &&
+            !assignment.graded
+          );
         }
 
         return assignment.duedate === 0 || assignment.duedate >= now;

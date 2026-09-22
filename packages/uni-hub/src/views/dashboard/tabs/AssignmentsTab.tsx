@@ -83,36 +83,45 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   const [localStatuses, setLocalStatuses] = useState<
     Record<number, { status?: string; grade?: string }>
   >({});
+  const requestedIdsRef = React.useRef<Set<number>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
     const assignmentsNeedingStatus = assignments.filter(
-      (item) => !item.submissionStatus && !localStatuses[item.id],
+      (item) => !item.submissionStatus && !requestedIdsRef.current.has(item.id),
     );
 
     if (assignmentsNeedingStatus.length === 0) return;
 
-    assignmentsNeedingStatus.slice(0, 10).forEach(async (item) => {
-      try {
-        const res = await moodleApi.getAssignmentStatus(item.id);
+    const batch = assignmentsNeedingStatus.slice(0, 10);
 
-        if (!cancelled && res?.data) {
-          const data = res.data as { status?: string; grade?: string };
+    for (const item of batch) {
+      requestedIdsRef.current.add(item.id);
+    }
 
-          setLocalStatuses((prev) => ({
-            ...prev,
-            [item.id]: { status: data.status, grade: data.grade },
-          }));
+    for (const item of batch) {
+      void (async () => {
+        try {
+          const res = await moodleApi.getAssignmentStatus(item.id);
+
+          if (!cancelled && res?.data) {
+            const data = res.data as { status?: string; grade?: string };
+
+            setLocalStatuses((prev) => ({
+              ...prev,
+              [item.id]: { status: data.status, grade: data.grade },
+            }));
+          }
+        } catch {
+          // Ignore status fetch error for individual item
         }
-      } catch {
-        // Ignore status fetch error for individual item
-      }
-    });
+      })();
+    }
 
     return () => {
       cancelled = true;
     };
-  }, [assignments, localStatuses]);
+  }, [assignments]);
 
   const handleDateChange =
     (setter: (value: string) => void) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -195,85 +204,111 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         </label>
       </div>
 
-      {visibleAssignments.length > 0 ? (
-        visibleAssignments.map((item) => {
-          const description = stripHtml(item.description);
-          const status = item.submissionStatus ?? localStatuses[item.id]?.status ?? 'new';
-          const grade = item.grade ?? localStatuses[item.id]?.grade;
-          const isCompleted = status === 'submitted' || status === 'graded' || Boolean(item.graded);
-          const hasDeadline = Boolean(item.duedate && item.duedate > 0);
-          const isOverdue = Boolean(hasDeadline && item.duedate < nowSec);
-          const statusInfo = getAssignmentStatusInfo(status, isCompleted, isOverdue);
+      {visibleAssignments.length > 0
+        ? visibleAssignments.map((item) => {
+            const description = stripHtml(item.description);
+            const status = item.submissionStatus ?? localStatuses[item.id]?.status ?? 'new';
+            const grade = item.grade ?? localStatuses[item.id]?.grade;
+            const isCompleted =
+              status === 'submitted' || status === 'graded' || Boolean(item.graded);
+            const hasDeadline = Boolean(item.duedate && item.duedate > 0);
+            const isOverdue = Boolean(hasDeadline && item.duedate < nowSec);
+            const statusInfo = getAssignmentStatusInfo(status, isCompleted, isOverdue);
 
-          return (
-            <motion.button
-              key={item.id}
-              type="button"
-              className={clsx(styles.assignmentCard, isCompleted && styles.assignmentCardCompleted)}
-              {...cardMotion}
-              onClick={() => {
-                playClick(soundEnabled);
-                onOpenAssignment(item);
-              }}
-            >
-              <div className={styles.assignmentHeaderRow}>
-                <div className={styles.assignmentCourseTag}>
-                  <BookOpen size={13} className={styles.assignmentCourseIcon} />
-                  <span className={styles.assignmentCourseName}>{item.courseName}</span>
-                </div>
+            return (
+              <motion.button
+                key={item.id}
+                type="button"
+                className={clsx(
+                  styles.assignmentCard,
+                  isCompleted && styles.assignmentCardCompleted,
+                )}
+                {...cardMotion}
+                onClick={() => {
+                  playClick(soundEnabled);
+                  onOpenAssignment(item);
+                }}
+              >
+                <div className={styles.assignmentHeaderRow}>
+                  <div className={styles.assignmentCourseTag}>
+                    <BookOpen size={13} className={styles.assignmentCourseIcon} />
+                    <span className={styles.assignmentCourseName}>{item.courseName}</span>
+                  </div>
 
-                <div className={styles.assignmentBadgesRow}>
-                  <Tag tone={statusInfo.tone}>
-                    {renderStatusIcon(statusInfo.tone)}
-                    {statusInfo.label}
-                  </Tag>
+                  <div className={styles.assignmentBadgesRow}>
+                    <Tag tone={statusInfo.tone}>
+                      {renderStatusIcon(statusInfo.tone)}
+                      {statusInfo.label}
+                    </Tag>
 
-                  {grade && (
-                    <span className={styles.assignmentGradeBadge}>
-                      <Award size={13} style={{ marginRight: 4 }} />
-                      Оцінка: {grade}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <h3 className={styles.assignmentTitle}>{item.name}</h3>
-
-              {description && (
-                <p className={styles.assignmentSnippet}>
-                  {description.length > 200 ? `${description.substring(0, 200)}...` : description}
-                </p>
-              )}
-
-              <div className={styles.assignmentFooterRow}>
-                <div className={styles.assignmentDeadlineBox}>
-                  <Calendar size={14} className={styles.calendarIcon} />
-                  {hasDeadline ? (
-                    <>
-                      <span className={styles.deadlineDate}>
-                        Дедлайн: {new Date(item.duedate * 1000).toLocaleDateString('uk-UA')}
+                    {grade && (
+                      <span className={styles.assignmentGradeBadge}>
+                        <Award size={13} style={{ marginRight: 4 }} />
+                        Оцінка: {grade}
                       </span>
-                      {!isCompleted && !isOverdue && <LiveCountdown targetUnixSec={item.duedate} />}
-                    </>
-                  ) : (
-                    <span className={styles.noDeadlineText}>Без терміну здачі</span>
-                  )}
+                    )}
+                  </div>
                 </div>
 
-                <div className={styles.assignmentActionHint}>
-                  <span>Відкрити завдання</span>
-                  <ChevronRight size={14} />
+                <h3 className={styles.assignmentTitle}>{item.name}</h3>
+
+                {description && (
+                  <p className={styles.assignmentSnippet}>
+                    {description.length > 200 ? `${description.substring(0, 200)}...` : description}
+                  </p>
+                )}
+
+                <div className={styles.assignmentFooterRow}>
+                  <div className={styles.assignmentDeadlineBox}>
+                    <Calendar size={14} className={styles.calendarIcon} />
+                    {hasDeadline ? (
+                      <>
+                        <span className={styles.deadlineDate}>
+                          Дедлайн: {new Date(item.duedate * 1000).toLocaleDateString('uk-UA')}
+                        </span>
+                        {!isCompleted && !isOverdue && (
+                          <LiveCountdown targetUnixSec={item.duedate} />
+                        )}
+                      </>
+                    ) : (
+                      <span className={styles.noDeadlineText}>Без терміну здачі</span>
+                    )}
+                  </div>
+
+                  <div className={styles.assignmentActionHint}>
+                    <span>Відкрити завдання</span>
+                    <ChevronRight size={14} />
+                  </div>
                 </div>
-              </div>
-            </motion.button>
-          );
-        })
-      ) : (
-        <Empty
-          description="Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉"
-          icon={<span style={{ fontSize: '48px' }}>🏖️</span>}
-        />
-      )}
+              </motion.button>
+            );
+          })
+        : (() => {
+            if (assignments.length === 0) {
+              return (
+                <Empty
+                  description="Завдань не знайдено"
+                  icon={<span style={{ fontSize: '48px' }}>📝</span>}
+                />
+              );
+            }
+
+            if (dateFrom || dateTo) {
+              return (
+                <Empty
+                  description="За обраними датами завдань не знайдено"
+                  icon={<span style={{ fontSize: '48px' }}>🔍</span>}
+                />
+              );
+            }
+
+            return (
+              <Empty
+                description="Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉"
+                icon={<span style={{ fontSize: '48px' }}>🏖️</span>}
+              />
+            );
+          })()}
     </div>
   );
 };
