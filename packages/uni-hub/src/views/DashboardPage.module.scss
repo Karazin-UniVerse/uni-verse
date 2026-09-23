@@ -280,6 +280,68 @@
   animation: fadeUp 0.2s var(--ease-standard);
 }
 
+.syncActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+}
+
+.lastSyncText {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.refreshBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  cursor: pointer;
+}
+
+.refreshIcon {
+  flex-shrink: 0;
+  transition: transform var(--transition-fast) var(--ease-standard);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.offlineBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--border-radius-medium, 8px);
+  background: color-mix(in srgb, var(--warning-color) 12%, var(--bg-surface));
+  border: 1px solid var(--warning-color);
+  color: var(--warning-text, #92400e);
+  font-size: var(--font-sm);
+  margin-bottom: var(--space-16);
+}
+
+:global([data-theme='dark']) .offlineBanner,
+:global([data-theme='cyberpunk']) .offlineBanner {
+  color: var(--warning-light, #fbbf24);
+}
+
+.offlineIcon {
+  color: var(--warning-color);
+  flex-shrink: 0;
+}
+
 .overviewHero {
   display: flex;
   align-items: flex-start;
@@ -602,6 +664,17 @@
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-12);
+  }
+}
+
+.assignmentCardAwaitingReview {
+  border-color: color-mix(in srgb, var(--warning-color) 25%, var(--card-border));
+  border-left-color: var(--warning-color);
+  background: color-mix(in srgb, var(--warning-color) 3%, var(--bg-surface));
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--warning-color) 40%, var(--card-border));
+    border-left-color: var(--warning-color);
   }
 }
 

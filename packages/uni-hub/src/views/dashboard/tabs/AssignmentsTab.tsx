@@ -30,19 +30,27 @@ import { cardMotion } from '../constants';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 type AssignmentStatusInfo = {
-  tone: 'success' | 'danger' | 'info';
+  tone: 'success' | 'danger' | 'info' | 'warning';
   label: string;
 };
 
 function getAssignmentStatusInfo(
   status: string,
-  isCompleted: boolean,
+  isGraded: boolean,
+  isAwaitingReview: boolean,
   isOverdue: boolean,
 ): AssignmentStatusInfo {
-  if (isCompleted) {
+  if (isGraded) {
     return {
       tone: 'success',
-      label: status === 'graded' ? 'Оцінено' : 'Здано на перевірку',
+      label: 'Оцінено',
+    };
+  }
+
+  if (isAwaitingReview) {
+    return {
+      tone: 'warning',
+      label: 'Очікує перевірки',
     };
   }
 
@@ -53,9 +61,13 @@ function getAssignmentStatusInfo(
   return { tone: 'info', label: 'В процесі' };
 }
 
-function renderStatusIcon(tone: 'success' | 'danger' | 'info') {
+function renderStatusIcon(tone: 'success' | 'danger' | 'info' | 'warning') {
   if (tone === 'success') {
     return <CheckCircle2 size={13} style={{ marginRight: 4 }} />;
+  }
+
+  if (tone === 'warning') {
+    return <Clock size={13} style={{ marginRight: 4 }} />;
   }
 
   if (tone === 'danger') {
@@ -207,11 +219,20 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         ? visibleAssignments.map((item) => {
             const status = item.submissionStatus ?? localStatuses[item.id]?.status ?? 'new';
             const grade = item.grade ?? localStatuses[item.id]?.grade;
-            const isCompleted =
-              status === 'submitted' || status === 'graded' || Boolean(item.graded);
+            const isGraded = status === 'graded' || Boolean(grade) || Boolean(item.graded);
+            const isAwaitingReview = !isGraded && status === 'submitted';
+            const isCompleted = isGraded || isAwaitingReview;
             const hasDeadline = Boolean(item.duedate && item.duedate > 0);
-            const isOverdue = Boolean(hasDeadline && item.duedate < nowSec);
-            const statusInfo = getAssignmentStatusInfo(status, isCompleted, isOverdue);
+            const isOverdue = Boolean(hasDeadline && item.duedate < nowSec && !isCompleted);
+            const isLate = Boolean(
+              item.isLate || (item.submittedAt && hasDeadline && item.submittedAt > item.duedate),
+            );
+            const statusInfo = getAssignmentStatusInfo(
+              status,
+              isGraded,
+              isAwaitingReview,
+              isOverdue,
+            );
 
             return (
               <motion.button
@@ -219,7 +240,8 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
                 type="button"
                 className={clsx(
                   styles.assignmentCard,
-                  isCompleted && styles.assignmentCardCompleted,
+                  isAwaitingReview && styles.assignmentCardAwaitingReview,
+                  isGraded && styles.assignmentCardCompleted,
                   isOverdue && styles.assignmentCardOverdue,
                   !isCompleted && !isOverdue && styles.assignmentCardInProgress,
                 )}
@@ -262,6 +284,13 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
                 </div>
 
                 <div className={styles.assignmentRightCol}>
+                  {isLate && (
+                    <Tag tone="danger">
+                      <AlertCircle size={13} style={{ marginRight: 4 }} />
+                      Здано із запізненням
+                    </Tag>
+                  )}
+
                   <Tag tone={statusInfo.tone}>
                     {grade ? (
                       <>

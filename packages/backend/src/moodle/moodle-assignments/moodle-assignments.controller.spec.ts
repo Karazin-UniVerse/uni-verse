@@ -7,6 +7,7 @@ import {
   GetAssignmentsQueryDto,
   AssignmentItemDto,
   SaveSubmissionDto,
+  SubmissionStatusDto,
 } from './moodle-assignments-dto';
 
 describe('MoodleAssignmentsController', () => {
@@ -71,10 +72,26 @@ describe('MoodleAssignmentsController', () => {
         submissionStatus: 'submitted',
         grade: '100',
         graded: true,
+        submittedAt: '1727000000',
+        isLate: true,
       });
       const itemErrors = await validate(item);
 
       expect(itemErrors.length).toBe(0);
+      expect(typeof item.submittedAt).toBe('number');
+      expect(item.isLate).toBe(true);
+
+      const statusDto = plainToInstance(SubmissionStatusDto, {
+        status: 'submitted',
+        grade: '90',
+        submittedAt: '1727000000',
+        isLate: false,
+      });
+      const statusErrors = await validate(statusDto);
+
+      expect(statusErrors.length).toBe(0);
+      expect(typeof statusDto.submittedAt).toBe('number');
+      expect(statusDto.isLate).toBe(false);
 
       const saveDto = plainToInstance(SaveSubmissionDto, {
         text: 'hello',

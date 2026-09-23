@@ -3,7 +3,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Spinner, useToast } from '@una';
+import clsx from 'clsx';
+import { RotateCw, AlertCircle } from 'lucide-react';
+import { Button as UnaButton, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
 import { isLoggedIn } from '@core/auth';
 import type { StudentProfile } from '@core/types';
@@ -86,6 +88,19 @@ function resolveGradesResponse(gradesResponse?: GradesApiResponse | null): Grade
 
   return [];
 }
+
+function formatLastSync(timestamp: number): string {
+  const d = new Date(timestamp);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const day = pad(d.getDate());
+  const month = pad(d.getMonth() + 1);
+  const year = d.getFullYear();
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+
+  return `${day}.${month}.${year} ${hours}:${minutes}`;
+}
+
 const DashboardPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -103,6 +118,9 @@ const DashboardPage: React.FC = () => {
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const activeStudentProfile = studentProfile ?? fallbackStudentProfile;
+
+  const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
+  const [isOfflineData, setIsOfflineData] = useState(false);
 
   const [data, setData] = useState<DashboardData>({
     courses: [],
@@ -131,7 +149,33 @@ const DashboardPage: React.FC = () => {
     data.events.length > 0 ||
     hasLoadedOnce;
 
-  const fetchData = async () => {
+  useEffect(() => {
+    try {
+      const cachedTime = localStorage.getItem('universe_last_sync_time');
+
+      if (cachedTime) {
+        setLastSyncTime(Number(cachedTime));
+      }
+
+      const cachedData = localStorage.getItem('universe_dashboard_data');
+
+      if (cachedData) {
+        const parsed = JSON.parse(cachedData) as Partial<DashboardData>;
+
+        if (parsed && typeof parsed === 'object') {
+          setData((previous) => ({
+            ...previous,
+            ...parsed,
+          }));
+          setHasLoadedOnce(true);
+        }
+      }
+    } catch {
+      // Ignore cache read errors
+    }
+  }, []);
+
+  const fetchData = async (isManual = false) => {
     setLoading(true);
 
     try {
@@ -164,7 +208,7 @@ const DashboardPage: React.FC = () => {
           moodleApi.getStatistics(),
         ]);
 
-      setData({
+      const freshData: DashboardData = {
         courses: Array.isArray(coursesRes?.data) ? coursesRes.data : [],
         grades: resolveGradesResponse(gradesRes),
         assignments: Array.isArray(assignmentsRes?.data) ? assignmentsRes.data : [],
@@ -174,8 +218,26 @@ const DashboardPage: React.FC = () => {
           : [],
         unreadCount: notificationsRes?.data?.unreadCount || 0,
         statistics: statsRes?.data || null,
-      });
+      };
+
+      setData(freshData);
       setHasLoadedOnce(true);
+      setIsOfflineData(false);
+
+      const nowTimestamp = Date.now();
+
+      setLastSyncTime(nowTimestamp);
+
+      try {
+        localStorage.setItem('universe_last_sync_time', String(nowTimestamp));
+        localStorage.setItem('universe_dashboard_data', JSON.stringify(freshData));
+      } catch {
+        // Ignore localStorage quota error
+      }
+
+      if (isManual) {
+        toast.success('Дані успішно оновлено');
+      }
     } catch (error) {
       if (error instanceof Error && error.message.includes('401')) {
         localStorage.removeItem('isLoggedIn');
@@ -188,6 +250,29 @@ const DashboardPage: React.FC = () => {
       }
 
       console.error(error);
+
+      try {
+        const cachedData = localStorage.getItem('universe_dashboard_data');
+
+        if (cachedData) {
+          const parsed = JSON.parse(cachedData) as Partial<DashboardData>;
+
+          if (parsed && typeof parsed === 'object') {
+            setData((previous) => ({
+              ...previous,
+              ...parsed,
+            }));
+            setIsOfflineData(true);
+            setHasLoadedOnce(true);
+            toast.info("Використовуються збережені дані: немає зв'язку з сервером Moodle.");
+
+            return;
+          }
+        }
+      } catch {
+        // Ignore cache read error
+      }
+
       toast.error('Помилка завантаження даних. Будь ласка, переконайтеся, що бекенд запущено.');
     } finally {
       setLoading(false);
@@ -343,12 +428,36 @@ const DashboardPage: React.FC = () => {
         <main className={styles.content}>
           <div className={styles.pageTitleRow}>
             <h2 className={styles.pageTitle}>{PAGE_TITLES[activeKey]}</h2>
-            {loading && hasCachedData && (
-              <div className={styles.pageUpdatingIndicator} role="status" aria-live="polite">
-                <Spinner size="small" tip="Оновлення..." />
-              </div>
-            )}
+            <div className={styles.syncActions}>
+              {lastSyncTime && (
+                <span className={styles.lastSyncText}>
+                  Дані оновлено: {formatLastSync(lastSyncTime)}
+                </span>
+              )}
+              <UnaButton
+                type="button"
+                variant="secondary"
+                size="small"
+                onClick={() => fetchData(true)}
+                disabled={loading}
+                aria-label="Оновити дані"
+                className={styles.refreshBtn}
+              >
+                <RotateCw size={14} className={clsx(styles.refreshIcon, loading && styles.spin)} />
+                <span>Оновити</span>
+              </UnaButton>
+            </div>
           </div>
+
+          {isOfflineData && (
+            <div className={styles.offlineBanner} role="alert">
+              <AlertCircle size={16} className={styles.offlineIcon} />
+              <span>
+                Увага: відсутній зв&apos;язок з сервером Moodle. Відображаються збережені дані
+                {lastSyncTime ? ` від ${formatLastSync(lastSyncTime)}` : ''}.
+              </span>
+            </div>
+          )}
           {loading && !hasCachedData ? (
             <DashboardSkeleton />
           ) : (

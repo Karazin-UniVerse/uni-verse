@@ -71,6 +71,23 @@ export class AssignmentItemDto {
   @IsOptional()
   @IsBoolean()
   graded?: boolean;
+
+  @ApiPropertyOptional({
+    example: 1727000000,
+    description: 'Submission timestamp if submitted',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  submittedAt?: number;
+
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Whether assignment was submitted after deadline',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isLate?: boolean;
 }
 
 export class SubmissionStatusDto {
@@ -85,6 +102,23 @@ export class SubmissionStatusDto {
     description: 'Grade if already graded',
   })
   grade?: string;
+
+  @ApiPropertyOptional({
+    example: 1727000000,
+    description: 'Submission timestamp',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  submittedAt?: number;
+
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Whether assignment was submitted after deadline',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isLate?: boolean;
 }
 
 export class GetAssignmentsQueryDto {

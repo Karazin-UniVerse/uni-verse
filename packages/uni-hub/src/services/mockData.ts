@@ -110,6 +110,50 @@ export const mockAssignments: Assignment[] = [
     year: 2026,
     semester: 5,
   },
+  {
+    id: 206,
+    courseName: 'Організація баз даних',
+    name: 'Лабораторна робота №4: Транзакції та рівні ізоляції ACID у PostgreSQL',
+    description:
+      'Дослідити аномалії паралельного доступу (брудне читання, неповторюване читання, фантоми).',
+    duedate: now + 86400 * 4,
+    submissionStatus: 'submitted',
+    submittedAt: now - 3600,
+    grade: null,
+    graded: false,
+    isLate: false,
+    year: 2026,
+    semester: 5,
+  },
+  {
+    id: 207,
+    courseName: 'Паралельні та розподілені обчислення',
+    name: 'Практикум: Багатопотоковість в C++20 (std::jthread, latches, barriers)',
+    description:
+      'Реалізувати шаблон паралельного конвеєра (pipeline) для обробки потоку зображень.',
+    duedate: now - 86400, // deadline passed 1 day ago
+    submissionStatus: 'submitted',
+    submittedAt: now - 3600 * 2, // submitted 2 hours ago (late)
+    grade: null,
+    graded: false,
+    isLate: true,
+    year: 2026,
+    semester: 5,
+  },
+  {
+    id: 208,
+    courseName: 'Філософія та наукове мислення',
+    name: 'Есе №2: Етика автономних систем та безпілотного транспорту',
+    description: 'Аналіз проблеми вагонетки в контексті сучасного машинного навчання.',
+    duedate: now - 86400 * 5,
+    submissionStatus: 'graded',
+    submittedAt: now - 86400 * 4, // submitted after deadline
+    grade: '88',
+    graded: true,
+    isLate: true,
+    year: 2026,
+    semester: 5,
+  },
 ];
 
 export const mockGrades: Grade[] = [

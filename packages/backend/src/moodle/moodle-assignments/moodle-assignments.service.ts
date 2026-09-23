@@ -74,6 +74,12 @@ export class MoodleAssignmentsService {
                 assign.submissionStatus = sub.status;
                 assign.grade = sub.grade;
                 assign.graded = sub.status === 'graded';
+                assign.submittedAt = sub.submittedAt;
+                assign.isLate = Boolean(
+                  sub.submittedAt &&
+                  assign.duedate > 0 &&
+                  sub.submittedAt > assign.duedate,
+                );
               } catch {
                 // Ignore single assignment status fetch failure
               }
@@ -123,8 +129,9 @@ export class MoodleAssignmentsService {
 
     const finalStatus =
       gradingStatus === 'graded' ? 'graded' : submissionStatus;
+    const submittedAt = data?.lastattempt?.submission?.timemodified;
 
-    return { status: finalStatus, grade };
+    return { status: finalStatus, grade, submittedAt };
   }
 
   async saveSubmission(
