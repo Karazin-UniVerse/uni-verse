@@ -195,6 +195,13 @@ const DashboardPage: React.FC = () => {
   };
 
   useEffect(() => {
+    if (searchParams.get('demo') === 'true') {
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('accessToken', 'demo-token');
+      localStorage.setItem('moodleToken', 'demo-token');
+      localStorage.setItem('isDemo', 'true');
+    }
+
     if (!isLoggedIn()) {
       router.push('/login');
 
@@ -212,7 +219,7 @@ const DashboardPage: React.FC = () => {
     }
 
     checkIn();
-  }, [checkIn, router]);
+  }, [checkIn, router, searchParams]);
 
   useEffect(() => {
     const requestedTab = searchParams.get('tab');
