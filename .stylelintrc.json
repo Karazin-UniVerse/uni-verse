@@ -1,12 +1,23 @@
 {
   "extends": ["stylelint-config-standard", "stylelint-config-standard-scss"],
   "rules": {
-    "keyframe-declaration-no-important": true,
-    "declaration-no-important": true,
     "selector-pseudo-class-no-unknown": [
       true,
       {
         "ignorePseudoClasses": ["global", "local"]
+      }
+    ],
+    "declaration-no-important": [
+      true,
+      {
+        "message": "Do not use !important. It indicates broken selector specificity. Refactor selectors or use CSS Modules scoping instead."
+      }
+    ],
+    "keyframe-declaration-no-important": true,
+    "media-feature-name-disallowed-list": [
+      ["min-width", "max-width"],
+      {
+        "message": "Do not write raw @media queries with min-width/max-width. Use '@include wider-than(\"breakpoint\")' or '@include narrower-than(\"breakpoint\")' from '@universe/ui/breakpoints.scss'."
       }
     ],
     "selector-class-pattern": [
@@ -28,5 +39,13 @@
         "ignoreAtRules": ["theme"]
       }
     ]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/breakpoints.scss"],
+      "rules": {
+        "media-feature-name-disallowed-list": null
+      }
+    }
+  ]
 }

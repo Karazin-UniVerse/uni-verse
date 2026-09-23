@@ -105,16 +105,18 @@ export const ErrorState: Story = {
   },
 };
 
-export const WithInitialFiles: Story = {
-  render: () => {
-    const sampleFile1 = new File(['hello'], 'document.pdf', { type: 'application/pdf' });
-    const sampleFile2 = new File(['image content'], 'avatar.png', { type: 'image/png' });
-    const [files, setFiles] = useState<File[]>([sampleFile1, sampleFile2]);
+const WithInitialFilesComponent = () => {
+  const sampleFile1 = new File(['hello'], 'document.pdf', { type: 'application/pdf' });
+  const sampleFile2 = new File(['image content'], 'avatar.png', { type: 'image/png' });
+  const [files, setFiles] = useState<File[]>([sampleFile1, sampleFile2]);
 
-    return (
-      <div style={{ maxWidth: '500px', padding: '20px' }}>
-        <FileInput label="Project Files" multiple files={files} onFilesChange={setFiles} />
-      </div>
-    );
-  },
+  return (
+    <div style={{ maxWidth: '500px', padding: '20px' }}>
+      <FileInput label="Project Files" multiple files={files} onFilesChange={setFiles} />
+    </div>
+  );
+};
+
+export const WithInitialFiles: Story = {
+  render: () => <WithInitialFilesComponent />,
 };

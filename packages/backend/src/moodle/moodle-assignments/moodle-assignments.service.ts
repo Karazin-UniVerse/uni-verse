@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { MoodleClientService } from '../moodle-client/moodle.client.service';
 import { getWsFunctionName } from '../../utils/wsfunctions';
 import {
@@ -15,6 +15,8 @@ import type {
 
 @Injectable()
 export class MoodleAssignmentsService {
+  private readonly logger = new Logger(MoodleAssignmentsService.name);
+
   constructor(private readonly moodleClient: MoodleClientService) {}
 
   async getAssignments(
@@ -54,7 +56,9 @@ export class MoodleAssignmentsService {
       });
 
       return assignments;
-    } catch {
+    } catch (error) {
+      this.logger.error(`Failed to fetch assignments: ${error}`);
+
       return [];
     }
   }

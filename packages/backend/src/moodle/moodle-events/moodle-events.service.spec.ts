@@ -64,5 +64,14 @@ describe('MoodleEventsService', () => {
       expect(result[0].name).toBe('Event');
       expect(result[0].courseName).toBe('C');
     });
+
+    it('should catch errors, log them, and return empty list', async () => {
+      mockMoodleClientService.client.mockRejectedValue(
+        new Error('Network failure'),
+      );
+      const result = await service.getUpcomingEvents('token', 'id');
+
+      expect(result).toEqual([]);
+    });
   });
 });

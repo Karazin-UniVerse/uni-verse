@@ -2,6 +2,7 @@
    GLOBAL RESPONSIVE BREAKPOINTS (UniDesign System)
    ========================================================================== */
 @use 'sass:map';
+@use 'sass:math';
 
 $breakpoint-xs: 480px;
 $breakpoint-sm: 640px;
@@ -18,6 +19,8 @@ $breakpoints: (
   'xxl': $breakpoint-xxl,
 );
 
+/// Mobile-first: applies styles at and above the given breakpoint.
+/// Usage: @include wider-than('md') { ... }
 @mixin wider-than($breakpoint) {
   $value: map.get($breakpoints, $breakpoint);
 
@@ -26,18 +29,21 @@ $breakpoints: (
       @content;
     }
   } @else {
-    @warn "Unknown breakpoint: #{$breakpoint}.";
+    @warn "Unknown breakpoint: #{$breakpoint}. Available: #{map.keys($breakpoints)}";
   }
 }
 
+/// Desktop-down: applies styles below the given breakpoint.
+/// Usage: @include narrower-than('md') { ... }
+/// Note: uses (max-width: breakpoint - 1px) to avoid overlap with wider-than.
 @mixin narrower-than($breakpoint) {
   $value: map.get($breakpoints, $breakpoint);
 
   @if $value {
-    @media (max-width: $value) {
+    @media (max-width: ($value - 1px)) {
       @content;
     }
   } @else {
-    @warn "Unknown breakpoint: #{$breakpoint}.";
+    @warn "Unknown breakpoint: #{$breakpoint}. Available: #{map.keys($breakpoints)}";
   }
 }
