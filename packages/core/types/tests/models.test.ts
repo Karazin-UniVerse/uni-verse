@@ -1,110 +1,17 @@
 import assert from 'node:assert/strict';
 import test, { describe } from 'node:test';
-
-import {
-  calculateEctsGrade,
-  calculateTraditionalGrade,
-  BREAKPOINTS,
-  GRADES_THRESHOLD,
-  type AssignmentItem,
-  type Course,
-  type CurriculumItem,
-  type GradeRecord,
-  type LmsConnectionStatus,
-  type ScheduleItem,
-  type StudentProfile,
-  type StudentRecordBookItem,
-} from './index.ts';
-
-describe('calculateEctsGrade', () => {
-  test('assigns A for scores >= 90', () => {
-    assert.strictEqual(calculateEctsGrade(100), 'A');
-    assert.strictEqual(calculateEctsGrade(95), 'A');
-    assert.strictEqual(calculateEctsGrade(90), 'A');
-  });
-
-  test('assigns B for scores in range [82, 90)', () => {
-    assert.strictEqual(calculateEctsGrade(89.9), 'B');
-    assert.strictEqual(calculateEctsGrade(85), 'B');
-    assert.strictEqual(calculateEctsGrade(82), 'B');
-  });
-
-  test('assigns C for scores in range [74, 82)', () => {
-    assert.strictEqual(calculateEctsGrade(81.9), 'C');
-    assert.strictEqual(calculateEctsGrade(78), 'C');
-    assert.strictEqual(calculateEctsGrade(74), 'C');
-  });
-
-  test('assigns D for scores in range [64, 74)', () => {
-    assert.strictEqual(calculateEctsGrade(73.9), 'D');
-    assert.strictEqual(calculateEctsGrade(68), 'D');
-    assert.strictEqual(calculateEctsGrade(64), 'D');
-  });
-
-  test('assigns E for scores in range [60, 64)', () => {
-    assert.strictEqual(calculateEctsGrade(63.9), 'E');
-    assert.strictEqual(calculateEctsGrade(62), 'E');
-    assert.strictEqual(calculateEctsGrade(60), 'E');
-  });
-
-  test('assigns Fx for scores in range [35, 60)', () => {
-    assert.strictEqual(calculateEctsGrade(59.9), 'Fx');
-    assert.strictEqual(calculateEctsGrade(45), 'Fx');
-    assert.strictEqual(calculateEctsGrade(35), 'Fx');
-  });
-
-  test('assigns F for scores < 35', () => {
-    assert.strictEqual(calculateEctsGrade(34.9), 'F');
-    assert.strictEqual(calculateEctsGrade(20), 'F');
-    assert.strictEqual(calculateEctsGrade(0), 'F');
-  });
-});
-
-describe('calculateTraditionalGrade', () => {
-  describe('exam grading', () => {
-    test('assigns відмінно for score >= 90', () => {
-      assert.strictEqual(calculateTraditionalGrade(100), 'відмінно');
-      assert.strictEqual(calculateTraditionalGrade(90, 'exam'), 'відмінно');
-    });
-
-    test('assigns добре for score in range [70, 90)', () => {
-      assert.strictEqual(calculateTraditionalGrade(89.9, 'exam'), 'добре');
-      assert.strictEqual(calculateTraditionalGrade(70, 'exam'), 'добре');
-    });
-
-    test('assigns задовільно for score in range [50, 70)', () => {
-      assert.strictEqual(calculateTraditionalGrade(69.9, 'exam'), 'задовільно');
-      assert.strictEqual(calculateTraditionalGrade(50, 'exam'), 'задовільно');
-    });
-
-    test('assigns незадовільно for score < 50', () => {
-      assert.strictEqual(calculateTraditionalGrade(49.9, 'exam'), 'незадовільно');
-      assert.strictEqual(calculateTraditionalGrade(30, 'exam'), 'незадовільно');
-      assert.strictEqual(calculateTraditionalGrade(0, 'exam'), 'незадовільно');
-    });
-  });
-
-  describe('credit grading', () => {
-    test('assigns зараховано for score >= 50', () => {
-      assert.strictEqual(calculateTraditionalGrade(100, 'credit'), 'зараховано');
-      assert.strictEqual(calculateTraditionalGrade(50, 'credit'), 'зараховано');
-    });
-
-    test('assigns не зараховано for score < 50', () => {
-      assert.strictEqual(calculateTraditionalGrade(49.9, 'credit'), 'не зараховано');
-      assert.strictEqual(calculateTraditionalGrade(0, 'credit'), 'не зараховано');
-    });
-  });
-
-  describe('differentiated credit grading', () => {
-    test('uses standard multi-tier marks for differentiated_credit', () => {
-      assert.strictEqual(calculateTraditionalGrade(95, 'differentiated_credit'), 'відмінно');
-      assert.strictEqual(calculateTraditionalGrade(75, 'differentiated_credit'), 'добре');
-      assert.strictEqual(calculateTraditionalGrade(55, 'differentiated_credit'), 'задовільно');
-      assert.strictEqual(calculateTraditionalGrade(40, 'differentiated_credit'), 'незадовільно');
-    });
-  });
-});
+import { BREAKPOINTS } from '../../constants/breakpoints.ts';
+import { GRADES_THRESHOLD } from '../../constants/grades.ts';
+import type {
+  AssignmentItem,
+  Course,
+  CurriculumItem,
+  GradeRecord,
+  LmsConnectionStatus,
+  ScheduleItem,
+  StudentProfile,
+  StudentRecordBookItem,
+} from '../index.ts';
 
 describe('domain type contracts compilation verification', () => {
   test('validates StudentProfile shape', () => {

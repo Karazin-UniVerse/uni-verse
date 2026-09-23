@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
-import { BREAKPOINTS } from '@universe/core';
+import { BREAKPOINTS } from '@core/constants/breakpoints';
 import { useMediaQuery } from './useMediaQuery';
 
 describe('useMediaQuery hook', () => {

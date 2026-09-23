@@ -6,4 +6,6 @@ export type SimpleSliderProps = {
   step?: number;
   disabled?: boolean;
   className?: string;
+  'aria-label'?: string;
+  id?: string;
 };

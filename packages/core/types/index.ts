@@ -1,6 +1,6 @@
 /**
  * @universe/types
- * Core domain models, shared contracts, and grade calculation utilities
+ * Core domain models, shared contracts, and type declarations
  * for the Karazin UniVerse platform (UniHub, NestJS Gateway, Moodle LMS).
  */
 
@@ -15,32 +15,37 @@ export type TraditionalGrade =
 export type ControlType = 'exam' | 'credit' | 'differentiated_credit';
 
 /**
- * Standard responsive breakpoints (in pixels) matching design system SCSS tokens
+ * Input parameters for accumulated grade evaluation
  */
-export const BREAKPOINTS = {
-  xs: 480,
-  sm: 640,
-  md: 768,
-  lg: 1024,
-  xl: 1280,
-  xxl: 1536,
-} as const;
+export interface GradeAccumulationParams {
+  semesterScore: number;
+  controlType?: ControlType;
+  examScore?: number | null;
+}
 
-export type Breakpoint = keyof typeof BREAKPOINTS;
 /**
- * Karazin University grading threshold boundaries (100-point scale):
- * - 90..100: відмінно (A)
- * - 70..89: добре (B, C)
- * - 50..69: задовільно / зараховано (D, E)
- * - 0..49: незадовільно / не зараховано (F / Fx)
+ * Result of accumulated grade calculation according to university regulations
  */
-export const GRADES_THRESHOLD = {
-  EXCELLENT: 90,
-  GOOD: 70,
-  SATISFACTORY: 50,
-} as const;
+export interface GradeAccumulationResult {
+  totalScore: number;
+  ectsGrade: EctsGrade;
+  traditionalGrade: TraditionalGrade;
+  isAdmittedToExam: boolean;
+  isExamPassed: boolean;
+  isCoursePassed: boolean;
+  statusMessage: string;
+}
 
-export type GradesThreshold = (typeof GRADES_THRESHOLD)[keyof typeof GRADES_THRESHOLD];
+/**
+ * Exam target requirement for achieving a specific ECTS grade
+ */
+export interface ExamTargetRequirement {
+  grade: EctsGrade;
+  minTotalScore: number;
+  requiredExamScore: number;
+  isAchievable: boolean;
+}
+
 /** Academic status of a student */
 export type StudentAcademicStatus = 'active' | 'academic_leave' | 'expelled' | 'graduated';
 
@@ -195,76 +200,4 @@ export interface LmsConnectionStatus {
   latencyMs?: number;
   userId?: string | number;
   userTokenValid: boolean;
-}
-
-/**
- * Calculates the ECTS letter grade based on a 100-point scale:
- * - >= 90: 'A'
- * - >= 82: 'B'
- * - >= 74: 'C'
- * - >= 64: 'D'
- * - >= 60: 'E'
- * - >= 35: 'Fx'
- * - < 35: 'F'
- */
-export function calculateEctsGrade(score: number): EctsGrade {
-  if (score >= 90) {
-    return 'A';
-  }
-
-  if (score >= 82) {
-    return 'B';
-  }
-
-  if (score >= 74) {
-    return 'C';
-  }
-
-  if (score >= 64) {
-    return 'D';
-  }
-
-  if (score >= 60) {
-    return 'E';
-  }
-
-  if (score >= 35) {
-    return 'Fx';
-  }
-
-  return 'F';
-}
-
-/**
- * Calculates the traditional Ukrainian national grade based on Karazin University scale:
- * - For credit ('credit'):
- *   - >= 50: 'зараховано'
- *   - < 50: 'не зараховано'
- * - For exam ('exam') and differentiated credit ('differentiated_credit'):
- *   - 90..100: 'відмінно'
- *   - 70..89: 'добре'
- *   - 50..69: 'задовільно'
- *   - 0..49: 'незадовільно'
- */
-export function calculateTraditionalGrade(
-  score: number,
-  controlType: ControlType = 'exam',
-): TraditionalGrade {
-  if (controlType === 'credit') {
-    return score >= GRADES_THRESHOLD.SATISFACTORY ? 'зараховано' : 'не зараховано';
-  }
-
-  if (score >= GRADES_THRESHOLD.EXCELLENT) {
-    return 'відмінно';
-  }
-
-  if (score >= GRADES_THRESHOLD.GOOD) {
-    return 'добре';
-  }
-
-  if (score >= GRADES_THRESHOLD.SATISFACTORY) {
-    return 'задовільно';
-  }
-
-  return 'незадовільно';
 }
