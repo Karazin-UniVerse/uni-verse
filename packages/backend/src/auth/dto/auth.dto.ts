@@ -24,3 +24,13 @@ export class LoginDto {
   @IsNotEmpty()
   password: string;
 }
+
+export class AuthResponseDto {
+  @ApiProperty({ example: 'eyJhbGciOi...' })
+  access_token: string;
+}
+
+export class LogoutResponseDto {
+  @ApiProperty({ example: 'Logged out successfully' })
+  message: string;
+}

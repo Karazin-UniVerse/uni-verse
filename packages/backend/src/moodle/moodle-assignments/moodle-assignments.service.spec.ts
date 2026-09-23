@@ -62,6 +62,17 @@ describe('MoodleAssignmentsService', () => {
 
       expect(result.length).toBe(1);
       expect(result[0].name).toBe('A1');
+      expect(result[0].year).toBe('2025/2026');
+      expect(result[0].semester).toBe(1);
+    });
+
+    it('should catch errors, log them, and return empty list', async () => {
+      mockMoodleClientService.client.mockRejectedValue(
+        new Error('Network failure'),
+      );
+      const result = await service.getAssignments('token', 'id');
+
+      expect(result).toEqual([]);
     });
   });
 

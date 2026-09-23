@@ -1,3 +1,5 @@
+@use '@universe/ui/breakpoints.scss' as *;
+
 .page {
   min-height: 100vh;
   background: var(--neutral-surface);
@@ -148,7 +150,7 @@
   font-size: var(--font-sm);
 }
 
-@media (width <= 768px) {
+@include narrower-than('md') {
   .content {
     padding: var(--space-16);
   }

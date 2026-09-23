@@ -1,3 +1,13 @@
+@use '@universe/ui/breakpoints.scss' as *;
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+  align-items: center;
+  margin-bottom: var(--space-16);
+}
+
 .body {
   display: flex;
   flex-direction: column;
@@ -212,7 +222,7 @@
   text-align: center;
 }
 
-@media (width <= 480px) {
+@include narrower-than('xs') {
   .forecast,
   .row,
   .section {

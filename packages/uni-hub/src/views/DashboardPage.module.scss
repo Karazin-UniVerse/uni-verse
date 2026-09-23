@@ -27,6 +27,9 @@
   display: grid;
   grid-template-columns: 240px 1fr;
   height: 100vh;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
   background: var(--bg-color);
   transition: grid-template-columns var(--transition-medium) var(--ease-standard);
 }
@@ -270,6 +273,8 @@
   gap: var(--space-16);
   flex-wrap: wrap;
   margin-bottom: var(--space-8);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .nearestDeadline {
@@ -277,6 +282,9 @@
   flex-direction: column;
   gap: var(--space-8);
   align-items: flex-start;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
 }
 
 .user {
@@ -367,10 +375,12 @@
 
 .content {
   flex: 1;
-  overflow: auto;
+  overflow: hidden auto;
   padding: var(--space-24);
   background: var(--neutral-surface);
   position: relative;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .contentLoading {
@@ -650,7 +660,7 @@
   display: none;
 }
 
-@media (width <= 1024px) {
+@include narrower-than('lg') {
   .layout {
     grid-template-columns: 72px 1fr;
   }
@@ -675,74 +685,22 @@
   }
 }
 
-@media (width <= 768px) {
+@include narrower-than('md') {
   .layout {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
 
   .sider {
-    position: fixed;
-    inset: auto var(--space-16) var(--space-16) var(--space-16);
-    height: 64px;
-    width: auto;
-    z-index: 1000;
-    transform: none;
-    visibility: visible;
-    flex-direction: row;
-    box-shadow: 0 8px 32px rgb(0 0 0 / 15%);
-    background: var(--bg-surface);
-    border: 1px solid var(--border-color);
-    border-radius: 32px;
+    display: none;
   }
 
   .brand {
     display: none;
-  }
-
-  .nav {
-    flex-direction: row;
-    justify-content: space-evenly;
-    align-items: stretch;
-    padding: var(--space-4);
-    width: 100%;
-    gap: var(--space-4);
-    overflow: hidden;
-  }
-
-  .navItem {
-    flex: 1;
-    flex-direction: column;
-    gap: 4px;
-    padding: 8px 0;
-    justify-content: center;
-    border-radius: 32px;
-    text-align: center;
-    color: var(--text-secondary);
-
-    .desktopLabel {
-      display: none;
-    }
-
-    .mobileLabel {
-      font-size: 10px;
-      display: block;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      white-space: nowrap;
-      width: 100%;
-      padding: 0 2px;
-    }
-
-    svg {
-      margin: 0 auto;
-    }
-  }
-
-  .activePill {
-    display: block;
-    border-radius: 32px;
   }
 
   .siderFooter {
@@ -750,7 +708,7 @@
   }
 
   .layout.mobileOpen .sider {
-    transform: none;
+    display: none;
   }
 
   .mobileOverlay {
@@ -764,10 +722,15 @@
   .main {
     flex: 1;
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   .header {
     padding: 0 var(--space-12);
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .headerRight {
@@ -781,6 +744,19 @@
   .content {
     padding: var(--space-16);
     padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    overflow: hidden auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .studentCard,
+  .panel,
+  .courseCard,
+  .assignmentCard,
+  .statCard {
+    padding: var(--space-16);
+    max-width: 100%;
+    box-sizing: border-box;
   }
 }
 
@@ -807,6 +783,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-16);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .studentAvatarLarge {
@@ -827,12 +805,15 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  min-width: 0;
+  overflow-wrap: break-word;
 
   h3 {
     margin: 0;
     font-size: var(--font-lg);
     font-weight: 600;
     color: var(--text-primary);
+    overflow-wrap: break-word;
   }
 }
 
@@ -840,6 +821,7 @@
   display: flex;
   gap: var(--space-8);
   flex-wrap: wrap;
+  max-width: 100%;
 }
 
 .studentGrid {
@@ -848,12 +830,19 @@
   gap: var(--space-12) var(--space-16);
   padding-top: var(--space-12);
   border-top: 1px solid var(--border-color);
+  min-width: 0;
+
+  @include narrower-than('sm') {
+    grid-template-columns: 1fr;
+  }
 }
 
 .studentField {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .fieldLabel {
@@ -919,16 +908,9 @@
 .horizontalScrollList {
   @include narrower-than('md') {
     display: flex;
-    flex-direction: row;
-    overflow-x: auto;
-    gap: var(--space-12);
-    padding-bottom: var(--space-8);
-    scroll-snap-type: x mandatory;
-
-    > div {
-      min-width: 240px;
-      scroll-snap-align: start;
-    }
+    flex-direction: column;
+    overflow-x: hidden;
+    gap: var(--space-8);
   }
 }
 

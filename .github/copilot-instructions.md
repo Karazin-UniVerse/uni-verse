@@ -5,7 +5,7 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 
 ## Core Technology Stack
 
-- **Frontend:** Next.js 15 (App Router), React, Tailwind CSS.
+- **Frontend:** Next.js 16 (App Router), React 19, SCSS Modules, Una Design System.
 - **Backend:** NestJS, Node.js.
 - **Database:** PostgreSQL with Prisma ORM.
 - **Language:** Strict TypeScript across the entire repository.
@@ -50,7 +50,7 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 
 - Prioritize **React Server Components (RSC)**. Use client components (`"use client"`) only when interactivity or browser APIs (like `useState`, `useEffect`, `window`) are required.
 - Push the `"use client"` directive as far down the component tree as possible (to the leaf nodes).
-- Use Tailwind CSS for styling. Follow a mobile-first responsive design approach.
+- Use SCSS Modules and Una design tokens for styling. Follow a mobile-first responsive design approach.
 - Optimize performance using Next.js caching (`fetch` cache, `unstable_cache`) and React hooks (`useMemo`, `useCallback`) where appropriate.
 
 ### 5. Monorepo (Turborepo)
