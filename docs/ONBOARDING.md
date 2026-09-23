@@ -9,7 +9,7 @@ This guide will help you understand the project architecture, tech stack, and th
 
 The project is structured as a **Monorepo** managed with **pnpm** and **Turborepo**.
 
-- **Frontend** (`../packages/uni-hub`): Next.js, React 19, Tailwind CSS, Zustand.
+- **Frontend** (`../packages/uni-hub`): Next.js, React 19, SCSS Modules, Zustand.
 - **Backend** (`../packages/backend`): NestJS, REST API, Prisma.
 - **Database** (`../packages/database`): PostgreSQL, Prisma.
 - **UI** (`../packages/ui`): Shared UI component library (`@una`).

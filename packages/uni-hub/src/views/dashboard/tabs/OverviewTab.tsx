@@ -43,7 +43,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const renderUpcomingEvents = () => {
     if (events.length > 0) {
       return (
-        <div className={`${styles.list} ${styles.horizontalScrollList}`}>
+        <div className={styles.list}>
           {events.slice(0, 4).map((event, index) => (
             <div
               key={event.id}
@@ -68,7 +68,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
     if (assignments.length > 0) {
       return (
-        <div className={`${styles.list} ${styles.horizontalScrollList}`}>
+        <div className={styles.list}>
           {assignments.slice(0, 4).map((assignment, index) => (
             <div
               key={assignment.id}
