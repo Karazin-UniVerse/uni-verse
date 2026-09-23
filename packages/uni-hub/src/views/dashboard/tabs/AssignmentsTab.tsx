@@ -27,7 +27,6 @@ import { moodleApi } from '@uni-hub/services/api';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { AssignmentsTabProps } from '../types';
 import { cardMotion } from '../constants';
-import { stripHtml } from '../utils';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 type AssignmentStatusInfo = {
@@ -206,7 +205,6 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
 
       {visibleAssignments.length > 0
         ? visibleAssignments.map((item) => {
-            const description = stripHtml(item.description);
             const status = item.submissionStatus ?? localStatuses[item.id]?.status ?? 'new';
             const grade = item.grade ?? localStatuses[item.id]?.grade;
             const isCompleted =
@@ -222,6 +220,8 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
                 className={clsx(
                   styles.assignmentCard,
                   isCompleted && styles.assignmentCardCompleted,
+                  isOverdue && styles.assignmentCardOverdue,
+                  !isCompleted && !isOverdue && styles.assignmentCardInProgress,
                 )}
                 {...cardMotion}
                 onClick={() => {
@@ -229,54 +229,55 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
                   onOpenAssignment(item);
                 }}
               >
-                <div className={styles.assignmentHeaderRow}>
-                  <div className={styles.assignmentCourseTag}>
-                    <BookOpen size={13} className={styles.assignmentCourseIcon} />
-                    <span className={styles.assignmentCourseName}>{item.courseName}</span>
-                  </div>
+                <div className={styles.assignmentMainCol}>
+                  <h3 className={styles.assignmentTitle}>{item.name}</h3>
 
-                  <div className={styles.assignmentBadgesRow}>
-                    <Tag tone={statusInfo.tone}>
-                      {renderStatusIcon(statusInfo.tone)}
-                      {statusInfo.label}
-                    </Tag>
+                  <div className={styles.assignmentMetaRow}>
+                    <div className={styles.assignmentCourseTag}>
+                      <BookOpen size={12} className={styles.assignmentCourseIcon} />
+                      <span className={styles.assignmentCourseName}>{item.courseName}</span>
+                    </div>
 
-                    {grade && (
-                      <span className={styles.assignmentGradeBadge}>
-                        <Award size={13} style={{ marginRight: 4 }} />
-                        Оцінка: {grade}
-                      </span>
-                    )}
+                    <span className={styles.metaDot}>•</span>
+
+                    <div className={styles.assignmentDeadlineBox}>
+                      <Calendar size={12} className={styles.calendarIcon} />
+                      {hasDeadline ? (
+                        <>
+                          <span className={styles.deadlineDate}>
+                            Дедлайн: {new Date(item.duedate * 1000).toLocaleDateString('uk-UA')}
+                          </span>
+                          {!isCompleted && !isOverdue && (
+                            <>
+                              <span className={styles.metaDot}>•</span>
+                              <LiveCountdown targetUnixSec={item.duedate} />
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <span className={styles.noDeadlineText}>Без терміну здачі</span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <h3 className={styles.assignmentTitle}>{item.name}</h3>
-
-                {description && (
-                  <p className={styles.assignmentSnippet}>
-                    {description.length > 200 ? `${description.substring(0, 200)}...` : description}
-                  </p>
-                )}
-
-                <div className={styles.assignmentFooterRow}>
-                  <div className={styles.assignmentDeadlineBox}>
-                    <Calendar size={14} className={styles.calendarIcon} />
-                    {hasDeadline ? (
+                <div className={styles.assignmentRightCol}>
+                  <Tag tone={statusInfo.tone}>
+                    {grade ? (
                       <>
-                        <span className={styles.deadlineDate}>
-                          Дедлайн: {new Date(item.duedate * 1000).toLocaleDateString('uk-UA')}
-                        </span>
-                        {!isCompleted && !isOverdue && (
-                          <LiveCountdown targetUnixSec={item.duedate} />
-                        )}
+                        <Award size={13} style={{ marginRight: 4 }} />
+                        Оцінка: {grade}
                       </>
                     ) : (
-                      <span className={styles.noDeadlineText}>Без терміну здачі</span>
+                      <>
+                        {renderStatusIcon(statusInfo.tone)}
+                        {statusInfo.label}
+                      </>
                     )}
-                  </div>
+                  </Tag>
 
-                  <div className={styles.assignmentActionHint}>
-                    <span>Відкрити завдання</span>
+                  <div className={styles.assignmentActionButton}>
+                    <span>Відкрити</span>
                     <ChevronRight size={14} />
                   </div>
                 </div>
