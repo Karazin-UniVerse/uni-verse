@@ -367,18 +367,39 @@
   display: flex;
   align-items: center;
   gap: var(--space-8);
+  font: inherit;
   font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-medium);
+  padding: var(--space-4) var(--space-8);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast) var(--ease-standard),
+    border-color var(--transition-fast) var(--ease-standard);
+
+  &:hover {
+    background: var(--bg-hover);
+    border-color: var(--card-border);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-primary);
+  }
 }
 
 .avatar {
   width: 32px;
   height: 32px;
-  border-radius: var(--border-radius-full);
+  border-radius: 50%;
   background: var(--accent-primary);
   color: var(--accent-text-on-primary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .notifWrap {
