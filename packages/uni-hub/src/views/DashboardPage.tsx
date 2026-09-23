@@ -101,6 +101,93 @@ function formatLastSync(timestamp: number): string {
   return `${day}.${month}.${year} ${hours}:${minutes}`;
 }
 
+type MoodleApiResponseTuple = [
+  Awaited<ReturnType<typeof moodleApi.getCourses>>,
+  Awaited<ReturnType<typeof moodleApi.getGrades>>,
+  Awaited<ReturnType<typeof moodleApi.getAssignments>>,
+  Awaited<ReturnType<typeof moodleApi.getEvents>>,
+  Awaited<ReturnType<typeof moodleApi.getNotifications>>,
+  Awaited<ReturnType<typeof moodleApi.getStatistics>>,
+];
+
+function assembleDashboardData([
+  coursesRes,
+  gradesRes,
+  assignmentsRes,
+  eventsRes,
+  notificationsRes,
+  statsRes,
+]: MoodleApiResponseTuple): DashboardData {
+  return {
+    courses: Array.isArray(coursesRes?.data) ? coursesRes.data : [],
+    grades: resolveGradesResponse(gradesRes),
+    assignments: Array.isArray(assignmentsRes?.data) ? assignmentsRes.data : [],
+    events: Array.isArray(eventsRes?.data) ? eventsRes.data : [],
+    notifications: Array.isArray(notificationsRes?.data?.notifications)
+      ? notificationsRes.data.notifications
+      : [],
+    unreadCount: notificationsRes?.data?.unreadCount || 0,
+    statistics: statsRes?.data || null,
+  };
+}
+
+function buildAssignmentParams(
+  sortOrder: 'asc' | 'desc',
+  dateFrom: string,
+  dateTo: string,
+  hideCompleted: boolean,
+): Record<string, string | number | boolean> {
+  const params: Record<string, string | number | boolean> = {
+    sortByDate: sortOrder,
+    includeStatus: true,
+  };
+  const fromTimestamp = parseDateFilterSeconds(dateFrom);
+  const toTimestamp = parseDateFilterSeconds(dateTo);
+
+  if (fromTimestamp !== null) {
+    params.dateFrom = fromTimestamp;
+  }
+
+  if (toTimestamp !== null) {
+    params.dateTo = toTimestamp;
+  }
+
+  if (hideCompleted) {
+    params.status = 'not_completed';
+  }
+
+  return params;
+}
+
+function loadCachedDashboardData(): Partial<DashboardData> | null {
+  try {
+    const raw = localStorage.getItem('universe_dashboard_data');
+
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<DashboardData>;
+
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistDashboardSnapshot(timestamp: number, freshData: DashboardData): void {
+  try {
+    localStorage.setItem('universe_last_sync_time', String(timestamp));
+    localStorage.setItem('universe_dashboard_data', JSON.stringify(freshData));
+  } catch {
+    // Ignore localStorage quota error
+  }
+}
+
+function isUnauthorizedError(error: unknown): boolean {
+  return error instanceof Error && error.message.includes('401');
+}
+
 const DashboardPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -157,18 +244,14 @@ const DashboardPage: React.FC = () => {
         setLastSyncTime(Number(cachedTime));
       }
 
-      const cachedData = localStorage.getItem('universe_dashboard_data');
+      const cachedData = loadCachedDashboardData();
 
       if (cachedData) {
-        const parsed = JSON.parse(cachedData) as Partial<DashboardData>;
-
-        if (parsed && typeof parsed === 'object') {
-          setData((previous) => ({
-            ...previous,
-            ...parsed,
-          }));
-          setHasLoadedOnce(true);
-        }
+        setData((previous) => ({
+          ...previous,
+          ...cachedData,
+        }));
+        setHasLoadedOnce(true);
       }
     } catch {
       // Ignore cache read errors
@@ -179,46 +262,17 @@ const DashboardPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const params: Record<string, string | number | boolean> = {
-        sortByDate: sortOrder,
-        includeStatus: true,
-      };
-      const fromTimestamp = parseDateFilterSeconds(dateFrom);
-      const toTimestamp = parseDateFilterSeconds(dateTo);
+      const params = buildAssignmentParams(sortOrder, dateFrom, dateTo, hideCompleted);
+      const responses = await Promise.all([
+        moodleApi.getCourses(),
+        moodleApi.getGrades(),
+        moodleApi.getAssignments(params),
+        moodleApi.getEvents(),
+        moodleApi.getNotifications(),
+        moodleApi.getStatistics(),
+      ]);
 
-      if (fromTimestamp !== null) {
-        params.dateFrom = fromTimestamp;
-      }
-
-      if (toTimestamp !== null) {
-        params.dateTo = toTimestamp;
-      }
-
-      if (hideCompleted) {
-        params.status = 'not_completed';
-      }
-
-      const [coursesRes, gradesRes, assignmentsRes, eventsRes, notificationsRes, statsRes] =
-        await Promise.all([
-          moodleApi.getCourses(),
-          moodleApi.getGrades(),
-          moodleApi.getAssignments(params),
-          moodleApi.getEvents(),
-          moodleApi.getNotifications(),
-          moodleApi.getStatistics(),
-        ]);
-
-      const freshData: DashboardData = {
-        courses: Array.isArray(coursesRes?.data) ? coursesRes.data : [],
-        grades: resolveGradesResponse(gradesRes),
-        assignments: Array.isArray(assignmentsRes?.data) ? assignmentsRes.data : [],
-        events: Array.isArray(eventsRes?.data) ? eventsRes.data : [],
-        notifications: Array.isArray(notificationsRes?.data?.notifications)
-          ? notificationsRes.data.notifications
-          : [],
-        unreadCount: notificationsRes?.data?.unreadCount || 0,
-        statistics: statsRes?.data || null,
-      };
+      const freshData = assembleDashboardData(responses);
 
       setData(freshData);
       setHasLoadedOnce(true);
@@ -227,19 +281,13 @@ const DashboardPage: React.FC = () => {
       const nowTimestamp = Date.now();
 
       setLastSyncTime(nowTimestamp);
-
-      try {
-        localStorage.setItem('universe_last_sync_time', String(nowTimestamp));
-        localStorage.setItem('universe_dashboard_data', JSON.stringify(freshData));
-      } catch {
-        // Ignore localStorage quota error
-      }
+      persistDashboardSnapshot(nowTimestamp, freshData);
 
       if (isManual) {
         toast.success('Дані успішно оновлено');
       }
     } catch (error) {
-      if (error instanceof Error && error.message.includes('401')) {
+      if (isUnauthorizedError(error)) {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('moodleToken');
@@ -251,26 +299,18 @@ const DashboardPage: React.FC = () => {
 
       console.error(error);
 
-      try {
-        const cachedData = localStorage.getItem('universe_dashboard_data');
+      const cachedData = loadCachedDashboardData();
 
-        if (cachedData) {
-          const parsed = JSON.parse(cachedData) as Partial<DashboardData>;
+      if (cachedData) {
+        setData((previous) => ({
+          ...previous,
+          ...cachedData,
+        }));
+        setIsOfflineData(true);
+        setHasLoadedOnce(true);
+        toast.info("Використовуються збережені дані: немає зв'язку з сервером Moodle.");
 
-          if (parsed && typeof parsed === 'object') {
-            setData((previous) => ({
-              ...previous,
-              ...parsed,
-            }));
-            setIsOfflineData(true);
-            setHasLoadedOnce(true);
-            toast.info("Використовуються збережені дані: немає зв'язку з сервером Moodle.");
-
-            return;
-          }
-        }
-      } catch {
-        // Ignore cache read error
+        return;
       }
 
       toast.error('Помилка завантаження даних. Будь ласка, переконайтеся, що бекенд запущено.');
