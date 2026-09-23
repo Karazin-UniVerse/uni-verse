@@ -49,7 +49,7 @@ const CourseContents: React.FC = () => {
   const courseId = (params?.courseId as string) || '';
   const router = useRouter();
   const toast = useToast();
-  const { t } = useLanguage();
+  const { formatMessage } = useLanguage();
 
   const [sections, setSections] = useState<CourseSection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,11 +58,11 @@ const CourseContents: React.FC = () => {
   const [selectedModule, setSelectedModule] = useState<CourseModule | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
-  const tRef = useRef(t);
+  const formatMessageRef = useRef(formatMessage);
 
   useEffect(() => {
-    tRef.current = t;
-  }, [t]);
+    formatMessageRef.current = formatMessage;
+  }, [formatMessage]);
 
   useEffect(() => {
     if (!courseId) return;
@@ -90,7 +90,7 @@ const CourseContents: React.FC = () => {
         if (cancelled) return;
 
         console.error(error);
-        toast.error(tRef.current('courseContents.loadError'));
+        toast.error(formatMessageRef.current('courseContents.loadError'));
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -127,11 +127,11 @@ const CourseContents: React.FC = () => {
 
   const renderSections = () => {
     if (loading) {
-      return <Spinner size="large" tip={t('courseContents.loading')} />;
+      return <Spinner size="large" tip={formatMessage('courseContents.loading')} />;
     }
 
     if (sections.length === 0) {
-      return <Empty description={t('courseContents.empty')} />;
+      return <Empty description={formatMessage('courseContents.empty')} />;
     }
 
     return (
@@ -172,7 +172,7 @@ const CourseContents: React.FC = () => {
                           <span>
                             <span className={styles.moduleName}>{courseModule.name}</span>
                             <span className={styles.moduleType}>
-                              {t('courseContents.moduleType')}: {courseModule.modname}
+                              {formatMessage('courseContents.moduleType')}: {courseModule.modname}
                             </span>
                           </span>
                         </button>
@@ -198,7 +198,7 @@ const CourseContents: React.FC = () => {
           isTransparent
           onClick={() => router.push('/?tab=courses')}
         >
-          <ArrowLeft size={16} /> {t('courseContents.back')}
+          <ArrowLeft size={16} /> {formatMessage('courseContents.back')}
         </SimpleButton>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -208,14 +208,14 @@ const CourseContents: React.FC = () => {
       </header>
 
       <main className={styles.content}>
-        <nav className={styles.breadcrumb} aria-label={t('courseContents.breadcrumbs')}>
-          <Link href="/?tab=courses">{t('courseContents.breadcrumbs')}</Link>
+        <nav className={styles.breadcrumb} aria-label={formatMessage('courseContents.breadcrumbs')}>
+          <Link href="/?tab=courses">{formatMessage('courseContents.breadcrumbs')}</Link>
           <span>/</span>
-          <span>{t('courseContents.title')}</span>
+          <span>{formatMessage('courseContents.title')}</span>
         </nav>
 
         <div className={styles.panel}>
-          <h1>{t('courseContents.title')}</h1>
+          <h1>{formatMessage('courseContents.title')}</h1>
 
           {renderSections()}
         </div>

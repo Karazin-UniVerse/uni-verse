@@ -1,21 +1,21 @@
-import type { ControlType } from '@core/types';
+import type { ControlType } from '@core/utils/grades';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { getGradeRawValue } from '@uni-hub/utils/grades';
 
 export function getControlTypeLabel(
   controlType: ControlType,
-  t?: (key: TranslationKey) => string,
+  formatMessage?: (key: TranslationKey) => string,
 ): string {
-  if (t) {
+  if (formatMessage) {
     switch (controlType) {
       case 'exam':
-        return t('control.exam');
+        return formatMessage('control.exam');
       case 'credit':
-        return t('control.credit');
+        return formatMessage('control.credit');
       case 'differentiated_credit':
-        return t('control.diffCredit');
+        return formatMessage('control.diffCredit');
       default:
-        return t('control.exam');
+        return formatMessage('control.exam');
     }
   }
 
@@ -33,22 +33,22 @@ export function getControlTypeLabel(
 
 export function getTraditionalGradeLabel(
   grade: string,
-  t?: (key: TranslationKey) => string,
+  formatMessage?: (key: TranslationKey) => string,
 ): string {
-  if (t) {
+  if (formatMessage) {
     switch (grade) {
       case 'відмінно':
-        return t('grades.excellent');
+        return formatMessage('grades.excellent');
       case 'добре':
-        return t('grades.good');
+        return formatMessage('grades.good');
       case 'задовільно':
-        return t('grades.satisfactory');
+        return formatMessage('grades.satisfactory');
       case 'незадовільно':
-        return t('grades.unsatisfactory');
+        return formatMessage('grades.unsatisfactory');
       case 'зараховано':
-        return t('grades.passed');
+        return formatMessage('grades.passed');
       case 'не зараховано':
-        return t('grades.failed');
+        return formatMessage('grades.failed');
       default:
         return grade;
     }

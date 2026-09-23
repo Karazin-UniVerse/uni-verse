@@ -32,17 +32,17 @@ export const ASSIGNMENT_STATUS_LABELS: Record<string, string> = {
 
 export const getAssignmentStatusLabel = (
   status: string,
-  t: (key: TranslationKey) => string,
+  formatMessage: (key: TranslationKey) => string,
 ): string => {
   switch (status) {
     case 'submitted':
-      return t('assignmentModal.statusSubmitted');
+      return formatMessage('assignmentModal.statusSubmitted');
     case 'graded':
-      return t('assignmentModal.statusGraded');
+      return formatMessage('assignmentModal.statusGraded');
     case 'new':
-      return t('assignmentModal.statusNew');
+      return formatMessage('assignmentModal.statusNew');
     case 'draft':
-      return t('assignmentModal.statusDraft');
+      return formatMessage('assignmentModal.statusDraft');
     default:
       return status;
   }
@@ -54,7 +54,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
   module,
   dueUnixSec,
 }) => {
-  const { t } = useLanguage();
+  const { formatMessage } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -75,7 +75,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
       setStatus(response.data as { status?: string; grade?: string } | null);
     } catch (error) {
       console.error(error);
-      toast.error(t('assignmentModal.loadStatusError'));
+      toast.error(formatMessage('assignmentModal.loadStatusError'));
     } finally {
       setLoading(false);
     }
@@ -92,6 +92,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
           setLoading(true);
         }
       });
+
       moodleApi
         .getAssignmentStatus(currentInstance)
         .then((response) => {
@@ -102,7 +103,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         .catch((error) => {
           if (!cancelled) {
             console.error(error);
-            toast.error(t('assignmentModal.loadStatusError'));
+            toast.error(formatMessage('assignmentModal.loadStatusError'));
           }
         })
         .finally(() => {
@@ -124,13 +125,13 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [visible, module?.instance, t, toast]);
+  }, [visible, module?.instance, formatMessage, toast]);
 
   const handleSubmit = async () => {
     if (!module?.instance) return;
 
     if (!text.trim() && files.length === 0) {
-      setFormError(t('assignmentModal.formRequired'));
+      setFormError(formatMessage('assignmentModal.formRequired'));
 
       return;
     }
@@ -161,7 +162,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
       }
 
       await moodleApi.submitAssignment(module.instance, text, fileItemId);
-      toast.success(t('assignmentModal.submitSuccess'));
+      toast.success(formatMessage('assignmentModal.submitSuccess'));
       useGamificationStore.getState().triggerCelebration();
 
       const deadline = dueUnixSec ?? module?.dueUnixSec ?? module?.duedate;
@@ -180,7 +181,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
       setFiles([]);
     } catch (error) {
       console.error(error);
-      toast.error(t('assignmentModal.submitError'));
+      toast.error(formatMessage('assignmentModal.submitError'));
     } finally {
       setUploadingFile(false);
       setSubmitting(false);
@@ -194,7 +195,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
   const canSubmit = !status || status.status === 'new' || status.status === 'draft';
 
   const statusLabel =
-    (status?.status && getAssignmentStatusLabel(status.status, t)) || status?.status;
+    (status?.status && getAssignmentStatusLabel(status.status, formatMessage)) || status?.status;
 
   const moodleUrl =
     module?.url ||
@@ -206,10 +207,10 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     <Modal
       open={visible}
       onClose={onClose}
-      title={module?.name || t('assignmentModal.defaultTitle')}
+      title={module?.name || formatMessage('assignmentModal.defaultTitle')}
     >
       {loading ? (
-        <Spinner tip={t('assignmentModal.loadingStatus')} />
+        <Spinner tip={formatMessage('assignmentModal.loadingStatus')} />
       ) : (
         <div className={styles.content}>
           {moodleUrl && (
@@ -223,14 +224,14 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                 size="small"
               >
                 <ExternalLink size={14} style={{ marginRight: 6 }} />{' '}
-                {t('assignmentModal.openMoodle')}
+                {formatMessage('assignmentModal.openMoodle')}
               </SimpleButton>
             </div>
           )}
 
           {module?.description && (
             <section>
-              <h4>{t('assignmentModal.description')}</h4>
+              <h4>{formatMessage('assignmentModal.description')}</h4>
               <div className={styles.box} style={{ whiteSpace: 'pre-wrap' }}>
                 {stripHtml(module.description)}
               </div>
@@ -239,7 +240,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
           {module?.contents && module.contents.length > 0 && (
             <section>
-              <h4>{t('assignmentModal.attachedFiles')}</h4>
+              <h4>{formatMessage('assignmentModal.attachedFiles')}</h4>
               <ul className={styles.fileList}>
                 {module.contents.map((file, idx: number) => {
                   const url = (file.fileurl || '') + (tokenStr ? `?token=${tokenStr}` : '');
@@ -255,7 +256,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                         variant="primary"
                         size="small"
                       >
-                        <Download size={14} /> {t('assignmentModal.download')}
+                        <Download size={14} /> {formatMessage('assignmentModal.download')}
                       </SimpleButton>
                     </li>
                   );
@@ -265,11 +266,11 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
           )}
 
           <section>
-            <h4>{t('assignmentModal.submissionStatus')}</h4>
+            <h4>{formatMessage('assignmentModal.submissionStatus')}</h4>
             {status ? (
               <div className={styles.box}>
                 <div className={styles.statusRow}>
-                  <strong>{t('assignmentModal.status')}: </strong>
+                  <strong>{formatMessage('assignmentModal.status')}: </strong>
                   <Tag
                     tone={
                       status.status === 'submitted' || status.status === 'graded'
@@ -282,26 +283,26 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                 </div>
                 {status.grade && (
                   <div>
-                    <strong>{t('assignmentModal.grade')}: </strong>
+                    <strong>{formatMessage('assignmentModal.grade')}: </strong>
                     <span>{status.grade}</span>
                   </div>
                 )}
               </div>
             ) : (
-              <p className={styles.muted}>{t('assignmentModal.noStatusData')}</p>
+              <p className={styles.muted}>{formatMessage('assignmentModal.noStatusData')}</p>
             )}
           </section>
 
           {canSubmit && (
             <section>
-              <h4>{t('assignmentModal.submitTitle')}</h4>
+              <h4>{formatMessage('assignmentModal.submitTitle')}</h4>
               <SimpleForm variant="simple" action={handleSubmit} className={styles.form}>
                 <label className={styles.field}>
-                  <span>{t('assignmentModal.answerText')}</span>
+                  <span>{formatMessage('assignmentModal.answerText')}</span>
                   <textarea
                     className={styles.textarea}
                     rows={6}
-                    placeholder={t('assignmentModal.placeholder')}
+                    placeholder={formatMessage('assignmentModal.placeholder')}
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     name="text"
@@ -309,13 +310,13 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                 </label>
 
                 <FileInput
-                  label={t('assignmentModal.attachFile')}
+                  label={formatMessage('assignmentModal.attachFile')}
                   files={files}
                   onFilesChange={setFiles}
                   maxFiles={1}
                   size="small"
-                  dragText={t('assignmentModal.dragDrop')}
-                  browseText={t('assignmentModal.browse')}
+                  dragText={formatMessage('assignmentModal.dragDrop')}
+                  browseText={formatMessage('assignmentModal.browse')}
                 />
 
                 {formError && <p className={styles.error}>{formError}</p>}
@@ -328,7 +329,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                     onClick={onClose}
                     disabled={submitting}
                   >
-                    {t('assignmentModal.cancel')}
+                    {formatMessage('assignmentModal.cancel')}
                   </SimpleButton>
                   <SimpleButton
                     type="submit"
@@ -336,7 +337,9 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                     size="medium"
                     disabled={submitting || uploadingFile}
                   >
-                    {uploadingFile ? t('assignmentModal.uploading') : t('assignmentModal.submit')}
+                    {uploadingFile
+                      ? formatMessage('assignmentModal.uploading')
+                      : formatMessage('assignmentModal.submit')}
                   </SimpleButton>
                 </div>
               </SimpleForm>

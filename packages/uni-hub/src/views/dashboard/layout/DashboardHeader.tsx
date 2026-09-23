@@ -22,7 +22,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   unreadCount,
   activeStudentProfile,
 }) => {
-  const { language, t } = useLanguage();
+  const { language, formatMessage } = useLanguage();
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -66,7 +66,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           isTransparent
           className={styles.mobileMenuBtn}
           onClick={onOpenMobileMenu}
-          aria-label={t('header.openMenu')}
+          aria-label={formatMessage('header.openMenu')}
           aria-expanded={mobileMenuOpen}
           aria-controls="dashboard-sidebar"
         >
@@ -82,7 +82,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           size="medium"
           isTransparent
           onClick={onToggleSound}
-          aria-label={soundEnabled ? t('header.soundMute') : t('header.soundUnmute')}
+          aria-label={
+            soundEnabled ? formatMessage('header.soundMute') : formatMessage('header.soundUnmute')
+          }
           className={styles.desktopOnly}
         >
           {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
@@ -95,7 +97,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             size="medium"
             isTransparent
             onClick={() => setNotifOpen((isOpen) => !isOpen)}
-            aria-label={t('header.notifications')}
+            aria-label={formatMessage('header.notifications')}
           >
             <Bell size={18} />
             {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
@@ -109,10 +111,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               transition={{ duration: 0.15 }}
             >
               <div className={styles.notifHeader}>
-                <strong>{t('header.notifications')}</strong>
+                <strong>{formatMessage('header.notifications')}</strong>
                 {unreadCount > 0 && (
                   <Tag tone="info">
-                    {unreadCount} {t('header.unreadCount')}
+                    {unreadCount} {formatMessage('header.unreadCount')}
                   </Tag>
                 )}
               </div>
@@ -139,7 +141,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                     );
                   })
                 ) : (
-                  <Empty description={t('header.notifications.empty')} />
+                  <Empty description={formatMessage('header.notifications.empty')} />
                 )}
               </div>
             </motion.div>
@@ -151,7 +153,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             type="button"
             className={styles.user}
             title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
-            aria-label={t('header.userMenu')}
+            aria-label={formatMessage('header.userMenu')}
             onClick={() => setUserMenuOpen((open) => !open)}
             aria-haspopup="menu"
             aria-expanded={userMenuOpen}
@@ -198,7 +200,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                     ) : (
                       <VolumeX size={16} style={{ marginRight: 8 }} />
                     )}
-                    {soundEnabled ? t('header.soundMute') : t('header.soundUnmute')}
+                    {soundEnabled
+                      ? formatMessage('header.soundMute')
+                      : formatMessage('header.soundUnmute')}
                   </Button>
                 </div>
 
@@ -227,7 +231,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                       color: 'var(--text-primary)',
                     }}
                   >
-                    {t('sidebar.logout')}
+                    {formatMessage('sidebar.logout')}
                   </Button>
                 </div>
               </div>

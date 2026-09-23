@@ -13,7 +13,7 @@ type BadgeSystemProps = {
 
 export const BadgeSystem: React.FC<BadgeSystemProps> = ({ grades, submittedBeforeDeadline }) => {
   const toast = useToast();
-  const { t } = useLanguage();
+  const { formatMessage } = useLanguage();
   const unlockedBadges = useGamificationStore((state) => state.unlockedBadges);
   const unlockBadge = useGamificationStore((state) => state.unlockBadge);
   const triggerCelebration = useGamificationStore((state) => state.triggerCelebration);
@@ -35,7 +35,7 @@ export const BadgeSystem: React.FC<BadgeSystemProps> = ({ grades, submittedBefor
         notifiedRef.current.add(id);
         const badge = BADGES[id];
 
-        toast.success(`${t('badge.unlocked')}: ${badge.title} — ${badge.description}`);
+        toast.success(`${formatMessage('badge.unlocked')}: ${badge.title} — ${badge.description}`);
         triggerCelebration();
       }
     }
@@ -47,7 +47,7 @@ export const BadgeSystem: React.FC<BadgeSystemProps> = ({ grades, submittedBefor
     unlockBadge,
     triggerCelebration,
     toast,
-    t,
+    formatMessage,
   ]);
 
   return null;

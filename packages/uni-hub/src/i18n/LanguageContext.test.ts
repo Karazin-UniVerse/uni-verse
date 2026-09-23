@@ -19,13 +19,14 @@ describe('LanguageContext and translations', () => {
 
   it('renders default Ukrainian language in SSR', () => {
     const Consumer = () => {
-      const { language, t } = useLanguage();
+      const { language, formatMessage, translate } = useLanguage();
 
       return React.createElement(
         'div',
         null,
         React.createElement('span', { id: 'lang' }, language),
-        React.createElement('span', { id: 'text' }, t('lang.uk')),
+        React.createElement('span', { id: 'text' }, formatMessage('lang.uk')),
+        React.createElement('span', { id: 'text-alt' }, translate('lang.uk')),
       );
     };
 

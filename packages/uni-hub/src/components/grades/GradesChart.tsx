@@ -14,7 +14,7 @@ type GradesChartProps = {
 };
 
 export const GradesChart: React.FC<GradesChartProps> = ({ grades }) => {
-  const { t } = useLanguage();
+  const { formatMessage } = useLanguage();
   const validGrades = useMemo(() => getValidGrades(grades), [grades]);
 
   const chartData = useMemo(
@@ -23,12 +23,12 @@ export const GradesChart: React.FC<GradesChartProps> = ({ grades }) => {
         const gradeValue = getGradeRawValue(grade) ?? 0;
 
         return {
-          name: getGradeCourseName(grade) || t('grades.defaultCourse'),
+          name: getGradeCourseName(grade) || formatMessage('grades.defaultCourse'),
           value: gradeValue,
           color: getGradeBarColor(gradeValue),
         };
       }),
-    [validGrades, t],
+    [validGrades, formatMessage],
   );
 
   return (
@@ -37,8 +37,8 @@ export const GradesChart: React.FC<GradesChartProps> = ({ grades }) => {
       layout="horizontal"
       data={chartData}
       domain={[0, 100]}
-      valueLabel={t('grades.chartValue')}
-      emptyDescription={t('grades.chartEmpty')}
+      valueLabel={formatMessage('grades.chartValue')}
+      emptyDescription={formatMessage('grades.chartEmpty')}
     />
   );
 };

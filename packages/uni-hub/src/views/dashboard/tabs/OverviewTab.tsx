@@ -24,7 +24,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   loading,
   onNavigate,
 }) => {
-  const { t } = useLanguage();
+  const { formatMessage } = useLanguage();
   const coursesCount = useCountUp(statistics?.total || 0, 800, !loading);
   const assignmentsCount = useCountUp(assignments.length, 800, !loading);
 
@@ -45,7 +45,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const renderUpcomingEvents = () => {
     if (events.length > 0) {
       return (
-        <div className={`${styles.list} ${styles.horizontalScrollList}`}>
+        <div className={styles.list}>
           {events.slice(0, 4).map((event, index) => (
             <div
               key={event.id}
@@ -70,7 +70,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
     if (assignments.length > 0) {
       return (
-        <div className={`${styles.list} ${styles.horizontalScrollList}`}>
+        <div className={styles.list}>
           {assignments.slice(0, 4).map((assignment, index) => (
             <div
               key={assignment.id}
@@ -88,7 +88,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       );
     }
 
-    return <Empty description={t('overview.noEvents')} />;
+    return <Empty description={formatMessage('overview.noEvents')} />;
   };
 
   return (
@@ -108,12 +108,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
           </div>
           <div className={styles.studentTags}>
-            <Tag tone="warning">{t('student.demo')}</Tag>
-            <Tag tone="success">{t('student.fullTime')}</Tag>
-            <Tag tone="info">{t('student.budget')}</Tag>
+            <Tag tone="warning">{formatMessage('student.demo')}</Tag>
+            <Tag tone="success">{formatMessage('student.fullTime')}</Tag>
+            <Tag tone="info">{formatMessage('student.budget')}</Tag>
             <Tag tone="success">
               <Award size={12} style={{ marginRight: 4 }} />
-              {t('student.scholarship')}
+              {formatMessage('student.scholarship')}
             </Tag>
           </div>
         </div>
@@ -125,41 +125,41 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
         <div className={styles.studentGrid}>
           <div className={styles.studentField}>
-            <span className={styles.fieldLabel}>{t('student.faculty')}</span>
+            <span className={styles.fieldLabel}>{formatMessage('student.faculty')}</span>
             <span className={styles.fieldValue}>{activeStudentProfile.faculty}</span>
           </div>
           <div className={styles.studentField}>
-            <span className={styles.fieldLabel}>{t('student.department')}</span>
+            <span className={styles.fieldLabel}>{formatMessage('student.department')}</span>
             <span className={styles.fieldValue}>{activeStudentProfile.department}</span>
           </div>
           <div className={styles.studentField}>
-            <span className={styles.fieldLabel}>{t('student.courseAndGroup')}</span>
+            <span className={styles.fieldLabel}>{formatMessage('student.courseAndGroup')}</span>
             <span className={styles.fieldValue}>
               {activeStudentProfile.course} курс, група {activeStudentProfile.group}
             </span>
           </div>
           <div className={styles.studentField}>
-            <span className={styles.fieldLabel}>{t('student.card')}</span>
+            <span className={styles.fieldLabel}>{formatMessage('student.card')}</span>
             <span className={styles.fieldValue}>{activeStudentProfile.studentCardNumber}</span>
           </div>
           <div className={styles.studentField}>
-            <span className={styles.fieldLabel}>{t('student.recordBook')}</span>
+            <span className={styles.fieldLabel}>{formatMessage('student.recordBook')}</span>
             <span className={styles.fieldValue}>{activeStudentProfile.recordBookNumber}</span>
           </div>
           <div className={styles.studentField}>
-            <span className={styles.fieldLabel}>{t('student.credits')}</span>
+            <span className={styles.fieldLabel}>{formatMessage('student.credits')}</span>
             <span className={styles.fieldValue}>
               {activeStudentProfile.totalCreditsEarned} ECTS
             </span>
           </div>
           <div className={styles.studentField}>
-            <span className={styles.fieldLabel}>{t('student.gpa')}</span>
+            <span className={styles.fieldLabel}>{formatMessage('student.gpa')}</span>
             <span className={styles.fieldValue}>{activeStudentProfile.gpa} / 100</span>
           </div>
           <div className={styles.studentField}>
-            <span className={styles.fieldLabel}>{t('student.status')}</span>
+            <span className={styles.fieldLabel}>{formatMessage('student.status')}</span>
             <span className={styles.fieldValue} style={{ color: '#22c55e' }}>
-              ● {t('student.statusActive')}
+              ● {formatMessage('student.statusActive')}
             </span>
           </div>
         </div>
@@ -177,21 +177,21 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
       <div className={styles.statGrid}>
         <div className={styles.statCard} style={{ animationDelay: '0ms' }}>
-          <div className={styles.statLabel}>{t('overview.totalCourses')}</div>
+          <div className={styles.statLabel}>{formatMessage('overview.totalCourses')}</div>
           <div className={styles.statValue}>
             <BookOpen size={20} />
             {coursesCount}
           </div>
         </div>
         <div className={styles.statCard} style={{ animationDelay: '40ms' }}>
-          <div className={styles.statLabel}>{t('overview.pendingAssignments')}</div>
+          <div className={styles.statLabel}>{formatMessage('overview.pendingAssignments')}</div>
           <div className={styles.statValue}>
             <FileEdit size={20} />
             {assignmentsCount}
           </div>
         </div>
         <div className={styles.statCard} style={{ animationDelay: '80ms' }}>
-          <div className={styles.statLabel}>{t('overview.gpa')}</div>
+          <div className={styles.statLabel}>{formatMessage('overview.gpa')}</div>
           <div className={styles.statValue}>
             <GraduationCap size={20} />
             {activeStudentProfile.gpa}
@@ -204,7 +204,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       <div className={styles.split}>
         <section className={styles.panel}>
           <div className={styles.panelHeader}>
-            <h3>{t('overview.currentCourses')}</h3>
+            <h3>{formatMessage('overview.currentCourses')}</h3>
             <SimpleButton
               type="button"
               variant="secondary"
@@ -212,7 +212,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               isTransparent
               onClick={() => onNavigate('courses')}
             >
-              {t('overview.all')}
+              {formatMessage('overview.all')}
             </SimpleButton>
           </div>
           {overviewCourses.length > 0 ? (
@@ -233,13 +233,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               ))}
             </div>
           ) : (
-            <Empty description={t('overview.noCourses')} />
+            <Empty description={formatMessage('overview.noCourses')} />
           )}
         </section>
 
         <section className={styles.panel}>
           <div className={styles.panelHeader}>
-            <h3>{t('overview.upcomingDeadlines')}</h3>
+            <h3>{formatMessage('overview.upcomingDeadlines')}</h3>
             <SimpleButton
               type="button"
               variant="secondary"
@@ -247,7 +247,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               isTransparent
               onClick={() => onNavigate('assignments')}
             >
-              {t('overview.all')}
+              {formatMessage('overview.all')}
             </SimpleButton>
           </div>
           {renderUpcomingEvents()}

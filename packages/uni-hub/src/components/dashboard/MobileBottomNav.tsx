@@ -19,14 +19,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onSelectKey,
   soundEnabled,
 }) => {
-  const { t } = useLanguage();
+  const { formatMessage } = useLanguage();
 
   return (
     <nav className={styles.container} aria-label="Мобільна навігація">
       <ul className={styles.nav}>
         {NAV_ITEMS.map((item) => {
-          const label = t(item.labelKey);
-          const shortLabel = t(item.shortLabelKey);
+          const label = formatMessage(item.labelKey);
+          const shortLabel = formatMessage(item.shortLabelKey);
 
           return (
             <li key={item.key} className={styles.navItemWrapper}>

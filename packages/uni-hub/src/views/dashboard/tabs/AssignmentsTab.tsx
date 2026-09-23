@@ -32,7 +32,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   soundEnabled,
   onOpenAssignment,
 }) => {
-  const { language, t } = useLanguage();
+  const { language, formatMessage } = useLanguage();
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const handleDateChange =
@@ -65,7 +65,9 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
           aria-expanded={filtersOpen}
         >
           <Filter size={16} />{' '}
-          {filtersOpen ? t('assignments.hideFilters') : t('assignments.filters')}
+          {filtersOpen
+            ? formatMessage('assignments.hideFilters')
+            : formatMessage('assignments.filters')}
         </SimpleButton>
       </div>
       <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
@@ -77,7 +79,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
           max="2099-12-31"
           value={dateFrom}
           onChange={handleDateChange(onDateFromChange)}
-          aria-label={t('assignments.dateFrom')}
+          aria-label={formatMessage('assignments.dateFrom')}
         />
         <SimpleInput
           type="date"
@@ -87,14 +89,14 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
           max="2099-12-31"
           value={dateTo}
           onChange={handleDateChange(onDateToChange)}
-          aria-label={t('assignments.dateTo')}
+          aria-label={formatMessage('assignments.dateTo')}
         />
         <Select
           value={sortOrder}
           onChange={(value) => onSortOrderChange(value as 'asc' | 'desc')}
           options={[
-            { value: 'asc', label: t('assignments.oldestFirst') },
-            { value: 'desc', label: t('assignments.newestFirst') },
+            { value: 'asc', label: formatMessage('assignments.oldestFirst') },
+            { value: 'desc', label: formatMessage('assignments.newestFirst') },
           ]}
         />
         <label className={styles.checkLabel}>
@@ -103,7 +105,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
             checked={hideCompleted}
             onChange={(event) => onHideCompletedChange(event.target.checked)}
           />
-          {t('assignments.hideCompleted')}
+          {formatMessage('assignments.hideCompleted')}
         </label>
       </div>
 
@@ -131,7 +133,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
                   {item.duedate && item.duedate > 0 ? (
                     <>
                       <Tag tone="warning">
-                        {t('assignments.deadline')}:{' '}
+                        {formatMessage('assignments.deadline')}:{' '}
                         {new Date(item.duedate * 1000).toLocaleDateString(
                           language === 'en' ? 'en-US' : 'uk-UA',
                         )}
@@ -139,7 +141,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
                       <LiveCountdown targetUnixSec={item.duedate} />
                     </>
                   ) : (
-                    <Tag tone="default">{t('assignments.noDueDate')}</Tag>
+                    <Tag tone="default">{formatMessage('assignments.noDueDate')}</Tag>
                   )}
                 </div>
               </div>
@@ -151,7 +153,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         })
       ) : (
         <Empty
-          description={t('assignments.emptyAllDone')}
+          description={formatMessage('assignments.emptyAllDone')}
           icon={<span style={{ fontSize: '48px' }}>🏖️</span>}
         />
       )}

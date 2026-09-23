@@ -32,9 +32,9 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
   showLabel = true,
 }) => {
   const { theme, setTheme, cycleTheme } = useTheme();
-  const { t } = useLanguage();
+  const { formatMessage } = useLanguage();
 
-  const currentThemeLabel = t(THEME_KEYS[theme]);
+  const currentThemeLabel = formatMessage(THEME_KEYS[theme]);
 
   if (compact) {
     return (
@@ -42,7 +42,7 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
         type="button"
         className={clsx(styles.compactBtn, className)}
         onClick={cycleTheme}
-        aria-label={`${t('theme.select')}: ${currentThemeLabel}`}
+        aria-label={`${formatMessage('theme.select')}: ${currentThemeLabel}`}
         title={currentThemeLabel}
         suppressHydrationWarning
       >
@@ -57,10 +57,13 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
   }
 
   return (
-    <fieldset className={clsx(styles.switcher, className)} aria-label={t('theme.select')}>
+    <fieldset
+      className={clsx(styles.switcher, className)}
+      aria-label={formatMessage('theme.select')}
+    >
       {(Object.keys(THEME_ICONS) as AppTheme[]).map((themeOption) => {
         const isSelectedTheme = theme === themeOption;
-        const optionLabel = t(THEME_KEYS[themeOption]);
+        const optionLabel = formatMessage(THEME_KEYS[themeOption]);
 
         return (
           <button

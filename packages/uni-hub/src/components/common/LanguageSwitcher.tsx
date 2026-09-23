@@ -66,7 +66,7 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
   variant = 'default',
   placement = 'auto',
 }) => {
-  const { language, setLanguage, t } = useLanguage();
+  const { language, setLanguage, formatMessage } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -160,8 +160,8 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
         onClick={handleToggle}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-label={`${t('lang.select')}: ${activeLanguage.label}`}
-        title={`${t('lang.select')}: ${activeLanguage.label}`}
+        aria-label={`${formatMessage('lang.select')}: ${activeLanguage.label}`}
+        title={`${formatMessage('lang.select')}: ${activeLanguage.label}`}
         suppressHydrationWarning
       >
         <Languages size={18} aria-hidden />
@@ -181,7 +181,7 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
         <div
           className={clsx(styles.dropdown, getDropdownPlacementClass())}
           role="listbox"
-          aria-label={t('lang.select')}
+          aria-label={formatMessage('lang.select')}
         >
           {LANGUAGES.map((item) => {
             const isSelected = item.code === language;

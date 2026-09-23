@@ -4,8 +4,9 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { BookOpen } from 'lucide-react';
-import { Button as SimpleButton, Tag, ProgressBar } from '@una';
-import type { CurriculumItem, ControlType } from '@core/types';
+import { Button, Tag, ProgressBar } from '@una';
+import type { CurriculumItem } from '@core/types';
+import type { ControlType } from '@core/utils/grades';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { CoursesTabProps } from '../types';
@@ -15,7 +16,7 @@ import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export const CoursesTab: React.FC<CoursesTabProps> = ({ courses, soundEnabled }) => {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { formatMessage } = useLanguage();
   const coursesList = courses.length > 0 ? courses : mockKarazinCurriculum;
 
   return (
@@ -47,18 +48,20 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({ courses, soundEnabled })
             {(credits !== undefined || controlType !== undefined) && (
               <div className={styles.courseMetaRow}>
                 {credits !== undefined && <Tag tone="neutral">{credits} ECTS</Tag>}
-                {controlType && <Tag tone="neutral">{getControlTypeLabel(controlType, t)}</Tag>}
+                {controlType && (
+                  <Tag tone="neutral">{getControlTypeLabel(controlType, formatMessage)}</Tag>
+                )}
               </div>
             )}
             {instructor && (
               <div className={styles.courseTeacher}>
-                {t('courses.instructor')}: <strong>{instructor}</strong>
+                {formatMessage('courses.instructor')}: <strong>{instructor}</strong>
               </div>
             )}
             <p className={styles.courseSummary}>
               {'summary' in course && course.summary
                 ? course.summary
-                : t('courses.curriculumSubject')}
+                : formatMessage('courses.curriculumSubject')}
             </p>
             {progress !== undefined && progress !== null && (
               <div>
@@ -70,13 +73,13 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({ courses, soundEnabled })
                     marginBottom: '4px',
                   }}
                 >
-                  <span className={styles.muted}>{t('courses.progress')}</span>
+                  <span className={styles.muted}>{formatMessage('courses.progress')}</span>
                   <span>{progress}%</span>
                 </div>
                 <ProgressBar value={progress} tone={progress >= 60 ? 'success' : 'warning'} />
               </div>
             )}
-            <SimpleButton
+            <Button
               type="button"
               variant="secondary"
               size="small"
@@ -86,8 +89,8 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({ courses, soundEnabled })
                 router.push(`/courses/${course.id}/contents`);
               }}
             >
-              {t('courses.viewMaterials')}
-            </SimpleButton>
+              {formatMessage('courses.viewMaterials')}
+            </Button>
           </motion.article>
         );
       })}

@@ -36,7 +36,7 @@ function getTimeOfDay(hour: number): TimeOfDay {
 }
 
 export const ContextualGreeting: React.FC<ContextualGreetingProps> = ({ assignments }) => {
-  const { t } = useLanguage();
+  const { formatMessage } = useLanguage();
   const nowMs = useNow(30000);
   const hour = new Date(nowMs).getHours();
   const nowSec = Math.floor(nowMs / 1000);
@@ -49,21 +49,21 @@ export const ContextualGreeting: React.FC<ContextualGreetingProps> = ({ assignme
       .sort((a, b) => a.duedate - b.duedate);
 
     if (upcoming.length === 0) {
-      return t('greeting.noDeadlines');
+      return formatMessage('greeting.noDeadlines');
     }
 
     const nearest = upcoming[0];
     const hoursLeft = Math.max(1, Math.ceil((nearest.duedate - nowSec) / 3600));
-    const prefix = t('greeting.deadlinePrefix');
+    const prefix = formatMessage('greeting.deadlinePrefix');
     const prefixStr = prefix ? `${prefix} ` : '';
 
-    return `${prefixStr}«${nearest.name}» ${t('greeting.deadlineRemaining')} ${hoursLeft} ${t('greeting.hours')} ${t('greeting.willMakeIt')}`;
-  }, [assignments, nowSec, t]);
+    return `${prefixStr}«${nearest.name}» ${formatMessage('greeting.deadlineRemaining')} ${hoursLeft} ${formatMessage('greeting.hours')} ${formatMessage('greeting.willMakeIt')}`;
+  }, [assignments, nowSec, formatMessage]);
 
   return (
     <div className={styles.wrap}>
       <h2 className={styles.hello}>
-        {t(GREETING_KEYS[timeOfDay])}, {t('greeting.student')}
+        {formatMessage(GREETING_KEYS[timeOfDay])}, {formatMessage('greeting.student')}
       </h2>
       <p className={styles.cta}>{cta}</p>
     </div>

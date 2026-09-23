@@ -8,7 +8,7 @@ import styles from './StreakBadge.module.scss';
 export const StreakBadge: React.FC = () => {
   const streak = useGamificationStore((state) => state.currentStreak);
   const controls = useAnimationControls();
-  const { language, t } = useLanguage();
+  const { language, formatMessage } = useLanguage();
 
   useEffect(() => {
     void controls.start({
@@ -19,25 +19,25 @@ export const StreakBadge: React.FC = () => {
 
   const getDaysLabel = (count: number): string => {
     if (language === 'en') {
-      return Math.abs(count) === 1 ? t('streak.day') : t('streak.daysMany');
+      return Math.abs(count) === 1 ? formatMessage('streak.day') : formatMessage('streak.daysMany');
     }
 
     const abs = Math.abs(count) % 100;
     const num = abs % 10;
 
     if (abs > 10 && abs < 20) {
-      return t('streak.daysMany');
+      return formatMessage('streak.daysMany');
     }
 
     if (num > 1 && num < 5) {
-      return t('streak.daysFew');
+      return formatMessage('streak.daysFew');
     }
 
     if (num === 1) {
-      return t('streak.day');
+      return formatMessage('streak.day');
     }
 
-    return t('streak.daysMany');
+    return formatMessage('streak.daysMany');
   };
 
   const daysLabel = getDaysLabel(streak);
@@ -46,7 +46,7 @@ export const StreakBadge: React.FC = () => {
     <motion.div
       className={styles.badge}
       animate={controls}
-      title={`${t('streak.title')}: ${streak} ${daysLabel}`}
+      title={`${formatMessage('streak.title')}: ${streak} ${daysLabel}`}
     >
       <motion.span
         className={styles.flame}

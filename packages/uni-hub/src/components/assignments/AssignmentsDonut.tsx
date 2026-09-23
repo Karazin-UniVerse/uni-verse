@@ -20,7 +20,7 @@ const COLORS = {
 } as const;
 
 export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments, grades }) => {
-  const { t } = useLanguage();
+  const { formatMessage } = useLanguage();
   const [nowSec, setNowSec] = useState(() => Math.floor(Date.now() / 1000));
 
   useEffect(() => {
@@ -62,27 +62,31 @@ export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments,
     const result: { name: string; value: number; color: string }[] = [];
 
     if (done > 0) {
-      result.push({ name: t('donut.completed'), value: done, color: COLORS.done });
+      result.push({ name: formatMessage('donut.completed'), value: done, color: COLORS.done });
     }
 
     if (overdue > 0) {
-      result.push({ name: t('donut.overdue'), value: overdue, color: COLORS.overdue });
+      result.push({ name: formatMessage('donut.overdue'), value: overdue, color: COLORS.overdue });
     }
 
     if (inProgress > 0) {
-      result.push({ name: t('donut.inProgress'), value: inProgress, color: COLORS.inProgress });
+      result.push({
+        name: formatMessage('donut.inProgress'),
+        value: inProgress,
+        color: COLORS.inProgress,
+      });
     }
 
     return result;
-  }, [assignments, grades, nowSec, t]);
+  }, [assignments, grades, nowSec, formatMessage]);
 
   return (
     <Chart
       type="donut"
-      title={t('donut.title')}
+      title={formatMessage('donut.title')}
       data={segments}
       height={DONUT_CHART_HEIGHT}
-      emptyDescription={t('donut.empty')}
+      emptyDescription={formatMessage('donut.empty')}
     />
   );
 };

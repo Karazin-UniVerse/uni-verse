@@ -83,7 +83,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   soundEnabled,
   onLogout,
 }) => {
-  const { t } = useLanguage();
+  const { formatMessage } = useLanguage();
   const siderRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -187,8 +187,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
         <nav className={styles.nav}>
           {NAV_ITEMS.map((item) => {
-            const label = t(item.labelKey);
-            const shortLabel = t(item.shortLabelKey);
+            const label = formatMessage(item.labelKey);
+            const shortLabel = formatMessage(item.shortLabelKey);
 
             return (
               <button
@@ -228,7 +228,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             className={styles.moodleStatusLink}
-            title={t('sidebar.moodleConnected')}
+            title={formatMessage('sidebar.moodleConnected')}
           >
             <span className={styles.statusDot} aria-hidden />
             {!collapsed || mobileMenuOpen ? (
@@ -257,7 +257,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             className={styles.logoutBtn}
           >
             <LogOut size={18} />
-            {(!collapsed || mobileMenuOpen) && <span>{t('sidebar.logout')}</span>}
+            {(!collapsed || mobileMenuOpen) && <span>{formatMessage('sidebar.logout')}</span>}
           </Button>
         </div>
       </aside>

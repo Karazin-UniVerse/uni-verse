@@ -15,6 +15,8 @@ const STORAGE_KEY = 'universe-lang';
 type LanguageContextValue = {
   language: AppLanguage;
   setLanguage: (lang: AppLanguage) => void;
+  formatMessage: (key: TranslationKey) => string;
+  translate: (key: TranslationKey) => string;
   t: (key: TranslationKey) => string;
 };
 
@@ -81,7 +83,7 @@ export const LanguageProvider: React.FC<Readonly<{ children: React.ReactNode }>>
     }
   }, []);
 
-  const t = useCallback(
+  const formatMessage = useCallback(
     (key: TranslationKey): string => {
       const dict = TRANSLATIONS[language] || TRANSLATIONS.uk;
 
@@ -90,7 +92,16 @@ export const LanguageProvider: React.FC<Readonly<{ children: React.ReactNode }>>
     [language],
   );
 
-  const value = useMemo(() => ({ language, setLanguage, t }), [language, setLanguage, t]);
+  const value = useMemo(
+    () => ({
+      language,
+      setLanguage,
+      formatMessage,
+      translate: formatMessage,
+      t: formatMessage,
+    }),
+    [language, setLanguage, formatMessage],
+  );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 };
@@ -98,6 +109,8 @@ export const LanguageProvider: React.FC<Readonly<{ children: React.ReactNode }>>
 const DEFAULT_CONTEXT: LanguageContextValue = {
   language: 'uk',
   setLanguage: () => {},
+  formatMessage: (key: TranslationKey): string => TRANSLATIONS.uk[key] || key,
+  translate: (key: TranslationKey): string => TRANSLATIONS.uk[key] || key,
   t: (key: TranslationKey): string => TRANSLATIONS.uk[key] || key,
 };
 

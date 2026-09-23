@@ -95,7 +95,7 @@ const DashboardPage: React.FC = () => {
   const checkIn = useGamificationStore((s) => s.checkIn);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const setSoundEnabled = useGamificationStore((s) => s.setSoundEnabled);
-  const { t } = useLanguage();
+  const { formatMessage } = useLanguage();
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -220,14 +220,14 @@ const DashboardPage: React.FC = () => {
           localStorage.removeItem('isLoggedIn');
           localStorage.removeItem('accessToken');
           localStorage.removeItem('moodleToken');
-          toast.error(t('dashboard.sessionExpired'));
+          toast.error(formatMessage('dashboard.sessionExpired'));
           router.push('/login');
 
           return;
         }
 
         console.error(error);
-        toast.error(t('dashboard.loadError'));
+        toast.error(formatMessage('dashboard.loadError'));
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -347,7 +347,7 @@ const DashboardPage: React.FC = () => {
 
         <main className={styles.content}>
           <div className={styles.pageTitleRow}>
-            <h2 className={styles.pageTitle}>{t(PAGE_TITLE_KEYS[activeKey])}</h2>
+            <h2 className={styles.pageTitle}>{formatMessage(PAGE_TITLE_KEYS[activeKey])}</h2>
           </div>
           {loading && !hasCachedData ? (
             <DashboardSkeleton />

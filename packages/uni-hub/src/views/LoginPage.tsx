@@ -13,7 +13,7 @@ import { motion } from 'framer-motion';
 import styles from './LoginPage.module.scss';
 
 const LoginPage: React.FC = () => {
-  const { t } = useLanguage();
+  const { formatMessage } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -41,7 +41,7 @@ const LoginPage: React.FC = () => {
     try {
       const res = await authApi.login(username, password);
 
-      toast.success(t('login.success'));
+      toast.success(formatMessage('login.success'));
       localStorage.setItem('isLoggedIn', 'true');
 
       if (res.data?.token) {
@@ -52,7 +52,7 @@ const LoginPage: React.FC = () => {
     } catch (err: unknown) {
       const serverError = (err as { response?: { data?: { error?: string } } })?.response?.data
         ?.error;
-      const message = serverError || t('login.invalidCredentials');
+      const message = serverError || formatMessage('login.invalidCredentials');
 
       toast.error(message);
     } finally {
@@ -71,19 +71,19 @@ const LoginPage: React.FC = () => {
       <div className={styles.center}>
         <SimpleForm className={styles.card} action={handleLogin}>
           <div className={styles.brand}>
-            <h1>{t('login.title')}</h1>
-            <p>{t('login.subtitle')}</p>
+            <h1>{formatMessage('login.title')}</h1>
+            <p>{formatMessage('login.subtitle')}</p>
           </div>
 
           <label htmlFor="login-username" className={styles.field}>
-            <span className={styles.label}>{t('login.username')}</span>
+            <span className={styles.label}>{formatMessage('login.username')}</span>
             <div className={styles.inputWrap}>
               <User size={16} className={styles.icon} />
               <TextInput
                 id="login-username"
                 name="username"
                 size="large"
-                placeholder={t('login.username')}
+                placeholder={formatMessage('login.username')}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
@@ -92,7 +92,7 @@ const LoginPage: React.FC = () => {
           </label>
 
           <label htmlFor="login-password" className={styles.field}>
-            <span className={styles.label}>{t('login.password')}</span>
+            <span className={styles.label}>{formatMessage('login.password')}</span>
             <div className={styles.inputWrap}>
               <Lock size={16} className={styles.icon} />
               <TextInput
@@ -100,7 +100,7 @@ const LoginPage: React.FC = () => {
                 name="password"
                 type="password"
                 size="large"
-                placeholder={t('login.password')}
+                placeholder={formatMessage('login.password')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
@@ -108,7 +108,7 @@ const LoginPage: React.FC = () => {
             </div>
           </label>
 
-          {errorKey && <p className={styles.error}>{t(errorKey)}</p>}
+          {errorKey && <p className={styles.error}>{formatMessage(errorKey)}</p>}
 
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button
@@ -118,7 +118,7 @@ const LoginPage: React.FC = () => {
               disabled={loading}
               className={styles.submit}
             >
-              {loading ? t('login.loading') : t('login.submit')}
+              {loading ? formatMessage('login.loading') : formatMessage('login.submit')}
             </Button>
           </motion.div>
         </SimpleForm>

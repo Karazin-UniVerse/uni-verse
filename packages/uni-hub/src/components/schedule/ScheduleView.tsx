@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Download, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button as SimpleButton, RadioButton, Tag, Empty } from '@una';
-import { BREAKPOINTS } from '@universe/core';
+import { Button, RadioButton, Tag, Empty } from '@una';
+import { BREAKPOINTS } from '@core/constants/breakpoints';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import styles from './ScheduleView.module.scss';
@@ -161,7 +161,7 @@ const getTypeTone = (type: string): 'info' | 'warning' | 'success' | 'danger' | 
 
 export const ScheduleView: React.FC = () => {
   const isMobile = useMediaQuery('less', BREAKPOINTS.md);
-  const { language, t } = useLanguage();
+  const { language, formatMessage } = useLanguage();
   const locale = language === 'en' ? 'en-US' : 'uk-UA';
 
   const [selectedViewMode, setSelectedViewMode] = useState<'month' | 'week' | 'day' | null>(null);
@@ -184,15 +184,15 @@ export const ScheduleView: React.FC = () => {
   const getTypeName = (type: string) => {
     switch (type) {
       case 'lecture':
-        return t('schedule.typeLecture');
+        return formatMessage('schedule.typeLecture');
       case 'lab':
-        return t('schedule.typeLab');
+        return formatMessage('schedule.typeLab');
       case 'practice':
-        return t('schedule.typePractice');
+        return formatMessage('schedule.typePractice');
       case 'exam':
-        return t('schedule.typeExam');
+        return formatMessage('schedule.typeExam');
       default:
-        return t('schedule.typeOther');
+        return formatMessage('schedule.typeOther');
     }
   };
 
@@ -227,7 +227,7 @@ export const ScheduleView: React.FC = () => {
     return (
       <section className={styles.panel}>
         <h3>
-          {t('schedule.scheduleFor')}{' '}
+          {formatMessage('schedule.scheduleFor')}{' '}
           {formatDate(selectedDate, { day: 'numeric', month: 'long', year: 'numeric' })}
         </h3>
         {events.length > 0 ? (
@@ -246,7 +246,7 @@ export const ScheduleView: React.FC = () => {
             ))}
           </ul>
         ) : (
-          <Empty description={t('schedule.noClasses')} />
+          <Empty description={formatMessage('schedule.noClasses')} />
         )}
       </section>
     );
@@ -259,26 +259,26 @@ export const ScheduleView: React.FC = () => {
     return (
       <div className={styles.week}>
         <div className={styles.weekNav}>
-          <SimpleButton
+          <Button
             type="button"
             variant="secondary"
             size="medium"
             onClick={() => setSelectedDate(addDays(selectedDate, -7))}
           >
-            <ChevronLeft size={16} /> {t('schedule.prevWeek')}
-          </SimpleButton>
+            <ChevronLeft size={16} /> {formatMessage('schedule.prevWeek')}
+          </Button>
           <h3>
             {formatDate(weekStart, { day: 'numeric', month: 'short' })} –{' '}
             {formatDate(addDays(weekStart, 6), { day: 'numeric', month: 'short', year: 'numeric' })}
           </h3>
-          <SimpleButton
+          <Button
             type="button"
             variant="secondary"
             size="medium"
             onClick={() => setSelectedDate(addDays(selectedDate, 7))}
           >
-            {t('schedule.nextWeek')} <ChevronRight size={16} />
-          </SimpleButton>
+            {formatMessage('schedule.nextWeek')} <ChevronRight size={16} />
+          </Button>
         </div>
 
         <div className={styles.weekGrid}>
@@ -309,7 +309,7 @@ export const ScheduleView: React.FC = () => {
                     ))}
                   </ul>
                 ) : (
-                  <p className={styles.freeDay}>{t('schedule.freeDay')}</p>
+                  <p className={styles.freeDay}>{formatMessage('schedule.freeDay')}</p>
                 )}
               </div>
             );
@@ -325,7 +325,7 @@ export const ScheduleView: React.FC = () => {
     return (
       <div className={styles.month}>
         <div className={styles.monthNav}>
-          <SimpleButton
+          <Button
             type="button"
             variant="secondary"
             size="small"
@@ -334,9 +334,9 @@ export const ScheduleView: React.FC = () => {
             }
           >
             <ChevronLeft size={16} />
-          </SimpleButton>
+          </Button>
           <h3>{formatDate(selectedDate, { month: 'long', year: 'numeric' })}</h3>
-          <SimpleButton
+          <Button
             type="button"
             variant="secondary"
             size="small"
@@ -345,7 +345,7 @@ export const ScheduleView: React.FC = () => {
             }
           >
             <ChevronRight size={16} />
-          </SimpleButton>
+          </Button>
         </div>
         <div className={styles.weekdays}>
           {weekdays.map((weekdayLabel) => (
@@ -395,13 +395,13 @@ export const ScheduleView: React.FC = () => {
         <div
           className={styles.viewSwitch}
           role="radiogroup"
-          aria-label={t('schedule.viewModeAria')}
+          aria-label={formatMessage('schedule.viewModeAria')}
         >
           {(
             [
-              ['month', t('schedule.modeMonth')],
-              ['week', t('schedule.modeWeek')],
-              ['day', t('schedule.modeDay')],
+              ['month', formatMessage('schedule.modeMonth')],
+              ['week', formatMessage('schedule.modeWeek')],
+              ['day', formatMessage('schedule.modeDay')],
             ] as const
           ).map(([value, label]) => (
             <label key={value} className={styles.radioLabel}>
@@ -417,14 +417,14 @@ export const ScheduleView: React.FC = () => {
           ))}
         </div>
 
-        <SimpleButton
+        <Button
           type="button"
           variant="primary"
           size="medium"
           onClick={() => exportToICS(DUMMY_EVENTS)}
         >
-          <Download size={16} /> {t('schedule.exportICal')}
-        </SimpleButton>
+          <Download size={16} /> {formatMessage('schedule.exportICal')}
+        </Button>
       </div>
 
       <div className={styles.body}>
