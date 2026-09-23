@@ -1,6 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import { MoodleAssignmentsController } from './moodle-assignments.controller';
 import { MoodleAssignmentsService } from './moodle-assignments.service';
+import {
+  GetAssignmentsQueryDto,
+  AssignmentItemDto,
+  SaveSubmissionDto,
+} from './moodle-assignments-dto';
 
 describe('MoodleAssignmentsController', () => {
   let controller: MoodleAssignmentsController;
@@ -30,20 +37,77 @@ describe('MoodleAssignmentsController', () => {
     expect(controller).toBeDefined();
   });
 
+  describe('DTO transformation and validation', () => {
+    it('should transform and validate GetAssignmentsQueryDto including includeStatus', async () => {
+      const plain = {
+        year: '2025/2026',
+        semester: '1',
+        status: 'completed',
+        sortByDate: 'asc',
+        dateFrom: '1672531200',
+        dateTo: '1704067200',
+        includeStatus: 'true',
+      };
+
+      const dto = plainToInstance(GetAssignmentsQueryDto, plain);
+
+      expect(typeof dto.dateFrom).toBe('number');
+      expect(typeof dto.dateTo).toBe('number');
+      expect(typeof dto.includeStatus).toBe('boolean');
+      expect(dto.includeStatus).toBe(true);
+
+      const errors = await validate(dto);
+
+      expect(errors.length).toBe(0);
+    });
+
+    it('should validate AssignmentItemDto and SaveSubmissionDto', async () => {
+      const item = plainToInstance(AssignmentItemDto, {
+        id: 1,
+        courseId: 2,
+        courseName: 'CS',
+        name: 'HW1',
+        duedate: 123456,
+        submissionStatus: 'submitted',
+        grade: '100',
+        graded: true,
+      });
+      const itemErrors = await validate(item);
+
+      expect(itemErrors.length).toBe(0);
+
+      const saveDto = plainToInstance(SaveSubmissionDto, {
+        text: 'hello',
+        fileItemId: 999,
+      });
+      const saveErrors = await validate(saveDto);
+
+      expect(saveErrors.length).toBe(0);
+    });
+  });
+
   describe('getAssignments', () => {
     it('should filter assignments by completed status using duedate fallback', async () => {
+      const now = Date.now() / 1000;
+
       mockService.getAssignments.mockResolvedValue([
         {
           id: 1,
-          duedate: Date.now() / 1000 - 10000,
+          duedate: now - 10000,
           year: '2025/2026',
           semester: 1,
         },
         {
           id: 2,
-          duedate: Date.now() / 1000 + 10000,
+          duedate: now + 10000,
           year: '2024/2025',
           semester: 2,
+        },
+        {
+          id: 3,
+          duedate: 0,
+          year: '2025/2026',
+          semester: 1,
         },
       ]);
       const result = await controller.getAssignments('token', 'id', {
@@ -54,7 +118,37 @@ describe('MoodleAssignmentsController', () => {
       expect(result[0].id).toBe(1);
     });
 
-    it('should filter assignments by completed and not_completed with submissionStatus', async () => {
+    it('should filter assignments by not_completed status using duedate fallback', async () => {
+      const now = Date.now() / 1000;
+
+      mockService.getAssignments.mockResolvedValue([
+        {
+          id: 1,
+          duedate: now - 10000,
+          year: '2025/2026',
+          semester: 1,
+        },
+        {
+          id: 2,
+          duedate: now + 10000,
+          year: '2024/2025',
+          semester: 2,
+        },
+        {
+          id: 3,
+          duedate: 0,
+          year: '2025/2026',
+          semester: 1,
+        },
+      ]);
+      const result = await controller.getAssignments('token', 'id', {
+        status: 'not_completed',
+      });
+
+      expect(result.map((a) => a.id)).toEqual([2, 3]);
+    });
+
+    it('should filter assignments by completed and not_completed with submissionStatus and graded flags', async () => {
       mockService.getAssignments.mockResolvedValue([
         {
           id: 1,
@@ -66,19 +160,28 @@ describe('MoodleAssignmentsController', () => {
           id: 2,
           name: 'Task 2',
           submissionStatus: 'graded',
-          graded: true,
+          graded: false,
           duedate: 0,
         },
         {
           id: 3,
           name: 'Task 3',
-          submissionStatus: 'new',
-          duedate: Date.now() / 1000 - 5000,
+          submissionStatus: 'draft',
+          graded: true,
+          duedate: 0,
         },
         {
           id: 4,
           name: 'Task 4',
           submissionStatus: 'new',
+          graded: false,
+          duedate: Date.now() / 1000 - 5000,
+        },
+        {
+          id: 5,
+          name: 'Task 5',
+          submissionStatus: 'draft',
+          graded: false,
           duedate: Date.now() / 1000 + 50000,
         },
       ]);
@@ -87,13 +190,13 @@ describe('MoodleAssignmentsController', () => {
         status: 'completed',
       });
 
-      expect(completed.map((a) => a.id)).toEqual([1, 2]);
+      expect(completed.map((a) => a.id)).toEqual([1, 2, 3]);
 
       const notCompleted = await controller.getAssignments('token', 'id', {
         status: 'not_completed',
       });
 
-      expect(notCompleted.map((a) => a.id)).toEqual([3, 4]);
+      expect(notCompleted.map((a) => a.id)).toEqual([4, 5]);
     });
 
     it('should filter assignments by year and semester', async () => {
