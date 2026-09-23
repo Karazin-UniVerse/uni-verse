@@ -2,12 +2,12 @@
 
 import React from 'react';
 import { Tag, ProgressBar } from '@una';
+import { GRADES_THRESHOLD } from '@core/constants/grades';
 import {
   calculateEctsGrade,
   calculateTraditionalGrade,
-  GRADES_THRESHOLD,
   type ControlType,
-} from '@core/types';
+} from '@core/utils/grades';
 import { GradesChart } from '@uni-hub/components/grades';
 import { GradeSimulatorTrigger } from '@uni-hub/components/gamification';
 import { getValidGrades, getGradeTone, getGradeCourseName } from '@uni-hub/utils/grades';
