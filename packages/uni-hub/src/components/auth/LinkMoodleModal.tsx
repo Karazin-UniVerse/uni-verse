@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { User, Lock } from 'lucide-react';
 import { Modal, Button, SimpleForm, useToast } from '@una';
-import { authApi } from '@uni-hub/services/api';
+import { authApi, getErrorMessage } from '@uni-hub/services/api';
 import { AuthField } from './AuthField';
 import styles from './LinkMoodleModal.module.scss';
 
@@ -43,12 +43,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({ onClose, onSuc
       toast.success('Moodle-акаунт успішно прив’язано!');
       onSuccess();
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string; error?: string } } })?.response?.data
-          ?.message ||
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
-        (err as Error).message ||
-        'Помилка прив’язки акаунта. Перевірте логін та пароль.';
+      const message = getErrorMessage(err, 'Помилка прив’язки акаунта. Перевірте логін та пароль.');
 
       setError(message);
       toast.error(message);

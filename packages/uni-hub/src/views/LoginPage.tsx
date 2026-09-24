@@ -5,7 +5,7 @@ import { User, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button, SimpleForm, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
-import { authApi } from '@uni-hub/services/api';
+import { authApi, getErrorMessage } from '@uni-hub/services/api';
 import { GoogleLoginButton, LinkMoodleModal, AuthField } from '@uni-hub/components/auth';
 import { motion } from 'framer-motion';
 import styles from './LoginPage.module.scss';
@@ -33,12 +33,7 @@ const LoginPage: React.FC = () => {
         setShowLinkModal(true);
       }
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string; error?: string } } })?.response?.data
-          ?.message ||
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
-        (err as Error).message ||
-        'Помилка входу через Google';
+      const message = getErrorMessage(err, 'Помилка входу через Google');
 
       setError(message);
       toast.error(message);
@@ -76,9 +71,7 @@ const LoginPage: React.FC = () => {
 
       router.push('/');
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
-        'Помилка входу. Перевірте облікові дані.';
+      const message = getErrorMessage(err, 'Помилка входу. Перевірте облікові дані.');
 
       toast.error(message);
     } finally {

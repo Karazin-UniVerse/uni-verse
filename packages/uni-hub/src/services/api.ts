@@ -90,7 +90,26 @@ async function executeAttempt<T>(
         localStorage.removeItem('moodleToken');
       }
 
-      throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+      let serverMessage: string | undefined;
+
+      try {
+        const errorJson = (await response.json()) as {
+          message?: string | string[];
+          error?: string;
+        };
+
+        if (Array.isArray(errorJson?.message)) {
+          serverMessage = errorJson.message.join(', ');
+        } else if (typeof errorJson?.message === 'string') {
+          serverMessage = errorJson.message;
+        } else if (typeof errorJson?.error === 'string') {
+          serverMessage = errorJson.error;
+        }
+      } catch {
+        // response was not JSON
+      }
+
+      throw new Error(serverMessage || `HTTP error ${response.status}: ${response.statusText}`);
     }
 
     const data = (await response.json()) as T;
@@ -150,6 +169,17 @@ async function request<T>(
 export interface GoogleAuthResponse {
   access_token: string;
   isLinked: boolean;
+}
+
+export function getErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof Error && err.message) {
+    return err.message;
+  }
+
+  const resData = (err as { response?: { data?: { message?: string; error?: string } } })?.response
+    ?.data;
+
+  return resData?.message || resData?.error || fallback;
 }
 
 export class AuthApi {
