@@ -7,6 +7,8 @@ export const SimpleSlider: React.FC<SimpleSliderProps> = ({
   value,
   onChange,
   className,
+  'aria-label': ariaLabel,
+  id,
   min = 0,
   max = 100,
   step = 1,
@@ -15,6 +17,8 @@ export const SimpleSlider: React.FC<SimpleSliderProps> = ({
   return (
     <input
       type="range"
+      id={id}
+      aria-label={ariaLabel}
       min={min}
       max={max}
       step={step}

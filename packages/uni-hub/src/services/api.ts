@@ -1,5 +1,4 @@
-export * from '@core/types';
-import { RESPONSE_CODES } from '@core/constants';
+import { RESPONSE_CODES } from '@core/constants/response-codes';
 import type {
   AuthResponse,
   Course,

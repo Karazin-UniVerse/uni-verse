@@ -1,4 +1,4 @@
-import type { ControlType } from '@core/types';
+import type { ControlType } from '@core/utils/grades';
 import { getGradeRawValue } from '@uni-hub/utils/grades';
 
 export function getControlTypeLabel(controlType: ControlType): string {

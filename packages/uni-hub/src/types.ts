@@ -1,4 +1,4 @@
-import type { ControlType } from '@core/types';
+import type { ControlType } from '@core/utils/grades';
 
 export interface Course {
   id: number;
@@ -21,6 +21,10 @@ export interface Grade {
   year?: GradeValue;
   semester?: number | null;
   controlType?: ControlType;
+  currentScore?: number | null;
+  examScore?: number | null;
+  totalScore?: number | null;
+  credits?: number;
 }
 
 export interface Assignment {

@@ -8,28 +8,32 @@
     "build": "tsc -p tsconfig.json",
     "test": "node --test"
   },
-  "main": "./dist/index.js",
-  "types": "./index.ts",
+  "main": "./dist/types/index.js",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
-      "types": "./index.ts",
-      "default": "./dist/index.js"
-    },
-    "./types": {
-      "types": "./types/index.ts",
+      "types": "./dist/types/index.d.ts",
       "default": "./dist/types/index.js"
     },
-    "./constants": {
-      "types": "./constants/index.ts",
-      "default": "./dist/constants/index.js"
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/types/index.js"
+    },
+    "./types/*": {
+      "types": "./dist/types/*.d.ts",
+      "default": "./dist/types/*.js"
+    },
+    "./constants/*": {
+      "types": "./dist/constants/*.d.ts",
+      "default": "./dist/constants/*.js"
+    },
+    "./utils/*": {
+      "types": "./dist/utils/*.d.ts",
+      "default": "./dist/utils/*.js"
     },
     "./auth": {
-      "types": "./auth/index.ts",
-      "default": "./dist/auth/index.js"
-    },
-    "./browser": {
-      "types": "./browser.ts",
-      "default": "./dist/browser.js"
+      "types": "./dist/auth.d.ts",
+      "default": "./dist/auth.js"
     }
   },
   "devDependencies": {
