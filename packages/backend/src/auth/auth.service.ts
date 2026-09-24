@@ -7,7 +7,13 @@ import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { GetCreds } from '../utils/get-creds';
 import * as bcrypt from 'bcrypt';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { OAuth2Client } from 'google-auth-library';
+import {
+  RegisterDto,
+  LoginDto,
+  GoogleAuthDto,
+  LinkMoodleDto,
+} from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -128,6 +134,111 @@ export class AuthService {
     await this.updateRtHash(user.id, tokens.refresh_token);
 
     return tokens;
+  }
+
+  async loginWithGoogle(dto: GoogleAuthDto) {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const client = new OAuth2Client(clientId);
+
+    let payload;
+
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken: dto.idToken,
+        audience: clientId,
+      });
+
+      payload = ticket.getPayload();
+    } catch (err: unknown) {
+      throw new BadRequestException(
+        `Invalid Google ID token: ${(err as Error).message}`,
+      );
+    }
+
+    if (!payload?.email) {
+      throw new BadRequestException(
+        'Google token does not contain a verified email',
+      );
+    }
+
+    const email = payload.email.toLowerCase();
+    const name =
+      payload.name ||
+      `${payload.given_name || ''} ${payload.family_name || ''}`.trim() ||
+      undefined;
+
+    let user = await this.userService.findByEmail(email);
+
+    if (!user) {
+      const randomPassword = await bcrypt.hash(
+        Math.random().toString(36) + Date.now().toString(36),
+        10,
+      );
+
+      user = await this.userService.createUser({
+        email,
+        name,
+        password: randomPassword,
+      });
+    }
+
+    const isLinked = Boolean(user.token && user.moodleId);
+
+    const tokens = await this.getTokens(
+      user.id,
+      user.email,
+      user.token ?? undefined,
+      user.moodleId ?? undefined,
+    );
+
+    await this.updateRtHash(user.id, tokens.refresh_token);
+
+    return {
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      isLinked,
+    };
+  }
+
+  async linkMoodleAccount(userId: string, dto: LinkMoodleDto) {
+    const user = await this.userService.findById(userId);
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const { moodleToken, moodleId } = await (async () => {
+      try {
+        const token = await this.getCreds.getToken(dto.username, dto.password);
+        const rawMoodleId = await this.getCreds.getUserId(token);
+
+        return { moodleToken: token, moodleId: String(rawMoodleId) };
+      } catch (error) {
+        throw new BadRequestException(
+          `Moodle Authentication failed: ${(error as Error).message}`,
+        );
+      }
+    })();
+
+    const updatedUser = await this.userService.updateUser(userId, {
+      token: moodleToken,
+      moodleId,
+    });
+
+    const tokens = await this.getTokens(
+      updatedUser.id,
+      updatedUser.email,
+      moodleToken,
+      moodleId,
+    );
+
+    await this.updateRtHash(updatedUser.id, tokens.refresh_token);
+
+    return {
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      isLinked: true,
+    };
   }
 
   async logout(userId: string) {

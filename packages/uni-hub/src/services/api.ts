@@ -147,6 +147,11 @@ async function request<T>(
   throw new Error('Request failed');
 }
 
+export interface GoogleAuthResponse {
+  access_token: string;
+  isLinked: boolean;
+}
+
 export class AuthApi {
   async login(email: string, password: string): Promise<{ data: AuthResponse }> {
     const response = await request<AuthResponse>('/auth/login', {
@@ -157,6 +162,39 @@ export class AuthApi {
     if (response.data?.access_token) {
       localStorage.setItem('accessToken', response.data.access_token);
       localStorage.setItem('isLoggedIn', 'true');
+    }
+
+    return response;
+  }
+
+  async loginWithGoogle(idToken: string): Promise<{ data: GoogleAuthResponse }> {
+    const response = await request<GoogleAuthResponse>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken }),
+    });
+
+    if (response.data?.access_token) {
+      localStorage.setItem('accessToken', response.data.access_token);
+      localStorage.setItem('isLoggedIn', 'true');
+    }
+
+    return response;
+  }
+
+  async linkMoodleAccount(
+    username: string,
+    password: string,
+  ): Promise<{ data: { access_token: string; isLinked: boolean } }> {
+    const response = await request<{ access_token: string; isLinked: boolean }>(
+      '/auth/moodle/link',
+      {
+        method: 'POST',
+        body: JSON.stringify({ username, password }),
+      },
+    );
+
+    if (response.data?.access_token) {
+      localStorage.setItem('accessToken', response.data.access_token);
     }
 
     return response;

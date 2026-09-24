@@ -106,3 +106,30 @@
 .submit {
   width: 100%;
 }
+
+.googleSection {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: var(--space-8);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: var(--space-16) 0;
+  color: var(--text-secondary);
+  font-size: var(--font-xs);
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid rgb(var(--text-primary-rgb, 0, 0, 0), 0.1);
+  }
+
+  span {
+    padding: 0 var(--space-12);
+  }
+}

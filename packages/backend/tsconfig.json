@@ -14,11 +14,6 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
-    "paths": {
-      "@core": ["../core/dist/index.d.ts"],
-      "@core/types": ["../core/dist/types/index.d.ts"],
-      "@core/*": ["../core/dist/*.d.ts", "../core/dist/*/index.d.ts"]
-    },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,

@@ -24,6 +24,9 @@ import {
   LoginDto,
   AuthResponseDto,
   LogoutResponseDto,
+  GoogleAuthDto,
+  LinkMoodleDto,
+  GoogleAuthResponseDto,
 } from './dto/auth.dto';
 
 @ApiTags('Auth')
@@ -69,6 +72,53 @@ export class AuthController {
     this.setRefreshTokenCookie(res, tokens.refresh_token);
 
     return { access_token: tokens.access_token };
+  }
+
+  @Public()
+  @Post('google')
+  @ApiOperation({ summary: 'Login or register user via Google SSO' })
+  @ApiResponse({
+    status: 200,
+    type: GoogleAuthResponseDto,
+    description: 'User successfully authenticated via Google.',
+  })
+  @HttpCode(HttpStatus.OK)
+  async loginWithGoogle(
+    @Body() dto: GoogleAuthDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<GoogleAuthResponseDto> {
+    const result = await this.authService.loginWithGoogle(dto);
+
+    this.setRefreshTokenCookie(res, result.refresh_token);
+
+    return {
+      access_token: result.access_token,
+      isLinked: result.isLinked,
+    };
+  }
+
+  @ApiBearerAuth()
+  @Post('moodle/link')
+  @ApiOperation({ summary: 'Link Moodle account to authenticated user' })
+  @ApiResponse({
+    status: 200,
+    type: GoogleAuthResponseDto,
+    description: 'Moodle account successfully linked.',
+  })
+  @HttpCode(HttpStatus.OK)
+  async linkMoodle(
+    @GetUser('sub') userId: string,
+    @Body() dto: LinkMoodleDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<GoogleAuthResponseDto> {
+    const result = await this.authService.linkMoodleAccount(userId, dto);
+
+    this.setRefreshTokenCookie(res, result.refresh_token);
+
+    return {
+      access_token: result.access_token,
+      isLinked: result.isLinked,
+    };
   }
 
   @ApiBearerAuth()
