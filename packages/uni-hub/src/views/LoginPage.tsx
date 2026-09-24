@@ -114,22 +114,6 @@ const LoginPage: React.FC = () => {
               {loading ? 'Вход...' : 'Войти'}
             </Button>
           </motion.div>
-
-          <div style={{ textAlign: 'center', marginTop: '12px' }}>
-            <Button
-              type="button"
-              variant="secondary"
-              size="medium"
-              onClick={async () => {
-                await authApi.login('demo', 'demo');
-                toast.success('Вхід у демо-режимі виконано');
-                router.push('/');
-              }}
-              style={{ width: '100%', fontSize: '0.875rem', opacity: 0.85 }}
-            >
-              Спробувати демо-режим (без Moodle) →
-            </Button>
-          </div>
         </SimpleForm>
       </div>
     </div>
