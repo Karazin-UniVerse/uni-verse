@@ -22,7 +22,11 @@ import {
   LinkMoodleDto,
 } from './dto/auth.dto';
 import { User, Role } from '@universe/database';
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
@@ -319,10 +323,24 @@ describe('AuthService', () => {
       );
     });
 
+    it('should throw BadRequestException if email_verified is not true', async () => {
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'unverified@example.com',
+          email_verified: false,
+        }),
+      });
+
+      await expect(authService.loginWithGoogle(googleDto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
     it('should authenticate existing linked user and return isLinked=true', async () => {
       mockVerifyIdToken.mockResolvedValue({
         getPayload: () => ({
           email: 'student@student.karazin.ua',
+          email_verified: true,
           name: 'Test Student',
         }),
       });
@@ -357,6 +375,7 @@ describe('AuthService', () => {
       mockVerifyIdToken.mockResolvedValue({
         getPayload: () => ({
           email: 'unlinked@gmail.com',
+          email_verified: true,
           name: 'Unlinked Student',
         }),
       });
@@ -388,6 +407,7 @@ describe('AuthService', () => {
       mockVerifyIdToken.mockResolvedValue({
         getPayload: () => ({
           email: 'newuser@gmail.com',
+          email_verified: true,
           given_name: 'New',
           family_name: 'User',
         }),
@@ -439,6 +459,20 @@ describe('AuthService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
+    it('should throw ConflictException if Moodle account is already linked to another user', async () => {
+      mockUserService.findById.mockResolvedValue(sampleUser);
+      mockGetCreds.getToken.mockResolvedValue('linked-moodle-token');
+      mockGetCreds.getUserId.mockResolvedValue('7777');
+      mockUserService.findByMoodleId.mockResolvedValue({
+        ...sampleUser,
+        id: 'other-user-uuid',
+      });
+
+      await expect(
+        authService.linkMoodleAccount(sampleUser.id, linkDto),
+      ).rejects.toThrow(ConflictException);
+    });
+
     it('should successfully link moodle account and return isLinked=true with new tokens', async () => {
       const linkedUser: User = {
         ...sampleUser,
@@ -449,6 +483,7 @@ describe('AuthService', () => {
       mockUserService.findById.mockResolvedValue(sampleUser);
       mockGetCreds.getToken.mockResolvedValue('linked-moodle-token');
       mockGetCreds.getUserId.mockResolvedValue('7777');
+      mockUserService.findByMoodleId.mockResolvedValue(null);
       mockUserService.updateUser.mockResolvedValue(linkedUser);
       mockJwtService.signAsync
         .mockResolvedValueOnce('updated-at')

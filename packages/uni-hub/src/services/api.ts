@@ -184,10 +184,14 @@ export function getErrorMessage(err: unknown, fallback: string): string {
 
 export class AuthApi {
   async login(email: string, password: string): Promise<{ data: AuthResponse }> {
-    const response = await request<AuthResponse>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
+    const response = await request<AuthResponse>(
+      '/auth/login',
+      {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      },
+      0,
+    );
 
     if (response.data?.access_token) {
       localStorage.setItem('accessToken', response.data.access_token);
@@ -198,10 +202,14 @@ export class AuthApi {
   }
 
   async loginWithGoogle(idToken: string): Promise<{ data: GoogleAuthResponse }> {
-    const response = await request<GoogleAuthResponse>('/auth/google', {
-      method: 'POST',
-      body: JSON.stringify({ idToken }),
-    });
+    const response = await request<GoogleAuthResponse>(
+      '/auth/google',
+      {
+        method: 'POST',
+        body: JSON.stringify({ idToken }),
+      },
+      0,
+    );
 
     if (response.data?.access_token) {
       localStorage.setItem('accessToken', response.data.access_token);
@@ -224,6 +232,7 @@ export class AuthApi {
         method: 'POST',
         body: JSON.stringify({ username, password }),
       },
+      0,
     );
 
     if (response.data?.access_token) {
@@ -239,7 +248,7 @@ export class AuthApi {
 
   async logout(): Promise<void> {
     try {
-      await request('/auth/logout', { method: 'POST' });
+      await request('/auth/logout', { method: 'POST' }, 0);
     } finally {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('isLoggedIn');

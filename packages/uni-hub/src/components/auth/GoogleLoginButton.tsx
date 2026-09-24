@@ -47,8 +47,18 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   onError,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [scriptLoaded, setScriptLoaded] = useState(
+    () => typeof window !== 'undefined' && Boolean(window.google?.accounts?.id),
+  );
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  const onSuccessRef = useRef(onSuccess);
+  const onErrorRef = useRef(onError);
+
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+    onErrorRef.current = onError;
+  });
 
   useEffect(() => {
     if (!clientId || !scriptLoaded || !window.google || !containerRef.current) {
@@ -60,9 +70,9 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         client_id: clientId,
         callback: (response) => {
           if (response?.credential) {
-            onSuccess(response.credential);
+            onSuccessRef.current(response.credential);
           } else {
-            onError?.('Не вдалося отримати токен від Google');
+            onErrorRef.current?.('Не вдалося отримати токен від Google');
           }
         },
       });
@@ -80,16 +90,16 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         });
       }
     } catch (err: unknown) {
-      onError?.((err as Error).message);
+      onErrorRef.current?.((err as Error).message);
     }
-  }, [scriptLoaded, clientId, onSuccess, onError]);
+  }, [scriptLoaded, clientId]);
 
   return (
     <div className={styles.wrapper}>
       <Script
         src="https://accounts.google.com/gsi/client"
         strategy="afterInteractive"
-        onLoad={() => setScriptLoaded(true)}
+        onReady={() => setScriptLoaded(true)}
       />
       <div ref={containerRef} className={disabled ? styles.disabled : styles.buttonContainer} />
     </div>

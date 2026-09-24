@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
@@ -25,7 +26,8 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    const existingUser = await this.userService.findByEmail(dto.email);
+    const normalizedEmail = dto.email.trim().toLowerCase();
+    const existingUser = await this.userService.findByEmail(normalizedEmail);
 
     if (existingUser) {
       throw new BadRequestException('User with this email already exists');
@@ -49,7 +51,7 @@ export class AuthService {
     const user = await (async () => {
       try {
         return await this.userService.createUser({
-          email: dto.email,
+          email: normalizedEmail,
           password: passwordHash,
           token: moodleToken,
           moodleId: moodleId,
@@ -96,14 +98,15 @@ export class AuthService {
       }
     })();
 
-    const emailToUse = dto.email.includes('@')
-      ? dto.email
-      : `${dto.email}@student.karazin.ua`;
+    const rawEmail = dto.email.trim().toLowerCase();
+    const emailToUse = rawEmail.includes('@')
+      ? rawEmail
+      : `${rawEmail}@student.karazin.ua`;
 
     const user = await (async () => {
       const existing =
         (await this.userService.findByMoodleId(moodleId)) ||
-        (await this.userService.findByEmail(dto.email)) ||
+        (await this.userService.findByEmail(rawEmail)) ||
         (await this.userService.findByEmail(emailToUse));
 
       if (!existing) {
@@ -163,7 +166,7 @@ export class AuthService {
       );
     }
 
-    if (!payload?.email) {
+    if (!payload?.email || payload.email_verified !== true) {
       throw new BadRequestException(
         'Google token does not contain a verified email',
       );
@@ -183,11 +186,32 @@ export class AuthService {
         10,
       );
 
-      user = await this.userService.createUser({
-        email,
-        name,
-        password: randomPassword,
-      });
+      try {
+        user = await this.userService.createUser({
+          email,
+          name,
+          password: randomPassword,
+        });
+      } catch (err: unknown) {
+        if (
+          err &&
+          typeof err === 'object' &&
+          'code' in err &&
+          (err as { code: string }).code === 'P2002'
+        ) {
+          const existing = await this.userService.findByEmail(email);
+
+          if (existing) {
+            user = existing;
+          } else {
+            throw new BadRequestException(
+              'User with this email already exists',
+            );
+          }
+        } else {
+          throw err;
+        }
+      }
     }
 
     const isLinked = Boolean(user.token && user.moodleId);
@@ -227,6 +251,14 @@ export class AuthService {
         );
       }
     })();
+
+    const existingMoodleUser = await this.userService.findByMoodleId(moodleId);
+
+    if (existingMoodleUser && existingMoodleUser.id !== userId) {
+      throw new ConflictException(
+        'Moodle account is already linked to another user',
+      );
+    }
 
     const updatedUser = await this.userService.updateUser(userId, {
       token: moodleToken,
