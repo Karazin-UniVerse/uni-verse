@@ -6,6 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { GetCreds } from '../utils/get-creds';
+import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import {
@@ -178,7 +179,7 @@ export class AuthService {
 
     if (!user) {
       const randomPassword = await bcrypt.hash(
-        Math.random().toString(36) + Date.now().toString(36),
+        randomBytes(32).toString('hex'),
         10,
       );
 

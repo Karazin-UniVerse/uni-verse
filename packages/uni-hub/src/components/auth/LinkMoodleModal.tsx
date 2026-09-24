@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { User, Lock } from 'lucide-react';
-import { Modal, Button, TextInput, SimpleForm, useToast } from '@una';
+import { Modal, Button, SimpleForm, useToast } from '@una';
 import { authApi } from '@uni-hub/services/api';
+import { AuthField } from './AuthField';
 import styles from './LinkMoodleModal.module.scss';
 
 export interface LinkMoodleModalProps {
@@ -64,36 +65,28 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({ onClose, onSuc
           необхідно зробити лише один раз — надалі вхід виконуватиметься через Google в один клік.
         </p>
 
-        <label className={styles.field}>
-          <span className={styles.label}>Логін або email у Moodle</span>
-          <div className={styles.inputWrap}>
-            <User size={16} className={styles.icon} />
-            <TextInput
-              name="moodleUsername"
-              size="large"
-              placeholder="Логін у Moodle"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="username"
-            />
-          </div>
-        </label>
+        <AuthField
+          id="link-moodle-username"
+          name="moodleUsername"
+          label="Логін або email у Moodle"
+          placeholder="Логін у Moodle"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          autoComplete="username"
+          icon={<User size={16} />}
+        />
 
-        <label className={styles.field}>
-          <span className={styles.label}>Пароль у Moodle</span>
-          <div className={styles.inputWrap}>
-            <Lock size={16} className={styles.icon} />
-            <TextInput
-              name="moodlePassword"
-              type="password"
-              size="large"
-              placeholder="Пароль"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-            />
-          </div>
-        </label>
+        <AuthField
+          id="link-moodle-password"
+          name="moodlePassword"
+          type="password"
+          label="Пароль у Moodle"
+          placeholder="Пароль"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
+          icon={<Lock size={16} />}
+        />
 
         {error && <p className={styles.error}>{error}</p>}
 

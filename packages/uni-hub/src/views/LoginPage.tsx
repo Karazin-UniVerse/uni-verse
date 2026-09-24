@@ -3,10 +3,10 @@
 import React, { useState } from 'react';
 import { User, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Button, TextInput, SimpleForm, useToast } from '@una';
+import { Button, SimpleForm, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { authApi } from '@uni-hub/services/api';
-import { GoogleLoginButton, LinkMoodleModal } from '@uni-hub/components/auth';
+import { GoogleLoginButton, LinkMoodleModal, AuthField } from '@uni-hub/components/auth';
 import { motion } from 'framer-motion';
 import styles from './LoginPage.module.scss';
 
@@ -114,38 +114,28 @@ const LoginPage: React.FC = () => {
             </>
           )}
 
-          <label htmlFor="login-username" className={styles.field}>
-            <span className={styles.label}>Ім’я користувача або email</span>
-            <div className={styles.inputWrap}>
-              <User size={16} className={styles.icon} />
-              <TextInput
-                id="login-username"
-                name="username"
-                size="large"
-                placeholder="Ім’я користувача або email"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
-              />
-            </div>
-          </label>
+          <AuthField
+            id="login-username"
+            name="username"
+            label="Ім’я користувача або email"
+            placeholder="Ім’я користувача або email"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            autoComplete="username"
+            icon={<User size={16} />}
+          />
 
-          <label htmlFor="login-password" className={styles.field}>
-            <span className={styles.label}>Пароль</span>
-            <div className={styles.inputWrap}>
-              <Lock size={16} className={styles.icon} />
-              <TextInput
-                id="login-password"
-                name="password"
-                type="password"
-                size="large"
-                placeholder="Пароль"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-              />
-            </div>
-          </label>
+          <AuthField
+            id="login-password"
+            name="password"
+            type="password"
+            label="Пароль"
+            placeholder="Пароль"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            icon={<Lock size={16} />}
+          />
 
           {error && <p className={styles.error}>{error}</p>}
 
