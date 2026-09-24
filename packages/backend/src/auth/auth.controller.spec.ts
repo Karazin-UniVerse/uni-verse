@@ -169,7 +169,7 @@ describe('AuthController', () => {
   describe('loginWithGoogle', () => {
     it('should authenticate via Google, set refresh cookie, and return access token and isLinked status', async () => {
       const dto: GoogleAuthDto = {
-        credential: 'google-id-token',
+        idToken: 'google-id-token',
       };
       const response = createMockResponse();
 

@@ -66,6 +66,7 @@ describe('AuthService', () => {
     jest.clearAllMocks();
     process.env.AT_SECRET = 'valid-production-at-secret';
     process.env.RT_SECRET = 'valid-production-rt-secret';
+    process.env.GOOGLE_CLIENT_ID = 'test-google-client-id';
 
     authService = new AuthService(
       mockUserService,
@@ -289,8 +290,16 @@ describe('AuthService', () => {
 
   describe('loginWithGoogle', () => {
     const googleDto: GoogleAuthDto = {
-      credential: 'valid-google-id-token',
+      idToken: 'valid-google-id-token',
     };
+
+    it('should throw BadRequestException if GOOGLE_CLIENT_ID is not configured', async () => {
+      delete process.env.GOOGLE_CLIENT_ID;
+
+      await expect(authService.loginWithGoogle(googleDto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
 
     it('should throw BadRequestException if token verification fails', async () => {
       mockVerifyIdToken.mockRejectedValue(new Error('Invalid token'));

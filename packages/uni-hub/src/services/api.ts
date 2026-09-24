@@ -175,7 +175,10 @@ export class AuthApi {
 
     if (response.data?.access_token) {
       localStorage.setItem('accessToken', response.data.access_token);
-      localStorage.setItem('isLoggedIn', 'true');
+
+      if (response.data.isLinked) {
+        localStorage.setItem('isLoggedIn', 'true');
+      }
     }
 
     return response;
@@ -195,6 +198,10 @@ export class AuthApi {
 
     if (response.data?.access_token) {
       localStorage.setItem('accessToken', response.data.access_token);
+
+      if (response.data.isLinked) {
+        localStorage.setItem('isLoggedIn', 'true');
+      }
     }
 
     return response;

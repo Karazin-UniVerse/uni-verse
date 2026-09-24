@@ -98,17 +98,21 @@ const LoginPage: React.FC = () => {
             <p>Увійдіть у свій акаунт Moodle</p>
           </div>
 
-          <div className={styles.googleSection}>
-            <GoogleLoginButton
-              onSuccess={handleGoogleSuccess}
-              onError={(msg) => setError(msg)}
-              disabled={loading}
-            />
-          </div>
+          {Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) && (
+            <>
+              <div className={styles.googleSection}>
+                <GoogleLoginButton
+                  onSuccess={handleGoogleSuccess}
+                  onError={(msg) => setError(msg)}
+                  disabled={loading}
+                />
+              </div>
 
-          <div className={styles.divider}>
-            <span>або за допомогою логіна Moodle</span>
-          </div>
+              <div className={styles.divider}>
+                <span>або за допомогою логіна Moodle</span>
+              </div>
+            </>
+          )}
 
           <label htmlFor="login-username" className={styles.field}>
             <span className={styles.label}>Ім’я користувача або email</span>
@@ -160,9 +164,15 @@ const LoginPage: React.FC = () => {
 
         <LinkMoodleModal
           open={showLinkModal}
-          onClose={() => setShowLinkModal(false)}
+          onClose={() => {
+            setShowLinkModal(false);
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('isLoggedIn');
+            setError('Для завершення входу необхідно прив’язати акаунт Moodle');
+          }}
           onSuccess={() => {
             setShowLinkModal(false);
+            toast.success('Вхід успішно виконано');
             router.push('/');
           }}
         />

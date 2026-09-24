@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import { User, Lock } from 'lucide-react';
-import { Modal, Button, SimpleForm, useToast } from '@una';
-import { TextInput } from '@una/inputs/TextInput';
+import { Modal, Button, TextInput, SimpleForm, useToast } from '@una';
 import { authApi } from '@uni-hub/services/api';
 import styles from './LinkMoodleModal.module.scss';
 

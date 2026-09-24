@@ -138,6 +138,13 @@ export class AuthService {
 
   async loginWithGoogle(dto: GoogleAuthDto) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
+
+    if (!clientId) {
+      throw new BadRequestException(
+        'Google authentication is not configured on the server',
+      );
+    }
+
     const client = new OAuth2Client(clientId);
 
     let payload;

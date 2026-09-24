@@ -48,12 +48,10 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
-  const clientId =
-    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-    '245056089040-eq6f7b9acb941b28hkhc0a500vebvr7a.apps.googleusercontent.com';
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
-    if (!scriptLoaded || !window.google || !containerRef.current) {
+    if (!clientId || !scriptLoaded || !window.google || !containerRef.current) {
       return;
     }
 
