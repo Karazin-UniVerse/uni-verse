@@ -33,10 +33,12 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
         onClick={cycleTheme}
         aria-label={`Тема: ${themeMetadata.label}. Перемкнути`}
         title={themeMetadata.label}
+        // intentional: suppressHydrationWarning – themeMetadata resolved client-side from stored preference; server renders default theme
         suppressHydrationWarning
       >
         {themeMetadata.icon}
         {showLabel && (
+          // intentional: suppressHydrationWarning – label text derived from client-side theme state
           <span className={styles.compactLabel} suppressHydrationWarning>
             {themeMetadata.label}
           </span>
@@ -58,6 +60,7 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
             className={clsx(styles.option, isSelectedTheme && styles.active)}
             onClick={() => setTheme(themeOption)}
             aria-pressed={isSelectedTheme}
+            // intentional: suppressHydrationWarning – isSelectedTheme (aria-pressed) derived from client-side theme state
             suppressHydrationWarning
           >
             {themeMetadata.icon}
