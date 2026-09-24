@@ -6,7 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { GetCreds } from '../utils/get-creds';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import {
