@@ -141,78 +141,8 @@ export class AuthService {
   }
 
   async loginWithGoogle(dto: GoogleAuthDto) {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-
-    if (!clientId) {
-      throw new BadRequestException(
-        'Google authentication is not configured on the server',
-      );
-    }
-
-    const client = new OAuth2Client(clientId);
-
-    let payload;
-
-    try {
-      const ticket = await client.verifyIdToken({
-        idToken: dto.idToken,
-        audience: clientId,
-      });
-
-      payload = ticket.getPayload();
-    } catch (err: unknown) {
-      throw new BadRequestException(
-        `Invalid Google ID token: ${(err as Error).message}`,
-      );
-    }
-
-    if (!payload?.email || payload.email_verified !== true) {
-      throw new BadRequestException(
-        'Google token does not contain a verified email',
-      );
-    }
-
-    const email = payload.email.toLowerCase();
-    const name =
-      payload.name ||
-      `${payload.given_name || ''} ${payload.family_name || ''}`.trim() ||
-      undefined;
-
-    let user = await this.userService.findByEmail(email);
-
-    if (!user) {
-      const randomPassword = await bcrypt.hash(
-        randomBytes(32).toString('hex'),
-        10,
-      );
-
-      try {
-        user = await this.userService.createUser({
-          email,
-          name,
-          password: randomPassword,
-        });
-      } catch (err: unknown) {
-        if (
-          err &&
-          typeof err === 'object' &&
-          'code' in err &&
-          (err as { code: string }).code === 'P2002'
-        ) {
-          const existing = await this.userService.findByEmail(email);
-
-          if (existing) {
-            user = existing;
-          } else {
-            throw new BadRequestException(
-              'User with this email already exists',
-            );
-          }
-        } else {
-          throw err;
-        }
-      }
-    }
+    const { email, name } = await this.verifyGoogleIdToken(dto.idToken);
+    const user = await this.findOrCreateGoogleUser(email, name);
 
     const isLinked = Boolean(user.token && user.moodleId);
 
@@ -230,6 +160,90 @@ export class AuthService {
       refresh_token: tokens.refresh_token,
       isLinked,
     };
+  }
+
+  private async verifyGoogleIdToken(
+    idToken: string,
+  ): Promise<{ email: string; name?: string }> {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+
+    if (!clientId) {
+      throw new BadRequestException(
+        'Google authentication is not configured on the server',
+      );
+    }
+
+    const client = new OAuth2Client(clientId);
+
+    let payload;
+
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken,
+        audience: clientId,
+      });
+
+      payload = ticket.getPayload();
+    } catch (err: unknown) {
+      throw new BadRequestException(
+        `Invalid Google ID token: ${(err as Error).message}`,
+      );
+    }
+
+    if (!payload?.email || payload.email_verified !== true) {
+      throw new BadRequestException(
+        'Google token does not contain a verified email',
+      );
+    }
+
+    const email = payload.email.toLowerCase();
+    const fallbackName =
+      `${payload.given_name || ''} ${payload.family_name || ''}`.trim();
+    const name = payload.name || fallbackName || undefined;
+
+    return { email, name };
+  }
+
+  private async findOrCreateGoogleUser(email: string, name?: string) {
+    const existingUser = await this.userService.findByEmail(email);
+
+    if (existingUser) {
+      return existingUser;
+    }
+
+    const randomPassword = await bcrypt.hash(
+      randomBytes(32).toString('hex'),
+      10,
+    );
+
+    try {
+      return await this.userService.createUser({
+        email,
+        name,
+        password: randomPassword,
+      });
+    } catch (err: unknown) {
+      if (this.isPrismaUniqueConstraintError(err)) {
+        const raceUser = await this.userService.findByEmail(email);
+
+        if (raceUser) {
+          return raceUser;
+        }
+
+        throw new BadRequestException('User with this email already exists');
+      }
+
+      throw err;
+    }
+  }
+
+  private isPrismaUniqueConstraintError(err: unknown): boolean {
+    return Boolean(
+      err &&
+      typeof err === 'object' &&
+      'code' in err &&
+      (err as { code: string }).code === 'P2002',
+    );
   }
 
   async linkMoodleAccount(userId: string, dto: LinkMoodleDto) {

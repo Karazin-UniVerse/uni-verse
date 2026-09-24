@@ -229,6 +229,51 @@ describe('AuthService', () => {
         }),
       );
     });
+
+    it('should find user by rawEmail if findByMoodleId returns null', async () => {
+      mockGetCreds.getToken.mockResolvedValue('fresh-moodle-token');
+      mockGetCreds.getUserId.mockResolvedValue('5001');
+      mockUserService.findByMoodleId.mockResolvedValue(null);
+      mockUserService.findByEmail.mockResolvedValueOnce(sampleUser);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('at-123')
+        .mockResolvedValueOnce('rt-123');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-rt');
+      mockUserService.updateUser.mockResolvedValue(sampleUser);
+
+      const tokens = await authService.login(loginDto);
+
+      expect(tokens).toEqual({
+        access_token: 'at-123',
+        refresh_token: 'rt-123',
+      });
+    });
+
+    it('should find user by suffixed email if findByMoodleId and rawEmail return null', async () => {
+      const usernameLoginDto: LoginDto = {
+        email: 'melnyk.bogdan',
+        password: 'Password123',
+      };
+
+      mockGetCreds.getToken.mockResolvedValue('fresh-moodle-token');
+      mockGetCreds.getUserId.mockResolvedValue('5001');
+      mockUserService.findByMoodleId.mockResolvedValue(null);
+      mockUserService.findByEmail
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(sampleUser);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('at-123')
+        .mockResolvedValueOnce('rt-123');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-rt');
+      mockUserService.updateUser.mockResolvedValue(sampleUser);
+
+      const tokens = await authService.login(usernameLoginDto);
+
+      expect(tokens).toEqual({
+        access_token: 'at-123',
+        refresh_token: 'rt-123',
+      });
+    });
   });
 
   describe('logout', () => {
@@ -434,6 +479,99 @@ describe('AuthService', () => {
         }),
       );
     });
+
+    it('should recover from Prisma P2002 race condition by returning existing user', async () => {
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'raceuser@gmail.com',
+          email_verified: true,
+          name: 'Race User',
+        }),
+      });
+      mockUserService.findByEmail
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(sampleUser);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-random-pw');
+      mockUserService.createUser.mockRejectedValue({ code: 'P2002' });
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('race-at')
+        .mockResolvedValueOnce('race-rt');
+      mockUserService.updateUser.mockResolvedValue(sampleUser);
+
+      const result = await authService.loginWithGoogle(googleDto);
+
+      expect(result).toHaveProperty('access_token', 'race-at');
+    });
+
+    it('should throw BadRequestException on P2002 if existing user still cannot be found', async () => {
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'raceuser@gmail.com',
+          email_verified: true,
+          name: 'Race User',
+        }),
+      });
+      mockUserService.findByEmail.mockResolvedValue(null);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-random-pw');
+      mockUserService.createUser.mockRejectedValue({ code: 'P2002' });
+
+      await expect(authService.loginWithGoogle(googleDto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should rethrow unexpected non-P2002 error from createUser', async () => {
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'crashuser@gmail.com',
+          email_verified: true,
+          name: 'Crash User',
+        }),
+      });
+      mockUserService.findByEmail.mockResolvedValue(null);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-random-pw');
+      mockUserService.createUser.mockRejectedValue(
+        new Error('Fatal DB failure'),
+      );
+
+      await expect(authService.loginWithGoogle(googleDto)).rejects.toThrow(
+        'Fatal DB failure',
+      );
+    });
+
+    it('should set name to undefined when Google payload has empty given and family names', async () => {
+      const newGoogleUser: User = {
+        ...sampleUser,
+        id: 'noname-user',
+        email: 'noname@gmail.com',
+        name: null,
+      };
+
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'noname@gmail.com',
+          email_verified: true,
+          given_name: '',
+          family_name: '',
+        }),
+      });
+      mockUserService.findByEmail.mockResolvedValue(null);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-random-pw');
+      mockUserService.createUser.mockResolvedValue(newGoogleUser);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('noname-at')
+        .mockResolvedValueOnce('noname-rt');
+      mockUserService.updateUser.mockResolvedValue(newGoogleUser);
+
+      await authService.loginWithGoogle(googleDto);
+
+      expect(mockUserService.createUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'noname@gmail.com',
+          name: undefined,
+        }),
+      );
+    });
   });
 
   describe('linkMoodleAccount', () => {
@@ -503,6 +641,35 @@ describe('AuthService', () => {
       expect(mockUserService.updateUser).toHaveBeenCalledWith(sampleUser.id, {
         token: 'linked-moodle-token',
         moodleId: '7777',
+      });
+    });
+
+    it('should allow user to re-link when existingMoodleUser belongs to the same user', async () => {
+      const linkedUser: User = {
+        ...sampleUser,
+        token: 'relinked-token',
+        moodleId: '7777',
+      };
+
+      mockUserService.findById.mockResolvedValue(sampleUser);
+      mockGetCreds.getToken.mockResolvedValue('relinked-token');
+      mockGetCreds.getUserId.mockResolvedValue('7777');
+      mockUserService.findByMoodleId.mockResolvedValue(sampleUser);
+      mockUserService.updateUser.mockResolvedValue(linkedUser);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('relinked-at')
+        .mockResolvedValueOnce('relinked-rt');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-relinked-rt');
+
+      const result = await authService.linkMoodleAccount(
+        sampleUser.id,
+        linkDto,
+      );
+
+      expect(result).toEqual({
+        access_token: 'relinked-at',
+        refresh_token: 'relinked-rt',
+        isLinked: true,
       });
     });
   });

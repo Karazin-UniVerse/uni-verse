@@ -229,4 +229,54 @@ describe('AuthController', () => {
       });
     });
   });
+
+  describe('setRefreshTokenCookie environment branch', () => {
+    it('should set secure=true when NODE_ENV is production', async () => {
+      const originalEnv = process.env.NODE_ENV;
+
+      process.env.NODE_ENV = 'production';
+
+      try {
+        const dto: LoginDto = {
+          email: 'prod@student.karazin.ua',
+          password: 'Password123!',
+        };
+        const response = createMockResponse();
+
+        authService.login.mockResolvedValue(mockTokens);
+
+        await controller.login(dto, response);
+
+        expect(response.cookie).toHaveBeenCalledWith(
+          'refreshToken',
+          mockTokens.refresh_token,
+          expect.objectContaining({
+            secure: true,
+          }),
+        );
+      } finally {
+        process.env.NODE_ENV = originalEnv;
+      }
+    });
+
+    it('should return isLinked=false when Google user is unlinked', async () => {
+      const dto: GoogleAuthDto = {
+        idToken: 'google-id-token',
+      };
+      const response = createMockResponse();
+
+      authService.loginWithGoogle.mockResolvedValue({
+        access_token: 'unlinked-google-at',
+        refresh_token: 'unlinked-google-rt',
+        isLinked: false,
+      });
+
+      const result = await controller.loginWithGoogle(dto, response);
+
+      expect(result).toEqual({
+        access_token: 'unlinked-google-at',
+        isLinked: false,
+      });
+    });
+  });
 });
