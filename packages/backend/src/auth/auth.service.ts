@@ -10,12 +10,12 @@ import { GetCreds } from '../utils/get-creds';
 import { randomBytes } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
+import { RegisterDto, LoginDto, GoogleAuthDto, LinkMoodleDto } from './dto';
 import {
-  RegisterDto,
-  LoginDto,
-  GoogleAuthDto,
-  LinkMoodleDto,
-} from './dto/auth.dto';
+  normalizeEmail,
+  buildEmailWithDomain,
+  isPrismaUniqueConstraintError,
+} from './utils/auth.utils';
 
 @Injectable()
 export class AuthService {
@@ -26,7 +26,7 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    const normalizedEmail = dto.email.trim().toLowerCase();
+    const normalizedEmail = normalizeEmail(dto.email);
     const existingUser = await this.userService.findByEmail(normalizedEmail);
 
     if (existingUser) {
@@ -98,10 +98,8 @@ export class AuthService {
       }
     })();
 
-    const rawEmail = dto.email.trim().toLowerCase();
-    const emailToUse = rawEmail.includes('@')
-      ? rawEmail
-      : `${rawEmail}@student.karazin.ua`;
+    const rawEmail = normalizeEmail(dto.email);
+    const emailToUse = buildEmailWithDomain(rawEmail, 'student.karazin.ua');
 
     const user = await (async () => {
       const existing =
@@ -223,7 +221,7 @@ export class AuthService {
         password: randomPassword,
       });
     } catch (err: unknown) {
-      if (this.isPrismaUniqueConstraintError(err)) {
+      if (isPrismaUniqueConstraintError(err)) {
         const raceUser = await this.userService.findByEmail(email);
 
         if (raceUser) {
@@ -235,15 +233,6 @@ export class AuthService {
 
       throw err;
     }
-  }
-
-  private isPrismaUniqueConstraintError(err: unknown): boolean {
-    return Boolean(
-      err &&
-      typeof err === 'object' &&
-      'code' in err &&
-      (err as { code: string }).code === 'P2002',
-    );
   }
 
   async linkMoodleAccount(userId: string, dto: LinkMoodleDto) {

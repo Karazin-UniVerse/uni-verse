@@ -27,7 +27,8 @@ import {
   GoogleAuthDto,
   LinkMoodleDto,
   GoogleAuthResponseDto,
-} from './dto/auth.dto';
+} from './dto';
+import { AUTH_ROUTES } from '@universe/core/constants/routes';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -35,7 +36,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
-  @Post('register')
+  @Post(AUTH_ROUTES.REGISTER)
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({
     status: 201,
@@ -55,7 +56,7 @@ export class AuthController {
   }
 
   @Public()
-  @Post('login')
+  @Post(AUTH_ROUTES.LOGIN)
   @ApiOperation({ summary: 'Login user' })
   @ApiResponse({
     status: 200,
@@ -75,7 +76,7 @@ export class AuthController {
   }
 
   @Public()
-  @Post('google')
+  @Post(AUTH_ROUTES.GOOGLE)
   @ApiOperation({ summary: 'Login or register user via Google SSO' })
   @ApiResponse({
     status: 200,
@@ -98,7 +99,7 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
-  @Post('moodle/link')
+  @Post(AUTH_ROUTES.MOODLE_LINK)
   @ApiOperation({ summary: 'Link Moodle account to authenticated user' })
   @ApiResponse({
     status: 200,
@@ -122,7 +123,7 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
-  @Post('logout')
+  @Post(AUTH_ROUTES.LOGOUT)
   @ApiOperation({ summary: 'Logout user' })
   @ApiResponse({
     status: 200,
@@ -143,7 +144,7 @@ export class AuthController {
   @Public()
   @UseGuards(RtGuard)
   @ApiCookieAuth()
-  @Post('refresh')
+  @Post(AUTH_ROUTES.REFRESH)
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({
     status: 200,
