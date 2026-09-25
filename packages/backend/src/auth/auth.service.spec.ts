@@ -1,3 +1,11 @@
+const mockVerifyIdToken = jest.fn();
+
+jest.mock('google-auth-library', () => ({
+  OAuth2Client: jest.fn().mockImplementation(() => ({
+    verifyIdToken: mockVerifyIdToken,
+  })),
+}));
+
 jest.mock('bcrypt', () => ({
   compare: jest.fn(),
   hash: jest.fn(),
@@ -7,9 +15,18 @@ import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { GetCreds } from '../utils/get-creds';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  GoogleAuthDto,
+  LinkMoodleDto,
+} from './dto/auth.dto';
 import { User, Role } from '@universe/database';
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
@@ -53,6 +70,7 @@ describe('AuthService', () => {
     jest.clearAllMocks();
     process.env.AT_SECRET = 'valid-production-at-secret';
     process.env.RT_SECRET = 'valid-production-rt-secret';
+    process.env.GOOGLE_CLIENT_ID = 'test-google-client-id';
 
     authService = new AuthService(
       mockUserService,
@@ -211,6 +229,51 @@ describe('AuthService', () => {
         }),
       );
     });
+
+    it('should find user by rawEmail if findByMoodleId returns null', async () => {
+      mockGetCreds.getToken.mockResolvedValue('fresh-moodle-token');
+      mockGetCreds.getUserId.mockResolvedValue('5001');
+      mockUserService.findByMoodleId.mockResolvedValue(null);
+      mockUserService.findByEmail.mockResolvedValueOnce(sampleUser);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('at-123')
+        .mockResolvedValueOnce('rt-123');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-rt');
+      mockUserService.updateUser.mockResolvedValue(sampleUser);
+
+      const tokens = await authService.login(loginDto);
+
+      expect(tokens).toEqual({
+        access_token: 'at-123',
+        refresh_token: 'rt-123',
+      });
+    });
+
+    it('should find user by suffixed email if findByMoodleId and rawEmail return null', async () => {
+      const usernameLoginDto: LoginDto = {
+        email: 'melnyk.bogdan',
+        password: 'Password123',
+      };
+
+      mockGetCreds.getToken.mockResolvedValue('fresh-moodle-token');
+      mockGetCreds.getUserId.mockResolvedValue('5001');
+      mockUserService.findByMoodleId.mockResolvedValue(null);
+      mockUserService.findByEmail
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(sampleUser);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('at-123')
+        .mockResolvedValueOnce('rt-123');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-rt');
+      mockUserService.updateUser.mockResolvedValue(sampleUser);
+
+      const tokens = await authService.login(usernameLoginDto);
+
+      expect(tokens).toEqual({
+        access_token: 'at-123',
+        refresh_token: 'rt-123',
+      });
+    });
   });
 
   describe('logout', () => {
@@ -271,6 +334,343 @@ describe('AuthService', () => {
       await expect(
         authService.refreshTokens(sampleUser.id, 'mismatched-rt'),
       ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('loginWithGoogle', () => {
+    const googleDto: GoogleAuthDto = {
+      idToken: 'valid-google-id-token',
+    };
+
+    it('should throw BadRequestException if GOOGLE_CLIENT_ID is not configured', async () => {
+      delete process.env.GOOGLE_CLIENT_ID;
+
+      await expect(authService.loginWithGoogle(googleDto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException if token verification fails', async () => {
+      mockVerifyIdToken.mockRejectedValue(new Error('Invalid token'));
+
+      await expect(authService.loginWithGoogle(googleDto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException if token payload has no email', async () => {
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({ name: 'No Email User' }),
+      });
+
+      await expect(authService.loginWithGoogle(googleDto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException if email_verified is not true', async () => {
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'unverified@example.com',
+          email_verified: false,
+        }),
+      });
+
+      await expect(authService.loginWithGoogle(googleDto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should authenticate existing linked user and return isLinked=true', async () => {
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'student@student.karazin.ua',
+          email_verified: true,
+          name: 'Test Student',
+        }),
+      });
+      mockUserService.findByEmail.mockResolvedValue(sampleUser);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('google-at')
+        .mockResolvedValueOnce('google-rt');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-google-rt');
+      mockUserService.updateUser.mockResolvedValue(sampleUser);
+
+      const result = await authService.loginWithGoogle(googleDto);
+
+      expect(result).toEqual({
+        access_token: 'google-at',
+        refresh_token: 'google-rt',
+        isLinked: true,
+      });
+      expect(mockUserService.findByEmail).toHaveBeenCalledWith(
+        'student@student.karazin.ua',
+      );
+    });
+
+    it('should authenticate existing unlinked user and return isLinked=false', async () => {
+      const unlinkedUser: User = {
+        ...sampleUser,
+        id: 'unlinked-user-1',
+        email: 'unlinked@gmail.com',
+        token: null,
+        moodleId: null,
+      };
+
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'unlinked@gmail.com',
+          email_verified: true,
+          name: 'Unlinked Student',
+        }),
+      });
+      mockUserService.findByEmail.mockResolvedValue(unlinkedUser);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('google-at')
+        .mockResolvedValueOnce('google-rt');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-google-rt');
+      mockUserService.updateUser.mockResolvedValue(unlinkedUser);
+
+      const result = await authService.loginWithGoogle(googleDto);
+
+      expect(result).toEqual({
+        access_token: 'google-at',
+        refresh_token: 'google-rt',
+        isLinked: false,
+      });
+    });
+
+    it('should create new user on first Google login and return isLinked=false', async () => {
+      const newGoogleUser: User = {
+        ...sampleUser,
+        id: 'new-google-user',
+        email: 'newuser@gmail.com',
+        token: null,
+        moodleId: null,
+      };
+
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'newuser@gmail.com',
+          email_verified: true,
+          given_name: 'New',
+          family_name: 'User',
+        }),
+      });
+      mockUserService.findByEmail.mockResolvedValue(null);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-random-pw');
+      mockUserService.createUser.mockResolvedValue(newGoogleUser);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('new-google-at')
+        .mockResolvedValueOnce('new-google-rt');
+      mockUserService.updateUser.mockResolvedValue(newGoogleUser);
+
+      const result = await authService.loginWithGoogle(googleDto);
+
+      expect(result).toEqual({
+        access_token: 'new-google-at',
+        refresh_token: 'new-google-rt',
+        isLinked: false,
+      });
+      expect(mockUserService.createUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'newuser@gmail.com',
+          name: 'New User',
+        }),
+      );
+    });
+
+    it('should recover from Prisma P2002 race condition by returning existing user', async () => {
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'raceuser@gmail.com',
+          email_verified: true,
+          name: 'Race User',
+        }),
+      });
+      mockUserService.findByEmail
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(sampleUser);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-random-pw');
+      mockUserService.createUser.mockRejectedValue({ code: 'P2002' });
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('race-at')
+        .mockResolvedValueOnce('race-rt');
+      mockUserService.updateUser.mockResolvedValue(sampleUser);
+
+      const result = await authService.loginWithGoogle(googleDto);
+
+      expect(result).toHaveProperty('access_token', 'race-at');
+    });
+
+    it('should throw BadRequestException on P2002 if existing user still cannot be found', async () => {
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'raceuser@gmail.com',
+          email_verified: true,
+          name: 'Race User',
+        }),
+      });
+      mockUserService.findByEmail.mockResolvedValue(null);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-random-pw');
+      mockUserService.createUser.mockRejectedValue({ code: 'P2002' });
+
+      await expect(authService.loginWithGoogle(googleDto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should rethrow unexpected non-P2002 error from createUser', async () => {
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'crashuser@gmail.com',
+          email_verified: true,
+          name: 'Crash User',
+        }),
+      });
+      mockUserService.findByEmail.mockResolvedValue(null);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-random-pw');
+      mockUserService.createUser.mockRejectedValue(
+        new Error('Fatal DB failure'),
+      );
+
+      await expect(authService.loginWithGoogle(googleDto)).rejects.toThrow(
+        'Fatal DB failure',
+      );
+    });
+
+    it('should set name to undefined when Google payload has empty given and family names', async () => {
+      const newGoogleUser: User = {
+        ...sampleUser,
+        id: 'noname-user',
+        email: 'noname@gmail.com',
+        name: null,
+      };
+
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'noname@gmail.com',
+          email_verified: true,
+          given_name: '',
+          family_name: '',
+        }),
+      });
+      mockUserService.findByEmail.mockResolvedValue(null);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-random-pw');
+      mockUserService.createUser.mockResolvedValue(newGoogleUser);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('noname-at')
+        .mockResolvedValueOnce('noname-rt');
+      mockUserService.updateUser.mockResolvedValue(newGoogleUser);
+
+      await authService.loginWithGoogle(googleDto);
+
+      expect(mockUserService.createUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'noname@gmail.com',
+          name: undefined,
+        }),
+      );
+    });
+  });
+
+  describe('linkMoodleAccount', () => {
+    const linkDto: LinkMoodleDto = {
+      username: 'student.login',
+      password: 'MoodlePassword123',
+    };
+
+    it('should throw BadRequestException if user is not found', async () => {
+      mockUserService.findById.mockResolvedValue(null);
+
+      await expect(
+        authService.linkMoodleAccount('non-existent-id', linkDto),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if Moodle authentication fails', async () => {
+      mockUserService.findById.mockResolvedValue(sampleUser);
+      mockGetCreds.getToken.mockRejectedValue(new Error('Invalid credentials'));
+
+      await expect(
+        authService.linkMoodleAccount(sampleUser.id, linkDto),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw ConflictException if Moodle account is already linked to another user', async () => {
+      mockUserService.findById.mockResolvedValue(sampleUser);
+      mockGetCreds.getToken.mockResolvedValue('linked-moodle-token');
+      mockGetCreds.getUserId.mockResolvedValue('7777');
+      mockUserService.findByMoodleId.mockResolvedValue({
+        ...sampleUser,
+        id: 'other-user-uuid',
+      });
+
+      await expect(
+        authService.linkMoodleAccount(sampleUser.id, linkDto),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('should successfully link moodle account and return isLinked=true with new tokens', async () => {
+      const linkedUser: User = {
+        ...sampleUser,
+        token: 'linked-moodle-token',
+        moodleId: '7777',
+      };
+
+      mockUserService.findById.mockResolvedValue(sampleUser);
+      mockGetCreds.getToken.mockResolvedValue('linked-moodle-token');
+      mockGetCreds.getUserId.mockResolvedValue('7777');
+      mockUserService.findByMoodleId.mockResolvedValue(null);
+      mockUserService.updateUser.mockResolvedValue(linkedUser);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('updated-at')
+        .mockResolvedValueOnce('updated-rt');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-updated-rt');
+
+      const result = await authService.linkMoodleAccount(
+        sampleUser.id,
+        linkDto,
+      );
+
+      expect(result).toEqual({
+        access_token: 'updated-at',
+        refresh_token: 'updated-rt',
+        isLinked: true,
+      });
+      expect(mockUserService.updateUser).toHaveBeenCalledWith(sampleUser.id, {
+        token: 'linked-moodle-token',
+        moodleId: '7777',
+      });
+    });
+
+    it('should allow user to re-link when existingMoodleUser belongs to the same user', async () => {
+      const linkedUser: User = {
+        ...sampleUser,
+        token: 'relinked-token',
+        moodleId: '7777',
+      };
+
+      mockUserService.findById.mockResolvedValue(sampleUser);
+      mockGetCreds.getToken.mockResolvedValue('relinked-token');
+      mockGetCreds.getUserId.mockResolvedValue('7777');
+      mockUserService.findByMoodleId.mockResolvedValue(sampleUser);
+      mockUserService.updateUser.mockResolvedValue(linkedUser);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('relinked-at')
+        .mockResolvedValueOnce('relinked-rt');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-relinked-rt');
+
+      const result = await authService.linkMoodleAccount(
+        sampleUser.id,
+        linkDto,
+      );
+
+      expect(result).toEqual({
+        access_token: 'relinked-at',
+        refresh_token: 'relinked-rt',
+        isLinked: true,
+      });
     });
   });
 

@@ -24,7 +24,11 @@ import {
   LoginDto,
   AuthResponseDto,
   LogoutResponseDto,
-} from './dto/auth.dto';
+  GoogleAuthDto,
+  LinkMoodleDto,
+  GoogleAuthResponseDto,
+} from './dto';
+import { AUTH_ROUTES } from '@universe/core/constants/routes';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -32,7 +36,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
-  @Post('register')
+  @Post(AUTH_ROUTES.REGISTER)
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({
     status: 201,
@@ -52,7 +56,7 @@ export class AuthController {
   }
 
   @Public()
-  @Post('login')
+  @Post(AUTH_ROUTES.LOGIN)
   @ApiOperation({ summary: 'Login user' })
   @ApiResponse({
     status: 200,
@@ -71,8 +75,55 @@ export class AuthController {
     return { access_token: tokens.access_token };
   }
 
+  @Public()
+  @Post(AUTH_ROUTES.GOOGLE)
+  @ApiOperation({ summary: 'Login or register user via Google SSO' })
+  @ApiResponse({
+    status: 200,
+    type: GoogleAuthResponseDto,
+    description: 'User successfully authenticated via Google.',
+  })
+  @HttpCode(HttpStatus.OK)
+  async loginWithGoogle(
+    @Body() dto: GoogleAuthDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<GoogleAuthResponseDto> {
+    const result = await this.authService.loginWithGoogle(dto);
+
+    this.setRefreshTokenCookie(res, result.refresh_token);
+
+    return {
+      access_token: result.access_token,
+      isLinked: result.isLinked,
+    };
+  }
+
   @ApiBearerAuth()
-  @Post('logout')
+  @Post(AUTH_ROUTES.MOODLE_LINK)
+  @ApiOperation({ summary: 'Link Moodle account to authenticated user' })
+  @ApiResponse({
+    status: 200,
+    type: GoogleAuthResponseDto,
+    description: 'Moodle account successfully linked.',
+  })
+  @HttpCode(HttpStatus.OK)
+  async linkMoodle(
+    @GetUser('sub') userId: string,
+    @Body() dto: LinkMoodleDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<GoogleAuthResponseDto> {
+    const result = await this.authService.linkMoodleAccount(userId, dto);
+
+    this.setRefreshTokenCookie(res, result.refresh_token);
+
+    return {
+      access_token: result.access_token,
+      isLinked: result.isLinked,
+    };
+  }
+
+  @ApiBearerAuth()
+  @Post(AUTH_ROUTES.LOGOUT)
   @ApiOperation({ summary: 'Logout user' })
   @ApiResponse({
     status: 200,
@@ -93,7 +144,7 @@ export class AuthController {
   @Public()
   @UseGuards(RtGuard)
   @ApiCookieAuth()
-  @Post('refresh')
+  @Post(AUTH_ROUTES.REFRESH)
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({
     status: 200,

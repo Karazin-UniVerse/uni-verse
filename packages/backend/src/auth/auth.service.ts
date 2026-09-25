@@ -1,13 +1,21 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { GetCreds } from '../utils/get-creds';
+import { randomBytes } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { OAuth2Client } from 'google-auth-library';
+import { RegisterDto, LoginDto, GoogleAuthDto, LinkMoodleDto } from './dto';
+import {
+  normalizeEmail,
+  buildEmailWithDomain,
+  isPrismaUniqueConstraintError,
+} from './utils/auth.utils';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +26,8 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    const existingUser = await this.userService.findByEmail(dto.email);
+    const normalizedEmail = normalizeEmail(dto.email);
+    const existingUser = await this.userService.findByEmail(normalizedEmail);
 
     if (existingUser) {
       throw new BadRequestException('User with this email already exists');
@@ -42,7 +51,7 @@ export class AuthService {
     const user = await (async () => {
       try {
         return await this.userService.createUser({
-          email: dto.email,
+          email: normalizedEmail,
           password: passwordHash,
           token: moodleToken,
           moodleId: moodleId,
@@ -89,14 +98,13 @@ export class AuthService {
       }
     })();
 
-    const emailToUse = dto.email.includes('@')
-      ? dto.email
-      : `${dto.email}@student.karazin.ua`;
+    const rawEmail = normalizeEmail(dto.email);
+    const emailToUse = buildEmailWithDomain(rawEmail, 'student.karazin.ua');
 
     const user = await (async () => {
       const existing =
         (await this.userService.findByMoodleId(moodleId)) ||
-        (await this.userService.findByEmail(dto.email)) ||
+        (await this.userService.findByEmail(rawEmail)) ||
         (await this.userService.findByEmail(emailToUse));
 
       if (!existing) {
@@ -128,6 +136,152 @@ export class AuthService {
     await this.updateRtHash(user.id, tokens.refresh_token);
 
     return tokens;
+  }
+
+  async loginWithGoogle(dto: GoogleAuthDto) {
+    const { email, name } = await this.verifyGoogleIdToken(dto.idToken);
+    const user = await this.findOrCreateGoogleUser(email, name);
+
+    const isLinked = Boolean(user.token && user.moodleId);
+
+    const tokens = await this.getTokens(
+      user.id,
+      user.email,
+      user.token ?? undefined,
+      user.moodleId ?? undefined,
+    );
+
+    await this.updateRtHash(user.id, tokens.refresh_token);
+
+    return {
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      isLinked,
+    };
+  }
+
+  private async verifyGoogleIdToken(
+    idToken: string,
+  ): Promise<{ email: string; name?: string }> {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+
+    if (!clientId) {
+      throw new BadRequestException(
+        'Google authentication is not configured on the server',
+      );
+    }
+
+    const client = new OAuth2Client(clientId);
+
+    let payload;
+
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken,
+        audience: clientId,
+      });
+
+      payload = ticket.getPayload();
+    } catch (err: unknown) {
+      throw new BadRequestException(
+        `Invalid Google ID token: ${(err as Error).message}`,
+      );
+    }
+
+    if (!payload?.email || payload.email_verified !== true) {
+      throw new BadRequestException(
+        'Google token does not contain a verified email',
+      );
+    }
+
+    const email = payload.email.toLowerCase();
+    const fallbackName =
+      `${payload.given_name || ''} ${payload.family_name || ''}`.trim();
+    const name = payload.name || fallbackName || undefined;
+
+    return { email, name };
+  }
+
+  private async findOrCreateGoogleUser(email: string, name?: string) {
+    const existingUser = await this.userService.findByEmail(email);
+
+    if (existingUser) {
+      return existingUser;
+    }
+
+    const randomPassword = await bcrypt.hash(
+      randomBytes(32).toString('hex'),
+      10,
+    );
+
+    try {
+      return await this.userService.createUser({
+        email,
+        name,
+        password: randomPassword,
+      });
+    } catch (err: unknown) {
+      if (isPrismaUniqueConstraintError(err)) {
+        const raceUser = await this.userService.findByEmail(email);
+
+        if (raceUser) {
+          return raceUser;
+        }
+
+        throw new BadRequestException('User with this email already exists');
+      }
+
+      throw err;
+    }
+  }
+
+  async linkMoodleAccount(userId: string, dto: LinkMoodleDto) {
+    const user = await this.userService.findById(userId);
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const { moodleToken, moodleId } = await (async () => {
+      try {
+        const token = await this.getCreds.getToken(dto.username, dto.password);
+        const rawMoodleId = await this.getCreds.getUserId(token);
+
+        return { moodleToken: token, moodleId: String(rawMoodleId) };
+      } catch (error) {
+        throw new BadRequestException(
+          `Moodle Authentication failed: ${(error as Error).message}`,
+        );
+      }
+    })();
+
+    const existingMoodleUser = await this.userService.findByMoodleId(moodleId);
+
+    if (existingMoodleUser && existingMoodleUser.id !== userId) {
+      throw new ConflictException(
+        'Moodle account is already linked to another user',
+      );
+    }
+
+    const updatedUser = await this.userService.updateUser(userId, {
+      token: moodleToken,
+      moodleId,
+    });
+
+    const tokens = await this.getTokens(
+      updatedUser.id,
+      updatedUser.email,
+      moodleToken,
+      moodleId,
+    );
+
+    await this.updateRtHash(updatedUser.id, tokens.refresh_token);
+
+    return {
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      isLinked: true,
+    };
   }
 
   async logout(userId: string) {

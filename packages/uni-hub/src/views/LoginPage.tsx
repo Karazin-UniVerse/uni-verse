@@ -3,9 +3,10 @@
 import React, { useState } from 'react';
 import { User, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Button, TextInput, SimpleForm, useToast } from '@una';
+import { Button, SimpleForm, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
-import { authApi } from '@uni-hub/services/api';
+import { authApi, getErrorMessage } from '@uni-hub/services/api';
+import { GoogleLoginButton, LinkMoodleModal, AuthField } from '@uni-hub/components/auth';
 import { motion } from 'framer-motion';
 import styles from './LoginPage.module.scss';
 
@@ -14,20 +15,44 @@ const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showLinkModal, setShowLinkModal] = useState(false);
   const router = useRouter();
   const toast = useToast();
+
+  const handleGoogleSuccess = async (idToken: string) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await authApi.loginWithGoogle(idToken);
+
+      if (res.data?.isLinked) {
+        toast.success('Вхід успішно виконано');
+        router.push('/');
+      } else {
+        setShowLinkModal(true);
+      }
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Помилка входу через Google');
+
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogin = async () => {
     setError('');
 
     if (!username.trim()) {
-      setError('Пожалуйста, введите имя пользователя');
+      setError('Будь ласка, введіть ім’я користувача');
 
       return;
     }
 
     if (!password) {
-      setError('Пожалуйста, введите пароль');
+      setError('Будь ласка, введіть пароль');
 
       return;
     }
@@ -37,7 +62,7 @@ const LoginPage: React.FC = () => {
     try {
       const res = await authApi.login(username, password);
 
-      toast.success('Вход выполнен успешно');
+      toast.success('Вхід успішно виконано');
       localStorage.setItem('isLoggedIn', 'true');
 
       if (res.data?.token) {
@@ -46,9 +71,7 @@ const LoginPage: React.FC = () => {
 
       router.push('/');
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
-        'Ошибка входа. Проверьте учетные данные.';
+      const message = getErrorMessage(err, 'Помилка входу. Перевірте облікові дані.');
 
       toast.error(message);
     } finally {
@@ -65,41 +88,47 @@ const LoginPage: React.FC = () => {
         <SimpleForm className={styles.card} action={handleLogin}>
           <div className={styles.brand}>
             <h1>UNiHub</h1>
-            <p>Войдите в свой аккаунт Moodle</p>
+            <p>Увійдіть у свій акаунт Moodle</p>
           </div>
 
-          <label htmlFor="login-username" className={styles.field}>
-            <span className={styles.label}>Имя пользователя</span>
-            <div className={styles.inputWrap}>
-              <User size={16} className={styles.icon} />
-              <TextInput
-                id="login-username"
-                name="username"
-                size="large"
-                placeholder="Имя пользователя"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
-              />
-            </div>
-          </label>
+          {Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) && (
+            <>
+              <div className={styles.googleSection}>
+                <GoogleLoginButton
+                  onSuccess={handleGoogleSuccess}
+                  onError={(msg) => setError(msg)}
+                  disabled={loading}
+                />
+              </div>
 
-          <label htmlFor="login-password" className={styles.field}>
-            <span className={styles.label}>Пароль</span>
-            <div className={styles.inputWrap}>
-              <Lock size={16} className={styles.icon} />
-              <TextInput
-                id="login-password"
-                name="password"
-                type="password"
-                size="large"
-                placeholder="Пароль"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-              />
-            </div>
-          </label>
+              <div className={styles.divider}>
+                <span>або за допомогою логіна Moodle</span>
+              </div>
+            </>
+          )}
+
+          <AuthField
+            id="login-username"
+            name="username"
+            label="Ім’я користувача або email"
+            placeholder="Ім’я користувача або email"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            autoComplete="username"
+            icon={<User size={16} />}
+          />
+
+          <AuthField
+            id="login-password"
+            name="password"
+            type="password"
+            label="Пароль"
+            placeholder="Пароль"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            icon={<Lock size={16} />}
+          />
 
           {error && <p className={styles.error}>{error}</p>}
 
@@ -111,10 +140,25 @@ const LoginPage: React.FC = () => {
               disabled={loading}
               className={styles.submit}
             >
-              {loading ? 'Вход...' : 'Войти'}
+              {loading ? 'Вхід...' : 'Увійти'}
             </Button>
           </motion.div>
         </SimpleForm>
+
+        <LinkMoodleModal
+          open={showLinkModal}
+          onClose={() => {
+            setShowLinkModal(false);
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('isLoggedIn');
+            setError('Для завершення входу необхідно прив’язати акаунт Moodle');
+          }}
+          onSuccess={() => {
+            setShowLinkModal(false);
+            toast.success('Вхід успішно виконано');
+            router.push('/');
+          }}
+        />
       </div>
     </div>
   );
