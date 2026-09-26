@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Download, ExternalLink } from 'lucide-react';
 import { Button as SimpleButton, FileInput, SimpleForm, Modal, Spinner, Tag, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
@@ -55,6 +55,11 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
   dueUnixSec,
 }) => {
   const { formatMessage } = useLanguage();
+  const formatMessageRef = useRef(formatMessage);
+
+  useEffect(() => {
+    formatMessageRef.current = formatMessage;
+  }, [formatMessage]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -103,7 +108,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         .catch((error) => {
           if (!cancelled) {
             console.error(error);
-            toast.error(formatMessage('assignmentModal.loadStatusError'));
+            toast.error(formatMessageRef.current('assignmentModal.loadStatusError'));
           }
         })
         .finally(() => {
@@ -125,7 +130,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [visible, module?.instance, formatMessage, toast]);
+  }, [visible, module?.instance, toast]);
 
   const handleSubmit = async () => {
     if (!module?.instance) return;

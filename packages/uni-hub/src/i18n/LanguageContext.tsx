@@ -34,22 +34,33 @@ const subscribeToLanguage = (callback: () => void) => {
   };
 };
 
+let inMemoryLanguage: AppLanguage = 'uk';
+let isStorageAvailable = true;
+
 const getLanguageSnapshot = (): AppLanguage => {
   if (typeof window === 'undefined') {
     return 'uk';
+  }
+
+  if (!isStorageAvailable) {
+    return inMemoryLanguage;
   }
 
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
 
     if (stored === 'uk' || stored === 'en') {
+      inMemoryLanguage = stored;
+
       return stored;
     }
   } catch {
-    return 'uk';
+    isStorageAvailable = false;
+
+    return inMemoryLanguage;
   }
 
-  return 'uk';
+  return inMemoryLanguage;
 };
 
 const getLanguageServerSnapshot = (): AppLanguage => 'uk';
@@ -71,10 +82,13 @@ export const LanguageProvider: React.FC<Readonly<{ children: React.ReactNode }>>
 
   const setLanguage = useCallback((next: AppLanguage) => {
     if (typeof window !== 'undefined') {
+      inMemoryLanguage = next;
+
       try {
         localStorage.setItem(STORAGE_KEY, next);
+        isStorageAvailable = true;
       } catch {
-        // Fallback for sandboxed or storage-restricted environments
+        isStorageAvailable = false;
       }
 
       window.dispatchEvent(new Event('language-change'));

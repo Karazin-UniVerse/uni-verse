@@ -62,4 +62,16 @@ describe('LanguageContext and translations', () => {
 
     expect(html).toContain('Світла');
   });
+
+  it('falls back to key when translation is missing', () => {
+    const Consumer = () => {
+      const { formatMessage } = useLanguage();
+
+      return React.createElement('span', null, formatMessage('missing.key' as any));
+    };
+
+    const html = renderToString(React.createElement(Consumer));
+
+    expect(html).toContain('missing.key');
+  });
 });
