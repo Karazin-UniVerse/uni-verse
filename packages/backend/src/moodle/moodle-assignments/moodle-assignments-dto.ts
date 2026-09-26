@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class SaveSubmissionDto {
@@ -47,6 +47,47 @@ export class AssignmentItemDto {
 
   @ApiPropertyOptional({ example: 2, description: 'Semester number' })
   semester?: number | null;
+
+  @ApiPropertyOptional({
+    example: 'submitted',
+    description: 'Submission status (new, draft, submitted, graded)',
+  })
+  @IsOptional()
+  @IsString()
+  submissionStatus?: string;
+
+  @ApiPropertyOptional({
+    example: '95.00',
+    description: 'Grade if already graded',
+  })
+  @IsOptional()
+  @IsString()
+  grade?: string;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Whether assignment is graded',
+  })
+  @IsOptional()
+  @IsBoolean()
+  graded?: boolean;
+
+  @ApiPropertyOptional({
+    example: 1727000000,
+    description: 'Submission timestamp if submitted',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  submittedAt?: number;
+
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Whether assignment was submitted after deadline',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isLate?: boolean;
 }
 
 export class SubmissionStatusDto {
@@ -61,6 +102,23 @@ export class SubmissionStatusDto {
     description: 'Grade if already graded',
   })
   grade?: string;
+
+  @ApiPropertyOptional({
+    example: 1727000000,
+    description: 'Submission timestamp',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  submittedAt?: number;
+
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Whether assignment was submitted after deadline',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isLate?: boolean;
 }
 
 export class GetAssignmentsQueryDto {
@@ -95,4 +153,13 @@ export class GetAssignmentsQueryDto {
   @Type(() => Number)
   @IsNumber()
   dateTo?: number;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Include submission status and grade',
+  })
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  includeStatus?: boolean;
 }

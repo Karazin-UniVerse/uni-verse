@@ -3,7 +3,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Spinner, useToast } from '@una';
+import clsx from 'clsx';
+import { RotateCw, AlertCircle } from 'lucide-react';
+import { Button as UnaButton, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
 import { isLoggedIn } from '@core/auth';
 import type { StudentProfile } from '@core/types';
@@ -86,6 +88,106 @@ function resolveGradesResponse(gradesResponse?: GradesApiResponse | null): Grade
 
   return [];
 }
+
+function formatLastSync(timestamp: number): string {
+  const d = new Date(timestamp);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const day = pad(d.getDate());
+  const month = pad(d.getMonth() + 1);
+  const year = d.getFullYear();
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+
+  return `${day}.${month}.${year} ${hours}:${minutes}`;
+}
+
+type MoodleApiResponseTuple = [
+  Awaited<ReturnType<typeof moodleApi.getCourses>>,
+  Awaited<ReturnType<typeof moodleApi.getGrades>>,
+  Awaited<ReturnType<typeof moodleApi.getAssignments>>,
+  Awaited<ReturnType<typeof moodleApi.getEvents>>,
+  Awaited<ReturnType<typeof moodleApi.getNotifications>>,
+  Awaited<ReturnType<typeof moodleApi.getStatistics>>,
+];
+
+function assembleDashboardData([
+  coursesRes,
+  gradesRes,
+  assignmentsRes,
+  eventsRes,
+  notificationsRes,
+  statsRes,
+]: MoodleApiResponseTuple): DashboardData {
+  return {
+    courses: Array.isArray(coursesRes?.data) ? coursesRes.data : [],
+    grades: resolveGradesResponse(gradesRes),
+    assignments: Array.isArray(assignmentsRes?.data) ? assignmentsRes.data : [],
+    events: Array.isArray(eventsRes?.data) ? eventsRes.data : [],
+    notifications: Array.isArray(notificationsRes?.data?.notifications)
+      ? notificationsRes.data.notifications
+      : [],
+    unreadCount: notificationsRes?.data?.unreadCount || 0,
+    statistics: statsRes?.data || null,
+  };
+}
+
+function buildAssignmentParams(
+  sortOrder: 'asc' | 'desc',
+  dateFrom: string,
+  dateTo: string,
+  hideCompleted: boolean,
+): Record<string, string | number | boolean> {
+  const params: Record<string, string | number | boolean> = {
+    sortByDate: sortOrder,
+    includeStatus: true,
+  };
+  const fromTimestamp = parseDateFilterSeconds(dateFrom);
+  const toTimestamp = parseDateFilterSeconds(dateTo);
+
+  if (fromTimestamp !== null) {
+    params.dateFrom = fromTimestamp;
+  }
+
+  if (toTimestamp !== null) {
+    params.dateTo = toTimestamp;
+  }
+
+  if (hideCompleted) {
+    params.status = 'not_completed';
+  }
+
+  return params;
+}
+
+function loadCachedDashboardData(): Partial<DashboardData> | null {
+  try {
+    const raw = localStorage.getItem('universe_dashboard_data');
+
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<DashboardData>;
+
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistDashboardSnapshot(timestamp: number, freshData: DashboardData): void {
+  try {
+    localStorage.setItem('universe_last_sync_time', String(timestamp));
+    localStorage.setItem('universe_dashboard_data', JSON.stringify(freshData));
+  } catch {
+    // Ignore localStorage quota error
+  }
+}
+
+function isUnauthorizedError(error: unknown): boolean {
+  return error instanceof Error && error.message.includes('401');
+}
+
 const DashboardPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -103,6 +205,9 @@ const DashboardPage: React.FC = () => {
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const activeStudentProfile = studentProfile ?? fallbackStudentProfile;
+
+  const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
+  const [isOfflineData, setIsOfflineData] = useState(false);
 
   const [data, setData] = useState<DashboardData>({
     courses: [],
@@ -131,50 +236,58 @@ const DashboardPage: React.FC = () => {
     data.events.length > 0 ||
     hasLoadedOnce;
 
-  const fetchData = async () => {
+  useEffect(() => {
+    try {
+      const cachedTime = localStorage.getItem('universe_last_sync_time');
+
+      if (cachedTime) {
+        setLastSyncTime(Number(cachedTime));
+      }
+
+      const cachedData = loadCachedDashboardData();
+
+      if (cachedData) {
+        setData((previous) => ({
+          ...previous,
+          ...cachedData,
+        }));
+        setHasLoadedOnce(true);
+      }
+    } catch {
+      // Ignore cache read errors
+    }
+  }, []);
+
+  const fetchData = async (isManual = false) => {
     setLoading(true);
 
     try {
-      const params: Record<string, string | number> = { sortByDate: sortOrder };
-      const fromTimestamp = parseDateFilterSeconds(dateFrom);
-      const toTimestamp = parseDateFilterSeconds(dateTo);
+      const params = buildAssignmentParams(sortOrder, dateFrom, dateTo, hideCompleted);
+      const responses = await Promise.all([
+        moodleApi.getCourses(),
+        moodleApi.getGrades(),
+        moodleApi.getAssignments(params),
+        moodleApi.getEvents(),
+        moodleApi.getNotifications(),
+        moodleApi.getStatistics(),
+      ]);
 
-      if (fromTimestamp !== null) {
-        params.dateFrom = fromTimestamp;
-      }
+      const freshData = assembleDashboardData(responses);
 
-      if (toTimestamp !== null) {
-        params.dateTo = toTimestamp;
-      }
-
-      if (hideCompleted) {
-        params.status = 'not_completed';
-      }
-
-      const [coursesRes, gradesRes, assignmentsRes, eventsRes, notificationsRes, statsRes] =
-        await Promise.all([
-          moodleApi.getCourses(),
-          moodleApi.getGrades(),
-          moodleApi.getAssignments(params),
-          moodleApi.getEvents(),
-          moodleApi.getNotifications(),
-          moodleApi.getStatistics(),
-        ]);
-
-      setData({
-        courses: Array.isArray(coursesRes?.data) ? coursesRes.data : [],
-        grades: resolveGradesResponse(gradesRes),
-        assignments: Array.isArray(assignmentsRes?.data) ? assignmentsRes.data : [],
-        events: Array.isArray(eventsRes?.data) ? eventsRes.data : [],
-        notifications: Array.isArray(notificationsRes?.data?.notifications)
-          ? notificationsRes.data.notifications
-          : [],
-        unreadCount: notificationsRes?.data?.unreadCount || 0,
-        statistics: statsRes?.data || null,
-      });
+      setData(freshData);
       setHasLoadedOnce(true);
+      setIsOfflineData(false);
+
+      const nowTimestamp = Date.now();
+
+      setLastSyncTime(nowTimestamp);
+      persistDashboardSnapshot(nowTimestamp, freshData);
+
+      if (isManual) {
+        toast.success('Дані успішно оновлено');
+      }
     } catch (error) {
-      if (error instanceof Error && error.message.includes('401')) {
+      if (isUnauthorizedError(error)) {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('moodleToken');
@@ -185,6 +298,21 @@ const DashboardPage: React.FC = () => {
       }
 
       console.error(error);
+
+      const cachedData = loadCachedDashboardData();
+
+      if (cachedData) {
+        setData((previous) => ({
+          ...previous,
+          ...cachedData,
+        }));
+        setIsOfflineData(true);
+        setHasLoadedOnce(true);
+        toast.info("Використовуються збережені дані: немає зв'язку з сервером Moodle.");
+
+        return;
+      }
+
       toast.error('Помилка завантаження даних. Будь ласка, переконайтеся, що бекенд запущено.');
     } finally {
       setLoading(false);
@@ -192,6 +320,13 @@ const DashboardPage: React.FC = () => {
   };
 
   useEffect(() => {
+    if (searchParams.get('demo') === 'true') {
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('accessToken', 'demo-token');
+      localStorage.setItem('moodleToken', 'demo-token');
+      localStorage.setItem('isDemo', 'true');
+    }
+
     if (!isLoggedIn()) {
       router.push('/login');
 
@@ -209,7 +344,7 @@ const DashboardPage: React.FC = () => {
     }
 
     checkIn();
-  }, [checkIn, router]);
+  }, [checkIn, router, searchParams]);
 
   useEffect(() => {
     const requestedTab = searchParams.get('tab');
@@ -333,25 +468,47 @@ const DashboardPage: React.FC = () => {
         <main className={styles.content}>
           <div className={styles.pageTitleRow}>
             <h2 className={styles.pageTitle}>{PAGE_TITLES[activeKey]}</h2>
+            <div className={styles.syncActions}>
+              {lastSyncTime && (
+                <span className={styles.lastSyncText}>
+                  Дані оновлено: {formatLastSync(lastSyncTime)}
+                </span>
+              )}
+              <UnaButton
+                type="button"
+                variant="secondary"
+                size="small"
+                onClick={() => fetchData(true)}
+                disabled={loading}
+                aria-label="Оновити дані"
+                className={styles.refreshBtn}
+              >
+                <RotateCw size={14} className={clsx(styles.refreshIcon, loading && styles.spin)} />
+                <span>Оновити</span>
+              </UnaButton>
+            </div>
           </div>
+
+          {isOfflineData && (
+            <div className={styles.offlineBanner} role="alert">
+              <AlertCircle size={16} className={styles.offlineIcon} />
+              <span>
+                Увага: відсутній зв&apos;язок з сервером Moodle. Відображаються збережені дані
+                {lastSyncTime ? ` від ${formatLastSync(lastSyncTime)}` : ''}.
+              </span>
+            </div>
+          )}
           {loading && !hasCachedData ? (
             <DashboardSkeleton />
           ) : (
-            <>
-              {loading && hasCachedData && (
-                <div className={styles.contentLoading}>
-                  <Spinner size="small" tip="Оновлення..." />
-                </div>
-              )}
-              <motion.div
-                key={activeKey}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                {renderActiveContent()}
-              </motion.div>
-            </>
+            <motion.div
+              key={activeKey}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              {renderActiveContent()}
+            </motion.div>
           )}
 
           <AssignmentModal

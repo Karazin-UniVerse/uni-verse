@@ -12,6 +12,7 @@ const DONUT_CHART_HEIGHT = 260;
 
 const COLORS = {
   done: 'var(--chart-success)',
+  awaitingReview: 'var(--warning-color)',
   overdue: 'var(--chart-danger)',
   inProgress: 'var(--chart-info)',
 } as const;
@@ -39,15 +40,22 @@ export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments,
     );
 
     let done = 0;
+    let awaitingReview = 0;
     let overdue = 0;
     let inProgress = 0;
 
     for (const assignment of assignments) {
       const courseKey = (assignment.courseName || '').trim().toLowerCase();
-      const isDone = gradedCourses.has(courseKey);
+      const isGraded =
+        gradedCourses.has(courseKey) ||
+        assignment.submissionStatus === 'graded' ||
+        Boolean(assignment.grade);
+      const isAwaiting = !isGraded && assignment.submissionStatus === 'submitted';
 
-      if (isDone) {
+      if (isGraded) {
         done += 1;
+      } else if (isAwaiting) {
+        awaitingReview += 1;
       } else if (assignment.duedate > 0 && assignment.duedate < nowSec) {
         overdue += 1;
       } else {
@@ -58,15 +66,23 @@ export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments,
     const result: { name: string; value: number; color: string }[] = [];
 
     if (done > 0) {
-      result.push({ name: 'Выполнено', value: done, color: COLORS.done });
+      result.push({ name: 'Виконано', value: done, color: COLORS.done });
+    }
+
+    if (awaitingReview > 0) {
+      result.push({
+        name: 'Очікує перевірки',
+        value: awaitingReview,
+        color: COLORS.awaitingReview,
+      });
     }
 
     if (overdue > 0) {
-      result.push({ name: 'Просрочено', value: overdue, color: COLORS.overdue });
+      result.push({ name: 'Прострочено', value: overdue, color: COLORS.overdue });
     }
 
     if (inProgress > 0) {
-      result.push({ name: 'В процессе', value: inProgress, color: COLORS.inProgress });
+      result.push({ name: 'В процесі', value: inProgress, color: COLORS.inProgress });
     }
 
     return result;
@@ -75,10 +91,10 @@ export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments,
   return (
     <Chart
       type="donut"
-      title="Статус заданий"
+      title="Статус завдань"
       data={segments}
       height={DONUT_CHART_HEIGHT}
-      emptyDescription="Задания не найдены"
+      emptyDescription="Завдань не знайдено"
     />
   );
 };
