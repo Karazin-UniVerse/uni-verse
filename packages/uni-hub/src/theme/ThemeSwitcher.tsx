@@ -44,10 +44,12 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
         onClick={cycleTheme}
         aria-label={`${formatMessage('theme.select')}: ${currentThemeLabel}`}
         title={currentThemeLabel}
+        // intentional: suppressHydrationWarning – currentThemeLabel resolved client-side from stored preference; server renders default theme
         suppressHydrationWarning
       >
         {THEME_ICONS[theme]}
         {showLabel && (
+          // intentional: suppressHydrationWarning – label text derived from client-side theme state
           <span className={styles.compactLabel} suppressHydrationWarning>
             {currentThemeLabel}
           </span>
@@ -72,6 +74,7 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
             className={clsx(styles.option, isSelectedTheme && styles.active)}
             onClick={() => setTheme(themeOption)}
             aria-pressed={isSelectedTheme}
+            // intentional: suppressHydrationWarning – isSelectedTheme (aria-pressed) derived from client-side theme state
             suppressHydrationWarning
           >
             {THEME_ICONS[themeOption]}
