@@ -11,22 +11,24 @@
     "no-unused-vars": "warn",
     "no-console": ["warn", { "allow": ["warn", "error", "info"] }],
     "eqeqeq": "error",
-    "no-duplicate-imports": ["error", { "includeExports": true }],
     "import/no-duplicates": "error",
+    "import/no-cycle": "error",
 
     "react/jsx-key": "error",
-    "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn",
+    "react/jsx-no-useless-fragment": "warn",
+    "react/no-danger": "warn",
     "react/no-direct-mutation-state": "error",
-    "import/no-cycle": "error",
+    "react/self-closing-comp": "error",
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error",
+
     "typescript/no-explicit-any": "warn",
 
     "universe/vertical-spacing": "error",
     "universe/destructuring-props-order": "error",
-    "universe/enforce-package-utils-alias": "error",
-    "universe/no-unused-imports": "error",
     "universe/eol-last": "error",
     "universe/max-len": ["error", { "code": 120 }],
+    "universe/no-suppress-hydration-without-comment": "warn",
 
     "universe/nestjs-require-api-response-type": "error",
     "universe/nestjs-require-bearer-auth-decorator": "error",
@@ -59,12 +61,18 @@
           {
             "patterns": [
               {
-                "group": ["../utils/*", "../utils/**"],
+                "group": ["../utils/**", "../../utils/**", "../../../utils/**"],
                 "message": "Use package alias '@uni-hub/utils/...' instead of relative '../utils/...' path."
               }
             ]
           }
         ]
+      }
+    },
+    {
+      "files": ["packages/uni-hub/src/providers/**/*.{ts,tsx}"],
+      "rules": {
+        "react/no-danger": "off"
       }
     },
     {
