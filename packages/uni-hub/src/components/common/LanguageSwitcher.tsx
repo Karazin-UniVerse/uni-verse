@@ -1,0 +1,214 @@
+'use client';
+
+import React, { useEffect, useRef, useState } from 'react';
+import { Languages, ChevronDown, Check } from 'lucide-react';
+import clsx from 'clsx';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import type { AppLanguage } from '@uni-hub/i18n/translations';
+import styles from './LanguageSwitcher.module.scss';
+
+const LANGUAGES: Array<{ code: AppLanguage; label: string; flag: string }> = [
+  { code: 'uk', label: 'Українська', flag: '🇺🇦' },
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+];
+
+export type LanguageSwitcherProps = {
+  compact?: boolean;
+  showLabel?: boolean;
+  variant?: 'default' | 'glass' | 'sider';
+  placement?: 'auto' | 'bottom-up' | 'top-down' | 'bottom-up-left' | 'top-down-left';
+  className?: string;
+};
+
+type ResolvedPlacement = 'top-down' | 'bottom-up' | 'bottom-up-left' | 'top-down-left';
+
+function getInitialPlacement(placement: LanguageSwitcherProps['placement']): ResolvedPlacement {
+  if (
+    placement === 'bottom-up' ||
+    placement === 'bottom-up-left' ||
+    placement === 'top-down-left'
+  ) {
+    return placement;
+  }
+
+  return 'top-down';
+}
+
+function resolveDropdownPlacement(
+  placement: LanguageSwitcherProps['placement'],
+  rect: DOMRect,
+  windowHeight: number,
+): ResolvedPlacement {
+  if (placement === 'top-down' || placement === 'top-down-left') {
+    return placement;
+  }
+
+  const spaceAbove = rect.top;
+  const spaceBelow = windowHeight - rect.bottom;
+  const minHeight = 110;
+  const shouldFlipDown = spaceAbove < minHeight && spaceBelow > spaceAbove;
+
+  if (placement === 'bottom-up-left') {
+    return shouldFlipDown ? 'top-down-left' : 'bottom-up-left';
+  }
+
+  if (placement === 'bottom-up') {
+    return shouldFlipDown ? 'top-down' : 'bottom-up';
+  }
+
+  return spaceAbove >= minHeight && spaceBelow < minHeight ? 'bottom-up' : 'top-down';
+}
+
+export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
+  className,
+  compact = false,
+  showLabel = true,
+  variant = 'default',
+  placement = 'auto',
+}) => {
+  const { language, setLanguage, formatMessage } = useLanguage();
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const [resolvedPlacement, setResolvedPlacement] = useState<ResolvedPlacement>(() =>
+    getInitialPlacement(placement),
+  );
+
+  const activeLanguage = LANGUAGES.find((lang) => lang.code === language) || LANGUAGES[0];
+
+  const updatePlacement = () => {
+    if (!triggerRef.current) {
+      return;
+    }
+
+    const rect = triggerRef.current.getBoundingClientRect();
+    const nextPlacement = resolveDropdownPlacement(placement, rect, window.innerHeight);
+
+    setResolvedPlacement(nextPlacement);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
+  const handleSelect = (code: AppLanguage) => {
+    setLanguage(code);
+    setIsOpen(false);
+    triggerRef.current?.focus();
+  };
+
+  const handleToggle = () => {
+    if (!isOpen) {
+      updatePlacement();
+    }
+
+    setIsOpen((prev) => !prev);
+  };
+
+  const getDropdownPlacementClass = () => {
+    switch (resolvedPlacement) {
+      case 'bottom-up-left':
+        return styles.dropUpLeft;
+      case 'top-down-left':
+        return styles.dropDownLeft;
+      case 'top-down':
+        return styles.dropDown;
+      case 'bottom-up':
+      default:
+        return styles.dropUp;
+    }
+  };
+
+  const isCollapsed = compact && !showLabel;
+
+  return (
+    <div
+      ref={containerRef}
+      className={clsx(styles.wrapper, variant === 'sider' && styles.fullWidth, className)}
+    >
+      <button
+        ref={triggerRef}
+        type="button"
+        className={clsx(
+          styles.trigger,
+          variant === 'glass' && styles.glassTrigger,
+          variant === 'sider' && styles.siderTrigger,
+          isCollapsed && styles.collapsedTrigger,
+        )}
+        onClick={handleToggle}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-label={`${formatMessage('lang.select')}: ${activeLanguage.label}`}
+        title={`${formatMessage('lang.select')}: ${activeLanguage.label}`}
+        // intentional: suppressHydrationWarning – activeLanguage resolved client-side from stored preference; server renders default language
+        suppressHydrationWarning
+      >
+        <Languages size={18} aria-hidden />
+        {showLabel && (
+          <>
+            {/* intentional: suppressHydrationWarning – label text derived from client-side language state */}
+            <span suppressHydrationWarning>{activeLanguage.label}</span>
+            <ChevronDown
+              size={14}
+              className={clsx(styles.chevron, isOpen && styles.chevronOpen)}
+              aria-hidden
+            />
+          </>
+        )}
+      </button>
+
+      {isOpen && (
+        <div
+          className={clsx(styles.dropdown, getDropdownPlacementClass())}
+          role="listbox"
+          aria-label={formatMessage('lang.select')}
+        >
+          {LANGUAGES.map((item) => {
+            const isSelected = item.code === language;
+
+            return (
+              <button
+                key={item.code}
+                type="button"
+                className={clsx(styles.option, isSelected && styles.active)}
+                onClick={() => handleSelect(item.code)}
+                role="option"
+                aria-selected={isSelected}
+              >
+                <span className={styles.flag} aria-hidden>
+                  {item.flag}
+                </span>
+                <span>{item.label}</span>
+                {isSelected && <Check size={16} className={styles.checkIcon} aria-hidden />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default LanguageSwitcher;

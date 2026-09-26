@@ -13,6 +13,7 @@ import {
 } from '@una';
 import { LiveCountdown } from '@uni-hub/components/gamification';
 import { playClick } from '@uni-hub/utils/soundEffects';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { AssignmentsTabProps } from '../types';
 import { cardMotion } from '../constants';
 import { stripHtml } from '../utils';
@@ -31,6 +32,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   soundEnabled,
   onOpenAssignment,
 }) => {
+  const { language, formatMessage } = useLanguage();
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const handleDateChange =
@@ -62,34 +64,39 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
           size="small"
           aria-expanded={filtersOpen}
         >
-          <Filter size={16} /> {filtersOpen ? 'Сховати фільтри' : 'Фільтри'}
+          <Filter size={16} />{' '}
+          {filtersOpen
+            ? formatMessage('assignments.hideFilters')
+            : formatMessage('assignments.filters')}
         </SimpleButton>
       </div>
       <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
         <SimpleInput
           type="date"
+          lang={language === 'en' ? 'en-US' : 'uk-UA'}
           size="medium"
           min="2000-01-01"
           max="2099-12-31"
           value={dateFrom}
           onChange={handleDateChange(onDateFromChange)}
-          aria-label="Дата від"
+          aria-label={formatMessage('assignments.dateFrom')}
         />
         <SimpleInput
           type="date"
+          lang={language === 'en' ? 'en-US' : 'uk-UA'}
           size="medium"
           min="2000-01-01"
           max="2099-12-31"
           value={dateTo}
           onChange={handleDateChange(onDateToChange)}
-          aria-label="Дата до"
+          aria-label={formatMessage('assignments.dateTo')}
         />
         <Select
           value={sortOrder}
           onChange={(value) => onSortOrderChange(value as 'asc' | 'desc')}
           options={[
-            { value: 'asc', label: 'Спочатку старі' },
-            { value: 'desc', label: 'Спочатку нові' },
+            { value: 'asc', label: formatMessage('assignments.oldestFirst') },
+            { value: 'desc', label: formatMessage('assignments.newestFirst') },
           ]}
         />
         <label className={styles.checkLabel}>
@@ -98,7 +105,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
             checked={hideCompleted}
             onChange={(event) => onHideCompletedChange(event.target.checked)}
           />
-          Сховати виконані
+          {formatMessage('assignments.hideCompleted')}
         </label>
       </div>
 
@@ -126,12 +133,15 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
                   {item.duedate && item.duedate > 0 ? (
                     <>
                       <Tag tone="warning">
-                        Дедлайн: {new Date(item.duedate * 1000).toLocaleDateString('uk-UA')}
+                        {formatMessage('assignments.deadline')}:{' '}
+                        {new Date(item.duedate * 1000).toLocaleDateString(
+                          language === 'en' ? 'en-US' : 'uk-UA',
+                        )}
                       </Tag>
                       <LiveCountdown targetUnixSec={item.duedate} />
                     </>
                   ) : (
-                    <Tag tone="default">Без терміну</Tag>
+                    <Tag tone="default">{formatMessage('assignments.noDueDate')}</Tag>
                   )}
                 </div>
               </div>
@@ -143,7 +153,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         })
       ) : (
         <Empty
-          description="Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉"
+          description={formatMessage('assignments.emptyAllDone')}
           icon={<span style={{ fontSize: '48px' }}>🏖️</span>}
         />
       )}

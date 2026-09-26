@@ -14,41 +14,63 @@ import {
 } from 'lucide-react';
 import { Button } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
+import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { playClick } from '@uni-hub/utils/soundEffects';
+import type { TranslationKey } from '@uni-hub/i18n/translations';
 import type { DashboardSidebarProps, NavKey } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
-export const NAV_ITEMS: {
+export interface NavItemConfig {
   key: NavKey;
   icon: React.ReactNode;
+  labelKey: TranslationKey;
+  shortLabelKey: TranslationKey;
   label: string;
   shortLabel: string;
-}[] = [
+}
+
+export const NAV_ITEMS: NavItemConfig[] = [
   {
     key: 'overview',
     icon: <LayoutDashboard size={18} />,
+    labelKey: 'nav.overview.full',
+    shortLabelKey: 'nav.overview',
     label: 'Картка студента / Огляд',
     shortLabel: 'Огляд',
   },
   {
     key: 'courses',
     icon: <BookOpen size={18} />,
+    labelKey: 'nav.courses.full',
+    shortLabelKey: 'nav.courses',
     label: 'Індивідуальний план',
     shortLabel: 'Курси',
   },
   {
     key: 'grades',
     icon: <ClipboardList size={18} />,
+    labelKey: 'nav.grades.full',
+    shortLabelKey: 'nav.grades',
     label: 'Заліковка та бали',
     shortLabel: 'Оцінки',
   },
   {
     key: 'schedule',
     icon: <CalendarDays size={18} />,
+    labelKey: 'nav.schedule.full',
+    shortLabelKey: 'nav.schedule',
     label: 'Розклад занять',
     shortLabel: 'Розклад',
   },
-  { key: 'assignments', icon: <FileEdit size={18} />, label: 'Завдання', shortLabel: 'Завдання' },
+  {
+    key: 'assignments',
+    icon: <FileEdit size={18} />,
+    labelKey: 'nav.assignments.full',
+    shortLabelKey: 'nav.assignments',
+    label: 'Завдання',
+    shortLabel: 'Завдання',
+  },
 ];
 
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
@@ -61,6 +83,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   soundEnabled,
   onLogout,
 }) => {
+  const { formatMessage } = useLanguage();
   const siderRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -163,35 +186,40 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         </div>
 
         <nav className={styles.nav}>
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              className={`${styles.navItem} ${activeKey === item.key ? styles.active : ''}`}
-              onClick={() => {
-                playClick(soundEnabled);
-                onSelectKey(item.key);
-                onCloseMobileMenu();
-              }}
-              title={item.label}
-              aria-label={item.label}
-            >
-              {activeKey === item.key && (
-                <motion.div
-                  layoutId="active-nav-pill"
-                  className={styles.activePill}
-                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                />
-              )}
-              {item.icon}
-              {(!collapsed || mobileMenuOpen) && (
-                <>
-                  <span className={styles.desktopLabel}>{item.label}</span>
-                  <span className={styles.mobileLabel}>{item.shortLabel}</span>
-                </>
-              )}
-            </button>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const label = formatMessage(item.labelKey);
+            const shortLabel = formatMessage(item.shortLabelKey);
+
+            return (
+              <button
+                key={item.key}
+                type="button"
+                className={`${styles.navItem} ${activeKey === item.key ? styles.active : ''}`}
+                onClick={() => {
+                  playClick(soundEnabled);
+                  onSelectKey(item.key);
+                  onCloseMobileMenu();
+                }}
+                title={label}
+                aria-label={label}
+              >
+                {activeKey === item.key && (
+                  <motion.div
+                    layoutId="active-nav-pill"
+                    className={styles.activePill}
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                  />
+                )}
+                {item.icon}
+                {(!collapsed || mobileMenuOpen) && (
+                  <>
+                    <span className={styles.desktopLabel}>{label}</span>
+                    <span className={styles.mobileLabel}>{shortLabel}</span>
+                  </>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
         <div className={styles.siderFooter}>
@@ -200,7 +228,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             className={styles.moodleStatusLink}
-            title="Moodle LMS (підключено)"
+            title={formatMessage('sidebar.moodleConnected')}
           >
             <span className={styles.statusDot} aria-hidden />
             {!collapsed || mobileMenuOpen ? (
@@ -209,6 +237,12 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
               <span className={styles.moodleCompactIcon}>🔗</span>
             )}
           </a>
+          <LanguageSwitcher
+            compact
+            showLabel={!collapsed || mobileMenuOpen}
+            variant="sider"
+            placement="bottom-up-left"
+          />
           <ThemeSwitcher
             compact
             showLabel={!collapsed || mobileMenuOpen}
@@ -223,7 +257,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             className={styles.logoutBtn}
           >
             <LogOut size={18} />
-            {(!collapsed || mobileMenuOpen) && <span>Вийти</span>}
+            {(!collapsed || mobileMenuOpen) && <span>{formatMessage('sidebar.logout')}</span>}
           </Button>
         </div>
       </aside>

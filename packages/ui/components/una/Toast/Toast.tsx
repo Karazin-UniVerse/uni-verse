@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import styles from './Toast.module.scss';
 
 import type { ToastApi, ToastItem, ToastKind, ToastProviderProps } from './Toast.types';
@@ -9,13 +9,27 @@ let toastId = 0;
 
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [items, setItems] = useState<ToastItem[]>([]);
+  const activeTextsRef = useRef<Map<string, number>>(new Map());
 
   const push = useCallback((kind: ToastKind, text: string) => {
+    const key = `${kind}:${text}`;
+    const now = Date.now();
+    const lastDispatched = activeTextsRef.current.get(key) ?? 0;
+
+    if (now - lastDispatched < 1000) {
+      return;
+    }
+
+    activeTextsRef.current.set(key, now);
     const id = ++toastId;
 
     setItems((prev) => [...prev, { id, kind, text }]);
     window.setTimeout(() => {
       setItems((prev) => prev.filter((t) => t.id !== id));
+
+      if (activeTextsRef.current.get(key) === now) {
+        activeTextsRef.current.delete(key);
+      }
     }, 3500);
   }, []);
 

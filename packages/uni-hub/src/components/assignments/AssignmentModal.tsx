@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Download, ExternalLink } from 'lucide-react';
 import { Button as SimpleButton, FileInput, SimpleForm, Modal, Spinner, Tag, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
 import type { CourseModule } from '@uni-hub/types';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { BADGES } from '@uni-hub/constants/gamification';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './AssignmentModal.module.scss';
 
 interface AssignmentModalProps {
@@ -22,10 +24,28 @@ function stripHtml(html: string): string {
 }
 
 export const ASSIGNMENT_STATUS_LABELS: Record<string, string> = {
-  submitted: 'Сдано на проверку',
-  graded: 'Оценено',
-  new: 'Нет попытки',
-  draft: 'Черновик',
+  submitted: 'Здано на перевірку',
+  graded: 'Оцінено',
+  new: 'Немає спроби',
+  draft: 'Чернетка',
+};
+
+export const getAssignmentStatusLabel = (
+  status: string,
+  formatMessage: (key: TranslationKey) => string,
+): string => {
+  switch (status) {
+    case 'submitted':
+      return formatMessage('assignmentModal.statusSubmitted');
+    case 'graded':
+      return formatMessage('assignmentModal.statusGraded');
+    case 'new':
+      return formatMessage('assignmentModal.statusNew');
+    case 'draft':
+      return formatMessage('assignmentModal.statusDraft');
+    default:
+      return status;
+  }
 };
 
 const AssignmentModal: React.FC<AssignmentModalProps> = ({
@@ -34,6 +54,12 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
   module,
   dueUnixSec,
 }) => {
+  const { formatMessage } = useLanguage();
+  const formatMessageRef = useRef(formatMessage);
+
+  useEffect(() => {
+    formatMessageRef.current = formatMessage;
+  }, [formatMessage]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -54,7 +80,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
       setStatus(response.data as { status?: string; grade?: string } | null);
     } catch (error) {
       console.error(error);
-      toast.error('Не удалось загрузить статус задания');
+      toast.error(formatMessage('assignmentModal.loadStatusError'));
     } finally {
       setLoading(false);
     }
@@ -71,6 +97,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
           setLoading(true);
         }
       });
+
       moodleApi
         .getAssignmentStatus(currentInstance)
         .then((response) => {
@@ -81,7 +108,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         .catch((error) => {
           if (!cancelled) {
             console.error(error);
-            toast.error('Не удалось загрузить статус задания');
+            toast.error(formatMessageRef.current('assignmentModal.loadStatusError'));
           }
         })
         .finally(() => {
@@ -109,7 +136,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     if (!module?.instance) return;
 
     if (!text.trim() && files.length === 0) {
-      setFormError('Пожалуйста, введите текст решения или прикрепите файл');
+      setFormError(formatMessage('assignmentModal.formRequired'));
 
       return;
     }
@@ -140,7 +167,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
       }
 
       await moodleApi.submitAssignment(module.instance, text, fileItemId);
-      toast.success('Решение успешно отправлено');
+      toast.success(formatMessage('assignmentModal.submitSuccess'));
       useGamificationStore.getState().triggerCelebration();
 
       const deadline = dueUnixSec ?? module?.dueUnixSec ?? module?.duedate;
@@ -159,7 +186,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
       setFiles([]);
     } catch (error) {
       console.error(error);
-      toast.error('Ошибка при отправке решения');
+      toast.error(formatMessage('assignmentModal.submitError'));
     } finally {
       setUploadingFile(false);
       setSubmitting(false);
@@ -172,7 +199,8 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
       : null;
   const canSubmit = !status || status.status === 'new' || status.status === 'draft';
 
-  const statusLabel = (status?.status && ASSIGNMENT_STATUS_LABELS[status.status]) || status?.status;
+  const statusLabel =
+    (status?.status && getAssignmentStatusLabel(status.status, formatMessage)) || status?.status;
 
   const moodleUrl =
     module?.url ||
@@ -181,9 +209,13 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
       : undefined);
 
   return (
-    <Modal open={visible} onClose={onClose} title={module?.name || 'Задание'}>
+    <Modal
+      open={visible}
+      onClose={onClose}
+      title={module?.name || formatMessage('assignmentModal.defaultTitle')}
+    >
       {loading ? (
-        <Spinner tip="Загрузка статуса..." />
+        <Spinner tip={formatMessage('assignmentModal.loadingStatus')} />
       ) : (
         <div className={styles.content}>
           {moodleUrl && (
@@ -196,15 +228,15 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                 variant="secondary"
                 size="small"
               >
-                <ExternalLink size={14} style={{ marginRight: 6 }} /> Открыть оригинальное задание
-                на Moodle
+                <ExternalLink size={14} style={{ marginRight: 6 }} />{' '}
+                {formatMessage('assignmentModal.openMoodle')}
               </SimpleButton>
             </div>
           )}
 
           {module?.description && (
             <section>
-              <h4>Описание</h4>
+              <h4>{formatMessage('assignmentModal.description')}</h4>
               <div className={styles.box} style={{ whiteSpace: 'pre-wrap' }}>
                 {stripHtml(module.description)}
               </div>
@@ -213,7 +245,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
           {module?.contents && module.contents.length > 0 && (
             <section>
-              <h4>Прикрепленные файлы</h4>
+              <h4>{formatMessage('assignmentModal.attachedFiles')}</h4>
               <ul className={styles.fileList}>
                 {module.contents.map((file, idx: number) => {
                   const url = (file.fileurl || '') + (tokenStr ? `?token=${tokenStr}` : '');
@@ -229,7 +261,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                         variant="primary"
                         size="small"
                       >
-                        <Download size={14} /> Скачать
+                        <Download size={14} /> {formatMessage('assignmentModal.download')}
                       </SimpleButton>
                     </li>
                   );
@@ -239,11 +271,11 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
           )}
 
           <section>
-            <h4>Статус сдачи</h4>
+            <h4>{formatMessage('assignmentModal.submissionStatus')}</h4>
             {status ? (
               <div className={styles.box}>
                 <div className={styles.statusRow}>
-                  <strong>Статус: </strong>
+                  <strong>{formatMessage('assignmentModal.status')}: </strong>
                   <Tag
                     tone={
                       status.status === 'submitted' || status.status === 'graded'
@@ -256,26 +288,26 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                 </div>
                 {status.grade && (
                   <div>
-                    <strong>Оценка: </strong>
+                    <strong>{formatMessage('assignmentModal.grade')}: </strong>
                     <span>{status.grade}</span>
                   </div>
                 )}
               </div>
             ) : (
-              <p className={styles.muted}>Нет данных о статусе</p>
+              <p className={styles.muted}>{formatMessage('assignmentModal.noStatusData')}</p>
             )}
           </section>
 
           {canSubmit && (
             <section>
-              <h4>Отправить решение</h4>
+              <h4>{formatMessage('assignmentModal.submitTitle')}</h4>
               <SimpleForm variant="simple" action={handleSubmit} className={styles.form}>
                 <label className={styles.field}>
-                  <span>Текст ответа</span>
+                  <span>{formatMessage('assignmentModal.answerText')}</span>
                   <textarea
                     className={styles.textarea}
                     rows={6}
-                    placeholder="Введите ваш ответ здесь..."
+                    placeholder={formatMessage('assignmentModal.placeholder')}
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     name="text"
@@ -283,13 +315,13 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                 </label>
 
                 <FileInput
-                  label="Прикрепить файл"
+                  label={formatMessage('assignmentModal.attachFile')}
                   files={files}
                   onFilesChange={setFiles}
                   maxFiles={1}
                   size="small"
-                  dragText="Перетащите файл сюда или"
-                  browseText="выберите"
+                  dragText={formatMessage('assignmentModal.dragDrop')}
+                  browseText={formatMessage('assignmentModal.browse')}
                 />
 
                 {formError && <p className={styles.error}>{formError}</p>}
@@ -302,7 +334,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                     onClick={onClose}
                     disabled={submitting}
                   >
-                    Отмена
+                    {formatMessage('assignmentModal.cancel')}
                   </SimpleButton>
                   <SimpleButton
                     type="submit"
@@ -310,7 +342,9 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                     size="medium"
                     disabled={submitting || uploadingFile}
                   >
-                    {uploadingFile ? 'Загрузка файла...' : 'Отправить'}
+                    {uploadingFile
+                      ? formatMessage('assignmentModal.uploading')
+                      : formatMessage('assignmentModal.submit')}
                   </SimpleButton>
                 </div>
               </SimpleForm>

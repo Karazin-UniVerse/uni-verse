@@ -6,6 +6,8 @@ import { Menu, Volume2, VolumeX, Bell, User } from 'lucide-react';
 import { Button, Tag, Empty } from '@una';
 import { StreakBadge } from '@uni-hub/components/gamification';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
+import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi } from '@uni-hub/services/api';
 import type { DashboardHeaderProps } from '../types';
 import { stripHtml } from '../utils';
@@ -20,6 +22,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   unreadCount,
   activeStudentProfile,
 }) => {
+  const { language, formatMessage } = useLanguage();
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -63,7 +66,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           isTransparent
           className={styles.mobileMenuBtn}
           onClick={onOpenMobileMenu}
-          aria-label="Відкрити меню"
+          aria-label={formatMessage('header.openMenu')}
           aria-expanded={mobileMenuOpen}
           aria-controls="dashboard-sidebar"
         >
@@ -79,7 +82,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           size="medium"
           isTransparent
           onClick={onToggleSound}
-          aria-label={soundEnabled ? 'Вимкнути звук' : 'Увімкнути звук'}
+          aria-label={
+            soundEnabled ? formatMessage('header.soundMute') : formatMessage('header.soundUnmute')
+          }
           className={styles.desktopOnly}
         >
           {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
@@ -92,7 +97,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             size="medium"
             isTransparent
             onClick={() => setNotifOpen((isOpen) => !isOpen)}
-            aria-label="Сповіщення"
+            aria-label={formatMessage('header.notifications')}
           >
             <Bell size={18} />
             {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
@@ -106,8 +111,12 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               transition={{ duration: 0.15 }}
             >
               <div className={styles.notifHeader}>
-                <strong>Сповіщення</strong>
-                {unreadCount > 0 && <Tag tone="info">{unreadCount} нових</Tag>}
+                <strong>{formatMessage('header.notifications')}</strong>
+                {unreadCount > 0 && (
+                  <Tag tone="info">
+                    {unreadCount} {formatMessage('header.unreadCount')}
+                  </Tag>
+                )}
               </div>
               <div className={styles.notifList}>
                 {notifications.length > 0 ? (
@@ -124,13 +133,15 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                           {message.length > 100 ? `${message.substring(0, 100)}...` : message}
                         </div>
                         <div className={styles.notifTime}>
-                          {new Date(item.timecreated * 1000).toLocaleString('uk-UA')}
+                          {new Date(item.timecreated * 1000).toLocaleString(
+                            language === 'en' ? 'en-US' : 'uk-UA',
+                          )}
                         </div>
                       </div>
                     );
                   })
                 ) : (
-                  <Empty description="Немає сповіщень" />
+                  <Empty description={formatMessage('header.notifications.empty')} />
                 )}
               </div>
             </motion.div>
@@ -142,7 +153,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             type="button"
             className={styles.user}
             title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
-            aria-label="Меню профілю користувача"
+            aria-label={formatMessage('header.userMenu')}
             onClick={() => setUserMenuOpen((open) => !open)}
             aria-haspopup="menu"
             aria-expanded={userMenuOpen}
@@ -167,6 +178,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               </div>
 
               <div className={styles.userDropdownBody}>
+                <div className={styles.mobileOnlyItem} style={{ marginBottom: 6 }}>
+                  <LanguageSwitcher compact={false} placement="top-down" />
+                </div>
+
                 <div className={styles.mobileOnlyItem}>
                   <ThemeSwitcher compact={false} showLabel={true} />
                 </div>
@@ -185,7 +200,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                     ) : (
                       <VolumeX size={16} style={{ marginRight: 8 }} />
                     )}
-                    {soundEnabled ? 'Вимкнути звук' : 'Увімкнути звук'}
+                    {soundEnabled
+                      ? formatMessage('header.soundMute')
+                      : formatMessage('header.soundUnmute')}
                   </Button>
                 </div>
 
@@ -214,7 +231,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                       color: 'var(--text-primary)',
                     }}
                   >
-                    Вийти
+                    {formatMessage('sidebar.logout')}
                   </Button>
                 </div>
               </div>
