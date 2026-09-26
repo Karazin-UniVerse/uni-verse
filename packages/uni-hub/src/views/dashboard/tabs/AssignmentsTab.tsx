@@ -1,21 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useMemo } from 'react';
 import { Filter } from 'lucide-react';
-import {
-  TextInput as SimpleInput,
-  Select,
-  CheckBox,
-  Tag,
-  Empty,
-  Button as SimpleButton,
-} from '@una';
-import { LiveCountdown } from '@uni-hub/components/gamification';
-import { playClick } from '@uni-hub/utils/soundEffects';
+import { TextInput as SimpleInput, Select, CheckBox, Empty, Button as SimpleButton } from '@una';
+import { AssignmentCard } from '@uni-hub/components/assignments';
+import { useAssignmentStatuses } from '@uni-hub/hooks/useAssignmentStatuses';
+import { useNow } from '@uni-hub/hooks/useNow';
 import type { AssignmentsTabProps } from '../types';
-import { cardMotion } from '../constants';
-import { stripHtml } from '../utils';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
@@ -32,6 +23,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   onOpenAssignment,
 }) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const localStatuses = useAssignmentStatuses(assignments);
 
   const handleDateChange =
     (setter: (value: string) => void) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,6 +43,18 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
 
       setter(value);
     };
+
+  const visibleAssignments = useMemo(() => {
+    return assignments.filter((item) => {
+      const status = item.submissionStatus ?? localStatuses[item.id]?.status;
+      const isCompleted = status === 'submitted' || status === 'graded' || Boolean(item.graded);
+
+      return !hideCompleted || !isCompleted;
+    });
+  }, [assignments, hideCompleted, localStatuses]);
+
+  const nowMs = useNow(30_000);
+  const nowSec = Math.floor(nowMs / 1000);
 
   return (
     <div className={styles.stack}>
@@ -102,51 +106,44 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         </label>
       </div>
 
-      {assignments.length > 0 ? (
-        assignments.map((item) => {
-          const description = stripHtml(item.description);
-
-          return (
-            <motion.button
+      {visibleAssignments.length > 0
+        ? visibleAssignments.map((item) => (
+            <AssignmentCard
               key={item.id}
-              type="button"
-              className={styles.assignmentCard}
-              {...cardMotion}
-              onClick={() => {
-                playClick(soundEnabled);
-                onOpenAssignment(item);
-              }}
-            >
-              <div className={styles.assignmentTop}>
-                <div>
-                  <div className={styles.listTitle}>{item.name}</div>
-                  <div className={styles.muted}>{item.courseName}</div>
-                </div>
-                <div className={styles.nearestDeadline}>
-                  {item.duedate && item.duedate > 0 ? (
-                    <>
-                      <Tag tone="warning">
-                        Дедлайн: {new Date(item.duedate * 1000).toLocaleDateString('uk-UA')}
-                      </Tag>
-                      <LiveCountdown targetUnixSec={item.duedate} />
-                    </>
-                  ) : (
-                    <Tag tone="default">Без терміну</Tag>
-                  )}
-                </div>
-              </div>
-              <div className={styles.htmlSnippet}>
-                {description.length > 200 ? `${description.substring(0, 200)}...` : description}
-              </div>
-            </motion.button>
-          );
-        })
-      ) : (
-        <Empty
-          description="Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉"
-          icon={<span style={{ fontSize: '48px' }}>🏖️</span>}
-        />
-      )}
+              assignment={item}
+              status={item.submissionStatus ?? localStatuses[item.id]?.status ?? 'new'}
+              grade={item.grade ?? localStatuses[item.id]?.grade}
+              nowSec={nowSec}
+              soundEnabled={soundEnabled}
+              onOpenAssignment={onOpenAssignment}
+            />
+          ))
+        : (() => {
+            if (assignments.length === 0) {
+              return (
+                <Empty
+                  description="Завдань не знайдено"
+                  icon={<span style={{ fontSize: '48px' }}>📝</span>}
+                />
+              );
+            }
+
+            if (dateFrom || dateTo) {
+              return (
+                <Empty
+                  description="За обраними датами завдань не знайдено"
+                  icon={<span style={{ fontSize: '48px' }}>🔍</span>}
+                />
+              );
+            }
+
+            return (
+              <Empty
+                description="Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉"
+                icon={<span style={{ fontSize: '48px' }}>🏖️</span>}
+              />
+            );
+          })()}
     </div>
   );
 };

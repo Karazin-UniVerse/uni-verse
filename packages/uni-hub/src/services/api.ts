@@ -182,6 +182,7 @@ export interface GetAssignmentsParams {
   sortByDate?: 'asc' | 'desc';
   status?: 'completed' | 'not_completed';
   year?: string;
+  includeStatus?: boolean;
 }
 
 export class MoodleApi {

@@ -77,8 +77,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             >
               <div className={styles.listTitle}>{assignment.name}</div>
               <div className={styles.muted}>
-                {assignment.courseName} • Дедлайн:{' '}
-                {new Date(assignment.duedate * 1000).toLocaleDateString('uk-UA')}
+                {assignment.courseName} •{' '}
+                {assignment.duedate > 0
+                  ? `Дедлайн: ${new Date(assignment.duedate * 1000).toLocaleDateString('uk-UA')}`
+                  : 'Без терміну'}
               </div>
             </div>
           ))}

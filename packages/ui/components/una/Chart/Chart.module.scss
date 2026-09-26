@@ -37,18 +37,17 @@
 
   :global(.recharts-wrapper),
   :global(.recharts-surface),
+  :global(.recharts-pie),
+  :global(.recharts-sector),
   :global(svg) {
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
+    outline: none;
 
-    &:focus {
-      outline: none;
-    }
-
+    &:focus,
     &:focus-visible {
-      outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, var(--accent-primary));
-      outline-offset: var(--focus-ring-offset, 2px);
+      outline: none;
     }
   }
 }

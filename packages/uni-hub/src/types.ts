@@ -35,6 +35,9 @@ export interface Assignment {
   description: string;
   year?: number | null;
   semester?: number | null;
+  submissionStatus?: string;
+  grade?: string | null;
+  graded?: boolean;
 }
 
 export interface MoodleEvent {
