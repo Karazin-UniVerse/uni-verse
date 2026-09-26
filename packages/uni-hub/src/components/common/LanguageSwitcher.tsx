@@ -162,11 +162,13 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
         aria-expanded={isOpen}
         aria-label={`${formatMessage('lang.select')}: ${activeLanguage.label}`}
         title={`${formatMessage('lang.select')}: ${activeLanguage.label}`}
+        // intentional: suppressHydrationWarning – activeLanguage resolved client-side from stored preference; server renders default language
         suppressHydrationWarning
       >
         <Languages size={18} aria-hidden />
         {showLabel && (
           <>
+            {/* intentional: suppressHydrationWarning – label text derived from client-side language state */}
             <span suppressHydrationWarning>{activeLanguage.label}</span>
             <ChevronDown
               size={14}
