@@ -22,6 +22,7 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+  // intentional: suppressHydrationWarning – theme class injected by inline script before hydration causes expected server/client mismatch on <html>
   return (
     <html
       lang="uk"
