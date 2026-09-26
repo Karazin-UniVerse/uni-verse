@@ -16,8 +16,6 @@ type LanguageContextValue = {
   language: AppLanguage;
   setLanguage: (lang: AppLanguage) => void;
   formatMessage: (key: TranslationKey) => string;
-  translate: (key: TranslationKey) => string;
-  t: (key: TranslationKey) => string;
 };
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
@@ -97,8 +95,6 @@ export const LanguageProvider: React.FC<Readonly<{ children: React.ReactNode }>>
       language,
       setLanguage,
       formatMessage,
-      translate: formatMessage,
-      t: formatMessage,
     }),
     [language, setLanguage, formatMessage],
   );
@@ -110,8 +106,6 @@ const DEFAULT_CONTEXT: LanguageContextValue = {
   language: 'uk',
   setLanguage: () => {},
   formatMessage: (key: TranslationKey): string => TRANSLATIONS.uk[key] || key,
-  translate: (key: TranslationKey): string => TRANSLATIONS.uk[key] || key,
-  t: (key: TranslationKey): string => TRANSLATIONS.uk[key] || key,
 };
 
 export function useLanguage(): LanguageContextValue {
