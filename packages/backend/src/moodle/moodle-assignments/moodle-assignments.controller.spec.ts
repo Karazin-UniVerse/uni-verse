@@ -83,6 +83,26 @@ describe('MoodleAssignmentsController', () => {
       const errorsZero = await validate(dtoZero);
 
       expect(errorsZero.length).toBe(0);
+
+      const dtoNull = plainToInstance(GetAssignmentsQueryDto, {
+        includeStatus: null,
+      });
+
+      expect(dtoNull.includeStatus).toBeUndefined();
+
+      const errorsNull = await validate(dtoNull);
+
+      expect(errorsNull.length).toBe(0);
+
+      const dtoUndefined = plainToInstance(GetAssignmentsQueryDto, {
+        includeStatus: undefined,
+      });
+
+      expect(dtoUndefined.includeStatus).toBeUndefined();
+
+      const errorsUndefined = await validate(dtoUndefined);
+
+      expect(errorsUndefined.length).toBe(0);
     });
 
     it('should validate AssignmentItemDto and SaveSubmissionDto', async () => {
