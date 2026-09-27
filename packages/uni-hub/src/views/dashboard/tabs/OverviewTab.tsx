@@ -36,7 +36,7 @@ const extractMeetingUrl = (event: MoodleEvent): string | null => {
     const match = event.description.match(MEETING_URL_REGEX);
 
     if (match) {
-      return match[0];
+      return match[0].replace(/[),.;]+$/, '');
     }
   }
 

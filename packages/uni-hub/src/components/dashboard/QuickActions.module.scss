@@ -86,23 +86,23 @@
 }
 
 .iconMoodle {
-  background: rgb(249 115 22 / 12%);
-  color: #f97316;
+  background: color-mix(in srgb, var(--warning-color, #f97316) 12%, transparent);
+  color: var(--warning-color, #f97316);
 }
 
 .iconAssignments {
-  background: rgb(59 130 246 / 12%);
-  color: #3b82f6;
+  background: color-mix(in srgb, var(--accent-primary, #3b82f6) 12%, transparent);
+  color: var(--accent-primary, #3b82f6);
 }
 
 .iconSchedule {
-  background: rgb(168 85 247 / 12%);
-  color: #a855f7;
+  background: color-mix(in srgb, var(--info-color, #a855f7) 12%, transparent);
+  color: var(--info-color, #a855f7);
 }
 
 .iconSimulator {
-  background: rgb(34 197 94 / 12%);
-  color: #22c55e;
+  background: color-mix(in srgb, var(--success-color, #22c55e) 12%, transparent);
+  color: var(--success-color, #22c55e);
 }
 
 .actionBody {

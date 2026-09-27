@@ -120,23 +120,23 @@
 }
 
 .toneSuccess {
-  background: rgb(34 197 94 / 15%);
-  color: #16a34a;
+  background: color-mix(in srgb, var(--success-color, #16a34a) 15%, transparent);
+  color: var(--success-color, #16a34a);
 }
 
 .toneInfo {
-  background: rgb(59 130 246 / 15%);
-  color: #2563eb;
+  background: color-mix(in srgb, var(--accent-primary, #2563eb) 15%, transparent);
+  color: var(--accent-primary, #2563eb);
 }
 
 .toneWarning {
-  background: rgb(234 179 8 / 15%);
-  color: #ca8a04;
+  background: color-mix(in srgb, var(--warning-color, #ca8a04) 15%, transparent);
+  color: var(--warning-color, #ca8a04);
 }
 
 .toneDanger {
-  background: rgb(239 68 68 / 15%);
-  color: #dc2626;
+  background: color-mix(in srgb, var(--error-color, #dc2626) 15%, transparent);
+  color: var(--error-color, #dc2626);
 }
 
 @keyframes fadeUp {
