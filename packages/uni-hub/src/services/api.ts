@@ -16,14 +16,71 @@ import {
   mockEvents,
   mockNotifications,
   mockStatistics,
+  mockAssignments,
   getMockAssignments,
 } from './mockData';
 
+function getStorage(): Storage | null {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage;
+    }
+
+    if (typeof localStorage !== 'undefined') {
+      return localStorage;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export const safeStorage = {
+  getItem(key: string): string | null {
+    try {
+      const storage = getStorage();
+
+      return storage ? storage.getItem(key) : null;
+    } catch {
+      return null;
+    }
+  },
+  setItem(key: string, value: string): boolean {
+    try {
+      const storage = getStorage();
+
+      if (!storage) {
+        return false;
+      }
+
+      storage.setItem(key, value);
+
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  removeItem(key: string): boolean {
+    try {
+      const storage = getStorage();
+
+      if (!storage) {
+        return false;
+      }
+
+      storage.removeItem(key);
+
+      return true;
+    } catch {
+      return false;
+    }
+  },
+};
+
 export function isDemoMode(): boolean {
   return (
-    isBrowser &&
-    (localStorage.getItem('isDemo') === 'true' ||
-      localStorage.getItem('accessToken') === 'demo-token')
+    safeStorage.getItem('isDemo') === 'true' || safeStorage.getItem('accessToken') === 'demo-token'
   );
 }
 
@@ -100,10 +157,13 @@ async function executeAttempt<T>(
     });
 
     if (!response.ok) {
-      if (response.status === RESPONSE_CODES.UNAUTHORIZED && isBrowser) {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('moodleToken');
+      if (response.status === RESPONSE_CODES.UNAUTHORIZED) {
+        safeStorage.removeItem('isLoggedIn');
+        safeStorage.removeItem('accessToken');
+        safeStorage.removeItem('moodleToken');
+        safeStorage.removeItem('isDemo');
+        safeStorage.removeItem('universe_dashboard_data');
+        safeStorage.removeItem('universe_last_sync_time');
       }
 
       throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
@@ -128,7 +188,7 @@ async function request<T>(
   timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
 ): Promise<{ data: T }> {
   const url = `${API_BASE_URL}${endpoint}`;
-  const token = isBrowser ? localStorage.getItem('accessToken') : null;
+  const token = safeStorage.getItem('accessToken');
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -165,18 +225,21 @@ async function request<T>(
 
 export class AuthApi {
   async login(email: string, password: string): Promise<{ data: AuthResponse }> {
-    if (email === 'demo' || password === 'demo') {
+    if (email === 'demo' && password === 'demo') {
       const mockAuth: AuthResponse = {
         access_token: 'demo-token',
         token: 'demo-token',
         userID: 'karazin-student-001',
       };
 
-      if (isBrowser) {
-        localStorage.setItem('accessToken', 'demo-token');
-        localStorage.setItem('moodleToken', 'demo-token');
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('isDemo', 'true');
+      const persisted =
+        safeStorage.setItem('accessToken', 'demo-token') &&
+        safeStorage.setItem('moodleToken', 'demo-token') &&
+        safeStorage.setItem('isLoggedIn', 'true') &&
+        safeStorage.setItem('isDemo', 'true');
+
+      if (!persisted && isBrowser) {
+        throw new Error('Не вдалося зберегти сесію: доступ до локального сховища заборонено');
       }
 
       return { data: mockAuth };
@@ -188,8 +251,9 @@ export class AuthApi {
     });
 
     if (response.data?.access_token) {
-      localStorage.setItem('accessToken', response.data.access_token);
-      localStorage.setItem('isLoggedIn', 'true');
+      safeStorage.setItem('accessToken', response.data.access_token);
+      safeStorage.setItem('isLoggedIn', 'true');
+      safeStorage.removeItem('isDemo');
     }
 
     return response;
@@ -201,10 +265,12 @@ export class AuthApi {
         await request('/auth/logout', { method: 'POST' });
       }
     } finally {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('moodleToken');
-      localStorage.removeItem('isDemo');
+      safeStorage.removeItem('accessToken');
+      safeStorage.removeItem('isLoggedIn');
+      safeStorage.removeItem('moodleToken');
+      safeStorage.removeItem('isDemo');
+      safeStorage.removeItem('universe_dashboard_data');
+      safeStorage.removeItem('universe_last_sync_time');
     }
   }
 }
@@ -282,13 +348,18 @@ export class MoodleApi {
 
   getAssignmentStatus(assignId: number): Promise<{ data: unknown }> {
     if (isDemoMode()) {
+      const match = mockAssignments.find((assignment) => assignment.id === assignId);
+
       return Promise.resolve({
         data: {
           lastattempt: {
-            gradingstatus: 'graded',
-            submission: { status: 'submitted' },
+            gradingstatus: match?.graded ? 'graded' : 'notgraded',
+            submission: {
+              status: match?.submissionStatus || 'new',
+              timemodified: match?.submittedAt,
+            },
           },
-          feedback: { grade: { grade: '95' } },
+          feedback: match?.grade ? { grade: { grade: String(match.grade) } } : undefined,
         },
       });
     }

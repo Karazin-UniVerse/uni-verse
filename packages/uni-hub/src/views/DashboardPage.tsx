@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
@@ -228,6 +228,7 @@ const DashboardPage: React.FC = () => {
   const [selectedAssignmentModule, setSelectedAssignmentModule] = useState<CourseModule | null>(
     null,
   );
+  const fetchRequestIdRef = useRef(0);
 
   const hasCachedData =
     data.courses.length > 0 ||
@@ -259,6 +260,8 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   const fetchData = async (isManual = false) => {
+    const requestId = ++fetchRequestIdRef.current;
+
     setLoading(true);
 
     try {
@@ -271,6 +274,10 @@ const DashboardPage: React.FC = () => {
         moodleApi.getNotifications(),
         moodleApi.getStatistics(),
       ]);
+
+      if (requestId !== fetchRequestIdRef.current) {
+        return;
+      }
 
       const freshData = assembleDashboardData(responses);
 
@@ -287,10 +294,22 @@ const DashboardPage: React.FC = () => {
         toast.success('Дані успішно оновлено');
       }
     } catch (error) {
+      if (requestId !== fetchRequestIdRef.current) {
+        return;
+      }
+
       if (isUnauthorizedError(error)) {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('moodleToken');
+        try {
+          localStorage.removeItem('isLoggedIn');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('moodleToken');
+          localStorage.removeItem('isDemo');
+          localStorage.removeItem('universe_dashboard_data');
+          localStorage.removeItem('universe_last_sync_time');
+        } catch {
+          // Ignore storage errors
+        }
+
         toast.error('Сесія застаріла або недійсна. Будь ласка, увійдіть знову.');
         router.push('/login');
 
@@ -302,9 +321,36 @@ const DashboardPage: React.FC = () => {
       const cachedData = loadCachedDashboardData();
 
       if (cachedData) {
+        let fallbackAssignments = cachedData.assignments || [];
+
+        if (hideCompleted) {
+          fallbackAssignments = fallbackAssignments.filter(
+            (assignment) =>
+              assignment.submissionStatus !== 'graded' &&
+              assignment.submissionStatus !== 'submitted',
+          );
+        }
+
+        const fromSec = parseDateFilterSeconds(dateFrom);
+
+        if (fromSec !== null) {
+          fallbackAssignments = fallbackAssignments.filter(
+            (assignment) => assignment.duedate > 0 && assignment.duedate >= fromSec,
+          );
+        }
+
+        const toSec = parseDateFilterSeconds(dateTo);
+
+        if (toSec !== null) {
+          fallbackAssignments = fallbackAssignments.filter(
+            (assignment) => assignment.duedate > 0 && assignment.duedate <= toSec,
+          );
+        }
+
         setData((previous) => ({
           ...previous,
           ...cachedData,
+          assignments: fallbackAssignments,
         }));
         setIsOfflineData(true);
         setHasLoadedOnce(true);
@@ -315,16 +361,22 @@ const DashboardPage: React.FC = () => {
 
       toast.error('Помилка завантаження даних. Будь ласка, переконайтеся, що бекенд запущено.');
     } finally {
-      setLoading(false);
+      if (requestId === fetchRequestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    if (searchParams.get('demo') === 'true') {
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('accessToken', 'demo-token');
-      localStorage.setItem('moodleToken', 'demo-token');
-      localStorage.setItem('isDemo', 'true');
+    try {
+      if (searchParams.get('demo') === 'true' && !isLoggedIn()) {
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('accessToken', 'demo-token');
+        localStorage.setItem('moodleToken', 'demo-token');
+        localStorage.setItem('isDemo', 'true');
+      }
+    } catch {
+      // Ignore storage errors
     }
 
     if (!isLoggedIn()) {
@@ -372,7 +424,17 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
+    try {
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('moodleToken');
+      localStorage.removeItem('isDemo');
+      localStorage.removeItem('universe_dashboard_data');
+      localStorage.removeItem('universe_last_sync_time');
+    } catch {
+      // Ignore storage errors
+    }
+
     router.push('/login');
   };
 

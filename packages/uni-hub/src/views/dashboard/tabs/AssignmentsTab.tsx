@@ -102,7 +102,9 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
       (item) => !item.submissionStatus && !requestedIdsRef.current.has(item.id),
     );
 
-    if (assignmentsNeedingStatus.length === 0) return;
+    if (assignmentsNeedingStatus.length === 0) {
+      return;
+    }
 
     const batch = assignmentsNeedingStatus.slice(0, 10);
 
@@ -115,16 +117,24 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         try {
           const res = await moodleApi.getAssignmentStatus(item.id);
 
-          if (!cancelled && res?.data) {
+          if (cancelled) {
+            requestedIdsRef.current.delete(item.id);
+
+            return;
+          }
+
+          if (res?.data) {
             const data = res.data as { status?: string; grade?: string };
 
             setLocalStatuses((prev) => ({
               ...prev,
               [item.id]: { status: data.status, grade: data.grade },
             }));
+          } else {
+            requestedIdsRef.current.delete(item.id);
           }
         } catch {
-          // Ignore status fetch error for individual item
+          requestedIdsRef.current.delete(item.id);
         }
       })();
     }
