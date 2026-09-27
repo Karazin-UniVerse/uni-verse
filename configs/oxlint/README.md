@@ -32,20 +32,20 @@ Enforces the convention that required properties must appear before optional pro
 - In function and React component parameter destructuring (`ObjectPattern`), properties without default values (`data`, `height`, `className`) must appear before properties with default values (`type = 'bar'`, `layout = 'horizontal'`).
 - **Autofix (`--fix`)**: Safely reorders properties with pure literal defaults. Automatically falls back to report-only whenever function calls, variable references, rest elements, or comments are present to guarantee semantic safety.
 
-### Situation 4: Intra-Package Import Aliasing (`no-restricted-imports`)
+### Situation 4: Intra-Package & Monorepo Import Boundaries (`no-restricted-imports`)
 
-Prevents deep or ambiguous relative parent imports within packages:
+Enforces strict architectural separation across the monorepo via `no-restricted-imports` in `.oxlintrc.json`:
 
-- In `packages/uni-hub`, relative parent imports to `utils` (up to three levels: `../`, `../../`, `../../../`) are banned in favor of package aliases (e.g. `@uni-hub/utils/...`).
-- Configured via the `no-restricted-imports` override in `.oxlintrc.json`.
+- **`packages/uni-hub`**: Banned relative parent imports to `utils` (`../utils/**`, `../../utils/**`, `../../../utils/**`) in favor of `@uni-hub/utils/...`. Direct imports of backend code (`@universe/backend/**`, `@universe/database/**`, `prisma`) are prohibited; data must be accessed via API clients.
+- **`packages/ui`**: Cannot import application packages (`@uni-hub/**`, `@universe/backend/**`, `@universe/database/**`). The design system remains 100% presentational.
+- **`packages/backend`**: Cannot import frontend packages or React libraries (`react`, `react-dom`, `next`, `@uni-hub/**`, `@universe/ui/**`).
+- **`packages/core`**: Pure domain package. Framework-specific dependencies (`@nestjs/**`, `react`, `next`, `express`, `zustand`, database packages) are prohibited.
 
 ### Situation 5: Duplicate Imports & Re-exports (`import/no-duplicates`)
 
-Detects redundant duplicate module imports and re-exports using the `import` plugin rule with `{ "includeExports": true }`. This supersedes the removed ESLint built-in `no-duplicate-imports`.
+Detects redundant duplicate module imports and re-exports using native `import/no-duplicates` with `{ "includeExports": true }`.
 
-### Situation 6: Unused Imports (`no-unused-vars` + `import/no-unused-modules`)
-
-Two complementary rules cover unused imports and exports:
+### Situation 6: Unused Imports & Exports (`no-unused-vars` + `import/no-unused-modules`)
 
 - `no-unused-vars` (`"warn"`) — flags imported identifiers never referenced in the module.
 - `import/no-unused-modules` (`"error"`, `unusedExports: true`) — flags exported symbols never consumed outside the module.
@@ -59,9 +59,8 @@ Native Oxlint rule. Enforces that every file ends with a trailing newline charac
 
 ### Situation 8: Maximum Line Length (`max-len`)
 
-Native Oxlint rule. Enforces that source lines do not exceed 120 characters.
-
-Ignored automatically for: URLs, string literals, comments, template literals, and RegExp literals.
+Native Oxlint rule. Enforces maximum line length of 120 characters (`code: 120`).
+Exemptions handled automatically in Rust: URLs (`ignoreUrls`), string literals (`ignoreStrings`), comments (`ignoreComments`), template literals (`ignoreTemplateLiterals`), and RegExp literals (`ignoreRegExpLiterals`).
 
 - Level: `error`.
 

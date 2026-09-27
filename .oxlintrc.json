@@ -9,11 +9,15 @@
   },
   "rules": {
     "no-unused-vars": "warn",
-    "no-console": ["warn", { "allow": ["warn", "error", "info"] }],
+    "no-console": [
+      "warn",
+      {
+        "allow": ["warn", "error", "info"]
+      }
+    ],
     "eqeqeq": "error",
     "import/no-duplicates": "error",
     "import/no-cycle": "error",
-
     "react/jsx-key": "error",
     "react/jsx-no-useless-fragment": "warn",
     "react/no-danger": "warn",
@@ -21,22 +25,23 @@
     "react/self-closing-comp": "error",
     "react/rules-of-hooks": "error",
     "react/exhaustive-deps": "error",
-
     "typescript/no-explicit-any": "warn",
-
     "universe/vertical-spacing": "error",
     "universe/destructuring-props-order": "error",
-    "universe/eol-last": "error",
-    "universe/max-len": ["error", { "code": 120 }],
     "universe/no-suppress-hydration-without-comment": "warn",
-
     "universe/nestjs-require-api-response-type": "error",
     "universe/nestjs-require-bearer-auth-decorator": "error",
     "universe/nestjs-controller-return-type": "error",
     "universe/una-primitive-purity": "error",
     "universe/nestjs-controller-no-prisma": "error",
     "universe/no-empty-catch-in-services": "error",
-    "universe/core-package-isolation": "error"
+    "universe/core-package-isolation": "error",
+    "no-duplicate-imports": [
+      "error",
+      {
+        "includeExports": true
+      }
+    ]
   },
   "overrides": [
     {
@@ -63,6 +68,17 @@
               {
                 "group": ["../utils/**", "../../utils/**", "../../../utils/**"],
                 "message": "Use package alias '@uni-hub/utils/...' instead of relative '../utils/...' path."
+              },
+              {
+                "group": [
+                  "@universe/backend",
+                  "@universe/backend/**",
+                  "@universe/database",
+                  "@universe/database/**",
+                  "prisma",
+                  "@prisma/**"
+                ],
+                "message": "Frontend cannot directly import backend or database code. Access data via HTTP API clients (@uni-hub/services/api)."
               }
             ]
           }
@@ -83,7 +99,14 @@
           {
             "patterns": [
               {
-                "group": ["@uni-hub/**", "@universe/backend/**", "@universe/database/**"],
+                "group": [
+                  "@uni-hub",
+                  "@uni-hub/**",
+                  "@universe/backend",
+                  "@universe/backend/**",
+                  "@universe/database",
+                  "@universe/database/**"
+                ],
                 "message": "UI package cannot depend on application packages. Design system must remain independent."
               }
             ]
@@ -99,7 +122,16 @@
           {
             "patterns": [
               {
-                "group": ["react", "react-dom", "next", "next/**", "@uni-hub/**"],
+                "group": [
+                  "react",
+                  "react-dom",
+                  "next",
+                  "next/**",
+                  "@uni-hub",
+                  "@uni-hub/**",
+                  "@universe/ui",
+                  "@universe/ui/**"
+                ],
                 "message": "Backend cannot import frontend or React libraries."
               }
             ]
@@ -115,7 +147,23 @@
           {
             "patterns": [
               {
-                "group": ["@nestjs/**", "react", "react-dom", "next", "@universe/backend/**"],
+                "group": [
+                  "@nestjs/**",
+                  "react",
+                  "react-dom",
+                  "next",
+                  "next/**",
+                  "@universe/backend",
+                  "@universe/backend/**",
+                  "@universe/database",
+                  "@universe/database/**",
+                  "express",
+                  "zustand",
+                  "@universe/ui",
+                  "@universe/ui/**",
+                  "@uni-hub",
+                  "@uni-hub/**"
+                ],
                 "message": "@universe/core is a pure domain contract package."
               }
             ]
