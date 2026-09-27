@@ -84,7 +84,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
           <span className={styles.iconWrapper}>
             <FaGoogle size={18} />
           </span>
-          Продовжити з Google
+          <span>Продовжити з Google</span>
         </Button>
       </div>
       <div
