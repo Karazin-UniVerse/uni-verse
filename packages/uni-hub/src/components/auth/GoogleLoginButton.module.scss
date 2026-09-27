@@ -1,18 +1,65 @@
 .wrapper {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
-  min-height: 44px;
+  min-height: 48px;
+
+  &:hover .customButton {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+  }
+
+  &:active .customButton {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+  }
+}
+
+.customButtonWrapper {
+  width: 100%;
+}
+
+.customButton {
+  width: 100%;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-weight: 500;
+  font-size: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: var(--border-radius-medium, 8px);
+  position: relative;
+  overflow: hidden;
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .buttonContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.01;
+  z-index: 10;
+  overflow: hidden;
+  cursor: pointer;
   display: flex;
   justify-content: center;
-  width: 100%;
 
   iframe {
     margin: 0 auto;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
   }
 }
 
