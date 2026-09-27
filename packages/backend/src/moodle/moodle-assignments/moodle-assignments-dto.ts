@@ -121,6 +121,18 @@ export class SubmissionStatusDto {
   isLate?: boolean;
 }
 
+function parseBooleanQuery(value: unknown): unknown {
+  if (value === true || value === 'true') {
+    return true;
+  }
+
+  if (value === false || value === 'false') {
+    return false;
+  }
+
+  return value;
+}
+
 export class GetAssignmentsQueryDto {
   @ApiPropertyOptional({ enum: ['completed', 'not_completed'] })
   @IsOptional()
@@ -159,13 +171,7 @@ export class GetAssignmentsQueryDto {
     description: 'Include submission status and grade',
   })
   @IsOptional()
-  @Transform(({ value }) =>
-    value === true || value === 'true'
-      ? true
-      : value === false || value === 'false'
-        ? false
-        : value,
-  )
+  @Transform(({ value }) => parseBooleanQuery(value))
   @IsBoolean()
   includeStatus?: boolean;
 }

@@ -9,7 +9,7 @@ import { Button as UnaButton, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
 import { isLoggedIn } from '@core/auth';
 import type { StudentProfile } from '@core/types';
-import type { Grade, CourseModule } from '@uni-hub/types';
+import type { Grade, CourseModule, Assignment } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
 import { DashboardSkeleton, MobileBottomNav } from '@uni-hub/components/dashboard';
 import { BadgeSystem, GradeSimulator } from '@uni-hub/components/gamification';
@@ -188,6 +188,49 @@ function isUnauthorizedError(error: unknown): boolean {
   return error instanceof Error && error.message.includes('401');
 }
 
+function clearUserSessionStorage(): void {
+  try {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('moodleToken');
+    localStorage.removeItem('isDemo');
+    localStorage.removeItem('universe_dashboard_data');
+    localStorage.removeItem('universe_last_sync_time');
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function filterFallbackAssignments(
+  assignments: Assignment[] = [],
+  hideCompleted: boolean,
+  dateFrom?: string,
+  dateTo?: string,
+): Assignment[] {
+  let list = assignments;
+
+  if (hideCompleted) {
+    list = list.filter(
+      (assignment) =>
+        assignment.submissionStatus !== 'graded' && assignment.submissionStatus !== 'submitted',
+    );
+  }
+
+  const fromSec = parseDateFilterSeconds(dateFrom);
+
+  if (fromSec !== null) {
+    list = list.filter((assignment) => assignment.duedate > 0 && assignment.duedate >= fromSec);
+  }
+
+  const toSec = parseDateFilterSeconds(dateTo);
+
+  if (toSec !== null) {
+    list = list.filter((assignment) => assignment.duedate > 0 && assignment.duedate <= toSec);
+  }
+
+  return list;
+}
+
 const DashboardPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -299,17 +342,7 @@ const DashboardPage: React.FC = () => {
       }
 
       if (isUnauthorizedError(error)) {
-        try {
-          localStorage.removeItem('isLoggedIn');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('moodleToken');
-          localStorage.removeItem('isDemo');
-          localStorage.removeItem('universe_dashboard_data');
-          localStorage.removeItem('universe_last_sync_time');
-        } catch {
-          // Ignore storage errors
-        }
-
+        clearUserSessionStorage();
         toast.error('Сесія застаріла або недійсна. Будь ласка, увійдіть знову.');
         router.push('/login');
 
@@ -321,31 +354,12 @@ const DashboardPage: React.FC = () => {
       const cachedData = loadCachedDashboardData();
 
       if (cachedData) {
-        let fallbackAssignments = cachedData.assignments || [];
-
-        if (hideCompleted) {
-          fallbackAssignments = fallbackAssignments.filter(
-            (assignment) =>
-              assignment.submissionStatus !== 'graded' &&
-              assignment.submissionStatus !== 'submitted',
-          );
-        }
-
-        const fromSec = parseDateFilterSeconds(dateFrom);
-
-        if (fromSec !== null) {
-          fallbackAssignments = fallbackAssignments.filter(
-            (assignment) => assignment.duedate > 0 && assignment.duedate >= fromSec,
-          );
-        }
-
-        const toSec = parseDateFilterSeconds(dateTo);
-
-        if (toSec !== null) {
-          fallbackAssignments = fallbackAssignments.filter(
-            (assignment) => assignment.duedate > 0 && assignment.duedate <= toSec,
-          );
-        }
+        const fallbackAssignments = filterFallbackAssignments(
+          cachedData.assignments,
+          hideCompleted,
+          dateFrom,
+          dateTo,
+        );
 
         setData((previous) => ({
           ...previous,
@@ -424,17 +438,7 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   const handleLogout = () => {
-    try {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('moodleToken');
-      localStorage.removeItem('isDemo');
-      localStorage.removeItem('universe_dashboard_data');
-      localStorage.removeItem('universe_last_sync_time');
-    } catch {
-      // Ignore storage errors
-    }
-
+    clearUserSessionStorage();
     router.push('/login');
   };
 
