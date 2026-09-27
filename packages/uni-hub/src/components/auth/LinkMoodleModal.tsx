@@ -53,7 +53,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({ onClose, onSuc
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Прив'язка облікового запису Moodle" width={440}>
+    <Modal open={open} onClose={onClose} title="Прив'язка облікового запису Moodle" width={400}>
       <SimpleForm action={handleLink} className={styles.modalContent}>
         <p className={styles.description}>
           Щоб завантажити ваші курси, розклад та оцінки, введіть логін і пароль від Moodle. Це

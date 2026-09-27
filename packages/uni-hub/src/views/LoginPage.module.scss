@@ -74,6 +74,28 @@
   font-size: var(--font-sm);
 }
 
+.hintBox {
+  background: rgb(var(--text-primary-rgb, 0, 0, 0), 0.04);
+  border: 1px solid rgb(var(--text-primary-rgb, 0, 0, 0), 0.08);
+  border-radius: var(--border-radius-large, 16px);
+  padding: var(--space-16);
+  margin-bottom: var(--space-8);
+
+  p {
+    margin: 0;
+    font-size: var(--font-sm);
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+}
+
+.cardActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  margin-top: var(--space-8);
+}
+
 .submit {
   width: 100%;
 }

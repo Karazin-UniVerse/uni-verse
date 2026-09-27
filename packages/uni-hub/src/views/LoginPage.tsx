@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button, SimpleForm, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { authApi, getErrorMessage } from '@uni-hub/services/api';
-import { GoogleLoginButton, LinkMoodleModal, AuthField } from '@uni-hub/components/auth';
+import { GoogleLoginButton, AuthField } from '@uni-hub/components/auth';
 import { motion } from 'framer-motion';
 import styles from './LoginPage.module.scss';
 
@@ -14,8 +14,10 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [linkUsername, setLinkUsername] = useState('');
+  const [linkPassword, setLinkPassword] = useState('');
   const [error, setError] = useState('');
-  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [isLinkingMoodle, setIsLinkingMoodle] = useState(false);
   const router = useRouter();
   const toast = useToast();
 
@@ -30,7 +32,7 @@ const LoginPage: React.FC = () => {
         toast.success('Вхід успішно виконано');
         router.push('/');
       } else {
-        setShowLinkModal(true);
+        setIsLinkingMoodle(true);
       }
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Помилка входу через Google');
@@ -79,86 +81,180 @@ const LoginPage: React.FC = () => {
     }
   };
 
+  const handleLinkMoodle = async () => {
+    setError('');
+
+    if (!linkUsername.trim()) {
+      setError('Будь ласка, введіть логін або email у Moodle');
+
+      return;
+    }
+
+    if (!linkPassword) {
+      setError('Будь ласка, введіть пароль від Moodle');
+
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await authApi.linkMoodleAccount(linkUsername.trim(), linkPassword);
+
+      toast.success('Moodle-акаунт успішно прив’язано!');
+      toast.success('Вхід успішно виконано');
+      router.push('/');
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Помилка прив’язки акаунта. Перевірте логін та пароль.');
+
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelLink = () => {
+    setIsLinkingMoodle(false);
+    setLinkUsername('');
+    setLinkPassword('');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('isLoggedIn');
+    setError('Для завершення входу необхідно прив’язати акаунт Moodle');
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.themeBar}>
         <ThemeSwitcher compact />
       </div>
       <div className={styles.center}>
-        <SimpleForm className={styles.card} action={handleLogin}>
-          <div className={styles.brand}>
-            <h1>UNiHub</h1>
-            <p>Увійдіть у свій акаунт Moodle</p>
-          </div>
+        {isLinkingMoodle ? (
+          <SimpleForm className={styles.card} action={handleLinkMoodle}>
+            <div className={styles.brand}>
+              <h1>UNiHub</h1>
+              <p>Прив'язка акаунта Moodle</p>
+            </div>
 
-          {Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) && (
-            <>
-              <div className={styles.googleSection}>
-                <GoogleLoginButton
-                  onSuccess={handleGoogleSuccess}
-                  onError={(msg) => setError(msg)}
+            <div className={styles.hintBox}>
+              <p>
+                Щоб завантажити ваші курси, розклад та оцінки, введіть логін і пароль від Moodle. Це
+                необхідно зробити лише один раз — надалі вхід виконуватиметься через Google в один
+                клік.
+              </p>
+            </div>
+
+            <AuthField
+              id="link-moodle-username"
+              name="moodleUsername"
+              label="Логін або email у Moodle"
+              placeholder="Логін у Moodle"
+              value={linkUsername}
+              onChange={(e) => setLinkUsername(e.target.value)}
+              autoComplete="username"
+              icon={<User size={16} />}
+            />
+
+            <AuthField
+              id="link-moodle-password"
+              name="moodlePassword"
+              type="password"
+              label="Пароль у Moodle"
+              placeholder="Пароль"
+              value={linkPassword}
+              onChange={(e) => setLinkPassword(e.target.value)}
+              autoComplete="current-password"
+              icon={<Lock size={16} />}
+            />
+
+            {error && <p className={styles.error}>{error}</p>}
+
+            <div className={styles.cardActions}>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="large"
                   disabled={loading}
-                />
-              </div>
+                  className={styles.submit}
+                >
+                  {loading ? 'Прив’язка...' : 'Прив’язати Moodle'}
+                </Button>
+              </motion.div>
 
-              <div className={styles.divider}>
-                <span>або за допомогою логіна Moodle</span>
-              </div>
-            </>
-          )}
+              <Button
+                type="button"
+                variant="secondary"
+                size="large"
+                disabled={loading}
+                className={styles.submit}
+                onClick={handleCancelLink}
+              >
+                Повернутися до входу
+              </Button>
+            </div>
+          </SimpleForm>
+        ) : (
+          <SimpleForm className={styles.card} action={handleLogin}>
+            <div className={styles.brand}>
+              <h1>UNiHub</h1>
+              <p>Увійдіть у свій акаунт Moodle</p>
+            </div>
 
-          <AuthField
-            id="login-username"
-            name="username"
-            label="Ім’я користувача або email"
-            placeholder="Ім’я користувача або email"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            autoComplete="username"
-            icon={<User size={16} />}
-          />
+            {Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) && (
+              <>
+                <div className={styles.googleSection}>
+                  <GoogleLoginButton
+                    onSuccess={handleGoogleSuccess}
+                    onError={(msg) => setError(msg)}
+                    disabled={loading}
+                  />
+                </div>
 
-          <AuthField
-            id="login-password"
-            name="password"
-            type="password"
-            label="Пароль"
-            placeholder="Пароль"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            icon={<Lock size={16} />}
-          />
+                <div className={styles.divider}>
+                  <span>або за допомогою логіна Moodle</span>
+                </div>
+              </>
+            )}
 
-          {error && <p className={styles.error}>{error}</p>}
+            <AuthField
+              id="login-username"
+              name="username"
+              label="Ім’я користувача або email"
+              placeholder="Ім’я користувача або email"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
+              icon={<User size={16} />}
+            />
 
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button
-              type="submit"
-              variant="primary"
-              size="large"
-              disabled={loading}
-              className={styles.submit}
-            >
-              {loading ? 'Вхід...' : 'Увійти'}
-            </Button>
-          </motion.div>
-        </SimpleForm>
+            <AuthField
+              id="login-password"
+              name="password"
+              type="password"
+              label="Пароль"
+              placeholder="Пароль"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              icon={<Lock size={16} />}
+            />
 
-        <LinkMoodleModal
-          open={showLinkModal}
-          onClose={() => {
-            setShowLinkModal(false);
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('isLoggedIn');
-            setError('Для завершення входу необхідно прив’язати акаунт Moodle');
-          }}
-          onSuccess={() => {
-            setShowLinkModal(false);
-            toast.success('Вхід успішно виконано');
-            router.push('/');
-          }}
-        />
+            {error && <p className={styles.error}>{error}</p>}
+
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                type="submit"
+                variant="primary"
+                size="large"
+                disabled={loading}
+                className={styles.submit}
+              >
+                {loading ? 'Вхід...' : 'Увійти'}
+              </Button>
+            </motion.div>
+          </SimpleForm>
+        )}
       </div>
     </div>
   );
