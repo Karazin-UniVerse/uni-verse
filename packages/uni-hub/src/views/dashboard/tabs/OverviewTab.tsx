@@ -167,7 +167,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
           </div>
           <div className={styles.studentTags}>
-            <Tag tone="warning">Демо-дані</Tag>
             <Tag tone="success">Денна форма</Tag>
             <Tag tone="info">Бюджет</Tag>
             <Tag tone="success">
@@ -176,11 +175,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </Tag>
           </div>
         </div>
-
-        <p className={styles.muted} style={{ fontSize: 'var(--font-xs)', margin: 0 }}>
-          Академічні реквізити (номер студентського, залікової книжки, факультет) відображаються як
-          демонстраційні дані до підключення профільного API.
-        </p>
 
         <div className={styles.studentGrid}>
           <div className={styles.studentField}>
