@@ -200,6 +200,7 @@ export const mockEvents: MoodleEvent[] = [
     timestart: now + 86400 * 1,
     formattedtime: 'Завтра о 14:00',
     eventtype: 'due',
+    url: 'https://meet.google.com/abc-defg-hij',
   },
   {
     id: 302,

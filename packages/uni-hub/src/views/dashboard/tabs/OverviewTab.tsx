@@ -1,17 +1,47 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { GraduationCap, Award, BookOpen, FileEdit } from 'lucide-react';
+import {
+  GraduationCap,
+  Award,
+  BookOpen,
+  FileEdit,
+  ChevronRight,
+  Video,
+  ExternalLink,
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Tag, Empty, Button as SimpleButton } from '@una';
 import type { CurriculumItem } from '@core/types';
 import { AssignmentsDonut } from '@uni-hub/components/assignments';
+import { QuickActions, RecentGradesFeed } from '@uni-hub/components/dashboard';
 import { ContextualGreeting, LiveCountdown } from '@uni-hub/components/gamification';
 import { useCountUp } from '@uni-hub/hooks/useCountUp';
 import { useNow } from '@uni-hub/hooks/useNow';
+import type { MoodleEvent } from '@uni-hub/types';
 import type { OverviewTabProps } from '../types';
 import { mockKarazinCurriculum } from '../constants';
 import { stripHtml } from '../utils';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
+
+const MEETING_URL_REGEX =
+  /https?:\/\/[^\s"'<>]*(zoom\.us|meet\.google\.com|teams\.microsoft\.com|teams\.live\.com|bbb\.[^\s"'<>]+)[^\s"'<>]*/i;
+
+const extractMeetingUrl = (event: MoodleEvent): string | null => {
+  if (event.url && MEETING_URL_REGEX.test(event.url)) {
+    return event.url;
+  }
+
+  if (event.description) {
+    const match = event.description.match(MEETING_URL_REGEX);
+
+    if (match) {
+      return match[0];
+    }
+  }
+
+  return null;
+};
 
 export const OverviewTab: React.FC<OverviewTabProps> = ({
   courses,
@@ -23,6 +53,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   loading,
   onNavigate,
 }) => {
+  const router = useRouter();
   const coursesCount = useCountUp(statistics?.total || 0, 800, !loading);
   const assignmentsCount = useCountUp(assignments.length, 800, !loading);
 
@@ -44,24 +75,42 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     if (events.length > 0) {
       return (
         <div className={styles.list}>
-          {events.slice(0, 4).map((event, index) => (
-            <div
-              key={event.id}
-              className={styles.listItem}
-              style={{ animationDelay: `${index * 40}ms` }}
-            >
-              <div className={styles.listTitle}>
-                {event.url ? (
-                  <a href={event.url} target="_blank" rel="noopener noreferrer">
-                    {event.name}
-                  </a>
-                ) : (
-                  event.name
+          {events.slice(0, 4).map((event, index) => {
+            const meetingUrl = extractMeetingUrl(event);
+
+            return (
+              <div
+                key={event.id}
+                className={styles.listItem}
+                style={{ animationDelay: `${index * 40}ms` }}
+              >
+                <div className={styles.listTitle}>
+                  {event.url ? (
+                    <a href={event.url} target="_blank" rel="noopener noreferrer">
+                      {event.name}
+                    </a>
+                  ) : (
+                    event.name
+                  )}
+                </div>
+                <div className={styles.muted}>{stripHtml(event.formattedtime)}</div>
+                {meetingUrl && (
+                  <div>
+                    <a
+                      href={meetingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.joinMeetingBtn}
+                    >
+                      <Video size={14} />
+                      <span>Приєднатися до заняття</span>
+                      <ExternalLink size={12} />
+                    </a>
+                  </div>
                 )}
               </div>
-              <div className={styles.muted}>{stripHtml(event.formattedtime)}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       );
     }
@@ -72,8 +121,18 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           {assignments.slice(0, 4).map((assignment, index) => (
             <div
               key={assignment.id}
-              className={styles.listItem}
+              role="button"
+              tabIndex={0}
+              className={`${styles.listItem} ${styles.assignmentItemClickable}`}
+              onClick={() => onNavigate('assignments')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onNavigate('assignments');
+                }
+              }}
               style={{ animationDelay: `${index * 40}ms` }}
+              title={`Перейти до завдання: ${assignment.name}`}
             >
               <div className={styles.listTitle}>{assignment.name}</div>
               <div className={styles.muted}>
@@ -176,30 +235,79 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       </div>
 
       <div className={styles.statGrid}>
-        <div className={styles.statCard} style={{ animationDelay: '0ms' }}>
+        <div
+          role="button"
+          tabIndex={0}
+          className={`${styles.statCard} ${styles.statCardClickable}`}
+          onClick={() => onNavigate('courses')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onNavigate('courses');
+            }
+          }}
+          style={{ animationDelay: '0ms' }}
+          title="Перейти до списку курсів"
+        >
           <div className={styles.statLabel}>Всього дисциплін</div>
           <div className={styles.statValue}>
             <BookOpen size={20} />
             {coursesCount}
           </div>
+          <div className={styles.statHint}>Переглянути курси &rarr;</div>
         </div>
-        <div className={styles.statCard} style={{ animationDelay: '40ms' }}>
+
+        <div
+          role="button"
+          tabIndex={0}
+          className={`${styles.statCard} ${styles.statCardClickable}`}
+          onClick={() => onNavigate('assignments')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onNavigate('assignments');
+            }
+          }}
+          style={{ animationDelay: '40ms' }}
+          title="Перейти до списку завдань"
+        >
           <div className={styles.statLabel}>Завдань до виконання</div>
           <div className={styles.statValue}>
             <FileEdit size={20} />
             {assignmentsCount}
           </div>
+          <div className={styles.statHint}>Переглянути завдання &rarr;</div>
         </div>
-        <div className={styles.statCard} style={{ animationDelay: '80ms' }}>
+
+        <div
+          role="button"
+          tabIndex={0}
+          className={`${styles.statCard} ${styles.statCardClickable}`}
+          onClick={() => onNavigate('grades')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onNavigate('grades');
+            }
+          }}
+          style={{ animationDelay: '80ms' }}
+          title="Перейти до залікової книжки та оцінок"
+        >
           <div className={styles.statLabel}>Рейтинговий бал (GPA)</div>
           <div className={styles.statValue}>
             <GraduationCap size={20} />
             {activeStudentProfile.gpa}
           </div>
+          <div className={styles.statHint}>Залікова книжка &rarr;</div>
         </div>
       </div>
 
-      <AssignmentsDonut assignments={assignments} grades={grades} />
+      <QuickActions assignments={assignments} onNavigate={onNavigate} />
+
+      <div className={styles.gradesDonutGrid}>
+        <RecentGradesFeed assignments={assignments} onNavigate={onNavigate} />
+        <AssignmentsDonut assignments={assignments} grades={grades} />
+      </div>
 
       <div className={styles.split}>
         <section className={styles.panel}>
@@ -220,14 +328,29 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               {overviewCourses.map((course, index) => (
                 <div
                   key={course.id}
-                  className={styles.listItem}
+                  role="button"
+                  tabIndex={0}
+                  className={`${styles.listItem} ${styles.courseItemClickable}`}
+                  onClick={() => router.push(`/courses/${course.id}/contents`)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      router.push(`/courses/${course.id}/contents`);
+                    }
+                  }}
                   style={{ animationDelay: `${index * 40}ms` }}
+                  title={`Переглянути матеріали курсу: ${'fullname' in course ? course.fullname : (course as CurriculumItem).name}`}
                 >
-                  <div className={styles.listTitle}>
-                    {'fullname' in course ? course.fullname : (course as CurriculumItem).name}
+                  <div className={styles.courseItemMain}>
+                    <div className={styles.listTitle}>
+                      {'fullname' in course ? course.fullname : (course as CurriculumItem).name}
+                    </div>
+                    <div className={styles.muted}>
+                      {'shortname' in course ? course.shortname : (course as CurriculumItem).code}
+                    </div>
                   </div>
-                  <div className={styles.muted}>
-                    {'shortname' in course ? course.shortname : (course as CurriculumItem).code}
+                  <div className={styles.courseItemAction}>
+                    <ChevronRight size={16} />
                   </div>
                 </div>
               ))}

@@ -1,0 +1,152 @@
+.recentGradesPanel {
+  background: var(--bg-surface);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: var(--space-24);
+  box-shadow: var(--card-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h3 {
+    margin: 0;
+    font-size: var(--font-lg);
+    font-weight: var(--font-weight-bold);
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    color: var(--text-primary);
+  }
+}
+
+.headerIcon {
+  color: var(--accent-primary);
+}
+
+.feedList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.feedItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding: var(--space-12);
+  border-radius: var(--border-radius-medium);
+  background: var(--neutral-surface);
+  cursor: pointer;
+  animation: fadeUp var(--transition-medium) var(--ease-standard) both;
+  transition:
+    transform var(--transition-fast) var(--ease-standard),
+    box-shadow var(--transition-fast) var(--ease-standard),
+    background-color var(--transition-fast) var(--ease-standard);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-medium);
+    background: var(--accent-secondary);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+  }
+}
+
+.feedItemMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.feedItemTitle {
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-sm);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feedItemMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+
+.courseName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dotSeparator {
+  opacity: 0.5;
+}
+
+.feedItemScore {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-shrink: 0;
+}
+
+.scoreBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: var(--border-radius-full);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-sm);
+  letter-spacing: 0.02em;
+}
+
+.toneSuccess {
+  background: rgb(34 197 94 / 15%);
+  color: #16a34a;
+}
+
+.toneInfo {
+  background: rgb(59 130 246 / 15%);
+  color: #2563eb;
+}
+
+.toneWarning {
+  background: rgb(234 179 8 / 15%);
+  color: #ca8a04;
+}
+
+.toneDanger {
+  background: rgb(239 68 68 / 15%);
+  color: #dc2626;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

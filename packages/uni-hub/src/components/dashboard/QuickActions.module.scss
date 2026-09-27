@@ -1,0 +1,189 @@
+@use '@universe/ui/breakpoints.scss' as *;
+
+.quickActionsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.quickActionsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h3 {
+    margin: 0;
+    font-size: var(--font-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+  }
+}
+
+.actionsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-16);
+
+  @include narrower-than('lg') {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include narrower-than('sm') {
+    grid-template-columns: 1fr;
+    gap: var(--space-12);
+  }
+}
+
+.actionCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: var(--space-16);
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--card-shadow);
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform var(--transition-fast) var(--ease-standard),
+    box-shadow var(--transition-fast) var(--ease-standard),
+    border-color var(--transition-fast) var(--ease-standard),
+    background-color var(--transition-fast) var(--ease-standard);
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--card-shadow-hover);
+    border-color: var(--accent-primary);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+  }
+}
+
+.iconWrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--border-radius-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform var(--transition-fast) var(--ease-standard);
+
+  .actionCard:hover & {
+    transform: scale(1.08);
+  }
+}
+
+.iconMoodle {
+  background: rgb(249 115 22 / 12%);
+  color: #f97316;
+}
+
+.iconAssignments {
+  background: rgb(59 130 246 / 12%);
+  color: #3b82f6;
+}
+
+.iconSchedule {
+  background: rgb(168 85 247 / 12%);
+  color: #a855f7;
+}
+
+.iconSimulator {
+  background: rgb(34 197 94 / 12%);
+  color: #22c55e;
+}
+
+.actionBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  flex: 1;
+}
+
+.actionTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.actionTitle {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-sm);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.actionDescription {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--border-radius-full);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.badgeAlert {
+  background: var(--error-color);
+  color: #fff;
+  animation: pulseBadge 2s infinite;
+}
+
+.badgeInfo {
+  background: var(--accent-secondary);
+  color: var(--accent-primary);
+}
+
+.externalIcon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  margin-left: auto;
+  opacity: 0.6;
+  transition:
+    opacity var(--transition-fast) var(--ease-standard),
+    transform var(--transition-fast) var(--ease-standard);
+
+  .actionCard:hover & {
+    opacity: 1;
+    transform: translate(2px, -2px);
+  }
+}
+
+@keyframes pulseBadge {
+  0% {
+    box-shadow: 0 0 0 0 rgb(239 68 68 / 50%);
+  }
+
+  70% {
+    box-shadow: 0 0 0 5px rgb(239 68 68 / 0%);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgb(239 68 68 / 0%);
+  }
+}

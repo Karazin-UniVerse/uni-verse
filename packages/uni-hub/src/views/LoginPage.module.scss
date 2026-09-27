@@ -85,6 +85,12 @@
 
   input {
     padding-left: 40px;
+    padding-right: 40px;
+
+    &::-ms-reveal,
+    &::-ms-clear {
+      display: none;
+    }
   }
 }
 
@@ -95,6 +101,32 @@
   transform: translateY(-50%);
   color: var(--text-secondary);
   pointer-events: none;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast) var(--ease-standard);
+
+  &:hover {
+    color: var(--text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+    border-radius: var(--border-radius-small, 4px);
+  }
 }
 
 .error {
