@@ -61,6 +61,30 @@ describe('MoodleAssignmentsController', () => {
       expect(errors.length).toBe(0);
     });
 
+    it('should transform includeStatus=false and includeStatus=0 to boolean false', async () => {
+      const dtoFalse = plainToInstance(GetAssignmentsQueryDto, {
+        includeStatus: 'false',
+      });
+
+      expect(typeof dtoFalse.includeStatus).toBe('boolean');
+      expect(dtoFalse.includeStatus).toBe(false);
+
+      const errorsFalse = await validate(dtoFalse);
+
+      expect(errorsFalse.length).toBe(0);
+
+      const dtoZero = plainToInstance(GetAssignmentsQueryDto, {
+        includeStatus: '0',
+      });
+
+      expect(typeof dtoZero.includeStatus).toBe('boolean');
+      expect(dtoZero.includeStatus).toBe(false);
+
+      const errorsZero = await validate(dtoZero);
+
+      expect(errorsZero.length).toBe(0);
+    });
+
     it('should validate AssignmentItemDto and SaveSubmissionDto', async () => {
       const item = plainToInstance(AssignmentItemDto, {
         id: 1,

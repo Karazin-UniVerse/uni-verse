@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class SaveSubmissionDto {
   @ApiPropertyOptional({
@@ -125,7 +125,13 @@ export class GetAssignmentsQueryDto {
     description: 'Include submission status and grade',
   })
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ value }) => {
+    if (value === undefined || value === null) {
+      return undefined;
+    }
+
+    return value === 'true' || value === true || value === 1 || value === '1';
+  })
   @IsBoolean()
   includeStatus?: boolean;
 }
