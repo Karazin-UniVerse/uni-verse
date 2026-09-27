@@ -171,9 +171,10 @@ export const Modal: React.FC<ModalProps> = ({
           )}
           <button
             type="button"
-            className={styles.closeBtn ?? ''}
+            className={styles.closeBtn}
             onClick={onClose}
             aria-label="Закрити"
+            title="Закрити"
           >
             <X size={18} />
           </button>
