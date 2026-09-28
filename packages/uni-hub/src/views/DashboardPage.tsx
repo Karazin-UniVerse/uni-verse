@@ -202,12 +202,12 @@ function clearUserSessionStorage(): void {
 }
 
 function filterFallbackAssignments(
-  assignments: Assignment[] = [],
+  assignments: Assignment[] | undefined,
   hideCompleted: boolean,
   dateFrom?: string,
   dateTo?: string,
 ): Assignment[] {
-  let list = assignments;
+  let list = assignments ?? [];
 
   if (hideCompleted) {
     list = list.filter(
