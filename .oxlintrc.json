@@ -16,6 +16,12 @@
       }
     ],
     "eqeqeq": "error",
+    "no-duplicate-imports": [
+      "error",
+      {
+        "includeExports": true
+      }
+    ],
     "import/no-duplicates": "error",
     "import/no-cycle": "error",
     "react/jsx-key": "error",
@@ -35,13 +41,7 @@
     "universe/una-primitive-purity": "error",
     "universe/nestjs-controller-no-prisma": "error",
     "universe/no-empty-catch-in-services": "error",
-    "universe/core-package-isolation": "error",
-    "no-duplicate-imports": [
-      "error",
-      {
-        "includeExports": true
-      }
-    ]
+    "universe/core-package-isolation": "error"
   },
   "overrides": [
     {

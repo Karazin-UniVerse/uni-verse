@@ -41,9 +41,9 @@ Enforces strict architectural separation across the monorepo via `no-restricted-
 - **`packages/backend`**: Cannot import frontend packages or React libraries (`react`, `react-dom`, `next`, `@uni-hub/**`, `@universe/ui/**`).
 - **`packages/core`**: Pure domain package. Framework-specific dependencies (`@nestjs/**`, `react`, `next`, `express`, `zustand`, database packages) are prohibited.
 
-### Situation 5: Duplicate Imports & Re-exports (`import/no-duplicates`)
+### Situation 5: Duplicate Imports & Re-exports (`no-duplicate-imports` + `import/no-duplicates`)
 
-Detects redundant duplicate module imports and re-exports using native `import/no-duplicates` with `{ "includeExports": true }`.
+Detects redundant duplicate module imports and re-exports using native `no-duplicate-imports` with `{ "includeExports": true }` alongside `import/no-duplicates`.
 
 ### Situation 6: Unused Imports & Exports (`no-unused-vars` + `import/no-unused-modules`)
 
