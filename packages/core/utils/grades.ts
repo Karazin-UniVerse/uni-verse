@@ -1,4 +1,5 @@
 import {
+  CONTROL_TYPES,
   GRADES_THRESHOLD,
   MAX_EXAM,
   MAX_SEMESTER_CREDIT,
@@ -6,6 +7,7 @@ import {
   MIN_EXAM_ADMISSION,
   MIN_EXAM_PASS,
   MIN_PASSING_SCORE,
+  TRADITIONAL_GRADES,
 } from '../constants/grades.ts';
 
 import type {
@@ -77,25 +79,27 @@ export function calculateEctsGrade(score: number): EctsGrade {
  */
 export function calculateTraditionalGrade(
   score: number,
-  controlType: ControlType = 'exam',
+  controlType: ControlType = CONTROL_TYPES.EXAM,
 ): TraditionalGrade {
-  if (controlType === 'credit') {
-    return score >= GRADES_THRESHOLD.SATISFACTORY ? 'зараховано' : 'не зараховано';
+  if (controlType === CONTROL_TYPES.CREDIT) {
+    return score >= GRADES_THRESHOLD.SATISFACTORY
+      ? TRADITIONAL_GRADES.PASSED
+      : TRADITIONAL_GRADES.FAILED;
   }
 
   if (score >= GRADES_THRESHOLD.EXCELLENT) {
-    return 'відмінно';
+    return TRADITIONAL_GRADES.EXCELLENT;
   }
 
   if (score >= GRADES_THRESHOLD.GOOD) {
-    return 'добре';
+    return TRADITIONAL_GRADES.GOOD;
   }
 
   if (score >= GRADES_THRESHOLD.SATISFACTORY) {
-    return 'задовільно';
+    return TRADITIONAL_GRADES.SATISFACTORY;
   }
 
-  return 'незадовільно';
+  return TRADITIONAL_GRADES.UNSATISFACTORY;
 }
 
 /**
@@ -137,7 +141,7 @@ export function calculateAccumulatedGrade(
     return {
       totalScore: semesterScore,
       ectsGrade: calculateEctsGrade(semesterScore),
-      traditionalGrade: 'незадовільно',
+      traditionalGrade: TRADITIONAL_GRADES.UNSATISFACTORY,
       isAdmittedToExam: false,
       isExamPassed: false,
       isCoursePassed: false,
@@ -149,7 +153,7 @@ export function calculateAccumulatedGrade(
     return {
       totalScore: semesterScore,
       ectsGrade: calculateEctsGrade(semesterScore),
-      traditionalGrade: 'незадовільно',
+      traditionalGrade: TRADITIONAL_GRADES.UNSATISFACTORY,
       isAdmittedToExam: true,
       isExamPassed: false,
       isCoursePassed: false,

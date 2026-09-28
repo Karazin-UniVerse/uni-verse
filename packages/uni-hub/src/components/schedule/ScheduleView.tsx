@@ -161,8 +161,8 @@ const getTypeTone = (type: string): 'info' | 'warning' | 'success' | 'danger' | 
 
 export const ScheduleView: React.FC = () => {
   const isMobile = useMediaQuery('less', BREAKPOINTS.md);
-  const { language, formatMessage } = useLanguage();
-  const locale = language === 'en' ? 'en-US' : 'uk-UA';
+  const { localeTag, formatMessage } = useLanguage();
+  const locale = localeTag;
 
   const [selectedViewMode, setSelectedViewMode] = useState<'month' | 'week' | 'day' | null>(null);
   const viewMode = selectedViewMode ?? (isMobile ? 'day' : 'month');

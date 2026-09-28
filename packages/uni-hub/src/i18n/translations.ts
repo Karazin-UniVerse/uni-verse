@@ -10,4 +10,13 @@ export const TRANSLATIONS = {
 
 export type TranslationKey = keyof typeof TRANSLATIONS.uk;
 
+export const LOCALE_TAGS: Record<AppLanguage, string> = {
+  uk: 'uk-UA',
+  en: 'en-US',
+} as const;
+
+export function getLocaleTag(language: AppLanguage): string {
+  return LOCALE_TAGS[language] ?? LOCALE_TAGS.uk;
+}
+
 export { uk, en };

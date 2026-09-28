@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
-import { LanguageProvider, useLanguage } from './LanguageContext';
+import { LanguageProvider, useLanguage, getLocaleTag, LOCALE_TAGS } from './LanguageContext';
 import { TRANSLATIONS, uk, en } from './translations';
 import { LanguageSwitcher } from '../components/common/LanguageSwitcher';
 import { ThemeSwitcher } from '../theme/ThemeSwitcher';
@@ -73,5 +73,26 @@ describe('LanguageContext and translations', () => {
     const html = renderToString(React.createElement(Consumer));
 
     expect(html).toContain('missing.key');
+  });
+
+  it('maps language codes to BCP 47 locale tags', () => {
+    expect(getLocaleTag('uk')).toBe('uk-UA');
+    expect(getLocaleTag('en')).toBe('en-US');
+    expect(LOCALE_TAGS.uk).toBe('uk-UA');
+    expect(LOCALE_TAGS.en).toBe('en-US');
+    expect(getLocaleTag('unknown' as any)).toBe('uk-UA');
+  });
+
+  it('exposes localeTag in LanguageContext', () => {
+    const Consumer = () => {
+      const { localeTag } = useLanguage();
+
+      return React.createElement('span', { id: 'locale' }, localeTag);
+    };
+
+    const tree = React.createElement(LanguageProvider, null, React.createElement(Consumer));
+    const html = renderToString(tree);
+
+    expect(html).toContain('uk-UA');
   });
 });

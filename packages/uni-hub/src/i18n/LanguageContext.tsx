@@ -8,12 +8,21 @@ import React, {
   useMemo,
   useSyncExternalStore,
 } from 'react';
-import { TRANSLATIONS, type AppLanguage, type TranslationKey } from './translations';
+import {
+  TRANSLATIONS,
+  type AppLanguage,
+  type TranslationKey,
+  LOCALE_TAGS,
+  getLocaleTag,
+} from './translations';
+
+export { LOCALE_TAGS, getLocaleTag };
 
 const STORAGE_KEY = 'universe-lang';
 
 type LanguageContextValue = {
   language: AppLanguage;
+  localeTag: string;
   setLanguage: (lang: AppLanguage) => void;
   formatMessage: (key: TranslationKey) => string;
 };
@@ -107,6 +116,7 @@ export const LanguageProvider: React.FC<Readonly<{ children: React.ReactNode }>>
   const value = useMemo(
     () => ({
       language,
+      localeTag: getLocaleTag(language),
       setLanguage,
       formatMessage,
     }),
@@ -118,6 +128,7 @@ export const LanguageProvider: React.FC<Readonly<{ children: React.ReactNode }>>
 
 const DEFAULT_CONTEXT: LanguageContextValue = {
   language: 'uk',
+  localeTag: 'uk-UA',
   setLanguage: () => {},
   formatMessage: (key: TranslationKey): string => TRANSLATIONS.uk[key] || key,
 };

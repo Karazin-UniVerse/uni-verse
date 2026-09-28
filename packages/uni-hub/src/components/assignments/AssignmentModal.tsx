@@ -23,13 +23,6 @@ function stripHtml(html: string): string {
   return (doc.body.textContent ?? '').trim();
 }
 
-export const ASSIGNMENT_STATUS_LABELS: Record<string, string> = {
-  submitted: 'Здано на перевірку',
-  graded: 'Оцінено',
-  new: 'Немає спроби',
-  draft: 'Чернетка',
-};
-
 export const getAssignmentStatusLabel = (
   status: string,
   formatMessage: (key: TranslationKey) => string,

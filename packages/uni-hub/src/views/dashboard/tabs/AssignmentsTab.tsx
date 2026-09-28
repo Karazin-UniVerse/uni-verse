@@ -32,7 +32,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   soundEnabled,
   onOpenAssignment,
 }) => {
-  const { language, formatMessage } = useLanguage();
+  const { localeTag, formatMessage } = useLanguage();
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const handleDateChange =
@@ -73,7 +73,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
       <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
         <SimpleInput
           type="date"
-          lang={language === 'en' ? 'en-US' : 'uk-UA'}
+          lang={localeTag}
           size="medium"
           min="2000-01-01"
           max="2099-12-31"
@@ -83,7 +83,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         />
         <SimpleInput
           type="date"
-          lang={language === 'en' ? 'en-US' : 'uk-UA'}
+          lang={localeTag}
           size="medium"
           min="2000-01-01"
           max="2099-12-31"
@@ -134,9 +134,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
                     <>
                       <Tag tone="warning">
                         {formatMessage('assignments.deadline')}:{' '}
-                        {new Date(item.duedate * 1000).toLocaleDateString(
-                          language === 'en' ? 'en-US' : 'uk-UA',
-                        )}
+                        {new Date(item.duedate * 1000).toLocaleDateString(localeTag)}
                       </Tag>
                       <LiveCountdown targetUnixSec={item.duedate} />
                     </>

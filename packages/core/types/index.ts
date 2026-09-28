@@ -4,15 +4,19 @@
  * for the Karazin UniVerse platform (UniHub, NestJS Gateway, Moodle LMS).
  */
 
+import type {
+  ControlType as CoreControlType,
+  TraditionalGrade as CoreTraditionalGrade,
+} from '../constants/grades.ts';
+
 /** ECTS Grade scale (European Credit Transfer and Accumulation System) */
 export type EctsGrade = 'A' | 'B' | 'C' | 'D' | 'E' | 'Fx' | 'F';
 
-/** Traditional Ukrainian national grading scale */
-export type TraditionalGrade =
-  'відмінно' | 'добре' | 'задовільно' | 'незадовільно' | 'зараховано' | 'не зараховано';
+/** Traditional Ukrainian national grading scale: 'відмінно' | 'добре' | 'задовільно' | 'незадовільно' | 'зараховано' | 'не зараховано' */
+export type TraditionalGrade = CoreTraditionalGrade;
 
-/** Final control types in higher education curriculum */
-export type ControlType = 'exam' | 'credit' | 'differentiated_credit';
+/** Final control types in higher education curriculum: 'exam' | 'credit' | 'differentiated_credit' */
+export type ControlType = CoreControlType;
 
 /**
  * Input parameters for accumulated grade evaluation

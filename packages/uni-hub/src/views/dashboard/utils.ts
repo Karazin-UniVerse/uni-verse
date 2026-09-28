@@ -1,57 +1,40 @@
+import { CONTROL_TYPES, TRADITIONAL_GRADES } from '@core/constants/grades';
 import type { ControlType } from '@core/utils/grades';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { getGradeRawValue } from '@uni-hub/utils/grades';
 
+const CONTROL_TYPE_KEYS: Record<ControlType, TranslationKey> = {
+  [CONTROL_TYPES.EXAM]: 'control.exam',
+  [CONTROL_TYPES.CREDIT]: 'control.credit',
+  [CONTROL_TYPES.DIFFERENTIATED_CREDIT]: 'control.diffCredit',
+};
+
 export function getControlTypeLabel(
   controlType: ControlType,
-  formatMessage?: (key: TranslationKey) => string,
+  formatMessage: (key: TranslationKey) => string,
 ): string {
-  if (formatMessage) {
-    switch (controlType) {
-      case 'exam':
-        return formatMessage('control.exam');
-      case 'credit':
-        return formatMessage('control.credit');
-      case 'differentiated_credit':
-        return formatMessage('control.diffCredit');
-      default:
-        return formatMessage('control.exam');
-    }
-  }
+  const key = CONTROL_TYPE_KEYS[controlType] ?? 'control.exam';
 
-  switch (controlType) {
-    case 'exam':
-      return 'Іспит';
-    case 'credit':
-      return 'Залік';
-    case 'differentiated_credit':
-      return 'Диф. залік';
-    default:
-      return 'Іспит';
-  }
+  return formatMessage(key);
 }
+
+const TRADITIONAL_GRADE_KEYS: Record<string, TranslationKey> = {
+  [TRADITIONAL_GRADES.EXCELLENT]: 'grades.excellent',
+  [TRADITIONAL_GRADES.GOOD]: 'grades.good',
+  [TRADITIONAL_GRADES.SATISFACTORY]: 'grades.satisfactory',
+  [TRADITIONAL_GRADES.UNSATISFACTORY]: 'grades.unsatisfactory',
+  [TRADITIONAL_GRADES.PASSED]: 'grades.passed',
+  [TRADITIONAL_GRADES.FAILED]: 'grades.failed',
+};
 
 export function getTraditionalGradeLabel(
   grade: string,
   formatMessage?: (key: TranslationKey) => string,
 ): string {
-  if (formatMessage) {
-    switch (grade) {
-      case 'відмінно':
-        return formatMessage('grades.excellent');
-      case 'добре':
-        return formatMessage('grades.good');
-      case 'задовільно':
-        return formatMessage('grades.satisfactory');
-      case 'незадовільно':
-        return formatMessage('grades.unsatisfactory');
-      case 'зараховано':
-        return formatMessage('grades.passed');
-      case 'не зараховано':
-        return formatMessage('grades.failed');
-      default:
-        return grade;
-    }
+  const translationKey = TRADITIONAL_GRADE_KEYS[grade];
+
+  if (translationKey && formatMessage) {
+    return formatMessage(translationKey);
   }
 
   return grade;
@@ -87,6 +70,10 @@ export function stripHtml(html?: string | null): string {
 }
 
 export function parseGradeScore(gradeItem: unknown): number {
+  if (typeof gradeItem === 'number' && !Number.isNaN(gradeItem)) {
+    return Math.min(100, Math.max(0, Math.round(gradeItem)));
+  }
+
   const item = gradeItem as
     | (Parameters<typeof getGradeRawValue>[0] & {
         grade?: unknown;

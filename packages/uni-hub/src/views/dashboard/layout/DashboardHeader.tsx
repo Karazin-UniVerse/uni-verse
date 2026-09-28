@@ -22,7 +22,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   unreadCount,
   activeStudentProfile,
 }) => {
-  const { language, formatMessage } = useLanguage();
+  const { localeTag, formatMessage } = useLanguage();
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -133,9 +133,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                           {message.length > 100 ? `${message.substring(0, 100)}...` : message}
                         </div>
                         <div className={styles.notifTime}>
-                          {new Date(item.timecreated * 1000).toLocaleString(
-                            language === 'en' ? 'en-US' : 'uk-UA',
-                          )}
+                          {new Date(item.timecreated * 1000).toLocaleString(localeTag)}
                         </div>
                       </div>
                     );
