@@ -2,7 +2,7 @@
 
 This directory contains configuration and plugins for **Oxlint** — the sole linter for the UniVerse monorepo.
 
-> **Note**: ESLint is not used. The previously present `.eslintrc.cjs` has been removed (Phase 2 cleanup). All linting goes through Oxlint with the custom `universe-rules.mjs` plugin.
+> **Note**: ESLint is not used. The previously present `.eslintrc.cjs` has been removed (Phase 2 cleanup). All linting goes through Oxlint with the custom `universe-rules.mjs` plugin, while code formatting (line wrapping, EOF newline, quotes) is delegated to Prettier.
 
 ## 1. Overview
 
@@ -11,6 +11,7 @@ Oxlint runs in CLI and Git pre-commit hooks via **Husky** and **lint-staged**.
 - **Root Config**: [`.oxlintrc.json`](../../.oxlintrc.json)
 - **Plugin Implementation**: [`configs/oxlint/plugins/universe-rules.mjs`](./plugins/universe-rules.mjs)
 - **Pre-commit Hook**: [`lint-staged.config.cjs`](../../lint-staged.config.cjs)
+- **Prettier Config**: [`prettier.config.js`](../../prettier.config.js)
 
 ---
 
@@ -45,24 +46,22 @@ Enforces strict architectural separation across the monorepo via `no-restricted-
 
 Detects redundant duplicate module imports and re-exports using native `no-duplicate-imports` with `{ "includeExports": true }` alongside `import/no-duplicates`.
 
-### Situation 6: Unused Imports & Exports (`no-unused-vars` + `import/no-unused-modules`)
+### Situation 6: Unused Variables & Imports (`no-unused-vars`)
 
-- `no-unused-vars` (`"warn"`) — flags imported identifiers never referenced in the module.
-- `import/no-unused-modules` (`"error"`, `unusedExports: true`) — flags exported symbols never consumed outside the module.
+- `no-unused-vars` (`"warn"`) — flags imported identifiers and variables never referenced in the module.
 
-### Situation 7: End of File Newline (`eol-last`)
+### Situation 7: End of File Newline (Prettier)
 
-Native Oxlint rule. Enforces that every file ends with a trailing newline character.
+Enforced via **Prettier** across all supported files to ensure every file ends with a trailing newline character.
 
-- **Autofix (`--fix`)**: Automatically appends the newline if missing.
-- Level: `error`.
+- **Autoformat**: Automatically formatted during commit via `lint-staged` (`prettier --write`) and verifiable across the repository via `pnpm run format:check`.
 
-### Situation 8: Maximum Line Length (`max-len`)
+### Situation 8: Line Length & Code Wrapping (Prettier `printWidth: 100`)
 
-Native Oxlint rule. Enforces maximum line length of 120 characters (`code: 120`).
-Exemptions handled automatically in Rust: URLs (`ignoreUrls`), string literals (`ignoreStrings`), comments (`ignoreComments`), template literals (`ignoreTemplateLiterals`), and RegExp literals (`ignoreRegExpLiterals`).
+Formatting and line wrapping conventions are delegated to **Prettier** rather than hard linter failures, configured with `printWidth: 100` in [`prettier.config.js`](../../prettier.config.js).
 
-- Level: `error`.
+- Prettier intelligently wraps long expressions, multi-line arguments, JSX attributes, and object literals while naturally accommodating unbroken URLs, long string literals, and RegExp patterns.
+- **Autoformat**: Enforced automatically during commit via `lint-staged` (`prettier --write`) and verifiable via `pnpm run format:check`.
 
 ### Situation 9: Hydration Warning Suppression (`universe/no-suppress-hydration-without-comment`)
 
