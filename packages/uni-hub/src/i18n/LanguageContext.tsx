@@ -8,15 +8,9 @@ import React, {
   useMemo,
   useSyncExternalStore,
 } from 'react';
-import {
-  TRANSLATIONS,
-  type AppLanguage,
-  type TranslationKey,
-  LOCALE_TAGS,
-  getLocaleTag,
-} from './translations';
+import { TRANSLATIONS, type AppLanguage, type TranslationKey, getLocaleTag } from './translations';
 
-export { LOCALE_TAGS, getLocaleTag };
+export { LOCALE_TAGS, getLocaleTag } from './translations';
 
 const STORAGE_KEY = 'universe-lang';
 
