@@ -41,8 +41,13 @@
   justify-content: space-between;
   gap: var(--space-16);
   padding: var(--space-12);
+  border: none;
   border-radius: var(--border-radius-medium);
   background: var(--neutral-surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  width: 100%;
   cursor: pointer;
   animation: fadeUp var(--transition-medium) var(--ease-standard) both;
   transition:

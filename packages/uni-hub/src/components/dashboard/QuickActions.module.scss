@@ -45,6 +45,9 @@
   cursor: pointer;
   text-decoration: none;
   color: inherit;
+  font: inherit;
+  text-align: left;
+  width: 100%;
   box-shadow: var(--card-shadow);
   position: relative;
   overflow: hidden;
@@ -150,7 +153,7 @@
 
 .badgeAlert {
   background: var(--error-color);
-  color: #fff;
+  color: var(--accent-text-on-primary, #fff);
   animation: pulseBadge 2s infinite;
 }
 

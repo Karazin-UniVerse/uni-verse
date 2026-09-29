@@ -59,8 +59,12 @@ export class MoodleAssignmentsService {
       if (includeStatus && assignments.length > 0) {
         const chunkSize = 5;
 
-        for (let i = 0; i < assignments.length; i += chunkSize) {
-          const chunk = assignments.slice(i, i + chunkSize);
+        const executeChunks = async (startIndex: number): Promise<void> => {
+          if (startIndex >= assignments.length) {
+            return;
+          }
+
+          const chunk = assignments.slice(startIndex, startIndex + chunkSize);
 
           await Promise.allSettled(
             chunk.map(async (assign) => {
@@ -85,7 +89,11 @@ export class MoodleAssignmentsService {
               }
             }),
           );
-        }
+
+          await executeChunks(startIndex + chunkSize);
+        };
+
+        await executeChunks(0);
       }
 
       return assignments;

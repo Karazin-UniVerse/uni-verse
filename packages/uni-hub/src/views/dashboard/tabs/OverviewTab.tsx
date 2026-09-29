@@ -26,7 +26,7 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 const MEETING_URL_REGEX =
-  /https?:\/\/[^\s"'<>]*(zoom\.us|meet\.google\.com|teams\.microsoft\.com|teams\.live\.com|bbb\.[^\s"'<>]+)[^\s"'<>]*/i;
+  /https?:\/\/(?:[a-z0-9-]+\.)*(?:zoom\.us|meet\.google\.com|teams\.microsoft\.com|teams\.live\.com|bbb\.[a-z0-9.-]+)[^\s"'<>()]*/i;
 
 const extractMeetingUrl = (event: MoodleEvent): string | null => {
   if (event.url && MEETING_URL_REGEX.test(event.url)) {
@@ -34,7 +34,7 @@ const extractMeetingUrl = (event: MoodleEvent): string | null => {
   }
 
   if (event.description) {
-    const match = event.description.match(MEETING_URL_REGEX);
+    const match = MEETING_URL_REGEX.exec(event.description);
 
     if (match) {
       return match[0].replace(/[),.;]+$/, '');
@@ -121,18 +121,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       return (
         <div className={styles.list}>
           {assignments.slice(0, 4).map((assignment, index) => (
-            <div
+            <button
               key={assignment.id}
-              role="button"
-              tabIndex={0}
+              type="button"
               className={`${styles.listItem} ${styles.assignmentItemClickable}`}
               onClick={() => onNavigate('assignments')}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onNavigate('assignments');
-                }
-              }}
               style={{ animationDelay: `${index * 40}ms` }}
               title={`Перейти до завдання: ${assignment.name}`}
             >
@@ -143,7 +136,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   ? `Дедлайн: ${new Date(assignment.duedate * 1000).toLocaleDateString('uk-UA')}`
                   : 'Без терміну'}
               </div>
-            </div>
+            </button>
           ))}
         </div>
       );
@@ -231,17 +224,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       </div>
 
       <div className={styles.statGrid}>
-        <div
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           className={`${styles.statCard} ${styles.statCardClickable}`}
           onClick={() => onNavigate('courses')}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onNavigate('courses');
-            }
-          }}
           style={{ animationDelay: '0ms' }}
           title="Перейти до списку курсів"
         >
@@ -251,19 +237,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             {coursesCount}
           </div>
           <div className={styles.statHint}>Переглянути курси &rarr;</div>
-        </div>
+        </button>
 
-        <div
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           className={`${styles.statCard} ${styles.statCardClickable}`}
           onClick={() => onNavigate('assignments')}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onNavigate('assignments');
-            }
-          }}
           style={{ animationDelay: '40ms' }}
           title="Перейти до списку завдань"
         >
@@ -273,19 +252,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             {assignmentsCount}
           </div>
           <div className={styles.statHint}>Переглянути завдання &rarr;</div>
-        </div>
+        </button>
 
-        <div
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           className={`${styles.statCard} ${styles.statCardClickable}`}
           onClick={() => onNavigate('grades')}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onNavigate('grades');
-            }
-          }}
           style={{ animationDelay: '80ms' }}
           title="Перейти до залікової книжки та оцінок"
         >
@@ -295,7 +267,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             {activeStudentProfile.gpa}
           </div>
           <div className={styles.statHint}>Залікова книжка &rarr;</div>
-        </div>
+        </button>
       </div>
 
       <QuickActions assignments={assignments} onNavigate={onNavigate} />
@@ -322,18 +294,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           {overviewCourses.length > 0 ? (
             <div className={styles.list}>
               {overviewCourses.map((course, index) => (
-                <div
+                <button
                   key={course.id}
-                  role="button"
-                  tabIndex={0}
+                  type="button"
                   className={`${styles.listItem} ${styles.courseItemClickable}`}
                   onClick={() => router.push(`/courses/${course.id}/contents`)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      router.push(`/courses/${course.id}/contents`);
-                    }
-                  }}
                   style={{ animationDelay: `${index * 40}ms` }}
                   title={`Переглянути матеріали курсу: ${'fullname' in course ? course.fullname : (course as CurriculumItem).name}`}
                 >
@@ -348,7 +313,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   <div className={styles.courseItemAction}>
                     <ChevronRight size={16} />
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           ) : (

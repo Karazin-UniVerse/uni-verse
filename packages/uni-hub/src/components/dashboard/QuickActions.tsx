@@ -25,13 +25,6 @@ export function calculatePendingAssignmentsCount(assignments: Assignment[]): num
 export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavigate }) => {
   const pendingCount = useMemo(() => calculatePendingAssignmentsCount(assignments), [assignments]);
 
-  const handleCardKeyDown = (key: NavKey) => (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onNavigate(key);
-    }
-  };
-
   return (
     <section className={styles.quickActionsContainer} aria-label="Швидкі дії">
       <div className={styles.quickActionsHeader}>
@@ -59,12 +52,10 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
           <ExternalLink size={16} className={styles.externalIcon} />
         </a>
 
-        <div
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           className={styles.actionCard}
           onClick={() => onNavigate('assignments')}
-          onKeyDown={handleCardKeyDown('assignments')}
           title="Перейти до списку завдань та дедлайнів"
         >
           <div className={`${styles.iconWrapper} ${styles.iconAssignments}`}>
@@ -81,14 +72,12 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
               {pendingCount > 0 ? `${pendingCount} до виконання` : 'Всі завдання здано'}
             </span>
           </div>
-        </div>
+        </button>
 
-        <div
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           className={styles.actionCard}
           onClick={() => onNavigate('schedule')}
-          onKeyDown={handleCardKeyDown('schedule')}
           title="Перейти до розкладу занять"
         >
           <div className={`${styles.iconWrapper} ${styles.iconSchedule}`}>
@@ -100,14 +89,12 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
             </div>
             <span className={styles.actionDescription}>Пари та консультації</span>
           </div>
-        </div>
+        </button>
 
-        <div
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           className={styles.actionCard}
           onClick={() => onNavigate('grades')}
-          onKeyDown={handleCardKeyDown('grades')}
           title="Перейти до залікової книжки та симулятора оцінок"
         >
           <div className={`${styles.iconWrapper} ${styles.iconSimulator}`}>
@@ -119,7 +106,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
             </div>
             <span className={styles.actionDescription}>Заліковка та розрахунок</span>
           </div>
-        </div>
+        </button>
       </div>
     </section>
   );

@@ -73,13 +73,6 @@ export const RecentGradesFeed: React.FC<RecentGradesFeedProps> = ({
     });
   };
 
-  const handleItemKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onNavigate('assignments');
-    }
-  };
-
   return (
     <section className={styles.recentGradesPanel} aria-label="Останні оцінки">
       <div className={styles.panelHeader}>
@@ -106,13 +99,11 @@ export const RecentGradesFeed: React.FC<RecentGradesFeedProps> = ({
             const dateStr = formatDate(assignment.submittedAt || assignment.duedate);
 
             return (
-              <div
+              <button
                 key={assignment.id}
-                role="button"
-                tabIndex={0}
+                type="button"
                 className={styles.feedItem}
                 onClick={() => onNavigate('assignments')}
-                onKeyDown={handleItemKeyDown}
                 style={{ animationDelay: `${index * 40}ms` }}
                 title={`Перейти до завдання: ${assignment.name}`}
               >
@@ -134,7 +125,7 @@ export const RecentGradesFeed: React.FC<RecentGradesFeedProps> = ({
                     style={{ color: 'var(--text-secondary)', opacity: 0.7 }}
                   />
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
