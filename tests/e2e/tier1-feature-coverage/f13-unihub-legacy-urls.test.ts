@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { fileExists, readWorkspaceFile } from '../test-helpers';
 
 describe('Tier 1 - Feature 13: Fix Hardcoded Legacy URLs in UniHub (@universe/uni-hub)', () => {
-  const modalPath = 'packages/uni-hub/src/components/AssignmentModal.tsx';
+  const modalPath = 'packages/uni-hub/components/AssignmentModal.tsx';
 
   it('F13-1: AssignmentModal.tsx must exist', () => {
     expect(fileExists(modalPath)).toBe(true);

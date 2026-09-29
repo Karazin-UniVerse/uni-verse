@@ -56,7 +56,7 @@ describe('Tier 3 - Cross-Feature Combinations & Contracts Integration', () => {
     expect(mockStudentProfile.gpa).toBeGreaterThan(90);
 
     // Verify DashboardPage imports UI components (F4)
-    const dashboardContent = readWorkspaceFile('packages/uni-hub/src/views/DashboardPage.tsx');
+    const dashboardContent = readWorkspaceFile('packages/uni-hub/views/DashboardPage.tsx');
 
     expect(dashboardContent).toMatch(/Tag|ProgressBar|Spinner|Empty/);
     // Tab exists
@@ -72,19 +72,19 @@ describe('Tier 3 - Cross-Feature Combinations & Contracts Integration', () => {
     expect(envConfig).toContain(`MOODLE_BASEURL="${canonicalHost}"`);
 
     // 2. Sider footer link
-    const siderPage = readWorkspaceFile('packages/uni-hub/src/views/DashboardPage.tsx');
+    const siderPage = readWorkspaceFile('packages/uni-hub/views/DashboardPage.tsx');
 
     expect(siderPage).toContain(canonicalHost);
 
     // 3. AssignmentModal link
-    const modal = readWorkspaceFile('packages/uni-hub/src/components/AssignmentModal.tsx');
+    const modal = readWorkspaceFile('packages/uni-hub/components/AssignmentModal.tsx');
 
     expect(modal).toContain(canonicalHost);
     expect(modal).not.toContain('moodle.karazin.ua');
   });
 
   it('Combination 4 (F1 + F7 + F9): UniHub API Service Deserialization to Shared Contracts', () => {
-    const apiContent = readWorkspaceFile('packages/uni-hub/src/services/api.ts');
+    const apiContent = readWorkspaceFile('packages/uni-hub/services/api.ts');
 
     // Verifies endpoints and typed methods exist
     expect(apiContent).toContain('getCourses');
@@ -101,7 +101,7 @@ describe('Tier 3 - Cross-Feature Combinations & Contracts Integration', () => {
     expect(varsContent.length).toBeGreaterThan(50);
 
     // UniHub dashboard imports SCSS
-    const dashboardScss = readWorkspaceFile('packages/uni-hub/src/views/DashboardPage.module.scss');
+    const dashboardScss = readWorkspaceFile('packages/uni-hub/views/DashboardPage.module.scss');
 
     expect(dashboardScss.length).toBeGreaterThan(100);
   });

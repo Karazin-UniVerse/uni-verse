@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readWorkspaceFile } from '../test-helpers';
 
 describe('Tier 2 - Feature 12 & 13: Boundary Cases in Gradebook and URL Handling', () => {
-  const modalPath = 'packages/uni-hub/src/components/AssignmentModal.tsx';
+  const modalPath = 'packages/uni-hub/components/AssignmentModal.tsx';
 
   it('F12-B1: Zero score (0/100) must render explicitly as 0 and not falsy empty string', () => {
     const formatScore = (val: number | null | undefined) =>

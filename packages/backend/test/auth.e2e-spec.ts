@@ -3,9 +3,9 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import cookieParser from 'cookie-parser';
-import { AppModule } from '../src/app.module';
-import { GetCreds } from '../src/utils/get-creds';
-import { PrismaService } from '../src/prisma/prisma.service';
+import { AppModule } from '../app.module';
+import { GetCreds } from '../utils/get-creds';
+import { PrismaService } from '../prisma/prisma.service';
 
 describe('AuthController (HTTP Integration / E2E)', () => {
   let app: INestApplication<App>;

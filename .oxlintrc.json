@@ -70,7 +70,7 @@
       }
     },
     {
-      "files": ["packages/uni-hub/src/providers/**/*.{ts,tsx}"],
+      "files": ["packages/uni-hub/providers/**/*.{ts,tsx}"],
       "rules": {
         "react/no-danger": "off"
       }
