@@ -30,3 +30,65 @@ export const MAX_SEMESTER_CREDIT = 100;
 
 /** Minimum overall score required to pass a course according to Karazin scale */
 export const MIN_PASSING_SCORE = 50;
+
+/**
+ * Higher education final control types in Ukrainian university curriculum
+ */
+export const CONTROL_TYPES = {
+  EXAM: 'exam',
+  CREDIT: 'credit',
+  DIFFERENTIATED_CREDIT: 'differentiated_credit',
+} as const;
+
+export type ControlType = (typeof CONTROL_TYPES)[keyof typeof CONTROL_TYPES];
+
+/**
+ * Traditional Ukrainian national grading scale marks (Karazin University)
+ */
+export const TRADITIONAL_GRADES = {
+  EXCELLENT: 'відмінно',
+  GOOD: 'добре',
+  SATISFACTORY: 'задовільно',
+  UNSATISFACTORY: 'незадовільно',
+  PASSED: 'зараховано',
+  FAILED: 'не зараховано',
+} as const;
+
+export type TraditionalGrade = (typeof TRADITIONAL_GRADES)[keyof typeof TRADITIONAL_GRADES];
+
+/** ECTS Grade scale (European Credit Transfer and Accumulation System) */
+export const ECTS_GRADES = ['A', 'B', 'C', 'D', 'E', 'Fx', 'F'] as const;
+
+export type EctsGrade = (typeof ECTS_GRADES)[number];
+
+/**
+ * Input parameters for accumulated grade evaluation
+ */
+export interface GradeAccumulationParams {
+  semesterScore: number;
+  controlType?: ControlType;
+  examScore?: number | null;
+}
+
+/**
+ * Result of accumulated grade calculation according to university regulations
+ */
+export interface GradeAccumulationResult {
+  totalScore: number;
+  ectsGrade: EctsGrade;
+  traditionalGrade: TraditionalGrade;
+  isAdmittedToExam: boolean;
+  isExamPassed: boolean;
+  isCoursePassed: boolean;
+  statusMessage: string;
+}
+
+/**
+ * Exam target requirement for achieving a specific ECTS grade
+ */
+export interface ExamTargetRequirement {
+  grade: EctsGrade;
+  minTotalScore: number;
+  requiredExamScore: number;
+  isAchievable: boolean;
+}

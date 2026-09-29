@@ -19,6 +19,13 @@
   z-index: 2;
 }
 
+.languageBar {
+  position: absolute;
+  bottom: var(--space-24);
+  right: var(--space-24);
+  z-index: 2;
+}
+
 .center {
   min-height: 100vh;
   display: flex;

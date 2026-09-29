@@ -5,12 +5,15 @@ import { User, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button, SimpleForm, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
+import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi, getErrorMessage } from '@uni-hub/services/api';
 import { GoogleLoginButton, AuthField } from '@uni-hub/components/auth';
 import { motion } from 'framer-motion';
 import styles from './LoginPage.module.scss';
 
 const LoginPage: React.FC = () => {
+  const { formatMessage } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -29,13 +32,13 @@ const LoginPage: React.FC = () => {
       const res = await authApi.loginWithGoogle(idToken);
 
       if (res.data?.isLinked) {
-        toast.success('Вхід успішно виконано');
+        toast.success(formatMessage('login.success'));
         router.push('/');
       } else {
         setIsLinkingMoodle(true);
       }
     } catch (err: unknown) {
-      const message = getErrorMessage(err, 'Помилка входу через Google');
+      const message = getErrorMessage(err, formatMessage('login.googleError'));
 
       setError(message);
       toast.error(message);
@@ -48,13 +51,13 @@ const LoginPage: React.FC = () => {
     setError('');
 
     if (!username.trim()) {
-      setError('Будь ласка, введіть ім’я користувача');
+      setError(formatMessage('login.enterUsernameError'));
 
       return;
     }
 
     if (!password) {
-      setError('Будь ласка, введіть пароль');
+      setError(formatMessage('login.enterPasswordError'));
 
       return;
     }
@@ -64,7 +67,7 @@ const LoginPage: React.FC = () => {
     try {
       const res = await authApi.login(username, password);
 
-      toast.success('Вхід успішно виконано');
+      toast.success(formatMessage('login.success'));
       localStorage.setItem('isLoggedIn', 'true');
 
       if (res.data?.token) {
@@ -73,8 +76,9 @@ const LoginPage: React.FC = () => {
 
       router.push('/');
     } catch (err: unknown) {
-      const message = getErrorMessage(err, 'Помилка входу. Перевірте облікові дані.');
+      const message = getErrorMessage(err, formatMessage('login.invalidCredentials'));
 
+      setError(message);
       toast.error(message);
     } finally {
       setLoading(false);
@@ -85,13 +89,13 @@ const LoginPage: React.FC = () => {
     setError('');
 
     if (!linkUsername.trim()) {
-      setError('Будь ласка, введіть логін або email у Moodle');
+      setError(formatMessage('login.linkMoodleEnterUsername'));
 
       return;
     }
 
     if (!linkPassword) {
-      setError('Будь ласка, введіть пароль від Moodle');
+      setError(formatMessage('login.linkMoodleEnterPassword'));
 
       return;
     }
@@ -101,11 +105,11 @@ const LoginPage: React.FC = () => {
     try {
       await authApi.linkMoodleAccount(linkUsername.trim(), linkPassword);
 
-      toast.success('Moodle-акаунт успішно прив’язано!');
-      toast.success('Вхід успішно виконано');
+      toast.success(formatMessage('login.linkMoodleSuccess'));
+      toast.success(formatMessage('login.success'));
       router.push('/');
     } catch (err: unknown) {
-      const message = getErrorMessage(err, 'Помилка прив’язки акаунта. Перевірте логін та пароль.');
+      const message = getErrorMessage(err, formatMessage('login.linkMoodleError'));
 
       setError(message);
       toast.error(message);
@@ -120,7 +124,7 @@ const LoginPage: React.FC = () => {
     setLinkPassword('');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('isLoggedIn');
-    setError('Для завершення входу необхідно прив’язати акаунт Moodle');
+    setError(formatMessage('login.linkMoodleRequired'));
   };
 
   return (
@@ -128,27 +132,26 @@ const LoginPage: React.FC = () => {
       <div className={styles.themeBar}>
         <ThemeSwitcher compact />
       </div>
+      <div className={styles.languageBar}>
+        <LanguageSwitcher variant="glass" placement="bottom-up" />
+      </div>
       <div className={styles.center}>
         {isLinkingMoodle ? (
           <SimpleForm className={styles.card} action={handleLinkMoodle}>
             <div className={styles.brand}>
-              <h1>UNiHub</h1>
-              <p>Прив'язка акаунта Moodle</p>
+              <h1>{formatMessage('login.title')}</h1>
+              <p>{formatMessage('login.linkMoodleTitle')}</p>
             </div>
 
             <div className={styles.hintBox}>
-              <p>
-                Щоб завантажити ваші курси, розклад та оцінки, введіть логін і пароль від Moodle. Це
-                необхідно зробити лише один раз — надалі вхід виконуватиметься через Google в один
-                клік.
-              </p>
+              <p>{formatMessage('login.linkMoodleHint')}</p>
             </div>
 
             <AuthField
               id="link-moodle-username"
               name="moodleUsername"
-              label="Логін або email у Moodle"
-              placeholder="Логін у Moodle"
+              label={formatMessage('login.linkMoodleUsername')}
+              placeholder={formatMessage('login.linkMoodleUsernamePlaceholder')}
               value={linkUsername}
               onChange={(e) => setLinkUsername(e.target.value)}
               autoComplete="username"
@@ -159,8 +162,8 @@ const LoginPage: React.FC = () => {
               id="link-moodle-password"
               name="moodlePassword"
               type="password"
-              label="Пароль у Moodle"
-              placeholder="Пароль"
+              label={formatMessage('login.linkMoodlePassword')}
+              placeholder={formatMessage('login.linkMoodlePasswordPlaceholder')}
               value={linkPassword}
               onChange={(e) => setLinkPassword(e.target.value)}
               autoComplete="current-password"
@@ -178,7 +181,9 @@ const LoginPage: React.FC = () => {
                   disabled={loading}
                   className={styles.submit}
                 >
-                  {loading ? 'Прив’язка...' : 'Прив’язати Moodle'}
+                  {loading
+                    ? formatMessage('login.linkMoodleLoading')
+                    : formatMessage('login.linkMoodleSubmit')}
                 </Button>
               </motion.div>
 
@@ -190,15 +195,15 @@ const LoginPage: React.FC = () => {
                 className={styles.submit}
                 onClick={handleCancelLink}
               >
-                Повернутися до входу
+                {formatMessage('login.linkMoodleBack')}
               </Button>
             </div>
           </SimpleForm>
         ) : (
           <SimpleForm className={styles.card} action={handleLogin}>
             <div className={styles.brand}>
-              <h1>UNiHub</h1>
-              <p>Увійдіть у свій акаунт Moodle</p>
+              <h1>{formatMessage('login.title')}</h1>
+              <p>{formatMessage('login.subtitle')}</p>
             </div>
 
             {Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) && (
@@ -212,7 +217,7 @@ const LoginPage: React.FC = () => {
                 </div>
 
                 <div className={styles.divider}>
-                  <span>або за допомогою логіна Moodle</span>
+                  <span>{formatMessage('login.orMoodle')}</span>
                 </div>
               </>
             )}
@@ -220,8 +225,8 @@ const LoginPage: React.FC = () => {
             <AuthField
               id="login-username"
               name="username"
-              label="Ім’я користувача або email"
-              placeholder="Ім’я користувача або email"
+              label={formatMessage('login.usernameOrEmail')}
+              placeholder={formatMessage('login.usernameOrEmail')}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
@@ -232,8 +237,8 @@ const LoginPage: React.FC = () => {
               id="login-password"
               name="password"
               type="password"
-              label="Пароль"
-              placeholder="Пароль"
+              label={formatMessage('login.password')}
+              placeholder={formatMessage('login.password')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
@@ -250,7 +255,7 @@ const LoginPage: React.FC = () => {
                 disabled={loading}
                 className={styles.submit}
               >
-                {loading ? 'Вхід...' : 'Увійти'}
+                {loading ? formatMessage('login.loading') : formatMessage('login.submit')}
               </Button>
             </motion.div>
           </SimpleForm>
