@@ -174,7 +174,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         }
       }
 
-      fetchStatus();
+      await fetchStatus();
       setText('');
       setFiles([]);
     } catch (error) {
