@@ -45,7 +45,12 @@ export function buildQueryString(params?: Record<string, unknown>): string {
 
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== null && value !== '') {
-      searchParams.append(key, String(value));
+      const formattedValue =
+        typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+          ? String(value)
+          : JSON.stringify(value);
+
+      searchParams.append(key, formattedValue);
     }
   }
 

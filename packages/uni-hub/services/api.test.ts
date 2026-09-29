@@ -57,6 +57,14 @@ describe('UniHub API Service', () => {
 
       expect(result).toBe('?active=true&search=algorithms');
     });
+
+    it('should serialize object values safely using JSON.stringify without [object Object]', () => {
+      const result = buildQueryString({
+        filter: { status: 'completed' },
+      });
+
+      expect(result).toBe(`?filter=${encodeURIComponent('{"status":"completed"}')}`);
+    });
   });
 
   describe('AuthApi', () => {
