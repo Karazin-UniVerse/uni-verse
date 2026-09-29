@@ -90,7 +90,26 @@ async function executeAttempt<T>(
         localStorage.removeItem('moodleToken');
       }
 
-      throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+      let serverMessage: string | undefined;
+
+      try {
+        const errorJson = (await response.json()) as {
+          message?: string | string[];
+          error?: string;
+        };
+
+        if (Array.isArray(errorJson?.message)) {
+          serverMessage = errorJson.message.join(', ');
+        } else if (typeof errorJson?.message === 'string') {
+          serverMessage = errorJson.message;
+        } else if (typeof errorJson?.error === 'string') {
+          serverMessage = errorJson.error;
+        }
+      } catch {
+        // response was not JSON
+      }
+
+      throw new Error(serverMessage || `HTTP error ${response.status}: ${response.statusText}`);
     }
 
     const data = (await response.json()) as T;
@@ -147,12 +166,32 @@ async function request<T>(
   throw new Error('Request failed');
 }
 
+export interface GoogleAuthResponse {
+  access_token: string;
+  isLinked: boolean;
+}
+
+export function getErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof Error && err.message) {
+    return err.message;
+  }
+
+  const resData = (err as { response?: { data?: { message?: string; error?: string } } })?.response
+    ?.data;
+
+  return resData?.message || resData?.error || fallback;
+}
+
 export class AuthApi {
   async login(email: string, password: string): Promise<{ data: AuthResponse }> {
-    const response = await request<AuthResponse>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
+    const response = await request<AuthResponse>(
+      '/auth/login',
+      {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      },
+      0,
+    );
 
     if (response.data?.access_token) {
       localStorage.setItem('accessToken', response.data.access_token);
@@ -162,9 +201,54 @@ export class AuthApi {
     return response;
   }
 
+  async loginWithGoogle(idToken: string): Promise<{ data: GoogleAuthResponse }> {
+    const response = await request<GoogleAuthResponse>(
+      '/auth/google',
+      {
+        method: 'POST',
+        body: JSON.stringify({ idToken }),
+      },
+      0,
+    );
+
+    if (response.data?.access_token) {
+      localStorage.setItem('accessToken', response.data.access_token);
+
+      if (response.data.isLinked) {
+        localStorage.setItem('isLoggedIn', 'true');
+      }
+    }
+
+    return response;
+  }
+
+  async linkMoodleAccount(
+    username: string,
+    password: string,
+  ): Promise<{ data: { access_token: string; isLinked: boolean } }> {
+    const response = await request<{ access_token: string; isLinked: boolean }>(
+      '/auth/moodle/link',
+      {
+        method: 'POST',
+        body: JSON.stringify({ username, password }),
+      },
+      0,
+    );
+
+    if (response.data?.access_token) {
+      localStorage.setItem('accessToken', response.data.access_token);
+
+      if (response.data.isLinked) {
+        localStorage.setItem('isLoggedIn', 'true');
+      }
+    }
+
+    return response;
+  }
+
   async logout(): Promise<void> {
     try {
-      await request('/auth/logout', { method: 'POST' });
+      await request('/auth/logout', { method: 'POST' }, 0);
     } finally {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('isLoggedIn');

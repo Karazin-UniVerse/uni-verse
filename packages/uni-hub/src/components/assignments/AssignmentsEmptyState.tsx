@@ -1,5 +1,8 @@
+'use client';
+
 import React from 'react';
 import { Empty } from '@una';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 
 export interface AssignmentsEmptyStateProps {
   hasAssignments: boolean;
@@ -10,10 +13,12 @@ export const AssignmentsEmptyState: React.FC<AssignmentsEmptyStateProps> = ({
   hasAssignments,
   hasDateFilter,
 }) => {
+  const { formatMessage } = useLanguage();
+
   if (!hasAssignments) {
     return (
       <Empty
-        description="Завдань не знайдено"
+        description={formatMessage('assignments.emptyNotFound')}
         icon={<span style={{ fontSize: '48px' }}>📝</span>}
       />
     );
@@ -22,7 +27,7 @@ export const AssignmentsEmptyState: React.FC<AssignmentsEmptyStateProps> = ({
   if (hasDateFilter) {
     return (
       <Empty
-        description="За обраними датами завдань не знайдено"
+        description={formatMessage('assignments.emptyDateFilter')}
         icon={<span style={{ fontSize: '48px' }}>🔍</span>}
       />
     );
@@ -30,7 +35,7 @@ export const AssignmentsEmptyState: React.FC<AssignmentsEmptyStateProps> = ({
 
   return (
     <Empty
-      description="Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉"
+      description={formatMessage('assignments.emptyAllDone')}
       icon={<span style={{ fontSize: '48px' }}>🏖️</span>}
     />
   );

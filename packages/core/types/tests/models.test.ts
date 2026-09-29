@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test, { describe } from 'node:test';
 import { BREAKPOINTS } from '../../constants/breakpoints.ts';
-import { GRADES_THRESHOLD } from '../../constants/grades.ts';
+import { CONTROL_TYPES, GRADES_THRESHOLD, TRADITIONAL_GRADES } from '../../constants/grades.ts';
 import type {
   AssignmentItem,
   Course,
@@ -152,5 +152,20 @@ describe('domain type contracts compilation verification', () => {
     assert.strictEqual(GRADES_THRESHOLD.EXCELLENT, 90);
     assert.strictEqual(GRADES_THRESHOLD.GOOD, 70);
     assert.strictEqual(GRADES_THRESHOLD.SATISFACTORY, 50);
+  });
+
+  test('validates CONTROL_TYPES values', () => {
+    assert.strictEqual(CONTROL_TYPES.EXAM, 'exam');
+    assert.strictEqual(CONTROL_TYPES.CREDIT, 'credit');
+    assert.strictEqual(CONTROL_TYPES.DIFFERENTIATED_CREDIT, 'differentiated_credit');
+  });
+
+  test('validates TRADITIONAL_GRADES values', () => {
+    assert.strictEqual(TRADITIONAL_GRADES.EXCELLENT, 'відмінно');
+    assert.strictEqual(TRADITIONAL_GRADES.GOOD, 'добре');
+    assert.strictEqual(TRADITIONAL_GRADES.SATISFACTORY, 'задовільно');
+    assert.strictEqual(TRADITIONAL_GRADES.UNSATISFACTORY, 'незадовільно');
+    assert.strictEqual(TRADITIONAL_GRADES.PASSED, 'зараховано');
+    assert.strictEqual(TRADITIONAL_GRADES.FAILED, 'не зараховано');
   });
 });
