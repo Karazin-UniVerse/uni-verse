@@ -83,9 +83,9 @@ export class MoodleAssignmentsService {
                     // Ignore single assignment status fetch failure
                   }
                 }),
-              ).then(() => {}),
+              ),
             ),
-          Promise.resolve(),
+          Promise.resolve<unknown>(undefined),
         );
       }
 
