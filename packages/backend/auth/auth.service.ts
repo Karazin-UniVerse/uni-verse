@@ -15,6 +15,8 @@ import {
   normalizeEmail,
   buildEmailWithDomain,
   isPrismaUniqueConstraintError,
+  isAllowedCorporateDomain,
+  extractGoogleUserName,
 } from './utils/auth.utils';
 
 @Injectable()
@@ -195,9 +197,14 @@ export class AuthService {
     }
 
     const email = payload.email.toLowerCase();
-    const fallbackName =
-      `${payload.given_name || ''} ${payload.family_name || ''}`.trim();
-    const name = payload.name || fallbackName || undefined;
+
+    if (!isAllowedCorporateDomain(email, payload.hd)) {
+      throw new ForbiddenException(
+        'Доступ дозволено лише для облікових записів @student.karazin.ua та @karazin.ua',
+      );
+    }
+
+    const name = extractGoogleUserName(payload);
 
     return { email, name };
   }

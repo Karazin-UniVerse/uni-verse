@@ -101,6 +101,71 @@ describe('UniHub API Service', () => {
       expect(mockStorage.accessToken).toBeUndefined();
       expect(mockStorage.isLoggedIn).toBeUndefined();
     });
+
+    it('loginWithGoogle should send POST to /auth/google with idToken', async () => {
+      const mockGoogleResponse = {
+        access_token: 'google-jwt-access-token',
+        isLinked: true,
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockGoogleResponse,
+      } as Response);
+
+      const response = await authApi.loginWithGoogle('mock-id-token-abc');
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(response.data).toEqual(mockGoogleResponse);
+
+      const call = vi.mocked(global.fetch).mock.calls[0];
+
+      expect(call[0]).toContain('/auth/google');
+      expect(call[1]?.body).toBe(JSON.stringify({ idToken: 'mock-id-token-abc' }));
+    });
+
+    it('loginWithGoogle should throw error with server message when domain is restricted (403)', async () => {
+      const forbiddenMessage =
+        'Доступ дозволено лише для облікових записів @student.karazin.ua та @karazin.ua';
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        json: async () => ({
+          statusCode: 403,
+          message: forbiddenMessage,
+          error: 'Forbidden',
+        }),
+      } as Response);
+
+      await expect(authApi.loginWithGoogle('invalid-domain-token')).rejects.toThrow(
+        forbiddenMessage,
+      );
+    });
+
+    it('linkMoodleAccount should send POST to /auth/moodle/link with credentials', async () => {
+      const mockLinkResponse = {
+        access_token: 'linked-jwt-token',
+        isLinked: true,
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockLinkResponse,
+      } as Response);
+
+      const response = await authApi.linkMoodleAccount('moodle.student', 'SecretPassword');
+
+      expect(response.data).toEqual(mockLinkResponse);
+
+      const call = vi.mocked(global.fetch).mock.calls[0];
+
+      expect(call[0]).toContain('/auth/moodle/link');
+      expect(call[1]?.body).toBe(
+        JSON.stringify({ username: 'moodle.student', password: 'SecretPassword' }),
+      );
+    });
   });
 
   describe('MoodleApi', () => {

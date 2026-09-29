@@ -386,6 +386,7 @@ describe('AuthService', () => {
         getPayload: () => ({
           email: 'student@student.karazin.ua',
           email_verified: true,
+          hd: 'student.karazin.ua',
           name: 'Test Student',
         }),
       });
@@ -412,15 +413,16 @@ describe('AuthService', () => {
       const unlinkedUser: User = {
         ...sampleUser,
         id: 'unlinked-user-1',
-        email: 'unlinked@gmail.com',
+        email: 'unlinked@student.karazin.ua',
         token: null,
         moodleId: null,
       };
 
       mockVerifyIdToken.mockResolvedValue({
         getPayload: () => ({
-          email: 'unlinked@gmail.com',
+          email: 'unlinked@student.karazin.ua',
           email_verified: true,
+          hd: 'student.karazin.ua',
           name: 'Unlinked Student',
         }),
       });
@@ -444,15 +446,16 @@ describe('AuthService', () => {
       const newGoogleUser: User = {
         ...sampleUser,
         id: 'new-google-user',
-        email: 'newuser@gmail.com',
+        email: 'newuser@student.karazin.ua',
         token: null,
         moodleId: null,
       };
 
       mockVerifyIdToken.mockResolvedValue({
         getPayload: () => ({
-          email: 'newuser@gmail.com',
+          email: 'newuser@student.karazin.ua',
           email_verified: true,
+          hd: 'student.karazin.ua',
           given_name: 'New',
           family_name: 'User',
         }),
@@ -474,7 +477,7 @@ describe('AuthService', () => {
       });
       expect(mockUserService.createUser).toHaveBeenCalledWith(
         expect.objectContaining({
-          email: 'newuser@gmail.com',
+          email: 'newuser@student.karazin.ua',
           name: 'New User',
         }),
       );
@@ -483,8 +486,9 @@ describe('AuthService', () => {
     it('should recover from Prisma P2002 race condition by returning existing user', async () => {
       mockVerifyIdToken.mockResolvedValue({
         getPayload: () => ({
-          email: 'raceuser@gmail.com',
+          email: 'raceuser@student.karazin.ua',
           email_verified: true,
+          hd: 'student.karazin.ua',
           name: 'Race User',
         }),
       });
@@ -506,8 +510,9 @@ describe('AuthService', () => {
     it('should throw BadRequestException on P2002 if existing user still cannot be found', async () => {
       mockVerifyIdToken.mockResolvedValue({
         getPayload: () => ({
-          email: 'raceuser@gmail.com',
+          email: 'raceuser@student.karazin.ua',
           email_verified: true,
+          hd: 'student.karazin.ua',
           name: 'Race User',
         }),
       });
@@ -523,8 +528,9 @@ describe('AuthService', () => {
     it('should rethrow unexpected non-P2002 error from createUser', async () => {
       mockVerifyIdToken.mockResolvedValue({
         getPayload: () => ({
-          email: 'crashuser@gmail.com',
+          email: 'crashuser@student.karazin.ua',
           email_verified: true,
+          hd: 'student.karazin.ua',
           name: 'Crash User',
         }),
       });
@@ -543,14 +549,15 @@ describe('AuthService', () => {
       const newGoogleUser: User = {
         ...sampleUser,
         id: 'noname-user',
-        email: 'noname@gmail.com',
+        email: 'noname@student.karazin.ua',
         name: null,
       };
 
       mockVerifyIdToken.mockResolvedValue({
         getPayload: () => ({
-          email: 'noname@gmail.com',
+          email: 'noname@student.karazin.ua',
           email_verified: true,
+          hd: 'student.karazin.ua',
           given_name: '',
           family_name: '',
         }),
@@ -567,10 +574,85 @@ describe('AuthService', () => {
 
       expect(mockUserService.createUser).toHaveBeenCalledWith(
         expect.objectContaining({
-          email: 'noname@gmail.com',
+          email: 'noname@student.karazin.ua',
           name: undefined,
         }),
       );
+    });
+
+    it('should throw ForbiddenException if user has non-corporate domain (@gmail.com) and hd is missing', async () => {
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'personal@gmail.com',
+          email_verified: true,
+          name: 'Personal User',
+        }),
+      });
+
+      await expect(authService.loginWithGoogle(googleDto)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should throw ForbiddenException if user has non-karazin Workspace domain', async () => {
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'user@kpi.ua',
+          email_verified: true,
+          hd: 'kpi.ua',
+          name: 'Other University User',
+        }),
+      });
+
+      await expect(authService.loginWithGoogle(googleDto)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should throw ForbiddenException if email domain does not match allowed domains even if hd is forged', async () => {
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'user@attacker.com',
+          email_verified: true,
+          hd: 'student.karazin.ua',
+          name: 'Attacker User',
+        }),
+      });
+
+      await expect(authService.loginWithGoogle(googleDto)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should allow university staff/lecturer with @karazin.ua domain', async () => {
+      const lecturerUser: User = {
+        ...sampleUser,
+        id: 'lecturer-id',
+        email: 'lecturer@karazin.ua',
+      };
+
+      mockVerifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          email: 'lecturer@karazin.ua',
+          email_verified: true,
+          hd: 'karazin.ua',
+          name: 'Lecturer User',
+        }),
+      });
+      mockUserService.findByEmail.mockResolvedValue(lecturerUser);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('lecturer-at')
+        .mockResolvedValueOnce('lecturer-rt');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-rt');
+      mockUserService.updateUser.mockResolvedValue(lecturerUser);
+
+      const result = await authService.loginWithGoogle(googleDto);
+
+      expect(result).toEqual({
+        access_token: 'lecturer-at',
+        refresh_token: 'lecturer-rt',
+        isLinked: true,
+      });
     });
   });
 
