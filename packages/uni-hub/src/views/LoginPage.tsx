@@ -3,12 +3,12 @@
 import React, { useState } from 'react';
 import { User, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Button, TextInput, SimpleForm, useToast } from '@una';
+import { Button, SimpleForm, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { TranslationKey } from '@uni-hub/i18n/translations';
-import { authApi } from '@uni-hub/services/api';
+import { authApi, getErrorMessage } from '@uni-hub/services/api';
+import { GoogleLoginButton, AuthField } from '@uni-hub/components/auth';
 import { motion } from 'framer-motion';
 import styles from './LoginPage.module.scss';
 
@@ -17,21 +17,47 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
+  const [linkUsername, setLinkUsername] = useState('');
+  const [linkPassword, setLinkPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLinkingMoodle, setIsLinkingMoodle] = useState(false);
   const router = useRouter();
   const toast = useToast();
 
+  const handleGoogleSuccess = async (idToken: string) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await authApi.loginWithGoogle(idToken);
+
+      if (res.data?.isLinked) {
+        toast.success(formatMessage('login.success'));
+        router.push('/');
+      } else {
+        setIsLinkingMoodle(true);
+      }
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, formatMessage('login.googleError'));
+
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogin = async () => {
-    setErrorKey(null);
+    setError('');
 
     if (!username.trim()) {
-      setErrorKey('login.enterUsernameError');
+      setError(formatMessage('login.enterUsernameError'));
 
       return;
     }
 
     if (!password) {
-      setErrorKey('login.enterPasswordError');
+      setError(formatMessage('login.enterPasswordError'));
 
       return;
     }
@@ -50,14 +76,55 @@ const LoginPage: React.FC = () => {
 
       router.push('/');
     } catch (err: unknown) {
-      const serverError = (err as { response?: { data?: { error?: string } } })?.response?.data
-        ?.error;
-      const message = serverError || formatMessage('login.invalidCredentials');
+      const message = getErrorMessage(err, formatMessage('login.invalidCredentials'));
 
+      setError(message);
       toast.error(message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLinkMoodle = async () => {
+    setError('');
+
+    if (!linkUsername.trim()) {
+      setError(formatMessage('login.linkMoodleEnterUsername'));
+
+      return;
+    }
+
+    if (!linkPassword) {
+      setError(formatMessage('login.linkMoodleEnterPassword'));
+
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await authApi.linkMoodleAccount(linkUsername.trim(), linkPassword);
+
+      toast.success(formatMessage('login.linkMoodleSuccess'));
+      toast.success(formatMessage('login.success'));
+      router.push('/');
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, formatMessage('login.linkMoodleError'));
+
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelLink = () => {
+    setIsLinkingMoodle(false);
+    setLinkUsername('');
+    setLinkPassword('');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('isLoggedIn');
+    setError(formatMessage('login.linkMoodleRequired'));
   };
 
   return (
@@ -69,59 +136,130 @@ const LoginPage: React.FC = () => {
         <LanguageSwitcher variant="glass" placement="bottom-up" />
       </div>
       <div className={styles.center}>
-        <SimpleForm className={styles.card} action={handleLogin}>
-          <div className={styles.brand}>
-            <h1>{formatMessage('login.title')}</h1>
-            <p>{formatMessage('login.subtitle')}</p>
-          </div>
-
-          <label htmlFor="login-username" className={styles.field}>
-            <span className={styles.label}>{formatMessage('login.username')}</span>
-            <div className={styles.inputWrap}>
-              <User size={16} className={styles.icon} />
-              <TextInput
-                id="login-username"
-                name="username"
-                size="large"
-                placeholder={formatMessage('login.username')}
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
-              />
+        {isLinkingMoodle ? (
+          <SimpleForm className={styles.card} action={handleLinkMoodle}>
+            <div className={styles.brand}>
+              <h1>{formatMessage('login.title')}</h1>
+              <p>{formatMessage('login.linkMoodleTitle')}</p>
             </div>
-          </label>
 
-          <label htmlFor="login-password" className={styles.field}>
-            <span className={styles.label}>{formatMessage('login.password')}</span>
-            <div className={styles.inputWrap}>
-              <Lock size={16} className={styles.icon} />
-              <TextInput
-                id="login-password"
-                name="password"
-                type="password"
-                size="large"
-                placeholder={formatMessage('login.password')}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-              />
+            <div className={styles.hintBox}>
+              <p>{formatMessage('login.linkMoodleHint')}</p>
             </div>
-          </label>
 
-          {errorKey && <p className={styles.error}>{formatMessage(errorKey)}</p>}
+            <AuthField
+              id="link-moodle-username"
+              name="moodleUsername"
+              label={formatMessage('login.linkMoodleUsername')}
+              placeholder={formatMessage('login.linkMoodleUsernamePlaceholder')}
+              value={linkUsername}
+              onChange={(e) => setLinkUsername(e.target.value)}
+              autoComplete="username"
+              icon={<User size={16} />}
+            />
 
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button
-              type="submit"
-              variant="primary"
-              size="large"
-              disabled={loading}
-              className={styles.submit}
-            >
-              {loading ? formatMessage('login.loading') : formatMessage('login.submit')}
-            </Button>
-          </motion.div>
-        </SimpleForm>
+            <AuthField
+              id="link-moodle-password"
+              name="moodlePassword"
+              type="password"
+              label={formatMessage('login.linkMoodlePassword')}
+              placeholder={formatMessage('login.linkMoodlePasswordPlaceholder')}
+              value={linkPassword}
+              onChange={(e) => setLinkPassword(e.target.value)}
+              autoComplete="current-password"
+              icon={<Lock size={16} />}
+            />
+
+            {error && <p className={styles.error}>{error}</p>}
+
+            <div className={styles.cardActions}>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="large"
+                  disabled={loading}
+                  className={styles.submit}
+                >
+                  {loading
+                    ? formatMessage('login.linkMoodleLoading')
+                    : formatMessage('login.linkMoodleSubmit')}
+                </Button>
+              </motion.div>
+
+              <Button
+                type="button"
+                variant="secondary"
+                size="large"
+                disabled={loading}
+                className={styles.submit}
+                onClick={handleCancelLink}
+              >
+                {formatMessage('login.linkMoodleBack')}
+              </Button>
+            </div>
+          </SimpleForm>
+        ) : (
+          <SimpleForm className={styles.card} action={handleLogin}>
+            <div className={styles.brand}>
+              <h1>{formatMessage('login.title')}</h1>
+              <p>{formatMessage('login.subtitle')}</p>
+            </div>
+
+            {Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) && (
+              <>
+                <div className={styles.googleSection}>
+                  <GoogleLoginButton
+                    onSuccess={handleGoogleSuccess}
+                    onError={(msg) => setError(msg)}
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className={styles.divider}>
+                  <span>{formatMessage('login.orMoodle')}</span>
+                </div>
+              </>
+            )}
+
+            <AuthField
+              id="login-username"
+              name="username"
+              label={formatMessage('login.usernameOrEmail')}
+              placeholder={formatMessage('login.usernameOrEmail')}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
+              icon={<User size={16} />}
+            />
+
+            <AuthField
+              id="login-password"
+              name="password"
+              type="password"
+              label={formatMessage('login.password')}
+              placeholder={formatMessage('login.password')}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              icon={<Lock size={16} />}
+            />
+
+            {error && <p className={styles.error}>{error}</p>}
+
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                type="submit"
+                variant="primary"
+                size="large"
+                disabled={loading}
+                className={styles.submit}
+              >
+                {loading ? formatMessage('login.loading') : formatMessage('login.submit')}
+              </Button>
+            </motion.div>
+          </SimpleForm>
+        )}
       </div>
     </div>
   );
