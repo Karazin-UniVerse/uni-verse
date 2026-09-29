@@ -112,13 +112,22 @@ describe('auth.utils', () => {
       expect(isAllowed).toBe(false);
     });
 
-    it('should permit gmail when explicitly configured in allowed domains', () => {
-      const isAllowed = isAllowedCorporateDomain('dev@gmail.com', undefined, [
-        'karazin.ua',
-        'gmail.com',
-      ]);
+    it('should permit gmail when configured in GOOGLE_ALLOWED_DOMAINS', () => {
+      const originalEnv = process.env.GOOGLE_ALLOWED_DOMAINS;
 
-      expect(isAllowed).toBe(true);
+      try {
+        process.env.GOOGLE_ALLOWED_DOMAINS = 'karazin.ua,gmail.com';
+
+        const isAllowed = isAllowedCorporateDomain('dev@gmail.com', undefined);
+
+        expect(isAllowed).toBe(true);
+      } finally {
+        if (originalEnv === undefined) {
+          delete process.env.GOOGLE_ALLOWED_DOMAINS;
+        } else {
+          process.env.GOOGLE_ALLOWED_DOMAINS = originalEnv;
+        }
+      }
     });
 
     it('should dynamically read allowed domains from process.env.GOOGLE_ALLOWED_DOMAINS', () => {
