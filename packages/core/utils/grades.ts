@@ -8,16 +8,13 @@ import {
   MIN_EXAM_PASS,
   MIN_PASSING_SCORE,
   TRADITIONAL_GRADES,
+  type ControlType,
+  type EctsGrade,
+  type ExamTargetRequirement,
+  type GradeAccumulationParams,
+  type GradeAccumulationResult,
+  type TraditionalGrade,
 } from '../constants/grades.ts';
-
-import type {
-  ControlType,
-  EctsGrade,
-  ExamTargetRequirement,
-  GradeAccumulationParams,
-  GradeAccumulationResult,
-  TraditionalGrade,
-} from '../types/index.ts';
 
 export type {
   ControlType,

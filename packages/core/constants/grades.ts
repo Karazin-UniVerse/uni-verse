@@ -55,3 +55,40 @@ export const TRADITIONAL_GRADES = {
 } as const;
 
 export type TraditionalGrade = (typeof TRADITIONAL_GRADES)[keyof typeof TRADITIONAL_GRADES];
+
+/** ECTS Grade scale (European Credit Transfer and Accumulation System) */
+export const ECTS_GRADES = ['A', 'B', 'C', 'D', 'E', 'Fx', 'F'] as const;
+
+export type EctsGrade = (typeof ECTS_GRADES)[number];
+
+/**
+ * Input parameters for accumulated grade evaluation
+ */
+export interface GradeAccumulationParams {
+  semesterScore: number;
+  controlType?: ControlType;
+  examScore?: number | null;
+}
+
+/**
+ * Result of accumulated grade calculation according to university regulations
+ */
+export interface GradeAccumulationResult {
+  totalScore: number;
+  ectsGrade: EctsGrade;
+  traditionalGrade: TraditionalGrade;
+  isAdmittedToExam: boolean;
+  isExamPassed: boolean;
+  isCoursePassed: boolean;
+  statusMessage: string;
+}
+
+/**
+ * Exam target requirement for achieving a specific ECTS grade
+ */
+export interface ExamTargetRequirement {
+  grade: EctsGrade;
+  minTotalScore: number;
+  requiredExamScore: number;
+  isAchievable: boolean;
+}

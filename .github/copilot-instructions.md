@@ -75,6 +75,8 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
   - Completely delete obsolete files and aliases. We are an active internal monorepo with no external library consumers — maintain zero legacy dead code and zero transitional proxy layers.
 - **No Redundant Aliases for Types, Enums, or Constants**:
   - NEVER introduce redundant aliases or duplicate exports for backwards compatibility (e.g. `export const GradeScoreThreshold = GRADES_THRESHOLD; export type GradeScoreThreshold = GradesThreshold;`).
+  - NEVER import a type from another module under an alias only to re-export it under its original name (e.g. `import type { TraditionalGrade as CoreTraditionalGrade } from '../constants/grades'; export type TraditionalGrade = CoreTraditionalGrade;`). This is a redundant alias anti-pattern.
+  - Enforce a single canonical source of truth per entity. When types and constants belong to a specific domain submodule (such as grades in `@universe/core/constants/grades.ts`), declare them there and import them directly where needed without re-aliasing in `packages/core/types/index.ts`.
   - Enforce a single canonical identifier per entity. When renaming or unifying identifiers, update all call sites across the codebase and remove the previous name completely.
 
 ### 8. AI Code Review Culture & Complexity Management
