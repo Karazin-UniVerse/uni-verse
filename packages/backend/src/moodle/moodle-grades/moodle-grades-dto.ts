@@ -1,10 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import type { StudentRecordBookItem } from '@core/types';
+import type { StudentRecordBookItem } from '@universe/core/types';
 import type {
   ControlType,
   EctsGrade,
   TraditionalGrade,
-} from '@core/utils/grades';
+} from '@universe/core/utils/grades';
 
 export class MoodleGradeItemDto implements Partial<StudentRecordBookItem> {
   @ApiPropertyOptional({

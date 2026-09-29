@@ -40,23 +40,26 @@ function truncateLabel(value: string, max: number): string {
 
 type ChartTooltipProps = Partial<TooltipContentProps<number, string>> & {
   valueLabel?: string;
+  type?: 'bar' | 'donut';
 };
 
-function ChartTooltip({ active, payload, label, valueLabel }: Readonly<ChartTooltipProps>) {
+function ChartTooltip({ active, payload, label, valueLabel, type }: Readonly<ChartTooltipProps>) {
   if (!active || !payload?.length) return null;
 
   const item = payload[0];
   const color = typeof item.color === 'string' ? item.color : undefined;
+  const categoryName = item.name ? String(item.name) : undefined;
+  const displayLabel = type === 'donut' ? categoryName : valueLabel;
 
   return (
     <div className={css.tooltip} role="status" aria-live="assertive">
-      {label !== null && label !== undefined && label !== '' && (
+      {type !== 'donut' && label !== null && label !== undefined && label !== '' && (
         <div className={css.tooltipLabel}>{String(label)}</div>
       )}
       <div className={css.tooltipRow}>
         {color && <span className={css.tooltipSwatch} style={{ background: color }} />}
         <span>
-          {valueLabel ? `${valueLabel}: ` : ''}
+          {displayLabel ? `${displayLabel}: ` : ''}
           {item.value ?? 0}
         </span>
       </div>
@@ -175,7 +178,7 @@ export function Chart({
             stroke={theme.themeKey === 'cyberpunk' ? theme.axis : 'transparent'}
             strokeWidth={theme.themeKey === 'cyberpunk' ? 1 : 0}
           />
-          <Tooltip content={<ChartTooltip valueLabel={valueLabel} />} />
+          <Tooltip content={<ChartTooltip valueLabel={valueLabel} type={type} />} />
         </PieChart>
       );
     }
@@ -205,7 +208,7 @@ export function Chart({
             tickLine={false}
             interval={0}
           />
-          <Tooltip content={<ChartTooltip valueLabel={valueLabel} />} />
+          <Tooltip content={<ChartTooltip valueLabel={valueLabel} type={type} />} />
           <Bar
             dataKey="value"
             radius={[0, barRadius, barRadius, 0]}
@@ -235,7 +238,7 @@ export function Chart({
           axisLine={{ stroke: theme.axis }}
           tickLine={{ stroke: theme.axis }}
         />
-        <Tooltip content={<ChartTooltip valueLabel={valueLabel} />} />
+        <Tooltip content={<ChartTooltip valueLabel={valueLabel} type={type} />} />
         <Bar
           dataKey="value"
           radius={[barRadius, barRadius, 0, 0]}

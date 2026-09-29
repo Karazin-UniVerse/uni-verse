@@ -11,10 +11,16 @@ import {
 import { GradesChart } from '@uni-hub/components/grades';
 import { GradeSimulatorTrigger } from '@uni-hub/components/gamification';
 import { getValidGrades, getGradeTone, getGradeCourseName } from '@uni-hub/utils/grades';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { Grade } from '@uni-hub/types';
 import type { GradesTabProps } from '../types';
 import { mockFallbackGrades } from '../constants';
-import { getControlTypeLabel, parseGradeScore, getExamScoreDisplay } from '../utils';
+import {
+  getControlTypeLabel,
+  getTraditionalGradeLabel,
+  parseGradeScore,
+  getExamScoreDisplay,
+} from '../utils';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export type GradeDisplayItem = Grade & {
@@ -30,11 +36,16 @@ interface GradeTableRowProps {
 }
 
 const GradeTableRow: React.FC<GradeTableRowProps> = ({ grade, index }) => {
-  const courseName = getGradeCourseName(grade) || grade.courseName || `Дисципліна #${index + 1}`;
+  const { formatMessage } = useLanguage();
+  const courseName =
+    getGradeCourseName(grade) ||
+    grade.courseName ||
+    `${formatMessage('grades.discipline')} #${index + 1}`;
   const totalScore = parseGradeScore(grade);
   const controlType: ControlType | undefined = grade.controlType;
   const ects = calculateEctsGrade(totalScore);
-  const traditionalGrade = calculateTraditionalGrade(totalScore, controlType ?? undefined);
+  const rawTraditional = calculateTraditionalGrade(totalScore, controlType ?? undefined);
+  const traditionalGrade = getTraditionalGradeLabel(rawTraditional, formatMessage);
   const tone = getGradeTone(totalScore);
 
   const currentScore =
@@ -55,7 +66,7 @@ const GradeTableRow: React.FC<GradeTableRowProps> = ({ grade, index }) => {
       <td>
         {controlType ? (
           <Tag tone={controlType === 'exam' ? 'info' : 'neutral'}>
-            {getControlTypeLabel(controlType)}
+            {getControlTypeLabel(controlType, formatMessage)}
           </Tag>
         ) : (
           '—'
@@ -82,13 +93,14 @@ const GradeTableRow: React.FC<GradeTableRowProps> = ({ grade, index }) => {
 };
 
 export const GradesTab: React.FC<GradesTabProps> = ({ grades, onOpenSimulator }) => {
+  const { formatMessage } = useLanguage();
   const rawValidGrades = getValidGrades(grades);
   const validGrades = rawValidGrades.length > 0 ? rawValidGrades : mockFallbackGrades;
 
   return (
     <div className={styles.gradesStack}>
       <div className={styles.pageTitleRow} style={{ marginBottom: 0 }}>
-        <span className={styles.muted}>Електронна залікова книжка та симулятор оцінок</span>
+        <span className={styles.muted}>{formatMessage('grades.subtitle')}</span>
         <GradeSimulatorTrigger onOpen={onOpenSimulator} />
       </div>
       <GradesChart grades={validGrades as Grade[]} />
@@ -96,20 +108,22 @@ export const GradesTab: React.FC<GradesTabProps> = ({ grades, onOpenSimulator })
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Дисципліна</th>
-              <th>Кредити ECTS</th>
-              <th>Форма контролю</th>
-              <th>Поточний бал (0–60)</th>
-              <th>Екзамен (0–40)</th>
-              <th>Підсумковий 100-бальний бал</th>
-              <th>Оцінка ECTS</th>
-              <th>Традиційна (національна) оцінка</th>
+              <th>{formatMessage('grades.colCourse')}</th>
+              <th>{formatMessage('grades.colCredits')}</th>
+              <th>{formatMessage('grades.colControl')}</th>
+              <th>{formatMessage('grades.colCurrent')}</th>
+              <th>{formatMessage('grades.colExam')}</th>
+              <th>{formatMessage('grades.colFinal')}</th>
+              <th>{formatMessage('grades.colEcts')}</th>
+              <th>{formatMessage('grades.colTraditional')}</th>
             </tr>
           </thead>
           <tbody>
             {(validGrades as GradeDisplayItem[]).map((gradeItem, index: number) => {
               const courseName =
-                getGradeCourseName(gradeItem) || gradeItem.courseName || `Дисципліна #${index + 1}`;
+                getGradeCourseName(gradeItem) ||
+                gradeItem.courseName ||
+                `${formatMessage('grades.discipline')} #${index + 1}`;
 
               return <GradeTableRow key={courseName + index} grade={gradeItem} index={index} />;
             })}

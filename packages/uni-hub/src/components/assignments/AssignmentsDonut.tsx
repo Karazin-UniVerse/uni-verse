@@ -1,5 +1,8 @@
+'use client';
+
 import React, { useEffect, useMemo, useState } from 'react';
 import type { Assignment, Grade } from '@uni-hub/types';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { getGradeCourseName, getValidGrades } from '@uni-hub/utils/grades';
 import { Chart } from '@una';
 
@@ -17,6 +20,7 @@ const COLORS = {
 } as const;
 
 export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments, grades }) => {
+  const { formatMessage } = useLanguage();
   const [nowSec, setNowSec] = useState(() => Math.floor(Date.now() / 1000));
 
   useEffect(() => {
@@ -44,7 +48,11 @@ export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments,
 
     for (const assignment of assignments) {
       const courseKey = (assignment.courseName || '').trim().toLowerCase();
-      const isDone = gradedCourses.has(courseKey);
+      const isDone =
+        gradedCourses.has(courseKey) ||
+        assignment.submissionStatus === 'submitted' ||
+        assignment.submissionStatus === 'graded' ||
+        Boolean(assignment.graded);
 
       if (isDone) {
         done += 1;
@@ -58,27 +66,31 @@ export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments,
     const result: { name: string; value: number; color: string }[] = [];
 
     if (done > 0) {
-      result.push({ name: 'Выполнено', value: done, color: COLORS.done });
+      result.push({ name: formatMessage('donut.completed'), value: done, color: COLORS.done });
     }
 
     if (overdue > 0) {
-      result.push({ name: 'Просрочено', value: overdue, color: COLORS.overdue });
+      result.push({ name: formatMessage('donut.overdue'), value: overdue, color: COLORS.overdue });
     }
 
     if (inProgress > 0) {
-      result.push({ name: 'В процессе', value: inProgress, color: COLORS.inProgress });
+      result.push({
+        name: formatMessage('donut.inProgress'),
+        value: inProgress,
+        color: COLORS.inProgress,
+      });
     }
 
     return result;
-  }, [assignments, grades, nowSec]);
+  }, [assignments, grades, nowSec, formatMessage]);
 
   return (
     <Chart
       type="donut"
-      title="Статус заданий"
+      title={formatMessage('donut.title')}
       data={segments}
       height={DONUT_CHART_HEIGHT}
-      emptyDescription="Задания не найдены"
+      emptyDescription={formatMessage('donut.empty')}
     />
   );
 };
