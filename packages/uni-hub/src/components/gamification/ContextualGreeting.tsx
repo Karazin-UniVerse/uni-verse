@@ -1,6 +1,10 @@
+'use client';
+
 import React, { useMemo } from 'react';
 import type { Assignment } from '@uni-hub/types';
 import type { TimeOfDay } from '@uni-hub/constants/gamification';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { useNow } from '@uni-hub/hooks/useNow';
 import styles from './ContextualGreeting.module.scss';
 
@@ -8,11 +12,11 @@ type ContextualGreetingProps = {
   assignments: Assignment[];
 };
 
-const GREETINGS: Record<TimeOfDay, string> = {
-  morning: 'Доброе утро',
-  day: 'Добрый день',
-  evening: 'Добрый вечер',
-  night: 'Доброй ночи',
+const GREETING_KEYS: Record<TimeOfDay, TranslationKey> = {
+  morning: 'greeting.morning',
+  day: 'greeting.day',
+  evening: 'greeting.evening',
+  night: 'greeting.night',
 };
 
 function getTimeOfDay(hour: number): TimeOfDay {
@@ -32,6 +36,7 @@ function getTimeOfDay(hour: number): TimeOfDay {
 }
 
 export const ContextualGreeting: React.FC<ContextualGreetingProps> = ({ assignments }) => {
+  const { formatMessage } = useLanguage();
   const nowMs = useNow(30000);
   const hour = new Date(nowMs).getHours();
   const nowSec = Math.floor(nowMs / 1000);
@@ -44,18 +49,22 @@ export const ContextualGreeting: React.FC<ContextualGreetingProps> = ({ assignme
       .sort((a, b) => a.duedate - b.duedate);
 
     if (upcoming.length === 0) {
-      return 'Ближайших дедлайнов нет — можно выдохнуть или заглянуть в курсы.';
+      return formatMessage('greeting.noDeadlines');
     }
 
     const nearest = upcoming[0];
     const hoursLeft = Math.max(1, Math.ceil((nearest.duedate - nowSec) / 3600));
+    const prefix = formatMessage('greeting.deadlinePrefix');
+    const prefixStr = prefix ? `${prefix} ` : '';
 
-    return `До «${nearest.name}» осталось ${hoursLeft} ч. Успеем?`;
-  }, [assignments, nowSec]);
+    return `${prefixStr}«${nearest.name}» ${formatMessage('greeting.deadlineRemaining')} ${hoursLeft} ${formatMessage('greeting.hours')} ${formatMessage('greeting.willMakeIt')}`;
+  }, [assignments, nowSec, formatMessage]);
 
   return (
     <div className={styles.wrap}>
-      <h2 className={styles.hello}>{GREETINGS[timeOfDay]}, студент</h2>
+      <h2 className={styles.hello}>
+        {formatMessage(GREETING_KEYS[timeOfDay])}, {formatMessage('greeting.student')}
+      </h2>
       <p className={styles.cta}>{cta}</p>
     </div>
   );

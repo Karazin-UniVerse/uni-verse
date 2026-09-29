@@ -20,6 +20,7 @@ import {
   calculateExamTargets,
   type ControlType,
 } from '@core/utils/grades';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { AdmissionBanner } from './AdmissionBanner';
 import { ExamTargetsGrid } from './ExamTargetsGrid';
 import { RemainingAssignmentsSection } from './RemainingAssignmentsSection';
@@ -90,6 +91,7 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
   onClose,
   open,
 }) => {
+  const { formatMessage } = useLanguage();
   const validGrades = useMemo(() => getValidGrades(grades), [grades]);
   const uniqueGrades = useMemo(() => getUniqueGrades(validGrades), [validGrades]);
 
@@ -204,14 +206,19 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
 
   if (uniqueGrades.length === 0) {
     return (
-      <Modal open={open} onClose={onClose} title="Симулятор оцінок — «Що, якщо?»" width={580}>
-        <Empty description="Немає оцінок для симуляції" />
+      <Modal
+        open={open}
+        onClose={onClose}
+        title={formatMessage('simulator.modalTitle')}
+        width={580}
+      >
+        <Empty description={formatMessage('simulator.empty')} />
       </Modal>
     );
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Симулятор оцінок — «Що, якщо?»" width={580}>
+    <Modal open={open} onClose={onClose} title={formatMessage('simulator.modalTitle')} width={580}>
       <div className={styles.body}>
         <div className={styles.courseHeader}>
           <div className={styles.courseHeaderTop}>
@@ -224,7 +231,7 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
             value={selectedCourse}
             onChange={setCourseName}
             options={courseOptions}
-            aria-label="Дисципліна"
+            aria-label={formatMessage('grades.discipline')}
           />
         </div>
 

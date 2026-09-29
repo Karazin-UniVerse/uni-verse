@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -15,6 +15,9 @@ import {
 } from 'lucide-react';
 import { Button as SimpleButton, Spinner, Empty, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
+import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import {
   COURSE_MODULE_NAMES,
   type CourseSection,
@@ -46,6 +49,7 @@ const CourseContents: React.FC = () => {
   const courseId = (params?.courseId as string) || '';
   const router = useRouter();
   const toast = useToast();
+  const { formatMessage } = useLanguage();
 
   const [sections, setSections] = useState<CourseSection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,14 +58,25 @@ const CourseContents: React.FC = () => {
   const [selectedModule, setSelectedModule] = useState<CourseModule | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
+  const formatMessageRef = useRef(formatMessage);
+
+  useEffect(() => {
+    formatMessageRef.current = formatMessage;
+  }, [formatMessage]);
+
   useEffect(() => {
     if (!courseId) return;
+
+    let cancelled = false;
 
     const fetchContents = async () => {
       setLoading(true);
 
       try {
         const response = await moodleApi.getCourseContents(Number.parseInt(courseId, 10));
+
+        if (cancelled) return;
+
         const validSections = response.data.filter(
           (section: CourseSection) => section.name && section.modules && section.modules.length > 0,
         );
@@ -72,14 +87,22 @@ const CourseContents: React.FC = () => {
           setOpenSections(new Set([validSections[0].id.toString()]));
         }
       } catch (error) {
+        if (cancelled) return;
+
         console.error(error);
-        toast.error('Не удалось загрузить содержимое курса');
+        toast.error(formatMessageRef.current('courseContents.loadError'));
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     fetchContents();
+
+    return () => {
+      cancelled = true;
+    };
   }, [courseId, toast]);
 
   const handleModuleClick = (courseModule: CourseModule) => {
@@ -104,11 +127,11 @@ const CourseContents: React.FC = () => {
 
   const renderSections = () => {
     if (loading) {
-      return <Spinner size="large" tip="Загрузка содержимого..." />;
+      return <Spinner size="large" tip={formatMessage('courseContents.loading')} />;
     }
 
     if (sections.length === 0) {
-      return <Empty description="В этом курсе пока нет доступных материалов." />;
+      return <Empty description={formatMessage('courseContents.empty')} />;
     }
 
     return (
@@ -148,7 +171,9 @@ const CourseContents: React.FC = () => {
                           </span>
                           <span>
                             <span className={styles.moduleName}>{courseModule.name}</span>
-                            <span className={styles.moduleType}>Тип: {courseModule.modname}</span>
+                            <span className={styles.moduleType}>
+                              {formatMessage('courseContents.moduleType')}: {courseModule.modname}
+                            </span>
                           </span>
                         </button>
                       </li>
@@ -173,19 +198,24 @@ const CourseContents: React.FC = () => {
           isTransparent
           onClick={() => router.push('/?tab=courses')}
         >
-          <ArrowLeft size={16} /> Назад до курсів
+          <ArrowLeft size={16} /> {formatMessage('courseContents.back')}
         </SimpleButton>
+
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <LanguageSwitcher placement="top-down" />
+          <ThemeSwitcher />
+        </div>
       </header>
 
       <main className={styles.content}>
-        <nav className={styles.breadcrumb} aria-label="Хлебные крошки">
-          <Link href="/?tab=courses">Курсы</Link>
+        <nav className={styles.breadcrumb} aria-label={formatMessage('courseContents.breadcrumbs')}>
+          <Link href="/?tab=courses">{formatMessage('courseContents.breadcrumbs')}</Link>
           <span>/</span>
-          <span>Содержимое курса</span>
+          <span>{formatMessage('courseContents.title')}</span>
         </nav>
 
         <div className={styles.panel}>
-          <h1>Содержимое курса</h1>
+          <h1>{formatMessage('courseContents.title')}</h1>
 
           {renderSections()}
         </div>

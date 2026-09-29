@@ -25,6 +25,7 @@ import { LiveCountdown } from '@uni-hub/components/gamification';
 import { useNow } from '@uni-hub/hooks/useNow';
 import { moodleApi } from '@uni-hub/services/api';
 import { playClick } from '@uni-hub/utils/soundEffects';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { AssignmentsTabProps } from '../types';
 import { cardMotion } from '../constants';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
@@ -90,6 +91,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   soundEnabled,
   onOpenAssignment,
 }) => {
+  const { localeTag, formatMessage } = useLanguage();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [localStatuses, setLocalStatuses] = useState<
     Record<number, { status?: string; grade?: string }>
@@ -185,34 +187,39 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
           size="small"
           aria-expanded={filtersOpen}
         >
-          <Filter size={16} /> {filtersOpen ? 'Сховати фільтри' : 'Фільтри'}
+          <Filter size={16} />{' '}
+          {filtersOpen
+            ? formatMessage('assignments.hideFilters')
+            : formatMessage('assignments.filters')}
         </SimpleButton>
       </div>
       <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
         <SimpleInput
           type="date"
+          lang={localeTag}
           size="medium"
           min="2000-01-01"
           max="2099-12-31"
           value={dateFrom}
           onChange={handleDateChange(onDateFromChange)}
-          aria-label="Дата від"
+          aria-label={formatMessage('assignments.dateFrom')}
         />
         <SimpleInput
           type="date"
+          lang={localeTag}
           size="medium"
           min="2000-01-01"
           max="2099-12-31"
           value={dateTo}
           onChange={handleDateChange(onDateToChange)}
-          aria-label="Дата до"
+          aria-label={formatMessage('assignments.dateTo')}
         />
         <Select
           value={sortOrder}
           onChange={(value) => onSortOrderChange(value as 'asc' | 'desc')}
           options={[
-            { value: 'asc', label: 'Спочатку старі' },
-            { value: 'desc', label: 'Спочатку нові' },
+            { value: 'asc', label: formatMessage('assignments.oldestFirst') },
+            { value: 'desc', label: formatMessage('assignments.newestFirst') },
           ]}
         />
         <label className={styles.checkLabel}>
@@ -221,7 +228,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
             checked={hideCompleted}
             onChange={(event) => onHideCompletedChange(event.target.checked)}
           />
-          Сховати виконані
+          {formatMessage('assignments.hideCompleted')}
         </label>
       </div>
 
@@ -292,12 +299,11 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
                     </div>
                   </div>
                 </div>
-
                 <div className={styles.assignmentRightCol}>
                   {isLate && (
                     <Tag tone="danger">
                       <AlertCircle size={13} style={{ marginRight: 4 }} />
-                      Здано із запізненням
+                      {formatMessage('assignments.submittedLate')}
                     </Tag>
                   )}
 
@@ -305,7 +311,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
                     {grade ? (
                       <>
                         <Award size={13} style={{ marginRight: 4 }} />
-                        Оцінка: {grade}
+                        {formatMessage('assignments.grade')}: {grade}
                       </>
                     ) : (
                       <>
@@ -316,7 +322,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
                   </Tag>
 
                   <div className={styles.assignmentActionButton}>
-                    <span>Відкрити</span>
+                    <span>{formatMessage('assignments.open')}</span>
                     <ChevronRight size={14} />
                   </div>
                 </div>
@@ -327,7 +333,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
             if (assignments.length === 0) {
               return (
                 <Empty
-                  description="Завдань не знайдено"
+                  description={formatMessage('assignments.emptyNotFound')}
                   icon={<span style={{ fontSize: '48px' }}>📝</span>}
                 />
               );
@@ -336,7 +342,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
             if (dateFrom || dateTo) {
               return (
                 <Empty
-                  description="За обраними датами завдань не знайдено"
+                  description={formatMessage('assignments.emptyDateFilter')}
                   icon={<span style={{ fontSize: '48px' }}>🔍</span>}
                 />
               );
@@ -344,7 +350,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
 
             return (
               <Empty
-                description="Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉"
+                description={formatMessage('assignments.emptyAllDone')}
                 icon={<span style={{ fontSize: '48px' }}>🏖️</span>}
               />
             );

@@ -27,14 +27,16 @@ import {
   GradesTab,
   AssignmentsTab,
 } from './dashboard';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './DashboardPage.module.scss';
 
-const PAGE_TITLES: Record<NavKey, string> = {
-  overview: 'Картка студента / Огляд',
-  courses: 'Індивідуальний план',
-  grades: 'Заліковка та бали',
-  schedule: 'Розклад занять',
-  assignments: 'Завдання',
+const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
+  overview: 'nav.overview.full',
+  courses: 'nav.courses.full',
+  grades: 'nav.grades.full',
+  schedule: 'nav.schedule.full',
+  assignments: 'nav.assignments.full',
 };
 
 type GradesApiResponse = Awaited<ReturnType<typeof moodleApi.getGrades>>;
@@ -238,6 +240,7 @@ const DashboardPage: React.FC = () => {
   const checkIn = useGamificationStore((s) => s.checkIn);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const setSoundEnabled = useGamificationStore((s) => s.setSoundEnabled);
+  const { formatMessage } = useLanguage();
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -334,7 +337,7 @@ const DashboardPage: React.FC = () => {
       persistDashboardSnapshot(nowTimestamp, freshData);
 
       if (isManual) {
-        toast.success('Дані успішно оновлено');
+        toast.success(formatMessage('dashboard.syncSuccess'));
       }
     } catch (error) {
       if (requestId !== fetchRequestIdRef.current) {
@@ -343,7 +346,7 @@ const DashboardPage: React.FC = () => {
 
       if (isUnauthorizedError(error)) {
         clearUserSessionStorage();
-        toast.error('Сесія застаріла або недійсна. Будь ласка, увійдіть знову.');
+        toast.error(formatMessage('dashboard.sessionExpired'));
         router.push('/login');
 
         return;
@@ -368,12 +371,12 @@ const DashboardPage: React.FC = () => {
         }));
         setIsOfflineData(true);
         setHasLoadedOnce(true);
-        toast.info("Використовуються збережені дані: немає зв'язку з сервером Moodle.");
+        toast.info(formatMessage('dashboard.offlineNotice'));
 
         return;
       }
 
-      toast.error('Помилка завантаження даних. Будь ласка, переконайтеся, що бекенд запущено.');
+      toast.error(formatMessage('dashboard.loadError'));
     } finally {
       if (requestId === fetchRequestIdRef.current) {
         setLoading(false);
@@ -533,11 +536,11 @@ const DashboardPage: React.FC = () => {
 
         <main className={styles.content}>
           <div className={styles.pageTitleRow}>
-            <h2 className={styles.pageTitle}>{PAGE_TITLES[activeKey]}</h2>
+            <h2 className={styles.pageTitle}>{formatMessage(PAGE_TITLE_KEYS[activeKey])}</h2>
             <div className={styles.syncActions}>
               {lastSyncTime && (
                 <span className={styles.lastSyncText}>
-                  Дані оновлено: {formatLastSync(lastSyncTime)}
+                  {formatMessage('dashboard.dataUpdated')}: {formatLastSync(lastSyncTime)}
                 </span>
               )}
               <UnaButton
@@ -546,11 +549,11 @@ const DashboardPage: React.FC = () => {
                 size="small"
                 onClick={() => fetchData(true)}
                 disabled={loading}
-                aria-label="Оновити дані"
+                aria-label={formatMessage('dashboard.refreshData')}
                 className={styles.refreshBtn}
               >
                 <RotateCw size={14} className={clsx(styles.refreshIcon, loading && styles.spin)} />
-                <span>Оновити</span>
+                <span>{formatMessage('dashboard.refresh')}</span>
               </UnaButton>
             </div>
           </div>
@@ -559,8 +562,11 @@ const DashboardPage: React.FC = () => {
             <div className={styles.offlineBanner} role="alert">
               <AlertCircle size={16} className={styles.offlineIcon} />
               <span>
-                Увага: відсутній зв&apos;язок з сервером Moodle. Відображаються збережені дані
-                {lastSyncTime ? ` від ${formatLastSync(lastSyncTime)}` : ''}.
+                {formatMessage('dashboard.offlineWarning')}
+                {lastSyncTime
+                  ? ` ${formatMessage('dashboard.offlineFrom')} ${formatLastSync(lastSyncTime)}`
+                  : ''}
+                .
               </span>
             </div>
           )}
