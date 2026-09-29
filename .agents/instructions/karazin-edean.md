@@ -19,9 +19,11 @@ uni-verse/
 ### Critical Rules & Anti-Patterns to Prevent
 
 1. **Shared Types & Domain Models**:
-   - Always import shared types from `@universe/core/types` (e.g. `StudentProfile`, `GradeRecord`, `calculateEctsGrade`).
+   - Import shared types from their canonical source: domain entities (`StudentProfile`, `CurriculumItem`, `GradeRecord`, etc.) from `@universe/core/types`, grade constants & calculation contracts (`CONTROL_TYPES`, `TRADITIONAL_GRADES`, `TraditionalGrade`, `ControlType`, `EctsGrade`, `GradeAccumulationParams`, `GradeAccumulationResult`) from `@universe/core/constants/grades` (or `@universe/core/utils/grades`).
    - NEVER create a standalone `packages/types/package.json` — all core types reside in `@universe/core`.
-   - NEVER introduce redundant aliases or duplicate exports for backwards compatibility (e.g. `export const GradeScoreThreshold = GRADES_THRESHOLD; export type GradeScoreThreshold = GradesThreshold;`). Use a single canonical identifier everywhere.
+   - NEVER introduce redundant aliases or duplicate exports for backwards compatibility (e.g. `export const GradeScoreThreshold = GRADES_THRESHOLD; export type GradeScoreThreshold = GradesThreshold;`).
+   - NEVER create cross-module proxy type aliases (e.g. `import type { TraditionalGrade as CoreTraditionalGrade } from '../constants/grades'; export type TraditionalGrade = CoreTraditionalGrade;`). Types must be defined once in their canonical module and imported directly from there.
+   - Use a single canonical identifier everywhere.
    - When re-exporting in libraries/services, use `export * from '@universe/core/types'` to prevent ESLint `no-duplicate-imports` and SonarCloud `typescript:S7763`.
 
 2. **Backend Moodle Gateway (`@universe/backend`)**:
