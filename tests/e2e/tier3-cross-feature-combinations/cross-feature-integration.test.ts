@@ -77,7 +77,7 @@ describe('Tier 3 - Cross-Feature Combinations & Contracts Integration', () => {
     expect(siderPage).toContain(canonicalHost);
 
     // 3. AssignmentModal link
-    const modal = readWorkspaceFile('packages/uni-hub/components/AssignmentModal.tsx');
+    const modal = readWorkspaceFile('packages/uni-hub/components/assignments/AssignmentModal.tsx');
 
     expect(modal).toContain(canonicalHost);
     expect(modal).not.toContain('moodle.karazin.ua');

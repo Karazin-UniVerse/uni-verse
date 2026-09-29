@@ -80,7 +80,7 @@
       }
     },
     {
-      "files": ["packages/uni-hub/providers/**/*.{ts,tsx}"],
+      "files": ["packages/uni-hub/app/providers.tsx"],
       "rules": {
         "react/no-danger": "off"
       }

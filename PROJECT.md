@@ -195,5 +195,5 @@ export { Empty } from './components/una/Empty';
 - `packages/backend/utils/get-creds.ts`: Credentials helper with Moodle URL fallback.
 - `packages/uni-hub/views/DashboardPage.tsx`: E-Dean dashboard with 5 Ukrainian tabs, siderFooter Moodle link, and 3-tier gradebook.
 - `packages/uni-hub/services/api.ts`: API client consuming backend endpoints with @universe/core/types contracts.
-- `packages/uni-hub/components/AssignmentModal.tsx`: Updated Moodle URL link.
+- `packages/uni-hub/components/assignments/AssignmentModal.tsx`: Updated Moodle URL link.
 - `tests/e2e/`: E2E test suite created by E2E Testing Track.
