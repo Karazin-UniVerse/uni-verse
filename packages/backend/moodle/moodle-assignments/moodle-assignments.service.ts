@@ -58,28 +58,35 @@ export class MoodleAssignmentsService {
 
       if (includeStatus && assignments.length > 0) {
         const chunkSize = 5;
+        const chunks: AssignmentItemDto[][] = [];
 
         for (let i = 0; i < assignments.length; i += chunkSize) {
-          const chunk = assignments.slice(i, i + chunkSize);
-
-          await Promise.allSettled(
-            chunk.map(async (assign) => {
-              try {
-                const sub = await this.getSubmissionStatus(
-                  moodleToken,
-                  moodleId,
-                  assign.id,
-                );
-
-                assign.submissionStatus = sub.status;
-                assign.grade = sub.grade;
-                assign.graded = sub.status === 'graded';
-              } catch {
-                // Ignore single assignment status fetch failure
-              }
-            }),
-          );
+          chunks.push(assignments.slice(i, i + chunkSize));
         }
+
+        await chunks.reduce(
+          (chain, chunk) =>
+            chain.then(() =>
+              Promise.allSettled(
+                chunk.map(async (assign) => {
+                  try {
+                    const sub = await this.getSubmissionStatus(
+                      moodleToken,
+                      moodleId,
+                      assign.id,
+                    );
+
+                    assign.submissionStatus = sub.status;
+                    assign.grade = sub.grade;
+                    assign.graded = sub.status === 'graded';
+                  } catch {
+                    // Ignore single assignment status fetch failure
+                  }
+                }),
+              ).then(() => {}),
+            ),
+          Promise.resolve(),
+        );
       }
 
       return assignments;
