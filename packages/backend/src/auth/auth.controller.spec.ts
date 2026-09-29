@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ForbiddenException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import {
@@ -194,6 +195,23 @@ describe('AuthController', () => {
         access_token: 'google-at',
         isLinked: true,
       });
+    });
+
+    it('should propagate ForbiddenException when user domain is not allowed', async () => {
+      const dto: GoogleAuthDto = {
+        idToken: 'unauthorized-domain-token',
+      };
+      const response = createMockResponse();
+
+      authService.loginWithGoogle.mockRejectedValue(
+        new ForbiddenException(
+          'Доступ дозволено лише для облікових записів @student.karazin.ua та @karazin.ua',
+        ),
+      );
+
+      await expect(controller.loginWithGoogle(dto, response)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
