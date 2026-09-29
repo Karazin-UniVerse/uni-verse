@@ -172,6 +172,8 @@ export const en = {
   'assignments.hideCompleted': 'Hide completed',
   'assignments.deadline': 'Deadline',
   'assignments.noDueDate': 'No due date',
+  'assignments.emptyNotFound': 'No assignments found',
+  'assignments.emptyDateFilter': 'No assignments found for selected dates',
   'assignments.emptyAllDone':
     'Hooray, all assignments completed! Time to relax or review lectures 🎉',
 
