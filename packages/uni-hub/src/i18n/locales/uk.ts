@@ -35,6 +35,8 @@ export const uk = {
   'login.linkMoodleEnterPassword': 'Будь ласка, введіть пароль від Moodle',
   'login.linkMoodleRequired': 'Для завершення входу необхідно прив’язати акаунт Moodle',
   'login.linkMoodleError': 'Помилка прив’язки акаунта. Перевірте логін та пароль.',
+  'login.tryDemo': 'Спробувати демо-режим (без Moodle) →',
+  'login.demoSuccess': 'Вхід у демо-режимі виконано',
 
   // Themes
   'theme.light': 'Світла',
@@ -63,13 +65,13 @@ export const uk = {
   'dashboard.loadError':
     'Помилка завантаження даних. Будь ласка, переконайтеся, що бекенд запущено.',
   'dashboard.syncSuccess': 'Дані успішно оновлено',
-  'dashboard.offlineNotice': 'Використовуються збережені дані: немає зв’язку з сервером Moodle.',
+  'dashboard.offlineNotice': "Використовуються збережені дані: немає зв'язку з сервером Moodle.",
   'dashboard.updating': 'Оновлення...',
   'dashboard.dataUpdated': 'Дані оновлено',
   'dashboard.refreshData': 'Оновити дані',
   'dashboard.refresh': 'Оновити',
   'dashboard.offlineWarning':
-    'Увага: відсутній зв’язок з сервером Moodle. Відображаються збережені дані',
+    "Увага: відсутній зв'язок з сервером Moodle. Відображаються збережені дані",
   'dashboard.offlineFrom': 'від',
 
   // Greetings
@@ -183,6 +185,9 @@ export const uk = {
   'assignments.hideCompleted': 'Сховати виконані',
   'assignments.deadline': 'Дедлайн',
   'assignments.noDueDate': 'Без терміну',
+  'assignments.submittedLate': 'Здано із запізненням',
+  'assignments.grade': 'Оцінка',
+  'assignments.open': 'Відкрити',
   'assignments.emptyNotFound': 'Завдань не знайдено',
   'assignments.emptyDateFilter': 'За обраними датами завдань не знайдено',
   'assignments.emptyAllDone': 'Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉',

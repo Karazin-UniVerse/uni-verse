@@ -278,6 +278,22 @@ const LoginPage: React.FC = () => {
                 {loading ? formatMessage('login.loading') : formatMessage('login.submit')}
               </Button>
             </motion.div>
+
+            <div style={{ textAlign: 'center', marginTop: '12px' }}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="medium"
+                onClick={async () => {
+                  await authApi.login('demo', 'demo');
+                  toast.success(formatMessage('login.demoSuccess'));
+                  router.push('/');
+                }}
+                style={{ width: '100%', fontSize: '0.875rem', opacity: 0.85 }}
+              >
+                {formatMessage('login.tryDemo')}
+              </Button>
+            </div>
           </SimpleForm>
         )}
       </div>

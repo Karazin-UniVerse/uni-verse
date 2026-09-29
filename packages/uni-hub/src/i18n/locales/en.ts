@@ -37,6 +37,8 @@ export const en = {
   'login.linkMoodleEnterPassword': 'Please enter password in Moodle',
   'login.linkMoodleRequired': 'Linking a Moodle account is required to complete sign-in',
   'login.linkMoodleError': 'Failed to link account. Please check your credentials.',
+  'login.tryDemo': 'Try demo mode (without Moodle) →',
+  'login.demoSuccess': 'Logged in using demo mode',
 
   // Themes
   'theme.light': 'Light',
@@ -63,13 +65,13 @@ export const en = {
   'header.notifications.empty': 'No notifications',
   'dashboard.sessionExpired': 'Session expired or invalid. Please sign in again.',
   'dashboard.loadError': 'Failed to load data. Please ensure the backend is running.',
-  'dashboard.syncSuccess': 'Data updated successfully',
+  'dashboard.syncSuccess': 'Data refreshed successfully',
   'dashboard.offlineNotice': 'Using cached data: unable to connect to Moodle server.',
   'dashboard.updating': 'Updating...',
   'dashboard.dataUpdated': 'Data updated',
   'dashboard.refreshData': 'Refresh data',
   'dashboard.refresh': 'Refresh',
-  'dashboard.offlineWarning': 'Warning: unable to connect to Moodle server. Showing cached data',
+  'dashboard.offlineWarning': 'Warning: Moodle server is unreachable. Showing cached data',
   'dashboard.offlineFrom': 'from',
 
   // Greetings
@@ -183,6 +185,9 @@ export const en = {
   'assignments.hideCompleted': 'Hide completed',
   'assignments.deadline': 'Deadline',
   'assignments.noDueDate': 'No due date',
+  'assignments.submittedLate': 'Submitted late',
+  'assignments.grade': 'Grade',
+  'assignments.open': 'Open',
   'assignments.emptyNotFound': 'No assignments found',
   'assignments.emptyDateFilter': 'No assignments found for selected dates',
   'assignments.emptyAllDone':

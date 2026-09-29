@@ -567,8 +567,11 @@ const DashboardPage: React.FC = () => {
             <div className={styles.offlineBanner} role="alert">
               <AlertCircle size={16} className={styles.offlineIcon} />
               <span>
-                Увага: відсутній зв&apos;язок з сервером Moodle. Відображаються збережені дані
-                {lastSyncTime ? ` від ${formatLastSync(lastSyncTime)}` : ''}.
+                {formatMessage('dashboard.offlineWarning')}
+                {lastSyncTime
+                  ? ` ${formatMessage('dashboard.offlineFrom')} ${formatLastSync(lastSyncTime)}`
+                  : ''}
+                .
               </span>
             </div>
           )}

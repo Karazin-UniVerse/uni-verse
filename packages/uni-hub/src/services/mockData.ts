@@ -191,13 +191,22 @@ export const mockGrades: Grade[] = [
   },
 ];
 
+const getFutureTimestamp = (daysAhead: number, hours: number, minutes = 0): number => {
+  const date = new Date();
+
+  date.setDate(date.getDate() + daysAhead);
+  date.setHours(hours, minutes, 0, 0);
+
+  return Math.floor(date.getTime() / 1000);
+};
+
 export const mockEvents: MoodleEvent[] = [
   {
     id: 301,
     name: 'Консультація перед екзаменом з АСД',
     courseName: 'Алгоритми та структури даних',
     description: 'Онлайн-зустріч у Google Meet для розбору практичних завдань',
-    timestart: now + 86400 * 1,
+    timestart: getFutureTimestamp(1, 14, 0),
     formattedtime: 'Завтра о 14:00',
     eventtype: 'due',
     url: 'https://meet.google.com/abc-defg-hij',
@@ -207,7 +216,7 @@ export const mockEvents: MoodleEvent[] = [
     name: 'Захист лабораторної роботи №3',
     courseName: 'Паралельні та розподілені обчислення',
     description: 'Захист звіту та коду на занятті',
-    timestart: now + 86400 * 4,
+    timestart: getFutureTimestamp(4, 10, 0),
     formattedtime: 'Через 4 дні о 10:00',
     eventtype: 'course',
   },
@@ -242,41 +251,67 @@ export function getMockAssignments(params?: GetAssignmentsParams): Assignment[] 
 
   if (params?.status === 'not_completed') {
     list = list.filter(
-      (a) => a.submissionStatus !== 'graded' && a.submissionStatus !== 'submitted',
+      (assignment) =>
+        assignment.submissionStatus !== 'graded' && assignment.submissionStatus !== 'submitted',
+    );
+  } else if (params?.status === 'completed') {
+    list = list.filter(
+      (assignment) =>
+        assignment.submissionStatus === 'graded' || assignment.submissionStatus === 'submitted',
     );
   }
 
+  if (params?.year) {
+    const yearNum = Number(params.year);
+
+    if (!Number.isNaN(yearNum)) {
+      list = list.filter((assignment) => assignment.year === yearNum);
+    }
+  }
+
+  if (params?.semester) {
+    const semesterNum = Number(params.semester);
+
+    if (!Number.isNaN(semesterNum)) {
+      list = list.filter((assignment) => assignment.semester === semesterNum);
+    }
+  }
+
   if (typeof params?.dateFrom === 'number') {
-    list = list.filter((a) => a.duedate > 0 && a.duedate >= (params.dateFrom as number));
+    list = list.filter(
+      (assignment) => assignment.duedate > 0 && assignment.duedate >= (params.dateFrom as number),
+    );
   }
 
   if (typeof params?.dateTo === 'number') {
-    list = list.filter((a) => a.duedate > 0 && a.duedate <= (params.dateTo as number));
+    list = list.filter(
+      (assignment) => assignment.duedate > 0 && assignment.duedate <= (params.dateTo as number),
+    );
   }
 
   if (params?.sortByDate === 'desc') {
-    list.sort((a, b) => {
-      if (a.duedate === 0) {
+    list.sort((firstAssignment, secondAssignment) => {
+      if (firstAssignment.duedate === 0) {
         return 1;
       }
 
-      if (b.duedate === 0) {
+      if (secondAssignment.duedate === 0) {
         return -1;
       }
 
-      return b.duedate - a.duedate;
+      return secondAssignment.duedate - firstAssignment.duedate;
     });
   } else {
-    list.sort((a, b) => {
-      if (a.duedate === 0) {
+    list.sort((firstAssignment, secondAssignment) => {
+      if (firstAssignment.duedate === 0) {
         return 1;
       }
 
-      if (b.duedate === 0) {
+      if (secondAssignment.duedate === 0) {
         return -1;
       }
 
-      return a.duedate - b.duedate;
+      return firstAssignment.duedate - secondAssignment.duedate;
     });
   }
 

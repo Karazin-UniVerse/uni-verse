@@ -60,6 +60,14 @@ describe('MoodleAssignmentsController', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBe(0);
+
+      const falsePlain = { ...plain, includeStatus: 'false' };
+      const falseDto = plainToInstance(GetAssignmentsQueryDto, falsePlain);
+
+      expect(falseDto.includeStatus).toBe(false);
+      const falseErrors = await validate(falseDto);
+
+      expect(falseErrors.length).toBe(0);
     });
 
     it('should transform includeStatus=false and includeStatus=0 to boolean false', async () => {
