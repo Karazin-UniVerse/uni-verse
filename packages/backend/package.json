@@ -101,7 +101,11 @@
       "!coverage/**",
       "!test/**",
       "!node_modules/**",
-      "!prisma.config.ts"
+      "!prisma.config.ts",
+      "!main.ts",
+      "!**/*.module.ts",
+      "!**/*.dto.ts",
+      "!types/**"
     ],
     "coverageReporters": [
       "text",
