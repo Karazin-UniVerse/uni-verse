@@ -93,6 +93,39 @@ describe('MoodleAssignmentsController', () => {
 
       expect(errorsZero.length).toBe(0);
 
+      const dtoZeroNum = plainToInstance(GetAssignmentsQueryDto, {
+        includeStatus: 0,
+      });
+
+      expect(typeof dtoZeroNum.includeStatus).toBe('boolean');
+      expect(dtoZeroNum.includeStatus).toBe(false);
+
+      const errorsZeroNum = await validate(dtoZeroNum);
+
+      expect(errorsZeroNum.length).toBe(0);
+
+      const dtoOneNum = plainToInstance(GetAssignmentsQueryDto, {
+        includeStatus: 1,
+      });
+
+      expect(typeof dtoOneNum.includeStatus).toBe('boolean');
+      expect(dtoOneNum.includeStatus).toBe(true);
+
+      const errorsOneNum = await validate(dtoOneNum);
+
+      expect(errorsOneNum.length).toBe(0);
+
+      const dtoOneStr = plainToInstance(GetAssignmentsQueryDto, {
+        includeStatus: '1',
+      });
+
+      expect(typeof dtoOneStr.includeStatus).toBe('boolean');
+      expect(dtoOneStr.includeStatus).toBe(true);
+
+      const errorsOneStr = await validate(dtoOneStr);
+
+      expect(errorsOneStr.length).toBe(0);
+
       const dtoNull = plainToInstance(GetAssignmentsQueryDto, {
         includeStatus: null,
       });
@@ -112,6 +145,16 @@ describe('MoodleAssignmentsController', () => {
       const errorsUndefined = await validate(dtoUndefined);
 
       expect(errorsUndefined.length).toBe(0);
+
+      const dtoInvalid = plainToInstance(GetAssignmentsQueryDto, {
+        includeStatus: 'invalid',
+      });
+
+      expect(dtoInvalid.includeStatus).toBe('invalid');
+
+      const errorsInvalid = await validate(dtoInvalid);
+
+      expect(errorsInvalid.length).toBeGreaterThan(0);
     });
 
     it('should validate AssignmentItemDto and SaveSubmissionDto', async () => {
