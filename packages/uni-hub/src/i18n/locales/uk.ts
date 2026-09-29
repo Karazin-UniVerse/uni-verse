@@ -171,6 +171,8 @@ export const uk = {
   'assignments.hideCompleted': 'Сховати виконані',
   'assignments.deadline': 'Дедлайн',
   'assignments.noDueDate': 'Без терміну',
+  'assignments.emptyNotFound': 'Завдань не знайдено',
+  'assignments.emptyDateFilter': 'За обраними датами завдань не знайдено',
   'assignments.emptyAllDone': 'Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉',
 
   // Schedule View

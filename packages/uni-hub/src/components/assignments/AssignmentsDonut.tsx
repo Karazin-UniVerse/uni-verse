@@ -48,7 +48,11 @@ export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments,
 
     for (const assignment of assignments) {
       const courseKey = (assignment.courseName || '').trim().toLowerCase();
-      const isDone = gradedCourses.has(courseKey);
+      const isDone =
+        gradedCourses.has(courseKey) ||
+        assignment.submissionStatus === 'submitted' ||
+        assignment.submissionStatus === 'graded' ||
+        Boolean(assignment.graded);
 
       if (isDone) {
         done += 1;
