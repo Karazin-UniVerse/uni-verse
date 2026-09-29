@@ -2,46 +2,15 @@
 
 import React, { useState, useMemo } from 'react';
 import { Filter } from 'lucide-react';
-import { TextInput as SimpleInput, Select, CheckBox, Empty, Button as SimpleButton } from '@una';
-import { AssignmentCard, useAssignmentStatuses } from '@uni-hub/components/assignments';
+import { TextInput as SimpleInput, Select, CheckBox, Button as SimpleButton } from '@una';
+import {
+  AssignmentCard,
+  AssignmentsEmptyState,
+  useAssignmentStatuses,
+} from '@uni-hub/components/assignments';
 import { useNow } from '@uni-hub/hooks/useNow';
 import type { AssignmentsTabProps } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
-
-interface AssignmentsEmptyStateProps {
-  hasAssignments: boolean;
-  hasDateFilter: boolean;
-}
-
-const AssignmentsEmptyState: React.FC<AssignmentsEmptyStateProps> = ({
-  hasAssignments,
-  hasDateFilter,
-}) => {
-  if (!hasAssignments) {
-    return (
-      <Empty
-        description="Завдань не знайдено"
-        icon={<span style={{ fontSize: '48px' }}>📝</span>}
-      />
-    );
-  }
-
-  if (hasDateFilter) {
-    return (
-      <Empty
-        description="За обраними датами завдань не знайдено"
-        icon={<span style={{ fontSize: '48px' }}>🔍</span>}
-      />
-    );
-  }
-
-  return (
-    <Empty
-      description="Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉"
-      icon={<span style={{ fontSize: '48px' }}>🏖️</span>}
-    />
-  );
-};
 
 export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   assignments,
