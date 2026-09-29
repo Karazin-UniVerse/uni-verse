@@ -16,12 +16,6 @@
       }
     ],
     "eqeqeq": "error",
-    "no-duplicate-imports": [
-      "error",
-      {
-        "includeExports": true
-      }
-    ],
     "import/no-duplicates": "error",
     "import/no-cycle": "error",
     "react/jsx-key": "error",
