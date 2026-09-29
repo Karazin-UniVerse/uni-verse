@@ -155,7 +155,6 @@ UniVerse enforces strict institutional security policies:
    - Allowed domains are configurable via `GOOGLE_ALLOWED_DOMAINS="karazin.ua,student.karazin.ua"`.
 
 2. **Dual-Factor Domain Verification**:
-   - Cryptographically verifies Google ID Token signature and audience against `GOOGLE_CLIENT_ID`.
    - Cross-checks both the signed `hd` (Hosted Domain) claim and the normalized email suffix to prevent domain spoofing.
 
 3. **Moodle Account Linking**:
@@ -171,11 +170,9 @@ Run linters, style checks, type checks, and automated tests across all monorepo 
 # Static analysis with Oxlint (0 warnings policy)
 pnpm lint
 
-# SCSS / CSS Stylelint
-pnpm lint:style
-
 # Automatically fix linting and formatting issues
-pnpm fix
+pnpm lint:fix
+pnpm format
 
 # Strict TypeScript type check across all packages
 pnpm typecheck
@@ -194,11 +191,11 @@ pnpm build
 
 ## Tech Stack
 
-| Layer               | Technologies                                                                                                                                                     |
-| :------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Frontend**        | [Next.js 16](https://nextjs.org/) (Turbopack, App Router), [React 19](https://react.dev/), Sass / CSS Modules                                                    |
-| **Backend**         | [NestJS](https://nestjs.com/), Node.js 24, `@nestjs/jwt`, `google-auth-library`                                                                                  |
-| **Database & ORM**  | [PostgreSQL 16](https://www.postgresql.org/), [Prisma ORM 7](https://www.prisma.io/)                                                                             |
-| **Design System**   | `@universe/ui` (Una UI, custom SCSS design tokens, responsive mixins)                                                                                            |
-| **LMS Integration** | [Moodle REST Web Services](https://docs.moodle.org/dev/Web_services)                                                                                             |
-| **Tooling & CI/CD** | [Turborepo](https://turbo.build/), [pnpm](https://pnpm.io/), [Oxlint](https://oxc.rs/), [Stylelint](https://stylelint.io/), [SonarCloud](https://sonarcloud.io/) |
+| Layer               | Technologies                                                                                                                 |
+| :------------------ | :--------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend**        | [Next.js 16](https://nextjs.org/) (Turbopack, App Router), [React 19](https://react.dev/), Sass / CSS Modules                |
+| **Backend**         | [NestJS](https://nestjs.com/), Node.js 24, `@nestjs/jwt`, `google-auth-library`                                              |
+| **Database & ORM**  | [PostgreSQL 16](https://www.postgresql.org/), [Prisma ORM 7](https://www.prisma.io/)                                         |
+| **Design System**   | `@universe/ui` (Una UI, custom SCSS design tokens, responsive mixins)                                                        |
+| **LMS Integration** | [Moodle REST Web Services](https://docs.moodle.org/dev/Web_services)                                                         |
+| **Tooling & CI/CD** | [Turborepo](https://turbo.build/), [pnpm](https://pnpm.io/), [Oxlint](https://oxc.rs/), [SonarCloud](https://sonarcloud.io/) |
