@@ -15,44 +15,48 @@ export function useAssignmentStatuses(assignments: Assignment[]): AssignmentLoca
     const requestedIds = requestedIdsRef.current;
     const inFlightIds = new Set<number>();
 
-    const fetchAllStatuses = async () => {
-      while (!cancelled) {
-        const assignmentsNeedingStatus = assignments.filter(
-          (item) => !item.submissionStatus && !requestedIds.has(item.id),
-        );
-
-        if (assignmentsNeedingStatus.length === 0) {
-          break;
-        }
-
-        const batch = assignmentsNeedingStatus.slice(0, BATCH_SIZE);
-
-        for (const item of batch) {
-          requestedIds.add(item.id);
-          inFlightIds.add(item.id);
-        }
-
-        await Promise.allSettled(
-          batch.map(async (item) => {
-            try {
-              const res = await moodleApi.getAssignmentStatus(item.id);
-
-              if (!cancelled && res?.data) {
-                const data = res.data as { status?: string; grade?: string };
-
-                setLocalStatuses((prev) => ({
-                  ...prev,
-                  [item.id]: { status: data.status, grade: data.grade },
-                }));
-              }
-            } catch {
-              // Ignore status fetch error for individual item
-            } finally {
-              inFlightIds.delete(item.id);
-            }
-          }),
-        );
+    const fetchAllStatuses = async (): Promise<void> => {
+      if (cancelled) {
+        return;
       }
+
+      const assignmentsNeedingStatus = assignments.filter(
+        (item) => !item.submissionStatus && !requestedIds.has(item.id),
+      );
+
+      if (assignmentsNeedingStatus.length === 0) {
+        return;
+      }
+
+      const batch = assignmentsNeedingStatus.slice(0, BATCH_SIZE);
+
+      for (const item of batch) {
+        requestedIds.add(item.id);
+        inFlightIds.add(item.id);
+      }
+
+      await Promise.allSettled(
+        batch.map(async (item) => {
+          try {
+            const res = await moodleApi.getAssignmentStatus(item.id);
+
+            if (!cancelled && res?.data) {
+              const data = res.data as { status?: string; grade?: string };
+
+              setLocalStatuses((prev) => ({
+                ...prev,
+                [item.id]: { status: data.status, grade: data.grade },
+              }));
+            }
+          } catch {
+            // Ignore status fetch error for individual item
+          } finally {
+            inFlightIds.delete(item.id);
+          }
+        }),
+      );
+
+      await fetchAllStatuses();
     };
 
     void fetchAllStatuses();
