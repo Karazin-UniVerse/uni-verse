@@ -15,6 +15,9 @@ import {
   normalizeEmail,
   buildEmailWithDomain,
   isPrismaUniqueConstraintError,
+  parseAllowedDomains,
+  isAllowedCorporateDomain,
+  extractGoogleUserName,
 } from './utils/auth.utils';
 
 @Injectable()
@@ -160,19 +163,6 @@ export class AuthService {
     };
   }
 
-  private getAllowedDomains(): string[] {
-    const raw = process.env.GOOGLE_ALLOWED_DOMAINS;
-
-    if (!raw) {
-      return ['karazin.ua', 'student.karazin.ua'];
-    }
-
-    return raw
-      .split(',')
-      .map((d) => d.trim().toLowerCase())
-      .filter(Boolean);
-  }
-
   private async verifyGoogleIdToken(
     idToken: string,
   ): Promise<{ email: string; name?: string }> {
@@ -207,26 +197,18 @@ export class AuthService {
       );
     }
 
-    const hostedDomain = payload.hd?.toLowerCase();
     const email = payload.email.toLowerCase();
-
-    const allowedDomains = this.getAllowedDomains();
-    const isEmailValid = allowedDomains.some((domain) =>
-      email.endsWith(`@${domain}`),
+    const allowedDomains = parseAllowedDomains(
+      process.env.GOOGLE_ALLOWED_DOMAINS,
     );
-    const isHdValid = hostedDomain
-      ? allowedDomains.includes(hostedDomain)
-      : allowedDomains.includes('gmail.com');
 
-    if (!isHdValid || !isEmailValid) {
+    if (!isAllowedCorporateDomain(email, payload.hd, allowedDomains)) {
       throw new ForbiddenException(
         'Доступ дозволено лише для облікових записів @student.karazin.ua та @karazin.ua',
       );
     }
 
-    const fallbackName =
-      `${payload.given_name || ''} ${payload.family_name || ''}`.trim();
-    const name = payload.name || fallbackName || undefined;
+    const name = extractGoogleUserName(payload);
 
     return { email, name };
   }
