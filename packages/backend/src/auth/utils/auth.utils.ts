@@ -53,17 +53,21 @@ export function parseAllowedDomains(raw?: string): string[] {
 export function isAllowedCorporateDomain(
   email: string,
   hostedDomain?: string,
-  allowedDomains: string[] = [...DEFAULT_ALLOWED_DOMAINS],
+  allowedDomains: string[] = parseAllowedDomains(
+    process.env.GOOGLE_ALLOWED_DOMAINS,
+  ),
 ): boolean {
+  const domains =
+    allowedDomains ?? parseAllowedDomains(process.env.GOOGLE_ALLOWED_DOMAINS);
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedHd = hostedDomain?.trim().toLowerCase();
 
-  const isEmailValid = allowedDomains.some((domain) =>
+  const isEmailValid = domains.some((domain) =>
     normalizedEmail.endsWith(`@${domain}`),
   );
   const isHdValid = normalizedHd
-    ? allowedDomains.includes(normalizedHd)
-    : allowedDomains.includes('gmail.com');
+    ? domains.includes(normalizedHd)
+    : domains.includes('gmail.com');
 
   return isHdValid && isEmailValid;
 }

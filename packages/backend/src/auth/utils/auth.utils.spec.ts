@@ -120,6 +120,28 @@ describe('auth.utils', () => {
 
       expect(isAllowed).toBe(true);
     });
+
+    it('should dynamically read allowed domains from process.env.GOOGLE_ALLOWED_DOMAINS', () => {
+      const originalEnv = process.env.GOOGLE_ALLOWED_DOMAINS;
+
+      try {
+        process.env.GOOGLE_ALLOWED_DOMAINS =
+          'custom-partner.edu,alumni.karazin.ua';
+
+        const isAllowed = isAllowedCorporateDomain(
+          'user@alumni.karazin.ua',
+          'alumni.karazin.ua',
+        );
+
+        expect(isAllowed).toBe(true);
+      } finally {
+        if (originalEnv === undefined) {
+          delete process.env.GOOGLE_ALLOWED_DOMAINS;
+        } else {
+          process.env.GOOGLE_ALLOWED_DOMAINS = originalEnv;
+        }
+      }
+    });
   });
 
   describe('extractGoogleUserName', () => {
