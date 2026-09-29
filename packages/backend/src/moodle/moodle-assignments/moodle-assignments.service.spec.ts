@@ -121,7 +121,6 @@ describe('MoodleAssignmentsService', () => {
       expect(result[0].submittedAt).toBe(1500);
       expect(result[0].isLate).toBe(true);
     });
-
     it('should gracefully handle individual submission status errors when includeStatus is true', async () => {
       mockMoodleClientService.client
         .mockResolvedValueOnce({
@@ -197,6 +196,90 @@ describe('MoodleAssignmentsService', () => {
       expect(result.status).toBe('submitted');
       expect(result.grade).toBeUndefined();
       expect(result.submittedAt).toBe(1727000000);
+    });
+
+    it('should default to new status when lastattempt has no submission info', async () => {
+      mockMoodleClientService.client.mockResolvedValue({});
+
+      const result = await service.getSubmissionStatus('token', 'id', 1);
+
+      expect(result.status).toBe('new');
+      expect(result.grade).toBeUndefined();
+    });
+
+    it('should throw BadRequestException if token or moodleId is missing', async () => {
+      await expect(service.getSubmissionStatus('', 'id', 1)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.getSubmissionStatus('token', '', 1)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('saveSubmission', () => {
+    it('should throw BadRequestException if token is missing', async () => {
+      await expect(service.saveSubmission('', 1, 'text')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should save submission with text only', async () => {
+      mockMoodleClientService.client.mockResolvedValue({ status: true });
+
+      const result = await service.saveSubmission('token', 1, 'Only text');
+
+      expect(result).toEqual({ status: true });
+      expect(mockMoodleClientService.client).toHaveBeenCalledWith(
+        'mod_assign_save_submission',
+        'token',
+        undefined,
+        {
+          assignmentid: 1,
+          plugindata: {
+            onlinetext_editor: { text: 'Only text', format: 1, itemid: 0 },
+          },
+        },
+      );
+    });
+
+    it('should save submission with fileItemId only', async () => {
+      mockMoodleClientService.client.mockResolvedValue({ status: true });
+
+      const result = await service.saveSubmission('token', 1, undefined, 777);
+
+      expect(result).toEqual({ status: true });
+      expect(mockMoodleClientService.client).toHaveBeenCalledWith(
+        'mod_assign_save_submission',
+        'token',
+        undefined,
+        {
+          assignmentid: 1,
+          plugindata: {
+            files_filemanager: 777,
+          },
+        },
+      );
+    });
+
+    it('should save submission with text and fileItemId', async () => {
+      mockMoodleClientService.client.mockResolvedValue({ status: true });
+
+      const result = await service.saveSubmission('token', 1, 'My text', 12345);
+
+      expect(result).toEqual({ status: true });
+      expect(mockMoodleClientService.client).toHaveBeenCalledWith(
+        'mod_assign_save_submission',
+        'token',
+        undefined,
+        {
+          assignmentid: 1,
+          plugindata: {
+            onlinetext_editor: { text: 'My text', format: 1, itemid: 0 },
+            files_filemanager: 12345,
+          },
+        },
+      );
     });
 
     it('should default to new status when lastattempt has no submission info', async () => {

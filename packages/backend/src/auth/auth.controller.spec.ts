@@ -1,7 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ForbiddenException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  GoogleAuthDto,
+  LinkMoodleDto,
+} from './dto/auth.dto';
 import type { Response } from 'express';
 
 describe('AuthController', () => {
@@ -28,6 +34,8 @@ describe('AuthController', () => {
       login: jest.fn(),
       logout: jest.fn(),
       refreshTokens: jest.fn(),
+      loginWithGoogle: jest.fn(),
+      linkMoodleAccount: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -156,6 +164,137 @@ describe('AuthController', () => {
         }),
       );
       expect(result).toEqual({ access_token: newTokens.access_token });
+    });
+  });
+
+  describe('loginWithGoogle', () => {
+    it('should authenticate via Google, set refresh cookie, and return access token and isLinked status', async () => {
+      const dto: GoogleAuthDto = {
+        idToken: 'google-id-token',
+      };
+      const response = createMockResponse();
+
+      authService.loginWithGoogle.mockResolvedValue({
+        access_token: 'google-at',
+        refresh_token: 'google-rt',
+        isLinked: true,
+      });
+
+      const result = await controller.loginWithGoogle(dto, response);
+
+      expect(authService.loginWithGoogle).toHaveBeenCalledWith(dto);
+      expect(response.cookie).toHaveBeenCalledWith(
+        'refreshToken',
+        'google-rt',
+        expect.objectContaining({
+          httpOnly: true,
+          sameSite: 'strict',
+        }),
+      );
+      expect(result).toEqual({
+        access_token: 'google-at',
+        isLinked: true,
+      });
+    });
+
+    it('should propagate ForbiddenException when user domain is not allowed', async () => {
+      const dto: GoogleAuthDto = {
+        idToken: 'unauthorized-domain-token',
+      };
+      const response = createMockResponse();
+
+      authService.loginWithGoogle.mockRejectedValue(
+        new ForbiddenException(
+          'Доступ дозволено лише для облікових записів @student.karazin.ua та @karazin.ua',
+        ),
+      );
+
+      await expect(controller.loginWithGoogle(dto, response)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+  });
+
+  describe('linkMoodle', () => {
+    it('should link Moodle account, set refresh cookie, and return new access token and isLinked=true', async () => {
+      const userId = 'user-uuid-123';
+      const dto: LinkMoodleDto = {
+        username: 'moodle.user',
+        password: 'Password123!',
+      };
+      const response = createMockResponse();
+
+      authService.linkMoodleAccount.mockResolvedValue({
+        access_token: 'new-linked-at',
+        refresh_token: 'new-linked-rt',
+        isLinked: true,
+      });
+
+      const result = await controller.linkMoodle(userId, dto, response);
+
+      expect(authService.linkMoodleAccount).toHaveBeenCalledWith(userId, dto);
+      expect(response.cookie).toHaveBeenCalledWith(
+        'refreshToken',
+        'new-linked-rt',
+        expect.objectContaining({
+          httpOnly: true,
+          sameSite: 'strict',
+        }),
+      );
+      expect(result).toEqual({
+        access_token: 'new-linked-at',
+        isLinked: true,
+      });
+    });
+  });
+
+  describe('setRefreshTokenCookie environment branch', () => {
+    it('should set secure=true when NODE_ENV is production', async () => {
+      const originalEnv = process.env.NODE_ENV;
+
+      process.env.NODE_ENV = 'production';
+
+      try {
+        const dto: LoginDto = {
+          email: 'prod@student.karazin.ua',
+          password: 'Password123!',
+        };
+        const response = createMockResponse();
+
+        authService.login.mockResolvedValue(mockTokens);
+
+        await controller.login(dto, response);
+
+        expect(response.cookie).toHaveBeenCalledWith(
+          'refreshToken',
+          mockTokens.refresh_token,
+          expect.objectContaining({
+            secure: true,
+          }),
+        );
+      } finally {
+        process.env.NODE_ENV = originalEnv;
+      }
+    });
+
+    it('should return isLinked=false when Google user is unlinked', async () => {
+      const dto: GoogleAuthDto = {
+        idToken: 'google-id-token',
+      };
+      const response = createMockResponse();
+
+      authService.loginWithGoogle.mockResolvedValue({
+        access_token: 'unlinked-google-at',
+        refresh_token: 'unlinked-google-rt',
+        isLinked: false,
+      });
+
+      const result = await controller.loginWithGoogle(dto, response);
+
+      expect(result).toEqual({
+        access_token: 'unlinked-google-at',
+        isLinked: false,
+      });
     });
   });
 });

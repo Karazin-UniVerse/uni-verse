@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
 import { RotateCw, AlertCircle } from 'lucide-react';
-import { Button as UnaButton, useToast } from '@una';
+import { Button as UnaButton, Spinner, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
 import { isLoggedIn } from '@core/auth';
 import type { StudentProfile } from '@core/types';
-import type { Grade, CourseModule } from '@uni-hub/types';
+import type { Grade, CourseModule, Assignment } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
 import { DashboardSkeleton, MobileBottomNav } from '@uni-hub/components/dashboard';
 import { BadgeSystem, GradeSimulator } from '@uni-hub/components/gamification';
@@ -27,14 +27,16 @@ import {
   GradesTab,
   AssignmentsTab,
 } from './dashboard';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './DashboardPage.module.scss';
 
-const PAGE_TITLES: Record<NavKey, string> = {
-  overview: 'Картка студента / Огляд',
-  courses: 'Індивідуальний план',
-  grades: 'Заліковка та бали',
-  schedule: 'Розклад занять',
-  assignments: 'Завдання',
+const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
+  overview: 'nav.overview.full',
+  courses: 'nav.courses.full',
+  grades: 'nav.grades.full',
+  schedule: 'nav.schedule.full',
+  assignments: 'nav.assignments.full',
 };
 
 type GradesApiResponse = Awaited<ReturnType<typeof moodleApi.getGrades>>;
@@ -188,6 +190,49 @@ function isUnauthorizedError(error: unknown): boolean {
   return error instanceof Error && error.message.includes('401');
 }
 
+function clearUserSessionStorage(): void {
+  try {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('moodleToken');
+    localStorage.removeItem('isDemo');
+    localStorage.removeItem('universe_dashboard_data');
+    localStorage.removeItem('universe_last_sync_time');
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function filterFallbackAssignments(
+  assignments: Assignment[] | undefined,
+  hideCompleted: boolean,
+  dateFrom?: string,
+  dateTo?: string,
+): Assignment[] {
+  let list = assignments ?? [];
+
+  if (hideCompleted) {
+    list = list.filter(
+      (assignment) =>
+        assignment.submissionStatus !== 'graded' && assignment.submissionStatus !== 'submitted',
+    );
+  }
+
+  const fromSec = parseDateFilterSeconds(dateFrom);
+
+  if (fromSec !== null) {
+    list = list.filter((assignment) => assignment.duedate > 0 && assignment.duedate >= fromSec);
+  }
+
+  const toSec = parseDateFilterSeconds(dateTo);
+
+  if (toSec !== null) {
+    list = list.filter((assignment) => assignment.duedate > 0 && assignment.duedate <= toSec);
+  }
+
+  return list;
+}
+
 const DashboardPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -195,6 +240,7 @@ const DashboardPage: React.FC = () => {
   const checkIn = useGamificationStore((s) => s.checkIn);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const setSoundEnabled = useGamificationStore((s) => s.setSoundEnabled);
+  const { formatMessage } = useLanguage();
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -228,6 +274,7 @@ const DashboardPage: React.FC = () => {
   const [selectedAssignmentModule, setSelectedAssignmentModule] = useState<CourseModule | null>(
     null,
   );
+  const fetchRequestIdRef = useRef(0);
 
   const hasCachedData =
     data.courses.length > 0 ||
@@ -259,6 +306,8 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   const fetchData = async (isManual = false) => {
+    const requestId = ++fetchRequestIdRef.current;
+
     setLoading(true);
 
     try {
@@ -272,6 +321,10 @@ const DashboardPage: React.FC = () => {
         moodleApi.getStatistics(),
       ]);
 
+      if (requestId !== fetchRequestIdRef.current) {
+        return;
+      }
+
       const freshData = assembleDashboardData(responses);
 
       setData(freshData);
@@ -284,14 +337,16 @@ const DashboardPage: React.FC = () => {
       persistDashboardSnapshot(nowTimestamp, freshData);
 
       if (isManual) {
-        toast.success('Дані успішно оновлено');
+        toast.success(formatMessage('dashboard.syncSuccess'));
       }
     } catch (error) {
+      if (requestId !== fetchRequestIdRef.current) {
+        return;
+      }
+
       if (isUnauthorizedError(error)) {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('moodleToken');
-        toast.error('Сесія застаріла або недійсна. Будь ласка, увійдіть знову.');
+        clearUserSessionStorage();
+        toast.error(formatMessage('dashboard.sessionExpired'));
         router.push('/login');
 
         return;
@@ -302,29 +357,43 @@ const DashboardPage: React.FC = () => {
       const cachedData = loadCachedDashboardData();
 
       if (cachedData) {
+        const fallbackAssignments = filterFallbackAssignments(
+          cachedData.assignments,
+          hideCompleted,
+          dateFrom,
+          dateTo,
+        );
+
         setData((previous) => ({
           ...previous,
           ...cachedData,
+          assignments: fallbackAssignments,
         }));
         setIsOfflineData(true);
         setHasLoadedOnce(true);
-        toast.info("Використовуються збережені дані: немає зв'язку з сервером Moodle.");
+        toast.info(formatMessage('dashboard.offlineNotice'));
 
         return;
       }
 
-      toast.error('Помилка завантаження даних. Будь ласка, переконайтеся, що бекенд запущено.');
+      toast.error(formatMessage('dashboard.loadError'));
     } finally {
-      setLoading(false);
+      if (requestId === fetchRequestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    if (searchParams.get('demo') === 'true') {
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('accessToken', 'demo-token');
-      localStorage.setItem('moodleToken', 'demo-token');
-      localStorage.setItem('isDemo', 'true');
+    try {
+      if (searchParams.get('demo') === 'true' && !isLoggedIn()) {
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('accessToken', 'demo-token');
+        localStorage.setItem('moodleToken', 'demo-token');
+        localStorage.setItem('isDemo', 'true');
+      }
+    } catch {
+      // Ignore storage errors
     }
 
     if (!isLoggedIn()) {
@@ -372,7 +441,7 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
+    clearUserSessionStorage();
     router.push('/login');
   };
 
@@ -467,11 +536,16 @@ const DashboardPage: React.FC = () => {
 
         <main className={styles.content}>
           <div className={styles.pageTitleRow}>
-            <h2 className={styles.pageTitle}>{PAGE_TITLES[activeKey]}</h2>
+            <h2 className={styles.pageTitle}>{formatMessage(PAGE_TITLE_KEYS[activeKey])}</h2>
+            {loading && hasCachedData && (
+              <div className={styles.pageUpdatingIndicator} role="status" aria-live="polite">
+                <Spinner size="small" tip={formatMessage('dashboard.updating')} />
+              </div>
+            )}
             <div className={styles.syncActions}>
               {lastSyncTime && (
                 <span className={styles.lastSyncText}>
-                  Дані оновлено: {formatLastSync(lastSyncTime)}
+                  {formatMessage('dashboard.dataUpdated')}: {formatLastSync(lastSyncTime)}
                 </span>
               )}
               <UnaButton
@@ -480,11 +554,11 @@ const DashboardPage: React.FC = () => {
                 size="small"
                 onClick={() => fetchData(true)}
                 disabled={loading}
-                aria-label="Оновити дані"
+                aria-label={formatMessage('dashboard.refreshData')}
                 className={styles.refreshBtn}
               >
                 <RotateCw size={14} className={clsx(styles.refreshIcon, loading && styles.spin)} />
-                <span>Оновити</span>
+                <span>{formatMessage('dashboard.refresh')}</span>
               </UnaButton>
             </div>
           </div>

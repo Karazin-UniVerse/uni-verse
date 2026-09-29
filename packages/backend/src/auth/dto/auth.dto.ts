@@ -34,3 +34,36 @@ export class LogoutResponseDto {
   @ApiProperty({ example: 'Logged out successfully' })
   message: string;
 }
+
+export class GoogleAuthDto {
+  @ApiProperty({ description: 'Google ID Token from Google Identity Services' })
+  @IsNotEmpty()
+  @IsString()
+  idToken: string;
+}
+
+export class LinkMoodleDto {
+  @ApiProperty({
+    example: 'student.login',
+    description: 'Moodle username or email',
+  })
+  @IsNotEmpty()
+  @IsString()
+  username: string;
+
+  @ApiProperty({ example: 'password123', description: 'Moodle password' })
+  @IsNotEmpty()
+  @IsString()
+  password: string;
+}
+
+export class GoogleAuthResponseDto {
+  @ApiProperty({ example: 'eyJhbGciOi...' })
+  access_token: string;
+
+  @ApiProperty({
+    example: true,
+    description: 'Whether the account is linked to Moodle',
+  })
+  isLinked: boolean;
+}

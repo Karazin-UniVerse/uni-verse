@@ -1,5 +1,8 @@
+'use client';
+
 import React, { useEffect, useMemo, useState } from 'react';
 import type { Assignment, Grade } from '@uni-hub/types';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { getGradeCourseName, getValidGrades } from '@uni-hub/utils/grades';
 import { Chart } from '@una';
 
@@ -18,6 +21,7 @@ const COLORS = {
 } as const;
 
 export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments, grades }) => {
+  const { formatMessage } = useLanguage();
   const [nowSec, setNowSec] = useState(() => Math.floor(Date.now() / 1000));
 
   useEffect(() => {
@@ -66,35 +70,39 @@ export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments,
     const result: { name: string; value: number; color: string }[] = [];
 
     if (done > 0) {
-      result.push({ name: 'Виконано', value: done, color: COLORS.done });
+      result.push({ name: formatMessage('donut.completed'), value: done, color: COLORS.done });
     }
 
     if (awaitingReview > 0) {
       result.push({
-        name: 'Очікує перевірки',
+        name: formatMessage('donut.awaitingReview'),
         value: awaitingReview,
         color: COLORS.awaitingReview,
       });
     }
 
     if (overdue > 0) {
-      result.push({ name: 'Прострочено', value: overdue, color: COLORS.overdue });
+      result.push({ name: formatMessage('donut.overdue'), value: overdue, color: COLORS.overdue });
     }
 
     if (inProgress > 0) {
-      result.push({ name: 'В процесі', value: inProgress, color: COLORS.inProgress });
+      result.push({
+        name: formatMessage('donut.inProgress'),
+        value: inProgress,
+        color: COLORS.inProgress,
+      });
     }
 
     return result;
-  }, [assignments, grades, nowSec]);
+  }, [assignments, grades, nowSec, formatMessage]);
 
   return (
     <Chart
       type="donut"
-      title="Статус завдань"
+      title={formatMessage('donut.title')}
       data={segments}
       height={DONUT_CHART_HEIGHT}
-      emptyDescription="Завдань не знайдено"
+      emptyDescription={formatMessage('donut.empty')}
     />
   );
 };

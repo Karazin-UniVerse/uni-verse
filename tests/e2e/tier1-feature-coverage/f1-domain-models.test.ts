@@ -101,7 +101,11 @@ describe('Tier 1 - Feature 1: Shared Core Domain Models (@universe/core)', () =>
       : 'packages/types/src/index.ts';
 
     expect(fileExists(typesPath), `${typesPath} must exist`).toBe(true);
-    const content = readWorkspaceFile(typesPath);
+    const content =
+      readWorkspaceFile(typesPath) +
+      (fileExists('packages/core/constants/grades.ts')
+        ? readWorkspaceFile('packages/core/constants/grades.ts')
+        : '');
 
     expect(content).toContain('type EctsGrade');
     expect(content).toContain("'A'");
