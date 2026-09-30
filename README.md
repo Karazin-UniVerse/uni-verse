@@ -44,31 +44,7 @@ Ensure the following tools are installed on your system:
 
 ## Quickstart: Step-by-Step Setup & Running
 
-### ⚡ Recommended: Interactive Setup Wizard
-
-The fastest way to configure your local environment is using the interactive CLI wizard:
-
-```bash
-pnpm setup
-# or
-pnpm dev:select
-```
-
-The wizard prompts you for your workflow:
-
-1. **Dependencies**: automatically runs `pnpm install`.
-2. **Backend Selection**:
-   - **Remote Develop API** (`https://p01--backend-stage--djrwwgsr7dmx.code.run`) — **Recommended for Frontend Developers**. No local backend or database required!
-   - **Remote Staging API** (`https://p01--backend-stage--4y9d57mwx2gx.code.run`) — Connects to staging.
-   - **Local Backend** (`http://localhost:3001`) — For fullstack/backend developers.
-3. **Database Selection** (if Local Backend): choose local PostgreSQL or remote staging database, and automatically runs Prisma client generation.
-4. **Instant Launch**: starts your dev server immediately.
-
----
-
-### Manual Setup (Step-by-Step)
-
-#### 1. Clone Repository & Install Dependencies
+### 1. Clone Repository & Install Dependencies
 
 ```bash
 git clone https://github.com/Karazin-UniVerse/uni-verse.git
@@ -76,7 +52,7 @@ cd uni-verse
 pnpm install
 ```
 
-#### 2. Environment Configuration
+### 2. Environment Configuration
 
 Copy the sample environment file to `.env`:
 
@@ -109,7 +85,7 @@ If developing packages independently:
   # Windows:     Copy-Item .env.example packages/backend/.env
   ```
 
-#### 3. Initialize Database & Generate Prisma Client (Fullstack only)
+### 3. Initialize Database & Generate Prisma Client (Fullstack only)
 
 If developing the backend locally, make sure PostgreSQL is running, then generate the client and push database schema:
 
@@ -128,7 +104,7 @@ pnpm db:studio
 # Opens at http://localhost:5555
 ```
 
-#### 4. Run the Development Servers
+### 4. Run the Development Servers
 
 Run the entire monorepo concurrently via Turborepo:
 
