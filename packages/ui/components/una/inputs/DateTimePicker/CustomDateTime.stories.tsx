@@ -25,7 +25,7 @@ const meta: Meta<typeof CustomDateTime> = {
 export default meta;
 type Story = StoryObj<typeof CustomDateTime>;
 
-const InteractiveTemplate = (args: any) => {
+const InteractiveTemplate = (args: React.ComponentProps<typeof CustomDateTime>) => {
   const [date, setDate] = useState<Date | null>(new Date());
 
   return (

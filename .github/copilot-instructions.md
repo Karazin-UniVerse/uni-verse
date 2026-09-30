@@ -37,6 +37,13 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 - **No Unnecessary Component Aliases**: Export and use components by their canonical names (e.g., `ToastProvider` for toast context, not `Toast = ToastProvider`).
 - **Complex Components**: Composite, business-logic-heavy, or non-design system components go into `packages/ui/components/complex/`.
 - **Component Types Extraction (`.types.ts`)**: For React UI components with non-trivial prop interfaces or data models, extract types into a co-located `<ComponentName>.types.ts` file (e.g. `Chart.types.ts` adjacent to `Chart.tsx`). Re-export types from the component file or module index for backwards compatibility. Do NOT create separate `.types.ts` files for simple utilities, single helper functions, or trivial components to avoid unnecessary fragmentation.
+- **Storybook Stories Scope Restriction & Section Separation**:
+  - Storybook stories are strictly written **ONLY for components inside `packages/ui` (`@universe/ui`)**.
+  - Writing Storybook stories in any other workspace packages (such as `packages/uni-hub` or `packages/backend`) is **STRICTLY PROHIBITED**.
+  - Storybook sidebar hierarchy:
+    - Una design system components (`packages/ui/components/una/`) are placed under the `Components/*` section (e.g. `title: 'Components/Buttons/Button'`, `title: 'Components/Inputs/TextInput'`).
+    - Complex composite components (`packages/ui/components/complex/`) are placed under the dedicated `Complex/*` section (e.g. `title: 'Complex/ExampleComponent'`).
+  - All stories must follow Component Story Format 3 (CSF3) using `satisfies Meta<typeof Component>` and `StoryObj<typeof meta>`. Avoid untyped parameters (`any`) in story templates.
 
 ### 3. Backend (NestJS)
 

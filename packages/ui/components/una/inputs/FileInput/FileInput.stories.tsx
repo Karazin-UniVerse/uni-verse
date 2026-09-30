@@ -30,7 +30,7 @@ const meta: Meta<typeof FileInput> = {
 export default meta;
 type Story = StoryObj<typeof FileInput>;
 
-const InteractiveTemplate = (args: any) => {
+const InteractiveTemplate = (args: React.ComponentProps<typeof FileInput>) => {
   const [files, setFiles] = useState<File[]>([]);
 
   return (
