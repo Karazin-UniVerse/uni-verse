@@ -58,12 +58,6 @@ export const safeStorage = {
   },
 };
 
-export function isDemoMode(): boolean {
-  return (
-    safeStorage.getItem('isDemo') === 'true' || safeStorage.getItem('accessToken') === 'demo-token'
-  );
-}
-
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   (isBrowser && window.location.hostname !== 'localhost'

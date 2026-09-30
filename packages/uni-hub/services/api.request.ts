@@ -78,7 +78,6 @@ async function executeAttempt<T>(
         safeStorage.removeItem('isLoggedIn');
         safeStorage.removeItem('accessToken');
         safeStorage.removeItem('moodleToken');
-        safeStorage.removeItem('isDemo');
         safeStorage.removeItem('universe_dashboard_data');
         safeStorage.removeItem('universe_last_sync_time');
       }

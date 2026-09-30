@@ -37,8 +37,6 @@ export const en = {
   'login.linkMoodleEnterPassword': 'Please enter password in Moodle',
   'login.linkMoodleRequired': 'Linking a Moodle account is required to complete sign-in',
   'login.linkMoodleError': 'Failed to link account. Please check your credentials.',
-  'login.tryDemo': 'Try demo mode (without Moodle) →',
-  'login.demoSuccess': 'Logged in using demo mode',
 
   // Themes
   'theme.light': 'Light',
@@ -87,7 +85,6 @@ export const en = {
   'greeting.willMakeIt': 'Ready?',
 
   // Student Profile Card
-  'student.demo': 'Demo data',
   'student.fullTime': 'Full-time',
   'student.budget': 'State-funded',
   'student.scholarship': 'Honors (Academic scholarship)',

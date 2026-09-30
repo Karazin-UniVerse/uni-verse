@@ -52,7 +52,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         localStorage.removeItem('accessToken');
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('moodleToken');
-        localStorage.removeItem('isDemo');
         localStorage.removeItem('universe_dashboard_data');
         localStorage.removeItem('universe_last_sync_time');
       } catch {
