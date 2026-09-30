@@ -12,6 +12,8 @@ COPY . .
 ARG NEXT_PUBLIC_API_URL=https://p01--backend--jm9qjnmpm4m2.code.run
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @universe/ui build-storybook
+RUN cp -r packages/ui/storybook-static packages/uni-hub/public/storybook
 RUN pnpm --filter @universe/uni-hub build
 
 FROM base AS runner
