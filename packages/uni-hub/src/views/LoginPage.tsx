@@ -9,6 +9,8 @@ import { SimpleForm } from '@una/Form';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { useToast } from '@una/Toast';
 import { authApi } from '@uni-hub/services/api/auth-api';
+import { features } from '@uni-hub/config/features';
+import { GoogleLoginButton } from '@uni-hub/components/GoogleLoginButton';
 import styles from './LoginPage.module.scss';
 
 const LoginPage: React.FC = () => {
@@ -23,13 +25,13 @@ const LoginPage: React.FC = () => {
     setError('');
 
     if (!username.trim()) {
-      setError('Пожалуйста, введите имя пользователя');
+      setError('Будь ласка, введіть ім\'я користувача');
 
       return;
     }
 
     if (!password) {
-      setError('Пожалуйста, введите пароль');
+      setError('Будь ласка, введіть пароль');
 
       return;
     }
@@ -39,7 +41,7 @@ const LoginPage: React.FC = () => {
     try {
       const res = await authApi.login(username, password);
 
-      toast.success('Вход выполнен успешно');
+      toast.success('Вхід виконано успішно');
       localStorage.setItem('isLoggedIn', 'true');
 
       if (res.data?.token) {
@@ -50,13 +52,51 @@ const LoginPage: React.FC = () => {
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
-        'Ошибка входа. Проверьте учетные данные.';
+        'Помилка входу. Перевірте облікові дані.';
 
       toast.error(message);
     } finally {
       setLoading(false);
     }
   };
+
+  const handleGoogleSuccess = async (idToken: string) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      await authApi.loginWithGoogle(idToken);
+
+      toast.success('Авторизація через Google успішна');
+      router.push('/');
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        'Помилка авторизації Google';
+
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isMoodleAuth = features.auth.moodle;
+  const isGoogleAuth = features.auth.google;
+
+  const getLoginSubtitle = (): string => {
+    if (isMoodleAuth && isGoogleAuth) {
+      return 'Оберіть зручний спосіб входу';
+    }
+
+    if (isGoogleAuth) {
+      return 'Вхід через корпоративний Google акаунт';
+    }
+
+    return 'Увійдіть у свій акаунт Moodle';
+  };
+
+  const loginSubtitle = getLoginSubtitle();
 
   return (
     <div className={styles.page}>
@@ -67,51 +107,75 @@ const LoginPage: React.FC = () => {
         <SimpleForm variant="card" className={styles.card} action={handleLogin}>
           <div className={styles.brand}>
             <h1>UNiVerse</h1>
-            <p>Войдите в свой аккаунт Moodle</p>
+            <p>{loginSubtitle}</p>
           </div>
 
-          <label className={styles.field}>
-            <span className={styles.label}>Имя пользователя</span>
-            <div className={styles.inputWrap}>
-              <User size={16} className={styles.icon} />
-              <TextInput
-                name="username"
+          {isMoodleAuth && (
+            <>
+              <label className={styles.field}>
+                <span className={styles.label}>Ім&apos;я користувача</span>
+                <div className={styles.inputWrap}>
+                  <User size={16} className={styles.icon} />
+                  <TextInput
+                    name="username"
+                    size="large"
+                    placeholder="Ім'я користувача"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    autoComplete="username"
+                  />
+                </div>
+              </label>
+
+              <label className={styles.field}>
+                <span className={styles.label}>Пароль</span>
+                <div className={styles.inputWrap}>
+                  <Lock size={16} className={styles.icon} />
+                  <TextInput
+                    name="password"
+                    type="password"
+                    size="large"
+                    placeholder="Пароль"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                  />
+                </div>
+              </label>
+
+              {error && <p className={styles.error}>{error}</p>}
+
+              <Button
+                type="submit"
+                variant="primary"
                 size="large"
-                placeholder="Имя пользователя"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
-              />
+                disabled={loading}
+                className={styles.submit}
+              >
+                {loading ? 'Вхід...' : 'Увійти'}
+              </Button>
+            </>
+          )}
+
+          {isMoodleAuth && isGoogleAuth && (
+            <div className={styles.divider}>
+              <span>або</span>
             </div>
-          </label>
+          )}
 
-          <label className={styles.field}>
-            <span className={styles.label}>Пароль</span>
-            <div className={styles.inputWrap}>
-              <Lock size={16} className={styles.icon} />
-              <TextInput
-                name="password"
-                type="password"
-                size="large"
-                placeholder="Пароль"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-              />
-            </div>
-          </label>
+          {isGoogleAuth && (
+            <GoogleLoginButton
+              onSuccess={handleGoogleSuccess}
+              onError={(msg) => toast.error(msg)}
+              disabled={loading}
+            />
+          )}
 
-          {error && <p className={styles.error}>{error}</p>}
-
-          <Button
-            type="submit"
-            variant="primary"
-            size="large"
-            disabled={loading}
-            className={styles.submit}
-          >
-            {loading ? 'Вход...' : 'Войти'}
-          </Button>
+          {!isMoodleAuth && !isGoogleAuth && (
+            <p className={styles.error}>
+              Провайдери аутентифікації наразі вимкнені в конфігурації середовища.
+            </p>
+          )}
         </SimpleForm>
       </div>
     </div>
