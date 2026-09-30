@@ -11,6 +11,8 @@ WORKDIR /app
 COPY . .
 ARG NEXT_PUBLIC_API_URL=https://p01--backend--jm9qjnmpm4m2.code.run
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @universe/core build && pnpm --filter @universe/uni-hub build
 
