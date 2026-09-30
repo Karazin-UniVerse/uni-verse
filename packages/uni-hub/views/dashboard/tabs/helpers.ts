@@ -3,16 +3,20 @@ export type AssignmentStatusInfo = {
   label: string;
 };
 
-export function getAssignmentStatusInfo(
-  status: string,
-  isGradedOrCompleted: boolean,
-  isAwaitingOrOverdue: boolean,
-  isOverdue?: boolean,
-): AssignmentStatusInfo {
-  if (typeof isOverdue === 'boolean') {
-    const isGraded = isGradedOrCompleted;
-    const isAwaitingReview = isAwaitingOrOverdue;
+export type AssignmentStatusInfoParams = {
+  status: string;
+  isGraded: boolean;
+  isAwaitingReview: boolean;
+  isOverdue?: boolean;
+};
 
+export function getAssignmentStatusInfo({
+  status,
+  isGraded,
+  isAwaitingReview,
+  isOverdue,
+}: AssignmentStatusInfoParams): AssignmentStatusInfo {
+  if (typeof isOverdue === 'boolean') {
     if (isGraded) {
       return { tone: 'success', label: 'Оцінено' };
     }
@@ -28,8 +32,8 @@ export function getAssignmentStatusInfo(
     return { tone: 'info', label: 'В процесі' };
   }
 
-  const isCompleted = isGradedOrCompleted;
-  const overdue = isAwaitingOrOverdue;
+  const isCompleted = isGraded;
+  const overdue = isAwaitingReview;
 
   if (isCompleted) {
     return {
@@ -43,4 +47,16 @@ export function getAssignmentStatusInfo(
   }
 
   return { tone: 'info', label: 'В процесі' };
+}
+
+export function formatLastSync(timestamp: number): string {
+  const d = new Date(timestamp);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const day = pad(d.getDate());
+  const month = pad(d.getMonth() + 1);
+  const year = d.getFullYear();
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+
+  return `${day}.${month}.${year} ${hours}:${minutes}`;
 }

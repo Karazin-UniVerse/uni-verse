@@ -50,6 +50,13 @@ uni-verse/
    - Run `npx oxlint --fix` to automatically format spacing.
    - Ensure `pnpm-lock.yaml` is formatted with `npx prettier --write pnpm-lock.yaml`.
 
+6. **Function Parameters**:
+   - **Functions with more than 3 parameters MUST use an object parameter** instead of positional arguments. This improves readability and avoids argument-order mistakes.
+   - ✅ Correct: `function getStatusInfo({ status, isGraded, isAwaitingReview, isOverdue }: StatusInfoParams)`
+   - ❌ Incorrect: `function getStatusInfo(status: string, isGraded: boolean, isAwaitingReview: boolean, isOverdue?: boolean)`
+   - Define a named `type` or `interface` for the object parameter shape.
+
+
 ---
 
 ## Verification Pipeline

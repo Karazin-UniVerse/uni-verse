@@ -27,6 +27,7 @@ import {
   GradesTab,
   AssignmentsTab,
 } from './dashboard';
+import { formatLastSync } from './dashboard/tabs/helpers';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './DashboardPage.module.scss';
@@ -89,18 +90,6 @@ function resolveGradesResponse(gradesResponse?: GradesApiResponse | null): Grade
   }
 
   return [];
-}
-
-function formatLastSync(timestamp: number): string {
-  const d = new Date(timestamp);
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  const day = pad(d.getDate());
-  const month = pad(d.getMonth() + 1);
-  const year = d.getFullYear();
-  const hours = pad(d.getHours());
-  const minutes = pad(d.getMinutes());
-
-  return `${day}.${month}.${year} ${hours}:${minutes}`;
 }
 
 type MoodleApiResponseTuple = [

@@ -69,6 +69,10 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 - When fixing bugs, explain _why_ the bug occurred before providing the code.
 - Write clean, self-documenting code. Add comments only for complex logic or business rules.
 - Prefer smaller, focused PRs and commits.
+- **Functions with more than 3 parameters MUST use an object parameter** instead of positional arguments.
+  - ✅ Correct: `function getStatusInfo({ status, isGraded, isAwaitingReview, isOverdue }: StatusInfoParams)`
+  - ❌ Incorrect: `function getStatusInfo(status: string, isGraded: boolean, isAwaitingReview: boolean, isOverdue?: boolean)`
+  - Define a named `type` or `interface` for the parameter shape.
 - **No Premature Backwards Compatibility / Legacy Shims (No "Backtracking")**:
   - When moving, renaming, or refactoring code (such as migrating components into `@universe/ui` or renaming functions/mixins), **never** create backwards-compatibility aliases, re-export proxies, wrapper functions, or deprecated shim files (e.g., `export { Button as SimpleButton } from '@universe/ui'` inside deprecated paths).
   - Directly update all call sites, imports, and usages across the entire codebase to the new location/name.
