@@ -101,7 +101,7 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
             {hasDeadline ? (
               <>
                 <span className={styles.deadlineDate}>
-                  Дедлайн: {new Date(assignment.duedate * 1000).toLocaleDateString(localeTag)}
+                  {`${formatMessage('assignments.deadline')}: ${new Date(assignment.duedate * 1000).toLocaleDateString(localeTag)}`}
                 </span>
                 {!isCompleted && !isOverdue && (
                   <>
@@ -111,7 +111,9 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
                 )}
               </>
             ) : (
-              <span className={styles.noDeadlineText}>Без терміну здачі</span>
+              <span className={styles.noDeadlineText}>
+                {formatMessage('assignments.noDeadline')}
+              </span>
             )}
           </div>
         </div>

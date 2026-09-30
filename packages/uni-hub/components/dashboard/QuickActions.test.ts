@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Assignment } from '@uni-hub/types';
-import { calculatePendingAssignmentsCount } from './QuickActions';
+import { calculatePendingAssignmentsCount } from './helpers';
 
 describe('QuickActions', () => {
   describe('calculatePendingAssignmentsCount', () => {

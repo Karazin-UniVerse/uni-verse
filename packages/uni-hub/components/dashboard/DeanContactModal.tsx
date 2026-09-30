@@ -44,10 +44,7 @@ export const DeanContactModal: React.FC<DeanContactModalProps> = ({
       setIsSubmitting(false);
 
       const ticketNumber = 1000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 9000);
-      const successMsg = formatMessage('dean.successMessage').replace(
-        '{ticket}',
-        String(ticketNumber),
-      );
+      const successMsg = formatMessage('dean.successMessage', { ticket: ticketNumber });
 
       toast.success(successMsg);
       setMessage('');

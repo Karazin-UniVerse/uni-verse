@@ -100,7 +100,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   className={`${styles.listItem} ${styles.courseItemClickable}`}
                   onClick={() => router.push(`/courses/${course.id}/contents`)}
                   style={{ animationDelay: `${index * 40}ms` }}
-                  title={`Переглянути матеріали курсу: ${'fullname' in course ? course.fullname : (course as CurriculumItem).name}`}
+                  title={formatMessage('overview.viewCourseMaterials', {
+                    name:
+                      ('fullname' in course ? course.fullname : (course as CurriculumItem).name) ??
+                      '',
+                  })}
                 >
                   <div className={styles.courseItemMain}>
                     <div className={styles.listTitle}>

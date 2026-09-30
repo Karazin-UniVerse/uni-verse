@@ -76,7 +76,9 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
             className={`${styles.listItem} ${styles.assignmentItemClickable}`}
             onClick={() => onNavigate('assignments')}
             style={{ animationDelay: `${index * 40}ms` }}
-            title={`Перейти до завдання: ${assignment.name}`}
+            title={formatMessage('recentGrades.viewAssignment', {
+              name: assignment.name,
+            })}
           >
             <div className={styles.listTitle}>{assignment.name}</div>
             <div className={styles.muted}>

@@ -40,3 +40,14 @@ export function formatRecentGradeDate(
     month: 'short',
   });
 }
+
+export function calculatePendingAssignmentsCount(
+  assignments: Array<{ graded?: boolean; grade?: string | null; submissionStatus?: string }>,
+): number {
+  return assignments.filter((assignment) => {
+    const isGraded = assignment.graded || Boolean(assignment.grade);
+    const isSubmitted = assignment.submissionStatus === 'submitted';
+
+    return !isGraded && !isSubmitted;
+  }).length;
+}

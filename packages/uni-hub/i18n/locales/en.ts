@@ -185,6 +185,7 @@ export const en = {
   'assignments.hideCompleted': 'Hide completed',
   'assignments.deadline': 'Deadline',
   'assignments.noDueDate': 'No due date',
+  'assignments.noDeadline': 'No submission deadline',
   'assignments.submittedLate': 'Submitted late',
   'assignments.grade': 'Grade',
   'assignments.open': 'Open',
@@ -301,6 +302,7 @@ export const en = {
   'recentGrades.empty': 'No graded assignments yet',
   'recentGrades.allGradesTitle': 'View all grades in the gradebook',
   'recentGrades.ariaLabel': 'Recent Grades',
+  'recentGrades.viewAssignment': 'Go to assignment: {name}',
 
   // Overview Tab Extras
   'overview.joinMeeting': 'Join meeting',
@@ -310,4 +312,9 @@ export const en = {
   'overview.nearestDeadline': 'Nearest deadline:',
   'overview.specialty': 'Specialty',
   'overview.noDeadline': 'No deadline',
+  'overview.coursesTitle': 'Go to courses list',
+  'overview.assignmentsTitle': 'Go to assignments list',
+  'overview.gradesTitle': 'Go to gradebook and grades',
+  'overview.viewCourseMaterials': 'View course materials: {name}',
+  'student.courseGroupFormat': 'Year {course}, group {group}',
 } as const satisfies Record<TranslationKey, string>;

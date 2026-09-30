@@ -59,7 +59,10 @@ export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }
         <div className={styles.studentField}>
           <span className={styles.fieldLabel}>{formatMessage('student.courseAndGroup')}</span>
           <span className={styles.fieldValue}>
-            {activeStudentProfile.course} курс, група {activeStudentProfile.group}
+            {formatMessage('student.courseGroupFormat', {
+              course: activeStudentProfile.course,
+              group: activeStudentProfile.group,
+            })}
           </span>
         </div>
         <div className={styles.studentField}>

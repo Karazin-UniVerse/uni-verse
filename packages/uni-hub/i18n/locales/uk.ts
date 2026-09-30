@@ -185,6 +185,7 @@ export const uk = {
   'assignments.hideCompleted': 'Сховати виконані',
   'assignments.deadline': 'Дедлайн',
   'assignments.noDueDate': 'Без терміну',
+  'assignments.noDeadline': 'Без терміну здачі',
   'assignments.submittedLate': 'Здано із запізненням',
   'assignments.grade': 'Оцінка',
   'assignments.open': 'Відкрити',
@@ -300,6 +301,7 @@ export const uk = {
   'recentGrades.empty': 'Ще немає перевірених робіт',
   'recentGrades.allGradesTitle': 'Переглянути всі оцінки в заліковій книжці',
   'recentGrades.ariaLabel': 'Останні оцінки',
+  'recentGrades.viewAssignment': 'Перейти до завдання: {name}',
 
   // Overview Tab Extras
   'overview.joinMeeting': 'Приєднатися до заняття',
@@ -309,7 +311,12 @@ export const uk = {
   'overview.nearestDeadline': 'Найближчий дедлайн:',
   'overview.specialty': 'Спеціальність',
   'overview.noDeadline': 'Без терміну',
-} as const;
+  'overview.coursesTitle': 'Перейти до списку курсів',
+  'overview.assignmentsTitle': 'Перейти до списку завдань',
+  'overview.gradesTitle': 'Перейти до залікової книжки та оцінок',
+  'overview.viewCourseMaterials': 'Переглянути матеріали курсу: {name}',
+  'student.courseGroupFormat': '{course} курс, група {group}',
+};
 
 export type TranslationKey = keyof typeof uk;
 export type Translations = Record<TranslationKey, string>;

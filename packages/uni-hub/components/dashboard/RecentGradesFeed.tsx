@@ -9,8 +9,6 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { getScoreToneClass, formatRecentGradeDate } from './helpers';
 import styles from './RecentGradesFeed.module.scss';
 
-export { getScoreToneClass };
-
 export interface RecentGradesFeedProps {
   assignments: Assignment[];
   onNavigate: (tab: NavKey) => void;
@@ -81,7 +79,9 @@ export const RecentGradesFeed: React.FC<RecentGradesFeedProps> = ({
                 className={styles.feedItem}
                 onClick={() => onNavigate('assignments')}
                 style={{ animationDelay: `${index * 40}ms` }}
-                title={`Перейти до завдання: ${assignment.name}`}
+                title={formatMessage('recentGrades.viewAssignment', {
+                  name: assignment.name,
+                })}
               >
                 <div className={styles.feedItemMain}>
                   <div className={styles.feedItemTitle}>{assignment.name}</div>

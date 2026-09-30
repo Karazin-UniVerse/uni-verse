@@ -6,6 +6,7 @@ import type { Assignment } from '@uni-hub/types';
 import type { NavKey } from '@uni-hub/views/dashboard/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { DeanContactModal } from './DeanContactModal';
+import { calculatePendingAssignmentsCount } from './helpers';
 import styles from './QuickActions.module.scss';
 
 export interface QuickActionsProps {
@@ -14,15 +15,6 @@ export interface QuickActionsProps {
 }
 
 const MOODLE_URL = process.env.NEXT_PUBLIC_MOODLE_URL || 'https://moodle.universemvp.tech';
-
-export function calculatePendingAssignmentsCount(assignments: Assignment[]): number {
-  return assignments.filter((assignment) => {
-    const isGraded = assignment.graded || Boolean(assignment.grade);
-    const isSubmitted = assignment.submissionStatus === 'submitted';
-
-    return !isGraded && !isSubmitted;
-  }).length;
-}
 
 export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavigate }) => {
   const { formatMessage } = useLanguage();
@@ -84,10 +76,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
               </div>
               <span className={styles.actionDescription}>
                 {pendingCount > 0
-                  ? formatMessage('quickActions.pendingCount').replace(
-                      '{count}',
-                      String(pendingCount),
-                    )
+                  ? formatMessage('quickActions.pendingCount', { count: pendingCount })
                   : formatMessage('quickActions.allDone')}
               </span>
             </div>

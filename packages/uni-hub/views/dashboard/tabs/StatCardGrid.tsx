@@ -28,7 +28,7 @@ export const StatCardGrid: React.FC<StatCardGridProps> = ({
         className={`${styles.statCard} ${styles.statCardClickable}`}
         onClick={() => onNavigate('courses')}
         style={{ animationDelay: '0ms' }}
-        title="Перейти до списку курсів"
+        title={formatMessage('overview.coursesTitle')}
       >
         <div className={styles.statLabel}>{formatMessage('overview.totalCourses')}</div>
         <div className={styles.statValue}>
@@ -43,7 +43,7 @@ export const StatCardGrid: React.FC<StatCardGridProps> = ({
         className={`${styles.statCard} ${styles.statCardClickable}`}
         onClick={() => onNavigate('assignments')}
         style={{ animationDelay: '40ms' }}
-        title="Перейти до списку завдань"
+        title={formatMessage('overview.assignmentsTitle')}
       >
         <div className={styles.statLabel}>{formatMessage('overview.pendingAssignments')}</div>
         <div className={styles.statValue}>
@@ -58,7 +58,7 @@ export const StatCardGrid: React.FC<StatCardGridProps> = ({
         className={`${styles.statCard} ${styles.statCardClickable}`}
         onClick={() => onNavigate('grades')}
         style={{ animationDelay: '80ms' }}
-        title="Перейти до залікової книжки та оцінок"
+        title={formatMessage('overview.gradesTitle')}
       >
         <div className={styles.statLabel}>{formatMessage('overview.gpa')}</div>
         <div className={styles.statValue}>

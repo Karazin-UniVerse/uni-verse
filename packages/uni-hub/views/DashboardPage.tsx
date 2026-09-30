@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
 import { RotateCw, AlertCircle } from 'lucide-react';
-import { Button as UnaButton, Spinner } from '@una';
+import { Button, Spinner } from '@una';
 import { isLoggedIn } from '@core/auth';
 import type { CourseModule } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
@@ -260,7 +260,7 @@ const DashboardPage: React.FC = () => {
                   {formatMessage('dashboard.dataUpdated')}: {formatLastSync(lastSyncTime)}
                 </span>
               )}
-              <UnaButton
+              <Button
                 type="button"
                 variant="secondary"
                 size="small"
@@ -271,7 +271,7 @@ const DashboardPage: React.FC = () => {
               >
                 <RotateCw size={14} className={clsx(styles.refreshIcon, loading && styles.spin)} />
                 <span>{formatMessage('dashboard.refresh')}</span>
-              </UnaButton>
+              </Button>
             </div>
           </div>
 
