@@ -18,6 +18,17 @@
   }
 }
 
+.hasRightElement {
+  input {
+    padding-right: 40px;
+
+    &::-ms-reveal,
+    &::-ms-clear {
+      display: none;
+    }
+  }
+}
+
 .icon {
   position: absolute;
   left: 14px;
@@ -25,4 +36,14 @@
   transform: translateY(-50%);
   color: var(--text-secondary);
   pointer-events: none;
+}
+
+.rightElement {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

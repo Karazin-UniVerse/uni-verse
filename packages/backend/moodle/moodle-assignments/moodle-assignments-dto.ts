@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+import { parseBooleanQuery } from './moodle-assignments.helpers';
 
 export class SaveSubmissionDto {
   @ApiPropertyOptional({
@@ -118,18 +119,6 @@ export class SubmissionStatusDto {
   @IsOptional()
   @IsBoolean()
   isLate?: boolean;
-}
-
-function parseBooleanQuery(value: unknown): unknown {
-  if (value === true || value === 'true') {
-    return true;
-  }
-
-  if (value === false || value === 'false') {
-    return false;
-  }
-
-  return value;
 }
 
 export class GetAssignmentsQueryDto {

@@ -1,3 +1,4 @@
+import type { StudentProfile } from '@core/types';
 import type {
   Course,
   Grade,
@@ -15,6 +16,7 @@ import {
   mockStatistics,
   mockAssignments,
   getMockAssignments,
+  mockStudentProfile,
 } from './mockData';
 import { isDemoMode } from './api.storage';
 import { request, buildQueryString } from './api.request';
@@ -80,6 +82,13 @@ export class MoodleApi {
     return request<CourseStatistics>('/moodle/statistics');
   }
 
+  getProfile(): Promise<{ data: StudentProfile }> {
+    if (isDemoMode()) {
+      return Promise.resolve({ data: mockStudentProfile });
+    }
+
+    return request<StudentProfile>('/moodle/profile');
+  }
   getCourseContents(courseId: number): Promise<{ data: CourseSection[] }> {
     if (isDemoMode()) {
       return Promise.resolve({ data: [] });

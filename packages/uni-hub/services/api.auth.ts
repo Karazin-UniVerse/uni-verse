@@ -103,6 +103,8 @@ export class AuthApi {
       safeStorage.removeItem('isLoggedIn');
       safeStorage.removeItem('moodleToken');
       safeStorage.removeItem('isDemo');
+      safeStorage.removeItem('username');
+      safeStorage.removeItem('universe_student_profile');
       safeStorage.removeItem('universe_dashboard_data');
       safeStorage.removeItem('universe_last_sync_time');
     }

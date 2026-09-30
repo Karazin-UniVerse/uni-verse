@@ -1,3 +1,4 @@
+import type { StudentProfile } from '@core/types';
 import type {
   Course,
   Grade,
@@ -209,6 +210,7 @@ export const mockEvents: MoodleEvent[] = [
     timestart: getFutureTimestamp(1, 14, 0),
     formattedtime: 'Завтра о 14:00',
     eventtype: 'due',
+    url: 'https://meet.google.com/abc-defg-hij',
   },
   {
     id: 302,
@@ -316,3 +318,25 @@ export function getMockAssignments(params?: GetAssignmentsParams): Assignment[] 
 
   return list;
 }
+export const mockStudentProfile: StudentProfile = {
+  id: 'karazin-student-001',
+  moodleId: 4021,
+  fullName: 'Барсуков Родіон Сергійович',
+  email: 'rodion.barsukov@karazin.ua',
+  avatarUrl: 'https://moodle.universemvp.tech/user/pix.php/4021/f1.jpg',
+  studentCardNumber: 'KB-10293847',
+  recordBookNumber: 'ЗК-2024-042',
+  faculty: 'ННІ Компʼютерних наук та штучного інтелекту',
+  department: 'Кафедра математичного моделювання та аналізу даних',
+  specialty: '122 Компʼютерні науки',
+  educationalProgram: 'Компʼютерні науки та інтелектуальні системи',
+  degree: 'bachelor',
+  course: 3,
+  group: 'КС12',
+  studyForm: 'full-time',
+  financing: 'budget',
+  status: 'active',
+  gpa: 92.4,
+  totalCreditsEarned: 120,
+  academicStanding: 'honors',
+};

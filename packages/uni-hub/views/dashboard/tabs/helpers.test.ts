@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { getAssignmentStatusInfo, formatLastSync } from './helpers';
+import {
+  getAssignmentStatusInfo,
+  formatLastSync,
+  trimTrailingPunctuation,
+  extractMeetingUrl,
+} from './helpers';
+import type { MoodleEvent } from '@uni-hub/types';
 
 describe('getAssignmentStatusInfo', () => {
   it('returns graded status when completed and status is graded', () => {
@@ -12,6 +18,20 @@ describe('getAssignmentStatusInfo', () => {
     expect(result).toEqual({
       tone: 'success',
       label: 'Оцінено',
+    });
+  });
+
+  it('supports object argument signature', () => {
+    const result = getAssignmentStatusInfo({
+      status: 'submitted',
+      isGraded: false,
+      isAwaitingReview: true,
+      isOverdue: false,
+    });
+
+    expect(result).toEqual({
+      tone: 'warning',
+      label: 'Очікує перевірки',
     });
   });
 
@@ -110,5 +130,66 @@ describe('formatLastSync', () => {
     const result = formatLastSync(d.getTime());
 
     expect(result).toContain('05.01.2026');
+  });
+});
+
+describe('trimTrailingPunctuation', () => {
+  it('removes trailing punctuation marks like closing parens, dots, commas, semicolons', () => {
+    expect(trimTrailingPunctuation('https://zoom.us/j/123).')).toBe('https://zoom.us/j/123');
+    expect(trimTrailingPunctuation('https://meet.google.com/abc-defg-hij,')).toBe(
+      'https://meet.google.com/abc-defg-hij',
+    );
+    expect(trimTrailingPunctuation('https://teams.microsoft.com;')).toBe(
+      'https://teams.microsoft.com',
+    );
+  });
+
+  it('leaves clean URLs unchanged', () => {
+    expect(trimTrailingPunctuation('https://zoom.us/j/123')).toBe('https://zoom.us/j/123');
+  });
+});
+
+describe('extractMeetingUrl', () => {
+  it('extracts URL directly from event.url if matching pattern', () => {
+    const event: MoodleEvent = {
+      id: 1,
+      name: 'Lecture',
+      description: '',
+      courseName: 'CS',
+      timestart: 1000,
+      formattedtime: '10:00',
+      eventtype: 'course',
+      url: 'https://zoom.us/j/999888777',
+    };
+
+    expect(extractMeetingUrl(event)).toBe('https://zoom.us/j/999888777');
+  });
+
+  it('extracts URL from description if event.url is missing', () => {
+    const event: MoodleEvent = {
+      id: 2,
+      name: 'Seminar',
+      description: 'Join Google Meet: https://meet.google.com/xyz-uvwx-rst! See you there.',
+      courseName: 'CS',
+      timestart: 1000,
+      formattedtime: '12:00',
+      eventtype: 'course',
+    };
+
+    expect(extractMeetingUrl(event)).toBe('https://meet.google.com/xyz-uvwx-rst');
+  });
+
+  it('returns null if no meeting link is present', () => {
+    const event: MoodleEvent = {
+      id: 3,
+      name: 'Self-study',
+      description: 'Read chapter 4',
+      courseName: 'CS',
+      timestart: 1000,
+      formattedtime: '14:00',
+      eventtype: 'course',
+    };
+
+    expect(extractMeetingUrl(event)).toBeNull();
   });
 });

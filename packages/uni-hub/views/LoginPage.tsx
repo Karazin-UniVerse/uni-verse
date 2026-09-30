@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User, Lock } from 'lucide-react';
+import { User, Lock, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button, SimpleForm, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
@@ -17,6 +17,7 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [linkUsername, setLinkUsername] = useState('');
   const [linkPassword, setLinkPassword] = useState('');
   const [error, setError] = useState('');
@@ -69,6 +70,7 @@ const LoginPage: React.FC = () => {
 
       toast.success(formatMessage('login.success'));
       localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('username', username.trim());
 
       if (res.data?.token) {
         localStorage.setItem('moodleToken', res.data.token);
@@ -107,6 +109,7 @@ const LoginPage: React.FC = () => {
 
       toast.success(formatMessage('login.linkMoodleSuccess'));
       toast.success(formatMessage('login.success'));
+      localStorage.setItem('username', linkUsername.trim());
       router.push('/');
     } catch (err: unknown) {
       const message = getErrorMessage(err, formatMessage('login.linkMoodleError'));
@@ -236,13 +239,32 @@ const LoginPage: React.FC = () => {
             <AuthField
               id="login-password"
               name="password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               label={formatMessage('login.password')}
               placeholder={formatMessage('login.password')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
               icon={<Lock size={16} />}
+              rightElement={
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={
+                    showPassword
+                      ? formatMessage('login.hidePassword')
+                      : formatMessage('login.showPassword')
+                  }
+                  title={
+                    showPassword
+                      ? formatMessage('login.hidePassword')
+                      : formatMessage('login.showPassword')
+                  }
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
             />
 
             {error && <p className={styles.error}>{error}</p>}

@@ -1,0 +1,177 @@
+.modalContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20, 20px);
+}
+
+.deanHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  padding-bottom: var(--space-16);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.deanIconWrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--border-radius-medium);
+  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+  color: var(--accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.deanTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
+  h3 {
+    margin: 0;
+    font-size: var(--font-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+  }
+
+  p {
+    margin: 0;
+    font-size: var(--font-xs);
+    color: var(--text-secondary);
+  }
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-12);
+  background: var(--bg-canvas, var(--bg-surface));
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--border-radius-medium);
+  border: 1px solid var(--border-subtle);
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+
+  svg {
+    flex-shrink: 0;
+    color: var(--accent-primary);
+  }
+
+  strong {
+    color: var(--text-primary);
+  }
+}
+
+.templatesSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.sectionLabel {
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chipsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.chipBtn {
+  font: inherit;
+  font-size: var(--font-xs);
+  padding: var(--space-6, 6px) var(--space-12);
+  border-radius: var(--border-radius-full);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast) var(--ease-standard),
+    border-color var(--transition-fast) var(--ease-standard),
+    transform var(--transition-fast) var(--ease-standard);
+
+  &:hover {
+    border-color: var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.chipBtnActive {
+  background: var(--accent-primary);
+  color: var(--accent-text-on-primary);
+  border-color: var(--accent-primary);
+
+  &:hover {
+    background: var(--accent-primary-hover, var(--accent-primary));
+    color: var(--accent-text-on-primary);
+  }
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 6px);
+
+  label {
+    font-size: var(--font-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+  }
+
+  input,
+  textarea {
+    font: inherit;
+    font-size: var(--font-sm);
+    padding: var(--space-10, 10px) var(--space-12);
+    border-radius: var(--border-radius-medium);
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color var(--transition-fast) var(--ease-standard);
+
+    &:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+}
+
+.modalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-12);
+  padding-top: var(--space-12);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.submitContent {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6, 6px);
+}
