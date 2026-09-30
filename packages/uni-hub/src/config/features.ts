@@ -43,10 +43,7 @@ export const features: FeatureFlags = {
   opportunities: parseEnvBoolean(process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES, false),
   moodle: parseEnvBoolean(process.env.NEXT_PUBLIC_FEATURE_MOODLE, true),
   auth: {
-    google: parseEnvBoolean(
-      process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED,
-      Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID),
-    ),
+    google: parseEnvBoolean(process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED, false),
     moodle: parseEnvBoolean(process.env.NEXT_PUBLIC_AUTH_MOODLE_ENABLED, true),
   },
 };
