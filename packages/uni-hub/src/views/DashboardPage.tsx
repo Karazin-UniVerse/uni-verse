@@ -18,7 +18,6 @@ import {
   VolumeX,
   Menu,
   Briefcase,
-  Sparkles,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -379,6 +378,7 @@ const DashboardPage: React.FC = () => {
     ];
 
     const result = items.filter((item) => (features.moodle ? true : !item.moodleOnly));
+
     if (features.opportunities) {
       result.push({
         key: 'opportunities',
@@ -386,6 +386,7 @@ const DashboardPage: React.FC = () => {
         label: 'Можливості',
       });
     }
+
     return result;
   }, []);
 

@@ -37,6 +37,7 @@ const parseEnvBoolean = (value: string | undefined, defaultValue: boolean): bool
   if (value === undefined || value === '') {
     return defaultValue;
   }
+
   return value.toLowerCase() === 'true' || value === '1';
 };
 
