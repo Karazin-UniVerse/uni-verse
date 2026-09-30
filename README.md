@@ -144,6 +144,9 @@ pnpm --filter @universe/uni-hub dev
 
 # Start NestJS backend only (http://localhost:3001)
 pnpm --filter @universe/backend start:dev
+
+# Start Una UI Storybook component catalog (http://localhost:6006)
+pnpm --filter @universe/ui storybook
 ```
 
 > ⚠️ **Important on Authentication:** UniVerse user authentication delegates directly to Moodle LMS (`https://moodle.universemvp.tech`). Password validation is performed against Moodle, NOT arbitrary local database rows. To log in during development, you must use valid credentials from the test Moodle instance (ask the Project Coordinator for test credentials).
@@ -152,6 +155,7 @@ pnpm --filter @universe/backend start:dev
 
 - **UniHub Web Portal**: [http://localhost:3000](http://localhost:3000)
 - **Backend API Gateway**: [http://localhost:3001](http://localhost:3001)
+- **Una UI Storybook**: [http://localhost:6006](http://localhost:6006) _(available on develop and staging at `/storybook/`)_
 - **Prisma Studio (Database GUI)**: [http://localhost:5555](http://localhost:5555)
 
 ---
