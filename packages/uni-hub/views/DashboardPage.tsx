@@ -428,7 +428,11 @@ const DashboardPage: React.FC = () => {
       return;
     }
 
-    fetchData();
+    void fetchData();
+
+    return () => {
+      fetchRequestIdRef.current += 1;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router, sortOrder, dateFrom, dateTo, hideCompleted]);
 

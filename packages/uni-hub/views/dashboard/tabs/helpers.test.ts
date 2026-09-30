@@ -46,4 +46,31 @@ describe('getAssignmentStatusInfo', () => {
       label: 'В процесі',
     });
   });
+
+  it('returns awaiting review status when isAwaitingReview is true in 4-arg signature', () => {
+    const result = getAssignmentStatusInfo('submitted', false, true, false);
+
+    expect(result).toEqual({
+      tone: 'warning',
+      label: 'Очікує перевірки',
+    });
+  });
+
+  it('returns graded status when isGraded is true in 4-arg signature', () => {
+    const result = getAssignmentStatusInfo('graded', true, false, false);
+
+    expect(result).toEqual({
+      tone: 'success',
+      label: 'Оцінено',
+    });
+  });
+
+  it('returns overdue status when isOverdue is true in 4-arg signature', () => {
+    const result = getAssignmentStatusInfo('new', false, false, true);
+
+    expect(result).toEqual({
+      tone: 'danger',
+      label: 'Прострочено',
+    });
+  });
 });

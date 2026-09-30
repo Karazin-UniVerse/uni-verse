@@ -6,7 +6,7 @@ export function fireConfetti(): void {
     zIndex: 2000,
   };
 
-  confetti({
+  void confetti({
     ...defaults,
     particleCount: 80,
     spread: 70,
@@ -14,7 +14,7 @@ export function fireConfetti(): void {
   });
 
   window.setTimeout(() => {
-    confetti({
+    void confetti({
       ...defaults,
       particleCount: 40,
       spread: 100,

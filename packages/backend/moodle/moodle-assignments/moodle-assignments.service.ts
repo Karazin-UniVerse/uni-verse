@@ -58,42 +58,41 @@ export class MoodleAssignmentsService {
 
       if (includeStatus && assignments.length > 0) {
         const chunkSize = 5;
+        const chunks: AssignmentItemDto[][] = [];
 
-        const executeChunks = async (startIndex: number): Promise<void> => {
-          if (startIndex >= assignments.length) {
-            return;
-          }
+        for (let i = 0; i < assignments.length; i += chunkSize) {
+          chunks.push(assignments.slice(i, i + chunkSize));
+        }
 
-          const chunk = assignments.slice(startIndex, startIndex + chunkSize);
+        await chunks.reduce(
+          (chain, chunk) =>
+            chain.then(() =>
+              Promise.allSettled(
+                chunk.map(async (assign) => {
+                  try {
+                    const sub = await this.getSubmissionStatus(
+                      moodleToken,
+                      moodleId,
+                      assign.id,
+                    );
 
-          await Promise.allSettled(
-            chunk.map(async (assign) => {
-              try {
-                const sub = await this.getSubmissionStatus(
-                  moodleToken,
-                  moodleId,
-                  assign.id,
-                );
-
-                assign.submissionStatus = sub.status;
-                assign.grade = sub.grade;
-                assign.graded = sub.status === 'graded';
-                assign.submittedAt = sub.submittedAt;
-                assign.isLate = Boolean(
-                  sub.submittedAt &&
-                  assign.duedate > 0 &&
-                  sub.submittedAt > assign.duedate,
-                );
-              } catch {
-                // Ignore single assignment status fetch failure
-              }
-            }),
-          );
-
-          await executeChunks(startIndex + chunkSize);
-        };
-
-        await executeChunks(0);
+                    assign.submissionStatus = sub.status;
+                    assign.grade = sub.grade;
+                    assign.graded = sub.status === 'graded';
+                    assign.submittedAt = sub.submittedAt;
+                    assign.isLate = Boolean(
+                      sub.submittedAt &&
+                      assign.duedate > 0 &&
+                      sub.submittedAt > assign.duedate,
+                    );
+                  } catch {
+                    // Ignore single assignment status fetch failure
+                  }
+                }),
+              ),
+            ),
+          Promise.resolve<unknown>(undefined),
+        );
       }
 
       return assignments;

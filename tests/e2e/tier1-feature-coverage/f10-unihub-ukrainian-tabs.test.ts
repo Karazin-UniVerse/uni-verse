@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { fileExists, readWorkspaceFile } from '../test-helpers';
 
 describe('Tier 1 - Feature 10: E-Dean 5 Canonical Ukrainian Tabs (@universe/uni-hub)', () => {
-  const dashboardPath = 'packages/uni-hub/src/views/DashboardPage.tsx';
+  const dashboardPath = 'packages/uni-hub/views/DashboardPage.tsx';
 
   it('F10-1: DashboardPage.tsx should exist', () => {
     expect(fileExists(dashboardPath)).toBe(true);

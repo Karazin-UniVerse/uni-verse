@@ -15,10 +15,8 @@ export function useAssignmentStatuses(assignments: Assignment[]): AssignmentLoca
     const requestedIds = requestedIdsRef.current;
     const inFlightIds = new Set<number>();
 
-    const fetchAllStatuses = async (): Promise<void> => {
-      if (cancelled) {
-        return;
-      }
+    const processNextBatch = async (): Promise<void> => {
+      if (cancelled) return;
 
       const assignmentsNeedingStatus = assignments.filter(
         (item) => !item.submissionStatus && !requestedIds.has(item.id),
@@ -56,10 +54,10 @@ export function useAssignmentStatuses(assignments: Assignment[]): AssignmentLoca
         }),
       );
 
-      await fetchAllStatuses();
+      return processNextBatch();
     };
 
-    void fetchAllStatuses();
+    void processNextBatch();
 
     return () => {
       cancelled = true;

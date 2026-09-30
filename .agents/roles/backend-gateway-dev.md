@@ -4,7 +4,7 @@ Responsible for NestJS Moodle proxy controllers and services in `@universe/backe
 
 ## Responsibilities
 
-- Implement Moodle REST proxy endpoints under `packages/backend/src/moodle/`.
+- Implement Moodle REST proxy endpoints under `packages/backend/moodle/`.
 - Ensure default gateway URL points to `https://moodle.universemvp.tech`.
 - Align response DTOs with `@universe/core/types`.
 - Maintain comprehensive unit and controller test coverage (Jest).

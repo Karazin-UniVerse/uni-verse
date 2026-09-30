@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MoodleClientService } from './moodle-client/moodle.client.service';
-import { UserService } from 'src/user/user.service';
+import { UserService } from '../user/user.service';
 
 describe('MoodleClientService', () => {
   let service: MoodleClientService;

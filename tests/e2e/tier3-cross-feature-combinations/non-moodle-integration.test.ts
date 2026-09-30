@@ -219,7 +219,7 @@ describe('Tier 3 - Non-Moodle Platform & Core Integration Suite', () => {
 
   describe('Scenario 4: Backend Security & DTO Validation Contracts', () => {
     it('should ensure DTO files enforce strict validation schemas and whitelisting', () => {
-      const dtoContent = readWorkspaceFile('packages/backend/src/user/user-dto.ts');
+      const dtoContent = readWorkspaceFile('packages/backend/user/user-dto.ts');
 
       // Both CreateUserDto and UpdateUserDto must import validation decorators
       expect(dtoContent).toMatch(/import\s*\{[^}]*IsEmail[^}]*\}\s*from\s*['"]class-validator['"]/);
@@ -239,9 +239,9 @@ describe('Tier 3 - Non-Moodle Platform & Core Integration Suite', () => {
     });
 
     it('should confirm AtGuard and Public decorator mechanism protects routes by default', () => {
-      const atGuardContent = readWorkspaceFile('packages/backend/src/auth/guards/at.guard.ts');
+      const atGuardContent = readWorkspaceFile('packages/backend/auth/guards/at.guard.ts');
       const publicDecContent = readWorkspaceFile(
-        'packages/backend/src/auth/decorators/public.decorator.ts',
+        'packages/backend/auth/decorators/public.decorator.ts',
       );
 
       expect(atGuardContent).toContain('IS_PUBLIC_KEY');

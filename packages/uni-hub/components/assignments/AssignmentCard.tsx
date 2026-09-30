@@ -15,6 +15,7 @@ import {
 import { Tag } from '@una';
 import { LiveCountdown } from '@uni-hub/components/gamification';
 import { playClick } from '@uni-hub/utils/soundEffects';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { Assignment } from '@uni-hub/types';
 import { cardMotion } from '@uni-hub/views/dashboard/constants';
 import {
@@ -56,6 +57,7 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
   onOpenAssignment,
   status = 'new',
 }) => {
+  const { localeTag, formatMessage } = useLanguage();
   const isGraded = status === 'graded' || Boolean(grade) || Boolean(assignment.graded);
   const isAwaitingReview = !isGraded && status === 'submitted';
   const isCompleted = isGraded || isAwaitingReview;
@@ -65,7 +67,7 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
     assignment.isLate ||
     (assignment.submittedAt && hasDeadline && assignment.submittedAt > assignment.duedate),
   );
-  const statusInfo = getAssignmentStatusInfo(status, isCompleted, isOverdue, isAwaitingReview);
+  const statusInfo = getAssignmentStatusInfo(status, isGraded, isAwaitingReview, isOverdue);
 
   return (
     <motion.button
@@ -99,7 +101,7 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
             {hasDeadline ? (
               <>
                 <span className={styles.deadlineDate}>
-                  Дедлайн: {new Date(assignment.duedate * 1000).toLocaleDateString('uk-UA')}
+                  Дедлайн: {new Date(assignment.duedate * 1000).toLocaleDateString(localeTag)}
                 </span>
                 {!isCompleted && !isOverdue && (
                   <>
@@ -119,7 +121,7 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
         {isLate && (
           <Tag tone="danger">
             <AlertCircle size={13} style={{ marginRight: 4 }} />
-            Здано із запізненням
+            {formatMessage('assignments.submittedLate')}
           </Tag>
         )}
 
@@ -127,7 +129,7 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
           {grade ? (
             <>
               <Award size={13} style={{ marginRight: 4 }} />
-              Оцінка: {grade}
+              {`${formatMessage('assignments.grade')}: ${grade}`}
             </>
           ) : (
             <>
@@ -138,7 +140,7 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
         </Tag>
 
         <div className={styles.assignmentActionButton}>
-          <span>Відкрити</span>
+          <span>{formatMessage('assignments.open')}</span>
           <ChevronRight size={14} />
         </div>
       </div>

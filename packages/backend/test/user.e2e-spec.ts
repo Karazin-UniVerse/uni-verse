@@ -4,8 +4,8 @@ import { JwtService } from '@nestjs/jwt';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import cookieParser from 'cookie-parser';
-import { AppModule } from '../src/app.module';
-import { PrismaService } from '../src/prisma/prisma.service';
+import { AppModule } from '../app.module';
+import { PrismaService } from '../prisma/prisma.service';
 
 describe('UserController (HTTP Integration / E2E)', () => {
   let app: INestApplication<App>;
