@@ -77,3 +77,25 @@
 .submit {
   width: 100%;
 }
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: var(--space-16) 0;
+  color: var(--text-secondary);
+  font-size: var(--font-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border-color, rgba(128, 128, 128, 0.2));
+  }
+
+  span {
+    padding: 0 var(--space-8);
+  }
+}
