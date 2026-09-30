@@ -53,7 +53,7 @@ const DATABASE_OPTIONS = {
   },
 };
 
-async function runCommand(command, args) {
+async function runCommand(command, args, env = {}) {
   return new Promise((resolvePromise, reject) => {
     const isWindows = process.platform === 'win32';
     const cmd = isWindows && command === 'pnpm' ? 'pnpm.cmd' : command;
@@ -64,6 +64,7 @@ async function runCommand(command, args) {
       stdio: 'inherit',
       shell: true,
       cwd: ROOT_DIR,
+      env: { ...process.env, ...env },
     });
 
     proc.on('close', (code) => {
@@ -92,7 +93,7 @@ function updateEnvFile(filePath, updates) {
     const line = `${key}="${value}"`;
 
     if (regex.test(content)) {
-      content = content.replace(regex, line);
+      content = content.replace(regex, () => line);
     } else {
       content += `\n${line}`;
     }
@@ -105,9 +106,13 @@ async function main() {
   const rl = createInterface({ input, output });
 
   try {
-    console.log(`\n${c.bold}${c.cyan}====================================================${c.reset}`);
+    console.log(
+      `\n${c.bold}${c.cyan}====================================================${c.reset}`,
+    );
     console.log(`${c.bold}${c.cyan}       UniVerse Interactive Dev Environment Wizard  ${c.reset}`);
-    console.log(`${c.bold}${c.cyan}====================================================${c.reset}\n`);
+    console.log(
+      `${c.bold}${c.cyan}====================================================${c.reset}\n`,
+    );
 
     // 1. Dependency installation
     const installAnswer = await rl.question(
@@ -124,15 +129,15 @@ async function main() {
     console.log(`\n${c.bold}2. Select Backend API Target:${c.reset}`);
     console.log(
       `  ${c.green}[1] Remote Develop API${c.reset} (${c.dim}https://p01--backend-stage--djrwwgsr7dmx.code.run${c.reset}) ${c.magenta}★ [Best for Frontend]${c.reset}\n` +
-      `      ${c.dim}No local backend or database required.${c.reset}`,
+        `      ${c.dim}No local backend or database required.${c.reset}`,
     );
     console.log(
       `  ${c.cyan}[2] Remote Staging API${c.reset} (${c.dim}https://p01--backend-stage--4y9d57mwx2gx.code.run${c.reset})\n` +
-      `      ${c.dim}Connect to staging environment.${c.reset}`,
+        `      ${c.dim}Connect to staging environment.${c.reset}`,
     );
     console.log(
       `  ${c.yellow}[3] Local Backend${c.reset} (${c.dim}http://localhost:3001${c.reset})\n` +
-      `      ${c.dim}Runs NestJS API locally (requires database).${c.reset}`,
+        `      ${c.dim}Runs NestJS API locally (requires database).${c.reset}`,
     );
 
     const backendAnswer = await rl.question(`\nSelect backend [1-3] (default: 1): `);
@@ -159,15 +164,13 @@ async function main() {
       console.log(`\n${c.bold}3. Select Database Connection for Local Backend:${c.reset}`);
       console.log(
         `  ${c.yellow}[1] Local PostgreSQL${c.reset} (${c.dim}localhost:5432${c.reset})\n` +
-        `      ${c.dim}Requires local PostgreSQL server or Docker container running.${c.reset}`,
+          `      ${c.dim}Requires local PostgreSQL server or Docker container running.${c.reset}`,
       );
       console.log(
         `  ${c.cyan}[2] Remote Stage Database${c.reset} (${c.dim}stage-db on Northflank${c.reset})\n` +
-        `      ${c.dim}Connects local backend directly to the cloud stage database.${c.reset}`,
+          `      ${c.dim}Connects local backend directly to the cloud stage database.${c.reset}`,
       );
-      console.log(
-        `  ${c.magenta}[3] Custom PostgreSQL Connection String${c.reset}`,
-      );
+      console.log(`  ${c.magenta}[3] Custom PostgreSQL Connection String${c.reset}`);
 
       const dbAnswer = await rl.question(`\nSelect database [1-3] (default: 1): `);
       const dbChoice = dbAnswer.trim() || '1';
@@ -193,7 +196,9 @@ async function main() {
         selectedDbUrl = DATABASE_OPTIONS.local.url;
       }
 
-      console.log(`${c.green}✔ Selected database: ${c.bold}${selectedDbUrl.includes('@') ? selectedDbUrl.split('@')[1] : selectedDbUrl}${c.reset}`);
+      console.log(
+        `${c.green}✔ Selected database: ${c.bold}${selectedDbUrl.includes('@') ? selectedDbUrl.split('@')[1] : selectedDbUrl}${c.reset}`,
+      );
     }
 
     // 4. Configure environment files
@@ -204,7 +209,9 @@ async function main() {
       PORT: '3000',
       NEXT_PUBLIC_API_URL: selectedBackend.url,
     });
-    console.log(`${c.green}✔ Updated ${c.bold}packages/uni-hub/.env.local${c.reset} (NEXT_PUBLIC_API_URL=${selectedBackend.url})`);
+    console.log(
+      `${c.green}✔ Updated ${c.bold}packages/uni-hub/.env.local${c.reset} (NEXT_PUBLIC_API_URL=${selectedBackend.url})`,
+    );
 
     // If local backend, update root and backend .env
     if (isLocalBackend) {
@@ -220,11 +227,15 @@ async function main() {
         FRONTEND_URL: 'http://localhost:3000',
         MOODLE_BASEURL: 'https://moodle.universemvp.tech',
       });
-      console.log(`${c.green}✔ Updated ${c.bold}.env${c.reset} and ${c.bold}packages/backend/.env${c.reset}`);
+      console.log(
+        `${c.green}✔ Updated ${c.bold}.env${c.reset} and ${c.bold}packages/backend/.env${c.reset}`,
+      );
 
       // Run prisma generate
       console.log(`\n${c.cyan}Generating Prisma client...${c.reset}`);
-      await runCommand('pnpm', ['db:generate']);
+      await runCommand('pnpm', ['db:generate'], {
+        DATABASE_URL: selectedDbUrl,
+      });
 
       const runMigrate = await rl.question(
         `\n${c.bold}Push schema to database ('pnpm db:migrate')?${c.reset} (Y/n): `,
@@ -232,21 +243,31 @@ async function main() {
 
       if (runMigrate.trim().toLowerCase() !== 'n') {
         try {
-          await runCommand('pnpm', ['db:migrate']);
+          await runCommand('pnpm', ['db:migrate'], {
+            DATABASE_URL: selectedDbUrl,
+          });
           console.log(`${c.green}✔ Database schema synced successfully.${c.reset}`);
         } catch {
-          console.log(`${c.yellow}⚠ Notice: Could not sync database. Ensure PostgreSQL is running.${c.reset}`);
+          console.log(
+            `${c.yellow}⚠ Notice: Could not sync database. Ensure PostgreSQL is running.${c.reset}`,
+          );
         }
       }
     }
 
     // 5. Auth notice & Launch prompt
-    console.log(`\n${c.bold}${c.yellow}================== [ Moodle Auth Notice ] ==================${c.reset}`);
+    console.log(
+      `\n${c.bold}${c.yellow}================== [ Moodle Auth Notice ] ==================${c.reset}`,
+    );
     console.log(`${c.yellow}• UniVerse authentication delegates to Moodle LMS.${c.reset}`);
     console.log(`${c.yellow}• For logging in, use real student/instructor credentials${c.reset}`);
     console.log(`${c.yellow}  registered on: ${c.bold}https://moodle.universemvp.tech${c.reset}`);
-    console.log(`${c.yellow}• Local table passwords in PostgreSQL are NOT checked by the API.${c.reset}`);
-    console.log(`${c.bold}${c.yellow}============================================================${c.reset}\n`);
+    console.log(
+      `${c.yellow}• Local table passwords in PostgreSQL are NOT checked by the API.${c.reset}`,
+    );
+    console.log(
+      `${c.bold}${c.yellow}============================================================${c.reset}\n`,
+    );
 
     const launchAnswer = await rl.question(
       `${c.bold}Ready! Launch development server now?${c.reset} (Y/n): `,
@@ -257,9 +278,13 @@ async function main() {
 
       if (isLocalBackend) {
         console.log(`\n${c.green}Starting fullstack workspace (Turborepo)...${c.reset}`);
-        await runCommand('pnpm', ['dev']);
+        await runCommand('pnpm', ['dev'], {
+          DATABASE_URL: selectedDbUrl,
+        });
       } else {
-        console.log(`\n${c.green}Starting UniHub frontend (pointing to ${selectedBackend.url})...${c.reset}`);
+        console.log(
+          `\n${c.green}Starting UniHub frontend (pointing to ${selectedBackend.url})...${c.reset}`,
+        );
         await runCommand('pnpm', ['--filter', '@universe/uni-hub', 'dev']);
       }
 
@@ -275,7 +300,9 @@ async function main() {
     }
   } catch (error) {
     process.exitCode = 1;
-    console.error(`\n${c.red}Error: ${error instanceof Error ? error.message : String(error)}${c.reset}`);
+    console.error(
+      `\n${c.red}Error: ${error instanceof Error ? error.message : String(error)}${c.reset}`,
+    );
   } finally {
     rl.close();
   }
