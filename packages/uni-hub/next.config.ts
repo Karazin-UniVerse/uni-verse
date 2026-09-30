@@ -3,17 +3,12 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   /* config options here */
   transpilePackages: ['@universe/ui', '@universe/core'],
-  async redirects() {
+  async rewrites() {
     return [
       {
         source: '/storybook',
-        destination: '/storybook/',
-        permanent: false,
+        destination: '/storybook/index.html',
       },
-    ];
-  },
-  async rewrites() {
-    return [
       {
         source: '/storybook/',
         destination: '/storybook/index.html',
