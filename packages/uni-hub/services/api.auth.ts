@@ -1,6 +1,5 @@
-import { isBrowser } from '@uni-hub/utils/browser';
 import type { AuthResponse } from '@uni-hub/types';
-import { safeStorage, isDemoMode } from './api.storage';
+import { safeStorage } from './api.storage';
 import { request } from './api.request';
 
 export interface GoogleAuthResponse {
@@ -10,26 +9,6 @@ export interface GoogleAuthResponse {
 
 export class AuthApi {
   async login(email: string, password: string): Promise<{ data: AuthResponse }> {
-    if (email === 'demo' && password === 'demo') {
-      const mockAuth: AuthResponse = {
-        access_token: 'demo-token',
-        token: 'demo-token',
-        userID: 'karazin-student-001',
-      };
-
-      const persisted =
-        safeStorage.setItem('accessToken', 'demo-token') &&
-        safeStorage.setItem('moodleToken', 'demo-token') &&
-        safeStorage.setItem('isLoggedIn', 'true') &&
-        safeStorage.setItem('isDemo', 'true');
-
-      if (!persisted && isBrowser) {
-        throw new Error('Не вдалося зберегти сесію: доступ до локального сховища заборонено');
-      }
-
-      return { data: mockAuth };
-    }
-
     const response = await request<AuthResponse>(
       '/auth/login',
       {
@@ -42,7 +21,6 @@ export class AuthApi {
     if (response.data?.access_token) {
       safeStorage.setItem('accessToken', response.data.access_token);
       safeStorage.setItem('isLoggedIn', 'true');
-      safeStorage.removeItem('isDemo');
     }
 
     return response;
@@ -95,14 +73,11 @@ export class AuthApi {
 
   async logout(): Promise<void> {
     try {
-      if (!isDemoMode()) {
-        await request('/auth/logout', { method: 'POST' }, 0);
-      }
+      await request('/auth/logout', { method: 'POST' }, 0);
     } finally {
       safeStorage.removeItem('accessToken');
       safeStorage.removeItem('isLoggedIn');
       safeStorage.removeItem('moodleToken');
-      safeStorage.removeItem('isDemo');
       safeStorage.removeItem('username');
       safeStorage.removeItem('universe_student_profile');
       safeStorage.removeItem('universe_dashboard_data');

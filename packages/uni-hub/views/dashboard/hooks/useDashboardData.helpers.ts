@@ -153,7 +153,6 @@ export function clearUserSessionStorage(): void {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('moodleToken');
-    localStorage.removeItem('isDemo');
     localStorage.removeItem('username');
     localStorage.removeItem('universe_student_profile');
     localStorage.removeItem('universe_dashboard_data');

@@ -35,8 +35,6 @@ export const uk = {
   'login.linkMoodleEnterPassword': 'Будь ласка, введіть пароль від Moodle',
   'login.linkMoodleRequired': 'Для завершення входу необхідно прив’язати акаунт Moodle',
   'login.linkMoodleError': 'Помилка прив’язки акаунта. Перевірте логін та пароль.',
-  'login.tryDemo': 'Спробувати демо-режим (без Moodle) →',
-  'login.demoSuccess': 'Вхід у демо-режимі виконано',
 
   // Themes
   'theme.light': 'Світла',
@@ -87,7 +85,6 @@ export const uk = {
   'greeting.willMakeIt': 'Встигнемо?',
 
   // Student Profile Card
-  'student.demo': 'Демо-дані',
   'student.fullTime': 'Денна форма',
   'student.budget': 'Бюджет',
   'student.scholarship': 'Відмінник (Академічна стипендія)',
