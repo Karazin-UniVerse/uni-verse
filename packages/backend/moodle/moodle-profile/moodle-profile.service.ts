@@ -1,8 +1,31 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { MoodleClientService } from '../moodle-client/moodle.client.service';
 import { MoodleCoursesService } from '../moodle-courses/moodle-courses.service';
 import { MoodleGradesService } from '../moodle-grades/moodle-grades.service';
 import { StudentProfileDto } from './moodle-profile-dto';
+
+interface IMoodleClientService {
+  client<T>(
+    wsfunction: string,
+    token: string,
+    moodleId?: string,
+    params?: Record<string, unknown>,
+  ): Promise<T>;
+}
+
+interface IMoodleCoursesService {
+  getCourses(
+    token: string,
+    moodleId: string,
+  ): Promise<Array<{ id?: number; fullname?: string }>>;
+}
+
+interface IMoodleGradesService {
+  getGeneralGrades(
+    token: string,
+    moodleId: string,
+  ): Promise<{ grades?: Array<{ grade?: string | number | null }> }>;
+}
 
 interface MoodleSiteInfo {
   sitename?: string;
@@ -33,9 +56,12 @@ export class MoodleProfileService {
   private readonly logger = new Logger(MoodleProfileService.name);
 
   constructor(
-    private readonly moodleClient: MoodleClientService,
-    private readonly moodleCoursesService: MoodleCoursesService,
-    private readonly moodleGradesService: MoodleGradesService,
+    @Inject(MoodleClientService)
+    private readonly moodleClient: IMoodleClientService,
+    @Inject(MoodleCoursesService)
+    private readonly moodleCoursesService: IMoodleCoursesService,
+    @Inject(MoodleGradesService)
+    private readonly moodleGradesService: IMoodleGradesService,
   ) {}
 
   async getProfile(
