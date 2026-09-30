@@ -83,8 +83,6 @@ uni-verse/
       - ❌ No monolithic components without subcomponents or custom hooks.
       - ❌ No hardcoded UI strings without i18n translation keys.
 
-
-
 ---
 
 ## Verification Pipeline
