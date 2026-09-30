@@ -46,7 +46,7 @@ Ensure the following tools are installed on your system:
 
 ### ⚡ Interactive Setup Wizard (Develop & Staging)
 
-The fastest way to configure your local development environment is using the interactive CLI wizard (available on `develop` and `staging` branches):
+The fastest way to configure your local development environment without manually copying `.env` files is using the interactive CLI wizard (available on `develop` and `staging` branches):
 
 ```bash
 pnpm dev:select
@@ -54,15 +54,25 @@ pnpm dev:select
 pnpm dev:setup
 ```
 
-The wizard guides you through your configuration:
+The wizard prompts you step-by-step, automatically configures environment files, and starts the development server:
 
-1. **Install Dependencies**: automatically runs `pnpm install`.
-2. **Backend Selection**:
-   - **Remote Develop API** (`https://p01--backend-stage--djrwwgsr7dmx.code.run`) — **Recommended for Frontend Developers**. Develop UI with live cloud backend and test Moodle data without needing local PostgreSQL or NestJS running!
-   - **Remote Staging API** (`https://p01--backend-stage--4y9d57mwx2gx.code.run`) — Connects to staging cloud deployment.
-   - **Local Backend** (`http://localhost:3001`) — For fullstack developers working on NestJS and API endpoints.
-3. **Database Selection** (if Local Backend): configure local PostgreSQL or custom connection string, and automatically runs Prisma client generation.
-4. **Instant Launch**: automatically starts your development servers.
+1. **Workspace Dependencies**:
+   - Prompts `Run 'pnpm install' before starting? (Y/n)` — press `Enter` to automatically verify and install all dependencies across the workspace.
+2. **Backend API Target**:
+   - `[1] Remote Develop API` (`https://p01--backend-stage--djrwwgsr7dmx.code.run`) — **Recommended for Frontend Developers**. Automatically writes `packages/uni-hub/.env.local` with `NEXT_PUBLIC_API_URL`. You can immediately develop and test UI features with live Moodle LMS data without running NestJS or PostgreSQL locally!
+   - `[2] Remote Staging API` (`https://p01--backend-stage--4y9d57mwx2gx.code.run`) — Points the frontend to the staging deployment.
+   - `[3] Local Backend` (`http://localhost:3001`) — For backend & fullstack developers running NestJS locally.
+3. **Database Selection** (only if Local Backend `[3]` is selected):
+   - `[1] Local PostgreSQL` (`localhost:5432`)
+   - `[2] Remote Stage Database` (Northflank stage-db; prompts for connection string if not in environment)
+   - `[3] Custom PostgreSQL Connection String`
+   - Automatically writes `.env` and `packages/backend/.env`, generates Prisma Client (`pnpm db:generate`), and optionally syncs schema (`pnpm db:migrate`).
+4. **Moodle Authentication Notice**:
+   - Displays an in-terminal reminder that user authentication delegates to `https://moodle.universemvp.tech`.
+5. **Instant Launch**:
+   - Prompts `Launch development server now? (Y/n)`:
+     - **Frontend**: immediately starts `pnpm --filter @universe/uni-hub dev` ([http://localhost:3000](http://localhost:3000)).
+     - **Fullstack**: immediately starts the full Turborepo monorepo `pnpm dev`.
 
 ---
 
