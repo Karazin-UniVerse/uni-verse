@@ -21,52 +21,55 @@ export const StatCardGrid: React.FC<StatCardGridProps> = ({
 }) => {
   const { formatMessage } = useLanguage();
 
+  const cards = [
+    {
+      tab: 'courses' as const,
+      delayMs: 0,
+      title: formatMessage('overview.coursesTitle'),
+      label: formatMessage('overview.totalCourses'),
+      hint: formatMessage('overview.coursesHint'),
+      icon: <BookOpen size={20} />,
+      value: coursesCount,
+    },
+    {
+      tab: 'assignments' as const,
+      delayMs: 40,
+      title: formatMessage('overview.assignmentsTitle'),
+      label: formatMessage('overview.pendingAssignments'),
+      hint: formatMessage('overview.assignmentsHint'),
+      icon: <FileEdit size={20} />,
+      value: assignmentsCount,
+    },
+    {
+      tab: 'grades' as const,
+      delayMs: 80,
+      title: formatMessage('overview.gradesTitle'),
+      label: formatMessage('overview.gpa'),
+      hint: formatMessage('overview.gradesHint'),
+      icon: <GraduationCap size={20} />,
+      value: gpa,
+    },
+  ];
+
   return (
     <div className={styles.statGrid}>
-      <button
-        type="button"
-        className={`${styles.statCard} ${styles.statCardClickable}`}
-        onClick={() => onNavigate('courses')}
-        style={{ animationDelay: '0ms' }}
-        title={formatMessage('overview.coursesTitle')}
-      >
-        <div className={styles.statLabel}>{formatMessage('overview.totalCourses')}</div>
-        <div className={styles.statValue}>
-          <BookOpen size={20} />
-          {coursesCount}
-        </div>
-        <div className={styles.statHint}>{formatMessage('overview.coursesHint')}</div>
-      </button>
-
-      <button
-        type="button"
-        className={`${styles.statCard} ${styles.statCardClickable}`}
-        onClick={() => onNavigate('assignments')}
-        style={{ animationDelay: '40ms' }}
-        title={formatMessage('overview.assignmentsTitle')}
-      >
-        <div className={styles.statLabel}>{formatMessage('overview.pendingAssignments')}</div>
-        <div className={styles.statValue}>
-          <FileEdit size={20} />
-          {assignmentsCount}
-        </div>
-        <div className={styles.statHint}>{formatMessage('overview.assignmentsHint')}</div>
-      </button>
-
-      <button
-        type="button"
-        className={`${styles.statCard} ${styles.statCardClickable}`}
-        onClick={() => onNavigate('grades')}
-        style={{ animationDelay: '80ms' }}
-        title={formatMessage('overview.gradesTitle')}
-      >
-        <div className={styles.statLabel}>{formatMessage('overview.gpa')}</div>
-        <div className={styles.statValue}>
-          <GraduationCap size={20} />
-          {gpa}
-        </div>
-        <div className={styles.statHint}>{formatMessage('overview.gradesHint')}</div>
-      </button>
+      {cards.map((card) => (
+        <button
+          key={card.tab}
+          type="button"
+          className={`${styles.statCard} ${styles.statCardClickable}`}
+          onClick={() => onNavigate(card.tab)}
+          style={{ animationDelay: `${card.delayMs}ms` }}
+          title={card.title}
+        >
+          <div className={styles.statLabel}>{card.label}</div>
+          <div className={styles.statValue}>
+            {card.icon}
+            {card.value}
+          </div>
+          <div className={styles.statHint}>{card.hint}</div>
+        </button>
+      ))}
     </div>
   );
 };
