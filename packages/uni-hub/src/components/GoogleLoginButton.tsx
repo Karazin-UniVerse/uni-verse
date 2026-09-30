@@ -73,8 +73,6 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
 
     if (!scriptLoaded || !window.google?.accounts?.id) {
       onErrorRef.current?.('Сервіс авторизації Google завантажується, будь ласка, зачекайте');
-
-      return;
     }
   };
 
