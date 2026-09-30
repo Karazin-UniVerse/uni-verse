@@ -70,19 +70,18 @@ All standard configuration variables and local development defaults (ports, loca
 
 If developing packages independently:
 
-- **Frontend (`packages/uni-hub`)**: Optionally copy `packages/uni-hub/.env.example` to `packages/uni-hub/.env.local`:
+- **Frontend (`packages/uni-hub`)**: Optionally create `packages/uni-hub/.env.local`:
 
   ```bash
-  # Linux/macOS: cp packages/uni-hub/.env.example packages/uni-hub/.env.local
-  # Windows:     Copy-Item packages/uni-hub/.env.example packages/uni-hub/.env.local
+  NEXT_PUBLIC_API_URL="http://localhost:3001"
   ```
 
   > **Tip for Frontend Developers:** Set `NEXT_PUBLIC_API_URL="https://p01--backend-stage--djrwwgsr7dmx.code.run"` in `packages/uni-hub/.env.local` to develop the UI without needing local PostgreSQL or NestJS running!
 
-- **Backend (`packages/backend`)**: Optionally copy `.env.example` to `packages/backend/.env`:
+- **Backend (`packages/backend`)**: Optionally copy `packages/backend/.env.example` to `packages/backend/.env`:
   ```bash
-  # Linux/macOS: cp .env.example packages/backend/.env
-  # Windows:     Copy-Item .env.example packages/backend/.env
+  # Linux/macOS: cp packages/backend/.env.example packages/backend/.env
+  # Windows:     Copy-Item packages/backend/.env.example packages/backend/.env
   ```
 
 ### 3. Initialize Database & Generate Prisma Client (Fullstack only)
@@ -100,7 +99,7 @@ pnpm db:migrate
 _(Optional)_ Launch Prisma Studio Web GUI to inspect local database records:
 
 ```bash
-pnpm db:studio
+pnpm --filter @universe/backend exec prisma studio
 # Opens at http://localhost:5555
 ```
 
