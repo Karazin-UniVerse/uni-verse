@@ -68,6 +68,30 @@ describe('MoodleAssignmentsController', () => {
       const falseErrors = await validate(falseDto);
 
       expect(falseErrors.length).toBe(0);
+
+      const boolTrueDto = plainToInstance(GetAssignmentsQueryDto, {
+        ...plain,
+        includeStatus: true,
+      });
+
+      expect(boolTrueDto.includeStatus).toBe(true);
+
+      const boolFalseDto = plainToInstance(GetAssignmentsQueryDto, {
+        ...plain,
+        includeStatus: false,
+      });
+
+      expect(boolFalseDto.includeStatus).toBe(false);
+
+      const fallbackDto = plainToInstance(GetAssignmentsQueryDto, {
+        ...plain,
+        includeStatus: 'invalid-string',
+      });
+
+      expect(fallbackDto.includeStatus).toBe('invalid-string');
+      const fallbackErrors = await validate(fallbackDto);
+
+      expect(fallbackErrors.length).toBeGreaterThan(0);
     });
 
     it('should validate AssignmentItemDto and SaveSubmissionDto', async () => {
