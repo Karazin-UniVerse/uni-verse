@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { getScoreToneClass } from './RecentGradesFeed';
+import { getScoreToneClass, formatRecentGradeDate } from './helpers';
 import styles from './RecentGradesFeed.module.scss';
 
-describe('RecentGradesFeed', () => {
+describe('RecentGradesFeed helpers', () => {
   describe('getScoreToneClass', () => {
     it('returns toneSuccess for scores 90 and above', () => {
       expect(getScoreToneClass('95')).toBe(styles.toneSuccess);
@@ -29,6 +29,22 @@ describe('RecentGradesFeed', () => {
       expect(getScoreToneClass(null)).toBe(styles.toneInfo);
       expect(getScoreToneClass(undefined)).toBe(styles.toneInfo);
       expect(getScoreToneClass('passed')).toBe(styles.toneInfo);
+    });
+  });
+
+  describe('formatRecentGradeDate', () => {
+    it('formats timestamp into localized date', () => {
+      const fixedTimestamp = 1704067200; // 2024-01-01
+      const formatted = formatRecentGradeDate(fixedTimestamp, 'en-US');
+
+      expect(formatted).toBeDefined();
+      expect(formatted.length).toBeGreaterThan(0);
+    });
+
+    it('returns fallback string for null or non-positive timestamp', () => {
+      expect(formatRecentGradeDate(null)).toBe('Нещодавно');
+      expect(formatRecentGradeDate(undefined)).toBe('Нещодавно');
+      expect(formatRecentGradeDate(0, 'uk-UA', 'Fallback')).toBe('Fallback');
     });
   });
 });

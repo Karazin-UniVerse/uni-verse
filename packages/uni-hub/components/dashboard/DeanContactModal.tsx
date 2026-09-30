@@ -1,9 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Building2, Mail, Phone, Clock, Send } from 'lucide-react';
-import { Modal, Button as SimpleButton, useToast } from '@una';
+import { Building2, Send } from 'lucide-react';
+import { Modal, Button, useToast } from '@una';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { DeanContactInfo } from './DeanContactInfo';
+import { DeanTopicChips, DEAN_TOPIC_KEYS } from './DeanTopicChips';
 import styles from './DeanContactModal.module.scss';
+
+export { DEAN_TOPIC_KEYS };
 
 export interface DeanContactModalProps {
   open: boolean;
@@ -11,24 +16,25 @@ export interface DeanContactModalProps {
   facultyName?: string;
 }
 
-export const TEMPLATE_TOPICS = [
-  'Довідка про навчання',
-  'Академічна довідка / виписка оцінок',
-  'Питання щодо сесії та розкладу',
-  'Індивідуальний графік навчання',
-  'Інше звернення до деканату',
-];
-
 export const DeanContactModal: React.FC<DeanContactModalProps> = ({
   open,
   onClose,
   facultyName = 'ННІ Компʼютерних наук та штучного інтелекту',
 }) => {
   const toast = useToast();
-  const [selectedTopic, setSelectedTopic] = useState(TEMPLATE_TOPICS[0]);
+  const { formatMessage } = useLanguage();
+
+  const defaultTopic = formatMessage('dean.topic.certificate');
+
+  const [selectedTopic, setSelectedTopic] = useState(defaultTopic);
   const [customSubject, setCustomSubject] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleTopicSelect = (topic: string) => {
+    setSelectedTopic(topic);
+    setCustomSubject(topic);
+  };
 
   const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -36,11 +42,14 @@ export const DeanContactModal: React.FC<DeanContactModalProps> = ({
 
     setTimeout(() => {
       setIsSubmitting(false);
-      const ticketNumber = 1000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 9000);
 
-      toast.success(
-        `Звернення №КВ-${ticketNumber} успішно надіслано до деканату! Відповідь надійде на вашу корпоративну пошту.`,
+      const ticketNumber = 1000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 9000);
+      const successMsg = formatMessage('dean.successMessage').replace(
+        '{ticket}',
+        String(ticketNumber),
       );
+
+      toast.success(successMsg);
       setMessage('');
       setCustomSubject('');
       onClose();
@@ -48,7 +57,13 @@ export const DeanContactModal: React.FC<DeanContactModalProps> = ({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Зв'язок з деканатом" width={560}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={formatMessage('dean.modalTitle')}
+      width={560}
+      closeLabel={formatMessage('modal.close')}
+    >
       <div className={styles.modalContent}>
         <div className={styles.deanHeader}>
           <div className={styles.deanIconWrapper}>
@@ -56,100 +71,59 @@ export const DeanContactModal: React.FC<DeanContactModalProps> = ({
           </div>
           <div className={styles.deanTitleGroup}>
             <h3>{facultyName}</h3>
-            <p>Деканат та служба академічної підтримки студентів</p>
+            <p>{formatMessage('dean.supportSubtitle')}</p>
           </div>
         </div>
 
-        <div className={styles.infoGrid}>
-          <div className={styles.infoItem}>
-            <Mail size={16} />
-            <span>
-              <strong>Email:</strong> dean.cs@karazin.ua
-            </span>
-          </div>
-          <div className={styles.infoItem}>
-            <Phone size={16} />
-            <span>
-              <strong>Тел:</strong> +38 (057) 707-55-55
-            </span>
-          </div>
-          <div className={styles.infoItem}>
-            <Clock size={16} />
-            <span>
-              <strong>Графік:</strong> Пн–Пт, 09:00 – 17:00
-            </span>
-          </div>
-          <div className={styles.infoItem}>
-            <span>
-              ✈️ <strong>Telegram:</strong> @karazin_edean
-            </span>
-          </div>
-        </div>
+        <DeanContactInfo />
 
         <form onSubmit={handleSubmit} className={styles.modalContent}>
-          <div className={styles.templatesSection}>
-            <span className={styles.sectionLabel}>Типові запити (шаблони):</span>
-            <div className={styles.chipsList}>
-              {TEMPLATE_TOPICS.map((topic) => (
-                <button
-                  key={topic}
-                  type="button"
-                  className={`${styles.chipBtn} ${selectedTopic === topic ? styles.chipBtnActive : ''}`}
-                  onClick={() => {
-                    setSelectedTopic(topic);
-                    setCustomSubject(topic);
-                  }}
-                >
-                  {topic}
-                </button>
-              ))}
-            </div>
-          </div>
+          <DeanTopicChips selectedTopic={selectedTopic} onSelectTopic={handleTopicSelect} />
 
           <div className={styles.formGroup}>
-            <label htmlFor="dean-request-subject">Тема запиту</label>
+            <label htmlFor="dean-request-subject">{formatMessage('dean.subjectLabel')}</label>
             <input
               id="dean-request-subject"
               type="text"
               value={customSubject || selectedTopic}
               onChange={(e) => setCustomSubject(e.target.value)}
-              placeholder="Вкажіть тему запиту"
+              placeholder={formatMessage('dean.subjectPlaceholder')}
               required
             />
           </div>
 
           <div className={styles.formGroup}>
-            <label htmlFor="dean-request-message">Текст повідомлення або коментар</label>
+            <label htmlFor="dean-request-message">{formatMessage('dean.messageLabel')}</label>
             <textarea
               id="dean-request-message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Опишіть деталі вашого запиту чи довідки..."
+              placeholder={formatMessage('dean.messagePlaceholder')}
               rows={3}
               required
             />
           </div>
 
           <div className={styles.modalFooter}>
-            <SimpleButton
+            <Button
               type="button"
               variant="secondary"
               size="medium"
               onClick={onClose}
               disabled={isSubmitting}
             >
-              Скасувати
-            </SimpleButton>
-            <SimpleButton type="submit" variant="primary" size="medium" disabled={isSubmitting}>
+              {formatMessage('dean.cancel')}
+            </Button>
+            <Button type="submit" variant="primary" size="medium" disabled={isSubmitting}>
               {isSubmitting ? (
-                'Надсилання...'
+                formatMessage('dean.sending')
               ) : (
                 <span className={styles.submitContent}>
                   <Send size={16} />
-                  <span>Надіслати звернення</span>
+                  <span>{formatMessage('dean.submit')}</span>
                 </span>
               )}
-            </SimpleButton>
+            </Button>
           </div>
         </form>
       </div>

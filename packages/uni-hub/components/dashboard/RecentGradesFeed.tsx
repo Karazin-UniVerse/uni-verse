@@ -2,10 +2,14 @@
 
 import React, { useMemo } from 'react';
 import { Award, ChevronRight } from 'lucide-react';
-import { Empty, Button as SimpleButton } from '@una';
+import { Empty, Button } from '@una';
 import type { Assignment } from '@uni-hub/types';
 import type { NavKey } from '@uni-hub/views/dashboard/types';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { getScoreToneClass, formatRecentGradeDate } from './helpers';
 import styles from './RecentGradesFeed.module.scss';
+
+export { getScoreToneClass };
 
 export interface RecentGradesFeedProps {
   assignments: Assignment[];
@@ -13,37 +17,13 @@ export interface RecentGradesFeedProps {
   maxItems?: number;
 }
 
-export function getScoreToneClass(gradeStr: string | null | undefined): string {
-  if (!gradeStr) {
-    return styles.toneInfo;
-  }
-
-  const numeric = Number.parseFloat(gradeStr.replace(/[^\d.-]/g, ''));
-
-  if (Number.isNaN(numeric)) {
-    return styles.toneInfo;
-  }
-
-  if (numeric >= 90) {
-    return styles.toneSuccess;
-  }
-
-  if (numeric >= 75) {
-    return styles.toneInfo;
-  }
-
-  if (numeric >= 60) {
-    return styles.toneWarning;
-  }
-
-  return styles.toneDanger;
-}
-
 export const RecentGradesFeed: React.FC<RecentGradesFeedProps> = ({
   assignments,
   onNavigate,
   maxItems = 4,
 }) => {
+  const { formatMessage, localeTag } = useLanguage();
+
   const gradedAssignments = useMemo(() => {
     return assignments
       .filter((assignment) => {
@@ -62,41 +42,37 @@ export const RecentGradesFeed: React.FC<RecentGradesFeedProps> = ({
       .slice(0, maxItems);
   }, [assignments, maxItems]);
 
-  const formatDate = (timestamp?: number | null) => {
-    if (!timestamp || timestamp <= 0) {
-      return 'Нещодавно';
-    }
-
-    return new Date(timestamp * 1000).toLocaleDateString('uk-UA', {
-      day: 'numeric',
-      month: 'short',
-    });
-  };
-
   return (
-    <section className={styles.recentGradesPanel} aria-label="Останні оцінки">
+    <section
+      className={styles.recentGradesPanel}
+      aria-label={formatMessage('recentGrades.ariaLabel')}
+    >
       <div className={styles.panelHeader}>
         <h3>
           <Award size={18} className={styles.headerIcon} />
-          <span>Останні оцінки</span>
+          <span>{formatMessage('recentGrades.title')}</span>
         </h3>
-        <SimpleButton
+        <Button
           type="button"
           variant="secondary"
           size="small"
           isTransparent
           onClick={() => onNavigate('grades')}
-          title="Переглянути всі оцінки в заліковій книжці"
+          title={formatMessage('recentGrades.allGradesTitle')}
         >
-          Всі оцінки
-        </SimpleButton>
+          {formatMessage('recentGrades.allGrades')}
+        </Button>
       </div>
 
       {gradedAssignments.length > 0 ? (
         <div className={styles.feedList}>
           {gradedAssignments.map((assignment, index) => {
             const toneClass = getScoreToneClass(assignment.grade);
-            const dateStr = formatDate(assignment.submittedAt || assignment.duedate);
+            const dateStr = formatRecentGradeDate(
+              assignment.submittedAt || assignment.duedate,
+              localeTag,
+              formatMessage('recentGrades.recently'),
+            );
 
             return (
               <button
@@ -118,7 +94,7 @@ export const RecentGradesFeed: React.FC<RecentGradesFeedProps> = ({
 
                 <div className={styles.feedItemScore}>
                   <span className={`${styles.scoreBadge} ${toneClass}`}>
-                    {assignment.grade || 'Зараховано'}
+                    {assignment.grade || formatMessage('recentGrades.passed')}
                   </span>
                   <ChevronRight
                     size={16}
@@ -130,7 +106,7 @@ export const RecentGradesFeed: React.FC<RecentGradesFeedProps> = ({
           })}
         </div>
       ) : (
-        <Empty description="Ще немає перевірених робіт" />
+        <Empty description={formatMessage('recentGrades.empty')} />
       )}
     </section>
   );

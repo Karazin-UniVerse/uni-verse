@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { Globe, FileText, Calendar, Building2, ExternalLink } from 'lucide-react';
 import type { Assignment } from '@uni-hub/types';
 import type { NavKey } from '@uni-hub/views/dashboard/types';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { DeanContactModal } from './DeanContactModal';
 import styles from './QuickActions.module.scss';
 
@@ -24,14 +25,18 @@ export function calculatePendingAssignmentsCount(assignments: Assignment[]): num
 }
 
 export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavigate }) => {
+  const { formatMessage } = useLanguage();
   const [isDeanModalOpen, setIsDeanModalOpen] = useState(false);
   const pendingCount = useMemo(() => calculatePendingAssignmentsCount(assignments), [assignments]);
 
   return (
     <>
-      <section className={styles.quickActionsContainer} aria-label="Швидкі дії">
+      <section
+        className={styles.quickActionsContainer}
+        aria-label={formatMessage('quickActions.ariaLabel')}
+      >
         <div className={styles.quickActionsHeader}>
-          <h3>Швидкі дії</h3>
+          <h3>{formatMessage('quickActions.title')}</h3>
         </div>
 
         <div className={styles.actionsGrid}>
@@ -40,7 +45,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
             target="_blank"
             rel="noopener noreferrer"
             className={styles.actionCard}
-            title="Відкрити платформу Moodle LMS у новій вкладці"
+            title={formatMessage('quickActions.moodleTitle')}
           >
             <div className={`${styles.iconWrapper} ${styles.iconMoodle}`}>
               <Globe size={22} />
@@ -48,9 +53,13 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
             <div className={styles.actionBody}>
               <div className={styles.actionTitleRow}>
                 <span className={styles.actionTitle}>Moodle LMS</span>
-                <span className={`${styles.badge} ${styles.badgeInfo}`}>Каразінський</span>
+                <span className={`${styles.badge} ${styles.badgeInfo}`}>
+                  {formatMessage('quickActions.moodleBadge')}
+                </span>
               </div>
-              <span className={styles.actionDescription}>Платформа курсів</span>
+              <span className={styles.actionDescription}>
+                {formatMessage('quickActions.moodleDescription')}
+              </span>
             </div>
             <ExternalLink size={16} className={styles.externalIcon} />
           </a>
@@ -59,20 +68,27 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
             type="button"
             className={styles.actionCard}
             onClick={() => onNavigate('assignments')}
-            title="Перейти до списку завдань та дедлайнів"
+            title={formatMessage('quickActions.assignmentsTitle')}
           >
             <div className={`${styles.iconWrapper} ${styles.iconAssignments}`}>
               <FileText size={22} />
             </div>
             <div className={styles.actionBody}>
               <div className={styles.actionTitleRow}>
-                <span className={styles.actionTitle}>Мої завдання</span>
+                <span className={styles.actionTitle}>
+                  {formatMessage('quickActions.myAssignments')}
+                </span>
                 {pendingCount > 0 && (
                   <span className={`${styles.badge} ${styles.badgeAlert}`}>{pendingCount}</span>
                 )}
               </div>
               <span className={styles.actionDescription}>
-                {pendingCount > 0 ? `${pendingCount} до виконання` : 'Всі завдання здано'}
+                {pendingCount > 0
+                  ? formatMessage('quickActions.pendingCount').replace(
+                      '{count}',
+                      String(pendingCount),
+                    )
+                  : formatMessage('quickActions.allDone')}
               </span>
             </div>
           </button>
@@ -81,16 +97,18 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
             type="button"
             className={styles.actionCard}
             onClick={() => onNavigate('schedule')}
-            title="Перейти до розкладу занять"
+            title={formatMessage('quickActions.scheduleTitle')}
           >
             <div className={`${styles.iconWrapper} ${styles.iconSchedule}`}>
               <Calendar size={22} />
             </div>
             <div className={styles.actionBody}>
               <div className={styles.actionTitleRow}>
-                <span className={styles.actionTitle}>Розклад занять</span>
+                <span className={styles.actionTitle}>{formatMessage('quickActions.schedule')}</span>
               </div>
-              <span className={styles.actionDescription}>Пари та консультації</span>
+              <span className={styles.actionDescription}>
+                {formatMessage('quickActions.scheduleDescription')}
+              </span>
             </div>
           </button>
 
@@ -98,16 +116,18 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
             type="button"
             className={styles.actionCard}
             onClick={() => setIsDeanModalOpen(true)}
-            title="Зв'язатися з деканатом, замовити довідку або консультацію"
+            title={formatMessage('quickActions.deanTitle')}
           >
             <div className={`${styles.iconWrapper} ${styles.iconDean}`}>
               <Building2 size={22} />
             </div>
             <div className={styles.actionBody}>
               <div className={styles.actionTitleRow}>
-                <span className={styles.actionTitle}>Зв'язок з деканатом</span>
+                <span className={styles.actionTitle}>{formatMessage('quickActions.dean')}</span>
               </div>
-              <span className={styles.actionDescription}>Запити, довідки, контакти</span>
+              <span className={styles.actionDescription}>
+                {formatMessage('quickActions.deanDescription')}
+              </span>
             </div>
           </button>
         </div>

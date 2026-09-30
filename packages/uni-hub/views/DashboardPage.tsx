@@ -1,15 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
 import { RotateCw, AlertCircle } from 'lucide-react';
-import { Button as UnaButton, Spinner, useToast } from '@una';
-import { moodleApi } from '@uni-hub/services/api';
+import { Button as UnaButton, Spinner } from '@una';
 import { isLoggedIn } from '@core/auth';
-import type { StudentProfile } from '@core/types';
-import type { Grade, CourseModule, Assignment } from '@uni-hub/types';
+import type { CourseModule } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
 import { DashboardSkeleton, MobileBottomNav } from '@uni-hub/components/dashboard';
 import { BadgeSystem, GradeSimulator } from '@uni-hub/components/gamification';
@@ -17,7 +15,6 @@ import { ScheduleView } from '@uni-hub/components/schedule';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import {
   type NavKey,
-  type DashboardData,
   isNavKey,
   fallbackStudentProfile,
   DashboardSidebar,
@@ -27,6 +24,8 @@ import {
   GradesTab,
   AssignmentsTab,
 } from './dashboard';
+import { formatLastSync } from './dashboard/tabs/helpers';
+import { useDashboardData, clearUserSessionStorage } from './dashboard/hooks/useDashboardData';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './DashboardPage.module.scss';
@@ -39,206 +38,9 @@ const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
   assignments: 'nav.assignments.full',
 };
 
-type GradesApiResponse = Awaited<ReturnType<typeof moodleApi.getGrades>>;
-
-function parseDateFilterSeconds(dateString?: string): number | null {
-  if (!dateString) {
-    return null;
-  }
-
-  const dateParts = dateString.split('-');
-
-  if (dateParts.length !== 3) {
-    return null;
-  }
-
-  const [yearStr, monthStr, dayStr] = dateParts;
-  const expectedYear = Number.parseInt(yearStr, 10);
-  const expectedMonth = Number.parseInt(monthStr, 10);
-  const expectedDay = Number.parseInt(dayStr, 10);
-
-  const parsedDate = new Date(dateString);
-
-  if (
-    Number.isNaN(parsedDate.getTime()) ||
-    parsedDate.getFullYear() > 2099 ||
-    parsedDate.getUTCFullYear() > 2099
-  ) {
-    return null;
-  }
-
-  const matchesUtc =
-    parsedDate.getUTCFullYear() === expectedYear &&
-    parsedDate.getUTCMonth() + 1 === expectedMonth &&
-    parsedDate.getUTCDate() === expectedDay;
-  const matchesLocal =
-    parsedDate.getFullYear() === expectedYear &&
-    parsedDate.getMonth() + 1 === expectedMonth &&
-    parsedDate.getDate() === expectedDay;
-
-  if (!matchesUtc && !matchesLocal) {
-    return null;
-  }
-
-  return Math.floor(parsedDate.getTime() / 1000);
-}
-
-function resolveGradesResponse(gradesResponse?: GradesApiResponse | null): Grade[] {
-  if (Array.isArray(gradesResponse?.data?.grades)) {
-    return gradesResponse.data.grades;
-  }
-
-  return [];
-}
-
-function formatLastSync(timestamp: number): string {
-  const d = new Date(timestamp);
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  const day = pad(d.getDate());
-  const month = pad(d.getMonth() + 1);
-  const year = d.getFullYear();
-  const hours = pad(d.getHours());
-  const minutes = pad(d.getMinutes());
-
-  return `${day}.${month}.${year} ${hours}:${minutes}`;
-}
-
-type MoodleApiResponseTuple = [
-  Awaited<ReturnType<typeof moodleApi.getCourses>>,
-  Awaited<ReturnType<typeof moodleApi.getGrades>>,
-  Awaited<ReturnType<typeof moodleApi.getAssignments>>,
-  Awaited<ReturnType<typeof moodleApi.getEvents>>,
-  Awaited<ReturnType<typeof moodleApi.getNotifications>>,
-  Awaited<ReturnType<typeof moodleApi.getStatistics>>,
-];
-
-function assembleDashboardData([
-  coursesRes,
-  gradesRes,
-  assignmentsRes,
-  eventsRes,
-  notificationsRes,
-  statsRes,
-]: MoodleApiResponseTuple): DashboardData {
-  return {
-    courses: Array.isArray(coursesRes?.data) ? coursesRes.data : [],
-    grades: resolveGradesResponse(gradesRes),
-    assignments: Array.isArray(assignmentsRes?.data) ? assignmentsRes.data : [],
-    events: Array.isArray(eventsRes?.data) ? eventsRes.data : [],
-    notifications: Array.isArray(notificationsRes?.data?.notifications)
-      ? notificationsRes.data.notifications
-      : [],
-    unreadCount: notificationsRes?.data?.unreadCount || 0,
-    statistics: statsRes?.data || null,
-  };
-}
-
-function buildAssignmentParams(
-  sortOrder: 'asc' | 'desc',
-  dateFrom: string,
-  dateTo: string,
-  hideCompleted: boolean,
-): Record<string, string | number | boolean> {
-  const params: Record<string, string | number | boolean> = {
-    sortByDate: sortOrder,
-    includeStatus: true,
-  };
-  const fromTimestamp = parseDateFilterSeconds(dateFrom);
-  const toTimestamp = parseDateFilterSeconds(dateTo);
-
-  if (fromTimestamp !== null) {
-    params.dateFrom = fromTimestamp;
-  }
-
-  if (toTimestamp !== null) {
-    params.dateTo = toTimestamp;
-  }
-
-  if (hideCompleted) {
-    params.status = 'not_completed';
-  }
-
-  return params;
-}
-
-function loadCachedDashboardData(): Partial<DashboardData> | null {
-  try {
-    const raw = localStorage.getItem('universe_dashboard_data');
-
-    if (!raw) {
-      return null;
-    }
-
-    const parsed = JSON.parse(raw) as Partial<DashboardData>;
-
-    return parsed && typeof parsed === 'object' ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-function persistDashboardSnapshot(timestamp: number, freshData: DashboardData): void {
-  try {
-    localStorage.setItem('universe_last_sync_time', String(timestamp));
-    localStorage.setItem('universe_dashboard_data', JSON.stringify(freshData));
-  } catch {
-    // Ignore localStorage quota error
-  }
-}
-
-function isUnauthorizedError(error: unknown): boolean {
-  return error instanceof Error && error.message.includes('401');
-}
-
-function clearUserSessionStorage(): void {
-  try {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('moodleToken');
-    localStorage.removeItem('isDemo');
-    localStorage.removeItem('username');
-    localStorage.removeItem('universe_student_profile');
-    localStorage.removeItem('universe_dashboard_data');
-    localStorage.removeItem('universe_last_sync_time');
-  } catch {
-    // Ignore storage errors
-  }
-}
-
-function filterFallbackAssignments(
-  assignments: Assignment[] | undefined,
-  hideCompleted: boolean,
-  dateFrom?: string,
-  dateTo?: string,
-): Assignment[] {
-  let list = assignments ?? [];
-
-  if (hideCompleted) {
-    list = list.filter(
-      (assignment) =>
-        assignment.submissionStatus !== 'graded' && assignment.submissionStatus !== 'submitted',
-    );
-  }
-
-  const fromSec = parseDateFilterSeconds(dateFrom);
-
-  if (fromSec !== null) {
-    list = list.filter((assignment) => assignment.duedate > 0 && assignment.duedate >= fromSec);
-  }
-
-  const toSec = parseDateFilterSeconds(dateTo);
-
-  if (toSec !== null) {
-    list = list.filter((assignment) => assignment.duedate > 0 && assignment.duedate <= toSec);
-  }
-
-  return list;
-}
-
 const DashboardPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const toast = useToast();
   const checkIn = useGamificationStore((s) => s.checkIn);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const setSoundEnabled = useGamificationStore((s) => s.setSoundEnabled);
@@ -247,25 +49,8 @@ const DashboardPage: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeKey, setActiveKey] = useState<NavKey>('overview');
-  const [loading, setLoading] = useState(true);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();
-  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
-  const activeStudentProfile = studentProfile ?? fallbackStudentProfile;
-
-  const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
-  const [isOfflineData, setIsOfflineData] = useState(false);
-
-  const [data, setData] = useState<DashboardData>({
-    courses: [],
-    grades: [],
-    assignments: [],
-    events: [],
-    notifications: [],
-    unreadCount: 0,
-    statistics: null,
-  });
 
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -276,7 +61,26 @@ const DashboardPage: React.FC = () => {
   const [selectedAssignmentModule, setSelectedAssignmentModule] = useState<CourseModule | null>(
     null,
   );
-  const fetchRequestIdRef = useRef(0);
+
+  const {
+    data,
+    loading,
+    hasLoadedOnce,
+    lastSyncTime,
+    isOfflineData,
+    studentProfile,
+    setStudentProfile,
+    fetchData,
+    cancelPendingFetch,
+  } = useDashboardData({
+    sortOrder,
+    dateFrom,
+    dateTo,
+    hideCompleted,
+    onUnauthorized: () => router.push('/login'),
+  });
+
+  const activeStudentProfile = studentProfile ?? fallbackStudentProfile;
 
   const hasCachedData =
     data.courses.length > 0 ||
@@ -284,143 +88,6 @@ const DashboardPage: React.FC = () => {
     data.assignments.length > 0 ||
     data.events.length > 0 ||
     hasLoadedOnce;
-
-  useEffect(() => {
-    try {
-      const cachedTime = localStorage.getItem('universe_last_sync_time');
-
-      if (cachedTime) {
-        setLastSyncTime(Number(cachedTime));
-      }
-
-      const cachedProfile = localStorage.getItem('universe_student_profile');
-
-      if (cachedProfile) {
-        const parsedProfile = JSON.parse(cachedProfile) as StudentProfile;
-
-        if (parsedProfile && typeof parsedProfile === 'object') {
-          setStudentProfile(parsedProfile);
-        }
-      }
-
-      const cachedData = loadCachedDashboardData();
-
-      if (cachedData) {
-        setData((previous) => ({
-          ...previous,
-          ...cachedData,
-        }));
-        setHasLoadedOnce(true);
-      }
-    } catch {
-      // Ignore cache read errors
-    }
-  }, []);
-
-  const fetchData = async (isManual = false) => {
-    const requestId = ++fetchRequestIdRef.current;
-
-    setLoading(true);
-
-    try {
-      const params = buildAssignmentParams(sortOrder, dateFrom, dateTo, hideCompleted);
-      const [
-        coursesRes,
-        gradesRes,
-        assignmentsRes,
-        eventsRes,
-        notificationsRes,
-        statsRes,
-        profileRes,
-      ] = await Promise.all([
-        moodleApi.getCourses(),
-        moodleApi.getGrades(),
-        moodleApi.getAssignments(params),
-        moodleApi.getEvents(),
-        moodleApi.getNotifications(),
-        moodleApi.getStatistics(),
-        moodleApi.getProfile().catch(() => null),
-      ]);
-
-      if (requestId !== fetchRequestIdRef.current) {
-        return;
-      }
-
-      const freshData = assembleDashboardData([
-        coursesRes,
-        gradesRes,
-        assignmentsRes,
-        eventsRes,
-        notificationsRes,
-        statsRes,
-      ]);
-
-      setData(freshData);
-      setHasLoadedOnce(true);
-      setIsOfflineData(false);
-
-      if (profileRes?.data) {
-        setStudentProfile(profileRes.data);
-
-        try {
-          localStorage.setItem('universe_student_profile', JSON.stringify(profileRes.data));
-        } catch {
-          // Ignore storage quota errors
-        }
-      }
-
-      const nowTimestamp = Date.now();
-
-      setLastSyncTime(nowTimestamp);
-      persistDashboardSnapshot(nowTimestamp, freshData);
-
-      if (isManual) {
-        toast.success(formatMessage('dashboard.syncSuccess'));
-      }
-    } catch (error) {
-      if (requestId !== fetchRequestIdRef.current) {
-        return;
-      }
-
-      if (isUnauthorizedError(error)) {
-        clearUserSessionStorage();
-        toast.error(formatMessage('dashboard.sessionExpired'));
-        router.push('/login');
-
-        return;
-      }
-
-      console.error(error);
-
-      const cachedData = loadCachedDashboardData();
-
-      if (cachedData) {
-        const fallbackAssignments = filterFallbackAssignments(
-          cachedData.assignments,
-          hideCompleted,
-          dateFrom,
-          dateTo,
-        );
-
-        setData((previous) => ({
-          ...previous,
-          ...cachedData,
-          assignments: fallbackAssignments,
-        }));
-        setIsOfflineData(true);
-        setHasLoadedOnce(true);
-        toast.info(formatMessage('dashboard.offlineNotice'));
-
-        return;
-      }
-
-      toast.error(formatMessage('dashboard.loadError'));
-    } finally {
-      if (requestId === fetchRequestIdRef.current) {
-        setLoading(false);
-      }
-    }
-  };
 
   useEffect(() => {
     try {
@@ -454,7 +121,7 @@ const DashboardPage: React.FC = () => {
     }
 
     checkIn();
-  }, [checkIn, router, searchParams]);
+  }, [checkIn, router, searchParams, setStudentProfile]);
 
   useEffect(() => {
     const requestedTab = searchParams.get('tab');
@@ -472,7 +139,7 @@ const DashboardPage: React.FC = () => {
     void fetchData();
 
     return () => {
-      fetchRequestIdRef.current += 1;
+      cancelPendingFetch();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router, sortOrder, dateFrom, dateTo, hideCompleted]);

@@ -248,4 +248,66 @@ export const en = {
 
   // Gamification
   'badge.unlocked': 'Achievement',
+
+  // Modal
+  'modal.close': 'Close',
+
+  // Dean's Office Modal
+  'dean.modalTitle': "Contact Dean's Office",
+  'dean.supportSubtitle': "Dean's Office and Academic Support Service",
+  'dean.email': 'Email:',
+  'dean.phone': 'Phone:',
+  'dean.schedule': 'Hours:',
+  'dean.scheduleValue': 'Mon–Fri, 09:00 – 17:00',
+  'dean.telegram': 'Telegram:',
+  'dean.sectionLabel': 'Common request templates:',
+  'dean.subjectLabel': 'Request subject',
+  'dean.subjectPlaceholder': 'Enter request subject',
+  'dean.messageLabel': 'Message text or comment',
+  'dean.messagePlaceholder': 'Describe the details of your request...',
+  'dean.cancel': 'Cancel',
+  'dean.sending': 'Sending...',
+  'dean.submit': 'Send request',
+  'dean.successMessage':
+    "Request #DC-{ticket} successfully sent to the Dean's Office! A response will be sent to your corporate email.",
+  'dean.topic.certificate': 'Certificate of Study',
+  'dean.topic.transcript': 'Academic transcript / grade report',
+  'dean.topic.session': 'Session and schedule questions',
+  'dean.topic.individual': 'Individual study schedule',
+  'dean.topic.other': "Other request to Dean's Office",
+
+  // Quick Actions
+  'quickActions.title': 'Quick Actions',
+  'quickActions.moodleBadge': 'Karazin',
+  'quickActions.moodleTitle': 'Open Moodle LMS platform in a new tab',
+  'quickActions.moodleDescription': 'Course platform',
+  'quickActions.assignmentsTitle': 'Go to assignments and deadlines',
+  'quickActions.myAssignments': 'My Assignments',
+  'quickActions.pendingCount': '{count} to complete',
+  'quickActions.allDone': 'All assignments submitted',
+  'quickActions.scheduleTitle': 'Go to class schedule',
+  'quickActions.schedule': 'Class Schedule',
+  'quickActions.scheduleDescription': 'Classes and consultations',
+  'quickActions.deanTitle': "Contact Dean's Office for a certificate or consultation",
+  'quickActions.dean': "Contact Dean's Office",
+  'quickActions.deanDescription': 'Requests, certificates, contacts',
+  'quickActions.ariaLabel': 'Quick Actions',
+
+  // Recent Grades Feed
+  'recentGrades.title': 'Recent Grades',
+  'recentGrades.allGrades': 'All grades',
+  'recentGrades.recently': 'Recently',
+  'recentGrades.passed': 'Passed',
+  'recentGrades.empty': 'No graded assignments yet',
+  'recentGrades.allGradesTitle': 'View all grades in the gradebook',
+  'recentGrades.ariaLabel': 'Recent Grades',
+
+  // Overview Tab Extras
+  'overview.joinMeeting': 'Join meeting',
+  'overview.coursesHint': 'View courses →',
+  'overview.assignmentsHint': 'View assignments →',
+  'overview.gradesHint': 'Gradebook →',
+  'overview.nearestDeadline': 'Nearest deadline:',
+  'overview.specialty': 'Specialty',
+  'overview.noDeadline': 'No deadline',
 } as const satisfies Record<TranslationKey, string>;
