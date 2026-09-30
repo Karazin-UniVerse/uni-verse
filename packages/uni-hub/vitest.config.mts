@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   resolve: {
     alias: {
-      '@uni-hub': path.resolve(__dirname, './src'),
+      '@uni-hub': path.resolve(__dirname, '.'),
       '@core': path.resolve(__dirname, '../core'),
       '@una': path.resolve(__dirname, '../ui/components/una'),
     },

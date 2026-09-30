@@ -322,98 +322,6 @@ export default {
       },
     },
 
-    'eol-last': {
-      meta: {
-        type: 'layout',
-        fixable: 'whitespace',
-        docs: {
-          description: 'Require newline at the end of files (EOF/EOL).',
-        },
-        messages: {},
-      },
-      create(context) {
-        return {
-          Program(node) {
-            const sourceCode = context.sourceCode || context.getSourceCode();
-            const text = sourceCode.text || (sourceCode.getText ? sourceCode.getText() : '');
-
-            if (text.length > 0 && !text.endsWith('\n')) {
-              context.report({
-                node,
-                message: 'Newline required at end of file (eol-last).',
-                fix(fixer) {
-                  return fixer.insertTextAfter(node, '\n');
-                },
-              });
-            }
-          },
-        };
-      },
-    },
-
-    'max-len': {
-      meta: {
-        type: 'layout',
-        schema: [
-          {
-            type: 'object',
-            properties: {
-              code: { type: 'integer' },
-            },
-            additionalProperties: false,
-          },
-        ],
-        docs: {
-          description: 'Enforce a maximum line length.',
-        },
-        messages: {},
-      },
-      create(context) {
-        const config = (context.options && context.options[0]) || {};
-        const maxLen = config.code || 120;
-
-        return {
-          Program(node) {
-            const sourceCode = context.sourceCode || context.getSourceCode();
-            const lines =
-              sourceCode.lines ||
-              (sourceCode.text
-                ? sourceCode.text.split(/\r?\n/)
-                : sourceCode.getText().split(/\r?\n/));
-
-            for (let i = 0; i < lines.length; i++) {
-              const line = lines[i];
-
-              if (line.length > maxLen) {
-                // Ignore lines containing URLs
-                if (/https?:\/\//.test(line)) continue;
-
-                // Ignore pure import statements
-                if (/^\s*import\s+.+from\s+['"].+['"];?$/.test(line)) continue;
-
-                // Ignore comment lines
-                if (/^\s*(\/\/|\/\*|\*)/.test(line)) continue;
-
-                // Ignore lines where the excess is inside a string/template literal
-                if (/['"`]/.test(line) && line.replace(/['"`].*?['"`]/g, '').length <= maxLen) {
-                  continue;
-                }
-
-                context.report({
-                  node,
-                  loc: {
-                    start: { line: i + 1, column: maxLen },
-                    end: { line: i + 1, column: line.length },
-                  },
-                  message: `Line ${i + 1} exceeds the maximum line length of ${maxLen} (current: ${line.length}).`,
-                });
-              }
-            }
-          },
-        };
-      },
-    },
-
     // ─── HYDRATION / RENDERING ────────────────────────────────────────
 
     'no-suppress-hydration-without-comment': {
@@ -518,8 +426,7 @@ export default {
       meta: {
         type: 'problem',
         docs: {
-          description:
-            'Endpoints using @GetUser() must have @ApiBearerAuth() or @ApiCookieAuth().',
+          description: 'Endpoints using @GetUser() must have @ApiBearerAuth() or @ApiCookieAuth().',
         },
       },
       create(context) {
@@ -561,8 +468,7 @@ export default {
             if (!classHasAuth) {
               context.report({
                 node,
-                message:
-                  'Endpoint uses @GetUser() but missing @ApiBearerAuth()/@ApiCookieAuth().',
+                message: 'Endpoint uses @GetUser() but missing @ApiBearerAuth()/@ApiCookieAuth().',
               });
             }
           },
@@ -721,8 +627,7 @@ export default {
 
             if (
               !handler ||
-              (handler.type !== 'ArrowFunctionExpression' &&
-                handler.type !== 'FunctionExpression')
+              (handler.type !== 'ArrowFunctionExpression' && handler.type !== 'FunctionExpression')
             ) {
               return;
             }

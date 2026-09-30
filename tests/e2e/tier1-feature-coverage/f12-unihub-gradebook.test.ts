@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { fileExists, readWorkspaceFile } from '../test-helpers';
 
 describe('Tier 1 - Feature 12: Digital Gradebook 3-Tier Grade Display (@universe/uni-hub)', () => {
-  const dashboardPath = 'packages/uni-hub/src/views/DashboardPage.tsx';
+  const dashboardPath = 'packages/uni-hub/views/DashboardPage.tsx';
 
   it('F12-1: DashboardPage.tsx should define a table for grades visualization', () => {
     expect(fileExists(dashboardPath)).toBe(true);

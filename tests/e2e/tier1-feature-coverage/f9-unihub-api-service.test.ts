@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { fileExists, readWorkspaceFile } from '../test-helpers';
 
 describe('Tier 1 - Feature 9: UniHub API Service Alignment (@universe/uni-hub)', () => {
-  const apiPath = 'packages/uni-hub/src/services/api.ts';
+  const apiPath = 'packages/uni-hub/services/api.ts';
 
-  it('F9-1: packages/uni-hub/src/services/api.ts must exist', () => {
+  it('F9-1: packages/uni-hub/services/api.ts must exist', () => {
     expect(fileExists(apiPath)).toBe(true);
   });
 

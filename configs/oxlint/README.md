@@ -2,7 +2,7 @@
 
 This directory contains configuration and plugins for **Oxlint** — the sole linter for the UniVerse monorepo.
 
-> **Note**: ESLint is not used. The previously present `.eslintrc.cjs` has been removed (Phase 2 cleanup). All linting goes through Oxlint with the custom `universe-rules.mjs` plugin.
+> **Note**: ESLint is not used. The previously present `.eslintrc.cjs` has been removed (Phase 2 cleanup). All linting goes through Oxlint with the custom `universe-rules.mjs` plugin, while code formatting (line wrapping, EOF newline, quotes) is delegated to Prettier.
 
 ## 1. Overview
 
@@ -11,6 +11,7 @@ Oxlint runs in CLI and Git pre-commit hooks via **Husky** and **lint-staged**.
 - **Root Config**: [`.oxlintrc.json`](../../.oxlintrc.json)
 - **Plugin Implementation**: [`configs/oxlint/plugins/universe-rules.mjs`](./plugins/universe-rules.mjs)
 - **Pre-commit Hook**: [`lint-staged.config.cjs`](../../lint-staged.config.cjs)
+- **Prettier Config**: [`prettier.config.js`](../../prettier.config.js)
 
 ---
 
@@ -32,38 +33,35 @@ Enforces the convention that required properties must appear before optional pro
 - In function and React component parameter destructuring (`ObjectPattern`), properties without default values (`data`, `height`, `className`) must appear before properties with default values (`type = 'bar'`, `layout = 'horizontal'`).
 - **Autofix (`--fix`)**: Safely reorders properties with pure literal defaults. Automatically falls back to report-only whenever function calls, variable references, rest elements, or comments are present to guarantee semantic safety.
 
-### Situation 4: Intra-Package Import Aliasing (`no-restricted-imports`)
+### Situation 4: Intra-Package & Monorepo Import Boundaries (`no-restricted-imports`)
 
-Prevents deep or ambiguous relative parent imports within packages:
+Enforces strict architectural separation across the monorepo via `no-restricted-imports` in `.oxlintrc.json`:
 
-- In `packages/uni-hub`, relative parent imports to `utils` (up to three levels: `../`, `../../`, `../../../`) are banned in favor of package aliases (e.g. `@uni-hub/utils/...`).
-- Configured via the `no-restricted-imports` override in `.oxlintrc.json`.
+- **`packages/uni-hub`**: Banned relative parent imports to `utils` (`../utils/**`, `../../utils/**`, `../../../utils/**`) in favor of `@uni-hub/utils/...`. Direct imports of backend code (`@universe/backend/**`, `@universe/database/**`, `prisma`) are prohibited; data must be accessed via API clients.
+- **`packages/ui`**: Cannot import application packages (`@uni-hub/**`, `@universe/backend/**`, `@universe/database/**`). The design system remains 100% presentational.
+- **`packages/backend`**: Cannot import frontend packages or React libraries (`react`, `react-dom`, `next`, `@uni-hub/**`, `@universe/ui/**`).
+- **`packages/core`**: Pure domain package. Framework-specific dependencies (`@nestjs/**`, `react`, `next`, `express`, `zustand`, database packages) are prohibited.
 
-### Situation 5: Duplicate Imports & Re-exports (`import/no-duplicates`)
+### Situation 5: Duplicate Imports & Re-exports (`no-duplicate-imports` + `import/no-duplicates`)
 
-Detects redundant duplicate module imports and re-exports using the `import` plugin rule with `{ "includeExports": true }`. This supersedes the removed ESLint built-in `no-duplicate-imports`.
+Detects redundant duplicate module imports and re-exports using native `no-duplicate-imports` with `{ "includeExports": true }` alongside `import/no-duplicates`.
 
-### Situation 6: Unused Imports (`no-unused-vars` + `import/no-unused-modules`)
+### Situation 6: Unused Variables & Imports (`no-unused-vars`)
 
-Two complementary rules cover unused imports and exports:
+- `no-unused-vars` (`"warn"`) — flags imported identifiers and variables never referenced in the module.
 
-- `no-unused-vars` (`"warn"`) — flags imported identifiers never referenced in the module.
-- `import/no-unused-modules` (`"error"`, `unusedExports: true`) — flags exported symbols never consumed outside the module.
+### Situation 7: End of File Newline (Prettier)
 
-### Situation 7: End of File Newline (`eol-last`)
+Enforced via **Prettier** across all supported files to ensure every file ends with a trailing newline character.
 
-Native Oxlint rule. Enforces that every file ends with a trailing newline character.
+- **Autoformat**: Automatically formatted during commit via `lint-staged` (`prettier --write`) and verifiable across the repository via `pnpm run format:check`.
 
-- **Autofix (`--fix`)**: Automatically appends the newline if missing.
-- Level: `error`.
+### Situation 8: Line Length & Code Wrapping (Prettier `printWidth: 100`)
 
-### Situation 8: Maximum Line Length (`max-len`)
+Formatting and line wrapping conventions are delegated to **Prettier** rather than hard linter failures, configured with `printWidth: 100` in [`prettier.config.js`](../../prettier.config.js).
 
-Native Oxlint rule. Enforces that source lines do not exceed 120 characters.
-
-Ignored automatically for: URLs, string literals, comments, template literals, and RegExp literals.
-
-- Level: `error`.
+- Prettier intelligently wraps long expressions, multi-line arguments, JSX attributes, and object literals while naturally accommodating unbroken URLs, long string literals, and RegExp patterns.
+- **Autoformat**: Enforced automatically during commit via `lint-staged` (`prettier --write`) and verifiable via `pnpm run format:check`.
 
 ### Situation 9: Hydration Warning Suppression (`universe/no-suppress-hydration-without-comment`)
 

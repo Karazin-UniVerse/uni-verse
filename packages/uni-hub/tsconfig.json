@@ -20,10 +20,10 @@
       }
     ],
     "paths": {
-      "@uni-hub/*": ["./src/*"],
+      "@uni-hub/*": ["./*"],
       "@core": ["../core/index.ts"],
       "@core/*": ["../core/*"],
-      "@ui/*": ["./src/components/ui/*", "../ui/components/una/*", "../ui/*"],
+      "@ui/*": ["./components/ui/*", "../ui/components/una/*", "../ui/*"],
       "@una": ["../ui/components/una/index.ts"],
       "@una/*": ["../ui/components/una/*"]
     }

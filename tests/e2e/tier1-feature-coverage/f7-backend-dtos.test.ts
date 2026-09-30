@@ -3,7 +3,7 @@ import { fileExists, readWorkspaceFile } from '../test-helpers';
 
 describe('Tier 1 - Feature 7: Backend DTOs Alignment with @universe/types (@universe/backend)', () => {
   it('F7-1: Backend moodle controller should expose /moodle/courses with standard DTO fields', () => {
-    const controllerPath = 'packages/backend/src/moodle/moodle.controller.ts';
+    const controllerPath = 'packages/backend/moodle/moodle.controller.ts';
 
     expect(fileExists(controllerPath)).toBe(true);
     const content = readWorkspaceFile(controllerPath);
@@ -13,8 +13,8 @@ describe('Tier 1 - Feature 7: Backend DTOs Alignment with @universe/types (@univ
 
   it('F7-2: Backend moodle controller should expose /moodle/assignments endpoint', () => {
     const assignmentsControllerPath =
-      'packages/backend/src/moodle/moodle-assignments/moodle-assignments.controller.ts';
-    const fallbackPath = 'packages/backend/src/moodle/moodle.controller.ts';
+      'packages/backend/moodle/moodle-assignments/moodle-assignments.controller.ts';
+    const fallbackPath = 'packages/backend/moodle/moodle.controller.ts';
     const controllerPath = fileExists(assignmentsControllerPath)
       ? assignmentsControllerPath
       : fallbackPath;
@@ -26,7 +26,7 @@ describe('Tier 1 - Feature 7: Backend DTOs Alignment with @universe/types (@univ
   });
 
   it('F7-3: Backend moodle controller should expose /moodle/grades endpoint', () => {
-    const controllerPath = 'packages/backend/src/moodle/moodle.controller.ts';
+    const controllerPath = 'packages/backend/moodle/moodle.controller.ts';
     const content = readWorkspaceFile(controllerPath);
 
     expect(content).toMatch(/grades/i);
@@ -34,8 +34,8 @@ describe('Tier 1 - Feature 7: Backend DTOs Alignment with @universe/types (@univ
 
   it('F7-4: Backend moodle controller should expose /moodle/events endpoint', () => {
     const eventsControllerPath =
-      'packages/backend/src/moodle/moodle-events/moodle-events.controller.ts';
-    const fallbackPath = 'packages/backend/src/moodle/moodle.controller.ts';
+      'packages/backend/moodle/moodle-events/moodle-events.controller.ts';
+    const fallbackPath = 'packages/backend/moodle/moodle.controller.ts';
     const controllerPath = fileExists(eventsControllerPath) ? eventsControllerPath : fallbackPath;
 
     expect(fileExists(controllerPath)).toBe(true);
@@ -46,10 +46,10 @@ describe('Tier 1 - Feature 7: Backend DTOs Alignment with @universe/types (@univ
 
   it('F7-5: Backend DTO structure should align with shared domain contracts', () => {
     // Check moodle service/module integrates types or implements contract fields
-    const gradesServicePath = 'packages/backend/src/moodle/moodle-grades/moodle-grades.service.ts';
+    const gradesServicePath = 'packages/backend/moodle/moodle-grades/moodle-grades.service.ts';
     const coursesServicePath =
-      'packages/backend/src/moodle/moodle-courses/moodle-courses.service.ts';
-    const fallbackPath = 'packages/backend/src/moodle/moodle.service.ts';
+      'packages/backend/moodle/moodle-courses/moodle-courses.service.ts';
+    const fallbackPath = 'packages/backend/moodle/moodle.service.ts';
     const servicePath = fileExists(gradesServicePath)
       ? gradesServicePath
       : fileExists(coursesServicePath)

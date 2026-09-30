@@ -131,7 +131,7 @@ node packages/ui/node_modules/vitest/vitest.mjs run --config tests/e2e/vitest.co
 
 12. **Feature 13: Fix Hardcoded Legacy URLs in UniHub (`@universe/uni-hub`)**
     - `AssignmentModal.tsx`: посилання на оригінальне завдання вказує на `moodle.universemvp.tech`.
-    - Відсутність входжень застарілого домену `moodle.karazin.ua` у коді `packages/uni-hub/src/`.
+    - Відсутність входжень застарілого домену `moodle.karazin.ua` у коді `packages/uni-hub/`.
     - Коректне відкриття зовнішніх посилань із параметрами `instance`.
     - Завантаження файлів додатків через оновлений домен.
     - Безпечна конкатенація токена доступу.

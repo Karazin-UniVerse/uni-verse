@@ -13,7 +13,7 @@ Monorepo workspace (pnpm + Turborepo) consisting of 7 active packages:
 - `@universe/typescript-config` (`configs/config-typescript`): Base and package tsconfig presets.
 
 Data Flow:
-Browser (UniHub Next.js) ──► `packages/uni-hub/src/services/api.ts` ──► `@universe/backend` NestJS Gateway ──► Moodle LMS (`https://moodle.universemvp.tech`)
+Browser (UniHub Next.js) ──► `packages/uni-hub/services/api.ts` ──► `@universe/backend` NestJS Gateway ──► Moodle LMS (`https://moodle.universemvp.tech`)
 Both frontend and backend share types from `@universe/core/types`. Frontend consumes UI components from `@universe/ui`.
 
 ## Feature Inventory
@@ -190,10 +190,10 @@ export { Empty } from './components/una/Empty';
 - `packages/core/package.json`: Exports field, types field, workspace configuration for @universe/core.
 - `packages/core/tsconfig.json`: TypeScript compiler options extending base config.
 - `packages/ui/index.ts`: Public exports of Una UI components.
-- `packages/backend/src/moodle/moodle-client/moodle.client.service.ts`: Moodle client service with https://moodle.universemvp.tech default.
-- `packages/backend/src/moodle/moodle-files/moodle-files.service.ts`: Files service with Moodle URL fallback.
-- `packages/backend/src/utils/get-creds.ts`: Credentials helper with Moodle URL fallback.
-- `packages/uni-hub/src/views/DashboardPage.tsx`: E-Dean dashboard with 5 Ukrainian tabs, siderFooter Moodle link, and 3-tier gradebook.
-- `packages/uni-hub/src/services/api.ts`: API client consuming backend endpoints with @universe/core/types contracts.
-- `packages/uni-hub/src/components/AssignmentModal.tsx`: Updated Moodle URL link.
+- `packages/backend/moodle/moodle-client/moodle.client.service.ts`: Moodle client service with https://moodle.universemvp.tech default.
+- `packages/backend/moodle/moodle-files/moodle-files.service.ts`: Files service with Moodle URL fallback.
+- `packages/backend/utils/get-creds.ts`: Credentials helper with Moodle URL fallback.
+- `packages/uni-hub/views/DashboardPage.tsx`: E-Dean dashboard with 5 Ukrainian tabs, siderFooter Moodle link, and 3-tier gradebook.
+- `packages/uni-hub/services/api.ts`: API client consuming backend endpoints with @universe/core/types contracts.
+- `packages/uni-hub/components/assignments/AssignmentModal.tsx`: Updated Moodle URL link.
 - `tests/e2e/`: E2E test suite created by E2E Testing Track.

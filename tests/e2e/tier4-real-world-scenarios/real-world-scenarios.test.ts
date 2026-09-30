@@ -86,7 +86,7 @@ describe('Tier 4 - Real-World Scenarios: End-to-End User Journeys', () => {
     expect(moodleJumpUrl).toBe('https://moodle.universemvp.tech/mod/assign/view.php?a=88');
 
     // 3. Check DashboardPage contains status indicator
-    const dashboard = readWorkspaceFile('packages/uni-hub/src/views/DashboardPage.tsx');
+    const dashboard = readWorkspaceFile('packages/uni-hub/views/DashboardPage.tsx');
 
     expect(dashboard).toContain('moodle.universemvp.tech');
   });
@@ -136,13 +136,13 @@ describe('Tier 4 - Real-World Scenarios: End-to-End User Journeys', () => {
 
   it('Scenario 5: LMS Gateway Degradation & Fault-Tolerant Feedback', () => {
     // When backend returns error or is unreachable
-    const apiCode = readWorkspaceFile('packages/uni-hub/src/services/api.ts');
+    const apiCode = readWorkspaceFile('packages/uni-hub/services/api.ts');
 
     expect(apiCode).toMatch(/try\s*\{[\s\S]*catch/);
     expect(apiCode).toMatch(/timeout/i);
 
     // Dashboard catches errors and triggers toast notification
-    const dashboardCode = readWorkspaceFile('packages/uni-hub/src/views/DashboardPage.tsx');
+    const dashboardCode = readWorkspaceFile('packages/uni-hub/views/DashboardPage.tsx');
 
     expect(dashboardCode).toMatch(/toast\.error/);
   });

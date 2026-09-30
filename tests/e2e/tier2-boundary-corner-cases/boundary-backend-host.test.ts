@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { MoodleClientService } from '../../../packages/backend/src/moodle/moodle-client/moodle.client.service';
+import { MoodleClientService } from '../../../packages/backend/moodle/moodle-client/moodle.client.service';
 import { readWorkspaceFile } from '../test-helpers';
 
 describe('Tier 2 - Feature 6: Boundary & Corner Cases in Backend Host Validation', () => {
@@ -63,8 +63,8 @@ describe('Tier 2 - Feature 6: Boundary & Corner Cases in Backend Host Validation
   });
 
   it('F6-B5: Moodle host should be consistent across all backend services without legacy residue', () => {
-    const filesServicePath = 'packages/backend/src/moodle/moodle-files/moodle-files.service.ts';
-    const credsPath = 'packages/backend/src/utils/get-creds.ts';
+    const filesServicePath = 'packages/backend/moodle/moodle-files/moodle-files.service.ts';
+    const credsPath = 'packages/backend/utils/get-creds.ts';
 
     const filesContent = readWorkspaceFile(filesServicePath);
     const credsContent = readWorkspaceFile(credsPath);

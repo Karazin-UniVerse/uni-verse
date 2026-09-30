@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { fileExists, readWorkspaceFile } from '../test-helpers';
 
 describe('Tier 1 - Feature 11: Sidebar Footer Moodle Status Indicator (@universe/uni-hub)', () => {
-  const dashboardPath = 'packages/uni-hub/src/views/DashboardPage.tsx';
+  const dashboardPath = 'packages/uni-hub/views/DashboardPage.tsx';
 
   it('F11-1: siderFooter container should be present in DashboardPage.tsx', () => {
     expect(fileExists(dashboardPath)).toBe(true);
