@@ -50,8 +50,6 @@ The fastest way to configure your local development environment without manually
 
 ```bash
 pnpm dev:select
-# or
-pnpm dev:setup
 ```
 
 The wizard prompts you step-by-step, automatically configures environment files, and starts the development server:
