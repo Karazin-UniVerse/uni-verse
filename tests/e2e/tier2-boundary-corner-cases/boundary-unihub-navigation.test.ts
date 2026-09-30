@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readWorkspaceFile } from '../test-helpers';
 
 describe('Tier 2 - Feature 10 & 11: Boundary Cases in UniHub Navigation & Sider', () => {
-  const dashboardPath = 'packages/uni-hub/src/views/DashboardPage.tsx';
+  const dashboardPath = 'packages/uni-hub/views/DashboardPage.tsx';
 
   it('F10-B1: Navigation key guard function should strictly reject invalid tab strings', () => {
     const CANONICAL_KEYS = ['overview', 'courses', 'grades', 'schedule', 'assignments'];

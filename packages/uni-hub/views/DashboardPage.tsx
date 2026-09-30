@@ -238,7 +238,7 @@ const DashboardPage: React.FC = () => {
       }
     };
 
-    fetchData();
+    void fetchData();
 
     return () => {
       cancelled = true;

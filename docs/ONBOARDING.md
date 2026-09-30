@@ -16,7 +16,7 @@ The project is structured as a **Monorepo** managed with **pnpm** and **Turborep
 
 ---
 
-## ⚙️ Backend Modules (`../packages/backend/src`)
+## ⚙️ Backend Modules (`../packages/backend`)
 
 The backend follows NestJS modular architecture.
 
@@ -48,7 +48,7 @@ The largest module, acting as a proxy and aggregator for Moodle API data. It inc
 
 ---
 
-## 🎨 Frontend Modules (`../packages/uni-hub/src`)
+## 🎨 Frontend Modules (`../packages/uni-hub`)
 
 The client-side architecture is organized into clear domain directories.
 
@@ -89,7 +89,7 @@ An Axios wrapper for backend communication.
 
 The project encapsulates domain logic and reusable helpers into utility functions.
 
-### Backend Utils (`../packages/backend/src/utils`)
+### Backend Utils (`../packages/backend/utils`)
 
 - **`get-creds.ts` (`GetCreds`)**: Service to retrieve user credentials from Moodle. Queries `/login/token.php` for user token and `core_webservice_get_site_info` to extract Moodle `userid`.
 - **`moodle-params-builder.ts` (`buildMoodleParams`)**: Serializes nested objects and arrays into flat key-value pairs required by Moodle REST Web Services.
@@ -99,7 +99,7 @@ The project encapsulates domain logic and reusable helpers into utility function
   - `filterCourses` — filters courses according to completion progress and academic timeline.
 - **`wsfunctions.ts`**: Constants containing Moodle Web Service function names (e.g., `core_enrol_get_users_courses`).
 
-### Frontend Utils (`../packages/uni-hub/src/utils`)
+### Frontend Utils (`../packages/uni-hub/utils`)
 
 - **`confetti.ts`**: `fireConfetti` triggers visual confetti particle effects for achievement rewards.
 - **`gradeMath.ts` (`computeSimulatedFinal`)**: Mathematical formula for the "What-if?" grade simulator, calculating hypothetical final grades with clamping.

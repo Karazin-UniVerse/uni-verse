@@ -98,7 +98,7 @@ const CourseContents: React.FC = () => {
       }
     };
 
-    fetchContents();
+    void fetchContents();
 
     return () => {
       cancelled = true;

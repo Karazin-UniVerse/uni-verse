@@ -45,7 +45,12 @@ export function buildQueryString(params?: Record<string, unknown>): string {
 
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== null && value !== '') {
-      searchParams.append(key, String(value));
+      const formattedValue =
+        typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+          ? String(value)
+          : JSON.stringify(value);
+
+      searchParams.append(key, formattedValue);
     }
   }
 
@@ -142,28 +147,24 @@ async function request<T>(
     headers.Authorization = `Bearer ${token}`;
   }
 
-  let attempt = 0;
-
-  while (attempt <= retries) {
+  const attemptRequest = async (currentAttempt: number): Promise<{ data: T }> => {
     try {
       return await executeAttempt<T>(url, options, headers, timeoutMs);
     } catch (err) {
-      if (options.signal?.aborted) {
+      if (options.signal?.aborted || currentAttempt >= retries) {
         throw err;
       }
 
-      if (attempt < retries) {
-        attempt++;
-        const delay = attempt * 500;
+      const nextAttempt = currentAttempt + 1;
+      const delay = nextAttempt * 500;
 
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      } else {
-        throw err;
-      }
+      await new Promise((resolve) => setTimeout(resolve, delay));
+
+      return attemptRequest(nextAttempt);
     }
-  }
+  };
 
-  throw new Error('Request failed');
+  return attemptRequest(0);
 }
 
 export interface GoogleAuthResponse {
