@@ -66,4 +66,15 @@ describe('MoodleProfileController', () => {
     );
     expect(res).toEqual(mockProfile);
   });
+
+  it('should return profile from service when email is omitted', async () => {
+    const res = await controller.getProfile('token-123', '4021');
+
+    expect(mockProfileService.getProfile).toHaveBeenCalledWith(
+      'token-123',
+      '4021',
+      undefined,
+    );
+    expect(res).toEqual(mockProfile);
+  });
 });

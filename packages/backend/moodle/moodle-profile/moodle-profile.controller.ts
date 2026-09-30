@@ -23,7 +23,7 @@ export class MoodleProfileController {
   async getProfile(
     @GetUser('moodleToken') moodleToken: string,
     @GetUser('moodleId') moodleId: string,
-    @GetUser('email') email: string,
+    @GetUser('email') email?: string,
   ): Promise<StudentProfileDto> {
     return this.profileService.getProfile(moodleToken, moodleId, email);
   }
