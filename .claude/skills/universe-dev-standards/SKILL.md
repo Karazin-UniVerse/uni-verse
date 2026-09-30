@@ -28,7 +28,7 @@ uni-verse/
 ### Dependency Rules:
 
 - **`@universe/core`**: Zero internal dependencies. Holds all shared types, schemas, and math/grading logic.
-- **`@universe/ui`**: Consumed by frontend packages. Primitives in `components/una/` must be imported via `@una` (e.g. `import { Button, Tag, Empty } from '@una';`).
+- **`@universe/ui`**: Consumed by frontend packages. Primitives in `components/una/` must be imported via `@una` (e.g. `import { Button, Tag, Empty } from '@una';`). Complex components reside in `components/complex/`. **Storybook stories belong strictly in `@universe/ui`** (`Components/*` for Una, `Complex/*` for complex components; never in `uni-hub` or `backend`).
 - **`@universe/backend`**: NestJS gateway. All DTOs and models must align with `@universe/core/types`.
 - **`@universe/uni-hub`**: Next.js student portal. Must use React Server Components where possible; mark client interactive components with `'use client'`.
 
@@ -205,6 +205,9 @@ pnpm typecheck
 
 # 3. Unit and integration tests
 pnpm test
+
+# 4. Storybook build verification (when modifying packages/ui)
+pnpm --filter @universe/ui build-storybook
 ```
 
 ### Pre-Commit Quality Checklist:
@@ -216,4 +219,5 @@ pnpm test
 - [ ] All arrays access last elements via `.at(-1)`.
 - [ ] No `Math.random()` used for IDs or data rendering.
 - [ ] Code formatted with proper vertical spacing and empty line before `return`.
+- [ ] Storybook stories written ONLY in `packages/ui` (`Components/*` for Una, `Complex/*` for complex components) using CSF3 with zero `any`.
 - [ ] All tests, typecheck, and linter pass with 0 errors and 0 warnings.
