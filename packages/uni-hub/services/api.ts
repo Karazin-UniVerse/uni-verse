@@ -1,4 +1,5 @@
 import { RESPONSE_CODES } from '@core/constants/response-codes';
+import type { StudentProfile } from '@core/types';
 import type {
   AuthResponse,
   Course,
@@ -18,6 +19,7 @@ import {
   mockStatistics,
   mockAssignments,
   getMockAssignments,
+  mockStudentProfile,
 } from './mockData';
 
 function getStorage(): Storage | null {
@@ -167,6 +169,8 @@ async function executeAttempt<T>(
         safeStorage.removeItem('accessToken');
         safeStorage.removeItem('moodleToken');
         safeStorage.removeItem('isDemo');
+        safeStorage.removeItem('username');
+        safeStorage.removeItem('universe_student_profile');
         safeStorage.removeItem('universe_dashboard_data');
         safeStorage.removeItem('universe_last_sync_time');
       }
@@ -354,6 +358,8 @@ export class AuthApi {
       safeStorage.removeItem('isLoggedIn');
       safeStorage.removeItem('moodleToken');
       safeStorage.removeItem('isDemo');
+      safeStorage.removeItem('username');
+      safeStorage.removeItem('universe_student_profile');
       safeStorage.removeItem('universe_dashboard_data');
       safeStorage.removeItem('universe_last_sync_time');
     }
@@ -421,6 +427,14 @@ export class MoodleApi {
     }
 
     return request<CourseStatistics>('/moodle/statistics');
+  }
+
+  getProfile(): Promise<{ data: StudentProfile }> {
+    if (isDemoMode()) {
+      return Promise.resolve({ data: mockStudentProfile });
+    }
+
+    return request<StudentProfile>('/moodle/profile');
   }
 
   getCourseContents(courseId: number): Promise<{ data: CourseSection[] }> {

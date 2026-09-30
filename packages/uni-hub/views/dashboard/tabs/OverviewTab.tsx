@@ -163,7 +163,15 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         <div className={styles.studentCardTop}>
           <div className={styles.studentIdentity}>
             <div className={styles.studentAvatarLarge}>
-              <GraduationCap size={26} />
+              {activeStudentProfile.avatarUrl ? (
+                <img
+                  src={activeStudentProfile.avatarUrl}
+                  alt={activeStudentProfile.fullName}
+                  className={styles.avatarImg}
+                />
+              ) : (
+                <GraduationCap size={26} />
+              )}
             </div>
             <div className={styles.studentMainInfo}>
               <h3>{activeStudentProfile.fullName}</h3>

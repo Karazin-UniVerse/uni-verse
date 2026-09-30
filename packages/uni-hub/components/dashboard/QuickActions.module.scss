@@ -103,9 +103,9 @@
   color: var(--info-color, #a855f7);
 }
 
-.iconSimulator {
-  background: color-mix(in srgb, var(--success-color, #22c55e) 12%, transparent);
-  color: var(--success-color, #22c55e);
+.iconDean {
+  background: color-mix(in srgb, var(--success-color) 12%, transparent);
+  color: var(--success-color);
 }
 
 .actionBody {

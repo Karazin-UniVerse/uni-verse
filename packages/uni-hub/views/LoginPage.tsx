@@ -70,6 +70,7 @@ const LoginPage: React.FC = () => {
 
       toast.success(formatMessage('login.success'));
       localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('username', username.trim());
 
       if (res.data?.token) {
         localStorage.setItem('moodleToken', res.data.token);
@@ -108,6 +109,7 @@ const LoginPage: React.FC = () => {
 
       toast.success(formatMessage('login.linkMoodleSuccess'));
       toast.success(formatMessage('login.success'));
+      localStorage.setItem('username', linkUsername.trim());
       router.push('/');
     } catch (err: unknown) {
       const message = getErrorMessage(err, formatMessage('login.linkMoodleError'));

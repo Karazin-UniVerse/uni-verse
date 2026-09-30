@@ -196,6 +196,8 @@ function clearUserSessionStorage(): void {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('moodleToken');
     localStorage.removeItem('isDemo');
+    localStorage.removeItem('username');
+    localStorage.removeItem('universe_student_profile');
     localStorage.removeItem('universe_dashboard_data');
     localStorage.removeItem('universe_last_sync_time');
   } catch {
@@ -291,6 +293,16 @@ const DashboardPage: React.FC = () => {
         setLastSyncTime(Number(cachedTime));
       }
 
+      const cachedProfile = localStorage.getItem('universe_student_profile');
+
+      if (cachedProfile) {
+        const parsedProfile = JSON.parse(cachedProfile) as StudentProfile;
+
+        if (parsedProfile && typeof parsedProfile === 'object') {
+          setStudentProfile(parsedProfile);
+        }
+      }
+
       const cachedData = loadCachedDashboardData();
 
       if (cachedData) {
@@ -312,24 +324,50 @@ const DashboardPage: React.FC = () => {
 
     try {
       const params = buildAssignmentParams(sortOrder, dateFrom, dateTo, hideCompleted);
-      const responses = await Promise.all([
+      const [
+        coursesRes,
+        gradesRes,
+        assignmentsRes,
+        eventsRes,
+        notificationsRes,
+        statsRes,
+        profileRes,
+      ] = await Promise.all([
         moodleApi.getCourses(),
         moodleApi.getGrades(),
         moodleApi.getAssignments(params),
         moodleApi.getEvents(),
         moodleApi.getNotifications(),
         moodleApi.getStatistics(),
+        moodleApi.getProfile().catch(() => null),
       ]);
 
       if (requestId !== fetchRequestIdRef.current) {
         return;
       }
 
-      const freshData = assembleDashboardData(responses);
+      const freshData = assembleDashboardData([
+        coursesRes,
+        gradesRes,
+        assignmentsRes,
+        eventsRes,
+        notificationsRes,
+        statsRes,
+      ]);
 
       setData(freshData);
       setHasLoadedOnce(true);
       setIsOfflineData(false);
+
+      if (profileRes?.data) {
+        setStudentProfile(profileRes.data);
+
+        try {
+          localStorage.setItem('universe_student_profile', JSON.stringify(profileRes.data));
+        } catch {
+          // Ignore storage quota errors
+        }
+      }
 
       const nowTimestamp = Date.now();
 
@@ -405,11 +443,14 @@ const DashboardPage: React.FC = () => {
     const savedUser = localStorage.getItem('username');
 
     if (savedUser && savedUser !== fallbackStudentProfile.fullName) {
-      setStudentProfile({
-        ...fallbackStudentProfile,
-        fullName: savedUser,
-        email: savedUser.includes('@') ? savedUser : `${savedUser}@karazin.ua`,
-      });
+      setStudentProfile(
+        (previousProfile) =>
+          previousProfile ?? {
+            ...fallbackStudentProfile,
+            fullName: savedUser,
+            email: savedUser.includes('@') ? savedUser : `${savedUser}@karazin.ua`,
+          },
+      );
     }
 
     checkIn();
