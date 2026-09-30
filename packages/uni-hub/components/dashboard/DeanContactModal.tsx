@@ -5,10 +5,10 @@ import { Building2, Send } from 'lucide-react';
 import { Modal, Button, useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { DeanContactInfo } from './DeanContactInfo';
-import { DeanTopicChips, DEAN_TOPIC_KEYS } from './DeanTopicChips';
+import { DeanTopicChips } from './DeanTopicChips';
 import styles from './DeanContactModal.module.scss';
 
-export { DEAN_TOPIC_KEYS };
+export { DEAN_TOPIC_KEYS } from './DeanTopicChips';
 
 export interface DeanContactModalProps {
   open: boolean;
