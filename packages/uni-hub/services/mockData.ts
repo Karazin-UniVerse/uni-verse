@@ -318,7 +318,6 @@ export function getMockAssignments(params?: GetAssignmentsParams): Assignment[] 
 
   return list;
 }
-
 export const mockStudentProfile: StudentProfile = {
   id: 'karazin-student-001',
   moodleId: 4021,

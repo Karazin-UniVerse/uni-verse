@@ -89,7 +89,6 @@ export class MoodleApi {
 
     return request<StudentProfile>('/moodle/profile');
   }
-
   getCourseContents(courseId: number): Promise<{ data: CourseSection[] }> {
     if (isDemoMode()) {
       return Promise.resolve({ data: [] });
