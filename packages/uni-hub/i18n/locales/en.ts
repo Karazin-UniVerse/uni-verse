@@ -18,6 +18,8 @@ export const en = {
   'login.invalidCredentials': 'Login failed. Please check your credentials.',
   'login.enterUsernameError': 'Please enter a username',
   'login.enterPasswordError': 'Please enter a password',
+  'login.showPassword': 'Show password',
+  'login.hidePassword': 'Hide password',
   'login.orMoodle': 'or with Moodle login',
   'login.googleError': 'Google sign-in error',
   'login.linkMoodleTitle': 'Link Moodle Account',
@@ -35,6 +37,8 @@ export const en = {
   'login.linkMoodleEnterPassword': 'Please enter password in Moodle',
   'login.linkMoodleRequired': 'Linking a Moodle account is required to complete sign-in',
   'login.linkMoodleError': 'Failed to link account. Please check your credentials.',
+  'login.tryDemo': 'Try demo mode (without Moodle) →',
+  'login.demoSuccess': 'Logged in using demo mode',
 
   // Themes
   'theme.light': 'Light',
@@ -61,6 +65,14 @@ export const en = {
   'header.notifications.empty': 'No notifications',
   'dashboard.sessionExpired': 'Session expired or invalid. Please sign in again.',
   'dashboard.loadError': 'Failed to load data. Please ensure the backend is running.',
+  'dashboard.syncSuccess': 'Data refreshed successfully',
+  'dashboard.offlineNotice': 'Using cached data: unable to connect to Moodle server.',
+  'dashboard.updating': 'Updating...',
+  'dashboard.dataUpdated': 'Data updated',
+  'dashboard.refreshData': 'Refresh data',
+  'dashboard.refresh': 'Refresh',
+  'dashboard.offlineWarning': 'Warning: Moodle server is unreachable. Showing cached data',
+  'dashboard.offlineFrom': 'from',
 
   // Greetings
   'greeting.morning': 'Good morning',
@@ -103,6 +115,7 @@ export const en = {
   'donut.title': 'Assignment Status',
   'donut.empty': 'No assignments found',
   'donut.completed': 'Completed',
+  'donut.awaitingReview': 'Awaiting review',
   'donut.overdue': 'Overdue',
   'donut.inProgress': 'In progress',
 
@@ -172,6 +185,10 @@ export const en = {
   'assignments.hideCompleted': 'Hide completed',
   'assignments.deadline': 'Deadline',
   'assignments.noDueDate': 'No due date',
+  'assignments.noDeadline': 'No submission deadline',
+  'assignments.submittedLate': 'Submitted late',
+  'assignments.grade': 'Grade',
+  'assignments.open': 'Open',
   'assignments.emptyNotFound': 'No assignments found',
   'assignments.emptyDateFilter': 'No assignments found for selected dates',
   'assignments.emptyAllDone':
@@ -232,4 +249,72 @@ export const en = {
 
   // Gamification
   'badge.unlocked': 'Achievement',
+
+  // Modal
+  'modal.close': 'Close',
+
+  // Dean's Office Modal
+  'dean.modalTitle': "Contact Dean's Office",
+  'dean.supportSubtitle': "Dean's Office and Academic Support Service",
+  'dean.email': 'Email:',
+  'dean.phone': 'Phone:',
+  'dean.schedule': 'Hours:',
+  'dean.scheduleValue': 'Mon–Fri, 09:00 – 17:00',
+  'dean.telegram': 'Telegram:',
+  'dean.sectionLabel': 'Common request templates:',
+  'dean.subjectLabel': 'Request subject',
+  'dean.subjectPlaceholder': 'Enter request subject',
+  'dean.messageLabel': 'Message text or comment',
+  'dean.messagePlaceholder': 'Describe the details of your request...',
+  'dean.cancel': 'Cancel',
+  'dean.sending': 'Sending...',
+  'dean.submit': 'Send request',
+  'dean.successMessage':
+    "Request #DC-{ticket} successfully sent to the Dean's Office! A response will be sent to your corporate email.",
+  'dean.topic.certificate': 'Certificate of Study',
+  'dean.topic.transcript': 'Academic transcript / grade report',
+  'dean.topic.session': 'Session and schedule questions',
+  'dean.topic.individual': 'Individual study schedule',
+  'dean.topic.other': "Other request to Dean's Office",
+
+  // Quick Actions
+  'quickActions.title': 'Quick Actions',
+  'quickActions.moodleBadge': 'Karazin',
+  'quickActions.moodleTitle': 'Open Moodle LMS platform in a new tab',
+  'quickActions.moodleDescription': 'Course platform',
+  'quickActions.assignmentsTitle': 'Go to assignments and deadlines',
+  'quickActions.myAssignments': 'My Assignments',
+  'quickActions.pendingCount': '{count} to complete',
+  'quickActions.allDone': 'All assignments submitted',
+  'quickActions.scheduleTitle': 'Go to class schedule',
+  'quickActions.schedule': 'Class Schedule',
+  'quickActions.scheduleDescription': 'Classes and consultations',
+  'quickActions.deanTitle': "Contact Dean's Office for a certificate or consultation",
+  'quickActions.dean': "Contact Dean's Office",
+  'quickActions.deanDescription': 'Requests, certificates, contacts',
+  'quickActions.ariaLabel': 'Quick Actions',
+
+  // Recent Grades Feed
+  'recentGrades.title': 'Recent Grades',
+  'recentGrades.allGrades': 'All grades',
+  'recentGrades.recently': 'Recently',
+  'recentGrades.passed': 'Passed',
+  'recentGrades.empty': 'No graded assignments yet',
+  'recentGrades.allGradesTitle': 'View all grades in the gradebook',
+  'recentGrades.ariaLabel': 'Recent Grades',
+  'recentGrades.viewAssignment': 'Go to assignment: {name}',
+
+  // Overview Tab Extras
+  'overview.joinMeeting': 'Join meeting',
+  'overview.coursesHint': 'View courses →',
+  'overview.assignmentsHint': 'View assignments →',
+  'overview.gradesHint': 'Gradebook →',
+  'overview.nearestDeadline': 'Nearest deadline:',
+  'overview.specialty': 'Specialty',
+  'overview.noDeadline': 'No deadline',
+  'overview.coursesTitle': 'Go to courses list',
+  'overview.assignmentsTitle': 'Go to assignments list',
+  'overview.gradesTitle': 'Go to gradebook and grades',
+  'overview.viewCourseMaterials': 'View course materials: {name}',
+  'student.courseGroupFormat': 'Year {course}, group {group}',
 } as const satisfies Record<TranslationKey, string>;

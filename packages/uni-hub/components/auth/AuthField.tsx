@@ -12,6 +12,7 @@ export interface AuthFieldProps {
   name: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder: string;
+  rightElement?: React.ReactNode;
   type?: string;
   value: string;
 }
@@ -24,13 +25,14 @@ export const AuthField: React.FC<AuthFieldProps> = ({
   name,
   onChange,
   placeholder,
+  rightElement,
   value,
   type = 'text',
 }) => {
   return (
     <label htmlFor={id} className={styles.field}>
       <span className={styles.label}>{label}</span>
-      <div className={styles.inputWrap}>
+      <div className={`${styles.inputWrap} ${rightElement ? styles.hasRightElement : ''}`}>
         <span className={styles.icon}>{icon}</span>
         <TextInput
           id={id}
@@ -42,6 +44,7 @@ export const AuthField: React.FC<AuthFieldProps> = ({
           onChange={onChange}
           autoComplete={autoComplete}
         />
+        {rightElement ? <div className={styles.rightElement}>{rightElement}</div> : null}
       </div>
     </label>
   );

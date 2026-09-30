@@ -7,6 +7,7 @@ import {
   GetAssignmentsQueryDto,
   AssignmentItemDto,
   SaveSubmissionDto,
+  SubmissionStatusDto,
 } from './moodle-assignments-dto';
 
 describe('MoodleAssignmentsController', () => {
@@ -59,6 +60,38 @@ describe('MoodleAssignmentsController', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBe(0);
+
+      const falsePlain = { ...plain, includeStatus: 'false' };
+      const falseDto = plainToInstance(GetAssignmentsQueryDto, falsePlain);
+
+      expect(falseDto.includeStatus).toBe(false);
+      const falseErrors = await validate(falseDto);
+
+      expect(falseErrors.length).toBe(0);
+
+      const boolTrueDto = plainToInstance(GetAssignmentsQueryDto, {
+        ...plain,
+        includeStatus: true,
+      });
+
+      expect(boolTrueDto.includeStatus).toBe(true);
+
+      const boolFalseDto = plainToInstance(GetAssignmentsQueryDto, {
+        ...plain,
+        includeStatus: false,
+      });
+
+      expect(boolFalseDto.includeStatus).toBe(false);
+
+      const fallbackDto = plainToInstance(GetAssignmentsQueryDto, {
+        ...plain,
+        includeStatus: 'invalid-string',
+      });
+
+      expect(fallbackDto.includeStatus).toBe('invalid-string');
+      const fallbackErrors = await validate(fallbackDto);
+
+      expect(fallbackErrors.length).toBeGreaterThan(0);
     });
 
     it('should transform includeStatus=false and includeStatus=0 to boolean false', async () => {
@@ -84,6 +117,39 @@ describe('MoodleAssignmentsController', () => {
 
       expect(errorsZero.length).toBe(0);
 
+      const dtoZeroNum = plainToInstance(GetAssignmentsQueryDto, {
+        includeStatus: 0,
+      });
+
+      expect(typeof dtoZeroNum.includeStatus).toBe('boolean');
+      expect(dtoZeroNum.includeStatus).toBe(false);
+
+      const errorsZeroNum = await validate(dtoZeroNum);
+
+      expect(errorsZeroNum.length).toBe(0);
+
+      const dtoOneNum = plainToInstance(GetAssignmentsQueryDto, {
+        includeStatus: 1,
+      });
+
+      expect(typeof dtoOneNum.includeStatus).toBe('boolean');
+      expect(dtoOneNum.includeStatus).toBe(true);
+
+      const errorsOneNum = await validate(dtoOneNum);
+
+      expect(errorsOneNum.length).toBe(0);
+
+      const dtoOneStr = plainToInstance(GetAssignmentsQueryDto, {
+        includeStatus: '1',
+      });
+
+      expect(typeof dtoOneStr.includeStatus).toBe('boolean');
+      expect(dtoOneStr.includeStatus).toBe(true);
+
+      const errorsOneStr = await validate(dtoOneStr);
+
+      expect(errorsOneStr.length).toBe(0);
+
       const dtoNull = plainToInstance(GetAssignmentsQueryDto, {
         includeStatus: null,
       });
@@ -103,8 +169,17 @@ describe('MoodleAssignmentsController', () => {
       const errorsUndefined = await validate(dtoUndefined);
 
       expect(errorsUndefined.length).toBe(0);
-    });
 
+      const dtoInvalid = plainToInstance(GetAssignmentsQueryDto, {
+        includeStatus: 'invalid',
+      });
+
+      expect(dtoInvalid.includeStatus).toBe('invalid');
+
+      const errorsInvalid = await validate(dtoInvalid);
+
+      expect(errorsInvalid.length).toBeGreaterThan(0);
+    });
     it('should validate AssignmentItemDto and SaveSubmissionDto', async () => {
       const item = plainToInstance(AssignmentItemDto, {
         id: 1,
@@ -115,10 +190,26 @@ describe('MoodleAssignmentsController', () => {
         submissionStatus: 'submitted',
         grade: '100',
         graded: true,
+        submittedAt: '1727000000',
+        isLate: true,
       });
       const itemErrors = await validate(item);
 
       expect(itemErrors.length).toBe(0);
+      expect(typeof item.submittedAt).toBe('number');
+      expect(item.isLate).toBe(true);
+
+      const statusDto = plainToInstance(SubmissionStatusDto, {
+        status: 'submitted',
+        grade: '90',
+        submittedAt: '1727000000',
+        isLate: false,
+      });
+      const statusErrors = await validate(statusDto);
+
+      expect(statusErrors.length).toBe(0);
+      expect(typeof statusDto.submittedAt).toBe('number');
+      expect(statusDto.isLate).toBe(false);
 
       const saveDto = plainToInstance(SaveSubmissionDto, {
         text: 'hello',

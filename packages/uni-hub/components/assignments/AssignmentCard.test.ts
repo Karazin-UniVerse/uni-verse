@@ -61,4 +61,37 @@ describe('AssignmentCard component', () => {
 
     expect(html).toContain('Без терміну здачі');
   });
+
+  it('renders awaiting review status with warning tone when submitted without grade', () => {
+    const html = renderToString(
+      React.createElement(AssignmentCard, {
+        assignment: mockAssignment,
+        status: 'submitted',
+        nowSec: 1700000000,
+        soundEnabled: false,
+        onOpenAssignment: () => {},
+      }),
+    );
+
+    expect(html).toContain('Очікує перевірки');
+  });
+
+  it('renders submitted late tag when isLate is true', () => {
+    const lateAssignment: Assignment = {
+      ...mockAssignment,
+      isLate: true,
+    };
+
+    const html = renderToString(
+      React.createElement(AssignmentCard, {
+        assignment: lateAssignment,
+        status: 'submitted',
+        nowSec: 1700000000,
+        soundEnabled: false,
+        onOpenAssignment: () => {},
+      }),
+    );
+
+    expect(html).toContain('Здано із запізненням');
+  });
 });

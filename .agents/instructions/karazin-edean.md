@@ -82,6 +82,7 @@ uni-verse/
       - ❌ No inline helpers inside components or DTO files.
       - ❌ No monolithic components without subcomponents or custom hooks.
       - ❌ No hardcoded UI strings without i18n translation keys.
+
 ---
 
 ## Verification Pipeline

@@ -75,6 +75,33 @@ describe('LanguageContext and translations', () => {
     expect(html).toContain('missing.key');
   });
 
+  it('interpolates placeholders with provided values', () => {
+    const Consumer = () => {
+      const { formatMessage } = useLanguage();
+
+      return React.createElement(
+        'div',
+        null,
+        React.createElement(
+          'span',
+          { id: 'count' },
+          formatMessage('quickActions.pendingCount', { count: 5 }),
+        ),
+        React.createElement(
+          'span',
+          { id: 'assignment' },
+          formatMessage('recentGrades.viewAssignment', { name: 'Lab 1' }),
+        ),
+      );
+    };
+
+    const tree = React.createElement(LanguageProvider, null, React.createElement(Consumer));
+    const html = renderToString(tree);
+
+    expect(html).toContain('5 до виконання');
+    expect(html).toContain('Перейти до завдання: Lab 1');
+  });
+
   it('maps language codes to BCP 47 locale tags', () => {
     expect(getLocaleTag('uk')).toBe('uk-UA');
     expect(getLocaleTag('en')).toBe('en-US');

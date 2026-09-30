@@ -95,6 +95,33 @@ describe('MoodleAssignmentsService', () => {
       expect(result[0].graded).toBe(true);
     });
 
+    it('should detect late submission when submittedAt > duedate', async () => {
+      mockMoodleClientService.client
+        .mockResolvedValueOnce({
+          courses: [
+            {
+              fullname: 'Algorithms',
+              shortname: 'ALG',
+              assignments: [
+                { id: 1, name: 'A1', duedate: 1000, intro: 'Test' },
+              ],
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          lastattempt: {
+            gradingstatus: 'notgraded',
+            submission: { status: 'submitted', timemodified: 1500 },
+          },
+        });
+
+      const result = await service.getAssignments('token', 'id', true);
+
+      expect(result.length).toBe(1);
+      expect(result[0].submittedAt).toBe(1500);
+      expect(result[0].isLate).toBe(true);
+    });
+
     it('should gracefully handle individual submission status errors when includeStatus is true', async () => {
       mockMoodleClientService.client
         .mockResolvedValueOnce({
@@ -157,11 +184,11 @@ describe('MoodleAssignmentsService', () => {
       expect(result.grade).toBe('Passed');
     });
 
-    it('should return submission status when grading is incomplete and grade is absent', async () => {
+    it('should return submission status and submittedAt when grading is incomplete', async () => {
       mockMoodleClientService.client.mockResolvedValue({
         lastattempt: {
           gradingstatus: 'notgraded',
-          submission: { status: 'submitted' },
+          submission: { status: 'submitted', timemodified: 1727000000 },
         },
       });
 
@@ -169,6 +196,7 @@ describe('MoodleAssignmentsService', () => {
 
       expect(result.status).toBe('submitted');
       expect(result.grade).toBeUndefined();
+      expect(result.submittedAt).toBe(1727000000);
     });
 
     it('should default to new status when lastattempt has no submission info', async () => {

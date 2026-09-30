@@ -16,6 +16,8 @@ import { MoodleStatisticsService } from './moodle-statistics/moodle-statistics.s
 import { MoodleStatisticsController } from './moodle-statistics/moodle-statistics.controller';
 import { MoodleCourseContentsService } from './moodle-course-contents/moodle-course-contents.service';
 import { MoodleCourseContentsController } from './moodle-course-contents/moodle-course-contents.controller';
+import { MoodleProfileService } from './moodle-profile/moodle-profile.service';
+import { MoodleProfileController } from './moodle-profile/moodle-profile.controller';
 
 @Module({
   controllers: [
@@ -26,6 +28,7 @@ import { MoodleCourseContentsController } from './moodle-course-contents/moodle-
     MoodleFilesController,
     MoodleStatisticsController,
     MoodleCourseContentsController,
+    MoodleProfileController,
   ],
   providers: [
     MoodleClientService,
@@ -38,6 +41,7 @@ import { MoodleCourseContentsController } from './moodle-course-contents/moodle-
     MoodleFilesService,
     MoodleStatisticsService,
     MoodleCourseContentsService,
+    MoodleProfileService,
   ],
   exports: [
     MoodleClientService,
@@ -49,6 +53,7 @@ import { MoodleCourseContentsController } from './moodle-course-contents/moodle-
     MoodleFilesService,
     MoodleStatisticsService,
     MoodleCourseContentsService,
+    MoodleProfileService,
   ],
 })
 export class MoodleModule {}

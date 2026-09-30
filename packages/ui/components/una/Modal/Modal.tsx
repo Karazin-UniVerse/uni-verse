@@ -69,6 +69,7 @@ export const Modal: React.FC<ModalProps> = ({
   open,
   ariaLabel,
   className,
+  closeLabel,
   title,
   width = 700,
 }) => {
@@ -145,7 +146,7 @@ export const Modal: React.FC<ModalProps> = ({
     return null;
   }
 
-  const dialogAriaLabel = title ? undefined : ariaLabel || 'Діалогове вікно';
+  const dialogAriaLabel = title ? undefined : ariaLabel || 'Dialog';
 
   return (
     <div ref={overlayRef} className={styles.overlay}>
@@ -171,9 +172,10 @@ export const Modal: React.FC<ModalProps> = ({
           )}
           <button
             type="button"
-            className={styles.closeBtn ?? ''}
+            className={styles.closeBtn}
             onClick={onClose}
-            aria-label="Закрити"
+            aria-label={closeLabel ?? 'Close'}
+            title={closeLabel ?? 'Close'}
           >
             <X size={18} />
           </button>

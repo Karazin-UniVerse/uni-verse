@@ -16,6 +16,8 @@ export const uk = {
   'login.invalidCredentials': 'Помилка входу. Перевірте облікові дані.',
   'login.enterUsernameError': "Будь ласка, введіть ім'я користувача",
   'login.enterPasswordError': 'Будь ласка, введіть пароль',
+  'login.showPassword': 'Показати пароль',
+  'login.hidePassword': 'Сховати пароль',
   'login.orMoodle': 'або за допомогою логіна Moodle',
   'login.googleError': 'Помилка входу через Google',
   'login.linkMoodleTitle': "Прив'язка акаунта Moodle",
@@ -33,6 +35,8 @@ export const uk = {
   'login.linkMoodleEnterPassword': 'Будь ласка, введіть пароль від Moodle',
   'login.linkMoodleRequired': 'Для завершення входу необхідно прив’язати акаунт Moodle',
   'login.linkMoodleError': 'Помилка прив’язки акаунта. Перевірте логін та пароль.',
+  'login.tryDemo': 'Спробувати демо-режим (без Moodle) →',
+  'login.demoSuccess': 'Вхід у демо-режимі виконано',
 
   // Themes
   'theme.light': 'Світла',
@@ -60,6 +64,15 @@ export const uk = {
   'dashboard.sessionExpired': 'Сесія застаріла або недійсна. Будь ласка, увійдіть знову.',
   'dashboard.loadError':
     'Помилка завантаження даних. Будь ласка, переконайтеся, що бекенд запущено.',
+  'dashboard.syncSuccess': 'Дані успішно оновлено',
+  'dashboard.offlineNotice': "Використовуються збережені дані: немає зв'язку з сервером Moodle.",
+  'dashboard.updating': 'Оновлення...',
+  'dashboard.dataUpdated': 'Дані оновлено',
+  'dashboard.refreshData': 'Оновити дані',
+  'dashboard.refresh': 'Оновити',
+  'dashboard.offlineWarning':
+    "Увага: відсутній зв'язок з сервером Moodle. Відображаються збережені дані",
+  'dashboard.offlineFrom': 'від',
 
   // Greetings
   'greeting.morning': 'Доброго ранку',
@@ -102,6 +115,7 @@ export const uk = {
   'donut.title': 'Статус завдань',
   'donut.empty': 'Завдання не знайдені',
   'donut.completed': 'Виконано',
+  'donut.awaitingReview': 'Очікує перевірки',
   'donut.overdue': 'Прострочено',
   'donut.inProgress': 'В процесі',
 
@@ -171,6 +185,10 @@ export const uk = {
   'assignments.hideCompleted': 'Сховати виконані',
   'assignments.deadline': 'Дедлайн',
   'assignments.noDueDate': 'Без терміну',
+  'assignments.noDeadline': 'Без терміну здачі',
+  'assignments.submittedLate': 'Здано із запізненням',
+  'assignments.grade': 'Оцінка',
+  'assignments.open': 'Відкрити',
   'assignments.emptyNotFound': 'Завдань не знайдено',
   'assignments.emptyDateFilter': 'За обраними датами завдань не знайдено',
   'assignments.emptyAllDone': 'Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉',
@@ -230,7 +248,75 @@ export const uk = {
 
   // Gamification
   'badge.unlocked': 'Досягнення',
-} as const;
+
+  // Modal
+  'modal.close': 'Закрити',
+
+  // Dean's Office Modal
+  'dean.modalTitle': "Зв'язок з деканатом",
+  'dean.supportSubtitle': 'Деканат та служба академічної підтримки студентів',
+  'dean.email': 'Email:',
+  'dean.phone': 'Тел:',
+  'dean.schedule': 'Графік:',
+  'dean.scheduleValue': 'Пн–Пт, 09:00 – 17:00',
+  'dean.telegram': 'Telegram:',
+  'dean.sectionLabel': 'Типові запити (шаблони):',
+  'dean.subjectLabel': 'Тема запиту',
+  'dean.subjectPlaceholder': 'Вкажіть тему запиту',
+  'dean.messageLabel': 'Текст повідомлення або коментар',
+  'dean.messagePlaceholder': 'Опишіть деталі вашого запиту чи довідки...',
+  'dean.cancel': 'Скасувати',
+  'dean.sending': 'Надсилання...',
+  'dean.submit': 'Надіслати звернення',
+  'dean.successMessage':
+    'Звернення №КВ-{ticket} успішно надіслано до деканату! Відповідь надійде на вашу корпоративну пошту.',
+  'dean.topic.certificate': 'Довідка про навчання',
+  'dean.topic.transcript': 'Академічна довідка / виписка оцінок',
+  'dean.topic.session': 'Питання щодо сесії та розкладу',
+  'dean.topic.individual': 'Індивідуальний графік навчання',
+  'dean.topic.other': 'Інше звернення до деканату',
+
+  // Quick Actions
+  'quickActions.title': 'Швидкі дії',
+  'quickActions.moodleBadge': 'Каразінський',
+  'quickActions.moodleTitle': 'Відкрити платформу Moodle LMS у новій вкладці',
+  'quickActions.moodleDescription': 'Платформа курсів',
+  'quickActions.assignmentsTitle': 'Перейти до списку завдань та дедлайнів',
+  'quickActions.myAssignments': 'Мої завдання',
+  'quickActions.pendingCount': '{count} до виконання',
+  'quickActions.allDone': 'Всі завдання здано',
+  'quickActions.scheduleTitle': 'Перейти до розкладу занять',
+  'quickActions.schedule': 'Розклад занять',
+  'quickActions.scheduleDescription': 'Пари та консультації',
+  'quickActions.deanTitle': "Зв'язатися з деканатом, замовити довідку або консультацію",
+  'quickActions.dean': "Зв'язок з деканатом",
+  'quickActions.deanDescription': 'Запити, довідки, контакти',
+  'quickActions.ariaLabel': 'Швидкі дії',
+
+  // Recent Grades Feed
+  'recentGrades.title': 'Останні оцінки',
+  'recentGrades.allGrades': 'Всі оцінки',
+  'recentGrades.recently': 'Нещодавно',
+  'recentGrades.passed': 'Зараховано',
+  'recentGrades.empty': 'Ще немає перевірених робіт',
+  'recentGrades.allGradesTitle': 'Переглянути всі оцінки в заліковій книжці',
+  'recentGrades.ariaLabel': 'Останні оцінки',
+  'recentGrades.viewAssignment': 'Перейти до завдання: {name}',
+
+  // Overview Tab Extras
+  'overview.joinMeeting': 'Приєднатися до заняття',
+  'overview.coursesHint': 'Переглянути курси →',
+  'overview.assignmentsHint': 'Переглянути завдання →',
+  'overview.gradesHint': 'Залікова книжка →',
+  'overview.nearestDeadline': 'Найближчий дедлайн:',
+  'overview.specialty': 'Спеціальність',
+  'overview.noDeadline': 'Без терміну',
+  'overview.coursesTitle': 'Перейти до списку курсів',
+  'overview.assignmentsTitle': 'Перейти до списку завдань',
+  'overview.gradesTitle': 'Перейти до залікової книжки та оцінок',
+  'overview.viewCourseMaterials': 'Переглянути матеріали курсу: {name}',
+  'student.courseGroupFormat': '{course} курс, група {group}',
+};
 
 export type TranslationKey = keyof typeof uk;
 export type Translations = Record<TranslationKey, string>;

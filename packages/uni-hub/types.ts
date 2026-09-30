@@ -38,6 +38,8 @@ export interface Assignment {
   submissionStatus?: string;
   grade?: string | null;
   graded?: boolean;
+  submittedAt?: number | null;
+  isLate?: boolean;
 }
 
 export interface MoodleEvent {

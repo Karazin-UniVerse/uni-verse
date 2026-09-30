@@ -3,11 +3,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Spinner, useToast } from '@una';
-import { moodleApi } from '@uni-hub/services/api';
+import clsx from 'clsx';
+import { RotateCw, AlertCircle } from 'lucide-react';
+import { Button, Spinner } from '@una';
 import { isLoggedIn } from '@core/auth';
-import type { StudentProfile } from '@core/types';
-import type { Grade, CourseModule } from '@uni-hub/types';
+import type { CourseModule } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
 import { DashboardSkeleton, MobileBottomNav } from '@uni-hub/components/dashboard';
 import { BadgeSystem, GradeSimulator } from '@uni-hub/components/gamification';
@@ -15,7 +15,6 @@ import { ScheduleView } from '@uni-hub/components/schedule';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import {
   type NavKey,
-  type DashboardData,
   isNavKey,
   fallbackStudentProfile,
   DashboardSidebar,
@@ -25,6 +24,8 @@ import {
   GradesTab,
   AssignmentsTab,
 } from './dashboard';
+import { formatLastSync } from './dashboard/tabs/helpers';
+import { useDashboardData, clearUserSessionStorage } from './dashboard/hooks/useDashboardData';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './DashboardPage.module.scss';
@@ -37,61 +38,9 @@ const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
   assignments: 'nav.assignments.full',
 };
 
-type GradesApiResponse = Awaited<ReturnType<typeof moodleApi.getGrades>>;
-
-function parseDateFilterSeconds(dateString?: string): number | null {
-  if (!dateString) {
-    return null;
-  }
-
-  const dateParts = dateString.split('-');
-
-  if (dateParts.length !== 3) {
-    return null;
-  }
-
-  const [yearStr, monthStr, dayStr] = dateParts;
-  const expectedYear = Number.parseInt(yearStr, 10);
-  const expectedMonth = Number.parseInt(monthStr, 10);
-  const expectedDay = Number.parseInt(dayStr, 10);
-
-  const parsedDate = new Date(dateString);
-
-  if (
-    Number.isNaN(parsedDate.getTime()) ||
-    parsedDate.getFullYear() > 2099 ||
-    parsedDate.getUTCFullYear() > 2099
-  ) {
-    return null;
-  }
-
-  const matchesUtc =
-    parsedDate.getUTCFullYear() === expectedYear &&
-    parsedDate.getUTCMonth() + 1 === expectedMonth &&
-    parsedDate.getUTCDate() === expectedDay;
-  const matchesLocal =
-    parsedDate.getFullYear() === expectedYear &&
-    parsedDate.getMonth() + 1 === expectedMonth &&
-    parsedDate.getDate() === expectedDay;
-
-  if (!matchesUtc && !matchesLocal) {
-    return null;
-  }
-
-  return Math.floor(parsedDate.getTime() / 1000);
-}
-
-function resolveGradesResponse(gradesResponse?: GradesApiResponse | null): Grade[] {
-  if (Array.isArray(gradesResponse?.data?.grades)) {
-    return gradesResponse.data.grades;
-  }
-
-  return [];
-}
 const DashboardPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const toast = useToast();
   const checkIn = useGamificationStore((s) => s.checkIn);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const setSoundEnabled = useGamificationStore((s) => s.setSoundEnabled);
@@ -100,22 +49,8 @@ const DashboardPage: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeKey, setActiveKey] = useState<NavKey>('overview');
-  const [loading, setLoading] = useState(true);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();
-  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
-  const activeStudentProfile = studentProfile ?? fallbackStudentProfile;
-
-  const [data, setData] = useState<DashboardData>({
-    courses: [],
-    grades: [],
-    assignments: [],
-    events: [],
-    notifications: [],
-    unreadCount: 0,
-    statistics: null,
-  });
 
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -127,6 +62,26 @@ const DashboardPage: React.FC = () => {
     null,
   );
 
+  const {
+    data,
+    loading,
+    hasLoadedOnce,
+    lastSyncTime,
+    isOfflineData,
+    studentProfile,
+    setStudentProfile,
+    fetchData,
+    cancelPendingFetch,
+  } = useDashboardData({
+    sortOrder,
+    dateFrom,
+    dateTo,
+    hideCompleted,
+    onUnauthorized: () => router.push('/login'),
+  });
+
+  const activeStudentProfile = studentProfile ?? fallbackStudentProfile;
+
   const hasCachedData =
     data.courses.length > 0 ||
     data.grades.length > 0 ||
@@ -135,6 +90,17 @@ const DashboardPage: React.FC = () => {
     hasLoadedOnce;
 
   useEffect(() => {
+    try {
+      if (searchParams.get('demo') === 'true' && !isLoggedIn()) {
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('accessToken', 'demo-token');
+        localStorage.setItem('moodleToken', 'demo-token');
+        localStorage.setItem('isDemo', 'true');
+      }
+    } catch {
+      // Ignore storage errors
+    }
+
     if (!isLoggedIn()) {
       router.push('/login');
 
@@ -144,15 +110,18 @@ const DashboardPage: React.FC = () => {
     const savedUser = localStorage.getItem('username');
 
     if (savedUser && savedUser !== fallbackStudentProfile.fullName) {
-      setStudentProfile({
-        ...fallbackStudentProfile,
-        fullName: savedUser,
-        email: savedUser.includes('@') ? savedUser : `${savedUser}@karazin.ua`,
-      });
+      setStudentProfile(
+        (previousProfile) =>
+          previousProfile ?? {
+            ...fallbackStudentProfile,
+            fullName: savedUser,
+            email: savedUser.includes('@') ? savedUser : `${savedUser}@karazin.ua`,
+          },
+      );
     }
 
     checkIn();
-  }, [checkIn, router]);
+  }, [checkIn, router, searchParams, setStudentProfile]);
 
   useEffect(() => {
     const requestedTab = searchParams.get('tab');
@@ -167,81 +136,10 @@ const DashboardPage: React.FC = () => {
       return;
     }
 
-    let cancelled = false;
-
-    const fetchData = async () => {
-      setLoading(true);
-
-      try {
-        const params: Record<string, string | number | boolean> = {
-          sortByDate: sortOrder,
-          includeStatus: true,
-        };
-        const fromTimestamp = parseDateFilterSeconds(dateFrom);
-        const toTimestamp = parseDateFilterSeconds(dateTo);
-
-        if (fromTimestamp !== null) {
-          params.dateFrom = fromTimestamp;
-        }
-
-        if (toTimestamp !== null) {
-          params.dateTo = toTimestamp;
-        }
-
-        if (hideCompleted) {
-          params.status = 'not_completed';
-        }
-
-        const [coursesRes, gradesRes, assignmentsRes, eventsRes, notificationsRes, statsRes] =
-          await Promise.all([
-            moodleApi.getCourses(),
-            moodleApi.getGrades(),
-            moodleApi.getAssignments(params),
-            moodleApi.getEvents(),
-            moodleApi.getNotifications(),
-            moodleApi.getStatistics(),
-          ]);
-
-        if (cancelled) return;
-
-        setData({
-          courses: Array.isArray(coursesRes?.data) ? coursesRes.data : [],
-          grades: resolveGradesResponse(gradesRes),
-          assignments: Array.isArray(assignmentsRes?.data) ? assignmentsRes.data : [],
-          events: Array.isArray(eventsRes?.data) ? eventsRes.data : [],
-          notifications: Array.isArray(notificationsRes?.data?.notifications)
-            ? notificationsRes.data.notifications
-            : [],
-          unreadCount: notificationsRes?.data?.unreadCount || 0,
-          statistics: statsRes?.data || null,
-        });
-        setHasLoadedOnce(true);
-      } catch (error) {
-        if (cancelled) return;
-
-        if (error instanceof Error && error.message.includes('401')) {
-          localStorage.removeItem('isLoggedIn');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('moodleToken');
-          toast.error(formatMessage('dashboard.sessionExpired'));
-          router.push('/login');
-
-          return;
-        }
-
-        console.error(error);
-        toast.error(formatMessage('dashboard.loadError'));
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
     void fetchData();
 
     return () => {
-      cancelled = true;
+      cancelPendingFetch();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router, sortOrder, dateFrom, dateTo, hideCompleted]);
@@ -255,7 +153,7 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
+    clearUserSessionStorage();
     router.push('/login');
   };
 
@@ -353,10 +251,42 @@ const DashboardPage: React.FC = () => {
             <h2 className={styles.pageTitle}>{formatMessage(PAGE_TITLE_KEYS[activeKey])}</h2>
             {loading && hasCachedData && (
               <div className={styles.pageUpdatingIndicator} role="status" aria-live="polite">
-                <Spinner size="small" tip="Оновлення..." />
+                <Spinner size="small" tip={formatMessage('dashboard.updating')} />
               </div>
             )}
+            <div className={styles.syncActions}>
+              {lastSyncTime && (
+                <span className={styles.lastSyncText}>
+                  {formatMessage('dashboard.dataUpdated')}: {formatLastSync(lastSyncTime)}
+                </span>
+              )}
+              <Button
+                type="button"
+                variant="secondary"
+                size="small"
+                onClick={() => fetchData(true)}
+                disabled={loading}
+                aria-label={formatMessage('dashboard.refreshData')}
+                className={styles.refreshBtn}
+              >
+                <RotateCw size={14} className={clsx(styles.refreshIcon, loading && styles.spin)} />
+                <span>{formatMessage('dashboard.refresh')}</span>
+              </Button>
+            </div>
           </div>
+
+          {isOfflineData && (
+            <div className={styles.offlineBanner} role="alert">
+              <AlertCircle size={16} className={styles.offlineIcon} />
+              <span>
+                {formatMessage('dashboard.offlineWarning')}
+                {lastSyncTime
+                  ? ` ${formatMessage('dashboard.offlineFrom')} ${formatLastSync(lastSyncTime)}`
+                  : ''}
+                .
+              </span>
+            </div>
+          )}
           {loading && !hasCachedData ? (
             <DashboardSkeleton />
           ) : (
