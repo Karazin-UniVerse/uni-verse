@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
 import { spawn } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -48,7 +49,7 @@ const DATABASE_OPTIONS = {
   },
   stage: {
     name: 'Remote Stage PostgreSQL (stage-db on Northflank)',
-    url: 'postgresql://_384ba963925defa3:_c9be7ea2af9ed6af166bd6f63816d9@primary.stage-db--4y9d57mwx2gx.addon.code.run:5432/_7a1e7a197e94?sslmode=require&schema=public',
+    url: process.env.STAGE_DATABASE_URL || '',
   },
 };
 
@@ -79,6 +80,7 @@ async function runCommand(command, args) {
 
 function updateEnvFile(filePath, updates) {
   let content = '';
+
   if (existsSync(filePath)) {
     content = readFileSync(filePath, 'utf-8');
   } else if (existsSync(ROOT_ENV_EXAMPLE)) {
@@ -88,6 +90,7 @@ function updateEnvFile(filePath, updates) {
   for (const [key, value] of Object.entries(updates)) {
     const regex = new RegExp(`^${key}=.*$`, 'm');
     const line = `${key}="${value}"`;
+
     if (regex.test(content)) {
       content = content.replace(regex, line);
     } else {
@@ -132,8 +135,8 @@ async function main() {
       `      ${c.dim}Runs NestJS API locally (requires database).${c.reset}`,
     );
 
-    let backendChoice = await rl.question(`\nSelect backend [1-3] (default: 1): `);
-    backendChoice = backendChoice.trim() || '1';
+    const backendAnswer = await rl.question(`\nSelect backend [1-3] (default: 1): `);
+    const backendChoice = backendAnswer.trim() || '1';
 
     let selectedBackend;
     let isLocalBackend = false;
@@ -166,13 +169,25 @@ async function main() {
         `  ${c.magenta}[3] Custom PostgreSQL Connection String${c.reset}`,
       );
 
-      let dbChoice = await rl.question(`\nSelect database [1-3] (default: 1): `);
-      dbChoice = dbChoice.trim() || '1';
+      const dbAnswer = await rl.question(`\nSelect database [1-3] (default: 1): `);
+      const dbChoice = dbAnswer.trim() || '1';
 
       if (dbChoice === '2') {
-        selectedDbUrl = DATABASE_OPTIONS.stage.url;
+        if (DATABASE_OPTIONS.stage.url) {
+          selectedDbUrl = DATABASE_OPTIONS.stage.url;
+        } else {
+          console.log(
+            `\n${c.yellow}Notice: STAGE_DATABASE_URL environment variable is not set.${c.reset}`,
+          );
+          const enteredUrl = await rl.question(
+            'Enter Remote Stage DATABASE_URL (ask Project Coordinator): ',
+          );
+
+          selectedDbUrl = enteredUrl.trim() || DATABASE_OPTIONS.local.url;
+        }
       } else if (dbChoice === '3') {
         const customUrl = await rl.question(`Enter DATABASE_URL: `);
+
         selectedDbUrl = customUrl.trim() || DATABASE_OPTIONS.local.url;
       } else {
         selectedDbUrl = DATABASE_OPTIONS.local.url;
@@ -214,11 +229,12 @@ async function main() {
       const runMigrate = await rl.question(
         `\n${c.bold}Push schema to database ('pnpm db:migrate')?${c.reset} (Y/n): `,
       );
+
       if (runMigrate.trim().toLowerCase() !== 'n') {
         try {
           await runCommand('pnpm', ['db:migrate']);
           console.log(`${c.green}✔ Database schema synced successfully.${c.reset}`);
-        } catch (dbErr) {
+        } catch {
           console.log(`${c.yellow}⚠ Notice: Could not sync database. Ensure PostgreSQL is running.${c.reset}`);
         }
       }
@@ -238,6 +254,7 @@ async function main() {
 
     if (launchAnswer.trim().toLowerCase() !== 'n') {
       rl.close();
+
       if (isLocalBackend) {
         console.log(`\n${c.green}Starting fullstack workspace (Turborepo)...${c.reset}`);
         await runCommand('pnpm', ['dev']);
@@ -245,16 +262,19 @@ async function main() {
         console.log(`\n${c.green}Starting UniHub frontend (pointing to ${selectedBackend.url})...${c.reset}`);
         await runCommand('pnpm', ['--filter', '@universe/uni-hub', 'dev']);
       }
+
       return;
     }
 
     console.log(`\n${c.green}Configuration saved!${c.reset}`);
+
     if (isLocalBackend) {
       console.log(`To start manually, run: ${c.bold}pnpm dev${c.reset}`);
     } else {
       console.log(`To start frontend, run: ${c.bold}pnpm --filter @universe/uni-hub dev${c.reset}`);
     }
   } catch (error) {
+    process.exitCode = 1;
     console.error(`\n${c.red}Error: ${error instanceof Error ? error.message : String(error)}${c.reset}`);
   } finally {
     rl.close();
