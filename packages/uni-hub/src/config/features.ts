@@ -28,8 +28,6 @@ export interface FeatureFlags {
     google: boolean;
     /** Moodle credentials login (username + password) */
     moodle: boolean;
-    /** Local username/password credentials */
-    credentials: boolean;
   };
 }
 
@@ -50,7 +48,6 @@ export const features: FeatureFlags = {
       Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID),
     ),
     moodle: parseEnvBoolean(process.env.NEXT_PUBLIC_AUTH_MOODLE_ENABLED, true),
-    credentials: parseEnvBoolean(process.env.NEXT_PUBLIC_AUTH_CREDENTIALS_ENABLED, true),
   },
 };
 

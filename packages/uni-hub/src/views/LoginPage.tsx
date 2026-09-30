@@ -60,11 +60,25 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const handleGoogleSuccess = (idToken: string) => {
-    toast.success('Авторизація через Google успішна');
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('googleIdToken', idToken);
-    router.push('/');
+  const handleGoogleSuccess = async (idToken: string) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      await authApi.loginWithGoogle(idToken);
+
+      toast.success('Авторизація через Google успішна');
+      router.push('/');
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        'Помилка авторизації Google';
+
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isMoodleAuth = features.auth.moodle;

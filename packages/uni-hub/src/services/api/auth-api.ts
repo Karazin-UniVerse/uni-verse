@@ -16,6 +16,20 @@ export class AuthApi {
     return response;
   }
 
+  async loginWithGoogle(idToken: string): Promise<{ data: AuthResponse }> {
+    const response = await request<AuthResponse>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken }),
+    });
+
+    if (response.data?.access_token) {
+      localStorage.setItem('accessToken', response.data.access_token);
+      localStorage.setItem('isLoggedIn', 'true');
+    }
+
+    return response;
+  }
+
   async logout(): Promise<void> {
     try {
       await request('/auth/logout', { method: 'POST' });

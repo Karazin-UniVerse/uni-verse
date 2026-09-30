@@ -87,7 +87,24 @@ const NAV_KEYS = new Set<NavKey>([
   'opportunities',
 ]);
 
-const isNavKey = (value: string): value is NavKey => NAV_KEYS.has(value as NavKey);
+const isNavKey = (value: string): value is NavKey => {
+  if (!NAV_KEYS.has(value as NavKey)) {
+    return false;
+  }
+
+  if (value === 'opportunities' && !features.opportunities) {
+    return false;
+  }
+
+  if (
+    !features.moodle &&
+    (value === 'courses' || value === 'grades' || value === 'assignments')
+  ) {
+    return false;
+  }
+
+  return true;
+};
 
 const cardMotion = {
   whileHover: { scale: 1.02, y: -2 },
@@ -786,6 +803,10 @@ const DashboardPage: React.FC = () => {
   );
 
   const renderActiveContent = () => {
+    if (!isNavKey(activeKey)) {
+      return renderOverview();
+    }
+
     switch (activeKey) {
       case 'overview':
         return renderOverview();

@@ -64,6 +64,24 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
     }
   }, [scriptLoaded, clientId]);
 
+  const handleFallbackClick = () => {
+    if (!clientId) {
+      onErrorRef.current?.('Google SSO не налаштовано: відсутній NEXT_PUBLIC_GOOGLE_CLIENT_ID');
+
+      return;
+    }
+
+    if (!scriptLoaded || !window.google?.accounts?.id) {
+      onErrorRef.current?.('Сервіс авторизації Google завантажується, будь ласка, зачекайте');
+
+      return;
+    }
+  };
+
+  if (!clientId) {
+    return null;
+  }
+
   return (
     <div className={styles.wrapper}>
       <Script
@@ -73,10 +91,12 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
       />
       <div className={styles.fallbackButtonWrap}>
         <Button
+          type="button"
           variant="secondary"
           size="large"
           className={styles.fallbackButton}
           disabled={disabled}
+          onClick={handleFallbackClick}
         >
           <svg className={styles.googleIcon} viewBox="0 0 24 24" width="18" height="18">
             <path
