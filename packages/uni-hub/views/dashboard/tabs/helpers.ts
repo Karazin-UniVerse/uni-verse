@@ -32,17 +32,14 @@ export function getAssignmentStatusInfo({
     return { tone: 'info', label: 'В процесі' };
   }
 
-  const isCompleted = isGraded;
-  const overdue = isAwaitingReview;
-
-  if (isCompleted) {
+  if (isGraded) {
     return {
       tone: 'success',
       label: status === 'graded' ? 'Оцінено' : 'Здано на перевірку',
     };
   }
 
-  if (overdue) {
+  if (isAwaitingReview) {
     return { tone: 'danger', label: 'Прострочено' };
   }
 
