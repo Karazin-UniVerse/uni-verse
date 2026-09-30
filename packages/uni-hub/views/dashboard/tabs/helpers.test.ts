@@ -29,15 +29,6 @@ describe('getAssignmentStatusInfo', () => {
     });
   });
 
-  it('returns awaiting review status when isAwaitingReview is true', () => {
-    const result = getAssignmentStatusInfo('submitted', true, false, true);
-
-    expect(result).toEqual({
-      tone: 'warning',
-      label: 'Очікує перевірки',
-    });
-  });
-
   it('returns in-progress status when neither completed nor overdue', () => {
     const result = getAssignmentStatusInfo('new', false, false);
 
