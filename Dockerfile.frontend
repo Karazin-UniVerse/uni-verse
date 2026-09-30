@@ -22,6 +22,8 @@ ENV NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=$NEXT_PUBLIC_AUTH_GOOGLE_ENABLED
 ARG NEXT_PUBLIC_AUTH_MOODLE_ENABLED
 ENV NEXT_PUBLIC_AUTH_MOODLE_ENABLED=$NEXT_PUBLIC_AUTH_MOODLE_ENABLED
 RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @universe/ui build-storybook
+RUN cp -r packages/ui/storybook-static packages/uni-hub/public/storybook
 RUN pnpm --filter @universe/uni-hub build
 
 FROM base AS runner
