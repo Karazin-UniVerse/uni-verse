@@ -77,7 +77,7 @@ type NavKey =
   | 'events'
   | 'opportunities';
 
-const NAV_KEYS: NavKey[] = [
+const NAV_KEYS = new Set<NavKey>([
   'overview',
   'courses',
   'grades',
@@ -85,9 +85,9 @@ const NAV_KEYS: NavKey[] = [
   'schedule',
   'events',
   'opportunities',
-];
+]);
 
-const isNavKey = (value: string): value is NavKey => NAV_KEYS.includes(value as NavKey);
+const isNavKey = (value: string): value is NavKey => NAV_KEYS.has(value as NavKey);
 
 const cardMotion = {
   whileHover: { scale: 1.02, y: -2 },

@@ -70,6 +70,20 @@ const LoginPage: React.FC = () => {
   const isMoodleAuth = features.auth.moodle;
   const isGoogleAuth = features.auth.google;
 
+  const getLoginSubtitle = (): string => {
+    if (isMoodleAuth && isGoogleAuth) {
+      return 'Оберіть зручний спосіб входу';
+    }
+
+    if (isGoogleAuth) {
+      return 'Вхід через корпоративний Google акаунт';
+    }
+
+    return 'Увійдіть у свій акаунт Moodle';
+  };
+
+  const loginSubtitle = getLoginSubtitle();
+
   return (
     <div className={styles.page}>
       <div className={styles.themeBar}>
@@ -79,13 +93,7 @@ const LoginPage: React.FC = () => {
         <SimpleForm variant="card" className={styles.card} action={handleLogin}>
           <div className={styles.brand}>
             <h1>UNiVerse</h1>
-            <p>
-              {isMoodleAuth && isGoogleAuth
-                ? 'Оберіть зручний спосіб входу'
-                : isGoogleAuth
-                  ? 'Вхід через корпоративний Google акаунт'
-                  : 'Увійдіть у свій акаунт Moodle'}
-            </p>
+            <p>{loginSubtitle}</p>
           </div>
 
           {isMoodleAuth && (
