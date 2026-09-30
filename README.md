@@ -44,7 +44,31 @@ Ensure the following tools are installed on your system:
 
 ## Quickstart: Step-by-Step Setup & Running
 
-### 1. Clone Repository & Install Dependencies
+### ⚡ Interactive Setup Wizard (Develop & Staging)
+
+The fastest way to configure your local development environment is using the interactive CLI wizard (available on `develop` and `staging` branches):
+
+```bash
+pnpm dev:select
+# or
+pnpm dev:setup
+```
+
+The wizard guides you through your configuration:
+
+1. **Install Dependencies**: automatically runs `pnpm install`.
+2. **Backend Selection**:
+   - **Remote Develop API** (`https://p01--backend-stage--djrwwgsr7dmx.code.run`) — **Recommended for Frontend Developers**. Develop UI with live cloud backend and test Moodle data without needing local PostgreSQL or NestJS running!
+   - **Remote Staging API** (`https://p01--backend-stage--4y9d57mwx2gx.code.run`) — Connects to staging cloud deployment.
+   - **Local Backend** (`http://localhost:3001`) — For fullstack developers working on NestJS and API endpoints.
+3. **Database Selection** (if Local Backend): configure local PostgreSQL or custom connection string, and automatically runs Prisma client generation.
+4. **Instant Launch**: automatically starts your development servers.
+
+---
+
+### Manual Setup (Step-by-Step)
+
+#### 1. Clone Repository & Install Dependencies
 
 ```bash
 git clone https://github.com/Karazin-UniVerse/uni-verse.git
@@ -52,7 +76,7 @@ cd uni-verse
 pnpm install
 ```
 
-### 2. Environment Configuration
+#### 2. Environment Configuration
 
 Copy the sample environment file to `.env`:
 
@@ -84,7 +108,7 @@ If developing packages independently:
   # Windows:     Copy-Item packages/backend/.env.example packages/backend/.env
   ```
 
-### 3. Initialize Database & Generate Prisma Client (Fullstack only)
+#### 3. Initialize Database & Generate Prisma Client (Fullstack only)
 
 If developing the backend locally, make sure PostgreSQL is running, then generate the client and push database schema:
 
@@ -103,7 +127,7 @@ pnpm db:studio
 # Opens at http://localhost:5555
 ```
 
-### 4. Run the Development Servers
+#### 4. Run the Development Servers
 
 Run the entire monorepo concurrently via Turborepo:
 
@@ -126,7 +150,7 @@ pnpm --filter @universe/ui storybook
 
 > ⚠️ **Important on Authentication:** UniVerse user authentication delegates directly to Moodle LMS (`https://moodle.universemvp.tech`). Password validation is performed against Moodle, NOT arbitrary local database rows. To log in during development, you must use valid credentials from the test Moodle instance (ask the Project Coordinator for test credentials).
 
-### 5. Access the Applications
+#### 5. Access the Applications
 
 - **UniHub Web Portal**: [http://localhost:3000](http://localhost:3000)
 - **Backend API Gateway**: [http://localhost:3001](http://localhost:3001)
