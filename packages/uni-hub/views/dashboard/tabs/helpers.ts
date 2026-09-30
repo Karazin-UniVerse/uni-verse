@@ -7,42 +7,18 @@ export type AssignmentStatusInfo = {
 
 export type AssignmentStatusInfoParams = {
   status: string;
-  isGraded?: boolean;
-  isAwaitingReview?: boolean;
+  isGraded: boolean;
+  isAwaitingReview: boolean;
   isOverdue?: boolean;
-  isGradedOrCompleted?: boolean;
-  isAwaitingOrOverdue?: boolean;
 };
 
-export function getAssignmentStatusInfo(
-  paramsOrStatus: string | AssignmentStatusInfoParams,
-  arg2?: boolean,
-  arg3?: boolean,
-  arg4?: boolean,
-): AssignmentStatusInfo {
-  let status: string;
-  let isGradedOrCompleted: boolean;
-  let isAwaitingOrOverdue: boolean;
-  let isOverdue: boolean | undefined;
-
-  if (typeof paramsOrStatus === 'object') {
-    status = paramsOrStatus.status;
-    isGradedOrCompleted = Boolean(paramsOrStatus.isGraded ?? paramsOrStatus.isGradedOrCompleted);
-    isAwaitingOrOverdue = Boolean(
-      paramsOrStatus.isAwaitingReview ?? paramsOrStatus.isAwaitingOrOverdue,
-    );
-    isOverdue = paramsOrStatus.isOverdue;
-  } else {
-    status = paramsOrStatus;
-    isGradedOrCompleted = Boolean(arg2);
-    isAwaitingOrOverdue = Boolean(arg3);
-    isOverdue = arg4;
-  }
-
+export function getAssignmentStatusInfo({
+  status,
+  isGraded,
+  isAwaitingReview,
+  isOverdue,
+}: AssignmentStatusInfoParams): AssignmentStatusInfo {
   if (typeof isOverdue === 'boolean') {
-    const isGraded = isGradedOrCompleted;
-    const isAwaitingReview = isAwaitingOrOverdue;
-
     if (isGraded) {
       return { tone: 'success', label: 'Оцінено' };
     }
@@ -58,8 +34,8 @@ export function getAssignmentStatusInfo(
     return { tone: 'info', label: 'В процесі' };
   }
 
-  const isCompleted = isGradedOrCompleted;
-  const overdue = isAwaitingOrOverdue;
+  const isCompleted = isGraded;
+  const overdue = isAwaitingReview;
 
   if (isCompleted) {
     return {
