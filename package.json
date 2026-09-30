@@ -4,6 +4,8 @@
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev": "turbo dev",
+    "dev:select": "node scripts/dev.mjs",
+    "setup": "node scripts/dev.mjs",
     "build": "turbo build",
     "lint": "oxlint --deny-warnings",
     "lint:ox": "oxlint --deny-warnings",

@@ -44,7 +44,31 @@ Ensure the following tools are installed on your system:
 
 ## Quickstart: Step-by-Step Setup & Running
 
-### 1. Clone Repository & Install Dependencies
+### ⚡ Recommended: Interactive Setup Wizard
+
+The fastest way to configure your local environment is using the interactive CLI wizard:
+
+```bash
+pnpm setup
+# or
+pnpm dev:select
+```
+
+The wizard prompts you for your workflow:
+
+1. **Dependencies**: automatically runs `pnpm install`.
+2. **Backend Selection**:
+   - **Remote Develop API** (`https://p01--backend-stage--djrwwgsr7dmx.code.run`) — **Recommended for Frontend Developers**. No local backend or database required!
+   - **Remote Staging API** (`https://p01--backend-stage--4y9d57mwx2gx.code.run`) — Connects to staging.
+   - **Local Backend** (`http://localhost:3001`) — For fullstack/backend developers.
+3. **Database Selection** (if Local Backend): choose local PostgreSQL or remote staging database, and automatically runs Prisma client generation.
+4. **Instant Launch**: starts your dev server immediately.
+
+---
+
+### Manual Setup (Step-by-Step)
+
+#### 1. Clone Repository & Install Dependencies
 
 ```bash
 git clone https://github.com/Karazin-UniVerse/uni-verse.git
@@ -52,7 +76,7 @@ cd uni-verse
 pnpm install
 ```
 
-### 2. Environment Configuration
+#### 2. Environment Configuration
 
 Copy the sample environment file to `.env`:
 
@@ -70,20 +94,24 @@ All standard configuration variables and local development defaults (ports, loca
 
 If developing packages independently:
 
-- **Backend (`packages/backend`)**: Optionally copy `.env.example` to `packages/backend/.env`:
-  ```bash
-  # Linux/macOS: cp .env.example packages/backend/.env
-  # Windows:     Copy-Item .env.example packages/backend/.env
-  ```
 - **Frontend (`packages/uni-hub`)**: Optionally copy `packages/uni-hub/.env.example` to `packages/uni-hub/.env.local`:
+
   ```bash
   # Linux/macOS: cp packages/uni-hub/.env.example packages/uni-hub/.env.local
   # Windows:     Copy-Item packages/uni-hub/.env.example packages/uni-hub/.env.local
   ```
 
-### 3. Initialize Database & Generate Prisma Client
+  > **Tip for Frontend Developers:** Set `NEXT_PUBLIC_API_URL="https://p01--backend-stage--djrwwgsr7dmx.code.run"` in `packages/uni-hub/.env.local` to develop the UI without needing local PostgreSQL or NestJS running!
 
-Make sure PostgreSQL is running, then generate the client and push database schema:
+- **Backend (`packages/backend`)**: Optionally copy `.env.example` to `packages/backend/.env`:
+  ```bash
+  # Linux/macOS: cp .env.example packages/backend/.env
+  # Windows:     Copy-Item .env.example packages/backend/.env
+  ```
+
+#### 3. Initialize Database & Generate Prisma Client (Fullstack only)
+
+If developing the backend locally, make sure PostgreSQL is running, then generate the client and push database schema:
 
 ```bash
 # Generate Prisma Client
@@ -100,7 +128,7 @@ pnpm db:studio
 # Opens at http://localhost:5555
 ```
 
-### 4. Run the Development Servers
+#### 4. Run the Development Servers
 
 Run the entire monorepo concurrently via Turborepo:
 
@@ -111,12 +139,14 @@ pnpm dev
 Or run packages independently:
 
 ```bash
-# Start NestJS backend only (http://localhost:3001)
-pnpm --filter @universe/backend start:dev
-
 # Start UniHub Next.js frontend only (http://localhost:3000)
 pnpm --filter @universe/uni-hub dev
+
+# Start NestJS backend only (http://localhost:3001)
+pnpm --filter @universe/backend start:dev
 ```
+
+> ⚠️ **Important on Authentication:** UniVerse user authentication delegates directly to Moodle LMS (`https://moodle.universemvp.tech`). Password validation is performed against Moodle, NOT arbitrary local database rows. To log in during development, you must use valid credentials from the test Moodle instance (ask the Project Coordinator for test credentials).
 
 ### 5. Access the Applications
 
