@@ -64,41 +64,22 @@ cp .env.example .env
 Copy-Item .env.example .env
 ```
 
-Ensure the key environment variables in `.env` are configured:
+All standard configuration variables and local development defaults (ports, local database connection, Moodle LMS endpoints, development JWT secrets) are pre-configured in `.env.example`.
 
-```ini
-# Backend API Port & Node Environment
-PORT=3001
-NODE_ENV=development
+> **Note:** For private or institutional credentials (such as Google OAuth Client ID & Secret, or staging/production JWT secrets), please ask the **Project Coordinator**.
 
-# Database Connection (PostgreSQL)
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/universe?schema=public"
+If developing packages independently:
 
-# JWT Authentication Secrets (Must be random strings in production)
-AT_SECRET="your-access-token-secret-key-at-least-32-chars"
-RT_SECRET="your-refresh-token-secret-key-at-least-32-chars"
-
-# Moodle LMS Integration
-MOODLE_BASEURL="https://moodle.universemvp.tech"
-MOODLE_TIMEOUT=15000
-
-# CORS / Frontend origin
-FRONTEND_URL="http://localhost:3000"
-
-# Google OAuth 2.0 & Corporate Domain Restriction
-GOOGLE_CLIENT_ID="your-google-oauth-client-id.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
-NEXT_PUBLIC_GOOGLE_CLIENT_ID="your-google-oauth-client-id.apps.googleusercontent.com"
-GOOGLE_ALLOWED_DOMAINS="karazin.ua,student.karazin.ua"
-```
-
-For the frontend package (`packages/uni-hub`), ensure `packages/uni-hub/.env.local` contains:
-
-```ini
-PORT=3000
-NEXT_PUBLIC_API_URL=http://localhost:3001
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
-```
+- **Backend (`packages/backend`)**: Optionally copy `.env.example` to `packages/backend/.env`:
+  ```bash
+  # Linux/macOS: cp .env.example packages/backend/.env
+  # Windows:     Copy-Item .env.example packages/backend/.env
+  ```
+- **Frontend (`packages/uni-hub`)**: Optionally copy `packages/uni-hub/.env.example` to `packages/uni-hub/.env.local`:
+  ```bash
+  # Linux/macOS: cp packages/uni-hub/.env.example packages/uni-hub/.env.local
+  # Windows:     Copy-Item packages/uni-hub/.env.example packages/uni-hub/.env.local
+  ```
 
 ### 3. Initialize Database & Generate Prisma Client
 
