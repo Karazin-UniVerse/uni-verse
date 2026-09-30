@@ -78,7 +78,7 @@ If developing packages independently:
 
   > **Tip for Frontend Developers:** Set `NEXT_PUBLIC_API_URL="https://p01--backend-stage--djrwwgsr7dmx.code.run"` in `packages/uni-hub/.env.local` to develop the UI without needing local PostgreSQL or NestJS running!
 
-- **Backend (`packages/backend`)**: Optionally copy `packages/backend/.env.example` to `packages/backend/.env`:
+- **Backend (`packages/backend`)**: Copy `packages/backend/.env.example` to `packages/backend/.env` before running backend or database commands:
   ```bash
   # Linux/macOS: cp packages/backend/.env.example packages/backend/.env
   # Windows:     Copy-Item packages/backend/.env.example packages/backend/.env
@@ -99,7 +99,7 @@ pnpm db:migrate
 _(Optional)_ Launch Prisma Studio Web GUI to inspect local database records:
 
 ```bash
-pnpm --filter @universe/backend exec prisma studio
+pnpm db:studio
 # Opens at http://localhost:5555
 ```
 
@@ -167,10 +167,10 @@ pnpm format
 # Strict TypeScript type check across all packages
 pnpm typecheck
 
-# Run backend unit tests with code coverage (100% threshold on new code)
+# Run backend unit tests with code coverage
 pnpm --filter @universe/backend test:cov
 
-# Run all tests across the monorepo
+# Run configured package tests across the monorepo
 pnpm test
 
 # Production build across all packages
@@ -184,8 +184,8 @@ pnpm build
 | Layer               | Technologies                                                                                                                 |
 | :------------------ | :--------------------------------------------------------------------------------------------------------------------------- |
 | **Frontend**        | [Next.js 16](https://nextjs.org/) (Turbopack, App Router), [React 19](https://react.dev/), Sass / CSS Modules                |
-| **Backend**         | [NestJS](https://nestjs.com/), Node.js 24, `@nestjs/jwt`, `google-auth-library`                                              |
-| **Database & ORM**  | [PostgreSQL 16](https://www.postgresql.org/), [Prisma ORM 7](https://www.prisma.io/)                                         |
+| **Backend**         | [NestJS](https://nestjs.com/), Node.js 24, `@nestjs/jwt`, Passport                                                           |
+| **Database & ORM**  | [PostgreSQL 16](https://www.postgresql.org/), [Prisma ORM 5](https://www.prisma.io/)                                         |
 | **Design System**   | `@universe/ui` (Una UI, custom SCSS design tokens, responsive mixins)                                                        |
 | **LMS Integration** | [Moodle REST Web Services](https://docs.moodle.org/dev/Web_services)                                                         |
 | **Tooling & CI/CD** | [Turborepo](https://turbo.build/), [pnpm](https://pnpm.io/), [Oxlint](https://oxc.rs/), [SonarCloud](https://sonarcloud.io/) |
