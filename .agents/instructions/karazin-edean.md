@@ -56,6 +56,34 @@ uni-verse/
    - ❌ Incorrect: `function getStatusInfo(status: string, isGraded: boolean, isAwaitingReview: boolean, isOverdue?: boolean)`
    - Define a named `type` or `interface` for the object parameter shape.
 
+7. **Component Decomposition (Subcomponents & Custom Hooks)**:
+   - **Decompose large and complex components**: Components growing beyond ~150-200 lines or containing multiple distinct UI sections (e.g. cards, grids, event lists, forms) MUST be split into dedicated subcomponents.
+     - Examples: `OverviewTab` decomposed into `StudentCard`, `StatCardGrid`, and `UpcomingEventsList`; `DeanContactModal` decomposed into `DeanContactInfo` and `DeanTopicChips`.
+   - **Extract complex logic into custom hooks**: Extract data fetching, localStorage caching, lifecycle synchronization, and event listeners out of UI components into dedicated custom hooks (e.g. `useDashboardData`, `useAssignmentStatuses`).
+   - Keep page and tab components thin, declarative, and focused solely on layout composition.
+
+8. **Helper Functions & Utilities Placement (`helpers.ts` & `@universe/core`)**:
+   - **Extract helpers from components and hooks**: Pure functions, calculations, date formatting, score tone mappers, and regex matchers MUST NOT reside inline inside React components or hooks. Extract them into co-located `helpers.ts` files with corresponding unit tests in `helpers.test.ts`.
+   - **Shared helpers go to `@universe/core`**: If a function or utility is intended for general/cross-package use (e.g., grade accumulation algorithms, date calculations, browser checks), place it in `@universe/core/utils/` or `@universe/core/constants/`.
+   - **Backend DTO helpers**: Never keep utility functions (e.g., query string transformers, boolean parsers) inside DTO files. Always extract them to a companion `<module>.helpers.ts` file.
+   - **No Redundant Variable Aliases**: Do not re-assign variables solely for naming convenience (e.g., `const isCompleted = isGraded; const overdue = isAwaitingReview;`). Use canonical variable names directly.
+
+9. **Strict UI Localization via Translation Keys (i18n)**:
+   - **Zero hardcoded text in UI**: ALL user-facing text (titles, descriptions, badges, button labels, tooltips, placeholders, toast notifications, aria-labels) MUST be retrieved using translation keys via `useLanguage().formatMessage('key')`.
+   - **Bilingual synchronization**: Every new translation key MUST be added to BOTH `packages/uni-hub/i18n/locales/uk.ts` and `packages/uni-hub/i18n/locales/en.ts` to satisfy `Record<TranslationKey, string>`.
+   - **Language-agnostic UI library (`@universe/ui`)**: Shared design system components must not have hardcoded Ukrainian or English text. Accept accessible labels via props (e.g., `closeLabel?: string`) and supply localized values from the consumer.
+
+10. **Incorporating GitHub PR Review Feedback**:
+    - **Reviewer comments are project law**: All patterns, critiques, and preferences established by code reviewers (e.g., `iamredl-lab`) on GitHub Pull Requests must be strictly observed as core codebase standards.
+    - **Proactive prevention**: When generating or reviewing code, proactively check for and prevent all previously flagged review issues:
+      - ❌ No component aliases like `Button as SimpleButton`.
+      - ❌ No redundant aliases for types, variables, or functions.
+      - ❌ No functions with >3 positional parameters.
+      - ❌ No inline helpers inside components or DTO files.
+      - ❌ No monolithic components without subcomponents or custom hooks.
+      - ❌ No hardcoded UI strings without i18n translation keys.
+
+
 
 ---
 
