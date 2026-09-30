@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Spinner, useToast } from '@una';
+import clsx from 'clsx';
+import { RotateCw, AlertCircle } from 'lucide-react';
+import { Button as UnaButton, Spinner, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
 import { isLoggedIn } from '@core/auth';
 import type { StudentProfile } from '@core/types';
-import type { Grade, CourseModule } from '@uni-hub/types';
+import type { Grade, CourseModule, Assignment } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
 import { DashboardSkeleton, MobileBottomNav } from '@uni-hub/components/dashboard';
 import { BadgeSystem, GradeSimulator } from '@uni-hub/components/gamification';
@@ -25,6 +27,7 @@ import {
   GradesTab,
   AssignmentsTab,
 } from './dashboard';
+import { formatLastSync } from './dashboard/tabs/helpers';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './DashboardPage.module.scss';
@@ -88,6 +91,137 @@ function resolveGradesResponse(gradesResponse?: GradesApiResponse | null): Grade
 
   return [];
 }
+
+type MoodleApiResponseTuple = [
+  Awaited<ReturnType<typeof moodleApi.getCourses>>,
+  Awaited<ReturnType<typeof moodleApi.getGrades>>,
+  Awaited<ReturnType<typeof moodleApi.getAssignments>>,
+  Awaited<ReturnType<typeof moodleApi.getEvents>>,
+  Awaited<ReturnType<typeof moodleApi.getNotifications>>,
+  Awaited<ReturnType<typeof moodleApi.getStatistics>>,
+];
+
+function assembleDashboardData([
+  coursesRes,
+  gradesRes,
+  assignmentsRes,
+  eventsRes,
+  notificationsRes,
+  statsRes,
+]: MoodleApiResponseTuple): DashboardData {
+  return {
+    courses: Array.isArray(coursesRes?.data) ? coursesRes.data : [],
+    grades: resolveGradesResponse(gradesRes),
+    assignments: Array.isArray(assignmentsRes?.data) ? assignmentsRes.data : [],
+    events: Array.isArray(eventsRes?.data) ? eventsRes.data : [],
+    notifications: Array.isArray(notificationsRes?.data?.notifications)
+      ? notificationsRes.data.notifications
+      : [],
+    unreadCount: notificationsRes?.data?.unreadCount || 0,
+    statistics: statsRes?.data || null,
+  };
+}
+
+function buildAssignmentParams(
+  sortOrder: 'asc' | 'desc',
+  dateFrom: string,
+  dateTo: string,
+  hideCompleted: boolean,
+): Record<string, string | number | boolean> {
+  const params: Record<string, string | number | boolean> = {
+    sortByDate: sortOrder,
+    includeStatus: true,
+  };
+  const fromTimestamp = parseDateFilterSeconds(dateFrom);
+  const toTimestamp = parseDateFilterSeconds(dateTo);
+
+  if (fromTimestamp !== null) {
+    params.dateFrom = fromTimestamp;
+  }
+
+  if (toTimestamp !== null) {
+    params.dateTo = toTimestamp;
+  }
+
+  if (hideCompleted) {
+    params.status = 'not_completed';
+  }
+
+  return params;
+}
+
+function loadCachedDashboardData(): Partial<DashboardData> | null {
+  try {
+    const raw = localStorage.getItem('universe_dashboard_data');
+
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<DashboardData>;
+
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistDashboardSnapshot(timestamp: number, freshData: DashboardData): void {
+  try {
+    localStorage.setItem('universe_last_sync_time', String(timestamp));
+    localStorage.setItem('universe_dashboard_data', JSON.stringify(freshData));
+  } catch {
+    // Ignore localStorage quota error
+  }
+}
+
+function isUnauthorizedError(error: unknown): boolean {
+  return error instanceof Error && error.message.includes('401');
+}
+
+function clearUserSessionStorage(): void {
+  try {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('moodleToken');
+    localStorage.removeItem('isDemo');
+    localStorage.removeItem('universe_dashboard_data');
+    localStorage.removeItem('universe_last_sync_time');
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function filterFallbackAssignments(
+  assignments: Assignment[] | undefined,
+  hideCompleted: boolean,
+  dateFrom?: string,
+  dateTo?: string,
+): Assignment[] {
+  let list = assignments ?? [];
+
+  if (hideCompleted) {
+    list = list.filter(
+      (assignment) =>
+        assignment.submissionStatus !== 'graded' && assignment.submissionStatus !== 'submitted',
+    );
+  }
+
+  const fromSec = parseDateFilterSeconds(dateFrom);
+
+  if (fromSec !== null) {
+    list = list.filter((assignment) => assignment.duedate > 0 && assignment.duedate >= fromSec);
+  }
+
+  const toSec = parseDateFilterSeconds(dateTo);
+
+  if (toSec !== null) {
+    list = list.filter((assignment) => assignment.duedate > 0 && assignment.duedate <= toSec);
+  }
+
+  return list;
+}
+
 const DashboardPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -106,6 +240,9 @@ const DashboardPage: React.FC = () => {
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const activeStudentProfile = studentProfile ?? fallbackStudentProfile;
+
+  const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
+  const [isOfflineData, setIsOfflineData] = useState(false);
 
   const [data, setData] = useState<DashboardData>({
     courses: [],
@@ -126,6 +263,7 @@ const DashboardPage: React.FC = () => {
   const [selectedAssignmentModule, setSelectedAssignmentModule] = useState<CourseModule | null>(
     null,
   );
+  const fetchRequestIdRef = useRef(0);
 
   const hasCachedData =
     data.courses.length > 0 ||
@@ -135,6 +273,118 @@ const DashboardPage: React.FC = () => {
     hasLoadedOnce;
 
   useEffect(() => {
+    try {
+      const cachedTime = localStorage.getItem('universe_last_sync_time');
+
+      if (cachedTime) {
+        setLastSyncTime(Number(cachedTime));
+      }
+
+      const cachedData = loadCachedDashboardData();
+
+      if (cachedData) {
+        setData((previous) => ({
+          ...previous,
+          ...cachedData,
+        }));
+        setHasLoadedOnce(true);
+      }
+    } catch {
+      // Ignore cache read errors
+    }
+  }, []);
+
+  const fetchData = async (isManual = false) => {
+    const requestId = ++fetchRequestIdRef.current;
+
+    setLoading(true);
+
+    try {
+      const params = buildAssignmentParams(sortOrder, dateFrom, dateTo, hideCompleted);
+      const responses = await Promise.all([
+        moodleApi.getCourses(),
+        moodleApi.getGrades(),
+        moodleApi.getAssignments(params),
+        moodleApi.getEvents(),
+        moodleApi.getNotifications(),
+        moodleApi.getStatistics(),
+      ]);
+
+      if (requestId !== fetchRequestIdRef.current) {
+        return;
+      }
+
+      const freshData = assembleDashboardData(responses);
+
+      setData(freshData);
+      setHasLoadedOnce(true);
+      setIsOfflineData(false);
+
+      const nowTimestamp = Date.now();
+
+      setLastSyncTime(nowTimestamp);
+      persistDashboardSnapshot(nowTimestamp, freshData);
+
+      if (isManual) {
+        toast.success(formatMessage('dashboard.syncSuccess'));
+      }
+    } catch (error) {
+      if (requestId !== fetchRequestIdRef.current) {
+        return;
+      }
+
+      if (isUnauthorizedError(error)) {
+        clearUserSessionStorage();
+        toast.error(formatMessage('dashboard.sessionExpired'));
+        router.push('/login');
+
+        return;
+      }
+
+      console.error(error);
+
+      const cachedData = loadCachedDashboardData();
+
+      if (cachedData) {
+        const fallbackAssignments = filterFallbackAssignments(
+          cachedData.assignments,
+          hideCompleted,
+          dateFrom,
+          dateTo,
+        );
+
+        setData((previous) => ({
+          ...previous,
+          ...cachedData,
+          assignments: fallbackAssignments,
+        }));
+        setIsOfflineData(true);
+        setHasLoadedOnce(true);
+        toast.info(formatMessage('dashboard.offlineNotice'));
+
+        return;
+      }
+
+      toast.error(formatMessage('dashboard.loadError'));
+    } finally {
+      if (requestId === fetchRequestIdRef.current) {
+        setLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    try {
+      if (searchParams.get('demo') === 'true' && !isLoggedIn()) {
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('accessToken', 'demo-token');
+        localStorage.setItem('moodleToken', 'demo-token');
+        localStorage.setItem('isDemo', 'true');
+      }
+    } catch {
+      // Ignore storage errors
+    }
+
     if (!isLoggedIn()) {
       router.push('/login');
 
@@ -152,7 +402,7 @@ const DashboardPage: React.FC = () => {
     }
 
     checkIn();
-  }, [checkIn, router]);
+  }, [checkIn, router, searchParams]);
 
   useEffect(() => {
     const requestedTab = searchParams.get('tab');
@@ -167,81 +417,10 @@ const DashboardPage: React.FC = () => {
       return;
     }
 
-    let cancelled = false;
-
-    const fetchData = async () => {
-      setLoading(true);
-
-      try {
-        const params: Record<string, string | number | boolean> = {
-          sortByDate: sortOrder,
-          includeStatus: true,
-        };
-        const fromTimestamp = parseDateFilterSeconds(dateFrom);
-        const toTimestamp = parseDateFilterSeconds(dateTo);
-
-        if (fromTimestamp !== null) {
-          params.dateFrom = fromTimestamp;
-        }
-
-        if (toTimestamp !== null) {
-          params.dateTo = toTimestamp;
-        }
-
-        if (hideCompleted) {
-          params.status = 'not_completed';
-        }
-
-        const [coursesRes, gradesRes, assignmentsRes, eventsRes, notificationsRes, statsRes] =
-          await Promise.all([
-            moodleApi.getCourses(),
-            moodleApi.getGrades(),
-            moodleApi.getAssignments(params),
-            moodleApi.getEvents(),
-            moodleApi.getNotifications(),
-            moodleApi.getStatistics(),
-          ]);
-
-        if (cancelled) return;
-
-        setData({
-          courses: Array.isArray(coursesRes?.data) ? coursesRes.data : [],
-          grades: resolveGradesResponse(gradesRes),
-          assignments: Array.isArray(assignmentsRes?.data) ? assignmentsRes.data : [],
-          events: Array.isArray(eventsRes?.data) ? eventsRes.data : [],
-          notifications: Array.isArray(notificationsRes?.data?.notifications)
-            ? notificationsRes.data.notifications
-            : [],
-          unreadCount: notificationsRes?.data?.unreadCount || 0,
-          statistics: statsRes?.data || null,
-        });
-        setHasLoadedOnce(true);
-      } catch (error) {
-        if (cancelled) return;
-
-        if (error instanceof Error && error.message.includes('401')) {
-          localStorage.removeItem('isLoggedIn');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('moodleToken');
-          toast.error(formatMessage('dashboard.sessionExpired'));
-          router.push('/login');
-
-          return;
-        }
-
-        console.error(error);
-        toast.error(formatMessage('dashboard.loadError'));
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
     void fetchData();
 
     return () => {
-      cancelled = true;
+      fetchRequestIdRef.current += 1;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router, sortOrder, dateFrom, dateTo, hideCompleted]);
@@ -255,7 +434,7 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
+    clearUserSessionStorage();
     router.push('/login');
   };
 
@@ -356,7 +535,39 @@ const DashboardPage: React.FC = () => {
                 <Spinner size="small" tip="Оновлення..." />
               </div>
             )}
+            <div className={styles.syncActions}>
+              {lastSyncTime && (
+                <span className={styles.lastSyncText}>
+                  {formatMessage('dashboard.dataUpdated')}: {formatLastSync(lastSyncTime)}
+                </span>
+              )}
+              <UnaButton
+                type="button"
+                variant="secondary"
+                size="small"
+                onClick={() => fetchData(true)}
+                disabled={loading}
+                aria-label={formatMessage('dashboard.refreshData')}
+                className={styles.refreshBtn}
+              >
+                <RotateCw size={14} className={clsx(styles.refreshIcon, loading && styles.spin)} />
+                <span>{formatMessage('dashboard.refresh')}</span>
+              </UnaButton>
+            </div>
           </div>
+
+          {isOfflineData && (
+            <div className={styles.offlineBanner} role="alert">
+              <AlertCircle size={16} className={styles.offlineIcon} />
+              <span>
+                {formatMessage('dashboard.offlineWarning')}
+                {lastSyncTime
+                  ? ` ${formatMessage('dashboard.offlineFrom')} ${formatLastSync(lastSyncTime)}`
+                  : ''}
+                .
+              </span>
+            </div>
+          )}
           {loading && !hasCachedData ? (
             <DashboardSkeleton />
           ) : (

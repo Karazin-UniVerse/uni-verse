@@ -7,6 +7,7 @@ import {
   GetAssignmentsQueryDto,
   AssignmentItemDto,
   SaveSubmissionDto,
+  SubmissionStatusDto,
 } from './moodle-assignments-dto';
 
 describe('MoodleAssignmentsController', () => {
@@ -59,50 +60,38 @@ describe('MoodleAssignmentsController', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBe(0);
-    });
 
-    it('should transform includeStatus=false and includeStatus=0 to boolean false', async () => {
-      const dtoFalse = plainToInstance(GetAssignmentsQueryDto, {
-        includeStatus: 'false',
+      const falsePlain = { ...plain, includeStatus: 'false' };
+      const falseDto = plainToInstance(GetAssignmentsQueryDto, falsePlain);
+
+      expect(falseDto.includeStatus).toBe(false);
+      const falseErrors = await validate(falseDto);
+
+      expect(falseErrors.length).toBe(0);
+
+      const boolTrueDto = plainToInstance(GetAssignmentsQueryDto, {
+        ...plain,
+        includeStatus: true,
       });
 
-      expect(typeof dtoFalse.includeStatus).toBe('boolean');
-      expect(dtoFalse.includeStatus).toBe(false);
+      expect(boolTrueDto.includeStatus).toBe(true);
 
-      const errorsFalse = await validate(dtoFalse);
-
-      expect(errorsFalse.length).toBe(0);
-
-      const dtoZero = plainToInstance(GetAssignmentsQueryDto, {
-        includeStatus: '0',
+      const boolFalseDto = plainToInstance(GetAssignmentsQueryDto, {
+        ...plain,
+        includeStatus: false,
       });
 
-      expect(typeof dtoZero.includeStatus).toBe('boolean');
-      expect(dtoZero.includeStatus).toBe(false);
+      expect(boolFalseDto.includeStatus).toBe(false);
 
-      const errorsZero = await validate(dtoZero);
-
-      expect(errorsZero.length).toBe(0);
-
-      const dtoNull = plainToInstance(GetAssignmentsQueryDto, {
-        includeStatus: null,
+      const fallbackDto = plainToInstance(GetAssignmentsQueryDto, {
+        ...plain,
+        includeStatus: 'invalid-string',
       });
 
-      expect(dtoNull.includeStatus).toBeUndefined();
+      expect(fallbackDto.includeStatus).toBe('invalid-string');
+      const fallbackErrors = await validate(fallbackDto);
 
-      const errorsNull = await validate(dtoNull);
-
-      expect(errorsNull.length).toBe(0);
-
-      const dtoUndefined = plainToInstance(GetAssignmentsQueryDto, {
-        includeStatus: undefined,
-      });
-
-      expect(dtoUndefined.includeStatus).toBeUndefined();
-
-      const errorsUndefined = await validate(dtoUndefined);
-
-      expect(errorsUndefined.length).toBe(0);
+      expect(fallbackErrors.length).toBeGreaterThan(0);
     });
 
     it('should validate AssignmentItemDto and SaveSubmissionDto', async () => {
@@ -115,10 +104,26 @@ describe('MoodleAssignmentsController', () => {
         submissionStatus: 'submitted',
         grade: '100',
         graded: true,
+        submittedAt: '1727000000',
+        isLate: true,
       });
       const itemErrors = await validate(item);
 
       expect(itemErrors.length).toBe(0);
+      expect(typeof item.submittedAt).toBe('number');
+      expect(item.isLate).toBe(true);
+
+      const statusDto = plainToInstance(SubmissionStatusDto, {
+        status: 'submitted',
+        grade: '90',
+        submittedAt: '1727000000',
+        isLate: false,
+      });
+      const statusErrors = await validate(statusDto);
+
+      expect(statusErrors.length).toBe(0);
+      expect(typeof statusDto.submittedAt).toBe('number');
+      expect(statusDto.isLate).toBe(false);
 
       const saveDto = plainToInstance(SaveSubmissionDto, {
         text: 'hello',

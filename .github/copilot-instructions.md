@@ -49,9 +49,18 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 ### 4. Frontend (Next.js & React)
 
 - Prioritize **React Server Components (RSC)**. Use client components (`"use client"`) only when interactivity or browser APIs (like `useState`, `useEffect`, `window`) are required.
-- Push the `"use client"` directive as far down the component tree as possible (to the leaf nodes).
-- Use SCSS Modules and Una design tokens for styling. Follow a mobile-first responsive design approach.
-- Optimize performance using Next.js caching (`fetch` cache, `unstable_cache`) and React hooks (`useMemo`, `useCallback`) where appropriate.
+- **Component Decomposition**:
+  - Components exceeding ~150-200 lines or containing multiple distinct UI sections (cards, grids, feeds, action panels) MUST be decomposed into focused subcomponents (e.g. `StudentCard`, `StatCardGrid`, `UpcomingEventsList`).
+  - Complex stateful logic, data fetching, localStorage caching, and lifecycle listeners MUST be extracted into custom hooks (e.g. `useDashboardData`, `useAssignmentStatuses`).
+  - Keep page and tab views declarative and thin.
+- **Strict UI Localization via Translation Keys (i18n)**:
+  - ZERO hardcoded strings in UI. ALL user-facing text (headings, button labels, tooltips, placeholders, toast notifications, aria-labels) MUST use translation keys via `useLanguage().formatMessage('key')`.
+  - Every translation key MUST be defined symmetrically in BOTH `packages/uni-hub/i18n/locales/uk.ts` and `packages/uni-hub/i18n/locales/en.ts` satisfying `Record<TranslationKey, string>`.
+  - Design system components in `@universe/ui` must remain language-agnostic and receive accessibility labels via props (e.g. `closeLabel?: string`).
+- **Helper Functions & Utilities Placement**:
+  - Pure calculation, formatting, score tone mapping, and regex utilities MUST NOT live inside React components, hooks, or backend DTOs.
+  - Extract component/view utilities into co-located `helpers.ts` files with companion `helpers.test.ts`.
+  - If a helper or calculation is intended for general/cross-package reuse, place it canonically in `@universe/core/utils/` or `@universe/core/constants/`.
 
 ### 5. Monorepo (Turborepo)
 
@@ -69,15 +78,32 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
 - When fixing bugs, explain _why_ the bug occurred before providing the code.
 - Write clean, self-documenting code. Add comments only for complex logic or business rules.
 - Prefer smaller, focused PRs and commits.
+- **Decompose Large and Complex Components**:
+  - Always break down complex components into subcomponents, custom hooks, and helpers.
+  - Never allow a component to become a monolith that mixes data fetching, caching, multiple UI sections, and inline business math.
+- **Helper Functions Placement**:
+  - Component/module helpers → `<directory>/helpers.ts` (with unit tests in `helpers.test.ts`).
+  - Backend DTO helpers → `<module>.helpers.ts` (never keep helper functions in DTO files).
+  - General / cross-package utilities → `@universe/core/utils/` or `@universe/core/constants/`.
+- **Strict i18n Translation Keys**:
+  - Never write raw text in JSX/TSX. Always use `formatMessage('some.key')` and keep `uk.ts` and `en.ts` in sync.
+- **Functions with more than 3 parameters MUST use an object parameter** instead of positional arguments.
+  - ✅ Correct: `function getStatusInfo({ status, isGraded, isAwaitingReview, isOverdue }: StatusInfoParams)`
+  - ❌ Incorrect: `function getStatusInfo(status: string, isGraded: boolean, isAwaitingReview: boolean, isOverdue?: boolean)`
+  - Define a named `type` or `interface` for the parameter shape.
 - **No Premature Backwards Compatibility / Legacy Shims (No "Backtracking")**:
   - When moving, renaming, or refactoring code (such as migrating components into `@universe/ui` or renaming functions/mixins), **never** create backwards-compatibility aliases, re-export proxies, wrapper functions, or deprecated shim files (e.g., `export { Button as SimpleButton } from '@universe/ui'` inside deprecated paths).
   - Directly update all call sites, imports, and usages across the entire codebase to the new location/name.
   - Completely delete obsolete files and aliases. We are an active internal monorepo with no external library consumers — maintain zero legacy dead code and zero transitional proxy layers.
-- **No Redundant Aliases for Types, Enums, or Constants**:
+- **No Redundant Aliases for Types, Enums, Variables, or Constants**:
   - NEVER introduce redundant aliases or duplicate exports for backwards compatibility (e.g. `export const GradeScoreThreshold = GRADES_THRESHOLD; export type GradeScoreThreshold = GradesThreshold;`).
   - NEVER import a type from another module under an alias only to re-export it under its original name (e.g. `import type { TraditionalGrade as CoreTraditionalGrade } from '../constants/grades'; export type TraditionalGrade = CoreTraditionalGrade;`). This is a redundant alias anti-pattern.
+  - NEVER introduce redundant variable aliases inside functions (e.g. `const isCompleted = isGraded; const overdue = isAwaitingReview;`). Use canonical variable names directly.
   - Enforce a single canonical source of truth per entity. When types and constants belong to a specific domain submodule (such as grades in `@universe/core/constants/grades.ts`), declare them there and import them directly where needed without re-aliasing in `packages/core/types/index.ts`.
   - Enforce a single canonical identifier per entity. When renaming or unifying identifiers, update all call sites across the codebase and remove the previous name completely.
+- **Incorporating GitHub PR Review Feedback**:
+  - Patterns, architectural requests, and reviews from team reviewers (e.g. `iamredl-lab`) on GitHub Pull Requests are top-priority canon standards.
+  - Always learn from and incorporate PR review patterns into future implementations and code reviews.
 
 ### 8. AI Code Review Culture & Complexity Management
 
@@ -93,6 +119,9 @@ Evaluate the code strictly against these failure modes:
 6. **SECURITY:** Review the code from a security perspective. Flag any potential vulnerabilities (e.g., injections, insecure data handling, missing authorization).
 7. **ACCESSIBILITY (a11y):** Review UI components from an accessibility perspective. Ensure proper ARIA roles, keyboard navigability, and sufficient contrast.
 8. **LEGACY SHIMS & RETROACTIVE RE-EXPORTS (Backtracking):** Flag any backwards-compatibility aliases, proxy re-exports, or transitional wrapper shims introduced during refactoring. Require the author to update all consumer imports directly and remove obsolete files.
+9. **MONOLITHIC COMPONENTS & MISSING DECOMPOSITION:** Flag large components (>150-200 lines) that contain inline data fetching, stateful side-effects, or multiple UI sections without decomposing into subcomponents and hooks.
+10. **INLINE HELPERS & DTO POLLUTION:** Flag any pure helper functions, calculation utilities, date formatters, or query transformers kept inline inside React components, custom hooks, or backend DTOs. Demand extraction into `helpers.ts` (with unit tests) or `@universe/core`.
+11. **HARDCODED UI TEXT (i18n):** Flag any hardcoded strings in JSX/TSX. Enforce translation keys across both `uk.ts` and `en.ts`.
 
 Output requirements for Review:
 

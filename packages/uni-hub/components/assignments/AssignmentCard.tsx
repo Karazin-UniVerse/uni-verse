@@ -15,6 +15,7 @@ import {
 import { Tag } from '@una';
 import { LiveCountdown } from '@uni-hub/components/gamification';
 import { playClick } from '@uni-hub/utils/soundEffects';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { Assignment } from '@uni-hub/types';
 import { cardMotion } from '@uni-hub/views/dashboard/constants';
 import {
@@ -37,6 +38,10 @@ function renderStatusIcon(tone: AssignmentStatusInfo['tone']) {
     return <CheckCircle2 size={13} style={{ marginRight: 4 }} />;
   }
 
+  if (tone === 'warning') {
+    return <Clock size={13} style={{ marginRight: 4 }} />;
+  }
+
   if (tone === 'danger') {
     return <AlertCircle size={13} style={{ marginRight: 4 }} />;
   }
@@ -52,17 +57,25 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
   onOpenAssignment,
   status = 'new',
 }) => {
-  const isCompleted = status === 'submitted' || status === 'graded' || Boolean(assignment.graded);
+  const { localeTag, formatMessage } = useLanguage();
+  const isGraded = status === 'graded' || Boolean(grade) || Boolean(assignment.graded);
+  const isAwaitingReview = !isGraded && status === 'submitted';
+  const isCompleted = isGraded || isAwaitingReview;
   const hasDeadline = Boolean(assignment.duedate && assignment.duedate > 0);
-  const isOverdue = Boolean(hasDeadline && assignment.duedate < nowSec);
-  const statusInfo = getAssignmentStatusInfo(status, isCompleted, isOverdue);
+  const isOverdue = Boolean(hasDeadline && assignment.duedate < nowSec && !isCompleted);
+  const isLate = Boolean(
+    assignment.isLate ||
+    (assignment.submittedAt && hasDeadline && assignment.submittedAt > assignment.duedate),
+  );
+  const statusInfo = getAssignmentStatusInfo({ status, isGraded, isAwaitingReview, isOverdue });
 
   return (
     <motion.button
       type="button"
       className={clsx(
         styles.assignmentCard,
-        isCompleted && styles.assignmentCardCompleted,
+        isAwaitingReview && styles.assignmentCardAwaitingReview,
+        isGraded && styles.assignmentCardCompleted,
         isOverdue && styles.assignmentCardOverdue,
         !isCompleted && !isOverdue && styles.assignmentCardInProgress,
       )}
@@ -88,7 +101,7 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
             {hasDeadline ? (
               <>
                 <span className={styles.deadlineDate}>
-                  Дедлайн: {new Date(assignment.duedate * 1000).toLocaleDateString('uk-UA')}
+                  Дедлайн: {new Date(assignment.duedate * 1000).toLocaleDateString(localeTag)}
                 </span>
                 {!isCompleted && !isOverdue && (
                   <>
@@ -105,11 +118,18 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
       </div>
 
       <div className={styles.assignmentRightCol}>
+        {isLate && (
+          <Tag tone="danger">
+            <AlertCircle size={13} style={{ marginRight: 4 }} />
+            {formatMessage('assignments.submittedLate')}
+          </Tag>
+        )}
+
         <Tag tone={statusInfo.tone}>
           {grade ? (
             <>
               <Award size={13} style={{ marginRight: 4 }} />
-              Оцінка: {grade}
+              {`${formatMessage('assignments.grade')}: ${grade}`}
             </>
           ) : (
             <>
@@ -120,7 +140,7 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
         </Tag>
 
         <div className={styles.assignmentActionButton}>
-          <span>Відкрити</span>
+          <span>{formatMessage('assignments.open')}</span>
           <ChevronRight size={14} />
         </div>
       </div>

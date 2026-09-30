@@ -280,6 +280,68 @@
   animation: fadeUp 0.2s var(--ease-standard);
 }
 
+.syncActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+}
+
+.lastSyncText {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.refreshBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  cursor: pointer;
+}
+
+.refreshIcon {
+  flex-shrink: 0;
+  transition: transform var(--transition-fast) var(--ease-standard);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.offlineBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--border-radius-medium, 8px);
+  background: color-mix(in srgb, var(--warning-color) 12%, var(--bg-surface));
+  border: 1px solid var(--warning-color);
+  color: var(--warning-text, #92400e);
+  font-size: var(--font-sm);
+  margin-bottom: var(--space-16);
+}
+
+:global([data-theme='dark']) .offlineBanner,
+:global([data-theme='cyberpunk']) .offlineBanner {
+  color: var(--warning-light, #fbbf24);
+}
+
+.offlineIcon {
+  color: var(--warning-color);
+  flex-shrink: 0;
+}
+
 .overviewHero {
   display: flex;
   align-items: flex-start;
@@ -305,18 +367,39 @@
   display: flex;
   align-items: center;
   gap: var(--space-8);
+  font: inherit;
   font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-medium);
+  padding: var(--space-4) var(--space-8);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast) var(--ease-standard),
+    border-color var(--transition-fast) var(--ease-standard);
+
+  &:hover {
+    background: var(--bg-hover);
+    border-color: var(--card-border);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-primary);
+  }
 }
 
 .avatar {
   width: 32px;
   height: 32px;
-  border-radius: var(--border-radius-full);
+  border-radius: 50%;
   background: var(--accent-primary);
   color: var(--accent-text-on-primary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .notifWrap {
@@ -602,6 +685,17 @@
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-12);
+  }
+}
+
+.assignmentCardAwaitingReview {
+  border-color: color-mix(in srgb, var(--warning-color) 25%, var(--card-border));
+  border-left-color: var(--warning-color);
+  background: color-mix(in srgb, var(--warning-color) 3%, var(--bg-surface));
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--warning-color) 40%, var(--card-border));
+    border-left-color: var(--warning-color);
   }
 }
 
