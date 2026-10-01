@@ -7,6 +7,7 @@ import { Button, Tag, Empty } from '@una';
 import { StreakBadge } from '@uni-hub/components/gamification';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
+import { DevFeaturePanel } from '@uni-hub/features';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi } from '@uni-hub/services/api';
 import type { DashboardHeaderProps } from '../types';
@@ -82,6 +83,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       </div>
 
       <div className={styles.headerRight}>
+        <DevFeaturePanel />
         <Button
           type="button"
           variant="secondary"
