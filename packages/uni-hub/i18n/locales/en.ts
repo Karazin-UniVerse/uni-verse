@@ -56,6 +56,8 @@ export const en = {
   'nav.schedule.full': 'Class Schedule',
   'nav.grades': 'Grades',
   'nav.grades.full': 'Gradebook & Scores',
+  'nav.opportunities': 'Opportunities',
+  'nav.opportunities.full': 'Opportunities Platform',
 
   // Sidebar & Header
   'sidebar.logout': 'Log out',
@@ -321,4 +323,25 @@ export const en = {
   'overview.gradesTitle': 'Go to gradebook and grades',
   'overview.viewCourseMaterials': 'View course materials: {name}',
   'student.courseGroupFormat': 'Year {course}, group {group}',
+
+  // Feature Gating & Opportunities
+  'quickActions.opportunities': 'Opportunities',
+  'quickActions.opportunitiesDescription': 'Internships, hackathons, grants',
+  'quickActions.opportunitiesTitle': 'Go to opportunities and internships platform',
+  'featureGate.disabledTitle': 'Feature Currently Unavailable',
+  'featureGate.disabledDescription':
+    'This module is currently disabled by administrator or undergoing maintenance.',
+  'featureGate.backToOverview': 'Back to Overview',
+  'opportunities.title': 'Opportunities Platform',
+  'opportunities.subtitle':
+    'Career opportunities, internships, research grants, and Karazin student initiatives',
+  'opportunities.badge': 'OP-104 MVP Preview',
+  'opportunities.filterAll': 'All Opportunities',
+  'opportunities.filterInternships': 'Internships & Tech',
+  'opportunities.filterGrants': 'Grants & Scholarships',
+  'opportunities.filterExchange': 'Academic Mobility',
+  'opportunities.apply': 'Apply',
+  'opportunities.details': 'Details',
+  'opportunities.deadline': 'Deadline:',
+  'opportunities.empty': 'No open opportunities found in this category',
 } as const satisfies Record<TranslationKey, string>;

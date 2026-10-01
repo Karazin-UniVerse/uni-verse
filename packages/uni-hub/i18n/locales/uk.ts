@@ -54,6 +54,8 @@ export const uk = {
   'nav.schedule.full': 'Розклад занять',
   'nav.grades': 'Оцінки',
   'nav.grades.full': 'Заліковка та бали',
+  'nav.opportunities': 'Можливості',
+  'nav.opportunities.full': 'Платформа можливостей',
 
   // Sidebar & Header
   'sidebar.logout': 'Вийти',
@@ -320,6 +322,27 @@ export const uk = {
   'overview.gradesTitle': 'Перейти до залікової книжки та оцінок',
   'overview.viewCourseMaterials': 'Переглянути матеріали курсу: {name}',
   'student.courseGroupFormat': '{course} курс, група {group}',
+
+  // Feature Gating & Opportunities
+  'quickActions.opportunities': 'Можливості',
+  'quickActions.opportunitiesDescription': 'Стажування, хакатони, гранти',
+  'quickActions.opportunitiesTitle': 'Перейти до платформи можливостей та стажувань',
+  'featureGate.disabledTitle': 'Модуль тимчасово недоступний',
+  'featureGate.disabledDescription':
+    'Цю функцію вимкнено в налаштуваннях або вона знаходиться на стадії оновлення.',
+  'featureGate.backToOverview': 'Повернутися до огляду',
+  'opportunities.title': 'Платформа можливостей',
+  'opportunities.subtitle':
+    'Кар’єрні пропозиції, стажування, наукові гранти та студентські ініціативи Каразінського',
+  'opportunities.badge': 'OP-104 MVP Preview',
+  'opportunities.filterAll': 'Всі пропозиції',
+  'opportunities.filterInternships': 'Стажування та IT',
+  'opportunities.filterGrants': 'Гранти та стипендії',
+  'opportunities.filterExchange': 'Академічна мобільність',
+  'opportunities.apply': 'Подати заявку',
+  'opportunities.details': 'Детальніше',
+  'opportunities.deadline': 'Дедлайн:',
+  'opportunities.empty': 'Наразі немає відкритих можливостей у цій категорії',
 };
 
 export type TranslationKey = keyof typeof uk;
