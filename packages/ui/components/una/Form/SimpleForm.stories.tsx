@@ -5,7 +5,7 @@ import { TextInput } from '../inputs/TextInput/TextInput';
 import { Button } from '../Button/Button';
 
 const meta = {
-  title: 'Components/Form',
+  title: 'Una/Form',
   component: SimpleForm,
   parameters: {
     layout: 'centered',

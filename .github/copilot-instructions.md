@@ -35,13 +35,17 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
   - Always consume Una components separately via the `@una` alias (e.g., `import { Button, Tag } from '@una';`).
   - Keep the root `packages/ui/index.ts` reserved strictly for top-level non-Una library exports (such as complex components and hooks).
 - **No Unnecessary Component Aliases**: Export and use components by their canonical names (e.g., `ToastProvider` for toast context, not `Toast = ToastProvider`).
-- **Complex Components**: Composite, business-logic-heavy, or non-design system components go into `packages/ui/components/complex/`.
+- **Component Placement Tiers & Separation of Concerns**:
+  - **Design System Primitives (`packages/ui/components/una/`)**: Reusable atomic design system elements, inputs, and base primitives. Language-agnostic, zero application logic, imported via `@una`.
+  - **Complex UI-Only Components (`packages/ui/components/complex/`)**: Composite presentational UI components composed of Una primitives. **STRICTLY UI-ONLY**: must contain zero business logic, zero domain data-fetching, and zero application store/context dependencies (driven purely via props and event callbacks). Storybook stories belong under `Complex/*`.
+  - **Application Components with Logic (`packages/uni-hub/components/`)**: Components containing application business logic, domain workflows, store subscriptions (e.g. `useGamificationStore`), or API service calls (e.g. Moodle auth/assignments).
+  - **Pre-Implementation Architectural Consideration**: Before creating any new component, AI assistants and developers MUST evaluate which tier is the most suitable. If placement is ambiguous, ask the user before writing code. When implementing domain components in `packages/uni-hub/components/`, actively consider composing and reusing `complex` UI components from `@universe/ui` rather than embedding composite presentation layouts directly inside logic components.
 - **Component Types Extraction (`.types.ts`)**: For React UI components with non-trivial prop interfaces or data models, extract types into a co-located `<ComponentName>.types.ts` file (e.g. `Chart.types.ts` adjacent to `Chart.tsx`). Re-export types from the component file or module index for backwards compatibility. Do NOT create separate `.types.ts` files for simple utilities, single helper functions, or trivial components to avoid unnecessary fragmentation.
 - **Storybook Stories Scope Restriction & Section Separation**:
   - Storybook stories are strictly written **ONLY for components inside `packages/ui` (`@universe/ui`)**.
   - Writing Storybook stories in any other workspace packages (such as `packages/uni-hub` or `packages/backend`) is **STRICTLY PROHIBITED**.
   - Storybook sidebar hierarchy:
-    - Una design system components (`packages/ui/components/una/`) are placed under the `Components/*` section (e.g. `title: 'Components/Buttons/Button'`, `title: 'Components/Inputs/TextInput'`).
+    - Una design system components (`packages/ui/components/una/`) are placed under the `Una/*` section (e.g. `title: 'Una/Buttons/Button'`, `title: 'Una/Inputs/TextInput'`).
     - Complex composite components (`packages/ui/components/complex/`) are placed under the dedicated `Complex/*` section (e.g. `title: 'Complex/ExampleComponent'`).
   - All stories must follow Component Story Format 3 (CSF3) using `satisfies Meta<typeof Component>` and `StoryObj<typeof meta>`. Avoid untyped parameters (`any`) in story templates.
 
