@@ -40,7 +40,7 @@
   height: 18px;
   padding: 0 5px;
   border-radius: 9px;
-  background: var(--accent-primary, #3b82f6);
+  background: #1d4ed8;
   color: #fff;
   font-size: 10px;
   font-weight: 700;
@@ -53,6 +53,9 @@
   z-index: 10000;
   width: 360px;
   max-width: calc(100vw - 40px);
+  margin: 0;
+  padding: 0;
+  color: inherit;
   background: var(--bg-surface, #fff);
   border: 1px solid var(--border-color, rgb(0 0 0 / 12%));
   border-radius: var(--border-radius-large, 12px);
