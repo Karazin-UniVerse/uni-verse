@@ -124,7 +124,7 @@ describe('FeatureToggleContext and Components', () => {
     expect(html).toContain('id="has-reset-fn">true</span>');
   });
 
-  it('renders DevFeaturePanel floating trigger button in SSR', () => {
+  it('renders DevFeaturePanel trigger button in SSR', () => {
     const tree = React.createElement(
       FeatureToggleProvider,
       null,
@@ -133,6 +133,6 @@ describe('FeatureToggleContext and Components', () => {
 
     const html = renderToString(tree);
 
-    expect(html).toContain('Toggles');
+    expect(html).toContain('Feature Toggles');
   });
 });
