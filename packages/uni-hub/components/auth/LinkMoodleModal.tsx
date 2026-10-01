@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { User, Lock } from 'lucide-react';
 import { Modal, Button, SimpleForm, useToast } from '@una';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi, getErrorMessage } from '@uni-hub/services/api';
 import { AuthField } from './AuthField';
 import styles from './LinkMoodleModal.module.scss';
@@ -14,6 +15,7 @@ export interface LinkMoodleModalProps {
 }
 
 export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({ onClose, onSuccess, open }) => {
+  const { formatMessage } = useLanguage();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,13 +26,13 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({ onClose, onSuc
     setError('');
 
     if (!username.trim()) {
-      setError('Будь ласка, введіть логін або email у Moodle');
+      setError(formatMessage('login.linkMoodleEnterUsername'));
 
       return;
     }
 
     if (!password) {
-      setError('Будь ласка, введіть пароль від Moodle');
+      setError(formatMessage('login.linkMoodleEnterPassword'));
 
       return;
     }
@@ -40,10 +42,10 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({ onClose, onSuc
     try {
       await authApi.linkMoodleAccount(username.trim(), password);
 
-      toast.success('Moodle-акаунт успішно прив’язано!');
+      toast.success(formatMessage('login.linkMoodleSuccess'));
       onSuccess();
     } catch (err: unknown) {
-      const message = getErrorMessage(err, 'Помилка прив’язки акаунта. Перевірте логін та пароль.');
+      const message = getErrorMessage(err, formatMessage('login.linkMoodleError'));
 
       setError(message);
       toast.error(message);
@@ -53,32 +55,35 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({ onClose, onSuc
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Прив'язка облікового запису Moodle" width={400}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={formatMessage('login.linkMoodleTitle')}
+      closeLabel={formatMessage('modal.close')}
+      width={400}
+    >
       <SimpleForm action={handleLink} className={styles.modalContent}>
-        <p className={styles.description}>
-          Щоб завантажити ваші курси, розклад та оцінки, введіть логін і пароль від Moodle. Це
-          необхідно зробити лише один раз — надалі вхід виконуватиметься через Google в один клік.
-        </p>
+        <p className={styles.description}>{formatMessage('login.linkMoodleHint')}</p>
 
         <AuthField
-          id="link-moodle-username"
+          id="modal-link-moodle-username"
           name="moodleUsername"
-          label="Логін або email у Moodle"
-          placeholder="Логін у Moodle"
+          label={formatMessage('login.linkMoodleUsername')}
+          placeholder={formatMessage('login.linkMoodleUsernamePlaceholder')}
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(event) => setUsername(event.target.value)}
           autoComplete="username"
           icon={<User size={16} />}
         />
 
         <AuthField
-          id="link-moodle-password"
+          id="modal-link-moodle-password"
           name="moodlePassword"
           type="password"
-          label="Пароль у Moodle"
-          placeholder="Пароль"
+          label={formatMessage('login.linkMoodlePassword')}
+          placeholder={formatMessage('login.linkMoodlePasswordPlaceholder')}
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(event) => setPassword(event.target.value)}
           autoComplete="current-password"
           icon={<Lock size={16} />}
         />
@@ -87,10 +92,12 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({ onClose, onSuc
 
         <div className={styles.actions}>
           <Button variant="secondary" onClick={onClose} disabled={loading}>
-            Скасувати
+            {formatMessage('common.cancel')}
           </Button>
           <Button type="submit" variant="primary" disabled={loading}>
-            {loading ? 'Прив’язка...' : 'Прив’язати Moodle'}
+            {loading
+              ? formatMessage('login.linkMoodleLoading')
+              : formatMessage('login.linkMoodleSubmit')}
           </Button>
         </div>
       </SimpleForm>

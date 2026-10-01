@@ -7,8 +7,8 @@ import { Button, SimpleForm, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { authApi, getErrorMessage } from '@uni-hub/services/api';
-import { GoogleLoginButton, AuthField } from '@uni-hub/components/auth';
+import { authApi, getErrorMessage, safeStorage } from '@uni-hub/services/api';
+import { GoogleLoginButton, AuthField, parseGoogleClaims } from '@uni-hub/components/auth';
 import { motion } from 'framer-motion';
 import styles from './LoginPage.module.scss';
 
@@ -20,6 +20,7 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [linkUsername, setLinkUsername] = useState('');
   const [linkPassword, setLinkPassword] = useState('');
+  const [googleUserName, setGoogleUserName] = useState('');
   const [error, setError] = useState('');
   const [isLinkingMoodle, setIsLinkingMoodle] = useState(false);
   const router = useRouter();
@@ -30,12 +31,23 @@ const LoginPage: React.FC = () => {
     setError('');
 
     try {
+      const claims = parseGoogleClaims(idToken);
+      const displayName = claims.name || claims.email || '';
+
+      if (displayName) {
+        setGoogleUserName(displayName);
+        safeStorage.setItem('username', displayName);
+      }
+
       const res = await authApi.loginWithGoogle(idToken);
 
       if (res.data?.isLinked) {
+        safeStorage.setItem('isLoggedIn', 'true');
+        safeStorage.setItem('isMoodleLinked', 'true');
         toast.success(formatMessage('login.success'));
         router.push('/');
       } else {
+        safeStorage.setItem('isMoodleLinked', 'false');
         setIsLinkingMoodle(true);
       }
     } catch (err: unknown) {
@@ -69,11 +81,12 @@ const LoginPage: React.FC = () => {
       const res = await authApi.login(username, password);
 
       toast.success(formatMessage('login.success'));
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('username', username.trim());
+      safeStorage.setItem('isLoggedIn', 'true');
+      safeStorage.setItem('isMoodleLinked', 'true');
+      safeStorage.setItem('username', username.trim());
 
       if (res.data?.token) {
-        localStorage.setItem('moodleToken', res.data.token);
+        safeStorage.setItem('moodleToken', res.data.token);
       }
 
       router.push('/');
@@ -109,7 +122,9 @@ const LoginPage: React.FC = () => {
 
       toast.success(formatMessage('login.linkMoodleSuccess'));
       toast.success(formatMessage('login.success'));
-      localStorage.setItem('username', linkUsername.trim());
+      safeStorage.setItem('isLoggedIn', 'true');
+      safeStorage.setItem('isMoodleLinked', 'true');
+      safeStorage.setItem('username', linkUsername.trim());
       router.push('/');
     } catch (err: unknown) {
       const message = getErrorMessage(err, formatMessage('login.linkMoodleError'));
@@ -121,13 +136,25 @@ const LoginPage: React.FC = () => {
     }
   };
 
+  const handleSkipLinkMoodle = () => {
+    safeStorage.setItem('isLoggedIn', 'true');
+    safeStorage.setItem('isMoodleLinked', 'false');
+
+    if (googleUserName) {
+      safeStorage.setItem('username', googleUserName);
+    }
+
+    toast.success(formatMessage('login.success'));
+    router.push('/');
+  };
+
   const handleCancelLink = () => {
     setIsLinkingMoodle(false);
     setLinkUsername('');
     setLinkPassword('');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('isLoggedIn');
-    setError(formatMessage('login.linkMoodleRequired'));
+    safeStorage.removeItem('accessToken');
+    safeStorage.removeItem('isLoggedIn');
+    safeStorage.removeItem('isMoodleLinked');
   };
 
   return (
@@ -156,7 +183,7 @@ const LoginPage: React.FC = () => {
               label={formatMessage('login.linkMoodleUsername')}
               placeholder={formatMessage('login.linkMoodleUsernamePlaceholder')}
               value={linkUsername}
-              onChange={(e) => setLinkUsername(e.target.value)}
+              onChange={(event) => setLinkUsername(event.target.value)}
               autoComplete="username"
               icon={<User size={16} />}
             />
@@ -168,7 +195,7 @@ const LoginPage: React.FC = () => {
               label={formatMessage('login.linkMoodlePassword')}
               placeholder={formatMessage('login.linkMoodlePasswordPlaceholder')}
               value={linkPassword}
-              onChange={(e) => setLinkPassword(e.target.value)}
+              onChange={(event) => setLinkPassword(event.target.value)}
               autoComplete="current-password"
               icon={<Lock size={16} />}
             />
@@ -194,6 +221,18 @@ const LoginPage: React.FC = () => {
                 type="button"
                 variant="secondary"
                 size="large"
+                disabled={loading}
+                className={styles.submit}
+                onClick={handleSkipLinkMoodle}
+              >
+                {formatMessage('login.linkMoodleSkip')}
+              </Button>
+
+              <Button
+                type="button"
+                variant="secondary"
+                size="large"
+                isTransparent
                 disabled={loading}
                 className={styles.submit}
                 onClick={handleCancelLink}
@@ -231,7 +270,7 @@ const LoginPage: React.FC = () => {
               label={formatMessage('login.usernameOrEmail')}
               placeholder={formatMessage('login.usernameOrEmail')}
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(event) => setUsername(event.target.value)}
               autoComplete="username"
               icon={<User size={16} />}
             />
@@ -243,7 +282,7 @@ const LoginPage: React.FC = () => {
               label={formatMessage('login.password')}
               placeholder={formatMessage('login.password')}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(event) => setPassword(event.target.value)}
               autoComplete="current-password"
               icon={<Lock size={16} />}
               rightElement={
