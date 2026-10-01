@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import { OpportunitiesTab, MOCK_OPPORTUNITIES } from './OpportunitiesTab';
+import { OpportunitiesTab } from './OpportunitiesTab';
+import { MOCK_OPPORTUNITIES } from './opportunities.mock';
 
 describe('OpportunitiesTab', () => {
   it('contains valid mock opportunities data', () => {

@@ -22,7 +22,7 @@ export const FeatureDisabledNotice: React.FC<FeatureDisabledNoticeProps> = ({
   const { formatMessage } = useLanguage();
 
   return (
-    <div className={styles.noticeContainer} role="status">
+    <output className={styles.noticeContainer}>
       <div className={styles.iconWrapper} aria-hidden>
         <ShieldAlert size={28} />
       </div>
@@ -41,6 +41,6 @@ export const FeatureDisabledNotice: React.FC<FeatureDisabledNoticeProps> = ({
           {formatMessage('featureGate.backToOverview')}
         </Button>
       )}
-    </div>
+    </output>
   );
 };

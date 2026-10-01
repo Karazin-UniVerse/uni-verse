@@ -12,15 +12,8 @@ import {
 } from 'lucide-react';
 import { Tag, Button } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import {
-  type OpportunityCategory,
-  type OpportunityItem,
-  MOCK_OPPORTUNITIES,
-} from './opportunities.mock';
+import { type OpportunityCategory, MOCK_OPPORTUNITIES } from './opportunities.mock';
 import styles from './OpportunitiesTab.module.scss';
-
-export type { OpportunityCategory, OpportunityItem };
-export { MOCK_OPPORTUNITIES };
 
 interface FilterOption {
   category: OpportunityCategory;
