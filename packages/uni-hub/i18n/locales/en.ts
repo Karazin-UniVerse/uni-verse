@@ -326,6 +326,7 @@ export const en = {
 
   // Feature Gating & Opportunities
   'quickActions.opportunities': 'Opportunities',
+  'quickActions.newBadge': 'New',
   'quickActions.opportunitiesDescription': 'Internships, hackathons, grants',
   'quickActions.opportunitiesTitle': 'Go to opportunities and internships platform',
   'featureGate.disabledTitle': 'Feature Currently Unavailable',

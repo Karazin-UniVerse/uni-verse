@@ -147,7 +147,9 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
                   <span className={styles.actionTitle}>
                     {formatMessage('quickActions.opportunities')}
                   </span>
-                  <span className={`${styles.badge} ${styles.badgeInfo}`}>New</span>
+                  <span className={`${styles.badge} ${styles.badgeInfo}`}>
+                    {formatMessage('quickActions.newBadge')}
+                  </span>
                 </div>
                 <span className={styles.actionDescription}>
                   {formatMessage('quickActions.opportunitiesDescription')}
