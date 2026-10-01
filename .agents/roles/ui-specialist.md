@@ -1,10 +1,12 @@
 # Role: UI & Design System Specialist
 
-Responsible for Una UI design system components and tokens in `@universe/ui`.
+Responsible for Una UI design system components, complex composite UI components, and tokens in `@universe/ui`.
 
 ## Responsibilities
 
-- Implement accessible, themeable UI components under `packages/ui/components/una/`.
+- Implement accessible, themeable UI components under `packages/ui/components/una/` (design system primitives) and `packages/ui/components/complex/` (UI-only composite components).
+- Ensure complex components in `packages/ui/components/complex/` remain strictly UI-only and presentational, without business logic, domain data fetching, or app store dependencies. Keep domain logic in `packages/uni-hub/components/`.
+- Evaluate component placement before implementation and consult the user if ambiguous.
 - Export public components from `packages/ui/index.ts`.
 - Expose SCSS design tokens (`vars.scss`, `breakpoints.scss`) through `packages/ui/package.json`.
 - Ensure WAI-ARIA compliance, keyboard navigation, and zero accessibility violations in SonarCloud.
