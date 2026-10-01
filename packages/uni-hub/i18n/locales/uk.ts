@@ -325,6 +325,7 @@ export const uk = {
 
   // Feature Gating & Opportunities
   'quickActions.opportunities': 'Можливості',
+  'quickActions.newBadge': 'Нове',
   'quickActions.opportunitiesDescription': 'Стажування, хакатони, гранти',
   'quickActions.opportunitiesTitle': 'Перейти до платформи можливостей та стажувань',
   'featureGate.disabledTitle': 'Модуль тимчасово недоступний',

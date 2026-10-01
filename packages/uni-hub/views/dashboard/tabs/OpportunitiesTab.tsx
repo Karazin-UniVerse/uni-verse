@@ -60,6 +60,7 @@ export const OpportunitiesTab: React.FC = () => {
               type="button"
               className={`${styles.filterBtn} ${selectedCategory === category ? styles.active : ''}`}
               onClick={() => setSelectedCategory(category)}
+              aria-pressed={selectedCategory === category}
             >
               {Icon && <Icon size={14} />}
               {formatMessage(labelKey)}
@@ -99,17 +100,18 @@ export const OpportunitiesTab: React.FC = () => {
 
               <div className={styles.cardBottom}>
                 <div className={styles.actionsRow}>
-                  <a
+                  <Button
+                    isLink
                     href={item.externalUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    variant="primary"
+                    size="small"
                     style={{ textDecoration: 'none' }}
                   >
-                    <Button type="button" variant="primary" size="small">
-                      <ExternalLink size={14} style={{ marginRight: 6 }} />
-                      {formatMessage('opportunities.apply')}
-                    </Button>
-                  </a>
+                    <ExternalLink size={14} style={{ marginRight: 6 }} />
+                    {formatMessage('opportunities.apply')}
+                  </Button>
                 </div>
               </div>
             </article>
