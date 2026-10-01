@@ -32,7 +32,8 @@ export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }
             )}
           </div>
           <div className={styles.studentMainInfo}>
-            <h3>{activeStudentProfile.fullName}</h3>
+            {/* intentional: suppressHydrationWarning – user profile is hydrated from client localStorage */}
+            <h3 suppressHydrationWarning>{activeStudentProfile.fullName}</h3>
             <div className={styles.muted}>
               {formatMessage('overview.specialty')} {activeStudentProfile.specialty} •{' '}
               {activeStudentProfile.educationalProgram}
