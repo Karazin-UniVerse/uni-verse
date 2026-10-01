@@ -42,11 +42,29 @@ export const DevFeaturePanel: React.FC = () => {
     () => false,
   );
   const containerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDialogElement>(null);
+  const wasOpenRef = useRef(false);
 
   const { flags, activeOverrides, setFeatureOverride, resetFeatureOverrides, isOverridden } =
     useFeatureControls();
 
   const overrideCount = Object.keys(activeOverrides).length;
+
+  useEffect(() => {
+    if (isOpen) {
+      wasOpenRef.current = true;
+      const firstFocusable = panelRef.current?.querySelector<HTMLElement>(
+        'button, input, [tabindex]:not([tabindex="-1"])',
+      );
+
+      firstFocusable?.focus();
+    } else if (wasOpenRef.current) {
+      wasOpenRef.current = false;
+      const trigger = containerRef.current?.querySelector<HTMLButtonElement>('button');
+
+      trigger?.focus();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -115,7 +133,7 @@ export const DevFeaturePanel: React.FC = () => {
       </Button>
 
       {isOpen && (
-        <dialog className={styles.panelOverlay} open aria-label="Feature Toggles">
+        <dialog ref={panelRef} className={styles.panelOverlay} open aria-label="Feature Toggles">
           <div className={styles.panelHeader}>
             <div className={styles.panelTitleGroup}>
               <SlidersHorizontal size={16} />
