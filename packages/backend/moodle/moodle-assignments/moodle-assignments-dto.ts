@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+import { parseBooleanQuery } from './moodle-assignments.helpers';
 
 export class SaveSubmissionDto {
   @ApiPropertyOptional({
@@ -71,6 +72,22 @@ export class AssignmentItemDto {
   @IsOptional()
   @IsBoolean()
   graded?: boolean;
+  @ApiPropertyOptional({
+    example: 1727000000,
+    description: 'Submission timestamp if submitted',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  submittedAt?: number;
+
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Whether assignment was submitted after deadline',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isLate?: boolean;
 }
 
 export class SubmissionStatusDto {
@@ -85,6 +102,23 @@ export class SubmissionStatusDto {
     description: 'Grade if already graded',
   })
   grade?: string;
+
+  @ApiPropertyOptional({
+    example: 1727000000,
+    description: 'Submission timestamp',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  submittedAt?: number;
+
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Whether assignment was submitted after deadline',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isLate?: boolean;
 }
 
 export class GetAssignmentsQueryDto {
@@ -125,13 +159,7 @@ export class GetAssignmentsQueryDto {
     description: 'Include submission status and grade',
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value === undefined || value === null) {
-      return undefined;
-    }
-
-    return value === 'true' || value === true || value === 1 || value === '1';
-  })
+  @Transform(({ value }) => parseBooleanQuery(value))
   @IsBoolean()
   includeStatus?: boolean;
 }

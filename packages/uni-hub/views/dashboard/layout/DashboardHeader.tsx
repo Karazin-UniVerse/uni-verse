@@ -48,9 +48,15 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     try {
       await authApi.logout();
     } catch {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('moodleToken');
+      try {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('moodleToken');
+        localStorage.removeItem('universe_dashboard_data');
+        localStorage.removeItem('universe_last_sync_time');
+      } catch {
+        // Ignore storage errors
+      }
     } finally {
       window.location.href = '/login';
     }

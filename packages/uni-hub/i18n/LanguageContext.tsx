@@ -18,7 +18,7 @@ type LanguageContextValue = {
   language: AppLanguage;
   localeTag: string;
   setLanguage: (lang: AppLanguage) => void;
-  formatMessage: (key: TranslationKey) => string;
+  formatMessage: (key: TranslationKey, values?: Record<string, string | number>) => string;
 };
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
@@ -99,10 +99,17 @@ export const LanguageProvider: React.FC<Readonly<{ children: React.ReactNode }>>
   }, []);
 
   const formatMessage = useCallback(
-    (key: TranslationKey): string => {
+    (key: TranslationKey, values?: Record<string, string | number>): string => {
       const dict = TRANSLATIONS[language] || TRANSLATIONS.uk;
+      const template = dict[key] || TRANSLATIONS.uk[key] || key;
 
-      return dict[key] || TRANSLATIONS.uk[key] || key;
+      if (!values) {
+        return template;
+      }
+
+      return template.replace(/\{(\w+)\}/g, (match, paramKey) => {
+        return paramKey in values ? String(values[paramKey]) : match;
+      });
     },
     [language],
   );
@@ -124,7 +131,17 @@ const DEFAULT_CONTEXT: LanguageContextValue = {
   language: 'uk',
   localeTag: 'uk-UA',
   setLanguage: () => {},
-  formatMessage: (key: TranslationKey): string => TRANSLATIONS.uk[key] || key,
+  formatMessage: (key: TranslationKey, values?: Record<string, string | number>): string => {
+    const template = TRANSLATIONS.uk[key] || key;
+
+    if (!values) {
+      return template;
+    }
+
+    return template.replace(/\{(\w+)\}/g, (match, paramKey) => {
+      return paramKey in values ? String(values[paramKey]) : match;
+    });
+  },
 };
 
 export function useLanguage(): LanguageContextValue {

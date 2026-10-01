@@ -8,4 +8,5 @@ export type ModalProps = {
   className?: string;
   title?: ReactNode;
   width?: number | string;
+  closeLabel?: string;
 };
