@@ -33,7 +33,7 @@ uni-verse/
   - **Complex UI-Only Components** reside in `components/complex/` (composite presentational components with zero application/business logic or store bindings).
   - **Components with business logic** belong in `packages/uni-hub/components/`.
   - **Pre-implementation check**: Consider the appropriate placement tier before implementation; if ambiguous, consult the user. Reuse complex UI components inside `uni-hub/components`.
-  - **Storybook stories belong strictly in `@universe/ui`** (`Components/*` for Una primitives, `Complex/*` for complex UI components; never in `uni-hub` or `backend`).
+  - **Storybook stories belong strictly in `@universe/ui`** (`Una/*` for Una primitives, `Complex/*` for complex UI components; never in `uni-hub` or `backend`).
 - **`@universe/backend`**: NestJS gateway. All DTOs and models must align with `@universe/core/types`.
 - **`@universe/uni-hub`**: Next.js student portal. Must use React Server Components where possible; mark client interactive components with `'use client'`.
 
@@ -224,6 +224,6 @@ pnpm --filter @universe/ui build-storybook
 - [ ] All arrays access last elements via `.at(-1)`.
 - [ ] No `Math.random()` used for IDs or data rendering.
 - [ ] Code formatted with proper vertical spacing and empty line before `return`.
-- [ ] Storybook stories written ONLY in `packages/ui` (`Components/*` for Una, `Complex/*` for complex components) using CSF3 with zero `any`.
+- [ ] Storybook stories written ONLY in `packages/ui` (`Una/*` for Una, `Complex/*` for complex components) using CSF3 with zero `any`.
 - [ ] Proper component placement: design system in `ui/una`, UI-only composite in `ui/complex`, domain/logic in `uni-hub/components`.
 - [ ] All tests, typecheck, and linter pass with 0 errors and 0 warnings.

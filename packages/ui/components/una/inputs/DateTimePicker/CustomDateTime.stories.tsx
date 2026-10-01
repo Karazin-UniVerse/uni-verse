@@ -4,7 +4,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { CustomDateTime } from './CustomDateTime';
 
 const meta: Meta<typeof CustomDateTime> = {
-  title: 'Components/Inputs/CustomDateTime',
+  title: 'Una/Inputs/CustomDateTime',
   component: CustomDateTime,
   tags: ['autodocs'],
   argTypes: {

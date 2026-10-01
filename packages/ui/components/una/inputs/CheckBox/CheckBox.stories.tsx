@@ -3,7 +3,7 @@ import { CheckBox } from './CheckBox';
 import React from 'react';
 
 const meta: Meta<typeof CheckBox> = {
-  title: 'Components/Inputs/CheckBox',
+  title: 'Una/Inputs/CheckBox',
   component: CheckBox,
   tags: ['autodocs'],
   argTypes: {

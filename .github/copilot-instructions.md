@@ -45,7 +45,7 @@ The project is a monorepo managed with **Turborepo** and **pnpm workspaces**.
   - Storybook stories are strictly written **ONLY for components inside `packages/ui` (`@universe/ui`)**.
   - Writing Storybook stories in any other workspace packages (such as `packages/uni-hub` or `packages/backend`) is **STRICTLY PROHIBITED**.
   - Storybook sidebar hierarchy:
-    - Una design system components (`packages/ui/components/una/`) are placed under the `Components/*` section (e.g. `title: 'Components/Buttons/Button'`, `title: 'Components/Inputs/TextInput'`).
+    - Una design system components (`packages/ui/components/una/`) are placed under the `Una/*` section (e.g. `title: 'Una/Buttons/Button'`, `title: 'Una/Inputs/TextInput'`).
     - Complex composite components (`packages/ui/components/complex/`) are placed under the dedicated `Complex/*` section (e.g. `title: 'Complex/ExampleComponent'`).
   - All stories must follow Component Story Format 3 (CSF3) using `satisfies Meta<typeof Component>` and `StoryObj<typeof meta>`. Avoid untyped parameters (`any`) in story templates.
 

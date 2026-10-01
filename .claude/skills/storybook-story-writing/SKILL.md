@@ -1,6 +1,6 @@
 ---
 name: storybook-story-writing
-description: Use when creating, modifying, or reviewing Storybook stories for UI components in the UniVerse monorepo. Enforces Component Story Format 3 (CSF3), strictly restricts stories to packages/ui, and separates Una design system components (Components/*) from complex composite components (Complex/*).
+description: Use when creating, modifying, or reviewing Storybook stories for UI components in the UniVerse monorepo. Enforces Component Story Format 3 (CSF3), strictly restricts stories to packages/ui, and separates Una design system components (Una/*) from complex composite components (Complex/*).
 ---
 
 # Storybook - Story Writing
@@ -29,10 +29,10 @@ The Storybook sidebar is divided into two distinct primary sections:
 
 | Section Hierarchy | Target Path | Purpose | Example Title |
 | :--- | :--- | :--- | :--- |
-| **`Components/*`** | `packages/ui/components/una/` | Una design system primitives, inputs, and base elements | `title: 'Components/Buttons/Button'`<br>`title: 'Components/Inputs/TextInput'` |
+| **`Una/*`** | `packages/ui/components/una/` | Una design system primitives, inputs, and base elements | `title: 'Una/Buttons/Button'`<br>`title: 'Una/Inputs/TextInput'` |
 | **`Complex/*`** | `packages/ui/components/complex/` | Multi-part composite, UI-only components (composed of Una primitives without business logic) | `title: 'Complex/ExampleComponent'` |
 
-The sidebar ordering is configured in `packages/ui/.storybook/preview.tsx` via `storySort.order: ['Components', 'Complex']`.
+The sidebar ordering is configured in `packages/ui/.storybook/preview.tsx` via `storySort.order: ['Una', 'Complex']`.
 
 ---
 
@@ -48,7 +48,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { ComponentName } from './ComponentName';
 
 const meta = {
-  title: 'Components/Category/ComponentName', // or 'Complex/ComponentName'
+  title: 'Una/Category/ComponentName', // or 'Complex/ComponentName'
   component: ComponentName,
   tags: ['autodocs'],
   parameters: {
@@ -124,8 +124,8 @@ Showcase all meaningful states:
 | Anti-Pattern | Reason | Correct Approach |
 | :--- | :--- | :--- |
 | **Stories in `uni-hub` or `backend`** | Breaks architectural package boundaries | Write stories strictly in `packages/ui` |
-| **Una component with `title: 'Complex/...'`** | Confuses design system navigation | Place under `Components/*` |
-| **Complex component with `title: 'Components/...'`** | Pollutes core design system primitives | Place under `Complex/*` |
+| **Una component with `title: 'Complex/...'`** | Confuses design system navigation | Place under `Una/*` |
+| **Complex component with `title: 'Una/...'`** | Pollutes core design system primitives | Place under `Complex/*` |
 | **CSF2 `Template.bind({})`** | Deprecated legacy Storybook format | Use CSF3 object syntax `export const Story: StoryObj = { args: { ... } }` |
 | **`args: any` in templates** | Violates monorepo strict typing standard | Use `React.ComponentProps<typeof Component>` |
 | **Hardcoding inline styles instead of tokens** | Breaks dark/cyberpunk theme rendering | Use Una CSS custom properties (`var(--...)`) |

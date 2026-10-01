@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import FileInput from './FileInput';
 
 const meta: Meta<typeof FileInput> = {
-  title: 'Components/Inputs/FileInput',
+  title: 'Una/Inputs/FileInput',
   component: FileInput,
   tags: ['autodocs'],
   argTypes: {
