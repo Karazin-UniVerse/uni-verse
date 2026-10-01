@@ -30,7 +30,7 @@ The Storybook sidebar is divided into two distinct primary sections:
 | Section Hierarchy | Target Path | Purpose | Example Title |
 | :--- | :--- | :--- | :--- |
 | **`Components/*`** | `packages/ui/components/una/` | Una design system primitives, inputs, and base elements | `title: 'Components/Buttons/Button'`<br>`title: 'Components/Inputs/TextInput'` |
-| **`Complex/*`** | `packages/ui/components/complex/` | Multi-part composite, domain-driven, or feature-level components | `title: 'Complex/ExampleComponent'` |
+| **`Complex/*`** | `packages/ui/components/complex/` | Multi-part composite, UI-only components (composed of Una primitives without business logic) | `title: 'Complex/ExampleComponent'` |
 
 The sidebar ordering is configured in `packages/ui/.storybook/preview.tsx` via `storySort.order: ['Components', 'Complex']`.
 
