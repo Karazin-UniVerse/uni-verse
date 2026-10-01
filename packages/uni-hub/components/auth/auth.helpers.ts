@@ -19,7 +19,7 @@ export const parseGoogleClaims = (token: string): GoogleJwtClaims => {
     const jsonPayload = decodeURIComponent(
       atob(base64)
         .split('')
-        .map((char) => '%' + ('00' + char.charCodeAt(0).toString(16)).slice(-2))
+        .map((char) => '%' + ('00' + (char.codePointAt(0) ?? 0).toString(16)).slice(-2))
         .join(''),
     );
 

@@ -287,7 +287,7 @@ const DashboardPage: React.FC = () => {
             </div>
           )}
           {!isMoodleLinked && (
-            <div className={styles.linkMoodleBanner} role="status">
+            <output className={styles.linkMoodleBanner}>
               <div className={styles.linkMoodleBannerContent}>
                 <Link2 size={16} className={styles.linkMoodleIcon} />
                 <span>{formatMessage('dashboard.linkMoodlePrompt')}</span>
@@ -300,7 +300,7 @@ const DashboardPage: React.FC = () => {
               >
                 {formatMessage('dashboard.linkMoodleAction')}
               </Button>
-            </div>
+            </output>
           )}
           {loading && !hasCachedData ? (
             <DashboardSkeleton />
