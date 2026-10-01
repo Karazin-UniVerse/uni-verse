@@ -11,11 +11,14 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { useFeatures } from '@uni-hub/features';
+import type { FeatureFlags, FeatureFlagKey } from '@core/constants/features';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import type { DashboardSidebarProps, NavKey } from '../types';
@@ -28,6 +31,7 @@ export interface NavItemConfig {
   shortLabelKey: TranslationKey;
   label: string;
   shortLabel: string;
+  featureFlag?: FeatureFlagKey;
 }
 
 export const NAV_ITEMS: NavItemConfig[] = [
@@ -46,6 +50,7 @@ export const NAV_ITEMS: NavItemConfig[] = [
     shortLabelKey: 'nav.courses',
     label: 'Індивідуальний план',
     shortLabel: 'Курси',
+    featureFlag: 'isMoodleIntegrationEnabled',
   },
   {
     key: 'grades',
@@ -54,6 +59,7 @@ export const NAV_ITEMS: NavItemConfig[] = [
     shortLabelKey: 'nav.grades',
     label: 'Заліковка та бали',
     shortLabel: 'Оцінки',
+    featureFlag: 'isMoodleIntegrationEnabled',
   },
   {
     key: 'schedule',
@@ -62,6 +68,7 @@ export const NAV_ITEMS: NavItemConfig[] = [
     shortLabelKey: 'nav.schedule',
     label: 'Розклад занять',
     shortLabel: 'Розклад',
+    featureFlag: 'isEDeanEnabled',
   },
   {
     key: 'assignments',
@@ -70,8 +77,21 @@ export const NAV_ITEMS: NavItemConfig[] = [
     shortLabelKey: 'nav.assignments',
     label: 'Завдання',
     shortLabel: 'Завдання',
+    featureFlag: 'isMoodleIntegrationEnabled',
+  },
+  {
+    key: 'opportunities',
+    icon: <Sparkles size={18} />,
+    labelKey: 'nav.opportunities.full',
+    shortLabelKey: 'nav.opportunities',
+    label: 'Платформа можливостей',
+    shortLabel: 'Можливості',
+    featureFlag: 'isOpportunitiesPlatformEnabled',
   },
 ];
+
+export const getVisibleNavItems = (flags: FeatureFlags): NavItemConfig[] =>
+  NAV_ITEMS.filter((item) => !item.featureFlag || flags[item.featureFlag]);
 
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   collapsed,
@@ -84,6 +104,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   onLogout,
 }) => {
   const { formatMessage } = useLanguage();
+  const flags = useFeatures();
+  const visibleNavItems = getVisibleNavItems(flags);
   const siderRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -186,7 +208,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         </div>
 
         <nav className={styles.nav}>
-          {NAV_ITEMS.map((item) => {
+          {visibleNavItems.map((item) => {
             const label = formatMessage(item.labelKey);
             const shortLabel = formatMessage(item.shortLabelKey);
 
@@ -223,20 +245,22 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         </nav>
 
         <div className={styles.siderFooter}>
-          <a
-            href="https://moodle.universemvp.tech"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.moodleStatusLink}
-            title={formatMessage('sidebar.moodleConnected')}
-          >
-            <span className={styles.statusDot} aria-hidden />
-            {!collapsed || mobileMenuOpen ? (
-              <span className={styles.moodleHost}>🔗 moodle.universemvp.tech</span>
-            ) : (
-              <span className={styles.moodleCompactIcon}>🔗</span>
-            )}
-          </a>
+          {flags.isMoodleIntegrationEnabled && (
+            <a
+              href="https://moodle.universemvp.tech"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.moodleStatusLink}
+              title={formatMessage('sidebar.moodleConnected')}
+            >
+              <span className={styles.statusDot} aria-hidden />
+              {!collapsed || mobileMenuOpen ? (
+                <span className={styles.moodleHost}>🔗 moodle.universemvp.tech</span>
+              ) : (
+                <span className={styles.moodleCompactIcon}>🔗</span>
+              )}
+            </a>
+          )}
           <LanguageSwitcher
             compact
             showLabel={!collapsed || mobileMenuOpen}
