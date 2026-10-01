@@ -53,17 +53,19 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     <div className={styles.stack}>
       <StudentCard activeStudentProfile={activeStudentProfile} />
 
-      <div className={styles.overviewHero}>
-        <ContextualGreeting assignments={assignments} />
-        {flags.isMoodleIntegrationEnabled && nearestDeadline && (
-          <div className={styles.nearestDeadline}>
-            <span className={styles.muted}>
-              {formatMessage('overview.nearestDeadline')} {nearestDeadline.name}
-            </span>
-            <LiveCountdown targetUnixSec={nearestDeadline.duedate} />
-          </div>
-        )}
-      </div>
+      {flags.isMoodleIntegrationEnabled && (
+        <div className={styles.overviewHero}>
+          <ContextualGreeting assignments={assignments} />
+          {nearestDeadline && (
+            <div className={styles.nearestDeadline}>
+              <span className={styles.muted}>
+                {formatMessage('overview.nearestDeadline')} {nearestDeadline.name}
+              </span>
+              <LiveCountdown targetUnixSec={nearestDeadline.duedate} />
+            </div>
+          )}
+        </div>
+      )}
 
       {flags.isMoodleIntegrationEnabled && (
         <StatCardGrid
