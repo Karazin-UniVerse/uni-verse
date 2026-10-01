@@ -115,7 +115,7 @@ export const DevFeaturePanel: React.FC = () => {
   }
 
   return (
-    <div className={styles.panelOverlay} role="dialog" aria-modal="true">
+    <dialog className={styles.panelOverlay} open aria-label="Feature Toggles">
       <div className={styles.panelHeader}>
         <div className={styles.panelTitleGroup}>
           <SlidersHorizontal size={16} />
@@ -180,6 +180,6 @@ export const DevFeaturePanel: React.FC = () => {
           {isCopied ? 'Скопійовано!' : 'Копіювати URL'}
         </Button>
       </div>
-    </div>
+    </dialog>
   );
 };
