@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { SlidersHorizontal, X, RotateCcw } from 'lucide-react';
 import { Button, Tag } from '@una';
 import type { FeatureFlagKey } from '@core/constants/features';
@@ -31,9 +31,16 @@ const FEATURE_ITEMS: FeatureItemConfig[] = [
   },
 ];
 
+const emptySubscribe = () => () => {};
+
 export const DevFeaturePanel: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isReset, setIsReset] = useState(false);
+  const isMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { flags, activeOverrides, setFeatureOverride, resetFeatureOverrides, isOverridden } =
@@ -102,7 +109,9 @@ export const DevFeaturePanel: React.FC = () => {
         className={styles.headerButton}
       >
         <SlidersHorizontal size={18} />
-        {overrideCount > 0 && <span className={styles.overrideBadge}>{overrideCount}</span>}
+        {isMounted && overrideCount > 0 && (
+          <span className={styles.overrideBadge}>{overrideCount}</span>
+        )}
       </Button>
 
       {isOpen && (
