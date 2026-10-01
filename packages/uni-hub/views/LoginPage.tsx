@@ -36,7 +36,6 @@ const LoginPage: React.FC = () => {
 
       if (displayName) {
         setGoogleUserName(displayName);
-        safeStorage.setItem('username', displayName);
       }
 
       const res = await authApi.loginWithGoogle(idToken);
@@ -44,6 +43,11 @@ const LoginPage: React.FC = () => {
       if (res.data?.isLinked) {
         safeStorage.setItem('isLoggedIn', 'true');
         safeStorage.setItem('isMoodleLinked', 'true');
+
+        if (displayName) {
+          safeStorage.setItem('username', displayName);
+        }
+
         toast.success(formatMessage('login.success'));
         router.push('/');
       } else {
@@ -51,6 +55,8 @@ const LoginPage: React.FC = () => {
         setIsLinkingMoodle(true);
       }
     } catch (err: unknown) {
+      setGoogleUserName('');
+      safeStorage.removeItem('username');
       const message = getErrorMessage(err, formatMessage('login.googleError'));
 
       setError(message);
@@ -150,11 +156,13 @@ const LoginPage: React.FC = () => {
 
   const handleCancelLink = () => {
     setIsLinkingMoodle(false);
+    setGoogleUserName('');
     setLinkUsername('');
     setLinkPassword('');
     safeStorage.removeItem('accessToken');
     safeStorage.removeItem('isLoggedIn');
     safeStorage.removeItem('isMoodleLinked');
+    safeStorage.removeItem('username');
   };
 
   return (
