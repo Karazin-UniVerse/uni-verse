@@ -151,6 +151,17 @@ export type GradesThreshold = (typeof GRADES_THRESHOLD)[keyof typeof GRADES_THRE
 
 For the clean `export { X } from 'y'` form, see [quality](quality.md).
 
+## No magic values
+
+Never put bare numbers or domain strings into logic: HTTP status codes, grade thresholds, filter names, storage keys, timeouts. Declare a const object with a derived type once, in `@universe/core/constants` when more than one package can use it ([where shared code lives](#reuse-before-writing-dry)), and import it. Do not use TS `enum`; see [quality](quality.md).
+
+```typescript
+// ❌ if (response.status === 401)
+// ✅ if (response.status === RESPONSE_CODES.UNAUTHORIZED)
+export const RESPONSE_CODES = { UNAUTHORIZED: 401 } as const;
+export type ResponseCode = (typeof RESPONSE_CODES)[keyof typeof RESPONSE_CODES];
+```
+
 ---
 
 # Architecture
@@ -175,6 +186,14 @@ uni-verse/
 - **`@universe/ui`**: consumed by frontend packages.
 - **`@universe/backend`**: all DTOs and models must align with `@universe/core/types`.
 - **`@universe/uni-hub`**: prefer React Server Components, see [frontend](frontend.md).
+
+### Core layout
+
+- One file per domain, grouped by kind: `constants/grades.ts`, `constants/breakpoints.ts`, `utils/grades.ts`, `utils/browser.ts`. Import the specific module (`@core/utils/browser`), never the package root.
+- No barrel `index.ts` in `constants/` and `utils/`. Barrels hide where code lives and force a split later; add domain files from the start.
+- Types, constants and functions never share a file. Types stay under `types/`.
+- Tests sit next to the code in a sibling `tests/` directory (`utils/tests/grades.test.ts`).
+- Do not write unit tests for types and constants; test behavior only.
 
 ## Monorepo rules
 
