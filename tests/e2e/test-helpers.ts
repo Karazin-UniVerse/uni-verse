@@ -65,7 +65,7 @@ export function oracleCalculateTraditionalGrade(
 }
 
 /**
- * Dynamic module loader for @universe/core or @universe/types
+ * Dynamic module loader for @universe/core
  */
 export async function loadTypesModule(): Promise<any> {
   const coreRootPath = resolveWorkspacePath('packages/core/index.ts');
@@ -88,17 +88,7 @@ export async function loadTypesModule(): Promise<any> {
     }
   }
 
-  const tsPath = resolveWorkspacePath('packages/types/src/index.ts');
-
-  if (!fs.existsSync(tsPath)) {
-    return null;
-  }
-
-  try {
-    return await import('../../packages/types/src/index.ts');
-  } catch {
-    return null;
-  }
+  return null;
 }
 
 /**
