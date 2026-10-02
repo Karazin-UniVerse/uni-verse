@@ -86,6 +86,14 @@ function getStatusInfo(
 
 For React components with non-trivial prop interfaces or data models, extract the types into `<ComponentName>.types.ts` next to the component (`Chart.types.ts` beside `Chart.tsx`). Do not create `.types.ts` files for simple utilities, single helpers or trivial components. Import the types directly from the `.types.ts` file; do not re-export them from the component file (see the shim rule below).
 
+## Components, files and imports
+
+- One component per file. Subcomponents go in their own files.
+- Inside a domain folder do not repeat the folder name in a frontend file name: `components/auth/helpers.ts`, not `auth.helpers.ts`. Backend modules keep `<module>.helpers.ts`.
+- One `import` statement per package, listing every name: `import { Modal, Button, useToast } from '@una';`. For `@universe/core` import the specific module ([core layout](architecture.md#core-layout)).
+- Do not add a dependency that another workspace package already provides (use `@ui`, not a second copy).
+- After a refactor, remove what is now unused: exports, files, dependencies, translation keys. Before keeping something that "might be needed", check that it is used.
+
 ## Keep it simple (KISS)
 
 - Choose the simplest solution that meets the current requirement. Five direct lines beat a fifty-line generalization.

@@ -4,6 +4,8 @@
 
 Prioritize React Server Components. Use client components (`"use client"`) only when interactivity or browser APIs (`useState`, `useEffect`, `window`) are required.
 
+- Components in `packages/ui` stay usable as Server Components. Put `"use client"` only on the part that needs interactivity, and compose the rest as `children` of that client wrapper (for example `Chart`). Before adding `"use client"` to an app component, check that it really needs state, effects or browser APIs.
+
 ## Component decomposition
 
 - Components over ~150-200 lines, or with several distinct UI sections (cards, grids, feeds, action panels), MUST be split into focused subcomponents. Examples: `StudentCard`, `StatCardGrid`, `UpcomingEventsList`; `DeanContactModal` into `DeanContactInfo` and `DeanTopicChips`.
@@ -17,6 +19,7 @@ Prioritize React Server Components. Use client components (`"use client"`) only 
 - Zero hardcoded strings in the UI. All user-facing text (headings, button labels, tooltips, placeholders, toast notifications, aria-labels) goes through translation keys: `useLanguage().formatMessage('some.key')`.
 - Define every key in both `packages/uni-hub/i18n/locales/uk.ts` and `packages/uni-hub/i18n/locales/en.ts`, satisfying `Record<TranslationKey, string>`. Keep the two files in sync.
 - `@universe/ui` components stay language-agnostic: no hardcoded Ukrainian or English text. Accessibility labels come in as props (for example `closeLabel?: string`), and the consumer supplies the localized value.
+- Dynamic values go through placeholders in the translation string and the `values` argument: `'Go to assignment: {name}'` with `formatMessage('recentGrades.viewAssignment', { name })`. Never concatenate strings around `formatMessage`. Keep one translation function name; do not add aliases such as `t`.
 
 ## Responsive breakpoints
 
