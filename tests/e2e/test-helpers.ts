@@ -29,7 +29,7 @@ export function readJsonFile<T = unknown>(relPath: string): T {
 }
 
 /**
- * Authoritative Oracles derived strictly from PROJECT.md and ORIGINAL_REQUEST.md
+ * Authoritative oracles for the grade scales (ECTS / traditional)
  */
 export function oracleCalculateEctsGrade(score: number): 'A' | 'B' | 'C' | 'D' | 'E' | 'Fx' | 'F' {
   if (score >= 90) return 'A';
@@ -119,7 +119,7 @@ export async function loadUiModule(): Promise<any> {
 }
 
 /**
- * Standard test fixtures based on PROJECT.md interfaces
+ * Standard test fixtures matching the @universe/core/types interfaces
  */
 export const mockStudentProfile = {
   id: 'karazin-student-001',
