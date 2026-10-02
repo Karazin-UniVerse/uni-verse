@@ -53,7 +53,7 @@ Package `AGENTS.md` in `packages/uni-hub` keeps the `next dev`-managed block (`B
 - `storybook-story-writing` stays as a skill (it is a procedure, not a standing rule); scope/section rules are referenced from `docs/ai/architecture.md`, not duplicated.
 - After this change the only project-specific skill is `storybook-story-writing`; everything else in `skills/` is third-party.
 - Delete `agent/skills/` (stale leftover).
-- Remove vendor copies already provided globally: `brainstorming`, `skill-creator`, `frontend-design`. Remaining vendor skills are kept and listed in `skills-lock.json`.
+- Vendor skills (including `brainstorming`, `skill-creator`, `frontend-design`) stay in the repo and in `skills-lock.json`: the repository is shared and must not depend on any contributor's global installs. (An earlier draft removed these three; reversed on 2026-10-02.)
 - Add missing `playwright-cli` to `.agents/skills` (present only in `.claude`).
 
 ## Reviewer integration
