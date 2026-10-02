@@ -47,3 +47,11 @@ export interface ScheduleMonthViewProps {
   weekdays: string[];
   monthDays: Date[];
 }
+
+export interface ScheduleMonthDayCellProps {
+  day: Date;
+  events: ScheduleEvent[];
+  inMonth: boolean;
+  isToday: boolean;
+  onSelect: () => void;
+}

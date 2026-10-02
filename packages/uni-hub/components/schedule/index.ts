@@ -5,4 +5,5 @@ export * from './ScheduleDayView';
 export * from './ScheduleWeekView';
 export * from './ScheduleWeekDayCard';
 export * from './ScheduleMonthView';
+export * from './ScheduleMonthDayCell';
 export * from './helpers';
