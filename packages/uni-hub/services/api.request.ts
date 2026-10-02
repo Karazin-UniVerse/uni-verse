@@ -101,7 +101,11 @@ async function executeAttempt<T>(
         // response was not JSON
       }
 
-      throw new Error(serverMessage || `HTTP error ${response.status}: ${response.statusText}`);
+      const errorDetail = serverMessage
+        ? `${serverMessage} (HTTP ${response.status})`
+        : `HTTP error ${response.status}: ${response.statusText}`;
+
+      throw new Error(errorDetail);
     }
 
     const data = (await response.json()) as T;

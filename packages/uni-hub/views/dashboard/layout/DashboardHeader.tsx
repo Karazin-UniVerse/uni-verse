@@ -155,7 +155,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             </motion.div>
           )}
         </div>
-
         <div className={styles.userWrap} ref={userRef}>
           <button
             type="button"
@@ -165,11 +164,14 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             onClick={() => setUserMenuOpen((open) => !open)}
             aria-haspopup="menu"
             aria-expanded={userMenuOpen}
+            // intentional: suppressHydrationWarning – user profile is resolved client-side from storage; server renders fallback
+            suppressHydrationWarning
           >
             <span className={styles.avatar}>
               <User size={16} />
             </span>
-            <span>{activeStudentProfile.fullName}</span>
+            {/* intentional: suppressHydrationWarning – student name loaded client-side */}
+            <span suppressHydrationWarning>{activeStudentProfile.fullName}</span>
           </button>
 
           {userMenuOpen && (
@@ -181,8 +183,12 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               transition={{ duration: 0.15 }}
             >
               <div className={styles.userDropdownHeader}>
-                <strong>{activeStudentProfile.fullName}</strong>
-                <div className={styles.muted}>{activeStudentProfile.group}</div>
+                {/* intentional: suppressHydrationWarning – student name loaded client-side */}
+                <strong suppressHydrationWarning>{activeStudentProfile.fullName}</strong>
+                {/* intentional: suppressHydrationWarning – student group loaded client-side */}
+                <div className={styles.muted} suppressHydrationWarning>
+                  {activeStudentProfile.group}
+                </div>
               </div>
 
               <div className={styles.dropdownSection}>

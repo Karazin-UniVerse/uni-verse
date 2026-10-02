@@ -146,7 +146,13 @@ export function persistDashboardSnapshot(timestamp: number, freshData: Dashboard
 }
 
 export function isUnauthorizedError(error: unknown): boolean {
-  return error instanceof Error && error.message.includes('401');
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+
+  return message.includes('401') || message.includes('unauthorized');
 }
 
 export function clearUserSessionStorage(): void {

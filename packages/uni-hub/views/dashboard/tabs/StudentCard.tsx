@@ -34,8 +34,10 @@ export const StudentCard: React.FC<StudentCardProps> = ({
             )}
           </div>
           <div className={styles.studentMainInfo}>
-            <h3>{activeStudentProfile.fullName}</h3>
-            <div className={styles.muted}>
+            {/* intentional: suppressHydrationWarning – student name loaded client-side */}
+            <h3 suppressHydrationWarning>{activeStudentProfile.fullName}</h3>
+            {/* intentional: suppressHydrationWarning – student specialty and program loaded client-side */}
+            <div className={styles.muted} suppressHydrationWarning>
               {formatMessage('overview.specialty')} {activeStudentProfile.specialty} •{' '}
               {activeStudentProfile.educationalProgram}
             </div>
