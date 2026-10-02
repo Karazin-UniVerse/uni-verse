@@ -4,7 +4,7 @@
 
 Prioritize React Server Components. Use client components (`"use client"`) only when interactivity or browser APIs (`useState`, `useEffect`, `window`) are required.
 
-- Components in `packages/ui` stay usable as Server Components. Put `"use client"` only on the part that needs interactivity, and compose the rest as `children` of that client wrapper (for example `Chart`). Before adding `"use client"` to an app component, check that it really needs state, effects or browser APIs.
+- Components in `packages/ui` stay usable as Server Components. Put `"use client"` only on the part that needs interactivity, and compose the rest as `children` of that client wrapper. Before adding `"use client"` to an app component, check that it really needs state, effects or browser APIs.
 
 ## Component decomposition
 

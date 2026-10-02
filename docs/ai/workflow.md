@@ -38,13 +38,6 @@ pnpm exec prettier --check <files you changed>
 - `pnpm exec oxlint --fix` fixes vertical-spacing violations automatically.
 - Format the lockfile with `pnpm exec prettier --write pnpm-lock.yaml`.
 
-## Config and environment
-
-- `.env.example` is the single source of truth for environment variables. A new variable is added there in the same PR; developers copy it to `.env`.
-- Code reads configuration from `process.env` and does not carry fallback defaults for values that `.env.example` or the server always provides. Never hardcode URLs or hosts.
-- Do not duplicate `.env` files or entries in `.gitignore`, `tsconfig` paths or `package.json`; search for an existing entry first. A workspace alias is declared once (`workspace:*` in `package.json`, one path in `tsconfig.json`).
-- Secrets are never committed. In README or docs write "ask the Project coordinator" for private values.
-
 ## Documentation
 
 - Documentation is in English.
@@ -60,6 +53,6 @@ pnpm exec prettier --check <files you changed>
 - [ ] Vertical spacing and an empty line before `return` ([code-style](code-style.md)).
 - [ ] I searched for an existing helper, constant, type or component before writing a new one; shared code is in the right place ([code-style](code-style.md#reuse-before-writing-dry)).
 - [ ] The solution is the simplest that meets the requirement ([code-style](code-style.md#keep-it-simple-kiss)).
-- [ ] No magic values; API calls go through client classes ([code-style](code-style.md#no-magic-values), [architecture](architecture.md#api-clients)).
-- [ ] Unused exports, files, dependencies and translation keys are removed; new env variables and docs are in place ([config and environment](#config-and-environment)).
+- [ ] No magic values; API calls go through client classes ([api-and-config](api-and-config.md#no-magic-values)).
+- [ ] Unused exports, files, dependencies and translation keys are removed; new env variables and docs are in place ([config and environment](api-and-config.md#config-and-environment)).
 - [ ] Lint, typecheck, tests and build pass with zero errors and zero warnings.

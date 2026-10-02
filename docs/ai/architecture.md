@@ -23,7 +23,7 @@ uni-verse/
 
 ### Core layout
 
-- One file per domain, grouped by kind: `constants/grades.ts`, `constants/breakpoints.ts`, `utils/grades.ts`, `utils/browser.ts`. Import the specific module (`@core/utils/browser`), never the package root.
+- One file per domain, grouped by kind: `constants/grades.ts`, `constants/breakpoints.ts`, `utils/grades.ts`, `utils/browser.ts`. Import the specific module (`@universe/core/utils/browser`, or the `@core/utils/browser` alias inside uni-hub), never the package root.
 - No barrel `index.ts` in `constants/` and `utils/`. Barrels hide where code lives and force a split later; add domain files from the start.
 - Types, constants and functions never share a file. Types stay under `types/`.
 - Tests sit next to the code in a sibling `tests/` directory (`utils/tests/grades.test.ts`).
@@ -64,13 +64,3 @@ Before creating any component, decide which tier fits. If the placement is ambig
 - Services contain all business logic.
 - Inject Prisma as a service (managed through `@universe/database`).
 - Use dependency injection and keep modules highly cohesive.
-
-## API clients
-
-HTTP access is class-based so that transport settings and dependencies live in one place.
-
-- **Frontend (`packages/uni-hub/services/`)**: one class per backend domain (`AuthApi`, `MoodleApi`), in `api.<domain>.ts`, exported as one shared instance (`export const authApi = new AuthApi()`). Components and hooks call methods on the instance; they never call `fetch` or a raw `request` function.
-- Shared transport (base URL, auth header, timeout, retries, error mapping) lives in a single `ApiClient` base class that the domain classes extend, with a protected `request<T>()` method. Do not copy transport logic into a domain class.
-- **Backend**: one injectable client service per external system (Moodle: `MoodleClientService`). Other services depend on it through DI and never call `fetch` directly.
-- Pure functions stay functions: query-string building, message mapping and other stateless helpers are not wrapped in a class. Put them where [shared code lives](code-style.md#reuse-before-writing-dry), or make them `private` members of the client when only it uses them.
-- Existing function-based transport code is migrated when a PR changes it; do not refactor it in unrelated PRs.

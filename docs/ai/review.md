@@ -13,11 +13,11 @@ Evaluate the change strictly against these failure modes:
 7. **ACCESSIBILITY (a11y):** check ARIA roles, keyboard navigation and contrast. Rules: [quality](quality.md).
 8. **LEGACY SHIMS & RETROACTIVE RE-EXPORTS (Backtracking):** flag backwards-compatibility aliases, proxy re-exports and transitional wrappers introduced during refactoring. Require direct updates of consumer imports and removal of obsolete files. Rule: [code-style](code-style.md).
 9. **MONOLITHIC COMPONENTS & MISSING DECOMPOSITION:** flag components over ~150-200 lines with inline data fetching, stateful side effects or several UI sections that are not split into subcomponents and hooks. Rule: [frontend](frontend.md).
-10. **INLINE HELPERS & DTO POLLUTION:** flag pure helpers, calculation utilities, date formatters or query transformers kept inside components, hooks or backend DTOs; require `helpers.ts` (with unit tests) or `@universe/core`. Rule: [code-style](code-style.md).
+10. **INLINE HELPERS & DTO POLLUTION:** flag pure helpers, calculation utilities, date formatters or query transformers kept inside components, hooks or backend DTOs; require the location from the [placement table](code-style.md#reuse-before-writing-dry). Rule: [code-style](code-style.md).
 11. **HARDCODED UI TEXT (i18n):** flag hardcoded strings in JSX/TSX; require translation keys in both `uk.ts` and `en.ts`. Rule: [frontend](frontend.md).
-12. **MAGIC VALUES:** bare numbers or domain strings in logic instead of core constants. Rule: [code-style](code-style.md#no-magic-values).
-13. **MISSING OPERATIONAL CHANGES:** a new env variable absent from `.env.example`, a new script or service without docs, UI changes without screenshots. Rule: [workflow](workflow.md#config-and-environment).
-14. **API ACCESS OUTSIDE CLIENT CLASSES:** direct `fetch` or raw `request` calls in components or services. Rule: [architecture](architecture.md#api-clients).
+12. **MAGIC VALUES:** bare numbers or domain strings in logic instead of core constants. Rule: [api-and-config](api-and-config.md#no-magic-values).
+13. **MISSING OPERATIONAL CHANGES:** a new env variable absent from `.env.example`, a new script or service without docs, UI changes without screenshots. Rules: [config](api-and-config.md#config-and-environment), [PR screenshots](workflow.md#branches-commits-pull-requests).
+14. **API ACCESS OUTSIDE CLIENT CLASSES:** direct `fetch` or raw `request` calls in components, hooks or backend services other than the client class itself. Flag the existing `request()` function only when the PR touches it. Rule: [api-and-config](api-and-config.md#api-clients).
 
 ## Output requirements
 
