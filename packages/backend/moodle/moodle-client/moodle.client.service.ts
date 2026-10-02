@@ -27,7 +27,9 @@ export type MoodleClientParams = {
 
 @Injectable()
 export class MoodleClientService {
-  private readonly baseUrl = (process.env.MOODLE_BASEURL || '').trim();
+  private readonly baseUrl = (process.env.MOODLE_BASEURL || '')
+    .trim()
+    .replace(/\/$/, '');
   private readonly timeout = process.env.MOODLE_TIMEOUT || '15000';
   private readonly logger = new Logger(MoodleClientService.name);
 
@@ -35,6 +37,14 @@ export class MoodleClientService {
     if (!this.baseUrl.startsWith('https://')) {
       throw new Error('MOODLE_BASEURL must be a secure URL (https://)');
     }
+  }
+
+  /**
+   * Low-level request to a path under the Moodle base URL. Redirects are
+   * refused unless the caller overrides `redirect`.
+   */
+  async fetch(path: string, init: RequestInit = {}): Promise<Response> {
+    return fetch(`${this.baseUrl}${path}`, { redirect: 'error', ...init });
   }
 
   async client<T = unknown>({

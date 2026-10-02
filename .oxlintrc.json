@@ -28,6 +28,13 @@
     "typescript/no-explicit-any": "warn",
     "react/no-multi-comp": "error",
     "max-params": ["error", { "max": 3 }],
+    "no-restricted-globals": [
+      "error",
+      {
+        "name": "fetch",
+        "message": "Do not call fetch directly. Go through the API client class: MoodleClientService on the backend, the api.* client classes in uni-hub."
+      }
+    ],
     "universe/vertical-spacing": "error",
     "universe/destructuring-props-order": "error",
     "universe/no-suppress-hydration-without-comment": "warn",
@@ -53,7 +60,17 @@
       "rules": {
         "typescript/no-explicit-any": "off",
         "react/no-multi-comp": "off",
-        "max-params": "off"
+        "max-params": "off",
+        "no-restricted-globals": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/backend/moodle/moodle-client/moodle.client.service.ts",
+        "packages/uni-hub/services/api.request.ts"
+      ],
+      "rules": {
+        "no-restricted-globals": "off"
       }
     },
     {

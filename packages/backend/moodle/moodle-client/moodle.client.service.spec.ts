@@ -84,4 +84,57 @@ describe('MoodleClientService', () => {
       svc.client({ wsfunction: 'someFunction', moodleToken: 'token' }),
     ).rejects.toThrow(BadRequestException);
   });
+
+  describe('fetch', () => {
+    const buildService = (baseUrl: string): MoodleClientService => {
+      process.env.MOODLE_BASEURL = baseUrl;
+      process.env.MOODLE_TIMEOUT = '1000';
+
+      return new MoodleClientService();
+    };
+
+    it('requests the path under the Moodle base URL and refuses redirects by default', async () => {
+      const fetchMock = jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValue(new Response('{}'));
+
+      await buildService('https://example.com').fetch('/login/token.php', {
+        method: 'POST',
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://example.com/login/token.php',
+        { redirect: 'error', method: 'POST' },
+      );
+    });
+
+    it('lets the caller override the default init options', async () => {
+      const fetchMock = jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValue(new Response('{}'));
+
+      await buildService('https://example.com').fetch('/x', {
+        redirect: 'follow',
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith('https://example.com/x', {
+        redirect: 'follow',
+      });
+    });
+
+    it('does not produce a double slash when MOODLE_BASEURL ends with a slash', async () => {
+      const fetchMock = jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValue(new Response('{}'));
+
+      await buildService('https://example.com/').fetch(
+        '/webservice/upload.php',
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://example.com/webservice/upload.php',
+        { redirect: 'error' },
+      );
+    });
+  });
 });
