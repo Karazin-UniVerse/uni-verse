@@ -32,9 +32,9 @@ Karazin UniVerse is a monorepo (Turborepo + pnpm workspaces): Next.js 16 (App Ro
 
 ## Read on demand
 
-| When you are…                                                                                                       | Read                                                 |
-| ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| building or styling UI components (colors, typography, spacing, radii, shadows, z-index, motion) — you MUST read it | [docs/ai/design-system.md](docs/ai/design-system.md) |
-| reviewing code or a PR                                                                                              | [docs/ai/review.md](docs/ai/review.md)               |
-| branching, committing, running checks                                                                               | [docs/ai/workflow.md](docs/ai/workflow.md)           |
-| touching Moodle, grades, or the E-Dean portal                                                                       | [docs/ai/domain-edean.md](docs/ai/domain-edean.md)   |
+| When you are…                                                                                                       | Read                                                   |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| building or styling UI components (colors, typography, spacing, radii, shadows, z-index, motion) — you MUST read it | [docs/ai/design-system.md](docs/ai/design-system.md)   |
+| reviewing code or a PR                                                                                              | [docs/ai/review.md](docs/ai/review.md)                 |
+| branching, committing, running checks                                                                               | [docs/ai/workflow.md](docs/ai/workflow.md)             |
+| touching Moodle, grades, or the E-Dean portal                                                                       | [docs/ai/domain-uni-hub.md](docs/ai/domain-uni-hub.md) |
