@@ -1,46 +1,46 @@
-# Правила Дизайн-Системи (UniDesign)
+# Design System Rules (UniDesign)
 
-Цей документ містить суворі правила та інструкції щодо використання дизайн-системи **UniVerse**, яких мають дотримуватися AI-агенти та розробники. Правила ранжовані за рівнем суворості.
+This document contains the strict rules and instructions for using the **UniVerse** design system that AI agents and developers must follow. The rules are ranked by level of strictness.
 
-## 🔴 Критична строгість (Critical Strictness)
+## 🔴 Critical Strictness
 
-### 1. Кольори (Colors)
+### 1. Colors
 
-- Використовувати **ВИКЛЮЧНО** змінні з дизайн-системи.
-- **ЗАБОРОНЕНО** хардкодити будь-які HEX, RGB або HSL значення (наприклад, `#FF0000`, `rgb(255, 0, 0)`).
-- Якщо необхідного кольору не вистачає в системі:
-  - Пропонуйте додавання нового токена в дизайн-систему (vars.scss).
-  - Або змініть дизайн, щоб він відповідав наявній палітрі.
+- Use **ONLY** variables from the design system.
+- **DO NOT** hardcode any HEX, RGB or HSL values (for example, `#FF0000`, `rgb(255, 0, 0)`).
+- If a required color is missing from the system:
+  - Propose adding a new token to the design system (vars.scss).
+  - Or change the design to match the existing palette.
 
-### 2. Типографіка (Шрифти та розміри)
+### 2. Typography (Fonts and Sizes)
 
-- Використовувати **виключно** системні розміри шрифтів та сімейства (font-family).
-- Шрифти та розміри застосовуються цілком до всього поля / компонента.
-- Змінювати базову типографіку в дизайн-системі **суворо заборонено**.
-- _Винятки:_ Кастомні розміри допускаються **лише** для унікальних/специфічних полів (наприклад, графіки, логотипи), і лише якщо це явно погоджено.
+- Use **only** system font sizes and font families (font-family).
+- Fonts and sizes apply to the whole field / component as a unit.
+- Changing the base typography in the design system is **strictly prohibited**.
+- _Exceptions:_ Custom sizes are allowed **only** for unique or specific elements (for example, charts, logos), and only if explicitly approved.
 
-## 🟠 Висока строгість (High Strictness)
+## 🟠 High Strictness
 
-### 3. Відступи (Spacing: Margins & Paddings)
+### 3. Spacing (Margins & Paddings)
 
-- Відступи пишуться ситуативно, але **СУВОРО** за принципом кратності:
-  - Основна сітка: кратно **8** (`8px`, `16px`, `24px`, `32px`...).
-  - Допоміжна сітка: кратно **4** (`4px`, `12px`, `20px`...).
-  - Мікро-відступи: кратно **2** (лише для дуже тісних UI-елементів).
-- **Заборонено** використовувати непарні або випадкові значення (наприклад, `7px`, `13px`, `15px`).
+- Spacing is written case by case, but **STRICTLY** following the multiples principle:
+  - Primary grid: multiples of **8** (`8px`, `16px`, `24px`, `32px`...).
+  - Secondary grid: multiples of **4** (`4px`, `12px`, `20px`...).
+  - Micro spacing: multiples of **2** (only for very tight UI elements).
+- Using odd or arbitrary values (for example, `7px`, `13px`, `15px`) is **prohibited**.
 
-### 4. Радіуси границь (Border Radius)
+### 4. Border Radius
 
-- Використовувати лише стандартизовані системні токени (наприклад, `rounded-sm`, `rounded-md`, `rounded-lg`, `rounded-full`).
-- Не хардкодити довільні піксельні значення (наприклад, `border-radius: 5px;`).
+- Use only standardized system tokens (for example, `rounded-sm`, `rounded-md`, `rounded-lg`, `rounded-full`).
+- Do not hardcode arbitrary pixel values (for example, `border-radius: 5px;`).
 
-## 🟡 Середня строгість (Medium Strictness)
+## 🟡 Medium Strictness
 
-### 5. Тіні та Глибина (Shadows & Z-Index)
+### 5. Shadows & Z-Index
 
-- **Тіні (Elevation):** Заборонено писати кастомні тіні (`box-shadow: 0px 4px ...`). Використовувати виключно системні рівні глибини (elevation-1, elevation-2).
-- **Z-Index:** Використовувати чіткі системні рівні (наприклад, `z-dropdown`, `z-sticky`, `z-modal`, `z-tooltip`), щоб уникнути конфліктів і накладання (z-index wars). Уникати магічних чисел на кшталт `z-index: 9999`.
+- **Shadows (Elevation):** Writing custom shadows (`box-shadow: 0px 4px ...`) is prohibited. Use only the system elevation levels (elevation-1, elevation-2).
+- **Z-Index:** Use clear system levels (for example, `z-dropdown`, `z-sticky`, `z-modal`, `z-tooltip`) to avoid conflicts and stacking issues (z-index wars). Avoid magic numbers such as `z-index: 9999`.
 
-### 6. Анімації та Переходи (Animations & Transitions)
+### 6. Animations & Transitions
 
-- Всі `transition-duration` та `transition-timing-function` мають використовувати єдині системні змінні (наприклад, `duration-200 ease-in-out`). Це забезпечує плавний і консистентний досвід.
+- All `transition-duration` and `transition-timing-function` values must use the shared system variables (for example, `duration-200 ease-in-out`). This ensures a smooth and consistent experience.
