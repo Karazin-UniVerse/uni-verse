@@ -18,13 +18,21 @@ function getAudioContext(): AudioContext | null {
   return audioContextInstance;
 }
 
-function playTone(
-  frequency: number,
-  duration: number,
-  oscillatorType: OscillatorType,
+type PlayToneParams = {
+  frequency: number;
+  duration: number;
+  oscillatorType: OscillatorType;
+  gain?: number;
+  delaySeconds?: number;
+};
+
+function playTone({
+  frequency,
+  duration,
+  oscillatorType,
   gain = 0.04,
   delaySeconds = 0,
-): void {
+}: PlayToneParams): void {
   const audioContext = getAudioContext();
 
   if (!audioContext) {
@@ -61,7 +69,7 @@ export function playClick(enabled: boolean): void {
     return;
   }
 
-  playTone(660, 0.05, 'sine', 0.03);
+  playTone({ frequency: 660, duration: 0.05, oscillatorType: 'sine', gain: 0.03 });
 }
 
 export function playSuccess(enabled: boolean): void {
@@ -69,7 +77,19 @@ export function playSuccess(enabled: boolean): void {
     return;
   }
 
-  playTone(523.25, 0.09, 'triangle', 0.045, 0);
-  playTone(659.25, 0.1, 'triangle', 0.04, 0.08);
-  playTone(783.99, 0.14, 'triangle', 0.035, 0.16);
+  playTone({ frequency: 523.25, duration: 0.09, oscillatorType: 'triangle', gain: 0.045 });
+  playTone({
+    frequency: 659.25,
+    duration: 0.1,
+    oscillatorType: 'triangle',
+    gain: 0.04,
+    delaySeconds: 0.08,
+  });
+  playTone({
+    frequency: 783.99,
+    duration: 0.14,
+    oscillatorType: 'triangle',
+    gain: 0.035,
+    delaySeconds: 0.16,
+  });
 }

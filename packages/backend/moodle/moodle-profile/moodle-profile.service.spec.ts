@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MoodleProfileService } from './moodle-profile.service';
-import { MoodleClientService } from '../moodle-client/moodle.client.service';
+import {
+  MoodleClientService,
+  type MoodleClientParams,
+} from '../moodle-client/moodle.client.service';
 import { MoodleCoursesService } from '../moodle-courses/moodle-courses.service';
 import { MoodleGradesService } from '../moodle-grades/moodle-grades.service';
 
@@ -55,30 +58,32 @@ describe('MoodleProfileService', () => {
   });
 
   it('should fetch Moodle site info and build profile with calculated GPA and credits (honors)', async () => {
-    mockMoodleClient.client.mockImplementation(async (wsfunction: string) => {
-      if (wsfunction === 'core_webservice_get_site_info') {
-        return {
-          fullname: 'Іван Петренко',
-          username: 'ivan.petrenko',
-          userid: 5001,
-          userpictureurl: 'https://moodle.test/pic.jpg',
-        };
-      }
+    mockMoodleClient.client.mockImplementation(
+      async ({ wsfunction }: MoodleClientParams) => {
+        if (wsfunction === 'core_webservice_get_site_info') {
+          return {
+            fullname: 'Іван Петренко',
+            username: 'ivan.petrenko',
+            userid: 5001,
+            userpictureurl: 'https://moodle.test/pic.jpg',
+          };
+        }
 
-      if (wsfunction === 'core_user_get_users_by_field') {
-        return [
-          {
-            id: 5001,
-            email: 'ivan.petrenko@student.karazin.ua',
-            department: 'Кафедра системного аналізу',
-            institution: 'Факультет компʼютерних наук',
-            idnumber: 'KB-99998888',
-          },
-        ];
-      }
+        if (wsfunction === 'core_user_get_users_by_field') {
+          return [
+            {
+              id: 5001,
+              email: 'ivan.petrenko@student.karazin.ua',
+              department: 'Кафедра системного аналізу',
+              institution: 'Факультет компʼютерних наук',
+              idnumber: 'KB-99998888',
+            },
+          ];
+        }
 
-      return null;
-    });
+        return null;
+      },
+    );
 
     const profile = await service.getProfile(
       'valid-token',
@@ -143,18 +148,20 @@ describe('MoodleProfileService', () => {
   });
 
   it('should handle site info with firstname and lastname when fullname is missing', async () => {
-    mockMoodleClient.client.mockImplementation(async (wsfunction: string) => {
-      if (wsfunction === 'core_webservice_get_site_info') {
-        return {
-          firstname: 'Олена',
-          lastname: 'Коваленко',
-          username: 'olena.kovalenko',
-          userid: 6001,
-        };
-      }
+    mockMoodleClient.client.mockImplementation(
+      async ({ wsfunction }: MoodleClientParams) => {
+        if (wsfunction === 'core_webservice_get_site_info') {
+          return {
+            firstname: 'Олена',
+            lastname: 'Коваленко',
+            username: 'olena.kovalenko',
+            userid: 6001,
+          };
+        }
 
-      return [];
-    });
+        return [];
+      },
+    );
 
     const profile = await service.getProfile('token', '6001');
 
@@ -165,23 +172,25 @@ describe('MoodleProfileService', () => {
   });
 
   it('should fall back to moodleUser fullname and profileimageurl when siteInfo names are missing', async () => {
-    mockMoodleClient.client.mockImplementation(async (wsfunction: string) => {
-      if (wsfunction === 'core_webservice_get_site_info') {
-        return {};
-      }
+    mockMoodleClient.client.mockImplementation(
+      async ({ wsfunction }: MoodleClientParams) => {
+        if (wsfunction === 'core_webservice_get_site_info') {
+          return {};
+        }
 
-      if (wsfunction === 'core_user_get_users_by_field') {
-        return [
-          {
-            fullname: 'Тарас Шевченко',
-            profileimageurl: 'https://moodle.test/taras.jpg',
-            department: 'Кафедра українознавства',
-          },
-        ];
-      }
+        if (wsfunction === 'core_user_get_users_by_field') {
+          return [
+            {
+              fullname: 'Тарас Шевченко',
+              profileimageurl: 'https://moodle.test/taras.jpg',
+              department: 'Кафедра українознавства',
+            },
+          ];
+        }
 
-      return null;
-    });
+        return null;
+      },
+    );
 
     const profile = await service.getProfile('token', '7001');
 

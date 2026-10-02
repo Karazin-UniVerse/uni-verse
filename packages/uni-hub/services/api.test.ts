@@ -167,6 +167,21 @@ describe('UniHub API Service', () => {
       );
     });
 
+    it('login, loginWithGoogle, linkMoodleAccount and logout do not retry failed requests', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('network down'));
+
+      await expect(authApi.login('student@karazin.ua', 'SecretPass123!')).rejects.toThrow(
+        'network down',
+      );
+      await expect(authApi.loginWithGoogle('google-id-token')).rejects.toThrow('network down');
+      await expect(authApi.linkMoodleAccount('moodle-user', 'moodle-pass')).rejects.toThrow(
+        'network down',
+      );
+      await expect(authApi.logout()).rejects.toThrow('network down');
+
+      expect(global.fetch).toHaveBeenCalledTimes(4);
+    });
+
     it('linkMoodleAccount should send POST to /auth/moodle/link with credentials', async () => {
       const mockLinkResponse = {
         access_token: 'linked-jwt-token',
@@ -293,6 +308,22 @@ describe('UniHub API Service', () => {
 
       expect(fetchMock.mock.calls[1][1]?.method).toBe('POST');
       expect(fetchMock.mock.calls[1][1]?.body).toContain('lab1.pdf');
+    });
+
+    it('retries a failed request twice by default', async () => {
+      vi.useFakeTimers();
+      global.fetch = vi.fn().mockRejectedValue(new Error('network down'));
+
+      try {
+        const rejection = expect(moodleApi.getCourses()).rejects.toThrow('network down');
+
+        await vi.runAllTimersAsync();
+        await rejection;
+
+        expect(global.fetch).toHaveBeenCalledTimes(3);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it('should throw error when server returns HTTP error status', async () => {

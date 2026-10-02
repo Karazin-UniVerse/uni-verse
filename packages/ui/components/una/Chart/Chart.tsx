@@ -39,12 +39,19 @@ function truncateLabel(value: string, max: number): string {
   return `${value.slice(0, max - 1)}…`;
 }
 
-function calculateDefaultHeight(
-  type: 'bar' | 'donut',
-  layout: 'horizontal' | 'vertical',
-  dataLength: number,
-  rowHeight: number,
-): number {
+type DefaultHeightParams = {
+  type: 'bar' | 'donut';
+  layout: 'horizontal' | 'vertical';
+  dataLength: number;
+  rowHeight: number;
+};
+
+function calculateDefaultHeight({
+  type,
+  layout,
+  dataLength,
+  rowHeight,
+}: DefaultHeightParams): number {
   if (type === 'donut') {
     return 220;
   }
@@ -114,7 +121,7 @@ export function Chart({
   }
 
   const resolvedHeight =
-    height ?? calculateDefaultHeight(type, layout, chartData.length, rowHeight);
+    height ?? calculateDefaultHeight({ type, layout, dataLength: chartData.length, rowHeight });
   const plotHeight = type === 'donut' && title ? resolvedHeight - 28 : resolvedHeight;
   const tickStyle = { fill: theme.tick, fontSize: 12 };
 

@@ -19,12 +19,11 @@ export class MoodleNotificationsService {
     }
 
     try {
-      const data = await this.moodleClient.client<MoodleNotificationsResponse>(
-        getWsFunctionName('getNotifications'),
+      const data = await this.moodleClient.client<MoodleNotificationsResponse>({
+        wsfunction: getWsFunctionName('getNotifications'),
         moodleToken,
-        undefined,
-        { useridto: moodleId },
-      );
+        params: { useridto: moodleId },
+      });
 
       const notifications = (data?.notifications || []).map((notification) => ({
         id: notification.id,

@@ -26,6 +26,8 @@
     "react/rules-of-hooks": "error",
     "react/exhaustive-deps": "error",
     "typescript/no-explicit-any": "warn",
+    "react/no-multi-comp": "error",
+    "max-params": ["error", { "max": 3 }],
     "universe/vertical-spacing": "error",
     "universe/destructuring-props-order": "error",
     "universe/no-suppress-hydration-without-comment": "warn",
@@ -35,8 +37,7 @@
     "universe/una-primitive-purity": "error",
     "universe/nestjs-controller-no-prisma": "error",
     "universe/no-empty-catch-in-services": "error",
-    "universe/core-package-isolation": "error",
-    "react/no-multi-comp": "error"
+    "universe/core-package-isolation": "error"
   },
   "overrides": [
     {
@@ -51,7 +52,14 @@
       ],
       "rules": {
         "typescript/no-explicit-any": "off",
-        "react/no-multi-comp": "off"
+        "react/no-multi-comp": "off",
+        "max-params": "off"
+      }
+    },
+    {
+      "files": ["**/*.controller.ts"],
+      "rules": {
+        "max-params": "off"
       }
     },
     {

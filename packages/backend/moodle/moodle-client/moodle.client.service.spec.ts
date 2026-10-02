@@ -35,12 +35,12 @@ describe('MoodleClientService', () => {
       .spyOn(global, 'fetch')
       .mockResolvedValue(new Response(JSON.stringify({ ok: true })));
 
-    const res = await svc.client<{ ok: boolean }>(
-      'token',
-      '1',
-      'someFunction',
-      { a: 1 },
-    );
+    const res = await svc.client<{ ok: boolean }>({
+      wsfunction: 'token',
+      moodleToken: '1',
+      moodleId: 'someFunction',
+      params: { a: 1 },
+    });
 
     expect(res).toEqual({ ok: true });
     expect(fetchMock).toHaveBeenCalled();
@@ -55,9 +55,14 @@ describe('MoodleClientService', () => {
     error.name = 'TimeoutError';
     jest.spyOn(global, 'fetch').mockRejectedValue(error);
 
-    await expect(svc.client('t', '1', 'f', {})).rejects.toThrow(
-      'Moodle request timeout',
-    );
+    await expect(
+      svc.client({
+        wsfunction: 't',
+        moodleToken: '1',
+        moodleId: 'f',
+        params: {},
+      }),
+    ).rejects.toThrow('Moodle request timeout');
   });
 
   it('client throws BadRequestException when response is MoodleException', async () => {
@@ -75,8 +80,8 @@ describe('MoodleClientService', () => {
       ),
     );
 
-    await expect(svc.client('someFunction', 'token')).rejects.toThrow(
-      BadRequestException,
-    );
+    await expect(
+      svc.client({ wsfunction: 'someFunction', moodleToken: 'token' }),
+    ).rejects.toThrow(BadRequestException);
   });
 });

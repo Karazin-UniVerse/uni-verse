@@ -18,6 +18,13 @@ function isMoodleException(data: unknown): data is MoodleException {
   return typeof data === 'object' && data !== null && 'exception' in data;
 }
 
+export type MoodleClientParams = {
+  wsfunction: string;
+  moodleToken?: string;
+  moodleId?: string;
+  params?: Record<string, unknown>;
+};
+
 @Injectable()
 export class MoodleClientService {
   private readonly baseUrl = (process.env.MOODLE_BASEURL || '').trim();
@@ -30,12 +37,12 @@ export class MoodleClientService {
     }
   }
 
-  async client<T = unknown>(
-    wsfunction: string,
-    moodleToken?: string,
-    moodleId?: string,
-    params?: Record<string, unknown>,
-  ): Promise<T> {
+  async client<T = unknown>({
+    wsfunction,
+    moodleToken,
+    moodleId,
+    params,
+  }: MoodleClientParams): Promise<T> {
     const timeout = Number(this.timeout);
 
     if (!Number.isFinite(timeout) || timeout <= 0) {

@@ -13,6 +13,13 @@ import type {
   SubmissionStatusDto,
 } from './moodle-assignments-dto';
 
+export type SaveSubmissionParams = {
+  moodleToken: string;
+  assignId: number;
+  text?: string;
+  fileItemId?: number;
+};
+
 @Injectable()
 export class MoodleAssignmentsService {
   private readonly logger = new Logger(MoodleAssignmentsService.name);
@@ -29,10 +36,10 @@ export class MoodleAssignmentsService {
     }
 
     try {
-      const data = await this.moodleClient.client<MoodleAssignmentsResponse>(
-        getWsFunctionName('getAssignments'),
+      const data = await this.moodleClient.client<MoodleAssignmentsResponse>({
+        wsfunction: getWsFunctionName('getAssignments'),
         moodleToken,
-      );
+      });
 
       const assignments: AssignmentItemDto[] = [];
 
@@ -113,10 +120,12 @@ export class MoodleAssignmentsService {
     }
 
     const data = await this.moodleClient.client<MoodleSubmissionStatusResponse>(
-      getWsFunctionName('getAssignmentSubmissionStatus'),
-      moodleToken,
-      moodleId,
-      { assignid: assignId },
+      {
+        wsfunction: getWsFunctionName('getAssignmentSubmissionStatus'),
+        moodleToken,
+        moodleId,
+        params: { assignid: assignId },
+      },
     );
 
     const submissionStatus = data?.lastattempt?.submission?.status ?? 'new';
@@ -141,12 +150,12 @@ export class MoodleAssignmentsService {
     return { status: finalStatus, grade, submittedAt };
   }
 
-  async saveSubmission(
-    moodleToken: string,
-    assignId: number,
-    text?: string,
-    fileItemId?: number,
-  ): Promise<unknown> {
+  async saveSubmission({
+    moodleToken,
+    assignId,
+    text,
+    fileItemId,
+  }: SaveSubmissionParams): Promise<unknown> {
     if (!moodleToken) {
       throw new BadRequestException('Token is not provided');
     }
@@ -161,11 +170,10 @@ export class MoodleAssignmentsService {
       plugindata['files_filemanager'] = fileItemId;
     }
 
-    return this.moodleClient.client(
-      getWsFunctionName('saveAssignmentSubmission'),
+    return this.moodleClient.client({
+      wsfunction: getWsFunctionName('saveAssignmentSubmission'),
       moodleToken,
-      undefined,
-      { assignmentid: assignId, plugindata },
-    );
+      params: { assignmentid: assignId, plugindata },
+    });
   }
 }
