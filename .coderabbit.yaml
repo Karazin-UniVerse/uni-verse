@@ -9,6 +9,10 @@ knowledge_base:
   mcp:
     usage: enabled
 reviews:
+  auto_review:
+    base_branches:
+      - 'develop'
+      - 'staging'
   path_instructions:
     - path: '**/*.{ts,tsx}'
       instructions: |
