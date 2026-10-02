@@ -88,12 +88,37 @@ function getStatusInfo(
 
 For React components with non-trivial prop interfaces or data models, extract the types into `<ComponentName>.types.ts` next to the component (`Chart.types.ts` beside `Chart.tsx`). Do not create `.types.ts` files for simple utilities, single helpers or trivial components. Import the types directly from the `.types.ts` file; do not re-export them from the component file (see the shim rule below).
 
-## Helpers placement
+## Keep it simple (KISS)
 
-- Pure calculations, formatting, score-tone mapping and regex utilities MUST NOT live inside React components, hooks or backend DTOs.
-- Component and view helpers go into a co-located `helpers.ts` with a companion `helpers.test.ts`.
+- Choose the simplest solution that meets the current requirement. Five direct lines beat a fifty-line generalization.
+- Do not abstract for a hypothetical future: no factories, generic wrappers, strategy layers, extra options or flags with a single caller.
+- Before adding a layer, class, hook or helper, ask: "what would I delete if this did not exist?" If the answer is "nothing", do not add it.
+- If the solution needs a paragraph to explain, look for a simpler one first. When two designs both work, take the one with fewer moving parts.
+- No defensive code for states that the types or the callers already rule out.
+- Pure functions stay functions. Use a class only where the rules say so ([API clients](architecture.md#api-clients)) or where state and dependencies are really shared.
+
+## Reuse before writing (DRY)
+
+Before writing a function, constant, type, hook or component, search the repo for an existing one **by behavior, not only by name**: grep for the formula, regex or domain term. Equivalent code often hides under another name (`parseGradeScore` and a local score parser are the same thing).
+
+- Equivalent exists: use it. Near match exists: extend it; do not fork it.
+- Never leave two functions with the same or near-identical behavior in different places. If you find a pair, consolidate it in the same PR, or say in the PR description that a follow-up task is needed.
+
+Where shared code lives. Take the first row that fits:
+
+| Used by                                                        | Location                                                                                                                         |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| One file                                                       | A non-exported function in that file                                                                                             |
+| Several files of one component or view                         | Co-located `helpers.ts` with `helpers.test.ts`                                                                                   |
+| Several places in one package                                  | The package-level helpers directory (`packages/uni-hub/utils/`, `packages/backend/utils/`), one file per domain                  |
+| More than one package, or expected to be used by more than one | `@universe/core`: `utils/` for functions, `constants/` for values, `types/` for types. One file per domain (`grades`, `browser`) |
+
+Rules:
+
+- Promote code up one row when its second consumer appears at that level. Do not promote ahead of need, except code that is clearly cross-package (grades, Moodle contracts, HTTP codes).
+- Pure calculations, formatting, score-tone mapping and regex utilities MUST NOT live inside React components, hooks, backend services or DTOs.
 - Backend DTO helpers go into `<module>.helpers.ts`; never keep helper functions in DTO files.
-- Helpers meant for cross-package reuse go into `@universe/core/utils` or `@universe/core/constants`.
+- A helper used by exactly one other function stays in that function's module as a private function, not a new file.
 
 ## Comments
 
@@ -201,7 +226,7 @@ Prioritize React Server Components. Use client components (`"use client"`) only 
 - Complex stateful logic, data fetching, localStorage caching and lifecycle listeners MUST be extracted into custom hooks (for example `useDashboardData`, `useAssignmentStatuses`).
 - Keep pages and tab views declarative and thin: layout composition only.
 - Never let a component become a monolith that mixes data fetching, caching, several UI sections and inline business math.
-- Helper placement rules: [code-style](code-style.md#helpers-placement).
+- Helper placement rules: [code-style](code-style.md#reuse-before-writing-dry).
 
 ## Localization (i18n)
 

@@ -10,7 +10,7 @@ Prioritize React Server Components. Use client components (`"use client"`) only 
 - Complex stateful logic, data fetching, localStorage caching and lifecycle listeners MUST be extracted into custom hooks (for example `useDashboardData`, `useAssignmentStatuses`).
 - Keep pages and tab views declarative and thin: layout composition only.
 - Never let a component become a monolith that mixes data fetching, caching, several UI sections and inline business math.
-- Helper placement rules: [code-style](code-style.md#helpers-placement).
+- Helper placement rules: [code-style](code-style.md#reuse-before-writing-dry).
 
 ## Localization (i18n)
 
