@@ -107,10 +107,10 @@ export const DUMMY_EVENTS = generateDummyEvents();
 
 export const escapeICSText = (value: string): string =>
   value
-    .replace(/\\/g, '\\\\')
-    .replace(/\r\n|\r|\n/g, '\\n')
-    .replace(/;/g, '\\;')
-    .replace(/,/g, '\\,');
+    .replace(/\\/g, String.raw`\\`)
+    .replace(/\r\n|\r|\n/g, String.raw`\n`)
+    .replace(/;/g, String.raw`\;`)
+    .replace(/,/g, String.raw`\,`);
 
 export const generateICSContent = (events: ScheduleEvent[]): string => {
   const formatDateICS = (date: Date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
