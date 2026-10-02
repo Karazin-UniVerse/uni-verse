@@ -6,6 +6,8 @@
 - All working PRs target `develop`, never `main`.
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `refactor:`, `chore:`, `docs:`, `test:`.
 - Prefer smaller, focused PRs and commits.
+- UI changes include screenshots in the PR description.
+- When people or ownership change, update `.github/CODEOWNERS` in the same PR.
 - Merge criteria, protected branches, Code Freeze and the release cycle: see [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 ## Hooks
@@ -36,9 +38,18 @@ pnpm exec prettier --check <files you changed>
 - `pnpm exec oxlint --fix` fixes vertical-spacing violations automatically.
 - Format the lockfile with `pnpm exec prettier --write pnpm-lock.yaml`.
 
+## Config and environment
+
+- `.env.example` is the single source of truth for environment variables. A new variable is added there in the same PR; developers copy it to `.env`.
+- Code reads configuration from `process.env` and does not carry fallback defaults for values that `.env.example` or the server always provides. Never hardcode URLs or hosts.
+- Do not duplicate `.env` files or entries in `.gitignore`, `tsconfig` paths or `package.json`; search for an existing entry first. A workspace alias is declared once (`workspace:*` in `package.json`, one path in `tsconfig.json`).
+- Secrets are never committed. In README or docs write "ask the Project coordinator" for private values.
+
 ## Documentation
 
-When a package gains a public API, add a Markdown file describing the public API of that package.
+- Documentation is in English.
+- Anything a developer must run or configure (script, service, Storybook, env variable) is documented in `README.md` or `docs/` in the same PR. Every command in a doc must exist; verify it.
+- When a package gains a public API, add a Markdown file describing the public API of that package.
 
 ## Pre-commit checklist
 

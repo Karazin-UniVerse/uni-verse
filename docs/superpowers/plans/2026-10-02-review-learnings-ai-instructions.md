@@ -54,7 +54,6 @@ Modify only:
 - `docs/ai/workflow.md` — config/env, documentation, PR hygiene, extended checklist (Tasks 4, 6)
 - `docs/ai/review.md` — new failure modes (Task 6)
 - `AGENTS.md` — working agreements and self-review gate (Task 6)
-- `.github/pull_request_template.md` — screenshots and docs checkboxes (Task 4)
 
 Anchors that later tasks link to (defined in Task 1–3): `code-style.md#keep-it-simple-kiss`, `code-style.md#reuse-before-writing-dry`, `code-style.md#no-magic-values`, `architecture.md#core-layout`, `architecture.md#api-clients`.
 
@@ -250,7 +249,8 @@ git commit -m "docs(ai): require class-based API clients"
 **Files:**
 
 - Modify: `docs/ai/workflow.md` (two sections, one list item)
-- Modify: `.github/pull_request_template.md`
+
+_The PR template (`.github/pull_request_template.md`) is deliberately left out: the owner will handle it separately._
 
 - [ ] **Step 1: Add the config and documentation sections to `workflow.md`**
 
@@ -282,16 +282,7 @@ Append to `## Branches, commits, pull requests`:
 - When people or ownership change, update `.github/CODEOWNERS` in the same PR.
 ```
 
-- [ ] **Step 3: Update the PR template**
-
-In `.github/pull_request_template.md`, under `## Що було перевірено?` add:
-
-```markdown
-- [ ] Для змін UI додано скріншоти
-- [ ] Документацію оновлено (README/docs), якщо додано скрипт, сервіс або змінну середовища
-```
-
-- [ ] **Step 4: Verify**
+- [ ] **Step 3: Verify**
 
 Run: `grep -c "^## Documentation" docs/ai/workflow.md`
 Expected: `1`
@@ -299,11 +290,11 @@ Expected: `1`
 Run: `grep -n "env.example" docs/ai/workflow.md | head -3`
 Expected: at least one line.
 
-- [ ] **Step 5: Format and commit**
+- [ ] **Step 4: Format and commit (after the owner's approval)**
 
 ```bash
-pnpm exec prettier --write docs/ai/workflow.md .github/pull_request_template.md
-git add docs/ai/workflow.md .github/pull_request_template.md
+pnpm exec prettier --write docs/ai/workflow.md
+git add docs/ai/workflow.md
 git commit -m "docs(ai): add config, docs and PR hygiene rules"
 ```
 
