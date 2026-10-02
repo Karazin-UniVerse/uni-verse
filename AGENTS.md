@@ -13,7 +13,7 @@ Karazin UniVerse is a monorepo (Turborepo + pnpm workspaces): Next.js 16 (App Ro
 
 ## Commands
 
-`pnpm lint` · `pnpm lint:style` · `pnpm typecheck` · `pnpm test` · `pnpm build` · `pnpm format:check` — all must pass with zero warnings. Details in [workflow](docs/ai/workflow.md).
+`pnpm lint` · `pnpm lint:style` · `pnpm typecheck` · `pnpm test` · `pnpm build` must pass with zero warnings, and prettier must pass on the files you changed. Details in [workflow](docs/ai/workflow.md).
 
 ## Working agreements
 
@@ -32,9 +32,9 @@ Karazin UniVerse is a monorepo (Turborepo + pnpm workspaces): Next.js 16 (App Ro
 
 ## Read on demand
 
-| When you are…                                 | Read                                                 |
-| --------------------------------------------- | ---------------------------------------------------- |
-| styling UI (colors, spacing, shadows, motion) | [docs/ai/design-system.md](docs/ai/design-system.md) |
-| reviewing code or a PR                        | [docs/ai/review.md](docs/ai/review.md)               |
-| branching, committing, running checks         | [docs/ai/workflow.md](docs/ai/workflow.md)           |
-| touching Moodle, grades, or the E-Dean portal | [docs/ai/domain-edean.md](docs/ai/domain-edean.md)   |
+| When you are…                                                                                                       | Read                                                 |
+| ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| building or styling UI components (colors, typography, spacing, radii, shadows, z-index, motion) — you MUST read it | [docs/ai/design-system.md](docs/ai/design-system.md) |
+| reviewing code or a PR                                                                                              | [docs/ai/review.md](docs/ai/review.md)               |
+| branching, committing, running checks                                                                               | [docs/ai/workflow.md](docs/ai/workflow.md)           |
+| touching Moodle, grades, or the E-Dean portal                                                                       | [docs/ai/domain-edean.md](docs/ai/domain-edean.md)   |

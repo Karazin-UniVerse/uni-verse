@@ -14,7 +14,7 @@ husky runs lint-staged on commit: oxlint and prettier for source files, stylelin
 
 ## Verification pipeline
 
-Run before committing or opening a PR (CI runs the same). All must pass with zero errors and zero warnings.
+Run before committing or opening a PR. CI runs `pnpm lint`, `pnpm lint:style`, `pnpm typecheck`, the backend coverage tests (`pnpm --filter @universe/backend test:cov`) and `pnpm build`; the rest are local checks. Everything you run must pass with zero errors and zero warnings.
 
 ```bash
 pnpm lint            # oxlint --deny-warnings
@@ -22,12 +22,12 @@ pnpm lint:style      # stylelint
 pnpm typecheck       # all workspace packages
 pnpm test            # unit and integration tests
 pnpm build
-pnpm format:check
+pnpm exec prettier --check <files you changed>
 ```
 
 - When you touch `packages/ui`, also run `pnpm --filter @universe/ui build-storybook`.
 - The requirement-driven Vitest suite: `pnpm test:e2e`.
-- If you edit anything under `.agents/skills`, run `pnpm skills:sync`, then `pnpm skills:check` (`.claude/skills` is a mirror of `.agents/skills`).
+- If you edit anything under `.agents/skills`, run `pnpm skills:sync`, then `pnpm skills:check` (`.claude/skills` is a mirror of `.agents/skills`). `skills:sync` never deletes files that exist only in `.claude/skills`; add `--prune` to delete them.
 
 ## Tooling notes
 
