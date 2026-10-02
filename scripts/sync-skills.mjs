@@ -64,9 +64,9 @@ if (isCheck) {
     process.exit(1);
   }
 
-  console.log('.claude/skills matches .agents/skills');
+  console.info('.claude/skills matches .agents/skills');
 } else {
   rmSync(target, { recursive: true, force: true });
   cpSync(source, target, { recursive: true });
-  console.log('Synced .agents/skills -> .claude/skills');
+  console.info('Synced .agents/skills -> .claude/skills');
 }
