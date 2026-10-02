@@ -372,14 +372,12 @@ Add these bullets to `## Working agreements` (keep the file short; the rules liv
 
 - [ ] **Step 2: `review.md` failure modes**
 
-After item 11 add:
+Items 1 (over-engineering) and 2 (DRY) already exist in the rubric, so extend them instead of adding duplicates: item 1 gains "a layer, class, option or abstraction with a single caller is a finding" plus a link to `code-style.md#keep-it-simple-kiss`; item 2 gains "same behavior under another name; shared logic left at a lower level when it belongs one level up" plus a link to `code-style.md#reuse-before-writing-dry`. After item 11 add:
 
 ```markdown
-12. **COMPLEXITY BEYOND NEED (KISS):** a layer, class, option or abstraction with a single caller; code that needs a long explanation where a direct version exists. Rule: [code-style](code-style.md#keep-it-simple-kiss).
-13. **DUPLICATED OR MISPLACED SHARED CODE (DRY):** a function with the same behavior as an existing one under another name; shared logic left in a component or package-local file when it belongs in the next level up (`@universe/core` for cross-package). Rule: [code-style](code-style.md#reuse-before-writing-dry).
-14. **MAGIC VALUES:** bare numbers or domain strings in logic instead of core constants. Rule: [code-style](code-style.md#no-magic-values).
-15. **MISSING OPERATIONAL CHANGES:** a new env variable absent from `.env.example`, a new script or service without docs, UI changes without screenshots. Rule: [workflow](workflow.md#config-and-environment).
-16. **API ACCESS OUTSIDE CLIENT CLASSES:** direct `fetch` or raw `request` calls in components or services. Rule: [architecture](architecture.md#api-clients).
+12. **MAGIC VALUES:** bare numbers or domain strings in logic instead of core constants. Rule: [code-style](code-style.md#no-magic-values).
+13. **MISSING OPERATIONAL CHANGES:** a new env variable absent from `.env.example`, a new script or service without docs, UI changes without screenshots. Rule: [workflow](workflow.md#config-and-environment).
+14. **API ACCESS OUTSIDE CLIENT CLASSES:** direct `fetch` or raw `request` calls in components or services. Rule: [architecture](architecture.md#api-clients).
 ```
 
 - [ ] **Step 3: Extend the checklist in `workflow.md`**
