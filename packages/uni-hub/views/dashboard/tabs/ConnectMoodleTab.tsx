@@ -21,16 +21,19 @@ export const ConnectMoodleTab: React.FC<ConnectMoodleTabProps> = ({ onConnect })
       onConnect={onConnect}
       features={[
         {
+          id: 'grades',
           icon: <Award size={20} aria-hidden />,
           title: formatMessage('connectMoodle.featureGradesTitle'),
           description: formatMessage('connectMoodle.featureGradesDesc'),
         },
         {
+          id: 'deadlines',
           icon: <CalendarDays size={20} aria-hidden />,
           title: formatMessage('connectMoodle.featureDeadlinesTitle'),
           description: formatMessage('connectMoodle.featureDeadlinesDesc'),
         },
         {
+          id: 'courses',
           icon: <BookOpen size={20} aria-hidden />,
           title: formatMessage('connectMoodle.featureCoursesTitle'),
           description: formatMessage('connectMoodle.featureCoursesDesc'),

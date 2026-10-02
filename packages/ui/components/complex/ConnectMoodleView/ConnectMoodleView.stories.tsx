@@ -31,16 +31,19 @@ export const Default: Story = {
     onConnect: () => {},
     features: [
       {
+        id: 'grades',
         icon: <Award size={20} />,
         title: 'Синхронізація оцінок',
         description: 'Ваша заліковка завжди під рукою з автоматичним розрахунком ECTS.',
       },
       {
+        id: 'deadlines',
         icon: <CalendarDays size={20} />,
         title: 'Дедлайни та завдання',
         description: 'Слідкуйте за дедлайнами лабораторних та практичних робіт.',
       },
       {
+        id: 'courses',
         icon: <BookOpen size={20} />,
         title: 'Матеріали та курси',
         description: 'Швидкий доступ до навчальних матеріалів кожного курсу.',

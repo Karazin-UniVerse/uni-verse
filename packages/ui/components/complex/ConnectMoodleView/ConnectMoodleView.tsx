@@ -5,6 +5,7 @@ import { Button } from '../../una';
 import styles from './ConnectMoodleView.module.scss';
 
 export interface ConnectMoodleFeatureItem {
+  id?: string;
   icon?: React.ReactNode;
   title: React.ReactNode;
   description: React.ReactNode;
@@ -65,13 +66,20 @@ export const ConnectMoodleView: React.FC<ConnectMoodleViewProps> = ({
 
       {features.length > 0 && (
         <div className={styles.featuresGrid}>
-          {features.map((feature, index) => (
-            <article key={index} className={styles.featureCard}>
-              {feature.icon && <div className={styles.featureIcon}>{feature.icon}</div>}
-              <h4 className={styles.featureTitle}>{feature.title}</h4>
-              <p className={styles.featureText}>{feature.description}</p>
-            </article>
-          ))}
+          {features.map((feature) => {
+            const itemKey =
+              feature.id ??
+              (typeof feature.title === 'string' ? feature.title : undefined) ??
+              (typeof feature.description === 'string' ? feature.description : 'feature-item');
+
+            return (
+              <article key={itemKey} className={styles.featureCard}>
+                {feature.icon && <div className={styles.featureIcon}>{feature.icon}</div>}
+                <h4 className={styles.featureTitle}>{feature.title}</h4>
+                <p className={styles.featureText}>{feature.description}</p>
+              </article>
+            );
+          })}
         </div>
       )}
     </div>
