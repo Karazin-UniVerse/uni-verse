@@ -9,6 +9,8 @@ knowledge_base:
   mcp:
     usage: enabled
 reviews:
+  path_filters:
+    - '!GEMINI.md'
   auto_review:
     base_branches:
       - 'develop'

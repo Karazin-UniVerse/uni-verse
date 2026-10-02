@@ -25,10 +25,12 @@ Karazin UniVerse is a monorepo (Turborepo + pnpm workspaces): Next.js 16 (App Ro
 
 ## Always-loaded rules
 
-@docs/ai/code-style.md
-@docs/ai/architecture.md
-@docs/ai/frontend.md
-@docs/ai/quality.md
+These four files are loaded into every session: Claude Code imports them from `CLAUDE.md`, Gemini CLI and Antigravity read them from the generated `GEMINI.md`. Edit the files in `docs/ai/`, never `GEMINI.md`.
+
+- [docs/ai/code-style.md](docs/ai/code-style.md)
+- [docs/ai/architecture.md](docs/ai/architecture.md)
+- [docs/ai/frontend.md](docs/ai/frontend.md)
+- [docs/ai/quality.md](docs/ai/quality.md)
 
 ## Read on demand
 

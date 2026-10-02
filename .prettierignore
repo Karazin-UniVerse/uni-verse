@@ -7,3 +7,4 @@ coverage
 pnpm-lock.yaml
 .agents
 .claude
+GEMINI.md
