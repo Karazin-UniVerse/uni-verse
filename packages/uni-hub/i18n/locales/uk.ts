@@ -30,6 +30,7 @@ export const uk = {
   'login.linkMoodleSubmit': 'Прив’язати Moodle',
   'login.linkMoodleLoading': 'Прив’язка...',
   'login.linkMoodleBack': 'Повернутися до входу',
+  'login.linkMoodleSkip': 'Пропустити',
   'login.linkMoodleSuccess': 'Moodle-акаунт успішно прив’язано!',
   'login.linkMoodleEnterUsername': 'Будь ласка, введіть логін або email у Moodle',
   'login.linkMoodleEnterPassword': 'Будь ласка, введіть пароль від Moodle',
@@ -71,6 +72,10 @@ export const uk = {
   'dashboard.offlineWarning':
     "Увага: відсутній зв'язок з сервером Moodle. Відображаються збережені дані",
   'dashboard.offlineFrom': 'від',
+  'dashboard.linkMoodlePrompt':
+    "Акаунт Moodle не прив'язано. Прив'яжіть його, щоб завантажити розклад, завдання та оцінки.",
+  'dashboard.linkMoodleAction': "Прив'язати Moodle",
+  'common.cancel': 'Скасувати',
 
   // Greetings
   'greeting.morning': 'Доброго ранку',

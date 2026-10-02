@@ -100,6 +100,7 @@ describe('UniHub API Service', () => {
 
       expect(mockStorage.accessToken).toBeUndefined();
       expect(mockStorage.isLoggedIn).toBeUndefined();
+      expect(mockStorage.isMoodleLinked).toBeUndefined();
     });
 
     it('loginWithGoogle should send POST to /auth/google with idToken', async () => {
@@ -117,11 +118,33 @@ describe('UniHub API Service', () => {
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(response.data).toEqual(mockGoogleResponse);
+      expect(mockStorage.accessToken).toBe('google-jwt-access-token');
+      expect(mockStorage.isLoggedIn).toBe('true');
+      expect(mockStorage.isMoodleLinked).toBe('true');
 
       const call = vi.mocked(global.fetch).mock.calls[0];
 
       expect(call[0]).toContain('/auth/google');
       expect(call[1]?.body).toBe(JSON.stringify({ idToken: 'mock-id-token-abc' }));
+    });
+
+    it('loginWithGoogle with isLinked: false should store token and mark isMoodleLinked as false', async () => {
+      const mockGoogleResponse = {
+        access_token: 'unlinked-jwt-token',
+        isLinked: false,
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockGoogleResponse,
+      } as Response);
+
+      const response = await authApi.loginWithGoogle('mock-id-token-unlinked');
+
+      expect(response.data).toEqual(mockGoogleResponse);
+      expect(mockStorage.accessToken).toBe('unlinked-jwt-token');
+      expect(mockStorage.isLoggedIn).toBeUndefined();
+      expect(mockStorage.isMoodleLinked).toBe('false');
     });
 
     it('loginWithGoogle should throw error with server message when domain is restricted (403)', async () => {
@@ -158,6 +181,9 @@ describe('UniHub API Service', () => {
       const response = await authApi.linkMoodleAccount('moodle.student', 'SecretPassword');
 
       expect(response.data).toEqual(mockLinkResponse);
+      expect(mockStorage.accessToken).toBe('linked-jwt-token');
+      expect(mockStorage.isLoggedIn).toBe('true');
+      expect(mockStorage.isMoodleLinked).toBe('true');
 
       const call = vi.mocked(global.fetch).mock.calls[0];
 

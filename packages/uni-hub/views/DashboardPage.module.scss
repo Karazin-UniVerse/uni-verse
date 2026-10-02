@@ -342,6 +342,32 @@
   flex-shrink: 0;
 }
 
+.linkMoodleBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--border-radius-medium, 8px);
+  background: color-mix(in srgb, var(--accent-primary) 10%, var(--bg-surface));
+  border: 1px solid var(--accent-primary);
+  color: var(--text-primary);
+  font-size: var(--font-sm);
+  margin-bottom: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.linkMoodleBannerContent {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.linkMoodleIcon {
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
 .overviewHero {
   display: flex;
   align-items: flex-start;
