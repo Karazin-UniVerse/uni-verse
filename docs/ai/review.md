@@ -4,8 +4,8 @@ Used by CodeRabbit and by any agent asked to review code. Act as a rigorous Prin
 
 Evaluate the change strictly against these failure modes:
 
-1. **OVER-ENGINEERING & PREMATURE ABSTRACTION (Complexity):** flag abstract classes, factories, generic wrappers or layers that solve hypothetical future problems rather than immediate requirements. If 5 lines of direct, simple code suffice, reject a 50-line generalized architecture. Always look for ways to simplify.
-2. **DRY VIOLATIONS & DUPLICATION:** the author must reuse existing core utilities, local helpers and the shared UI library (`packages/ui`) instead of creating duplicate implementations.
+1. **OVER-ENGINEERING & PREMATURE ABSTRACTION (Complexity):** flag abstract classes, factories, generic wrappers or layers that solve hypothetical future problems rather than immediate requirements. If 5 lines of direct, simple code suffice, reject a 50-line generalized architecture. Always look for ways to simplify. A layer, class, option or abstraction with a single caller is a finding. Rule: [code-style](code-style.md#keep-it-simple-kiss).
+2. **DRY VIOLATIONS & DUPLICATION:** the author must reuse existing core utilities, local helpers and the shared UI library (`packages/ui`) instead of creating duplicate implementations. Flag a function with the same behavior as an existing one under another name, and shared logic left at a lower level (component, package) when it belongs one level up (`@universe/core` for cross-package). Rule: [code-style](code-style.md#reuse-before-writing-dry).
 3. **TASK INTENT & ARCHITECTURAL MATCH:** the code must match the architectural requirements and the task intent. Flag hallucinated extra features, out-of-scope functionality and drift from the requirements. Placement rules: [architecture](architecture.md).
 4. **AI SLOP & VERBOSITY:** flag excessive defensive checks, comments that restate what the code does, dead code and unnecessary helper utilities. Lint and Sonar rules: [quality](quality.md).
 5. **REGRESSION PREVENTION:** check critically whether the change breaks existing logic elsewhere in the system.
@@ -15,6 +15,9 @@ Evaluate the change strictly against these failure modes:
 9. **MONOLITHIC COMPONENTS & MISSING DECOMPOSITION:** flag components over ~150-200 lines with inline data fetching, stateful side effects or several UI sections that are not split into subcomponents and hooks. Rule: [frontend](frontend.md).
 10. **INLINE HELPERS & DTO POLLUTION:** flag pure helpers, calculation utilities, date formatters or query transformers kept inside components, hooks or backend DTOs; require `helpers.ts` (with unit tests) or `@universe/core`. Rule: [code-style](code-style.md).
 11. **HARDCODED UI TEXT (i18n):** flag hardcoded strings in JSX/TSX; require translation keys in both `uk.ts` and `en.ts`. Rule: [frontend](frontend.md).
+12. **MAGIC VALUES:** bare numbers or domain strings in logic instead of core constants. Rule: [code-style](code-style.md#no-magic-values).
+13. **MISSING OPERATIONAL CHANGES:** a new env variable absent from `.env.example`, a new script or service without docs, UI changes without screenshots. Rule: [workflow](workflow.md#config-and-environment).
+14. **API ACCESS OUTSIDE CLIENT CLASSES:** direct `fetch` or raw `request` calls in components or services. Rule: [architecture](architecture.md#api-clients).
 
 ## Output requirements
 

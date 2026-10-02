@@ -58,4 +58,8 @@ pnpm exec prettier --check <files you changed>
 - [ ] No nested ternaries in JSX, no `Math.random()` for IDs, last element via `.at(-1)`, accessible interactive elements ([quality](quality.md)).
 - [ ] Components sit in the right tier; Storybook stories only in `packages/ui` ([architecture](architecture.md)).
 - [ ] Vertical spacing and an empty line before `return` ([code-style](code-style.md)).
+- [ ] I searched for an existing helper, constant, type or component before writing a new one; shared code is in the right place ([code-style](code-style.md#reuse-before-writing-dry)).
+- [ ] The solution is the simplest that meets the requirement ([code-style](code-style.md#keep-it-simple-kiss)).
+- [ ] No magic values; API calls go through client classes ([code-style](code-style.md#no-magic-values), [architecture](architecture.md#api-clients)).
+- [ ] Unused exports, files, dependencies and translation keys are removed; new env variables and docs are in place ([config and environment](#config-and-environment)).
 - [ ] Lint, typecheck, tests and build pass with zero errors and zero warnings.
