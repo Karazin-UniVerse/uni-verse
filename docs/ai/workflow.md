@@ -28,7 +28,8 @@ pnpm exec prettier --check <files you changed>
 - When you touch `packages/ui`, also run `pnpm --filter @universe/ui build-storybook`.
 - The requirement-driven Vitest suite: `pnpm test:e2e`.
 - `GEMINI.md` is generated from the `@docs/ai/*.md` imports in `CLAUDE.md` (Gemini CLI and Antigravity do not expand `@` imports). Never edit it by hand: change `docs/ai/`, then run `pnpm gemini:sync` (the pre-commit hook does this too); `pnpm gemini:check` verifies it.
-- If you edit anything under `.agents/skills`, the pre-commit hook runs `pnpm skills:sync` and stages the result (`.claude/skills` is a mirror of `.agents/skills`); `pnpm skills:check` verifies it. To remove a skill, delete it from `.agents/skills` and run `pnpm skills:sync --prune`. `skills:sync` never deletes files that exist only in `.claude/skills`; add `--prune` to delete them.
+- If you edit anything under `.agents/skills`, the pre-commit hook runs `pnpm skills:sync` and stages the result (`.claude/skills` is an exact mirror of `.agents/skills`, so sync also deletes files that no longer exist in the source); `pnpm skills:check` verifies it and fails if `.agents/skills` is missing. To remove a skill, delete it from `.agents/skills` and run `pnpm skills:sync`.
+- The pre-commit hook rejects the commit while `CLAUDE.md`, `docs/ai`, or `.agents/skills` has unstaged or untracked changes, because `GEMINI.md` and `.claude/skills` are generated from the working tree. `git add` those sources (or stash the rest) and commit again.
 
 ## Tooling notes
 

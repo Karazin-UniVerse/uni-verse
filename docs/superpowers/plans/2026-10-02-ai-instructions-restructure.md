@@ -45,7 +45,7 @@ Create:
 
 Modify: `.coderabbit.yaml`, `package.json` (2 scripts), `skills-lock.json`, `packages/uni-hub/AGENTS.md` (no change expected; verified only).
 
-Delete (Task 11, after coverage is green): `.github/copilot-instructions.md`, `.agents/instructions/`, `.agents/roles/`, `.agents/README.md`, `CODE_STYLE.md`, `docs/CODE_STYLE.md`, `docs/contribution.md`, `docs/architecture.md`, `docs/api.md`, and from `.agents/skills` + `.claude/skills`: `universe-dev-standards`, and from `.agents/skills` only: `brainstorming`, `skill-creator`, `frontend-design` (the mirror then removes nothing else).
+Delete (Task 11, after coverage is green): `.github/copilot-instructions.md`, `.agents/instructions/`, `.agents/roles/`, `.agents/README.md`, `CODE_STYLE.md`, `docs/CODE_STYLE.md`, `docs/contribution.md`, `docs/architecture.md`, `docs/api.md`, and from `.agents/skills` + `.claude/skills`: `universe-dev-standards` (the vendor skills `brainstorming`, `skill-creator`, `frontend-design` stay in the repo and in `skills-lock.json`; the mirror then removes nothing else).
 
 `SCRATCH` below means the session scratchpad: `/private/tmp/claude-502/-Users-ReDL-Documents-Programming-Projects-uni-verse/a33f9090-ea71-4914-b273-c2a9c831da79/scratchpad`.
 
@@ -644,7 +644,7 @@ git commit -m "docs(ai): add AGENTS.md entry point with Claude and Gemini wiring
 
 - Create: `scripts/sync-skills.mjs`, `.agents/skills/playwright-cli/` (copy)
 - Modify: `package.json` (scripts), `skills-lock.json`
-- Delete: `.agents/skills/{brainstorming,skill-creator,frontend-design,universe-dev-standards}`, `.claude/skills/universe-dev-standards` (the sync removes the latter)
+- Delete: `.agents/skills/universe-dev-standards`, `.claude/skills/universe-dev-standards` (the sync removes the latter). The vendor skills `brainstorming`, `skill-creator`, `frontend-design` are kept.
 
 **Interfaces:**
 
@@ -747,11 +747,13 @@ git status --short .agents/skills/playwright-cli | head -3
 
 Expected: `??` entries. This must happen **before** any sync, otherwise the mirror would delete it.
 
-- [ ] **Step 4: Delete the skills that should not live in the repo**
+- [ ] **Step 4: Delete the superseded `universe-dev-standards` skill**
 
 ```bash
-git rm -r -q .agents/skills/universe-dev-standards .agents/skills/brainstorming .agents/skills/skill-creator .agents/skills/frontend-design
+git rm -r -q .agents/skills/universe-dev-standards
 ```
+
+The vendor skills `brainstorming`, `skill-creator` and `frontend-design` are **not** deleted: the repository is shared and must not depend on any contributor's global installs.
 
 Only after the coverage script is green for S01–S15 is the **content** of `universe-dev-standards` considered migrated (Task 11 re-runs the full script). The skill text stays recoverable from git history (`git show HEAD:.agents/skills/universe-dev-standards/SKILL.md`).
 
@@ -782,14 +784,14 @@ Expected: `differs: storybook-story-writing/SKILL.md`, `exit=1`; after sync, mat
 
 - [ ] **Step 7: Update `skills-lock.json`**
 
-Remove the entries `brainstorming`, `frontend-design`, `skill-creator` (they no longer exist in the repo). Leave all other entries. `playwright-cli` has no known upstream source and is not added to the lock. Validate: `node -e "JSON.parse(require('fs').readFileSync('skills-lock.json','utf8')); console.log('ok')"` → `ok`.
+Keep the entries `brainstorming`, `frontend-design`, `skill-creator` (the skills stay in the repo); no entries are removed. `universe-dev-standards` is a local skill and has no lock entry. `playwright-cli` has no known upstream source and is not added to the lock. Validate: `node -e "JSON.parse(require('fs').readFileSync('skills-lock.json','utf8')); console.log('ok')"` → `ok`, and `grep -cE '"(brainstorming|frontend-design|skill-creator)"' skills-lock.json` → `3`.
 
 - [ ] **Step 8: Commit**
 
 ```bash
 pnpm exec prettier --write package.json skills-lock.json scripts/sync-skills.mjs
 git add scripts/sync-skills.mjs package.json skills-lock.json .agents .claude
-git commit -m "chore(skills): make .agents/skills canonical with a .claude mirror script and drop redundant skills"
+git commit -m "chore(skills): make .agents/skills canonical with a .claude mirror script and drop the superseded universe-dev-standards skill"
 ```
 
 ---

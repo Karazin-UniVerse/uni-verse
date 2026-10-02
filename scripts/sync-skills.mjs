@@ -1,4 +1,4 @@
-import { cpSync, existsSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { cpSync, existsSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -6,7 +6,6 @@ const root = join(fileURLToPath(import.meta.url), '..', '..');
 const source = join(root, '.agents', 'skills');
 const target = join(root, '.claude', 'skills');
 const isCheck = process.argv.includes('--check');
-const isPrune = process.argv.includes('--prune');
 
 function listFiles(directory) {
   const files = [];
@@ -24,19 +23,18 @@ function listFiles(directory) {
   return files;
 }
 
-function safeList(directory) {
-  try {
-    statSync(directory);
-
-    return listFiles(directory).map((file) => relative(directory, file));
-  } catch {
+// A missing directory is a normal state for the mirror (it counts as empty); read errors propagate.
+function listTree(directory) {
+  if (!existsSync(directory)) {
     return [];
   }
+
+  return listFiles(directory).map((file) => relative(directory, file));
 }
 
 function findDifferences() {
-  const sourceFiles = safeList(source);
-  const targetFiles = safeList(target);
+  const sourceFiles = listTree(source);
+  const targetFiles = listTree(target);
   const differences = [];
 
   for (const file of sourceFiles) {
@@ -56,35 +54,30 @@ function findDifferences() {
   return differences;
 }
 
-if (isCheck) {
-  const differences = findDifferences();
+// The canonical directory must exist in both modes: without it there is nothing to mirror or verify.
+if (!existsSync(source)) {
+  console.error('.agents/skills does not exist; it is the canonical skills directory');
+  process.exit(1);
+}
 
-  if (differences.length > 0) {
-    console.error(differences.join('\n'));
-    console.error(
-      '\n.claude/skills is out of sync with .agents/skills. Run: pnpm skills:sync (add --prune to delete extra files)',
-    );
-    process.exit(1);
-  }
+try {
+  if (isCheck) {
+    const differences = findDifferences();
 
-  console.info('.claude/skills matches .agents/skills');
-} else {
-  if (!existsSync(source)) {
-    console.error('.agents/skills does not exist; refusing to sync');
-    process.exit(1);
-  }
+    if (differences.length > 0) {
+      console.error(differences.join('\n'));
+      console.error('\n.claude/skills is out of sync with .agents/skills. Run: pnpm skills:sync');
+      process.exit(1);
+    }
 
-  const extras = findDifferences().filter((difference) => difference.startsWith('extra'));
-
-  if (isPrune) {
+    console.info('.claude/skills matches .agents/skills');
+  } else {
+    // Replace the mirror wholesale so files deleted from .agents/skills disappear from it too.
     rmSync(target, { recursive: true, force: true });
+    cpSync(source, target, { recursive: true, verbatimSymlinks: true });
+    console.info('Synced .agents/skills -> .claude/skills');
   }
-
-  cpSync(source, target, { recursive: true, verbatimSymlinks: true });
-  console.info('Synced .agents/skills -> .claude/skills');
-
-  if (!isPrune && extras.length > 0) {
-    console.warn(extras.join('\n'));
-    console.warn('\nKept the files above. To delete them as well, run: pnpm skills:sync --prune');
-  }
+} catch (error) {
+  console.error(`skills sync failed: ${error.message}`);
+  process.exit(1);
 }

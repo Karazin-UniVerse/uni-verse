@@ -39,7 +39,7 @@ Handles API security and access control.
 
 - **Endpoints** (`/auth/...`, names come from `AUTH_ROUTES`): `register`, `login`, `google` (Google SSO), `moodle/link` (link a Moodle account to an existing user), `logout`, `refresh`.
 - **Tokens:** Passport.js with two JWT strategies, access token (`AT_SECRET`) and refresh token (`RT_SECRET`). `AtGuard` is registered globally; mark open endpoints with `@Public()`.
-- **Decorators:** `@GetUser('<field>')` extracts a field from the access-token payload (`sub`, `email`, `moodleId`, `moodleToken`).
+- **Decorators:** `@GetUser('<field>')` extracts a field from the payload set by the guard on the route. Under `AtGuard` that is the access-token payload (`sub`, `email`, `moodleId`, `moodleToken`); under `RtGuard` (`refresh`) it is the refresh-token payload plus `refreshToken` taken from the cookie (`sub`, `refreshToken`).
 
 ### 2. `UserModule` (User Management)
 
@@ -155,7 +155,7 @@ The schema lives in `packages/backend/prisma/schema.prisma` and generates the cl
 ## 🚀 Local Development Setup
 
 1. Install dependencies: `pnpm install`
-2. Create `.env` from `.env.example` and fill in `DATABASE_URL`, `AT_SECRET`, `RT_SECRET`, `MOODLE_BASEURL`, `FRONTEND_URL` and, for Google SSO, `GOOGLE_CLIENT_ID`. The backend refuses to start without a secure `AT_SECRET`.
+2. Create `.env` from `.env.example` and fill in `DATABASE_URL`, `AT_SECRET`, `RT_SECRET`, `MOODLE_BASEURL`, `FRONTEND_URL` and, for Google SSO, `GOOGLE_CLIENT_ID`. The backend refuses to start if `AT_SECRET` is missing or still equals the placeholder `your-access-token-secret-key` (`RT_SECRET` has the same check against `your-refresh-token-secret-key`); no minimum length is enforced, so use a long random value.
 3. Prepare database: `pnpm db:generate && pnpm db:migrate`
 4. Start development servers: `pnpm dev` (runs frontend and backend concurrently), or `pnpm dev:select` to choose between a local and a remote backend interactively.
 

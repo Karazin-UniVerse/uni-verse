@@ -1,3 +1,13 @@
-npx lint-staged
-node scripts/sync-gemini-context.mjs && git add GEMINI.md
-node scripts/sync-skills.mjs && git add .claude/skills
+# GEMINI.md and .claude/skills are generated from the working tree, not the index, so every
+# source must be fully staged (no unstaged edits, no untracked files) or the commit could carry
+# generated output that does not match its committed source.
+sources="CLAUDE.md docs/ai .agents/skills"
+if ! git diff --quiet -- $sources || [ -n "$(git ls-files --others --exclude-standard -- $sources)" ]; then
+  echo "pre-commit: unstaged or untracked changes in: $sources" >&2
+  echo "Stage them (git add) or stash them, then commit again. Generated GEMINI.md and .claude/skills must match the staged sources." >&2
+  exit 1
+fi
+
+npx lint-staged || exit 1
+node scripts/sync-gemini-context.mjs && git add GEMINI.md || exit 1
+node scripts/sync-skills.mjs && git add .claude/skills || exit 1
