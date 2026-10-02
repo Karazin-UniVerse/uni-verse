@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseGoogleClaims } from './auth.helpers';
+import { parseGoogleClaims } from './helpers';
 
 describe('parseGoogleClaims', () => {
   it('correctly parses claims from a valid mock JWT token', () => {
