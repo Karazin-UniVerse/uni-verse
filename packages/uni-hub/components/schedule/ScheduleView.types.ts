@@ -30,6 +30,14 @@ export interface ScheduleWeekViewProps {
   getTypeName: (type: string) => string;
 }
 
+export interface ScheduleWeekDayCardProps {
+  day: Date;
+  events: ScheduleEvent[];
+  isToday: boolean;
+  locale: string;
+  getTypeName: (type: string) => string;
+}
+
 export interface ScheduleMonthViewProps {
   selectedDate: Date;
   onSelectDate: (date: Date) => void;

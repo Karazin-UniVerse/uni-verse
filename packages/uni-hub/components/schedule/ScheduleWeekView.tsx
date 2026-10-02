@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { addDays, formatScheduleDate, formatScheduleTime, isSameDay, startOfWeek } from './helpers';
+import { addDays, formatScheduleDate, isSameDay, startOfWeek } from './helpers';
+import { ScheduleWeekDayCard } from './ScheduleWeekDayCard';
 import styles from './ScheduleView.module.scss';
 
 import type { ScheduleWeekViewProps } from './ScheduleView.types';
@@ -51,38 +52,16 @@ export const ScheduleWeekView: React.FC<ScheduleWeekViewProps> = ({
       </div>
 
       <div className={styles.weekGrid}>
-        {days.map((day) => {
-          const events = getEventsForDate(day);
-          const isToday = isSameDay(day, new Date());
-
-          return (
-            <div
-              key={day.toISOString()}
-              className={`${styles.dayCard} ${isToday ? styles.today : ''}`}
-            >
-              <div className={styles.dayCardHeader}>
-                <span>{formatScheduleDate(day, { weekday: 'long' }, locale)}</span>
-                <span>{formatScheduleDate(day, { day: '2-digit', month: '2-digit' }, locale)}</span>
-              </div>
-              {events.length > 0 ? (
-                <ul className={styles.dayEvents}>
-                  {events.map((event) => (
-                    <li key={event.id}>
-                      <strong>
-                        {formatScheduleTime(event.start, locale)} {event.title}
-                      </strong>
-                      <span>
-                        {getTypeName(event.type)} • {event.location}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className={styles.freeDay}>{formatMessage('schedule.freeDay')}</p>
-              )}
-            </div>
-          );
-        })}
+        {days.map((day) => (
+          <ScheduleWeekDayCard
+            key={day.toISOString()}
+            day={day}
+            events={getEventsForDate(day)}
+            isToday={isSameDay(day, new Date())}
+            locale={locale}
+            getTypeName={getTypeName}
+          />
+        ))}
       </div>
     </div>
   );

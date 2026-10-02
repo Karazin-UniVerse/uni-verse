@@ -3,5 +3,6 @@ export * from './ScheduleView.types';
 export * from './ScheduleToolbar';
 export * from './ScheduleDayView';
 export * from './ScheduleWeekView';
+export * from './ScheduleWeekDayCard';
 export * from './ScheduleMonthView';
 export * from './helpers';
