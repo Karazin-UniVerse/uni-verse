@@ -231,7 +231,7 @@ const DashboardPage: React.FC = () => {
           />
         );
       case 'connectMoodle':
-        return <ConnectMoodleTab onConnect={() => openLinkModal('connect')} />;
+        return <ConnectMoodleTab onConnect={() => openLinkModal(LinkMoodleMode.CONNECT)} />;
       default:
         return null;
     }

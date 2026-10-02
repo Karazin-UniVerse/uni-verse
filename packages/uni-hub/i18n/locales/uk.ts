@@ -221,6 +221,8 @@ export const uk = {
   'schedule.exportICal': 'Експорт у iCal',
   'schedule.prevWeek': 'Попередній тиждень',
   'schedule.nextWeek': 'Наступний тиждень',
+  'schedule.prevMonth': 'Попередній місяць',
+  'schedule.nextMonth': 'Наступний місяць',
   'schedule.freeDay': 'Вільний день',
   'schedule.scheduleFor': 'Розклад на',
   'schedule.noClasses': 'На цей день занять немає',
