@@ -9,11 +9,10 @@ import { Button, Spinner } from '@una';
 import { isLoggedIn } from '@core/auth';
 import type { CourseModule } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
-import { LinkMoodleModal, UnlinkMoodleModal } from '@uni-hub/components/auth';
+import { LinkMoodleModal, UnlinkMoodleModal, LinkMoodleMode } from '@uni-hub/components/auth';
 import { DashboardSkeleton, MobileBottomNav } from '@uni-hub/components/dashboard';
 import { BadgeSystem, GradeSimulator } from '@uni-hub/components/gamification';
 import { ScheduleView } from '@uni-hub/components/schedule';
-import { safeStorage } from '@uni-hub/services/api';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import {
   type NavKey,
@@ -29,6 +28,7 @@ import {
 } from './dashboard';
 import { formatLastSync } from './dashboard/tabs/helpers';
 import { useDashboardData, clearUserSessionStorage } from './dashboard/hooks/useDashboardData';
+import { useMoodleLink } from './dashboard/hooks/useMoodleLink';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './DashboardPage.module.scss';
@@ -65,16 +65,6 @@ const DashboardPage: React.FC = () => {
   const [selectedAssignmentModule, setSelectedAssignmentModule] = useState<CourseModule | null>(
     null,
   );
-  const [linkModalMode, setLinkModalMode] = useState<'connect' | 'change'>('connect');
-  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
-  const [isUnlinkModalOpen, setIsUnlinkModalOpen] = useState(false);
-  const [isMoodleLinked, setIsMoodleLinked] = useState<boolean>(() => {
-    if (typeof window === 'undefined') {
-      return true;
-    }
-
-    return safeStorage.getItem('isMoodleLinked') !== 'false';
-  });
 
   const {
     data,
@@ -93,6 +83,36 @@ const DashboardPage: React.FC = () => {
     dateTo,
     hideCompleted,
     onUnauthorized: () => router.push('/login'),
+  });
+
+  const {
+    isMoodleLinked,
+    linkModalMode,
+    isLinkModalOpen,
+    isUnlinkModalOpen,
+    openLinkModal,
+    closeLinkModal,
+    openUnlinkModal,
+    closeUnlinkModal,
+    handleLinkSuccess,
+    handleUnlinkSuccess,
+  } = useMoodleLink({
+    activeKey,
+    setActiveKey,
+    onLinkSuccess: () => {
+      void fetchData();
+    },
+    onUnlinkSuccess: () => {
+      setData({
+        courses: [],
+        grades: [],
+        assignments: [],
+        events: [],
+        notifications: [],
+        unreadCount: 0,
+        statistics: null,
+      });
+    },
   });
 
   const activeStudentProfile = studentProfile ?? fallbackStudentProfile;
@@ -159,39 +179,6 @@ const DashboardPage: React.FC = () => {
   const handleLogout = () => {
     clearUserSessionStorage();
     router.push('/login');
-  };
-
-  const openLinkModal = (mode: 'connect' | 'change' = 'connect') => {
-    setLinkModalMode(mode);
-    setIsLinkModalOpen(true);
-  };
-
-  const handleLinkSuccess = () => {
-    setIsLinkModalOpen(false);
-    setIsMoodleLinked(true);
-    safeStorage.setItem('isMoodleLinked', 'true');
-
-    if (activeKey === 'connectMoodle') {
-      setActiveKey('overview');
-    }
-
-    void fetchData();
-  };
-
-  const handleUnlinkSuccess = () => {
-    setIsUnlinkModalOpen(false);
-    setIsMoodleLinked(false);
-    safeStorage.setItem('isMoodleLinked', 'false');
-
-    setData({
-      courses: [],
-      grades: [],
-      assignments: [],
-      events: [],
-      notifications: [],
-      unreadCount: 0,
-      statistics: null,
-    });
   };
 
   const renderActiveContent = () => {
@@ -287,7 +274,7 @@ const DashboardPage: React.FC = () => {
           activeStudentProfile={activeStudentProfile}
           isMoodleLinked={isMoodleLinked}
           onOpenLinkMoodle={openLinkModal}
-          onOpenUnlinkMoodle={() => setIsUnlinkModalOpen(true)}
+          onOpenUnlinkMoodle={openUnlinkModal}
         />
 
         <main className={styles.content}>
@@ -341,7 +328,7 @@ const DashboardPage: React.FC = () => {
                 type="button"
                 variant="primary"
                 size="small"
-                onClick={() => openLinkModal('connect')}
+                onClick={() => openLinkModal(LinkMoodleMode.CONNECT)}
               >
                 {formatMessage('dashboard.linkMoodleAction')}
               </Button>
@@ -374,13 +361,13 @@ const DashboardPage: React.FC = () => {
           <LinkMoodleModal
             mode={linkModalMode}
             open={isLinkModalOpen}
-            onClose={() => setIsLinkModalOpen(false)}
+            onClose={closeLinkModal}
             onSuccess={handleLinkSuccess}
           />
 
           <UnlinkMoodleModal
             open={isUnlinkModalOpen}
-            onClose={() => setIsUnlinkModalOpen(false)}
+            onClose={closeUnlinkModal}
             onSuccess={handleUnlinkSuccess}
           />
 

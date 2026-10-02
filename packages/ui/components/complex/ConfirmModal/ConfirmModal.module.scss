@@ -5,23 +5,30 @@
   padding: var(--space-8) 0;
 }
 
-.warningBox {
+.messageBox {
   display: flex;
   align-items: flex-start;
   gap: var(--space-12);
   padding: var(--space-12);
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--border-radius-medium, 8px);
   background-color: var(--surface-secondary);
   border: 1px solid var(--border-color);
 }
 
-.warningIcon {
-  color: var(--error-color, #ef4444);
+.icon {
   flex-shrink: 0;
   margin-top: 2px;
 }
 
-.warningText {
+.dangerIcon {
+  color: var(--error-color, #ef4444);
+}
+
+.warningIcon {
+  color: var(--warning-color, #f59e0b);
+}
+
+.messageText {
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--font-sm);

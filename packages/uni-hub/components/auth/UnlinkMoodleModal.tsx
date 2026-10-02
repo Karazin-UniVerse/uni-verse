@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AlertTriangle } from 'lucide-react';
-import { Modal, Button, useToast } from '@una';
+import { ConfirmModal } from '@universe/ui';
+import { useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi, getErrorMessage } from '@uni-hub/services/api';
-import styles from './UnlinkMoodleModal.module.scss';
 
 export interface UnlinkMoodleModalProps {
   onClose: () => void;
@@ -40,37 +39,19 @@ export const UnlinkMoodleModal: React.FC<UnlinkMoodleModalProps> = ({
   };
 
   return (
-    <Modal
+    <ConfirmModal
       open={open}
       onClose={onClose}
+      onConfirm={handleUnlink}
       title={formatMessage('login.unlinkMoodleTitle')}
+      message={formatMessage('login.unlinkMoodlePrompt')}
+      cancelLabel={formatMessage('common.cancel')}
+      confirmLabel={formatMessage('login.unlinkMoodleConfirm')}
+      loadingLabel={formatMessage('login.unlinkMoodleLoading')}
+      loading={loading}
       closeLabel={formatMessage('modal.close')}
-      width={420}
-    >
-      <div className={styles.modalContent}>
-        <div className={styles.warningBox}>
-          <AlertTriangle size={20} className={styles.warningIcon} aria-hidden />
-          <p className={styles.warningText}>{formatMessage('login.unlinkMoodlePrompt')}</p>
-        </div>
-
-        <div className={styles.actions}>
-          <Button variant="secondary" onClick={onClose} disabled={loading}>
-            {formatMessage('common.cancel')}
-          </Button>
-          <Button
-            type="button"
-            variant="primary"
-            className={styles.dangerBtn}
-            onClick={handleUnlink}
-            disabled={loading}
-          >
-            {loading
-              ? formatMessage('login.unlinkMoodleLoading')
-              : formatMessage('login.unlinkMoodleConfirm')}
-          </Button>
-        </div>
-      </div>
-    </Modal>
+      variant="danger"
+    />
   );
 };
 

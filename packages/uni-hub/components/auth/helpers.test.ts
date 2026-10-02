@@ -1,5 +1,32 @@
 import { describe, it, expect } from 'vitest';
-import { parseGoogleClaims } from './helpers';
+import { parseGoogleClaims, getLinkMoodleConfig, LinkMoodleMode } from './helpers';
+
+describe('getLinkMoodleConfig', () => {
+  it('returns default connect mode translation keys', () => {
+    const config = getLinkMoodleConfig(LinkMoodleMode.CONNECT);
+
+    expect(config.titleKey).toBe('login.linkMoodleTitle');
+    expect(config.hintKey).toBe('login.linkMoodleHint');
+    expect(config.submitKey).toBe('login.linkMoodleSubmit');
+    expect(config.successKey).toBe('login.linkMoodleSuccess');
+  });
+
+  it('defaults to connect mode when no argument passed', () => {
+    const config = getLinkMoodleConfig();
+
+    expect(config.titleKey).toBe('login.linkMoodleTitle');
+    expect(config.hintKey).toBe('login.linkMoodleHint');
+  });
+
+  it('returns change mode translation keys when mode is CHANGE', () => {
+    const config = getLinkMoodleConfig(LinkMoodleMode.CHANGE);
+
+    expect(config.titleKey).toBe('login.changeMoodleTitle');
+    expect(config.hintKey).toBe('login.changeMoodleHint');
+    expect(config.submitKey).toBe('login.changeMoodleSubmit');
+    expect(config.successKey).toBe('login.changeMoodleSuccess');
+  });
+});
 
 describe('parseGoogleClaims', () => {
   it('correctly parses claims from a valid mock JWT token', () => {

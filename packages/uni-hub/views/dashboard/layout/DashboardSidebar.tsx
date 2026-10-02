@@ -28,8 +28,6 @@ export interface NavItemConfig {
   icon: React.ReactNode;
   labelKey: TranslationKey;
   shortLabelKey: TranslationKey;
-  label: string;
-  shortLabel: string;
 }
 
 export const NAV_ITEMS: NavItemConfig[] = [
@@ -38,40 +36,30 @@ export const NAV_ITEMS: NavItemConfig[] = [
     icon: <LayoutDashboard size={18} />,
     labelKey: 'nav.overview.full',
     shortLabelKey: 'nav.overview',
-    label: 'Картка студента / Огляд',
-    shortLabel: 'Огляд',
   },
   {
     key: 'courses',
     icon: <BookOpen size={18} />,
     labelKey: 'nav.courses.full',
     shortLabelKey: 'nav.courses',
-    label: 'Індивідуальний план',
-    shortLabel: 'Курси',
   },
   {
     key: 'grades',
     icon: <ClipboardList size={18} />,
     labelKey: 'nav.grades.full',
     shortLabelKey: 'nav.grades',
-    label: 'Заліковка та бали',
-    shortLabel: 'Оцінки',
   },
   {
     key: 'schedule',
     icon: <CalendarDays size={18} />,
     labelKey: 'nav.schedule.full',
     shortLabelKey: 'nav.schedule',
-    label: 'Розклад занять',
-    shortLabel: 'Розклад',
   },
   {
     key: 'assignments',
     icon: <FileEdit size={18} />,
     labelKey: 'nav.assignments.full',
     shortLabelKey: 'nav.assignments',
-    label: 'Завдання',
-    shortLabel: 'Завдання',
   },
 ];
 
@@ -87,8 +75,6 @@ export const getVisibleNavItems = (isMoodleLinked = true): NavItemConfig[] => {
       icon: <Link2 size={18} />,
       labelKey: 'nav.connectMoodle.full',
       shortLabelKey: 'nav.connectMoodle',
-      label: 'Підключити Moodle',
-      shortLabel: 'Moodle',
     },
   ];
 };

@@ -1,4 +1,5 @@
 import type { StudentProfile } from '@core/types';
+import type { LinkMoodleMode } from '@uni-hub/components/auth';
 import type {
   Course,
   Grade,
@@ -90,6 +91,6 @@ export interface DashboardHeaderProps {
   unreadCount: number;
   activeStudentProfile: StudentProfile;
   isMoodleLinked?: boolean;
-  onOpenLinkMoodle?: (mode?: 'connect' | 'change') => void;
+  onOpenLinkMoodle?: (mode?: LinkMoodleMode) => void;
   onOpenUnlinkMoodle?: () => void;
 }

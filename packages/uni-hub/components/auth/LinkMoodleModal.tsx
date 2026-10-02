@@ -6,10 +6,11 @@ import { Modal, Button, SimpleForm, useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi, getErrorMessage } from '@uni-hub/services/api';
 import { AuthField } from './AuthField';
+import { LinkMoodleMode, getLinkMoodleConfig } from './helpers';
 import styles from './LinkMoodleModal.module.scss';
 
 export interface LinkMoodleModalProps {
-  mode?: 'connect' | 'change';
+  mode?: LinkMoodleMode;
   onClose: () => void;
   onSuccess: () => void;
   open: boolean;
@@ -19,7 +20,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
   onClose,
   onSuccess,
   open,
-  mode = 'connect',
+  mode = LinkMoodleMode.CONNECT,
 }) => {
   const { formatMessage } = useLanguage();
   const [username, setUsername] = useState('');
@@ -28,12 +29,10 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
   const [error, setError] = useState('');
   const toast = useToast();
 
-  const isChangeMode = mode === 'change';
-  const title = formatMessage(isChangeMode ? 'login.changeMoodleTitle' : 'login.linkMoodleTitle');
-  const hint = formatMessage(isChangeMode ? 'login.changeMoodleHint' : 'login.linkMoodleHint');
-  const submitLabel = formatMessage(
-    isChangeMode ? 'login.changeMoodleSubmit' : 'login.linkMoodleSubmit',
-  );
+  const config = getLinkMoodleConfig(mode);
+  const title = formatMessage(config.titleKey);
+  const hint = formatMessage(config.hintKey);
+  const submitLabel = formatMessage(config.submitKey);
 
   const handleLink = async () => {
     setError('');
@@ -55,9 +54,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
     try {
       await authApi.linkMoodleAccount(username.trim(), password);
 
-      toast.success(
-        formatMessage(isChangeMode ? 'login.changeMoodleSuccess' : 'login.linkMoodleSuccess'),
-      );
+      toast.success(formatMessage(config.successKey));
       onSuccess();
     } catch (err: unknown) {
       const message = getErrorMessage(err, formatMessage('login.linkMoodleError'));

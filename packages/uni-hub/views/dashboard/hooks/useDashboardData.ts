@@ -17,9 +17,9 @@ import {
   loadCachedDashboardData,
   persistDashboardSnapshot,
   syncStudentProfile,
-} from './useDashboardData.helpers';
+} from './helpers';
 
-export { clearUserSessionStorage } from './useDashboardData.helpers';
+export { clearUserSessionStorage } from './helpers';
 
 export interface UseDashboardDataOptions {
   sortOrder: 'asc' | 'desc';

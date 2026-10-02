@@ -10,6 +10,7 @@ import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi } from '@uni-hub/services/api';
+import { LinkMoodleMode } from '@uni-hub/components/auth';
 import type { DashboardHeaderProps } from '../types';
 import { stripHtml } from '../utils';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
@@ -223,7 +224,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                       size="small"
                       onClick={() => {
                         setUserMenuOpen(false);
-                        onOpenLinkMoodle?.('change');
+                        onOpenLinkMoodle?.(LinkMoodleMode.CHANGE);
                       }}
                     >
                       {formatMessage('header.moodleChange')}
@@ -248,7 +249,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                     size="small"
                     onClick={() => {
                       setUserMenuOpen(false);
-                      onOpenLinkMoodle?.('connect');
+                      onOpenLinkMoodle?.(LinkMoodleMode.CONNECT);
                     }}
                     style={{ width: '100%' }}
                   >

@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { LinkMoodleModal } from './LinkMoodleModal';
+import { LinkMoodleMode } from './helpers';
 
 vi.mock('@una', async () => {
   const actual = await vi.importActual<Record<string, unknown>>('@una');
@@ -39,7 +40,7 @@ describe('LinkMoodleModal component', () => {
     const html = renderToString(
       React.createElement(LinkMoodleModal, {
         open: true,
-        mode: 'connect',
+        mode: LinkMoodleMode.CONNECT,
         onClose: vi.fn(),
         onSuccess: vi.fn(),
       }),
@@ -55,7 +56,7 @@ describe('LinkMoodleModal component', () => {
     const html = renderToString(
       React.createElement(LinkMoodleModal, {
         open: true,
-        mode: 'change',
+        mode: LinkMoodleMode.CHANGE,
         onClose: vi.fn(),
         onSuccess: vi.fn(),
       }),

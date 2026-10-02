@@ -1,4 +1,5 @@
 import { moodleApi } from '@uni-hub/services/api';
+import { isBrowser } from '@uni-hub/utils/browser';
 import type { Grade, Assignment } from '@uni-hub/types';
 import type { StudentProfile } from '@core/types';
 import type { DashboardData } from '../types';
@@ -207,7 +208,7 @@ export function filterFallbackAssignments({
 }
 
 export function getInitialSyncTime(): number | null {
-  if (typeof window === 'undefined') {
+  if (!isBrowser) {
     return null;
   }
 
@@ -244,7 +245,7 @@ export function syncStudentProfile(
 }
 
 export function isMoodleUnlinked(): boolean {
-  if (typeof window === 'undefined') {
+  if (!isBrowser) {
     return false;
   }
 
