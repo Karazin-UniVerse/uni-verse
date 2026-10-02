@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button, Tag } from '@una';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { formatScheduleDate, getTypeTone, isSameDay } from './helpers';
 import styles from './ScheduleView.module.scss';
 
@@ -15,6 +16,7 @@ export const ScheduleMonthView: React.FC<ScheduleMonthViewProps> = ({
   weekdays,
   monthDays,
 }) => {
+  const { formatMessage } = useLanguage();
   const currentMonth = selectedDate.getMonth();
 
   return (
@@ -24,6 +26,7 @@ export const ScheduleMonthView: React.FC<ScheduleMonthViewProps> = ({
           type="button"
           variant="secondary"
           size="small"
+          aria-label={formatMessage('schedule.prevMonth')}
           onClick={() =>
             onSelectDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1))
           }
@@ -35,6 +38,7 @@ export const ScheduleMonthView: React.FC<ScheduleMonthViewProps> = ({
           type="button"
           variant="secondary"
           size="small"
+          aria-label={formatMessage('schedule.nextMonth')}
           onClick={() =>
             onSelectDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1))
           }

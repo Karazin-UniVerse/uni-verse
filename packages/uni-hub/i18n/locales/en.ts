@@ -199,6 +199,8 @@ export const en = {
   'schedule.exportICal': 'Export to iCal',
   'schedule.prevWeek': 'Previous week',
   'schedule.nextWeek': 'Next week',
+  'schedule.prevMonth': 'Previous month',
+  'schedule.nextMonth': 'Next month',
   'schedule.freeDay': 'Free day',
   'schedule.scheduleFor': 'Schedule for',
   'schedule.noClasses': 'No classes for this day',

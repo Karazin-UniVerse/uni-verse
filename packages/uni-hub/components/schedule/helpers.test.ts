@@ -9,6 +9,8 @@ import {
   generateDummyEvents,
   generateICSContent,
   exportToICS,
+  escapeICSText,
+  KARAZIN_PAIRS,
 } from './helpers';
 
 import type { ScheduleEvent } from './ScheduleView.types';
@@ -125,6 +127,59 @@ describe('schedule helpers', () => {
     });
   });
 
+  describe('KARAZIN_PAIRS', () => {
+    it('has matching numeric start/end times for each pair label (80 minutes duration)', () => {
+      KARAZIN_PAIRS.forEach((pair) => {
+        const startTotalMin = pair.startHour * 60 + pair.startMin;
+        const endTotalMin = pair.endHour * 60 + pair.endMin;
+
+        expect(endTotalMin - startTotalMin).toBe(80);
+      });
+    });
+
+    it('has accurate Karazin timetable intervals', () => {
+      expect(KARAZIN_PAIRS[0]).toMatchObject({
+        startHour: 8,
+        startMin: 30,
+        endHour: 9,
+        endMin: 50,
+      });
+      expect(KARAZIN_PAIRS[1]).toMatchObject({
+        startHour: 10,
+        startMin: 10,
+        endHour: 11,
+        endMin: 30,
+      });
+      expect(KARAZIN_PAIRS[2]).toMatchObject({
+        startHour: 12,
+        startMin: 0,
+        endHour: 13,
+        endMin: 20,
+      });
+      expect(KARAZIN_PAIRS[3]).toMatchObject({
+        startHour: 13,
+        startMin: 40,
+        endHour: 15,
+        endMin: 0,
+      });
+      expect(KARAZIN_PAIRS[4]).toMatchObject({
+        startHour: 15,
+        startMin: 20,
+        endHour: 16,
+        endMin: 40,
+      });
+    });
+  });
+
+  describe('escapeICSText', () => {
+    it('escapes backslashes, semicolons, commas, and newlines per RFC 5545', () => {
+      const raw = 'Math, Logic; C:\\Class\nRoom 101\r\nAud. 2';
+      const escaped = escapeICSText(raw);
+
+      expect(escaped).toBe('Math\\, Logic\\; C:\\\\Class\\nRoom 101\\nAud. 2');
+    });
+  });
+
   describe('generateDummyEvents', () => {
     it('generates a populated list of schedule events including exams', () => {
       const events = generateDummyEvents();
@@ -144,6 +199,10 @@ describe('schedule helpers', () => {
 
       expect(examEvent).toBeDefined();
       expect(examEvent?.title).toContain('Іспит');
+      expect(examEvent?.start.getHours()).toBe(10);
+      expect(examEvent?.start.getMinutes()).toBe(10);
+      expect(examEvent?.end.getHours()).toBe(13);
+      expect(examEvent?.end.getMinutes()).toBe(20);
     });
   });
 
@@ -151,23 +210,23 @@ describe('schedule helpers', () => {
     const sampleEvents: ScheduleEvent[] = [
       {
         id: 'test-event-1',
-        title: 'Math Lecture',
+        title: 'Math, Logic & AI; Lecture',
         start: new Date('2026-02-01T08:30:00.000Z'),
-        end: new Date('2026-02-01T10:05:00.000Z'),
+        end: new Date('2026-02-01T09:50:00.000Z'),
         type: 'lecture',
-        location: 'Room 101',
+        location: 'Room 101, Building 2',
       },
     ];
 
-    it('generates a valid iCalendar VCALENDAR string', () => {
+    it('generates a valid iCalendar VCALENDAR string with escaped fields', () => {
       const ics = generateICSContent(sampleEvents);
 
       expect(ics).toContain('BEGIN:VCALENDAR');
       expect(ics).toContain('VERSION:2.0');
       expect(ics).toContain('BEGIN:VEVENT');
       expect(ics).toContain('UID:test-event-1@universemvp.tech');
-      expect(ics).toContain('SUMMARY:Math Lecture');
-      expect(ics).toContain('LOCATION:Room 101');
+      expect(ics).toContain('SUMMARY:Math\\, Logic & AI\\; Lecture');
+      expect(ics).toContain('LOCATION:Room 101\\, Building 2');
       expect(ics).toContain('END:VEVENT');
       expect(ics).toContain('END:VCALENDAR');
     });

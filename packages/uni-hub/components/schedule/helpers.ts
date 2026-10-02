@@ -25,11 +25,11 @@ export const isSameDay = (leftDate: Date, rightDate: Date): boolean =>
   leftDate.getDate() === rightDate.getDate();
 
 export const KARAZIN_PAIRS = [
-  { startHour: 8, startMin: 30, endHour: 10, endMin: 5, label: '1 пара (08:30 – 09:50)' },
-  { startHour: 10, startMin: 20, endHour: 11, endMin: 55, label: '2 пара (10:10 – 11:30)' },
-  { startHour: 12, startMin: 10, endHour: 13, endMin: 45, label: '3 пара (12:00 – 13:20)' },
-  { startHour: 14, startMin: 0, endHour: 15, endMin: 35, label: '4 пара (13:40 – 15:00)' },
-  { startHour: 15, startMin: 50, endHour: 17, endMin: 25, label: '5 пара (15:20 – 16:40)' },
+  { startHour: 8, startMin: 30, endHour: 9, endMin: 50, label: '1 пара (08:30 – 09:50)' },
+  { startHour: 10, startMin: 10, endHour: 11, endMin: 30, label: '2 пара (10:10 – 11:30)' },
+  { startHour: 12, startMin: 0, endHour: 13, endMin: 20, label: '3 пара (12:00 – 13:20)' },
+  { startHour: 13, startMin: 40, endHour: 15, endMin: 0, label: '4 пара (13:40 – 15:00)' },
+  { startHour: 15, startMin: 20, endHour: 16, endMin: 40, label: '5 пара (15:20 – 16:40)' },
 ];
 
 export const generateDummyEvents = (): ScheduleEvent[] => {
@@ -86,10 +86,10 @@ export const generateDummyEvents = (): ScheduleEvent[] => {
   const examDay = addDays(now, 5);
   const examStart = new Date(examDay);
 
-  examStart.setHours(10, 20, 0, 0);
+  examStart.setHours(10, 10, 0, 0);
   const examEnd = new Date(examDay);
 
-  examEnd.setHours(13, 45, 0, 0);
+  examEnd.setHours(13, 20, 0, 0);
 
   events.push({
     id: 'evt-exam',
@@ -105,6 +105,13 @@ export const generateDummyEvents = (): ScheduleEvent[] => {
 
 export const DUMMY_EVENTS = generateDummyEvents();
 
+export const escapeICSText = (value: string): string =>
+  value
+    .replace(/\\/g, '\\\\')
+    .replace(/\r\n|\r|\n/g, '\\n')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,');
+
 export const generateICSContent = (events: ScheduleEvent[]): string => {
   const formatDateICS = (date: Date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 
@@ -116,8 +123,8 @@ export const generateICSContent = (events: ScheduleEvent[]): string => {
     icsContent += `DTSTAMP:${formatDateICS(new Date())}\r\n`;
     icsContent += `DTSTART:${formatDateICS(event.start)}\r\n`;
     icsContent += `DTEND:${formatDateICS(event.end)}\r\n`;
-    icsContent += `SUMMARY:${event.title}\r\n`;
-    icsContent += `LOCATION:${event.location}\r\n`;
+    icsContent += `SUMMARY:${escapeICSText(event.title)}\r\n`;
+    icsContent += `LOCATION:${escapeICSText(event.location)}\r\n`;
     icsContent += 'END:VEVENT\r\n';
   });
   icsContent += 'END:VCALENDAR\r\n';
