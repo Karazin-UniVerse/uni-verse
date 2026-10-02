@@ -35,7 +35,8 @@
     "universe/una-primitive-purity": "error",
     "universe/nestjs-controller-no-prisma": "error",
     "universe/no-empty-catch-in-services": "error",
-    "universe/core-package-isolation": "error"
+    "universe/core-package-isolation": "error",
+    "react/no-multi-comp": "error"
   },
   "overrides": [
     {
@@ -49,7 +50,8 @@
         "**/.storybook/**"
       ],
       "rules": {
-        "typescript/no-explicit-any": "off"
+        "typescript/no-explicit-any": "off",
+        "react/no-multi-comp": "off"
       }
     },
     {
