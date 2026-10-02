@@ -21,6 +21,7 @@ export class AuthApi {
     if (response.data?.access_token) {
       safeStorage.setItem('accessToken', response.data.access_token);
       safeStorage.setItem('isLoggedIn', 'true');
+      safeStorage.setItem('isMoodleLinked', 'true');
     }
 
     return response;
@@ -37,10 +38,13 @@ export class AuthApi {
     );
 
     if (response.data?.access_token) {
-      localStorage.setItem('accessToken', response.data.access_token);
+      safeStorage.setItem('accessToken', response.data.access_token);
 
       if (response.data.isLinked) {
-        localStorage.setItem('isLoggedIn', 'true');
+        safeStorage.setItem('isLoggedIn', 'true');
+        safeStorage.setItem('isMoodleLinked', 'true');
+      } else {
+        safeStorage.setItem('isMoodleLinked', 'false');
       }
     }
 
@@ -61,10 +65,11 @@ export class AuthApi {
     );
 
     if (response.data?.access_token) {
-      localStorage.setItem('accessToken', response.data.access_token);
+      safeStorage.setItem('accessToken', response.data.access_token);
 
       if (response.data.isLinked) {
-        localStorage.setItem('isLoggedIn', 'true');
+        safeStorage.setItem('isLoggedIn', 'true');
+        safeStorage.setItem('isMoodleLinked', 'true');
       }
     }
 
@@ -77,6 +82,7 @@ export class AuthApi {
     } finally {
       safeStorage.removeItem('accessToken');
       safeStorage.removeItem('isLoggedIn');
+      safeStorage.removeItem('isMoodleLinked');
       safeStorage.removeItem('moodleToken');
       safeStorage.removeItem('username');
       safeStorage.removeItem('universe_student_profile');
