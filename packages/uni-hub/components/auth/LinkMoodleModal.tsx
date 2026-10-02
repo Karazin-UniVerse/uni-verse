@@ -77,7 +77,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
       closeLabel={formatMessage('modal.close')}
       width={400}
     >
-      <SimpleForm action={handleLink} className={styles.modalContent}>
+      <SimpleForm variant="simple" action={handleLink} className={styles.modalContent}>
         <p className={styles.description}>{hint}</p>
 
         <AuthField
