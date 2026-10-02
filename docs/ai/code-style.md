@@ -148,3 +148,14 @@ export type GradesThreshold = (typeof GRADES_THRESHOLD)[keyof typeof GRADES_THRE
 ```
 
 For the clean `export { X } from 'y'` form, see [quality](quality.md).
+
+## No magic values
+
+Never put bare numbers or domain strings into logic: HTTP status codes, grade thresholds, filter names, storage keys, timeouts. Declare a const object with a derived type once, in `@universe/core/constants` when more than one package can use it ([where shared code lives](#reuse-before-writing-dry)), and import it. Do not use TS `enum`; see [quality](quality.md).
+
+```typescript
+// ❌ if (response.status === 401)
+// ✅ if (response.status === RESPONSE_CODES.UNAUTHORIZED)
+export const RESPONSE_CODES = { UNAUTHORIZED: 401 } as const;
+export type ResponseCode = (typeof RESPONSE_CODES)[keyof typeof RESPONSE_CODES];
+```
