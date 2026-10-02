@@ -8,7 +8,14 @@ import type {
   CourseStatistics,
 } from '@uni-hub/types';
 
-export const NAV_KEYS = ['overview', 'courses', 'grades', 'schedule', 'assignments'] as const;
+export const NAV_KEYS = [
+  'overview',
+  'courses',
+  'grades',
+  'schedule',
+  'assignments',
+  'connectMoodle',
+] as const;
 
 export type NavKey = (typeof NAV_KEYS)[number];
 
@@ -35,6 +42,7 @@ export interface OverviewTabProps {
   activeStudentProfile: StudentProfile;
   loading: boolean;
   onNavigate: (key: NavKey) => void;
+  isMoodleLinked?: boolean;
 }
 
 export interface CoursesTabProps {
@@ -70,6 +78,7 @@ export interface DashboardSidebarProps {
   onSelectKey: (key: NavKey) => void;
   soundEnabled: boolean;
   onLogout: () => void;
+  isMoodleLinked?: boolean;
 }
 
 export interface DashboardHeaderProps {
@@ -80,4 +89,7 @@ export interface DashboardHeaderProps {
   notifications: Notification[];
   unreadCount: number;
   activeStudentProfile: StudentProfile;
+  isMoodleLinked?: boolean;
+  onOpenLinkMoodle?: (mode?: 'connect' | 'change') => void;
+  onOpenUnlinkMoodle?: () => void;
 }

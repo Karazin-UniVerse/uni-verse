@@ -9,9 +9,13 @@ import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export interface StudentCardProps {
   activeStudentProfile: StudentProfile;
+  isMoodleLinked?: boolean;
 }
 
-export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }) => {
+export const StudentCard: React.FC<StudentCardProps> = ({
+  activeStudentProfile,
+  isMoodleLinked = true,
+}) => {
   const { formatMessage } = useLanguage();
 
   return (
@@ -43,6 +47,10 @@ export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }
           <Tag tone="success">
             <Award size={12} style={{ marginRight: 4 }} />
             {formatMessage('student.scholarship')}
+          </Tag>
+          <Tag tone={isMoodleLinked ? 'success' : 'warning'}>
+            Moodle:{' '}
+            {formatMessage(isMoodleLinked ? 'header.moodleConnected' : 'header.moodleNotConnected')}
           </Tag>
         </div>
       </div>

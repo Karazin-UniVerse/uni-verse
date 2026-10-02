@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import { Menu, Volume2, VolumeX, Bell, User } from 'lucide-react';
 import { Button, Tag, Empty } from '@una';
@@ -21,6 +22,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   notifications,
   unreadCount,
   activeStudentProfile,
+  onOpenLinkMoodle,
+  onOpenUnlinkMoodle,
+  isMoodleLinked = true,
 }) => {
   const { localeTag, formatMessage } = useLanguage();
   const [notifOpen, setNotifOpen] = useState(false);
@@ -179,6 +183,72 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               <div className={styles.userDropdownHeader}>
                 <strong>{activeStudentProfile.fullName}</strong>
                 <div className={styles.muted}>{activeStudentProfile.group}</div>
+              </div>
+
+              <div className={styles.dropdownSection}>
+                <div className={styles.moodleStatusHeader}>
+                  <span>Moodle LMS</span>
+                  <span
+                    className={clsx(
+                      styles.moodleStatusBadge,
+                      isMoodleLinked ? styles.linked : styles.unlinked,
+                    )}
+                  >
+                    <span
+                      className={styles.statusDot}
+                      style={{
+                        backgroundColor: isMoodleLinked
+                          ? 'var(--success-color, #22c55e)'
+                          : 'var(--text-secondary, #94a3b8)',
+                      }}
+                      aria-hidden
+                    />
+                    {formatMessage(
+                      isMoodleLinked ? 'header.moodleConnected' : 'header.moodleNotConnected',
+                    )}
+                  </span>
+                </div>
+
+                {isMoodleLinked ? (
+                  <div className={styles.moodleDropdownActions}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="small"
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        onOpenLinkMoodle?.('change');
+                      }}
+                    >
+                      {formatMessage('header.moodleChange')}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="small"
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        onOpenUnlinkMoodle?.();
+                      }}
+                      style={{ color: 'var(--error-color)' }}
+                    >
+                      {formatMessage('header.moodleDisconnect')}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="small"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      onOpenLinkMoodle?.('connect');
+                    }}
+                    style={{ width: '100%' }}
+                  >
+                    {formatMessage('header.moodleConnect')}
+                  </Button>
+                )}
               </div>
 
               <div className={styles.userDropdownBody}>

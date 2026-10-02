@@ -201,6 +201,10 @@ export function useDashboardData({
         return;
       }
 
+      if (typeof window !== 'undefined' && localStorage.getItem('isMoodleLinked') === 'false') {
+        return;
+      }
+
       toast.error(formatMessage('dashboard.loadError'));
     } finally {
       if (requestId === fetchRequestIdRef.current) {

@@ -123,6 +123,29 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
+  @Post(AUTH_ROUTES.MOODLE_UNLINK)
+  @ApiOperation({ summary: 'Unlink Moodle account from authenticated user' })
+  @ApiResponse({
+    status: 200,
+    type: GoogleAuthResponseDto,
+    description: 'Moodle account successfully unlinked.',
+  })
+  @HttpCode(HttpStatus.OK)
+  async unlinkMoodle(
+    @GetUser('sub') userId: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<GoogleAuthResponseDto> {
+    const result = await this.authService.unlinkMoodleAccount(userId);
+
+    this.setRefreshTokenCookie(res, result.refresh_token);
+
+    return {
+      access_token: result.access_token,
+      isLinked: result.isLinked,
+    };
+  }
+
+  @ApiBearerAuth()
   @Post(AUTH_ROUTES.LOGOUT)
   @ApiOperation({ summary: 'Logout user' })
   @ApiResponse({

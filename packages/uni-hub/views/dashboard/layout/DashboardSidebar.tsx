@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -11,6 +12,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
+  Link2,
 } from 'lucide-react';
 import { Button } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
@@ -73,6 +75,24 @@ export const NAV_ITEMS: NavItemConfig[] = [
   },
 ];
 
+export const getVisibleNavItems = (isMoodleLinked = true): NavItemConfig[] => {
+  if (isMoodleLinked) {
+    return NAV_ITEMS;
+  }
+
+  return [
+    ...NAV_ITEMS,
+    {
+      key: 'connectMoodle',
+      icon: <Link2 size={18} />,
+      labelKey: 'nav.connectMoodle.full',
+      shortLabelKey: 'nav.connectMoodle',
+      label: 'Підключити Moodle',
+      shortLabel: 'Moodle',
+    },
+  ];
+};
+
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   collapsed,
   onToggleCollapsed,
@@ -82,9 +102,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   onSelectKey,
   soundEnabled,
   onLogout,
+  isMoodleLinked = true,
 }) => {
   const { formatMessage } = useLanguage();
   const siderRef = useRef<HTMLElement>(null);
+  const items = getVisibleNavItems(isMoodleLinked);
 
   useEffect(() => {
     if (!mobileMenuOpen) {
@@ -186,15 +208,20 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         </div>
 
         <nav className={styles.nav}>
-          {NAV_ITEMS.map((item) => {
+          {items.map((item) => {
             const label = formatMessage(item.labelKey);
             const shortLabel = formatMessage(item.shortLabelKey);
+            const isConnect = item.key === 'connectMoodle';
 
             return (
               <button
                 key={item.key}
                 type="button"
-                className={`${styles.navItem} ${activeKey === item.key ? styles.active : ''}`}
+                className={clsx(
+                  styles.navItem,
+                  activeKey === item.key && styles.active,
+                  isConnect && styles.connectMoodleNavItem,
+                )}
                 onClick={() => {
                   playClick(soundEnabled);
                   onSelectKey(item.key);
@@ -215,6 +242,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                   <>
                     <span className={styles.desktopLabel}>{label}</span>
                     <span className={styles.mobileLabel}>{shortLabel}</span>
+                    {isConnect && <span className={styles.navBadgePulse} aria-hidden />}
                   </>
                 )}
               </button>

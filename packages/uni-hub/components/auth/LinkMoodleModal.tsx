@@ -9,18 +9,31 @@ import { AuthField } from './AuthField';
 import styles from './LinkMoodleModal.module.scss';
 
 export interface LinkMoodleModalProps {
+  mode?: 'connect' | 'change';
   onClose: () => void;
   onSuccess: () => void;
   open: boolean;
 }
 
-export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({ onClose, onSuccess, open }) => {
+export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
+  onClose,
+  onSuccess,
+  open,
+  mode = 'connect',
+}) => {
   const { formatMessage } = useLanguage();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const toast = useToast();
+
+  const isChangeMode = mode === 'change';
+  const title = formatMessage(isChangeMode ? 'login.changeMoodleTitle' : 'login.linkMoodleTitle');
+  const hint = formatMessage(isChangeMode ? 'login.changeMoodleHint' : 'login.linkMoodleHint');
+  const submitLabel = formatMessage(
+    isChangeMode ? 'login.changeMoodleSubmit' : 'login.linkMoodleSubmit',
+  );
 
   const handleLink = async () => {
     setError('');
@@ -42,7 +55,9 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({ onClose, onSuc
     try {
       await authApi.linkMoodleAccount(username.trim(), password);
 
-      toast.success(formatMessage('login.linkMoodleSuccess'));
+      toast.success(
+        formatMessage(isChangeMode ? 'login.changeMoodleSuccess' : 'login.linkMoodleSuccess'),
+      );
       onSuccess();
     } catch (err: unknown) {
       const message = getErrorMessage(err, formatMessage('login.linkMoodleError'));
@@ -58,12 +73,12 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({ onClose, onSuc
     <Modal
       open={open}
       onClose={onClose}
-      title={formatMessage('login.linkMoodleTitle')}
+      title={title}
       closeLabel={formatMessage('modal.close')}
       width={400}
     >
       <SimpleForm action={handleLink} className={styles.modalContent}>
-        <p className={styles.description}>{formatMessage('login.linkMoodleHint')}</p>
+        <p className={styles.description}>{hint}</p>
 
         <AuthField
           id="modal-link-moodle-username"
@@ -95,9 +110,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({ onClose, onSuc
             {formatMessage('common.cancel')}
           </Button>
           <Button type="submit" variant="primary" disabled={loading}>
-            {loading
-              ? formatMessage('login.linkMoodleLoading')
-              : formatMessage('login.linkMoodleSubmit')}
+            {loading ? formatMessage('login.linkMoodleLoading') : submitLabel}
           </Button>
         </div>
       </SimpleForm>
