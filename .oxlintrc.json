@@ -136,6 +136,7 @@
     {
       "files": ["packages/core/**/*.{ts}"],
       "rules": {
+        "oxc/no-barrel-file": ["error", { "threshold": 0 }],
         "no-restricted-imports": [
           "error",
           {
