@@ -22,7 +22,7 @@ Decide per-question, not per-session. The test: **would the user understand this
 - **Technical decisions** — API design, data modeling, architectural approach selection
 - **Clarifying questions** — anything where the answer is words, not a visual preference
 
-A question _about_ a UI topic is not automatically a visual question. "What kind of wizard do you want?" is conceptual — use the terminal. "Which of these wizard layouts feels right?" is visual — use the browser.
+A question *about* a UI topic is not automatically a visual question. "What kind of wizard do you want?" is conceptual — use the terminal. "Which of these wizard layouts feels right?" is visual — use the browser.
 
 ## How It Works
 
@@ -35,7 +35,7 @@ The server watches a directory for HTML files and serves the newest one to the b
 ```bash
 # Start AFTER the user approves the companion. --open auto-opens their browser on
 # the first screen; --project-dir persists mockups and enables same-port restart.
-scripts/start-server.sh --project-dir /path/to/project --open
+bash scripts/start-server.sh --project-dir /path/to/project --open
 
 # Returns: {"type":"server-started","port":52341,
 #           "url":"http://localhost:52341/?key=ab12…",
@@ -60,32 +60,28 @@ without repeating it.
 **Launching the server by platform:**
 
 **Claude Code:**
-
 ```bash
 # Default mode works — the script backgrounds the server itself.
-scripts/start-server.sh --project-dir /path/to/project --open
+bash scripts/start-server.sh --project-dir /path/to/project --open
 ```
 
 On Windows, the script auto-detects and switches to foreground mode (which blocks the tool call). Use `run_in_background: true` on the Bash tool call so the server survives across conversation turns, then read `$STATE_DIR/server-info` on the next turn to get the URL and port.
 
 **Codex:**
-
 ```bash
 # Codex reaps background processes. The script auto-detects CODEX_CI and
 # switches to foreground mode. Run it normally — no extra flags needed.
-scripts/start-server.sh --project-dir /path/to/project --open
+bash scripts/start-server.sh --project-dir /path/to/project --open
 ```
 
 **Gemini CLI:**
-
 ```bash
 # Use --foreground and set is_background: true on your shell tool call
 # so the process survives across turns
-scripts/start-server.sh --project-dir /path/to/project --open --foreground
+bash scripts/start-server.sh --project-dir /path/to/project --open --foreground
 ```
 
 **Copilot CLI:**
-
 ```bash
 # Start it with Copilot CLI's non-blocking/background shell mechanism so the
 # server survives across turns. Keep --foreground so the harness, not the
@@ -99,7 +95,7 @@ bash scripts/start-server.sh --project-dir /path/to/project --open --foreground
 If the URL is unreachable from your browser (common in remote/containerized setups), bind a non-loopback host:
 
 ```bash
-scripts/start-server.sh \
+bash scripts/start-server.sh \
   --project-dir /path/to/project \
   --host 0.0.0.0 \
   --url-host localhost
@@ -233,18 +229,8 @@ The frame template provides these CSS classes for your content:
 
 ```html
 <div class="pros-cons">
-  <div class="pros">
-    <h4>Pros</h4>
-    <ul>
-      <li>Benefit</li>
-    </ul>
-  </div>
-  <div class="cons">
-    <h4>Cons</h4>
-    <ul>
-      <li>Drawback</li>
-    </ul>
-  </div>
+  <div class="pros"><h4>Pros</h4><ul><li>Benefit</li></ul></div>
+  <div class="cons"><h4>Cons</h4><ul><li>Drawback</li></ul></div>
 </div>
 ```
 
@@ -257,7 +243,7 @@ The frame template provides these CSS classes for your content:
   <div class="mock-content">Main content area</div>
 </div>
 <button class="mock-button">Action Button</button>
-<input class="mock-input" placeholder="Input field" />
+<input class="mock-input" placeholder="Input field">
 <div class="placeholder">Placeholder area</div>
 ```
 
@@ -302,7 +288,7 @@ If `$STATE_DIR/events` doesn't exist, the user didn't interact with the browser 
 ## Cleaning Up
 
 ```bash
-scripts/stop-server.sh $SESSION_DIR
+bash scripts/stop-server.sh $SESSION_DIR
 ```
 
 If the session used `--project-dir`, mockup files persist in `.superpowers/brainstorm/` for later reference. Only `/tmp` sessions get deleted on stop.
