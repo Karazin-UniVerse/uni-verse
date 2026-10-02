@@ -88,6 +88,14 @@ function getStatusInfo(
 
 For React components with non-trivial prop interfaces or data models, extract the types into `<ComponentName>.types.ts` next to the component (`Chart.types.ts` beside `Chart.tsx`). Do not create `.types.ts` files for simple utilities, single helpers or trivial components. Import the types directly from the `.types.ts` file; do not re-export them from the component file (see the shim rule below).
 
+## Components, files and imports
+
+- One component per file. Subcomponents go in their own files.
+- Inside a domain folder do not repeat the folder name in a frontend file name: `components/auth/helpers.ts`, not `auth.helpers.ts`. Backend modules keep `<module>.helpers.ts`.
+- One `import` statement per package, listing every name: `import { Modal, Button, useToast } from '@una';`. For `@universe/core` import the specific module ([core layout](architecture.md#core-layout)).
+- Do not add a dependency that another workspace package already provides (use `@ui`, not a second copy).
+- After a refactor, remove what is now unused: exports, files, dependencies, translation keys. Before keeping something that "might be needed", check that it is used.
+
 ## Keep it simple (KISS)
 
 - Choose the simplest solution that meets the current requirement. Five direct lines beat a fifty-line generalization.
@@ -249,6 +257,8 @@ HTTP access is class-based so that transport settings and dependencies live in o
 
 Prioritize React Server Components. Use client components (`"use client"`) only when interactivity or browser APIs (`useState`, `useEffect`, `window`) are required.
 
+- Components in `packages/ui` stay usable as Server Components. Put `"use client"` only on the part that needs interactivity, and compose the rest as `children` of that client wrapper (for example `Chart`). Before adding `"use client"` to an app component, check that it really needs state, effects or browser APIs.
+
 ## Component decomposition
 
 - Components over ~150-200 lines, or with several distinct UI sections (cards, grids, feeds, action panels), MUST be split into focused subcomponents. Examples: `StudentCard`, `StatCardGrid`, `UpcomingEventsList`; `DeanContactModal` into `DeanContactInfo` and `DeanTopicChips`.
@@ -262,6 +272,7 @@ Prioritize React Server Components. Use client components (`"use client"`) only 
 - Zero hardcoded strings in the UI. All user-facing text (headings, button labels, tooltips, placeholders, toast notifications, aria-labels) goes through translation keys: `useLanguage().formatMessage('some.key')`.
 - Define every key in both `packages/uni-hub/i18n/locales/uk.ts` and `packages/uni-hub/i18n/locales/en.ts`, satisfying `Record<TranslationKey, string>`. Keep the two files in sync.
 - `@universe/ui` components stay language-agnostic: no hardcoded Ukrainian or English text. Accessibility labels come in as props (for example `closeLabel?: string`), and the consumer supplies the localized value.
+- Dynamic values go through placeholders in the translation string and the `values` argument: `'Go to assignment: {name}'` with `formatMessage('recentGrades.viewAssignment', { name })`. Never concatenate strings around `formatMessage`. Keep one translation function name; do not add aliases such as `t`.
 
 ## Responsive breakpoints
 
