@@ -101,7 +101,7 @@ For React components with non-trivial prop interfaces or data models, extract th
 - Before adding a layer, class, hook or helper, ask: "what would I delete if this did not exist?" If the answer is "nothing", do not add it.
 - If the solution needs a paragraph to explain, look for a simpler one first. When two designs both work, take the one with fewer moving parts.
 - No defensive code for states that the types or the callers already rule out.
-- Pure functions stay functions. Use a class only where the rules say so ([API clients](architecture.md#api-clients)) or where state and dependencies are really shared.
+- Pure functions stay functions. Use a class only where the rules say so ([API clients](api-and-config.md#api-clients)) or where state and dependencies are really shared.
 
 ## Reuse before writing (DRY)
 
@@ -122,7 +122,7 @@ Where shared code lives. Take the first row that fits:
 Rules:
 
 - Promote code up one row when its second consumer appears at that level. Do not promote ahead of need, except code that is clearly cross-package (grades, Moodle contracts, HTTP codes).
-- Pure calculations, formatting, score-tone mapping and regex utilities MUST NOT live inside React components, hooks, backend services or DTOs.
+- Pure calculations, formatting, score-tone mapping and regex utilities MUST NOT be written inside the body of a component or hook, a service class or a DTO file. A non-exported module-level function in the same file is allowed when only that file uses it.
 - Backend DTO helpers go into `<module>.helpers.ts`; never keep helper functions in DTO files.
 - A helper used by exactly one other function stays in that function's module as a private function, not a new file.
 
@@ -156,14 +156,3 @@ export type GradesThreshold = (typeof GRADES_THRESHOLD)[keyof typeof GRADES_THRE
 ```
 
 For the clean `export { X } from 'y'` form, see [quality](quality.md).
-
-## No magic values
-
-Never put bare numbers or domain strings into logic: HTTP status codes, grade thresholds, filter names, storage keys, timeouts. Declare a const object with a derived type once, in `@universe/core/constants` when more than one package can use it ([where shared code lives](#reuse-before-writing-dry)), and import it. Do not use TS `enum`; see [quality](quality.md).
-
-```typescript
-// ❌ if (response.status === 401)
-// ✅ if (response.status === RESPONSE_CODES.UNAUTHORIZED)
-export const RESPONSE_CODES = { UNAUTHORIZED: 401 } as const;
-export type ResponseCode = (typeof RESPONSE_CODES)[keyof typeof RESPONSE_CODES];
-```

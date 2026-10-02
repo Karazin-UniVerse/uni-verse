@@ -103,7 +103,7 @@ For React components with non-trivial prop interfaces or data models, extract th
 - Before adding a layer, class, hook or helper, ask: "what would I delete if this did not exist?" If the answer is "nothing", do not add it.
 - If the solution needs a paragraph to explain, look for a simpler one first. When two designs both work, take the one with fewer moving parts.
 - No defensive code for states that the types or the callers already rule out.
-- Pure functions stay functions. Use a class only where the rules say so ([API clients](architecture.md#api-clients)) or where state and dependencies are really shared.
+- Pure functions stay functions. Use a class only where the rules say so ([API clients](api-and-config.md#api-clients)) or where state and dependencies are really shared.
 
 ## Reuse before writing (DRY)
 
@@ -124,7 +124,7 @@ Where shared code lives. Take the first row that fits:
 Rules:
 
 - Promote code up one row when its second consumer appears at that level. Do not promote ahead of need, except code that is clearly cross-package (grades, Moodle contracts, HTTP codes).
-- Pure calculations, formatting, score-tone mapping and regex utilities MUST NOT live inside React components, hooks, backend services or DTOs.
+- Pure calculations, formatting, score-tone mapping and regex utilities MUST NOT be written inside the body of a component or hook, a service class or a DTO file. A non-exported module-level function in the same file is allowed when only that file uses it.
 - Backend DTO helpers go into `<module>.helpers.ts`; never keep helper functions in DTO files.
 - A helper used by exactly one other function stays in that function's module as a private function, not a new file.
 
@@ -159,17 +159,6 @@ export type GradesThreshold = (typeof GRADES_THRESHOLD)[keyof typeof GRADES_THRE
 
 For the clean `export { X } from 'y'` form, see [quality](quality.md).
 
-## No magic values
-
-Never put bare numbers or domain strings into logic: HTTP status codes, grade thresholds, filter names, storage keys, timeouts. Declare a const object with a derived type once, in `@universe/core/constants` when more than one package can use it ([where shared code lives](#reuse-before-writing-dry)), and import it. Do not use TS `enum`; see [quality](quality.md).
-
-```typescript
-// ❌ if (response.status === 401)
-// ✅ if (response.status === RESPONSE_CODES.UNAUTHORIZED)
-export const RESPONSE_CODES = { UNAUTHORIZED: 401 } as const;
-export type ResponseCode = (typeof RESPONSE_CODES)[keyof typeof RESPONSE_CODES];
-```
-
 ---
 
 # Architecture
@@ -197,7 +186,7 @@ uni-verse/
 
 ### Core layout
 
-- One file per domain, grouped by kind: `constants/grades.ts`, `constants/breakpoints.ts`, `utils/grades.ts`, `utils/browser.ts`. Import the specific module (`@core/utils/browser`), never the package root.
+- One file per domain, grouped by kind: `constants/grades.ts`, `constants/breakpoints.ts`, `utils/grades.ts`, `utils/browser.ts`. Import the specific module (`@universe/core/utils/browser`, or the `@core/utils/browser` alias inside uni-hub), never the package root.
 - No barrel `index.ts` in `constants/` and `utils/`. Barrels hide where code lives and force a split later; add domain files from the start.
 - Types, constants and functions never share a file. Types stay under `types/`.
 - Tests sit next to the code in a sibling `tests/` directory (`utils/tests/grades.test.ts`).
@@ -239,16 +228,6 @@ Before creating any component, decide which tier fits. If the placement is ambig
 - Inject Prisma as a service (managed through `@universe/database`).
 - Use dependency injection and keep modules highly cohesive.
 
-## API clients
-
-HTTP access is class-based so that transport settings and dependencies live in one place.
-
-- **Frontend (`packages/uni-hub/services/`)**: one class per backend domain (`AuthApi`, `MoodleApi`), in `api.<domain>.ts`, exported as one shared instance (`export const authApi = new AuthApi()`). Components and hooks call methods on the instance; they never call `fetch` or a raw `request` function.
-- Shared transport (base URL, auth header, timeout, retries, error mapping) lives in a single `ApiClient` base class that the domain classes extend, with a protected `request<T>()` method. Do not copy transport logic into a domain class.
-- **Backend**: one injectable client service per external system (Moodle: `MoodleClientService`). Other services depend on it through DI and never call `fetch` directly.
-- Pure functions stay functions: query-string building, message mapping and other stateless helpers are not wrapped in a class. Put them where [shared code lives](code-style.md#reuse-before-writing-dry), or make them `private` members of the client when only it uses them.
-- Existing function-based transport code is migrated when a PR changes it; do not refactor it in unrelated PRs.
-
 ---
 
 # Frontend (Next.js and React)
@@ -257,7 +236,7 @@ HTTP access is class-based so that transport settings and dependencies live in o
 
 Prioritize React Server Components. Use client components (`"use client"`) only when interactivity or browser APIs (`useState`, `useEffect`, `window`) are required.
 
-- Components in `packages/ui` stay usable as Server Components. Put `"use client"` only on the part that needs interactivity, and compose the rest as `children` of that client wrapper (for example `Chart`). Before adding `"use client"` to an app component, check that it really needs state, effects or browser APIs.
+- Components in `packages/ui` stay usable as Server Components. Put `"use client"` only on the part that needs interactivity, and compose the rest as `children` of that client wrapper. Before adding `"use client"` to an app component, check that it really needs state, effects or browser APIs.
 
 ## Component decomposition
 
