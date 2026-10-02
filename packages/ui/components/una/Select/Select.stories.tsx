@@ -39,15 +39,20 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const InteractiveSelect = (args: React.ComponentProps<typeof Select>) => {
-  const [val, setVal] = useState(args.value || args.options[0]?.value || '');
+const InteractiveSelectInner = (args: React.ComponentProps<typeof Select>) => {
+  const defaultValue = args.value || args.options[0]?.value || '';
+  const [selectedValue, setSelectedValue] = useState(defaultValue);
 
   return (
     <div style={{ minWidth: '260px' }}>
-      <Select {...args} value={val} onChange={setVal} />
+      <Select {...args} value={selectedValue} onChange={setSelectedValue} />
     </div>
   );
 };
+
+const InteractiveSelect = (args: React.ComponentProps<typeof Select>) => (
+  <InteractiveSelectInner key={args.value} {...args} />
+);
 
 export const Default: Story = {
   render: InteractiveSelect,

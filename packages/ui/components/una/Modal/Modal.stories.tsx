@@ -34,41 +34,71 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const InteractiveModalDemo = (args: React.ComponentProps<typeof Modal>) => {
-  const [isOpen, setIsOpen] = useState(false);
+const InteractiveModalInner = (args: React.ComponentProps<typeof Modal>) => {
+  const [isOpen, setIsOpen] = useState(args.open ?? false);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    args.onClose?.();
+  };
 
   return (
     <div>
       <Button variant="primary" onClick={() => setIsOpen(true)}>
         Відкрити модальне вікно
       </Button>
-      <Modal {...args} open={isOpen} onClose={() => setIsOpen(false)}>
+      <Modal {...args} open={isOpen} onClose={handleClose}>
         {args.children}
       </Modal>
     </div>
   );
 };
 
+const InteractiveModalDemo = (args: React.ComponentProps<typeof Modal>) => (
+  <InteractiveModalInner key={String(args.open)} {...args} />
+);
+
+const InteractiveActionModalInner = (args: React.ComponentProps<typeof Modal>) => {
+  const [isOpen, setIsOpen] = useState(args.open ?? false);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    args.onClose?.();
+  };
+
+  return (
+    <div>
+      <Button variant="primary" onClick={() => setIsOpen(true)}>
+        Відкрити модальне вікно
+      </Button>
+      <Modal {...args} open={isOpen} onClose={handleClose}>
+        <div>
+          <p style={{ margin: '0 0 16px 0', lineHeight: 1.5 }}>
+            Ви впевнені, що бажаєте зберегти поточні зміни? Цю дію можна буде скасувати пізніше.
+          </p>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+            <Button variant="secondary" size="small" onClick={handleClose}>
+              Скасувати
+            </Button>
+            <Button variant="primary" size="small" onClick={handleClose}>
+              Підтвердити
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+};
+
+const InteractiveActionModal = (args: React.ComponentProps<typeof Modal>) => (
+  <InteractiveActionModalInner key={String(args.open)} {...args} />
+);
+
 export const Interactive: Story = {
-  render: InteractiveModalDemo,
+  render: InteractiveActionModal,
   args: {
     title: 'Підтвердження дії',
     closeLabel: 'Закрити діалог',
-    children: (
-      <div>
-        <p style={{ margin: '0 0 16px 0', lineHeight: 1.5 }}>
-          Ви впевнені, що бажаєте зберегти поточні зміни? Цю дію можна буде скасувати пізніше.
-        </p>
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-          <Button variant="secondary" size="small">
-            Скасувати
-          </Button>
-          <Button variant="primary" size="small">
-            Підтвердити
-          </Button>
-        </div>
-      </div>
-    ),
   },
 };
 
