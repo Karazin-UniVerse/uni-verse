@@ -9,6 +9,9 @@ import {
   persistDashboardSnapshot,
   clearUserSessionStorage,
   getInitialSyncTime,
+  buildFallbackData,
+  isMoodleUnlinked,
+  syncStudentProfile,
 } from './useDashboardData.helpers';
 
 describe('useDashboardData.helpers', () => {
@@ -129,6 +132,77 @@ describe('useDashboardData.helpers', () => {
 
       expect(localStorage.getItem('accessToken')).toBeNull();
       expect(localStorage.getItem('username')).toBeNull();
+    });
+  });
+
+  describe('syncStudentProfile', () => {
+    it('saves student profile to storage and calls setter callback', () => {
+      const setter = vi.fn();
+      const profile: any = { id: '1', fullName: 'John Doe' };
+
+      syncStudentProfile(profile, setter);
+
+      expect(setter).toHaveBeenCalledWith(profile);
+      expect(localStorage.getItem('universe_student_profile')).toBe(JSON.stringify(profile));
+    });
+
+    it('does nothing when profile is null or undefined', () => {
+      const setter = vi.fn();
+
+      syncStudentProfile(null, setter);
+      syncStudentProfile(undefined, setter);
+
+      expect(setter).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('isMoodleUnlinked', () => {
+    it('returns true when isMoodleLinked is explicitly false', () => {
+      localStorage.setItem('isMoodleLinked', 'false');
+
+      expect(isMoodleUnlinked()).toBe(true);
+    });
+
+    it('returns false when isMoodleLinked is true or missing', () => {
+      localStorage.setItem('isMoodleLinked', 'true');
+      expect(isMoodleUnlinked()).toBe(false);
+
+      delete mockStorage.isMoodleLinked;
+      expect(isMoodleUnlinked()).toBe(false);
+    });
+  });
+
+  describe('buildFallbackData', () => {
+    it('constructs fallback dashboard data with filtered assignments', () => {
+      const cachedData: any = {
+        courses: [{ id: 1 }],
+        assignments: [
+          { id: 10, submissionStatus: 'graded', duedate: 1000 },
+          { id: 20, submissionStatus: 'new', duedate: 2000 },
+        ],
+      };
+
+      const previousData: any = {
+        courses: [],
+        grades: [],
+        assignments: [],
+        events: [],
+        notifications: [],
+        unreadCount: 0,
+        statistics: null,
+      };
+
+      const result = buildFallbackData({
+        cachedData,
+        previousData,
+        hideCompleted: true,
+        dateFrom: '',
+        dateTo: '',
+      });
+
+      expect(result.courses).toEqual([{ id: 1 }]);
+      expect(result.assignments.length).toBe(1);
+      expect(result.assignments[0].id).toBe(20);
     });
   });
 });

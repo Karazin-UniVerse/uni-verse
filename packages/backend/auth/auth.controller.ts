@@ -30,6 +30,8 @@ import {
 } from './dto';
 import { AUTH_ROUTES } from '@universe/core/constants/routes';
 
+interface UnlinkMoodleResponse extends Promise<GoogleAuthResponseDto> {}
+
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
@@ -131,18 +133,18 @@ export class AuthController {
     description: 'Moodle account successfully unlinked.',
   })
   @HttpCode(HttpStatus.OK)
-  async unlinkMoodle(
+  unlinkMoodle(
     @GetUser('sub') userId: string,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<GoogleAuthResponseDto> {
-    const result = await this.authService.unlinkMoodleAccount(userId);
+  ): UnlinkMoodleResponse {
+    return this.authService.unlinkMoodleAccount(userId).then((result) => {
+      this.setRefreshTokenCookie(res, result.refresh_token);
 
-    this.setRefreshTokenCookie(res, result.refresh_token);
-
-    return {
-      access_token: result.access_token,
-      isLinked: result.isLinked,
-    };
+      return {
+        access_token: result.access_token,
+        isLinked: result.isLinked,
+      };
+    });
   }
 
   @ApiBearerAuth()

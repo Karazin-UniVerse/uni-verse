@@ -1,5 +1,6 @@
 import { moodleApi } from '@uni-hub/services/api';
 import type { Grade, Assignment } from '@uni-hub/types';
+import type { StudentProfile } from '@core/types';
 import type { DashboardData } from '../types';
 
 export type GradesApiResponse = Awaited<ReturnType<typeof moodleApi.getGrades>>;
@@ -217,4 +218,58 @@ export function getInitialSyncTime(): number | null {
   } catch {
     return null;
   }
+}
+
+export function syncStudentProfile(
+  profileData?: StudentProfile | null,
+  setStudentProfile?: (profile: StudentProfile) => void,
+): void {
+  if (!profileData) {
+    return;
+  }
+
+  setStudentProfile?.(profileData);
+
+  try {
+    localStorage.setItem('universe_student_profile', JSON.stringify(profileData));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
+export function isMoodleUnlinked(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  return localStorage.getItem('isMoodleLinked') === 'false';
+}
+
+export interface BuildFallbackDataOptions {
+  cachedData: Partial<DashboardData>;
+  previousData: DashboardData;
+  hideCompleted: boolean;
+  dateFrom: string;
+  dateTo: string;
+}
+
+export function buildFallbackData({
+  cachedData,
+  previousData,
+  hideCompleted,
+  dateFrom,
+  dateTo,
+}: BuildFallbackDataOptions): DashboardData {
+  const fallbackAssignments = filterFallbackAssignments({
+    assignments: cachedData.assignments ?? previousData.assignments,
+    hideCompleted,
+    dateFrom,
+    dateTo,
+  });
+
+  return {
+    ...previousData,
+    ...cachedData,
+    assignments: fallbackAssignments,
+  };
 }
