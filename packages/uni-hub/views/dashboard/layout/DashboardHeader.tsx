@@ -7,6 +7,7 @@ import { Button, Tag, Empty } from '@una';
 import { StreakBadge } from '@uni-hub/components/gamification';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
+import { DevFeaturePanel } from '@uni-hub/features';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi } from '@uni-hub/services/api';
 import type { DashboardHeaderProps } from '../types';
@@ -82,6 +83,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       </div>
 
       <div className={styles.headerRight}>
+        <DevFeaturePanel />
         <Button
           type="button"
           variant="secondary"
@@ -153,6 +155,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </div>
 
         <div className={styles.userWrap} ref={userRef}>
+          {/* intentional: suppressHydrationWarning – user profile is hydrated from client localStorage */}
           <button
             type="button"
             className={styles.user}
@@ -161,11 +164,14 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             onClick={() => setUserMenuOpen((open) => !open)}
             aria-haspopup="menu"
             aria-expanded={userMenuOpen}
+            // intentional: suppressHydrationWarning – user profile is hydrated from client localStorage
+            suppressHydrationWarning
           >
             <span className={styles.avatar}>
               <User size={16} />
             </span>
-            <span>{activeStudentProfile.fullName}</span>
+            {/* intentional: suppressHydrationWarning – user profile is hydrated from client localStorage */}
+            <span suppressHydrationWarning>{activeStudentProfile.fullName}</span>
           </button>
 
           {userMenuOpen && (
@@ -177,8 +183,12 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               transition={{ duration: 0.15 }}
             >
               <div className={styles.userDropdownHeader}>
-                <strong>{activeStudentProfile.fullName}</strong>
-                <div className={styles.muted}>{activeStudentProfile.group}</div>
+                {/* intentional: suppressHydrationWarning – user profile is hydrated from client localStorage */}
+                <strong suppressHydrationWarning>{activeStudentProfile.fullName}</strong>
+                {/* intentional: suppressHydrationWarning – user profile is hydrated from client localStorage */}
+                <div className={styles.muted} suppressHydrationWarning>
+                  {activeStudentProfile.group}
+                </div>
               </div>
 
               <div className={styles.userDropdownBody}>

@@ -54,6 +54,8 @@ export const uk = {
   'nav.schedule.full': 'Розклад занять',
   'nav.grades': 'Оцінки',
   'nav.grades.full': 'Заліковка та бали',
+  'nav.opportunities': 'Можливості',
+  'nav.opportunities.full': 'Платформа можливостей',
 
   // Sidebar & Header
   'sidebar.logout': 'Вийти',
@@ -320,6 +322,41 @@ export const uk = {
   'overview.gradesTitle': 'Перейти до залікової книжки та оцінок',
   'overview.viewCourseMaterials': 'Переглянути матеріали курсу: {name}',
   'student.courseGroupFormat': '{course} курс, група {group}',
+
+  // Feature Gating & Opportunities
+  'quickActions.opportunities': 'Можливості',
+  'quickActions.newBadge': 'Нове',
+  'quickActions.opportunitiesDescription': 'Стажування, хакатони, гранти',
+  'quickActions.opportunitiesTitle': 'Перейти до платформи можливостей та стажувань',
+  'featureGate.disabledTitle': 'Модуль тимчасово недоступний',
+  'featureGate.disabledDescription':
+    'Цю функцію вимкнено в налаштуваннях або вона знаходиться на стадії оновлення.',
+  'featureGate.backToOverview': 'Повернутися до огляду',
+  'opportunities.title': 'Платформа можливостей',
+  'opportunities.subtitle':
+    'Кар’єрні пропозиції, стажування, наукові гранти та студентські ініціативи Каразінського',
+  'opportunities.badge': 'OP-104 MVP Preview',
+  'opportunities.filterAll': 'Всі пропозиції',
+  'opportunities.filterInternships': 'Стажування та IT',
+  'opportunities.filterGrants': 'Гранти та стипендії',
+  'opportunities.filterExchange': 'Академічна мобільність',
+  'opportunities.apply': 'Подати заявку',
+  'opportunities.details': 'Детальніше',
+  'opportunities.deadline': 'Дедлайн:',
+  'opportunities.empty': 'Наразі немає відкритих можливостей у цій категорії',
+  'opportunities.tagInternships': 'IT & Стажування',
+  'opportunities.tagGrants': 'Гранти та стипендії',
+  'opportunities.tagExchange': 'Академічна мобільність',
+  'opportunities.item1Desc':
+    'Навчальна програма з можливістю працевлаштування для студентів IT-спеціальностей. Практика на реальних проектах із сучасним стеком (React, Node.js, Cloud).',
+  'opportunities.item2Desc':
+    'Семестрове навчання в Польщі для студентів бакалаврату та магістратури. Щомісячна стипендія та повне покриття академічних витрат.',
+  'opportunities.item3Title': 'Грантова програма підтримки молодих науковців Каразінського',
+  'opportunities.item3Org': 'Наукове товариство ХНУ імені В. Н. Каразіна',
+  'opportunities.item3Desc':
+    'Фінансування дослідницьких проектів студентів та аспірантів у галузях природничих та технічних наук. До 50 000 грн на обладнання та досліди.',
+  'opportunities.item4Desc':
+    'Тримісячний інтенсив під керівництвом senior-розробників. Менторство, код-рев’ю та підготовка до позиції Junior Developer.',
 };
 
 export type TranslationKey = keyof typeof uk;

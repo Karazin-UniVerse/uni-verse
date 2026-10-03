@@ -5,6 +5,7 @@ import { GraduationCap, Award } from 'lucide-react';
 import { Tag } from '@una';
 import type { StudentProfile } from '@core/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { useFeatures } from '@uni-hub/features';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export interface StudentCardProps {
@@ -13,6 +14,7 @@ export interface StudentCardProps {
 
 export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }) => {
   const { formatMessage } = useLanguage();
+  const flags = useFeatures();
 
   return (
     <section className={styles.studentCard}>
@@ -30,64 +32,81 @@ export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }
             )}
           </div>
           <div className={styles.studentMainInfo}>
-            <h3>{activeStudentProfile.fullName}</h3>
-            <div className={styles.muted}>
-              {formatMessage('overview.specialty')} {activeStudentProfile.specialty} •{' '}
-              {activeStudentProfile.educationalProgram}
-            </div>
+            {/* intentional: suppressHydrationWarning – user profile is hydrated from client localStorage */}
+            <h3 suppressHydrationWarning>{activeStudentProfile.fullName}</h3>
+            {flags.isEDeanEnabled ? (
+              <div className={styles.muted}>
+                {formatMessage('overview.specialty')} {activeStudentProfile.specialty} •{' '}
+                {activeStudentProfile.educationalProgram}
+              </div>
+            ) : (
+              <div className={styles.muted}>{activeStudentProfile.email}</div>
+            )}
           </div>
         </div>
-        <div className={styles.studentTags}>
-          <Tag tone="success">{formatMessage('student.fullTime')}</Tag>
-          <Tag tone="info">{formatMessage('student.budget')}</Tag>
-          <Tag tone="success">
-            <Award size={12} style={{ marginRight: 4 }} />
-            {formatMessage('student.scholarship')}
-          </Tag>
-        </div>
+        {flags.isEDeanEnabled && (
+          <div className={styles.studentTags}>
+            <Tag tone="success">{formatMessage('student.fullTime')}</Tag>
+            <Tag tone="info">{formatMessage('student.budget')}</Tag>
+            <Tag tone="success">
+              <Award size={12} style={{ marginRight: 4 }} />
+              {formatMessage('student.scholarship')}
+            </Tag>
+          </div>
+        )}
       </div>
 
-      <div className={styles.studentGrid}>
-        <div className={styles.studentField}>
-          <span className={styles.fieldLabel}>{formatMessage('student.faculty')}</span>
-          <span className={styles.fieldValue}>{activeStudentProfile.faculty}</span>
+      {(flags.isEDeanEnabled || flags.isMoodleIntegrationEnabled) && (
+        <div className={styles.studentGrid}>
+          {flags.isEDeanEnabled && (
+            <>
+              <div className={styles.studentField}>
+                <span className={styles.fieldLabel}>{formatMessage('student.faculty')}</span>
+                <span className={styles.fieldValue}>{activeStudentProfile.faculty}</span>
+              </div>
+              <div className={styles.studentField}>
+                <span className={styles.fieldLabel}>{formatMessage('student.department')}</span>
+                <span className={styles.fieldValue}>{activeStudentProfile.department}</span>
+              </div>
+              <div className={styles.studentField}>
+                <span className={styles.fieldLabel}>{formatMessage('student.courseAndGroup')}</span>
+                <span className={styles.fieldValue}>
+                  {formatMessage('student.courseGroupFormat', {
+                    course: activeStudentProfile.course,
+                    group: activeStudentProfile.group,
+                  })}
+                </span>
+              </div>
+              <div className={styles.studentField}>
+                <span className={styles.fieldLabel}>{formatMessage('student.card')}</span>
+                <span className={styles.fieldValue}>{activeStudentProfile.studentCardNumber}</span>
+              </div>
+              <div className={styles.studentField}>
+                <span className={styles.fieldLabel}>{formatMessage('student.recordBook')}</span>
+                <span className={styles.fieldValue}>{activeStudentProfile.recordBookNumber}</span>
+              </div>
+              <div className={styles.studentField}>
+                <span className={styles.fieldLabel}>{formatMessage('student.credits')}</span>
+                <span className={styles.fieldValue}>
+                  {activeStudentProfile.totalCreditsEarned} ECTS
+                </span>
+              </div>
+              <div className={styles.studentField}>
+                <span className={styles.fieldLabel}>{formatMessage('student.status')}</span>
+                <span className={styles.fieldValue} style={{ color: '#22c55e' }}>
+                  ● {formatMessage('student.statusActive')}
+                </span>
+              </div>
+            </>
+          )}
+          {flags.isMoodleIntegrationEnabled && (
+            <div className={styles.studentField}>
+              <span className={styles.fieldLabel}>{formatMessage('student.gpa')}</span>
+              <span className={styles.fieldValue}>{activeStudentProfile.gpa} / 100</span>
+            </div>
+          )}
         </div>
-        <div className={styles.studentField}>
-          <span className={styles.fieldLabel}>{formatMessage('student.department')}</span>
-          <span className={styles.fieldValue}>{activeStudentProfile.department}</span>
-        </div>
-        <div className={styles.studentField}>
-          <span className={styles.fieldLabel}>{formatMessage('student.courseAndGroup')}</span>
-          <span className={styles.fieldValue}>
-            {formatMessage('student.courseGroupFormat', {
-              course: activeStudentProfile.course,
-              group: activeStudentProfile.group,
-            })}
-          </span>
-        </div>
-        <div className={styles.studentField}>
-          <span className={styles.fieldLabel}>{formatMessage('student.card')}</span>
-          <span className={styles.fieldValue}>{activeStudentProfile.studentCardNumber}</span>
-        </div>
-        <div className={styles.studentField}>
-          <span className={styles.fieldLabel}>{formatMessage('student.recordBook')}</span>
-          <span className={styles.fieldValue}>{activeStudentProfile.recordBookNumber}</span>
-        </div>
-        <div className={styles.studentField}>
-          <span className={styles.fieldLabel}>{formatMessage('student.credits')}</span>
-          <span className={styles.fieldValue}>{activeStudentProfile.totalCreditsEarned} ECTS</span>
-        </div>
-        <div className={styles.studentField}>
-          <span className={styles.fieldLabel}>{formatMessage('student.gpa')}</span>
-          <span className={styles.fieldValue}>{activeStudentProfile.gpa} / 100</span>
-        </div>
-        <div className={styles.studentField}>
-          <span className={styles.fieldLabel}>{formatMessage('student.status')}</span>
-          <span className={styles.fieldValue} style={{ color: '#22c55e' }}>
-            ● {formatMessage('student.statusActive')}
-          </span>
-        </div>
-      </div>
+      )}
     </section>
   );
 };

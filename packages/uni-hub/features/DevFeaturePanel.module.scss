@@ -1,58 +1,38 @@
-.floatingTrigger {
-  position: fixed;
-  bottom: var(--space-20, 20px);
-  left: var(--space-20, 20px);
-  z-index: 9999;
-  display: flex;
+.containerWrap {
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-8, 8px);
-  padding: var(--space-8, 8px) var(--space-12, 12px);
-  background: var(--bg-surface, #fff);
-  border: 1px solid var(--border-color, rgb(0 0 0 / 12%));
-  border-radius: var(--border-radius-full, 9999px);
-  box-shadow: 0 4px 14px rgb(0 0 0 / 12%);
-  color: var(--text-primary, #0f172a);
-  font-size: var(--font-xs, 12px);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(8px);
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgb(0 0 0 / 16%);
-    border-color: var(--accent-primary, #3b82f6);
-  }
 }
 
-:global([data-theme='dark']) .floatingTrigger,
-:global([data-theme='cyberpunk']) .floatingTrigger {
-  background: rgb(30 41 59 / 90%);
-  border-color: rgb(255 255 255 / 15%);
-  box-shadow: 0 4px 14px rgb(0 0 0 / 40%);
+.headerButton {
+  position: relative;
 }
 
 .overrideBadge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 9px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
   background: #1d4ed8;
   color: #fff;
   font-size: 10px;
   font-weight: 700;
+  line-height: 16px;
 }
 
 .panelOverlay {
-  position: fixed;
-  bottom: var(--space-20, 20px);
-  left: var(--space-20, 20px);
-  z-index: 10000;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 1000;
   width: 360px;
-  max-width: calc(100vw - 40px);
+  max-width: 90vw;
   margin: 0;
   padding: 0;
   color: inherit;
