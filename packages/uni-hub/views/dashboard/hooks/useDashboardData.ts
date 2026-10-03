@@ -9,15 +9,17 @@ import type { DashboardData } from '../types';
 import {
   assembleDashboardData,
   buildAssignmentParams,
+  buildFallbackData,
   clearUserSessionStorage,
-  filterFallbackAssignments,
   getInitialSyncTime,
+  isMoodleUnlinked,
   isUnauthorizedError,
   loadCachedDashboardData,
   persistDashboardSnapshot,
-} from './useDashboardData.helpers';
+  syncStudentProfile,
+} from './helpers';
 
-export { clearUserSessionStorage } from './useDashboardData.helpers';
+export { clearUserSessionStorage } from './helpers';
 
 export interface UseDashboardDataOptions {
   sortOrder: 'asc' | 'desc';
@@ -145,16 +147,7 @@ export function useDashboardData({
       setData(freshData);
       setHasLoadedOnce(true);
       setIsOfflineData(false);
-
-      if (profileRes?.data) {
-        setStudentProfile(profileRes.data);
-
-        try {
-          localStorage.setItem('universe_student_profile', JSON.stringify(profileRes.data));
-        } catch {
-          // Ignore storage quota errors
-        }
-      }
+      syncStudentProfile(profileRes?.data, setStudentProfile);
 
       const nowTimestamp = Date.now();
 
@@ -182,18 +175,15 @@ export function useDashboardData({
       const cachedData = loadCachedDashboardData();
 
       if (cachedData) {
-        const fallbackAssignments = filterFallbackAssignments({
-          assignments: cachedData.assignments,
-          hideCompleted,
-          dateFrom,
-          dateTo,
-        });
-
-        setData((previous) => ({
-          ...previous,
-          ...cachedData,
-          assignments: fallbackAssignments,
-        }));
+        setData((previous) =>
+          buildFallbackData({
+            cachedData,
+            previousData: previous,
+            hideCompleted,
+            dateFrom,
+            dateTo,
+          }),
+        );
         setIsOfflineData(true);
         setHasLoadedOnce(true);
         toast.info(formatMessage('dashboard.offlineNotice'));
@@ -201,7 +191,9 @@ export function useDashboardData({
         return;
       }
 
-      toast.error(formatMessage('dashboard.loadError'));
+      if (!isMoodleUnlinked()) {
+        toast.error(formatMessage('dashboard.loadError'));
+      }
     } finally {
       if (requestId === fetchRequestIdRef.current) {
         setLoading(false);

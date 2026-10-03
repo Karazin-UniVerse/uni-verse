@@ -36,6 +36,17 @@ export const uk = {
   'login.linkMoodleEnterPassword': 'Будь ласка, введіть пароль від Moodle',
   'login.linkMoodleRequired': 'Для завершення входу необхідно прив’язати акаунт Moodle',
   'login.linkMoodleError': 'Помилка прив’язки акаунта. Перевірте логін та пароль.',
+  'login.changeMoodleTitle': 'Зміна акаунта Moodle',
+  'login.changeMoodleHint': 'Введіть нові облікові дані Moodle для заміни підключеного акаунту.',
+  'login.changeMoodleSubmit': 'Змінити акаунт',
+  'login.changeMoodleSuccess': 'Moodle-акаунт успішно змінено!',
+  'login.unlinkMoodleTitle': "Від'єднання акаунта Moodle",
+  'login.unlinkMoodlePrompt':
+    "Ви дійсно бажаєте від'єднати свій акаунт Moodle? Після від'єднання оцінки, курси та дедлайни не відображатимуться до повторного підключення.",
+  'login.unlinkMoodleConfirm': "Від'єднати",
+  'login.unlinkMoodleLoading': "Від'єднання...",
+  'login.unlinkMoodleSuccess': "Moodle-акаунт успішно від'єднано!",
+  'login.unlinkMoodleError': "Помилка від'єднання акаунта Moodle. Спробуйте пізніше.",
 
   // Themes
   'theme.light': 'Світла',
@@ -54,12 +65,19 @@ export const uk = {
   'nav.schedule.full': 'Розклад занять',
   'nav.grades': 'Оцінки',
   'nav.grades.full': 'Заліковка та бали',
+  'nav.connectMoodle': 'Підключити Moodle',
+  'nav.connectMoodle.full': 'Підключити акаунт Moodle LMS',
 
   // Sidebar & Header
   'sidebar.logout': 'Вийти',
   'sidebar.moodleConnected': 'Moodle LMS (підключено)',
   'header.notifications': 'Сповіщення',
   'header.notifications.empty': 'Немає сповіщень',
+  'header.moodleConnected': 'Підключено',
+  'header.moodleNotConnected': 'Не підключено',
+  'header.moodleChange': 'Змінити акаунт',
+  'header.moodleDisconnect': "Від'єднати",
+  'header.moodleConnect': 'Підключити Moodle',
   'dashboard.sessionExpired': 'Сесія застаріла або недійсна. Будь ласка, увійдіть знову.',
   'dashboard.loadError':
     'Помилка завантаження даних. Будь ласка, переконайтеся, що бекенд запущено.',
@@ -320,6 +338,22 @@ export const uk = {
   'overview.gradesTitle': 'Перейти до залікової книжки та оцінок',
   'overview.viewCourseMaterials': 'Переглянути матеріали курсу: {name}',
   'student.courseGroupFormat': '{course} курс, група {group}',
+
+  // Connect Moodle Tab
+  'connectMoodle.title': 'Підключення акаунту Moodle LMS',
+  'connectMoodle.subtitle':
+    "Об'єднайте UniVerse з вашим навчальним кабінетом Moodle для автоматичної синхронізації успішності, дедлайнів та курсів.",
+  'connectMoodle.cta': 'Підключити Moodle зараз',
+  'connectMoodle.openMoodleLms': 'Відкрити Moodle LMS',
+  'connectMoodle.featureGradesTitle': 'Синхронізація оцінок',
+  'connectMoodle.featureGradesDesc':
+    'Всі поточні бали за лабораторні, практичні та контрольні роботи автоматично оновлюються в електронній заліковці.',
+  'connectMoodle.featureDeadlinesTitle': 'Дедлайни та завдання',
+  'connectMoodle.featureDeadlinesDesc':
+    'Відстежуйте терміни здачі робіт, отримуйте сповіщення про наближення дедлайнів та уникайте запізнень.',
+  'connectMoodle.featureCoursesTitle': 'Матеріали та курси',
+  'connectMoodle.featureCoursesDesc':
+    'Швидкий доступ до навчальних планів, переліку дисциплін та контактів викладачів.',
 };
 
 export type TranslationKey = keyof typeof uk;

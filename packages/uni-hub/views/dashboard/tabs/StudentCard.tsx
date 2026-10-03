@@ -9,9 +9,13 @@ import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export interface StudentCardProps {
   activeStudentProfile: StudentProfile;
+  isMoodleLinked?: boolean;
 }
 
-export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }) => {
+export const StudentCard: React.FC<StudentCardProps> = ({
+  activeStudentProfile,
+  isMoodleLinked = true,
+}) => {
   const { formatMessage } = useLanguage();
 
   return (
@@ -30,8 +34,10 @@ export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }
             )}
           </div>
           <div className={styles.studentMainInfo}>
-            <h3>{activeStudentProfile.fullName}</h3>
-            <div className={styles.muted}>
+            {/* intentional: suppressHydrationWarning – student name loaded client-side */}
+            <h3 suppressHydrationWarning>{activeStudentProfile.fullName}</h3>
+            {/* intentional: suppressHydrationWarning – student specialty and program loaded client-side */}
+            <div className={styles.muted} suppressHydrationWarning>
               {formatMessage('overview.specialty')} {activeStudentProfile.specialty} •{' '}
               {activeStudentProfile.educationalProgram}
             </div>
@@ -43,6 +49,10 @@ export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }
           <Tag tone="success">
             <Award size={12} style={{ marginRight: 4 }} />
             {formatMessage('student.scholarship')}
+          </Tag>
+          <Tag tone={isMoodleLinked ? 'success' : 'warning'}>
+            Moodle:{' '}
+            {formatMessage(isMoodleLinked ? 'header.moodleConnected' : 'header.moodleNotConnected')}
           </Tag>
         </div>
       </div>

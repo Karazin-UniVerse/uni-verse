@@ -38,6 +38,17 @@ export const en = {
   'login.linkMoodleEnterPassword': 'Please enter password in Moodle',
   'login.linkMoodleRequired': 'Linking a Moodle account is required to complete sign-in',
   'login.linkMoodleError': 'Failed to link account. Please check your credentials.',
+  'login.changeMoodleTitle': 'Change Moodle Account',
+  'login.changeMoodleHint': 'Enter new Moodle credentials to replace the connected account.',
+  'login.changeMoodleSubmit': 'Change Account',
+  'login.changeMoodleSuccess': 'Moodle account changed successfully!',
+  'login.unlinkMoodleTitle': 'Disconnect Moodle Account',
+  'login.unlinkMoodlePrompt':
+    'Are you sure you want to disconnect your Moodle account? Grades, courses, and deadlines will not be displayed until you reconnect.',
+  'login.unlinkMoodleConfirm': 'Disconnect',
+  'login.unlinkMoodleLoading': 'Disconnecting...',
+  'login.unlinkMoodleSuccess': 'Moodle account disconnected successfully!',
+  'login.unlinkMoodleError': 'Failed to disconnect Moodle account. Please try again later.',
 
   // Themes
   'theme.light': 'Light',
@@ -56,12 +67,19 @@ export const en = {
   'nav.schedule.full': 'Class Schedule',
   'nav.grades': 'Grades',
   'nav.grades.full': 'Gradebook & Scores',
+  'nav.connectMoodle': 'Connect Moodle',
+  'nav.connectMoodle.full': 'Connect Moodle LMS Account',
 
   // Sidebar & Header
   'sidebar.logout': 'Log out',
   'sidebar.moodleConnected': 'Moodle LMS (connected)',
   'header.notifications': 'Notifications',
   'header.notifications.empty': 'No notifications',
+  'header.moodleConnected': 'Connected',
+  'header.moodleNotConnected': 'Not connected',
+  'header.moodleChange': 'Change account',
+  'header.moodleDisconnect': 'Disconnect',
+  'header.moodleConnect': 'Connect Moodle',
   'dashboard.sessionExpired': 'Session expired or invalid. Please sign in again.',
   'dashboard.loadError': 'Failed to load data. Please ensure the backend is running.',
   'dashboard.syncSuccess': 'Data refreshed successfully',
@@ -321,4 +339,20 @@ export const en = {
   'overview.gradesTitle': 'Go to gradebook and grades',
   'overview.viewCourseMaterials': 'View course materials: {name}',
   'student.courseGroupFormat': 'Year {course}, group {group}',
+
+  // Connect Moodle Tab
+  'connectMoodle.title': 'Connect Moodle LMS Account',
+  'connectMoodle.subtitle':
+    'Link UniVerse with your Moodle student portal for automatic sync of academic performance, deadlines, and courses.',
+  'connectMoodle.cta': 'Connect Moodle Now',
+  'connectMoodle.openMoodleLms': 'Open Moodle LMS',
+  'connectMoodle.featureGradesTitle': 'Grade Synchronization',
+  'connectMoodle.featureGradesDesc':
+    'All course scores, lab grades, and tests are automatically synced into your electronic grade book.',
+  'connectMoodle.featureDeadlinesTitle': 'Deadlines & Assignments',
+  'connectMoodle.featureDeadlinesDesc':
+    'Track upcoming assignment due dates, monitor progress, and never miss an academic deadline.',
+  'connectMoodle.featureCoursesTitle': 'Course Materials',
+  'connectMoodle.featureCoursesDesc':
+    'Quick access to syllabi, course modules, lectures, and instructor contacts.',
 } as const satisfies Record<TranslationKey, string>;

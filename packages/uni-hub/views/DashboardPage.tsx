@@ -9,11 +9,10 @@ import { Button, Spinner } from '@una';
 import { isLoggedIn } from '@core/auth';
 import type { CourseModule } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
-import { LinkMoodleModal } from '@uni-hub/components/auth';
+import { LinkMoodleModal, UnlinkMoodleModal, LinkMoodleMode } from '@uni-hub/components/auth';
 import { DashboardSkeleton, MobileBottomNav } from '@uni-hub/components/dashboard';
 import { BadgeSystem, GradeSimulator } from '@uni-hub/components/gamification';
 import { ScheduleView } from '@uni-hub/components/schedule';
-import { safeStorage } from '@uni-hub/services/api';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import {
   type NavKey,
@@ -25,9 +24,11 @@ import {
   CoursesTab,
   GradesTab,
   AssignmentsTab,
+  ConnectMoodleTab,
 } from './dashboard';
 import { formatLastSync } from './dashboard/tabs/helpers';
 import { useDashboardData, clearUserSessionStorage } from './dashboard/hooks/useDashboardData';
+import { useMoodleLink } from './dashboard/hooks/useMoodleLink';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './DashboardPage.module.scss';
@@ -38,6 +39,7 @@ const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
   grades: 'nav.grades.full',
   schedule: 'nav.schedule.full',
   assignments: 'nav.assignments.full',
+  connectMoodle: 'nav.connectMoodle.full',
 };
 
 const DashboardPage: React.FC = () => {
@@ -63,17 +65,10 @@ const DashboardPage: React.FC = () => {
   const [selectedAssignmentModule, setSelectedAssignmentModule] = useState<CourseModule | null>(
     null,
   );
-  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
-  const [isMoodleLinked, setIsMoodleLinked] = useState<boolean>(() => {
-    if (typeof window === 'undefined') {
-      return true;
-    }
-
-    return safeStorage.getItem('isMoodleLinked') !== 'false';
-  });
 
   const {
     data,
+    setData,
     loading,
     hasLoadedOnce,
     lastSyncTime,
@@ -88,6 +83,36 @@ const DashboardPage: React.FC = () => {
     dateTo,
     hideCompleted,
     onUnauthorized: () => router.push('/login'),
+  });
+
+  const {
+    isMoodleLinked,
+    linkModalMode,
+    isLinkModalOpen,
+    isUnlinkModalOpen,
+    openLinkModal,
+    closeLinkModal,
+    openUnlinkModal,
+    closeUnlinkModal,
+    handleLinkSuccess,
+    handleUnlinkSuccess,
+  } = useMoodleLink({
+    activeKey,
+    setActiveKey,
+    onLinkSuccess: () => {
+      void fetchData();
+    },
+    onUnlinkSuccess: () => {
+      setData({
+        courses: [],
+        grades: [],
+        assignments: [],
+        events: [],
+        notifications: [],
+        unreadCount: 0,
+        statistics: null,
+      });
+    },
   });
 
   const activeStudentProfile = studentProfile ?? fallbackStudentProfile;
@@ -169,6 +194,7 @@ const DashboardPage: React.FC = () => {
             activeStudentProfile={activeStudentProfile}
             loading={loading}
             onNavigate={setActiveKey}
+            isMoodleLinked={isMoodleLinked}
           />
         );
       case 'courses':
@@ -204,6 +230,8 @@ const DashboardPage: React.FC = () => {
             }}
           />
         );
+      case 'connectMoodle':
+        return <ConnectMoodleTab onConnect={() => openLinkModal(LinkMoodleMode.CONNECT)} />;
       default:
         return null;
     }
@@ -223,6 +251,7 @@ const DashboardPage: React.FC = () => {
         onSelectKey={setActiveKey}
         soundEnabled={soundEnabled}
         onLogout={handleLogout}
+        isMoodleLinked={isMoodleLinked}
       />
       <MobileBottomNav
         activeKey={activeKey}
@@ -243,6 +272,9 @@ const DashboardPage: React.FC = () => {
           notifications={data.notifications}
           unreadCount={data.unreadCount}
           activeStudentProfile={activeStudentProfile}
+          isMoodleLinked={isMoodleLinked}
+          onOpenLinkMoodle={openLinkModal}
+          onOpenUnlinkMoodle={openUnlinkModal}
         />
 
         <main className={styles.content}>
@@ -296,7 +328,7 @@ const DashboardPage: React.FC = () => {
                 type="button"
                 variant="primary"
                 size="small"
-                onClick={() => setIsLinkModalOpen(true)}
+                onClick={() => openLinkModal(LinkMoodleMode.CONNECT)}
               >
                 {formatMessage('dashboard.linkMoodleAction')}
               </Button>
@@ -327,14 +359,16 @@ const DashboardPage: React.FC = () => {
           />
 
           <LinkMoodleModal
+            mode={linkModalMode}
             open={isLinkModalOpen}
-            onClose={() => setIsLinkModalOpen(false)}
-            onSuccess={() => {
-              setIsLinkModalOpen(false);
-              setIsMoodleLinked(true);
-              safeStorage.setItem('isMoodleLinked', 'true');
-              fetchData();
-            }}
+            onClose={closeLinkModal}
+            onSuccess={handleLinkSuccess}
+          />
+
+          <UnlinkMoodleModal
+            open={isUnlinkModalOpen}
+            onClose={closeUnlinkModal}
+            onSuccess={handleUnlinkSuccess}
           />
 
           <GradeSimulator

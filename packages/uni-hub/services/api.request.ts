@@ -46,6 +46,49 @@ export function buildQueryString(params?: Record<string, unknown>): string {
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 
+function clearUnauthorizedStorage(status: number): void {
+  if (status === RESPONSE_CODES.UNAUTHORIZED) {
+    safeStorage.removeItem('isLoggedIn');
+    safeStorage.removeItem('accessToken');
+    safeStorage.removeItem('moodleToken');
+    safeStorage.removeItem('universe_dashboard_data');
+    safeStorage.removeItem('universe_last_sync_time');
+  }
+}
+
+async function extractServerErrorMessage(response: Response): Promise<string | undefined> {
+  try {
+    const errorJson = (await response.json()) as {
+      message?: string | string[];
+      error?: string;
+    };
+
+    if (Array.isArray(errorJson?.message)) {
+      return errorJson.message.join(', ');
+    }
+
+    if (typeof errorJson?.message === 'string') {
+      return errorJson.message;
+    }
+
+    if (typeof errorJson?.error === 'string') {
+      return errorJson.error;
+    }
+  } catch {
+    // response was not JSON
+  }
+
+  return undefined;
+}
+
+async function buildHttpErrorMessage(response: Response): Promise<string> {
+  const serverMessage = await extractServerErrorMessage(response);
+
+  return serverMessage
+    ? `${serverMessage} (HTTP ${response.status})`
+    : `HTTP error ${response.status}: ${response.statusText}`;
+}
+
 async function executeAttempt<T>(
   url: string,
   options: RequestInit,
@@ -74,34 +117,11 @@ async function executeAttempt<T>(
     });
 
     if (!response.ok) {
-      if (response.status === RESPONSE_CODES.UNAUTHORIZED) {
-        safeStorage.removeItem('isLoggedIn');
-        safeStorage.removeItem('accessToken');
-        safeStorage.removeItem('moodleToken');
-        safeStorage.removeItem('universe_dashboard_data');
-        safeStorage.removeItem('universe_last_sync_time');
-      }
+      clearUnauthorizedStorage(response.status);
 
-      let serverMessage: string | undefined;
+      const errorDetail = await buildHttpErrorMessage(response);
 
-      try {
-        const errorJson = (await response.json()) as {
-          message?: string | string[];
-          error?: string;
-        };
-
-        if (Array.isArray(errorJson?.message)) {
-          serverMessage = errorJson.message.join(', ');
-        } else if (typeof errorJson?.message === 'string') {
-          serverMessage = errorJson.message;
-        } else if (typeof errorJson?.error === 'string') {
-          serverMessage = errorJson.error;
-        }
-      } catch {
-        // response was not JSON
-      }
-
-      throw new Error(serverMessage || `HTTP error ${response.status}: ${response.statusText}`);
+      throw new Error(errorDetail);
     }
 
     const data = (await response.json()) as T;

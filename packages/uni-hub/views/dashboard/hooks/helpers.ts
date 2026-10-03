@@ -1,5 +1,7 @@
 import { moodleApi } from '@uni-hub/services/api';
+import { isBrowser } from '@uni-hub/utils/browser';
 import type { Grade, Assignment } from '@uni-hub/types';
+import type { StudentProfile } from '@core/types';
 import type { DashboardData } from '../types';
 
 export type GradesApiResponse = Awaited<ReturnType<typeof moodleApi.getGrades>>;
@@ -145,7 +147,13 @@ export function persistDashboardSnapshot(timestamp: number, freshData: Dashboard
 }
 
 export function isUnauthorizedError(error: unknown): boolean {
-  return error instanceof Error && error.message.includes('401');
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+
+  return message.includes('401') || message.includes('unauthorized');
 }
 
 export function clearUserSessionStorage(): void {
@@ -200,7 +208,7 @@ export function filterFallbackAssignments({
 }
 
 export function getInitialSyncTime(): number | null {
-  if (typeof window === 'undefined') {
+  if (!isBrowser) {
     return null;
   }
 
@@ -217,4 +225,58 @@ export function getInitialSyncTime(): number | null {
   } catch {
     return null;
   }
+}
+
+export function syncStudentProfile(
+  profileData?: StudentProfile | null,
+  setStudentProfile?: (profile: StudentProfile) => void,
+): void {
+  if (!profileData) {
+    return;
+  }
+
+  setStudentProfile?.(profileData);
+
+  try {
+    localStorage.setItem('universe_student_profile', JSON.stringify(profileData));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
+export function isMoodleUnlinked(): boolean {
+  if (!isBrowser) {
+    return false;
+  }
+
+  return localStorage.getItem('isMoodleLinked') === 'false';
+}
+
+export interface BuildFallbackDataOptions {
+  cachedData: Partial<DashboardData>;
+  previousData: DashboardData;
+  hideCompleted: boolean;
+  dateFrom: string;
+  dateTo: string;
+}
+
+export function buildFallbackData({
+  cachedData,
+  previousData,
+  hideCompleted,
+  dateFrom,
+  dateTo,
+}: BuildFallbackDataOptions): DashboardData {
+  const fallbackAssignments = filterFallbackAssignments({
+    assignments: cachedData.assignments ?? previousData.assignments,
+    hideCompleted,
+    dateFrom,
+    dateTo,
+  });
+
+  return {
+    ...previousData,
+    ...cachedData,
+    assignments: fallbackAssignments,
+  };
 }
