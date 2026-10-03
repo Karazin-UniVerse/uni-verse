@@ -1,0 +1,135 @@
+'use client';
+
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { type FeatureFlags, type FeatureFlagKey } from '@core/constants/features';
+import { mergeFeatureFlags, resolveEnvFeatureFlags } from '@core/utils/features';
+
+export type FeatureContextValue = {
+  flags: FeatureFlags;
+  envDefaults: FeatureFlags;
+  activeOverrides: Partial<FeatureFlags>;
+  isEnabled: (feature: FeatureFlagKey) => boolean;
+  setFeatureOverride: (feature: FeatureFlagKey, enabled: boolean) => void;
+  resetFeatureOverrides: () => void;
+  isOverridden: (feature?: FeatureFlagKey) => boolean;
+};
+
+const FeatureToggleContext = createContext<FeatureContextValue | null>(null);
+
+const getEnvDefaults = (): FeatureFlags => {
+  return resolveEnvFeatureFlags({
+    NEXT_PUBLIC_FEATURE_MOODLE: process.env.NEXT_PUBLIC_FEATURE_MOODLE,
+    NEXT_PUBLIC_FEATURE_EDEAN: process.env.NEXT_PUBLIC_FEATURE_EDEAN,
+    NEXT_PUBLIC_FEATURE_OPPORTUNITIES: process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES,
+  });
+};
+
+export interface FeatureToggleProviderProps {
+  children?: React.ReactNode;
+  initialFlags?: Partial<FeatureFlags>;
+}
+
+export const FeatureToggleProvider: React.FC<FeatureToggleProviderProps> = ({
+  children,
+  initialFlags,
+}) => {
+  const envDefaults = useMemo(() => getEnvDefaults(), []);
+  const [overrides, setOverrides] = useState<Partial<FeatureFlags>>(() => initialFlags ?? {});
+
+  const effectiveFlags = useMemo(() => {
+    return mergeFeatureFlags(envDefaults, overrides);
+  }, [envDefaults, overrides]);
+
+  const setFeatureOverride = useCallback((feature: FeatureFlagKey, enabled: boolean) => {
+    setOverrides((previous) => ({
+      ...previous,
+      [feature]: enabled,
+    }));
+  }, []);
+
+  const resetFeatureOverrides = useCallback(() => {
+    setOverrides(initialFlags ?? {});
+  }, [initialFlags]);
+
+  const isEnabled = useCallback(
+    (feature: FeatureFlagKey): boolean => {
+      return Boolean(effectiveFlags[feature]);
+    },
+    [effectiveFlags],
+  );
+
+  const isOverridden = useCallback(
+    (feature?: FeatureFlagKey): boolean => {
+      if (feature) {
+        return overrides[feature] !== undefined;
+      }
+
+      return Object.keys(overrides).length > 0;
+    },
+    [overrides],
+  );
+
+  const contextValue = useMemo<FeatureContextValue>(() => {
+    return {
+      flags: effectiveFlags,
+      envDefaults,
+      activeOverrides: overrides,
+      isEnabled,
+      setFeatureOverride,
+      resetFeatureOverrides,
+      isOverridden,
+    };
+  }, [
+    effectiveFlags,
+    envDefaults,
+    overrides,
+    isEnabled,
+    setFeatureOverride,
+    resetFeatureOverrides,
+    isOverridden,
+  ]);
+
+  return (
+    <FeatureToggleContext.Provider value={contextValue}>{children}</FeatureToggleContext.Provider>
+  );
+};
+
+export const useFeatures = (): FeatureFlags => {
+  const context = useContext(FeatureToggleContext);
+
+  if (!context) {
+    return getEnvDefaults();
+  }
+
+  return context.flags;
+};
+
+export const useFeature = (feature: FeatureFlagKey): boolean => {
+  const context = useContext(FeatureToggleContext);
+
+  if (!context) {
+    return Boolean(getEnvDefaults()[feature]);
+  }
+
+  return context.isEnabled(feature);
+};
+
+export const useFeatureControls = (): FeatureContextValue => {
+  const context = useContext(FeatureToggleContext);
+
+  if (!context) {
+    const defaults = getEnvDefaults();
+
+    return {
+      flags: defaults,
+      envDefaults: defaults,
+      activeOverrides: {},
+      isEnabled: (feature) => Boolean(defaults[feature]),
+      setFeatureOverride: () => {},
+      resetFeatureOverrides: () => {},
+      isOverridden: () => false,
+    };
+  }
+
+  return context;
+};
