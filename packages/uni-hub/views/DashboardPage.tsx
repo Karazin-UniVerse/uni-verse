@@ -28,7 +28,7 @@ import {
   OpportunitiesTab,
   NAV_ITEMS,
 } from './dashboard';
-import { useFeatures, FeatureGate } from '@uni-hub/features';
+import { useFeatures } from '@uni-hub/features';
 import { FeatureDisabledNotice } from '@uni-hub/components/common/FeatureDisabledNotice';
 import { formatLastSync } from './dashboard/tabs/helpers';
 import { useDashboardData, clearUserSessionStorage } from './dashboard/hooks/useDashboardData';
@@ -186,97 +186,72 @@ const DashboardPage: React.FC = () => {
           />
         );
       case 'courses':
-        return (
-          <FeatureGate
-            feature="isMoodleIntegrationEnabled"
-            fallback={
-              <FeatureDisabledNotice
-                featureName="isMoodleIntegrationEnabled"
-                onBackToOverview={() => setActiveKey('overview')}
-              />
-            }
-          >
-            <CoursesTab courses={data.courses} soundEnabled={soundEnabled} />
-          </FeatureGate>
+        return flags.isMoodleIntegrationEnabled ? (
+          <CoursesTab courses={data.courses} soundEnabled={soundEnabled} />
+        ) : (
+          <FeatureDisabledNotice
+            featureName="isMoodleIntegrationEnabled"
+            onBackToOverview={() => setActiveKey('overview')}
+          />
         );
       case 'grades':
-        return (
-          <FeatureGate
-            feature="isMoodleIntegrationEnabled"
-            fallback={
-              <FeatureDisabledNotice
-                featureName="isMoodleIntegrationEnabled"
-                onBackToOverview={() => setActiveKey('overview')}
-              />
-            }
-          >
-            <GradesTab grades={data.grades} onOpenSimulator={() => setSimulatorOpen(true)} />
-          </FeatureGate>
+        return flags.isMoodleIntegrationEnabled ? (
+          <GradesTab grades={data.grades} onOpenSimulator={() => setSimulatorOpen(true)} />
+        ) : (
+          <FeatureDisabledNotice
+            featureName="isMoodleIntegrationEnabled"
+            onBackToOverview={() => setActiveKey('overview')}
+          />
         );
       case 'schedule':
-        return (
-          <FeatureGate
-            feature="isEDeanEnabled"
-            fallback={
-              <FeatureDisabledNotice
-                featureName="isEDeanEnabled"
-                onBackToOverview={() => setActiveKey('overview')}
-              />
-            }
-          >
-            <ScheduleView />
-          </FeatureGate>
+        return flags.isEDeanEnabled ? (
+          <ScheduleView />
+        ) : (
+          <FeatureDisabledNotice
+            featureName="isEDeanEnabled"
+            onBackToOverview={() => setActiveKey('overview')}
+          />
         );
       case 'assignments':
-        return (
-          <FeatureGate
-            feature="isMoodleIntegrationEnabled"
-            fallback={
-              <FeatureDisabledNotice
-                featureName="isMoodleIntegrationEnabled"
-                onBackToOverview={() => setActiveKey('overview')}
-              />
-            }
-          >
-            <AssignmentsTab
-              assignments={data.assignments}
-              dateFrom={dateFrom}
-              dateTo={dateTo}
-              onDateFromChange={setDateFrom}
-              onDateToChange={setDateTo}
-              sortOrder={sortOrder}
-              onSortOrderChange={setSortOrder}
-              hideCompleted={hideCompleted}
-              onHideCompletedChange={setHideCompleted}
-              soundEnabled={soundEnabled}
-              onOpenAssignment={(item) => {
-                setSelectedAssignmentModule({
-                  id: item.id,
-                  instance: item.id,
-                  name: item.name,
-                  modname: 'assign',
-                  description: item.description,
-                  contents: [],
-                });
-                setSelectedDueUnixSec(item.duedate);
-                setIsAssignmentModalVisible(true);
-              }}
-            />
-          </FeatureGate>
+        return flags.isMoodleIntegrationEnabled ? (
+          <AssignmentsTab
+            assignments={data.assignments}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            onDateFromChange={setDateFrom}
+            onDateToChange={setDateTo}
+            sortOrder={sortOrder}
+            onSortOrderChange={setSortOrder}
+            hideCompleted={hideCompleted}
+            onHideCompletedChange={setHideCompleted}
+            soundEnabled={soundEnabled}
+            onOpenAssignment={(item) => {
+              setSelectedAssignmentModule({
+                id: item.id,
+                instance: item.id,
+                name: item.name,
+                modname: 'assign',
+                description: item.description,
+                contents: [],
+              });
+              setSelectedDueUnixSec(item.duedate);
+              setIsAssignmentModalVisible(true);
+            }}
+          />
+        ) : (
+          <FeatureDisabledNotice
+            featureName="isMoodleIntegrationEnabled"
+            onBackToOverview={() => setActiveKey('overview')}
+          />
         );
       case 'opportunities':
-        return (
-          <FeatureGate
-            feature="isOpportunitiesPlatformEnabled"
-            fallback={
-              <FeatureDisabledNotice
-                featureName="isOpportunitiesPlatformEnabled"
-                onBackToOverview={() => setActiveKey('overview')}
-              />
-            }
-          >
-            <OpportunitiesTab />
-          </FeatureGate>
+        return flags.isOpportunitiesPlatformEnabled ? (
+          <OpportunitiesTab />
+        ) : (
+          <FeatureDisabledNotice
+            featureName="isOpportunitiesPlatformEnabled"
+            onBackToOverview={() => setActiveKey('overview')}
+          />
         );
       default:
         return null;
