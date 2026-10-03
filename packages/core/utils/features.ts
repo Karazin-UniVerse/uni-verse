@@ -6,32 +6,17 @@
 import {
   DEFAULT_FEATURE_FLAGS,
   FEATURE_ENV_KEYS,
-  FEATURE_QUERY_PARAMS,
   type FeatureFlags,
-  type FeatureFlagKey,
 } from '../constants/features.ts';
+import { parseBoolean } from './boolean.ts';
+
+export { parseBoolean } from './boolean.ts';
 
 /**
  * Parses boolean representations (true, 'true', '1', 'yes', 'on').
  */
 export const parseBooleanFlag = (value: unknown, fallback: boolean): boolean => {
-  if (typeof value === 'boolean') {
-    return value;
-  }
-
-  if (typeof value === 'string') {
-    const trimmed = value.trim().toLowerCase();
-
-    if (trimmed === 'true' || trimmed === '1' || trimmed === 'yes' || trimmed === 'on') {
-      return true;
-    }
-
-    if (trimmed === 'false' || trimmed === '0' || trimmed === 'no' || trimmed === 'off') {
-      return false;
-    }
-  }
-
-  return fallback;
+  return parseBoolean(value, fallback);
 };
 
 /**
@@ -41,85 +26,19 @@ export const resolveEnvFeatureFlags = (
   env: Record<string, string | undefined> = {},
 ): FeatureFlags => {
   return {
-    isMoodleIntegrationEnabled: parseBooleanFlag(
+    isMoodleIntegrationEnabled: parseBoolean(
       env[FEATURE_ENV_KEYS.isMoodleIntegrationEnabled],
       DEFAULT_FEATURE_FLAGS.isMoodleIntegrationEnabled,
     ),
-    isEDeanEnabled: parseBooleanFlag(
+    isEDeanEnabled: parseBoolean(
       env[FEATURE_ENV_KEYS.isEDeanEnabled],
       DEFAULT_FEATURE_FLAGS.isEDeanEnabled,
     ),
-    isOpportunitiesPlatformEnabled: parseBooleanFlag(
+    isOpportunitiesPlatformEnabled: parseBoolean(
       env[FEATURE_ENV_KEYS.isOpportunitiesPlatformEnabled],
       DEFAULT_FEATURE_FLAGS.isOpportunitiesPlatformEnabled,
     ),
   };
-};
-
-/**
- * Parses feature flag overrides from URL query parameters.
- * Supports individual keys: ?ft_moodle=true&ft_opportunities=false
- * Also supports shortcut lists: ?features=moodle,opportunities or ?disable=moodle
- */
-export const parseFeatureQueryParams = (input: string | URLSearchParams): Partial<FeatureFlags> => {
-  const overrides: Partial<FeatureFlags> = {};
-  const params =
-    input instanceof URLSearchParams
-      ? input
-      : new URLSearchParams(input.startsWith('?') ? input.slice(1) : input);
-
-  for (const [flagKey, paramName] of Object.entries(FEATURE_QUERY_PARAMS) as [
-    FeatureFlagKey,
-    string,
-  ][]) {
-    if (params.has(paramName)) {
-      overrides[flagKey] = parseBooleanFlag(params.get(paramName), DEFAULT_FEATURE_FLAGS[flagKey]);
-    }
-  }
-
-  const featuresParam = params.get('features');
-
-  if (featuresParam) {
-    const enabledList = featuresParam
-      .toLowerCase()
-      .split(',')
-      .map((token) => token.trim());
-
-    if (enabledList.includes('moodle')) {
-      overrides.isMoodleIntegrationEnabled = true;
-    }
-
-    if (enabledList.includes('edean') || enabledList.includes('dean')) {
-      overrides.isEDeanEnabled = true;
-    }
-
-    if (enabledList.includes('opportunities') || enabledList.includes('opps')) {
-      overrides.isOpportunitiesPlatformEnabled = true;
-    }
-  }
-
-  const disableParam = params.get('disable');
-
-  if (disableParam) {
-    const disabledList = disableParam
-      .toLowerCase()
-      .split(',')
-      .map((token) => token.trim());
-
-    if (disabledList.includes('moodle')) {
-      overrides.isMoodleIntegrationEnabled = false;
-    }
-
-    if (disabledList.includes('edean') || disabledList.includes('dean')) {
-      overrides.isEDeanEnabled = false;
-    }
-
-    if (disabledList.includes('opportunities') || disabledList.includes('opps')) {
-      overrides.isOpportunitiesPlatformEnabled = false;
-    }
-  }
-
-  return overrides;
 };
 
 /**

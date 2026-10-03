@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { SlidersHorizontal, X, RotateCcw, Copy, Check } from 'lucide-react';
+import { SlidersHorizontal, X, RotateCcw } from 'lucide-react';
 import { Button, Tag } from '@una';
-import { FEATURE_QUERY_PARAMS, type FeatureFlagKey } from '@core/constants/features';
+import type { FeatureFlagKey } from '@core/constants/features';
 import { useFeatureControls } from './FeatureToggleContext';
 import styles from './DevFeaturePanel.module.scss';
 
@@ -33,7 +33,6 @@ const FEATURE_ITEMS: FeatureItemConfig[] = [
 
 export const DevFeaturePanel: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
   const [isReset, setIsReset] = useState(false);
 
   const { flags, activeOverrides, setFeatureOverride, resetFeatureOverrides, isOverridden } =
@@ -49,7 +48,7 @@ export const DevFeaturePanel: React.FC = () => {
 
       if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'f') {
         event.preventDefault();
-        setIsOpen((prev) => !prev);
+        setIsOpen((previous) => !previous);
       }
     };
 
@@ -71,31 +70,6 @@ export const DevFeaturePanel: React.FC = () => {
     setTimeout(() => {
       setIsReset(false);
     }, 2000);
-  };
-
-  const handleCopyTestUrl = async () => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const url = new URL(window.location.href);
-
-    for (const item of FEATURE_ITEMS) {
-      const paramName = FEATURE_QUERY_PARAMS[item.key];
-
-      url.searchParams.set(paramName, String(flags[item.key]));
-    }
-
-    try {
-      await navigator.clipboard.writeText(url.toString());
-      setIsCopied(true);
-
-      setTimeout(() => {
-        setIsCopied(false);
-      }, 2000);
-    } catch {
-      // Ignore clipboard write failures in headless environments
-    }
   };
 
   if (!isOpen) {
@@ -171,15 +145,9 @@ export const DevFeaturePanel: React.FC = () => {
           <RotateCcw size={14} style={{ marginRight: 6 }} />
           {isReset ? 'Скинуто!' : 'Скинути'}
         </Button>
-        <Button type="button" variant="primary" size="small" onClick={handleCopyTestUrl}>
-          {isCopied ? (
-            <Check size={14} style={{ marginRight: 6 }} />
-          ) : (
-            <Copy size={14} style={{ marginRight: 6 }} />
-          )}
-          {isCopied ? 'Скопійовано!' : 'Копіювати URL'}
-        </Button>
       </div>
     </dialog>
   );
 };
+
+export default DevFeaturePanel;

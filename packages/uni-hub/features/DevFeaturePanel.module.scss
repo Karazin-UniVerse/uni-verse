@@ -204,7 +204,7 @@
 .panelFooter {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--space-8, 8px);
   padding: var(--space-12, 12px) var(--space-16, 16px);
   border-top: 1px solid var(--border-color, rgb(0 0 0 / 8%));

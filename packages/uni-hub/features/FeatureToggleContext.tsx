@@ -1,24 +1,8 @@
 'use client';
 
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useSyncExternalStore,
-} from 'react';
-import {
-  DEFAULT_FEATURE_FLAGS,
-  FEATURE_OVERRIDES_STORAGE_KEY,
-  type FeatureFlags,
-  type FeatureFlagKey,
-} from '@core/constants/features';
-import {
-  mergeFeatureFlags,
-  parseFeatureQueryParams,
-  resolveEnvFeatureFlags,
-} from '@core/utils/features';
-import { safeStorage } from '@uni-hub/services/api';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { type FeatureFlags, type FeatureFlagKey } from '@core/constants/features';
+import { mergeFeatureFlags, resolveEnvFeatureFlags } from '@core/utils/features';
 
 export type FeatureContextValue = {
   flags: FeatureFlags;
@@ -32,77 +16,12 @@ export type FeatureContextValue = {
 
 const FeatureToggleContext = createContext<FeatureContextValue | null>(null);
 
-const EVENT_NAME = 'universe-feature-flags-change';
-
 const getEnvDefaults = (): FeatureFlags => {
   return resolveEnvFeatureFlags({
     NEXT_PUBLIC_FEATURE_MOODLE: process.env.NEXT_PUBLIC_FEATURE_MOODLE,
     NEXT_PUBLIC_FEATURE_EDEAN: process.env.NEXT_PUBLIC_FEATURE_EDEAN,
     NEXT_PUBLIC_FEATURE_OPPORTUNITIES: process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES,
   });
-};
-
-const getStoredOverrides = (): Partial<FeatureFlags> => {
-  if (typeof window === 'undefined') {
-    return {};
-  }
-
-  try {
-    const raw = safeStorage.getItem(FEATURE_OVERRIDES_STORAGE_KEY);
-
-    if (!raw) {
-      return {};
-    }
-
-    return JSON.parse(raw) as Partial<FeatureFlags>;
-  } catch {
-    return {};
-  }
-};
-
-const getQueryOverrides = (): Partial<FeatureFlags> => {
-  if (typeof window === 'undefined') {
-    return {};
-  }
-
-  return parseFeatureQueryParams(window.location.search);
-};
-
-let cachedSnapshot: FeatureFlags = DEFAULT_FEATURE_FLAGS;
-let cachedSnapshotKey = '';
-
-const computeFlagsSnapshot = (): FeatureFlags => {
-  const envDefaults = getEnvDefaults();
-  const stored = getStoredOverrides();
-  const query = getQueryOverrides();
-
-  const merged = mergeFeatureFlags(envDefaults, stored, query);
-  const key = JSON.stringify(merged);
-
-  if (key !== cachedSnapshotKey) {
-    cachedSnapshotKey = key;
-    cachedSnapshot = merged;
-  }
-
-  return cachedSnapshot;
-};
-
-const subscribeToFeatureFlags = (callback: () => void) => {
-  if (typeof window === 'undefined') {
-    return () => {};
-  }
-
-  window.addEventListener('storage', callback);
-  window.addEventListener(EVENT_NAME, callback);
-
-  return () => {
-    window.removeEventListener('storage', callback);
-    window.removeEventListener(EVENT_NAME, callback);
-  };
-};
-
-const getServerSnapshot = (): FeatureFlags => {
-  return getEnvDefaults();
 };
 
 export interface FeatureToggleProviderProps {
@@ -114,46 +33,23 @@ export const FeatureToggleProvider: React.FC<FeatureToggleProviderProps> = ({
   children,
   initialFlags,
 }) => {
-  const flags = useSyncExternalStore(
-    subscribeToFeatureFlags,
-    computeFlagsSnapshot,
-    getServerSnapshot,
-  );
-
   const envDefaults = useMemo(() => getEnvDefaults(), []);
-
-  const activeOverrides = useMemo(() => {
-    const stored = getStoredOverrides();
-    const query = getQueryOverrides();
-
-    return { ...stored, ...query, ...initialFlags };
-  }, [initialFlags]);
+  const [overrides, setOverrides] = useState<Partial<FeatureFlags>>(() => initialFlags ?? {});
 
   const effectiveFlags = useMemo(() => {
-    return initialFlags ? mergeFeatureFlags(flags, initialFlags) : flags;
-  }, [flags, initialFlags]);
+    return mergeFeatureFlags(envDefaults, overrides);
+  }, [envDefaults, overrides]);
 
   const setFeatureOverride = useCallback((feature: FeatureFlagKey, enabled: boolean) => {
-    const currentOverrides = getStoredOverrides();
-    const updated = {
-      ...currentOverrides,
+    setOverrides((previous) => ({
+      ...previous,
       [feature]: enabled,
-    };
-
-    safeStorage.setItem(FEATURE_OVERRIDES_STORAGE_KEY, JSON.stringify(updated));
-
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event(EVENT_NAME));
-    }
+    }));
   }, []);
 
   const resetFeatureOverrides = useCallback(() => {
-    safeStorage.removeItem(FEATURE_OVERRIDES_STORAGE_KEY);
-
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event(EVENT_NAME));
-    }
-  }, []);
+    setOverrides(initialFlags ?? {});
+  }, [initialFlags]);
 
   const isEnabled = useCallback(
     (feature: FeatureFlagKey): boolean => {
@@ -165,19 +61,19 @@ export const FeatureToggleProvider: React.FC<FeatureToggleProviderProps> = ({
   const isOverridden = useCallback(
     (feature?: FeatureFlagKey): boolean => {
       if (feature) {
-        return activeOverrides[feature] !== undefined;
+        return overrides[feature] !== undefined;
       }
 
-      return Object.keys(activeOverrides).length > 0;
+      return Object.keys(overrides).length > 0;
     },
-    [activeOverrides],
+    [overrides],
   );
 
   const contextValue = useMemo<FeatureContextValue>(() => {
     return {
       flags: effectiveFlags,
       envDefaults,
-      activeOverrides,
+      activeOverrides: overrides,
       isEnabled,
       setFeatureOverride,
       resetFeatureOverrides,
@@ -186,7 +82,7 @@ export const FeatureToggleProvider: React.FC<FeatureToggleProviderProps> = ({
   }, [
     effectiveFlags,
     envDefaults,
-    activeOverrides,
+    overrides,
     isEnabled,
     setFeatureOverride,
     resetFeatureOverrides,

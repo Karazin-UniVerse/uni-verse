@@ -5,12 +5,7 @@ import {
   FEATURE_ENV_KEYS,
   type FeatureFlags,
 } from '../../constants/features.ts';
-import {
-  mergeFeatureFlags,
-  parseBooleanFlag,
-  parseFeatureQueryParams,
-  resolveEnvFeatureFlags,
-} from '../features.ts';
+import { mergeFeatureFlags, parseBooleanFlag, resolveEnvFeatureFlags } from '../features.ts';
 
 describe('features utils', () => {
   describe('parseBooleanFlag', () => {
@@ -64,38 +59,6 @@ describe('features utils', () => {
     });
   });
 
-  describe('parseFeatureQueryParams', () => {
-    test('parses discrete query params correctly', () => {
-      const parsed = parseFeatureQueryParams('?ft_moodle=true&ft_opportunities=1&ft_edean=0');
-
-      assert.strictEqual(parsed.isMoodleIntegrationEnabled, true);
-      assert.strictEqual(parsed.isOpportunitiesPlatformEnabled, true);
-      assert.strictEqual(parsed.isEDeanEnabled, false);
-    });
-
-    test('parses URLSearchParams object', () => {
-      const searchParams = new URLSearchParams('ft_moodle=false');
-      const parsed = parseFeatureQueryParams(searchParams);
-
-      assert.strictEqual(parsed.isMoodleIntegrationEnabled, false);
-    });
-
-    test('supports shortcut list ?features=moodle,opportunities', () => {
-      const parsed = parseFeatureQueryParams('?features=moodle,opportunities');
-
-      assert.strictEqual(parsed.isMoodleIntegrationEnabled, true);
-      assert.strictEqual(parsed.isOpportunitiesPlatformEnabled, true);
-      assert.strictEqual(parsed.isEDeanEnabled, undefined);
-    });
-
-    test('supports shortcut disable ?disable=moodle,edean', () => {
-      const parsed = parseFeatureQueryParams('?disable=moodle,edean');
-
-      assert.strictEqual(parsed.isMoodleIntegrationEnabled, false);
-      assert.strictEqual(parsed.isEDeanEnabled, false);
-    });
-  });
-
   describe('mergeFeatureFlags', () => {
     test('merges multiple overrides in priority order', () => {
       const base: FeatureFlags = {
@@ -104,16 +67,16 @@ describe('features utils', () => {
         isOpportunitiesPlatformEnabled: false,
       };
 
-      const storageOverride = {
+      const firstOverride = {
         isMoodleIntegrationEnabled: true,
       };
 
-      const queryOverride = {
+      const secondOverride = {
         isOpportunitiesPlatformEnabled: true,
         isEDeanEnabled: false,
       };
 
-      const result = mergeFeatureFlags(base, storageOverride, queryOverride);
+      const result = mergeFeatureFlags(base, firstOverride, secondOverride);
 
       assert.strictEqual(result.isMoodleIntegrationEnabled, true);
       assert.strictEqual(result.isEDeanEnabled, false);
