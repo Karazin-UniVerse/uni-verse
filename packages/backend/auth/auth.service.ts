@@ -299,12 +299,12 @@ export class AuthService {
     }
 
     const tokens = await this.getTokens(user.id, user.email);
-    const rtHash = await this.hashData(tokens.refresh_token);
+    const refreshTokenHash = await this.hashData(tokens.refresh_token);
 
     await this.userService.updateUser(userId, {
       token: null,
       moodleId: null,
-      refreshToken: rtHash,
+      refreshToken: refreshTokenHash,
     });
 
     return {
