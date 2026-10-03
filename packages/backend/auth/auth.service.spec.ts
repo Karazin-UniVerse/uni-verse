@@ -789,6 +789,7 @@ describe('AuthService', () => {
       expect(mockUserService.updateUser).toHaveBeenCalledWith(sampleUser.id, {
         token: null,
         moodleId: null,
+        refreshToken: 'hashed-unlinked-rt',
       });
     });
   });

@@ -10,8 +10,8 @@ export interface ConfirmModalProps {
   onConfirm: () => void;
   title: React.ReactNode;
   message: React.ReactNode;
-  cancelLabel?: React.ReactNode;
-  confirmLabel?: React.ReactNode;
+  cancelLabel: React.ReactNode;
+  confirmLabel: React.ReactNode;
   closeLabel?: string;
   loading?: boolean;
   loadingLabel?: React.ReactNode;
@@ -27,12 +27,12 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onConfirm,
   title,
   message,
+  cancelLabel,
+  confirmLabel,
   closeLabel,
   loadingLabel,
   icon,
   className,
-  cancelLabel = 'Cancel',
-  confirmLabel = 'Confirm',
   loading = false,
   variant = 'danger',
   width = 420,

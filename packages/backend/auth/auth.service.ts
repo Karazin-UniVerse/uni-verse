@@ -298,14 +298,14 @@ export class AuthService {
       throw new BadRequestException('User not found');
     }
 
-    const updatedUser = await this.userService.updateUser(userId, {
+    const tokens = await this.getTokens(user.id, user.email);
+    const rtHash = await this.hashData(tokens.refresh_token);
+
+    await this.userService.updateUser(userId, {
       token: null,
       moodleId: null,
+      refreshToken: rtHash,
     });
-
-    const tokens = await this.getTokens(updatedUser.id, updatedUser.email);
-
-    await this.updateRtHash(updatedUser.id, tokens.refresh_token);
 
     return {
       access_token: tokens.access_token,
