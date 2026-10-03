@@ -344,6 +344,19 @@ export const uk = {
   'opportunities.details': 'Детальніше',
   'opportunities.deadline': 'Дедлайн:',
   'opportunities.empty': 'Наразі немає відкритих можливостей у цій категорії',
+  'opportunities.tagInternships': 'IT & Стажування',
+  'opportunities.tagGrants': 'Гранти та стипендії',
+  'opportunities.tagExchange': 'Академічна мобільність',
+  'opportunities.item1Desc':
+    'Навчальна програма з можливістю працевлаштування для студентів IT-спеціальностей. Практика на реальних проектах із сучасним стеком (React, Node.js, Cloud).',
+  'opportunities.item2Desc':
+    'Семестрове навчання в Польщі для студентів бакалаврату та магістратури. Щомісячна стипендія та повне покриття академічних витрат.',
+  'opportunities.item3Title': 'Грантова програма підтримки молодих науковців Каразінського',
+  'opportunities.item3Org': 'Наукове товариство ХНУ імені В. Н. Каразіна',
+  'opportunities.item3Desc':
+    'Фінансування дослідницьких проектів студентів та аспірантів у галузях природничих та технічних наук. До 50 000 грн на обладнання та досліди.',
+  'opportunities.item4Desc':
+    'Тримісячний інтенсив під керівництвом senior-розробників. Менторство, код-рев’ю та підготовка до позиції Junior Developer.',
 };
 
 export type TranslationKey = keyof typeof uk;

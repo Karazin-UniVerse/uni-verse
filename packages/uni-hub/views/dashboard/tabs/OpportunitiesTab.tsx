@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Tag, Button } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './OpportunitiesTab.module.scss';
 
 type OpportunityCategory = 'all' | 'internships' | 'grants' | 'exchange';
@@ -19,11 +20,13 @@ type OpportunityCategory = 'all' | 'internships' | 'grants' | 'exchange';
 interface OpportunityItem {
   id: string;
   category: OpportunityCategory;
-  title: string;
-  organization: string;
-  description: string;
+  titleKey?: TranslationKey;
+  title?: string;
+  orgKey?: TranslationKey;
+  organization?: string;
+  descKey: TranslationKey;
+  tagKey: TranslationKey;
   deadline: string;
-  tagLabel: string;
   externalUrl: string;
 }
 
@@ -33,10 +36,9 @@ const OPPORTUNITIES: readonly OpportunityItem[] = [
     category: 'internships',
     title: 'EPAM University Program: Junior Full-Stack Engineer',
     organization: 'EPAM Systems',
-    description:
-      'Навчальна програма з можливістю працевлаштування для студентів IT-спеціальностей. Практика на реальних проектах із сучасним стеком (React, Node.js, Cloud).',
+    descKey: 'opportunities.item1Desc',
+    tagKey: 'opportunities.tagInternships',
     deadline: '15.11.2026',
-    tagLabel: 'IT & Стажування',
     externalUrl: 'https://training.epam.ua',
   },
   {
@@ -44,21 +46,19 @@ const OPPORTUNITIES: readonly OpportunityItem[] = [
     category: 'exchange',
     title: 'Erasmus+ Academic Mobility 2026/2027: Adam Mickiewicz University',
     organization: 'Karazin International Office',
-    description:
-      'Семестрове навчання в Польщі для студентів бакалаврату та магістратури. Щомісячна стипендія та повне покриття академічних витрат.',
+    descKey: 'opportunities.item2Desc',
+    tagKey: 'opportunities.tagExchange',
     deadline: '01.12.2026',
-    tagLabel: 'Академічна мобільність',
     externalUrl: 'https://international.karazin.ua',
   },
   {
     id: 'opp-3',
     category: 'grants',
-    title: 'Грантова програма підтримки молодих науковців Каразінського',
-    organization: 'Наукове товариство ХНУ імені В. Н. Каразіна',
-    description:
-      'Фінансування дослідницьких проектів студентів та аспірантів у галузях природничих та технічних наук. До 50 000 грн на обладнання та досліди.',
+    titleKey: 'opportunities.item3Title',
+    orgKey: 'opportunities.item3Org',
+    descKey: 'opportunities.item3Desc',
+    tagKey: 'opportunities.tagGrants',
     deadline: '25.10.2026',
-    tagLabel: 'Гранти та стипендії',
     externalUrl: 'https://science.karazin.ua',
   },
   {
@@ -66,21 +66,16 @@ const OPPORTUNITIES: readonly OpportunityItem[] = [
     category: 'internships',
     title: 'SoftServe IT Academy: React & TypeScript Mentorship',
     organization: 'SoftServe',
-    description:
-      'Тримісячний інтенсив під керівництвом senior-розробників. Менторство, код-рев’ю та підготовка до позиції Junior Developer.',
+    descKey: 'opportunities.item4Desc',
+    tagKey: 'opportunities.tagInternships',
     deadline: '20.11.2026',
-    tagLabel: 'IT & Стажування',
     externalUrl: 'https://career.softserveinc.com',
   },
 ];
 
 interface FilterOption {
   category: OpportunityCategory;
-  labelKey:
-    | 'opportunities.filterAll'
-    | 'opportunities.filterInternships'
-    | 'opportunities.filterGrants'
-    | 'opportunities.filterExchange';
+  labelKey: TranslationKey;
   icon?: React.ComponentType<{ size: number }>;
 }
 
@@ -134,47 +129,52 @@ export const OpportunitiesTab: React.FC = () => {
         </div>
       ) : (
         <div className={styles.grid}>
-          {filteredItems.map((item) => (
-            <article key={item.id} className={styles.card}>
-              <div className={styles.cardTop}>
-                <div className={styles.cardMeta}>
-                  <span className={styles.categoryTag}>{item.tagLabel}</span>
-                  <div className={styles.deadlineContainer}>
-                    <Calendar size={13} />
-                    <span>
-                      {formatMessage('opportunities.deadline')} {item.deadline}
-                    </span>
+          {filteredItems.map((item) => {
+            const title = item.titleKey ? formatMessage(item.titleKey) : item.title;
+            const organization = item.orgKey ? formatMessage(item.orgKey) : item.organization;
+
+            return (
+              <article key={item.id} className={styles.card}>
+                <div className={styles.cardTop}>
+                  <div className={styles.cardMeta}>
+                    <span className={styles.categoryTag}>{formatMessage(item.tagKey)}</span>
+                    <div className={styles.deadlineContainer}>
+                      <Calendar size={13} />
+                      <span>
+                        {formatMessage('opportunities.deadline')} {item.deadline}
+                      </span>
+                    </div>
+                  </div>
+
+                  <h3 className={styles.cardTitle}>{title}</h3>
+
+                  <div className={styles.organization}>
+                    <Building2 size={15} />
+                    <span>{organization}</span>
+                  </div>
+
+                  <p className={styles.cardDescription}>{formatMessage(item.descKey)}</p>
+                </div>
+
+                <div className={styles.cardBottom}>
+                  <div className={styles.actionsRow}>
+                    <Button
+                      isLink
+                      href={item.externalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      variant="primary"
+                      size="small"
+                      style={{ textDecoration: 'none' }}
+                    >
+                      <ExternalLink size={14} style={{ marginRight: 6 }} />
+                      {formatMessage('opportunities.apply')}
+                    </Button>
                   </div>
                 </div>
-
-                <h3 className={styles.cardTitle}>{item.title}</h3>
-
-                <div className={styles.organization}>
-                  <Building2 size={15} />
-                  <span>{item.organization}</span>
-                </div>
-
-                <p className={styles.cardDescription}>{item.description}</p>
-              </div>
-
-              <div className={styles.cardBottom}>
-                <div className={styles.actionsRow}>
-                  <Button
-                    isLink
-                    href={item.externalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    variant="primary"
-                    size="small"
-                    style={{ textDecoration: 'none' }}
-                  >
-                    <ExternalLink size={14} style={{ marginRight: 6 }} />
-                    {formatMessage('opportunities.apply')}
-                  </Button>
-                </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       )}
     </div>

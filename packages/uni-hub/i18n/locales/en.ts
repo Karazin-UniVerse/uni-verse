@@ -345,4 +345,17 @@ export const en = {
   'opportunities.details': 'Details',
   'opportunities.deadline': 'Deadline:',
   'opportunities.empty': 'No open opportunities found in this category',
+  'opportunities.tagInternships': 'IT & Internships',
+  'opportunities.tagGrants': 'Grants & Scholarships',
+  'opportunities.tagExchange': 'Academic Mobility',
+  'opportunities.item1Desc':
+    'Training program with career prospects for IT students. Hands-on practice on real projects with a modern tech stack (React, Node.js, Cloud).',
+  'opportunities.item2Desc':
+    'Semester study in Poland for undergraduate and graduate students. Monthly stipend and full coverage of academic expenses.',
+  'opportunities.item3Title': 'Karazin Young Scientists Grant Support Program',
+  'opportunities.item3Org': 'Scientific Society of V. N. Karazin Kharkiv National University',
+  'opportunities.item3Desc':
+    'Funding for student and postgraduate research projects in natural and technical sciences. Up to 50,000 UAH for equipment and experiments.',
+  'opportunities.item4Desc':
+    'Three-month intensive mentorship with senior developers. Mentorship, code reviews, and preparation for a Junior Developer position.',
 } as const satisfies Record<TranslationKey, string>;
