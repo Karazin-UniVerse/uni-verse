@@ -5,7 +5,10 @@ import {
   parseGradeScore,
   detectControlType,
 } from './moodle-grades.service';
-import { MoodleClientService } from '../moodle-client/moodle.client.service';
+import {
+  MoodleClientService,
+  type MoodleClientParams,
+} from '../moodle-client/moodle.client.service';
 
 describe('MoodleGradesService', () => {
   let service: MoodleGradesService;
@@ -60,17 +63,19 @@ describe('MoodleGradesService', () => {
         { id: 102, fullname: 'Бази даних 2025-2026 sem 1', shortname: 'БД-26' },
       ];
 
-      mockMoodleClient.client.mockImplementation((wsfunction: string) => {
-        if (wsfunction === 'gradereport_overview_get_course_grades') {
-          return Promise.resolve(mockGradesResponse);
-        }
+      mockMoodleClient.client.mockImplementation(
+        ({ wsfunction }: MoodleClientParams) => {
+          if (wsfunction === 'gradereport_overview_get_course_grades') {
+            return Promise.resolve(mockGradesResponse);
+          }
 
-        if (wsfunction === 'core_enrol_get_users_courses') {
-          return Promise.resolve(mockCoursesResponse);
-        }
+          if (wsfunction === 'core_enrol_get_users_courses') {
+            return Promise.resolve(mockCoursesResponse);
+          }
 
-        return Promise.resolve(null);
-      });
+          return Promise.resolve(null);
+        },
+      );
 
       const result = await service.getGeneralGrades('valid_token', '42');
 
@@ -132,17 +137,19 @@ describe('MoodleGradesService', () => {
         { id: 207, fullname: 'Веб-технології' },
       ];
 
-      mockMoodleClient.client.mockImplementation((wsfunction: string) => {
-        if (wsfunction === 'gradereport_overview_get_course_grades') {
-          return Promise.resolve(mockGradesResponse);
-        }
+      mockMoodleClient.client.mockImplementation(
+        ({ wsfunction }: MoodleClientParams) => {
+          if (wsfunction === 'gradereport_overview_get_course_grades') {
+            return Promise.resolve(mockGradesResponse);
+          }
 
-        if (wsfunction === 'core_enrol_get_users_courses') {
-          return Promise.resolve(mockCoursesResponse);
-        }
+          if (wsfunction === 'core_enrol_get_users_courses') {
+            return Promise.resolve(mockCoursesResponse);
+          }
 
-        return Promise.resolve(null);
-      });
+          return Promise.resolve(null);
+        },
+      );
 
       const result = await service.getGeneralGrades('valid_token', '42');
 
@@ -195,19 +202,21 @@ describe('MoodleGradesService', () => {
     });
 
     it('should omit invented metadata when courses data is unavailable or unmapped', async () => {
-      mockMoodleClient.client.mockImplementation((wsfunction: string) => {
-        if (wsfunction === 'gradereport_overview_get_course_grades') {
-          return Promise.resolve({
-            grades: [{ courseid: 999, grade: '80.00', rawgrade: '80.00000' }],
-          });
-        }
+      mockMoodleClient.client.mockImplementation(
+        ({ wsfunction }: MoodleClientParams) => {
+          if (wsfunction === 'gradereport_overview_get_course_grades') {
+            return Promise.resolve({
+              grades: [{ courseid: 999, grade: '80.00', rawgrade: '80.00000' }],
+            });
+          }
 
-        if (wsfunction === 'core_enrol_get_users_courses') {
-          return Promise.reject(new Error('Course API down'));
-        }
+          if (wsfunction === 'core_enrol_get_users_courses') {
+            return Promise.reject(new Error('Course API down'));
+          }
 
-        return Promise.resolve(null);
-      });
+          return Promise.resolve(null);
+        },
+      );
 
       const result = await service.getGeneralGrades('valid_token', '42');
 
