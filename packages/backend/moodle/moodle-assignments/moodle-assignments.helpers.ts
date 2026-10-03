@@ -5,7 +5,5 @@ export function parseBooleanQuery(value: unknown): unknown {
     return undefined;
   }
 
-  const parsed = parseBoolean(value);
-
-  return parsed !== undefined ? parsed : value;
+  return parseBoolean(value) ?? value;
 }
