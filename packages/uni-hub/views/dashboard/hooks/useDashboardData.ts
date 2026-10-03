@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { moodleApi } from '@uni-hub/services/api';
 import type { StudentProfile } from '@core/types';
 import { useToast } from '@una';
@@ -25,26 +25,6 @@ export interface UseDashboardDataOptions {
   dateTo: string;
   hideCompleted: boolean;
   onUnauthorized: () => void;
-}
-
-function getInitialStudentProfile(): StudentProfile | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  try {
-    const cachedProfile = localStorage.getItem('universe_student_profile');
-
-    if (cachedProfile) {
-      const parsedProfile = JSON.parse(cachedProfile) as StudentProfile;
-
-      return parsedProfile && typeof parsedProfile === 'object' ? parsedProfile : null;
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
 }
 
 function getInitialDashboardData(): DashboardData {
@@ -97,9 +77,24 @@ export function useDashboardData({
   const [hasLoadedOnce, setHasLoadedOnce] = useState(getInitialHasLoadedOnce);
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(getInitialSyncTime);
   const [isOfflineData, setIsOfflineData] = useState(false);
-  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(
-    getInitialStudentProfile,
-  );
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
+
+  useEffect(() => {
+    try {
+      const cachedProfile = localStorage.getItem('universe_student_profile');
+
+      if (cachedProfile) {
+        const parsedProfile = JSON.parse(cachedProfile) as StudentProfile;
+
+        if (parsedProfile && typeof parsedProfile === 'object') {
+          // oxlint-disable-next-line react/set-state-in-effect
+          setStudentProfile(parsedProfile);
+        }
+      }
+    } catch {
+      // ...
+    }
+  }, []);
   const [data, setData] = useState<DashboardData>(getInitialDashboardData);
 
   const fetchRequestIdRef = useRef(0);
