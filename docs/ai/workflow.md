@@ -6,6 +6,8 @@
 - All working PRs target `develop`, never `main`.
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `refactor:`, `chore:`, `docs:`, `test:`.
 - Prefer smaller, focused PRs and commits.
+- UI changes include screenshots in the PR description.
+- When people or ownership change, update `.github/CODEOWNERS` in the same PR.
 - Merge criteria, protected branches, Code Freeze and the release cycle: see [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 ## Hooks
@@ -38,7 +40,9 @@ pnpm exec prettier --check <files you changed>
 
 ## Documentation
 
-When a package gains a public API, add a Markdown file describing the public API of that package.
+- Documentation is in English.
+- Anything a developer must run or configure (script, service, Storybook, env variable) is documented in `README.md` or `docs/` in the same PR. Every command in a doc must exist; verify it.
+- When a package gains a public API, add a Markdown file describing the public API of that package.
 
 ## Pre-commit checklist
 
@@ -47,4 +51,8 @@ When a package gains a public API, add a Markdown file describing the public API
 - [ ] No nested ternaries in JSX, no `Math.random()` for IDs, last element via `.at(-1)`, accessible interactive elements ([quality](quality.md)).
 - [ ] Components sit in the right tier; Storybook stories only in `packages/ui` ([architecture](architecture.md)).
 - [ ] Vertical spacing and an empty line before `return` ([code-style](code-style.md)).
+- [ ] I searched for an existing helper, constant, type or component before writing a new one; shared code is in the right place ([code-style](code-style.md#reuse-before-writing-dry)).
+- [ ] The solution is the simplest that meets the requirement ([code-style](code-style.md#keep-it-simple-kiss)).
+- [ ] No magic values; API calls go through client classes ([api-and-config](api-and-config.md#no-magic-values)).
+- [ ] Unused exports, files, dependencies and translation keys are removed; new env variables and docs are in place ([config and environment](api-and-config.md#config-and-environment)).
 - [ ] Lint, typecheck, tests and build pass with zero errors and zero warnings.

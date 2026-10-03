@@ -88,12 +88,45 @@ function getStatusInfo(
 
 For React components with non-trivial prop interfaces or data models, extract the types into `<ComponentName>.types.ts` next to the component (`Chart.types.ts` beside `Chart.tsx`). Do not create `.types.ts` files for simple utilities, single helpers or trivial components. Import the types directly from the `.types.ts` file; do not re-export them from the component file (see the shim rule below).
 
-## Helpers placement
+## Components, files and imports
 
-- Pure calculations, formatting, score-tone mapping and regex utilities MUST NOT live inside React components, hooks or backend DTOs.
-- Component and view helpers go into a co-located `helpers.ts` with a companion `helpers.test.ts`.
+- One component per file. Subcomponents go in their own files.
+- Inside a domain folder do not repeat the folder name in a frontend file name: `components/auth/helpers.ts`, not `auth.helpers.ts`. Backend modules keep `<module>.helpers.ts`.
+- One `import` statement per package, listing every name: `import { Modal, Button, useToast } from '@una';`. For `@universe/core` import the specific module ([core layout](architecture.md#core-layout)).
+- Do not add a dependency that another workspace package already provides (use `@ui`, not a second copy).
+- After a refactor, remove what is now unused: exports, files, dependencies, translation keys. Before keeping something that "might be needed", check that it is used.
+
+## Keep it simple (KISS)
+
+- Choose the simplest solution that meets the current requirement. Five direct lines beat a fifty-line generalization.
+- Do not abstract for a hypothetical future: no factories, generic wrappers, strategy layers, extra options or flags with a single caller.
+- Before adding a layer, class, hook or helper, ask: "what would I delete if this did not exist?" If the answer is "nothing", do not add it.
+- If the solution needs a paragraph to explain, look for a simpler one first. When two designs both work, take the one with fewer moving parts.
+- No defensive code for states that the types or the callers already rule out.
+- Pure functions stay functions. Use a class only where the rules say so ([API clients](api-and-config.md#api-clients)) or where state and dependencies are really shared.
+
+## Reuse before writing (DRY)
+
+Before writing a function, constant, type, hook or component, search the repo for an existing one **by behavior, not only by name**: grep for the formula, regex or domain term. Equivalent code often hides under another name (`parseGradeScore` and a local score parser are the same thing).
+
+- Equivalent exists: use it. Near match exists: extend it; do not fork it.
+- Never leave two functions with the same or near-identical behavior in different places. If you find a pair, consolidate it in the same PR, or say in the PR description that a follow-up task is needed.
+
+Where shared code lives. Take the first row that fits:
+
+| Used by                                                        | Location                                                                                                                         |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| One file                                                       | A non-exported function in that file                                                                                             |
+| Several files of one component or view                         | Co-located `helpers.ts` with `helpers.test.ts`                                                                                   |
+| Several places in one package                                  | The package-level helpers directory (`packages/uni-hub/utils/`, `packages/backend/utils/`), one file per domain                  |
+| More than one package, or expected to be used by more than one | `@universe/core`: `utils/` for functions, `constants/` for values, `types/` for types. One file per domain (`grades`, `browser`) |
+
+Rules:
+
+- Promote code up one row when its second consumer appears at that level. Do not promote ahead of need, except code that is clearly cross-package (grades, Moodle contracts, HTTP codes).
+- Pure calculations, formatting, score-tone mapping and regex utilities MUST NOT be written inside the body of a component or hook, a service class or a DTO file. A non-exported module-level function in the same file is allowed when only that file uses it.
 - Backend DTO helpers go into `<module>.helpers.ts`; never keep helper functions in DTO files.
-- Helpers meant for cross-package reuse go into `@universe/core/utils` or `@universe/core/constants`.
+- A helper used by exactly one other function stays in that function's module as a private function, not a new file.
 
 ## Comments
 
@@ -151,6 +184,14 @@ uni-verse/
 - **`@universe/backend`**: all DTOs and models must align with `@universe/core/types`.
 - **`@universe/uni-hub`**: prefer React Server Components, see [frontend](frontend.md).
 
+### Core layout
+
+- One file per domain, grouped by kind: `constants/grades.ts`, `constants/breakpoints.ts`, `utils/grades.ts`, `utils/browser.ts`. Import the specific module (`@universe/core/utils/browser`, or the `@core/utils/browser` alias inside uni-hub), never the package root.
+- No barrel `index.ts` in `constants/` and `utils/`. Barrels hide where code lives and force a split later; add domain files from the start.
+- Types, constants and functions never share a file. Types stay under `types/`.
+- Tests sit next to the code in a sibling `tests/` directory (`utils/tests/grades.test.ts`).
+- Do not write unit tests for types and constants; test behavior only.
+
 ## Monorepo rules
 
 - Keep packages isolated. Never use relative paths such as `../../../` to reach code outside the current workspace; import through the package name (for example `import { Button } from '@una'`).
@@ -195,19 +236,22 @@ Before creating any component, decide which tier fits. If the placement is ambig
 
 Prioritize React Server Components. Use client components (`"use client"`) only when interactivity or browser APIs (`useState`, `useEffect`, `window`) are required.
 
+- Components in `packages/ui` stay usable as Server Components. Put `"use client"` only on the part that needs interactivity, and compose the rest as `children` of that client wrapper. Before adding `"use client"` to an app component, check that it really needs state, effects or browser APIs.
+
 ## Component decomposition
 
 - Components over ~150-200 lines, or with several distinct UI sections (cards, grids, feeds, action panels), MUST be split into focused subcomponents. Examples: `StudentCard`, `StatCardGrid`, `UpcomingEventsList`; `DeanContactModal` into `DeanContactInfo` and `DeanTopicChips`.
 - Complex stateful logic, data fetching, localStorage caching and lifecycle listeners MUST be extracted into custom hooks (for example `useDashboardData`, `useAssignmentStatuses`).
 - Keep pages and tab views declarative and thin: layout composition only.
 - Never let a component become a monolith that mixes data fetching, caching, several UI sections and inline business math.
-- Helper placement rules: [code-style](code-style.md#helpers-placement).
+- Helper placement rules: [code-style](code-style.md#reuse-before-writing-dry).
 
 ## Localization (i18n)
 
 - Zero hardcoded strings in the UI. All user-facing text (headings, button labels, tooltips, placeholders, toast notifications, aria-labels) goes through translation keys: `useLanguage().formatMessage('some.key')`.
 - Define every key in both `packages/uni-hub/i18n/locales/uk.ts` and `packages/uni-hub/i18n/locales/en.ts`, satisfying `Record<TranslationKey, string>`. Keep the two files in sync.
 - `@universe/ui` components stay language-agnostic: no hardcoded Ukrainian or English text. Accessibility labels come in as props (for example `closeLabel?: string`), and the consumer supplies the localized value.
+- Dynamic values go through placeholders in the translation string and the `values` argument: `'Go to assignment: {name}'` with `formatMessage('recentGrades.viewAssignment', { name })`. Never concatenate strings around `formatMessage`. Keep one translation function name; do not add aliases such as `t`.
 
 ## Responsive breakpoints
 
