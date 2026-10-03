@@ -32,17 +32,3 @@ export const FEATURE_ENV_KEYS: Readonly<Record<FeatureFlagKey, string>> = Object
   isEDeanEnabled: 'NEXT_PUBLIC_FEATURE_EDEAN',
   isOpportunitiesPlatformEnabled: 'NEXT_PUBLIC_FEATURE_OPPORTUNITIES',
 });
-
-/**
- * Query parameter keys used for on-the-fly QA and developer testing overrides.
- */
-export const FEATURE_QUERY_PARAMS: Readonly<Record<FeatureFlagKey, string>> = Object.freeze({
-  isMoodleIntegrationEnabled: 'ft_moodle',
-  isEDeanEnabled: 'ft_edean',
-  isOpportunitiesPlatformEnabled: 'ft_opportunities',
-});
-
-/**
- * LocalStorage key for storing user/testing overrides in safeStorage.
- */
-export const FEATURE_OVERRIDES_STORAGE_KEY = 'universe_feature_overrides';
