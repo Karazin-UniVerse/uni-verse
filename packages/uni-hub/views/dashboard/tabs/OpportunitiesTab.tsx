@@ -12,8 +12,67 @@ import {
 } from 'lucide-react';
 import { Tag, Button } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { type OpportunityCategory, MOCK_OPPORTUNITIES } from './opportunities.mock';
 import styles from './OpportunitiesTab.module.scss';
+
+type OpportunityCategory = 'all' | 'internships' | 'grants' | 'exchange';
+
+interface OpportunityItem {
+  id: string;
+  category: OpportunityCategory;
+  title: string;
+  organization: string;
+  description: string;
+  deadline: string;
+  tagLabel: string;
+  externalUrl: string;
+}
+
+const OPPORTUNITIES: readonly OpportunityItem[] = [
+  {
+    id: 'opp-1',
+    category: 'internships',
+    title: 'EPAM University Program: Junior Full-Stack Engineer',
+    organization: 'EPAM Systems',
+    description:
+      'Навчальна програма з можливістю працевлаштування для студентів IT-спеціальностей. Практика на реальних проектах із сучасним стеком (React, Node.js, Cloud).',
+    deadline: '15.11.2026',
+    tagLabel: 'IT & Стажування',
+    externalUrl: 'https://training.epam.ua',
+  },
+  {
+    id: 'opp-2',
+    category: 'exchange',
+    title: 'Erasmus+ Academic Mobility 2026/2027: Adam Mickiewicz University',
+    organization: 'Karazin International Office',
+    description:
+      'Семестрове навчання в Польщі для студентів бакалаврату та магістратури. Щомісячна стипендія та повне покриття академічних витрат.',
+    deadline: '01.12.2026',
+    tagLabel: 'Академічна мобільність',
+    externalUrl: 'https://international.karazin.ua',
+  },
+  {
+    id: 'opp-3',
+    category: 'grants',
+    title: 'Грантова програма підтримки молодих науковців Каразінського',
+    organization: 'Наукове товариство ХНУ імені В. Н. Каразіна',
+    description:
+      'Фінансування дослідницьких проектів студентів та аспірантів у галузях природничих та технічних наук. До 50 000 грн на обладнання та досліди.',
+    deadline: '25.10.2026',
+    tagLabel: 'Гранти та стипендії',
+    externalUrl: 'https://science.karazin.ua',
+  },
+  {
+    id: 'opp-4',
+    category: 'internships',
+    title: 'SoftServe IT Academy: React & TypeScript Mentorship',
+    organization: 'SoftServe',
+    description:
+      'Тримісячний інтенсив під керівництвом senior-розробників. Менторство, код-рев’ю та підготовка до позиції Junior Developer.',
+    deadline: '20.11.2026',
+    tagLabel: 'IT & Стажування',
+    externalUrl: 'https://career.softserveinc.com',
+  },
+];
 
 interface FilterOption {
   category: OpportunityCategory;
@@ -36,7 +95,7 @@ export const OpportunitiesTab: React.FC = () => {
   const { formatMessage } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<OpportunityCategory>('all');
 
-  const filteredItems = MOCK_OPPORTUNITIES.filter(
+  const filteredItems = OPPORTUNITIES.filter(
     (item) => selectedCategory === 'all' || item.category === selectedCategory,
   );
 
