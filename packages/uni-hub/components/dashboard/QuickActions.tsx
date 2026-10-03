@@ -19,7 +19,8 @@ const MOODLE_URL = process.env.NEXT_PUBLIC_MOODLE_URL || 'https://moodle.univers
 
 export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavigate }) => {
   const { formatMessage } = useLanguage();
-  const flags = useFeatures();
+  const { isMoodleIntegrationEnabled, isEDeanEnabled, isOpportunitiesPlatformEnabled } =
+    useFeatures();
   const [isDeanModalOpen, setIsDeanModalOpen] = useState(false);
   const pendingCount = useMemo(() => calculatePendingAssignmentsCount(assignments), [assignments]);
 
@@ -34,7 +35,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
         </div>
 
         <div className={styles.actionsGrid}>
-          {flags.isMoodleIntegrationEnabled && (
+          {isMoodleIntegrationEnabled && (
             <a
               href={MOODLE_URL}
               target="_blank"
@@ -60,7 +61,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
             </a>
           )}
 
-          {flags.isMoodleIntegrationEnabled && (
+          {isMoodleIntegrationEnabled && (
             <button
               type="button"
               className={styles.actionCard}
@@ -88,7 +89,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
             </button>
           )}
 
-          {flags.isEDeanEnabled && (
+          {isEDeanEnabled && (
             <button
               type="button"
               className={styles.actionCard}
@@ -111,7 +112,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
             </button>
           )}
 
-          {flags.isEDeanEnabled && (
+          {isEDeanEnabled && (
             <button
               type="button"
               className={styles.actionCard}
@@ -132,7 +133,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
             </button>
           )}
 
-          {flags.isOpportunitiesPlatformEnabled && (
+          {isOpportunitiesPlatformEnabled && (
             <button
               type="button"
               className={styles.actionCard}
