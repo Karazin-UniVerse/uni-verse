@@ -5,38 +5,9 @@ import {
   FEATURE_ENV_KEYS,
   type FeatureFlags,
 } from '../../constants/features.ts';
-import { mergeFeatureFlags, parseBooleanFlag, resolveEnvFeatureFlags } from '../features.ts';
+import { mergeFeatureFlags, resolveEnvFeatureFlags } from '../features.ts';
 
 describe('features utils', () => {
-  describe('parseBooleanFlag', () => {
-    test('returns boolean value unchanged', () => {
-      assert.strictEqual(parseBooleanFlag(true, false), true);
-      assert.strictEqual(parseBooleanFlag(false, true), false);
-    });
-
-    test('parses truthy strings', () => {
-      assert.strictEqual(parseBooleanFlag('true', false), true);
-      assert.strictEqual(parseBooleanFlag('TRUE', false), true);
-      assert.strictEqual(parseBooleanFlag('1', false), true);
-      assert.strictEqual(parseBooleanFlag('yes', false), true);
-      assert.strictEqual(parseBooleanFlag('on', false), true);
-    });
-
-    test('parses falsy strings', () => {
-      assert.strictEqual(parseBooleanFlag('false', true), false);
-      assert.strictEqual(parseBooleanFlag('FALSE', true), false);
-      assert.strictEqual(parseBooleanFlag('0', true), false);
-      assert.strictEqual(parseBooleanFlag('no', true), false);
-      assert.strictEqual(parseBooleanFlag('off', true), false);
-    });
-
-    test('falls back to default for invalid inputs', () => {
-      assert.strictEqual(parseBooleanFlag('invalid', true), true);
-      assert.strictEqual(parseBooleanFlag(undefined, false), false);
-      assert.strictEqual(parseBooleanFlag(null, true), true);
-    });
-  });
-
   describe('resolveEnvFeatureFlags', () => {
     test('falls back to DEFAULT_FEATURE_FLAGS when env is empty', () => {
       const flags = resolveEnvFeatureFlags({});

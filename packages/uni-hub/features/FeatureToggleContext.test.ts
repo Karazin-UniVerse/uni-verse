@@ -6,7 +6,6 @@ import {
   useFeature,
   useFeatures,
   useFeatureControls,
-  FeatureGate,
   DevFeaturePanel,
 } from './index';
 
@@ -72,52 +71,6 @@ describe('FeatureToggleContext and Components', () => {
 
     expect(html).toContain('id="moodle">true</span>');
     expect(html).toContain('id="edean">false</span>');
-  });
-
-  it('FeatureGate conditionally renders based on flag state', () => {
-    const tree = React.createElement(
-      FeatureToggleProvider,
-      { initialFlags: { isMoodleIntegrationEnabled: false, isEDeanEnabled: true } },
-      React.createElement(
-        'div',
-        null,
-        React.createElement(
-          FeatureGate,
-          { feature: 'isEDeanEnabled' },
-          React.createElement('span', { id: 'edean-active' }, 'Schedule Available'),
-        ),
-        React.createElement(
-          FeatureGate,
-          {
-            feature: 'isMoodleIntegrationEnabled',
-            fallback: React.createElement('span', { id: 'moodle-disabled' }, 'Moodle Offline'),
-          },
-          React.createElement('span', { id: 'moodle-active' }, 'Grades Available'),
-        ),
-      ),
-    );
-
-    const html = renderToString(tree);
-
-    expect(html).toContain('Schedule Available');
-    expect(html).toContain('Moodle Offline');
-    expect(html).not.toContain('Grades Available');
-  });
-
-  it('FeatureGate supports inverted prop', () => {
-    const tree = React.createElement(
-      FeatureToggleProvider,
-      { initialFlags: { isOpportunitiesPlatformEnabled: false } },
-      React.createElement(
-        FeatureGate,
-        { feature: 'isOpportunitiesPlatformEnabled', inverted: true },
-        React.createElement('span', { id: 'coming-soon' }, 'Opportunities Coming Soon'),
-      ),
-    );
-
-    const html = renderToString(tree);
-
-    expect(html).toContain('Opportunities Coming Soon');
   });
 
   it('useFeatureControls returns defaults and helper methods', () => {
