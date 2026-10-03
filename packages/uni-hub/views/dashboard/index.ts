@@ -3,6 +3,7 @@ export * from './constants';
 export * from './utils';
 export * from './layout/DashboardSidebar';
 export * from './layout/DashboardHeader';
+export * from './layout/UserDropdown';
 export * from './tabs/OverviewTab';
 export * from './tabs/CoursesTab';
 export * from './tabs/GradesTab';

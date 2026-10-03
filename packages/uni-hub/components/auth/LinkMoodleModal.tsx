@@ -6,7 +6,7 @@ import { Modal, Button, SimpleForm, useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi, getErrorMessage } from '@uni-hub/services/api';
 import { AuthField } from './AuthField';
-import { LinkMoodleMode, getLinkMoodleConfig } from './helpers';
+import { LinkMoodleMode, getLinkMoodleContentKeys } from './helpers';
 import styles from './LinkMoodleModal.module.scss';
 
 export interface LinkMoodleModalProps {
@@ -29,10 +29,10 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
   const [error, setError] = useState('');
   const toast = useToast();
 
-  const config = getLinkMoodleConfig(mode);
-  const title = formatMessage(config.titleKey);
-  const hint = formatMessage(config.hintKey);
-  const submitLabel = formatMessage(config.submitKey);
+  const contentKeys = getLinkMoodleContentKeys(mode);
+  const title = formatMessage(contentKeys.titleKey);
+  const hint = formatMessage(contentKeys.hintKey);
+  const submitLabel = formatMessage(contentKeys.submitKey);
 
   const handleLink = async () => {
     setError('');
@@ -54,7 +54,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
     try {
       await authApi.linkMoodleAccount(username.trim(), password);
 
-      toast.success(formatMessage(config.successKey));
+      toast.success(formatMessage(contentKeys.successKey));
       onSuccess();
     } catch (err: unknown) {
       const message = getErrorMessage(err, formatMessage('login.linkMoodleError'));

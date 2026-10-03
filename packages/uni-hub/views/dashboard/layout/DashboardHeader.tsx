@@ -1,18 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import clsx from 'clsx';
 import { motion } from 'framer-motion';
-import { Menu, Volume2, VolumeX, Bell, User } from 'lucide-react';
+import { Menu, Bell, User, Volume2, VolumeX } from 'lucide-react';
 import { Button, Tag, Empty } from '@una';
 import { StreakBadge } from '@uni-hub/components/gamification';
-import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
-import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi } from '@uni-hub/services/api';
-import { LinkMoodleMode } from '@uni-hub/components/auth';
 import type { DashboardHeaderProps } from '../types';
 import { stripHtml } from '../utils';
+import { UserDropdown } from './UserDropdown';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
@@ -176,147 +173,16 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </button>
 
           {userMenuOpen && (
-            <motion.div
-              className={styles.userDropdown}
-              role="menu"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.15 }}
-            >
-              <div className={styles.userDropdownHeader}>
-                {/* intentional: suppressHydrationWarning – student name loaded client-side */}
-                <strong suppressHydrationWarning>{activeStudentProfile.fullName}</strong>
-                {/* intentional: suppressHydrationWarning – student group loaded client-side */}
-                <div className={styles.muted} suppressHydrationWarning>
-                  {activeStudentProfile.group}
-                </div>
-              </div>
-
-              <div className={styles.dropdownSection}>
-                <div className={styles.moodleStatusHeader}>
-                  <span>Moodle LMS</span>
-                  <span
-                    className={clsx(
-                      styles.moodleStatusBadge,
-                      isMoodleLinked ? styles.linked : styles.unlinked,
-                    )}
-                  >
-                    <span
-                      className={styles.statusDot}
-                      style={{
-                        backgroundColor: isMoodleLinked
-                          ? 'var(--success-color, #22c55e)'
-                          : 'var(--text-secondary, #94a3b8)',
-                      }}
-                      aria-hidden
-                    />
-                    {formatMessage(
-                      isMoodleLinked ? 'header.moodleConnected' : 'header.moodleNotConnected',
-                    )}
-                  </span>
-                </div>
-
-                {isMoodleLinked ? (
-                  <div className={styles.moodleDropdownActions}>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="small"
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        onOpenLinkMoodle?.(LinkMoodleMode.CHANGE);
-                      }}
-                    >
-                      {formatMessage('header.moodleChange')}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="small"
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        onOpenUnlinkMoodle?.();
-                      }}
-                      style={{ color: 'var(--error-color)' }}
-                    >
-                      {formatMessage('header.moodleDisconnect')}
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="small"
-                    onClick={() => {
-                      setUserMenuOpen(false);
-                      onOpenLinkMoodle?.(LinkMoodleMode.CONNECT);
-                    }}
-                    style={{ width: '100%' }}
-                  >
-                    {formatMessage('header.moodleConnect')}
-                  </Button>
-                )}
-              </div>
-
-              <div className={styles.userDropdownBody}>
-                <div className={styles.mobileOnlyItem} style={{ marginBottom: 6 }}>
-                  <LanguageSwitcher compact={false} placement="top-down" />
-                </div>
-
-                <div className={styles.mobileOnlyItem}>
-                  <ThemeSwitcher compact={false} showLabel={true} />
-                </div>
-
-                <div className={styles.mobileOnlyItem}>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="small"
-                    role="menuitem"
-                    onClick={onToggleSound}
-                    style={{ width: '100%', justifyContent: 'flex-start' }}
-                  >
-                    {soundEnabled ? (
-                      <Volume2 size={16} style={{ marginRight: 8 }} />
-                    ) : (
-                      <VolumeX size={16} style={{ marginRight: 8 }} />
-                    )}
-                    {soundEnabled
-                      ? formatMessage('header.soundMute')
-                      : formatMessage('header.soundUnmute')}
-                  </Button>
-                </div>
-
-                <div className={styles.mobileOnlyItem} style={{ marginBottom: 8 }}>
-                  <a
-                    href="https://moodle.universemvp.tech"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.moodleStatusLink}
-                  >
-                    <span className={styles.statusDot} aria-hidden />
-                    <span>Moodle LMS</span>
-                  </a>
-                </div>
-
-                <div className={styles.mobileOnlyItem}>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="small"
-                    role="menuitem"
-                    onClick={handleLogout}
-                    style={{
-                      width: '100%',
-                      justifyContent: 'flex-start',
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    {formatMessage('sidebar.logout')}
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
+            <UserDropdown
+              activeStudentProfile={activeStudentProfile}
+              isMoodleLinked={isMoodleLinked}
+              soundEnabled={soundEnabled}
+              onToggleSound={onToggleSound}
+              onOpenLinkMoodle={onOpenLinkMoodle}
+              onOpenUnlinkMoodle={onOpenUnlinkMoodle}
+              onClose={() => setUserMenuOpen(false)}
+              onLogout={handleLogout}
+            />
           )}
         </div>
       </div>

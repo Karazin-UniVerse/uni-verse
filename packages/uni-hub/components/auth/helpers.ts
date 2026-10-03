@@ -7,16 +7,16 @@ export const LinkMoodleMode = {
 
 export type LinkMoodleMode = (typeof LinkMoodleMode)[keyof typeof LinkMoodleMode];
 
-export interface LinkMoodleConfig {
+export interface LinkMoodleContentKeys {
   titleKey: TranslationKey;
   hintKey: TranslationKey;
   submitKey: TranslationKey;
   successKey: TranslationKey;
 }
 
-export function getLinkMoodleConfig(
+export function getLinkMoodleContentKeys(
   mode: LinkMoodleMode = LinkMoodleMode.CONNECT,
-): LinkMoodleConfig {
+): LinkMoodleContentKeys {
   const isChange = mode === LinkMoodleMode.CHANGE;
 
   return {

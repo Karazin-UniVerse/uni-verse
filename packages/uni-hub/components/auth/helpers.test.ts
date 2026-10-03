@@ -1,30 +1,30 @@
 import { describe, it, expect } from 'vitest';
-import { parseGoogleClaims, getLinkMoodleConfig, LinkMoodleMode } from './helpers';
+import { parseGoogleClaims, getLinkMoodleContentKeys, LinkMoodleMode } from './helpers';
 
-describe('getLinkMoodleConfig', () => {
+describe('getLinkMoodleContentKeys', () => {
   it('returns default connect mode translation keys', () => {
-    const config = getLinkMoodleConfig(LinkMoodleMode.CONNECT);
+    const keys = getLinkMoodleContentKeys(LinkMoodleMode.CONNECT);
 
-    expect(config.titleKey).toBe('login.linkMoodleTitle');
-    expect(config.hintKey).toBe('login.linkMoodleHint');
-    expect(config.submitKey).toBe('login.linkMoodleSubmit');
-    expect(config.successKey).toBe('login.linkMoodleSuccess');
+    expect(keys.titleKey).toBe('login.linkMoodleTitle');
+    expect(keys.hintKey).toBe('login.linkMoodleHint');
+    expect(keys.submitKey).toBe('login.linkMoodleSubmit');
+    expect(keys.successKey).toBe('login.linkMoodleSuccess');
   });
 
   it('defaults to connect mode when no argument passed', () => {
-    const config = getLinkMoodleConfig();
+    const keys = getLinkMoodleContentKeys();
 
-    expect(config.titleKey).toBe('login.linkMoodleTitle');
-    expect(config.hintKey).toBe('login.linkMoodleHint');
+    expect(keys.titleKey).toBe('login.linkMoodleTitle');
+    expect(keys.hintKey).toBe('login.linkMoodleHint');
   });
 
   it('returns change mode translation keys when mode is CHANGE', () => {
-    const config = getLinkMoodleConfig(LinkMoodleMode.CHANGE);
+    const keys = getLinkMoodleContentKeys(LinkMoodleMode.CHANGE);
 
-    expect(config.titleKey).toBe('login.changeMoodleTitle');
-    expect(config.hintKey).toBe('login.changeMoodleHint');
-    expect(config.submitKey).toBe('login.changeMoodleSubmit');
-    expect(config.successKey).toBe('login.changeMoodleSuccess');
+    expect(keys.titleKey).toBe('login.changeMoodleTitle');
+    expect(keys.hintKey).toBe('login.changeMoodleHint');
+    expect(keys.submitKey).toBe('login.changeMoodleSubmit');
+    expect(keys.successKey).toBe('login.changeMoodleSuccess');
   });
 });
 
