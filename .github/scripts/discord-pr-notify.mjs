@@ -48,6 +48,10 @@ function truncateText(text, maxLength = 250) {
 
   const clean = text.replace(/\r\n/g, '\n').trim();
 
+  if (clean.length === 0) {
+    return '_Без опису_';
+  }
+
   if (clean.length <= maxLength) {
     return clean;
   }
@@ -58,10 +62,15 @@ function truncateText(text, maxLength = 250) {
 async function sendDiscordWebhook(payload) {
   console.info(`Sending webhook to Discord...`);
 
+  const bodyPayload = {
+    allowed_mentions: { parse: ['users', 'everyone'] },
+    ...payload,
+  };
+
   const response = await fetch(WEBHOOK_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(bodyPayload),
   });
 
   if (!response.ok) {
@@ -76,14 +85,33 @@ async function sendDiscordWebhook(payload) {
 
 async function handleCiFailure() {
   const repo = process.env.GITHUB_REPOSITORY || 'unknown/repo';
-  const actor = process.env.GITHUB_ACTOR || 'unknown';
   const runId = process.env.GITHUB_RUN_ID || '';
   const serverUrl = process.env.GITHUB_SERVER_URL || 'https://github.com';
   const workflowName = process.env.GITHUB_WORKFLOW || 'CI';
-  const refName = process.env.GITHUB_REF_NAME || 'develop';
-  const commitSha = (process.env.GITHUB_SHA || '').slice(0, 7);
-  const runUrl = `${serverUrl}/${repo}/actions/runs/${runId}`;
 
+  let refName = process.env.GITHUB_REF_NAME || 'develop';
+  let actor = process.env.GITHUB_ACTOR || 'unknown';
+  let commitSha = (process.env.GITHUB_SHA || '').slice(0, 7);
+
+  const eventPath = process.env.GITHUB_EVENT_PATH;
+
+  if (eventPath && existsSync(eventPath)) {
+    try {
+      const eventData = JSON.parse(readFileSync(eventPath, 'utf8'));
+
+      if (eventData.pull_request) {
+        const pr = eventData.pull_request;
+
+        refName = pr.head?.ref || refName;
+        actor = pr.user?.login || actor;
+        commitSha = (pr.head?.sha || process.env.GITHUB_SHA || '').slice(0, 7);
+      }
+    } catch (err) {
+      console.warn('Could not parse GITHUB_EVENT_PATH in handleCiFailure:', err.message);
+    }
+  }
+
+  const runUrl = `${serverUrl}/${repo}/actions/runs/${runId}`;
   const authorMention = formatUserMention(actor);
 
   const payload = {
@@ -179,6 +207,15 @@ async function handlePullRequest() {
       reviewersMentions.length > 0
         ? `🔔 Запит на рев'ю: ${reviewersMentions.join(', ')}`
         : '@here новий PR потребує перегляду!';
+  } else if (action === 'review_requested') {
+    const requestedReviewer = eventData.requested_reviewer;
+    const reviewerMention = requestedReviewer
+      ? formatUserMention(requestedReviewer.login)
+      : "Шановний рев'ювер";
+
+    statusLabel = "🔔 Запит на рев'ю";
+    color = 0x5865f2; // Blurple
+    content = `🔔 ${reviewerMention}, тебе призначено рев'ювером для PR **#${pr.number}**!`;
   } else if (action === 'reopened') {
     statusLabel = '🔄 Перевідкрито PR';
     color = 0xfee75c; // Yellow

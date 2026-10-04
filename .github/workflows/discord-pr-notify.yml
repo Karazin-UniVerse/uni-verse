@@ -2,7 +2,7 @@ name: Discord PR Notification
 
 on:
   pull_request:
-    types: [opened, reopened, ready_for_review, closed]
+    types: [opened, reopened, ready_for_review, closed, review_requested]
 
 permissions:
   contents: read
@@ -11,7 +11,7 @@ jobs:
   notify-pr:
     name: Notify Discord on PR Event
     runs-on: ubuntu-latest
-    if: "!github.event.pull_request.draft || github.event.action == 'ready_for_review' || github.event.action == 'closed'"
+    if: "!github.event.pull_request.draft || github.event.action == 'ready_for_review' || github.event.action == 'closed' || github.event.action == 'review_requested'"
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
