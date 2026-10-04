@@ -16,6 +16,12 @@ export type FeatureContextValue = {
 
 const FeatureToggleContext = createContext<FeatureContextValue | null>(null);
 
+/**
+ * Resolves feature flags from environment variables.
+ * NOTE: Next.js only inlines process.env.NEXT_PUBLIC_* variables when accessed
+ * statically (e.g. process.env.NEXT_PUBLIC_FEATURE_MOODLE). Dynamic property access
+ * or loops over process.env are NOT inlined at build time.
+ */
 const getEnvDefaults = (): FeatureFlags => {
   return resolveEnvFeatureFlags({
     NEXT_PUBLIC_FEATURE_MOODLE: process.env.NEXT_PUBLIC_FEATURE_MOODLE,
@@ -98,37 +104,17 @@ export const useFeatures = (): FeatureFlags => {
   const context = useContext(FeatureToggleContext);
 
   if (!context) {
-    return getEnvDefaults();
+    throw new Error('useFeatures must be used within a FeatureToggleProvider');
   }
 
   return context.flags;
-};
-
-export const useFeature = (feature: FeatureFlagKey): boolean => {
-  const context = useContext(FeatureToggleContext);
-
-  if (!context) {
-    return Boolean(getEnvDefaults()[feature]);
-  }
-
-  return context.isEnabled(feature);
 };
 
 export const useFeatureControls = (): FeatureContextValue => {
   const context = useContext(FeatureToggleContext);
 
   if (!context) {
-    const defaults = getEnvDefaults();
-
-    return {
-      flags: defaults,
-      envDefaults: defaults,
-      activeOverrides: {},
-      isEnabled: (feature) => Boolean(defaults[feature]),
-      setFeatureOverride: () => {},
-      resetFeatureOverrides: () => {},
-      isOverridden: () => false,
-    };
+    throw new Error('useFeatureControls must be used within a FeatureToggleProvider');
   }
 
   return context;

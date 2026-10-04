@@ -3,7 +3,7 @@
  * Canonical boolean parsing utility.
  */
 
-export const parseBoolean = (value: unknown, fallback?: boolean): boolean | undefined => {
+export const parseBoolean = (value: unknown): boolean | undefined => {
   if (value === true || value === 1) {
     return true;
   }
@@ -24,5 +24,5 @@ export const parseBoolean = (value: unknown, fallback?: boolean): boolean | unde
     }
   }
 
-  return fallback;
+  return undefined;
 };

@@ -1,13 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
-import {
-  FeatureToggleProvider,
-  useFeature,
-  useFeatures,
-  useFeatureControls,
-  DevFeaturePanel,
-} from './index';
+import { FeatureToggleProvider, useFeatures, useFeatureControls, DevFeaturePanel } from './index';
 
 describe('FeatureToggleContext and Components', () => {
   beforeEach(() => {
@@ -43,34 +37,57 @@ describe('FeatureToggleContext and Components', () => {
 
     const html = renderToString(tree);
 
-    expect(html).toContain('id="moodle">false</span>');
+    expect(html).toContain('id="moodle">true</span>');
     expect(html).toContain('id="edean">true</span>');
     expect(html).toContain('id="opps">false</span>');
   });
 
   it('applies initialFlags overrides correctly', () => {
     const TestConsumer = () => {
-      const isMoodle = useFeature('isMoodleIntegrationEnabled');
-      const isEDean = useFeature('isEDeanEnabled');
+      const { isMoodleIntegrationEnabled, isEDeanEnabled } = useFeatures();
 
       return React.createElement(
         'div',
         null,
-        React.createElement('span', { id: 'moodle' }, String(isMoodle)),
-        React.createElement('span', { id: 'edean' }, String(isEDean)),
+        React.createElement('span', { id: 'moodle' }, String(isMoodleIntegrationEnabled)),
+        React.createElement('span', { id: 'edean' }, String(isEDeanEnabled)),
       );
     };
 
     const tree = React.createElement(
       FeatureToggleProvider,
-      { initialFlags: { isMoodleIntegrationEnabled: true, isEDeanEnabled: false } },
+      { initialFlags: { isMoodleIntegrationEnabled: false, isEDeanEnabled: false } },
       React.createElement(TestConsumer),
     );
 
     const html = renderToString(tree);
 
-    expect(html).toContain('id="moodle">true</span>');
+    expect(html).toContain('id="moodle">false</span>');
     expect(html).toContain('id="edean">false</span>');
+  });
+
+  it('throws an error when useFeatures is called outside FeatureToggleProvider', () => {
+    const TestConsumer = () => {
+      useFeatures();
+
+      return null;
+    };
+
+    expect(() => renderToString(React.createElement(TestConsumer))).toThrow(
+      'useFeatures must be used within a FeatureToggleProvider',
+    );
+  });
+
+  it('throws an error when useFeatureControls is called outside FeatureToggleProvider', () => {
+    const TestConsumer = () => {
+      useFeatureControls();
+
+      return null;
+    };
+
+    expect(() => renderToString(React.createElement(TestConsumer))).toThrow(
+      'useFeatureControls must be used within a FeatureToggleProvider',
+    );
   });
 
   it('useFeatureControls returns defaults and helper methods', () => {

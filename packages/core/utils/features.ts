@@ -7,8 +7,11 @@ import {
   DEFAULT_FEATURE_FLAGS,
   FEATURE_ENV_KEYS,
   type FeatureFlags,
+  type FeatureFlagKey,
 } from '../constants/features.ts';
 import { parseBoolean } from './boolean.ts';
+
+const FEATURE_FLAG_KEYS = Object.keys(FEATURE_ENV_KEYS) as FeatureFlagKey[];
 
 /**
  * Resolves feature flags from environment variables.
@@ -16,16 +19,18 @@ import { parseBoolean } from './boolean.ts';
 export const resolveEnvFeatureFlags = (
   env: Record<string, string | undefined> = {},
 ): FeatureFlags => {
-  return {
-    isMoodleIntegrationEnabled:
-      parseBoolean(env[FEATURE_ENV_KEYS.isMoodleIntegrationEnabled]) ??
-      DEFAULT_FEATURE_FLAGS.isMoodleIntegrationEnabled,
-    isEDeanEnabled:
-      parseBoolean(env[FEATURE_ENV_KEYS.isEDeanEnabled]) ?? DEFAULT_FEATURE_FLAGS.isEDeanEnabled,
-    isOpportunitiesPlatformEnabled:
-      parseBoolean(env[FEATURE_ENV_KEYS.isOpportunitiesPlatformEnabled]) ??
-      DEFAULT_FEATURE_FLAGS.isOpportunitiesPlatformEnabled,
-  };
+  const flags = { ...DEFAULT_FEATURE_FLAGS };
+
+  for (const flagKey of FEATURE_FLAG_KEYS) {
+    const envVar = FEATURE_ENV_KEYS[flagKey];
+    const parsed = parseBoolean(env[envVar]);
+
+    if (parsed !== undefined) {
+      flags[flagKey] = parsed;
+    }
+  }
+
+  return flags;
 };
 
 /**
@@ -42,16 +47,10 @@ export const mergeFeatureFlags = (
       continue;
     }
 
-    if (typeof override.isMoodleIntegrationEnabled === 'boolean') {
-      result.isMoodleIntegrationEnabled = override.isMoodleIntegrationEnabled;
-    }
-
-    if (typeof override.isEDeanEnabled === 'boolean') {
-      result.isEDeanEnabled = override.isEDeanEnabled;
-    }
-
-    if (typeof override.isOpportunitiesPlatformEnabled === 'boolean') {
-      result.isOpportunitiesPlatformEnabled = override.isOpportunitiesPlatformEnabled;
+    for (const key of FEATURE_FLAG_KEYS) {
+      if (typeof override[key] === 'boolean') {
+        result[key] = override[key];
+      }
     }
   }
 

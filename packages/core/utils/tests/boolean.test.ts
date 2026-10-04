@@ -30,13 +30,10 @@ describe('boolean utils', () => {
       assert.strictEqual(parseBoolean('off'), false);
     });
 
-    test('returns undefined or fallback for non-boolean inputs', () => {
+    test('returns undefined for non-boolean inputs', () => {
       assert.strictEqual(parseBoolean('other'), undefined);
       assert.strictEqual(parseBoolean(undefined), undefined);
       assert.strictEqual(parseBoolean(null), undefined);
-      assert.strictEqual(parseBoolean('other', true), true);
-      assert.strictEqual(parseBoolean(undefined, false), false);
-      assert.strictEqual(parseBoolean(null, true), true);
     });
   });
 });
