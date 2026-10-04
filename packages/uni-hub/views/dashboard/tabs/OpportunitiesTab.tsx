@@ -28,48 +28,72 @@ interface OpportunityItem {
   externalUrl: string;
 }
 
-const OPPORTUNITIES: readonly OpportunityItem[] = [
-  {
-    id: 'opp-1',
-    category: 'internships',
-    titleKey: 'opportunities.item1Title',
-    orgKey: 'opportunities.item1Org',
-    descKey: 'opportunities.item1Desc',
-    tagKey: 'opportunities.tagInternships',
-    deadline: '2026-11-15',
-    externalUrl: 'https://karazin.ua/',
-  },
-  {
-    id: 'opp-2',
-    category: 'exchange',
-    titleKey: 'opportunities.item2Title',
-    orgKey: 'opportunities.item2Org',
-    descKey: 'opportunities.item2Desc',
-    tagKey: 'opportunities.tagExchange',
-    deadline: '2026-12-01',
-    externalUrl: 'https://international.karazin.ua',
-  },
-  {
-    id: 'opp-3',
-    category: 'grants',
-    titleKey: 'opportunities.item3Title',
-    orgKey: 'opportunities.item3Org',
-    descKey: 'opportunities.item3Desc',
-    tagKey: 'opportunities.tagGrants',
-    deadline: '2026-10-25',
-    externalUrl: 'https://science.karazin.ua',
-  },
-  {
-    id: 'opp-4',
-    category: 'internships',
-    titleKey: 'opportunities.item4Title',
-    orgKey: 'opportunities.item4Org',
-    descKey: 'opportunities.item4Desc',
-    tagKey: 'opportunities.tagInternships',
-    deadline: '2026-11-20',
-    externalUrl: 'https://karazin.ua/',
-  },
+type OpportunityTuple = readonly [
+  id: string,
+  category: OpportunityCategory,
+  titleKey: TranslationKey,
+  orgKey: TranslationKey,
+  descKey: TranslationKey,
+  tagKey: TranslationKey,
+  deadline: string,
+  externalUrl: string,
 ];
+
+const RAW_OPPORTUNITIES: readonly OpportunityTuple[] = [
+  [
+    'opp-1',
+    'internships',
+    'opportunities.item1Title',
+    'opportunities.item1Org',
+    'opportunities.item1Desc',
+    'opportunities.tagInternships',
+    '2026-11-15',
+    'https://karazin.ua/',
+  ],
+  [
+    'opp-2',
+    'exchange',
+    'opportunities.item2Title',
+    'opportunities.item2Org',
+    'opportunities.item2Desc',
+    'opportunities.tagExchange',
+    '2026-12-01',
+    'https://international.karazin.ua',
+  ],
+  [
+    'opp-3',
+    'grants',
+    'opportunities.item3Title',
+    'opportunities.item3Org',
+    'opportunities.item3Desc',
+    'opportunities.tagGrants',
+    '2026-10-25',
+    'https://science.karazin.ua',
+  ],
+  [
+    'opp-4',
+    'internships',
+    'opportunities.item4Title',
+    'opportunities.item4Org',
+    'opportunities.item4Desc',
+    'opportunities.tagInternships',
+    '2026-11-20',
+    'https://karazin.ua/',
+  ],
+];
+
+const OPPORTUNITIES: readonly OpportunityItem[] = RAW_OPPORTUNITIES.map(
+  ([id, category, titleKey, orgKey, descKey, tagKey, deadline, externalUrl]) => ({
+    id,
+    category,
+    titleKey,
+    orgKey,
+    descKey,
+    tagKey,
+    deadline,
+    externalUrl,
+  }),
+);
 
 interface FilterOption {
   category: OpportunityCategory;
