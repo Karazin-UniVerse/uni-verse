@@ -115,3 +115,62 @@ export interface CourseSection {
   summary: string;
   modules: CourseModule[];
 }
+
+export type OpportunityStatus =
+  | 'DRAFT'
+  | 'READY_FOR_REVIEW'
+  | 'REQUIRES_CHANGES'
+  | 'PUBLISHED'
+  | 'REJECTED';
+
+export type OpportunityLifecycle = 'START' | 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'CANCELLED';
+
+export type OpportunityPaymentType = 'PAID' | 'UNPAID';
+
+export type OpportunityAppStatus =
+  | 'SUBMITTED'
+  | 'UNDER_REVIEW'
+  | 'ACCEPTED'
+  | 'REJECTED'
+  | 'WITHDRAWN';
+
+export interface OpportunityOwner {
+  id: string;
+  name?: string | null;
+  email: string;
+}
+
+export interface Opportunity {
+  id: string;
+  title: string;
+  description: string;
+  ownerContactInfo: string;
+  status: OpportunityStatus;
+  lifecycleState: OpportunityLifecycle;
+  paymentType: OpportunityPaymentType;
+  paymentDetails?: string | null;
+  moderationComment?: string | null;
+  ownerId: string;
+  owner?: OpportunityOwner;
+  createdAt: string;
+  updatedAt: string;
+  applications?: OpportunityApplication[];
+}
+
+export interface OpportunityApplication {
+  id: string;
+  applicantName: string;
+  contactInfo: string;
+  motivation?: string | null;
+  briefDescription?: string | null;
+  answers?: string | null;
+  status: OpportunityAppStatus;
+  ownerComment?: string | null;
+  opportunityId: string;
+  opportunity?: Opportunity;
+  applicantId: string;
+  applicant?: OpportunityOwner;
+  createdAt: string;
+  updatedAt: string;
+}
+

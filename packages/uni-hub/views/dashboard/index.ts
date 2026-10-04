@@ -8,3 +8,4 @@ export * from './tabs/CoursesTab';
 export * from './tabs/GradesTab';
 export * from './tabs/AssignmentsTab';
 export * from './tabs/OpportunitiesTab';
+export * from './tabs/OpportunityCard';

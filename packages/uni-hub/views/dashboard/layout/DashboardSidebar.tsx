@@ -8,6 +8,7 @@ import {
   ClipboardList,
   CalendarDays,
   FileEdit,
+  Briefcase,
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
@@ -33,6 +34,9 @@ export interface NavItemConfig {
   shortLabel: string;
   featureFlag?: FeatureFlagKey;
 }
+
+const ENABLE_OPPORTUNITIES_TAB =
+  process.env.NEXT_PUBLIC_ENABLE_OPPORTUNITIES_TAB === 'true';
 
 export const NAV_ITEMS: NavItemConfig[] = [
   {
@@ -88,6 +92,18 @@ export const NAV_ITEMS: NavItemConfig[] = [
     shortLabel: 'Можливості',
     featureFlag: 'isOpportunitiesPlatformEnabled',
   },
+  ...(ENABLE_OPPORTUNITIES_TAB
+    ? [
+        {
+          key: 'opportunities' as const,
+          icon: <Briefcase size={18} />,
+          labelKey: 'nav.opportunities.full' as const,
+          shortLabelKey: 'nav.opportunities' as const,
+          label: 'Можливості та проекти',
+          shortLabel: 'Можливості',
+        },
+      ]
+    : []),
 ];
 
 export const getVisibleNavItems = (flags: FeatureFlags): NavItemConfig[] =>

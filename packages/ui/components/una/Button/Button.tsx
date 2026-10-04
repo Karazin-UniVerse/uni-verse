@@ -32,7 +32,7 @@ export function Button({
   children,
   className,
   variant = 'primary',
-  size = 'small',
+  size = 'medium',
   isLink = false,
   isTransparent = false,
   ...props

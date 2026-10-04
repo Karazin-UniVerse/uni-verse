@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
@@ -26,9 +26,7 @@ import {
   GradesTab,
   AssignmentsTab,
   OpportunitiesTab,
-  NAV_ITEMS,
 } from './dashboard';
-import { useFeatures } from '@uni-hub/features';
 import { formatLastSync } from './dashboard/tabs/helpers';
 import { useDashboardData, clearUserSessionStorage } from './dashboard/hooks/useDashboardData';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -51,19 +49,12 @@ const DashboardPage: React.FC = () => {
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const setSoundEnabled = useGamificationStore((s) => s.setSoundEnabled);
   const { formatMessage } = useLanguage();
-  const flags = useFeatures();
-  const flagsRef = useRef(flags);
-
-  useEffect(() => {
-    flagsRef.current = flags;
-  });
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeKey, setActiveKey] = useState<NavKey>('overview');
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();
-  const [mounted, setMounted] = useState(false);
 
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -98,7 +89,6 @@ const DashboardPage: React.FC = () => {
     dateFrom,
     dateTo,
     hideCompleted,
-    enabled: flags.isMoodleIntegrationEnabled,
     onUnauthorized: () => router.push('/login'),
   });
 
@@ -110,10 +100,6 @@ const DashboardPage: React.FC = () => {
     data.assignments.length > 0 ||
     data.events.length > 0 ||
     hasLoadedOnce;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -141,26 +127,10 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     const requestedTab = searchParams.get('tab');
 
-    if (requestedTab && isNavKey(requestedTab)) {
-      const targetItem = NAV_ITEMS.find((item) => item.key === requestedTab);
-
-      if (!targetItem?.featureFlag || flagsRef.current[targetItem.featureFlag]) {
-        setActiveKey(requestedTab);
-
-        return;
-      }
+    if (requestedTab) {
+      setActiveKey(isNavKey(requestedTab) ? requestedTab : 'overview');
     }
-
-    setActiveKey('overview');
   }, [searchParams]);
-
-  useEffect(() => {
-    const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
-
-    if (activeItem?.featureFlag && !flags[activeItem.featureFlag]) {
-      setActiveKey('overview');
-    }
-  }, [flags, activeKey]);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -173,7 +143,7 @@ const DashboardPage: React.FC = () => {
       cancelPendingFetch();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router, sortOrder, dateFrom, dateTo, hideCompleted, flags.isMoodleIntegrationEnabled]);
+  }, [router, sortOrder, dateFrom, dateTo, hideCompleted]);
 
   const closeMobileMenu = useCallback(() => {
     setMobileMenuOpen(false);
@@ -189,11 +159,7 @@ const DashboardPage: React.FC = () => {
   };
 
   const renderActiveContent = () => {
-    const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
-    const effectiveKey =
-      activeItem?.featureFlag && !flags[activeItem.featureFlag] ? 'overview' : activeKey;
-
-    switch (effectiveKey) {
+    switch (activeKey) {
       case 'overview':
         return (
           <OverviewTab
@@ -241,14 +207,11 @@ const DashboardPage: React.FC = () => {
           />
         );
       case 'opportunities':
-        return <OpportunitiesTab />;
+        return <OpportunitiesTab soundEnabled={soundEnabled} />;
       default:
         return null;
     }
   };
-
-  // Spinner only after mount — keeps SSR and first client render identical
-  const showUpdatingIndicator = mounted && loading && hasCachedData;
 
   return (
     <div
@@ -289,15 +252,13 @@ const DashboardPage: React.FC = () => {
         <main className={styles.content}>
           <div className={styles.pageTitleRow}>
             <h2 className={styles.pageTitle}>{formatMessage(PAGE_TITLE_KEYS[activeKey])}</h2>
-
-            {showUpdatingIndicator && (
+            {loading && hasCachedData && (
               <div className={styles.pageUpdatingIndicator} role="status" aria-live="polite">
                 <Spinner size="small" tip={formatMessage('dashboard.updating')} />
               </div>
             )}
-
             <div className={styles.syncActions}>
-              {mounted && lastSyncTime && (
+              {lastSyncTime && (
                 <span className={styles.lastSyncText}>
                   {formatMessage('dashboard.dataUpdated')}: {formatLastSync(lastSyncTime)}
                 </span>
@@ -317,7 +278,7 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {mounted && isOfflineData && (
+          {isOfflineData && (
             <div className={styles.offlineBanner} role="alert">
               <AlertCircle size={16} className={styles.offlineIcon} />
               <span>
@@ -329,7 +290,6 @@ const DashboardPage: React.FC = () => {
               </span>
             </div>
           )}
-
           {!isMoodleLinked && (
             <output className={styles.linkMoodleBanner}>
               <div className={styles.linkMoodleBannerContent}>
@@ -351,7 +311,7 @@ const DashboardPage: React.FC = () => {
           ) : (
             <motion.div
               key={activeKey}
-              initial={mounted ? { opacity: 0, y: 6 } : false}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
             >

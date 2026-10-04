@@ -1,0 +1,267 @@
+@use '@universe/ui/breakpoints.scss' as *;
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: var(--card-shadow);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 300ms ease;
+  will-change: transform, box-shadow;
+
+  @include narrower-than('md') {
+    padding: 20px;
+  }
+
+  @include narrower-than('sm') {
+    padding: 18px 16px;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: transparent;
+    z-index: 2;
+    transition: background-color 200ms ease;
+  }
+
+  &.paidCard::before {
+    background: var(--success-color, #10b981);
+  }
+
+  &.unpaidCard::before {
+    background: var(--accent-primary, #3b82f6);
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    z-index: 2;
+    box-shadow:
+      0 16px 32px -8px color-mix(in srgb, var(--accent-primary) 14%, transparent),
+      var(--card-shadow-hover);
+    border-color: color-mix(in srgb, var(--accent-primary) 65%, var(--card-border));
+
+    .cardTitle {
+      color: var(--accent-primary);
+    }
+
+    .cardArrow {
+      transform: translate(3px, -3px);
+      color: var(--accent-primary);
+    }
+
+    .cardDetailsBtn {
+      background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+      border-color: color-mix(in srgb, var(--accent-primary) 35%, transparent);
+      color: var(--accent-primary);
+      transform: translateY(-1px);
+    }
+  }
+
+  &:active {
+    transform: translateY(-2px);
+    transition-duration: 120ms;
+  }
+}
+
+.cardTop {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.cardBadgeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  margin-bottom: 2px;
+}
+
+.categoryPill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 5px 12px;
+  border-radius: 8px;
+
+  &.paidCategory {
+    color: var(--success-color, #10b981);
+    background: color-mix(in srgb, var(--success-color, #10b981) 12%, transparent);
+  }
+
+  &.unpaidCategory {
+    color: var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+  }
+}
+
+.compensationPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-xs);
+  font-weight: 600;
+  color: var(--success-color, #10b981);
+  background: color-mix(in srgb, var(--success-color, #10b981) 10%, transparent);
+  padding: 5px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--success-color, #10b981) 25%, transparent);
+}
+
+.experiencePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  padding: 5px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+}
+
+.cardTitle {
+  margin: 0;
+  font: var(--font-heading);
+  font-size: 1.12rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cardDescription {
+  margin: 0;
+  font-size: var(--font-sm);
+  line-height: 1.6;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+
+.cardMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding-top: 16px;
+  margin-top: 18px;
+  border-top: 1px solid var(--card-border);
+}
+
+.ownerInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ownerAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-primary), color-mix(in srgb, var(--accent-primary) 60%, #8b5cf6));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 12%);
+}
+
+.ownerMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ownerName {
+  font-size: var(--font-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ownerRole {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.cardDetailsBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: var(--bg-hover);
+  border: 1px solid var(--card-border);
+  font-size: var(--font-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+  transition:
+    background-color 280ms ease,
+    border-color 280ms ease,
+    color 280ms ease,
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.cardArrow {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition:
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 280ms ease;
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.warningBox {
+  margin-top: var(--space-12);
+  padding: var(--space-12) var(--space-16);
+  background: color-mix(in srgb, var(--warning-color, #f59e0b) 10%, var(--bg-surface));
+  border-left: 3px solid var(--warning-color, #f59e0b);
+  border-radius: 0 10px 10px 0;
+  font-size: var(--font-xs);
+  line-height: 1.45;
+  color: var(--text-primary);
+}
