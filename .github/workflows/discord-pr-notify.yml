@@ -1,0 +1,29 @@
+name: Discord PR Notification
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, closed]
+
+permissions:
+  contents: read
+
+jobs:
+  notify-pr:
+    name: Notify Discord on PR Event
+    runs-on: ubuntu-latest
+    if: "!github.event.pull_request.draft || github.event.action == 'ready_for_review' || github.event.action == 'closed'"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Send Discord PR Notification
+        env:
+          DISCORD_PR_WEBHOOK: ${{ secrets.DISCORD_PR_WEBHOOK }}
+        run: node .github/scripts/discord-pr-notify.mjs

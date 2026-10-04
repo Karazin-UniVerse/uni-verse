@@ -43,3 +43,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
+
+      - name: Notify Discord on CI Failure
+        if: failure()
+        env:
+          DISCORD_PR_WEBHOOK: ${{ secrets.DISCORD_PR_WEBHOOK }}
+          NOTIFY_MODE: ci-failure
+        run: node .github/scripts/discord-pr-notify.mjs
