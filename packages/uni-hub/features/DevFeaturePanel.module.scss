@@ -44,6 +44,10 @@
   flex-direction: column;
   overflow: hidden;
   backdrop-filter: blur(12px);
+
+  &::backdrop {
+    background: transparent;
+  }
 }
 
 :global([data-theme='dark']) .panelOverlay,

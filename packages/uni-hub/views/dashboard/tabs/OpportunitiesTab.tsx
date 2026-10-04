@@ -108,6 +108,12 @@ const FILTER_OPTIONS: readonly FilterOption[] = [
   { category: 'exchange', labelKey: 'opportunities.filterExchange', icon: Globe },
 ];
 
+function parseLocalDate(deadline: string): Date {
+  const [year, month, day] = deadline.split('-').map(Number);
+
+  return new Date(year, (month ?? 1) - 1, day ?? 1);
+}
+
 export const OpportunitiesTab: React.FC = () => {
   const { formatMessage, localeTag } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<OpportunityCategory>('all');
@@ -154,7 +160,7 @@ export const OpportunitiesTab: React.FC = () => {
           {filteredItems.map((item) => {
             const title = formatMessage(item.titleKey);
             const organization = formatMessage(item.orgKey);
-            const formattedDeadline = new Date(item.deadline).toLocaleDateString(localeTag, {
+            const formattedDeadline = parseLocalDate(item.deadline).toLocaleDateString(localeTag, {
               day: '2-digit',
               month: '2-digit',
               year: 'numeric',

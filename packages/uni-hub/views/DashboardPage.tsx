@@ -170,7 +170,10 @@ const DashboardPage: React.FC = () => {
       return (
         <FeatureDisabledNotice
           featureName={activeItem.featureFlag}
-          onBackToOverview={() => setActiveKey('overview')}
+          onBackToOverview={() => {
+            setActiveKey('overview');
+            router.replace('/dashboard');
+          }}
         />
       );
     }

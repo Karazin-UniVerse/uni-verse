@@ -12,6 +12,7 @@ describe('FeatureDisabledNotice', () => {
         null,
         React.createElement(FeatureDisabledNotice, {
           featureName: 'isOpportunitiesPlatformEnabled',
+          showFeatureTag: false,
         }),
       ),
     );

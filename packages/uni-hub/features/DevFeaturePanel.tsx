@@ -101,8 +101,12 @@ export const DevFeaturePanel: React.FC = () => {
         <dialog
           ref={panelRef}
           className={styles.panelOverlay}
-          open
           aria-label={formatMessage('devPanel.title')}
+          onCancel={(event) => {
+            event.preventDefault();
+            setIsOpen(false);
+          }}
+          onClose={() => setIsOpen(false)}
         >
           <div className={styles.panelHeader}>
             <div className={styles.panelTitleGroup}>
