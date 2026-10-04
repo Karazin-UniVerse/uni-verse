@@ -8,9 +8,7 @@ import {
 
 describe('Tier 1 - Feature 2: Grade & ECTS Scale Calculation Utilities (@universe/core)', () => {
   it('F2-1: domain types index should export calculateEctsGrade function', async () => {
-    const typesPath = fileExists('packages/core/types/index.ts')
-      ? 'packages/core/types/index.ts'
-      : 'packages/types/src/index.ts';
+    const typesPath = 'packages/core/types/index.ts';
 
     expect(fileExists(typesPath), `${typesPath} must exist`).toBe(true);
     const mod = await loadTypesModule();
@@ -28,9 +26,7 @@ describe('Tier 1 - Feature 2: Grade & ECTS Scale Calculation Utilities (@univers
     expect(calculateEcts(90)).toBe('A');
 
     if (!mod?.calculateEctsGrade) {
-      const typesPath = fileExists('packages/core/types/index.ts')
-        ? 'packages/core/types/index.ts'
-        : 'packages/types/src/index.ts';
+      const typesPath = 'packages/core/types/index.ts';
 
       expect(fileExists(typesPath), `calculateEctsGrade must be exported from ${typesPath}`).toBe(
         true,
@@ -48,9 +44,7 @@ describe('Tier 1 - Feature 2: Grade & ECTS Scale Calculation Utilities (@univers
     expect(calculateEcts(62)).toBe('E');
 
     if (!mod?.calculateEctsGrade) {
-      const typesPath = fileExists('packages/core/types/index.ts')
-        ? 'packages/core/types/index.ts'
-        : 'packages/types/src/index.ts';
+      const typesPath = 'packages/core/types/index.ts';
 
       expect(fileExists(typesPath), `calculateEctsGrade must be exported from ${typesPath}`).toBe(
         true,
@@ -66,9 +60,7 @@ describe('Tier 1 - Feature 2: Grade & ECTS Scale Calculation Utilities (@univers
     expect(calculateEcts(20)).toBe('F');
 
     if (!mod?.calculateEctsGrade) {
-      const typesPath = fileExists('packages/core/types/index.ts')
-        ? 'packages/core/types/index.ts'
-        : 'packages/types/src/index.ts';
+      const typesPath = 'packages/core/types/index.ts';
 
       expect(fileExists(typesPath), `calculateEctsGrade must be exported from ${typesPath}`).toBe(
         true,
@@ -77,9 +69,7 @@ describe('Tier 1 - Feature 2: Grade & ECTS Scale Calculation Utilities (@univers
   });
 
   it('F2-5: domain types index should export calculateTraditionalGrade function', async () => {
-    const typesPath = fileExists('packages/core/types/index.ts')
-      ? 'packages/core/types/index.ts'
-      : 'packages/types/src/index.ts';
+    const typesPath = 'packages/core/types/index.ts';
 
     expect(fileExists(typesPath), `${typesPath} must exist`).toBe(true);
     const mod = await loadTypesModule();
@@ -103,9 +93,7 @@ describe('Tier 1 - Feature 2: Grade & ECTS Scale Calculation Utilities (@univers
     expect(calcTraditional(59, 'credit')).toBe('не зараховано');
 
     if (!mod?.calculateTraditionalGrade) {
-      const typesPath = fileExists('packages/core/types/index.ts')
-        ? 'packages/core/types/index.ts'
-        : 'packages/types/src/index.ts';
+      const typesPath = 'packages/core/types/index.ts';
 
       expect(
         fileExists(typesPath),
