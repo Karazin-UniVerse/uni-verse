@@ -27,10 +27,15 @@ function formatUserMention(githubUser) {
     return 'Unknown';
   }
 
-  const discordId = discordUsers[githubUser];
+  const entry =
+    discordUsers[githubUser] ??
+    Object.entries(discordUsers).find(([k]) => k.toLowerCase() === githubUser.toLowerCase())?.[1];
+  const target = entry ? String(entry).trim() : '';
 
-  if (discordId && String(discordId).trim().length > 0) {
-    return `<@${discordId}> (\`${githubUser}\`)`;
+  if (target.length > 0) {
+    const mention = /^\d+$/.test(target) ? `<@${target}>` : `@${target.replace(/^@/, '')}`;
+
+    return `${mention} (\`${githubUser}\`)`;
   }
 
   return `[@${githubUser}](https://github.com/${githubUser})`;
