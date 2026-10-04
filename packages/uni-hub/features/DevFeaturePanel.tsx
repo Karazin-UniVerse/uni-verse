@@ -1,105 +1,68 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { SlidersHorizontal, X, RotateCcw } from 'lucide-react';
 import { Button, Tag } from '@una';
 import type { FeatureFlagKey } from '@core/constants/features';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { useFeatureControls } from './FeatureToggleContext';
+import { useDevPanelModal } from './useDevPanelModal';
 import styles from './DevFeaturePanel.module.scss';
 
 interface FeatureItemConfig {
   key: FeatureFlagKey;
-  label: string;
-  description: string;
+  labelKey?: TranslationKey;
+  labelFallback: string;
+  descriptionKey: TranslationKey;
 }
 
 const FEATURE_ITEMS: FeatureItemConfig[] = [
   {
     key: 'isMoodleIntegrationEnabled',
-    label: 'Moodle LMS',
-    description: 'Курси, оцінки, завдання, GPA',
+    labelFallback: 'Moodle LMS',
+    descriptionKey: 'devPanel.moodleDesc',
   },
   {
     key: 'isEDeanEnabled',
-    label: 'Е-Деканат',
-    description: 'Розклад занять, студентська картка',
+    labelFallback: 'e-Dean',
+    descriptionKey: 'devPanel.eDeanDesc',
   },
   {
     key: 'isOpportunitiesPlatformEnabled',
-    label: 'Можливості (OP-104)',
-    description: 'Дошка проектів та стажувань',
+    labelKey: 'devPanel.opportunitiesLabel',
+    labelFallback: 'Opportunities',
+    descriptionKey: 'devPanel.opportunitiesDesc',
   },
 ];
 
-const emptySubscribe = () => () => {};
-
 export const DevFeaturePanel: React.FC = () => {
+  const { formatMessage } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [isReset, setIsReset] = useState(false);
-  const isMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
   const containerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDialogElement>(null);
-  const wasOpenRef = useRef(false);
+  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { flags, activeOverrides, setFeatureOverride, resetFeatureOverrides, isOverridden } =
     useFeatureControls();
 
   const overrideCount = Object.keys(activeOverrides).length;
 
-  useEffect(() => {
-    if (isOpen) {
-      wasOpenRef.current = true;
-      const firstFocusable = panelRef.current?.querySelector<HTMLElement>(
-        'button, input, [tabindex]:not([tabindex="-1"])',
-      );
-
-      firstFocusable?.focus();
-    } else if (wasOpenRef.current) {
-      wasOpenRef.current = false;
-      const trigger = containerRef.current?.querySelector<HTMLButtonElement>('button');
-
-      trigger?.focus();
-    }
-  }, [isOpen]);
+  useDevPanelModal({
+    isOpen,
+    setIsOpen,
+    containerRef,
+    panelRef,
+  });
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        setIsOpen(false);
-      }
-
-      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'f') {
-        event.preventDefault();
-        setIsOpen((previous) => !previous);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+      if (resetTimerRef.current) {
+        clearTimeout(resetTimerRef.current);
       }
     };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
+  }, []);
 
   const handleToggle = (featureKey: FeatureFlagKey, checked: boolean) => {
     setFeatureOverride(featureKey, checked);
@@ -109,7 +72,11 @@ export const DevFeaturePanel: React.FC = () => {
     resetFeatureOverrides();
     setIsReset(true);
 
-    setTimeout(() => {
+    if (resetTimerRef.current) {
+      clearTimeout(resetTimerRef.current);
+    }
+
+    resetTimerRef.current = setTimeout(() => {
       setIsReset(false);
     }, 2000);
   };
@@ -122,29 +89,32 @@ export const DevFeaturePanel: React.FC = () => {
         size="medium"
         isTransparent
         onClick={() => setIsOpen((previous) => !previous)}
-        aria-label="Відкрити панель фіча-тоґлів"
-        title="Feature Toggles (Ctrl+Shift+F)"
+        aria-label={formatMessage('devPanel.openButton')}
+        title={`${formatMessage('devPanel.title')} (Ctrl+Shift+F)`}
         className={styles.headerButton}
       >
         <SlidersHorizontal size={18} />
-        {isMounted && overrideCount > 0 && (
-          <span className={styles.overrideBadge}>{overrideCount}</span>
-        )}
+        {overrideCount > 0 && <span className={styles.overrideBadge}>{overrideCount}</span>}
       </Button>
 
       {isOpen && (
-        <dialog ref={panelRef} className={styles.panelOverlay} open aria-label="Feature Toggles">
+        <dialog
+          ref={panelRef}
+          className={styles.panelOverlay}
+          open
+          aria-label={formatMessage('devPanel.title')}
+        >
           <div className={styles.panelHeader}>
             <div className={styles.panelTitleGroup}>
               <SlidersHorizontal size={16} />
-              <h4>Feature Toggles</h4>
+              <h4>{formatMessage('devPanel.title')}</h4>
               <Tag tone="info">Dev</Tag>
             </div>
             <button
               type="button"
               className={styles.closeButton}
               onClick={() => setIsOpen(false)}
-              aria-label="Закрити панель фіча-тоґлів"
+              aria-label={formatMessage('devPanel.closeButton')}
             >
               <X size={16} />
             </button>
@@ -154,22 +124,27 @@ export const DevFeaturePanel: React.FC = () => {
             {FEATURE_ITEMS.map((item) => {
               const enabled = Boolean(flags[item.key]);
               const overridden = isOverridden(item.key);
+              const label = item.labelKey ? formatMessage(item.labelKey) : item.labelFallback;
 
               return (
                 <div key={item.key} className={styles.toggleRow}>
                   <div className={styles.toggleInfo}>
                     <div className={styles.toggleLabel}>
-                      <span>{item.label}</span>
-                      {overridden && <Tag tone="warning">Override</Tag>}
+                      <span>{label}</span>
+                      {overridden && (
+                        <Tag tone="warning">{formatMessage('devPanel.overrideTag')}</Tag>
+                      )}
                     </div>
-                    <span className={styles.toggleDescription}>{item.description}</span>
+                    <span className={styles.toggleDescription}>
+                      {formatMessage(item.descriptionKey)}
+                    </span>
                   </div>
                   <label className={styles.switch}>
                     <input
                       type="checkbox"
                       checked={enabled}
                       onChange={(event) => handleToggle(item.key, event.target.checked)}
-                      aria-label={item.label}
+                      aria-label={label}
                     />
                     <span className={styles.slider} />
                   </label>
@@ -186,8 +161,8 @@ export const DevFeaturePanel: React.FC = () => {
               onClick={handleReset}
               disabled={overrideCount === 0}
             >
-              <RotateCcw size={14} style={{ marginRight: 6 }} />
-              {isReset ? 'Скинуто!' : 'Скинути'}
+              <RotateCcw size={14} className={styles.btnIcon} />
+              {isReset ? formatMessage('devPanel.resetSuccess') : formatMessage('devPanel.reset')}
             </Button>
           </div>
         </dialog>
@@ -195,5 +170,3 @@ export const DevFeaturePanel: React.FC = () => {
     </div>
   );
 };
-
-export default DevFeaturePanel;

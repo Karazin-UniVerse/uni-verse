@@ -180,3 +180,15 @@
   background: var(--bg-surface, #fff);
   border-radius: var(--border-radius-large, 12px);
 }
+
+.sparklesIcon {
+  color: var(--accent-active);
+}
+
+.applyButton {
+  text-decoration: none;
+}
+
+.btnIcon {
+  margin-right: var(--space-6, 6px);
+}

@@ -83,7 +83,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       </div>
 
       <div className={styles.headerRight}>
-        <DevFeaturePanel />
+        {process.env.NEXT_PUBLIC_FEATURE_PANEL === 'true' && <DevFeaturePanel />}
         <Button
           type="button"
           variant="secondary"
@@ -155,7 +155,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </div>
 
         <div className={styles.userWrap} ref={userRef}>
-          {/* intentional: suppressHydrationWarning – user profile is hydrated from client localStorage */}
           <button
             type="button"
             className={styles.user}

@@ -133,6 +133,7 @@ describe('FeatureToggleContext and Components', () => {
 
     const html = renderToString(tree);
 
-    expect(html).toContain('Feature Toggles');
+    expect(html).toContain('Ctrl+Shift+F');
+    expect(html).toContain('Панель функцій');
   });
 });

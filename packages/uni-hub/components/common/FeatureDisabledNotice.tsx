@@ -11,6 +11,7 @@ export interface FeatureDisabledNoticeProps {
   description?: string;
   featureName?: string;
   onBackToOverview?: () => void;
+  showFeatureTag?: boolean;
 }
 
 export const FeatureDisabledNotice: React.FC<FeatureDisabledNoticeProps> = ({
@@ -18,6 +19,7 @@ export const FeatureDisabledNotice: React.FC<FeatureDisabledNoticeProps> = ({
   description,
   featureName,
   onBackToOverview,
+  showFeatureTag = process.env.NEXT_PUBLIC_FEATURE_PANEL === 'true',
 }) => {
   const { formatMessage } = useLanguage();
 
@@ -33,11 +35,11 @@ export const FeatureDisabledNotice: React.FC<FeatureDisabledNoticeProps> = ({
         {description ?? formatMessage('featureGate.disabledDescription')}
       </p>
 
-      {featureName && <span className={styles.featureTag}>flag: {featureName}</span>}
+      {showFeatureTag && featureName && <span className={styles.featureTag}>{featureName}</span>}
 
       {onBackToOverview && (
         <Button type="button" variant="primary" size="medium" onClick={onBackToOverview}>
-          <ArrowLeft size={16} style={{ marginRight: 6 }} />
+          <ArrowLeft size={16} className={styles.btnIcon} />
           {formatMessage('featureGate.backToOverview')}
         </Button>
       )}

@@ -20,10 +20,8 @@ type OpportunityCategory = 'all' | 'internships' | 'grants' | 'exchange';
 interface OpportunityItem {
   id: string;
   category: OpportunityCategory;
-  titleKey?: TranslationKey;
-  title?: string;
-  orgKey?: TranslationKey;
-  organization?: string;
+  titleKey: TranslationKey;
+  orgKey: TranslationKey;
   descKey: TranslationKey;
   tagKey: TranslationKey;
   deadline: string;
@@ -34,21 +32,21 @@ const OPPORTUNITIES: readonly OpportunityItem[] = [
   {
     id: 'opp-1',
     category: 'internships',
-    title: 'EPAM University Program: Junior Full-Stack Engineer',
-    organization: 'EPAM Systems',
+    titleKey: 'opportunities.item1Title',
+    orgKey: 'opportunities.item1Org',
     descKey: 'opportunities.item1Desc',
     tagKey: 'opportunities.tagInternships',
-    deadline: '15.11.2026',
-    externalUrl: 'https://training.epam.ua',
+    deadline: '2026-11-15',
+    externalUrl: 'https://karazin.ua/',
   },
   {
     id: 'opp-2',
     category: 'exchange',
-    title: 'Erasmus+ Academic Mobility 2026/2027: Adam Mickiewicz University',
-    organization: 'Karazin International Office',
+    titleKey: 'opportunities.item2Title',
+    orgKey: 'opportunities.item2Org',
     descKey: 'opportunities.item2Desc',
     tagKey: 'opportunities.tagExchange',
-    deadline: '01.12.2026',
+    deadline: '2026-12-01',
     externalUrl: 'https://international.karazin.ua',
   },
   {
@@ -58,18 +56,18 @@ const OPPORTUNITIES: readonly OpportunityItem[] = [
     orgKey: 'opportunities.item3Org',
     descKey: 'opportunities.item3Desc',
     tagKey: 'opportunities.tagGrants',
-    deadline: '25.10.2026',
+    deadline: '2026-10-25',
     externalUrl: 'https://science.karazin.ua',
   },
   {
     id: 'opp-4',
     category: 'internships',
-    title: 'SoftServe IT Academy: React & TypeScript Mentorship',
-    organization: 'SoftServe',
+    titleKey: 'opportunities.item4Title',
+    orgKey: 'opportunities.item4Org',
     descKey: 'opportunities.item4Desc',
     tagKey: 'opportunities.tagInternships',
-    deadline: '20.11.2026',
-    externalUrl: 'https://career.softserveinc.com',
+    deadline: '2026-11-20',
+    externalUrl: 'https://karazin.ua/',
   },
 ];
 
@@ -87,7 +85,7 @@ const FILTER_OPTIONS: readonly FilterOption[] = [
 ];
 
 export const OpportunitiesTab: React.FC = () => {
-  const { formatMessage } = useLanguage();
+  const { formatMessage, localeTag } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<OpportunityCategory>('all');
 
   const filteredItems = OPPORTUNITIES.filter(
@@ -99,7 +97,7 @@ export const OpportunitiesTab: React.FC = () => {
       <header className={styles.header}>
         <div className={styles.headerTop}>
           <div className={styles.titleRow}>
-            <Sparkles size={24} style={{ color: 'var(--accent-active, #1d4ed8)' }} />
+            <Sparkles size={24} className={styles.sparklesIcon} />
             <h2>{formatMessage('opportunities.title')}</h2>
           </div>
           <Tag tone="info">{formatMessage('opportunities.badge')}</Tag>
@@ -130,8 +128,13 @@ export const OpportunitiesTab: React.FC = () => {
       ) : (
         <div className={styles.grid}>
           {filteredItems.map((item) => {
-            const title = item.titleKey ? formatMessage(item.titleKey) : item.title;
-            const organization = item.orgKey ? formatMessage(item.orgKey) : item.organization;
+            const title = formatMessage(item.titleKey);
+            const organization = formatMessage(item.orgKey);
+            const formattedDeadline = new Date(item.deadline).toLocaleDateString(localeTag, {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            });
 
             return (
               <article key={item.id} className={styles.card}>
@@ -141,7 +144,7 @@ export const OpportunitiesTab: React.FC = () => {
                     <div className={styles.deadlineContainer}>
                       <Calendar size={13} />
                       <span>
-                        {formatMessage('opportunities.deadline')} {item.deadline}
+                        {formatMessage('opportunities.deadline')} {formattedDeadline}
                       </span>
                     </div>
                   </div>
@@ -165,9 +168,9 @@ export const OpportunitiesTab: React.FC = () => {
                       rel="noopener noreferrer"
                       variant="primary"
                       size="small"
-                      style={{ textDecoration: 'none' }}
+                      className={styles.applyButton}
                     >
-                      <ExternalLink size={14} style={{ marginRight: 6 }} />
+                      <ExternalLink size={14} className={styles.btnIcon} />
                       {formatMessage('opportunities.apply')}
                     </Button>
                   </div>

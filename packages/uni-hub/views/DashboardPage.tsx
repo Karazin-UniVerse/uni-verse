@@ -93,6 +93,7 @@ const DashboardPage: React.FC = () => {
     dateFrom,
     dateTo,
     hideCompleted,
+    enabled: flags.isMoodleIntegrationEnabled,
     onUnauthorized: () => router.push('/login'),
   });
 
@@ -137,14 +138,6 @@ const DashboardPage: React.FC = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
-
-    if (activeItem?.featureFlag && !flags[activeItem.featureFlag]) {
-      setActiveKey('overview');
-    }
-  }, [activeKey, flags]);
-
-  useEffect(() => {
     if (!isLoggedIn()) {
       return;
     }
@@ -155,7 +148,7 @@ const DashboardPage: React.FC = () => {
       cancelPendingFetch();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router, sortOrder, dateFrom, dateTo, hideCompleted]);
+  }, [router, sortOrder, dateFrom, dateTo, hideCompleted, flags.isMoodleIntegrationEnabled]);
 
   const closeMobileMenu = useCallback(() => {
     setMobileMenuOpen(false);
@@ -171,6 +164,17 @@ const DashboardPage: React.FC = () => {
   };
 
   const renderActiveContent = () => {
+    const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
+
+    if (activeItem?.featureFlag && !flags[activeItem.featureFlag]) {
+      return (
+        <FeatureDisabledNotice
+          featureName={activeItem.featureFlag}
+          onBackToOverview={() => setActiveKey('overview')}
+        />
+      );
+    }
+
     switch (activeKey) {
       case 'overview':
         return (
@@ -186,34 +190,13 @@ const DashboardPage: React.FC = () => {
           />
         );
       case 'courses':
-        return flags.isMoodleIntegrationEnabled ? (
-          <CoursesTab courses={data.courses} soundEnabled={soundEnabled} />
-        ) : (
-          <FeatureDisabledNotice
-            featureName="isMoodleIntegrationEnabled"
-            onBackToOverview={() => setActiveKey('overview')}
-          />
-        );
+        return <CoursesTab courses={data.courses} soundEnabled={soundEnabled} />;
       case 'grades':
-        return flags.isMoodleIntegrationEnabled ? (
-          <GradesTab grades={data.grades} onOpenSimulator={() => setSimulatorOpen(true)} />
-        ) : (
-          <FeatureDisabledNotice
-            featureName="isMoodleIntegrationEnabled"
-            onBackToOverview={() => setActiveKey('overview')}
-          />
-        );
+        return <GradesTab grades={data.grades} onOpenSimulator={() => setSimulatorOpen(true)} />;
       case 'schedule':
-        return flags.isEDeanEnabled ? (
-          <ScheduleView />
-        ) : (
-          <FeatureDisabledNotice
-            featureName="isEDeanEnabled"
-            onBackToOverview={() => setActiveKey('overview')}
-          />
-        );
+        return <ScheduleView />;
       case 'assignments':
-        return flags.isMoodleIntegrationEnabled ? (
+        return (
           <AssignmentsTab
             assignments={data.assignments}
             dateFrom={dateFrom}
@@ -238,21 +221,9 @@ const DashboardPage: React.FC = () => {
               setIsAssignmentModalVisible(true);
             }}
           />
-        ) : (
-          <FeatureDisabledNotice
-            featureName="isMoodleIntegrationEnabled"
-            onBackToOverview={() => setActiveKey('overview')}
-          />
         );
       case 'opportunities':
-        return flags.isOpportunitiesPlatformEnabled ? (
-          <OpportunitiesTab />
-        ) : (
-          <FeatureDisabledNotice
-            featureName="isOpportunitiesPlatformEnabled"
-            onBackToOverview={() => setActiveKey('overview')}
-          />
-        );
+        return <OpportunitiesTab />;
       default:
         return null;
     }
