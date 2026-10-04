@@ -7,6 +7,94 @@ interface UseDevPanelModalOptions {
   panelRef: RefObject<HTMLDialogElement | null>;
 }
 
+function openModalDialog(dialog: HTMLDialogElement | null): void {
+  if (!dialog) {
+    return;
+  }
+
+  if (typeof dialog.showModal === 'function') {
+    if (!dialog.open) {
+      dialog.showModal();
+    }
+  } else {
+    dialog.setAttribute('open', '');
+  }
+
+  const firstFocusable = dialog.querySelector<HTMLElement>(
+    'button, input, [tabindex]:not([tabindex="-1"])',
+  );
+
+  firstFocusable?.focus();
+}
+
+function closeModalDialog(dialog: HTMLDialogElement | null): void {
+  if (!dialog) {
+    return;
+  }
+
+  if (typeof dialog.close === 'function') {
+    if (dialog.open) {
+      dialog.close();
+    }
+  } else {
+    dialog.removeAttribute('open');
+  }
+}
+
+function restoreFocus(previousElement: HTMLElement | null, container: HTMLElement | null): void {
+  if (previousElement && document.contains(previousElement)) {
+    previousElement.focus();
+
+    return;
+  }
+
+  const trigger = container?.querySelector<HTMLButtonElement>('button');
+
+  trigger?.focus();
+}
+
+function isToggleShortcut(event: KeyboardEvent): boolean {
+  return event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'f';
+}
+
+function trapTabKey(event: KeyboardEvent, dialog: HTMLDialogElement | null): void {
+  if (event.key !== 'Tab' || !dialog) {
+    return;
+  }
+
+  const focusable = Array.from(
+    dialog.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    ),
+  );
+
+  if (focusable.length === 0) {
+    return;
+  }
+
+  const first = focusable[0];
+  const last = focusable.at(-1);
+
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last?.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first?.focus();
+  }
+}
+
+function isClickInsideDialog(event: MouseEvent, dialog: HTMLDialogElement): boolean {
+  const rect = dialog.getBoundingClientRect();
+
+  return (
+    event.clientX >= rect.left &&
+    event.clientX <= rect.right &&
+    event.clientY >= rect.top &&
+    event.clientY <= rect.bottom
+  );
+}
+
 export function useDevPanelModal({
   isOpen,
   setIsOpen,
@@ -21,50 +109,21 @@ export function useDevPanelModal({
 
     if (isOpen) {
       previousActiveElementRef.current = (document.activeElement as HTMLElement) ?? null;
+      openModalDialog(dialog);
 
-      if (dialog) {
-        if (typeof dialog.showModal === 'function') {
-          if (!dialog.open) {
-            dialog.showModal();
-          }
-        } else {
-          dialog.setAttribute('open', '');
-        }
-
-        const firstFocusable = dialog.querySelector<HTMLElement>(
-          'button, input, [tabindex]:not([tabindex="-1"])',
-        );
-
-        firstFocusable?.focus();
-      }
-    } else {
-      if (dialog) {
-        if (typeof dialog.close === 'function') {
-          if (dialog.open) {
-            dialog.close();
-          }
-        } else {
-          dialog.removeAttribute('open');
-        }
-      }
-
-      if (previousActiveElementRef.current && document.contains(previousActiveElementRef.current)) {
-        previousActiveElementRef.current.focus();
-      } else {
-        const trigger = containerRef.current?.querySelector<HTMLButtonElement>('button');
-
-        trigger?.focus();
-      }
-
-      previousActiveElementRef.current = null;
+      return;
     }
+
+    closeModalDialog(dialog);
+    restoreFocus(previousActiveElementRef.current, containerRef.current);
+    previousActiveElementRef.current = null;
   }, [isOpen, containerRef, panelRef]);
 
   // Keyboard navigation (Escape to close, Ctrl+Shift+F to toggle, Tab trap)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!isOpen) {
-        if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'f') {
+        if (isToggleShortcut(event)) {
           event.preventDefault();
           setIsOpen(true);
         }
@@ -72,48 +131,14 @@ export function useDevPanelModal({
         return;
       }
 
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' || isToggleShortcut(event)) {
         event.preventDefault();
         setIsOpen(false);
 
         return;
       }
 
-      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'f') {
-        event.preventDefault();
-        setIsOpen(false);
-
-        return;
-      }
-
-      if (event.key === 'Tab') {
-        const dialog = panelRef.current;
-
-        if (!dialog) {
-          return;
-        }
-
-        const focusable = dialog.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-        );
-
-        if (focusable.length === 0) {
-          return;
-        }
-
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-
-        if (event.shiftKey) {
-          if (document.activeElement === first) {
-            event.preventDefault();
-            last?.focus();
-          }
-        } else if (document.activeElement === last) {
-          event.preventDefault();
-          first?.focus();
-        }
-      }
+      trapTabKey(event, panelRef.current);
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -132,19 +157,10 @@ export function useDevPanelModal({
         return;
       }
 
-      if (event.target === dialog) {
-        const rect = dialog.getBoundingClientRect();
-        const isInDialog =
-          event.clientX >= rect.left &&
-          event.clientX <= rect.right &&
-          event.clientY >= rect.top &&
-          event.clientY <= rect.bottom;
+      if (event.target === dialog && !isClickInsideDialog(event, dialog)) {
+        setIsOpen(false);
 
-        if (!isInDialog) {
-          setIsOpen(false);
-
-          return;
-        }
+        return;
       }
 
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
