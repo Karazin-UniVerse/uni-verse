@@ -9,22 +9,18 @@ import {
 
 describe('Tier 1 - Feature 1: Shared Core Domain Models (@universe/core)', () => {
   it('F1-1: packages/core package.json should be valid and configure exports', () => {
-    const corePkgExists = fileExists('packages/core/package.json');
-    const typesPkgExists = fileExists('packages/types/package.json');
+    const pkgPath = 'packages/core/package.json';
 
-    expect(corePkgExists || typesPkgExists).toBe(true);
+    expect(fileExists(pkgPath)).toBe(true);
 
-    const pkgPath = corePkgExists ? 'packages/core/package.json' : 'packages/types/package.json';
     const pkg = JSON.parse(readWorkspaceFile(pkgPath));
 
-    expect(['@universe/core', '@universe/types']).toContain(pkg.name);
+    expect(pkg.name).toBe('@universe/core');
     expect(pkg.private).toBe(true);
   });
 
   it('F1-2: domain types index should declare StudentProfile model contract', async () => {
-    const typesPath = fileExists('packages/core/types/index.ts')
-      ? 'packages/core/types/index.ts'
-      : 'packages/types/src/index.ts';
+    const typesPath = 'packages/core/types/index.ts';
 
     expect(fileExists(typesPath), `${typesPath} must exist`).toBe(true);
     const content = readWorkspaceFile(typesPath);
@@ -42,9 +38,7 @@ describe('Tier 1 - Feature 1: Shared Core Domain Models (@universe/core)', () =>
   });
 
   it('F1-3: domain types index should declare CurriculumItem model contract', async () => {
-    const typesPath = fileExists('packages/core/types/index.ts')
-      ? 'packages/core/types/index.ts'
-      : 'packages/types/src/index.ts';
+    const typesPath = 'packages/core/types/index.ts';
 
     expect(fileExists(typesPath), `${typesPath} must exist`).toBe(true);
     const content = readWorkspaceFile(typesPath);
@@ -61,9 +55,7 @@ describe('Tier 1 - Feature 1: Shared Core Domain Models (@universe/core)', () =>
   });
 
   it('F1-4: domain types index should declare StudentRecordBookItem / GradeRecord model contract', async () => {
-    const typesPath = fileExists('packages/core/types/index.ts')
-      ? 'packages/core/types/index.ts'
-      : 'packages/types/src/index.ts';
+    const typesPath = 'packages/core/types/index.ts';
 
     expect(fileExists(typesPath), `${typesPath} must exist`).toBe(true);
     const content = readWorkspaceFile(typesPath);
@@ -80,9 +72,7 @@ describe('Tier 1 - Feature 1: Shared Core Domain Models (@universe/core)', () =>
   });
 
   it('F1-5: domain types index should declare AssignmentItem, ScheduleItem, and LmsConnectionStatus', async () => {
-    const typesPath = fileExists('packages/core/types/index.ts')
-      ? 'packages/core/types/index.ts'
-      : 'packages/types/src/index.ts';
+    const typesPath = 'packages/core/types/index.ts';
 
     expect(fileExists(typesPath), `${typesPath} must exist`).toBe(true);
     const content = readWorkspaceFile(typesPath);
@@ -96,9 +86,7 @@ describe('Tier 1 - Feature 1: Shared Core Domain Models (@universe/core)', () =>
   });
 
   it('F1-6: domain types index should define essential union literal types', async () => {
-    const typesPath = fileExists('packages/core/types/index.ts')
-      ? 'packages/core/types/index.ts'
-      : 'packages/types/src/index.ts';
+    const typesPath = 'packages/core/types/index.ts';
 
     expect(fileExists(typesPath), `${typesPath} must exist`).toBe(true);
     const content =

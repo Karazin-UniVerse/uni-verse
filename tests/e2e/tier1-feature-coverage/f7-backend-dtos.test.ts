@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { fileExists, readWorkspaceFile } from '../test-helpers';
 
-describe('Tier 1 - Feature 7: Backend DTOs Alignment with @universe/types (@universe/backend)', () => {
+describe('Tier 1 - Feature 7: Backend DTOs Alignment with @universe/core (@universe/backend)', () => {
   it('F7-1: Backend moodle controller should expose /moodle/courses with standard DTO fields', () => {
     const controllerPath = 'packages/backend/moodle/moodle.controller.ts';
 
@@ -47,8 +47,7 @@ describe('Tier 1 - Feature 7: Backend DTOs Alignment with @universe/types (@univ
   it('F7-5: Backend DTO structure should align with shared domain contracts', () => {
     // Check moodle service/module integrates types or implements contract fields
     const gradesServicePath = 'packages/backend/moodle/moodle-grades/moodle-grades.service.ts';
-    const coursesServicePath =
-      'packages/backend/moodle/moodle-courses/moodle-courses.service.ts';
+    const coursesServicePath = 'packages/backend/moodle/moodle-courses/moodle-courses.service.ts';
     const fallbackPath = 'packages/backend/moodle/moodle.service.ts';
     const servicePath = fileExists(gradesServicePath)
       ? gradesServicePath
