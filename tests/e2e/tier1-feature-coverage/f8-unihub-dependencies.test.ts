@@ -2,14 +2,14 @@ import { describe, it, expect } from 'vitest';
 import { fileExists, readJsonFile, readWorkspaceFile } from '../test-helpers';
 
 describe('Tier 1 - Feature 8: UniHub Package Dependencies & Imports Alignment (@universe/uni-hub)', () => {
-  it('F8-1: packages/uni-hub/package.json should depend on @universe/core or @universe/types', () => {
+  it('F8-1: packages/uni-hub/package.json should depend on @universe/core', () => {
     const pkg = readJsonFile<{ dependencies?: Record<string, string> }>(
       'packages/uni-hub/package.json',
     );
 
-    const hasDep = pkg.dependencies?.['@universe/core'] || pkg.dependencies?.['@universe/types'];
+    const hasDep = pkg.dependencies?.['@universe/core'];
 
-    expect(hasDep, '@universe/core or @universe/types must be in dependencies').toBeDefined();
+    expect(hasDep, '@universe/core must be in dependencies').toBeDefined();
     expect(hasDep).toBe('workspace:*');
   });
 
