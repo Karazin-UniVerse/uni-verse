@@ -131,7 +131,7 @@ export function useDashboardData({
         moodleApi.getProfile().catch(() => null),
       ]);
 
-      if (requestId !== fetchRequestIdRef.current) {
+      if (requestId !== fetchRequestIdRef.current || isMoodleUnlinked()) {
         return;
       }
 
@@ -158,7 +158,7 @@ export function useDashboardData({
         toast.success(formatMessage('dashboard.syncSuccess'));
       }
     } catch (error) {
-      if (requestId !== fetchRequestIdRef.current) {
+      if (requestId !== fetchRequestIdRef.current || isMoodleUnlinked()) {
         return;
       }
 
@@ -174,7 +174,7 @@ export function useDashboardData({
 
       const cachedData = loadCachedDashboardData();
 
-      if (cachedData) {
+      if (cachedData && !isMoodleUnlinked()) {
         setData((previous) =>
           buildFallbackData({
             cachedData,
@@ -203,6 +203,7 @@ export function useDashboardData({
 
   const cancelPendingFetch = () => {
     fetchRequestIdRef.current += 1;
+    setLoading(false);
   };
 
   return {

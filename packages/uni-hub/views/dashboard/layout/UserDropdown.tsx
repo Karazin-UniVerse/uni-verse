@@ -94,6 +94,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
               type="button"
               variant="secondary"
               size="small"
+              role="menuitem"
               onClick={() => {
                 onClose();
                 onOpenLinkMoodle?.(LinkMoodleMode.CHANGE);
@@ -105,6 +106,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
               type="button"
               variant="secondary"
               size="small"
+              role="menuitem"
               onClick={() => {
                 onClose();
                 onOpenUnlinkMoodle?.();
@@ -119,6 +121,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
             type="button"
             variant="primary"
             size="small"
+            role="menuitem"
             onClick={() => {
               onClose();
               onOpenLinkMoodle?.(LinkMoodleMode.CONNECT);

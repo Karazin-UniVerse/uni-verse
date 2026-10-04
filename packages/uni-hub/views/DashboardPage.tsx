@@ -103,6 +103,7 @@ const DashboardPage: React.FC = () => {
       void fetchData();
     },
     onUnlinkSuccess: () => {
+      cancelPendingFetch();
       setData({
         courses: [],
         grades: [],
