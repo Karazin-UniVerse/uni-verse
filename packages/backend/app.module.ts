@@ -7,6 +7,9 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { MoodleModule } from './moodle/moodle.module';
+import { OpportunitiesModule } from './opportunities/opportunities.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { AdminModule } from './admin/admin.module';
 import { AtGuard } from './auth/guards/at.guard';
 
 @Module({
@@ -16,6 +19,9 @@ import { AtGuard } from './auth/guards/at.guard';
     UserModule,
     AuthModule,
     MoodleModule,
+    OpportunitiesModule,
+    NotificationsModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [
