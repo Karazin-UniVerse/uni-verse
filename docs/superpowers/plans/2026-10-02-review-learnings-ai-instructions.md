@@ -375,9 +375,9 @@ Add these bullets to `## Working agreements` (keep the file short; the rules liv
 Items 1 (over-engineering) and 2 (DRY) already exist in the rubric, so extend them instead of adding duplicates: item 1 gains "a layer, class, option or abstraction with a single caller is a finding" plus a link to `code-style.md#keep-it-simple-kiss`; item 2 gains "same behavior under another name; shared logic left at a lower level when it belongs one level up" plus a link to `code-style.md#reuse-before-writing-dry`. After item 11 add:
 
 ```markdown
-12. **MAGIC VALUES:** bare numbers or domain strings in logic instead of core constants. Rule: [code-style](code-style.md#no-magic-values).
-13. **MISSING OPERATIONAL CHANGES:** a new env variable absent from `.env.example`, a new script or service without docs, UI changes without screenshots. Rule: [workflow](workflow.md#config-and-environment).
-14. **API ACCESS OUTSIDE CLIENT CLASSES:** direct `fetch` or raw `request` calls in components or services. Rule: [architecture](architecture.md#api-clients).
+12. **MAGIC VALUES:** bare numbers or domain strings in logic instead of core constants. Rule: [api-and-config](../../ai/api-and-config.md#no-magic-values).
+13. **MISSING OPERATIONAL CHANGES:** a new env variable absent from `.env.example`, a new script or service without docs, UI changes without screenshots. Rules: [config](../../ai/api-and-config.md#config-and-environment), [PR screenshots](../../ai/workflow.md#branches-commits-pull-requests).
+14. **API ACCESS OUTSIDE CLIENT CLASSES:** direct `fetch` or raw `request` calls in components or services. Rule: [api-and-config](../../ai/api-and-config.md#api-clients).
 ```
 
 - [ ] **Step 3: Extend the checklist in `workflow.md`**
@@ -385,10 +385,10 @@ Items 1 (over-engineering) and 2 (DRY) already exist in the rubric, so extend th
 Add to `## Pre-commit checklist`:
 
 ```markdown
-- [ ] I searched for an existing helper, constant, type or component before writing a new one; shared code is in the right place ([code-style](code-style.md#reuse-before-writing-dry)).
-- [ ] The solution is the simplest that meets the requirement ([code-style](code-style.md#keep-it-simple-kiss)).
-- [ ] No magic values; API calls go through client classes ([code-style](code-style.md#no-magic-values), [architecture](architecture.md#api-clients)).
-- [ ] Unused exports, files, dependencies and translation keys are removed; new env variables and docs are in place ([workflow](#config-and-environment)).
+- [ ] I searched for an existing helper, constant, type or component before writing a new one; shared code is in the right place ([code-style](../../ai/code-style.md#reuse-before-writing-dry)).
+- [ ] The solution is the simplest that meets the requirement ([code-style](../../ai/code-style.md#keep-it-simple-kiss)).
+- [ ] No magic values; API calls go through client classes ([api-and-config](../../ai/api-and-config.md#no-magic-values), [api-and-config](../../ai/api-and-config.md#api-clients)).
+- [ ] Unused exports, files, dependencies and translation keys are removed; new env variables and docs are in place ([config and environment](../../ai/api-and-config.md#config-and-environment)).
 ```
 
 - [ ] **Step 4: Verify links resolve**

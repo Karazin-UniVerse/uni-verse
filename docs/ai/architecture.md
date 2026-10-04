@@ -25,7 +25,7 @@ uni-verse/
 
 - One file per domain, grouped by kind: `constants/grades.ts`, `constants/breakpoints.ts`, `utils/grades.ts`, `utils/browser.ts`. Import the specific module (`@universe/core/utils/browser`, or the `@core/utils/browser` alias inside uni-hub), never the package root.
 - No barrel `index.ts` in `constants/` and `utils/`. Barrels hide where code lives and force a split later; add domain files from the start.
-- Types, constants and functions never share a file. Types stay under `types/`.
+- Types, constants and functions never share a file (except types derived directly from a constant, such as `type GradesThreshold = (typeof GRADES_THRESHOLD)[keyof typeof GRADES_THRESHOLD]`). Other types stay under `types/`.
 - Tests sit next to the code in a sibling `tests/` directory (`utils/tests/grades.test.ts`).
 - Do not write unit tests for types and constants; test behavior only.
 
