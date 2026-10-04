@@ -29,7 +29,7 @@ export function readJsonFile<T = unknown>(relPath: string): T {
 }
 
 /**
- * Authoritative Oracles derived strictly from PROJECT.md and ORIGINAL_REQUEST.md
+ * Authoritative oracles for the grade scales (ECTS / traditional)
  */
 export function oracleCalculateEctsGrade(score: number): 'A' | 'B' | 'C' | 'D' | 'E' | 'Fx' | 'F' {
   if (score >= 90) return 'A';
@@ -65,7 +65,7 @@ export function oracleCalculateTraditionalGrade(
 }
 
 /**
- * Dynamic module loader for @universe/core or @universe/types
+ * Dynamic module loader for @universe/core
  */
 export async function loadTypesModule(): Promise<any> {
   const coreRootPath = resolveWorkspacePath('packages/core/index.ts');
@@ -88,17 +88,7 @@ export async function loadTypesModule(): Promise<any> {
     }
   }
 
-  const tsPath = resolveWorkspacePath('packages/types/src/index.ts');
-
-  if (!fs.existsSync(tsPath)) {
-    return null;
-  }
-
-  try {
-    return await import('../../packages/types/src/index.ts');
-  } catch {
-    return null;
-  }
+  return null;
 }
 
 /**
@@ -119,7 +109,7 @@ export async function loadUiModule(): Promise<any> {
 }
 
 /**
- * Standard test fixtures based on PROJECT.md interfaces
+ * Standard test fixtures matching the @universe/core/types interfaces
  */
 export const mockStudentProfile = {
   id: 'karazin-student-001',
