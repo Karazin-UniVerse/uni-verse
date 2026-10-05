@@ -152,7 +152,6 @@ export function Chart({
         <BarChart
           data={chartData}
           layout="vertical"
-          accessibilityLayer={false}
           margin={{ top: 4, right: 12, left: 4, bottom: 4 }}
         >
           <CartesianGrid stroke={theme.grid} strokeDasharray="3 3" horizontal={false} />
