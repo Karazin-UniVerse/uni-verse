@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Globe, FileText, Calendar, Building2 } from 'lucide-react';
+import { BREAKPOINTS } from '@universe/core/constants/breakpoints';
 
 import { ActionCard } from './ActionCard';
 
@@ -13,7 +14,7 @@ const meta = {
   },
   decorators: [
     (Story) => (
-      <div style={{ width: '320px', maxWidth: '100%' }}>
+      <div style={{ width: `${BREAKPOINTS.xs}px`, maxWidth: '100%' }}>
         <Story />
       </div>
     ),

@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import { BREAKPOINTS } from '@universe/core/constants/breakpoints';
 
 import { GradeFeedItem } from './GradeFeedItem';
 
@@ -12,7 +13,7 @@ const meta = {
   },
   decorators: [
     (Story) => (
-      <div style={{ width: '420px', maxWidth: '100%' }}>
+      <div style={{ width: `${BREAKPOINTS.xs}px`, maxWidth: '100%' }}>
         <Story />
       </div>
     ),
