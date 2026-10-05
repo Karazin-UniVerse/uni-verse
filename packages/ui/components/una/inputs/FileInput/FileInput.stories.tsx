@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import FileInput from './FileInput';
 
 const meta: Meta<typeof FileInput> = {
-  title: 'Components/Inputs/FileInput',
+  title: 'Una/Inputs/FileInput',
   component: FileInput,
   tags: ['autodocs'],
   argTypes: {
@@ -30,7 +30,7 @@ const meta: Meta<typeof FileInput> = {
 export default meta;
 type Story = StoryObj<typeof FileInput>;
 
-const InteractiveTemplate = (args: any) => {
+const InteractiveTemplate = (args: React.ComponentProps<typeof FileInput>) => {
   const [files, setFiles] = useState<File[]>([]);
 
   return (
@@ -105,16 +105,18 @@ export const ErrorState: Story = {
   },
 };
 
-export const WithInitialFiles: Story = {
-  render: () => {
-    const sampleFile1 = new File(['hello'], 'document.pdf', { type: 'application/pdf' });
-    const sampleFile2 = new File(['image content'], 'avatar.png', { type: 'image/png' });
-    const [files, setFiles] = useState<File[]>([sampleFile1, sampleFile2]);
+const WithInitialFilesComponent = () => {
+  const sampleFile1 = new File(['hello'], 'document.pdf', { type: 'application/pdf' });
+  const sampleFile2 = new File(['image content'], 'avatar.png', { type: 'image/png' });
+  const [files, setFiles] = useState<File[]>([sampleFile1, sampleFile2]);
 
-    return (
-      <div style={{ maxWidth: '500px', padding: '20px' }}>
-        <FileInput label="Project Files" multiple files={files} onFilesChange={setFiles} />
-      </div>
-    );
-  },
+  return (
+    <div style={{ maxWidth: '500px', padding: '20px' }}>
+      <FileInput label="Project Files" multiple files={files} onFilesChange={setFiles} />
+    </div>
+  );
+};
+
+export const WithInitialFiles: Story = {
+  render: () => <WithInitialFilesComponent />,
 };

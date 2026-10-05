@@ -1,0 +1,171 @@
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { MoodleClientService } from '../moodle-client/moodle.client.service';
+import { getWsFunctionName } from '../../utils/wsfunctions';
+import {
+  normalizeMoodleText,
+  extractAcademicYear,
+  extractSemester,
+} from '../../utils/moodleFilters';
+import type { MoodleAssignmentsResponse } from '../../types/Assignment';
+import type { MoodleSubmissionStatusResponse } from '../../types/SubmissionStatus';
+import type {
+  AssignmentItemDto,
+  SubmissionStatusDto,
+} from './moodle-assignments-dto';
+
+@Injectable()
+export class MoodleAssignmentsService {
+  private readonly logger = new Logger(MoodleAssignmentsService.name);
+
+  constructor(private readonly moodleClient: MoodleClientService) {}
+
+  async getAssignments(
+    moodleToken: string,
+    moodleId: string,
+    includeStatus = false,
+  ): Promise<AssignmentItemDto[]> {
+    if (!moodleToken || !moodleId) {
+      throw new BadRequestException('Token or user ID are not provided');
+    }
+
+    try {
+      const data = await this.moodleClient.client<MoodleAssignmentsResponse>(
+        getWsFunctionName('getAssignments'),
+        moodleToken,
+      );
+
+      const assignments: AssignmentItemDto[] = [];
+
+      data?.courses?.forEach((course) => {
+        const year = extractAcademicYear(
+          `${course.fullname} ${course.shortname}`,
+        );
+        const semester =
+          extractSemester(course.fullname) ?? extractSemester(course.shortname);
+
+        course.assignments?.forEach((assign) => {
+          assignments.push({
+            id: assign.id,
+            courseName: course.fullname,
+            name: assign.name,
+            duedate: assign.duedate,
+            description: normalizeMoodleText(assign.intro),
+            year,
+            semester,
+          });
+        });
+      });
+
+      if (includeStatus && assignments.length > 0) {
+        const chunkSize = 5;
+        const chunks: AssignmentItemDto[][] = [];
+
+        for (let i = 0; i < assignments.length; i += chunkSize) {
+          chunks.push(assignments.slice(i, i + chunkSize));
+        }
+
+        await chunks.reduce(
+          (chain, chunk) =>
+            chain.then(() =>
+              Promise.allSettled(
+                chunk.map(async (assign) => {
+                  try {
+                    const sub = await this.getSubmissionStatus(
+                      moodleToken,
+                      moodleId,
+                      assign.id,
+                    );
+
+                    assign.submissionStatus = sub.status;
+                    assign.grade = sub.grade;
+                    assign.graded = sub.status === 'graded';
+                    assign.submittedAt = sub.submittedAt;
+                    assign.isLate = Boolean(
+                      sub.submittedAt &&
+                      assign.duedate > 0 &&
+                      sub.submittedAt > assign.duedate,
+                    );
+                  } catch {
+                    // Ignore single assignment status fetch failure
+                  }
+                }),
+              ),
+            ),
+          Promise.resolve<unknown>(undefined),
+        );
+      }
+
+      return assignments;
+    } catch (error) {
+      this.logger.error(`Failed to fetch assignments: ${error}`);
+
+      return [];
+    }
+  }
+
+  async getSubmissionStatus(
+    moodleToken: string,
+    moodleId: string,
+    assignId: number,
+  ): Promise<SubmissionStatusDto> {
+    if (!moodleToken || !moodleId) {
+      throw new BadRequestException('Token or user ID are not provided');
+    }
+
+    const data = await this.moodleClient.client<MoodleSubmissionStatusResponse>(
+      getWsFunctionName('getAssignmentSubmissionStatus'),
+      moodleToken,
+      moodleId,
+      { assignid: assignId },
+    );
+
+    const submissionStatus = data?.lastattempt?.submission?.status ?? 'new';
+    const gradingStatus = data?.lastattempt?.gradingstatus;
+    const rawGrade =
+      data?.feedback?.grade?.gradefordisplay ?? data?.feedback?.grade?.grade;
+
+    let grade: string | undefined;
+
+    if (rawGrade !== undefined && rawGrade !== null) {
+      const num = Number(rawGrade);
+
+      grade = !Number.isNaN(num)
+        ? Number.parseFloat(rawGrade).toString()
+        : rawGrade;
+    }
+
+    const finalStatus =
+      gradingStatus === 'graded' ? 'graded' : submissionStatus;
+    const submittedAt = data?.lastattempt?.submission?.timemodified;
+
+    return { status: finalStatus, grade, submittedAt };
+  }
+
+  async saveSubmission(
+    moodleToken: string,
+    assignId: number,
+    text?: string,
+    fileItemId?: number,
+  ): Promise<unknown> {
+    if (!moodleToken) {
+      throw new BadRequestException('Token is not provided');
+    }
+
+    const plugindata: Record<string, unknown> = {};
+
+    if (text !== undefined) {
+      plugindata['onlinetext_editor'] = { text, format: 1, itemid: 0 };
+    }
+
+    if (fileItemId !== undefined) {
+      plugindata['files_filemanager'] = fileItemId;
+    }
+
+    return this.moodleClient.client(
+      getWsFunctionName('saveAssignmentSubmission'),
+      moodleToken,
+      undefined,
+      { assignmentid: assignId, plugindata },
+    );
+  }
+}

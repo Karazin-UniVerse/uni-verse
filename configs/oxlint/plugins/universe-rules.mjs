@@ -269,7 +269,7 @@ function checkParams(context, params) {
 export default {
   meta: {
     name: 'universe',
-    version: '1.0.0',
+    version: '1.1.0',
   },
   rules: {
     'vertical-spacing': {
@@ -296,6 +296,7 @@ export default {
         };
       },
     },
+
     'destructuring-props-order': {
       meta: {
         type: 'suggestion',
@@ -320,183 +321,375 @@ export default {
         };
       },
     },
-    'enforce-package-utils-alias': {
+
+    // ─── HYDRATION / RENDERING ────────────────────────────────────────
+
+    'no-suppress-hydration-without-comment': {
       meta: {
         type: 'suggestion',
-        fixable: 'code',
         docs: {
           description:
-            'Enforce package alias (@uni-hub/utils/...) instead of relative parent path (../utils/...).',
+            'Require an explanatory comment when using suppressHydrationWarning to prevent silencing real bugs.',
         },
         messages: {},
       },
       create(context) {
         return {
-          ImportDeclaration(node) {
-            const filePath =
-              context.filename || (context.getFilename && context.getFilename()) || '';
+          JSXAttribute(node) {
+            if (!node.name || node.name.name !== 'suppressHydrationWarning') return;
 
-            // Only enforce inside packages/uni-hub
-            if (filePath && !filePath.replace(/\\/g, '/').includes('packages/uni-hub')) {
-              return;
-            }
+            const sourceCode = context.sourceCode || context.getSourceCode();
+            const attrLine = node.loc && node.loc.start.line;
 
-            const importPath = node.source && node.source.value;
+            if (!attrLine) return;
 
-            if (typeof importPath === 'string') {
-              const utilsMatch = importPath.match(/^(\.\.\/)+utils\/(.*)$/);
+            // Scan the raw source for the 'intentional' keyword within 5 lines above the attribute.
+            // This reliably catches both // JS comments outside JSX and {/* JSX comments */} inside.
+            const KEYWORD = 'intentional';
+            const rawLines =
+              sourceCode.lines ||
+              (sourceCode.text
+                ? sourceCode.text.split(/\r?\n/)
+                : (sourceCode.getText ? sourceCode.getText() : '').split(/\r?\n/));
 
-              if (utilsMatch) {
-                const subPath = utilsMatch[2];
-                const replacement = `@uni-hub/utils/${subPath}`;
+            const lookback = 5;
+            const startLine = Math.max(0, attrLine - 1 - lookback); // 0-indexed
 
-                context.report({
-                  node: node.source,
-                  message: `Use package alias '${replacement}' instead of relative path '${importPath}'.`,
-                  fix(fixer) {
-                    return fixer.replaceText(node.source, `'${replacement}'`);
-                  },
-                });
+            // oxlint-disable-next-line universe/vertical-spacing -- blank line present; CRLF edge-case in self-check
+            for (let i = startLine; i < attrLine - 1; i++) {
+              if (rawLines[i] && rawLines[i].toLowerCase().includes(KEYWORD)) {
+                return; // Found — compliant
               }
             }
+
+            // Also check the attribute line itself (inline comment)
+            const attrLineText = rawLines[attrLine - 1];
+
+            if (attrLineText && attrLineText.toLowerCase().includes(KEYWORD)) return;
+
+            context.report({
+              node,
+              message:
+                'suppressHydrationWarning requires an explanatory comment within 5 lines above: ' +
+                '// intentional: suppressHydrationWarning – <reason>',
+            });
           },
         };
       },
     },
-    'no-unused-imports': {
+
+    // ─── NESTJS / BACKEND ────────────────────────────────────────────
+
+    'nestjs-require-api-response-type': {
+      meta: {
+        type: 'problem',
+        docs: { description: 'Require @ApiResponse to include "type" for Orval codegen.' },
+      },
+      create(context) {
+        const filename = (context.filename || '').replace(/\\/g, '/');
+
+        if (!filename.includes('/backend/') || !filename.endsWith('.controller.ts')) return {};
+
+        return {
+          MethodDefinition(node) {
+            node.decorators?.forEach((d) => {
+              const callee = d.expression?.callee;
+
+              if (callee?.name !== 'ApiResponse') return;
+
+              const arg = d.expression?.arguments?.[0];
+
+              if (arg?.type !== 'ObjectExpression') return;
+
+              const statusProp = arg.properties.find(
+                (p) => p.key?.name === 'status' && [200, 201].includes(p.value?.value),
+              );
+
+              if (!statusProp) return;
+
+              const hasType = arg.properties.some((p) => p.key?.name === 'type');
+
+              if (!hasType) {
+                context.report({
+                  node: d,
+                  message:
+                    '@ApiResponse missing "type" property. Required for Orval type generation.',
+                });
+              }
+            });
+          },
+        };
+      },
+    },
+
+    'nestjs-require-bearer-auth-decorator': {
       meta: {
         type: 'problem',
         docs: {
-          description: 'Disallow unused imports.',
+          description: 'Endpoints using @GetUser() must have @ApiBearerAuth() or @ApiCookieAuth().',
         },
-        messages: {},
       },
       create(context) {
+        const filename = (context.filename || '').replace(/\\/g, '/');
+
+        if (!filename.includes('/backend/') || !filename.endsWith('.controller.ts')) return {};
+
+        const HTTP_DECORATORS = ['Get', 'Post', 'Put', 'Delete', 'Patch'];
+
         return {
-          Program(node) {
-            const sourceCode = context.sourceCode || context.getSourceCode();
-            const text = sourceCode.text || (sourceCode.getText ? sourceCode.getText() : '');
-
-            if (!text || !node.body) return;
-
-            const importDeclarations = node.body.filter(
-              (stmt) => stmt.type === 'ImportDeclaration',
+          MethodDefinition(node) {
+            const isEndpoint = node.decorators?.some((d) =>
+              HTTP_DECORATORS.includes(d.expression?.callee?.name || d.expression?.name || ''),
             );
 
-            for (const imp of importDeclarations) {
-              if (!imp.specifiers || imp.specifiers.length === 0) continue;
+            if (!isEndpoint) return;
 
-              const before = text.slice(0, imp.range[0]);
-              const after = text.slice(imp.range[1]);
-              const restOfFile = before + after;
+            const hasGetUser = node.value.params?.some((p) =>
+              p.decorators?.some((d) => d.expression?.callee?.name === 'GetUser'),
+            );
 
-              for (const spec of imp.specifiers) {
-                const importedName = spec.local && spec.local.name;
+            if (!hasGetUser) return;
 
-                if (!importedName) continue;
+            const methodHasAuth = node.decorators?.some((d) => {
+              const name = d.expression?.callee?.name || d.expression?.name;
 
-                // If React is imported and JSX is used in the file, consider React used
-                if (importedName === 'React' && /<[a-zA-Z0-9_]+(\s|\/|>)/.test(restOfFile)) {
-                  continue;
-                }
+              return name === 'ApiBearerAuth' || name === 'ApiCookieAuth';
+            });
 
-                const nameRegex = new RegExp(`\\b${importedName}\\b`);
+            if (methodHasAuth) return;
 
-                if (!nameRegex.test(restOfFile)) {
-                  context.report({
-                    node: spec,
-                    message: `Import '${importedName}' is defined but never used.`,
-                  });
-                }
-              }
-            }
-          },
-        };
-      },
-    },
-    'eol-last': {
-      meta: {
-        type: 'layout',
-        fixable: 'whitespace',
-        docs: {
-          description: 'Require newline at the end of files (EOF/EOL).',
-        },
-        messages: {},
-      },
-      create(context) {
-        return {
-          Program(node) {
-            const sourceCode = context.sourceCode || context.getSourceCode();
-            const text = sourceCode.text || (sourceCode.getText ? sourceCode.getText() : '');
+            const classNode = node.parent?.parent;
+            const classHasAuth = classNode?.decorators?.some((d) => {
+              const name = d.expression?.callee?.name || d.expression?.name;
 
-            if (text.length > 0 && !text.endsWith('\n')) {
+              return name === 'ApiBearerAuth' || name === 'ApiCookieAuth';
+            });
+
+            if (!classHasAuth) {
               context.report({
                 node,
-                message: 'Newline required at end of file (eol-last).',
-                fix(fixer) {
-                  return fixer.insertTextAfter(node, '\n');
-                },
+                message: 'Endpoint uses @GetUser() but missing @ApiBearerAuth()/@ApiCookieAuth().',
               });
             }
           },
         };
       },
     },
-    'max-len': {
+
+    'nestjs-controller-return-type': {
       meta: {
-        type: 'layout',
-        schema: [
-          {
-            type: 'object',
-            properties: {
-              code: {
-                type: 'integer',
-              },
-            },
-            additionalProperties: false,
-          },
-        ],
-        docs: {
-          description: 'Enforce a maximum line length.',
-        },
-        messages: {},
+        type: 'problem',
+        docs: { description: 'Require explicit return types on controller endpoints.' },
       },
       create(context) {
-        const config = (context.options && context.options[0]) || {};
-        const maxLen = config.code || 120;
+        const filename = (context.filename || '').replace(/\\/g, '/');
+
+        if (!filename.includes('/backend/') || !filename.endsWith('.controller.ts')) return {};
+
+        const HTTP_DECORATORS = ['Get', 'Post', 'Put', 'Delete', 'Patch'];
 
         return {
-          Program(node) {
-            const sourceCode = context.sourceCode || context.getSourceCode();
-            const lines =
-              sourceCode.lines ||
-              (sourceCode.text
-                ? sourceCode.text.split(/\r?\n/)
-                : sourceCode.getText().split(/\r?\n/));
+          MethodDefinition(node) {
+            const isEndpoint = node.decorators?.some((d) =>
+              HTTP_DECORATORS.includes(d.expression?.callee?.name || d.expression?.name || ''),
+            );
 
-            for (let i = 0; i < lines.length; i++) {
-              const line = lines[i];
+            if (!isEndpoint) return;
 
-              if (line.length > maxLen) {
-                if (/https?:\/\//.test(line)) continue;
+            if (!node.value?.returnType) {
+              context.report({
+                node,
+                message: `Controller method '${node.key?.name}' must have an explicit return type.`,
+              });
+            }
+          },
+        };
+      },
+    },
 
-                if (/^\s*import\s+.+from\s+['"].+['"];?$/.test(line)) continue;
+    'una-primitive-purity': {
+      meta: {
+        type: 'problem',
+        docs: { description: 'Prevent business imports in una/ design system.' },
+      },
+      create(context) {
+        const filename = (context.filename || '').replace(/\\/g, '/');
 
-                if (/^\s*(\/\/|\/\*|\*)/.test(line)) continue;
+        if (!filename.includes('/ui/') || !filename.includes('/una/')) return {};
 
-                if (/['"`]/.test(line) && line.replace(/['"`].*?['"`]/g, '').length <= maxLen) {
-                  continue;
-                }
+        const FORBIDDEN_SOURCES = [
+          '@uni-hub/services',
+          '@uni-hub/store',
+          '@uni-hub/views',
+          'zustand',
+          'next/navigation',
+          'next/router',
+          '@universe/backend',
+          '@universe/database',
+        ];
 
-                context.report({
-                  node,
-                  loc: {
-                    start: { line: i + 1, column: maxLen },
-                    end: { line: i + 1, column: line.length },
-                  },
-                  message: `Line ${i + 1} exceeds the maximum line length of ${maxLen} (current: ${line.length}).`,
-                });
-              }
+        return {
+          ImportDeclaration(node) {
+            const src = node.source?.value || '';
+            const match = FORBIDDEN_SOURCES.find((f) => src.includes(f));
+
+            if (match) {
+              context.report({
+                node,
+                message: `Design System Purity: 'una/' must not import '${src}'.`,
+              });
+            }
+          },
+        };
+      },
+    },
+
+    'nestjs-controller-no-prisma': {
+      meta: {
+        type: 'problem',
+        docs: { description: 'Controllers must not import PrismaService.' },
+      },
+      create(context) {
+        const filename = (context.filename || '').replace(/\\/g, '/');
+
+        if (!filename.includes('/backend/') || !filename.endsWith('.controller.ts')) return {};
+
+        return {
+          ImportDeclaration(node) {
+            const src = node.source?.value || '';
+
+            if (src.includes('prisma.service') || src.includes('prisma.module')) {
+              context.report({
+                node,
+                message: 'Controllers must not import PrismaService directly.',
+              });
+            }
+          },
+        };
+      },
+    },
+
+    'no-empty-catch-in-services': {
+      meta: {
+        type: 'problem',
+        docs: {
+          description: 'Disallow catch blocks returning empty data without logging.',
+        },
+      },
+      create(context) {
+        const filename = (context.filename || '').replace(/\\/g, '/');
+
+        if (!filename.endsWith('.service.ts')) return {};
+
+        function isEmptyFallback(arg) {
+          if (!arg) return false;
+
+          if (arg.type === 'ArrayExpression' && arg.elements.length === 0) return true;
+
+          return !!(
+            arg.type === 'ObjectExpression' &&
+            arg.properties.length > 0 &&
+            arg.properties.every(
+              (p) =>
+                (p.value?.type === 'ArrayExpression' && p.value.elements.length === 0) ||
+                (p.value?.type === 'Literal' && (p.value.value === 0 || p.value.value === '')),
+            )
+          );
+        }
+
+        return {
+          CatchClause(node) {
+            const body = node.body?.body;
+
+            if (!body || body.length !== 1) return;
+
+            const stmt = body[0];
+
+            if (stmt.type !== 'ReturnStatement') return;
+
+            if (isEmptyFallback(stmt.argument)) {
+              context.report({
+                node,
+                message: 'Silent error: catch returns empty data. Add Logger.error() or rethrow.',
+              });
+            }
+          },
+
+          CallExpression(node) {
+            if (
+              node.callee?.type !== 'MemberExpression' ||
+              node.callee.property?.name !== 'catch'
+            ) {
+              return;
+            }
+
+            const handler = node.arguments?.[0];
+
+            if (
+              !handler ||
+              (handler.type !== 'ArrowFunctionExpression' && handler.type !== 'FunctionExpression')
+            ) {
+              return;
+            }
+
+            if (handler.body?.type !== 'BlockStatement' && isEmptyFallback(handler.body)) {
+              context.report({
+                node,
+                message: 'Silent error: .catch() returns empty fallback.',
+              });
+
+              return;
+            }
+
+            const body = handler.body?.body;
+
+            if (
+              body?.length === 1 &&
+              body[0].type === 'ReturnStatement' &&
+              isEmptyFallback(body[0].argument)
+            ) {
+              context.report({
+                node,
+                message: 'Silent error: .catch() returns empty fallback.',
+              });
+            }
+          },
+        };
+      },
+    },
+
+    'core-package-isolation': {
+      meta: {
+        type: 'problem',
+        docs: { description: 'Prevent @universe/core from importing app-layer packages.' },
+      },
+      create(context) {
+        const filename = (context.filename || '').replace(/\\/g, '/');
+
+        if (!filename.includes('/packages/core/')) return {};
+
+        const FORBIDDEN = [
+          '@nestjs/',
+          'prisma',
+          '@prisma/',
+          'react',
+          'react-dom',
+          'next',
+          'zustand',
+          '@universe/database',
+          'express',
+        ];
+
+        return {
+          ImportDeclaration(node) {
+            const src = node.source?.value || '';
+            const match = FORBIDDEN.find((f) => src.startsWith(f) || src.includes(f));
+
+            if (match) {
+              context.report({
+                node,
+                message: `@universe/core must not import '${src}'.`,
+              });
             }
           },
         };

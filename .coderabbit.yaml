@@ -1,79 +1,22 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: 'en-US'
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - 'AGENTS.md'
+      - 'docs/ai/**/*.md'
+  mcp:
+    usage: enabled
 reviews:
+  path_filters:
+    - '!GEMINI.md'
+  auto_review:
+    base_branches:
+      - 'develop'
+      - 'staging'
   path_instructions:
     - path: '**/*.{ts,tsx}'
       instructions: |
-        Code formatting, naming, and vertical spacing rules:
-
-        1. Meaningful Names over Short Abbreviations:
-           - Always use descriptive, self-explanatory names for variables, parameters, and callback arguments.
-           - Avoid single-letter or cryptic abbreviations (e.g. use `course` instead of `c`, `user` instead of `u`, `error` instead of `e`, `response` instead of `res`).
-           
-           Example:
-           ```typescript
-           // Bad:
-           const names = data.map((c: Course) => c.fullname);
-           
-           // Good:
-           const names = data.map((course: Course) => course.fullname);
-           ```
-
-        2. Vertical Spacing (Padding lines between statements):
-           - Maintain clear vertical spacing (empty lines) between logical code blocks:
-             - Between variable/constant declarations and subsequent logic blocks.
-             - Between conditional statements (if/else), loops, and following function calls.
-             - Always keep an empty line before 'return' statements.
-
-           Example:
-           ```typescript
-           // Good:
-           const user = await this.userService.findById(id);
-
-           if (!user) {
-             throw new NotFoundException('User not found');
-           }
-
-           await this.logService.record(id);
-
-           return user;
-           ```
-
-        3. Component Props & Parameter Order:
-           - In type/interface definitions and component destructuring, declare fields without default values first, followed by optional fields and fields with default values.
-           
-           Example:
-           ```typescript
-           // Good:
-           export type ComponentProps = {
-             data: Item[];
-             height?: number;
-             title?: string;
-             variant?: string;
-           };
-
-           export function Component({
-             data,
-             height,
-             title,
-             variant = 'default',
-           }: ComponentProps) { ... }
-           ```
-
-        4. Component Types Extraction:
-           - For complex React UI components with substantial prop interfaces or domain types, extract them into a co-located `<ComponentName>.types.ts` file.
-           - Do not create separate `.types.ts` files for simple utility functions, single helpers, or trivial components to avoid unnecessary fragmentation.
-           - Re-export types from the component file or module index for backwards compatibility.
-           
-           Example:
-           ```typescript
-           // Chart.types.ts
-           export type ChartDatum = { ... };
-           export type ChartProps = { ... };
-
-           // Chart.tsx
-           export type { ChartDatum, ChartProps } from './Chart.types';
-           ```
-        5. Ban Legacy Re-export Shims & Backwards-Compatibility Proxies (No Backtracking):
-           - Never introduce backwards-compatible aliases, proxy re-exports, or transitional wrapper shims when refactoring or moving files (e.g. re-exporting new package members from deprecated paths).
-           - All consumers must be updated directly to new import paths, and obsolete files must be removed completely.
+        Apply the review rubric and output format from docs/ai/review.md.
+        The rules themselves live in AGENTS.md and docs/ai/*.md; do not rely on rules restated here.

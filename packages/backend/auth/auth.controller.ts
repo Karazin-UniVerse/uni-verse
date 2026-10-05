@@ -1,0 +1,175 @@
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiCookieAuth,
+} from '@nestjs/swagger';
+import { AuthService } from './auth.service';
+import { Public } from './decorators/public.decorator';
+import { RtGuard } from './guards/rt.guard';
+import { GetUser } from './decorators/get-user.decorator';
+import type { Response } from 'express';
+import {
+  RegisterDto,
+  LoginDto,
+  AuthResponseDto,
+  LogoutResponseDto,
+  GoogleAuthDto,
+  LinkMoodleDto,
+  GoogleAuthResponseDto,
+} from './dto';
+import { AUTH_ROUTES } from '@universe/core/constants/routes';
+
+@ApiTags('Auth')
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Public()
+  @Post(AUTH_ROUTES.REGISTER)
+  @ApiOperation({ summary: 'Register a new user' })
+  @ApiResponse({
+    status: 201,
+    type: AuthResponseDto,
+    description: 'User successfully created.',
+  })
+  @HttpCode(HttpStatus.CREATED)
+  async register(
+    @Body() dto: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResponseDto> {
+    const tokens = await this.authService.register(dto);
+
+    this.setRefreshTokenCookie(res, tokens.refresh_token);
+
+    return { access_token: tokens.access_token };
+  }
+
+  @Public()
+  @Post(AUTH_ROUTES.LOGIN)
+  @ApiOperation({ summary: 'Login user' })
+  @ApiResponse({
+    status: 200,
+    type: AuthResponseDto,
+    description: 'User successfully logged in.',
+  })
+  @HttpCode(HttpStatus.OK)
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResponseDto> {
+    const tokens = await this.authService.login(dto);
+
+    this.setRefreshTokenCookie(res, tokens.refresh_token);
+
+    return { access_token: tokens.access_token };
+  }
+
+  @Public()
+  @Post(AUTH_ROUTES.GOOGLE)
+  @ApiOperation({ summary: 'Login or register user via Google SSO' })
+  @ApiResponse({
+    status: 200,
+    type: GoogleAuthResponseDto,
+    description: 'User successfully authenticated via Google.',
+  })
+  @HttpCode(HttpStatus.OK)
+  async loginWithGoogle(
+    @Body() dto: GoogleAuthDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<GoogleAuthResponseDto> {
+    const result = await this.authService.loginWithGoogle(dto);
+
+    this.setRefreshTokenCookie(res, result.refresh_token);
+
+    return {
+      access_token: result.access_token,
+      isLinked: result.isLinked,
+    };
+  }
+
+  @ApiBearerAuth()
+  @Post(AUTH_ROUTES.MOODLE_LINK)
+  @ApiOperation({ summary: 'Link Moodle account to authenticated user' })
+  @ApiResponse({
+    status: 200,
+    type: GoogleAuthResponseDto,
+    description: 'Moodle account successfully linked.',
+  })
+  @HttpCode(HttpStatus.OK)
+  async linkMoodle(
+    @GetUser('sub') userId: string,
+    @Body() dto: LinkMoodleDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<GoogleAuthResponseDto> {
+    const result = await this.authService.linkMoodleAccount(userId, dto);
+
+    this.setRefreshTokenCookie(res, result.refresh_token);
+
+    return {
+      access_token: result.access_token,
+      isLinked: result.isLinked,
+    };
+  }
+
+  @ApiBearerAuth()
+  @Post(AUTH_ROUTES.LOGOUT)
+  @ApiOperation({ summary: 'Logout user' })
+  @ApiResponse({
+    status: 200,
+    type: LogoutResponseDto,
+    description: 'User successfully logged out.',
+  })
+  @HttpCode(HttpStatus.OK)
+  async logout(
+    @GetUser('sub') userId: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<LogoutResponseDto> {
+    await this.authService.logout(userId);
+    res.clearCookie('refreshToken');
+
+    return { message: 'Logged out successfully' };
+  }
+
+  @Public()
+  @UseGuards(RtGuard)
+  @ApiCookieAuth()
+  @Post(AUTH_ROUTES.REFRESH)
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiResponse({
+    status: 200,
+    type: AuthResponseDto,
+    description: 'Token successfully refreshed.',
+  })
+  @HttpCode(HttpStatus.OK)
+  async refreshTokens(
+    @GetUser('sub') userId: string,
+    @GetUser('refreshToken') refreshToken: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResponseDto> {
+    const tokens = await this.authService.refreshTokens(userId, refreshToken);
+
+    this.setRefreshTokenCookie(res, tokens.refresh_token);
+
+    return { access_token: tokens.access_token };
+  }
+
+  private setRefreshTokenCookie(res: Response, refreshToken: string) {
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+  }
+}

@@ -3,10 +3,16 @@ import styles from './Skeleton.module.scss';
 
 import type { SkeletonProps } from './Skeleton.types';
 
-export const Skeleton: React.FC<SkeletonProps> = ({ width, height, className, style }) => (
+export const Skeleton: React.FC<SkeletonProps> = ({
+  width,
+  height,
+  borderRadius,
+  className,
+  style,
+}) => (
   <div
     className={`${styles.skeleton} ${className ?? ''}`}
-    style={{ width, height, ...style }}
+    style={{ width, height, borderRadius, ...style }}
     aria-hidden
   />
 );

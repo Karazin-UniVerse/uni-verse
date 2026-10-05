@@ -1,0 +1,125 @@
+import { describe, it, expect } from 'vitest';
+import React from 'react';
+import { renderToString } from 'react-dom/server';
+import { LanguageProvider, useLanguage, getLocaleTag, LOCALE_TAGS } from './LanguageContext';
+import { TRANSLATIONS, uk, en } from './translations';
+import { LanguageSwitcher } from '../components/common/LanguageSwitcher';
+import { ThemeSwitcher } from '../theme/ThemeSwitcher';
+import { ThemeProvider } from '../theme/ThemeContext';
+
+describe('LanguageContext and translations', () => {
+  it('has consistent translation keys for uk and en', () => {
+    const ukKeys = Object.keys(uk).sort();
+    const enKeys = Object.keys(en).sort();
+
+    expect(ukKeys).toEqual(enKeys);
+    expect(Object.keys(TRANSLATIONS.uk).sort()).toEqual(ukKeys);
+    expect(Object.keys(TRANSLATIONS.en).sort()).toEqual(enKeys);
+  });
+
+  it('renders default Ukrainian language in SSR', () => {
+    const Consumer = () => {
+      const { language, formatMessage } = useLanguage();
+
+      return React.createElement(
+        'div',
+        null,
+        React.createElement('span', { id: 'lang' }, language),
+        React.createElement('span', { id: 'text' }, formatMessage('lang.uk')),
+      );
+    };
+
+    const tree = React.createElement(LanguageProvider, null, React.createElement(Consumer));
+    const html = renderToString(tree);
+
+    expect(html).toContain('uk');
+    expect(html).toContain('Українська');
+  });
+
+  it('renders LanguageSwitcher trigger button in SSR', () => {
+    const tree = React.createElement(
+      LanguageProvider,
+      null,
+      React.createElement(LanguageSwitcher, { showLabel: true }),
+    );
+    const html = renderToString(tree);
+
+    expect(html).toContain('Українська');
+    expect(html).toContain('button');
+  });
+
+  it('renders translated theme name in ThemeSwitcher', () => {
+    const tree = React.createElement(
+      LanguageProvider,
+      null,
+      React.createElement(
+        ThemeProvider,
+        null,
+        React.createElement(ThemeSwitcher, { compact: true, showLabel: true }),
+      ),
+    );
+    const html = renderToString(tree);
+
+    expect(html).toContain('Світла');
+  });
+
+  it('falls back to key when translation is missing', () => {
+    const Consumer = () => {
+      const { formatMessage } = useLanguage();
+
+      return React.createElement('span', null, formatMessage('missing.key' as any));
+    };
+
+    const html = renderToString(React.createElement(Consumer));
+
+    expect(html).toContain('missing.key');
+  });
+
+  it('interpolates placeholders with provided values', () => {
+    const Consumer = () => {
+      const { formatMessage } = useLanguage();
+
+      return React.createElement(
+        'div',
+        null,
+        React.createElement(
+          'span',
+          { id: 'count' },
+          formatMessage('quickActions.pendingCount', { count: 5 }),
+        ),
+        React.createElement(
+          'span',
+          { id: 'assignment' },
+          formatMessage('recentGrades.viewAssignment', { name: 'Lab 1' }),
+        ),
+      );
+    };
+
+    const tree = React.createElement(LanguageProvider, null, React.createElement(Consumer));
+    const html = renderToString(tree);
+
+    expect(html).toContain('5 до виконання');
+    expect(html).toContain('Перейти до завдання: Lab 1');
+  });
+
+  it('maps language codes to BCP 47 locale tags', () => {
+    expect(getLocaleTag('uk')).toBe('uk-UA');
+    expect(getLocaleTag('en')).toBe('en-US');
+    expect(LOCALE_TAGS.uk).toBe('uk-UA');
+    expect(LOCALE_TAGS.en).toBe('en-US');
+    expect(getLocaleTag('unknown' as any)).toBe('uk-UA');
+  });
+
+  it('exposes localeTag in LanguageContext', () => {
+    const Consumer = () => {
+      const { localeTag } = useLanguage();
+
+      return React.createElement('span', { id: 'locale' }, localeTag);
+    };
+
+    const tree = React.createElement(LanguageProvider, null, React.createElement(Consumer));
+    const html = renderToString(tree);
+
+    expect(html).toContain('uk-UA');
+  });
+});

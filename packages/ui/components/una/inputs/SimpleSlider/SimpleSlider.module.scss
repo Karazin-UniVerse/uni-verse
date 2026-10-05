@@ -22,10 +22,12 @@
     height: 16px;
     border-radius: var(--border-radius-full, 50%);
     background: var(--accent-primary, #164bd7);
-    border: 2px solid var(--bg-surface, #ffffff);
-    box-shadow: var(--box-shadow-small, 0 1px 3px rgba(0,0,0,0.15));
+    border: 2px solid var(--bg-surface, #fff);
+    box-shadow: var(--box-shadow-small, 0 1px 3px rgb(0 0 0 / 15%));
     cursor: pointer;
-    transition: transform var(--transition-fast, 0.1s) ease, background-color var(--transition-fast, 0.1s) ease;
+    transition:
+      transform var(--transition-fast, 0.1s) ease,
+      background-color var(--transition-fast, 0.1s) ease;
 
     &:hover {
       transform: scale(1.2);
@@ -38,10 +40,12 @@
     height: 16px;
     border-radius: var(--border-radius-full, 50%);
     background: var(--accent-primary, #164bd7);
-    border: 2px solid var(--bg-surface, #ffffff);
-    box-shadow: var(--box-shadow-small, 0 1px 3px rgba(0,0,0,0.15));
+    border: 2px solid var(--bg-surface, #fff);
+    box-shadow: var(--box-shadow-small, 0 1px 3px rgb(0 0 0 / 15%));
     cursor: pointer;
-    transition: transform var(--transition-fast, 0.1s) ease, background-color var(--transition-fast, 0.1s) ease;
+    transition:
+      transform var(--transition-fast, 0.1s) ease,
+      background-color var(--transition-fast, 0.1s) ease;
 
     &:hover {
       transform: scale(1.2);
@@ -50,10 +54,11 @@
 
   &:focus-visible {
     &::-webkit-slider-thumb {
-      box-shadow: 0 0 0 var(--focus-ring-width, 3px) var(--focus-ring-color, rgba(22, 75, 215, 0.35));
+      box-shadow: 0 0 0 var(--focus-ring-width, 3px) var(--focus-ring-color, rgb(22 75 215 / 35%));
     }
+
     &::-moz-range-thumb {
-      box-shadow: 0 0 0 var(--focus-ring-width, 3px) var(--focus-ring-color, rgba(22, 75, 215, 0.35));
+      box-shadow: 0 0 0 var(--focus-ring-width, 3px) var(--focus-ring-color, rgb(22 75 215 / 35%));
     }
   }
 }
@@ -62,7 +67,7 @@
   .slider {
     height: 4px;
     border-radius: 0;
-    background: rgba(255, 0, 85, 0.3);
+    background: rgb(255 0 85 / 30%);
 
     &::-webkit-slider-thumb {
       border-radius: 0;

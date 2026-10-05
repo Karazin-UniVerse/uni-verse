@@ -12,3 +12,7 @@ coverage
 /.idea/
 /packages/uni-hub/repomix-output.xml
 *.tsbuildinfo
+
+ux_ui_audit.md
+.playwright/
+.playwright-cli/

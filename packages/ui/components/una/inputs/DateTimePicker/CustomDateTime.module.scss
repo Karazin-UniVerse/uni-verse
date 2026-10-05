@@ -8,6 +8,8 @@
   top: calc(100% + var(--space-8));
   left: 0;
   z-index: 100;
+  margin: 0;
+  padding: 0;
   font-family: var(--font-family-base), sans-serif;
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
@@ -38,6 +40,7 @@
   padding: var(--space-4);
   font-weight: bold;
   border-radius: var(--border-radius-small);
+
   &:hover {
     color: var(--accent-primary);
     background-color: var(--bg-hover);
@@ -100,6 +103,7 @@
     background-color: var(--accent-primary);
     color: var(--accent-text-on-primary);
     font-weight: bold;
+
     &:hover {
       background-color: var(--accent-primary);
     }
@@ -133,9 +137,11 @@
   &::-webkit-scrollbar {
     width: 6px;
   }
+
   &::-webkit-scrollbar-track {
     background: transparent;
   }
+
   &::-webkit-scrollbar-thumb {
     background-color: var(--border-color);
     border-radius: 3px;
@@ -162,6 +168,7 @@
     background-color: var(--accent-primary);
     color: var(--accent-text-on-primary);
     font-weight: bold;
+
     &:hover {
       background-color: var(--accent-primary);
       color: var(--accent-text-on-primary);
@@ -171,8 +178,12 @@
 
 /* Sizes */
 .size-small {
-  .header { font-size: var(--font-sm); }
-  .dayName, .day {
+  .header {
+    font-size: var(--font-sm);
+  }
+
+  .dayName,
+  .day {
     width: 1.5rem;
     height: 1.5rem;
     font-size: var(--font-sm);
@@ -180,8 +191,12 @@
 }
 
 .size-medium {
-  .header { font-size: var(--font-md); }
-  .dayName, .day {
+  .header {
+    font-size: var(--font-md);
+  }
+
+  .dayName,
+  .day {
     width: 2rem;
     height: 2rem;
     font-size: var(--font-md);
@@ -189,8 +204,12 @@
 }
 
 .size-large {
-  .header { font-size: var(--font-lg); }
-  .dayName, .day {
+  .header {
+    font-size: var(--font-lg);
+  }
+
+  .dayName,
+  .day {
     width: 2.5rem;
     height: 2.5rem;
     font-size: var(--font-lg);

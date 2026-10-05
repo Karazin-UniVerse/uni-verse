@@ -8,8 +8,8 @@
   "scripts": {
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "build": "pnpm db:generate && nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "build": "pnpm --filter @universe/core build && pnpm db:generate && nest build",
+    "format": "prettier --write \"**/*.ts\" \"test/**/*.ts\"",
     "dev": "nest start --watch",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -24,54 +24,59 @@
     "test:e2e": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@nestjs/common": "^12.0.1",
-    "@nestjs/config": "^12.0.0",
-    "@nestjs/core": "^12.0.1",
-    "@nestjs/jwt": "^12.0.1",
+    "@nestjs/common": "^12.1.0",
+    "@nestjs/config": "^12.0.1",
+    "@nestjs/core": "^12.1.0",
+    "@nestjs/jwt": "^12.0.2",
     "@nestjs/passport": "^12.0.0",
-    "@nestjs/platform-express": "^12.0.1",
-    "@nestjs/swagger": "^12.0.1",
-    "@prisma/client": "5.10.0",
+    "@nestjs/platform-express": "^12.1.0",
+    "@nestjs/swagger": "^12.0.2",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "@universe/core": "workspace:*",
     "@universe/database": "workspace:*",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "cookie-parser": "^1.4.7",
-    "morgan": "^1.12.0",
+    "google-auth-library": "^11.1.0",
+    "morgan": "^1.12.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "pg": "^8.13.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.7",
-    "@eslint/js": "^9.18.0",
-    "@nestjs/cli": "^12.0.0",
-    "@nestjs/schematics": "^12.0.0",
-    "@nestjs/testing": "^12.0.1",
+    "@eslint/js": "^10.0.1",
+    "@nestjs/cli": "^12.0.7",
+    "@nestjs/schematics": "^12.0.5",
+    "@nestjs/testing": "^12.1.0",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/morgan": "^1.9.10",
-    "@types/node": "^24.0.0",
+    "@types/node": "^25.9.7",
     "@types/passport-jwt": "^4.0.1",
+    "@types/pg": "^8.11.11",
     "@types/supertest": "^7.0.0",
-    "eslint": "^9.18.0",
+    "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^17.12.0",
-    "jest": "^30.5.1",
-    "prettier": "^3.4.2",
-    "prisma": "^5.10.0",
+    "jest": "^30.5.2",
+    "prettier": "^3.9.9",
+    "prisma": "^7.10.0",
     "source-map-support": "^0.5.21",
-    "supertest": "^7.0.0",
-    "ts-jest": "^29.2.5",
+    "supertest": "^7.3.0",
+    "ts-jest": "^29.4.13",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.7.3",
-    "typescript-eslint": "^8.69.0"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.70.1"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -79,18 +84,34 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
+    "rootDir": ".",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "moduleNameMapper": {
-      "^src/(.*)$": "<rootDir>/$1"
+      "^@universe/core/(.*)$": "<rootDir>/../core/$1",
+      "^@universe/core$": "<rootDir>/../core/index.ts",
+      "^@core/(.*)$": "<rootDir>/../core/$1",
+      "^@core$": "<rootDir>/../core/index.ts"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.(t|j)s",
+      "!dist/**",
+      "!coverage/**",
+      "!test/**",
+      "!node_modules/**",
+      "!prisma.config.ts",
+      "!main.ts",
+      "!**/*.module.ts",
+      "!**/*.dto.ts",
+      "!types/**"
     ],
-    "coverageDirectory": "../coverage",
+    "coverageReporters": [
+      "text",
+      "lcovonly"
+    ],
+    "coverageDirectory": "./coverage",
     "testEnvironment": "node"
   }
 }

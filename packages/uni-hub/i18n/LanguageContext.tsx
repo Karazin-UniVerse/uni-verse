@@ -1,0 +1,151 @@
+'use client';
+
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+} from 'react';
+import { TRANSLATIONS, type AppLanguage, type TranslationKey, getLocaleTag } from './translations';
+
+export { LOCALE_TAGS, getLocaleTag } from './translations';
+
+const STORAGE_KEY = 'universe-lang';
+
+type LanguageContextValue = {
+  language: AppLanguage;
+  localeTag: string;
+  setLanguage: (lang: AppLanguage) => void;
+  formatMessage: (key: TranslationKey, values?: Record<string, string | number>) => string;
+};
+
+const LanguageContext = createContext<LanguageContextValue | null>(null);
+
+const subscribeToLanguage = (callback: () => void) => {
+  if (typeof window === 'undefined') {
+    return () => {};
+  }
+
+  window.addEventListener('storage', callback);
+  window.addEventListener('language-change', callback);
+
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener('language-change', callback);
+  };
+};
+
+let inMemoryLanguage: AppLanguage = 'uk';
+let isStorageAvailable = true;
+
+const getLanguageSnapshot = (): AppLanguage => {
+  if (typeof window === 'undefined') {
+    return 'uk';
+  }
+
+  if (!isStorageAvailable) {
+    return inMemoryLanguage;
+  }
+
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+
+    if (stored === 'uk' || stored === 'en') {
+      inMemoryLanguage = stored;
+
+      return stored;
+    }
+  } catch {
+    isStorageAvailable = false;
+
+    return inMemoryLanguage;
+  }
+
+  return inMemoryLanguage;
+};
+
+const getLanguageServerSnapshot = (): AppLanguage => 'uk';
+
+export const LanguageProvider: React.FC<Readonly<{ children: React.ReactNode }>> = ({
+  children,
+}) => {
+  const language = useSyncExternalStore(
+    subscribeToLanguage,
+    getLanguageSnapshot,
+    getLanguageServerSnapshot,
+  );
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = language;
+    }
+  }, [language]);
+
+  const setLanguage = useCallback((next: AppLanguage) => {
+    if (typeof window !== 'undefined') {
+      inMemoryLanguage = next;
+
+      try {
+        localStorage.setItem(STORAGE_KEY, next);
+        isStorageAvailable = true;
+      } catch {
+        isStorageAvailable = false;
+      }
+
+      window.dispatchEvent(new Event('language-change'));
+    }
+  }, []);
+
+  const formatMessage = useCallback(
+    (key: TranslationKey, values?: Record<string, string | number>): string => {
+      const dict = TRANSLATIONS[language] || TRANSLATIONS.uk;
+      const template = dict[key] || TRANSLATIONS.uk[key] || key;
+
+      if (!values) {
+        return template;
+      }
+
+      return template.replace(/\{(\w+)\}/g, (match, paramKey) => {
+        return paramKey in values ? String(values[paramKey]) : match;
+      });
+    },
+    [language],
+  );
+
+  const value = useMemo(
+    () => ({
+      language,
+      localeTag: getLocaleTag(language),
+      setLanguage,
+      formatMessage,
+    }),
+    [language, setLanguage, formatMessage],
+  );
+
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
+};
+
+const DEFAULT_CONTEXT: LanguageContextValue = {
+  language: 'uk',
+  localeTag: 'uk-UA',
+  setLanguage: () => {},
+  formatMessage: (key: TranslationKey, values?: Record<string, string | number>): string => {
+    const template = TRANSLATIONS.uk[key] || key;
+
+    if (!values) {
+      return template;
+    }
+
+    return template.replace(/\{(\w+)\}/g, (match, paramKey) => {
+      return paramKey in values ? String(values[paramKey]) : match;
+    });
+  },
+};
+
+export function useLanguage(): LanguageContextValue {
+  const context = useContext(LanguageContext);
+
+  return context ?? DEFAULT_CONTEXT;
+}

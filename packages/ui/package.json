@@ -4,12 +4,14 @@
   "private": true,
   "scripts": {
     "lint": "oxlint",
-    "typecheck": "echo 'No typecheck yet'",
+    "typecheck": "tsc --noEmit",
     "build": "echo 'No build step for ui yet'",
+    "test": "vitest run --config vitest.unit.config.mts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
   "main": "./index.ts",
+  "types": "./index.ts",
   "exports": {
     ".": "./index.ts",
     "./una": "./components/una/index.ts",
@@ -19,8 +21,9 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
-    "lucide-react": "^1.39.0",
-    "sass": "^1.103.1"
+    "lucide-react": "^1.48.0",
+    "recharts": "^3.10.1",
+    "sass": "^1.105.0"
   },
   "peerDependencies": {
     "react": "^19.2.8",
@@ -33,12 +36,12 @@
     "@storybook/addon-mcp": "^10.6.0",
     "@storybook/addon-vitest": "^10.5.10",
     "@storybook/react-vite": "^10.5.10",
-    "@types/react": "^19.2.18",
-    "@vitest/browser-playwright": "^5.0.0",
-    "@vitest/coverage-v8": "^5.0.0",
-    "playwright": "^1.62.1",
+    "@types/react": "^19.3.0",
+    "@vitest/browser-playwright": "^5.0.2",
+    "@vitest/coverage-v8": "^5.0.2",
+    "playwright": "^1.63.0",
     "storybook": "^10.5.10",
-    "typescript": "^5.0.0",
-    "vitest": "^5.0.0"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.2"
   }
 }

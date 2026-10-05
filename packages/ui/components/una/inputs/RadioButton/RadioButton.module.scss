@@ -8,7 +8,9 @@
   outline: none;
   cursor: pointer;
   position: relative;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
   margin: 0;
   background-color: var(--bg-surface);
 
@@ -21,7 +23,9 @@
     width: var(--space-12);
     height: var(--space-12);
     border-radius: var(--border-radius-full);
-    transition: transform var(--transition-fast), background-color var(--transition-fast);
+    transition:
+      transform var(--transition-fast),
+      background-color var(--transition-fast);
   }
 
   &:focus-visible {
@@ -37,6 +41,7 @@
     opacity: 0.6;
     border-color: var(--neutral-text-disabled);
     background-color: var(--neutral-surface);
+
     &::after {
       background-color: var(--neutral-text-disabled);
     }
@@ -51,6 +56,7 @@
 
   &:checked:not(:disabled) {
     border-color: var(--accent-primary);
+
     &::after {
       background-color: var(--accent-primary);
     }
@@ -58,6 +64,7 @@
 
   &:checked:hover:not(:disabled) {
     border-color: var(--accent-primary-hover);
+
     &::after {
       background-color: var(--accent-primary-hover);
     }
@@ -72,6 +79,7 @@
 
   &:checked:not(:disabled) {
     border-color: var(--neutral-text-primary);
+
     &::after {
       background-color: var(--neutral-text-primary);
     }
@@ -79,6 +87,7 @@
 
   &:checked:hover:not(:disabled) {
     border-color: var(--neutral-text-secondary);
+
     &::after {
       background-color: var(--neutral-text-secondary);
     }

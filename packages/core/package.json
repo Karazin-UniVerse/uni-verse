@@ -1,0 +1,43 @@
+{
+  "name": "@universe/core",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "lint": "oxlint",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test"
+  },
+  "main": "./dist/types/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/types/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/types/index.js"
+    },
+    "./types/*": {
+      "types": "./dist/types/*.d.ts",
+      "default": "./dist/types/*.js"
+    },
+    "./constants/*": {
+      "types": "./dist/constants/*.d.ts",
+      "default": "./dist/constants/*.js"
+    },
+    "./utils/*": {
+      "types": "./dist/utils/*.d.ts",
+      "default": "./dist/utils/*.js"
+    },
+    "./auth": {
+      "types": "./dist/auth.d.ts",
+      "default": "./dist/auth.js"
+    }
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  },
+  "type": "module"
+}
