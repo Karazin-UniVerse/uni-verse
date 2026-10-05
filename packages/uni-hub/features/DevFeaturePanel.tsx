@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { SlidersHorizontal, X, RotateCcw } from 'lucide-react';
-import { Button, Tag } from '@una';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import { SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { Button, Tag, Popover } from '@una';
 import type { FeatureFlagKey } from '@core/constants/features';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { useFeatureControls } from './FeatureToggleContext';
-import { useDevPanelModal } from './useDevPanelModal';
 import styles from './DevFeaturePanel.module.scss';
 
 interface FeatureItemConfig {
@@ -38,19 +37,38 @@ export const DevFeaturePanel: React.FC = () => {
   const { formatMessage } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [isReset, setIsReset] = useState(false);
-  const panelRef = useRef<HTMLDialogElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const popoverId = useId();
 
   const { flags, activeOverrides, setFeatureOverride, resetFeatureOverrides, isOverridden } =
     useFeatureControls();
 
   const overrideCount = Object.keys(activeOverrides).length;
 
-  const { handleToggle, handleClose } = useDevPanelModal({
-    isOpen,
-    setIsOpen,
-    panelRef,
-  });
+  const handleToggle = (): void => {
+    setIsOpen((previous) => !previous);
+  };
+
+  const handleClose = (): void => {
+    setIsOpen(false);
+  };
+
+  // Global toggle shortcut (Ctrl+Shift+F)
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        setIsOpen((previous) => !previous);
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -78,7 +96,7 @@ export const DevFeaturePanel: React.FC = () => {
   };
 
   return (
-    <div className={styles.containerWrap}>
+    <div className={styles.containerWrap} ref={anchorRef}>
       <Button
         type="button"
         variant="secondary"
@@ -87,86 +105,76 @@ export const DevFeaturePanel: React.FC = () => {
         onClick={handleToggle}
         aria-label={formatMessage('devPanel.openButton')}
         title={`${formatMessage('devPanel.title')} (Ctrl+Shift+F)`}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-controls={popoverId}
         className={styles.headerButton}
       >
         <SlidersHorizontal size={18} />
         {overrideCount > 0 && <span className={styles.overrideBadge}>{overrideCount}</span>}
       </Button>
 
-      {isOpen && (
-        <dialog
-          ref={panelRef}
-          className={styles.panelOverlay}
-          aria-label={formatMessage('devPanel.title')}
-          onCancel={(event) => {
-            event.preventDefault();
-            handleClose();
-          }}
-          onClose={handleClose}
-        >
-          <div className={styles.panelHeader}>
-            <div className={styles.panelTitleGroup}>
-              <SlidersHorizontal size={16} />
-              <h4>{formatMessage('devPanel.title')}</h4>
-              <Tag tone="info">{formatMessage('devPanel.devTag')}</Tag>
-            </div>
-            <button
-              type="button"
-              className={styles.closeButton}
-              onClick={handleClose}
-              aria-label={formatMessage('devPanel.closeButton')}
-            >
-              <X size={16} />
-            </button>
+      <Popover
+        open={isOpen}
+        onClose={handleClose}
+        anchorRef={anchorRef}
+        placement="bottom-end"
+        width={360}
+        title={
+          <div className={styles.panelTitleGroup}>
+            <SlidersHorizontal size={16} />
+            <span>{formatMessage('devPanel.title')}</span>
+            <Tag tone="info">{formatMessage('devPanel.devTag')}</Tag>
           </div>
+        }
+        closeLabel={formatMessage('devPanel.closeButton')}
+      >
+        <div className={styles.panelBody}>
+          {FEATURE_ITEMS.map((item) => {
+            const enabled = Boolean(flags[item.key]);
+            const overridden = isOverridden(item.key);
+            const label = formatMessage(item.labelKey);
 
-          <div className={styles.panelBody}>
-            {FEATURE_ITEMS.map((item) => {
-              const enabled = Boolean(flags[item.key]);
-              const overridden = isOverridden(item.key);
-              const label = formatMessage(item.labelKey);
-
-              return (
-                <div key={item.key} className={styles.toggleRow}>
-                  <div className={styles.toggleInfo}>
-                    <div className={styles.toggleLabel}>
-                      <span>{label}</span>
-                      {overridden && (
-                        <Tag tone="warning">{formatMessage('devPanel.overrideTag')}</Tag>
-                      )}
-                    </div>
-                    <span className={styles.toggleDescription}>
-                      {formatMessage(item.descriptionKey)}
-                    </span>
+            return (
+              <div key={item.key} className={styles.toggleRow}>
+                <div className={styles.toggleInfo}>
+                  <div className={styles.toggleLabel}>
+                    <span>{label}</span>
+                    {overridden && (
+                      <Tag tone="warning">{formatMessage('devPanel.overrideTag')}</Tag>
+                    )}
                   </div>
-                  <label className={styles.switch}>
-                    <input
-                      type="checkbox"
-                      checked={enabled}
-                      onChange={(event) => handleFeatureToggle(item.key, event.target.checked)}
-                      aria-label={label}
-                    />
-                    <span className={styles.slider} />
-                  </label>
+                  <span className={styles.toggleDescription}>
+                    {formatMessage(item.descriptionKey)}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
+                <label className={styles.switch}>
+                  <input
+                    type="checkbox"
+                    checked={enabled}
+                    onChange={(event) => handleFeatureToggle(item.key, event.target.checked)}
+                    aria-label={label}
+                  />
+                  <span className={styles.slider} />
+                </label>
+              </div>
+            );
+          })}
+        </div>
 
-          <div className={styles.panelFooter}>
-            <Button
-              type="button"
-              variant="secondary"
-              size="small"
-              onClick={handleReset}
-              disabled={overrideCount === 0}
-            >
-              <RotateCcw size={14} className={styles.btnIcon} />
-              {isReset ? formatMessage('devPanel.resetSuccess') : formatMessage('devPanel.reset')}
-            </Button>
-          </div>
-        </dialog>
-      )}
+        <div className={styles.panelFooter}>
+          <Button
+            type="button"
+            variant="secondary"
+            size="small"
+            onClick={handleReset}
+            disabled={overrideCount === 0}
+          >
+            <RotateCcw size={14} className={styles.btnIcon} />
+            {isReset ? formatMessage('devPanel.resetSuccess') : formatMessage('devPanel.reset')}
+          </Button>
+        </div>
+      </Popover>
     </div>
   );
 };

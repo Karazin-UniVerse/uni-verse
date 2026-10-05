@@ -4,6 +4,7 @@ export * from './Empty';
 export * from './Form';
 export * from './inputs';
 export * from './Modal';
+export * from './Popover';
 export * from './ProgressBar';
 export * from './Select';
 export * from './Skeleton';

@@ -1,5 +1,7 @@
-import React, { useId } from 'react';
+import React, { useId, useRef } from 'react';
 import { X } from 'lucide-react';
+import { useClickOutside } from '../../../hooks/useClickOutside';
+import { useEscapeKey } from '../../../hooks/useEscapeKey';
 import type { ModalProps } from './Modal.types';
 import { useModal } from './useModal';
 import styles from './Modal.module.scss';
@@ -21,12 +23,22 @@ export const Modal: React.FC<ModalProps> = ({
   width = 700,
 }) => {
   const titleId = useId();
+  const localDialogRef = useRef<HTMLDivElement>(null);
 
-  const { dialogRef, handleOverlayClick, handleKeyDown } = useModal({
+  useClickOutside(localDialogRef, onClose, {
+    enabled: open && closeOnClickOutside,
+  });
+
+  useEscapeKey(onClose, {
+    enabled: open && closeOnEscape,
+  });
+
+  const { dialogRef, handleKeyDown } = useModal({
     open,
     onClose,
-    closeOnClickOutside,
-    closeOnEscape,
+    dialogRef: localDialogRef,
+    closeOnClickOutside: false,
+    closeOnEscape: false,
     lockScroll,
     restoreFocus,
     trapFocus,
@@ -40,13 +52,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div className={styles.overlay}>
-      <button
-        type="button"
-        className={styles.backdrop}
-        onClick={handleOverlayClick}
-        tabIndex={-1}
-        aria-hidden="true"
-      />
+      <div className={styles.backdrop} aria-hidden="true" />
       <div
         ref={dialogRef as React.RefObject<HTMLDivElement>}
         className={`${styles.dialog} ${className ?? ''}`}
