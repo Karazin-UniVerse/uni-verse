@@ -35,16 +35,31 @@
   user-select: none;
   -webkit-user-select: none;
 
-  :global(.recharts-wrapper),
-  :global(.recharts-surface),
-  :global(svg) {
+  :global(.recharts-wrapper) {
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
+
+    &:focus:not(:focus-visible) {
+      outline: none;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
+      border-radius: var(--border-radius-medium);
+    }
+  }
+
+  :global(.recharts-surface),
+  :global(.recharts-bar-rectangle),
+  :global(.recharts-rectangle),
+  :global(svg),
+  :global(rect),
+  :global(path) {
     outline: none;
 
-    &:focus,
-    &:focus-visible {
+    &:focus:not(:focus-visible) {
       outline: none;
     }
   }

@@ -185,11 +185,7 @@ export function Chart({
     }
 
     return (
-      <BarChart
-        accessibilityLayer={false}
-        data={chartData}
-        margin={{ top: 4, right: 12, left: 4, bottom: 4 }}
-      >
+      <BarChart data={chartData} margin={{ top: 4, right: 12, left: 4, bottom: 4 }}>
         <CartesianGrid stroke={theme.grid} strokeDasharray="3 3" vertical={false} />
         <XAxis
           dataKey="name"
