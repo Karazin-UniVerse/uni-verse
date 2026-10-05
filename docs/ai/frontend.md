@@ -4,19 +4,22 @@
 
 Prioritize React Server Components. Use client components (`"use client"`) only when interactivity or browser APIs (`useState`, `useEffect`, `window`) are required.
 
+- Components in `packages/ui` stay usable as Server Components. Put `"use client"` only on the part that needs interactivity, and compose the rest as `children` of that client wrapper. Before adding `"use client"` to an app component, check that it really needs state, effects or browser APIs.
+
 ## Component decomposition
 
 - Components over ~150-200 lines, or with several distinct UI sections (cards, grids, feeds, action panels), MUST be split into focused subcomponents. Examples: `StudentCard`, `StatCardGrid`, `UpcomingEventsList`; `DeanContactModal` into `DeanContactInfo` and `DeanTopicChips`.
 - Complex stateful logic, data fetching, localStorage caching and lifecycle listeners MUST be extracted into custom hooks (for example `useDashboardData`, `useAssignmentStatuses`).
 - Keep pages and tab views declarative and thin: layout composition only.
 - Never let a component become a monolith that mixes data fetching, caching, several UI sections and inline business math.
-- Helper placement rules: [code-style](code-style.md#helpers-placement).
+- Helper placement rules: [code-style](code-style.md#reuse-before-writing-dry).
 
 ## Localization (i18n)
 
 - Zero hardcoded strings in the UI. All user-facing text (headings, button labels, tooltips, placeholders, toast notifications, aria-labels) goes through translation keys: `useLanguage().formatMessage('some.key')`.
 - Define every key in both `packages/uni-hub/i18n/locales/uk.ts` and `packages/uni-hub/i18n/locales/en.ts`, satisfying `Record<TranslationKey, string>`. Keep the two files in sync.
 - `@universe/ui` components stay language-agnostic: no hardcoded Ukrainian or English text. Accessibility labels come in as props (for example `closeLabel?: string`), and the consumer supplies the localized value.
+- Dynamic values go through placeholders in the translation string and the `values` argument: `'Go to assignment: {name}'` with `formatMessage('recentGrades.viewAssignment', { name })`. Never concatenate strings around `formatMessage`. Keep one translation function name; do not add aliases such as `t`.
 
 ## Responsive breakpoints
 
