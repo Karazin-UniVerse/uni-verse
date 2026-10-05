@@ -6,7 +6,12 @@ export type ModalProps = {
   open: boolean;
   ariaLabel?: string;
   className?: string;
-  title?: ReactNode;
-  width?: number | string;
   closeLabel?: string;
+  title?: ReactNode;
+  closeOnClickOutside?: boolean;
+  closeOnEscape?: boolean;
+  lockScroll?: boolean;
+  restoreFocus?: boolean;
+  trapFocus?: boolean;
+  width?: number | string;
 };

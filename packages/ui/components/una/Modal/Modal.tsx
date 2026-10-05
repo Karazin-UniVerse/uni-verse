@@ -12,6 +12,11 @@ export const Modal: React.FC<ModalProps> = ({
   className,
   closeLabel,
   title,
+  closeOnClickOutside = true,
+  closeOnEscape = true,
+  lockScroll = true,
+  restoreFocus = true,
+  trapFocus = true,
   width = 700,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -21,11 +26,11 @@ export const Modal: React.FC<ModalProps> = ({
     open,
     onClose,
     dialogRef,
-    closeOnClickOutside: true,
-    lockScroll: true,
-    closeOnEscape: true,
-    trapFocus: true,
-    restoreFocus: true,
+    closeOnClickOutside,
+    closeOnEscape,
+    lockScroll,
+    restoreFocus,
+    trapFocus,
   });
 
   if (!open) {
