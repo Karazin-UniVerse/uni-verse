@@ -5,15 +5,12 @@ const path = require('path');
 
 // ========== WebSocket Protocol (RFC 6455) ==========
 
-const OPCODES = { TEXT: 0x01, CLOSE: 0x08, PING: 0x09, PONG: 0x0a };
+const OPCODES = { TEXT: 0x01, CLOSE: 0x08, PING: 0x09, PONG: 0x0A };
 const WS_MAGIC = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 const MAX_FRAME_PAYLOAD_BYTES = 10 * 1024 * 1024;
 
 function computeAcceptKey(clientKey) {
-  return crypto
-    .createHash('sha1')
-    .update(clientKey + WS_MAGIC)
-    .digest('base64');
+  return crypto.createHash('sha1').update(clientKey + WS_MAGIC).digest('base64');
 }
 
 function encodeFrame(opcode, payload) {
@@ -44,9 +41,9 @@ function decodeFrame(buffer) {
   if (buffer.length < 2) return null;
 
   const secondByte = buffer[1];
-  const opcode = buffer[0] & 0x0f;
+  const opcode = buffer[0] & 0x0F;
   const masked = (secondByte & 0x80) !== 0;
-  let payloadLen = secondByte & 0x7f;
+  let payloadLen = secondByte & 0x7F;
   let offset = 2;
 
   if (!masked) throw new Error('Client frames must be masked');
@@ -95,9 +92,7 @@ function preferredPort() {
     try {
       const p = Number(fs.readFileSync(PORT_FILE, 'utf-8').trim());
       if (Number.isInteger(p) && p > 1023 && p < 65536) return p;
-    } catch (e) {
-      /* no prior port recorded */
-    }
+    } catch (e) { /* no prior port recorded */ }
   }
   return randomPort();
 }
@@ -108,16 +103,13 @@ const SESSION_DIR = process.env.BRAINSTORM_DIR || '/tmp/brainstorm';
 const CONTENT_DIR = path.join(SESSION_DIR, 'content');
 const STATE_DIR = path.join(SESSION_DIR, 'state');
 const SUPERPOWERS_VERSION = readSuperpowersVersion();
-const SUPERPOWERS_BRAND_IMAGE_URL =
-  'https://primeradiant.com/brand/superpowers-visual-brainstorming-logo.png';
+const SUPERPOWERS_BRAND_IMAGE_URL = 'https://primeradiant.com/brand/superpowers-visual-brainstorming-logo.png';
 const TELEMETRY_DISABLE_ENV_VARS = [
   'SUPERPOWERS_DISABLE_TELEMETRY',
   'DISABLE_TELEMETRY',
-  'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC',
+  'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC'
 ];
-const SUPERPOWERS_TELEMETRY_DISABLED = TELEMETRY_DISABLE_ENV_VARS.some((name) =>
-  isTruthyEnv(process.env[name]),
-);
+const SUPERPOWERS_TELEMETRY_DISABLED = TELEMETRY_DISABLE_ENV_VARS.some(name => isTruthyEnv(process.env[name]));
 let ownerPid = process.env.BRAINSTORM_OWNER_PID ? Number(process.env.BRAINSTORM_OWNER_PID) : null;
 
 // Per-session secret key. The companion is reachable by any local browser tab
@@ -134,11 +126,7 @@ function generateToken() {
 }
 
 function chmodOwnerOnly(file) {
-  try {
-    fs.chmodSync(file, 0o600);
-  } catch (e) {
-    /* best effort */
-  }
+  try { fs.chmodSync(file, 0o600); } catch (e) { /* best effort */ }
 }
 
 function initialToken() {
@@ -152,9 +140,7 @@ function initialToken() {
         chmodOwnerOnly(TOKEN_FILE);
         return { value: t, source: 'file' };
       }
-    } catch (e) {
-      /* no prior token recorded */
-    }
+    } catch (e) { /* no prior token recorded */ }
   }
   return { value: generateToken(), source: 'generated' };
 }
@@ -165,15 +151,9 @@ let tokenSource = tokenInfo.source;
 let COOKIE_NAME = 'brainstorm-key-' + PORT; // refined to the actual bound port in onListen
 
 const MIME_TYPES = {
-  '.html': 'text/html',
-  '.css': 'text/css',
-  '.js': 'application/javascript',
-  '.json': 'application/json',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.svg': 'image/svg+xml',
+  '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript',
+  '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.svg': 'image/svg+xml'
 };
 
 // ========== Templates and Constants ==========
@@ -227,7 +207,10 @@ const helperInjection = '<script>\n' + helperScript + '\n</script>';
 
 function readSuperpowersVersion() {
   const root = path.join(__dirname, '../../..');
-  const manifests = [path.join(root, 'package.json'), path.join(root, '.codex-plugin/plugin.json')];
+  const manifests = [
+    path.join(root, 'package.json'),
+    path.join(root, '.codex-plugin/plugin.json')
+  ];
 
   for (const manifest of manifests) {
     try {
@@ -263,19 +246,9 @@ function brandMarkup() {
     : 'Superpowers v' + version;
   const logo = SUPERPOWERS_TELEMETRY_DISABLED
     ? ''
-    : '<img class="brand-logo" src="' +
-      SUPERPOWERS_BRAND_IMAGE_URL +
-      '?v=' +
-      encodeURIComponent(SUPERPOWERS_VERSION) +
-      '" alt="Prime Radiant" referrerpolicy="no-referrer" decoding="async">';
+    : '<img class="brand-logo" src="' + SUPERPOWERS_BRAND_IMAGE_URL + '?v=' + encodeURIComponent(SUPERPOWERS_VERSION) + '" alt="Prime Radiant" referrerpolicy="no-referrer" decoding="async">';
 
-  return (
-    '<div class="brand"><a href="https://github.com/obra/superpowers">' +
-    logo +
-    '<span class="brand-copy">' +
-    text +
-    '</span></a></div>'
-  );
+  return '<div class="brand"><a href="https://github.com/obra/superpowers">' + logo + '<span class="brand-copy">' + text + '</span></a></div>';
 }
 
 function renderBranding(html) {
@@ -292,10 +265,9 @@ function wrapInFrame(content) {
 }
 
 function getNewestScreen() {
-  const files = fs
-    .readdirSync(CONTENT_DIR)
-    .filter((f) => !f.startsWith('.') && f.endsWith('.html'))
-    .map((f) => {
+  const files = fs.readdirSync(CONTENT_DIR)
+    .filter(f => !f.startsWith('.') && f.endsWith('.html'))
+    .map(f => {
       const fp = path.join(CONTENT_DIR, f);
       if (!isRegularFileInsideContentDir(fp)) return null;
       return { path: fp, mtime: fs.statSync(fp).mtime.getTime() };
@@ -315,10 +287,11 @@ function companionUrl() {
   return 'http://' + urlHostForHttp(URL_HOST) + ':' + PORT + '/?key=' + TOKEN;
 }
 
-function browserLauncherForPlatform(
-  url,
-  { platform = process.platform, osRelease = require('os').release(), env = process.env } = {},
-) {
+function browserLauncherForPlatform(url, {
+  platform = process.platform,
+  osRelease = require('os').release(),
+  env = process.env
+} = {}) {
   const isWSL = platform === 'linux' && /microsoft/i.test(osRelease);
   if (platform === 'darwin') return { bin: 'open', args: [url] };
   if (platform === 'win32' || isWSL) {
@@ -397,7 +370,7 @@ function securityHeaders(headers = {}) {
     'X-Frame-Options': 'DENY',
     'Content-Security-Policy': "frame-ancestors 'none'",
     'Cross-Origin-Resource-Policy': 'same-origin',
-    ...headers,
+    ...headers
   };
 }
 
@@ -422,24 +395,18 @@ function handleRequest(req, res) {
   // Mirror the key into a cookie so same-origin subresources (/files/*) can
   // authenticate after bootstrap. HttpOnly keeps it away from page scripts; the
   // WebSocket Origin check below is what blocks cross-origin localhost injection.
-  res.setHeader('Set-Cookie', COOKIE_NAME + '=' + TOKEN + '; HttpOnly; SameSite=Strict; Path=/');
+  res.setHeader('Set-Cookie',
+    COOKIE_NAME + '=' + TOKEN + '; HttpOnly; SameSite=Strict; Path=/');
 
   const pathname = pathnameOf(req.url);
   const keyFromQuery = queryKey(req.url);
-  if (
-    req.method === 'GET' &&
-    pathname === '/' &&
-    keyFromQuery &&
-    timingSafeEqualStr(keyFromQuery, TOKEN)
-  ) {
+  if (req.method === 'GET' && pathname === '/' && keyFromQuery && timingSafeEqualStr(keyFromQuery, TOKEN)) {
     res.writeHead(200, securityHeaders({ 'Content-Type': 'text/html; charset=utf-8' }));
     res.end(bootstrapPage(keyFromQuery));
   } else if (req.method === 'GET' && pathname === '/') {
     const screenFile = getNewestScreen();
     let html = screenFile
-      ? ((raw) => (isFullDocument(raw) ? raw : wrapInFrame(raw)))(
-          fs.readFileSync(screenFile, 'utf-8'),
-        )
+      ? (raw => isFullDocument(raw) ? raw : wrapInFrame(raw))(fs.readFileSync(screenFile, 'utf-8'))
       : waitingPage();
 
     if (html.includes('</body>')) {
@@ -475,25 +442,17 @@ function handleRequest(req, res) {
 const clients = new Set();
 
 function handleUpgrade(req, socket) {
-  if (!isAuthorized(req) || !isAllowedWebSocketOrigin(req)) {
-    socket.destroy();
-    return;
-  }
+  if (!isAuthorized(req) || !isAllowedWebSocketOrigin(req)) { socket.destroy(); return; }
 
   const key = req.headers['sec-websocket-key'];
-  if (!key) {
-    socket.destroy();
-    return;
-  }
+  if (!key) { socket.destroy(); return; }
 
   const accept = computeAcceptKey(key);
   socket.write(
     'HTTP/1.1 101 Switching Protocols\r\n' +
-      'Upgrade: websocket\r\n' +
-      'Connection: Upgrade\r\n' +
-      'Sec-WebSocket-Accept: ' +
-      accept +
-      '\r\n\r\n',
+    'Upgrade: websocket\r\n' +
+    'Connection: Upgrade\r\n' +
+    'Sec-WebSocket-Accept: ' + accept + '\r\n\r\n'
   );
 
   let buffer = Buffer.alloc(0);
@@ -560,11 +519,7 @@ function handleMessage(text) {
 function broadcast(msg) {
   const frame = encodeFrame(OPCODES.TEXT, Buffer.from(JSON.stringify(msg)));
   for (const socket of clients) {
-    try {
-      socket.write(frame);
-    } catch (e) {
-      clients.delete(socket);
-    }
+    try { socket.write(frame); } catch (e) { clients.delete(socket); }
   }
 }
 
@@ -582,22 +537,14 @@ function maybeOpenBrowser() {
   const cp = require('child_process');
   // Operator-provided launcher: run as given (this env var is trusted operator input).
   if (process.env.BRAINSTORM_OPEN_CMD) {
-    try {
-      cp.exec(process.env.BRAINSTORM_OPEN_CMD + ' ' + JSON.stringify(url), () => {});
-    } catch (e) {
-      /* best effort */
-    }
+    try { cp.exec(process.env.BRAINSTORM_OPEN_CMD + ' ' + JSON.stringify(url), () => {}); } catch (e) { /* best effort */ }
     return;
   }
   // Platform launchers: pass the URL as an argv element via execFile (no shell),
   // so a url-host containing shell metacharacters can't inject a command.
   const launcher = browserLauncherForPlatform(url);
   if (!launcher) return; // headless: nothing to open
-  try {
-    cp.execFile(launcher.bin, launcher.args, () => {});
-  } catch (e) {
-    /* best effort */
-  }
+  try { cp.execFile(launcher.bin, launcher.args, () => {}); } catch (e) { /* best effort */ }
 }
 
 // ========== Activity Tracking ==========
@@ -634,7 +581,7 @@ function startServer() {
   // macOS fs.watch reports 'rename' for both new files and overwrites,
   // so we can't rely on eventType alone.
   const knownFiles = new Set(
-    fs.readdirSync(CONTENT_DIR).filter((f) => !f.startsWith('.') && f.endsWith('.html')),
+    fs.readdirSync(CONTENT_DIR).filter(f => !f.startsWith('.') && f.endsWith('.html'))
   );
 
   const server = http.createServer(handleRequest);
@@ -644,28 +591,25 @@ function startServer() {
     if (!filename || filename.startsWith('.') || !filename.endsWith('.html')) return;
 
     if (debounceTimers.has(filename)) clearTimeout(debounceTimers.get(filename));
-    debounceTimers.set(
-      filename,
-      setTimeout(() => {
-        debounceTimers.delete(filename);
-        const filePath = path.join(CONTENT_DIR, filename);
+    debounceTimers.set(filename, setTimeout(() => {
+      debounceTimers.delete(filename);
+      const filePath = path.join(CONTENT_DIR, filename);
 
-        if (!fs.existsSync(filePath)) return; // file was deleted
-        touchActivity();
+      if (!fs.existsSync(filePath)) return; // file was deleted
+      touchActivity();
 
-        if (!knownFiles.has(filename)) {
-          knownFiles.add(filename);
-          const eventsFile = path.join(STATE_DIR, 'events');
-          if (fs.existsSync(eventsFile)) fs.unlinkSync(eventsFile);
-          console.log(JSON.stringify({ type: 'screen-added', file: filePath }));
-          maybeOpenBrowser();
-        } else {
-          console.log(JSON.stringify({ type: 'screen-updated', file: filePath }));
-        }
+      if (!knownFiles.has(filename)) {
+        knownFiles.add(filename);
+        const eventsFile = path.join(STATE_DIR, 'events');
+        if (fs.existsSync(eventsFile)) fs.unlinkSync(eventsFile);
+        console.log(JSON.stringify({ type: 'screen-added', file: filePath }));
+        maybeOpenBrowser();
+      } else {
+        console.log(JSON.stringify({ type: 'screen-updated', file: filePath }));
+      }
 
-        broadcast({ type: 'reload' });
-      }, 100),
-    );
+      broadcast({ type: 'reload' });
+    }, 100));
   });
   watcher.on('error', (err) => console.error('fs.watch error:', err.message));
 
@@ -675,30 +619,21 @@ function startServer() {
     if (fs.existsSync(infoFile)) fs.unlinkSync(infoFile);
     fs.writeFileSync(
       path.join(STATE_DIR, 'server-stopped'),
-      JSON.stringify({ reason, timestamp: Date.now() }) + '\n',
+      JSON.stringify({ reason, timestamp: Date.now() }) + '\n'
     );
     watcher.close();
     clearInterval(lifecycleCheck);
     // Close any upgraded WebSocket sockets so server.close() can complete and
     // the process actually exits instead of lingering on an open connection.
     for (const socket of clients) {
-      try {
-        socket.destroy();
-      } catch (e) {
-        /* already gone */
-      }
+      try { socket.destroy(); } catch (e) { /* already gone */ }
     }
     server.close(() => process.exit(0));
   }
 
   function ownerAlive() {
     if (!ownerPid) return true;
-    try {
-      process.kill(ownerPid, 0);
-      return true;
-    } catch (e) {
-      return e.code === 'EPERM';
-    }
+    try { process.kill(ownerPid, 0); return true; } catch (e) { return e.code === 'EPERM'; }
   }
 
   // Periodically exit if the owner process died or we've been idle too long.
@@ -712,13 +647,10 @@ function startServer() {
   // was wrong (common on WSL, Tailscale SSH, and cross-user scenarios).
   // Disable monitoring and rely on the idle timeout instead.
   if (ownerPid) {
-    try {
-      process.kill(ownerPid, 0);
-    } catch (e) {
+    try { process.kill(ownerPid, 0); }
+    catch (e) {
       if (e.code !== 'EPERM') {
-        console.log(
-          JSON.stringify({ type: 'owner-pid-invalid', pid: ownerPid, reason: 'dead at startup' }),
-        );
+        console.log(JSON.stringify({ type: 'owner-pid-invalid', pid: ownerPid, reason: 'dead at startup' }));
         ownerPid = null;
       }
     }
@@ -738,29 +670,18 @@ function startServer() {
     // *different* port because someone else holds the preferred one; persisting
     // would overwrite the shared files and strand that other session's open tab.
     if (PORT_FILE && !triedFallback) {
-      try {
-        fs.writeFileSync(PORT_FILE, String(PORT));
-      } catch (e) {
-        /* best effort */
-      }
+      try { fs.writeFileSync(PORT_FILE, String(PORT)); } catch (e) { /* best effort */ }
       if (TOKEN_FILE) {
         try {
           fs.writeFileSync(TOKEN_FILE, TOKEN, { mode: 0o600 });
           chmodOwnerOnly(TOKEN_FILE);
-        } catch (e) {
-          /* best effort */
-        }
+        } catch (e) { /* best effort */ }
       }
     }
     const info = JSON.stringify({
-      type: 'server-started',
-      port: Number(PORT),
-      host: HOST,
-      url_host: URL_HOST,
-      url: companionUrl(),
-      screen_dir: CONTENT_DIR,
-      state_dir: STATE_DIR,
-      idle_timeout_ms: IDLE_TIMEOUT_MS,
+      type: 'server-started', port: Number(PORT), host: HOST,
+      url_host: URL_HOST, url: companionUrl(),
+      screen_dir: CONTENT_DIR, state_dir: STATE_DIR, idle_timeout_ms: IDLE_TIMEOUT_MS
     });
     console.log(info);
     // server-info embeds the key — keep it owner-only.
@@ -770,9 +691,7 @@ function startServer() {
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE' && !triedFallback) {
       if (tokenSource === 'env') {
-        console.error(
-          'Server failed to bind: preferred port is in use and BRAINSTORM_TOKEN is set; refusing fallback with explicit token',
-        );
+        console.error('Server failed to bind: preferred port is in use and BRAINSTORM_TOKEN is set; refusing fallback with explicit token');
         process.exit(1);
       }
       triedFallback = true;
@@ -800,5 +719,5 @@ module.exports = {
   decodeFrame,
   browserLauncherForPlatform,
   OPCODES,
-  MAX_FRAME_PAYLOAD_BYTES,
+  MAX_FRAME_PAYLOAD_BYTES
 };
