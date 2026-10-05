@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Mail, Phone, Clock, Send } from 'lucide-react';
+import { BREAKPOINTS } from '@universe/core/constants/breakpoints';
 
 import { ContactInfoGrid } from './ContactInfoGrid';
 
@@ -40,7 +41,7 @@ const meta = {
   },
   decorators: [
     (Story) => (
-      <div style={{ width: '480px', maxWidth: '100%' }}>
+      <div style={{ width: `${BREAKPOINTS.xs}px`, maxWidth: '100%' }}>
         <Story />
       </div>
     ),

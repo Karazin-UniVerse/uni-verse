@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { TopicChips } from '@universe/ui';
+import { TopicChips } from '@ui';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 

@@ -23,6 +23,7 @@
       "@uni-hub/*": ["./*"],
       "@core": ["../core/index.ts"],
       "@core/*": ["../core/*"],
+      "@ui": ["../ui/index.ts"],
       "@ui/*": ["./components/ui/*", "../ui/components/una/*", "../ui/*"],
       "@una": ["../ui/components/una/index.ts"],
       "@una/*": ["../ui/components/una/*"]

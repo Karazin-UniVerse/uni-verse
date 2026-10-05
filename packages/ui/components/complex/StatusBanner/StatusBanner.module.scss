@@ -6,6 +6,7 @@
   border-radius: var(--border-radius-medium);
   font-size: var(--font-sm);
   font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
   box-sizing: border-box;
 }
 
@@ -25,23 +26,23 @@
 .bannerSuccess {
   background: color-mix(in srgb, var(--success-color, #16a34a) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--success-color, #16a34a) 30%, transparent);
-  color: var(--success-color, #16a34a);
+  color: var(--text-primary);
 }
 
 .bannerDanger {
   background: color-mix(in srgb, var(--error-color, #dc2626) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--error-color, #dc2626) 30%, transparent);
-  color: var(--error-color, #dc2626);
+  color: var(--text-primary);
 }
 
 .bannerWarning {
   background: color-mix(in srgb, var(--warning-color, #ca8a04) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--warning-color, #ca8a04) 30%, transparent);
-  color: var(--warning-color, #ca8a04);
+  color: var(--text-primary);
 }
 
 .bannerInfo {
   background: color-mix(in srgb, var(--accent-primary, #2563eb) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent-primary, #2563eb) 30%, transparent);
-  color: var(--accent-primary, #2563eb);
+  color: var(--text-primary);
 }

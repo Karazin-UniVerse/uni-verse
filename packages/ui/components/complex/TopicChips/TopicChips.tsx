@@ -5,6 +5,7 @@ import styles from './TopicChips.module.scss';
 
 export const TopicChips: React.FC<TopicChipsProps> = ({
   label,
+  ariaLabel,
   options,
   selectedId,
   onSelect,
@@ -13,7 +14,7 @@ export const TopicChips: React.FC<TopicChipsProps> = ({
   return (
     <div className={clsx(styles.templatesSection, className)}>
       {label && <span className={styles.sectionLabel}>{label}</span>}
-      <div className={styles.chipsList} role="group" aria-label={label}>
+      <div className={styles.chipsList} role="radiogroup" aria-label={label || ariaLabel}>
         {options.map((option) => {
           const isActive = selectedId === option.id;
 
@@ -21,9 +22,10 @@ export const TopicChips: React.FC<TopicChipsProps> = ({
             <button
               key={option.id}
               type="button"
+              role="radio"
+              aria-checked={isActive}
               className={clsx(styles.chipBtn, isActive && styles.chipBtnActive)}
               onClick={() => onSelect(option.id)}
-              aria-pressed={isActive}
             >
               {option.label}
             </button>

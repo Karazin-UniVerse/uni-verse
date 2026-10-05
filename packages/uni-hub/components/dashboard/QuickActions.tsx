@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Globe, FileText, Calendar, Building2 } from 'lucide-react';
-import { ActionCard } from '@universe/ui';
+import { ActionCard } from '@ui';
 import type { Assignment } from '@uni-hub/types';
 import type { NavKey } from '@uni-hub/views/dashboard/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -39,7 +39,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
             rel="noopener noreferrer"
             icon={<Globe size={22} />}
             iconTone="moodle"
-            title="Moodle LMS"
+            title={formatMessage('quickActions.moodle')}
             badge={formatMessage('quickActions.moodleBadge')}
             badgeTone="info"
             description={formatMessage('quickActions.moodleDescription')}

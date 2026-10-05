@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Mail, Phone, Clock } from 'lucide-react';
-import { ContactInfoGrid } from '@universe/ui';
+import { ContactInfoGrid } from '@ui';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 
 export const DeanContactInfo: React.FC = () => {

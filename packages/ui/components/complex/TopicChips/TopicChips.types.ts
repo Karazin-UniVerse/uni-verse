@@ -5,6 +5,7 @@ export type TopicChipOption = {
 
 export type TopicChipsProps = {
   label?: string;
+  ariaLabel?: string;
   options: TopicChipOption[];
   selectedId?: string;
   onSelect: (id: string) => void;

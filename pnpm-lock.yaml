@@ -272,6 +272,9 @@ importers:
       '@types/react':
         specifier: ^19.3.0
         version: 19.3.0
+      '@universe/core':
+        specifier: workspace:*
+        version: link:../core
       '@vitest/browser-playwright':
         specifier: ^5.0.2
         version: 5.0.2(playwright@1.63.0)(vite@8.2.0(@types/node@25.9.8)(esbuild@0.28.1)(jiti@2.7.0)(sass-embedded@1.105.0)(sass@1.105.0)(terser@5.51.2)(yaml@2.9.1))(vitest@5.0.2)
