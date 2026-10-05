@@ -19,6 +19,13 @@ import {
   extractGoogleUserName,
 } from './utils/auth.utils';
 
+export type GetTokensParams = {
+  userId: string;
+  email: string;
+  moodleToken?: string;
+  moodleId?: string;
+};
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -72,12 +79,12 @@ export class AuthService {
       }
     })();
 
-    const tokens = await this.getTokens(
-      user.id,
-      user.email,
-      user.token ?? undefined,
-      user.moodleId ?? undefined,
-    );
+    const tokens = await this.getTokens({
+      userId: user.id,
+      email: user.email,
+      moodleToken: user.token ?? undefined,
+      moodleId: user.moodleId ?? undefined,
+    });
 
     await this.updateRtHash(user.id, tokens.refresh_token);
 
@@ -128,12 +135,12 @@ export class AuthService {
       return existing;
     })();
 
-    const tokens = await this.getTokens(
-      user.id,
-      user.email,
+    const tokens = await this.getTokens({
+      userId: user.id,
+      email: user.email,
       moodleToken,
       moodleId,
-    );
+    });
 
     await this.updateRtHash(user.id, tokens.refresh_token);
 
@@ -146,12 +153,12 @@ export class AuthService {
 
     const isLinked = Boolean(user.token && user.moodleId);
 
-    const tokens = await this.getTokens(
-      user.id,
-      user.email,
-      user.token ?? undefined,
-      user.moodleId ?? undefined,
-    );
+    const tokens = await this.getTokens({
+      userId: user.id,
+      email: user.email,
+      moodleToken: user.token ?? undefined,
+      moodleId: user.moodleId ?? undefined,
+    });
 
     await this.updateRtHash(user.id, tokens.refresh_token);
 
@@ -275,12 +282,12 @@ export class AuthService {
       moodleId,
     });
 
-    const tokens = await this.getTokens(
-      updatedUser.id,
-      updatedUser.email,
+    const tokens = await this.getTokens({
+      userId: updatedUser.id,
+      email: updatedUser.email,
       moodleToken,
       moodleId,
-    );
+    });
 
     await this.updateRtHash(updatedUser.id, tokens.refresh_token);
 
@@ -308,11 +315,11 @@ export class AuthService {
       throw new ForbiddenException('Access Denied');
     }
 
-    const tokens = await this.getTokens(
-      user.id,
-      user.email,
-      user.token ?? undefined,
-    );
+    const tokens = await this.getTokens({
+      userId: user.id,
+      email: user.email,
+      moodleToken: user.token ?? undefined,
+    });
 
     await this.updateRtHash(user.id, tokens.refresh_token);
 
@@ -329,12 +336,7 @@ export class AuthService {
     return bcrypt.hash(data, 10);
   }
 
-  async getTokens(
-    userId: string,
-    email: string,
-    moodleToken?: string,
-    moodleId?: string,
-  ) {
+  async getTokens({ userId, email, moodleToken, moodleId }: GetTokensParams) {
     const atSecret = process.env.AT_SECRET;
     const rtSecret = process.env.RT_SECRET;
     const knownPlaceholders = new Set([

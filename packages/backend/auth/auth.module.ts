@@ -7,9 +7,10 @@ import { AtStrategy } from './strategies/at.strategy';
 import { RtStrategy } from './strategies/rt.strategy';
 import { UserModule } from '../user/user.module';
 import { GetCreds } from '../utils/get-creds';
+import { MoodleModule } from '../moodle/moodle.module';
 
 @Module({
-  imports: [PassportModule, JwtModule.register({}), UserModule],
+  imports: [PassportModule, JwtModule.register({}), UserModule, MoodleModule],
   controllers: [AuthController],
   providers: [AuthService, GetCreds, AtStrategy, RtStrategy],
 })

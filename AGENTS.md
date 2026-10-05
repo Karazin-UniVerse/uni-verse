@@ -22,6 +22,10 @@ Karazin UniVerse is a monorepo (Turborepo + pnpm workspaces): Next.js 16 (App Ro
 - Feedback from team reviewers on GitHub PRs (for example `iamredl-lab`) is top-priority canon; prevent previously flagged issues proactively.
 - Do not add compatibility aliases, re-export shims or redundant names; update all call sites instead.
 - Every UI string goes through a translation key; decide the component tier before creating a component.
+- Keep it simple and reuse before writing: [KISS](docs/ai/code-style.md#keep-it-simple-kiss), [DRY and where shared code lives](docs/ai/code-style.md#reuse-before-writing-dry).
+- Rules apply to code you write or touch. Do not refactor unrelated code to match them; mention a violation you notice in the PR description.
+- Before saying a task is done, walk the [pre-commit checklist](docs/ai/workflow.md#pre-commit-checklist) and fix what it flags.
+- If a reviewer asks to "add this to the instructions", update the matching file in `docs/ai/` (not a skill) and keep each rule in one place.
 
 ## Always-loaded rules
 
@@ -38,5 +42,6 @@ These four files are loaded into every session: Claude Code imports them from `C
 | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | building or styling UI components (colors, typography, spacing, radii, shadows, z-index, motion) — you MUST read it | [docs/ai/design-system.md](docs/ai/design-system.md)   |
 | reviewing code or a PR                                                                                              | [docs/ai/review.md](docs/ai/review.md)                 |
+| writing an API client, constants or magic values, env variables or config                                           | [docs/ai/api-and-config.md](docs/ai/api-and-config.md) |
 | branching, committing, running checks                                                                               | [docs/ai/workflow.md](docs/ai/workflow.md)             |
 | touching Moodle, grades, or the E-Dean portal                                                                       | [docs/ai/domain-uni-hub.md](docs/ai/domain-uni-hub.md) |
