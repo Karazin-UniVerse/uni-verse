@@ -1,0 +1,57 @@
+import React from 'react';
+import type { Meta, StoryObj } from '@storybook/react';
+import { Mail, Phone, Clock, Send } from 'lucide-react';
+
+import { ContactInfoGrid } from './ContactInfoGrid';
+
+const sampleItems = [
+  {
+    id: 'email',
+    icon: <Mail size={16} />,
+    label: 'Email:',
+    value: 'dean.cs@karazin.ua',
+  },
+  {
+    id: 'phone',
+    icon: <Phone size={16} />,
+    label: 'Телефон:',
+    value: '+38 (057) 707-55-55',
+  },
+  {
+    id: 'schedule',
+    icon: <Clock size={16} />,
+    label: 'Графік прийому:',
+    value: 'Пн-Пт: 09:00 - 17:00',
+  },
+  {
+    id: 'telegram',
+    icon: <Send size={16} />,
+    label: 'Telegram:',
+    value: '@karazin_edean',
+  },
+];
+
+const meta = {
+  title: 'Complex/ContactInfoGrid',
+  component: ContactInfoGrid,
+  tags: ['autodocs'],
+  parameters: {
+    layout: 'centered',
+  },
+  decorators: [
+    (Story) => (
+      <div style={{ width: '480px', maxWidth: '100%' }}>
+        <Story />
+      </div>
+    ),
+  ],
+} satisfies Meta<typeof ContactInfoGrid>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {
+  args: {
+    items: sampleItems,
+  },
+};

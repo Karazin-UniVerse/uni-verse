@@ -35,95 +35,6 @@
   gap: var(--space-8);
 }
 
-.feedItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-16);
-  padding: var(--space-12);
-  border: none;
-  border-radius: var(--border-radius-medium);
-  background: var(--neutral-surface);
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  width: 100%;
-  cursor: pointer;
-  animation: fadeUp var(--transition-medium) var(--ease-standard) both;
-  transition:
-    transform var(--transition-fast) var(--ease-standard),
-    box-shadow var(--transition-fast) var(--ease-standard),
-    background-color var(--transition-fast) var(--ease-standard);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--box-shadow-medium);
-    background: var(--accent-secondary);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--accent-primary);
-    outline-offset: 2px;
-  }
-}
-
-.feedItemMain {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1;
-}
-
-.feedItemTitle {
-  font-weight: var(--font-weight-medium);
-  font-size: var(--font-sm);
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.feedItemMeta {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  font-size: var(--font-xs);
-  color: var(--text-secondary);
-}
-
-.courseName {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dotSeparator {
-  opacity: 0.5;
-}
-
-.feedItemScore {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  flex-shrink: 0;
-}
-
-.scoreBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 10px;
-  border-radius: var(--border-radius-full);
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-sm);
-  letter-spacing: 0.02em;
-}
-
 .toneSuccess {
   background: color-mix(in srgb, var(--success-color, #16a34a) 15%, transparent);
   color: var(--success-color, #16a34a);
@@ -142,16 +53,4 @@
 .toneDanger {
   background: color-mix(in srgb, var(--error-color, #dc2626) 15%, transparent);
   color: var(--error-color, #dc2626);
-}
-
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
