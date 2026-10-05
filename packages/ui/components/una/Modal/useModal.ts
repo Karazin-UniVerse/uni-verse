@@ -4,6 +4,7 @@ export interface UseModalOptions {
   open: boolean;
   onClose?: () => void;
   dialogRef?: RefObject<HTMLElement | null>;
+  closeOnClickOutside?: boolean;
   closeOnEscape?: boolean;
   lockScroll?: boolean;
   restoreFocus?: boolean;
@@ -72,6 +73,7 @@ export function useModal({
   open,
   onClose,
   dialogRef,
+  closeOnClickOutside = false,
   closeOnEscape = true,
   lockScroll = true,
   restoreFocus = true,
@@ -128,11 +130,29 @@ export function useModal({
       }
     };
 
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!dialogElement) {
+        return;
+      }
+
+      if (!dialogElement.contains(event.target as Node)) {
+        onCloseRef.current?.();
+      }
+    };
+
     document.addEventListener('keydown', handleKeyDown);
+
+    if (closeOnClickOutside) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
 
     return () => {
       cancelAnimationFrame(frameId);
       document.removeEventListener('keydown', handleKeyDown);
+
+      if (closeOnClickOutside) {
+        document.removeEventListener('mousedown', handleClickOutside);
+      }
 
       closeModalDialog(dialogElement);
 
@@ -144,5 +164,5 @@ export function useModal({
         previouslyFocusedElementRef.current?.focus?.();
       }
     };
-  }, [open, lockScroll, closeOnEscape, trapFocus, restoreFocus, dialogRef]);
+  }, [open, lockScroll, closeOnClickOutside, closeOnEscape, trapFocus, restoreFocus, dialogRef]);
 }

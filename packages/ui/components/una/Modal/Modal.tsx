@@ -15,13 +15,13 @@ export const Modal: React.FC<ModalProps> = ({
   width = 700,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
 
   useModal({
     open,
     onClose,
     dialogRef,
+    closeOnClickOutside: true,
     lockScroll: true,
     closeOnEscape: true,
     trapFocus: true,
@@ -32,21 +32,10 @@ export const Modal: React.FC<ModalProps> = ({
     return null;
   }
 
-  const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.target === overlayRef.current) {
-      onClose();
-    }
-  };
-
   const dialogAriaLabel = title ? undefined : ariaLabel || 'Dialog';
 
   return (
-    <div
-      ref={overlayRef}
-      className={styles.overlay}
-      onClick={handleOverlayClick}
-      role="presentation"
-    >
+    <div className={styles.overlay}>
       <div
         ref={dialogRef}
         className={`${styles.dialog} ${className ?? ''}`}
