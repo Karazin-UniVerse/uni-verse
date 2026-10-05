@@ -4,11 +4,11 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { TopicChips } from './TopicChips';
 
 const sampleChips = [
-  { id: 'cert', label: 'Довідка про навчання' },
-  { id: 'transcript', label: 'Академічна виписка' },
-  { id: 'session', label: 'Питання щодо сесії' },
-  { id: 'individual', label: 'Індивідуальний план' },
-  { id: 'other', label: 'Інше питання' },
+  { id: 'cert', label: 'Enrollment Certificate' },
+  { id: 'transcript', label: 'Academic Transcript' },
+  { id: 'session', label: 'Exam Session Questions' },
+  { id: 'individual', label: 'Individual Study Plan' },
+  { id: 'other', label: 'Other Inquiries' },
 ];
 
 const meta = {
@@ -28,7 +28,7 @@ const meta = {
   argTypes: {
     label: {
       control: 'text',
-      description: 'Текст підпису секції',
+      description: 'Section label or header text',
     },
   },
 } satisfies Meta<typeof TopicChips>;
@@ -45,7 +45,7 @@ const InteractiveTopicChips = (args: React.ComponentProps<typeof TopicChips>) =>
 export const Default: Story = {
   render: InteractiveTopicChips,
   args: {
-    label: 'Оберіть тему звернення',
+    label: 'Select inquiry topic',
     options: sampleChips,
     selectedId: 'cert',
   },

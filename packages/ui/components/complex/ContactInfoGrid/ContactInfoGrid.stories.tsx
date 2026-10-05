@@ -14,14 +14,14 @@ const sampleItems = [
   {
     id: 'phone',
     icon: <Phone size={16} />,
-    label: 'Телефон:',
+    label: 'Phone:',
     value: '+38 (057) 707-55-55',
   },
   {
     id: 'schedule',
     icon: <Clock size={16} />,
-    label: 'Графік прийому:',
-    value: 'Пн-Пт: 09:00 - 17:00',
+    label: 'Office hours:',
+    value: 'Mon-Fri: 09:00 - 17:00',
   },
   {
     id: 'telegram',
@@ -45,6 +45,11 @@ const meta = {
       </div>
     ),
   ],
+  argTypes: {
+    items: {
+      description: 'Array of contact information entries (icon, label, value)',
+    },
+  },
 } satisfies Meta<typeof ContactInfoGrid>;
 
 export default meta;

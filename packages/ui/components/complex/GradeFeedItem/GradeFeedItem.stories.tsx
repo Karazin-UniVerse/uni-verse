@@ -21,23 +21,23 @@ const meta = {
     scoreTone: {
       control: 'select',
       options: ['success', 'info', 'warning', 'danger', 'default'],
-      description: 'Тон бейджа оцінки',
+      description: 'Visual tone for the score badge',
     },
     title: {
       control: 'text',
-      description: 'Назва завдання',
+      description: 'Assignment or task title',
     },
     courseName: {
       control: 'text',
-      description: 'Назва дисципліни',
+      description: 'Course or subject name',
     },
     dateText: {
       control: 'text',
-      description: 'Текст дати або дедлайну',
+      description: 'Formatted date or deadline text',
     },
     score: {
       control: 'text',
-      description: 'Значення оцінки або статус',
+      description: 'Score value or status text',
     },
   },
 } satisfies Meta<typeof GradeFeedItem>;
@@ -47,9 +47,9 @@ type Story = StoryObj<typeof meta>;
 
 export const ExcellentScore: Story = {
   args: {
-    title: 'Лабораторна робота №3: Нормалізація БД',
-    courseName: 'Бази даних',
-    dateText: '12 вер.',
+    title: 'Lab 3: Database Normalization',
+    courseName: 'Databases',
+    dateText: 'Sep 12',
     score: '98 / 100',
     scoreTone: 'success',
   },
@@ -57,9 +57,9 @@ export const ExcellentScore: Story = {
 
 export const GoodScore: Story = {
   args: {
-    title: 'Практичне завдання: Архітектура мікросервісів',
-    courseName: 'Розробка ПЗ',
-    dateText: '10 вер.',
+    title: 'Practical: Microservices Architecture',
+    courseName: 'Software Engineering',
+    dateText: 'Sep 10',
     score: '85 / 100',
     scoreTone: 'info',
   },
@@ -67,9 +67,9 @@ export const GoodScore: Story = {
 
 export const WarningScore: Story = {
   args: {
-    title: 'Тест 1: Операційні системи',
-    courseName: 'Системне програмування',
-    dateText: '05 вер.',
+    title: 'Quiz 1: Operating Systems',
+    courseName: 'Systems Programming',
+    dateText: 'Sep 05',
     score: '68 / 100',
     scoreTone: 'warning',
   },
@@ -77,9 +77,9 @@ export const WarningScore: Story = {
 
 export const LowScore: Story = {
   args: {
-    title: 'Контрольна робота: Математичний аналіз',
-    courseName: 'Вища математика',
-    dateText: '01 вер.',
+    title: 'Midterm: Mathematical Analysis',
+    courseName: 'Calculus',
+    dateText: 'Sep 01',
     score: '52 / 100',
     scoreTone: 'danger',
   },
@@ -87,10 +87,10 @@ export const LowScore: Story = {
 
 export const PassedStatus: Story = {
   args: {
-    title: 'Залік: Фізичне виховання',
-    courseName: 'Спорт',
-    dateText: '28 серп.',
-    score: 'Зараховано',
+    title: 'Credit: Physical Education',
+    courseName: 'Sports',
+    dateText: 'Aug 28',
+    score: 'Passed',
     scoreTone: 'success',
   },
 };

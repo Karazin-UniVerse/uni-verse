@@ -22,28 +22,28 @@ const meta = {
     iconTone: {
       control: 'select',
       options: ['default', 'moodle', 'assignments', 'schedule', 'dean'],
-      description: 'Колірний тон іконки',
+      description: 'Color tone of the icon wrapper',
     },
     badgeTone: {
       control: 'select',
       options: ['default', 'info', 'alert'],
-      description: 'Колірний тон бейджа',
+      description: 'Color tone of the optional badge',
     },
     title: {
       control: 'text',
-      description: 'Заголовок картки дії',
+      description: 'Title of the action card',
     },
     description: {
       control: 'text',
-      description: 'Опис дії',
+      description: 'Short description of the action',
     },
     badge: {
       control: 'text',
-      description: 'Текст або число у бейджі',
+      description: 'Badge label or counter value',
     },
     isExternal: {
       control: 'boolean',
-      description: 'Чи є посилання зовнішнім',
+      description: 'Whether the action links to an external resource',
     },
   },
 } satisfies Meta<typeof ActionCard>;
@@ -53,8 +53,8 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    title: 'Розклад занять',
-    description: 'Перегляд пар та дедлайнів',
+    title: 'Class Schedule',
+    description: 'View upcoming classes and deadlines',
     icon: <Calendar size={22} />,
     iconTone: 'schedule',
   },
@@ -62,8 +62,8 @@ export const Default: Story = {
 
 export const WithAlertBadge: Story = {
   args: {
-    title: 'Мої завдання',
-    description: '3 завдання очікують на здачу',
+    title: 'My Assignments',
+    description: '3 assignments pending submission',
     icon: <FileText size={22} />,
     iconTone: 'assignments',
     badge: 3,
@@ -74,7 +74,7 @@ export const WithAlertBadge: Story = {
 export const ExternalLinkCard: Story = {
   args: {
     title: 'Moodle LMS',
-    description: 'Перехід до навчального порталу',
+    description: 'Access university learning portal',
     icon: <Globe size={22} />,
     iconTone: 'moodle',
     badge: 'Moodle',
@@ -87,8 +87,8 @@ export const ExternalLinkCard: Story = {
 
 export const DeanContactCard: Story = {
   args: {
-    title: 'Деканат онлайн',
-    description: 'Звʼязок з адміністрацією та довідки',
+    title: "Dean's Office Online",
+    description: 'Contact administration and request certificates',
     icon: <Building2 size={22} />,
     iconTone: 'dean',
   },

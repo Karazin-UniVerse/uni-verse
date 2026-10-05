@@ -21,11 +21,11 @@ const meta = {
     tone: {
       control: 'select',
       options: ['success', 'danger', 'warning', 'info'],
-      description: 'Колірний тон банера',
+      description: 'Visual tone for the status banner',
     },
     children: {
       control: 'text',
-      description: 'Текст або вміст повідомлення',
+      description: 'Banner content or message text',
     },
   },
 } satisfies Meta<typeof StatusBanner>;
@@ -37,7 +37,7 @@ export const Success: Story = {
   args: {
     tone: 'success',
     icon: '🟢',
-    children: 'Допущено до іспиту (45 / 60 б. — поріг допуску 30 б. досягнуто)',
+    children: 'Admitted to the exam (45 / 60 pts — threshold of 30 pts reached)',
   },
 };
 
@@ -45,7 +45,7 @@ export const Danger: Story = {
   args: {
     tone: 'danger',
     icon: '🔴',
-    children: 'Не допущено до іспиту (22 / 60 б. — бракує 8 б. для допуску)',
+    children: 'Not admitted to the exam (22 / 60 pts — 8 pts needed to qualify)',
   },
 };
 
@@ -53,7 +53,7 @@ export const Warning: Story = {
   args: {
     tone: 'warning',
     icon: '⚠️',
-    children: 'Увага: кінцевий термін подання індивідуального плану спливає через 2 дні',
+    children: 'Notice: Submission deadline for the individual study plan ends in 2 days',
   },
 };
 
@@ -61,6 +61,6 @@ export const Info: Story = {
   args: {
     tone: 'info',
     icon: 'ℹ️',
-    children: 'Розпочато реєстрацію на вибіркові дисципліни весняного семестру',
+    children: 'Registration for elective courses in the spring semester is now open',
   },
 };
