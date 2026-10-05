@@ -1,4 +1,4 @@
-import React, { useId, useRef } from 'react';
+import React, { useId } from 'react';
 import { X } from 'lucide-react';
 import type { ModalProps } from './Modal.types';
 import { useModal } from './useModal';
@@ -19,13 +19,11 @@ export const Modal: React.FC<ModalProps> = ({
   trapFocus = true,
   width = 700,
 }) => {
-  const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
 
-  useModal({
+  const { dialogRef, handleOverlayClick, handleKeyDown } = useModal({
     open,
     onClose,
-    dialogRef,
     closeOnClickOutside,
     closeOnEscape,
     lockScroll,
@@ -40,9 +38,9 @@ export const Modal: React.FC<ModalProps> = ({
   const dialogAriaLabel = title ? undefined : ariaLabel || 'Dialog';
 
   return (
-    <div className={styles.overlay}>
+    <div className={styles.overlay} onClick={handleOverlayClick}>
       <div
-        ref={dialogRef}
+        ref={dialogRef as React.RefObject<HTMLDivElement>}
         className={`${styles.dialog} ${className ?? ''}`}
         style={
           {
@@ -54,6 +52,7 @@ export const Modal: React.FC<ModalProps> = ({
         aria-labelledby={title ? titleId : undefined}
         aria-label={dialogAriaLabel}
         tabIndex={-1}
+        onKeyDown={handleKeyDown}
       >
         <div className={styles.header}>
           {title && (

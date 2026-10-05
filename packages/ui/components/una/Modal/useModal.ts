@@ -1,4 +1,11 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import {
+  useEffect,
+  useRef,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type RefObject,
+} from 'react';
+import { noop } from '@universe/core/utils/fn';
 
 export interface UseModalOptions {
   open: boolean;
@@ -11,7 +18,11 @@ export interface UseModalOptions {
   trapFocus?: boolean;
 }
 
-const noop = (): void => {};
+export interface UseModalReturn {
+  dialogRef: RefObject<HTMLElement | null>;
+  handleOverlayClick: (event: ReactMouseEvent<HTMLElement>) => void;
+  handleKeyDown: (event: ReactKeyboardEvent<HTMLElement>) => void;
+}
 
 const FOCUSABLE_SELECTOR =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -56,13 +67,15 @@ function closeModalDialog(dialog: HTMLElement | null): void {
 export function useModal({
   open,
   onClose,
-  dialogRef,
+  dialogRef: externalDialogRef,
   closeOnClickOutside = false,
   closeOnEscape = true,
   lockScroll = true,
   restoreFocus = true,
   trapFocus = true,
-}: UseModalOptions): void {
+}: UseModalOptions): UseModalReturn {
+  const localDialogRef = useRef<HTMLElement | null>(null);
+  const dialogRef = externalDialogRef ?? localDialogRef;
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
 
@@ -70,12 +83,31 @@ export function useModal({
     onCloseRef.current = onClose;
   });
 
+  const handleOverlayClick = (event: ReactMouseEvent<HTMLElement>): void => {
+    if (closeOnClickOutside && event.target === event.currentTarget) {
+      onCloseRef.current?.();
+    }
+  };
+
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLElement>): void => {
+    if (closeOnEscape && event.key === 'Escape') {
+      event.stopPropagation();
+      onCloseRef.current?.();
+
+      return;
+    }
+
+    if (trapFocus) {
+      handleFocusTrap(event.nativeEvent, dialogRef.current);
+    }
+  };
+
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    const dialogElement = dialogRef?.current ?? null;
+    const dialogElement = dialogRef.current;
 
     previouslyFocusedElementRef.current = (document.activeElement as HTMLElement) ?? null;
 
@@ -101,42 +133,18 @@ export function useModal({
       }
     });
 
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
       if (closeOnEscape && event.key === 'Escape') {
         event.stopPropagation();
         onCloseRef.current?.();
-
-        return;
-      }
-
-      if (trapFocus) {
-        handleFocusTrap(event, dialogElement);
       }
     };
 
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!dialogElement) {
-        return;
-      }
-
-      if (!dialogElement.contains(event.target as Node)) {
-        onCloseRef.current?.();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-
-    if (closeOnClickOutside) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
+    document.addEventListener('keydown', handleGlobalKeyDown);
 
     return () => {
       cancelAnimationFrame(frameId);
-      document.removeEventListener('keydown', handleKeyDown);
-
-      if (closeOnClickOutside) {
-        document.removeEventListener('mousedown', handleClickOutside);
-      }
+      document.removeEventListener('keydown', handleGlobalKeyDown);
 
       closeModalDialog(dialogElement);
 
@@ -150,5 +158,11 @@ export function useModal({
         requestAnimationFrame(() => previous.focus());
       }
     };
-  }, [open, lockScroll, closeOnClickOutside, closeOnEscape, trapFocus, restoreFocus, dialogRef]);
+  }, [open, lockScroll, closeOnEscape, restoreFocus, dialogRef]);
+
+  return {
+    dialogRef,
+    handleOverlayClick,
+    handleKeyDown,
+  };
 }

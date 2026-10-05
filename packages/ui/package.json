@@ -20,6 +20,7 @@
     "./breakpoints.scss": "./breakpoints.scss"
   },
   "dependencies": {
+    "@universe/core": "workspace:*",
     "clsx": "^2.1.1",
     "lucide-react": "^1.49.0",
     "recharts": "^3.10.1",
