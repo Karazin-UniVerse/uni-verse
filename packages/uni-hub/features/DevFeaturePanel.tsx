@@ -12,26 +12,24 @@ import styles from './DevFeaturePanel.module.scss';
 
 interface FeatureItemConfig {
   key: FeatureFlagKey;
-  labelKey?: TranslationKey;
-  labelFallback: string;
+  labelKey: TranslationKey;
   descriptionKey: TranslationKey;
 }
 
 const FEATURE_ITEMS: FeatureItemConfig[] = [
   {
     key: 'isMoodleIntegrationEnabled',
-    labelFallback: 'Moodle LMS',
+    labelKey: 'devPanel.moodleLabel',
     descriptionKey: 'devPanel.moodleDesc',
   },
   {
     key: 'isEDeanEnabled',
-    labelFallback: 'e-Dean',
+    labelKey: 'devPanel.eDeanLabel',
     descriptionKey: 'devPanel.eDeanDesc',
   },
   {
     key: 'isOpportunitiesPlatformEnabled',
     labelKey: 'devPanel.opportunitiesLabel',
-    labelFallback: 'Opportunities',
     descriptionKey: 'devPanel.opportunitiesDesc',
   },
 ];
@@ -128,7 +126,7 @@ export const DevFeaturePanel: React.FC = () => {
             {FEATURE_ITEMS.map((item) => {
               const enabled = Boolean(flags[item.key]);
               const overridden = isOverridden(item.key);
-              const label = item.labelKey ? formatMessage(item.labelKey) : item.labelFallback;
+              const label = formatMessage(item.labelKey);
 
               return (
                 <div key={item.key} className={styles.toggleRow}>

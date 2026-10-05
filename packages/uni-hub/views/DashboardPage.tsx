@@ -52,7 +52,6 @@ const DashboardPage: React.FC = () => {
   const setSoundEnabled = useGamificationStore((s) => s.setSoundEnabled);
   const { formatMessage } = useLanguage();
   const flags = useFeatures();
-  const { isMoodleIntegrationEnabled } = flags;
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -93,7 +92,7 @@ const DashboardPage: React.FC = () => {
     dateFrom,
     dateTo,
     hideCompleted,
-    enabled: isMoodleIntegrationEnabled,
+    enabled: flags.isMoodleIntegrationEnabled,
     onUnauthorized: () => router.push('/login'),
   });
 
@@ -156,7 +155,7 @@ const DashboardPage: React.FC = () => {
       cancelPendingFetch();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router, sortOrder, dateFrom, dateTo, hideCompleted, isMoodleIntegrationEnabled]);
+  }, [router, sortOrder, dateFrom, dateTo, hideCompleted, flags.isMoodleIntegrationEnabled]);
 
   const closeMobileMenu = useCallback(() => {
     setMobileMenuOpen(false);
