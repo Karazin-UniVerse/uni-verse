@@ -12,10 +12,11 @@ import {
   PieChart,
   Pie,
   Rectangle,
-  type TooltipContentProps,
 } from 'recharts';
 import clsx from 'clsx';
 import css from './Chart.module.scss';
+import { ChartLegend } from './ChartLegend';
+import { ChartTooltip } from './ChartTooltip';
 import { resolveCssColor, useChartTheme } from './useChartTheme';
 
 export type * from './Chart.types';
@@ -38,56 +39,19 @@ function truncateLabel(value: string, max: number): string {
   return `${value.slice(0, max - 1)}…`;
 }
 
-type ChartTooltipProps = Partial<TooltipContentProps<number, string>> & {
-  valueLabel?: string;
-  type?: 'bar' | 'donut';
+type DefaultHeightParams = {
+  type: 'bar' | 'donut';
+  layout: 'horizontal' | 'vertical';
+  dataLength: number;
+  rowHeight: number;
 };
 
-function ChartTooltip({ active, payload, label, valueLabel, type }: Readonly<ChartTooltipProps>) {
-  if (!active || !payload?.length) return null;
-
-  const item = payload[0];
-  const color = typeof item.color === 'string' ? item.color : undefined;
-  const categoryName = item.name ? String(item.name) : undefined;
-  const displayLabel = type === 'donut' ? categoryName : valueLabel;
-
-  return (
-    <div className={css.tooltip} role="status" aria-live="assertive">
-      {type !== 'donut' && label !== null && label !== undefined && label !== '' && (
-        <div className={css.tooltipLabel}>{String(label)}</div>
-      )}
-      <div className={css.tooltipRow}>
-        {color && <span className={css.tooltipSwatch} style={{ background: color }} />}
-        <span>
-          {displayLabel ? `${displayLabel}: ` : ''}
-          {item.value ?? 0}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function ChartLegend({ items }: Readonly<{ items: { name: string; color: string }[] }>) {
-  if (items.length === 0) return null;
-
-  return (
-    <div className={css.legend}>
-      {items.map((item) => (
-        <span key={item.name} className={css.legendItem}>
-          <span className={css.legendSwatch} style={{ background: item.color }} />
-          {item.name}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function calculateDefaultHeight(
-  type: 'bar' | 'donut',
-  layout: 'horizontal' | 'vertical',
-  dataLength: number,
-  rowHeight: number,
-): number {
+function calculateDefaultHeight({
+  type,
+  layout,
+  dataLength,
+  rowHeight,
+}: DefaultHeightParams): number {
   if (type === 'donut') {
     return 220;
   }
@@ -157,7 +121,7 @@ export function Chart({
   }
 
   const resolvedHeight =
-    height ?? calculateDefaultHeight(type, layout, chartData.length, rowHeight);
+    height ?? calculateDefaultHeight({ type, layout, dataLength: chartData.length, rowHeight });
   const plotHeight = type === 'donut' && title ? resolvedHeight - 28 : resolvedHeight;
   const tickStyle = { fill: theme.tick, fontSize: 12 };
 
