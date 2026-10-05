@@ -22,7 +22,6 @@ export const Modal: React.FC<ModalProps> = ({
     open,
     onClose,
     dialogRef,
-    overlayRef,
     lockScroll: true,
     closeOnEscape: true,
     trapFocus: true,
@@ -33,10 +32,21 @@ export const Modal: React.FC<ModalProps> = ({
     return null;
   }
 
+  const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target === overlayRef.current) {
+      onClose();
+    }
+  };
+
   const dialogAriaLabel = title ? undefined : ariaLabel || 'Dialog';
 
   return (
-    <div ref={overlayRef} className={styles.overlay}>
+    <div
+      ref={overlayRef}
+      className={styles.overlay}
+      onClick={handleOverlayClick}
+      role="presentation"
+    >
       <div
         ref={dialogRef}
         className={`${styles.dialog} ${className ?? ''}`}
