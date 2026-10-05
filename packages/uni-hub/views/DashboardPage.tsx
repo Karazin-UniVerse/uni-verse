@@ -29,7 +29,6 @@ import {
   NAV_ITEMS,
 } from './dashboard';
 import { useFeatures } from '@uni-hub/features';
-import { FeatureDisabledNotice } from '@uni-hub/components/common/FeatureDisabledNotice';
 import { formatLastSync } from './dashboard/tabs/helpers';
 import { useDashboardData, clearUserSessionStorage } from './dashboard/hooks/useDashboardData';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -133,10 +132,18 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     const requestedTab = searchParams.get('tab');
 
-    if (requestedTab) {
-      setActiveKey(isNavKey(requestedTab) ? requestedTab : 'overview');
+    if (requestedTab && isNavKey(requestedTab)) {
+      const targetItem = NAV_ITEMS.find((item) => item.key === requestedTab);
+
+      if (!targetItem?.featureFlag || flags[targetItem.featureFlag]) {
+        setActiveKey(requestedTab);
+
+        return;
+      }
     }
-  }, [searchParams]);
+
+    setActiveKey('overview');
+  }, [searchParams, flags]);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -166,20 +173,10 @@ const DashboardPage: React.FC = () => {
 
   const renderActiveContent = () => {
     const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
+    const effectiveKey =
+      activeItem?.featureFlag && !flags[activeItem.featureFlag] ? 'overview' : activeKey;
 
-    if (activeItem?.featureFlag && !flags[activeItem.featureFlag]) {
-      return (
-        <FeatureDisabledNotice
-          featureName={activeItem.featureFlag}
-          onBackToOverview={() => {
-            setActiveKey('overview');
-            router.replace('/dashboard');
-          }}
-        />
-      );
-    }
-
-    switch (activeKey) {
+    switch (effectiveKey) {
       case 'overview':
         return (
           <OverviewTab

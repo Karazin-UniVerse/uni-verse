@@ -329,10 +329,7 @@ export const en = {
   'quickActions.newBadge': 'New',
   'quickActions.opportunitiesDescription': 'Internships, hackathons, grants',
   'quickActions.opportunitiesTitle': 'Go to opportunities and internships platform',
-  'featureGate.disabledTitle': 'Feature Currently Unavailable',
-  'featureGate.disabledDescription':
-    'This module is currently disabled by administrator or undergoing maintenance.',
-  'featureGate.backToOverview': 'Back to Overview',
+
   'opportunities.title': 'Opportunities Platform',
   'opportunities.subtitle':
     'Career opportunities, internships, research grants, and Karazin student initiatives',

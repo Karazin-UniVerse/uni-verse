@@ -328,10 +328,7 @@ export const uk = {
   'quickActions.newBadge': 'Нове',
   'quickActions.opportunitiesDescription': 'Стажування, хакатони, гранти',
   'quickActions.opportunitiesTitle': 'Перейти до платформи можливостей та стажувань',
-  'featureGate.disabledTitle': 'Модуль тимчасово недоступний',
-  'featureGate.disabledDescription':
-    'Цю функцію вимкнено в налаштуваннях або вона знаходиться на стадії оновлення.',
-  'featureGate.backToOverview': 'Повернутися до огляду',
+
   'opportunities.title': 'Платформа можливостей',
   'opportunities.subtitle':
     'Кар’єрні пропозиції, стажування, наукові гранти та студентські ініціативи Каразінського',
