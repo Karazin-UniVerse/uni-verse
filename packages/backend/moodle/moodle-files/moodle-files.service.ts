@@ -18,9 +18,26 @@ export class MoodleFilesService {
 
     const baseUrl = (process.env.MOODLE_BASEURL || '').trim();
 
-    if (!baseUrl.startsWith('https://')) {
+    let parsedBaseUrl: URL;
+
+    try {
+      parsedBaseUrl = new URL(baseUrl);
+    } catch {
       throw new InternalServerErrorException(
         'MOODLE_BASEURL must be a secure URL (https://)',
+      );
+    }
+
+    const hostname = parsedBaseUrl.hostname.toLowerCase();
+    const isPrivateOrLocalHost =
+      hostname === 'localhost' ||
+      hostname === '169.254.169.254' ||
+      hostname === '::1' ||
+      /^(127\.|10\.|172\.(1[6-9]|2\d|3[0-1])\.|192\.168\.)/.test(hostname);
+
+    if (parsedBaseUrl.protocol !== 'https:' || isPrivateOrLocalHost) {
+      throw new InternalServerErrorException(
+        'MOODLE_BASEURL must be a secure URL (https://) pointing to a public host',
       );
     }
 
