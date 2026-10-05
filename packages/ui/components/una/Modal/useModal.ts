@@ -20,7 +20,7 @@ export interface UseModalOptions {
 
 export interface UseModalReturn {
   dialogRef: RefObject<HTMLElement | null>;
-  handleOverlayClick: (event: ReactMouseEvent<HTMLElement>) => void;
+  handleOverlayClick: (event?: ReactMouseEvent<HTMLElement>) => void;
   handleKeyDown: (event: ReactKeyboardEvent<HTMLElement>) => void;
 }
 
@@ -83,8 +83,12 @@ export function useModal({
     onCloseRef.current = onClose;
   });
 
-  const handleOverlayClick = (event: ReactMouseEvent<HTMLElement>): void => {
-    if (closeOnClickOutside && event.target === event.currentTarget) {
+  const handleOverlayClick = (event?: ReactMouseEvent<HTMLElement>): void => {
+    if (!closeOnClickOutside) {
+      return;
+    }
+
+    if (!event || event.target === event.currentTarget) {
       onCloseRef.current?.();
     }
   };

@@ -38,7 +38,14 @@ export const Modal: React.FC<ModalProps> = ({
   const dialogAriaLabel = title ? undefined : ariaLabel || 'Dialog';
 
   return (
-    <div className={styles.overlay} onClick={handleOverlayClick}>
+    <div className={styles.overlay}>
+      <button
+        type="button"
+        className={styles.backdrop}
+        onClick={handleOverlayClick}
+        tabIndex={-1}
+        aria-label={closeLabel ?? 'Close'}
+      />
       <div
         ref={dialogRef as React.RefObject<HTMLDivElement>}
         className={`${styles.dialog} ${className ?? ''}`}
