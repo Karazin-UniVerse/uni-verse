@@ -47,10 +47,9 @@ export const DevFeaturePanel: React.FC = () => {
 
   const overrideCount = Object.keys(activeOverrides).length;
 
-  useDevPanelModal({
+  const { handleToggle, handleClose, handleBackdropClick, handleKeyDown } = useDevPanelModal({
     isOpen,
     setIsOpen,
-    containerRef,
     panelRef,
   });
 
@@ -62,7 +61,7 @@ export const DevFeaturePanel: React.FC = () => {
     };
   }, []);
 
-  const handleToggle = (featureKey: FeatureFlagKey, checked: boolean) => {
+  const handleFeatureToggle = (featureKey: FeatureFlagKey, checked: boolean) => {
     setFeatureOverride(featureKey, checked);
   };
 
@@ -86,7 +85,7 @@ export const DevFeaturePanel: React.FC = () => {
         variant="secondary"
         size="medium"
         isTransparent
-        onClick={() => setIsOpen((previous) => !previous)}
+        onClick={handleToggle}
         aria-label={formatMessage('devPanel.openButton')}
         title={`${formatMessage('devPanel.title')} (Ctrl+Shift+F)`}
         className={styles.headerButton}
@@ -100,11 +99,13 @@ export const DevFeaturePanel: React.FC = () => {
           ref={panelRef}
           className={styles.panelOverlay}
           aria-label={formatMessage('devPanel.title')}
+          onClick={handleBackdropClick}
+          onKeyDown={handleKeyDown}
           onCancel={(event) => {
             event.preventDefault();
-            setIsOpen(false);
+            handleClose();
           }}
-          onClose={() => setIsOpen(false)}
+          onClose={handleClose}
         >
           <div className={styles.panelHeader}>
             <div className={styles.panelTitleGroup}>
@@ -115,7 +116,7 @@ export const DevFeaturePanel: React.FC = () => {
             <button
               type="button"
               className={styles.closeButton}
-              onClick={() => setIsOpen(false)}
+              onClick={handleClose}
               aria-label={formatMessage('devPanel.closeButton')}
             >
               <X size={16} />
@@ -145,7 +146,7 @@ export const DevFeaturePanel: React.FC = () => {
                     <input
                       type="checkbox"
                       checked={enabled}
-                      onChange={(event) => handleToggle(item.key, event.target.checked)}
+                      onChange={(event) => handleFeatureToggle(item.key, event.target.checked)}
                       aria-label={label}
                     />
                     <span className={styles.slider} />

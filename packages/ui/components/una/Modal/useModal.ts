@@ -5,7 +5,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type RefObject,
 } from 'react';
-import { noop } from '@universe/core/utils/fn';
+import { noop } from '@core/utils/fn';
 
 export interface UseModalOptions {
   open: boolean;

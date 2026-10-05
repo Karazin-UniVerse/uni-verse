@@ -232,8 +232,8 @@ importers:
 
   packages/ui:
     dependencies:
-      '@universe/core':
-        specifier: workspace:*
+      '@core':
+        specifier: workspace:@universe/core@*
         version: link:../core
       clsx:
         specifier: ^2.1.1
