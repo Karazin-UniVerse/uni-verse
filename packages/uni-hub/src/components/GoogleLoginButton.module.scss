@@ -1,0 +1,41 @@
+.wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.fallbackButtonWrap {
+  width: 100%;
+}
+
+.fallbackButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 10px;
+}
+
+.googleIcon {
+  flex-shrink: 0;
+}
+
+.gsiContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.001;
+  overflow: hidden;
+  z-index: 10;
+
+  &.disabled {
+    pointer-events: none;
+  }
+}

@@ -17,6 +17,7 @@ import {
   Volume2,
   VolumeX,
   Menu,
+  Briefcase,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -64,13 +65,46 @@ import {
   getGradeRawValue,
 } from '@uni-hub/utils/grades';
 import { playClick } from '@uni-hub/utils/soundEffects';
+import { features } from '@uni-hub/config/features';
 import styles from './DashboardPage.module.scss';
 
-type NavKey = 'overview' | 'courses' | 'grades' | 'assignments' | 'schedule' | 'events';
+type NavKey =
+  | 'overview'
+  | 'courses'
+  | 'grades'
+  | 'assignments'
+  | 'schedule'
+  | 'events'
+  | 'opportunities';
 
-const NAV_KEYS: NavKey[] = ['overview', 'courses', 'grades', 'assignments', 'schedule', 'events'];
+const NAV_KEYS = new Set<NavKey>([
+  'overview',
+  'courses',
+  'grades',
+  'assignments',
+  'schedule',
+  'events',
+  'opportunities',
+]);
 
-const isNavKey = (value: string): value is NavKey => NAV_KEYS.includes(value as NavKey);
+const isNavKey = (value: string): value is NavKey => {
+  if (!NAV_KEYS.has(value as NavKey)) {
+    return false;
+  }
+
+  if (value === 'opportunities' && !features.opportunities) {
+    return false;
+  }
+
+  if (
+    !features.moodle &&
+    (value === 'courses' || value === 'grades' || value === 'assignments')
+  ) {
+    return false;
+  }
+
+  return true;
+};
 
 const cardMotion = {
   whileHover: { scale: 1.02, y: -2 },
@@ -350,14 +384,28 @@ const DashboardPage: React.FC = () => {
     router.push('/login');
   };
 
-  const menuItems: { key: NavKey; icon: React.ReactNode; label: string }[] = [
-    { key: 'overview', icon: <LayoutDashboard size={18} />, label: 'Обзор' },
-    { key: 'courses', icon: <BookOpen size={18} />, label: 'Курсы' },
-    { key: 'grades', icon: <ClipboardList size={18} />, label: 'Оценки' },
-    { key: 'assignments', icon: <FileEdit size={18} />, label: 'Задания' },
-    { key: 'schedule', icon: <CalendarDays size={18} />, label: 'Расписание' },
-    { key: 'events', icon: <Calendar size={18} />, label: 'События' },
-  ];
+  const menuItems: { key: NavKey; icon: React.ReactNode; label: string }[] = useMemo(() => {
+    const items: { key: NavKey; icon: React.ReactNode; label: string; moodleOnly?: boolean }[] = [
+      { key: 'overview', icon: <LayoutDashboard size={18} />, label: 'Обзор' },
+      { key: 'courses', icon: <BookOpen size={18} />, label: 'Курсы', moodleOnly: true },
+      { key: 'grades', icon: <ClipboardList size={18} />, label: 'Оценки', moodleOnly: true },
+      { key: 'assignments', icon: <FileEdit size={18} />, label: 'Задания', moodleOnly: true },
+      { key: 'schedule', icon: <CalendarDays size={18} />, label: 'Расписание' },
+      { key: 'events', icon: <Calendar size={18} />, label: 'События' },
+    ];
+
+    const result = items.filter((item) => (features.moodle ? true : !item.moodleOnly));
+
+    if (features.opportunities) {
+      result.push({
+        key: 'opportunities',
+        icon: <Briefcase size={18} />,
+        label: 'Можливості',
+      });
+    }
+
+    return result;
+  }, []);
 
   const renderOverview = () => (
     <div className={styles.stack}>
@@ -689,7 +737,76 @@ const DashboardPage: React.FC = () => {
       <Empty description="События не найдены" />
     );
 
+  const renderOpportunities = () => (
+    <div className={styles.stack}>
+      <div className={styles.overviewHero}>
+        <div>
+          <div className={styles.sectionHeader} style={{ marginBottom: 'var(--space-8)' }}>
+            <h2
+              className={styles.sectionTitle}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <Briefcase size={20} />
+              Можливості та стажування
+            </h2>
+            <Tag tone="info">Staging Preview</Tag>
+          </div>
+          <p className={styles.muted}>
+            Центр кар&apos;єрного зростання, стажувань та дослідницьких можливостей Каразінського
+            університету.
+          </p>
+        </div>
+      </div>
+
+      <div className={styles.statGrid}>
+        <div className={styles.statCard}>
+          <div className={styles.statLabel}>Активні пропозиції</div>
+          <div className={styles.statValue}>3</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statLabel}>Партнери та компанії</div>
+          <div className={styles.statValue}>12+</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statLabel}>Студентські гранти</div>
+          <div className={styles.statValue}>2</div>
+        </div>
+      </div>
+
+      <div className={styles.sectionHeader}>
+        <span className={styles.sectionTitle}>Рекомендовані вакансії та стажування</span>
+        <Tag tone="neutral">Оновлено</Tag>
+      </div>
+
+      <div className={styles.grid}>
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <span className={styles.cardTitle}>Junior Node.js / NestJS Trainee</span>
+            <Tag tone="success">Відкрито</Tag>
+          </div>
+          <p className={styles.cardDesc}>
+            Практика розробки мікросервісів та API Gateway для студентських сервісів університету.
+          </p>
+        </div>
+
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <span className={styles.cardTitle}>AI Research Assistant (Computer Vision)</span>
+            <Tag tone="info">Науковий грант</Tag>
+          </div>
+          <p className={styles.cardDesc}>
+            Участь у дослідницькій лабораторії ННІ КН та ШІ над проєктами штучного інтелекту.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderActiveContent = () => {
+    if (!isNavKey(activeKey)) {
+      return renderOverview();
+    }
+
     switch (activeKey) {
       case 'overview':
         return renderOverview();
@@ -703,6 +820,8 @@ const DashboardPage: React.FC = () => {
         return renderEvents();
       case 'schedule':
         return <ScheduleView />;
+      case 'opportunities':
+        return renderOpportunities();
       default:
         return renderOverview();
     }

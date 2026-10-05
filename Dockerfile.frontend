@@ -11,7 +11,21 @@ WORKDIR /app
 COPY . .
 ARG NEXT_PUBLIC_API_URL=https://p01--backend--jm9qjnmpm4m2.code.run
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ARG NEXT_PUBLIC_FEATURE_OPPORTUNITIES
+ENV NEXT_PUBLIC_FEATURE_OPPORTUNITIES=$NEXT_PUBLIC_FEATURE_OPPORTUNITIES
+ARG NEXT_PUBLIC_FEATURE_MOODLE
+ENV NEXT_PUBLIC_FEATURE_MOODLE=$NEXT_PUBLIC_FEATURE_MOODLE
+ARG NEXT_PUBLIC_AUTH_GOOGLE_ENABLED
+ENV NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=$NEXT_PUBLIC_AUTH_GOOGLE_ENABLED
+ARG NEXT_PUBLIC_AUTH_MOODLE_ENABLED
+ENV NEXT_PUBLIC_AUTH_MOODLE_ENABLED=$NEXT_PUBLIC_AUTH_MOODLE_ENABLED
 RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @universe/ui build-storybook
+RUN cp -r packages/ui/storybook-static packages/uni-hub/public/storybook
+RUN sed -i 's|<head>|<head><base href="/storybook/">|g' packages/uni-hub/public/storybook/index.html && \
+    sed -i 's|<head>|<head><base href="/storybook/">|g' packages/uni-hub/public/storybook/iframe.html
 RUN pnpm --filter @universe/uni-hub build
 
 FROM base AS runner
