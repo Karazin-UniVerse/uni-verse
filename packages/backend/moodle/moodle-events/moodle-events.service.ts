@@ -20,8 +20,7 @@ export class MoodleEventsService {
 
     try {
       const data = await this.moodleClient.client<MoodleUpcomingEventsResponse>(
-        getWsFunctionName('getUpcomingEvents'),
-        moodleToken,
+        { wsfunction: getWsFunctionName('getUpcomingEvents'), moodleToken },
       );
 
       return (data?.events || []).map((event) => ({

@@ -220,67 +220,77 @@ describe('MoodleAssignmentsService', () => {
 
   describe('saveSubmission', () => {
     it('should throw BadRequestException if token is missing', async () => {
-      await expect(service.saveSubmission('', 1, 'text')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.saveSubmission({ moodleToken: '', assignId: 1, text: 'text' }),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should save submission with text only', async () => {
       mockMoodleClientService.client.mockResolvedValue({ status: true });
 
-      const result = await service.saveSubmission('token', 1, 'Only text');
+      const result = await service.saveSubmission({
+        moodleToken: 'token',
+        assignId: 1,
+        text: 'Only text',
+      });
 
       expect(result).toEqual({ status: true });
-      expect(mockMoodleClientService.client).toHaveBeenCalledWith(
-        'mod_assign_save_submission',
-        'token',
-        undefined,
-        {
+      expect(mockMoodleClientService.client).toHaveBeenCalledWith({
+        wsfunction: 'mod_assign_save_submission',
+        moodleToken: 'token',
+        params: {
           assignmentid: 1,
           plugindata: {
             onlinetext_editor: { text: 'Only text', format: 1, itemid: 0 },
           },
         },
-      );
+      });
     });
 
     it('should save submission with fileItemId only', async () => {
       mockMoodleClientService.client.mockResolvedValue({ status: true });
 
-      const result = await service.saveSubmission('token', 1, undefined, 777);
+      const result = await service.saveSubmission({
+        moodleToken: 'token',
+        assignId: 1,
+        fileItemId: 777,
+      });
 
       expect(result).toEqual({ status: true });
-      expect(mockMoodleClientService.client).toHaveBeenCalledWith(
-        'mod_assign_save_submission',
-        'token',
-        undefined,
-        {
+      expect(mockMoodleClientService.client).toHaveBeenCalledWith({
+        wsfunction: 'mod_assign_save_submission',
+        moodleToken: 'token',
+        params: {
           assignmentid: 1,
           plugindata: {
             files_filemanager: 777,
           },
         },
-      );
+      });
     });
 
     it('should save submission with text and fileItemId', async () => {
       mockMoodleClientService.client.mockResolvedValue({ status: true });
 
-      const result = await service.saveSubmission('token', 1, 'My text', 12345);
+      const result = await service.saveSubmission({
+        moodleToken: 'token',
+        assignId: 1,
+        text: 'My text',
+        fileItemId: 12345,
+      });
 
       expect(result).toEqual({ status: true });
-      expect(mockMoodleClientService.client).toHaveBeenCalledWith(
-        'mod_assign_save_submission',
-        'token',
-        undefined,
-        {
+      expect(mockMoodleClientService.client).toHaveBeenCalledWith({
+        wsfunction: 'mod_assign_save_submission',
+        moodleToken: 'token',
+        params: {
           assignmentid: 1,
           plugindata: {
             onlinetext_editor: { text: 'My text', format: 1, itemid: 0 },
             files_filemanager: 12345,
           },
         },
-      );
+      });
     });
   });
 });
