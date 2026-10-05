@@ -6,6 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   resolve: {
+    dedupe: ['react', 'react-dom'],
     alias: {
       '@uni-hub': path.resolve(__dirname, '.'),
       '@core': path.resolve(__dirname, '../core'),

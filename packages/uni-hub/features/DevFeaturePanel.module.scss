@@ -1,8 +1,11 @@
-.floatingTrigger {
+.container {
   position: fixed;
   bottom: var(--space-20, 20px);
   left: var(--space-20, 20px);
   z-index: 9999;
+}
+
+.floatingTrigger {
   display: flex;
   align-items: center;
   gap: var(--space-8, 8px);
@@ -46,76 +49,22 @@
   font-weight: 700;
 }
 
-.panelOverlay {
-  position: fixed;
-  bottom: var(--space-20, 20px);
-  left: var(--space-20, 20px);
-  z-index: 10000;
-  width: 360px;
-  max-width: calc(100vw - 40px);
-  margin: 0;
-  padding: 0;
-  color: inherit;
-  background: var(--bg-surface, #fff);
-  border: 1px solid var(--border-color, rgb(0 0 0 / 12%));
-  border-radius: var(--border-radius-large, 12px);
-  box-shadow: 0 12px 36px rgb(0 0 0 / 20%);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  backdrop-filter: blur(12px);
-}
-
-:global([data-theme='dark']) .panelOverlay,
-:global([data-theme='cyberpunk']) .panelOverlay {
-  background: rgb(30 41 59 / 96%);
-  border-color: rgb(255 255 255 / 15%);
-}
-
-.panelHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-12, 12px) var(--space-16, 16px);
-  border-bottom: 1px solid var(--border-color, rgb(0 0 0 / 8%));
-}
-
 .panelTitleGroup {
   display: flex;
   align-items: center;
   gap: var(--space-8, 8px);
 
-  h4 {
-    margin: 0;
+  span {
     font-size: var(--font-sm, 14px);
     font-weight: 600;
     color: var(--text-primary);
   }
 }
 
-.closeButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  border-radius: var(--border-radius-small, 6px);
-  cursor: pointer;
-
-  &:hover {
-    background: var(--bg-hover, rgb(0 0 0 / 5%));
-    color: var(--text-primary);
-  }
-}
-
-.panelBody {
+.toggleList {
   display: flex;
   flex-direction: column;
   gap: var(--space-12, 12px);
-  padding: var(--space-16, 16px);
 }
 
 .toggleRow {
@@ -199,14 +148,4 @@
 .switch input:focus-visible + .slider {
   outline: 2px solid var(--accent-primary, #3b82f6);
   outline-offset: 2px;
-}
-
-.panelFooter {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-8, 8px);
-  padding: var(--space-12, 12px) var(--space-16, 16px);
-  border-top: 1px solid var(--border-color, rgb(0 0 0 / 8%));
-  background: var(--bg-hover, rgb(0 0 0 / 2%));
 }

@@ -1,0 +1,120 @@
+@use '../../../breakpoints.scss' as *;
+
+.popover {
+  position: absolute;
+  z-index: var(--z-index-dropdown, 1000);
+  background: var(--bg-surface, var(--bg-color, #fff));
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-large, 12px);
+  box-shadow: var(--box-shadow-large, 0 12px 36px rgb(0 0 0 / 20%));
+  width: var(--popover-width, max-content);
+  max-width: min(calc(100vw - 32px), 480px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: popover-in var(--transition-fast, 0.15s) var(--ease-standard, ease-out);
+
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+.bottomEnd {
+  top: calc(100% + var(--space-8, 8px));
+  right: 0;
+  transform-origin: top right;
+}
+
+.bottomStart {
+  top: calc(100% + var(--space-8, 8px));
+  left: 0;
+  transform-origin: top left;
+}
+
+.topEnd {
+  bottom: calc(100% + var(--space-8, 8px));
+  right: 0;
+  transform-origin: bottom right;
+}
+
+.topStart {
+  bottom: calc(100% + var(--space-8, 8px));
+  left: 0;
+  transform-origin: bottom left;
+}
+
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12, 12px);
+  padding: var(--space-12, 12px) var(--space-16, 16px);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-sm, 14px);
+  font-weight: var(--font-weight-bold, 600);
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.closeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-small, 6px);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background-color var(--transition-fast) var(--ease-standard),
+    color var(--transition-fast) var(--ease-standard);
+
+  &:hover {
+    background: var(--bg-hover, rgb(0 0 0 / 5%));
+    color: var(--text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+  }
+}
+
+.body {
+  padding: var(--space-16, 16px);
+  overflow: auto;
+  font-size: var(--font-sm, 14px);
+  color: var(--text-primary);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8, 8px);
+  padding: var(--space-12, 12px) var(--space-16, 16px);
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-hover, rgb(0 0 0 / 2%));
+}
