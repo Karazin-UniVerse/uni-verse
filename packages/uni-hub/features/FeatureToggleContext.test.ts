@@ -8,24 +8,32 @@ describe('FeatureToggleContext and Components', () => {
     delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
     delete process.env.NEXT_PUBLIC_FEATURE_EDEAN;
     delete process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES;
+    delete process.env.NEXT_PUBLIC_FEATURE_PANEL;
   });
 
   afterEach(() => {
     delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
     delete process.env.NEXT_PUBLIC_FEATURE_EDEAN;
     delete process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES;
+    delete process.env.NEXT_PUBLIC_FEATURE_PANEL;
   });
 
   it('renders children with default feature flags in SSR', () => {
     const TestConsumer = () => {
-      const flags = useFeatures();
+      const {
+        isMoodleIntegrationEnabled,
+        isEDeanEnabled,
+        isOpportunitiesPlatformEnabled,
+        isFeaturePanelEnabled,
+      } = useFeatures();
 
       return React.createElement(
         'div',
         null,
-        React.createElement('span', { id: 'moodle' }, String(flags.isMoodleIntegrationEnabled)),
-        React.createElement('span', { id: 'edean' }, String(flags.isEDeanEnabled)),
-        React.createElement('span', { id: 'opps' }, String(flags.isOpportunitiesPlatformEnabled)),
+        React.createElement('span', { id: 'moodle' }, String(isMoodleIntegrationEnabled)),
+        React.createElement('span', { id: 'edean' }, String(isEDeanEnabled)),
+        React.createElement('span', { id: 'opps' }, String(isOpportunitiesPlatformEnabled)),
+        React.createElement('span', { id: 'panel' }, String(isFeaturePanelEnabled)),
       );
     };
 
@@ -40,6 +48,7 @@ describe('FeatureToggleContext and Components', () => {
     expect(html).toContain('id="moodle">true</span>');
     expect(html).toContain('id="edean">true</span>');
     expect(html).toContain('id="opps">false</span>');
+    expect(html).toContain('id="panel">false</span>');
   });
 
   it('applies initialFlags overrides correctly', () => {

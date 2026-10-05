@@ -14,7 +14,7 @@ export interface StudentCardProps {
 
 export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }) => {
   const { formatMessage } = useLanguage();
-  const flags = useFeatures();
+  const { isEDeanEnabled, isMoodleIntegrationEnabled } = useFeatures();
 
   return (
     <section className={styles.studentCard}>
@@ -34,7 +34,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }
           <div className={styles.studentMainInfo}>
             {/* intentional: suppressHydrationWarning – user profile is hydrated from client localStorage */}
             <h3 suppressHydrationWarning>{activeStudentProfile.fullName}</h3>
-            {flags.isEDeanEnabled ? (
+            {isEDeanEnabled ? (
               <div className={styles.muted}>
                 {formatMessage('overview.specialty')} {activeStudentProfile.specialty} •{' '}
                 {activeStudentProfile.educationalProgram}
@@ -44,7 +44,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }
             )}
           </div>
         </div>
-        {flags.isEDeanEnabled && (
+        {isEDeanEnabled && (
           <div className={styles.studentTags}>
             <Tag tone="success">{formatMessage('student.fullTime')}</Tag>
             <Tag tone="info">{formatMessage('student.budget')}</Tag>
@@ -56,9 +56,9 @@ export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }
         )}
       </div>
 
-      {(flags.isEDeanEnabled || flags.isMoodleIntegrationEnabled) && (
+      {(isEDeanEnabled || isMoodleIntegrationEnabled) && (
         <div className={styles.studentGrid}>
-          {flags.isEDeanEnabled && (
+          {isEDeanEnabled && (
             <>
               <div className={styles.studentField}>
                 <span className={styles.fieldLabel}>{formatMessage('student.faculty')}</span>
@@ -99,7 +99,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }
               </div>
             </>
           )}
-          {flags.isMoodleIntegrationEnabled && (
+          {isMoodleIntegrationEnabled && (
             <div className={styles.studentField}>
               <span className={styles.fieldLabel}>{formatMessage('student.gpa')}</span>
               <span className={styles.fieldValue}>{activeStudentProfile.gpa} / 100</span>

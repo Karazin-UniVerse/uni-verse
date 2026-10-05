@@ -105,6 +105,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 }) => {
   const { formatMessage } = useLanguage();
   const flags = useFeatures();
+  const { isMoodleIntegrationEnabled } = flags;
   const visibleNavItems = getVisibleNavItems(flags);
   const siderRef = useRef<HTMLElement>(null);
 
@@ -245,7 +246,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         </nav>
 
         <div className={styles.siderFooter}>
-          {flags.isMoodleIntegrationEnabled && (
+          {isMoodleIntegrationEnabled && (
             <a
               href="https://moodle.universemvp.tech"
               target="_blank"

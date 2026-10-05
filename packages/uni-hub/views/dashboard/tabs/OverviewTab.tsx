@@ -31,7 +31,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 }) => {
   const router = useRouter();
   const { formatMessage } = useLanguage();
-  const flags = useFeatures();
+  const { isMoodleIntegrationEnabled } = useFeatures();
   const coursesCount = useCountUp(statistics?.total || 0, 800, !loading);
   const assignmentsCount = useCountUp(assignments.length, 800, !loading);
 
@@ -53,7 +53,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     <div className={styles.stack}>
       <StudentCard activeStudentProfile={activeStudentProfile} />
 
-      {flags.isMoodleIntegrationEnabled && (
+      {isMoodleIntegrationEnabled && (
         <div className={styles.overviewHero}>
           <ContextualGreeting assignments={assignments} />
           {nearestDeadline && (
@@ -67,7 +67,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
       )}
 
-      {flags.isMoodleIntegrationEnabled && (
+      {isMoodleIntegrationEnabled && (
         <StatCardGrid
           coursesCount={coursesCount}
           assignmentsCount={assignmentsCount}
@@ -78,14 +78,14 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
       <QuickActions assignments={assignments} onNavigate={onNavigate} />
 
-      {flags.isMoodleIntegrationEnabled && (
+      {isMoodleIntegrationEnabled && (
         <div className={styles.gradesDonutGrid}>
           <RecentGradesFeed assignments={assignments} onNavigate={onNavigate} />
           <AssignmentsDonut assignments={assignments} grades={grades} />
         </div>
       )}
 
-      {flags.isMoodleIntegrationEnabled && (
+      {isMoodleIntegrationEnabled && (
         <div className={styles.split}>
           <section className={styles.panel}>
             <div className={styles.panelHeader}>

@@ -10,18 +10,21 @@ export interface FeatureFlags {
   isEDeanEnabled: boolean;
   /** Enables Opportunities & Internships board platform */
   isOpportunitiesPlatformEnabled: boolean;
+  /** Enables developer feature flags control panel */
+  isFeaturePanelEnabled: boolean;
 }
 
 export type FeatureFlagKey = keyof FeatureFlags;
 
 /**
  * Baseline default values for feature flags.
- * Production default: Moodle enabled, Opportunities disabled, eDean enabled.
+ * Production default: Moodle enabled, Opportunities disabled, eDean enabled, DevPanel disabled.
  */
 export const DEFAULT_FEATURE_FLAGS: Readonly<FeatureFlags> = Object.freeze({
   isMoodleIntegrationEnabled: true,
   isEDeanEnabled: true,
   isOpportunitiesPlatformEnabled: false,
+  isFeaturePanelEnabled: false,
 });
 
 /**
@@ -31,4 +34,5 @@ export const FEATURE_ENV_KEYS: Readonly<Record<FeatureFlagKey, string>> = Object
   isMoodleIntegrationEnabled: 'NEXT_PUBLIC_FEATURE_MOODLE',
   isEDeanEnabled: 'NEXT_PUBLIC_FEATURE_EDEAN',
   isOpportunitiesPlatformEnabled: 'NEXT_PUBLIC_FEATURE_OPPORTUNITIES',
+  isFeaturePanelEnabled: 'NEXT_PUBLIC_FEATURE_PANEL',
 });

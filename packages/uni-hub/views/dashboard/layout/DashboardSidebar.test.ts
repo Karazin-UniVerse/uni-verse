@@ -14,6 +14,7 @@ describe('DashboardSidebar navigation & feature gating', () => {
       isMoodleIntegrationEnabled: true,
       isEDeanEnabled: true,
       isOpportunitiesPlatformEnabled: true,
+      isFeaturePanelEnabled: true,
     });
 
     expect(visible.map((item) => item.key)).toEqual([
@@ -31,6 +32,7 @@ describe('DashboardSidebar navigation & feature gating', () => {
       isMoodleIntegrationEnabled: false,
       isEDeanEnabled: true,
       isOpportunitiesPlatformEnabled: false,
+      isFeaturePanelEnabled: false,
     });
 
     expect(visible.map((item) => item.key)).toEqual(['overview', 'schedule']);
@@ -41,6 +43,7 @@ describe('DashboardSidebar navigation & feature gating', () => {
       isMoodleIntegrationEnabled: false,
       isEDeanEnabled: false,
       isOpportunitiesPlatformEnabled: false,
+      isFeaturePanelEnabled: false,
     });
 
     expect(visible.map((item) => item.key)).toEqual(['overview']);

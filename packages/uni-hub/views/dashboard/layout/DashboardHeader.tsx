@@ -7,7 +7,7 @@ import { Button, Tag, Empty } from '@una';
 import { StreakBadge } from '@uni-hub/components/gamification';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
-import { DevFeaturePanel } from '@uni-hub/features';
+import { DevFeaturePanel, useFeatures } from '@uni-hub/features';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi } from '@uni-hub/services/api';
 import type { DashboardHeaderProps } from '../types';
@@ -24,6 +24,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   activeStudentProfile,
 }) => {
   const { localeTag, formatMessage } = useLanguage();
+  const { isFeaturePanelEnabled } = useFeatures();
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -83,7 +84,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       </div>
 
       <div className={styles.headerRight}>
-        {process.env.NEXT_PUBLIC_FEATURE_PANEL === 'true' && <DevFeaturePanel />}
+        {isFeaturePanelEnabled && <DevFeaturePanel />}
         <Button
           type="button"
           variant="secondary"

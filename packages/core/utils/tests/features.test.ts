@@ -20,6 +20,7 @@ describe('features utils', () => {
         [FEATURE_ENV_KEYS.isMoodleIntegrationEnabled]: 'true',
         [FEATURE_ENV_KEYS.isEDeanEnabled]: 'false',
         [FEATURE_ENV_KEYS.isOpportunitiesPlatformEnabled]: '1',
+        [FEATURE_ENV_KEYS.isFeaturePanelEnabled]: 'true',
       };
 
       const flags = resolveEnvFeatureFlags(env);
@@ -27,6 +28,7 @@ describe('features utils', () => {
       assert.strictEqual(flags.isMoodleIntegrationEnabled, true);
       assert.strictEqual(flags.isEDeanEnabled, false);
       assert.strictEqual(flags.isOpportunitiesPlatformEnabled, true);
+      assert.strictEqual(flags.isFeaturePanelEnabled, true);
     });
   });
 
@@ -36,6 +38,7 @@ describe('features utils', () => {
         isMoodleIntegrationEnabled: false,
         isEDeanEnabled: true,
         isOpportunitiesPlatformEnabled: false,
+        isFeaturePanelEnabled: false,
       };
 
       const firstOverride = {
@@ -59,6 +62,7 @@ describe('features utils', () => {
         isMoodleIntegrationEnabled: false,
         isEDeanEnabled: true,
         isOpportunitiesPlatformEnabled: false,
+        isFeaturePanelEnabled: false,
       };
 
       const result = mergeFeatureFlags(base, null, undefined, { isMoodleIntegrationEnabled: true });
