@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
@@ -52,6 +52,11 @@ const DashboardPage: React.FC = () => {
   const setSoundEnabled = useGamificationStore((s) => s.setSoundEnabled);
   const { formatMessage } = useLanguage();
   const flags = useFeatures();
+  const flagsRef = useRef(flags);
+
+  useEffect(() => {
+    flagsRef.current = flags;
+  });
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -134,7 +139,7 @@ const DashboardPage: React.FC = () => {
     if (requestedTab && isNavKey(requestedTab)) {
       const targetItem = NAV_ITEMS.find((item) => item.key === requestedTab);
 
-      if (!targetItem?.featureFlag || flags[targetItem.featureFlag]) {
+      if (!targetItem?.featureFlag || flagsRef.current[targetItem.featureFlag]) {
         setActiveKey(requestedTab);
 
         return;
@@ -142,7 +147,15 @@ const DashboardPage: React.FC = () => {
     }
 
     setActiveKey('overview');
-  }, [searchParams, flags]);
+  }, [searchParams]);
+
+  useEffect(() => {
+    const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
+
+    if (activeItem?.featureFlag && !flags[activeItem.featureFlag]) {
+      setActiveKey('overview');
+    }
+  }, [flags, activeKey]);
 
   useEffect(() => {
     if (!isLoggedIn()) {

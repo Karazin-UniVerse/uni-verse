@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { useEffect, useId, useRef, type RefObject } from 'react';
 
 export interface UseModalOptions {
   open: boolean;
@@ -12,6 +12,38 @@ export interface UseModalOptions {
 }
 
 const noop = (): void => {};
+
+const modalStack: string[] = [];
+let previousBodyOverflow = '';
+
+function registerModal(id: string, lockScroll: boolean): void {
+  if (typeof document === 'undefined') {
+    return;
+  }
+
+  if (lockScroll && modalStack.length === 0) {
+    previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+  }
+
+  modalStack.push(id);
+}
+
+function unregisterModal(id: string, lockScroll: boolean): void {
+  if (typeof document === 'undefined') {
+    return;
+  }
+
+  const index = modalStack.lastIndexOf(id);
+
+  if (index !== -1) {
+    modalStack.splice(index, 1);
+  }
+
+  if (lockScroll && modalStack.length === 0) {
+    document.body.style.overflow = previousBodyOverflow;
+  }
+}
 
 const FOCUSABLE_SELECTOR =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -79,6 +111,7 @@ export function useModal({
   restoreFocus = true,
   trapFocus = true,
 }: UseModalOptions): void {
+  const modalId = useId();
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
 
@@ -94,13 +127,7 @@ export function useModal({
     const dialogElement = dialogRef?.current ?? null;
 
     previouslyFocusedElementRef.current = (document.activeElement as HTMLElement) ?? null;
-
-    const originalOverflow = document.body.style.overflow;
-
-    if (lockScroll) {
-      document.body.style.overflow = 'hidden';
-    }
-
+    registerModal(modalId, lockScroll);
     openModalDialog(dialogElement);
 
     const frameId = requestAnimationFrame(() => {
@@ -119,8 +146,12 @@ export function useModal({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (closeOnEscape && event.key === 'Escape') {
-        event.stopPropagation();
-        onCloseRef.current?.();
+        const isTopmost = modalStack.at(-1) === modalId;
+
+        if (isTopmost) {
+          event.stopPropagation();
+          onCloseRef.current?.();
+        }
 
         return;
       }
@@ -155,14 +186,22 @@ export function useModal({
       }
 
       closeModalDialog(dialogElement);
+      unregisterModal(modalId, lockScroll);
 
-      if (lockScroll) {
-        document.body.style.overflow = originalOverflow;
-      }
+      const previous = previouslyFocusedElementRef.current;
 
-      if (restoreFocus) {
-        previouslyFocusedElementRef.current?.focus?.();
+      if (restoreFocus && previous) {
+        requestAnimationFrame(() => previous.focus());
       }
     };
-  }, [open, lockScroll, closeOnClickOutside, closeOnEscape, trapFocus, restoreFocus, dialogRef]);
+  }, [
+    open,
+    modalId,
+    lockScroll,
+    closeOnClickOutside,
+    closeOnEscape,
+    trapFocus,
+    restoreFocus,
+    dialogRef,
+  ]);
 }

@@ -362,6 +362,7 @@ export const uk = {
     'Інтенсивне менторство, патерни проєктування та практика код-рев’ю з досвідченими випускниками.',
   'devPanel.openButton': 'Відкрити панель перемикачів функцій',
   'devPanel.title': 'Панель функцій',
+  'devPanel.devTag': 'Dev',
   'devPanel.closeButton': 'Закрити панель перемикачів',
   'devPanel.reset': 'Скинути',
   'devPanel.resetSuccess': 'Скинуто!',

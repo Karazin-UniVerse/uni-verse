@@ -110,7 +110,7 @@ export const DevFeaturePanel: React.FC = () => {
             <div className={styles.panelTitleGroup}>
               <SlidersHorizontal size={16} />
               <h4>{formatMessage('devPanel.title')}</h4>
-              <Tag tone="info">Dev</Tag>
+              <Tag tone="info">{formatMessage('devPanel.devTag')}</Tag>
             </div>
             <button
               type="button"

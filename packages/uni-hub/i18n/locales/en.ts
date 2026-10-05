@@ -363,6 +363,7 @@ export const en = {
     'Intensive peer mentorship, design patterns, and code review practice with experienced alumni.',
   'devPanel.openButton': 'Open feature toggles panel',
   'devPanel.title': 'Feature Toggles',
+  'devPanel.devTag': 'Dev',
   'devPanel.closeButton': 'Close feature toggles panel',
   'devPanel.reset': 'Reset',
   'devPanel.resetSuccess': 'Reset!',
