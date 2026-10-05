@@ -207,15 +207,6 @@ async function handlePullRequest() {
       reviewersMentions.length > 0
         ? `🔔 Запит на рев'ю: ${reviewersMentions.join(', ')}`
         : '@here новий PR потребує перегляду!';
-  } else if (action === 'review_requested') {
-    const requestedReviewer = eventData.requested_reviewer;
-    const reviewerMention = requestedReviewer
-      ? formatUserMention(requestedReviewer.login)
-      : "Шановний рев'ювер";
-
-    statusLabel = "🔔 Запит на рев'ю";
-    color = 0x5865f2; // Blurple
-    content = `🔔 ${reviewerMention}, тебе призначено рев'ювером для PR **#${pr.number}**!`;
   } else if (action === 'reopened') {
     statusLabel = '🔄 Перевідкрито PR';
     color = 0xfee75c; // Yellow
