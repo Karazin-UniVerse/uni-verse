@@ -12,6 +12,7 @@ export const Modal: React.FC<ModalProps> = ({
   className,
   closeLabel,
   title,
+  closeButton = true,
   closeOnClickOutside = true,
   closeOnEscape = true,
   lockScroll = true,
@@ -44,7 +45,7 @@ export const Modal: React.FC<ModalProps> = ({
         className={styles.backdrop}
         onClick={handleOverlayClick}
         tabIndex={-1}
-        aria-label={closeLabel ?? 'Close'}
+        aria-hidden="true"
       />
       <div
         ref={dialogRef as React.RefObject<HTMLDivElement>}
@@ -61,22 +62,26 @@ export const Modal: React.FC<ModalProps> = ({
         tabIndex={-1}
         onKeyDown={handleKeyDown}
       >
-        <div className={styles.header}>
-          {title && (
-            <h3 id={titleId} className={styles.title}>
-              {title}
-            </h3>
-          )}
-          <button
-            type="button"
-            className={styles.closeBtn}
-            onClick={onClose}
-            aria-label={closeLabel ?? 'Close'}
-            title={closeLabel ?? 'Close'}
-          >
-            <X size={18} />
-          </button>
-        </div>
+        {(title || closeButton) && (
+          <div className={styles.header}>
+            {title && (
+              <h3 id={titleId} className={styles.title}>
+                {title}
+              </h3>
+            )}
+            {closeButton && (
+              <button
+                type="button"
+                className={styles.closeBtn}
+                onClick={onClose}
+                aria-label={closeLabel ?? 'Close'}
+                title={closeLabel ?? 'Close'}
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
+        )}
         <div className={styles.body}>{children}</div>
       </div>
     </div>
