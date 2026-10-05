@@ -38,7 +38,6 @@ export const DevFeaturePanel: React.FC = () => {
   const { formatMessage } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [isReset, setIsReset] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDialogElement>(null);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -47,7 +46,7 @@ export const DevFeaturePanel: React.FC = () => {
 
   const overrideCount = Object.keys(activeOverrides).length;
 
-  const { handleToggle, handleClose, handleBackdropClick, handleKeyDown } = useDevPanelModal({
+  const { handleToggle, handleClose } = useDevPanelModal({
     isOpen,
     setIsOpen,
     panelRef,
@@ -79,7 +78,7 @@ export const DevFeaturePanel: React.FC = () => {
   };
 
   return (
-    <div className={styles.containerWrap} ref={containerRef}>
+    <div className={styles.containerWrap}>
       <Button
         type="button"
         variant="secondary"
@@ -99,8 +98,6 @@ export const DevFeaturePanel: React.FC = () => {
           ref={panelRef}
           className={styles.panelOverlay}
           aria-label={formatMessage('devPanel.title')}
-          onClick={handleBackdropClick}
-          onKeyDown={handleKeyDown}
           onCancel={(event) => {
             event.preventDefault();
             handleClose();

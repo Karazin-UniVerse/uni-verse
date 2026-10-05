@@ -1,4 +1,4 @@
-import { useEffect, type Dispatch, type RefObject, type SetStateAction } from 'react';
+import { useCallback, useEffect, type Dispatch, type RefObject, type SetStateAction } from 'react';
 import { useModal } from '@una';
 
 interface UseDevPanelModalOptions {
@@ -10,8 +10,6 @@ interface UseDevPanelModalOptions {
 export interface UseDevPanelModalReturn {
   handleToggle: () => void;
   handleClose: () => void;
-  handleBackdropClick: (event?: React.MouseEvent<HTMLElement>) => void;
-  handleKeyDown: (event: React.KeyboardEvent<HTMLElement>) => void;
 }
 
 function isToggleShortcut(event: KeyboardEvent): boolean {
@@ -23,15 +21,15 @@ export function useDevPanelModal({
   setIsOpen,
   panelRef,
 }: UseDevPanelModalOptions): UseDevPanelModalReturn {
-  const handleClose = (): void => {
+  const handleClose = useCallback((): void => {
     setIsOpen(false);
-  };
+  }, [setIsOpen]);
 
-  const handleToggle = (): void => {
+  const handleToggle = useCallback((): void => {
     setIsOpen((previous) => !previous);
-  };
+  }, [setIsOpen]);
 
-  const { handleOverlayClick, handleKeyDown } = useModal({
+  useModal({
     open: isOpen,
     onClose: handleClose,
     dialogRef: panelRef,
@@ -57,10 +55,40 @@ export function useDevPanelModal({
     };
   }, [setIsOpen]);
 
+  // Handle backdrop click on the native dialog
+  useEffect(() => {
+    const dialog = panelRef.current;
+
+    if (!isOpen || !dialog) {
+      return;
+    }
+
+    const handleDialogClick = (event: MouseEvent) => {
+      if (event.target !== dialog) {
+        return;
+      }
+
+      const rect = dialog.getBoundingClientRect();
+      const isInside =
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom;
+
+      if (!isInside) {
+        handleClose();
+      }
+    };
+
+    dialog.addEventListener('click', handleDialogClick);
+
+    return () => {
+      dialog.removeEventListener('click', handleDialogClick);
+    };
+  }, [isOpen, panelRef, handleClose]);
+
   return {
     handleToggle,
     handleClose,
-    handleBackdropClick: handleOverlayClick,
-    handleKeyDown,
   };
 }
