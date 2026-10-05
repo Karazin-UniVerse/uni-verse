@@ -18,7 +18,7 @@ export function shouldTriggerClickOutside(
     return false;
   }
 
-  if (ignoreElement && ignoreElement.contains(eventTarget)) {
+  if (ignoreElement?.contains(eventTarget)) {
     return false;
   }
 
