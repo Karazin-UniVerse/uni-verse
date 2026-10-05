@@ -763,14 +763,14 @@ describe('AuthService', () => {
       process.env.RT_SECRET = 'valid-production-rt-secret';
 
       await expect(
-        authService.getTokens('u1', 'test@example.com'),
+        authService.getTokens({ userId: 'u1', email: 'test@example.com' }),
       ).rejects.toThrow('JWT secrets are not configured securely');
 
       // AT_SECRET missing
       delete process.env.AT_SECRET;
 
       await expect(
-        authService.getTokens('u1', 'test@example.com'),
+        authService.getTokens({ userId: 'u1', email: 'test@example.com' }),
       ).rejects.toThrow('JWT secrets are not configured securely');
 
       // RT_SECRET placeholder
@@ -778,14 +778,14 @@ describe('AuthService', () => {
       process.env.RT_SECRET = 'your-refresh-token-secret-key';
 
       await expect(
-        authService.getTokens('u1', 'test@example.com'),
+        authService.getTokens({ userId: 'u1', email: 'test@example.com' }),
       ).rejects.toThrow('JWT secrets are not configured securely');
 
       // RT_SECRET missing
       delete process.env.RT_SECRET;
 
       await expect(
-        authService.getTokens('u1', 'test@example.com'),
+        authService.getTokens({ userId: 'u1', email: 'test@example.com' }),
       ).rejects.toThrow('JWT secrets are not configured securely');
     });
   });

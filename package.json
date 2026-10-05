@@ -4,6 +4,7 @@
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev": "turbo dev",
+    "dev:select": "node scripts/dev.mjs",
     "build": "turbo build",
     "lint": "oxlint --deny-warnings",
     "lint:ox": "oxlint --deny-warnings",
@@ -16,6 +17,10 @@
     "test:e2e": "vitest run --config tests/e2e/vitest.config.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "skills:sync": "node scripts/sync-skills.mjs",
+    "skills:check": "node scripts/sync-skills.mjs --check",
+    "gemini:sync": "node scripts/sync-gemini-context.mjs",
+    "gemini:check": "node scripts/sync-gemini-context.mjs --check",
     "prepare": "husky",
     "db:generate": "pnpm --filter @universe/backend db:generate",
     "db:migrate": "pnpm --filter @universe/backend db:push",
@@ -30,12 +35,12 @@
     "prettier": "^3.9.9",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "sass-embedded": "^1.105.0",
-    "stylelint": "^17.15.0",
+    "sass-embedded": "^1.105.1",
+    "stylelint": "^17.16.0",
     "stylelint-config-standard": "^40.0.0",
     "stylelint-config-standard-scss": "^17.0.0",
     "turbo": "^2.11.4",
-    "typescript": "^5.7.0",
-    "vitest": "^5.0.2"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
   }
 }

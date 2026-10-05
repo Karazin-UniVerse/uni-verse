@@ -32,6 +32,7 @@ export const en = {
   'login.linkMoodleSubmit': 'Link Moodle',
   'login.linkMoodleLoading': 'Linking...',
   'login.linkMoodleBack': 'Back to Sign In',
+  'login.linkMoodleSkip': 'Skip',
   'login.linkMoodleSuccess': 'Moodle account linked successfully!',
   'login.linkMoodleEnterUsername': 'Please enter username or email in Moodle',
   'login.linkMoodleEnterPassword': 'Please enter password in Moodle',
@@ -71,6 +72,10 @@ export const en = {
   'dashboard.refresh': 'Refresh',
   'dashboard.offlineWarning': 'Warning: Moodle server is unreachable. Showing cached data',
   'dashboard.offlineFrom': 'from',
+  'dashboard.linkMoodlePrompt':
+    'Moodle account is not linked. Link it to load your schedule, assignments, and grades.',
+  'dashboard.linkMoodleAction': 'Link Moodle',
+  'common.cancel': 'Cancel',
 
   // Greetings
   'greeting.morning': 'Good morning',
@@ -199,6 +204,8 @@ export const en = {
   'schedule.exportICal': 'Export to iCal',
   'schedule.prevWeek': 'Previous week',
   'schedule.nextWeek': 'Next week',
+  'schedule.prevMonth': 'Previous month',
+  'schedule.nextMonth': 'Next month',
   'schedule.freeDay': 'Free day',
   'schedule.scheduleFor': 'Schedule for',
   'schedule.noClasses': 'No classes for this day',

@@ -1,7 +1,18 @@
 const { spawnSync } = require('child_process');
 const path = require('path');
 
-const files = process.argv.slice(2);
+// Directories listed in ignorePatterns of .oxlintrc.json: oxlint exits with an error when it is
+// handed only ignored files, so drop them here.
+const IGNORED_DIRECTORIES = ['.agents/', '.claude/'];
+
+const files = process.argv
+  .slice(2)
+  .filter(
+    (file) =>
+      !IGNORED_DIRECTORIES.some(
+        (directory) => file.includes(`/${directory}`) || file.startsWith(directory),
+      ),
+  );
 
 if (files.length === 0) {
   process.exit(0);

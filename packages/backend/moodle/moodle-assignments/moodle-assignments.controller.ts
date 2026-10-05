@@ -74,12 +74,12 @@ export class MoodleAssignmentsController {
     @Param('assignId', ParseIntPipe) assignId: number,
     @Body() dto: SaveSubmissionDto,
   ): Promise<unknown> {
-    return this.assignmentsService.saveSubmission(
+    return this.assignmentsService.saveSubmission({
       moodleToken,
       assignId,
-      dto.text,
-      dto.fileItemId,
-    );
+      text: dto.text,
+      fileItemId: dto.fileItemId,
+    });
   }
 
   private filterAndSortAssignments(

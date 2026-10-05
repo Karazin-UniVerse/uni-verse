@@ -9,38 +9,36 @@ export interface GoogleAuthResponse {
 
 export class AuthApi {
   async login(email: string, password: string): Promise<{ data: AuthResponse }> {
-    const response = await request<AuthResponse>(
-      '/auth/login',
-      {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      },
-      0,
-    );
+    const response = await request<AuthResponse>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+      retries: 0,
+    });
 
     if (response.data?.access_token) {
       safeStorage.setItem('accessToken', response.data.access_token);
       safeStorage.setItem('isLoggedIn', 'true');
+      safeStorage.setItem('isMoodleLinked', 'true');
     }
 
     return response;
   }
 
   async loginWithGoogle(idToken: string): Promise<{ data: GoogleAuthResponse }> {
-    const response = await request<GoogleAuthResponse>(
-      '/auth/google',
-      {
-        method: 'POST',
-        body: JSON.stringify({ idToken }),
-      },
-      0,
-    );
+    const response = await request<GoogleAuthResponse>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken }),
+      retries: 0,
+    });
 
     if (response.data?.access_token) {
-      localStorage.setItem('accessToken', response.data.access_token);
+      safeStorage.setItem('accessToken', response.data.access_token);
 
       if (response.data.isLinked) {
-        localStorage.setItem('isLoggedIn', 'true');
+        safeStorage.setItem('isLoggedIn', 'true');
+        safeStorage.setItem('isMoodleLinked', 'true');
+      } else {
+        safeStorage.setItem('isMoodleLinked', 'false');
       }
     }
 
@@ -56,15 +54,16 @@ export class AuthApi {
       {
         method: 'POST',
         body: JSON.stringify({ username, password }),
+        retries: 0,
       },
-      0,
     );
 
     if (response.data?.access_token) {
-      localStorage.setItem('accessToken', response.data.access_token);
+      safeStorage.setItem('accessToken', response.data.access_token);
 
       if (response.data.isLinked) {
-        localStorage.setItem('isLoggedIn', 'true');
+        safeStorage.setItem('isLoggedIn', 'true');
+        safeStorage.setItem('isMoodleLinked', 'true');
       }
     }
 
@@ -73,10 +72,11 @@ export class AuthApi {
 
   async logout(): Promise<void> {
     try {
-      await request('/auth/logout', { method: 'POST' }, 0);
+      await request('/auth/logout', { method: 'POST', retries: 0 });
     } finally {
       safeStorage.removeItem('accessToken');
       safeStorage.removeItem('isLoggedIn');
+      safeStorage.removeItem('isMoodleLinked');
       safeStorage.removeItem('moodleToken');
       safeStorage.removeItem('username');
       safeStorage.removeItem('universe_student_profile');

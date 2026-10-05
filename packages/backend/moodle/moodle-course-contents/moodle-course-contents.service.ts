@@ -15,11 +15,10 @@ export class MoodleCourseContentsService {
       throw new BadRequestException('Token is not provided');
     }
 
-    return this.moodleClient.client<CourseContentDto[]>(
-      getWsFunctionName('getCourseContents'),
+    return this.moodleClient.client<CourseContentDto[]>({
+      wsfunction: getWsFunctionName('getCourseContents'),
       moodleToken,
-      undefined,
-      { courseid: courseId },
-    );
+      params: { courseid: courseId },
+    });
   }
 }

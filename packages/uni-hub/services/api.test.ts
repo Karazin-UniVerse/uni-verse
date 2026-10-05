@@ -100,6 +100,7 @@ describe('UniHub API Service', () => {
 
       expect(mockStorage.accessToken).toBeUndefined();
       expect(mockStorage.isLoggedIn).toBeUndefined();
+      expect(mockStorage.isMoodleLinked).toBeUndefined();
     });
 
     it('loginWithGoogle should send POST to /auth/google with idToken', async () => {
@@ -117,11 +118,33 @@ describe('UniHub API Service', () => {
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(response.data).toEqual(mockGoogleResponse);
+      expect(mockStorage.accessToken).toBe('google-jwt-access-token');
+      expect(mockStorage.isLoggedIn).toBe('true');
+      expect(mockStorage.isMoodleLinked).toBe('true');
 
       const call = vi.mocked(global.fetch).mock.calls[0];
 
       expect(call[0]).toContain('/auth/google');
       expect(call[1]?.body).toBe(JSON.stringify({ idToken: 'mock-id-token-abc' }));
+    });
+
+    it('loginWithGoogle with isLinked: false should store token and mark isMoodleLinked as false', async () => {
+      const mockGoogleResponse = {
+        access_token: 'unlinked-jwt-token',
+        isLinked: false,
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockGoogleResponse,
+      } as Response);
+
+      const response = await authApi.loginWithGoogle('mock-id-token-unlinked');
+
+      expect(response.data).toEqual(mockGoogleResponse);
+      expect(mockStorage.accessToken).toBe('unlinked-jwt-token');
+      expect(mockStorage.isLoggedIn).toBeUndefined();
+      expect(mockStorage.isMoodleLinked).toBe('false');
     });
 
     it('loginWithGoogle should throw error with server message when domain is restricted (403)', async () => {
@@ -144,6 +167,21 @@ describe('UniHub API Service', () => {
       );
     });
 
+    it('login, loginWithGoogle, linkMoodleAccount and logout do not retry failed requests', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('network down'));
+
+      await expect(authApi.login('student@karazin.ua', 'SecretPass123!')).rejects.toThrow(
+        'network down',
+      );
+      await expect(authApi.loginWithGoogle('google-id-token')).rejects.toThrow('network down');
+      await expect(authApi.linkMoodleAccount('moodle-user', 'moodle-pass')).rejects.toThrow(
+        'network down',
+      );
+      await expect(authApi.logout()).rejects.toThrow('network down');
+
+      expect(global.fetch).toHaveBeenCalledTimes(4);
+    });
+
     it('linkMoodleAccount should send POST to /auth/moodle/link with credentials', async () => {
       const mockLinkResponse = {
         access_token: 'linked-jwt-token',
@@ -158,6 +196,9 @@ describe('UniHub API Service', () => {
       const response = await authApi.linkMoodleAccount('moodle.student', 'SecretPassword');
 
       expect(response.data).toEqual(mockLinkResponse);
+      expect(mockStorage.accessToken).toBe('linked-jwt-token');
+      expect(mockStorage.isLoggedIn).toBe('true');
+      expect(mockStorage.isMoodleLinked).toBe('true');
 
       const call = vi.mocked(global.fetch).mock.calls[0];
 
@@ -267,6 +308,22 @@ describe('UniHub API Service', () => {
 
       expect(fetchMock.mock.calls[1][1]?.method).toBe('POST');
       expect(fetchMock.mock.calls[1][1]?.body).toContain('lab1.pdf');
+    });
+
+    it('retries a failed request twice by default', async () => {
+      vi.useFakeTimers();
+      global.fetch = vi.fn().mockRejectedValue(new Error('network down'));
+
+      try {
+        const rejection = expect(moodleApi.getCourses()).rejects.toThrow('network down');
+
+        await vi.runAllTimersAsync();
+        await rejection;
+
+        expect(global.fetch).toHaveBeenCalledTimes(3);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it('should throw error when server returns HTTP error status', async () => {

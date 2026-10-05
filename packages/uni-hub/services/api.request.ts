@@ -46,12 +46,19 @@ export function buildQueryString(params?: Record<string, unknown>): string {
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 
-async function executeAttempt<T>(
-  url: string,
-  options: RequestInit,
-  headers: Record<string, string>,
-  timeoutMs: number,
-): Promise<{ data: T }> {
+type ExecuteAttemptParams = {
+  url: string;
+  options: RequestInit;
+  headers: Record<string, string>;
+  timeoutMs: number;
+};
+
+async function executeAttempt<T>({
+  url,
+  options,
+  headers,
+  timeoutMs,
+}: ExecuteAttemptParams): Promise<{ data: T }> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -116,12 +123,13 @@ async function executeAttempt<T>(
   }
 }
 
+export type RequestOptions = RequestInit & { retries?: number; timeoutMs?: number };
+
 export async function request<T>(
   endpoint: string,
-  options: RequestInit = {},
-  retries = 2,
-  timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
+  requestOptions: RequestOptions = {},
 ): Promise<{ data: T }> {
+  const { retries = 2, timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS, ...options } = requestOptions;
   const url = `${API_BASE_URL}${endpoint}`;
   const token = safeStorage.getItem('accessToken');
 
@@ -136,7 +144,7 @@ export async function request<T>(
 
   const attemptRequest = async (currentAttempt: number): Promise<{ data: T }> => {
     try {
-      return await executeAttempt<T>(url, options, headers, timeoutMs);
+      return await executeAttempt<T>({ url, options, headers, timeoutMs });
     } catch (err) {
       if (options.signal?.aborted || currentAttempt >= retries) {
         throw err;

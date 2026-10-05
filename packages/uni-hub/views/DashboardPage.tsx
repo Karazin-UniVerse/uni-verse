@@ -4,14 +4,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
-import { RotateCw, AlertCircle } from 'lucide-react';
+import { RotateCw, AlertCircle, Link2 } from 'lucide-react';
 import { Button, Spinner } from '@una';
 import { isLoggedIn } from '@core/auth';
 import type { CourseModule } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
+import { LinkMoodleModal } from '@uni-hub/components/auth';
 import { DashboardSkeleton, MobileBottomNav } from '@uni-hub/components/dashboard';
 import { BadgeSystem, GradeSimulator } from '@uni-hub/components/gamification';
 import { ScheduleView } from '@uni-hub/components/schedule';
+import { safeStorage } from '@uni-hub/services/api';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import {
   type NavKey,
@@ -63,6 +65,14 @@ const DashboardPage: React.FC = () => {
   const [selectedAssignmentModule, setSelectedAssignmentModule] = useState<CourseModule | null>(
     null,
   );
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [isMoodleLinked, setIsMoodleLinked] = useState<boolean>(() => {
+    if (typeof window === 'undefined') {
+      return true;
+    }
+
+    return safeStorage.getItem('isMoodleLinked') !== 'false';
+  });
 
   const {
     data,
@@ -288,6 +298,22 @@ const DashboardPage: React.FC = () => {
             </div>
           )}
 
+          {!isMoodleLinked && (
+            <output className={styles.linkMoodleBanner}>
+              <div className={styles.linkMoodleBannerContent}>
+                <Link2 size={16} className={styles.linkMoodleIcon} />
+                <span>{formatMessage('dashboard.linkMoodlePrompt')}</span>
+              </div>
+              <Button
+                type="button"
+                variant="primary"
+                size="small"
+                onClick={() => setIsLinkModalOpen(true)}
+              >
+                {formatMessage('dashboard.linkMoodleAction')}
+              </Button>
+            </output>
+          )}
           {loading && !hasCachedData ? (
             <DashboardSkeleton />
           ) : (
@@ -310,6 +336,17 @@ const DashboardPage: React.FC = () => {
             }}
             module={selectedAssignmentModule}
             dueUnixSec={selectedDueUnixSec}
+          />
+
+          <LinkMoodleModal
+            open={isLinkModalOpen}
+            onClose={() => setIsLinkModalOpen(false)}
+            onSuccess={() => {
+              setIsLinkModalOpen(false);
+              setIsMoodleLinked(true);
+              safeStorage.setItem('isMoodleLinked', 'true');
+              fetchData();
+            }}
           />
 
           <GradeSimulator

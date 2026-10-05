@@ -1,9 +1,14 @@
 import '../vars.scss';
 import React from 'react';
-import type { Preview } from '@storybook/react-vite';
+import type { Decorator, Preview } from '@storybook/react-vite';
 
 const preview: Preview = {
   parameters: {
+    options: {
+      storySort: {
+        order: ['Una', 'Complex'],
+      },
+    },
     controls: {
       matchers: {
         color: /(background|color)$/i,
@@ -39,9 +44,9 @@ export const globalTypes = {
   },
 };
 
-export const decorators = [
-  (Story: any, context: any) => {
-    const theme = context.globals?.theme ?? 'light';
+export const decorators: Decorator[] = [
+  (Story, context) => {
+    const theme = (context.globals?.theme as string) ?? 'light';
 
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('data-theme', theme);
