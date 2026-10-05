@@ -86,7 +86,8 @@
     {
       "files": [
         "packages/backend/moodle/moodle-client/moodle.client.service.ts",
-        "packages/uni-hub/services/api.request.ts"
+        "packages/uni-hub/services/api.request.ts",
+        ".github/scripts/**"
       ],
       "rules": {
         "no-restricted-globals": "off",
