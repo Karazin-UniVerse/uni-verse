@@ -54,6 +54,8 @@ export const uk = {
   'nav.schedule.full': 'Розклад занять',
   'nav.grades': 'Оцінки',
   'nav.grades.full': 'Заліковка та бали',
+  'nav.opportunities': 'Можливості',
+  'nav.opportunities.full': 'Платформа можливостей',
 
   // Sidebar & Header
   'sidebar.logout': 'Вийти',
@@ -320,6 +322,57 @@ export const uk = {
   'overview.gradesTitle': 'Перейти до залікової книжки та оцінок',
   'overview.viewCourseMaterials': 'Переглянути матеріали курсу: {name}',
   'student.courseGroupFormat': '{course} курс, група {group}',
+
+  // Feature Gating & Opportunities
+  'quickActions.opportunities': 'Можливості',
+  'quickActions.newBadge': 'Нове',
+  'quickActions.opportunitiesDescription': 'Стажування, хакатони, гранти',
+  'quickActions.opportunitiesTitle': 'Перейти до платформи можливостей та стажувань',
+
+  'opportunities.title': 'Платформа можливостей',
+  'opportunities.subtitle':
+    'Кар’єрні пропозиції, стажування, наукові гранти та студентські ініціативи Каразінського',
+  'opportunities.badge': 'Попередній перегляд',
+  'opportunities.filterAll': 'Всі пропозиції',
+  'opportunities.filterInternships': 'Стажування та IT',
+  'opportunities.filterGrants': 'Гранти та стипендії',
+  'opportunities.filterExchange': 'Академічна мобільність',
+  'opportunities.apply': 'Подати заявку',
+  'opportunities.details': 'Детальніше',
+  'opportunities.deadline': 'Дедлайн:',
+  'opportunities.empty': 'Наразі немає відкритих можливостей у цій категорії',
+  'opportunities.tagInternships': 'IT & Стажування',
+  'opportunities.tagGrants': 'Гранти та стипендії',
+  'opportunities.tagExchange': 'Академічна мобільність',
+  'opportunities.item1Title': 'Практикум із веб-розробки Junior Full-Stack',
+  'opportunities.item1Org': 'Каразінський хаб інновацій',
+  'opportunities.item1Desc':
+    'Практика на університетських проєктах із відкритим кодом та сучасним стеком (React, Node.js, Cloud).',
+  'opportunities.item2Title': 'Програма міжнародного академічного обміну',
+  'opportunities.item2Org': 'Відділ міжнародних зв’язків Каразінського',
+  'opportunities.item2Desc':
+    'Семестрове навчання в партнерських університетах Європи для студентів бакалаврату та магістратури.',
+  'opportunities.item3Title': 'Грантова програма підтримки молодих дослідників Каразінського',
+  'opportunities.item3Org': 'Наукове товариство ХНУ імені В. Н. Каразіна',
+  'opportunities.item3Desc':
+    'Фінансування дослідницьких проєктів студентів та аспірантів у галузях природничих та технічних наук.',
+  'opportunities.item4Title': 'Воркшоп і менторство з фронтенд-розробки',
+  'opportunities.item4Org': 'Асоціація випускників факультету комп’ютерних наук',
+  'opportunities.item4Desc':
+    'Інтенсивне менторство, патерни проєктування та практика код-рев’ю з досвідченими випускниками.',
+  'devPanel.openButton': 'Відкрити панель перемикачів функцій',
+  'devPanel.title': 'Панель функцій',
+  'devPanel.devTag': 'Dev',
+  'devPanel.closeButton': 'Закрити панель перемикачів',
+  'devPanel.reset': 'Скинути',
+  'devPanel.resetSuccess': 'Скинуто!',
+  'devPanel.overrideTag': 'Перевизначено',
+  'devPanel.moodleLabel': 'Moodle LMS',
+  'devPanel.moodleDesc': 'Курси, оцінки, завдання, GPA',
+  'devPanel.eDeanLabel': 'e-Dean',
+  'devPanel.eDeanDesc': 'Розклад занять, студентська картка',
+  'devPanel.opportunitiesLabel': 'Можливості',
+  'devPanel.opportunitiesDesc': 'Дошка проєктів та стажувань',
 };
 
 export type TranslationKey = keyof typeof uk;

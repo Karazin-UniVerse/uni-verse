@@ -14,6 +14,7 @@
   "types": "./index.ts",
   "exports": {
     ".": "./index.ts",
+    "./hooks": "./hooks/index.ts",
     "./una": "./components/una/index.ts",
     "./una/*": "./components/una/*",
     "./vars.scss": "./vars.scss",

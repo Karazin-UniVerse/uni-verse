@@ -28,6 +28,10 @@ const meta = {
       control: 'text',
       description: 'Текст aria-label та підказка для кнопки закриття',
     },
+    closeButton: {
+      control: 'boolean',
+      description: 'Відображати кнопку закриття (хрестик) у шапці',
+    },
   },
 } satisfies Meta<typeof Modal>;
 
@@ -130,5 +134,13 @@ export const WithoutTitle: Story = {
         </p>
       </div>
     ),
+  },
+};
+
+export const WithoutCloseButton: Story = {
+  render: InteractiveActionModal,
+  args: {
+    title: 'Діалог без кнопки закриття',
+    closeButton: false,
   },
 };
