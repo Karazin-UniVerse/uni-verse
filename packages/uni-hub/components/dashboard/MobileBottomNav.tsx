@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { useFeatures } from '@uni-hub/features';
+import { useFeatures } from '@uni-hub/components/features';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import { getVisibleNavItems } from '@uni-hub/views/dashboard/layout/DashboardSidebar';
 import type { NavKey } from '@uni-hub/views/dashboard/types';

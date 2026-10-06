@@ -5,7 +5,7 @@ import { GraduationCap, Award } from 'lucide-react';
 import { Tag } from '@una';
 import type { StudentProfile } from '@core/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { useFeatures } from '@uni-hub/features';
+import { useFeatures } from '@uni-hub/components/features';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export interface StudentCardProps {

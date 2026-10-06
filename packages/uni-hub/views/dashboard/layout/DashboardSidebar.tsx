@@ -17,7 +17,7 @@ import { Button } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { useFeatures } from '@uni-hub/features';
+import { useFeatures } from '@uni-hub/components/features';
 import type { FeatureFlags, FeatureFlagKey } from '@core/constants/features';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { TranslationKey } from '@uni-hub/i18n/translations';

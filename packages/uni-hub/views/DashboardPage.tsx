@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
 import { RotateCw, AlertCircle, Link2 } from 'lucide-react';
 import { Button, Spinner } from '@una';
-import { isLoggedIn } from '@core/auth';
+import { isLoggedIn } from '@core/utils/auth';
 import type { CourseModule } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
 import { LinkMoodleModal } from '@uni-hub/components/auth';
@@ -28,7 +28,7 @@ import {
   OpportunitiesTab,
   NAV_ITEMS,
 } from './dashboard';
-import { useFeatures } from '@uni-hub/features';
+import { useFeatures } from '@uni-hub/components/features';
 import { formatLastSync } from './dashboard/tabs/helpers';
 import { useDashboardData, clearUserSessionStorage } from './dashboard/hooks/useDashboardData';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';

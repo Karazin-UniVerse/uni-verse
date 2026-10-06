@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FeatureToggleProvider } from '@uni-hub/features';
+import { FeatureToggleProvider } from '@uni-hub/components/features';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
 import { ToastProvider } from '@una';
