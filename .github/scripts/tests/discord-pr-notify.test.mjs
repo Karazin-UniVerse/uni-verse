@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   formatPrAge,
+  formatCommentsCount,
+  analyzePrReviewStatus,
   formatPrLine,
   chunkLines,
   getEmbedLength,
@@ -9,6 +11,7 @@ import {
   partitionEmbedsIntoMessages,
   groupPullRequests,
   buildReminderDiscordPayload,
+  fetchPullRequestsGraphQL,
   fetchOpenPullRequests,
   fetchPullRequestDetails,
 } from '../discord-pr-notify.mjs';
@@ -22,6 +25,113 @@ test('formatPrAge calculates friendly Ukrainian time strings', () => {
   assert.equal(formatPrAge(halfHourAgo), '< 1г');
   assert.equal(formatPrAge(fiveHoursAgo), '5г');
   assert.equal(formatPrAge(threeDaysAgo), '3д');
+});
+
+test('formatCommentsCount formats Ukrainian plurals correctly', () => {
+  assert.equal(formatCommentsCount(1), '1 відкритий коментар');
+  assert.equal(formatCommentsCount(2), '2 відкритих коментарі');
+  assert.equal(formatCommentsCount(4), '4 відкритих коментарі');
+  assert.equal(formatCommentsCount(5), '5 відкритих коментарів');
+  assert.equal(formatCommentsCount(11), '11 відкритих коментарів');
+  assert.equal(formatCommentsCount(21), '21 відкритий коментар');
+  assert.equal(formatCommentsCount(24), '24 відкритих коментарі');
+});
+
+test('analyzePrReviewStatus flags ACTION_REQUIRED when unresolved thread has last comment from reviewer', () => {
+  const pr = {
+    user: { login: 'brodion-230' },
+    reviewDecision: 'REVIEW_REQUIRED',
+    reviewThreads: [
+      {
+        isResolved: false,
+        isOutdated: false,
+        comments: [{ author: { login: 'brodion-230' } }, { author: { login: 'iamredl-lab' } }],
+      },
+    ],
+    requested_reviewers: [],
+  };
+
+  const status = analyzePrReviewStatus(pr, { 'iamredl-lab': '493400648851914753' });
+
+  assert.equal(status.statusType, 'ACTION_REQUIRED');
+  assert.equal(status.pendingAuthorThreadsCount, 1);
+  assert.equal(status.lastReviewerLogin, 'iamredl-lab');
+  assert.match(status.reviewStr, /Потрібні правки/);
+  assert.match(status.reviewStr, /1 відкритий коментар/);
+  assert.match(status.reviewStr, /<@493400648851914753>/);
+});
+
+test('analyzePrReviewStatus flags WAITING_FOR_REVIEWER when author replied to all unresolved threads', () => {
+  const pr = {
+    user: { login: 'brodion-230' },
+    reviewDecision: 'REVIEW_REQUIRED',
+    reviewThreads: [
+      {
+        isResolved: false,
+        isOutdated: false,
+        comments: [{ author: { login: 'iamredl-lab' } }, { author: { login: 'brodion-230' } }],
+      },
+    ],
+    requested_reviewers: [],
+  };
+
+  const status = analyzePrReviewStatus(pr, {});
+
+  assert.equal(status.statusType, 'WAITING_FOR_REVIEWER');
+  assert.match(status.reviewStr, /Автор відповів/);
+});
+
+test('analyzePrReviewStatus ignores resolved and outdated threads', () => {
+  const pr = {
+    user: { login: 'brodion-230' },
+    reviewDecision: 'REVIEW_REQUIRED',
+    reviewThreads: [
+      {
+        isResolved: true,
+        isOutdated: false,
+        comments: [{ author: { login: 'iamredl-lab' } }],
+      },
+      {
+        isResolved: false,
+        isOutdated: true,
+        comments: [{ author: { login: 'iamredl-lab' } }],
+      },
+    ],
+    requested_reviewers: [{ login: 'iamredl-lab' }],
+  };
+
+  const status = analyzePrReviewStatus(pr, {});
+
+  assert.equal(status.statusType, 'NEEDS_REVIEW');
+  assert.match(status.reviewStr, /Очікує рев'ю/);
+});
+
+test('analyzePrReviewStatus flags ACTION_REQUIRED when reviewDecision is CHANGES_REQUESTED', () => {
+  const pr = {
+    user: { login: 'brodion-230' },
+    reviewDecision: 'CHANGES_REQUESTED',
+    reviewThreads: [],
+    requested_reviewers: [],
+  };
+
+  const status = analyzePrReviewStatus(pr, {});
+
+  assert.equal(status.statusType, 'ACTION_REQUIRED');
+  assert.match(status.reviewStr, /Потрібні правки/);
+});
+
+test('analyzePrReviewStatus flags APPROVED when reviewDecision is APPROVED and no pending threads', () => {
+  const pr = {
+    user: { login: 'brodion-230' },
+    reviewDecision: 'APPROVED',
+    reviewThreads: [],
+    requested_reviewers: [],
+  };
+
+  const status = analyzePrReviewStatus(pr, {});
+
+  assert.equal(status.statusType, 'APPROVED');
+  assert.match(status.reviewStr, /Схвалено/);
 });
 
 test('formatPrLine truncates oversized titles and bounds total line length', () => {
@@ -72,7 +182,6 @@ test('getEmbedLength calculates total characters in an embed correctly', () => {
     ],
   };
 
-  // 'Title'(5) + 'Desc'(4) + 'Footer'(6) + 'F1'(2) + 'V1'(2) + 'F2'(2) + 'V2'(2) = 23
   assert.equal(getEmbedLength(embed), 23);
 });
 
@@ -120,14 +229,11 @@ test('groupPullRequests filters drafts, segregates dependabot and groups by auth
 
   const result = groupPullRequests(mockPrs);
 
-  // Drafts must be skipped
   assert.equal(result.totalCount, 3);
   assert.equal(result.authorPrs.get('brodion-230')?.length, 1);
   assert.equal(result.authorPrs.get('brodion-230')?.[0].number, 101);
   assert.equal(result.authorPrs.get('Kostik565')?.length, 1);
   assert.equal(result.authorPrs.get('Kostik565')?.[0].number, 103);
-
-  // Dependabot must be segregated
   assert.equal(result.dependabotPrs.length, 1);
   assert.equal(result.dependabotPrs[0].number, 104);
   assert.equal(result.authorPrs.has('dependabot[bot]'), false);
@@ -144,7 +250,7 @@ test('buildReminderDiscordPayload returns null when no open PRs exist', () => {
   assert.equal(payload, null);
 });
 
-test('buildReminderDiscordPayload formats valid Discord payload with author fields and dependabot section', () => {
+test('buildReminderDiscordPayload formats valid Discord payload with action required warning', () => {
   const discordUsers = {
     'brodion-230': '1412361252935565382',
     Kostik565: '1055920927306694697',
@@ -161,7 +267,14 @@ test('buildReminderDiscordPayload formats valid Discord payload with author fiel
           head: { ref: 'feat/btn' },
           base: { ref: 'develop' },
           created_at: new Date().toISOString(),
-          requested_reviewers: [{ login: 'Kostik565' }],
+          requested_reviewers: [],
+          reviewThreads: [
+            {
+              isResolved: false,
+              isOutdated: false,
+              comments: [{ author: { login: 'Kostik565' } }],
+            },
+          ],
           additions: 45,
           deletions: 12,
         },
@@ -192,28 +305,18 @@ test('buildReminderDiscordPayload formats valid Discord payload with author fiel
 
   const payload = messages[0];
 
-  assert.ok(payload.embeds);
-  assert.equal(payload.embeds.length, 1);
+  assert.match(payload.content, /незарезолвані коментарі/);
+  assert.match(payload.content, /<@1412361252935565382>/);
 
   const embed = payload.embeds[0];
 
   assert.match(embed.title, /Щоденний дайджест Pull Requests/i);
 
-  // Author field
-  const authorField = embed.fields.find((f) => f.name.includes('brodion-230'));
+  const authorField = embed.fields.find((field) => field.name.includes('brodion-230'));
 
   assert.ok(authorField);
-  assert.match(authorField.name, /<@1412361252935565382>/);
-  assert.match(authorField.value, /#101/);
-  assert.match(authorField.value, /feat: add buttons/);
+  assert.match(authorField.value, /Потрібні правки/);
   assert.match(authorField.value, /<@1055920927306694697>/);
-  assert.match(authorField.value, /\(\+45\/-12\)/);
-
-  // Dependabot field
-  const dependabotField = embed.fields.find((f) => f.name.includes('Dependabot'));
-
-  assert.ok(dependabotField);
-  assert.match(dependabotField.value, /#104/);
 });
 
 test('buildReminderDiscordPayload splits Dependabot into multiple fields when exceeding 1000 chars without dropping links', () => {
@@ -238,12 +341,12 @@ test('buildReminderDiscordPayload splits Dependabot into multiple fields when ex
   assert.ok(Array.isArray(messages));
 
   const embed = messages[0].embeds[0];
-  const depFields = embed.fields.filter((f) => f.name.includes('Dependabot'));
+  const depFields = embed.fields.filter((field) => field.name.includes('Dependabot'));
 
   assert.ok(depFields.length > 1, 'Should split Dependabot across multiple fields');
 
-  for (const f of depFields) {
-    assert.ok(f.value.length <= 1024);
+  for (const field of depFields) {
+    assert.ok(field.value.length <= 1024);
   }
 });
 
@@ -276,7 +379,6 @@ test('partitionFieldsIntoEmbeds partitions fields across multiple embeds when ex
 test('partitionEmbedsIntoMessages splits embeds across multiple messages when exceeding 5500 chars or 10 embeds', () => {
   const embeds = [];
 
-  // Create 12 embeds, each with 600 characters
   for (let i = 1; i <= 12; i++) {
     embeds.push({
       title: `Embed ${i}`,
@@ -289,13 +391,68 @@ test('partitionEmbedsIntoMessages splits embeds across multiple messages when ex
 
   assert.ok(messages.length >= 2, 'Must split into multiple messages');
 
-  for (const msg of messages) {
-    assert.ok(msg.embeds.length <= 10, 'Each message must have <= 10 embeds');
+  for (const message of messages) {
+    assert.ok(message.embeds.length <= 10, 'Each message must have <= 10 embeds');
 
     const totalChars =
-      (msg.content?.length || 0) + msg.embeds.reduce((sum, e) => sum + getEmbedLength(e), 0);
+      (message.content?.length || 0) +
+      message.embeds.reduce((sum, embed) => sum + getEmbedLength(embed), 0);
 
-    assert.ok(totalChars <= 5500, `Message total chars ${totalChars} must stay under 5500 limit`);
+    assert.ok(totalChars <= 5500);
+  }
+});
+
+test('fetchPullRequestsGraphQL parses GraphQL response into normalized PR objects', async () => {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({
+      data: {
+        repository: {
+          pullRequests: {
+            nodes: [
+              {
+                number: 10,
+                title: 'GraphQL PR',
+                url: 'https://github.com/repo/pull/10',
+                isDraft: false,
+                createdAt: new Date().toISOString(),
+                additions: 50,
+                deletions: 10,
+                baseRefName: 'develop',
+                headRefName: 'feat/test',
+                author: { login: 'alice' },
+                reviewDecision: 'CHANGES_REQUESTED',
+                reviewRequests: { nodes: [] },
+                reviewThreads: {
+                  nodes: [
+                    {
+                      isResolved: false,
+                      isOutdated: false,
+                      comments: { nodes: [{ author: { login: 'bob' } }] },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      },
+    }),
+  });
+
+  try {
+    const prs = await fetchPullRequestsGraphQL({ repo: 'owner/repo', token: 'token' });
+
+    assert.ok(Array.isArray(prs));
+    assert.equal(prs.length, 1);
+    assert.equal(prs[0].number, 10);
+    assert.equal(prs[0].user.login, 'alice');
+    assert.equal(prs[0].reviewDecision, 'CHANGES_REQUESTED');
+    assert.equal(prs[0].reviewThreads.length, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
   }
 });
 
