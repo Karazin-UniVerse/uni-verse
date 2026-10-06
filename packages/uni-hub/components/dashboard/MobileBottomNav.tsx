@@ -3,8 +3,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { useFeatures } from '@uni-hub/features';
 import { playClick } from '@uni-hub/utils/soundEffects';
-import { NAV_ITEMS } from '@uni-hub/views/dashboard/layout/DashboardSidebar';
+import { getVisibleNavItems } from '@uni-hub/views/dashboard/layout/DashboardSidebar';
 import type { NavKey } from '@uni-hub/views/dashboard/types';
 import styles from './MobileBottomNav.module.scss';
 
@@ -20,11 +21,13 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   soundEnabled,
 }) => {
   const { formatMessage } = useLanguage();
+  const flags = useFeatures();
+  const visibleNavItems = getVisibleNavItems(flags);
 
   return (
     <nav className={styles.container} aria-label="Мобільна навігація">
       <ul className={styles.nav}>
-        {NAV_ITEMS.map((item) => {
+        {visibleNavItems.map((item) => {
           const label = formatMessage(item.labelKey);
           const shortLabel = formatMessage(item.shortLabelKey);
 

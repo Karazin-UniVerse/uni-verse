@@ -25,6 +25,7 @@ export interface UseDashboardDataOptions {
   dateTo: string;
   hideCompleted: boolean;
   onUnauthorized: () => void;
+  enabled?: boolean;
 }
 
 function getInitialStudentProfile(): StudentProfile | null {
@@ -89,11 +90,12 @@ export function useDashboardData({
   dateTo,
   hideCompleted,
   onUnauthorized,
+  enabled = true,
 }: UseDashboardDataOptions) {
   const toast = useToast();
   const { formatMessage } = useLanguage();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(getInitialHasLoadedOnce);
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(getInitialSyncTime);
   const [isOfflineData, setIsOfflineData] = useState(false);
@@ -105,6 +107,12 @@ export function useDashboardData({
   const fetchRequestIdRef = useRef(0);
 
   const fetchData = async (isManual = false) => {
+    if (!enabled) {
+      setLoading(false);
+
+      return;
+    }
+
     const requestId = ++fetchRequestIdRef.current;
 
     setLoading(true);
