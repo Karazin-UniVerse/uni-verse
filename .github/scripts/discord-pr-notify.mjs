@@ -71,6 +71,115 @@ export function formatPrAge(createdAt) {
   return '< 1г';
 }
 
+export function formatPrLine(pr, users = discordUsers) {
+  const age = formatPrAge(pr.created_at);
+  const baseRef = pr.base?.ref || 'develop';
+  const additions = pr.additions;
+  const deletions = pr.deletions;
+  const hasDiff = typeof additions === 'number' && typeof deletions === 'number';
+  const sizeStr = hasDiff ? ` *(+${additions}/-${deletions})*` : '';
+
+  const reviewers = (pr.requested_reviewers || [])
+    .map((r) => formatUserMention(r.login, users))
+    .join(', ');
+  const reviewStr = reviewers.length > 0 ? ` • 🔍 ${reviewers}` : ' • ⚠️ *Очікує призначення*';
+
+  // Discord field limit is 1024 chars. Cap title so the line safely stays <= 900 chars
+  const maxTitleLen = 120;
+  const rawTitle = pr.title || 'Untitled';
+  const title =
+    rawTitle.length > maxTitleLen ? `${rawTitle.slice(0, maxTitleLen - 3)}...` : rawTitle;
+
+  let line = `• [**#${pr.number}** ${title}](${pr.html_url}) ➔ \`${baseRef}\` (⏳ ${age}${sizeStr})${reviewStr}`;
+
+  if (line.length > 900) {
+    line = `${line.slice(0, 897)}...`;
+  }
+
+  return line;
+}
+
+export function chunkLines(lines, maxChunkLength = 1000) {
+  const chunks = [];
+  let currentChunk = '';
+
+  for (const line of lines) {
+    if (currentChunk && (currentChunk + '\n' + line).length > maxChunkLength) {
+      chunks.push(currentChunk.trim());
+      currentChunk = line;
+    } else {
+      currentChunk = currentChunk ? `${currentChunk}\n${line}` : line;
+    }
+  }
+
+  if (currentChunk) {
+    chunks.push(currentChunk.trim());
+  }
+
+  return chunks;
+}
+
+export function partitionFieldsIntoEmbeds({
+  fields,
+  repoName,
+  totalPrCount,
+  humanPrCount,
+  dependabotCount,
+}) {
+  const MAX_FIELDS_PER_EMBED = 25;
+  const MAX_TOTAL_CHARS_PER_EMBED = 5500;
+
+  const embeds = [];
+  let currentFields = [];
+  let currentChars = 0;
+
+  const baseTitle = `📋 Щоденний дайджест Pull Requests: ${repoName}`;
+  const baseDescription = `Зараз відкрито **${totalPrCount}** PR (${humanPrCount} від розробників, ${dependabotCount} від Dependabot). Будь ласка, знайдіть час для рев'ю!`;
+  const footerText = `UniVerse PR Reminder • ${repoName}`;
+
+  let isFirst = true;
+  let overhead = baseTitle.length + baseDescription.length + footerText.length;
+
+  function flushEmbed() {
+    if (currentFields.length === 0) {
+      return;
+    }
+
+    embeds.push({
+      title: isFirst ? baseTitle : undefined,
+      description: isFirst ? baseDescription : undefined,
+      color: 0x5865f2,
+      fields: currentFields,
+      footer: { text: footerText },
+      timestamp: new Date().toISOString(),
+    });
+
+    currentFields = [];
+    currentChars = 0;
+    isFirst = false;
+    overhead = footerText.length;
+  }
+
+  for (const field of fields) {
+    const fieldChars = (field.name?.length || 0) + (field.value?.length || 0);
+
+    if (
+      currentFields.length >= MAX_FIELDS_PER_EMBED ||
+      currentChars + fieldChars + (currentFields.length === 0 ? overhead : 0) >
+        MAX_TOTAL_CHARS_PER_EMBED
+    ) {
+      flushEmbed();
+    }
+
+    currentFields.push(field);
+    currentChars += fieldChars;
+  }
+
+  flushEmbed();
+
+  return embeds;
+}
+
 export function groupPullRequests(pullRequests) {
   const authorPrs = new Map();
   const dependabotPrs = [];
@@ -129,40 +238,8 @@ export function buildReminderDiscordPayload({
   // Grouped per author
   for (const [authorLogin, prs] of authorPrs.entries()) {
     const authorMention = formatUserMention(authorLogin, users);
-    const prLines = prs.map((pr) => {
-      const age = formatPrAge(pr.created_at);
-      const baseRef = pr.base?.ref || 'develop';
-      const additions = pr.additions ?? 0;
-      const deletions = pr.deletions ?? 0;
-      const sizeStr = additions || deletions ? ` *(+${additions}/-${deletions})*` : '';
-
-      const reviewers = (pr.requested_reviewers || [])
-        .map((r) => formatUserMention(r.login, users))
-        .join(', ');
-      const reviewStr = reviewers.length > 0 ? ` • 🔍 ${reviewers}` : ' • ⚠️ *Очікує призначення*';
-
-      return `• [**#${pr.number}** ${pr.title}](${pr.html_url}) ➔ \`${baseRef}\` (⏳ ${age}${sizeStr})${reviewStr}`;
-    });
-
-    // Discord embed field value limit is 1024 chars
-    const chunks = [];
-    let currentChunk = '';
-
-    for (const line of prLines) {
-      if ((currentChunk + '\n' + line).length > 1000) {
-        if (currentChunk) {
-          chunks.push(currentChunk.trim());
-        }
-
-        currentChunk = line;
-      } else {
-        currentChunk = currentChunk ? `${currentChunk}\n${line}` : line;
-      }
-    }
-
-    if (currentChunk) {
-      chunks.push(currentChunk.trim());
-    }
+    const prLines = prs.map((pr) => formatPrLine(pr, users));
+    const chunks = chunkLines(prLines, 1000);
 
     chunks.forEach((chunk, index) => {
       fields.push({
@@ -178,39 +255,44 @@ export function buildReminderDiscordPayload({
 
   // Dependabot separate compact section
   if (dependabotPrs.length > 0) {
-    const depLines = dependabotPrs
-      .map(
-        (pr) =>
-          `• [**#${pr.number}** ${pr.title}](${pr.html_url}) ➔ \`${pr.base?.ref || 'develop'}\``,
-      )
-      .join('\n');
+    const depLines = dependabotPrs.map((pr) => {
+      const maxTitleLen = 100;
+      const rawTitle = pr.title || 'Untitled';
+      const title =
+        rawTitle.length > maxTitleLen ? `${rawTitle.slice(0, maxTitleLen - 3)}...` : rawTitle;
 
-    fields.push({
-      name: `🤖 Dependabot (${dependabotPrs.length} оновлень)`,
-      value: depLines.length > 1000 ? depLines.slice(0, 990) + '...' : depLines,
-      inline: false,
+      return `• [**#${pr.number}** ${title}](${pr.html_url}) ➔ \`${pr.base?.ref || 'develop'}\``;
+    });
+
+    const depChunks = chunkLines(depLines, 1000);
+
+    depChunks.forEach((chunk, index) => {
+      fields.push({
+        name:
+          index === 0
+            ? `🤖 Dependabot (${dependabotPrs.length} оновлень)`
+            : `🤖 Dependabot (продовження)`,
+        value: chunk,
+        inline: false,
+      });
     });
   }
 
   const humanPrCount = totalPrCount - dependabotPrs.length;
+  const embeds = partitionFieldsIntoEmbeds({
+    fields,
+    repoName,
+    totalPrCount,
+    humanPrCount,
+    dependabotCount: dependabotPrs.length,
+  });
 
   return {
     content:
       humanPrCount > 0
         ? `🔔 **Щоденне нагадування:** у репозиторії є відкриті Pull Requests, які очікують на рев'ю!`
         : `🤖 **Щоденний статус:** очікують на розгляд тільки оновлення Dependabot.`,
-    embeds: [
-      {
-        title: `📋 Щоденний дайджест Pull Requests: ${repoName}`,
-        description: `Зараз відкрито **${totalPrCount}** PR (${humanPrCount} від розробників, ${dependabotPrs.length} від Dependabot). Будь ласка, знайдіть час для рев'ю!`,
-        color: 0x5865f2, // Blurple
-        fields,
-        footer: {
-          text: `UniVerse PR Reminder • ${repoName}`,
-        },
-        timestamp: new Date().toISOString(),
-      },
-    ],
+    embeds,
   };
 }
 
@@ -247,7 +329,52 @@ export async function sendDiscordWebhook(payload) {
 }
 
 export async function fetchOpenPullRequests({ repo, token }) {
-  const url = `https://api.github.com/repos/${repo}/pulls?state=open&per_page=100`;
+  let nextUrl = `https://api.github.com/repos/${repo}/pulls?state=open&per_page=100`;
+  const allPrs = [];
+
+  const headers = {
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    'User-Agent': 'uni-verse-discord-pr-reminder',
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  while (nextUrl) {
+    const response = await fetch(nextUrl, { headers });
+
+    if (!response.ok) {
+      const text = await response.text();
+
+      throw new Error(`GitHub API error (${response.status}): ${text}`);
+    }
+
+    const prs = await response.json();
+
+    if (!Array.isArray(prs) || prs.length === 0) {
+      break;
+    }
+
+    allPrs.push(...prs);
+
+    const linkHeader = response.headers.get('link');
+
+    if (linkHeader) {
+      const match = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+
+      nextUrl = match ? match[1] : null;
+    } else {
+      nextUrl = null;
+    }
+  }
+
+  return allPrs;
+}
+
+export async function fetchPullRequestDetails({ repo, prNumber, token }) {
+  const url = `https://api.github.com/repos/${repo}/pulls/${prNumber}`;
   const headers = {
     Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
@@ -261,9 +388,7 @@ export async function fetchOpenPullRequests({ repo, token }) {
   const response = await fetch(url, { headers });
 
   if (!response.ok) {
-    const text = await response.text();
-
-    throw new Error(`GitHub API error (${response.status}): ${text}`);
+    return null;
   }
 
   return await response.json();
@@ -278,6 +403,32 @@ export async function handlePrReminder() {
   const prs = await fetchOpenPullRequests({ repo, token });
 
   console.info(`Retrieved ${prs.length} open pull requests.`);
+
+  // Enrich non-draft developer PRs with diff details in batches of 10
+  const eligiblePrs = prs.filter(
+    (p) => !p.draft && !p.user?.login?.toLowerCase().startsWith('dependabot'),
+  );
+
+  const BATCH_SIZE = 10;
+
+  for (let i = 0; i < eligiblePrs.length; i += BATCH_SIZE) {
+    const batch = eligiblePrs.slice(i, i + BATCH_SIZE);
+
+    await Promise.all(
+      batch.map(async (pr) => {
+        try {
+          const details = await fetchPullRequestDetails({ repo, prNumber: pr.number, token });
+
+          if (details) {
+            pr.additions = details.additions;
+            pr.deletions = details.deletions;
+          }
+        } catch {
+          // Non-fatal, fallback to list data
+        }
+      }),
+    );
+  }
 
   const { authorPrs, dependabotPrs, totalCount } = groupPullRequests(prs);
 
