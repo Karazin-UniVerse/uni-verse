@@ -86,7 +86,6 @@ $space-64: 64px;
      ========================================================================== */
 
   /* Neutral Palette (Grayscale) */
-  --white-10: #fff;
   --gray-50: #f8f9fa;
   --gray-100: #f1f3f5;
   --gray-200: #e9ecef;
@@ -104,13 +103,13 @@ $space-64: 64px;
   --blue-200: #c5d3fc;
   --blue-300: #a1b7fa;
   --blue-400: #7794f6;
-  --blue-500: #93c5fd;
-  --blue-600: #60a5fa;
-  --blue-700: #3466e7;
-  --blue-800: #164bd7;
-  --blue-900: #123898;
-  --blue-1000: #102e7a;
-  --blue-1100: #0f2860;
+  --blue-500: #3466e7;
+  --blue-600: #164bd7;
+  --blue-700: #123898;
+  --blue-800: #102e7a;
+  --blue-900: #0f2860;
+  --blue-1000: #60a5fa;
+  --blue-1100: #93c5fd;
 
   /* Red Palette */
   --red-50: #fef2f2;
@@ -263,8 +262,8 @@ $space-64: 64px;
   --card-shadow-hover: 0 8px 24px rgb(0 0 0 / 60%);
 
   /* Accent Colors */
-  --accent-primary: var(--blue-600);
-  --accent-primary-hover: var(--blue-500);
+  --accent-primary: var(--blue-1000);
+  --accent-primary-hover: var(--blue-1100);
   --accent-primary-active: var(--blue-800);
   --accent-text-on-primary: #fff;
   --accent-secondary: var(--gray-700);
