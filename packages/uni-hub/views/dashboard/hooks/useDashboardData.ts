@@ -79,20 +79,29 @@ export function useDashboardData({
   const [isOfflineData, setIsOfflineData] = useState(false);
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
 
-  useEffect(() => {
+  // 1. Вспомогательная функция (выносим за пределы компонента)
+  const getCachedStudentProfile = (): StudentProfile | null => {
     try {
       const cachedProfile = localStorage.getItem('universe_student_profile');
 
-      if (cachedProfile) {
-        const parsedProfile = JSON.parse(cachedProfile) as StudentProfile;
+      if (!cachedProfile) return null;
 
-        if (parsedProfile && typeof parsedProfile === 'object') {
-          // oxlint-disable-next-line react/set-state-in-effect
-          setStudentProfile(parsedProfile);
-        }
+      const parsedProfile = JSON.parse(cachedProfile) as StudentProfile;
+
+      if (parsedProfile && typeof parsedProfile === 'object') {
+        return parsedProfile;
       }
-    } catch {
-      // ...
+    } catch {}
+
+    return null;
+  };
+
+  useEffect(() => {
+    const cachedProfile = getCachedStudentProfile();
+
+    if (cachedProfile) {
+      // oxlint-disable-next-line react/set-state-in-effect
+      setStudentProfile(cachedProfile);
     }
   }, []);
   const [data, setData] = useState<DashboardData>(getInitialDashboardData);

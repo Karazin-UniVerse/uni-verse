@@ -117,7 +117,7 @@
 
 :global([data-theme='dark']) .active,
 :global([data-theme='cyberpunk']) .active {
-  color: #fff;
+  color: var(--white-10);
 }
 
 .collapsed .navItem {
