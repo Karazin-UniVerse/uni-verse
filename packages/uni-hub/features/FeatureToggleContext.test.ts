@@ -52,9 +52,9 @@ describe('FeatureToggleContext and Components', () => {
 
     const html = renderToString(tree);
 
-    expect(html).toContain('id="moodle">true</span>');
-    expect(html).toContain('id="edean">true</span>');
-    expect(html).toContain('id="opps">false</span>');
+    expect(html).toContain('id="moodle">false</span>');
+    expect(html).toContain('id="edean">false</span>');
+    expect(html).toContain('id="opps">true</span>');
     expect(html).toContain('id="panel">false</span>');
   });
 

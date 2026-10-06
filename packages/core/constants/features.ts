@@ -18,12 +18,12 @@ export type FeatureFlagKey = keyof FeatureFlags;
 
 /**
  * Baseline default values for feature flags.
- * Production default: Moodle enabled, Opportunities disabled, eDean enabled, DevPanel disabled.
+ * Production default: only opportunities is enabled.
  */
 export const DEFAULT_FEATURE_FLAGS: Readonly<FeatureFlags> = Object.freeze({
-  isMoodleIntegrationEnabled: true,
-  isEDeanEnabled: true,
-  isOpportunitiesPlatformEnabled: false,
+  isMoodleIntegrationEnabled: false,
+  isEDeanEnabled: false,
+  isOpportunitiesPlatformEnabled: true,
   isFeaturePanelEnabled: false,
 });
 

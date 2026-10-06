@@ -2,8 +2,9 @@ import React, { useId, useRef } from 'react';
 import { X } from 'lucide-react';
 import { useClickOutside } from '../../../hooks/useClickOutside';
 import { useEscapeKey } from '../../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
+import { useScrollLock } from '../../../hooks/useScrollLock';
 import type { ModalProps } from './Modal.types';
-import { useModal } from './useModal';
 import styles from './Modal.module.scss';
 
 export const Modal: React.FC<ModalProps> = ({
@@ -23,9 +24,9 @@ export const Modal: React.FC<ModalProps> = ({
   width = 700,
 }) => {
   const titleId = useId();
-  const localDialogRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
-  useClickOutside(localDialogRef, onClose, {
+  useClickOutside(dialogRef, onClose, {
     enabled: open && closeOnClickOutside,
   });
 
@@ -33,28 +34,24 @@ export const Modal: React.FC<ModalProps> = ({
     enabled: open && closeOnEscape,
   });
 
-  const { dialogRef, handleKeyDown } = useModal({
-    open,
-    onClose,
-    dialogRef: localDialogRef,
-    closeOnClickOutside: false,
-    closeOnEscape: false,
-    lockScroll,
+  useScrollLock(open && lockScroll);
+
+  useFocusTrap(dialogRef, {
+    enabled: open && trapFocus,
     restoreFocus,
-    trapFocus,
   });
 
   if (!open) {
     return null;
   }
 
-  const dialogAriaLabel = title ? undefined : ariaLabel || 'Dialog';
+  const dialogAriaLabel = title ? undefined : ariaLabel;
 
   return (
     <div className={styles.overlay}>
       <div className={styles.backdrop} aria-hidden="true" />
       <div
-        ref={dialogRef as React.RefObject<HTMLDivElement>}
+        ref={dialogRef}
         className={`${styles.dialog} ${className ?? ''}`}
         style={
           {
@@ -66,7 +63,6 @@ export const Modal: React.FC<ModalProps> = ({
         aria-labelledby={title ? titleId : undefined}
         aria-label={dialogAriaLabel}
         tabIndex={-1}
-        onKeyDown={handleKeyDown}
       >
         {(title || closeButton) && (
           <div className={styles.header}>
@@ -80,8 +76,8 @@ export const Modal: React.FC<ModalProps> = ({
                 type="button"
                 className={styles.closeBtn}
                 onClick={onClose}
-                aria-label={closeLabel ?? 'Close'}
-                title={closeLabel ?? 'Close'}
+                aria-label={closeLabel}
+                title={closeLabel}
               >
                 <X size={18} />
               </button>

@@ -14,8 +14,8 @@ export const Popover: React.FC<PopoverProps> = ({
   width,
   className,
   ariaLabel,
+  closeLabel,
   closeButton = true,
-  closeLabel = 'Close',
   placement = 'bottom-end',
 }) => {
   const panelRef = useRef<HTMLDialogElement>(null);

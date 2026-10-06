@@ -13,24 +13,24 @@ const meta = {
   argTypes: {
     open: {
       control: 'boolean',
-      description: 'Стан видимості поповера',
+      description: 'Controls popover visibility',
     },
     title: {
       control: 'text',
-      description: 'Заголовок поповера',
+      description: 'Popover title',
     },
     width: {
       control: 'text',
-      description: 'Ширина поповера',
+      description: 'Popover width (number in px or CSS string)',
     },
     placement: {
       control: 'select',
       options: ['bottom-end', 'bottom-start', 'top-end', 'top-start'],
-      description: 'Розташування поповера відносно якоря',
+      description: 'Popover placement relative to anchor',
     },
     closeButton: {
       control: 'boolean',
-      description: 'Відображати кнопку закриття (хрестик)',
+      description: 'Whether to show the close button',
     },
   },
 } satisfies Meta<typeof Popover>;
@@ -45,15 +45,15 @@ const InteractivePopoverDemo = (args: React.ComponentProps<typeof Popover>) => {
   return (
     <div style={{ position: 'relative', display: 'inline-block' }} ref={anchorRef}>
       <Button variant="secondary" onClick={() => setIsOpen((prev) => !prev)}>
-        Відкрити панель
+        Open panel
       </Button>
       <Popover {...args} open={isOpen} onClose={() => setIsOpen(false)} anchorRef={anchorRef}>
         <div style={{ padding: '16px' }}>
           <p style={{ margin: '0 0 12px 0', fontSize: '13px' }}>
-            Це спливаючий поповер, привʼязаний до якірної кнопки.
+            This is a floating popover anchored to the button.
           </p>
           <Button size="small" variant="primary" onClick={() => setIsOpen(false)}>
-            Зрозуміло
+            Got it
           </Button>
         </div>
       </Popover>
@@ -64,9 +64,9 @@ const InteractivePopoverDemo = (args: React.ComponentProps<typeof Popover>) => {
 export const Default: Story = {
   render: InteractivePopoverDemo,
   args: {
-    title: 'Налаштування',
+    title: 'Settings',
     placement: 'bottom-end',
     width: 320,
-    closeLabel: 'Закрити',
+    closeLabel: 'Close',
   },
 };
