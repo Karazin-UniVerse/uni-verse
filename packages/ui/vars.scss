@@ -109,6 +109,7 @@ $space-64: 64px;
   --blue-800: #102e7a;
   --blue-900: #0f2860;
   --blue-1000: #60a5fa;
+  --blue-1100: #93c5fd;
 
   /* Red Palette */
   --red-50: #fef2f2;
@@ -261,8 +262,8 @@ $space-64: 64px;
   --card-shadow-hover: 0 8px 24px rgb(0 0 0 / 60%);
 
   /* Accent Colors */
-  --accent-primary: #60a5fa;
-  --accent-primary-hover: #93c5fd;
+  --accent-primary: var(--blue-1000);
+  --accent-primary-hover: var(--blue-1100);
   --accent-primary-active: var(--blue-800);
   --accent-text-on-primary: #fff;
   --accent-secondary: var(--gray-700);
