@@ -78,7 +78,9 @@
     color: var(--accent-primary);
     background: var(--bg-surface);
     font-weight: 600;
-    box-shadow: 0 1px 3px rgb(0 0 0 / 8%), 0 1px 2px rgb(0 0 0 / 4%);
+    box-shadow:
+      0 1px 3px rgb(0 0 0 / 8%),
+      0 1px 2px rgb(0 0 0 / 4%);
   }
 }
 
@@ -281,7 +283,9 @@
     background: var(--bg-surface);
     color: var(--accent-primary);
     font-weight: 600;
-    box-shadow: 0 1px 3px rgb(0 0 0 / 8%), 0 1px 2px rgb(0 0 0 / 4%);
+    box-shadow:
+      0 1px 3px rgb(0 0 0 / 8%),
+      0 1px 2px rgb(0 0 0 / 4%);
   }
 }
 
@@ -493,7 +497,11 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-primary), color-mix(in srgb, var(--accent-primary) 60%, #8b5cf6));
+  background: linear-gradient(
+    135deg,
+    var(--accent-primary),
+    color-mix(in srgb, var(--accent-primary) 60%, #8b5cf6)
+  );
   color: #fff;
   display: flex;
   align-items: center;
@@ -742,7 +750,7 @@
   line-height: 1.65;
   color: var(--text-primary);
   white-space: pre-line;
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .previousCommentBox {
@@ -819,9 +827,9 @@
 }
 
 .approveBtn {
-  background: var(--success-color, #10b981) !important;
-  border-color: var(--success-color, #10b981) !important;
-  color: #fff !important;
+  background: var(--success-color, #10b981);
+  border-color: var(--success-color, #10b981);
+  color: #fff;
   font-weight: 600;
   transition: all 180ms ease;
 
@@ -833,29 +841,29 @@
 }
 
 .reviseBtn {
-  color: var(--warning-color, #d97706) !important;
-  border-color: color-mix(in srgb, var(--warning-color, #f59e0b) 45%, var(--card-border)) !important;
-  background: color-mix(in srgb, var(--warning-color, #f59e0b) 8%, var(--bg-surface)) !important;
+  color: var(--warning-color, #d97706);
+  border-color: color-mix(in srgb, var(--warning-color, #f59e0b) 45%, var(--card-border));
+  background: color-mix(in srgb, var(--warning-color, #f59e0b) 8%, var(--bg-surface));
   font-weight: 500;
   transition: all 180ms ease;
 
   &:hover {
-    background: color-mix(in srgb, var(--warning-color, #f59e0b) 16%, var(--bg-surface)) !important;
-    border-color: var(--warning-color, #f59e0b) !important;
+    background: color-mix(in srgb, var(--warning-color, #f59e0b) 16%, var(--bg-surface));
+    border-color: var(--warning-color, #f59e0b);
     transform: translateY(-1px);
   }
 }
 
 .rejectBtn {
-  color: var(--error-color, #ef4444) !important;
-  border-color: color-mix(in srgb, var(--error-color, #ef4444) 40%, var(--card-border)) !important;
-  background: color-mix(in srgb, var(--error-color, #ef4444) 6%, var(--bg-surface)) !important;
+  color: var(--error-color, #ef4444);
+  border-color: color-mix(in srgb, var(--error-color, #ef4444) 40%, var(--card-border));
+  background: color-mix(in srgb, var(--error-color, #ef4444) 6%, var(--bg-surface));
   font-weight: 500;
   transition: all 180ms ease;
 
   &:hover {
-    background: color-mix(in srgb, var(--error-color, #ef4444) 14%, var(--bg-surface)) !important;
-    border-color: var(--error-color, #ef4444) !important;
+    background: color-mix(in srgb, var(--error-color, #ef4444) 14%, var(--bg-surface));
+    border-color: var(--error-color, #ef4444);
     transform: translateY(-1px);
   }
 }
@@ -1042,7 +1050,7 @@
   line-height: 1.65;
   color: var(--text-primary);
   white-space: pre-line;
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .ownerFeedbackBox {
@@ -1105,15 +1113,15 @@
 }
 
 .withdrawBtn {
-  color: var(--error-color, #ef4444) !important;
-  border-color: color-mix(in srgb, var(--error-color, #ef4444) 30%, var(--card-border)) !important;
-  background: color-mix(in srgb, var(--error-color, #ef4444) 6%, var(--bg-surface)) !important;
+  color: var(--error-color, #ef4444);
+  border-color: color-mix(in srgb, var(--error-color, #ef4444) 30%, var(--card-border));
+  background: color-mix(in srgb, var(--error-color, #ef4444) 6%, var(--bg-surface));
   font-weight: 500;
   transition: all 180ms ease;
 
   &:hover {
-    background: color-mix(in srgb, var(--error-color, #ef4444) 14%, var(--bg-surface)) !important;
-    border-color: var(--error-color, #ef4444) !important;
+    background: color-mix(in srgb, var(--error-color, #ef4444) 14%, var(--bg-surface));
+    border-color: var(--error-color, #ef4444);
     transform: translateY(-1px);
   }
 }

@@ -37,6 +37,7 @@ describe('Opportunities decomposed subtabs', () => {
     motivation: 'I love React and want to learn more',
     status: 'SUBMITTED',
     createdAt: '2026-10-01T11:00:00.000Z',
+    updatedAt: '2026-10-01T11:00:00.000Z',
     opportunity: mockOpportunity,
   };
 

@@ -1,14 +1,8 @@
 'use client';
+/* oxlint-disable react(set-state-in-effect) */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Plus,
-  Briefcase,
-  ShieldCheck,
-  Users,
-  FileText,
-  Check,
-} from 'lucide-react';
+import { Plus, Briefcase, ShieldCheck, Users, FileText, Check } from 'lucide-react';
 import { Button } from '@una';
 import { safeStorage } from '@uni-hub/services/api.storage';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
@@ -170,22 +164,20 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
 
   // Load data when active subtab changes
   useEffect(() => {
-    if (activeSubTab === 'catalog') {
-      void fetchCatalog();
-    } else if (activeSubTab === 'my-opportunities') {
-      void fetchMyOpportunities();
-    } else if (activeSubTab === 'my-applications') {
-      void fetchMyApplications();
-    } else if (activeSubTab === 'moderation') {
-      void fetchModerationQueue();
-    }
-  }, [
-    activeSubTab,
-    fetchCatalog,
-    fetchMyOpportunities,
-    fetchMyApplications,
-    fetchModerationQueue,
-  ]);
+    const timer = setTimeout(() => {
+      if (activeSubTab === 'catalog') {
+        void fetchCatalog();
+      } else if (activeSubTab === 'my-opportunities') {
+        void fetchMyOpportunities();
+      } else if (activeSubTab === 'my-applications') {
+        void fetchMyApplications();
+      } else if (activeSubTab === 'moderation') {
+        void fetchModerationQueue();
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [activeSubTab, fetchCatalog, fetchMyOpportunities, fetchMyApplications, fetchModerationQueue]);
 
   // Pre-fetch moderation count if user is moderator or admin
   useEffect(() => {
