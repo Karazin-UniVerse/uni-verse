@@ -119,6 +119,19 @@ export function chunkLines(lines, maxChunkLength = 1000) {
   return chunks;
 }
 
+export function getEmbedLength(embed) {
+  let length =
+    (embed.title?.length || 0) +
+    (embed.description?.length || 0) +
+    (embed.footer?.text?.length || 0);
+
+  for (const field of embed.fields || []) {
+    length += (field.name?.length || 0) + (field.value?.length || 0);
+  }
+
+  return length;
+}
+
 export function partitionFieldsIntoEmbeds({
   fields,
   repoName,
@@ -127,7 +140,7 @@ export function partitionFieldsIntoEmbeds({
   dependabotCount,
 }) {
   const MAX_FIELDS_PER_EMBED = 25;
-  const MAX_TOTAL_CHARS_PER_EMBED = 5500;
+  const MAX_EMBED_CHARS = 5000;
 
   const embeds = [];
   let currentFields = [];
@@ -165,8 +178,7 @@ export function partitionFieldsIntoEmbeds({
 
     if (
       currentFields.length >= MAX_FIELDS_PER_EMBED ||
-      currentChars + fieldChars + (currentFields.length === 0 ? overhead : 0) >
-        MAX_TOTAL_CHARS_PER_EMBED
+      currentChars + fieldChars + (currentFields.length === 0 ? overhead : 0) > MAX_EMBED_CHARS
     ) {
       flushEmbed();
     }
@@ -178,6 +190,51 @@ export function partitionFieldsIntoEmbeds({
   flushEmbed();
 
   return embeds;
+}
+
+export function partitionEmbedsIntoMessages(embeds, mainContent = '') {
+  const MAX_EMBEDS_PER_MESSAGE = 10;
+  const MAX_MESSAGE_CHARS = 5500;
+
+  const messages = [];
+  let currentEmbeds = [];
+  let currentChars = 0;
+  let isFirstMessage = true;
+
+  function flushMessage() {
+    if (currentEmbeds.length === 0) {
+      return;
+    }
+
+    messages.push({
+      content: isFirstMessage ? mainContent : undefined,
+      embeds: currentEmbeds,
+    });
+
+    currentEmbeds = [];
+    currentChars = 0;
+    isFirstMessage = false;
+  }
+
+  for (const embed of embeds) {
+    const embedCharCount = getEmbedLength(embed);
+    const contentOverhead =
+      currentEmbeds.length === 0 && isFirstMessage ? mainContent?.length || 0 : 0;
+
+    if (
+      currentEmbeds.length >= MAX_EMBEDS_PER_MESSAGE ||
+      currentChars + embedCharCount + contentOverhead > MAX_MESSAGE_CHARS
+    ) {
+      flushMessage();
+    }
+
+    currentEmbeds.push(embed);
+    currentChars += embedCharCount;
+  }
+
+  flushMessage();
+
+  return messages;
 }
 
 export function groupPullRequests(pullRequests) {
@@ -287,16 +344,24 @@ export function buildReminderDiscordPayload({
     dependabotCount: dependabotPrs.length,
   });
 
-  return {
-    content:
-      humanPrCount > 0
-        ? `🔔 **Щоденне нагадування:** у репозиторії є відкриті Pull Requests, які очікують на рев'ю!`
-        : `🤖 **Щоденний статус:** очікують на розгляд тільки оновлення Dependabot.`,
-    embeds,
-  };
+  const content =
+    humanPrCount > 0
+      ? `🔔 **Щоденне нагадування:** у репозиторії є відкриті Pull Requests, які очікують на рев'ю!`
+      : `🤖 **Щоденний статус:** очікують на розгляд тільки оновлення Dependabot.`;
+
+  return partitionEmbedsIntoMessages(embeds, content);
 }
 
 export async function sendDiscordWebhook(payload) {
+  if (Array.isArray(payload)) {
+    for (const message of payload) {
+      await sendDiscordWebhook(message);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+
+    return;
+  }
+
   const webhookUrl = process.env.DISCORD_PR_WEBHOOK;
 
   if (!webhookUrl) {
@@ -438,14 +503,14 @@ export async function handlePrReminder() {
     return;
   }
 
-  const payload = buildReminderDiscordPayload({
+  const payloads = buildReminderDiscordPayload({
     authorPrs,
     dependabotPrs,
     repoName: repo,
     discordUsers,
   });
 
-  if (!payload) {
+  if (!payloads || payloads.length === 0) {
     console.info('Payload is empty. Skipping notification.');
 
     return;
@@ -453,12 +518,12 @@ export async function handlePrReminder() {
 
   if (isDryRun) {
     console.info('DRY_RUN enabled. Payload to send:');
-    console.info(JSON.stringify(payload, null, 2));
+    console.info(JSON.stringify(payloads, null, 2));
 
     return;
   }
 
-  await sendDiscordWebhook(payload);
+  await sendDiscordWebhook(payloads);
 }
 
 export async function handleCiFailure() {

@@ -4,7 +4,9 @@ import {
   formatPrAge,
   formatPrLine,
   chunkLines,
+  getEmbedLength,
   partitionFieldsIntoEmbeds,
+  partitionEmbedsIntoMessages,
   groupPullRequests,
   buildReminderDiscordPayload,
   fetchOpenPullRequests,
@@ -57,6 +59,21 @@ test('chunkLines splits lines correctly under maxChunkLength', () => {
   for (const chunk of chunks) {
     assert.ok(chunk.length <= 500);
   }
+});
+
+test('getEmbedLength calculates total characters in an embed correctly', () => {
+  const embed = {
+    title: 'Title',
+    description: 'Desc',
+    footer: { text: 'Footer' },
+    fields: [
+      { name: 'F1', value: 'V1' },
+      { name: 'F2', value: 'V2' },
+    ],
+  };
+
+  // 'Title'(5) + 'Desc'(4) + 'Footer'(6) + 'F1'(2) + 'V1'(2) + 'F2'(2) + 'V2'(2) = 23
+  assert.equal(getEmbedLength(embed), 23);
 });
 
 test('groupPullRequests filters drafts, segregates dependabot and groups by author', () => {
@@ -163,14 +180,18 @@ test('buildReminderDiscordPayload formats valid Discord payload with author fiel
     },
   ];
 
-  const payload = buildReminderDiscordPayload({
+  const messages = buildReminderDiscordPayload({
     authorPrs,
     dependabotPrs,
     repoName: 'Karazin-UniVerse/uni-verse',
     discordUsers,
   });
 
-  assert.ok(payload);
+  assert.ok(Array.isArray(messages));
+  assert.equal(messages.length, 1);
+
+  const payload = messages[0];
+
   assert.ok(payload.embeds);
   assert.equal(payload.embeds.length, 1);
 
@@ -207,15 +228,16 @@ test('buildReminderDiscordPayload splits Dependabot into multiple fields when ex
     });
   }
 
-  const payload = buildReminderDiscordPayload({
+  const messages = buildReminderDiscordPayload({
     authorPrs: new Map(),
     dependabotPrs,
     repoName: 'test/repo',
     discordUsers: {},
   });
 
-  assert.ok(payload);
-  const embed = payload.embeds[0];
+  assert.ok(Array.isArray(messages));
+
+  const embed = messages[0].embeds[0];
   const depFields = embed.fields.filter((f) => f.name.includes('Dependabot'));
 
   assert.ok(depFields.length > 1, 'Should split Dependabot across multiple fields');
@@ -248,6 +270,32 @@ test('partitionFieldsIntoEmbeds partitions fields across multiple embeds when ex
 
   for (const embed of embeds) {
     assert.ok(embed.fields.length <= 25, 'Each embed must have <= 25 fields');
+  }
+});
+
+test('partitionEmbedsIntoMessages splits embeds across multiple messages when exceeding 5500 chars or 10 embeds', () => {
+  const embeds = [];
+
+  // Create 12 embeds, each with 600 characters
+  for (let i = 1; i <= 12; i++) {
+    embeds.push({
+      title: `Embed ${i}`,
+      description: 'A'.repeat(500),
+      fields: [{ name: 'Field', value: 'B'.repeat(50) }],
+    });
+  }
+
+  const messages = partitionEmbedsIntoMessages(embeds, 'Main content announcement');
+
+  assert.ok(messages.length >= 2, 'Must split into multiple messages');
+
+  for (const msg of messages) {
+    assert.ok(msg.embeds.length <= 10, 'Each message must have <= 10 embeds');
+
+    const totalChars =
+      (msg.content?.length || 0) + msg.embeds.reduce((sum, e) => sum + getEmbedLength(e), 0);
+
+    assert.ok(totalChars <= 5500, `Message total chars ${totalChars} must stay under 5500 limit`);
   }
 });
 
