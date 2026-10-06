@@ -7,6 +7,7 @@ import { ScheduleWeekDayCard } from './ScheduleWeekDayCard';
 import styles from './ScheduleView.module.scss';
 
 import type { ScheduleWeekViewProps } from './ScheduleView.types';
+import { useNow } from '@uni-hub/hooks/useNow';
 
 export const ScheduleWeekView: React.FC<ScheduleWeekViewProps> = ({
   selectedDate,
@@ -21,6 +22,8 @@ export const ScheduleWeekView: React.FC<ScheduleWeekViewProps> = ({
     () => Array.from({ length: 7 }, (_, dayIndex) => addDays(weekStart, dayIndex)),
     [weekStart],
   );
+
+  const now = useNow();
 
   return (
     <div className={styles.week}>
@@ -57,7 +60,7 @@ export const ScheduleWeekView: React.FC<ScheduleWeekViewProps> = ({
             key={day.toISOString()}
             day={day}
             events={getEventsForDate(day)}
-            isToday={isSameDay(day, new Date())}
+            isToday={isSameDay(day, new Date(now))}
             locale={locale}
             getTypeName={getTypeName}
           />

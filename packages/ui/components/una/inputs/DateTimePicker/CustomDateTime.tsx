@@ -30,7 +30,7 @@ export function CustomDateTime({
   const pickerDialogId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [prevSelected, setPrevSelected] = useState(selected);
-  const [viewDate, setViewDate] = useState(selected || new Date());
+  const [viewDate, setViewDate] = useState(() => selected || new Date());
   const containerRef = useRef<HTMLDivElement>(null);
   const timeListRef = useRef<HTMLDivElement>(null);
 
@@ -145,7 +145,7 @@ export function CustomDateTime({
     return `${formattedDate} ${displayHours}:${minutes} ${meridiem}`;
   };
 
-  const currentYear = new Date().getFullYear();
+  const [currentYear] = useState(() => new Date().getFullYear());
   const years = Array.from({ length: 21 }, (_, index) => currentYear - 10 + index);
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
