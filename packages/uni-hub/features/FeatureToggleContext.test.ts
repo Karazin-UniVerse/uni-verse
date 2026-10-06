@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { FEATURE_STORAGE_KEYS } from '@core/constants/features';
-import { createOverrideStore } from '../helpers/features';
+import { createOverrideStore } from '@core/utils/features';
 import { FeatureToggleProvider, useFeatures, useFeatureControls, DevFeaturePanel } from './index';
 
 describe('FeatureToggleContext and Components', () => {

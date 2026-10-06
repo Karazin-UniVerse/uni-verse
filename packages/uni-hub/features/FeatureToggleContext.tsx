@@ -8,8 +8,11 @@ import React, {
   useSyncExternalStore,
 } from 'react';
 import type { FeatureFlags, FeatureFlagKey } from '@core/constants/features';
-import { mergeFeatureFlags } from '@core/utils/features';
-import { createOverrideStore, getEnvDefaults } from '../helpers/features';
+import {
+  createOverrideStore,
+  mergeFeatureFlags,
+  resolveEnvFeatureFlags,
+} from '@core/utils/features';
 
 export type FeatureContextValue = {
   flags: FeatureFlags;
@@ -22,6 +25,15 @@ export type FeatureContextValue = {
 };
 
 const FeatureToggleContext = createContext<FeatureContextValue | null>(null);
+
+const getEnvDefaults = (): FeatureFlags => {
+  return resolveEnvFeatureFlags({
+    NEXT_PUBLIC_FEATURE_MOODLE: process.env.NEXT_PUBLIC_FEATURE_MOODLE,
+    NEXT_PUBLIC_FEATURE_EDEAN: process.env.NEXT_PUBLIC_FEATURE_EDEAN,
+    NEXT_PUBLIC_FEATURE_OPPORTUNITIES: process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES,
+    NEXT_PUBLIC_FEATURE_PANEL: process.env.NEXT_PUBLIC_FEATURE_PANEL,
+  });
+};
 
 export interface FeatureToggleProviderProps {
   children?: React.ReactNode;
