@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
@@ -25,7 +25,10 @@ import {
   GradesTab,
   AssignmentsTab,
   ConnectMoodleTab,
+  OpportunitiesTab,
+  NAV_ITEMS,
 } from './dashboard';
+import { useFeatures } from '@uni-hub/features';
 import { formatLastSync } from './dashboard/tabs/helpers';
 import { useDashboardData, clearUserSessionStorage } from './dashboard/hooks/useDashboardData';
 import { useMoodleLink } from './dashboard/hooks/useMoodleLink';
@@ -39,6 +42,7 @@ const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
   grades: 'nav.grades.full',
   schedule: 'nav.schedule.full',
   assignments: 'nav.assignments.full',
+  opportunities: 'nav.opportunities.full',
   connectMoodle: 'nav.connectMoodle.full',
 };
 
@@ -49,6 +53,12 @@ const DashboardPage: React.FC = () => {
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const setSoundEnabled = useGamificationStore((s) => s.setSoundEnabled);
   const { formatMessage } = useLanguage();
+  const flags = useFeatures();
+  const flagsRef = useRef(flags);
+
+  useEffect(() => {
+    flagsRef.current = flags;
+  });
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -82,6 +92,7 @@ const DashboardPage: React.FC = () => {
     dateFrom,
     dateTo,
     hideCompleted,
+    enabled: flags.isMoodleIntegrationEnabled,
     onUnauthorized: () => router.push('/login'),
   });
 
@@ -151,10 +162,26 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     const requestedTab = searchParams.get('tab');
 
-    if (requestedTab) {
-      setActiveKey(isNavKey(requestedTab) ? requestedTab : 'overview');
+    if (requestedTab && isNavKey(requestedTab)) {
+      const targetItem = NAV_ITEMS.find((item) => item.key === requestedTab);
+
+      if (!targetItem?.featureFlag || flagsRef.current[targetItem.featureFlag]) {
+        setActiveKey(requestedTab);
+
+        return;
+      }
     }
+
+    setActiveKey('overview');
   }, [searchParams]);
+
+  useEffect(() => {
+    const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
+
+    if (activeItem?.featureFlag && !flags[activeItem.featureFlag]) {
+      setActiveKey('overview');
+    }
+  }, [flags, activeKey]);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -167,7 +194,7 @@ const DashboardPage: React.FC = () => {
       cancelPendingFetch();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router, sortOrder, dateFrom, dateTo, hideCompleted]);
+  }, [router, sortOrder, dateFrom, dateTo, hideCompleted, flags.isMoodleIntegrationEnabled]);
 
   const closeMobileMenu = useCallback(() => {
     setMobileMenuOpen(false);
@@ -183,7 +210,11 @@ const DashboardPage: React.FC = () => {
   };
 
   const renderActiveContent = () => {
-    switch (activeKey) {
+    const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
+    const effectiveKey =
+      activeItem?.featureFlag && !flags[activeItem.featureFlag] ? 'overview' : activeKey;
+
+    switch (effectiveKey) {
       case 'overview':
         return (
           <OverviewTab
@@ -231,6 +262,8 @@ const DashboardPage: React.FC = () => {
             }}
           />
         );
+      case 'opportunities':
+        return <OpportunitiesTab />;
       case 'connectMoodle':
         return <ConnectMoodleTab onConnect={() => openLinkModal(LinkMoodleMode.CONNECT)} />;
       default:

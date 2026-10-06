@@ -13,11 +13,14 @@ import {
   PanelLeftOpen,
   LogOut,
   Link2,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { useFeatures } from '@uni-hub/features';
+import type { FeatureFlags, FeatureFlagKey } from '@core/constants/features';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import type { DashboardSidebarProps, NavKey } from '../types';
@@ -28,6 +31,7 @@ export interface NavItemConfig {
   icon: React.ReactNode;
   labelKey: TranslationKey;
   shortLabelKey: TranslationKey;
+  featureFlag?: FeatureFlagKey;
 }
 
 export const NAV_ITEMS: NavItemConfig[] = [
@@ -42,41 +46,71 @@ export const NAV_ITEMS: NavItemConfig[] = [
     icon: <BookOpen size={18} />,
     labelKey: 'nav.courses.full',
     shortLabelKey: 'nav.courses',
+    featureFlag: 'isMoodleIntegrationEnabled',
   },
   {
     key: 'grades',
     icon: <ClipboardList size={18} />,
     labelKey: 'nav.grades.full',
     shortLabelKey: 'nav.grades',
+    featureFlag: 'isMoodleIntegrationEnabled',
   },
   {
     key: 'schedule',
     icon: <CalendarDays size={18} />,
     labelKey: 'nav.schedule.full',
     shortLabelKey: 'nav.schedule',
+    featureFlag: 'isEDeanEnabled',
   },
   {
     key: 'assignments',
     icon: <FileEdit size={18} />,
     labelKey: 'nav.assignments.full',
     shortLabelKey: 'nav.assignments',
+    featureFlag: 'isMoodleIntegrationEnabled',
+  },
+  {
+    key: 'opportunities',
+    icon: <Sparkles size={18} />,
+    labelKey: 'nav.opportunities.full',
+    shortLabelKey: 'nav.opportunities',
+    featureFlag: 'isOpportunitiesPlatformEnabled',
   },
 ];
 
-export const getVisibleNavItems = (isMoodleLinked = true): NavItemConfig[] => {
-  if (isMoodleLinked) {
-    return NAV_ITEMS;
+export const getVisibleNavItems = (
+  flagsOrLinked: FeatureFlags | boolean = true,
+  isMoodleLinkedParam: boolean = true,
+): NavItemConfig[] => {
+  let flags: FeatureFlags | undefined;
+  let isMoodleLinked = true;
+
+  if (typeof flagsOrLinked === 'boolean') {
+    isMoodleLinked = flagsOrLinked;
+  } else if (flagsOrLinked && typeof flagsOrLinked === 'object') {
+    flags = flagsOrLinked;
+    isMoodleLinked = isMoodleLinkedParam;
   }
 
-  return [
-    ...NAV_ITEMS,
-    {
-      key: 'connectMoodle',
-      icon: <Link2 size={18} />,
-      labelKey: 'nav.connectMoodle.full',
-      shortLabelKey: 'nav.connectMoodle',
-    },
-  ];
+  const baseItems = NAV_ITEMS.filter(
+    (item) => !item.featureFlag || (flags ? flags[item.featureFlag] : true),
+  );
+
+  const isMoodleEnabled = flags ? flags.isMoodleIntegrationEnabled : true;
+
+  if (!isMoodleLinked && isMoodleEnabled) {
+    return [
+      ...baseItems,
+      {
+        key: 'connectMoodle',
+        icon: <Link2 size={18} />,
+        labelKey: 'nav.connectMoodle.full',
+        shortLabelKey: 'nav.connectMoodle',
+      },
+    ];
+  }
+
+  return baseItems;
 };
 
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
@@ -91,8 +125,9 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   isMoodleLinked = true,
 }) => {
   const { formatMessage } = useLanguage();
+  const flags = useFeatures();
+  const visibleNavItems = getVisibleNavItems(flags, isMoodleLinked);
   const siderRef = useRef<HTMLElement>(null);
-  const items = getVisibleNavItems(isMoodleLinked);
 
   useEffect(() => {
     if (!mobileMenuOpen) {
@@ -194,7 +229,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         </div>
 
         <nav className={styles.nav}>
-          {items.map((item) => {
+          {visibleNavItems.map((item) => {
             const label = formatMessage(item.labelKey);
             const shortLabel = formatMessage(item.shortLabelKey);
             const isConnect = item.key === 'connectMoodle';
@@ -237,20 +272,22 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         </nav>
 
         <div className={styles.siderFooter}>
-          <a
-            href="https://moodle.universemvp.tech"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.moodleStatusLink}
-            title={formatMessage('sidebar.moodleConnected')}
-          >
-            <span className={styles.statusDot} aria-hidden />
-            {!collapsed || mobileMenuOpen ? (
-              <span className={styles.moodleHost}>🔗 moodle.universemvp.tech</span>
-            ) : (
-              <span className={styles.moodleCompactIcon}>🔗</span>
-            )}
-          </a>
+          {flags.isMoodleIntegrationEnabled && (
+            <a
+              href="https://moodle.universemvp.tech"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.moodleStatusLink}
+              title={formatMessage('sidebar.moodleConnected')}
+            >
+              <span className={styles.statusDot} aria-hidden />
+              {!collapsed || mobileMenuOpen ? (
+                <span className={styles.moodleHost}>🔗 moodle.universemvp.tech</span>
+              ) : (
+                <span className={styles.moodleCompactIcon}>🔗</span>
+              )}
+            </a>
+          )}
           <LanguageSwitcher
             compact
             showLabel={!collapsed || mobileMenuOpen}

@@ -2,7 +2,6 @@ name: Code Freeze Check
 
 on:
   pull_request:
-    branches: [develop]
     types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
 
 permissions:
@@ -18,9 +17,15 @@ jobs:
 
       - name: Check Code Freeze State
         env:
+          TARGET_BRANCH: ${{ github.base_ref }}
           VARS_FREEZE: ${{ vars.CODE_FREEZE }}
           HAS_BYPASS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'hotfix') || contains(github.event.pull_request.labels.*.name, 'freeze-bypass') }}
         run: |
+          if [ "$TARGET_BRANCH" != "develop" ]; then
+            echo "Code Freeze check applies exclusively to 'develop'. Merging into '$TARGET_BRANCH' is allowed."
+            exit 0
+          fi
+
           if git ls-remote --exit-code --tags origin refs/tags/code-freeze >/dev/null 2>&1; then
             TAG_EXISTS=1
           else

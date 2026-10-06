@@ -16,6 +16,7 @@ export const NAV_KEYS = [
   'schedule',
   'assignments',
   'connectMoodle',
+  'opportunities',
 ] as const;
 
 export type NavKey = (typeof NAV_KEYS)[number];

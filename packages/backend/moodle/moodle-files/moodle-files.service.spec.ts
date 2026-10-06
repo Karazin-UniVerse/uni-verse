@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MoodleFilesService } from './moodle-files.service';
+import { MoodleClientService } from '../moodle-client/moodle.client.service';
 import {
   BadRequestException,
   InternalServerErrorException,
@@ -11,12 +12,13 @@ describe('MoodleFilesService', () => {
   let fetchSpy: jest.SpyInstance;
 
   beforeEach(async () => {
+    process.env.MOODLE_BASEURL = 'https://moodle.test';
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [MoodleFilesService],
+      providers: [MoodleFilesService, MoodleClientService],
     }).compile();
 
     service = module.get<MoodleFilesService>(MoodleFilesService);
-    process.env.MOODLE_BASEURL = 'https://moodle.test';
     fetchSpy = jest.spyOn(global, 'fetch');
   });
 
@@ -33,13 +35,6 @@ describe('MoodleFilesService', () => {
       await expect(
         service.uploadFile('', 'test.txt', 'base64'),
       ).rejects.toThrow(BadRequestException);
-    });
-
-    it('should throw InternalServerErrorException if MOODLE_BASEURL is invalid', async () => {
-      process.env.MOODLE_BASEURL = 'ftp://invalid-url';
-      await expect(
-        service.uploadFile('token', 'test.txt', 'base64'),
-      ).rejects.toThrow(InternalServerErrorException);
     });
 
     it('should handle fetch failure', async () => {

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Menu, Bell, User, Volume2, VolumeX } from 'lucide-react';
 import { Button, Tag, Empty } from '@una';
 import { StreakBadge } from '@uni-hub/components/gamification';
+import { DevFeaturePanel, useFeatures } from '@uni-hub/features';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi } from '@uni-hub/services/api';
 import type { DashboardHeaderProps } from '../types';
@@ -25,6 +26,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   isMoodleLinked = true,
 }) => {
   const { localeTag, formatMessage } = useLanguage();
+  const { isFeaturePanelEnabled } = useFeatures();
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -84,6 +86,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       </div>
 
       <div className={styles.headerRight}>
+        {isFeaturePanelEnabled && <DevFeaturePanel />}
         <Button
           type="button"
           variant="secondary"
@@ -162,13 +165,13 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             onClick={() => setUserMenuOpen((open) => !open)}
             aria-haspopup="menu"
             aria-expanded={userMenuOpen}
-            // intentional: suppressHydrationWarning – user profile is resolved client-side from storage; server renders fallback
+            // intentional: suppressHydrationWarning – user profile is hydrated from client localStorage
             suppressHydrationWarning
           >
             <span className={styles.avatar}>
               <User size={16} />
             </span>
-            {/* intentional: suppressHydrationWarning – student name loaded client-side */}
+            {/* intentional: suppressHydrationWarning – user profile is hydrated from client localStorage */}
             <span suppressHydrationWarning>{activeStudentProfile.fullName}</span>
           </button>
 

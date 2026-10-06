@@ -420,12 +420,12 @@ describe('MoodleAssignmentsController', () => {
       });
 
       expect(result).toEqual({ success: true });
-      expect(mockService.saveSubmission).toHaveBeenCalledWith(
-        'token',
-        123,
-        'test',
-        456,
-      );
+      expect(mockService.saveSubmission).toHaveBeenCalledWith({
+        moodleToken: 'token',
+        assignId: 123,
+        text: 'test',
+        fileItemId: 456,
+      });
     });
   });
 });

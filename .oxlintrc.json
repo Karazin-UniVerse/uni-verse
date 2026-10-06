@@ -26,6 +26,33 @@
     "react/rules-of-hooks": "error",
     "react/exhaustive-deps": "error",
     "typescript/no-explicit-any": "warn",
+    "react/no-multi-comp": "error",
+    "max-params": ["error", { "max": 3 }],
+    "no-restricted-globals": [
+      "error",
+      {
+        "name": "fetch",
+        "message": "Do not call fetch directly. Go through the API client class: MoodleClientService on the backend, the api.* client classes in uni-hub."
+      }
+    ],
+    "no-restricted-properties": [
+      "error",
+      {
+        "object": "globalThis",
+        "property": "fetch",
+        "message": "Do not call fetch directly. Go through the API client class: MoodleClientService on the backend, the api.* client classes in uni-hub."
+      },
+      {
+        "object": "window",
+        "property": "fetch",
+        "message": "Do not call fetch directly. Go through the API client class: MoodleClientService on the backend, the api.* client classes in uni-hub."
+      },
+      {
+        "object": "self",
+        "property": "fetch",
+        "message": "Do not call fetch directly. Go through the API client class: MoodleClientService on the backend, the api.* client classes in uni-hub."
+      }
+    ],
     "universe/vertical-spacing": "error",
     "universe/destructuring-props-order": "error",
     "universe/no-suppress-hydration-without-comment": "warn",
@@ -49,7 +76,28 @@
         "**/.storybook/**"
       ],
       "rules": {
-        "typescript/no-explicit-any": "off"
+        "typescript/no-explicit-any": "off",
+        "react/no-multi-comp": "off",
+        "max-params": "off",
+        "no-restricted-globals": "off",
+        "no-restricted-properties": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/backend/moodle/moodle-client/moodle.client.service.ts",
+        "packages/uni-hub/services/api.request.ts",
+        ".github/scripts/**"
+      ],
+      "rules": {
+        "no-restricted-globals": "off",
+        "no-restricted-properties": "off"
+      }
+    },
+    {
+      "files": ["**/*.controller.ts"],
+      "rules": {
+        "max-params": "off"
       }
     },
     {
@@ -136,6 +184,7 @@
     {
       "files": ["packages/core/**/*.{ts}"],
       "rules": {
+        "oxc/no-barrel-file": ["error", { "threshold": 0 }],
         "no-restricted-imports": [
           "error",
           {

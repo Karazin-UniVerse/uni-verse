@@ -9,14 +9,11 @@ export interface GoogleAuthResponse {
 
 export class AuthApi {
   async login(email: string, password: string): Promise<{ data: AuthResponse }> {
-    const response = await request<AuthResponse>(
-      '/auth/login',
-      {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      },
-      0,
-    );
+    const response = await request<AuthResponse>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+      retries: 0,
+    });
 
     if (response.data?.access_token) {
       safeStorage.setItem('accessToken', response.data.access_token);
@@ -28,14 +25,11 @@ export class AuthApi {
   }
 
   async loginWithGoogle(idToken: string): Promise<{ data: GoogleAuthResponse }> {
-    const response = await request<GoogleAuthResponse>(
-      '/auth/google',
-      {
-        method: 'POST',
-        body: JSON.stringify({ idToken }),
-      },
-      0,
-    );
+    const response = await request<GoogleAuthResponse>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken }),
+      retries: 0,
+    });
 
     if (response.data?.access_token) {
       safeStorage.setItem('accessToken', response.data.access_token);
@@ -60,8 +54,8 @@ export class AuthApi {
       {
         method: 'POST',
         body: JSON.stringify({ username, password }),
+        retries: 0,
       },
-      0,
     );
 
     if (response.data?.access_token) {
@@ -83,8 +77,8 @@ export class AuthApi {
       '/auth/moodle/unlink',
       {
         method: 'POST',
+        retries: 0,
       },
-      0,
     );
 
     if (response.data?.access_token) {
@@ -100,7 +94,7 @@ export class AuthApi {
 
   async logout(): Promise<void> {
     try {
-      await request('/auth/logout', { method: 'POST' }, 0);
+      await request('/auth/logout', { method: 'POST', retries: 0 });
     } finally {
       safeStorage.removeItem('accessToken');
       safeStorage.removeItem('isLoggedIn');

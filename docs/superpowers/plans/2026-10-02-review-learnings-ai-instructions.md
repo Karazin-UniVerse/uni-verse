@@ -54,7 +54,6 @@ Modify only:
 - `docs/ai/workflow.md` — config/env, documentation, PR hygiene, extended checklist (Tasks 4, 6)
 - `docs/ai/review.md` — new failure modes (Task 6)
 - `AGENTS.md` — working agreements and self-review gate (Task 6)
-- `.github/pull_request_template.md` — screenshots and docs checkboxes (Task 4)
 
 Anchors that later tasks link to (defined in Task 1–3): `code-style.md#keep-it-simple-kiss`, `code-style.md#reuse-before-writing-dry`, `code-style.md#no-magic-values`, `architecture.md#core-layout`, `architecture.md#api-clients`.
 
@@ -250,7 +249,8 @@ git commit -m "docs(ai): require class-based API clients"
 **Files:**
 
 - Modify: `docs/ai/workflow.md` (two sections, one list item)
-- Modify: `.github/pull_request_template.md`
+
+_The PR template (`.github/pull_request_template.md`) is deliberately left out: the owner will handle it separately._
 
 - [ ] **Step 1: Add the config and documentation sections to `workflow.md`**
 
@@ -282,16 +282,7 @@ Append to `## Branches, commits, pull requests`:
 - When people or ownership change, update `.github/CODEOWNERS` in the same PR.
 ```
 
-- [ ] **Step 3: Update the PR template**
-
-In `.github/pull_request_template.md`, under `## Що було перевірено?` add:
-
-```markdown
-- [ ] Для змін UI додано скріншоти
-- [ ] Документацію оновлено (README/docs), якщо додано скрипт, сервіс або змінну середовища
-```
-
-- [ ] **Step 4: Verify**
+- [ ] **Step 3: Verify**
 
 Run: `grep -c "^## Documentation" docs/ai/workflow.md`
 Expected: `1`
@@ -299,11 +290,11 @@ Expected: `1`
 Run: `grep -n "env.example" docs/ai/workflow.md | head -3`
 Expected: at least one line.
 
-- [ ] **Step 5: Format and commit**
+- [ ] **Step 4: Format and commit (after the owner's approval)**
 
 ```bash
-pnpm exec prettier --write docs/ai/workflow.md .github/pull_request_template.md
-git add docs/ai/workflow.md .github/pull_request_template.md
+pnpm exec prettier --write docs/ai/workflow.md
+git add docs/ai/workflow.md
 git commit -m "docs(ai): add config, docs and PR hygiene rules"
 ```
 
@@ -381,14 +372,12 @@ Add these bullets to `## Working agreements` (keep the file short; the rules liv
 
 - [ ] **Step 2: `review.md` failure modes**
 
-After item 11 add:
+Items 1 (over-engineering) and 2 (DRY) already exist in the rubric, so extend them instead of adding duplicates: item 1 gains "a layer, class, option or abstraction with a single caller is a finding" plus a link to `code-style.md#keep-it-simple-kiss`; item 2 gains "same behavior under another name; shared logic left at a lower level when it belongs one level up" plus a link to `code-style.md#reuse-before-writing-dry`. After item 11 add:
 
 ```markdown
-12. **COMPLEXITY BEYOND NEED (KISS):** a layer, class, option or abstraction with a single caller; code that needs a long explanation where a direct version exists. Rule: [code-style](code-style.md#keep-it-simple-kiss).
-13. **DUPLICATED OR MISPLACED SHARED CODE (DRY):** a function with the same behavior as an existing one under another name; shared logic left in a component or package-local file when it belongs in the next level up (`@universe/core` for cross-package). Rule: [code-style](code-style.md#reuse-before-writing-dry).
-14. **MAGIC VALUES:** bare numbers or domain strings in logic instead of core constants. Rule: [code-style](code-style.md#no-magic-values).
-15. **MISSING OPERATIONAL CHANGES:** a new env variable absent from `.env.example`, a new script or service without docs, UI changes without screenshots. Rule: [workflow](workflow.md#config-and-environment).
-16. **API ACCESS OUTSIDE CLIENT CLASSES:** direct `fetch` or raw `request` calls in components or services. Rule: [architecture](architecture.md#api-clients).
+12. **MAGIC VALUES:** bare numbers or domain strings in logic instead of core constants. Rule: [api-and-config](../../ai/api-and-config.md#no-magic-values).
+13. **MISSING OPERATIONAL CHANGES:** a new env variable absent from `.env.example`, a new script or service without docs, UI changes without screenshots. Rules: [config](../../ai/api-and-config.md#config-and-environment), [PR screenshots](../../ai/workflow.md#branches-commits-pull-requests).
+14. **API ACCESS OUTSIDE CLIENT CLASSES:** direct `fetch` or raw `request` calls in components or services. Rule: [api-and-config](../../ai/api-and-config.md#api-clients).
 ```
 
 - [ ] **Step 3: Extend the checklist in `workflow.md`**
@@ -396,10 +385,10 @@ After item 11 add:
 Add to `## Pre-commit checklist`:
 
 ```markdown
-- [ ] I searched for an existing helper, constant, type or component before writing a new one; shared code is in the right place ([code-style](code-style.md#reuse-before-writing-dry)).
-- [ ] The solution is the simplest that meets the requirement ([code-style](code-style.md#keep-it-simple-kiss)).
-- [ ] No magic values; API calls go through client classes ([code-style](code-style.md#no-magic-values), [architecture](architecture.md#api-clients)).
-- [ ] Unused exports, files, dependencies and translation keys are removed; new env variables and docs are in place ([workflow](#config-and-environment)).
+- [ ] I searched for an existing helper, constant, type or component before writing a new one; shared code is in the right place ([code-style](../../ai/code-style.md#reuse-before-writing-dry)).
+- [ ] The solution is the simplest that meets the requirement ([code-style](../../ai/code-style.md#keep-it-simple-kiss)).
+- [ ] No magic values; API calls go through client classes ([api-and-config](../../ai/api-and-config.md#no-magic-values), [api-and-config](../../ai/api-and-config.md#api-clients)).
+- [ ] Unused exports, files, dependencies and translation keys are removed; new env variables and docs are in place ([config and environment](../../ai/api-and-config.md#config-and-environment)).
 ```
 
 - [ ] **Step 4: Verify links resolve**
