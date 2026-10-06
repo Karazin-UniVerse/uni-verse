@@ -524,55 +524,51 @@ export async function sendDiscordWebhook(payload) {
   console.info('Discord notification sent successfully.');
 }
 
-export async function fetchPullRequestsGraphQL({ repo, token }) {
-  if (!token) {
-    return null;
-  }
-
-  const [owner, name] = repo.split('/');
-
-  if (!owner || !name) {
-    return null;
-  }
-
-  const query = `
-    query($owner: String!, $name: String!) {
-      repository(owner: $owner, name: $name) {
-        pullRequests(states: OPEN, first: 100) {
-          nodes {
-            number
-            title
-            url
-            isDraft
-            createdAt
-            additions
-            deletions
-            baseRefName
-            headRefName
-            author {
-              login
-            }
-            reviewDecision
-            reviewRequests(first: 20) {
-              nodes {
-                requestedReviewer {
-                  ... on User {
-                    login
-                  }
+export const PULL_REQUESTS_GRAPHQL_QUERY = `
+  query($owner: String!, $name: String!, $cursor: String) {
+    repository(owner: $owner, name: $name) {
+      pullRequests(states: OPEN, first: 100, after: $cursor) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          number
+          title
+          url
+          isDraft
+          createdAt
+          additions
+          deletions
+          baseRefName
+          headRefName
+          author {
+            login
+          }
+          reviewDecision
+          reviewRequests(first: 20) {
+            nodes {
+              requestedReviewer {
+                ... on User {
+                  login
                 }
               }
             }
-            reviewThreads(first: 50) {
-              nodes {
-                isResolved
-                isOutdated
-                comments(last: 10) {
-                  nodes {
-                    author {
-                      login
-                    }
-                    createdAt
+          }
+          reviewThreads(first: 50) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              isResolved
+              isOutdated
+              comments(last: 10) {
+                nodes {
+                  author {
+                    login
                   }
+                  createdAt
                 }
               }
             }
@@ -580,8 +576,37 @@ export async function fetchPullRequestsGraphQL({ repo, token }) {
         }
       }
     }
-  `;
+  }
+`;
 
+export const REVIEW_THREADS_GRAPHQL_QUERY = `
+  query($owner: String!, $name: String!, $number: Int!, $cursor: String) {
+    repository(owner: $owner, name: $name) {
+      pullRequest(number: $number) {
+        reviewThreads(first: 50, after: $cursor) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            isResolved
+            isOutdated
+            comments(last: 10) {
+              nodes {
+                author {
+                  login
+                }
+                createdAt
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export async function executeGraphQLQuery({ query, variables, token }) {
   const response = await fetch('https://api.github.com/graphql', {
     method: 'POST',
     headers: {
@@ -589,7 +614,7 @@ export async function fetchPullRequestsGraphQL({ repo, token }) {
       'Content-Type': 'application/json',
       'User-Agent': 'uni-verse-discord-pr-reminder',
     },
-    body: JSON.stringify({ query, variables: { owner, name } }),
+    body: JSON.stringify({ query, variables }),
   });
 
   if (!response.ok) {
@@ -608,13 +633,67 @@ export async function fetchPullRequestsGraphQL({ repo, token }) {
     return null;
   }
 
-  const nodes = result.data?.repository?.pullRequests?.nodes;
+  return result.data;
+}
 
-  if (!Array.isArray(nodes)) {
+export async function fetchPullRequestsGraphQL({ repo, token }) {
+  if (!token) {
     return null;
   }
 
-  return nodes.map((node) => ({
+  const [owner, name] = repo.split('/');
+
+  if (!owner || !name) {
+    return null;
+  }
+
+  const allPullRequests = [];
+  let pullRequestCursor = null;
+  let hasMorePullRequests = true;
+
+  while (hasMorePullRequests) {
+    const data = await executeGraphQLQuery({
+      query: PULL_REQUESTS_GRAPHQL_QUERY,
+      variables: { owner, name, cursor: pullRequestCursor },
+      token,
+    });
+
+    const connection = data?.repository?.pullRequests;
+
+    if (!connection || !Array.isArray(connection.nodes)) {
+      return null;
+    }
+
+    allPullRequests.push(...connection.nodes);
+    hasMorePullRequests = Boolean(connection.pageInfo?.hasNextPage);
+    pullRequestCursor = connection.pageInfo?.endCursor || null;
+  }
+
+  for (const node of allPullRequests) {
+    const threads = [...(node.reviewThreads?.nodes || [])];
+    let threadPageInfo = node.reviewThreads?.pageInfo;
+
+    while (threadPageInfo?.hasNextPage && threadPageInfo.endCursor) {
+      const threadData = await executeGraphQLQuery({
+        query: REVIEW_THREADS_GRAPHQL_QUERY,
+        variables: { owner, name, number: node.number, cursor: threadPageInfo.endCursor },
+        token,
+      });
+
+      const threadConnection = threadData?.repository?.pullRequest?.reviewThreads;
+
+      if (!threadConnection || !Array.isArray(threadConnection.nodes)) {
+        return null;
+      }
+
+      threads.push(...threadConnection.nodes);
+      threadPageInfo = threadConnection.pageInfo;
+    }
+
+    node.aggregatedReviewThreads = threads;
+  }
+
+  return allPullRequests.map((node) => ({
     number: node.number,
     title: node.title,
     html_url: node.url,
@@ -629,7 +708,7 @@ export async function fetchPullRequestsGraphQL({ repo, token }) {
     requested_reviewers: (node.reviewRequests?.nodes || [])
       .map((request) => request.requestedReviewer)
       .filter((user) => Boolean(user?.login)),
-    reviewThreads: node.reviewThreads?.nodes || [],
+    reviewThreads: node.aggregatedReviewThreads || node.reviewThreads?.nodes || [],
   }));
 }
 

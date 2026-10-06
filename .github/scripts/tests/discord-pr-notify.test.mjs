@@ -456,6 +456,182 @@ test('fetchPullRequestsGraphQL parses GraphQL response into normalized PR object
   }
 });
 
+test('fetchPullRequestsGraphQL paginates pullRequests across multiple pages', async () => {
+  const originalFetch = globalThis.fetch;
+  let callIndex = 0;
+
+  globalThis.fetch = async () => {
+    callIndex++;
+
+    if (callIndex === 1) {
+      return {
+        ok: true,
+        json: async () => ({
+          data: {
+            repository: {
+              pullRequests: {
+                pageInfo: { hasNextPage: true, endCursor: 'cursor-page-1' },
+                nodes: [
+                  {
+                    number: 101,
+                    title: 'PR Page 1',
+                    url: 'https://github.com/repo/pull/101',
+                    isDraft: false,
+                    createdAt: new Date().toISOString(),
+                    additions: 10,
+                    deletions: 5,
+                    baseRefName: 'develop',
+                    headRefName: 'feat/p1',
+                    author: { login: 'alice' },
+                    reviewDecision: 'APPROVED',
+                    reviewRequests: { nodes: [] },
+                    reviewThreads: {
+                      pageInfo: { hasNextPage: false, endCursor: null },
+                      nodes: [],
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        }),
+      };
+    }
+
+    return {
+      ok: true,
+      json: async () => ({
+        data: {
+          repository: {
+            pullRequests: {
+              pageInfo: { hasNextPage: false, endCursor: null },
+              nodes: [
+                {
+                  number: 102,
+                  title: 'PR Page 2',
+                  url: 'https://github.com/repo/pull/102',
+                  isDraft: false,
+                  createdAt: new Date().toISOString(),
+                  additions: 20,
+                  deletions: 10,
+                  baseRefName: 'develop',
+                  headRefName: 'feat/p2',
+                  author: { login: 'bob' },
+                  reviewDecision: null,
+                  reviewRequests: { nodes: [] },
+                  reviewThreads: {
+                    pageInfo: { hasNextPage: false, endCursor: null },
+                    nodes: [],
+                  },
+                },
+              ],
+            },
+          },
+        },
+      }),
+    };
+  };
+
+  try {
+    const prs = await fetchPullRequestsGraphQL({ repo: 'owner/repo', token: 'token' });
+
+    assert.ok(Array.isArray(prs));
+    assert.equal(prs.length, 2);
+    assert.equal(prs[0].number, 101);
+    assert.equal(prs[1].number, 102);
+    assert.equal(callIndex, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('fetchPullRequestsGraphQL paginates and aggregates reviewThreads across pages for a PR', async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+
+  globalThis.fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+
+    calls.push(body);
+
+    if (calls.length === 1) {
+      return {
+        ok: true,
+        json: async () => ({
+          data: {
+            repository: {
+              pullRequests: {
+                pageInfo: { hasNextPage: false, endCursor: null },
+                nodes: [
+                  {
+                    number: 201,
+                    title: 'PR with many threads',
+                    url: 'https://github.com/repo/pull/201',
+                    isDraft: false,
+                    createdAt: new Date().toISOString(),
+                    additions: 100,
+                    deletions: 20,
+                    baseRefName: 'develop',
+                    headRefName: 'feat/threads',
+                    author: { login: 'alice' },
+                    reviewDecision: 'CHANGES_REQUESTED',
+                    reviewRequests: { nodes: [] },
+                    reviewThreads: {
+                      pageInfo: { hasNextPage: true, endCursor: 'thread-cur-1' },
+                      nodes: [
+                        {
+                          isResolved: false,
+                          isOutdated: false,
+                          comments: { nodes: [{ author: { login: 'bob' } }] },
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        }),
+      };
+    }
+
+    return {
+      ok: true,
+      json: async () => ({
+        data: {
+          repository: {
+            pullRequest: {
+              reviewThreads: {
+                pageInfo: { hasNextPage: false, endCursor: null },
+                nodes: [
+                  {
+                    isResolved: false,
+                    isOutdated: false,
+                    comments: { nodes: [{ author: { login: 'charlie' } }] },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      }),
+    };
+  };
+
+  try {
+    const prs = await fetchPullRequestsGraphQL({ repo: 'owner/repo', token: 'token' });
+
+    assert.ok(Array.isArray(prs));
+    assert.equal(prs.length, 1);
+    assert.equal(prs[0].reviewThreads.length, 2);
+    assert.equal(calls.length, 2);
+    assert.equal(calls[1].variables.number, 201);
+    assert.equal(calls[1].variables.cursor, 'thread-cur-1');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('fetchOpenPullRequests follows rel="next" Link headers across pages', async () => {
   const originalFetch = globalThis.fetch;
   let callCount = 0;
