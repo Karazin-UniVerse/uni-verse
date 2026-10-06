@@ -5,7 +5,12 @@ import { PrismaService } from '../prisma/prisma.service';
 export class NotificationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createNotification(userId: string, title: string, message: string, link?: string) {
+  async createNotification(
+    userId: string,
+    title: string,
+    message: string,
+    link?: string,
+  ) {
     return this.prisma.notification.create({
       data: {
         userId,
@@ -27,6 +32,7 @@ export class NotificationsService {
     const notification = await this.prisma.notification.findFirst({
       where: { id, userId },
     });
+
     if (!notification) throw new NotFoundException('Notification not found');
 
     return this.prisma.notification.update({

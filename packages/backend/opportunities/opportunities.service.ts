@@ -1,7 +1,24 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { CreateOpportunityDto, UpdateOpportunityDto, ApplyOpportunityDto, ModerateOpportunityDto, ModerateAction, PaymentType } from './dto';
+import {
+  CreateOpportunityDto,
+  UpdateOpportunityDto,
+  ApplyOpportunityDto,
+  ModerateOpportunityDto,
+  ModerateAction,
+  FindOpportunitiesDto,
+} from './dto';
+import {
+  OpportunityLifecycleState,
+  ApplicationStatus,
+  OpportunityStatus,
+} from '@universe/database';
 
 @Injectable()
 export class OpportunitiesService {
@@ -20,13 +37,24 @@ export class OpportunitiesService {
     });
   }
 
-  async findAll(query: any) {
-    const { paymentType, ownerId, search } = query;
-    const where: any = {
-      status: 'PUBLISHED', // Enforce PUBLISHED to prevent unauthorized viewing of drafts
-    };
+  async findAll(query: FindOpportunitiesDto, userRole?: string) {
+    const { paymentType, ownerId, search, status } = query;
+    const where: Record<string, unknown> = {};
+
+    if (
+      status &&
+      status !== 'PUBLISHED' &&
+      (userRole === 'MODERATOR' || userRole === 'ADMIN')
+    ) {
+      where.status = status;
+    } else {
+      where.status = 'PUBLISHED';
+    }
+
     if (paymentType) where.paymentType = paymentType;
+
     if (ownerId) where.ownerId = ownerId;
+
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
@@ -52,15 +80,21 @@ export class OpportunitiesService {
         owner: { select: { id: true, name: true, email: true } },
       },
     });
+
     if (!opportunity) throw new NotFoundException('Opportunity not found');
+
     return opportunity;
   }
 
   async update(userId: string, id: string, dto: UpdateOpportunityDto) {
     const opportunity = await this.findOne(id);
+
     if (opportunity.ownerId !== userId) {
-      throw new ForbiddenException('You can only update your own opportunities');
+      throw new ForbiddenException(
+        'You can only update your own opportunities',
+      );
     }
+
     return this.prisma.opportunity.update({
       where: { id },
       data: dto,
@@ -69,16 +103,26 @@ export class OpportunitiesService {
 
   async changeStatus(userId: string, id: string, status: 'READY_FOR_REVIEW') {
     const opportunity = await this.findOne(id);
-    if (opportunity.ownerId !== userId) throw new ForbiddenException('Not your opportunity');
+
+    if (opportunity.ownerId !== userId)
+      throw new ForbiddenException('Not your opportunity');
+
     return this.prisma.opportunity.update({
       where: { id },
       data: { status },
     });
   }
 
-  async changeLifecycleState(userId: string, id: string, lifecycleState: any) {
+  async changeLifecycleState(
+    userId: string,
+    id: string,
+    lifecycleState: OpportunityLifecycleState,
+  ) {
     const opportunity = await this.findOne(id);
-    if (opportunity.ownerId !== userId) throw new ForbiddenException('Not your opportunity');
+
+    if (opportunity.ownerId !== userId)
+      throw new ForbiddenException('Not your opportunity');
+
     return this.prisma.opportunity.update({
       where: { id },
       data: { lifecycleState },
@@ -87,7 +131,10 @@ export class OpportunitiesService {
 
   async getOpportunityApplications(userId: string, id: string) {
     const opportunity = await this.findOne(id);
-    if (opportunity.ownerId !== userId) throw new ForbiddenException('Only the owner can view applications');
+
+    if (opportunity.ownerId !== userId)
+      throw new ForbiddenException('Only the owner can view applications');
+
     return this.prisma.opportunityApplication.findMany({
       where: { opportunityId: id },
       include: { applicant: { select: { name: true, email: true } } },
@@ -95,29 +142,40 @@ export class OpportunitiesService {
     });
   }
 
-  async updateApplicationStatus(userId: string, applicationId: string, status: any, ownerComment?: string) {
+  async updateApplicationStatus(
+    userId: string,
+    applicationId: string,
+    status: ApplicationStatus,
+    ownerComment?: string,
+  ) {
     const app = await this.prisma.opportunityApplication.findUnique({
       where: { id: applicationId },
       include: { opportunity: true },
     });
+
     if (!app) throw new NotFoundException('Application not found');
-    if (app.opportunity.ownerId !== userId) throw new ForbiddenException('Only the owner can manage this');
-    
+
+    if (app.opportunity.ownerId !== userId)
+      throw new ForbiddenException('Only the owner can manage this');
+
     const updated = await this.prisma.opportunityApplication.update({
       where: { id: applicationId },
       data: { status, ownerComment },
     });
 
-    let statusText = status;
+    let statusText: string = status;
+
     if (status === 'ACCEPTED') statusText = 'принят';
+
     if (status === 'REJECTED') statusText = 'отклонен';
+
     if (status === 'UNDER_REVIEW') statusText = 'на рассмотрении';
 
     await this.notificationsService.createNotification(
       app.applicantId,
       'Статус отклика изменен',
       `Ваш отклик на "${app.opportunity.title}" теперь ${statusText}.${ownerComment ? ` Комментарий: ${ownerComment}` : ''}`,
-      `/my-applications`
+      `/my-applications`,
     );
 
     return updated;
@@ -125,18 +183,27 @@ export class OpportunitiesService {
 
   async apply(userId: string, id: string, dto: ApplyOpportunityDto) {
     const opportunity = await this.findOne(id);
+
     if (opportunity.status !== 'PUBLISHED') {
-      throw new BadRequestException('Cannot apply to an unpublished opportunity');
+      throw new BadRequestException(
+        'Cannot apply to an unpublished opportunity',
+      );
     }
+
     if (opportunity.lifecycleState !== 'ACTIVE') {
-      throw new BadRequestException('Cannot apply to an opportunity that is not active');
+      throw new BadRequestException(
+        'Cannot apply to an opportunity that is not active',
+      );
     }
+
     const existing = await this.prisma.opportunityApplication.findFirst({
       where: { applicantId: userId, opportunityId: id },
     });
+
     if (existing) {
       throw new BadRequestException('Already applied to this opportunity');
     }
+
     const app = await this.prisma.opportunityApplication.create({
       data: {
         ...dto,
@@ -150,18 +217,25 @@ export class OpportunitiesService {
       opportunity.ownerId,
       'Новый отклик!',
       `Пользователь ${dto.applicantName} откликнулся на вашу возможность "${opportunity.title}".`,
-      `/my-opportunities/${id}`
+      `/my-opportunities/${id}`,
     );
 
     return app;
   }
 
-  
   async withdrawApplication(userId: string, applicationId: string) {
-    const app = await this.prisma.opportunityApplication.findUnique({ where: { id: applicationId } });
+    const app = await this.prisma.opportunityApplication.findUnique({
+      where: { id: applicationId },
+    });
+
     if (!app) throw new NotFoundException('Application not found');
-    if (app.applicantId !== userId) throw new ForbiddenException('Only the applicant can withdraw');
-    if (app.status === 'ACCEPTED' || app.status === 'REJECTED') throw new BadRequestException('Cannot withdraw completed application');
+
+    if (app.applicantId !== userId)
+      throw new ForbiddenException('Only the applicant can withdraw');
+
+    if (app.status === 'ACCEPTED' || app.status === 'REJECTED')
+      throw new BadRequestException('Cannot withdraw completed application');
+
     return this.prisma.opportunityApplication.update({
       where: { id: applicationId },
       data: { status: 'WITHDRAWN' },
@@ -184,11 +258,19 @@ export class OpportunitiesService {
   }
 
   async moderate(id: string, dto: ModerateOpportunityDto) {
-    let newStatus: any = 'DRAFT';
+    let newStatus: OpportunityStatus = 'DRAFT';
     let actionText = '';
-    if (dto.action === ModerateAction.APPROVE) { newStatus = 'PUBLISHED'; actionText = 'одобрена'; }
-    else if (dto.action === ModerateAction.REJECT) { newStatus = 'REJECTED'; actionText = 'отклонена'; }
-    else if (dto.action === ModerateAction.REQUIRE_CHANGES) { newStatus = 'REQUIRES_CHANGES'; actionText = 'возвращена на правки'; }
+
+    if (dto.action === ModerateAction.APPROVE) {
+      newStatus = 'PUBLISHED';
+      actionText = 'одобрена';
+    } else if (dto.action === ModerateAction.REJECT) {
+      newStatus = 'REJECTED';
+      actionText = 'отклонена';
+    } else if (dto.action === ModerateAction.REQUIRE_CHANGES) {
+      newStatus = 'REQUIRES_CHANGES';
+      actionText = 'возвращена на правки';
+    }
 
     const opp = await this.prisma.opportunity.update({
       where: { id },
@@ -202,7 +284,7 @@ export class OpportunitiesService {
       opp.ownerId,
       `Возможность ${actionText}`,
       `Ваша возможность "${opp.title}" была ${actionText} модератором.${dto.comment ? ` Комментарий: ${dto.comment}` : ''}`,
-      `/my-opportunities`
+      `/my-opportunities`,
     );
 
     return opp;
