@@ -6,7 +6,7 @@ import {
   readStoredOverrides,
   removeStoredOverrides,
   writeStoredOverrides,
-} from './helpers';
+} from './features';
 
 describe('features helpers', () => {
   let mockStorage: Record<string, string> = {};

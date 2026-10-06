@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import type { FeatureFlags, FeatureFlagKey } from '@core/constants/features';
 import { mergeFeatureFlags } from '@core/utils/features';
-import { createOverrideStore, getEnvDefaults } from './helpers';
+import { createOverrideStore, getEnvDefaults } from '../helpers/features';
 
 export type FeatureContextValue = {
   flags: FeatureFlags;
