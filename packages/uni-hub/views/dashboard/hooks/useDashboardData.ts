@@ -16,7 +16,7 @@ import {
   loadCachedDashboardData,
   persistDashboardSnapshot,
 } from './useDashboardData.helpers';
-
+import { isBrowser } from '@uni-hub/utils/browser';
 export { clearUserSessionStorage } from './useDashboardData.helpers';
 
 export interface UseDashboardDataOptions {
@@ -64,7 +64,7 @@ function getInitialHasLoadedOnce(): boolean {
 }
 
 function getCachedStudentProfile(): StudentProfile | null {
-  if (typeof window === 'undefined') {
+  if (!isBrowser) {
     return null;
   }
 
@@ -78,7 +78,9 @@ function getCachedStudentProfile(): StudentProfile | null {
     if (parsedProfile && typeof parsedProfile === 'object') {
       return parsedProfile;
     }
-  } catch {}
+  } catch {
+    // ignore invalid JSON / storage errors
+  }
 
   return null;
 }

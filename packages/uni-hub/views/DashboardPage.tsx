@@ -53,7 +53,6 @@ const DashboardPage: React.FC = () => {
   const [activeKey, setActiveKey] = useState<NavKey>('overview');
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();
-  // FIX: gate client-only UI so SSR HTML matches the first client render
   const [mounted, setMounted] = useState(false);
 
   const [dateFrom, setDateFrom] = useState('');
