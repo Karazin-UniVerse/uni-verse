@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { moodleApi } from '@uni-hub/services/api';
 import type { StudentProfile } from '@core/types';
 import { useToast } from '@una';
@@ -63,6 +63,26 @@ function getInitialHasLoadedOnce(): boolean {
   }
 }
 
+function getCachedStudentProfile(): StudentProfile | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const cachedProfile = localStorage.getItem('universe_student_profile');
+
+    if (!cachedProfile) return null;
+
+    const parsedProfile = JSON.parse(cachedProfile) as StudentProfile;
+
+    if (parsedProfile && typeof parsedProfile === 'object') {
+      return parsedProfile;
+    }
+  } catch {}
+
+  return null;
+}
+
 export function useDashboardData({
   sortOrder,
   dateFrom,
@@ -77,33 +97,9 @@ export function useDashboardData({
   const [hasLoadedOnce, setHasLoadedOnce] = useState(getInitialHasLoadedOnce);
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(getInitialSyncTime);
   const [isOfflineData, setIsOfflineData] = useState(false);
-  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
-
-  // 1. Вспомогательная функция (выносим за пределы компонента)
-  const getCachedStudentProfile = (): StudentProfile | null => {
-    try {
-      const cachedProfile = localStorage.getItem('universe_student_profile');
-
-      if (!cachedProfile) return null;
-
-      const parsedProfile = JSON.parse(cachedProfile) as StudentProfile;
-
-      if (parsedProfile && typeof parsedProfile === 'object') {
-        return parsedProfile;
-      }
-    } catch {}
-
-    return null;
-  };
-
-  useEffect(() => {
-    const cachedProfile = getCachedStudentProfile();
-
-    if (cachedProfile) {
-      // oxlint-disable-next-line react/set-state-in-effect
-      setStudentProfile(cachedProfile);
-    }
-  }, []);
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(
+    getCachedStudentProfile,
+  );
   const [data, setData] = useState<DashboardData>(getInitialDashboardData);
 
   const fetchRequestIdRef = useRef(0);
