@@ -36,3 +36,12 @@ export const FEATURE_ENV_KEYS: Readonly<Record<FeatureFlagKey, string>> = Object
   isOpportunitiesPlatformEnabled: 'NEXT_PUBLIC_FEATURE_OPPORTUNITIES',
   isFeaturePanelEnabled: 'NEXT_PUBLIC_FEATURE_PANEL',
 });
+
+/**
+ * Storage keys for client-side feature flag overrides.
+ */
+export const FEATURE_STORAGE_KEYS = {
+  OVERRIDES: 'universe_feature_overrides',
+} as const;
+
+export type FeatureStorageKey = (typeof FEATURE_STORAGE_KEYS)[keyof typeof FEATURE_STORAGE_KEYS];

@@ -1,7 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
-import { FeatureToggleProvider, useFeatures, useFeatureControls, DevFeaturePanel } from './index';
+import { FEATURE_STORAGE_KEYS } from '@core/constants/features';
+import {
+  FeatureToggleProvider,
+  useFeatures,
+  useFeatureControls,
+  DevFeaturePanel,
+  createOverrideStore,
+} from './index';
 
 describe('FeatureToggleContext and Components', () => {
   beforeEach(() => {
@@ -144,5 +151,80 @@ describe('FeatureToggleContext and Components', () => {
 
     expect(html).toContain('Ctrl+Shift+F');
     expect(html).toContain('Панель функцій');
+  });
+
+  describe('localStorage persistence and production safeguard', () => {
+    let mockStorage: Record<string, string> = {};
+
+    beforeEach(() => {
+      mockStorage = {};
+
+      const mockLocalStorage: Storage = {
+        getItem: (key: string) => mockStorage[key] ?? null,
+        setItem: (key: string, value: string) => {
+          mockStorage[key] = value;
+        },
+        removeItem: (key: string) => {
+          delete mockStorage[key];
+        },
+        clear: () => {
+          mockStorage = {};
+        },
+        key: () => null,
+        length: 0,
+      };
+
+      (global as unknown as { window?: unknown }).window = {
+        localStorage: mockLocalStorage,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      };
+    });
+
+    afterEach(() => {
+      delete (global as unknown as { window?: unknown }).window;
+    });
+
+    it('loads feature overrides from localStorage when allowOverrides is true', () => {
+      mockStorage[FEATURE_STORAGE_KEYS.OVERRIDES] = JSON.stringify({
+        isOpportunitiesPlatformEnabled: true,
+      });
+
+      const store = createOverrideStore({ allowOverrides: true });
+      const snapshot = store.getSnapshot();
+
+      expect(snapshot.isOpportunitiesPlatformEnabled).toBe(true);
+    });
+
+    it('ignores localStorage overrides and blocks changes when allowOverrides is false (production safeguard)', () => {
+      mockStorage[FEATURE_STORAGE_KEYS.OVERRIDES] = JSON.stringify({
+        isOpportunitiesPlatformEnabled: true,
+      });
+
+      const store = createOverrideStore({ allowOverrides: false });
+      const snapshot = store.getSnapshot();
+
+      expect(snapshot.isOpportunitiesPlatformEnabled).toBeUndefined();
+
+      store.setOverride('isOpportunitiesPlatformEnabled', true);
+      expect(mockStorage[FEATURE_STORAGE_KEYS.OVERRIDES]).toBe(
+        JSON.stringify({ isOpportunitiesPlatformEnabled: true }),
+      );
+      expect(store.getSnapshot().isOpportunitiesPlatformEnabled).toBeUndefined();
+    });
+
+    it('persists setOverride and reset to localStorage when allowOverrides is true', () => {
+      const store = createOverrideStore({ allowOverrides: true });
+
+      store.setOverride('isOpportunitiesPlatformEnabled', true);
+      expect(mockStorage[FEATURE_STORAGE_KEYS.OVERRIDES]).toContain(
+        '"isOpportunitiesPlatformEnabled":true',
+      );
+      expect(store.getSnapshot().isOpportunitiesPlatformEnabled).toBe(true);
+
+      store.reset();
+      expect(mockStorage[FEATURE_STORAGE_KEYS.OVERRIDES]).toBeUndefined();
+      expect(store.getSnapshot().isOpportunitiesPlatformEnabled).toBeUndefined();
+    });
   });
 });
