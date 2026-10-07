@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Globe, FileText, Calendar, Building2, ExternalLink, Sparkles } from 'lucide-react';
+import { Globe, FileText, Calendar, Building2, Sparkles } from 'lucide-react';
+import { ActionCard } from '@ui';
 import type { Assignment } from '@uni-hub/types';
 import type { NavKey } from '@uni-hub/views/dashboard/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -36,127 +37,71 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
 
         <div className={styles.actionsGrid}>
           {isMoodleIntegrationEnabled && (
-            <a
+            <ActionCard
               href={MOODLE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className={styles.actionCard}
-              title={formatMessage('quickActions.moodleTitle')}
-            >
-              <div className={`${styles.iconWrapper} ${styles.iconMoodle}`}>
-                <Globe size={22} />
-              </div>
-              <div className={styles.actionBody}>
-                <div className={styles.actionTitleRow}>
-                  <span className={styles.actionTitle}>Moodle LMS</span>
-                  <span className={`${styles.badge} ${styles.badgeInfo}`}>
-                    {formatMessage('quickActions.moodleBadge')}
-                  </span>
-                </div>
-                <span className={styles.actionDescription}>
-                  {formatMessage('quickActions.moodleDescription')}
-                </span>
-              </div>
-              <ExternalLink size={16} className={styles.externalIcon} />
-            </a>
+              icon={<Globe size={22} />}
+              iconTone="moodle"
+              title={formatMessage('quickActions.moodle')}
+              badge={formatMessage('quickActions.moodleBadge')}
+              badgeTone="info"
+              description={formatMessage('quickActions.moodleDescription')}
+              cardTitle={formatMessage('quickActions.moodleTitle')}
+              isExternal
+            />
           )}
 
           {isMoodleIntegrationEnabled && (
-            <button
-              type="button"
-              className={styles.actionCard}
+            <ActionCard
+              icon={<FileText size={22} />}
+              iconTone="assignments"
+              title={formatMessage('quickActions.myAssignments')}
+              badge={pendingCount > 0 ? pendingCount : undefined}
+              badgeTone="alert"
+              description={
+                pendingCount > 0
+                  ? formatMessage('quickActions.pendingCount', { count: pendingCount })
+                  : formatMessage('quickActions.allDone')
+              }
+              cardTitle={formatMessage('quickActions.assignmentsTitle')}
               onClick={() => onNavigate('assignments')}
-              title={formatMessage('quickActions.assignmentsTitle')}
-            >
-              <div className={`${styles.iconWrapper} ${styles.iconAssignments}`}>
-                <FileText size={22} />
-              </div>
-              <div className={styles.actionBody}>
-                <div className={styles.actionTitleRow}>
-                  <span className={styles.actionTitle}>
-                    {formatMessage('quickActions.myAssignments')}
-                  </span>
-                  {pendingCount > 0 && (
-                    <span className={`${styles.badge} ${styles.badgeAlert}`}>{pendingCount}</span>
-                  )}
-                </div>
-                <span className={styles.actionDescription}>
-                  {pendingCount > 0
-                    ? formatMessage('quickActions.pendingCount', { count: pendingCount })
-                    : formatMessage('quickActions.allDone')}
-                </span>
-              </div>
-            </button>
+            />
           )}
 
           {isEDeanEnabled && (
-            <button
-              type="button"
-              className={styles.actionCard}
+            <ActionCard
+              icon={<Calendar size={22} />}
+              iconTone="schedule"
+              title={formatMessage('quickActions.schedule')}
+              description={formatMessage('quickActions.scheduleDescription')}
+              cardTitle={formatMessage('quickActions.scheduleTitle')}
               onClick={() => onNavigate('schedule')}
-              title={formatMessage('quickActions.scheduleTitle')}
-            >
-              <div className={`${styles.iconWrapper} ${styles.iconSchedule}`}>
-                <Calendar size={22} />
-              </div>
-              <div className={styles.actionBody}>
-                <div className={styles.actionTitleRow}>
-                  <span className={styles.actionTitle}>
-                    {formatMessage('quickActions.schedule')}
-                  </span>
-                </div>
-                <span className={styles.actionDescription}>
-                  {formatMessage('quickActions.scheduleDescription')}
-                </span>
-              </div>
-            </button>
+            />
           )}
 
           {isEDeanEnabled && (
-            <button
-              type="button"
-              className={styles.actionCard}
+            <ActionCard
+              icon={<Building2 size={22} />}
+              iconTone="dean"
+              title={formatMessage('quickActions.dean')}
+              description={formatMessage('quickActions.deanDescription')}
+              cardTitle={formatMessage('quickActions.deanTitle')}
               onClick={() => setIsDeanModalOpen(true)}
-              title={formatMessage('quickActions.deanTitle')}
-            >
-              <div className={`${styles.iconWrapper} ${styles.iconDean}`}>
-                <Building2 size={22} />
-              </div>
-              <div className={styles.actionBody}>
-                <div className={styles.actionTitleRow}>
-                  <span className={styles.actionTitle}>{formatMessage('quickActions.dean')}</span>
-                </div>
-                <span className={styles.actionDescription}>
-                  {formatMessage('quickActions.deanDescription')}
-                </span>
-              </div>
-            </button>
+            />
           )}
 
           {isOpportunitiesPlatformEnabled && (
-            <button
-              type="button"
-              className={styles.actionCard}
+            <ActionCard
+              icon={<Sparkles size={22} />}
+              iconTone="opportunities"
+              title={formatMessage('quickActions.opportunities')}
+              badge={formatMessage('quickActions.newBadge')}
+              badgeTone="info"
+              description={formatMessage('quickActions.opportunitiesDescription')}
+              cardTitle={formatMessage('quickActions.opportunitiesTitle')}
               onClick={() => onNavigate('opportunities')}
-              title={formatMessage('quickActions.opportunitiesTitle')}
-            >
-              <div className={`${styles.iconWrapper} ${styles.iconOpportunities}`}>
-                <Sparkles size={22} />
-              </div>
-              <div className={styles.actionBody}>
-                <div className={styles.actionTitleRow}>
-                  <span className={styles.actionTitle}>
-                    {formatMessage('quickActions.opportunities')}
-                  </span>
-                  <span className={`${styles.badge} ${styles.badgeInfo}`}>
-                    {formatMessage('quickActions.newBadge')}
-                  </span>
-                </div>
-                <span className={styles.actionDescription}>
-                  {formatMessage('quickActions.opportunitiesDescription')}
-                </span>
-              </div>
-            </button>
+            />
           )}
         </div>
       </section>
