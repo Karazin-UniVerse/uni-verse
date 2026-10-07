@@ -54,6 +54,7 @@ export const en = {
   'theme.light': 'Light',
   'theme.dark': 'Dark',
   'theme.cyberpunk': 'Cyberpunk',
+  'theme.karazinClassic': 'Karazin Classic',
   'theme.select': 'Theme selection',
 
   // Navigation (short & full)

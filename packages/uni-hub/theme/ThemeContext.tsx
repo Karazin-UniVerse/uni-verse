@@ -7,7 +7,9 @@ import React, {
   useSyncExternalStore,
 } from 'react';
 
-export type AppTheme = 'light' | 'dark' | 'cyberpunk';
+export const APP_THEMES = ['light', 'dark', 'cyberpunk', 'karazinClassic'] as const;
+
+export type AppTheme = (typeof APP_THEMES)[number];
 
 const STORAGE_KEY = 'universe-theme';
 
@@ -41,8 +43,10 @@ const subscribeToTheme = (callback: () => void) => {
 const getThemeSnapshot = (): AppTheme => {
   const stored = localStorage.getItem(STORAGE_KEY);
 
-  if (stored === 'light' || stored === 'dark' || stored === 'cyberpunk') {
-    return stored;
+  const storedTheme = APP_THEMES.find((appTheme: AppTheme) => appTheme === stored);
+
+  if (storedTheme) {
+    return storedTheme;
   }
 
   return 'light';

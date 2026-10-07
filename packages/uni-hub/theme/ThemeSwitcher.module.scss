@@ -61,7 +61,7 @@
 
 .chevron {
   margin-left: auto;
-  color: var(--text-secondary);
+  color: var(--chevron-color, var(--text-secondary));
   transition: transform var(--transition-fast);
 }
 
