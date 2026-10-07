@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -7,7 +7,6 @@ import { ScheduleWeekDayCard } from './ScheduleWeekDayCard';
 import styles from './ScheduleView.module.scss';
 
 import type { ScheduleWeekViewProps } from './ScheduleView.types';
-import { useNow } from '@uni-hub/hooks/useNow';
 
 export const ScheduleWeekView: React.FC<ScheduleWeekViewProps> = ({
   selectedDate,
@@ -22,8 +21,7 @@ export const ScheduleWeekView: React.FC<ScheduleWeekViewProps> = ({
     () => Array.from({ length: 7 }, (_, dayIndex) => addDays(weekStart, dayIndex)),
     [weekStart],
   );
-
-  const now = useNow();
+  const [today] = useState(() => new Date());
 
   return (
     <div className={styles.week}>
@@ -60,7 +58,7 @@ export const ScheduleWeekView: React.FC<ScheduleWeekViewProps> = ({
             key={day.toISOString()}
             day={day}
             events={getEventsForDate(day)}
-            isToday={isSameDay(day, new Date(now))}
+            isToday={isSameDay(day, today)}
             locale={locale}
             getTypeName={getTypeName}
           />

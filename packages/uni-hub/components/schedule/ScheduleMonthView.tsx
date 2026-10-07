@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -7,7 +7,6 @@ import { ScheduleMonthDayCell } from './ScheduleMonthDayCell';
 import styles from './ScheduleView.module.scss';
 
 import type { ScheduleMonthViewProps } from './ScheduleView.types';
-import { useNow } from '@uni-hub/hooks/useNow';
 
 export const ScheduleMonthView: React.FC<ScheduleMonthViewProps> = ({
   selectedDate,
@@ -20,8 +19,7 @@ export const ScheduleMonthView: React.FC<ScheduleMonthViewProps> = ({
 }) => {
   const { formatMessage } = useLanguage();
   const currentMonth = selectedDate.getMonth();
-
-  const now = useNow();
+  const [today] = useState(() => new Date());
 
   return (
     <div className={styles.month}>
@@ -62,7 +60,7 @@ export const ScheduleMonthView: React.FC<ScheduleMonthViewProps> = ({
             day={day}
             events={getEventsForDate(day)}
             inMonth={day.getMonth() === currentMonth}
-            isToday={isSameDay(day, new Date(now))}
+            isToday={isSameDay(day, today)}
             onSelect={() => {
               onSelectDate(day);
               onSelectDayMode();
