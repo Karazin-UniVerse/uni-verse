@@ -185,7 +185,7 @@ export function determineStatusTransition({
   }
 
   if ((action === 'opened' || action === 'ready_for_review') && !isDraft) {
-    if (currentStatus === 'Not Started') {
+    if (currentStatus === 'Not Started' || currentStatus === 'Done') {
       return 'In Review';
     }
   }

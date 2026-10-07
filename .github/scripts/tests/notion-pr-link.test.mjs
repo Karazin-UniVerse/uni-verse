@@ -224,6 +224,20 @@ test('determineStatusTransition computes valid status changes', () => {
     determineStatusTransition({ currentStatus: undefined, action: 'opened', isDraft: false }),
     null,
   );
+
+  // Opening non-draft PR on an already 'Done' task reopens it to 'In Review'
+  assert.equal(
+    determineStatusTransition({ currentStatus: 'Done', action: 'opened', isDraft: false }),
+    'In Review',
+  );
+  assert.equal(
+    determineStatusTransition({
+      currentStatus: 'Done',
+      action: 'ready_for_review',
+      isDraft: false,
+    }),
+    'In Review',
+  );
 });
 
 test('resolveMatchingTask verifies Ticket Code integrity and avoids cross-project mismatch', () => {
