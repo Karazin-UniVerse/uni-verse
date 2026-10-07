@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { FEATURE_STORAGE_KEYS } from '@core/constants/features';
@@ -90,6 +90,36 @@ describe('FeatureToggleContext and Components', () => {
 
     expect(snapshot.isMoodleIntegrationEnabled).toBe(false);
     expect(snapshot.isEDeanEnabled).toBe(false);
+  });
+
+  it('allows overrides in production when NEXT_PUBLIC_FEATURE_PANEL is enabled', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    process.env.NEXT_PUBLIC_FEATURE_PANEL = 'true';
+
+    try {
+      const TestConsumer = () => {
+        const controls = useFeatureControls();
+
+        return React.createElement(
+          'span',
+          { id: 'is-overridden' },
+          String(controls.isOverridden()),
+        );
+      };
+
+      const tree = React.createElement(
+        FeatureToggleProvider,
+        null,
+        React.createElement(TestConsumer),
+      );
+
+      const html = renderToString(tree);
+
+      expect(html).toContain('id="is-overridden">false</span>');
+    } finally {
+      vi.unstubAllEnvs();
+      delete process.env.NEXT_PUBLIC_FEATURE_PANEL;
+    }
   });
 
   it('throws an error when useFeatures is called outside FeatureToggleProvider', () => {

@@ -40,10 +40,10 @@ export interface FeatureToggleProviderProps {
 }
 
 export const FeatureToggleProvider: React.FC<FeatureToggleProviderProps> = ({ children }) => {
-  // Production safeguard: feature overrides are disabled in production
-  const allowOverrides = process.env.NODE_ENV !== 'production';
-
   const envDefaults = useMemo(() => getEnvDefaults(), []);
+
+  // Overrides are allowed outside production OR when the feature panel is explicitly enabled in env
+  const allowOverrides = process.env.NODE_ENV !== 'production' || envDefaults.isFeaturePanelEnabled;
   const store = useMemo(() => createOverrideStore({ allowOverrides }), [allowOverrides]);
 
   const overrides = useSyncExternalStore(
