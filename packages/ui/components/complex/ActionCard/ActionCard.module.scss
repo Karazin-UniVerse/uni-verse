@@ -78,6 +78,11 @@
   color: var(--success-color, #16a34a);
 }
 
+.iconOpportunities {
+  background: color-mix(in srgb, var(--accent-active, #1d4ed8) 14%, transparent);
+  color: var(--accent-active, #1d4ed8);
+}
+
 .actionBody {
   display: flex;
   flex-direction: column;

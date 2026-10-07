@@ -1,8 +1,18 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
-import { type FeatureFlags, type FeatureFlagKey } from '@core/constants/features';
-import { mergeFeatureFlags, resolveEnvFeatureFlags } from '@core/utils/features';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useSyncExternalStore,
+} from 'react';
+import type { FeatureFlags, FeatureFlagKey } from '@core/constants/features';
+import {
+  createOverrideStore,
+  mergeFeatureFlags,
+  resolveEnvFeatureFlags,
+} from '@core/utils/features';
 
 export type FeatureContextValue = {
   flags: FeatureFlags;
@@ -16,46 +26,57 @@ export type FeatureContextValue = {
 
 const FeatureToggleContext = createContext<FeatureContextValue | null>(null);
 
-/**
- * Resolves feature flags from environment variables.
- * NOTE: Next.js only inlines process.env.NEXT_PUBLIC_* variables when accessed
- * statically (e.g. process.env.NEXT_PUBLIC_FEATURE_MOODLE). Dynamic property access
- * or loops over process.env are NOT inlined at build time.
- */
 const getEnvDefaults = (): FeatureFlags => {
   return resolveEnvFeatureFlags({
     NEXT_PUBLIC_FEATURE_MOODLE: process.env.NEXT_PUBLIC_FEATURE_MOODLE,
     NEXT_PUBLIC_FEATURE_EDEAN: process.env.NEXT_PUBLIC_FEATURE_EDEAN,
     NEXT_PUBLIC_FEATURE_OPPORTUNITIES: process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES,
+    NEXT_PUBLIC_FEATURE_PANEL: process.env.NEXT_PUBLIC_FEATURE_PANEL,
   });
 };
 
 export interface FeatureToggleProviderProps {
   children?: React.ReactNode;
+  allowOverrides?: boolean;
   initialFlags?: Partial<FeatureFlags>;
 }
 
 export const FeatureToggleProvider: React.FC<FeatureToggleProviderProps> = ({
   children,
+  allowOverrides: allowOverridesProp,
   initialFlags,
 }) => {
+  // Production safeguard: feature overrides are disabled by default in production
+  const isProduction = process.env.NODE_ENV === 'production';
+  const allowOverrides = allowOverridesProp ?? !isProduction;
+
   const envDefaults = useMemo(() => getEnvDefaults(), []);
-  const [overrides, setOverrides] = useState<Partial<FeatureFlags>>(() => initialFlags ?? {});
+
+  const store = useMemo(
+    () => createOverrideStore({ allowOverrides, initialFlags }),
+    [allowOverrides, initialFlags],
+  );
+
+  const overrides = useSyncExternalStore(
+    store.subscribe,
+    store.getSnapshot,
+    store.getServerSnapshot,
+  );
 
   const effectiveFlags = useMemo(() => {
     return mergeFeatureFlags(envDefaults, overrides);
   }, [envDefaults, overrides]);
 
-  const setFeatureOverride = useCallback((feature: FeatureFlagKey, enabled: boolean) => {
-    setOverrides((previous) => ({
-      ...previous,
-      [feature]: enabled,
-    }));
-  }, []);
+  const setFeatureOverride = useCallback(
+    (feature: FeatureFlagKey, enabled: boolean) => {
+      store.setOverride(feature, enabled);
+    },
+    [store],
+  );
 
   const resetFeatureOverrides = useCallback(() => {
-    setOverrides(initialFlags ?? {});
-  }, [initialFlags]);
+    store.reset();
+  }, [store]);
 
   const isEnabled = useCallback(
     (feature: FeatureFlagKey): boolean => {

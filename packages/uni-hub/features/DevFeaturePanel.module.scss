@@ -1,114 +1,35 @@
-.floatingTrigger {
-  position: fixed;
-  bottom: var(--space-20, 20px);
-  left: var(--space-20, 20px);
-  z-index: 9999;
-  display: flex;
+.containerWrap {
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-8, 8px);
-  padding: var(--space-8, 8px) var(--space-12, 12px);
-  background: var(--bg-surface, #fff);
-  border: 1px solid var(--border-color, rgb(0 0 0 / 12%));
-  border-radius: var(--border-radius-full, 9999px);
-  box-shadow: 0 4px 14px rgb(0 0 0 / 12%);
-  color: var(--text-primary, #0f172a);
-  font-size: var(--font-xs, 12px);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(8px);
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgb(0 0 0 / 16%);
-    border-color: var(--accent-primary, #3b82f6);
-  }
 }
 
-:global([data-theme='dark']) .floatingTrigger,
-:global([data-theme='cyberpunk']) .floatingTrigger {
-  background: rgb(30 41 59 / 90%);
-  border-color: rgb(255 255 255 / 15%);
-  box-shadow: 0 4px 14px rgb(0 0 0 / 40%);
+.headerButton {
+  position: relative;
 }
 
 .overrideBadge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 9px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
   background: #1d4ed8;
   color: #fff;
   font-size: 10px;
   font-weight: 700;
-}
-
-.panelOverlay {
-  position: fixed;
-  bottom: var(--space-20, 20px);
-  left: var(--space-20, 20px);
-  z-index: 10000;
-  width: 360px;
-  max-width: calc(100vw - 40px);
-  margin: 0;
-  padding: 0;
-  color: inherit;
-  background: var(--bg-surface, #fff);
-  border: 1px solid var(--border-color, rgb(0 0 0 / 12%));
-  border-radius: var(--border-radius-large, 12px);
-  box-shadow: 0 12px 36px rgb(0 0 0 / 20%);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  backdrop-filter: blur(12px);
-}
-
-:global([data-theme='dark']) .panelOverlay,
-:global([data-theme='cyberpunk']) .panelOverlay {
-  background: rgb(30 41 59 / 96%);
-  border-color: rgb(255 255 255 / 15%);
-}
-
-.panelHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-12, 12px) var(--space-16, 16px);
-  border-bottom: 1px solid var(--border-color, rgb(0 0 0 / 8%));
+  line-height: 16px;
 }
 
 .panelTitleGroup {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: var(--space-8, 8px);
-
-  h4 {
-    margin: 0;
-    font-size: var(--font-sm, 14px);
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-}
-
-.closeButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  border-radius: var(--border-radius-small, 6px);
-  cursor: pointer;
-
-  &:hover {
-    background: var(--bg-hover, rgb(0 0 0 / 5%));
-    color: var(--text-primary);
-  }
 }
 
 .panelBody {
@@ -209,4 +130,8 @@
   padding: var(--space-12, 12px) var(--space-16, 16px);
   border-top: 1px solid var(--border-color, rgb(0 0 0 / 8%));
   background: var(--bg-hover, rgb(0 0 0 / 2%));
+}
+
+.btnIcon {
+  margin-right: var(--space-6, 6px);
 }

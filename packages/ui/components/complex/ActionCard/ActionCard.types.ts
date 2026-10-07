@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
-export type ActionCardIconTone = 'moodle' | 'assignments' | 'schedule' | 'dean' | 'default';
+export type ActionCardIconTone =
+  'moodle' | 'assignments' | 'schedule' | 'dean' | 'opportunities' | 'default';
 
 export type ActionCardBadgeTone = 'info' | 'alert' | 'default';
 

@@ -22,7 +22,7 @@ const meta = {
   argTypes: {
     iconTone: {
       control: 'select',
-      options: ['default', 'moodle', 'assignments', 'schedule', 'dean'],
+      options: ['default', 'moodle', 'assignments', 'schedule', 'dean', 'opportunities'],
       description: 'Color tone of the icon wrapper',
     },
     badgeTone: {

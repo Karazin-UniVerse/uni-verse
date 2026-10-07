@@ -1,16 +1,14 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { MoodleClientService } from '../moodle-client/moodle.client.service';
+import {
+  MoodleClientService,
+  type MoodleClientParams,
+} from '../moodle-client/moodle.client.service';
 import { MoodleCoursesService } from '../moodle-courses/moodle-courses.service';
 import { MoodleGradesService } from '../moodle-grades/moodle-grades.service';
 import { StudentProfileDto } from './moodle-profile-dto';
 
 interface IMoodleClientService {
-  client<T>(
-    wsfunction: string,
-    token: string,
-    moodleId?: string,
-    params?: Record<string, unknown>,
-  ): Promise<T>;
+  client<T>(params: MoodleClientParams): Promise<T>;
 }
 
 interface IMoodleCoursesService {
@@ -115,10 +113,10 @@ export class MoodleProfileService {
 
   private async fetchSiteInfo(token: string): Promise<MoodleSiteInfo> {
     try {
-      const info = await this.moodleClient.client<MoodleSiteInfo>(
-        'core_webservice_get_site_info',
-        token,
-      );
+      const info = await this.moodleClient.client<MoodleSiteInfo>({
+        wsfunction: 'core_webservice_get_site_info',
+        moodleToken: token,
+      });
 
       return info || {};
     } catch (err) {
@@ -135,15 +133,15 @@ export class MoodleProfileService {
     moodleId: string,
   ): Promise<MoodleUserItem | undefined> {
     try {
-      const users = await this.moodleClient.client<MoodleUserItem[]>(
-        'core_user_get_users_by_field',
-        token,
+      const users = await this.moodleClient.client<MoodleUserItem[]>({
+        wsfunction: 'core_user_get_users_by_field',
+        moodleToken: token,
         moodleId,
-        {
+        params: {
           field: 'id',
           'values[0]': moodleId,
         },
-      );
+      });
 
       if (Array.isArray(users) && users.length > 0) {
         return users[0];

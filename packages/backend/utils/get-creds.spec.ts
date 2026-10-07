@@ -1,4 +1,5 @@
 import { GetCreds } from './get-creds';
+import { MoodleClientService } from '../moodle/moodle-client/moodle.client.service';
 
 describe('GetCreds Utility Service', () => {
   let service: GetCreds;
@@ -10,33 +11,13 @@ describe('GetCreds Utility Service', () => {
       ...originalEnv,
       MOODLE_BASEURL: 'https://moodle.karazin.ua/',
     };
-    service = new GetCreds();
+    service = new GetCreds(new MoodleClientService());
   });
 
   afterEach(() => {
     process.env = originalEnv;
     global.fetch = originalFetch;
     jest.clearAllMocks();
-  });
-
-  describe('getBaseUrl', () => {
-    it('should throw when MOODLE_BASEURL does not use https://', () => {
-      process.env.MOODLE_BASEURL = 'http://insecure-moodle.karazin.ua';
-
-      expect(() =>
-        (service as unknown as { getBaseUrl: () => string }).getBaseUrl(),
-      ).toThrow('MOODLE_BASEURL must use the secure https:// protocol');
-    });
-
-    it('should strip trailing slash from base url', () => {
-      process.env.MOODLE_BASEURL = 'https://moodle.karazin.ua/';
-
-      const url = (
-        service as unknown as { getBaseUrl: () => string }
-      ).getBaseUrl();
-
-      expect(url).toBe('https://moodle.karazin.ua');
-    });
   });
 
   describe('getToken', () => {

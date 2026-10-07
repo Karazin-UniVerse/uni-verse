@@ -18,9 +18,18 @@ function isMoodleException(data: unknown): data is MoodleException {
   return typeof data === 'object' && data !== null && 'exception' in data;
 }
 
+export type MoodleClientParams = {
+  wsfunction: string;
+  moodleToken?: string;
+  moodleId?: string;
+  params?: Record<string, unknown>;
+};
+
 @Injectable()
 export class MoodleClientService {
-  private readonly baseUrl = (process.env.MOODLE_BASEURL || '').trim();
+  private readonly baseUrl = (process.env.MOODLE_BASEURL || '')
+    .trim()
+    .replace(/\/$/, '');
   private readonly timeout = process.env.MOODLE_TIMEOUT || '15000';
   private readonly logger = new Logger(MoodleClientService.name);
 
@@ -30,12 +39,20 @@ export class MoodleClientService {
     }
   }
 
-  async client<T = unknown>(
-    wsfunction: string,
-    moodleToken?: string,
-    moodleId?: string,
-    params?: Record<string, unknown>,
-  ): Promise<T> {
+  /**
+   * Low-level request to a path under the Moodle base URL. Redirects are
+   * refused unless the caller overrides `redirect`.
+   */
+  async fetch(path: string, init: RequestInit = {}): Promise<Response> {
+    return fetch(`${this.baseUrl}${path}`, { redirect: 'error', ...init });
+  }
+
+  async client<T = unknown>({
+    wsfunction,
+    moodleToken,
+    moodleId,
+    params,
+  }: MoodleClientParams): Promise<T> {
     const timeout = Number(this.timeout);
 
     if (!Number.isFinite(timeout) || timeout <= 0) {

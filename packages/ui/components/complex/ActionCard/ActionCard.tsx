@@ -10,6 +10,7 @@ const iconToneClassMap = {
   assignments: styles.iconAssignments,
   schedule: styles.iconSchedule,
   dean: styles.iconDean,
+  opportunities: styles.iconOpportunities,
 };
 
 const badgeToneClassMap = {

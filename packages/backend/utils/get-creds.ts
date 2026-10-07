@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { MoodleClientService } from '../moodle/moodle-client/moodle.client.service';
 
 interface MoodleTokenResponse {
   token?: string;
@@ -13,15 +14,7 @@ interface MoodleUserIdResponse {
 
 @Injectable()
 export class GetCreds {
-  private getBaseUrl(): string {
-    const url = (process.env.MOODLE_BASEURL || '').trim().replace(/\/$/, '');
-
-    if (!url.startsWith('https://')) {
-      throw new Error('MOODLE_BASEURL must use the secure https:// protocol');
-    }
-
-    return url;
-  }
+  constructor(private readonly moodleClient: MoodleClientService) {}
 
   async getToken(email: string, password: string): Promise<string> {
     if (!email || !password) {
@@ -34,13 +27,12 @@ export class GetCreds {
       service: 'moodle_mobile_app',
     });
 
-    const response = await fetch(`${this.getBaseUrl()}/login/token.php`, {
+    const response = await this.moodleClient.fetch('/login/token.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: body.toString(),
-      redirect: 'error',
     });
 
     const text = await response.text();
@@ -60,11 +52,8 @@ export class GetCreds {
       throw new Error('Token is required');
     }
 
-    const response = await fetch(
-      `${this.getBaseUrl()}/webservice/rest/server.php?wstoken=${encodeURIComponent(token)}&wsfunction=core_webservice_get_site_info&moodlewsrestformat=json`,
-      {
-        redirect: 'error',
-      },
+    const response = await this.moodleClient.fetch(
+      `/webservice/rest/server.php?wstoken=${encodeURIComponent(token)}&wsfunction=core_webservice_get_site_info&moodlewsrestformat=json`,
     );
 
     const data = (await response.json()) as MoodleUserIdResponse;

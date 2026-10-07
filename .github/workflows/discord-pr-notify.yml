@@ -2,7 +2,7 @@ name: Discord PR Notification
 
 on:
   pull_request:
-    types: [opened, reopened, ready_for_review, closed, review_requested]
+    types: [opened, reopened, ready_for_review, closed]
 
 permissions:
   contents: read
@@ -11,15 +11,15 @@ jobs:
   notify-pr:
     name: Notify Discord on PR Event
     runs-on: ubuntu-latest
-    if: "!github.event.pull_request.draft || github.event.action == 'ready_for_review' || github.event.action == 'closed' || github.event.action == 'review_requested'"
+    if: "!github.event.pull_request.draft || github.event.action == 'ready_for_review' || github.event.action == 'closed'"
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
 

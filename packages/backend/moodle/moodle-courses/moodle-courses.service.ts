@@ -16,11 +16,11 @@ export class MoodleCoursesService {
     }
 
     try {
-      const data = await this.moodleClient.client<Course[]>(
-        getWsFunctionName('getCourses'),
-        token,
+      const data = await this.moodleClient.client<Course[]>({
+        wsfunction: getWsFunctionName('getCourses'),
+        moodleToken: token,
         moodleId,
-      );
+      });
 
       if (!Array.isArray(data)) {
         return [];

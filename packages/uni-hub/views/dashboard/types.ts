@@ -8,7 +8,14 @@ import type {
   CourseStatistics,
 } from '@uni-hub/types';
 
-export const NAV_KEYS = ['overview', 'courses', 'grades', 'schedule', 'assignments'] as const;
+export const NAV_KEYS = [
+  'overview',
+  'courses',
+  'grades',
+  'schedule',
+  'assignments',
+  'opportunities',
+] as const;
 
 export type NavKey = (typeof NAV_KEYS)[number];
 

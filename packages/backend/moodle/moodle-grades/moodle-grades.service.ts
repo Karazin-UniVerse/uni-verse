@@ -97,14 +97,18 @@ export class MoodleGradesService {
 
     const [gradesResponse, coursesData] = await Promise.all([
       this.moodleClient
-        .client<MoodleOverviewGradesResponse>(
-          getWsFunctionName('getGrades'),
-          token,
+        .client<MoodleOverviewGradesResponse>({
+          wsfunction: getWsFunctionName('getGrades'),
+          moodleToken: token,
           moodleId,
-        )
+        })
         .catch(() => ({ grades: [] }) as MoodleOverviewGradesResponse),
       this.moodleClient
-        .client<Course[]>(getWsFunctionName('getCourses'), token, moodleId)
+        .client<Course[]>({
+          wsfunction: getWsFunctionName('getCourses'),
+          moodleToken: token,
+          moodleId,
+        })
         .catch(() => [] as Course[]),
     ]);
 
