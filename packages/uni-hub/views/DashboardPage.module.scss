@@ -115,9 +115,12 @@
   color: var(--blue-700);
 }
 
-:global([data-theme='dark']) .active,
-:global([data-theme='cyberpunk']) .active {
+:global([data-theme='dark']) .active {
   color: var(--white-10);
+}
+
+:global([data-theme='cyberpunk']) .active {
+  color: var(--blue-400);
 }
 
 .collapsed .navItem {
