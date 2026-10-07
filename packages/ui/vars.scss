@@ -1,5 +1,13 @@
 @forward './breakpoints';
 
+/* Four-corner mesh gradient from the --primary-rgb / --secondary-rgb channels of the active theme */
+@function mesh-gradient($alpha) {
+  @return radial-gradient(at 0% 0%, rgb(var(--primary-rgb), $alpha) 0, transparent 50%),
+    radial-gradient(at 100% 0%, rgb(var(--secondary-rgb), $alpha) 0, transparent 50%),
+    radial-gradient(at 100% 100%, rgb(var(--primary-rgb), $alpha) 0, transparent 50%),
+    radial-gradient(at 0% 100%, rgb(var(--secondary-rgb), $alpha) 0, transparent 50%);
+}
+
 /* ==========================================================================
    1. BASE & LAYOUT TOKENS (Non-thematic)
    ========================================================================== */
@@ -284,13 +292,10 @@ $space-64: 64px;
   --bg-card: var(--bg-surface);
   --card-backdrop: none;
 
-  /* Mesh gradient built from the *-rgb channels; --mesh-alpha sets its strength */
-  --mesh-alpha: 0.15;
-  --bg-mesh:
-    radial-gradient(at 0% 0%, rgb(var(--primary-rgb), var(--mesh-alpha)) 0, transparent 50%),
-    radial-gradient(at 100% 0%, rgb(var(--secondary-rgb), var(--mesh-alpha)) 0, transparent 50%),
-    radial-gradient(at 100% 100%, rgb(var(--primary-rgb), var(--mesh-alpha)) 0, transparent 50%),
-    radial-gradient(at 0% 100%, rgb(var(--secondary-rgb), var(--mesh-alpha)) 0, transparent 50%);
+  /* Mesh gradients in three strengths: soft (light dashboard), default (login, dark), strong (Space) */
+  --bg-mesh-soft: #{mesh-gradient(0.08)};
+  --bg-mesh: #{mesh-gradient(0.15)};
+  --bg-mesh-strong: #{mesh-gradient(0.34)};
 }
 
 /* -----------------------------------------
@@ -316,8 +321,8 @@ $space-64: 64px;
   --card-shadow: 0 1px 2px rgb(15 23 42 / 6%), 0 4px 12px rgb(15 23 42 / 6%);
   --card-shadow-hover: 0 2px 4px rgb(15 23 42 / 8%), 0 12px 28px rgb(15 23 42 / 10%);
 
-  /* Mesh-gradient canvas, white header, accent bar on the active nav item */
-  --bg-page: var(--bg-mesh), var(--slate-50);
+  /* Mesh-gradient canvas (kept soft so it does not compete with the content), white header, accent bar on the active nav item */
+  --bg-page: var(--bg-mesh-soft), var(--slate-50);
   --bg-content: transparent;
   --header-bg: var(--white-10);
   --sidebar-item-active-accent: var(--accent-primary);
@@ -401,7 +406,7 @@ $space-64: 64px;
    UniVerse Space Theme (dark base + vivid glass)
    ----------------------------------------- */
 [data-theme='universeSpace'] {
-  --mesh-alpha: 0.34;
+  --bg-page: var(--bg-mesh-strong), var(--bg-color);
   --neutral-border: rgb(150 165 255 / 16%);
 
   /* Glass cards, sidebar and header over the mesh */

@@ -11,7 +11,7 @@ The light theme looked flat and washed out: cards and the content area were the 
 All overrides live in one block, `:root:not([data-theme]), [data-theme='light']`, placed after the shared defaults. The shared defaults stay as they were, so dark, Space, cyberpunk and Karazin Classic (which inherit some of them) do not change. Verified by comparing computed styles of the sidebar, header, content, cards, buttons and links in those four themes before and after: zero differences.
 
 - Slate palette (`--slate-50..900`): cool grays with a blue undertone.
-- White surfaces (`--neutral-surface`) on a `--slate-50` canvas, so cards separate from the page; the canvas carries the shared mesh gradient (`--bg-page: var(--bg-mesh), var(--slate-50)`) and the content area is transparent, as in the dark themes.
+- White surfaces (`--neutral-surface`) on a `--slate-50` canvas, so cards separate from the page; the canvas carries the soft mesh gradient (`--bg-page: var(--bg-mesh-soft), var(--slate-50)`, 8% instead of the 15% the login page uses, so it does not compete with the content) and the content area is transparent, as in the dark themes.
 - Text: primary `--slate-900` (17.9:1), secondary `--slate-500` (5.8:1 on white), disabled and placeholder `--slate-400`.
 - Borders `--slate-300`; hover and secondary-button fills from slate-100..300.
 - Cards: border `rgb(15 23 42 / 10%)` and a two-layer soft shadow, stronger on hover.

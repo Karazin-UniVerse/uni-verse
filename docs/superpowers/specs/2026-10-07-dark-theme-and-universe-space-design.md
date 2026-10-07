@@ -15,13 +15,13 @@ The dark theme looked flat and low-contrast: cards and the content area were the
 
 ## UniVerse Space
 
-- Shares one token block with dark (`[data-theme='dark'], [data-theme='universeSpace']`) and overrides only what makes it vivid: `--mesh-alpha: 0.34`, glass cards (`--bg-card` translucent plus `--card-backdrop: blur(14px)`), translucent sidebar and header, a blue-to-purple gradient active-item plate, blue-tinted borders and shadows.
+- Shares one token block with dark (`[data-theme='dark'], [data-theme='universeSpace']`) and overrides only what makes it vivid: `--bg-page` on the strong mesh (`--bg-mesh-strong`, 34%), glass cards (`--bg-card` translucent plus `--card-backdrop: blur(14px)`), translucent sidebar and header, a blue-to-purple gradient active-item plate, blue-tinted borders and shadows.
 - `[data-theme='dark']` selectors in `Tag`, `Popover`, `LiveCountdown` and `DashboardPage` also match `universeSpace`.
 - Dropdown panels and inputs keep the opaque `--bg-surface`; only card rules use the glass token.
 
 ## New tokens
 
-- `--bg-mesh` and `--mesh-alpha`: the four-corner mesh gradient built from `--primary-rgb` and `--secondary-rgb`; `LoginPage` now reads `--bg-mesh` (no visual change).
+- `--bg-mesh-soft` (8%), `--bg-mesh` (15%) and `--bg-mesh-strong` (34%): the four-corner mesh gradient built from `--primary-rgb` and `--secondary-rgb` by one SCSS function (`mesh-gradient`); `LoginPage` reads `--bg-mesh` (no visual change). Each surface picks its strength through `--bg-page`.
 - `--bg-card` (default `var(--bg-surface)`) and `--card-backdrop` (default `none`), applied to the nine card rules (`statCard`, `panel`, `courseCard`, `assignmentCard` and its two variants, `studentCard`, `recentGradesPanel`, `actionCard`).
 
 ## Theme list
