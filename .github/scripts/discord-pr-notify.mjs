@@ -23,7 +23,9 @@ export function formatUserMention(githubUser, customUsersMap = discordUsers) {
 
   const entry =
     customUsersMap[githubUser] ??
-    Object.entries(customUsersMap).find(([k]) => k.toLowerCase() === githubUser.toLowerCase())?.[1];
+    Object.entries(customUsersMap).find(
+      ([userKey]) => userKey.toLowerCase() === githubUser.toLowerCase(),
+    )?.[1];
   const target = entry ? String(entry).trim() : '';
 
   if (target.length > 0) {
@@ -71,6 +73,119 @@ export function formatPrAge(createdAt) {
   return '< 1г';
 }
 
+export function formatCommentsCount(count) {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+
+  if (mod10 === 1 && mod100 !== 11) {
+    return `${count} відкритий коментар`;
+  }
+
+  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) {
+    return `${count} відкритих коментарі`;
+  }
+
+  return `${count} відкритих коментарів`;
+}
+
+export function analyzePrReviewStatus(pr, users = discordUsers) {
+  const authorLogin = pr.user?.login || pr.author?.login;
+  const rawThreads = Array.isArray(pr.reviewThreads)
+    ? pr.reviewThreads
+    : pr.reviewThreads?.nodes || [];
+
+  let pendingAuthorThreadsCount = 0;
+  let authorRepliedThreadsCount = 0;
+  let lastReviewerLogin = null;
+
+  for (const thread of rawThreads) {
+    if (thread.isResolved || thread.isOutdated) {
+      continue;
+    }
+
+    const comments = Array.isArray(thread.comments)
+      ? thread.comments
+      : thread.comments?.nodes || [];
+
+    if (comments.length === 0) {
+      continue;
+    }
+
+    const lastComment = comments.at(-1);
+    const lastAuthor = lastComment?.author?.login || lastComment?.user?.login;
+
+    if (lastAuthor && lastAuthor.toLowerCase() === authorLogin?.toLowerCase()) {
+      authorRepliedThreadsCount++;
+    } else {
+      pendingAuthorThreadsCount++;
+
+      if (lastAuthor) {
+        lastReviewerLogin = lastAuthor;
+      }
+    }
+  }
+
+  const reviewDecision = pr.reviewDecision;
+
+  // 1. Action required: unresolved comments from reviewer OR CHANGES_REQUESTED
+  if (pendingAuthorThreadsCount > 0 || reviewDecision === 'CHANGES_REQUESTED') {
+    const reviewerMention = lastReviewerLogin ? formatUserMention(lastReviewerLogin, users) : null;
+    let detail = '';
+
+    if (pendingAuthorThreadsCount > 0) {
+      const countText = formatCommentsCount(pendingAuthorThreadsCount);
+
+      detail = reviewerMention ? `${countText} (останній від ${reviewerMention})` : countText;
+    } else {
+      detail = reviewerMention
+        ? `запитано зміни від ${reviewerMention}`
+        : "запитано зміни від рев'ювера";
+    }
+
+    return {
+      statusType: 'ACTION_REQUIRED',
+      pendingAuthorThreadsCount,
+      lastReviewerLogin,
+      reviewStr: ` • 🛠️ **Потрібні правки:** ${detail}`,
+    };
+  }
+
+  // 2. Waiting for re-review: author replied to all unresolved threads
+  if (authorRepliedThreadsCount > 0) {
+    return {
+      statusType: 'WAITING_FOR_REVIEWER',
+      pendingAuthorThreadsCount: 0,
+      lastReviewerLogin: null,
+      reviewStr: ' • 💬 **Автор відповів:** очікує перевірки',
+    };
+  }
+
+  // 3. Approved: ready to merge
+  if (reviewDecision === 'APPROVED') {
+    return {
+      statusType: 'APPROVED',
+      pendingAuthorThreadsCount: 0,
+      lastReviewerLogin: null,
+      reviewStr: ' • ✅ **Схвалено:** готовий до мержа!',
+    };
+  }
+
+  // 4. Default: awaiting initial review
+  const reviewers = (pr.requested_reviewers || [])
+    .map((reviewer) => formatUserMention(reviewer.login, users))
+    .join(', ');
+
+  const reviewStr =
+    reviewers.length > 0 ? ` • 🔍 **Очікує рев'ю:** ${reviewers}` : ' • ⚠️ *Очікує призначення*';
+
+  return {
+    statusType: 'NEEDS_REVIEW',
+    pendingAuthorThreadsCount: 0,
+    lastReviewerLogin: null,
+    reviewStr,
+  };
+}
+
 export function formatPrLine(pr, users = discordUsers) {
   const age = formatPrAge(pr.created_at);
   const baseRef = pr.base?.ref || 'develop';
@@ -79,10 +194,7 @@ export function formatPrLine(pr, users = discordUsers) {
   const hasDiff = typeof additions === 'number' && typeof deletions === 'number';
   const sizeStr = hasDiff ? ` *(+${additions}/-${deletions})*` : '';
 
-  const reviewers = (pr.requested_reviewers || [])
-    .map((r) => formatUserMention(r.login, users))
-    .join(', ');
-  const reviewStr = reviewers.length > 0 ? ` • 🔍 ${reviewers}` : ' • ⚠️ *Очікує призначення*';
+  const { reviewStr } = analyzePrReviewStatus(pr, users);
 
   // Discord field limit is 1024 chars. Cap title so the line safely stays <= 900 chars
   const maxTitleLen = 120;
@@ -247,7 +359,7 @@ export function groupPullRequests(pullRequests) {
       continue;
     }
 
-    const authorLogin = pr.user?.login || 'unknown';
+    const authorLogin = pr.user?.login || pr.author?.login || 'unknown';
 
     if (authorLogin.toLowerCase().startsWith('dependabot')) {
       dependabotPrs.push(pr);
@@ -291,11 +403,21 @@ export function buildReminderDiscordPayload({
   }
 
   const fields = [];
+  const authorsNeedingAction = new Set();
 
   // Grouped per author
   for (const [authorLogin, prs] of authorPrs.entries()) {
     const authorMention = formatUserMention(authorLogin, users);
-    const prLines = prs.map((pr) => formatPrLine(pr, users));
+    const prLines = prs.map((pr) => {
+      const status = analyzePrReviewStatus(pr, users);
+
+      if (status.statusType === 'ACTION_REQUIRED') {
+        authorsNeedingAction.add(authorLogin);
+      }
+
+      return formatPrLine(pr, users);
+    });
+
     const chunks = chunkLines(prLines, 1000);
 
     chunks.forEach((chunk, index) => {
@@ -344,10 +466,19 @@ export function buildReminderDiscordPayload({
     dependabotCount: dependabotPrs.length,
   });
 
-  const content =
-    humanPrCount > 0
-      ? `🔔 **Щоденне нагадування:** у репозиторії є відкриті Pull Requests, які очікують на рев'ю!`
-      : `🤖 **Щоденний статус:** очікують на розгляд тільки оновлення Dependabot.`;
+  let content = '';
+
+  if (authorsNeedingAction.size > 0) {
+    const authorMentions = Array.from(authorsNeedingAction)
+      .map((login) => formatUserMention(login, users))
+      .join(', ');
+
+    content = `🔔 **Щоденне нагадування:** у репозиторії є відкриті Pull Requests!\n⚠️ ${authorMentions}, у ваших PR є незарезолвані коментарі, які очікують на виправлення!`;
+  } else if (humanPrCount > 0) {
+    content = `🔔 **Щоденне нагадування:** у репозиторії є відкриті Pull Requests, які очікують на рев'ю!`;
+  } else {
+    content = `🤖 **Щоденний статус:** очікують на розгляд тільки оновлення Dependabot.`;
+  }
 
   return partitionEmbedsIntoMessages(embeds, content);
 }
@@ -391,6 +522,194 @@ export async function sendDiscordWebhook(payload) {
   }
 
   console.info('Discord notification sent successfully.');
+}
+
+export const PULL_REQUESTS_GRAPHQL_QUERY = `
+  query($owner: String!, $name: String!, $cursor: String) {
+    repository(owner: $owner, name: $name) {
+      pullRequests(states: OPEN, first: 100, after: $cursor) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          number
+          title
+          url
+          isDraft
+          createdAt
+          additions
+          deletions
+          baseRefName
+          headRefName
+          author {
+            login
+          }
+          reviewDecision
+          reviewRequests(first: 20) {
+            nodes {
+              requestedReviewer {
+                ... on User {
+                  login
+                }
+              }
+            }
+          }
+          reviewThreads(first: 50) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              isResolved
+              isOutdated
+              comments(last: 10) {
+                nodes {
+                  author {
+                    login
+                  }
+                  createdAt
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const REVIEW_THREADS_GRAPHQL_QUERY = `
+  query($owner: String!, $name: String!, $number: Int!, $cursor: String) {
+    repository(owner: $owner, name: $name) {
+      pullRequest(number: $number) {
+        reviewThreads(first: 50, after: $cursor) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            isResolved
+            isOutdated
+            comments(last: 10) {
+              nodes {
+                author {
+                  login
+                }
+                createdAt
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export async function executeGraphQLQuery({ query, variables, token }) {
+  const response = await fetch('https://api.github.com/graphql', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'User-Agent': 'uni-verse-discord-pr-reminder',
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+
+    console.warn(`GraphQL API returned HTTP ${response.status}: ${errorText}`);
+
+    return null;
+  }
+
+  const result = await response.json();
+
+  if (result.errors) {
+    console.warn('GraphQL API errors:', JSON.stringify(result.errors));
+
+    return null;
+  }
+
+  return result.data;
+}
+
+export async function fetchPullRequestsGraphQL({ repo, token }) {
+  if (!token) {
+    return null;
+  }
+
+  const [owner, name] = repo.split('/');
+
+  if (!owner || !name) {
+    return null;
+  }
+
+  const allPullRequests = [];
+  let pullRequestCursor = null;
+  let hasMorePullRequests = true;
+
+  while (hasMorePullRequests) {
+    const data = await executeGraphQLQuery({
+      query: PULL_REQUESTS_GRAPHQL_QUERY,
+      variables: { owner, name, cursor: pullRequestCursor },
+      token,
+    });
+
+    const connection = data?.repository?.pullRequests;
+
+    if (!connection || !Array.isArray(connection.nodes)) {
+      return null;
+    }
+
+    allPullRequests.push(...connection.nodes);
+    hasMorePullRequests = Boolean(connection.pageInfo?.hasNextPage);
+    pullRequestCursor = connection.pageInfo?.endCursor || null;
+  }
+
+  for (const node of allPullRequests) {
+    const threads = [...(node.reviewThreads?.nodes || [])];
+    let threadPageInfo = node.reviewThreads?.pageInfo;
+
+    while (threadPageInfo?.hasNextPage && threadPageInfo.endCursor) {
+      const threadData = await executeGraphQLQuery({
+        query: REVIEW_THREADS_GRAPHQL_QUERY,
+        variables: { owner, name, number: node.number, cursor: threadPageInfo.endCursor },
+        token,
+      });
+
+      const threadConnection = threadData?.repository?.pullRequest?.reviewThreads;
+
+      if (!threadConnection || !Array.isArray(threadConnection.nodes)) {
+        return null;
+      }
+
+      threads.push(...threadConnection.nodes);
+      threadPageInfo = threadConnection.pageInfo;
+    }
+
+    node.aggregatedReviewThreads = threads;
+  }
+
+  return allPullRequests.map((node) => ({
+    number: node.number,
+    title: node.title,
+    html_url: node.url,
+    draft: node.isDraft,
+    created_at: node.createdAt,
+    additions: node.additions,
+    deletions: node.deletions,
+    base: { ref: node.baseRefName },
+    head: { ref: node.headRefName },
+    user: { login: node.author?.login || 'unknown' },
+    reviewDecision: node.reviewDecision,
+    requested_reviewers: (node.reviewRequests?.nodes || [])
+      .map((request) => request.requestedReviewer)
+      .filter((user) => Boolean(user?.login)),
+    reviewThreads: node.aggregatedReviewThreads || node.reviewThreads?.nodes || [],
+  }));
 }
 
 export async function fetchOpenPullRequests({ repo, token }) {
@@ -465,34 +784,51 @@ export async function handlePrReminder() {
   const isDryRun = process.env.DRY_RUN === 'true';
 
   console.info(`Fetching open pull requests for ${repo}...`);
-  const prs = await fetchOpenPullRequests({ repo, token });
+  let prs = null;
 
-  console.info(`Retrieved ${prs.length} open pull requests.`);
+  if (token) {
+    try {
+      prs = await fetchPullRequestsGraphQL({ repo, token });
 
-  // Enrich non-draft developer PRs with diff details in batches of 10
-  const eligiblePrs = prs.filter(
-    (p) => !p.draft && !p.user?.login?.toLowerCase().startsWith('dependabot'),
-  );
+      if (prs) {
+        console.info(`Retrieved ${prs.length} open pull requests via GraphQL API.`);
+      }
+    } catch (err) {
+      console.warn('GraphQL fetch failed, falling back to REST:', err.message);
+    }
+  }
 
-  const BATCH_SIZE = 10;
+  if (!prs) {
+    prs = await fetchOpenPullRequests({ repo, token });
 
-  for (let i = 0; i < eligiblePrs.length; i += BATCH_SIZE) {
-    const batch = eligiblePrs.slice(i, i + BATCH_SIZE);
+    console.info(`Retrieved ${prs.length} open pull requests via REST API.`);
 
-    await Promise.all(
-      batch.map(async (pr) => {
-        try {
-          const details = await fetchPullRequestDetails({ repo, prNumber: pr.number, token });
-
-          if (details) {
-            pr.additions = details.additions;
-            pr.deletions = details.deletions;
-          }
-        } catch {
-          // Non-fatal, fallback to list data
-        }
-      }),
+    // Enrich non-draft developer PRs with diff details in batches of 10
+    const eligiblePrs = prs.filter(
+      (pullRequest) =>
+        !pullRequest.draft && !pullRequest.user?.login?.toLowerCase().startsWith('dependabot'),
     );
+
+    const BATCH_SIZE = 10;
+
+    for (let i = 0; i < eligiblePrs.length; i += BATCH_SIZE) {
+      const batch = eligiblePrs.slice(i, i + BATCH_SIZE);
+
+      await Promise.all(
+        batch.map(async (pr) => {
+          try {
+            const details = await fetchPullRequestDetails({ repo, prNumber: pr.number, token });
+
+            if (details) {
+              pr.additions = details.additions;
+              pr.deletions = details.deletions;
+            }
+          } catch {
+            // Non-fatal, fallback to list data
+          }
+        }),
+      );
+    }
   }
 
   const { authorPrs, dependabotPrs, totalCount } = groupPullRequests(prs);
@@ -630,7 +966,7 @@ export async function handlePullRequest() {
 
   const authorMention = formatUserMention(pr.user?.login);
   const reviewers = pr.requested_reviewers || [];
-  const reviewersMentions = reviewers.map((r) => formatUserMention(r.login));
+  const reviewersMentions = reviewers.map((reviewer) => formatUserMention(reviewer.login));
 
   if (action === 'closed') {
     if (pr.merged) {
