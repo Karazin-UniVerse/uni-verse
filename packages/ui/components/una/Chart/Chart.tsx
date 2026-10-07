@@ -172,7 +172,7 @@ export function Chart({
             tickLine={false}
             interval={0}
           />
-          <Tooltip content={<ChartTooltip valueLabel={valueLabel} type={type} />} />
+          <Tooltip cursor={false} content={<ChartTooltip valueLabel={valueLabel} type={type} />} />
           <Bar
             dataKey="value"
             radius={[0, barRadius, barRadius, 0]}
@@ -202,13 +202,13 @@ export function Chart({
           axisLine={{ stroke: theme.axis }}
           tickLine={{ stroke: theme.axis }}
         />
-        <Tooltip content={<ChartTooltip valueLabel={valueLabel} type={type} />} />
+        <Tooltip cursor={false} content={<ChartTooltip valueLabel={valueLabel} type={type} />} />
         <Bar
           dataKey="value"
-          radius={[barRadius, barRadius, 0, 0]}
+          radius={[0, barRadius, barRadius, 0]}
           maxBarSize={maxBarSize}
           isAnimationActive={animate}
-          shape={renderBarShape}
+          activeBar={false}
         />
       </BarChart>
     );

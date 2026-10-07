@@ -273,6 +273,9 @@ export const en = {
 
   // Gamification
   'badge.unlocked': 'Achievement',
+  'admission.admitted': 'Admitted to the exam ({score} / 60 pts — threshold of 30 pts reached)',
+  'admission.notAdmitted':
+    'Not admitted to the exam ({score} / 60 pts — {remaining} pts needed to qualify)',
 
   // Modal
   'modal.close': 'Close',
@@ -303,6 +306,7 @@ export const en = {
 
   // Quick Actions
   'quickActions.title': 'Quick Actions',
+  'quickActions.moodle': 'Moodle LMS',
   'quickActions.moodleBadge': 'Karazin',
   'quickActions.moodleTitle': 'Open Moodle LMS platform in a new tab',
   'quickActions.moodleDescription': 'Course platform',

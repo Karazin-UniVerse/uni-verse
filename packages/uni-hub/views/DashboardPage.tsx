@@ -65,6 +65,7 @@ const DashboardPage: React.FC = () => {
   const [activeKey, setActiveKey] = useState<NavKey>('overview');
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();
+  const [mounted, setMounted] = useState(false);
 
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -135,6 +136,10 @@ const DashboardPage: React.FC = () => {
     data.assignments.length > 0 ||
     data.events.length > 0 ||
     hasLoadedOnce;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -271,6 +276,9 @@ const DashboardPage: React.FC = () => {
     }
   };
 
+  // Spinner only after mount — keeps SSR and first client render identical
+  const showUpdatingIndicator = mounted && loading && hasCachedData;
+
   return (
     <div
       className={`${styles.layout} ${collapsed ? styles.collapsed : ''} ${mobileMenuOpen ? styles.mobileOpen : ''}`}
@@ -314,13 +322,15 @@ const DashboardPage: React.FC = () => {
         <main className={styles.content}>
           <div className={styles.pageTitleRow}>
             <h2 className={styles.pageTitle}>{formatMessage(PAGE_TITLE_KEYS[activeKey])}</h2>
-            {loading && hasCachedData && (
+
+            {showUpdatingIndicator && (
               <div className={styles.pageUpdatingIndicator} role="status" aria-live="polite">
                 <Spinner size="small" tip={formatMessage('dashboard.updating')} />
               </div>
             )}
+
             <div className={styles.syncActions}>
-              {lastSyncTime && (
+              {mounted && lastSyncTime && (
                 <span className={styles.lastSyncText}>
                   {formatMessage('dashboard.dataUpdated')}: {formatLastSync(lastSyncTime)}
                 </span>
@@ -340,7 +350,7 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {isOfflineData && (
+          {mounted && isOfflineData && (
             <div className={styles.offlineBanner} role="alert">
               <AlertCircle size={16} className={styles.offlineIcon} />
               <span>
@@ -352,6 +362,7 @@ const DashboardPage: React.FC = () => {
               </span>
             </div>
           )}
+
           {!isMoodleLinked && (
             <output className={styles.linkMoodleBanner}>
               <div className={styles.linkMoodleBannerContent}>
@@ -373,7 +384,7 @@ const DashboardPage: React.FC = () => {
           ) : (
             <motion.div
               key={activeKey}
-              initial={{ opacity: 0, y: 6 }}
+              initial={mounted ? { opacity: 0, y: 6 } : false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
             >

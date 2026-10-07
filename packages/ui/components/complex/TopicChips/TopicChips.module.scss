@@ -1,0 +1,61 @@
+.templatesSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.sectionLabel {
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chipsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.chipBtn {
+  font: inherit;
+  font-size: var(--font-xs);
+  padding: 6px var(--space-12);
+  border-radius: var(--border-radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-sizing: border-box;
+  transition:
+    background-color var(--transition-fast) var(--ease-standard),
+    border-color var(--transition-fast) var(--ease-standard),
+    transform var(--transition-fast) var(--ease-standard);
+
+  &:hover {
+    border-color: var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:focus-visible {
+    outline: var(--focus-ring-width) solid var(--accent-primary);
+    outline-offset: var(--focus-ring-offset);
+  }
+}
+
+.chipBtnActive {
+  background: var(--accent-primary);
+  color: var(--accent-text-on-primary);
+  border-color: var(--accent-primary);
+
+  &:hover {
+    background: var(--accent-primary-hover, var(--accent-primary));
+    color: var(--accent-text-on-primary);
+  }
+}

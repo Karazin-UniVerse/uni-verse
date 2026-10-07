@@ -272,6 +272,9 @@ export const uk = {
 
   // Gamification
   'badge.unlocked': 'Досягнення',
+  'admission.admitted': 'Допущено до іспиту ({score} / 60 б. — поріг допуску 30 б. досягнуто)',
+  'admission.notAdmitted':
+    'Не допущено до іспиту ({score} / 60 б. — бракує {remaining} б. для допуску)',
 
   // Modal
   'modal.close': 'Закрити',
@@ -302,6 +305,7 @@ export const uk = {
 
   // Quick Actions
   'quickActions.title': 'Швидкі дії',
+  'quickActions.moodle': 'Moodle LMS',
   'quickActions.moodleBadge': 'Каразінський',
   'quickActions.moodleTitle': 'Відкрити платформу Moodle LMS у новій вкладці',
   'quickActions.moodleDescription': 'Платформа курсів',

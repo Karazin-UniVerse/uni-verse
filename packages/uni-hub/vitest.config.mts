@@ -12,7 +12,7 @@ export default defineConfig({
     alias: {
       '@uni-hub': path.resolve(__dirname, '.'),
       '@core': path.resolve(__dirname, '../core'),
-      '@ui': path.resolve(__dirname, '../ui'),
+      '@ui': path.resolve(__dirname, '../ui/index.ts'),
       '@una': path.resolve(__dirname, '../ui/components/una'),
       react: path.dirname(require.resolve('react/package.json')),
       'react-dom': path.dirname(require.resolve('react-dom/package.json')),

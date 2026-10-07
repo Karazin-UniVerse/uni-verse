@@ -1,0 +1,48 @@
+.statusBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-12);
+  border-radius: var(--border-radius-medium);
+  font-size: var(--font-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+.bannerIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bannerContent {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.bannerSuccess {
+  background: color-mix(in srgb, var(--success-color, #16a34a) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success-color, #16a34a) 30%, transparent);
+  color: var(--text-primary);
+}
+
+.bannerDanger {
+  background: color-mix(in srgb, var(--error-color, #dc2626) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--error-color, #dc2626) 30%, transparent);
+  color: var(--text-primary);
+}
+
+.bannerWarning {
+  background: color-mix(in srgb, var(--warning-color, #ca8a04) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warning-color, #ca8a04) 30%, transparent);
+  color: var(--text-primary);
+}
+
+.bannerInfo {
+  background: color-mix(in srgb, var(--accent-primary, #2563eb) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-primary, #2563eb) 30%, transparent);
+  color: var(--text-primary);
+}

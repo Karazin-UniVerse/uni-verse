@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Award, ChevronRight } from 'lucide-react';
+import { Award } from 'lucide-react';
 import { Empty, Button } from '@una';
+import { GradeFeedItem } from '@ui';
 import type { Assignment } from '@uni-hub/types';
 import type { NavKey } from '@uni-hub/views/dashboard/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -73,35 +74,19 @@ export const RecentGradesFeed: React.FC<RecentGradesFeedProps> = ({
             );
 
             return (
-              <button
+              <GradeFeedItem
                 key={assignment.id}
-                type="button"
-                className={styles.feedItem}
-                onClick={() => onNavigate('assignments')}
-                style={{ animationDelay: `${index * 40}ms` }}
-                title={formatMessage('recentGrades.viewAssignment', {
+                title={assignment.name}
+                courseName={assignment.courseName}
+                dateText={dateStr}
+                score={assignment.grade || formatMessage('recentGrades.passed')}
+                scoreBadgeClassName={toneClass}
+                animationDelayMs={index * 40}
+                titleTooltip={formatMessage('recentGrades.viewAssignment', {
                   name: assignment.name,
                 })}
-              >
-                <div className={styles.feedItemMain}>
-                  <div className={styles.feedItemTitle}>{assignment.name}</div>
-                  <div className={styles.feedItemMeta}>
-                    <span className={styles.courseName}>{assignment.courseName}</span>
-                    <span className={styles.dotSeparator}>•</span>
-                    <span>{dateStr}</span>
-                  </div>
-                </div>
-
-                <div className={styles.feedItemScore}>
-                  <span className={`${styles.scoreBadge} ${toneClass}`}>
-                    {assignment.grade || formatMessage('recentGrades.passed')}
-                  </span>
-                  <ChevronRight
-                    size={16}
-                    style={{ color: 'var(--text-secondary)', opacity: 0.7 }}
-                  />
-                </div>
-              </button>
+                onClick={() => onNavigate('assignments')}
+              />
             );
           })}
         </div>
