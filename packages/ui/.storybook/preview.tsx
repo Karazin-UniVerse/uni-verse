@@ -9,6 +9,7 @@ const THEME_TITLES: Record<AppTheme, string> = {
   cyberpunk: 'Cyberpunk',
   karazinClassic: 'Karazin Classic',
   universeSpace: 'UniVerse Space',
+  karazinGold: 'Karazin Gold',
 };
 
 const preview: Preview = {

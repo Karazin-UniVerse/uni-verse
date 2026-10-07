@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Sun, Moon, Zap, GraduationCap, Orbit, ChevronDown } from 'lucide-react';
+import { Sun, Moon, Zap, GraduationCap, Orbit, Crown, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
 import { Dropdown, DropdownOption, type PopoverPlacement } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -16,6 +16,7 @@ const THEME_ICONS: Record<AppTheme, React.ReactNode> = {
   cyberpunk: <Zap size={18} />,
   karazinClassic: <GraduationCap size={18} />,
   universeSpace: <Orbit size={18} />,
+  karazinGold: <Crown size={18} />,
 };
 
 const THEME_KEYS: Record<AppTheme, TranslationKey> = {
@@ -24,6 +25,7 @@ const THEME_KEYS: Record<AppTheme, TranslationKey> = {
   cyberpunk: 'theme.cyberpunk',
   karazinClassic: 'theme.karazinClassic',
   universeSpace: 'theme.universeSpace',
+  karazinGold: 'theme.karazinGold',
 };
 
 type ThemeSwitcherProps = {
