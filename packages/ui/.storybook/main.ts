@@ -1,6 +1,6 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 
-import { dirname } from 'path';
+import { dirname, resolve } from 'path';
 
 import { fileURLToPath } from 'url';
 
@@ -21,6 +21,15 @@ const config: StorybookConfig = {
     getAbsolutePath('@storybook/addon-mcp'),
   ],
   framework: getAbsolutePath('@storybook/react-vite'),
+  async viteFinal(config) {
+    config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@universe/core': resolve(dirname(fileURLToPath(import.meta.url)), '../../core'),
+    };
+
+    return config;
+  },
 };
 
 export default config;
