@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { Languages, ChevronDown, Check } from 'lucide-react';
+import React, { useState } from 'react';
+import { Languages, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
+import { Dropdown, DropdownOption, type PopoverPlacement } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { AppLanguage } from '@uni-hub/i18n/translations';
 import styles from './LanguageSwitcher.module.scss';
@@ -21,6 +22,13 @@ export type LanguageSwitcherProps = {
 };
 
 type ResolvedPlacement = 'top-down' | 'bottom-up' | 'bottom-up-left' | 'top-down-left';
+
+const PANEL_PLACEMENTS: Record<ResolvedPlacement, PopoverPlacement> = {
+  'top-down': 'bottom-end',
+  'bottom-up': 'top-end',
+  'top-down-left': 'bottom-start',
+  'bottom-up-left': 'top-start',
+};
 
 function getInitialPlacement(placement: LanguageSwitcherProps['placement']): ResolvedPlacement {
   if (
@@ -67,147 +75,81 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
   placement = 'auto',
 }) => {
   const { language, setLanguage, formatMessage } = useLanguage();
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-
   const [resolvedPlacement, setResolvedPlacement] = useState<ResolvedPlacement>(() =>
     getInitialPlacement(placement),
   );
 
   const activeLanguage = LANGUAGES.find((lang) => lang.code === language) || LANGUAGES[0];
 
-  const updatePlacement = () => {
-    if (!triggerRef.current) {
-      return;
-    }
+  const updatePlacement = (trigger: HTMLElement) => {
+    const rect = trigger.getBoundingClientRect();
 
-    const rect = triggerRef.current.getBoundingClientRect();
-    const nextPlacement = resolveDropdownPlacement(placement, rect, window.innerHeight);
-
-    setResolvedPlacement(nextPlacement);
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-        triggerRef.current?.focus();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('keydown', handleKeyDown);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen]);
-
-  const handleSelect = (code: AppLanguage) => {
-    setLanguage(code);
-    setIsOpen(false);
-    triggerRef.current?.focus();
-  };
-
-  const handleToggle = () => {
-    if (!isOpen) {
-      updatePlacement();
-    }
-
-    setIsOpen((prev) => !prev);
-  };
-
-  const getDropdownPlacementClass = () => {
-    switch (resolvedPlacement) {
-      case 'bottom-up-left':
-        return styles.dropUpLeft;
-      case 'top-down-left':
-        return styles.dropDownLeft;
-      case 'top-down':
-        return styles.dropDown;
-      case 'bottom-up':
-      default:
-        return styles.dropUp;
-    }
+    setResolvedPlacement(resolveDropdownPlacement(placement, rect, window.innerHeight));
   };
 
   const isCollapsed = compact && !showLabel;
 
   return (
-    <div
-      ref={containerRef}
-      className={clsx(styles.wrapper, variant === 'sider' && styles.fullWidth, className)}
-    >
-      <button
-        ref={triggerRef}
-        type="button"
-        className={clsx(
-          styles.trigger,
-          variant === 'glass' && styles.glassTrigger,
-          variant === 'sider' && styles.siderTrigger,
-          isCollapsed && styles.collapsedTrigger,
-        )}
-        onClick={handleToggle}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-        aria-label={`${formatMessage('lang.select')}: ${activeLanguage.label}`}
-        title={`${formatMessage('lang.select')}: ${activeLanguage.label}`}
-        // intentional: suppressHydrationWarning – activeLanguage resolved client-side from stored preference; server renders default language
-        suppressHydrationWarning
-      >
-        <Languages size={18} aria-hidden />
-        {showLabel && (
-          <>
-            {/* intentional: suppressHydrationWarning – label text derived from client-side language state */}
-            <span suppressHydrationWarning>{activeLanguage.label}</span>
-            <ChevronDown
-              size={14}
-              className={clsx(styles.chevron, isOpen && styles.chevronOpen)}
-              aria-hidden
-            />
-          </>
-        )}
-      </button>
+    <Dropdown
+      className={className}
+      isFullWidth={variant === 'sider'}
+      isPadded
+      panelLabel={formatMessage('lang.select')}
+      panelRole="listbox"
+      placement={PANEL_PLACEMENTS[resolvedPlacement]}
+      trigger={(triggerProps, isOpen) => (
+        <button
+          {...triggerProps}
+          type="button"
+          className={clsx(
+            styles.trigger,
+            variant === 'glass' && styles.glassTrigger,
+            variant === 'sider' && styles.siderTrigger,
+            isCollapsed && styles.collapsedTrigger,
+          )}
+          onClick={(event) => {
+            if (!isOpen) {
+              updatePlacement(event.currentTarget);
+            }
 
-      {isOpen && (
-        <div
-          className={clsx(styles.dropdown, getDropdownPlacementClass())}
-          role="listbox"
-          aria-label={formatMessage('lang.select')}
+            triggerProps.onClick(event);
+          }}
+          aria-label={`${formatMessage('lang.select')}: ${activeLanguage.label}`}
+          title={`${formatMessage('lang.select')}: ${activeLanguage.label}`}
+          // intentional: suppressHydrationWarning – activeLanguage resolved client-side from stored preference; server renders default language
+          suppressHydrationWarning
         >
-          {LANGUAGES.map((item) => {
-            const isSelected = item.code === language;
-
-            return (
-              <button
-                key={item.code}
-                type="button"
-                className={clsx(styles.option, isSelected && styles.active)}
-                onClick={() => handleSelect(item.code)}
-                role="option"
-                aria-selected={isSelected}
-              >
-                <span className={styles.flag} aria-hidden>
-                  {item.flag}
-                </span>
-                <span>{item.label}</span>
-                {isSelected && <Check size={16} className={styles.checkIcon} aria-hidden />}
-              </button>
-            );
-          })}
-        </div>
+          <Languages size={18} aria-hidden />
+          {showLabel && (
+            <>
+              {/* intentional: suppressHydrationWarning – label text derived from client-side language state */}
+              <span suppressHydrationWarning>{activeLanguage.label}</span>
+              <ChevronDown
+                size={14}
+                className={clsx(styles.chevron, isOpen && styles.chevronOpen)}
+                aria-hidden
+              />
+            </>
+          )}
+        </button>
       )}
-    </div>
+    >
+      {(close) =>
+        LANGUAGES.map((item) => (
+          <DropdownOption
+            key={item.code}
+            icon={item.flag}
+            isSelected={item.code === language}
+            onSelect={() => {
+              setLanguage(item.code);
+              close();
+            }}
+          >
+            {item.label}
+          </DropdownOption>
+        ))
+      }
+    </Dropdown>
   );
 };
 

@@ -167,11 +167,9 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className={styles.page}>
-      <div className={styles.themeBar}>
-        <ThemeSwitcher compact />
-      </div>
-      <div className={styles.languageBar}>
-        <LanguageSwitcher variant="glass" placement="bottom-up" />
+      <div className={styles.toolbar}>
+        <LanguageSwitcher variant="glass" placement="top-down" />
+        <ThemeSwitcher compact className={styles.themeTrigger} />
       </div>
       <div className={styles.center}>
         {isLinkingMoodle ? (

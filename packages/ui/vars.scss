@@ -71,6 +71,9 @@ $space-64: 64px;
   --box-shadow-medium: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -1px rgb(0 0 0 / 6%);
   --box-shadow-large: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -2px rgb(0 0 0 / 5%);
 
+  /* Z-Index */
+  --z-dropdown: 100;
+
   /* Transitions */
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --transition-fast: 150ms var(--ease-standard);

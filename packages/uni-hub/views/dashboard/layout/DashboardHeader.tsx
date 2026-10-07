@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { Menu, Bell, User, Volume2, VolumeX } from 'lucide-react';
-import { Button, Tag, Empty } from '@una';
+import React from 'react';
+import { Menu, Volume2, VolumeX, Bell, User } from 'lucide-react';
+import { Button, Dropdown, Tag, Empty } from '@una';
 import { StreakBadge } from '@uni-hub/components/gamification';
 import { DevFeaturePanel, useFeatures } from '@uni-hub/features';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -27,26 +26,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 }) => {
   const { localeTag, formatMessage } = useLanguage();
   const { isFeaturePanelEnabled } = useFeatures();
-  const [notifOpen, setNotifOpen] = useState(false);
-  const notifRef = useRef<HTMLDivElement>(null);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const userRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const onClick = (event: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
-        setNotifOpen(false);
-      }
-
-      if (userRef.current && !userRef.current.contains(event.target as Node)) {
-        setUserMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', onClick);
-
-    return () => document.removeEventListener('mousedown', onClick);
-  }, []);
 
   const handleLogout = async () => {
     try {
@@ -101,81 +80,78 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
         </Button>
 
-        <div className={styles.notifWrap} ref={notifRef}>
-          <Button
-            type="button"
-            variant="secondary"
-            size="medium"
-            isTransparent
-            onClick={() => setNotifOpen((isOpen) => !isOpen)}
-            aria-label={formatMessage('header.notifications')}
-          >
-            <Bell size={18} />
-            {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
-          </Button>
-
-          {notifOpen && (
-            <motion.div
-              className={styles.notifDropdown}
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.15 }}
+        <Dropdown
+          width={360}
+          trigger={(triggerProps) => (
+            <Button
+              {...triggerProps}
+              type="button"
+              variant="secondary"
+              size="medium"
+              isTransparent
+              aria-label={formatMessage('header.notifications')}
             >
-              <div className={styles.notifHeader}>
-                <strong>{formatMessage('header.notifications')}</strong>
-                {unreadCount > 0 && (
-                  <Tag tone="info">
-                    {unreadCount} {formatMessage('header.unreadCount')}
-                  </Tag>
-                )}
-              </div>
-              <div className={styles.notifList}>
-                {notifications.length > 0 ? (
-                  notifications.map((item) => {
-                    const message = stripHtml(item.message);
-
-                    return (
-                      <div
-                        key={item.id}
-                        className={`${styles.notifItem} ${item.read ? '' : styles.unread}`}
-                      >
-                        <div className={styles.notifSubject}>{item.subject}</div>
-                        <div className={styles.muted}>
-                          {message.length > 100 ? `${message.substring(0, 100)}...` : message}
-                        </div>
-                        <div className={styles.notifTime}>
-                          {new Date(item.timecreated * 1000).toLocaleString(localeTag)}
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <Empty description={formatMessage('header.notifications.empty')} />
-                )}
-              </div>
-            </motion.div>
+              <Bell size={18} />
+              {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
+            </Button>
           )}
-        </div>
-        <div className={styles.userWrap} ref={userRef}>
-          <button
-            type="button"
-            className={styles.user}
-            title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
-            aria-label={formatMessage('header.userMenu')}
-            onClick={() => setUserMenuOpen((open) => !open)}
-            aria-haspopup="menu"
-            aria-expanded={userMenuOpen}
-            // intentional: suppressHydrationWarning – user profile is hydrated from client localStorage
-            suppressHydrationWarning
-          >
-            <span className={styles.avatar}>
-              <User size={16} />
-            </span>
-            {/* intentional: suppressHydrationWarning – user profile is hydrated from client localStorage */}
-            <span suppressHydrationWarning>{activeStudentProfile.fullName}</span>
-          </button>
+        >
+          <div className={styles.notifHeader}>
+            <strong>{formatMessage('header.notifications')}</strong>
+            {unreadCount > 0 && (
+              <Tag tone="info">
+                {unreadCount} {formatMessage('header.unreadCount')}
+              </Tag>
+            )}
+          </div>
+          <div className={styles.notifList}>
+            {notifications.length > 0 ? (
+              notifications.map((item) => {
+                const message = stripHtml(item.message);
 
-          {userMenuOpen && (
+                return (
+                  <div
+                    key={item.id}
+                    className={`${styles.notifItem} ${item.read ? '' : styles.unread}`}
+                  >
+                    <div className={styles.notifSubject}>{item.subject}</div>
+                    <div className={styles.muted}>
+                      {message.length > 100 ? `${message.substring(0, 100)}...` : message}
+                    </div>
+                    <div className={styles.notifTime}>
+                      {new Date(item.timecreated * 1000).toLocaleString(localeTag)}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <Empty description={formatMessage('header.notifications.empty')} />
+            )}
+          </div>
+        </Dropdown>
+
+        <Dropdown
+          panelRole="menu"
+          width={240}
+          trigger={(triggerProps) => (
+            <button
+              {...triggerProps}
+              type="button"
+              className={styles.user}
+              title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
+              aria-label={formatMessage('header.userMenu')}
+              // intentional: suppressHydrationWarning – user profile is hydrated from client localStorage
+              suppressHydrationWarning
+            >
+              <span className={styles.avatar}>
+                <User size={16} />
+              </span>
+              {/* intentional: suppressHydrationWarning – user profile is hydrated from client localStorage */}
+              <span suppressHydrationWarning>{activeStudentProfile.fullName}</span>
+            </button>
+          )}
+        >
+          {(close) => (
             <UserDropdown
               activeStudentProfile={activeStudentProfile}
               isMoodleLinked={isMoodleLinked}
@@ -183,11 +159,11 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               onToggleSound={onToggleSound}
               onOpenLinkMoodle={onOpenLinkMoodle}
               onOpenUnlinkMoodle={onOpenUnlinkMoodle}
-              onClose={() => setUserMenuOpen(false)}
+              onClose={close}
               onLogout={handleLogout}
             />
           )}
-        </div>
+        </Dropdown>
       </div>
     </header>
   );

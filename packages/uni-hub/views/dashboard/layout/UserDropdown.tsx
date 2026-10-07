@@ -2,7 +2,6 @@
 
 import React from 'react';
 import clsx from 'clsx';
-import { motion } from 'framer-motion';
 import { Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
@@ -52,13 +51,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   const statusDetails = getMoodleStatusDetails(Boolean(isMoodleLinked));
 
   return (
-    <motion.div
-      className={styles.userDropdown}
-      role="menu"
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.15 }}
-    >
+    <>
       <div className={styles.userDropdownHeader}>
         {/* intentional: suppressHydrationWarning – student name loaded client-side */}
         <strong suppressHydrationWarning>{activeStudentProfile.fullName}</strong>
@@ -189,6 +182,6 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
           </Button>
         </div>
       </div>
-    </motion.div>
+    </>
   );
 };
