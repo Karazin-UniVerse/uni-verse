@@ -14,13 +14,20 @@ export function extractNotionPageId(text) {
     return null;
   }
 
-  // Matches 32-hex UUID with or without hyphens at the end of notion URLs or standalone
+  // 1. Matches query param ?p=... or &p=... used when copying links from Notion peek/modal views
+  const queryParamMatch = text.match(/[?&]p=([0-9a-f]{32})(?:[&/\s?#]|$)/i);
+
+  if (queryParamMatch?.[1]) {
+    return queryParamMatch[1].toLowerCase();
+  }
+
+  // 2. Matches 32-hex UUID with or without hyphens at the end of notion URLs or standalone
   const urlMatch = text.match(
     /(?:notion\.(?:so|com)\/(?:[^/\s?#]+\/)?(?:[^/\s?#]+-)?([0-9a-f]{32}))/i,
   );
 
   if (urlMatch?.[1]) {
-    return urlMatch[1];
+    return urlMatch[1].toLowerCase();
   }
 
   const hyphenatedMatch = text.match(
@@ -28,7 +35,7 @@ export function extractNotionPageId(text) {
   );
 
   if (hyphenatedMatch) {
-    return hyphenatedMatch[0].replace(/-/g, '');
+    return hyphenatedMatch[0].replace(/-/g, '').toLowerCase();
   }
 
   return null;
@@ -380,7 +387,24 @@ export async function handlePullRequestEvent() {
   let page = null;
 
   if (taskInfo.pageId) {
-    page = await fetchNotionPage({ pageId: taskInfo.pageId, token: notionToken });
+    const fetchedPage = await fetchNotionPage({ pageId: taskInfo.pageId, token: notionToken });
+
+    if (fetchedPage) {
+      const hasPrProperty = Boolean(fetchedPage.properties?.['GitHub PRs']);
+      const pageTicketCode = fetchedPage.properties?.['Ticket Code']?.formula?.string || '';
+      const isCodeMismatch =
+        taskInfo.ticketCode &&
+        pageTicketCode &&
+        pageTicketCode.toLowerCase() !== taskInfo.ticketCode.toLowerCase();
+
+      if (hasPrProperty && !isCodeMismatch) {
+        page = fetchedPage;
+      } else {
+        console.warn(
+          `Page ${taskInfo.pageId} is not a valid task item (hasPrProperty=${hasPrProperty}, isCodeMismatch=${Boolean(isCodeMismatch)}). Falling back to database query.`,
+        );
+      }
+    }
   }
 
   if (!page && taskInfo.taskId) {
@@ -395,6 +419,14 @@ export async function handlePullRequestEvent() {
   if (!page) {
     console.warn(
       `Could not find matching Notion task for ID ${taskInfo.taskId || taskInfo.pageId}.`,
+    );
+
+    return;
+  }
+
+  if (!page.properties?.['GitHub PRs']) {
+    console.warn(
+      `Target Notion page "${page.id}" does not have property "GitHub PRs". Skipping Notion PR link.`,
     );
 
     return;

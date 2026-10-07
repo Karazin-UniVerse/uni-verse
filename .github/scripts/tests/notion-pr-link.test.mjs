@@ -17,11 +17,17 @@ test('extractNotionPageId extracts 32-hex UUID from various Notion URL formats',
     'https://app.notion.com/p/Add-integration-for-Notion-3f1f8cf15c6180b5897cd9aa240d8e0c';
   const url3 = 'https://notion.so/3f1f8cf15c6180b5897cd9aa240d8e0c?pvs=4';
   const hyphenated = '3f1f8cf1-5c61-80b5-897c-d9aa240d8e0c';
+  const peekUrl =
+    'https://app.notion.com/p/Projects-Dashboard-5e2f8cf15c618313b91681676558dc0d?p=3eef8cf15c6180c5bebafb944e3feb11&pm=s';
+  const modalUrl =
+    'https://notion.so/workspace/Dashboard-11111111111111111111111111111111?p=22222222222222222222222222222222';
 
   assert.equal(extractNotionPageId(url1), '3f1f8cf15c6180b5897cd9aa240d8e0c');
   assert.equal(extractNotionPageId(url2), '3f1f8cf15c6180b5897cd9aa240d8e0c');
   assert.equal(extractNotionPageId(url3), '3f1f8cf15c6180b5897cd9aa240d8e0c');
   assert.equal(extractNotionPageId(hyphenated), '3f1f8cf15c6180b5897cd9aa240d8e0c');
+  assert.equal(extractNotionPageId(peekUrl), '3eef8cf15c6180c5bebafb944e3feb11');
+  assert.equal(extractNotionPageId(modalUrl), '22222222222222222222222222222222');
   assert.equal(extractNotionPageId('https://github.com/pull/199'), null);
   assert.equal(extractNotionPageId(''), null);
   assert.equal(extractNotionPageId(null), null);
