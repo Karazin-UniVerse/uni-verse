@@ -37,25 +37,14 @@ const getEnvDefaults = (): FeatureFlags => {
 
 export interface FeatureToggleProviderProps {
   children?: React.ReactNode;
-  allowOverrides?: boolean;
-  initialFlags?: Partial<FeatureFlags>;
 }
 
-export const FeatureToggleProvider: React.FC<FeatureToggleProviderProps> = ({
-  children,
-  allowOverrides: allowOverridesProp,
-  initialFlags,
-}) => {
-  // Production safeguard: feature overrides are disabled by default in production
-  const isProduction = process.env.NODE_ENV === 'production';
-  const allowOverrides = allowOverridesProp ?? !isProduction;
+export const FeatureToggleProvider: React.FC<FeatureToggleProviderProps> = ({ children }) => {
+  // Production safeguard: feature overrides are disabled in production
+  const allowOverrides = process.env.NODE_ENV !== 'production';
 
   const envDefaults = useMemo(() => getEnvDefaults(), []);
-
-  const store = useMemo(
-    () => createOverrideStore({ allowOverrides, initialFlags }),
-    [allowOverrides, initialFlags],
-  );
+  const store = useMemo(() => createOverrideStore({ allowOverrides }), [allowOverrides]);
 
   const overrides = useSyncExternalStore(
     store.subscribe,

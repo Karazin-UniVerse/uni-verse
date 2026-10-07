@@ -53,7 +53,10 @@ describe('FeatureToggleContext and Components', () => {
     expect(html).toContain('id="panel">false</span>');
   });
 
-  it('applies initialFlags overrides correctly', () => {
+  it('resolves environment variables in FeatureToggleProvider correctly', () => {
+    process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
+    process.env.NEXT_PUBLIC_FEATURE_EDEAN = 'true';
+
     const TestConsumer = () => {
       const { isMoodleIntegrationEnabled, isEDeanEnabled } = useFeatures();
 
@@ -67,14 +70,26 @@ describe('FeatureToggleContext and Components', () => {
 
     const tree = React.createElement(
       FeatureToggleProvider,
-      { initialFlags: { isMoodleIntegrationEnabled: false, isEDeanEnabled: false } },
+      null,
       React.createElement(TestConsumer),
     );
 
     const html = renderToString(tree);
 
-    expect(html).toContain('id="moodle">false</span>');
-    expect(html).toContain('id="edean">false</span>');
+    expect(html).toContain('id="moodle">true</span>');
+    expect(html).toContain('id="edean">true</span>');
+  });
+
+  it('applies initialFlags on createOverrideStore correctly', () => {
+    const store = createOverrideStore({
+      allowOverrides: true,
+      initialFlags: { isMoodleIntegrationEnabled: false, isEDeanEnabled: false },
+    });
+
+    const snapshot = store.getSnapshot();
+
+    expect(snapshot.isMoodleIntegrationEnabled).toBe(false);
+    expect(snapshot.isEDeanEnabled).toBe(false);
   });
 
   it('throws an error when useFeatures is called outside FeatureToggleProvider', () => {
