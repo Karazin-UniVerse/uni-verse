@@ -101,6 +101,15 @@ $space-64: 64px;
   --gray-800: #343a40;
   --gray-900: #212529;
 
+  /* Slate Palette (light theme: cool grays with a blue undertone) */
+  --slate-50: #f4f6fb;
+  --slate-100: #eaeef6;
+  --slate-200: #dde3ee;
+  --slate-300: #cbd3e1;
+  --slate-400: #8a94a7;
+  --slate-500: #5b667c;
+  --slate-900: #0f172a;
+
   /* Night Palette (dark themes) */
   --night-950: #0b0c10;
   --night-900: #161922;
@@ -282,6 +291,36 @@ $space-64: 64px;
     radial-gradient(at 100% 0%, rgb(var(--secondary-rgb), var(--mesh-alpha)) 0, transparent 50%),
     radial-gradient(at 100% 100%, rgb(var(--primary-rgb), var(--mesh-alpha)) 0, transparent 50%),
     radial-gradient(at 0% 100%, rgb(var(--secondary-rgb), var(--mesh-alpha)) 0, transparent 50%);
+}
+
+/* -----------------------------------------
+   Light Theme refinement: crisper contrast.
+   Scoped to light only so the shared defaults above stay as they are for the other themes.
+   ----------------------------------------- */
+:root:not([data-theme]),
+[data-theme='light'] {
+  /* White surfaces on a cool canvas; stronger borders and text */
+  --neutral-surface: var(--white-10);
+  --neutral-border: var(--slate-300);
+  --neutral-text-primary: var(--slate-900);
+  --neutral-text-secondary: var(--slate-500);
+  --neutral-text-disabled: var(--slate-400);
+  --accent-secondary: var(--slate-100);
+  --accent-secondary-hover: var(--slate-200);
+  --accent-secondary-active: var(--slate-300);
+  --bg-hover: var(--slate-100);
+  --btn-primary-disabled: var(--slate-100);
+
+  /* Cards stand out with a visible border and a soft layered shadow */
+  --card-border: rgb(15 23 42 / 10%);
+  --card-shadow: 0 1px 2px rgb(15 23 42 / 6%), 0 4px 12px rgb(15 23 42 / 6%);
+  --card-shadow-hover: 0 2px 4px rgb(15 23 42 / 8%), 0 12px 28px rgb(15 23 42 / 10%);
+
+  /* Mesh-gradient canvas, white header, accent bar on the active nav item */
+  --bg-page: var(--bg-mesh), var(--slate-50);
+  --bg-content: transparent;
+  --header-bg: var(--white-10);
+  --sidebar-item-active-accent: var(--accent-primary);
 }
 
 /* -----------------------------------------
