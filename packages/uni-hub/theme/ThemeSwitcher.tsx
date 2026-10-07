@@ -6,7 +6,8 @@ import clsx from 'clsx';
 import { Dropdown, DropdownOption, type PopoverPlacement } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
-import { APP_THEMES, useTheme, type AppTheme } from './ThemeContext';
+import { APP_THEMES, type AppTheme } from '@core/constants/themes';
+import { useTheme } from './ThemeContext';
 import styles from './ThemeSwitcher.module.scss';
 
 const THEME_ICONS: Record<AppTheme, React.ReactNode> = {

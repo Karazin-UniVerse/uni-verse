@@ -35,31 +35,23 @@
   color: var(--red-800);
 }
 
-:global([data-theme='dark']) .success,
-:global([data-theme='universeSpace']) .success,
-:global([data-theme='cyberpunk']) .success {
+:global([data-color-scheme='dark']) .success {
   background: rgb(34 197 94 / 15%);
   color: var(--green-300);
 }
 
-:global([data-theme='dark']) .warning,
-:global([data-theme='universeSpace']) .warning,
-:global([data-theme='cyberpunk']) .warning {
+:global([data-color-scheme='dark']) .warning {
   background: rgb(245 158 11 / 15%);
   color: var(--warning-light, #fbbf24);
   border-color: #92400e;
 }
 
-:global([data-theme='dark']) .info,
-:global([data-theme='universeSpace']) .info,
-:global([data-theme='cyberpunk']) .info {
+:global([data-color-scheme='dark']) .info {
   background: rgb(52 102 231 / 20%);
   color: var(--blue-300);
 }
 
-:global([data-theme='dark']) .danger,
-:global([data-theme='universeSpace']) .danger,
-:global([data-theme='cyberpunk']) .danger {
+:global([data-color-scheme='dark']) .danger {
   background: rgb(239 68 68 / 15%);
   color: var(--red-300);
 }
