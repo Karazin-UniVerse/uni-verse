@@ -1,0 +1,44 @@
+@use '../../../breakpoints.scss' as *;
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-12);
+  background: var(--bg-surface);
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--border-radius-medium);
+  border: 1px solid var(--border-color);
+  box-sizing: border-box;
+
+  @include narrower-than('xs') {
+    grid-template-columns: 1fr;
+  }
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  min-width: 0;
+
+  .infoIcon {
+    flex-shrink: 0;
+    color: var(--accent-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .infoText {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    strong {
+      color: var(--text-primary);
+      margin-right: var(--space-4);
+    }
+  }
+}
