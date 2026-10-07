@@ -13,7 +13,7 @@ import { useNow } from '@uni-hub/hooks/useNow';
 import type { OverviewTabProps } from '../types';
 import { mockKarazinCurriculum } from '../constants';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { useFeatures } from '@uni-hub/components/features';
+import { useFeatures } from '@uni-hub/features';
 import { StudentCard } from './StudentCard';
 import { StatCardGrid } from './StatCardGrid';
 import { UpcomingEventsList } from './UpcomingEventsList';

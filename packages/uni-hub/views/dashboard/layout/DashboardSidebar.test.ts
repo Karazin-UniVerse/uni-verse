@@ -3,7 +3,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
-import { FeatureToggleProvider } from '@uni-hub/components/features';
+import { FeatureToggleProvider } from '@uni-hub/features';
 import { NAV_ITEMS, getVisibleNavItems, DashboardSidebar } from './DashboardSidebar';
 
 describe('DashboardSidebar navigation & feature gating', () => {

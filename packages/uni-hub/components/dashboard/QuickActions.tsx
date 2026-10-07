@@ -5,7 +5,7 @@ import { Globe, FileText, Calendar, Building2, ExternalLink, Sparkles } from 'lu
 import type { Assignment } from '@uni-hub/types';
 import type { NavKey } from '@uni-hub/views/dashboard/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { useFeatures } from '@uni-hub/components/features';
+import { useFeatures } from '@uni-hub/features';
 import { DeanContactModal } from './DeanContactModal';
 import { calculatePendingAssignmentsCount } from './helpers';
 import styles from './QuickActions.module.scss';

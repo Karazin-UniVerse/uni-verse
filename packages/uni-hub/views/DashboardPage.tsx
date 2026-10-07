@@ -28,7 +28,7 @@ import {
   OpportunitiesTab,
   NAV_ITEMS,
 } from './dashboard';
-import { useFeatures } from '@uni-hub/components/features';
+import { useFeatures } from '@uni-hub/features';
 import { formatLastSync } from './dashboard/tabs/helpers';
 import { useDashboardData, clearUserSessionStorage } from './dashboard/hooks/useDashboardData';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
