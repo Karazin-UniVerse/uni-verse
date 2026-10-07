@@ -33,11 +33,10 @@ Defaults live in the `:root, [data-theme='light']` block and equal what each reg
 | `--bg-content`                 | `var(--neutral-surface)`                                        | `.content`                                          |
 | `--sidebar-bg`                 | `var(--bg-surface)`                                             | `.sider`                                            |
 | `--sidebar-border`             | `var(--border-color)`                                           | `.sider`, `.brand`, `.siderFooter`                  |
+| `--sidebar-brand`              | `var(--text-primary)`                                           | `.brand` (classic: gold)                            |
 | `--sidebar-text`               | `var(--text-secondary)`                                         | `.navItem`, footer buttons, switchers               |
 | `--sidebar-text-strong`        | `var(--text-primary)`                                           | `.brand`, hover states, Moodle status link          |
 | `--sidebar-text-active`        | `var(--blue-700)` (dark: `--white-10`, cyberpunk: `--blue-400`) | `.active`                                           |
-| `--sidebar-control`            | `var(--accent-primary)`                                         | collapse button                                     |
-| `--sidebar-control-hover`      | `var(--accent-primary-hover)`                                   | collapse button hover                               |
 | `--sidebar-item-hover-bg`      | `var(--bg-hover)`                                               | hover of footer buttons, switchers, collapse button |
 | `--sidebar-item-active-bg`     | `color-mix(in srgb, var(--accent-primary) 18%, transparent)`    | `.activePill`                                       |
 | `--sidebar-item-active-accent` | `transparent`                                                   | left border of `.activePill`                        |
@@ -52,10 +51,11 @@ The per-theme `.active` color blocks in `DashboardPage.module.scss` (`:global([d
 
 ## Theme `karazinClassic`
 
+- Gold scale `--karazin-gold-100..700`; gold is used for the brand, the active-item bar, sidebar hairlines, hover tint and the header hairline.
 - New `--karazin-*` primitives in `vars.scss`, next to `--cyberpunk-*`: navy, blue, gold, light gray. Values are sampled from the reference screenshot (sidebar `#142545`, primary and active pill `#203979`, content `#f5f7fb`); the gold `#e0b04a` is an approximation.
 - Overrides semantic tokens (`--neutral-*`, `--accent-*`, `--btn-*`, `--bg-*`, `--text-*`, `--border-color`, `--focus-ring-color`, `--bg-hover`, `*-rgb` channels) for a light page.
 - Region tokens: navy `--sidebar-bg`, light `--sidebar-text` and `--sidebar-text-active`, a lighter blue `--sidebar-item-active-bg`, gold `--sidebar-item-active-accent`, `--sidebar-border` as a translucent light line; `--bg-content` light gray, `--bg-card` white, white header.
-- `--font-family-heading` set to a system serif stack (`Georgia, 'Times New Roman', serif`); `--font-heading` shorthand follows. No new web font. Precedent: cyberpunk overrides the same token.
+- `--font-family-heading` set to Source Serif 4 (loaded with `next/font/google`, latin + cyrillic, `preload: false` so other themes do not download it), falling back to Georgia; `--font-mono` set to the system monospace stack. Body text stays on the system sans stack. Precedent: cyberpunk overrides the same tokens. The first iteration used Georgia, whose heavy bold and old-style figures clashed with the sans text.
 - `--chart-*` tokens are not overridden: they alias `--accent-primary` and the semantic tokens, so charts follow the palette.
 - No hardcoded hex outside `vars.scss` (design-system rule).
 
@@ -79,3 +79,10 @@ Today the theme list is repeated in `AppTheme`, the stored-value check in `Theme
 
 - The Karazin sidebar is dark inside a light theme: any sidebar child that reads global `--text-*` or `--border-color` would be unreadable. Mitigation: all sidebar styles read `--sidebar-*` tokens, including `.brand`, footer buttons and the Moodle status link; verify in the browser.
 - `html, body` switches from `background-color` to `background`; check there is no flash or scroll-area mismatch.
+
+## Follow-up: sidebar size
+
+- Expanded sidebar width 240px -> 264px (all themes); nav items and footer buttons use `--font-sm` (14px).
+- Collapsed sidebar width 72px -> 88px. The collapse toggle moves out of the brand row to a plain round handle on the sidebar's right edge (24px, vertically centered on the 64px header; surface, border and text colors from the system tokens; the chevron rotates 180deg when collapsed; hidden below `lg`, where the sidebar is always collapsed). The brand row holds only the `U` mark, centered on the same axis as the nav icons. Both widths are SCSS variables in `DashboardPage.module.scss`.
+- Toggle labels moved to i18n keys `sidebar.collapse` and `sidebar.expand`; the toggle carries `aria-expanded` and `aria-controls`.
+- The `--sidebar-control*` tokens from the first iteration were removed (the toggle left the sidebar).

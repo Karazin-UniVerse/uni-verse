@@ -254,11 +254,10 @@ $space-64: 64px;
   /* Sidebar */
   --sidebar-bg: var(--bg-surface);
   --sidebar-border: var(--border-color);
+  --sidebar-brand: var(--text-primary);
   --sidebar-text: var(--text-secondary);
   --sidebar-text-strong: var(--text-primary);
   --sidebar-text-active: var(--blue-700);
-  --sidebar-control: var(--accent-primary);
-  --sidebar-control-hover: var(--accent-primary-hover);
   --sidebar-item-hover-bg: var(--bg-hover);
   --sidebar-item-active-bg: color-mix(in srgb, var(--accent-primary) 18%, transparent);
   --sidebar-item-active-accent: transparent;
@@ -453,7 +452,13 @@ $space-64: 64px;
   --karazin-gray-100: #eef2f9;
   --karazin-gray-200: #e3e8f1;
   --karazin-gray-300: #d3dbea;
+  --karazin-gold-100: #fbf3dc;
+  --karazin-gold-200: #f6e3ae;
+  --karazin-gold-300: #f0d283;
+  --karazin-gold-400: #e8c05f;
   --karazin-gold-500: #e0b04a;
+  --karazin-gold-600: #c4902c;
+  --karazin-gold-700: #9a6f1d;
 
   /* Neutral Colors override */
   --neutral-bg: var(--white-10);
@@ -488,18 +493,21 @@ $space-64: 64px;
 
   /* Navy sidebar */
   --sidebar-bg: var(--karazin-navy-900);
-  --sidebar-border: rgb(255 255 255 / 12%);
+  --sidebar-border: rgb(224 176 74 / 22%);
+  --sidebar-brand: var(--karazin-gold-300);
   --sidebar-text: var(--karazin-navy-100);
   --sidebar-text-strong: var(--white-10);
   --sidebar-text-active: var(--white-10);
-  --sidebar-control: var(--karazin-navy-100);
-  --sidebar-control-hover: var(--white-10);
-  --sidebar-item-hover-bg: rgb(255 255 255 / 8%);
+  --sidebar-item-hover-bg: rgb(224 176 74 / 12%);
   --sidebar-item-active-bg: var(--karazin-navy-700);
   --sidebar-item-active-accent: var(--karazin-gold-500);
 
-  /* Serif headings */
-  --font-family-heading: georgia, 'Times New Roman', serif;
+  /* White header with a gold hairline */
+  --header-border: var(--karazin-gold-200);
+
+  /* Serif headings: Source Serif 4 from next/font, Georgia when it is not loaded */
+  --font-family-heading: var(--font-source-serif, georgia), 'Times New Roman', serif;
+  --font-mono: ui-monospace, 'SF Mono', menlo, consolas, monospace;
 }
 
 /* ==========================================================================

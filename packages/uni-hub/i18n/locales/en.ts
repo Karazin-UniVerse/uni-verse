@@ -75,6 +75,8 @@ export const en = {
 
   // Sidebar & Header
   'sidebar.logout': 'Log out',
+  'sidebar.collapse': 'Collapse menu',
+  'sidebar.expand': 'Expand menu',
   'sidebar.moodleConnected': 'Moodle LMS (connected)',
   'header.notifications': 'Notifications',
   'header.notifications.empty': 'No notifications',

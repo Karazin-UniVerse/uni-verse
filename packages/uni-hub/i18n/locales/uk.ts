@@ -73,6 +73,8 @@ export const uk = {
 
   // Sidebar & Header
   'sidebar.logout': 'Вийти',
+  'sidebar.collapse': 'Згорнути меню',
+  'sidebar.expand': 'Розгорнути меню',
   'sidebar.moodleConnected': 'Moodle LMS (підключено)',
   'header.notifications': 'Сповіщення',
   'header.notifications.empty': 'Немає сповіщень',
