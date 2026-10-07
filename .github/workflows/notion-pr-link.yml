@@ -1,0 +1,30 @@
+name: Notion PR Link
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, ready_for_review, closed]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  link-notion:
+    name: Link PR to Notion Task
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Run Notion PR Link
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_TASKS_DATABASE_ID: 'cfaf8cf15c6183b4836b013e7e8cd25c'
+        run: node .github/scripts/notion-pr-link.mjs
