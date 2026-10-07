@@ -382,6 +382,7 @@ $sidebar-collapsed-width: 88px;
 }
 
 :global([data-theme='dark']) .offlineBanner,
+:global([data-theme='universeSpace']) .offlineBanner,
 :global([data-theme='cyberpunk']) .offlineBanner {
   color: var(--warning-light, #fbbf24);
 }
@@ -549,7 +550,8 @@ $sidebar-collapsed-width: 88px;
 }
 
 .statCard {
-  background: var(--bg-surface);
+  background: var(--bg-card);
+  backdrop-filter: var(--card-backdrop);
   border: 1px solid var(--card-border);
   border-radius: 16px;
   padding: var(--space-24);
@@ -638,7 +640,8 @@ $sidebar-collapsed-width: 88px;
 }
 
 .panel {
-  background: var(--bg-surface);
+  background: var(--bg-card);
+  backdrop-filter: var(--card-backdrop);
   border: 1px solid var(--card-border);
   border-radius: 16px;
   padding: var(--space-24);
@@ -791,7 +794,8 @@ $sidebar-collapsed-width: 88px;
 }
 
 .courseCard {
-  background: var(--bg-surface);
+  background: var(--bg-card);
+  backdrop-filter: var(--card-backdrop);
   border: 1px solid var(--card-border);
   border-radius: 16px;
   padding: var(--space-24);
@@ -860,7 +864,8 @@ $sidebar-collapsed-width: 88px;
 .assignmentCard {
   width: 100%;
   text-align: left;
-  background: var(--bg-surface);
+  background: var(--bg-card);
+  backdrop-filter: var(--card-backdrop);
   border: 1px solid var(--card-border);
   border-left: 4px solid var(--accent-primary);
   border-radius: var(--border-radius-large, 12px);
@@ -894,7 +899,8 @@ $sidebar-collapsed-width: 88px;
 .assignmentCardAwaitingReview {
   border-color: color-mix(in srgb, var(--warning-color) 25%, var(--card-border));
   border-left-color: var(--warning-color);
-  background: color-mix(in srgb, var(--warning-color) 3%, var(--bg-surface));
+  background: color-mix(in srgb, var(--warning-color) 3%, var(--bg-card));
+  backdrop-filter: var(--card-backdrop);
 
   &:hover {
     border-color: color-mix(in srgb, var(--warning-color) 40%, var(--card-border));
@@ -905,7 +911,8 @@ $sidebar-collapsed-width: 88px;
 .assignmentCardCompleted {
   border-color: color-mix(in srgb, var(--success-color) 25%, var(--card-border));
   border-left-color: var(--success-color);
-  background: color-mix(in srgb, var(--success-color) 3%, var(--bg-surface));
+  background: color-mix(in srgb, var(--success-color) 3%, var(--bg-card));
+  backdrop-filter: var(--card-backdrop);
 
   &:hover {
     border-color: color-mix(in srgb, var(--success-color) 40%, var(--card-border));
@@ -1211,7 +1218,8 @@ $sidebar-collapsed-width: 88px;
 }
 
 .studentCard {
-  background: var(--bg-surface);
+  background: var(--bg-card);
+  backdrop-filter: var(--card-backdrop);
   border: 1px solid var(--card-border); /* Ледь помітна рамка замість різкої */
   border-radius: 16px; /* Збільшене заокруглення */
   padding: var(--space-24);
