@@ -22,7 +22,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 }) => {
   const { formatMessage } = useLanguage();
   const flags = useFeatures();
-  const visibleNavItems = getVisibleNavItems(flags);
+  const visibleNavItems = getVisibleNavItems(flags, true);
 
   return (
     <nav className={styles.container} aria-label="Мобільна навігація">

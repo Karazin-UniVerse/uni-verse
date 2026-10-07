@@ -15,6 +15,7 @@ import {
   isMoodleUnlinked,
   isUnauthorizedError,
   loadCachedDashboardData,
+  persistDashboardSnapshot,
   syncStudentProfile,
 } from './helpers';
 import { isBrowser } from '@uni-hub/utils/browser';

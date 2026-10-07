@@ -113,6 +113,7 @@ export const uk = {
   'student.fullTime': 'Денна форма',
   'student.budget': 'Бюджет',
   'student.scholarship': 'Відмінник (Академічна стипендія)',
+  'student.moodleStatus': 'Moodle: {status}',
   'student.faculty': 'Факультет / Інститут',
   'student.department': 'Кафедра',
   'student.courseAndGroup': 'Курс / Академічна група',

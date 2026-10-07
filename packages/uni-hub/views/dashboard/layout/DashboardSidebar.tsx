@@ -23,7 +23,7 @@ import { useFeatures } from '@uni-hub/features';
 import type { FeatureFlags, FeatureFlagKey } from '@core/constants/features';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
-import type { DashboardSidebarProps, NavKey } from '../types';
+import { type DashboardSidebarProps, NavKey } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export interface NavItemConfig {
@@ -36,41 +36,41 @@ export interface NavItemConfig {
 
 export const NAV_ITEMS: NavItemConfig[] = [
   {
-    key: 'overview',
+    key: NavKey.Overview,
     icon: <LayoutDashboard size={18} />,
     labelKey: 'nav.overview.full',
     shortLabelKey: 'nav.overview',
   },
   {
-    key: 'courses',
+    key: NavKey.Courses,
     icon: <BookOpen size={18} />,
     labelKey: 'nav.courses.full',
     shortLabelKey: 'nav.courses',
     featureFlag: 'isMoodleIntegrationEnabled',
   },
   {
-    key: 'grades',
+    key: NavKey.Grades,
     icon: <ClipboardList size={18} />,
     labelKey: 'nav.grades.full',
     shortLabelKey: 'nav.grades',
     featureFlag: 'isMoodleIntegrationEnabled',
   },
   {
-    key: 'schedule',
+    key: NavKey.Schedule,
     icon: <CalendarDays size={18} />,
     labelKey: 'nav.schedule.full',
     shortLabelKey: 'nav.schedule',
     featureFlag: 'isEDeanEnabled',
   },
   {
-    key: 'assignments',
+    key: NavKey.Assignments,
     icon: <FileEdit size={18} />,
     labelKey: 'nav.assignments.full',
     shortLabelKey: 'nav.assignments',
     featureFlag: 'isMoodleIntegrationEnabled',
   },
   {
-    key: 'opportunities',
+    key: NavKey.Opportunities,
     icon: <Sparkles size={18} />,
     labelKey: 'nav.opportunities.full',
     shortLabelKey: 'nav.opportunities',
@@ -79,30 +79,16 @@ export const NAV_ITEMS: NavItemConfig[] = [
 ];
 
 export const getVisibleNavItems = (
-  flagsOrLinked: FeatureFlags | boolean = true,
-  isMoodleLinkedParam: boolean = true,
+  flags: FeatureFlags,
+  isMoodleLinked: boolean,
 ): NavItemConfig[] => {
-  let flags: FeatureFlags | undefined;
-  let isMoodleLinked = true;
+  const baseItems = NAV_ITEMS.filter((item) => !item.featureFlag || flags[item.featureFlag]);
 
-  if (typeof flagsOrLinked === 'boolean') {
-    isMoodleLinked = flagsOrLinked;
-  } else if (flagsOrLinked && typeof flagsOrLinked === 'object') {
-    flags = flagsOrLinked;
-    isMoodleLinked = isMoodleLinkedParam;
-  }
-
-  const baseItems = NAV_ITEMS.filter(
-    (item) => !item.featureFlag || (flags ? flags[item.featureFlag] : true),
-  );
-
-  const isMoodleEnabled = flags ? flags.isMoodleIntegrationEnabled : true;
-
-  if (!isMoodleLinked && isMoodleEnabled) {
+  if (!isMoodleLinked && flags.isMoodleIntegrationEnabled) {
     return [
       ...baseItems,
       {
-        key: 'connectMoodle',
+        key: NavKey.ConnectMoodle,
         icon: <Link2 size={18} />,
         labelKey: 'nav.connectMoodle.full',
         shortLabelKey: 'nav.connectMoodle',

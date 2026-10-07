@@ -113,6 +113,7 @@ export const en = {
   'student.fullTime': 'Full-time',
   'student.budget': 'State-funded',
   'student.scholarship': 'Honors (Academic scholarship)',
+  'student.moodleStatus': 'Moodle: {status}',
   'student.faculty': 'Faculty / Institute',
   'student.department': 'Department',
   'student.courseAndGroup': 'Year / Academic Group',

@@ -4,23 +4,32 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
 import { FeatureToggleProvider } from '@uni-hub/features';
+import { NavKey } from '../types';
+import type { FeatureFlags } from '@core/constants/features';
 import { NAV_ITEMS, getVisibleNavItems, DashboardSidebar } from './DashboardSidebar';
+
+const allEnabledFlags: FeatureFlags = {
+  isMoodleIntegrationEnabled: true,
+  isEDeanEnabled: true,
+  isOpportunitiesPlatformEnabled: true,
+  isFeaturePanelEnabled: true,
+};
 
 describe('DashboardSidebar helpers', () => {
   it('returns standard NAV_ITEMS when isMoodleLinked is true', () => {
-    const items = getVisibleNavItems(true);
+    const items = getVisibleNavItems(allEnabledFlags, true);
 
     expect(items).toEqual(NAV_ITEMS);
-    expect(items.some((item) => item.key === 'connectMoodle')).toBe(false);
+    expect(items.some((item) => item.key === NavKey.ConnectMoodle)).toBe(false);
   });
 
   it('includes connectMoodle item when isMoodleLinked is false', () => {
-    const items = getVisibleNavItems(false);
+    const items = getVisibleNavItems(allEnabledFlags, false);
 
     expect(items.length).toBe(NAV_ITEMS.length + 1);
-    expect(items.some((item) => item.key === 'connectMoodle')).toBe(true);
+    expect(items.some((item) => item.key === NavKey.ConnectMoodle)).toBe(true);
 
-    const connectItem = items.find((item) => item.key === 'connectMoodle');
+    const connectItem = items.find((item) => item.key === NavKey.ConnectMoodle);
 
     expect(connectItem?.labelKey).toBe('nav.connectMoodle.full');
     expect(connectItem?.shortLabelKey).toBe('nav.connectMoodle');
@@ -31,43 +40,44 @@ describe('DashboardSidebar navigation & feature gating', () => {
   it('includes all navigation items when all feature flags are enabled', () => {
     expect(NAV_ITEMS).toHaveLength(6);
 
-    const visible = getVisibleNavItems({
-      isMoodleIntegrationEnabled: true,
-      isEDeanEnabled: true,
-      isOpportunitiesPlatformEnabled: true,
-      isFeaturePanelEnabled: true,
-    });
+    const visible = getVisibleNavItems(allEnabledFlags, true);
 
     expect(visible.map((item) => item.key)).toEqual([
-      'overview',
-      'courses',
-      'grades',
-      'schedule',
-      'assignments',
-      'opportunities',
+      NavKey.Overview,
+      NavKey.Courses,
+      NavKey.Grades,
+      NavKey.Schedule,
+      NavKey.Assignments,
+      NavKey.Opportunities,
     ]);
   });
 
   it('filters out Moodle and Opportunities items when flags are disabled (prod default)', () => {
-    const visible = getVisibleNavItems({
-      isMoodleIntegrationEnabled: false,
-      isEDeanEnabled: true,
-      isOpportunitiesPlatformEnabled: false,
-      isFeaturePanelEnabled: false,
-    });
+    const visible = getVisibleNavItems(
+      {
+        isMoodleIntegrationEnabled: false,
+        isEDeanEnabled: true,
+        isOpportunitiesPlatformEnabled: false,
+        isFeaturePanelEnabled: false,
+      },
+      true,
+    );
 
-    expect(visible.map((item) => item.key)).toEqual(['overview', 'schedule']);
+    expect(visible.map((item) => item.key)).toEqual([NavKey.Overview, NavKey.Schedule]);
   });
 
   it('retains only overview if all feature flags are turned off', () => {
-    const visible = getVisibleNavItems({
-      isMoodleIntegrationEnabled: false,
-      isEDeanEnabled: false,
-      isOpportunitiesPlatformEnabled: false,
-      isFeaturePanelEnabled: false,
-    });
+    const visible = getVisibleNavItems(
+      {
+        isMoodleIntegrationEnabled: false,
+        isEDeanEnabled: false,
+        isOpportunitiesPlatformEnabled: false,
+        isFeaturePanelEnabled: false,
+      },
+      true,
+    );
 
-    expect(visible.map((item) => item.key)).toEqual(['overview']);
+    expect(visible.map((item) => item.key)).toEqual([NavKey.Overview]);
   });
 
   it('renders correctly with LanguageProvider, ThemeProvider, and FeatureToggleProvider', () => {

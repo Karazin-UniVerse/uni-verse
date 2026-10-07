@@ -61,10 +61,11 @@ export const StudentCard: React.FC<StudentCardProps> = ({
           )}
           {isMoodleIntegrationEnabled && (
             <Tag tone={isMoodleLinked ? 'success' : 'warning'}>
-              Moodle:{' '}
-              {formatMessage(
-                isMoodleLinked ? 'header.moodleConnected' : 'header.moodleNotConnected',
-              )}
+              {formatMessage('student.moodleStatus', {
+                status: formatMessage(
+                  isMoodleLinked ? 'header.moodleConnected' : 'header.moodleNotConnected',
+                ),
+              })}
             </Tag>
           )}
         </div>

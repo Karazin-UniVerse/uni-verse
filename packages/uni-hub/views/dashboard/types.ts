@@ -9,17 +9,19 @@ import type {
   CourseStatistics,
 } from '@uni-hub/types';
 
-export const NAV_KEYS = [
-  'overview',
-  'courses',
-  'grades',
-  'schedule',
-  'assignments',
-  'connectMoodle',
-  'opportunities',
-] as const;
+export const NavKey = {
+  Overview: 'overview',
+  Courses: 'courses',
+  Grades: 'grades',
+  Schedule: 'schedule',
+  Assignments: 'assignments',
+  ConnectMoodle: 'connectMoodle',
+  Opportunities: 'opportunities',
+} as const;
 
-export type NavKey = (typeof NAV_KEYS)[number];
+export type NavKey = (typeof NavKey)[keyof typeof NavKey];
+
+export const NAV_KEYS = Object.values(NavKey);
 
 const NAV_KEYS_SET: ReadonlySet<string> = new Set(NAV_KEYS);
 
