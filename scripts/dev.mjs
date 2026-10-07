@@ -22,7 +22,6 @@ const ROOT_DIR = process.cwd();
 const ROOT_ENV_PATH = resolve(ROOT_DIR, '.env');
 const ROOT_ENV_EXAMPLE = resolve(ROOT_DIR, '.env.example');
 const UNI_HUB_ENV_PATH = resolve(ROOT_DIR, 'packages', 'uni-hub', '.env.local');
-const UNI_HUB_ENV_EXAMPLE = resolve(ROOT_DIR, 'packages', 'uni-hub', '.env.example');
 const BACKEND_ENV_PATH = resolve(ROOT_DIR, 'packages', 'backend', '.env');
 
 const REMOTE_BACKENDS = {
@@ -80,13 +79,13 @@ async function runCommand(command, args, env = {}) {
   });
 }
 
-function updateEnvFile(filePath, updates, templatePath = ROOT_ENV_EXAMPLE) {
+function updateEnvFile(filePath, updates) {
   let content = '';
 
   if (existsSync(filePath)) {
     content = readFileSync(filePath, 'utf-8');
-  } else if (existsSync(templatePath)) {
-    content = readFileSync(templatePath, 'utf-8');
+  } else if (existsSync(ROOT_ENV_EXAMPLE)) {
+    content = readFileSync(ROOT_ENV_EXAMPLE, 'utf-8');
   }
 
   for (const [key, value] of Object.entries(updates)) {
@@ -206,14 +205,10 @@ async function main() {
     console.log(`\n${c.cyan}Configuring environment variables...${c.reset}`);
 
     // Update frontend .env.local
-    updateEnvFile(
-      UNI_HUB_ENV_PATH,
-      {
-        PORT: '3000',
-        NEXT_PUBLIC_API_URL: selectedBackend.url,
-      },
-      UNI_HUB_ENV_EXAMPLE,
-    );
+    updateEnvFile(UNI_HUB_ENV_PATH, {
+      PORT: '3000',
+      NEXT_PUBLIC_API_URL: selectedBackend.url,
+    });
     console.log(
       `${c.green}✔ Updated ${c.bold}packages/uni-hub/.env.local${c.reset} (NEXT_PUBLIC_API_URL=${selectedBackend.url})`,
     );

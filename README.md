@@ -102,14 +102,11 @@ All standard configuration variables and local development defaults (ports, loca
 
 If developing packages independently:
 
-- **Frontend (`packages/uni-hub`)**: Copy `packages/uni-hub/.env.example` to `packages/uni-hub/.env.local`. Next.js loads `.env*` files only from its own package directory, so the root `.env` has no effect on the frontend. The file holds `NEXT_PUBLIC_API_URL`, the Google client ID and the `NEXT_PUBLIC_FEATURE_*` feature flags:
+- **Frontend (`packages/uni-hub`)**: Optionally create `packages/uni-hub/.env.local`:
 
   ```bash
-  # Linux/macOS: cp packages/uni-hub/.env.example packages/uni-hub/.env.local
-  # Windows:     Copy-Item packages/uni-hub/.env.example packages/uni-hub/.env.local
+  NEXT_PUBLIC_API_URL="http://localhost:3001"
   ```
-
-  `NEXT_PUBLIC_*` values are inlined at build time, so restart `next dev` after changing a flag. In deployed environments they are passed as Docker build arguments (see `Dockerfile.frontend`). A flag missing from `.env.local` falls back to `DEFAULT_FEATURE_FLAGS` in `@universe/core`.
 
   > **Tip for Frontend Developers:** Set `NEXT_PUBLIC_API_URL="https://p01--backend-stage--djrwwgsr7dmx.code.run"` in `packages/uni-hub/.env.local` to develop the UI without needing local PostgreSQL or NestJS running!
 

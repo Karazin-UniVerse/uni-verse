@@ -25,7 +25,7 @@ export type ResponseCode = (typeof RESPONSE_CODES)[keyof typeof RESPONSE_CODES];
 
 ## Config and environment
 
-- The `.env.example` of the package that reads a variable is its single source of truth: the root `.env.example` for the backend, `packages/uni-hub/.env.example` for the frontend (Next.js loads `.env*` only from its own package directory, so `NEXT_PUBLIC_*` variables and feature flags never go to the root). A new variable is added there in the same PR; developers copy it to `.env` (root) or `.env.local` (`packages/uni-hub`).
+- `.env.example` is the single source of truth for environment variables. A new variable is added there in the same PR; developers copy it to `.env`.
 - Code reads configuration from `process.env` and does not carry fallback defaults for values that `.env.example` or the server always provides. Never hardcode URLs or hosts.
 - Do not duplicate `.env` files or entries in `.gitignore`, `tsconfig` paths or `package.json`; search for an existing entry first. A workspace alias is declared once (`workspace:*` in `package.json`, one path in `tsconfig.json`).
 - Secrets are never committed. In README or docs write "ask the Project coordinator" for private values.
