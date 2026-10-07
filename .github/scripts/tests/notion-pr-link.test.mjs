@@ -7,6 +7,7 @@ import {
   formatPrItem,
   mergePrRichText,
   determineStatusTransition,
+  resolveMatchingTask,
 } from '../notion-pr-link.mjs';
 
 test('extractNotionPageId extracts 32-hex UUID from various Notion URL formats', () => {
@@ -205,6 +206,67 @@ test('determineStatusTransition computes valid status changes', () => {
   // Closing unmerged PR does not move to 'Done'
   assert.equal(
     determineStatusTransition({ currentStatus: 'In Review', action: 'closed', isMerged: false }),
+    null,
+  );
+
+  // Missing or empty status does not trigger transition
+  assert.equal(
+    determineStatusTransition({ currentStatus: '', action: 'opened', isDraft: false }),
+    null,
+  );
+  assert.equal(
+    determineStatusTransition({ currentStatus: undefined, action: 'opened', isDraft: false }),
+    null,
+  );
+});
+
+test('resolveMatchingTask verifies Ticket Code integrity and avoids cross-project mismatch', () => {
+  const taskRS148 = {
+    id: 'page-rs-148',
+    properties: {
+      'Ticket Code': { formula: { string: 'RS-148' } },
+    },
+  };
+  const taskUNID148 = {
+    id: 'page-unid-148',
+    properties: {
+      'Ticket Code': { formula: { string: 'UNID-148' } },
+    },
+  };
+
+  // Empty results
+  assert.equal(resolveMatchingTask({ results: [] }), null);
+
+  // Without ticketCode fallback to first result
+  assert.deepEqual(resolveMatchingTask({ results: [taskRS148] }), taskRS148);
+
+  // Matches exact Ticket Code
+  assert.deepEqual(
+    resolveMatchingTask({
+      results: [taskUNID148, taskRS148],
+      ticketCode: 'RS-148',
+      taskId: 148,
+    }),
+    taskRS148,
+  );
+
+  // Case-insensitive match
+  assert.deepEqual(
+    resolveMatchingTask({
+      results: [taskRS148],
+      ticketCode: 'rs-148',
+      taskId: 148,
+    }),
+    taskRS148,
+  );
+
+  // Single result with different project prefix returns null and prevents cross-project linking
+  assert.equal(
+    resolveMatchingTask({
+      results: [taskRS148],
+      ticketCode: 'UNID-148',
+      taskId: 148,
+    }),
     null,
   );
 });

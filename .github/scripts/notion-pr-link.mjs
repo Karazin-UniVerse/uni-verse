@@ -212,6 +212,35 @@ export async function fetchNotionPage({ pageId, token }) {
 }
 
 /**
+ * Resolves matching task page from query results, verifying Ticket Code integrity
+ */
+export function resolveMatchingTask({ results = [], ticketCode = null, taskId = null } = {}) {
+  if (!Array.isArray(results) || results.length === 0) {
+    return null;
+  }
+
+  if (!ticketCode) {
+    return results[0];
+  }
+
+  const matching = results.find((page) => {
+    const code = page.properties?.['Ticket Code']?.formula?.string || '';
+
+    return code.toLowerCase() === ticketCode.toLowerCase();
+  });
+
+  if (!matching) {
+    console.warn(
+      `Found task with ID #${taskId}, but Ticket Code does not match expected "${ticketCode}".`,
+    );
+
+    return null;
+  }
+
+  return matching;
+}
+
+/**
  * Queries Notion Tasks database by Task ID
  */
 export async function queryTaskByNumber({ databaseId, taskId, ticketCode, token }) {
@@ -246,22 +275,7 @@ export async function queryTaskByNumber({ databaseId, taskId, ticketCode, token 
   const data = await response.json();
   const results = data.results || [];
 
-  if (results.length === 0) {
-    return null;
-  }
-
-  if (results.length === 1 || !ticketCode) {
-    return results[0];
-  }
-
-  // Disambiguate if multiple projects have same task number
-  const matching = results.find((page) => {
-    const code = page.properties?.['Ticket Code']?.formula?.string || '';
-
-    return code.toLowerCase() === ticketCode.toLowerCase();
-  });
-
-  return matching || results[0];
+  return resolveMatchingTask({ results, ticketCode, taskId });
 }
 
 /**
@@ -388,7 +402,7 @@ export async function handlePullRequestEvent() {
 
   const pageId = page.id;
   const taskName = page.properties?.['Task name']?.title?.[0]?.plain_text || 'Unnamed Task';
-  const currentStatus = page.properties?.['Status']?.status?.name || 'Not Started';
+  const currentStatus = page.properties?.['Status']?.status?.name || '';
   const existingRichText = page.properties?.['GitHub PRs']?.rich_text || [];
 
   console.info(`Found Notion task "${taskName}" (ID: ${pageId}, Status: "${currentStatus}").`);
