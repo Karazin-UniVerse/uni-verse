@@ -28,6 +28,16 @@ test('extractNotionPageId extracts 32-hex UUID from various Notion URL formats',
   assert.equal(extractNotionPageId(hyphenated), '3f1f8cf15c6180b5897cd9aa240d8e0c');
   assert.equal(extractNotionPageId(peekUrl), '3eef8cf15c6180c5bebafb944e3feb11');
   assert.equal(extractNotionPageId(modalUrl), '22222222222222222222222222222222');
+  assert.equal(
+    extractNotionPageId('https://figma.com/file?p=3eef8cf15c6180c5bebafb944e3feb11'),
+    null,
+  );
+  assert.equal(
+    extractNotionPageId(
+      'Figma: https://figma.com?p=11111111111111111111111111111111 Notion: https://notion.so/Task-3f1f8cf15c6180b5897cd9aa240d8e0c',
+    ),
+    '3f1f8cf15c6180b5897cd9aa240d8e0c',
+  );
   assert.equal(extractNotionPageId('https://github.com/pull/199'), null);
   assert.equal(extractNotionPageId(''), null);
   assert.equal(extractNotionPageId(null), null);

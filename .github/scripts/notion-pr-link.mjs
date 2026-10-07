@@ -14,8 +14,10 @@ export function extractNotionPageId(text) {
     return null;
   }
 
-  // 1. Matches query param ?p=... or &p=... used when copying links from Notion peek/modal views
-  const queryParamMatch = text.match(/[?&]p=([0-9a-f]{32})(?:[&/\s?#]|$)/i);
+  // 1. Matches query param ?p=... or &p=... within Notion URLs (used when copying links from Notion peek/modal views)
+  const queryParamMatch = text.match(
+    /(?:https?:\/\/(?:[a-zA-Z0-9-]+\.)?notion\.(?:so|com)\/[^\s)]*?[?&]p=([0-9a-f]{32}))/i,
+  );
 
   if (queryParamMatch?.[1]) {
     return queryParamMatch[1].toLowerCase();
@@ -392,16 +394,15 @@ export async function handlePullRequestEvent() {
     if (fetchedPage) {
       const hasPrProperty = Boolean(fetchedPage.properties?.['GitHub PRs']);
       const pageTicketCode = fetchedPage.properties?.['Ticket Code']?.formula?.string || '';
-      const isCodeMismatch =
-        taskInfo.ticketCode &&
-        pageTicketCode &&
-        pageTicketCode.toLowerCase() !== taskInfo.ticketCode.toLowerCase();
+      const isCodeMismatch = Boolean(
+        taskInfo.ticketCode && pageTicketCode.toLowerCase() !== taskInfo.ticketCode.toLowerCase(),
+      );
 
       if (hasPrProperty && !isCodeMismatch) {
         page = fetchedPage;
       } else {
         console.warn(
-          `Page ${taskInfo.pageId} is not a valid task item (hasPrProperty=${hasPrProperty}, isCodeMismatch=${Boolean(isCodeMismatch)}). Falling back to database query.`,
+          `Page ${taskInfo.pageId} is not a valid task item (hasPrProperty=${hasPrProperty}, isCodeMismatch=${isCodeMismatch}). Falling back to database query.`,
         );
       }
     }
