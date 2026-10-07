@@ -16,7 +16,7 @@ import {
   loadCachedDashboardData,
   persistDashboardSnapshot,
 } from './useDashboardData.helpers';
-
+import { isBrowser } from '@uni-hub/utils/browser';
 export { clearUserSessionStorage } from './useDashboardData.helpers';
 
 export interface UseDashboardDataOptions {
@@ -26,26 +26,6 @@ export interface UseDashboardDataOptions {
   hideCompleted: boolean;
   onUnauthorized: () => void;
   enabled?: boolean;
-}
-
-function getInitialStudentProfile(): StudentProfile | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  try {
-    const cachedProfile = localStorage.getItem('universe_student_profile');
-
-    if (cachedProfile) {
-      const parsedProfile = JSON.parse(cachedProfile) as StudentProfile;
-
-      return parsedProfile && typeof parsedProfile === 'object' ? parsedProfile : null;
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
 }
 
 function getInitialDashboardData(): DashboardData {
@@ -84,6 +64,28 @@ function getInitialHasLoadedOnce(): boolean {
   }
 }
 
+function getCachedStudentProfile(): StudentProfile | null {
+  if (!isBrowser) {
+    return null;
+  }
+
+  try {
+    const cachedProfile = localStorage.getItem('universe_student_profile');
+
+    if (!cachedProfile) return null;
+
+    const parsedProfile = JSON.parse(cachedProfile) as StudentProfile;
+
+    if (parsedProfile && typeof parsedProfile === 'object') {
+      return parsedProfile;
+    }
+  } catch {
+    // ignore invalid JSON / storage errors
+  }
+
+  return null;
+}
+
 export function useDashboardData({
   sortOrder,
   dateFrom,
@@ -100,7 +102,7 @@ export function useDashboardData({
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(getInitialSyncTime);
   const [isOfflineData, setIsOfflineData] = useState(false);
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(
-    getInitialStudentProfile,
+    getCachedStudentProfile,
   );
   const [data, setData] = useState<DashboardData>(getInitialDashboardData);
 

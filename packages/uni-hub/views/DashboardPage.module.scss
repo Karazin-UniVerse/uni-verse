@@ -101,12 +101,13 @@
 .activePill {
   position: absolute;
   inset: 0;
+  background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
   border-radius: var(--border-radius-medium);
   z-index: 0;
-  background: color-mix(in srgb, var(--accent-primary) 15%, transparent);
 }
 
 .active {
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -114,7 +115,10 @@
   color: var(--blue-700);
 }
 
-:global([data-theme='dark']) .active,
+:global([data-theme='dark']) .active {
+  color: var(--white-10);
+}
+
 :global([data-theme='cyberpunk']) .active {
   color: var(--blue-400);
 }

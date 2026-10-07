@@ -52,15 +52,14 @@
   }
 
   :global(.recharts-surface),
-  :global(.recharts-pie),
-  :global(.recharts-sector),
-  :global(svg) {
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-tap-highlight-color: transparent;
+  :global(.recharts-bar-rectangle),
+  :global(.recharts-rectangle),
+  :global(svg),
+  :global(rect),
+  :global(path) {
     outline: none;
 
-    &:focus {
+    &:focus:not(:focus-visible) {
       outline: none;
     }
   }
