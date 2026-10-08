@@ -97,15 +97,16 @@ describe('OpportunitiesService', () => {
       expect(res).toEqual({ id: '1', status: 'DRAFT', ownerId: 'owner1' });
     });
 
-    it('returns opportunity if unpublished and caller is ADMIN', async () => {
+    it('throws NotFoundException if unpublished and caller is ADMIN', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
         status: 'DRAFT',
         ownerId: 'owner1',
       } as any);
-      const res = await service.findOne('1', 'admin1', 'ADMIN');
 
-      expect(res).toEqual({ id: '1', status: 'DRAFT', ownerId: 'owner1' });
+      await expect(service.findOne('1', 'admin1', 'ADMIN')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
