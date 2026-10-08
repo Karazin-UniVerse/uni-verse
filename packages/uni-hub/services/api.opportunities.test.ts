@@ -28,7 +28,9 @@ describe('OpportunitiesApi', () => {
     const fetchMock = vi.mocked(global.fetch);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toContain('/opportunities?status=OPEN&paymentType=PAID');
+    expect(fetchMock.mock.calls[0][0]).toContain(
+      '/opportunities?status=PUBLISHED&paymentType=PAID',
+    );
   });
 
   it('getOpportunity should request /opportunities/:id', async () => {
