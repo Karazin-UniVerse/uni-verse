@@ -2,7 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { OpportunitiesService } from './opportunities.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { ForbiddenException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 
 describe('OpportunitiesService', () => {
   let service: OpportunitiesService;
@@ -86,6 +90,18 @@ describe('OpportunitiesService', () => {
         data: { title: 'new', status: 'READY_FOR_REVIEW' },
       });
     });
+
+    it('throws ForbiddenException if user is not the owner', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        ownerId: 'other-user',
+      } as any);
+
+      await expect(
+        service.update('user1', '1', { title: 'new' } as any),
+      ).rejects.toThrow(ForbiddenException);
+    });
   });
 
   describe('moderate', () => {
@@ -98,13 +114,28 @@ describe('OpportunitiesService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('updates status and sends notification if user is OPPORTUNITIES_MODERATOR', async () => {
-      jest
-        .spyOn(prisma.user, 'findUnique')
-        .mockResolvedValue({
-          id: 'user1',
-          role: 'OPPORTUNITIES_MODERATOR',
-        } as any);
+    it('throws BadRequestException if opportunity is not in READY_FOR_REVIEW', async () => {
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        id: 'user1',
+        role: 'OPPORTUNITIES_MODERATOR',
+      } as any);
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: 'opp1',
+        title: 'test',
+        ownerId: 'owner1',
+        status: 'DRAFT',
+      } as any);
+
+      await expect(
+        service.moderate('user1', 'opp1', { action: 'APPROVE' } as any),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('updates status and sends notification if user is OPPORTUNITIES_MODERATOR (APPROVE)', async () => {
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        id: 'user1',
+        role: 'OPPORTUNITIES_MODERATOR',
+      } as any);
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: 'opp1',
         title: 'test',
@@ -122,6 +153,478 @@ describe('OpportunitiesService', () => {
           data: expect.objectContaining({ status: 'PUBLISHED' }),
         }),
       );
+    });
+
+    it('updates status to REJECTED when action is REJECT', async () => {
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        id: 'user1',
+        role: 'OPPORTUNITIES_MODERATOR',
+      } as any);
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: 'opp1',
+        title: 'test',
+        ownerId: 'owner1',
+        status: 'READY_FOR_REVIEW',
+      } as any);
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        id: 'opp1',
+        title: 'test',
+        ownerId: 'owner1',
+      } as any);
+
+      await service.moderate('user1', 'opp1', {
+        action: 'REJECT',
+        comment: 'Не відповідає вимогам',
+      } as any);
+
+      expect(prisma.opportunity.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'REJECTED',
+            moderationComment: 'Не відповідає вимогам',
+          }),
+        }),
+      );
+    });
+
+    it('updates status to REQUIRES_CHANGES when action is REQUIRE_CHANGES', async () => {
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        id: 'user1',
+        role: 'ADMIN',
+      } as any);
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: 'opp1',
+        title: 'test',
+        ownerId: 'owner1',
+        status: 'READY_FOR_REVIEW',
+      } as any);
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        id: 'opp1',
+        title: 'test',
+        ownerId: 'owner1',
+      } as any);
+
+      await service.moderate('user1', 'opp1', {
+        action: 'REQUIRE_CHANGES',
+        comment: 'Уточніть деталі',
+      } as any);
+
+      expect(prisma.opportunity.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'REQUIRES_CHANGES',
+            moderationComment: 'Уточніть деталі',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('create', () => {
+    it('creates an opportunity with DRAFT status', async () => {
+      const dto = {
+        title: 'Тестова вакансія',
+        description: 'Опис вакансії',
+        paymentType: 'PAID' as const,
+        ownerContactInfo: 'test@karazin.ua',
+      };
+
+      jest.spyOn(prisma.opportunity, 'create').mockResolvedValue({
+        id: 'opp-1',
+        ...dto,
+        ownerId: 'user-1',
+        status: 'DRAFT',
+      } as any);
+
+      const result = await service.create('user-1', dto);
+
+      expect(prisma.opportunity.create).toHaveBeenCalledWith({
+        data: {
+          ...dto,
+          ownerId: 'user-1',
+          status: 'DRAFT',
+        },
+      });
+      expect(result.id).toBe('opp-1');
+    });
+  });
+
+  describe('findAll', () => {
+    it('returns published opportunities with filters', async () => {
+      jest
+        .spyOn(prisma.opportunity, 'findMany')
+        .mockResolvedValue([
+          { id: '1', title: 'React dev', status: 'PUBLISHED' },
+        ] as any);
+
+      const result = await service.findAll({
+        paymentType: 'PAID' as any,
+        ownerId: 'owner-1',
+        search: 'React',
+      });
+
+      expect(prisma.opportunity.findMany).toHaveBeenCalledWith({
+        where: {
+          status: 'PUBLISHED',
+          paymentType: 'PAID',
+          ownerId: 'owner-1',
+          OR: [
+            { title: { contains: 'React', mode: 'insensitive' } },
+            { description: { contains: 'React', mode: 'insensitive' } },
+          ],
+        },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          owner: { select: { id: true, name: true, email: true } },
+        },
+      });
+      expect(result).toHaveLength(1);
+    });
+
+    it('allows OPPORTUNITIES_MODERATOR or ADMIN to query specific statuses', async () => {
+      jest.spyOn(prisma.opportunity, 'findMany').mockResolvedValue([] as any);
+
+      await service.findAll(
+        { status: 'READY_FOR_REVIEW' as any },
+        'OPPORTUNITIES_MODERATOR',
+      );
+
+      expect(prisma.opportunity.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: 'READY_FOR_REVIEW' }),
+        }),
+      );
+    });
+  });
+
+  describe('changeStatus', () => {
+    it('throws ForbiddenException if not owner', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'DRAFT',
+        ownerId: 'other-user',
+      } as any);
+
+      await expect(
+        service.changeStatus('user-1', '1', 'READY_FOR_REVIEW'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws BadRequestException if transition is invalid', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        ownerId: 'user-1',
+      } as any);
+
+      await expect(
+        service.changeStatus('user-1', '1', 'READY_FOR_REVIEW'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException if target status is not READY_FOR_REVIEW', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'DRAFT',
+        ownerId: 'user-1',
+      } as any);
+
+      await expect(
+        service.changeStatus('user-1', '1', 'PUBLISHED' as any),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('updates status to READY_FOR_REVIEW when valid', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'DRAFT',
+        ownerId: 'user-1',
+      } as any);
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        id: '1',
+        status: 'READY_FOR_REVIEW',
+      } as any);
+
+      const result = await service.changeStatus(
+        'user-1',
+        '1',
+        'READY_FOR_REVIEW',
+      );
+
+      expect(prisma.opportunity.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: { status: 'READY_FOR_REVIEW' },
+      });
+      expect(result.status).toBe('READY_FOR_REVIEW');
+    });
+  });
+
+  describe('changeLifecycleState', () => {
+    it('throws ForbiddenException if not owner', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        ownerId: 'other',
+      } as any);
+
+      await expect(
+        service.changeLifecycleState('user-1', '1', 'ACTIVE' as any),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('updates lifecycleState when caller is owner', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        ownerId: 'user-1',
+      } as any);
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        id: '1',
+        lifecycleState: 'CLOSED',
+      } as any);
+
+      const result = await service.changeLifecycleState(
+        'user-1',
+        '1',
+        'CLOSED' as any,
+      );
+
+      expect(prisma.opportunity.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: { lifecycleState: 'CLOSED' },
+      });
+      expect(result.lifecycleState).toBe('CLOSED');
+    });
+  });
+
+  describe('getOpportunityApplications', () => {
+    it('throws ForbiddenException if not owner', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        ownerId: 'other',
+      } as any);
+
+      await expect(
+        service.getOpportunityApplications('user-1', '1'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('returns applications when caller is owner', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        ownerId: 'user-1',
+      } as any);
+      jest
+        .spyOn(prisma.opportunityApplication, 'findMany')
+        .mockResolvedValue([{ id: 'app-1', applicantId: 'user-2' }] as any);
+
+      const result = await service.getOpportunityApplications('user-1', '1');
+
+      expect(result).toHaveLength(1);
+    });
+  });
+
+  describe('updateApplicationStatus', () => {
+    it('throws NotFoundException if application not found', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue(null);
+
+      await expect(
+        service.updateApplicationStatus({
+          userId: 'user-1',
+          applicationId: 'app-1',
+          status: 'ACCEPTED' as any,
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ForbiddenException if caller is not opportunity owner', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue({
+          id: 'app-1',
+          opportunity: { ownerId: 'other' },
+        } as any);
+
+      await expect(
+        service.updateApplicationStatus({
+          userId: 'user-1',
+          applicationId: 'app-1',
+          status: 'ACCEPTED' as any,
+        }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('updates status and sends notification with Ukrainian status', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue({
+          id: 'app-1',
+          applicantId: 'applicant-1',
+          opportunity: { id: 'opp-1', title: 'React dev', ownerId: 'user-1' },
+        } as any);
+      jest.spyOn(prisma.opportunityApplication, 'update').mockResolvedValue({
+        id: 'app-1',
+        status: 'ACCEPTED',
+      } as any);
+
+      const result = await service.updateApplicationStatus({
+        userId: 'user-1',
+        applicationId: 'app-1',
+        status: 'ACCEPTED' as any,
+        ownerComment: 'Вітаємо',
+      });
+
+      expect(prisma.opportunityApplication.update).toHaveBeenCalledWith({
+        where: { id: 'app-1' },
+        data: { status: 'ACCEPTED', ownerComment: 'Вітаємо' },
+      });
+      expect(result.status).toBe('ACCEPTED');
+    });
+  });
+
+  describe('apply', () => {
+    it('throws BadRequestException if opportunity is unpublished', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'DRAFT',
+        ownerId: 'user-1',
+      } as any);
+
+      await expect(
+        service.apply('user-1', '1', {
+          applicantName: 'Іван',
+          contactInfo: 'ivan@karazin.ua',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException if opportunity is not active', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        lifecycleState: 'CLOSED',
+        ownerId: 'user-1',
+      } as any);
+
+      await expect(
+        service.apply('user-1', '1', {
+          applicantName: 'Іван',
+          contactInfo: 'ivan@karazin.ua',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException if already applied', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        lifecycleState: 'ACTIVE',
+      } as any);
+      jest.spyOn(prisma.opportunityApplication, 'findFirst').mockResolvedValue({
+        id: 'app-1',
+      } as any);
+
+      await expect(
+        service.apply('user-1', '1', {
+          applicantName: 'Іван',
+          contactInfo: 'ivan@karazin.ua',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('creates application and sends notification to owner', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        lifecycleState: 'ACTIVE',
+        title: 'Junior QA',
+        ownerId: 'owner-1',
+      } as any);
+      jest
+        .spyOn(prisma.opportunityApplication, 'findFirst')
+        .mockResolvedValue(null);
+      jest.spyOn(prisma.opportunityApplication, 'create').mockResolvedValue({
+        id: 'app-new',
+        opportunityId: '1',
+        applicantId: 'user-1',
+      } as any);
+
+      const result = await service.apply('user-1', '1', {
+        applicantName: 'Іван',
+        contactInfo: 'ivan@karazin.ua',
+      });
+
+      expect(prisma.opportunityApplication.create).toHaveBeenCalled();
+      expect(result.id).toBe('app-new');
+    });
+  });
+
+  describe('withdrawApplication', () => {
+    it('throws NotFoundException if application not found', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue(null);
+
+      await expect(
+        service.withdrawApplication('user-1', 'app-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ForbiddenException if caller is not the applicant', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue({
+          id: 'app-1',
+          applicantId: 'other-user',
+        } as any);
+
+      await expect(
+        service.withdrawApplication('user-1', 'app-1'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('withdraws application successfully', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue({
+          id: 'app-1',
+          applicantId: 'user-1',
+          status: 'SUBMITTED',
+        } as any);
+      jest.spyOn(prisma.opportunityApplication, 'update').mockResolvedValue({
+        id: 'app-1',
+        status: 'WITHDRAWN',
+      } as any);
+
+      const result = await service.withdrawApplication('user-1', 'app-1');
+
+      expect(result.status).toBe('WITHDRAWN');
+    });
+  });
+
+  describe('getMyApplications and getMyOpportunities', () => {
+    it('returns applications for user', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findMany')
+        .mockResolvedValue([{ id: 'app-1' }] as any);
+
+      const res = await service.getMyApplications('user-1');
+
+      expect(res).toHaveLength(1);
+    });
+
+    it('returns opportunities owned by user', async () => {
+      jest
+        .spyOn(prisma.opportunity, 'findMany')
+        .mockResolvedValue([{ id: 'opp-1' }] as any);
+
+      const res = await service.getMyOpportunities('user-1');
+
+      expect(res).toHaveLength(1);
     });
   });
 });

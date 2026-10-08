@@ -233,11 +233,11 @@ export class OpportunitiesService {
 
     let statusText: string = status;
 
-    if (status === 'ACCEPTED') statusText = 'принят';
+    if (status === 'ACCEPTED') statusText = 'прийнято';
 
-    if (status === 'REJECTED') statusText = 'отклонен';
+    if (status === 'REJECTED') statusText = 'відхилено';
 
-    if (status === 'UNDER_REVIEW') statusText = 'на рассмотрении';
+    if (status === 'UNDER_REVIEW') statusText = 'на розгляді';
 
     await this.notificationsService.createNotification({
       userId: app.applicantId,
@@ -381,13 +381,13 @@ export class OpportunitiesService {
 
     if (dto.action === ModerateAction.APPROVE) {
       newStatus = 'PUBLISHED';
-      actionText = 'одобрена';
+      actionText = 'схвалена';
     } else if (dto.action === ModerateAction.REJECT) {
       newStatus = 'REJECTED';
-      actionText = 'отклонена';
+      actionText = 'відхилена';
     } else if (dto.action === ModerateAction.REQUIRE_CHANGES) {
       newStatus = 'REQUIRES_CHANGES';
-      actionText = 'возвращена на правки';
+      actionText = 'повернута на доопрацювання';
     } else {
       throw new BadRequestException('Unknown moderation action');
     }
