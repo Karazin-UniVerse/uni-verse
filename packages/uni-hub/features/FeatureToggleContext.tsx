@@ -76,13 +76,15 @@ export const FeatureToggleProvider: React.FC<FeatureToggleProviderProps> = ({ ch
 
   const isOverridden = useCallback(
     (feature?: FeatureFlagKey): boolean => {
+      const currentOverrides = store.getSnapshot();
+
       if (feature) {
-        return overrides[feature] !== undefined;
+        return currentOverrides[feature] !== undefined;
       }
 
-      return Object.keys(overrides).length > 0;
+      return Object.keys(currentOverrides).length > 0;
     },
-    [overrides],
+    [store],
   );
 
   const contextValue = useMemo<FeatureContextValue>(() => {

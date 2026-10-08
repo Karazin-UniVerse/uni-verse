@@ -100,10 +100,14 @@ describe('FeatureToggleContext and Components', () => {
       const TestConsumer = () => {
         const controls = useFeatureControls();
 
+        if (!controls.isOverridden('isMoodleIntegrationEnabled')) {
+          controls.setFeatureOverride('isMoodleIntegrationEnabled', false);
+        }
+
         return React.createElement(
           'span',
           { id: 'is-overridden' },
-          String(controls.isOverridden()),
+          String(controls.isOverridden('isMoodleIntegrationEnabled')),
         );
       };
 
@@ -115,7 +119,7 @@ describe('FeatureToggleContext and Components', () => {
 
       const html = renderToString(tree);
 
-      expect(html).toContain('id="is-overridden">false</span>');
+      expect(html).toContain('id="is-overridden">true</span>');
     } finally {
       vi.unstubAllEnvs();
       delete process.env.NEXT_PUBLIC_FEATURE_PANEL;
