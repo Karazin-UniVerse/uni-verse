@@ -13,7 +13,7 @@ enum Role {
   STUDENT
   INSTRUCTOR
   ADMIN
-  MODERATOR
+  OPPORTUNITIES_MODERATOR
 }
 
 model User {
@@ -133,7 +133,7 @@ model OpportunityApplication {
   applicantId String
   applicant   User   @relation("Applicant", fields: [applicantId], references: [id])
 
-  comments    Comment[]
+  comments Comment[]
 }
 
 model Notification {
@@ -145,8 +145,8 @@ model Notification {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  userId    String
-  user      User     @relation("UserNotifications", fields: [userId], references: [id])
+  userId String
+  user   User   @relation("UserNotifications", fields: [userId], references: [id])
 }
 
 model Comment {
@@ -154,8 +154,8 @@ model Comment {
   text      String
   createdAt DateTime @default(now())
 
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
 
   opportunityId String?
   opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
