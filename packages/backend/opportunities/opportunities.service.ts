@@ -378,7 +378,7 @@ export class OpportunitiesService {
     // Real-time role check to prevent using cached demoted admin tokens
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
-    if (!user || user.role !== Role.OPPORTUNITIES_MODERATOR) {
+    if (user?.role !== Role.OPPORTUNITIES_MODERATOR) {
       throw new ForbiddenException(
         'Only OPPORTUNITIES_MODERATOR can moderate opportunities',
       );
