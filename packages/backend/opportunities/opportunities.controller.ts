@@ -29,6 +29,9 @@ export class OpportunitiesController {
 
   @ApiBearerAuth()
   @Post()
+  /**
+   * Create a new opportunity
+   */
   @ApiOperation({ summary: 'Create a new opportunity' })
   create(
     @GetUser('sub') userId: string,
@@ -42,6 +45,9 @@ export class OpportunitiesController {
   @Public()
   @ApiBearerAuth()
   @Get()
+  /**
+   * Get all published opportunities (or filter)
+   */
   @ApiOperation({ summary: 'Get all published opportunities (or filter)' })
   findAll(
     @GetUser('role') role: string,
@@ -52,6 +58,9 @@ export class OpportunitiesController {
 
   @ApiBearerAuth()
   @Get('my')
+  /**
+   * Get current user opportunities
+   */
   @ApiOperation({ summary: 'Get current user opportunities' })
   getMyOpportunities(@GetUser('sub') userId: string): Promise<unknown> {
     if (!userId) throw new ForbiddenException('User not authenticated');
@@ -61,6 +70,9 @@ export class OpportunitiesController {
 
   @ApiBearerAuth()
   @Put('my/applications/:id/withdraw')
+  /**
+   * Applicant withdraws their application
+   */
   @ApiOperation({ summary: 'Applicant withdraws their application' })
   withdrawApplication(
     @GetUser('sub') userId: string,
@@ -73,6 +85,9 @@ export class OpportunitiesController {
 
   @ApiBearerAuth()
   @Get('my/applications')
+  /**
+   * Get current user applications
+   */
   @ApiOperation({ summary: 'Get current user applications' })
   getMyApplications(@GetUser('sub') userId: string): Promise<unknown> {
     if (!userId) throw new ForbiddenException('User not authenticated');
@@ -81,14 +96,25 @@ export class OpportunitiesController {
   }
 
   @Public()
+  @ApiBearerAuth()
   @Get(':id')
+  /**
+   * Get opportunity by ID
+   */
   @ApiOperation({ summary: 'Get opportunity by ID' })
-  findOne(@Param('id') id: string): Promise<unknown> {
-    return this.opportunitiesService.findOne(id);
+  findOne(
+    @Param('id') id: string,
+    @GetUser('sub') userId?: string,
+    @GetUser('role') role?: string,
+  ): Promise<unknown> {
+    return this.opportunitiesService.findOne(id, userId, role);
   }
 
   @ApiBearerAuth()
   @Put(':id')
+  /**
+   * Update your opportunity
+   */
   @ApiOperation({ summary: 'Update your opportunity' })
   update(
     @GetUser('sub') userId: string,
@@ -102,6 +128,9 @@ export class OpportunitiesController {
 
   @ApiBearerAuth()
   @Post(':id/status')
+  /**
+   * Owner sends opportunity to review
+   */
   @ApiOperation({ summary: 'Owner sends opportunity to review' })
   changeStatus(
     @GetUser('sub') userId: string,
@@ -115,6 +144,9 @@ export class OpportunitiesController {
 
   @ApiBearerAuth()
   @Put(':id/lifecycle')
+  /**
+   * Owner changes lifecycle state
+   */
   @ApiOperation({ summary: 'Owner changes lifecycle state' })
   changeLifecycleState(
     @GetUser('sub') userId: string,
@@ -146,6 +178,9 @@ export class OpportunitiesController {
 
   @ApiBearerAuth()
   @Put('applications/:appId/status')
+  /**
+   * Owner updates application status
+   */
   @ApiOperation({ summary: 'Owner updates application status' })
   updateApplicationStatus(
     @GetUser('sub') userId: string,
@@ -164,6 +199,9 @@ export class OpportunitiesController {
 
   @ApiBearerAuth()
   @Post(':id/apply')
+  /**
+   * Apply to an opportunity
+   */
   @ApiOperation({ summary: 'Apply to an opportunity' })
   apply(
     @GetUser('sub') userId: string,
@@ -177,16 +215,17 @@ export class OpportunitiesController {
 
   @ApiBearerAuth()
   @Post(':id/moderate')
+  /**
+   * Moderate an opportunity (MODERATOR only)
+   */
   @ApiOperation({ summary: 'Moderate an opportunity (MODERATOR only)' })
   moderate(
-    @GetUser('role') role: string,
+    @GetUser('sub') userId: string,
     @Param('id') id: string,
     @Body() dto: ModerateOpportunityDto,
   ): Promise<unknown> {
-    if (role !== 'MODERATOR' && role !== 'ADMIN') {
-      throw new ForbiddenException('Only MODERATOR can moderate opportunities');
-    }
+    if (!userId) throw new ForbiddenException('User not authenticated');
 
-    return this.opportunitiesService.moderate(id, dto);
+    return this.opportunitiesService.moderate(userId, id, dto);
   }
 }

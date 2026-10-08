@@ -27,6 +27,9 @@ export class OpportunitiesService {
     private notificationsService: NotificationsService,
   ) {}
 
+  /**
+   * Create a new opportunity as a draft
+   */
   async create(userId: string, dto: CreateOpportunityDto) {
     return this.prisma.opportunity.create({
       data: {
@@ -37,6 +40,10 @@ export class OpportunitiesService {
     });
   }
 
+  /**
+   * Find all opportunities matching the query.
+   * If user is not moderator/admin, only PUBLISHED opportunities are returned.
+   */
   async findAll(query: FindOpportunitiesDto, userRole?: string) {
     const { paymentType, ownerId, search, status } = query;
     const where: Record<string, unknown> = {};
@@ -66,14 +73,16 @@ export class OpportunitiesService {
       where,
       orderBy: { createdAt: 'desc' },
       include: {
-        owner: {
-          select: { id: true, name: true, email: true },
-        },
+        owner: { select: { id: true, name: true, email: true } },
       },
     });
   }
 
-  async findOne(id: string) {
+  /**
+   * Retrieve an opportunity by ID.
+   * Ensures that unpublished opportunities are only visible to their owners or moderators/admins.
+   */
+  async findOne(id: string, userId?: string, userRole?: string) {
     const opportunity = await this.prisma.opportunity.findUnique({
       where: { id },
       include: {
@@ -83,11 +92,24 @@ export class OpportunitiesService {
 
     if (!opportunity) throw new NotFoundException('Opportunity not found');
 
+    if (
+      opportunity.status !== 'PUBLISHED' &&
+      opportunity.ownerId !== userId &&
+      userRole !== 'MODERATOR' &&
+      userRole !== 'ADMIN'
+    ) {
+      throw new ForbiddenException('Access denied to unpublished opportunity');
+    }
+
     return opportunity;
   }
 
+  /**
+   * Update an existing opportunity.
+   * If it was already published, it is reverted to READY_FOR_REVIEW to prevent bypassing moderation.
+   */
   async update(userId: string, id: string, dto: UpdateOpportunityDto) {
-    const opportunity = await this.findOne(id);
+    const opportunity = await this.findOne(id, userId);
 
     if (opportunity.ownerId !== userId) {
       throw new ForbiddenException(
@@ -95,14 +117,28 @@ export class OpportunitiesService {
       );
     }
 
+    const {
+      status: _status,
+      moderationComment: _comment,
+      ...safeDto
+    } = dto as Record<string, unknown>;
+    const data: Record<string, unknown> = { ...safeDto };
+
+    if (opportunity.status === 'PUBLISHED') {
+      data.status = 'READY_FOR_REVIEW';
+    }
+
     return this.prisma.opportunity.update({
       where: { id },
-      data: dto,
+      data,
     });
   }
 
+  /**
+   * Submit an opportunity for moderation.
+   */
   async changeStatus(userId: string, id: string, status: 'READY_FOR_REVIEW') {
-    const opportunity = await this.findOne(id);
+    const opportunity = await this.findOne(id, userId);
 
     if (opportunity.ownerId !== userId)
       throw new ForbiddenException('Not your opportunity');
@@ -113,12 +149,15 @@ export class OpportunitiesService {
     });
   }
 
+  /**
+   * Update the lifecycle state of an opportunity (e.g., ACTIVE, CLOSED).
+   */
   async changeLifecycleState(
     userId: string,
     id: string,
     lifecycleState: OpportunityLifecycleState,
   ) {
-    const opportunity = await this.findOne(id);
+    const opportunity = await this.findOne(id, userId);
 
     if (opportunity.ownerId !== userId)
       throw new ForbiddenException('Not your opportunity');
@@ -129,8 +168,11 @@ export class OpportunitiesService {
     });
   }
 
+  /**
+   * Retrieve all applications for a specific opportunity.
+   */
   async getOpportunityApplications(userId: string, id: string) {
-    const opportunity = await this.findOne(id);
+    const opportunity = await this.findOne(id, userId);
 
     if (opportunity.ownerId !== userId)
       throw new ForbiddenException('Only the owner can view applications');
@@ -142,6 +184,9 @@ export class OpportunitiesService {
     });
   }
 
+  /**
+   * Update the status of an application.
+   */
   async updateApplicationStatus(
     userId: string,
     applicationId: string,
@@ -181,8 +226,11 @@ export class OpportunitiesService {
     return updated;
   }
 
+  /**
+   * Apply to an opportunity.
+   */
   async apply(userId: string, id: string, dto: ApplyOpportunityDto) {
-    const opportunity = await this.findOne(id);
+    const opportunity = await this.findOne(id, userId);
 
     if (opportunity.status !== 'PUBLISHED') {
       throw new BadRequestException(
@@ -223,6 +271,9 @@ export class OpportunitiesService {
     return app;
   }
 
+  /**
+   * Withdraw an application.
+   */
   async withdrawApplication(userId: string, applicationId: string) {
     const app = await this.prisma.opportunityApplication.findUnique({
       where: { id: applicationId },
@@ -242,6 +293,9 @@ export class OpportunitiesService {
     });
   }
 
+  /**
+   * Retrieve all applications submitted by a user.
+   */
   async getMyApplications(userId: string) {
     return this.prisma.opportunityApplication.findMany({
       where: { applicantId: userId },
@@ -250,6 +304,9 @@ export class OpportunitiesService {
     });
   }
 
+  /**
+   * Retrieve all opportunities owned by a user.
+   */
   async getMyOpportunities(userId: string) {
     return this.prisma.opportunity.findMany({
       where: { ownerId: userId },
@@ -257,7 +314,19 @@ export class OpportunitiesService {
     });
   }
 
-  async moderate(id: string, dto: ModerateOpportunityDto) {
+  /**
+   * Moderate an opportunity. Enforces real-time role check from the database.
+   */
+  async moderate(userId: string, id: string, dto: ModerateOpportunityDto) {
+    // Real-time role check to prevent using cached demoted admin tokens
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+
+    if (!user || (user.role !== 'MODERATOR' && user.role !== 'ADMIN')) {
+      throw new ForbiddenException(
+        'Only MODERATOR or ADMIN can moderate opportunities',
+      );
+    }
+
     let newStatus: OpportunityStatus = 'DRAFT';
     let actionText = '';
 
