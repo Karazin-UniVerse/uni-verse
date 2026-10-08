@@ -8,7 +8,6 @@ import {
   ClipboardList,
   CalendarDays,
   FileEdit,
-  Briefcase,
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
@@ -22,7 +21,6 @@ import { useFeatures } from '@uni-hub/features';
 import type { FeatureFlags, FeatureFlagKey } from '@core/constants/features';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
-import { ENABLE_OPPORTUNITIES_TAB } from '../types';
 import type { DashboardSidebarProps, NavKey } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
@@ -90,18 +88,6 @@ export const NAV_ITEMS: NavItemConfig[] = [
     shortLabel: 'Можливості',
     featureFlag: 'isOpportunitiesPlatformEnabled',
   },
-  ...(ENABLE_OPPORTUNITIES_TAB
-    ? [
-        {
-          key: 'opportunities' as const,
-          icon: <Briefcase size={18} />,
-          labelKey: 'nav.opportunities.full' as const,
-          shortLabelKey: 'nav.opportunities' as const,
-          label: 'Можливості та проекти',
-          shortLabel: 'Можливості',
-        },
-      ]
-    : []),
 ];
 
 export const getVisibleNavItems = (flags: FeatureFlags): NavItemConfig[] =>
