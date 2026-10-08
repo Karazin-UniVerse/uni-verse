@@ -21,6 +21,13 @@ import {
   OpportunityStatus,
 } from '@universe/database';
 
+export type UpdateApplicationStatusParams = {
+  userId: string;
+  applicationId: string;
+  status: ApplicationStatus;
+  ownerComment?: string;
+};
+
 @Injectable()
 export class OpportunitiesService {
   constructor(
@@ -203,12 +210,12 @@ export class OpportunitiesService {
   /**
    * Update the status of an application.
    */
-  async updateApplicationStatus(
-    userId: string,
-    applicationId: string,
-    status: ApplicationStatus,
-    ownerComment?: string,
-  ) {
+  async updateApplicationStatus({
+    userId,
+    applicationId,
+    status,
+    ownerComment,
+  }: UpdateApplicationStatusParams) {
     const app = await this.prisma.opportunityApplication.findUnique({
       where: { id: applicationId },
       include: { opportunity: true },
@@ -232,12 +239,12 @@ export class OpportunitiesService {
 
     if (status === 'UNDER_REVIEW') statusText = 'на рассмотрении';
 
-    await this.notificationsService.createNotification(
-      app.applicantId,
-      'Статус отклика изменен',
-      `Ваш отклик на "${app.opportunity.title}" теперь ${statusText}.${ownerComment ? ` Комментарий: ${ownerComment}` : ''}`,
-      `/my-applications`,
-    );
+    await this.notificationsService.createNotification({
+      userId: app.applicantId,
+      title: 'Статус отклика изменен',
+      message: `Ваш отклик на "${app.opportunity.title}" теперь ${statusText}.${ownerComment ? ` Комментарий: ${ownerComment}` : ''}`,
+      link: `/my-applications`,
+    });
 
     return updated;
   }
@@ -292,12 +299,12 @@ export class OpportunitiesService {
       throw error;
     }
 
-    await this.notificationsService.createNotification(
-      opportunity.ownerId,
-      'Новый отклик!',
-      `Пользователь ${dto.applicantName} откликнулся на вашу возможность "${opportunity.title}".`,
-      `/my-opportunities/${id}`,
-    );
+    await this.notificationsService.createNotification({
+      userId: opportunity.ownerId,
+      title: 'Новый отклик!',
+      message: `Пользователь ${dto.applicantName} откликнулся на вашу возможность "${opportunity.title}".`,
+      link: `/my-opportunities/${id}`,
+    });
 
     return app;
   }
@@ -390,12 +397,12 @@ export class OpportunitiesService {
       },
     });
 
-    await this.notificationsService.createNotification(
-      opp.ownerId,
-      `Возможность ${actionText}`,
-      `Ваша возможность "${opp.title}" была ${actionText} модератором.${dto.comment ? ` Комментарий: ${dto.comment}` : ''}`,
-      `/my-opportunities`,
-    );
+    await this.notificationsService.createNotification({
+      userId: opp.ownerId,
+      title: `Возможность ${actionText}`,
+      message: `Ваша возможность "${opp.title}" была ${actionText} модератором.${dto.comment ? ` Комментарий: ${dto.comment}` : ''}`,
+      link: `/my-opportunities`,
+    });
 
     return opp;
   }

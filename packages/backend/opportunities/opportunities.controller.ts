@@ -189,12 +189,12 @@ export class OpportunitiesController {
   ): Promise<unknown> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
-    return this.opportunitiesService.updateApplicationStatus(
+    return this.opportunitiesService.updateApplicationStatus({
       userId,
-      appId,
-      dto.status,
-      dto.comment,
-    );
+      applicationId: appId,
+      status: dto.status,
+      ownerComment: dto.comment,
+    });
   }
 
   @ApiBearerAuth()

@@ -61,13 +61,11 @@ describe('OpportunitiesService', () => {
     });
 
     it('throws Forbidden if unpublished and not owner or moderator', async () => {
-      jest
-        .spyOn(prisma.opportunity, 'findUnique')
-        .mockResolvedValue({
-          id: '1',
-          status: 'DRAFT',
-          ownerId: 'other',
-        } as any);
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'DRAFT',
+        ownerId: 'other',
+      } as any);
       await expect(service.findOne('1', 'user', 'STUDENT')).rejects.toThrow(
         ForbiddenException,
       );
@@ -76,13 +74,11 @@ describe('OpportunitiesService', () => {
 
   describe('update', () => {
     it('resets status to READY_FOR_REVIEW if it was published', async () => {
-      jest
-        .spyOn(prisma.opportunity, 'findUnique')
-        .mockResolvedValue({
-          id: '1',
-          status: 'PUBLISHED',
-          ownerId: 'user1',
-        } as any);
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        ownerId: 'user1',
+      } as any);
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({} as any);
       await service.update('user1', '1', { title: 'new' } as any);
       expect(prisma.opportunity.update).toHaveBeenCalledWith({
@@ -107,12 +103,18 @@ describe('OpportunitiesService', () => {
         .spyOn(prisma.user, 'findUnique')
         .mockResolvedValue({ id: 'user1', role: 'MODERATOR' } as any);
       jest
-        .spyOn(prisma.opportunity, 'update')
+        .spyOn(prisma.opportunity, 'findUnique')
         .mockResolvedValue({
           id: 'opp1',
           title: 'test',
           ownerId: 'owner1',
+          status: 'READY_FOR_REVIEW',
         } as any);
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        id: 'opp1',
+        title: 'test',
+        ownerId: 'owner1',
+      } as any);
       await service.moderate('user1', 'opp1', { action: 'APPROVE' } as any);
       expect(prisma.opportunity.update).toHaveBeenCalledWith(
         expect.objectContaining({
