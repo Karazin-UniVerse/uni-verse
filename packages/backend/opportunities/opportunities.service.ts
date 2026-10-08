@@ -104,8 +104,7 @@ export class OpportunitiesService {
     if (
       opportunity.status !== OpportunityStatus.PUBLISHED &&
       opportunity.ownerId !== userId &&
-      userRole !== Role.OPPORTUNITIES_MODERATOR &&
-      userRole !== Role.ADMIN
+      userRole !== Role.OPPORTUNITIES_MODERATOR
     ) {
       throw new NotFoundException('Opportunity not found');
     }
