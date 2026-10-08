@@ -484,6 +484,42 @@ describe('OpportunitiesService', () => {
       });
       expect(result.status).toBe('ACCEPTED');
     });
+
+    it('throws BadRequestException if application is already WITHDRAWN', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue({
+          id: 'app-1',
+          status: 'WITHDRAWN',
+          opportunity: { ownerId: 'user-1' },
+        } as any);
+
+      await expect(
+        service.updateApplicationStatus({
+          userId: 'user-1',
+          applicationId: 'app-1',
+          status: 'ACCEPTED' as any,
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException if target status is not allowed for owner', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue({
+          id: 'app-1',
+          status: 'SUBMITTED',
+          opportunity: { ownerId: 'user-1' },
+        } as any);
+
+      await expect(
+        service.updateApplicationStatus({
+          userId: 'user-1',
+          applicationId: 'app-1',
+          status: 'WITHDRAWN' as any,
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
   });
 
   describe('apply', () => {

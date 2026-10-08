@@ -24,6 +24,7 @@ export type GetTokensParams = {
   email: string;
   moodleToken?: string;
   moodleId?: string;
+  role?: string;
 };
 
 @Injectable()
@@ -323,7 +324,7 @@ export class AuthService {
       userId: user.id,
       email: user.email,
       moodleToken: user.token ?? undefined,
-      moodleId: undefined,
+      moodleId: user.moodleId ?? undefined,
       role: user.role,
     });
 
@@ -342,7 +343,13 @@ export class AuthService {
     return bcrypt.hash(data, 10);
   }
 
-  async getTokens({ userId, email, moodleToken, moodleId, role }: GetTokensParams & { role?: string }) {
+  async getTokens({
+    userId,
+    email,
+    moodleToken,
+    moodleId,
+    role,
+  }: GetTokensParams) {
     const atSecret = process.env.AT_SECRET;
     const rtSecret = process.env.RT_SECRET;
     const knownPlaceholders = new Set([

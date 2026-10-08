@@ -31,8 +31,8 @@ export type UpdateApplicationStatusParams = {
 @Injectable()
 export class OpportunitiesService {
   constructor(
-    private prisma: PrismaService,
-    private notificationsService: NotificationsService,
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -223,8 +223,23 @@ export class OpportunitiesService {
 
     if (!app) throw new NotFoundException('Application not found');
 
-    if (app.opportunity.ownerId !== userId)
+    if (app.opportunity.ownerId !== userId) {
       throw new ForbiddenException('Only the owner can manage this');
+    }
+
+    if (app.status === 'WITHDRAWN') {
+      throw new BadRequestException('Cannot change a withdrawn application');
+    }
+
+    const allowedStatuses: ApplicationStatus[] = [
+      'UNDER_REVIEW',
+      'ACCEPTED',
+      'REJECTED',
+    ];
+
+    if (!allowedStatuses.includes(status)) {
+      throw new BadRequestException('Invalid target status');
+    }
 
     const updated = await this.prisma.opportunityApplication.update({
       where: { id: applicationId },
@@ -239,10 +254,12 @@ export class OpportunitiesService {
 
     if (status === 'UNDER_REVIEW') statusText = 'на розгляді';
 
+    const commentSuffix = ownerComment ? ` Коментар: ${ownerComment}` : '';
+
     await this.notificationsService.createNotification({
       userId: app.applicantId,
       title: 'Статус відгуку змінено',
-      message: `Ваш відгук на "${app.opportunity.title}" тепер ${statusText}.${ownerComment ? ` Коментар: ${ownerComment}` : ''}`,
+      message: `Ваш відгук на "${app.opportunity.title}" тепер ${statusText}.${commentSuffix}`,
       link: `/my-applications`,
     });
 
@@ -400,10 +417,12 @@ export class OpportunitiesService {
       },
     });
 
+    const commentSuffix = dto.comment ? ` Коментар: ${dto.comment}` : '';
+
     await this.notificationsService.createNotification({
       userId: opp.ownerId,
       title: `Можливість ${actionText}`,
-      message: `Ваша можливість "${opp.title}" була ${actionText} модератором.${dto.comment ? ` Коментар: ${dto.comment}` : ''}`,
+      message: `Ваша можливість "${opp.title}" була ${actionText} модератором.${commentSuffix}`,
       link: `/my-opportunities`,
     });
 

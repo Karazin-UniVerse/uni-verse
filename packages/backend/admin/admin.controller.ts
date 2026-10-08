@@ -5,6 +5,7 @@ import {
   Param,
   Body,
   ForbiddenException,
+  ParseEnumPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
@@ -19,9 +20,7 @@ export class AdminController {
   @ApiBearerAuth()
   @Get('users')
   @ApiOperation({ summary: 'Get all users' })
-  getUsers(
-    @GetUser('role') role: string,
-  ): Promise<
+  getUsers(@GetUser('role') role: string): Promise<
     {
       id: string;
       email: string;
@@ -43,7 +42,7 @@ export class AdminController {
   setRole(
     @GetUser('role') callerRole: string,
     @Param('id') userId: string,
-    @Body('role') newRole: Role,
+    @Body('role', new ParseEnumPipe(Role)) newRole: Role,
   ): Promise<{ id: string; email: string; name: string | null; role: Role }> {
     if (callerRole !== 'ADMIN') {
       throw new ForbiddenException('Only ADMIN can change roles');
