@@ -47,8 +47,12 @@ export class AtGuard extends AuthGuard('jwt') {
       return (user || undefined) as TUser;
     }
 
+    if (err instanceof Error) {
+      throw err;
+    }
+
     if (err || !user) {
-      throw (err || new UnauthorizedException()) as Error;
+      throw new UnauthorizedException();
     }
 
     return user as TUser;
