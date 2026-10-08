@@ -105,10 +105,19 @@ describe('OpportunitiesService', () => {
   });
 
   describe('moderate', () => {
-    it('throws Forbidden if user is not OPPORTUNITIES_MODERATOR or ADMIN', async () => {
+    it('throws Forbidden if user is not OPPORTUNITIES_MODERATOR', async () => {
       jest
         .spyOn(prisma.user, 'findUnique')
         .mockResolvedValue({ id: 'user1', role: 'STUDENT' } as any);
+      await expect(
+        service.moderate('user1', 'opp1', {} as any),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws Forbidden if user is ADMIN because only OPPORTUNITIES_MODERATOR can moderate', async () => {
+      jest
+        .spyOn(prisma.user, 'findUnique')
+        .mockResolvedValue({ id: 'user1', role: 'ADMIN' } as any);
       await expect(
         service.moderate('user1', 'opp1', {} as any),
       ).rejects.toThrow(ForbiddenException);
@@ -190,7 +199,7 @@ describe('OpportunitiesService', () => {
     it('updates status to REQUIRES_CHANGES when action is REQUIRE_CHANGES', async () => {
       jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
         id: 'user1',
-        role: 'ADMIN',
+        role: 'OPPORTUNITIES_MODERATOR',
       } as any);
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: 'opp1',
@@ -281,7 +290,7 @@ describe('OpportunitiesService', () => {
       expect(result).toHaveLength(1);
     });
 
-    it('allows OPPORTUNITIES_MODERATOR or ADMIN to query specific statuses', async () => {
+    it('allows OPPORTUNITIES_MODERATOR to query specific statuses', async () => {
       jest.spyOn(prisma.opportunity, 'findMany').mockResolvedValue([] as any);
 
       await service.findAll(
@@ -292,6 +301,18 @@ describe('OpportunitiesService', () => {
       expect(prisma.opportunity.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ status: 'READY_FOR_REVIEW' }),
+        }),
+      );
+    });
+
+    it('forces PUBLISHED status when user is ADMIN or regular user', async () => {
+      jest.spyOn(prisma.opportunity, 'findMany').mockResolvedValue([] as any);
+
+      await service.findAll({ status: 'DRAFT' as any }, 'ADMIN');
+
+      expect(prisma.opportunity.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: 'PUBLISHED' }),
         }),
       );
     });

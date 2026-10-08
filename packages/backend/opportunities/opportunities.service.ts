@@ -19,6 +19,7 @@ import {
   OpportunityLifecycleState,
   ApplicationStatus,
   OpportunityStatus,
+  Role,
 } from '@universe/database';
 
 export type UpdateApplicationStatusParams = {
@@ -43,14 +44,14 @@ export class OpportunitiesService {
       data: {
         ...dto,
         ownerId: userId,
-        status: 'DRAFT', // initial status
+        status: OpportunityStatus.DRAFT, // initial status
       },
     });
   }
 
   /**
    * Find all opportunities matching the query.
-   * If user is not moderator/admin, only PUBLISHED opportunities are returned.
+   * If user is not moderator, only PUBLISHED opportunities are returned.
    */
   async findAll(query: FindOpportunitiesDto, userRole?: string) {
     const { paymentType, ownerId, search, status } = query;
@@ -58,12 +59,12 @@ export class OpportunitiesService {
 
     if (
       status &&
-      status !== 'PUBLISHED' &&
-      (userRole === 'OPPORTUNITIES_MODERATOR' || userRole === 'ADMIN')
+      status !== OpportunityStatus.PUBLISHED &&
+      userRole === Role.OPPORTUNITIES_MODERATOR
     ) {
       where.status = status;
     } else {
-      where.status = 'PUBLISHED';
+      where.status = OpportunityStatus.PUBLISHED;
     }
 
     if (paymentType) where.paymentType = paymentType;
@@ -101,10 +102,9 @@ export class OpportunitiesService {
     if (!opportunity) throw new NotFoundException('Opportunity not found');
 
     if (
-      opportunity.status !== 'PUBLISHED' &&
+      opportunity.status !== OpportunityStatus.PUBLISHED &&
       opportunity.ownerId !== userId &&
-      userRole !== 'OPPORTUNITIES_MODERATOR' &&
-      userRole !== 'ADMIN'
+      userRole !== Role.OPPORTUNITIES_MODERATOR
     ) {
       throw new ForbiddenException('Access denied to unpublished opportunity');
     }
@@ -132,8 +132,8 @@ export class OpportunitiesService {
     } = dto as Record<string, unknown>;
     const data: Record<string, unknown> = { ...safeDto };
 
-    if (opportunity.status === 'PUBLISHED') {
-      data.status = 'READY_FOR_REVIEW';
+    if (opportunity.status === OpportunityStatus.PUBLISHED) {
+      data.status = OpportunityStatus.READY_FOR_REVIEW;
     }
 
     return this.prisma.opportunity.update({
@@ -145,21 +145,21 @@ export class OpportunitiesService {
   /**
    * Submit an opportunity for moderation.
    */
-  async changeStatus(userId: string, id: string, status: 'READY_FOR_REVIEW') {
+  async changeStatus(userId: string, id: string, status: OpportunityStatus) {
     const opportunity = await this.findOne(id, userId);
 
     if (opportunity.ownerId !== userId)
       throw new ForbiddenException('Not your opportunity');
 
-    if (status !== 'READY_FOR_REVIEW') {
+    if (status !== OpportunityStatus.READY_FOR_REVIEW) {
       throw new BadRequestException(
         'Can only change status to READY_FOR_REVIEW',
       );
     }
 
     if (
-      opportunity.status !== 'DRAFT' &&
-      opportunity.status !== 'REQUIRES_CHANGES'
+      opportunity.status !== OpportunityStatus.DRAFT &&
+      opportunity.status !== OpportunityStatus.REQUIRES_CHANGES
     ) {
       throw new BadRequestException(
         'Can only submit for review from DRAFT or REQUIRES_CHANGES status',
@@ -227,14 +227,14 @@ export class OpportunitiesService {
       throw new ForbiddenException('Only the owner can manage this');
     }
 
-    if (app.status === 'WITHDRAWN') {
+    if (app.status === ApplicationStatus.WITHDRAWN) {
       throw new BadRequestException('Cannot change a withdrawn application');
     }
 
     const allowedStatuses: ApplicationStatus[] = [
-      'UNDER_REVIEW',
-      'ACCEPTED',
-      'REJECTED',
+      ApplicationStatus.UNDER_REVIEW,
+      ApplicationStatus.ACCEPTED,
+      ApplicationStatus.REJECTED,
     ];
 
     if (!allowedStatuses.includes(status)) {
@@ -248,16 +248,17 @@ export class OpportunitiesService {
 
     let statusText: string = status;
 
-    if (status === 'ACCEPTED') statusText = 'прийнято';
+    if (status === ApplicationStatus.ACCEPTED) statusText = 'прийнято';
 
-    if (status === 'REJECTED') statusText = 'відхилено';
+    if (status === ApplicationStatus.REJECTED) statusText = 'відхилено';
 
-    if (status === 'UNDER_REVIEW') statusText = 'на розгляді';
+    if (status === ApplicationStatus.UNDER_REVIEW) statusText = 'на розгляді';
 
     const commentSuffix = ownerComment ? ` Коментар: ${ownerComment}` : '';
 
     await this.notificationsService.createNotification({
       userId: app.applicantId,
+      type: 'OPPORTUNITY_APPLICATION_STATUS',
       title: 'Статус відгуку змінено',
       message: `Ваш відгук на "${app.opportunity.title}" тепер ${statusText}.${commentSuffix}`,
       link: `/my-applications`,
@@ -272,13 +273,13 @@ export class OpportunitiesService {
   async apply(userId: string, id: string, dto: ApplyOpportunityDto) {
     const opportunity = await this.findOne(id, userId);
 
-    if (opportunity.status !== 'PUBLISHED') {
+    if (opportunity.status !== OpportunityStatus.PUBLISHED) {
       throw new BadRequestException(
         'Cannot apply to an unpublished opportunity',
       );
     }
 
-    if (opportunity.lifecycleState !== 'ACTIVE') {
+    if (opportunity.lifecycleState !== OpportunityLifecycleState.ACTIVE) {
       throw new BadRequestException(
         'Cannot apply to an opportunity that is not active',
       );
@@ -300,7 +301,7 @@ export class OpportunitiesService {
           ...dto,
           applicantId: userId,
           opportunityId: id,
-          status: 'SUBMITTED',
+          status: ApplicationStatus.SUBMITTED,
         },
       });
     } catch (error) {
@@ -318,6 +319,7 @@ export class OpportunitiesService {
 
     await this.notificationsService.createNotification({
       userId: opportunity.ownerId,
+      type: 'OPPORTUNITY_NEW_APPLICATION',
       title: 'Новий відгук!',
       message: `Користувач ${dto.applicantName} відгукнувся на вашу можливість "${opportunity.title}".`,
       link: `/my-opportunities/${id}`,
@@ -339,12 +341,15 @@ export class OpportunitiesService {
     if (app.applicantId !== userId)
       throw new ForbiddenException('Only the applicant can withdraw');
 
-    if (app.status === 'ACCEPTED' || app.status === 'REJECTED')
+    if (
+      app.status === ApplicationStatus.ACCEPTED ||
+      app.status === ApplicationStatus.REJECTED
+    )
       throw new BadRequestException('Cannot withdraw completed application');
 
     return this.prisma.opportunityApplication.update({
       where: { id: applicationId },
-      data: { status: 'WITHDRAWN' },
+      data: { status: ApplicationStatus.WITHDRAWN },
     });
   }
 
@@ -376,18 +381,15 @@ export class OpportunitiesService {
     // Real-time role check to prevent using cached demoted admin tokens
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
-    if (
-      !user ||
-      (user.role !== 'OPPORTUNITIES_MODERATOR' && user.role !== 'ADMIN')
-    ) {
+    if (!user || user.role !== Role.OPPORTUNITIES_MODERATOR) {
       throw new ForbiddenException(
-        'Only OPPORTUNITIES_MODERATOR or ADMIN can moderate opportunities',
+        'Only OPPORTUNITIES_MODERATOR can moderate opportunities',
       );
     }
 
     const opportunityToModerate = await this.findOne(id, userId, user.role);
 
-    if (opportunityToModerate.status !== 'READY_FOR_REVIEW') {
+    if (opportunityToModerate.status !== OpportunityStatus.READY_FOR_REVIEW) {
       throw new BadRequestException(
         'Only opportunities in READY_FOR_REVIEW can be moderated',
       );
@@ -397,13 +399,13 @@ export class OpportunitiesService {
     let actionText = '';
 
     if (dto.action === ModerateAction.APPROVE) {
-      newStatus = 'PUBLISHED';
+      newStatus = OpportunityStatus.PUBLISHED;
       actionText = 'схвалена';
     } else if (dto.action === ModerateAction.REJECT) {
-      newStatus = 'REJECTED';
+      newStatus = OpportunityStatus.REJECTED;
       actionText = 'відхилена';
     } else if (dto.action === ModerateAction.REQUIRE_CHANGES) {
-      newStatus = 'REQUIRES_CHANGES';
+      newStatus = OpportunityStatus.REQUIRES_CHANGES;
       actionText = 'повернута на доопрацювання';
     } else {
       throw new BadRequestException('Unknown moderation action');
@@ -421,6 +423,7 @@ export class OpportunitiesService {
 
     await this.notificationsService.createNotification({
       userId: opp.ownerId,
+      type: 'OPPORTUNITY_MODERATED',
       title: `Можливість ${actionText}`,
       message: `Ваша можливість "${opp.title}" була ${actionText} модератором.${commentSuffix}`,
       link: `/my-opportunities`,

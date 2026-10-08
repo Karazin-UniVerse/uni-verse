@@ -9,7 +9,6 @@ import { AuthModule } from './auth/auth.module';
 import { MoodleModule } from './moodle/moodle.module';
 import { OpportunitiesModule } from './opportunities/opportunities.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { AdminModule } from './admin/admin.module';
 import { AtGuard } from './auth/guards/at.guard';
 
 @Module({
@@ -21,7 +20,6 @@ import { AtGuard } from './auth/guards/at.guard';
     MoodleModule,
     OpportunitiesModule,
     NotificationsModule,
-    AdminModule,
   ],
   controllers: [AppController],
   providers: [
