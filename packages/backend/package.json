@@ -103,6 +103,7 @@
       "!test/**",
       "!node_modules/**",
       "!prisma.config.ts",
+      "!prisma/seed*.ts",
       "!main.ts",
       "!**/*.module.ts",
       "!**/*.dto.ts",
