@@ -241,8 +241,8 @@ export class OpportunitiesService {
 
     await this.notificationsService.createNotification({
       userId: app.applicantId,
-      title: 'Статус отклика изменен',
-      message: `Ваш отклик на "${app.opportunity.title}" теперь ${statusText}.${ownerComment ? ` Комментарий: ${ownerComment}` : ''}`,
+      title: 'Статус відгуку змінено',
+      message: `Ваш відгук на "${app.opportunity.title}" тепер ${statusText}.${ownerComment ? ` Коментар: ${ownerComment}` : ''}`,
       link: `/my-applications`,
     });
 
@@ -301,8 +301,8 @@ export class OpportunitiesService {
 
     await this.notificationsService.createNotification({
       userId: opportunity.ownerId,
-      title: 'Новый отклик!',
-      message: `Пользователь ${dto.applicantName} откликнулся на вашу возможность "${opportunity.title}".`,
+      title: 'Новий відгук!',
+      message: `Користувач ${dto.applicantName} відгукнувся на вашу можливість "${opportunity.title}".`,
       link: `/my-opportunities/${id}`,
     });
 
@@ -402,8 +402,8 @@ export class OpportunitiesService {
 
     await this.notificationsService.createNotification({
       userId: opp.ownerId,
-      title: `Возможность ${actionText}`,
-      message: `Ваша возможность "${opp.title}" была ${actionText} модератором.${dto.comment ? ` Комментарий: ${dto.comment}` : ''}`,
+      title: `Можливість ${actionText}`,
+      message: `Ваша можливість "${opp.title}" була ${actionText} модератором.${dto.comment ? ` Коментар: ${dto.comment}` : ''}`,
       link: `/my-opportunities`,
     });
 
