@@ -9,7 +9,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { GetUser } from '../auth/decorators/get-user.decorator';
-import { Role, User } from '@universe/database';
+import { Role } from '@universe/database';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -19,7 +19,17 @@ export class AdminController {
   @ApiBearerAuth()
   @Get('users')
   @ApiOperation({ summary: 'Get all users' })
-  getUsers(@GetUser('role') role: string): Promise<Omit<User, 'password'>[]> {
+  getUsers(
+    @GetUser('role') role: string,
+  ): Promise<
+    {
+      id: string;
+      email: string;
+      name: string | null;
+      role: Role;
+      createdAt: Date;
+    }[]
+  > {
     if (role !== 'ADMIN') {
       throw new ForbiddenException('Only ADMIN can view users');
     }
@@ -34,7 +44,7 @@ export class AdminController {
     @GetUser('role') callerRole: string,
     @Param('id') userId: string,
     @Body('role') newRole: Role,
-  ): Promise<Omit<User, 'password'>> {
+  ): Promise<{ id: string; email: string; name: string | null; role: Role }> {
     if (callerRole !== 'ADMIN') {
       throw new ForbiddenException('Only ADMIN can change roles');
     }
