@@ -17,6 +17,7 @@ import {
   ModerateOpportunityDto,
   UpdateApplicationStatusDto,
   ChangeLifecycleStateDto,
+  ChangeOpportunityStatusDto,
   FindOpportunitiesDto,
 } from './dto';
 import { GetUser } from '../auth/decorators/get-user.decorator';
@@ -144,11 +145,11 @@ export class OpportunitiesController {
   changeStatus(
     @GetUser('sub') userId: string,
     @Param('id') id: string,
-    @Body('status') status: 'READY_FOR_REVIEW',
+    @Body() dto: ChangeOpportunityStatusDto,
   ): Promise<Opportunity> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
-    return this.opportunitiesService.changeStatus(userId, id, status);
+    return this.opportunitiesService.changeStatus(userId, id, dto.status);
   }
 
   @ApiBearerAuth()

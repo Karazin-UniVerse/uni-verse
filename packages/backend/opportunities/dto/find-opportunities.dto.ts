@@ -1,16 +1,17 @@
-import { IsOptional, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { OpportunityStatus, PaymentType } from '@universe/database';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class FindOpportunitiesDto {
-  @ApiPropertyOptional()
-  @IsString()
+  @ApiPropertyOptional({ enum: OpportunityStatus })
+  @IsEnum(OpportunityStatus)
   @IsOptional()
-  status?: string;
+  status?: OpportunityStatus;
 
-  @ApiPropertyOptional()
-  @IsString()
+  @ApiPropertyOptional({ enum: PaymentType })
+  @IsEnum(PaymentType)
   @IsOptional()
-  paymentType?: string;
+  paymentType?: PaymentType;
 
   @ApiPropertyOptional()
   @IsString()
