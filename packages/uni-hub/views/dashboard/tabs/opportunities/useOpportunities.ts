@@ -73,7 +73,7 @@ export function useOpportunities() {
     comment: '',
   });
 
-  const isModeratorOrAdmin = userRole === 'MODERATOR' || userRole === 'ADMIN';
+  const isModeratorOrAdmin = userRole === 'OPPORTUNITIES_MODERATOR' || userRole === 'ADMIN';
 
   const fetchCatalog = useCallback(async () => {
     setLoading(true);
