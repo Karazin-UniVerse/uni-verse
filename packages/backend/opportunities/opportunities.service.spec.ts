@@ -89,7 +89,7 @@ describe('OpportunitiesService', () => {
   });
 
   describe('moderate', () => {
-    it('throws Forbidden if user is not MODERATOR or ADMIN', async () => {
+    it('throws Forbidden if user is not OPPORTUNITIES_MODERATOR or ADMIN', async () => {
       jest
         .spyOn(prisma.user, 'findUnique')
         .mockResolvedValue({ id: 'user1', role: 'STUDENT' } as any);
@@ -98,18 +98,19 @@ describe('OpportunitiesService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('updates status and sends notification if user is MODERATOR', async () => {
+    it('updates status and sends notification if user is OPPORTUNITIES_MODERATOR', async () => {
       jest
         .spyOn(prisma.user, 'findUnique')
-        .mockResolvedValue({ id: 'user1', role: 'MODERATOR' } as any);
-      jest
-        .spyOn(prisma.opportunity, 'findUnique')
         .mockResolvedValue({
-          id: 'opp1',
-          title: 'test',
-          ownerId: 'owner1',
-          status: 'READY_FOR_REVIEW',
+          id: 'user1',
+          role: 'OPPORTUNITIES_MODERATOR',
         } as any);
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: 'opp1',
+        title: 'test',
+        ownerId: 'owner1',
+        status: 'READY_FOR_REVIEW',
+      } as any);
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         id: 'opp1',
         title: 'test',

@@ -59,7 +59,7 @@ export class OpportunitiesService {
     if (
       status &&
       status !== 'PUBLISHED' &&
-      (userRole === 'MODERATOR' || userRole === 'ADMIN')
+      (userRole === 'OPPORTUNITIES_MODERATOR' || userRole === 'ADMIN')
     ) {
       where.status = status;
     } else {
@@ -103,7 +103,7 @@ export class OpportunitiesService {
     if (
       opportunity.status !== 'PUBLISHED' &&
       opportunity.ownerId !== userId &&
-      userRole !== 'MODERATOR' &&
+      userRole !== 'OPPORTUNITIES_MODERATOR' &&
       userRole !== 'ADMIN'
     ) {
       throw new ForbiddenException('Access denied to unpublished opportunity');
@@ -359,9 +359,12 @@ export class OpportunitiesService {
     // Real-time role check to prevent using cached demoted admin tokens
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
-    if (!user || (user.role !== 'MODERATOR' && user.role !== 'ADMIN')) {
+    if (
+      !user ||
+      (user.role !== 'OPPORTUNITIES_MODERATOR' && user.role !== 'ADMIN')
+    ) {
       throw new ForbiddenException(
-        'Only MODERATOR or ADMIN can moderate opportunities',
+        'Only OPPORTUNITIES_MODERATOR or ADMIN can moderate opportunities',
       );
     }
 

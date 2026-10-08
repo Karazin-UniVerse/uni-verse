@@ -216,9 +216,11 @@ export class OpportunitiesController {
   @ApiBearerAuth()
   @Post(':id/moderate')
   /**
-   * Moderate an opportunity (MODERATOR only)
+   * Moderate an opportunity (OPPORTUNITIES_MODERATOR only)
    */
-  @ApiOperation({ summary: 'Moderate an opportunity (MODERATOR only)' })
+  @ApiOperation({
+    summary: 'Moderate an opportunity (OPPORTUNITIES_MODERATOR only)',
+  })
   moderate(
     @GetUser('sub') userId: string,
     @Param('id') id: string,
