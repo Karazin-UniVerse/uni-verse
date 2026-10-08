@@ -4,6 +4,7 @@ import React from 'react';
 import clsx from 'clsx';
 import { Briefcase, Sparkles, Coins, ArrowUpRight } from 'lucide-react';
 import { Button } from '@una';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { Opportunity } from '@uni-hub/types';
 import styles from './OpportunityCard.module.scss';
 
@@ -22,36 +23,30 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   onOpenApplicants,
   variant = 'catalog',
 }) => {
+  const { formatMessage } = useLanguage();
   const isPaid = opportunity.paymentType === 'PAID';
-  const ownerName = opportunity.owner?.name || opportunity.owner?.email || 'Каразінський університет';
+  const ownerName =
+    opportunity.owner?.name ||
+    opportunity.owner?.email ||
+    formatMessage('opportunities.card.defaultOwner');
   const initial = ownerName.charAt(0).toUpperCase();
 
-  const handleCardClick = () => {
-    if (variant === 'catalog' && onOpenDetail) {
-      onOpenDetail(opportunity);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (variant === 'catalog' && (e.key === 'Enter' || e.key === ' ')) {
-      e.preventDefault();
-      onOpenDetail?.(opportunity);
-    }
-  };
-
   return (
-    <article
-      className={clsx(styles.card, isPaid ? styles.paidCard : styles.unpaidCard)}
-      onClick={handleCardClick}
-      role={variant === 'catalog' ? 'button' : undefined}
-      tabIndex={variant === 'catalog' ? 0 : undefined}
-      onKeyDown={variant === 'catalog' ? handleKeyDown : undefined}
-    >
+    <article className={clsx(styles.card, isPaid ? styles.paidCard : styles.unpaidCard)}>
       <div className={styles.cardTop}>
         <div className={styles.cardBadgeRow}>
-          <div className={clsx(styles.categoryPill, isPaid ? styles.paidCategory : styles.unpaidCategory)}>
+          <div
+            className={clsx(
+              styles.categoryPill,
+              isPaid ? styles.paidCategory : styles.unpaidCategory,
+            )}
+          >
             <Briefcase size={12} />
-            <span>{isPaid ? 'Вакансія' : 'Практика'}</span>
+            <span>
+              {isPaid
+                ? formatMessage('opportunities.card.vacancy')
+                : formatMessage('opportunities.card.practice')}
+            </span>
           </div>
 
           {variant === 'owner' ? (
@@ -59,12 +54,12 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
           ) : isPaid ? (
             <span className={styles.compensationPill}>
               <Coins size={12} />
-              {opportunity.paymentDetails || 'Оплачувано'}
+              {opportunity.paymentDetails || formatMessage('opportunities.card.paidDefault')}
             </span>
           ) : (
             <span className={styles.experiencePill}>
               <Sparkles size={12} />
-              Досвід / Практика
+              {formatMessage('opportunities.card.experience')}
             </span>
           )}
         </div>
@@ -74,7 +69,8 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
 
         {variant === 'owner' && opportunity.moderationComment && (
           <div className={styles.warningBox}>
-            <strong>Зауваження модератора:</strong> {opportunity.moderationComment}
+            <strong>{formatMessage('opportunities.card.moderatorNote')}</strong>{' '}
+            {opportunity.moderationComment}
           </div>
         )}
       </div>
@@ -89,22 +85,12 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
               <Button
                 variant="secondary"
                 size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenApplicants?.(opportunity);
-                }}
+                onClick={() => onOpenApplicants?.(opportunity)}
               >
-                Відгуки
+                {formatMessage('opportunities.card.applications')}
               </Button>
-              <Button
-                variant="primary"
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenDetail?.(opportunity);
-                }}
-              >
-                Управління
+              <Button variant="primary" size="small" onClick={() => onOpenDetail?.(opportunity)}>
+                {formatMessage('opportunities.card.management')}
               </Button>
             </div>
           </>
@@ -115,15 +101,22 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
               <div className={styles.ownerMeta}>
                 <span className={styles.ownerName}>{ownerName}</span>
                 <span className={styles.ownerRole}>
-                  {opportunity.ownerContactInfo || opportunity.owner?.email || 'Каразінський університет'}
+                  {opportunity.ownerContactInfo ||
+                    opportunity.owner?.email ||
+                    formatMessage('opportunities.card.defaultOwner')}
                 </span>
               </div>
             </div>
 
-            <div className={styles.cardDetailsBtn}>
-              <span>Деталі</span>
+            <button
+              type="button"
+              className={styles.cardDetailsBtn}
+              onClick={() => onOpenDetail?.(opportunity)}
+              aria-label={`Детальніше про ${opportunity.title}`}
+            >
+              <span>{formatMessage('opportunities.card.details')}</span>
               <ArrowUpRight size={15} className={styles.cardArrow} />
-            </div>
+            </button>
           </>
         )}
       </div>

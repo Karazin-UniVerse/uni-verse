@@ -190,7 +190,11 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-primary), color-mix(in srgb, var(--accent-primary) 60%, #8b5cf6));
+  background: linear-gradient(
+    135deg,
+    var(--accent-primary),
+    color-mix(in srgb, var(--accent-primary) 60%, #8b5cf6)
+  );
   color: #fff;
   display: flex;
   align-items: center;
@@ -239,6 +243,13 @@
     color 280ms ease,
     transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
 }
 
 .cardArrow {
