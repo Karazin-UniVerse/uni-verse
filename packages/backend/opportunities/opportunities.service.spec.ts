@@ -64,15 +64,48 @@ describe('OpportunitiesService', () => {
       expect(res).toEqual({ id: '1', status: 'PUBLISHED' });
     });
 
-    it('throws Forbidden if unpublished and not owner or moderator', async () => {
+    it('throws NotFoundException if unpublished and not owner or moderator', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
         status: 'DRAFT',
         ownerId: 'other',
       } as any);
       await expect(service.findOne('1', 'user', 'STUDENT')).rejects.toThrow(
-        ForbiddenException,
+        NotFoundException,
       );
+    });
+
+    it('returns opportunity if unpublished and caller is owner', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'DRAFT',
+        ownerId: 'owner1',
+      } as any);
+      const res = await service.findOne('1', 'owner1', 'STUDENT');
+
+      expect(res).toEqual({ id: '1', status: 'DRAFT', ownerId: 'owner1' });
+    });
+
+    it('returns opportunity if unpublished and caller is OPPORTUNITIES_MODERATOR', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'DRAFT',
+        ownerId: 'owner1',
+      } as any);
+      const res = await service.findOne('1', 'mod1', 'OPPORTUNITIES_MODERATOR');
+
+      expect(res).toEqual({ id: '1', status: 'DRAFT', ownerId: 'owner1' });
+    });
+
+    it('returns opportunity if unpublished and caller is ADMIN', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'DRAFT',
+        ownerId: 'owner1',
+      } as any);
+      const res = await service.findOne('1', 'admin1', 'ADMIN');
+
+      expect(res).toEqual({ id: '1', status: 'DRAFT', ownerId: 'owner1' });
     });
   });
 
@@ -319,10 +352,22 @@ describe('OpportunitiesService', () => {
   });
 
   describe('changeStatus', () => {
-    it('throws ForbiddenException if not owner', async () => {
+    it('throws NotFoundException if not owner and opportunity is unpublished', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
         status: 'DRAFT',
+        ownerId: 'other-user',
+      } as any);
+
+      await expect(
+        service.changeStatus('user-1', '1', 'READY_FOR_REVIEW'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ForbiddenException if not owner and opportunity is published', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
         ownerId: 'other-user',
       } as any);
 

@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException } from '@nestjs/common';
+import { OpportunityStatus } from '@universe/database';
 import { OpportunitiesController } from './opportunities.controller';
 import { OpportunitiesService } from './opportunities.service';
 
@@ -122,16 +123,20 @@ describe('OpportunitiesController', () => {
   describe('changeStatus', () => {
     it('throws ForbiddenException when userId is empty', () => {
       expect(() =>
-        controller.changeStatus('', 'opp1', 'READY_FOR_REVIEW'),
+        controller.changeStatus('', 'opp1', {
+          status: OpportunityStatus.READY_FOR_REVIEW,
+        }),
       ).toThrow(ForbiddenException);
     });
 
     it('delegates to service.changeStatus', async () => {
-      await controller.changeStatus('user1', 'opp1', 'READY_FOR_REVIEW');
+      await controller.changeStatus('user1', 'opp1', {
+        status: OpportunityStatus.READY_FOR_REVIEW,
+      });
       expect(service.changeStatus).toHaveBeenCalledWith(
         'user1',
         'opp1',
-        'READY_FOR_REVIEW',
+        OpportunityStatus.READY_FOR_REVIEW,
       );
     });
   });

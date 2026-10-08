@@ -1,13 +1,6 @@
-import { IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-
-export enum OpportunityLifecycleState {
-  START = 'START',
-  ACTIVE = 'ACTIVE',
-  PAUSED = 'PAUSED',
-  COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED',
-}
+import { OpportunityLifecycleState } from '@universe/database';
+import { IsEnum } from 'class-validator';
 
 export class ChangeLifecycleStateDto {
   @ApiProperty({ enum: OpportunityLifecycleState })

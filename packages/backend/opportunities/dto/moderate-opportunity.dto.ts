@@ -1,11 +1,14 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export enum ModerateAction {
-  APPROVE = 'APPROVE',
-  REJECT = 'REJECT',
-  REQUIRE_CHANGES = 'REQUIRE_CHANGES',
-}
+export const ModerateAction = {
+  APPROVE: 'APPROVE',
+  REJECT: 'REJECT',
+  REQUIRE_CHANGES: 'REQUIRE_CHANGES',
+} as const;
+
+export type ModerateAction =
+  (typeof ModerateAction)[keyof typeof ModerateAction];
 
 export class ModerateOpportunityDto {
   @ApiProperty({ enum: ModerateAction })

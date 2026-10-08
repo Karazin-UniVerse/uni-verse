@@ -104,9 +104,10 @@ export class OpportunitiesService {
     if (
       opportunity.status !== OpportunityStatus.PUBLISHED &&
       opportunity.ownerId !== userId &&
-      userRole !== Role.OPPORTUNITIES_MODERATOR
+      userRole !== Role.OPPORTUNITIES_MODERATOR &&
+      userRole !== Role.ADMIN
     ) {
-      throw new ForbiddenException('Access denied to unpublished opportunity');
+      throw new NotFoundException('Opportunity not found');
     }
 
     return opportunity;
@@ -246,22 +247,16 @@ export class OpportunitiesService {
       data: { status, ownerComment },
     });
 
-    let statusText: string = status;
-
-    if (status === ApplicationStatus.ACCEPTED) statusText = 'прийнято';
-
-    if (status === ApplicationStatus.REJECTED) statusText = 'відхилено';
-
-    if (status === ApplicationStatus.UNDER_REVIEW) statusText = 'на розгляді';
-
-    const commentSuffix = ownerComment ? ` Коментар: ${ownerComment}` : '';
-
     await this.notificationsService.createNotification({
       userId: app.applicantId,
       type: 'OPPORTUNITY_APPLICATION_STATUS',
-      title: 'Статус відгуку змінено',
-      message: `Ваш відгук на "${app.opportunity.title}" тепер ${statusText}.${commentSuffix}`,
-      link: `/my-applications`,
+      title: 'notifications.opportunityApplicationStatus.title',
+      message: JSON.stringify({
+        opportunityTitle: app.opportunity.title,
+        status,
+        comment: ownerComment || null,
+      }),
+      link: '/my-applications',
     });
 
     return updated;
@@ -320,8 +315,11 @@ export class OpportunitiesService {
     await this.notificationsService.createNotification({
       userId: opportunity.ownerId,
       type: 'OPPORTUNITY_NEW_APPLICATION',
-      title: 'Новий відгук!',
-      message: `Користувач ${dto.applicantName} відгукнувся на вашу можливість "${opportunity.title}".`,
+      title: 'notifications.opportunityNewApplication.title',
+      message: JSON.stringify({
+        opportunityTitle: opportunity.title,
+        applicantName: dto.applicantName,
+      }),
       link: `/my-opportunities/${id}`,
     });
 
@@ -396,17 +394,13 @@ export class OpportunitiesService {
     }
 
     let newStatus: OpportunityStatus;
-    let actionText = '';
 
     if (dto.action === ModerateAction.APPROVE) {
       newStatus = OpportunityStatus.PUBLISHED;
-      actionText = 'схвалена';
     } else if (dto.action === ModerateAction.REJECT) {
       newStatus = OpportunityStatus.REJECTED;
-      actionText = 'відхилена';
     } else if (dto.action === ModerateAction.REQUIRE_CHANGES) {
       newStatus = OpportunityStatus.REQUIRES_CHANGES;
-      actionText = 'повернута на доопрацювання';
     } else {
       throw new BadRequestException('Unknown moderation action');
     }
@@ -419,14 +413,16 @@ export class OpportunitiesService {
       },
     });
 
-    const commentSuffix = dto.comment ? ` Коментар: ${dto.comment}` : '';
-
     await this.notificationsService.createNotification({
       userId: opp.ownerId,
       type: 'OPPORTUNITY_MODERATED',
-      title: `Можливість ${actionText}`,
-      message: `Ваша можливість "${opp.title}" була ${actionText} модератором.${commentSuffix}`,
-      link: `/my-opportunities`,
+      title: 'notifications.opportunityModerated.title',
+      message: JSON.stringify({
+        opportunityTitle: opp.title,
+        action: dto.action,
+        comment: dto.comment || null,
+      }),
+      link: '/my-opportunities',
     });
 
     return opp;
