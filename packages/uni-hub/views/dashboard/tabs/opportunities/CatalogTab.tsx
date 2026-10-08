@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { Search, X } from 'lucide-react';
-import { Spinner, Empty } from '@una';
+import { TabStateWrapper } from './TabStateWrapper';
 import type { Opportunity, OpportunityPaymentType } from '@uni-hub/types';
 import { OpportunityCard } from '../OpportunityCard';
 import styles from '../OpportunitiesTab.module.scss';
@@ -107,23 +107,17 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
         </div>
       </div>
 
-      {loading ? (
-        <div className={styles.loadingBox}>
-          <Spinner size="large" />
-        </div>
-      ) : filteredOpportunities.length === 0 ? (
-        <Empty description="За вашим запитом не знайдено доступних можливостей" />
-      ) : (
+      <TabStateWrapper
+        loading={loading}
+        isEmpty={filteredOpportunities.length === 0}
+        emptyDescription="За вашим запитом не знайдено доступних можливостей"
+      >
         <div className={styles.grid}>
           {filteredOpportunities.map((opp) => (
-            <OpportunityCard
-              key={opp.id}
-              opportunity={opp}
-              onOpenDetail={onOpenDetail}
-            />
+            <OpportunityCard key={opp.id} opportunity={opp} onOpenDetail={onOpenDetail} />
           ))}
         </div>
-      )}
+      </TabStateWrapper>
     </>
   );
 };

@@ -346,6 +346,7 @@ export const en = {
   'opportunities.details': 'Details',
   'opportunities.deadline': 'Deadline:',
   'opportunities.empty': 'No open opportunities found in this category',
+  'opportunities.applicants.empty': 'There are no applications for this opportunity yet',
   'opportunities.tagInternships': 'IT & Internships',
   'opportunities.tagGrants': 'Grants & Scholarships',
   'opportunities.tagExchange': 'Academic Mobility',

@@ -345,6 +345,7 @@ export const uk = {
   'opportunities.details': 'Детальніше',
   'opportunities.deadline': 'Дедлайн:',
   'opportunities.empty': 'Наразі немає відкритих можливостей у цій категорії',
+  'opportunities.applicants.empty': 'На цю можливість ще немає відгуків від студентів',
   'opportunities.tagInternships': 'IT & Стажування',
   'opportunities.tagGrants': 'Гранти та стипендії',
   'opportunities.tagExchange': 'Академічна мобільність',

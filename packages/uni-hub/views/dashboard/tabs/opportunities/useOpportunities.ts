@@ -297,13 +297,13 @@ export function useOpportunities() {
     try {
       await opportunitiesApi.moderate(id, action, comment);
       setModerationQueue((prev) => prev.filter((item) => item.id !== id));
-      toast.success(
-        action === 'APPROVE'
-          ? formatMessage('opportunities.toast.approved')
-          : action === 'REJECT'
-            ? formatMessage('opportunities.toast.rejected')
-            : formatMessage('opportunities.toast.requiresChanges'),
-      );
+      const toastMap = {
+        APPROVE: 'opportunities.toast.approved',
+        REJECT: 'opportunities.toast.rejected',
+        REQUIRE_CHANGES: 'opportunities.toast.requiresChanges',
+      } as const;
+
+      toast.success(formatMessage(toastMap[action]));
     } catch (err: unknown) {
       toast.error((err as Error).message || formatMessage('opportunities.toast.moderateError'));
     }
