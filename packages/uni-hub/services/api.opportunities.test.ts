@@ -194,14 +194,12 @@ describe('OpportunitiesApi', () => {
     await opportunitiesApi.getMyOpportunities();
     await opportunitiesApi.getOpportunityApplications('1');
     await opportunitiesApi.getMyApplications();
-    await opportunitiesApi.getAdminUsers();
 
     const fetchMock = vi.mocked(global.fetch);
 
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(fetchMock.mock.calls[0][0]).toContain('/opportunities/my');
     expect(fetchMock.mock.calls[1][0]).toContain('/opportunities/1/applications');
     expect(fetchMock.mock.calls[2][0]).toContain('/opportunities/my/applications');
-    expect(fetchMock.mock.calls[3][0]).toContain('/admin/users');
   });
 });

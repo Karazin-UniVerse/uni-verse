@@ -38,13 +38,6 @@ export interface GetOpportunitiesParams {
   search?: string;
 }
 
-export interface AdminUser {
-  id: string;
-  email: string;
-  name: string | null;
-  role: string;
-}
-
 export class OpportunitiesApi {
   async getOpportunities(params?: GetOpportunitiesParams): Promise<{ data: Opportunity[] }> {
     const query = buildQueryString(params as Record<string, unknown>);
@@ -77,7 +70,10 @@ export class OpportunitiesApi {
     });
   }
 
-  async changeLifecycle(id: string, lifecycleState: OpportunityLifecycle): Promise<{ data: Opportunity }> {
+  async changeLifecycle(
+    id: string,
+    lifecycleState: OpportunityLifecycle,
+  ): Promise<{ data: Opportunity }> {
     return request<Opportunity>(`/opportunities/${id}/lifecycle`, {
       method: 'PUT',
       body: JSON.stringify({ lifecycleState }),
@@ -120,21 +116,14 @@ export class OpportunitiesApi {
     });
   }
 
-  async moderate(id: string, action: 'APPROVE' | 'REJECT' | 'REQUIRE_CHANGES', comment?: string): Promise<{ data: Opportunity }> {
+  async moderate(
+    id: string,
+    action: 'APPROVE' | 'REJECT' | 'REQUIRE_CHANGES',
+    comment?: string,
+  ): Promise<{ data: Opportunity }> {
     return request<Opportunity>(`/opportunities/${id}/moderate`, {
       method: 'POST',
       body: JSON.stringify({ action, comment }),
-    });
-  }
-
-  async getAdminUsers(): Promise<{ data: AdminUser[] }> {
-    return request<AdminUser[]>('/admin/users');
-  }
-
-  async setAdminUserRole(userId: string, role: string): Promise<{ data: unknown }> {
-    return request<unknown>(`/admin/users/${userId}/role`, {
-      method: 'PUT',
-      body: JSON.stringify({ role }),
     });
   }
 }
