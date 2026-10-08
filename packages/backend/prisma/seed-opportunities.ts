@@ -47,7 +47,7 @@ const SEED_OPPORTUNITIES: SeedOpportunity[] = [
     status: 'PUBLISHED',
     lifecycleState: 'ACTIVE',
     paymentType: 'UNPAID',
-    legacyTitles: ['SMM-менеджер для проєкту'],
+    legacyTitles: ['SMM-менеджер для проєкту', 'SMM-менеджер для проекта'],
   },
   {
     id: '10000000-0000-4000-8000-000000000004',
