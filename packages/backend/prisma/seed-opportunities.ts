@@ -12,7 +12,6 @@ interface SeedOpportunity {
   paymentType: 'PAID' | 'UNPAID';
   paymentDetails?: string;
   legacyTitles?: string[];
-  legacyContactInfos?: string[];
 }
 
 const SEED_OPPORTUNITIES: SeedOpportunity[] = [
@@ -27,7 +26,6 @@ const SEED_OPPORTUNITIES: SeedOpportunity[] = [
     paymentType: 'PAID',
     paymentDetails: '500$ на місяць',
     legacyTitles: ['Frontend Developer for Edu Startup'],
-    legacyContactInfos: ['@test_tg'],
   },
   {
     id: '10000000-0000-4000-8000-000000000002',
@@ -50,7 +48,6 @@ const SEED_OPPORTUNITIES: SeedOpportunity[] = [
     lifecycleState: 'ACTIVE',
     paymentType: 'UNPAID',
     legacyTitles: ['SMM-менеджер для проєкту'],
-    legacyContactInfos: ['@student_council'],
   },
   {
     id: '10000000-0000-4000-8000-000000000004',
@@ -112,13 +109,15 @@ async function main(): Promise<void> {
       where: {
         OR: [
           { id: item.id },
-          { title: item.title },
-          ...(item.legacyTitles?.map((legacyTitle) => ({
-            title: legacyTitle,
-          })) ?? []),
-          ...(item.legacyContactInfos?.map((contact) => ({
-            ownerContactInfo: contact,
-          })) ?? []),
+          {
+            ownerId: owner.id,
+            OR: [
+              { title: item.title },
+              ...(item.legacyTitles?.map((legacyTitle) => ({
+                title: legacyTitle,
+              })) ?? []),
+            ],
+          },
         ],
       },
     });
