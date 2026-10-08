@@ -145,8 +145,11 @@ export function CustomDateTime({
     return `${formattedDate} ${displayHours}:${minutes} ${meridiem}`;
   };
 
-  const [currentYear] = useState(() => new Date().getFullYear());
-  const years = Array.from({ length: 21 }, (_, index) => currentYear - 10 + index);
+  const [years] = useState(() => {
+    const startYear = new Date().getFullYear();
+
+    return Array.from({ length: 21 }, (_, index) => startYear - 10 + index);
+  });
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
