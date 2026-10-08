@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -143,6 +144,21 @@ export class OpportunitiesService {
     if (opportunity.ownerId !== userId)
       throw new ForbiddenException('Not your opportunity');
 
+    if (status !== 'READY_FOR_REVIEW') {
+      throw new BadRequestException(
+        'Can only change status to READY_FOR_REVIEW',
+      );
+    }
+
+    if (
+      opportunity.status !== 'DRAFT' &&
+      opportunity.status !== 'REQUIRES_CHANGES'
+    ) {
+      throw new BadRequestException(
+        'Can only submit for review from DRAFT or REQUIRES_CHANGES status',
+      );
+    }
+
     return this.prisma.opportunity.update({
       where: { id },
       data: { status },
@@ -252,14 +268,29 @@ export class OpportunitiesService {
       throw new BadRequestException('Already applied to this opportunity');
     }
 
-    const app = await this.prisma.opportunityApplication.create({
-      data: {
-        ...dto,
-        applicantId: userId,
-        opportunityId: id,
-        status: 'SUBMITTED',
-      },
-    });
+    let app;
+
+    try {
+      app = await this.prisma.opportunityApplication.create({
+        data: {
+          ...dto,
+          applicantId: userId,
+          opportunityId: id,
+          status: 'SUBMITTED',
+        },
+      });
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as Record<string, unknown>).code === 'P2002'
+      ) {
+        throw new ConflictException('Already applied to this opportunity');
+      }
+
+      throw error;
+    }
 
     await this.notificationsService.createNotification(
       opportunity.ownerId,
@@ -327,7 +358,15 @@ export class OpportunitiesService {
       );
     }
 
-    let newStatus: OpportunityStatus = 'DRAFT';
+    const opportunityToModerate = await this.findOne(id, userId, user.role);
+
+    if (opportunityToModerate.status !== 'READY_FOR_REVIEW') {
+      throw new BadRequestException(
+        'Only opportunities in READY_FOR_REVIEW can be moderated',
+      );
+    }
+
+    let newStatus: OpportunityStatus;
     let actionText = '';
 
     if (dto.action === ModerateAction.APPROVE) {
@@ -339,6 +378,8 @@ export class OpportunitiesService {
     } else if (dto.action === ModerateAction.REQUIRE_CHANGES) {
       newStatus = 'REQUIRES_CHANGES';
       actionText = 'возвращена на правки';
+    } else {
+      throw new BadRequestException('Unknown moderation action');
     }
 
     const opp = await this.prisma.opportunity.update({
