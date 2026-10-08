@@ -12,7 +12,6 @@
   position: relative;
   z-index: 1;
   overflow: hidden;
-  cursor: pointer;
   transition:
     transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 320ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -243,6 +242,11 @@
     color 280ms ease,
     transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+  }
 
   &::after {
     content: '';

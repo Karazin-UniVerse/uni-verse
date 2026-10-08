@@ -8,6 +8,8 @@ import type {
   CourseStatistics,
 } from '@uni-hub/types';
 
+export const ENABLE_OPPORTUNITIES_TAB = process.env.NEXT_PUBLIC_ENABLE_OPPORTUNITIES_TAB === 'true';
+
 export const NAV_KEYS = [
   'overview',
   'courses',

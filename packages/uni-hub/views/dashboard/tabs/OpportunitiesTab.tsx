@@ -67,6 +67,7 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
     handleUpdateAppStatus,
     handleWithdrawApplication,
     handleModerate,
+    isModeratorOrAdmin,
   } = useOpportunities();
 
   return (
@@ -108,20 +109,22 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
             {formatMessage('opportunities.tabs.myApplications')}
           </button>
 
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeSubTab === 'moderation'}
-            aria-controls="panel-moderation"
-            className={`${styles.segmentItem} ${activeSubTab === 'moderation' ? styles.activeSegment : ''}`}
-            onClick={() => setActiveSubTab('moderation')}
-          >
-            <ShieldCheck size={16} />
-            {formatMessage('opportunities.tabs.moderation')}
-            {moderationQueue.length > 0 && (
-              <span className={styles.badgePill}>{moderationQueue.length}</span>
-            )}
-          </button>
+          {isModeratorOrAdmin && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeSubTab === 'moderation'}
+              aria-controls="panel-moderation"
+              className={`${styles.segmentItem} ${activeSubTab === 'moderation' ? styles.activeSegment : ''}`}
+              onClick={() => setActiveSubTab('moderation')}
+            >
+              <ShieldCheck size={16} />
+              {formatMessage('opportunities.tabs.moderation')}
+              {moderationQueue.length > 0 && (
+                <span className={styles.badgePill}>{moderationQueue.length}</span>
+              )}
+            </button>
+          )}
         </div>
 
         <div className={styles.createBtnWrapper}>
@@ -174,7 +177,7 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
           />
         )}
 
-        {activeSubTab === 'moderation' && (
+        {activeSubTab === 'moderation' && isModeratorOrAdmin && (
           <ModerationQueueTab
             loading={loading}
             moderationQueue={moderationQueue}

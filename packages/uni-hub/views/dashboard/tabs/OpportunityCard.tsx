@@ -31,6 +31,18 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
     formatMessage('opportunities.card.defaultOwner');
   const initial = ownerName.charAt(0).toUpperCase();
 
+  const publicBadge = isPaid ? (
+    <span className={styles.compensationPill}>
+      <Coins size={12} />
+      {opportunity.paymentDetails || formatMessage('opportunities.card.paidDefault')}
+    </span>
+  ) : (
+    <span className={styles.experiencePill}>
+      <Sparkles size={12} />
+      {formatMessage('opportunities.card.experience')}
+    </span>
+  );
+
   return (
     <article className={clsx(styles.card, isPaid ? styles.paidCard : styles.unpaidCard)}>
       <div className={styles.cardTop}>
@@ -49,19 +61,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
             </span>
           </div>
 
-          {variant === 'owner' ? (
-            statusBadge
-          ) : isPaid ? (
-            <span className={styles.compensationPill}>
-              <Coins size={12} />
-              {opportunity.paymentDetails || formatMessage('opportunities.card.paidDefault')}
-            </span>
-          ) : (
-            <span className={styles.experiencePill}>
-              <Sparkles size={12} />
-              {formatMessage('opportunities.card.experience')}
-            </span>
-          )}
+          {variant === 'owner' ? statusBadge : publicBadge}
         </div>
 
         <h3 className={styles.cardTitle}>{opportunity.title}</h3>
@@ -112,7 +112,9 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
               type="button"
               className={styles.cardDetailsBtn}
               onClick={() => onOpenDetail?.(opportunity)}
-              aria-label={`Детальніше про ${opportunity.title}`}
+              aria-label={formatMessage('opportunities.card.detailsAria', {
+                title: opportunity.title,
+              })}
             >
               <span>{formatMessage('opportunities.card.details')}</span>
               <ArrowUpRight size={15} className={styles.cardArrow} />

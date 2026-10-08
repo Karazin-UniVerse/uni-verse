@@ -22,6 +22,7 @@ import { useFeatures } from '@uni-hub/features';
 import type { FeatureFlags, FeatureFlagKey } from '@core/constants/features';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
+import { ENABLE_OPPORTUNITIES_TAB } from '../types';
 import type { DashboardSidebarProps, NavKey } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
@@ -34,9 +35,6 @@ export interface NavItemConfig {
   shortLabel: string;
   featureFlag?: FeatureFlagKey;
 }
-
-const ENABLE_OPPORTUNITIES_TAB =
-  process.env.NEXT_PUBLIC_ENABLE_OPPORTUNITIES_TAB === 'true';
 
 export const NAV_ITEMS: NavItemConfig[] = [
   {

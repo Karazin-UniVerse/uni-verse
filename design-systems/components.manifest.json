@@ -1,0 +1,412 @@
+{
+  "schemaVersion": "od-components-manifest/v1",
+  "projectId": "uni-verse",
+  "libraryName": "@una (UniDesign)",
+  "importRoot": "@una",
+  "styling": "SCSS Modules + CSS Custom Properties (no Tailwind)",
+  "components": [
+    {
+      "name": "Button",
+      "importPath": "@una",
+      "category": "Actions",
+      "description": "Accessible button supporting native <button> and link-like <a> rendering. Forwards all native element attributes.",
+      "variants": {
+        "variant": ["primary", "secondary"],
+        "size": ["small", "medium", "large"],
+        "isTransparent": [true, false],
+        "isLink": [true, false]
+      },
+      "props": {
+        "children": "ReactNode (required)",
+        "variant": "'primary' | 'secondary' (default: 'primary')",
+        "size": "'small' | 'medium' | 'large' (default: 'small')",
+        "isTransparent": "boolean (default: false)",
+        "isLink": "boolean (default: false) — renders <a> instead of <button>",
+        "href": "string — required when isLink=true",
+        "className": "string",
+        "type": "'button' | 'submit' | 'reset' (default: 'button')",
+        "disabled": "boolean",
+        "onClick": "(event) => void"
+      },
+      "subcomponents": [],
+      "examples": [
+        "<Button variant=\"primary\" size=\"medium\" onClick={() => alert('Збережено')}>Зберегти</Button>",
+        "<Button variant=\"secondary\" size=\"small\">Скасувати</Button>",
+        "<Button variant=\"secondary\" isTransparent>Прозора кнопка</Button>",
+        "<Button isLink href=\"/docs\" variant=\"primary\" size=\"large\">Документація</Button>"
+      ]
+    },
+    {
+      "name": "TextInput",
+      "importPath": "@una",
+      "category": "Form Controls",
+      "description": "Single-line text input with forwardRef support. Extends native <input> attributes (except 'size').",
+      "variants": {
+        "variant": ["primary", "secondary"],
+        "size": ["small", "medium", "large"],
+        "isTransparent": [true, false]
+      },
+      "props": {
+        "variant": "'primary' | 'secondary' (default: 'primary')",
+        "size": "'small' | 'medium' | 'large' (default: 'medium')",
+        "isTransparent": "boolean (default: false) — underline-only style",
+        "placeholder": "string",
+        "type": "'text' | 'email' | 'password' | 'number' | 'search' | ...",
+        "disabled": "boolean",
+        "className": "string",
+        "ref": "React.Ref<HTMLInputElement>"
+      },
+      "subcomponents": [],
+      "examples": [
+        "<TextInput placeholder=\"Введіть ім'я\" size=\"medium\" variant=\"primary\" />",
+        "<TextInput placeholder=\"Email\" type=\"email\" size=\"large\" />",
+        "<TextInput placeholder=\"Пошук...\" size=\"small\" isTransparent />"
+      ]
+    },
+    {
+      "name": "Select",
+      "importPath": "@una",
+      "category": "Form Controls",
+      "description": "Accessible native <select> dropdown with custom chevron icon and token-based styling.",
+      "variants": {},
+      "props": {
+        "value": "string (required)",
+        "onChange": "(value: string) => void (required)",
+        "options": "Array<{ value: string; label: string }> (required)",
+        "className": "string",
+        "aria-label": "string"
+      },
+      "subcomponents": [],
+      "examples": [
+        "<Select value={semester} onChange={setSemester} options={[{ value: '1', label: 'Семестр 1' }, { value: '2', label: 'Семестр 2' }]} />",
+        "<Select value={sortBy} onChange={setSortBy} options={sortOptions} aria-label=\"Сортування\" />"
+      ]
+    },
+    {
+      "name": "CheckBox",
+      "importPath": "@una",
+      "category": "Form Controls",
+      "description": "Custom styled checkbox with animated checkmark and keyboard focus ring. Extends native <input> attributes.",
+      "variants": {
+        "variant": ["primary", "secondary"]
+      },
+      "props": {
+        "variant": "'primary' | 'secondary' (required)",
+        "checked": "boolean",
+        "onChange": "(event) => void",
+        "disabled": "boolean",
+        "className": "string"
+      },
+      "subcomponents": [],
+      "examples": [
+        "<CheckBox variant=\"primary\" checked={agreed} onChange={e => setAgreed(e.target.checked)} />",
+        "<CheckBox variant=\"secondary\" disabled />"
+      ]
+    },
+    {
+      "name": "RadioButton",
+      "importPath": "@una",
+      "category": "Form Controls",
+      "description": "Custom styled radio button with animated dot indicator and keyboard focus ring. Extends native <input> attributes.",
+      "variants": {
+        "variant": ["primary", "secondary"]
+      },
+      "props": {
+        "variant": "'primary' | 'secondary' (required)",
+        "name": "string — groups radio buttons",
+        "value": "string",
+        "checked": "boolean",
+        "onChange": "(event) => void",
+        "disabled": "boolean",
+        "className": "string"
+      },
+      "subcomponents": [],
+      "examples": [
+        "<RadioButton variant=\"primary\" name=\"grade\" value=\"A\" checked={grade === 'A'} onChange={handleChange} />",
+        "<RadioButton variant=\"secondary\" name=\"grade\" value=\"B\" />"
+      ]
+    },
+    {
+      "name": "CustomDateTime",
+      "importPath": "@una",
+      "category": "Form Controls",
+      "description": "Rich date-time picker with calendar grid and 15-minute time intervals. Uses TextInput as the trigger. Includes focus trap, click-outside close, and keyboard navigation.",
+      "variants": {
+        "size": ["small", "medium", "large"]
+      },
+      "props": {
+        "selected": "Date | null (required)",
+        "onChange": "(date: Date | null) => void (required)",
+        "size": "'small' | 'medium' | 'large' (default: 'medium')",
+        "variant": "'primary' | 'secondary'",
+        "isTransparent": "boolean",
+        "placeholder": "string"
+      },
+      "subcomponents": ["SimpleDateTime"],
+      "examples": [
+        "<CustomDateTime selected={deadline} onChange={setDeadline} size=\"medium\" />",
+        "<CustomDateTime selected={null} onChange={handleDateChange} placeholder=\"Оберіть дату\" />"
+      ]
+    },
+    {
+      "name": "FileInput",
+      "importPath": "@una",
+      "category": "Form Controls",
+      "description": "Drag-and-drop file upload zone with file list, size validation, and multi-file support. Uses forwardRef for native input access.",
+      "variants": {
+        "variant": ["primary", "secondary"],
+        "size": ["small", "medium", "large"]
+      },
+      "props": {
+        "variant": "'primary' | 'secondary' (default: 'primary')",
+        "size": "'small' | 'medium' | 'large' (default: 'medium')",
+        "label": "ReactNode",
+        "hint": "string — helper text below the icon",
+        "dragText": "string (default: 'Drag & drop files here, or')",
+        "browseText": "string (default: 'browse')",
+        "error": "string — external validation error",
+        "maxSize": "number — max file size in bytes",
+        "maxFiles": "number — max number of files",
+        "files": "File[] — controlled file list",
+        "onFilesChange": "(files: File[]) => void",
+        "onChange": "(event) => void",
+        "showFileList": "boolean (default: true)",
+        "multiple": "boolean (default: false)",
+        "disabled": "boolean (default: false)",
+        "accept": "string — MIME filter",
+        "id": "string"
+      },
+      "subcomponents": [],
+      "examples": [
+        "<FileInput label=\"Завантажити файл\" hint=\"PDF, DOCX до 10 МБ\" accept=\".pdf,.docx\" maxSize={10485760} />",
+        "<FileInput variant=\"secondary\" size=\"large\" multiple maxFiles={5} onFilesChange={setFiles} />",
+        "<FileInput label=\"Фото\" accept=\"image/*\" size=\"small\" />"
+      ]
+    },
+    {
+      "name": "SimpleSlider",
+      "importPath": "@una",
+      "category": "Form Controls",
+      "description": "Range slider input with custom thumb styling and Cyberpunk theme support.",
+      "variants": {},
+      "props": {
+        "value": "number (required)",
+        "onChange": "(value: number) => void (required)",
+        "min": "number (default: 0)",
+        "max": "number (default: 100)",
+        "step": "number (default: 1)",
+        "disabled": "boolean (default: false)",
+        "className": "string"
+      },
+      "subcomponents": [],
+      "examples": [
+        "<SimpleSlider value={volume} onChange={setVolume} min={0} max={100} />",
+        "<SimpleSlider value={rating} onChange={setRating} min={1} max={5} step={1} />"
+      ]
+    },
+    {
+      "name": "SimpleForm",
+      "importPath": "@una",
+      "category": "Form Controls",
+      "description": "Lightweight form wrapper that normalizes submission into action(FormData) and onData(object) callbacks. Supports visual card variant.",
+      "variants": {
+        "variant": ["simple", "card"]
+      },
+      "props": {
+        "children": "ReactNode (required)",
+        "action": "(formData: FormData) => void | Promise<void>",
+        "onData": "(data: Record<string, FormDataEntryValue | FormDataEntryValue[]>) => void",
+        "variant": "'simple' | 'card' (default: 'card')",
+        "className": "string"
+      },
+      "subcomponents": [],
+      "examples": [
+        "<SimpleForm onData={data => console.log(data)} variant=\"card\">\n  <TextInput name=\"email\" placeholder=\"Email\" />\n  <Button type=\"submit\" variant=\"primary\">Надіслати</Button>\n</SimpleForm>",
+        "<SimpleForm variant=\"simple\" action={handleServerAction}>\n  <TextInput name=\"query\" />\n  <Button type=\"submit\">Пошук</Button>\n</SimpleForm>"
+      ]
+    },
+    {
+      "name": "Modal",
+      "importPath": "@una",
+      "category": "Overlays",
+      "description": "Dialog overlay with focus trap, Escape-to-close (topmost only), body scroll lock, and mobile bottom-sheet animation. Uses role=\"dialog\" with aria-modal.",
+      "variants": {},
+      "props": {
+        "open": "boolean (required)",
+        "onClose": "() => void (required)",
+        "children": "ReactNode (required)",
+        "title": "ReactNode — renders in header with auto-generated aria-labelledby",
+        "width": "number | string (default: 700) — CSS width via --modal-dialog-width",
+        "ariaLabel": "string — fallback label when title is absent",
+        "className": "string"
+      },
+      "subcomponents": [],
+      "examples": [
+        "<Modal open={isOpen} onClose={() => setIsOpen(false)} title=\"Подати завдання\">\n  <p>Оберіть файл для завантаження</p>\n  <FileInput label=\"Файл\" />\n</Modal>",
+        "<Modal open={showConfirm} onClose={handleClose} title=\"Підтвердити видалення\" width={480}>\n  <p>Ви впевнені?</p>\n  <Button variant=\"primary\" onClick={handleDelete}>Видалити</Button>\n</Modal>"
+      ]
+    },
+    {
+      "name": "Tag",
+      "importPath": "@una",
+      "category": "Feedback & Display",
+      "description": "Inline status badge for academic grades, deadlines, ECTS credits, and categories. Tone colors adapt to dark and cyberpunk themes.",
+      "variants": {
+        "tone": ["default", "neutral", "success", "warning", "info", "danger"]
+      },
+      "props": {
+        "children": "ReactNode (required)",
+        "tone": "'default' | 'neutral' | 'success' | 'warning' | 'info' | 'danger' (default: 'default')",
+        "className": "string"
+      },
+      "subcomponents": [],
+      "examples": [
+        "<Tag tone=\"success\">95 / 100 • Відмінно</Tag>",
+        "<Tag tone=\"warning\">Дедлайн: завтра</Tag>",
+        "<Tag tone=\"danger\">Прострочено</Tag>",
+        "<Tag tone=\"info\">Іспит</Tag>",
+        "<Tag tone=\"neutral\">5 ECTS</Tag>"
+      ]
+    },
+    {
+      "name": "ProgressBar",
+      "importPath": "@una",
+      "category": "Feedback & Display",
+      "description": "Horizontal meter with animated fill width. Includes full ARIA progressbar role with aria-valuenow/min/max/text.",
+      "variants": {
+        "tone": ["success", "warning", "danger", "info"]
+      },
+      "props": {
+        "value": "number (required)",
+        "max": "number (default: 100)",
+        "tone": "'success' | 'warning' | 'danger' | 'info' (default: 'info')",
+        "ariaLabel": "string",
+        "ariaLabelledBy": "string",
+        "className": "string"
+      },
+      "subcomponents": [],
+      "examples": [
+        "<ProgressBar value={78} tone=\"success\" />",
+        "<ProgressBar value={45} max={100} tone=\"warning\" ariaLabel=\"Прогрес курсу\" />",
+        "<ProgressBar value={12} tone=\"danger\" />"
+      ]
+    },
+    {
+      "name": "Chart",
+      "importPath": "@una",
+      "category": "Data Visualization",
+      "description": "Data chart engine wrapping Recharts with CSS-variable-driven theming. Supports bar (vertical/horizontal) and donut types. Automatically adapts to Light, Dark, and Cyberpunk themes.",
+      "variants": {
+        "type": ["bar", "donut"],
+        "layout": ["horizontal", "vertical"]
+      },
+      "props": {
+        "data": "Array<{ name: string; value: number; color?: string }> (required)",
+        "type": "'bar' | 'donut' (default: 'bar')",
+        "layout": "'horizontal' | 'vertical' (default: 'horizontal')",
+        "height": "number — auto-calculated if omitted",
+        "title": "string",
+        "domain": "[number, number] (default: [0, 100])",
+        "emptyDescription": "string (default: 'Нет данных')",
+        "valueLabel": "string (default: 'Значение')",
+        "showLegend": "boolean (default: true for donut)",
+        "animate": "boolean (default: false)",
+        "categoryWidth": "number (default: 160)",
+        "maxCategoryLength": "number (default: 22)",
+        "rowHeight": "number (default: 44)",
+        "maxBarSize": "number (default: 22)",
+        "innerRadius": "number (default: 55) — donut only",
+        "outerRadius": "number (default: 80) — donut only",
+        "className": "string"
+      },
+      "subcomponents": [],
+      "examples": [
+        "<Chart type=\"donut\" title=\"Статус завдань\" data={[\n  { name: 'Виконано', value: 12, color: 'var(--chart-success)' },\n  { name: 'В процесі', value: 4, color: 'var(--chart-info)' },\n  { name: 'Прострочено', value: 1, color: 'var(--chart-danger)' }\n]} />",
+        "<Chart type=\"bar\" layout=\"horizontal\" title=\"Бали за предмети\" data={subjectScores} domain={[0, 100]} />",
+        "<Chart type=\"bar\" layout=\"vertical\" data={semesterData} height={300} animate />"
+      ]
+    },
+    {
+      "name": "Empty",
+      "importPath": "@una",
+      "category": "Feedback & Display",
+      "description": "Placeholder state for empty lists, tables, or data views. Shows a centered icon and description.",
+      "variants": {},
+      "props": {
+        "description": "ReactNode (default: 'Нет данных')",
+        "icon": "ReactNode — overrides default FolderOpen icon"
+      },
+      "subcomponents": [],
+      "examples": [
+        "<Empty description=\"Завдання ще не додані\" />",
+        "<Empty icon={<BookOpen size={48} />} description=\"Курси не знайдено\" />"
+      ]
+    },
+    {
+      "name": "Skeleton",
+      "importPath": "@una",
+      "category": "Feedback & Display",
+      "description": "Shimmer loading placeholder with configurable dimensions and border radius.",
+      "variants": {},
+      "props": {
+        "width": "string | number",
+        "height": "string | number",
+        "borderRadius": "string | number",
+        "className": "string",
+        "style": "CSSProperties"
+      },
+      "subcomponents": [],
+      "examples": [
+        "<Skeleton width=\"100%\" height={20} />",
+        "<Skeleton width={48} height={48} borderRadius=\"50%\" />",
+        "<Skeleton width=\"60%\" height={16} borderRadius={4} />"
+      ]
+    },
+    {
+      "name": "Spinner",
+      "importPath": "@una",
+      "category": "Feedback & Display",
+      "description": "Circular loading indicator with optional tip text. Includes role=\"status\" and aria-live for accessibility.",
+      "variants": {
+        "size": ["small", "medium", "large"]
+      },
+      "props": {
+        "size": "'small' | 'medium' | 'large' (default: 'medium')",
+        "tip": "string — visible loading message",
+        "ariaLabel": "string — screen reader label",
+        "className": "string"
+      },
+      "subcomponents": [],
+      "examples": [
+        "<Spinner size=\"large\" tip=\"Завантаження даних...\" />",
+        "<Spinner size=\"small\" />",
+        "<Spinner size=\"medium\" ariaLabel=\"Зачекайте\" />"
+      ]
+    },
+    {
+      "name": "ToastProvider",
+      "importPath": "@una",
+      "category": "Feedback & Display",
+      "description": "Context provider for toast notifications. Renders a fixed viewport in the top-right corner. Use the useToast() hook to trigger toasts from any child component.",
+      "variants": {},
+      "props": {
+        "children": "ReactNode (required)"
+      },
+      "subcomponents": [],
+      "relatedHooks": {
+        "useToast": {
+          "description": "Returns a ToastApi object with success(), error(), and info() methods.",
+          "methods": {
+            "success": "(text: string) => void",
+            "error": "(text: string) => void",
+            "info": "(text: string) => void"
+          }
+        }
+      },
+      "examples": [
+        "<ToastProvider>\n  <App />\n</ToastProvider>",
+        "const toast = useToast();\ntoast.success('Завдання збережено!');\ntoast.error('Помилка при завантаженні');\ntoast.info('Нове повідомлення');"
+      ]
+    }
+  ]
+}

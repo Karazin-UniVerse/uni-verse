@@ -18,6 +18,7 @@ import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import {
   type NavKey,
   isNavKey,
+  ENABLE_OPPORTUNITIES_TAB,
   fallbackStudentProfile,
   DashboardSidebar,
   DashboardHeader,
@@ -127,8 +128,12 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     const requestedTab = searchParams.get('tab');
 
-    if (requestedTab) {
-      setActiveKey(isNavKey(requestedTab) ? requestedTab : 'overview');
+    if (requestedTab && isNavKey(requestedTab)) {
+      if (requestedTab === 'opportunities' && !ENABLE_OPPORTUNITIES_TAB) {
+        setActiveKey('overview');
+      } else {
+        setActiveKey(requestedTab);
+      }
     }
   }, [searchParams]);
 

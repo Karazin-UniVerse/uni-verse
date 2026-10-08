@@ -1,0 +1,286 @@
+/* ==========================================================================
+   UniDesign System — Design Tokens (tokens.css)
+   Extracted from: packages/ui/vars.scss + packages/ui/breakpoints.scss
+   Project: Karazin UniVerse
+   ========================================================================== */
+
+/* ==========================================================================
+   1. LIGHT THEME (Default)
+   ========================================================================== */
+
+:root {
+  /* --- Spacing & Sizing (8pt Grid) --- */
+  --space-2: 2px;
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+  --space-64: 64px;
+
+  /* Spacing Aliases */
+  --padding-small: var(--space-8);
+  --padding-medium: var(--space-16);
+  --padding-large: var(--space-24);
+  --margin-small: var(--space-8);
+  --margin-medium: var(--space-16);
+  --margin-large: var(--space-24);
+  --gap-small: var(--space-8);
+  --gap-medium: var(--space-16);
+  --gap-large: var(--space-24);
+
+  /* --- Typography --- */
+  --font-family-base:
+    -apple-system, 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  --font-family-heading: var(--font-family-base);
+  --font-family-regular: var(--font-family-base);
+  --font-xs: 12px;
+  --font-sm: 14px;
+  --font-md: 16px;
+  --font-lg: 18px;
+  --font-xl: 20px;
+  --font-xxl: 24px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  --line-height-md: 24px;
+
+  /* Font Shorthand Abstractions */
+  --font-heading: var(--font-weight-bold) var(--font-xxl) / 1.2 var(--font-family-heading);
+  --font-regular: var(--font-weight-regular) var(--font-md) / 1.5 var(--font-family-regular);
+
+  /* --- Border Radii --- */
+  --border-radius-small: 4px;
+  --border-radius-medium: 8px;
+  --border-radius-large: 12px;
+  --border-radius-full: 9999px;
+
+  /* --- Shadows & Elevations --- */
+  --box-shadow-small: 0 1px 2px 0 rgb(0 0 0 / 5%);
+  --box-shadow-medium: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -1px rgb(0 0 0 / 6%);
+  --box-shadow-large: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -2px rgb(0 0 0 / 5%);
+
+  /* --- Transitions & Motion --- */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 150ms var(--ease-standard);
+  --transition-medium: 250ms var(--ease-standard);
+  --transition-slow: 400ms var(--ease-standard);
+
+  /* Open Design Required Motion Tokens */
+  --ease-od-standard: cubic-bezier(0.23, 1, 0.32, 1);
+  --motion-enter: 200ms;
+  --motion-exit: 140ms;
+
+  /* --- Focus Ring --- */
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+
+  /* ==========================================================================
+     2. RAW COLOR PALETTES
+     ========================================================================== */
+
+  /* Neutral Grayscale */
+  --gray-50: #f8f9fa;
+  --gray-100: #f1f3f5;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-500: #adb5bd;
+  --gray-600: #868e96;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --gray-900: #212529;
+
+  /* Karazin Blue */
+  --blue-50: #edf1fe;
+  --blue-100: #e0e6fe;
+  --blue-200: #c5d3fc;
+  --blue-300: #a1b7fa;
+  --blue-400: #7794f6;
+  --blue-500: #3466e7;
+  --blue-600: #164bd7;
+  --blue-700: #123898;
+  --blue-800: #102e7a;
+  --blue-900: #0f2860;
+
+  /* Red / Alert */
+  --red-50: #fef2f2;
+  --red-100: #fee2e2;
+  --red-200: #fecaca;
+  --red-300: #fca5a5;
+  --red-400: #f87171;
+  --red-500: #ef4444;
+  --red-600: #dc2626;
+  --red-700: #b91c1c;
+  --red-800: #991b1b;
+  --red-900: #7f1d1d;
+
+  /* Green / Academic Success */
+  --green-50: #f0fdf4;
+  --green-100: #dcfce7;
+  --green-200: #bbf7d0;
+  --green-300: #86efac;
+  --green-400: #4ade80;
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --green-700: #15803d;
+  --green-800: #166534;
+  --green-900: #14532d;
+
+  /* Purple / Academic */
+  --purple-50: #faf5ff;
+  --purple-100: #f3e8ff;
+  --purple-200: #e9d5ff;
+  --purple-300: #d8b4fe;
+  --purple-400: #c084fc;
+  --purple-500: #a855f7;
+  --purple-600: #9333ea;
+  --purple-700: #7e22ce;
+  --purple-800: #6b21a8;
+  --purple-900: #581c87;
+
+  /* Feedback (Static) */
+  --success-color: var(--green-500);
+  --error-color: var(--red-500);
+  --warning-color: #f59e0b;
+  --warning-light: #fbbf24;
+  --info-color: var(--blue-500);
+
+  /* ==========================================================================
+     3. SEMANTIC THEME TOKENS — Light (Default)
+     ========================================================================== */
+
+  /* Neutral Surfaces */
+  --neutral-bg: #fff;
+  --neutral-surface: var(--gray-50);
+  --neutral-border: var(--gray-200);
+  --neutral-text-primary: var(--gray-900);
+  --neutral-text-secondary: var(--gray-600);
+  --neutral-text-disabled: var(--gray-400);
+
+  /* Accent Primary */
+  --accent-primary: var(--blue-600);
+  --accent-primary-hover: var(--blue-700);
+  --accent-primary-active: var(--blue-800);
+  --accent-text-on-primary: #fff;
+
+  /* Accent Secondary */
+  --accent-secondary: var(--gray-100);
+  --accent-secondary-hover: var(--gray-200);
+  --accent-secondary-active: var(--gray-300);
+  --accent-text-on-secondary: var(--neutral-text-primary);
+
+  /* Focus */
+  --focus-ring-color: rgb(22 75 215 / 35%);
+  --bg-hover: var(--gray-100);
+
+  /* RGB Channels (for alpha blending / mesh gradients) */
+  --primary-rgb: 0, 112, 243;
+  --secondary-rgb: 121, 40, 202;
+  --surface-rgb: 255, 255, 255;
+  --text-primary-rgb: 0, 0, 0;
+
+  /* Component Aliases */
+  --bg-color: var(--neutral-bg);
+  --bg-surface: var(--neutral-surface);
+  --text-primary: var(--neutral-text-primary);
+  --text-secondary: var(--neutral-text-secondary);
+  --text-disabled: var(--neutral-text-disabled);
+  --border-color: var(--neutral-border);
+
+  /* Card */
+  --card-border: rgb(0 0 0 / 5%);
+  --card-shadow: 0 4px 12px rgb(0 0 0 / 3%);
+  --card-shadow-hover: 0 8px 24px rgb(0 0 0 / 6%);
+
+  /* Button: Primary */
+  --btn-primary-bg: var(--accent-primary);
+  --btn-primary-hover: var(--accent-primary-hover);
+  --btn-primary-active: var(--accent-primary-active);
+  --btn-primary-text: var(--accent-text-on-primary);
+  --btn-primary-disabled: var(--neutral-surface);
+
+  /* Button: Secondary */
+  --btn-secondary-bg: var(--accent-secondary);
+  --btn-secondary-hover: var(--accent-secondary-hover);
+  --btn-secondary-active: var(--accent-secondary-active);
+  --btn-secondary-text: var(--accent-text-on-secondary);
+}
+
+/* ==========================================================================
+   4. DARK THEME
+   ========================================================================== */
+
+[data-theme='dark'] {
+  --neutral-bg: #121212;
+  --neutral-surface: var(--gray-800);
+  --neutral-border: var(--gray-700);
+  --neutral-text-primary: var(--gray-50);
+  --neutral-text-secondary: var(--gray-400);
+  --neutral-text-disabled: var(--gray-600);
+  --accent-primary: var(--blue-600);
+  --accent-primary-hover: var(--blue-700);
+  --accent-primary-active: var(--blue-800);
+  --accent-text-on-primary: #fff;
+  --accent-secondary: var(--gray-700);
+  --accent-secondary-hover: var(--gray-600);
+  --accent-secondary-active: var(--gray-500);
+  --accent-text-on-secondary: var(--neutral-text-primary);
+  --focus-ring-color: rgb(119 148 246 / 45%);
+  --bg-hover: var(--gray-700);
+  --primary-rgb: 119, 148, 246;
+  --secondary-rgb: 168, 85, 247;
+  --surface-rgb: 52, 58, 64;
+  --text-primary-rgb: 248, 249, 250;
+  --card-border: rgb(255 255 255 / 8%);
+  --card-shadow: 0 4px 12px rgb(0 0 0 / 40%);
+  --card-shadow-hover: 0 8px 24px rgb(0 0 0 / 60%);
+}
+
+/* ==========================================================================
+   5. CYBERPUNK THEME
+   ========================================================================== */
+
+[data-theme='cyberpunk'] {
+  /* Cyberpunk Raw Palette */
+  --cyberpunk-black: #0b0b0e;
+  --cyberpunk-dark: #121217;
+  --cyberpunk-yellow: #fcee0a;
+  --cyberpunk-cyan: #00f0ff;
+  --cyberpunk-pink: #f05;
+  --cyberpunk-purple: #3f1651;
+  --cyberpunk-gray: #1b1c22;
+  --cyberpunk-text-dim: #70778c;
+
+  /* Override Radii — all sharp / angular */
+  --border-radius-small: 0px;
+  --border-radius-medium: 0px;
+  --border-radius-large: 0px;
+  --border-radius-full: 0px;
+
+  /* Override Shadows — neon glow effects */
+  --box-shadow-small: 0 0 5px rgb(0 240 255 / 40%);
+  --box-shadow-medium: 0 0 10px rgb(255 0 85 / 50%), 0 0 20px rgb(0 240 255 / 20%);
+  --box-shadow-large: 0 0 15px rgb(252 238 10 / 60%), 0 0 30px rgb(255 0 85 / 40%);
+
+  /* Override Typography — futuristic fonts */
+  --font-family-heading: 'Orbitron', sans-serif;
+  --font-family-regular: 'Share Tech Mono', monospace;
+}
+
+/* ==========================================================================
+   6. BREAKPOINTS REFERENCE (CSS comment only — use SCSS mixins in code)
+   ========================================================================== */
+
+/*
+  Breakpoint Scale:
+  --breakpoint-xs:  480px   (Small smartphones)
+  --breakpoint-sm:  640px   (Standard smartphones)
+  --breakpoint-md:  768px   (Tablets / Primary mobile boundary)
+  --breakpoint-lg:  1024px  (Tablets landscape / compact desktop)
+  --breakpoint-xl:  1280px  (Standard desktop)
+  --breakpoint-xxl: 1536px  (Widescreen monitors)
+*/

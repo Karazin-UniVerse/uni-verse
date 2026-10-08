@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "od-design-system-project/v1",
+  "id": "uni-verse",
+  "name": "Karazin UniVerse — UniDesign System",
+  "category": "Application UI",
+  "description": "Автоматически экспортированная дизайн-система из кодовой базы проекта Karazin UniVerse. Включает компоненты библиотеки @una, SCSS-токены, три темы (Light, Dark, Cyberpunk) и полную спецификацию UI для академической LMS-платформы.",
+  "source": {
+    "type": "local",
+    "origin": "Repository extract"
+  },
+  "files": {
+    "design": "DESIGN.md",
+    "tokens": "tokens.css",
+    "components": "components.html",
+    "componentsManifest": "components.manifest.json",
+    "usage": "USAGE.md"
+  }
+}

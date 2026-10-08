@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="uk" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UniDesign System — Component Fixture</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <style>
+    /* ==========================================================================
+       Fixture Layout — NOT part of the design system
+       ========================================================================== */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: var(--space-32);
+      font-family: var(--font-family-base), sans-serif;
+      font-size: var(--font-md);
+      line-height: 1.5;
+      color: var(--text-primary);
+      background-color: var(--bg-color);
+      transition: background-color var(--transition-medium), color var(--transition-medium);
+    }
+
+    .fixture-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-32);
+      padding-bottom: var(--space-16);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .fixture-header h1 {
+      margin: 0;
+      font: var(--font-heading);
+    }
+
+    .theme-switcher {
+      display: flex;
+      gap: var(--space-8);
+    }
+
+    .fixture-section {
+      margin-bottom: var(--space-48);
+    }
+
+    .fixture-section h2 {
+      font-size: var(--font-xl);
+      font-weight: var(--font-weight-bold);
+      margin: 0 0 var(--space-24);
+      padding-bottom: var(--space-8);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .fixture-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: var(--space-16);
+      margin-bottom: var(--space-24);
+    }
+
+    .fixture-row-label {
+      width: 100%;
+      font-size: var(--font-sm);
+      font-weight: var(--font-weight-medium);
+      color: var(--text-secondary);
+      margin-bottom: var(--space-4);
+    }
+
+    .fixture-col {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-12);
+    }
+
+    .fixture-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--space-16);
+    }
+
+    /* ==========================================================================
+       1. BUTTONS
+       ========================================================================== */
+    .btn {
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-radius: var(--border-radius-medium);
+      font-weight: var(--font-weight-medium);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      transition: var(--transition-fast);
+      font-family: inherit;
+    }
+
+    .btn:focus { outline: none; }
+    .btn:focus-visible {
+      outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, var(--accent-primary));
+      outline-offset: var(--focus-ring-offset, 2px);
+    }
+
+    /* Primary */
+    .btn-primary {
+      background-color: var(--btn-primary-bg);
+      color: var(--btn-primary-text);
+      border-color: var(--btn-primary-bg);
+    }
+    .btn-primary:hover {
+      background-color: var(--btn-primary-hover);
+      border-color: var(--btn-primary-hover);
+    }
+    .btn-primary:active {
+      background-color: var(--btn-primary-active);
+      border-color: var(--btn-primary-active);
+    }
+    .btn-primary:disabled {
+      background-color: var(--btn-primary-disabled);
+      color: var(--text-disabled);
+      cursor: not-allowed;
+      border-color: var(--btn-primary-disabled);
+    }
+
+    /* Secondary */
+    .btn-secondary {
+      background-color: var(--btn-secondary-bg);
+      color: var(--btn-secondary-text);
+      border-color: var(--border-color);
+    }
+    .btn-secondary:hover {
+      background-color: var(--btn-secondary-hover);
+    }
+    .btn-secondary:active {
+      background-color: var(--btn-secondary-active);
+    }
+    .btn-secondary:disabled {
+      background-color: var(--neutral-surface);
+      color: var(--text-disabled);
+      cursor: not-allowed;
+      border-color: var(--border-color);
+    }
+
+    /* Transparent / Ghost */
+    .btn-transparent {
+      background-color: transparent;
+      color: var(--accent-primary);
+      border-color: transparent;
+    }
+    .btn-transparent:hover {
+      background-color: var(--accent-secondary);
+      color: var(--accent-primary-hover);
+    }
+    .btn-transparent:active {
+      background-color: var(--accent-secondary-active);
+    }
+
+    /* Button Sizes */
+    .btn-small {
+      padding: var(--space-4) var(--space-8);
+      font-size: var(--font-sm);
+    }
+    .btn-medium {
+      padding: var(--space-8) var(--space-16);
+      font-size: var(--font-md);
+    }
+    .btn-large {
+      padding: var(--space-12) var(--space-24);
+      font-size: var(--font-lg);
+    }
+
+    /* ==========================================================================
+       2. FORM CONTROLS
+       ========================================================================== */
+
+    /* --- TextInput --- */
+    .text-input {
+      appearance: none;
+      -webkit-appearance: none;
+      outline: none;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-medium);
+      color: var(--text-primary);
+      background-color: var(--bg-surface);
+      transition: var(--transition-fast);
+      width: 100%;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    .text-input:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+    }
+    .text-input::placeholder {
+      color: var(--text-disabled);
+    }
+    .text-input:disabled {
+      background-color: var(--neutral-surface);
+      color: var(--text-disabled);
+      opacity: 0.7;
+      cursor: not-allowed;
+      border-color: var(--border-color);
+    }
+    .text-input-transparent {
+      background-color: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border-color);
+      border-radius: 0;
+    }
+    .text-input-transparent:focus {
+      background-color: transparent;
+      border-color: transparent;
+      box-shadow: none;
+      border-bottom: 2px solid var(--accent-primary);
+    }
+    .text-input-small {
+      padding: var(--space-4) var(--space-8);
+      font-size: var(--font-sm);
+      height: 32px;
+    }
+    .text-input-medium {
+      padding: var(--space-8) var(--space-16);
+      font-size: var(--font-md);
+      height: 40px;
+    }
+    .text-input-large {
+      padding: var(--space-12) var(--space-24);
+      font-size: var(--font-lg);
+      height: 48px;
+    }
+
+    /* --- Select --- */
+    .una-select {
+      appearance: none;
+      -webkit-appearance: none;
+      outline: none;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-medium);
+      color: var(--text-primary);
+      background-color: var(--bg-surface);
+      padding: var(--space-8) var(--space-32) var(--space-8) var(--space-16);
+      font-size: var(--font-md);
+      height: 40px;
+      transition: var(--transition-fast);
+      font-family: inherit;
+      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23888%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      background-size: 16px;
+    }
+    .una-select:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+    }
+
+    /* --- CheckBox --- */
+    .checkbox {
+      -webkit-appearance: none;
+      appearance: none;
+      width: var(--font-xl);
+      height: var(--font-xl);
+      border-radius: var(--border-radius-small);
+      border: 2px solid var(--border-color);
+      outline: none;
+      cursor: pointer;
+      position: relative;
+      transition: border-color var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
+      margin: 0;
+      background-color: var(--bg-surface);
+    }
+    .checkbox::after {
+      content: '';
+      position: absolute;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(45deg) scale(0);
+      width: var(--space-4);
+      height: var(--space-12);
+      border: solid var(--accent-text-on-primary);
+      border-width: 0 2px 2px 0;
+      transition: transform var(--transition-fast);
+    }
+    .checkbox:focus-visible {
+      box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+    }
+    .checkbox:checked::after {
+      transform: translate(-50%, -50%) rotate(45deg) scale(1);
+    }
+    .checkbox-primary:hover:not(:disabled) {
+      border-color: var(--accent-primary-hover);
+    }
+    .checkbox-primary:checked:not(:disabled) {
+      border-color: var(--accent-primary);
+      background-color: var(--accent-primary);
+    }
+    .checkbox-primary:checked:hover:not(:disabled) {
+      background-color: var(--accent-primary-hover);
+      border-color: var(--accent-primary-hover);
+    }
+    .checkbox:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+      border-color: var(--neutral-text-disabled);
+      background-color: var(--neutral-surface);
+    }
+
+    /* --- RadioButton --- */
+    .radio {
+      -webkit-appearance: none;
+      appearance: none;
+      width: var(--font-xl);
+      height: var(--font-xl);
+      border-radius: var(--border-radius-full);
+      border: 2px solid var(--border-color);
+      outline: none;
+      cursor: pointer;
+      position: relative;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+      margin: 0;
+      background-color: var(--bg-surface);
+    }
+    .radio::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      width: var(--space-12);
+      height: var(--space-12);
+      border-radius: var(--border-radius-full);
+      transition: transform var(--transition-fast), background-color var(--transition-fast);
+    }
+    .radio:focus-visible {
+      box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+    }
+    .radio:checked::after {
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .radio-primary:hover:not(:disabled) {
+      border-color: var(--accent-primary-hover);
+    }
+    .radio-primary:checked:not(:disabled) {
+      border-color: var(--accent-primary);
+    }
+    .radio-primary:checked:not(:disabled)::after {
+      background-color: var(--accent-primary);
+    }
+    .radio:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+      border-color: var(--neutral-text-disabled);
+      background-color: var(--neutral-surface);
+    }
+    .radio:disabled::after {
+      background-color: var(--neutral-text-disabled);
+    }
+
+    /* --- SimpleSlider --- */
+    .slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: var(--border-radius-full);
+      background: var(--border-color);
+      outline: none;
+      transition: opacity 0.2s;
+      cursor: pointer;
+    }
+    .slider:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: var(--border-radius-full);
+      background: var(--accent-primary);
+      border: 2px solid var(--bg-surface);
+      box-shadow: var(--box-shadow-small);
+      cursor: pointer;
+      transition: transform var(--transition-fast) ease, background-color var(--transition-fast) ease;
+    }
+    .slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+    .slider:focus-visible::-webkit-slider-thumb {
+      box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+    }
+
+    /* --- FileInput (Dropzone) --- */
+    .dropzone {
+      position: relative;
+      width: 100%;
+      box-sizing: border-box;
+      font-family: inherit;
+      border: 2px dashed var(--border-color);
+      border-radius: var(--border-radius-medium);
+      background-color: var(--bg-surface);
+      transition: var(--transition-fast);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      color: var(--text-secondary);
+      outline: none;
+      padding: 20px var(--space-24);
+      min-height: 130px;
+      font-size: var(--font-md);
+    }
+    .dropzone:hover {
+      border-color: var(--accent-primary);
+    }
+    .dropzone:focus-visible {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+    }
+    .dropzone-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: var(--space-8);
+      color: var(--text-secondary);
+      transition: transform var(--transition-fast), color var(--transition-fast);
+    }
+    .dropzone:hover .dropzone-icon {
+      transform: translateY(-2px);
+      color: var(--accent-primary);
+    }
+    .dropzone-text {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      align-items: center;
+    }
+    .dropzone-main {
+      font-weight: var(--font-weight-medium);
+      color: var(--text-primary);
+    }
+    .dropzone-browse {
+      color: var(--accent-primary);
+      text-decoration: none;
+      font-weight: var(--font-weight-medium);
+    }
+    .dropzone-hint {
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+    }
+    .dropzone-disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      background-color: var(--neutral-surface);
+      border-color: var(--border-color);
+    }
+
+    /* ==========================================================================
+       3. SURFACES / CARDS
+       ========================================================================== */
+
+    /* --- Card --- */
+    .card {
+      background-color: var(--neutral-surface);
+      padding: var(--padding-large);
+      border-radius: var(--border-radius-large);
+      border: 1px solid var(--card-border);
+      box-shadow: var(--card-shadow);
+      transition: box-shadow var(--transition-fast);
+    }
+    .card:hover {
+      box-shadow: var(--card-shadow-hover);
+    }
+    .card-title {
+      margin: 0 0 var(--space-8);
+      font-size: var(--font-lg);
+      font-weight: var(--font-weight-bold);
+      color: var(--text-primary);
+    }
+    .card-body {
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* --- SimpleForm Card Variant --- */
+    .form-card {
+      background-color: var(--neutral-surface);
+      padding: var(--padding-large);
+      border-radius: var(--border-radius-large);
+      box-shadow: var(--box-shadow-medium);
+      width: 350px;
+      border: 1px solid var(--neutral-border);
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap-medium);
+    }
+
+    /* --- Modal (Static Preview) --- */
+    .modal-overlay {
+      position: relative;
+      background: rgb(0 0 0 / 45%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-24);
+      border-radius: var(--border-radius-large);
+      min-height: 300px;
+    }
+    .modal-dialog {
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-large);
+      box-shadow: var(--box-shadow-large);
+      width: 500px;
+      max-width: 96%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-16);
+      padding: var(--space-16) var(--space-24);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .modal-title {
+      margin: 0;
+      font: var(--font-heading);
+      font-size: var(--font-xl);
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: var(--space-4);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+    }
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+    .modal-body {
+      padding: var(--space-24);
+      color: var(--text-secondary);
+      font-size: var(--font-md);
+    }
+
+    /* --- Empty State --- */
+    .empty-state {
+      padding: var(--space-40) var(--space-16);
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-12);
+    }
+    .empty-state-icon {
+      color: var(--text-disabled);
+      flex-shrink: 0;
+    }
+    .empty-state p {
+      margin: 0;
+    }
+
+    /* --- Skeleton --- */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .skeleton {
+      background: linear-gradient(
+        90deg,
+        var(--bg-surface) 25%,
+        var(--accent-secondary) 50%,
+        var(--bg-surface) 75%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.4s ease-in-out infinite;
+      border-radius: var(--border-radius-medium);
+    }
+
+    /* ==========================================================================
+       4. FEEDBACK / BADGES
+       ========================================================================== */
+
+    /* --- Tag / Badge --- */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: var(--space-2) var(--space-8);
+      border-radius: var(--border-radius-small);
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-medium);
+      border: 1px solid transparent;
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+    .tag-default {
+      background: var(--accent-secondary);
+    }
+    .tag-success {
+      background: var(--green-50);
+      color: var(--green-800);
+    }
+    .tag-warning {
+      background: #fffbeb;
+      color: #92400e;
+    }
+    .tag-info {
+      background: var(--blue-50);
+      color: var(--blue-800);
+    }
+    .tag-danger {
+      background: var(--red-50);
+      color: var(--red-800);
+    }
+
+    /* Dark theme tag overrides */
+    [data-theme="dark"] .tag-success {
+      background: rgb(34 197 94 / 15%);
+      color: var(--green-300);
+    }
+    [data-theme="dark"] .tag-warning {
+      background: rgb(245 158 11 / 15%);
+      color: var(--warning-light, #fbbf24);
+      border-color: #92400e;
+    }
+    [data-theme="dark"] .tag-info {
+      background: rgb(52 102 231 / 20%);
+      color: var(--blue-300);
+    }
+    [data-theme="dark"] .tag-danger {
+      background: rgb(239 68 68 / 15%);
+      color: var(--red-300);
+    }
+
+    /* --- ProgressBar --- */
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      border-radius: var(--border-radius-full);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      transition: width var(--transition-slow) var(--ease-standard);
+    }
+    .progress-success { background: var(--success-color); }
+    .progress-warning { background: var(--warning-color); }
+    .progress-danger  { background: var(--error-color); }
+    .progress-info    { background: var(--info-color); }
+
+    /* --- Spinner --- */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .spinner-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-12);
+      padding: var(--space-32);
+    }
+    .spinner {
+      border-radius: 50%;
+      border: 3px solid var(--border-color);
+      border-top-color: var(--accent-primary);
+      animation: spin 0.8s linear infinite;
+    }
+    .spinner-small  { width: 20px; height: 20px; }
+    .spinner-medium { width: 36px; height: 36px; }
+    .spinner-large  { width: 48px; height: 48px; }
+    .spinner-tip {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
+    }
+
+    /* --- Toast --- */
+    @keyframes toast-slide-in {
+      from { opacity: 0; transform: translateX(16px) translateY(-4px); }
+      to   { opacity: 1; transform: translateX(0) translateY(0); }
+    }
+    .toast-viewport {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-8);
+      max-width: 360px;
+    }
+    .toast {
+      padding: var(--space-12) var(--space-16);
+      border-radius: var(--border-radius-medium);
+      box-shadow: var(--box-shadow-medium);
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-size: var(--font-sm);
+      animation: toast-slide-in var(--transition-medium) var(--ease-standard);
+    }
+    .toast-success { border-color: var(--success-color); }
+    .toast-error   { border-color: var(--error-color); }
+    .toast-info    { border-color: var(--info-color); }
+
+    /* --- Chart Wrapper (Static) --- */
+    .chart-wrap {
+      width: 100%;
+      min-width: 0;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-large);
+      padding: var(--space-16);
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    .chart-title {
+      margin: 0 0 var(--space-8);
+      font-family: var(--font-family-heading), var(--font-family-base), sans-serif;
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-medium);
+      color: var(--text-primary);
+      letter-spacing: 0.01em;
+    }
+    .chart-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 160px;
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
+    }
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: var(--space-8) var(--space-16);
+      margin-top: var(--space-8);
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+    }
+    .chart-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-8);
+    }
+    .chart-legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ======================================================================
+       HEADER & THEME SWITCHER
+       ====================================================================== -->
+  <header class="fixture-header">
+    <h1>UniDesign Components</h1>
+    <div class="theme-switcher">
+      <button type="button" class="btn btn-small btn-secondary" onclick="document.documentElement.setAttribute('data-theme','light')">Light</button>
+      <button type="button" class="btn btn-small btn-secondary" onclick="document.documentElement.setAttribute('data-theme','dark')">Dark</button>
+      <button type="button" class="btn btn-small btn-secondary" onclick="document.documentElement.setAttribute('data-theme','cyberpunk')">Cyberpunk</button>
+    </div>
+  </header>
+
+  <!-- ======================================================================
+       SECTION 1: BUTTONS
+       ====================================================================== -->
+  <section class="fixture-section">
+    <h2>1. Buttons</h2>
+
+    <div class="fixture-row-label">Variant: Primary — All Sizes</div>
+    <div class="fixture-row">
+      <button type="button" class="btn btn-primary btn-small">Small</button>
+      <button type="button" class="btn btn-primary btn-medium">Medium</button>
+      <button type="button" class="btn btn-primary btn-large">Large</button>
+    </div>
+
+    <div class="fixture-row-label">Variant: Secondary — All Sizes</div>
+    <div class="fixture-row">
+      <button type="button" class="btn btn-secondary btn-small">Small</button>
+      <button type="button" class="btn btn-secondary btn-medium">Medium</button>
+      <button type="button" class="btn btn-secondary btn-large">Large</button>
+    </div>
+
+    <div class="fixture-row-label">Variant: Transparent (Ghost)</div>
+    <div class="fixture-row">
+      <button type="button" class="btn btn-transparent btn-small">Ghost Small</button>
+      <button type="button" class="btn btn-transparent btn-medium">Ghost Medium</button>
+      <button type="button" class="btn btn-transparent btn-large">Ghost Large</button>
+    </div>
+
+    <div class="fixture-row-label">States: Disabled</div>
+    <div class="fixture-row">
+      <button type="button" class="btn btn-primary btn-medium" disabled>Primary Disabled</button>
+      <button type="button" class="btn btn-secondary btn-medium" disabled>Secondary Disabled</button>
+    </div>
+
+    <div class="fixture-row-label">As Link (&lt;a&gt;)</div>
+    <div class="fixture-row">
+      <a href="#" class="btn btn-primary btn-medium">Link Primary</a>
+      <a href="#" class="btn btn-secondary btn-medium">Link Secondary</a>
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 2: FORM CONTROLS
+       ====================================================================== -->
+  <section class="fixture-section">
+    <h2>2. Form Controls</h2>
+
+    <div class="fixture-row-label">TextInput — Sizes</div>
+    <div class="fixture-col" style="max-width: 400px;">
+      <input type="text" class="text-input text-input-small" placeholder="Small input" />
+      <input type="text" class="text-input text-input-medium" placeholder="Medium input (default)" />
+      <input type="text" class="text-input text-input-large" placeholder="Large input" />
+    </div>
+
+    <div class="fixture-row-label" style="margin-top: var(--space-24);">TextInput — States</div>
+    <div class="fixture-col" style="max-width: 400px;">
+      <input type="text" class="text-input text-input-medium" value="Filled value" />
+      <input type="text" class="text-input text-input-medium" placeholder="Disabled" disabled />
+      <input type="text" class="text-input text-input-medium text-input-transparent" placeholder="Transparent variant" />
+    </div>
+
+    <div class="fixture-row-label" style="margin-top: var(--space-24);">Select</div>
+    <div class="fixture-row">
+      <select class="una-select">
+        <option>Семестр 1</option>
+        <option>Семестр 2</option>
+        <option>Семестр 3</option>
+      </select>
+      <select class="una-select">
+        <option>За датою</option>
+        <option>За оцінкою</option>
+        <option>За назвою</option>
+      </select>
+    </div>
+
+    <div class="fixture-row-label" style="margin-top: var(--space-24);">CheckBox — Primary Variant</div>
+    <div class="fixture-row" style="align-items: center;">
+      <label style="display: inline-flex; align-items: center; gap: var(--space-8); cursor: pointer;">
+        <input type="checkbox" class="checkbox checkbox-primary" />
+        <span style="font-size: var(--font-sm);">Unchecked</span>
+      </label>
+      <label style="display: inline-flex; align-items: center; gap: var(--space-8); cursor: pointer;">
+        <input type="checkbox" class="checkbox checkbox-primary" checked />
+        <span style="font-size: var(--font-sm);">Checked</span>
+      </label>
+      <label style="display: inline-flex; align-items: center; gap: var(--space-8); cursor: not-allowed;">
+        <input type="checkbox" class="checkbox checkbox-primary" disabled />
+        <span style="font-size: var(--font-sm); color: var(--text-disabled);">Disabled</span>
+      </label>
+    </div>
+
+    <div class="fixture-row-label" style="margin-top: var(--space-24);">RadioButton — Primary Variant</div>
+    <div class="fixture-row" style="align-items: center;">
+      <label style="display: inline-flex; align-items: center; gap: var(--space-8); cursor: pointer;">
+        <input type="radio" name="fixture-grade" class="radio radio-primary" value="A" checked />
+        <span style="font-size: var(--font-sm);">Відмінно (A)</span>
+      </label>
+      <label style="display: inline-flex; align-items: center; gap: var(--space-8); cursor: pointer;">
+        <input type="radio" name="fixture-grade" class="radio radio-primary" value="B" />
+        <span style="font-size: var(--font-sm);">Добре (B)</span>
+      </label>
+      <label style="display: inline-flex; align-items: center; gap: var(--space-8); cursor: not-allowed;">
+        <input type="radio" name="fixture-grade" class="radio radio-primary" value="C" disabled />
+        <span style="font-size: var(--font-sm); color: var(--text-disabled);">Disabled</span>
+      </label>
+    </div>
+
+    <div class="fixture-row-label" style="margin-top: var(--space-24);">SimpleSlider</div>
+    <div class="fixture-col" style="max-width: 400px;">
+      <input type="range" class="slider" min="0" max="100" value="65" />
+      <input type="range" class="slider" min="0" max="100" value="30" disabled />
+    </div>
+
+    <div class="fixture-row-label" style="margin-top: var(--space-24);">FileInput — Dropzone</div>
+    <div class="fixture-col" style="max-width: 500px;">
+      <button type="button" class="dropzone" tabindex="0" aria-label="File Upload">
+        <div class="dropzone-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+        </div>
+        <div class="dropzone-text">
+          <span class="dropzone-main">Drag &amp; drop files here, or <span class="dropzone-browse">browse</span></span>
+          <span class="dropzone-hint">PDF, DOCX до 10 МБ</span>
+        </div>
+      </button>
+      <button type="button" class="dropzone dropzone-disabled" disabled aria-label="File Upload">
+        <div class="dropzone-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+        </div>
+        <div class="dropzone-text">
+          <span class="dropzone-main">Drag &amp; drop files here, or <span class="dropzone-browse">browse</span></span>
+          <span class="dropzone-hint">Disabled state</span>
+        </div>
+      </button>
+    </div>
+
+    <div class="fixture-row-label" style="margin-top: var(--space-24);">SimpleForm (Card Variant)</div>
+    <div class="fixture-row">
+      <form class="form-card" onsubmit="return false">
+        <input type="email" class="text-input text-input-medium" placeholder="Email" name="email" />
+        <input type="password" class="text-input text-input-medium" placeholder="Пароль" name="password" />
+        <label style="display: inline-flex; align-items: center; gap: var(--space-8); cursor: pointer; font-size: var(--font-sm);">
+          <input type="checkbox" class="checkbox checkbox-primary" />
+          Запам'ятати мене
+        </label>
+        <button type="submit" class="btn btn-primary btn-medium" style="width: 100%;">Увійти</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 3: SURFACES / CARDS
+       ====================================================================== -->
+  <section class="fixture-section">
+    <h2>3. Surfaces &amp; Cards</h2>
+
+    <div class="fixture-grid">
+      <div class="card">
+        <h3 class="card-title">Математичний аналіз</h3>
+        <p class="card-body">Лектор: проф. Іваненко О.М. · 5 ECTS · Іспит</p>
+      </div>
+      <div class="card">
+        <h3 class="card-title">Програмна інженерія</h3>
+        <p class="card-body">Лектор: доц. Петренко В.І. · 4 ECTS · Залік</p>
+      </div>
+      <div class="card">
+        <h3 class="card-title">Англійська мова</h3>
+        <p class="card-body">Лектор: ст. викл. Коваленко Н.С. · 3 ECTS · Залік</p>
+      </div>
+    </div>
+
+    <div class="fixture-row-label" style="margin-top: var(--space-32);">Modal Dialog (Static Preview)</div>
+    <div class="modal-overlay">
+      <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="fixture-modal-title">
+        <div class="modal-header">
+          <h3 id="fixture-modal-title" class="modal-title">Подати завдання</h3>
+          <button type="button" class="modal-close" aria-label="Закрити">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p style="margin: 0 0 var(--space-16);">Оберіть файл для завантаження та натисніть «Надіслати».</p>
+          <button type="button" class="dropzone" style="min-height: 80px; padding: var(--space-12) var(--space-16); font-size: var(--font-sm);">
+            <div class="dropzone-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <div class="dropzone-text">
+              <span class="dropzone-main">Drag &amp; drop, або <span class="dropzone-browse">оберіть файл</span></span>
+            </div>
+          </button>
+          <div style="display: flex; justify-content: flex-end; gap: var(--space-8); margin-top: var(--space-16);">
+            <button type="button" class="btn btn-secondary btn-medium">Скасувати</button>
+            <button type="button" class="btn btn-primary btn-medium">Надіслати</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fixture-row-label" style="margin-top: var(--space-32);">Empty State</div>
+    <div class="card">
+      <div class="empty-state">
+        <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <p>Завдання ще не додані</p>
+      </div>
+    </div>
+
+    <div class="fixture-row-label" style="margin-top: var(--space-32);">Skeleton Loading</div>
+    <div class="fixture-row">
+      <div class="card" style="width: 280px;">
+        <div class="skeleton" style="width: 100%; height: 20px; margin-bottom: var(--space-12);"></div>
+        <div class="skeleton" style="width: 60%; height: 14px; margin-bottom: var(--space-8);"></div>
+        <div class="skeleton" style="width: 80%; height: 14px; margin-bottom: var(--space-8);"></div>
+        <div class="skeleton" style="width: 40%; height: 14px;"></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: var(--space-12);">
+        <div class="skeleton" style="width: 48px; height: 48px; border-radius: 50%;"></div>
+        <div>
+          <div class="skeleton" style="width: 120px; height: 16px; margin-bottom: var(--space-8);"></div>
+          <div class="skeleton" style="width: 80px; height: 12px;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 4: FEEDBACK & BADGES
+       ====================================================================== -->
+  <section class="fixture-section">
+    <h2>4. Feedback &amp; Badges</h2>
+
+    <div class="fixture-row-label">Tag — All Tones</div>
+    <div class="fixture-row">
+      <span class="tag tag-default">Default</span>
+      <span class="tag tag-success">95 / 100 • Відмінно</span>
+      <span class="tag tag-info">Іспит</span>
+      <span class="tag tag-warning">Дедлайн: завтра</span>
+      <span class="tag tag-danger">Прострочено</span>
+    </div>
+
+    <div class="fixture-row-label" style="margin-top: var(--space-24);">Tag — Academic Grades</div>
+    <div class="fixture-row">
+      <span class="tag tag-success">A — Відмінно (90–100)</span>
+      <span class="tag tag-info">B/C — Добре (70–89)</span>
+      <span class="tag tag-warning">D/E — Задовільно (50–69)</span>
+      <span class="tag tag-danger">F — Незадовільно (0–49)</span>
+      <span class="tag tag-default">5 ECTS</span>
+    </div>
+
+    <div class="fixture-row-label" style="margin-top: var(--space-24);">ProgressBar — All Tones</div>
+    <div class="fixture-col" style="max-width: 500px;">
+      <div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-4); font-size: var(--font-xs); color: var(--text-secondary);">
+          <span>Прогрес курсу</span>
+          <span>92%</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuenow="92" aria-valuemin="0" aria-valuemax="100" aria-label="Прогрес курсу">
+          <div class="progress-fill progress-success" style="width: 92%;"></div>
+        </div>
+      </div>
+      <div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-4); font-size: var(--font-xs); color: var(--text-secondary);">
+          <span>Завдання здано</span>
+          <span>78%</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100" aria-label="Завдання здано">
+          <div class="progress-fill progress-info" style="width: 78%;"></div>
+        </div>
+      </div>
+      <div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-4); font-size: var(--font-xs); color: var(--text-secondary);">
+          <span>Дедлайн наближається</span>
+          <span>55%</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuenow="55" aria-valuemin="0" aria-valuemax="100" aria-label="Дедлайн наближається">
+          <div class="progress-fill progress-warning" style="width: 55%;"></div>
+        </div>
+      </div>
+      <div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-4); font-size: var(--font-xs); color: var(--text-secondary);">
+          <span>Критичний стан</span>
+          <span>18%</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuenow="18" aria-valuemin="0" aria-valuemax="100" aria-label="Критичний стан">
+          <div class="progress-fill progress-danger" style="width: 18%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fixture-row-label" style="margin-top: var(--space-24);">Spinner — All Sizes</div>
+    <div class="fixture-row" style="align-items: flex-start;">
+      <div class="spinner-wrap" style="padding: var(--space-16);">
+        <div class="spinner spinner-small" aria-hidden="true"></div>
+        <p class="spinner-tip">Small</p>
+      </div>
+      <div class="spinner-wrap" style="padding: var(--space-16);">
+        <div class="spinner spinner-medium" aria-hidden="true"></div>
+        <p class="spinner-tip">Завантаження...</p>
+      </div>
+      <div class="spinner-wrap" style="padding: var(--space-16);">
+        <div class="spinner spinner-large" aria-hidden="true"></div>
+        <p class="spinner-tip">Large</p>
+      </div>
+    </div>
+
+    <div class="fixture-row-label" style="margin-top: var(--space-24);">Toast Notifications</div>
+    <div class="toast-viewport">
+      <div class="toast toast-success">✅ Завдання успішно збережено!</div>
+      <div class="toast toast-error">❌ Помилка при завантаженні файлу</div>
+      <div class="toast toast-info">ℹ️ Нове повідомлення від викладача</div>
+    </div>
+
+    <div class="fixture-row-label" style="margin-top: var(--space-24);">Chart — Static Preview (Donut)</div>
+    <div class="fixture-row">
+      <div class="chart-wrap" style="max-width: 400px;">
+        <h3 class="chart-title">Статус завдань</h3>
+        <div class="chart-empty">[Recharts renders here at runtime]</div>
+        <div class="chart-legend">
+          <span class="chart-legend-item">
+            <span class="chart-legend-swatch" style="background: var(--success-color);"></span>
+            Виконано (12)
+          </span>
+          <span class="chart-legend-item">
+            <span class="chart-legend-swatch" style="background: var(--info-color);"></span>
+            В процесі (4)
+          </span>
+          <span class="chart-legend-item">
+            <span class="chart-legend-swatch" style="background: var(--error-color);"></span>
+            Прострочено (1)
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="fixture-row-label" style="margin-top: var(--space-24);">Chart — Empty State</div>
+    <div class="fixture-row">
+      <div class="chart-wrap" style="max-width: 400px;">
+        <h3 class="chart-title">Оцінки за місяць</h3>
+        <div class="chart-empty">Нет данних</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 5: COLOR PALETTE REFERENCE
+       ====================================================================== -->
+  <section class="fixture-section">
+    <h2>5. Color Palette Reference</h2>
+
+    <div class="fixture-row-label">Neutral Grayscale</div>
+    <div class="fixture-row">
+      <div style="display: flex; gap: 2px;">
+        <div style="width: 48px; height: 48px; background: var(--gray-50); border: 1px solid var(--border-color); border-radius: var(--border-radius-small);" title="gray-50"></div>
+        <div style="width: 48px; height: 48px; background: var(--gray-100); border-radius: var(--border-radius-small);" title="gray-100"></div>
+        <div style="width: 48px; height: 48px; background: var(--gray-200); border-radius: var(--border-radius-small);" title="gray-200"></div>
+        <div style="width: 48px; height: 48px; background: var(--gray-300); border-radius: var(--border-radius-small);" title="gray-300"></div>
+        <div style="width: 48px; height: 48px; background: var(--gray-400); border-radius: var(--border-radius-small);" title="gray-400"></div>
+        <div style="width: 48px; height: 48px; background: var(--gray-500); border-radius: var(--border-radius-small);" title="gray-500"></div>
+        <div style="width: 48px; height: 48px; background: var(--gray-600); border-radius: var(--border-radius-small);" title="gray-600"></div>
+        <div style="width: 48px; height: 48px; background: var(--gray-700); border-radius: var(--border-radius-small);" title="gray-700"></div>
+        <div style="width: 48px; height: 48px; background: var(--gray-800); border-radius: var(--border-radius-small);" title="gray-800"></div>
+        <div style="width: 48px; height: 48px; background: var(--gray-900); border-radius: var(--border-radius-small);" title="gray-900"></div>
+      </div>
+    </div>
+
+    <div class="fixture-row-label">Karazin Blue</div>
+    <div class="fixture-row">
+      <div style="display: flex; gap: 2px;">
+        <div style="width: 48px; height: 48px; background: var(--blue-50); border: 1px solid var(--border-color); border-radius: var(--border-radius-small);" title="blue-50"></div>
+        <div style="width: 48px; height: 48px; background: var(--blue-100); border-radius: var(--border-radius-small);" title="blue-100"></div>
+        <div style="width: 48px; height: 48px; background: var(--blue-200); border-radius: var(--border-radius-small);" title="blue-200"></div>
+        <div style="width: 48px; height: 48px; background: var(--blue-300); border-radius: var(--border-radius-small);" title="blue-300"></div>
+        <div style="width: 48px; height: 48px; background: var(--blue-400); border-radius: var(--border-radius-small);" title="blue-400"></div>
+        <div style="width: 48px; height: 48px; background: var(--blue-500); border-radius: var(--border-radius-small);" title="blue-500"></div>
+        <div style="width: 48px; height: 48px; background: var(--blue-600); border-radius: var(--border-radius-small);" title="blue-600"></div>
+        <div style="width: 48px; height: 48px; background: var(--blue-700); border-radius: var(--border-radius-small);" title="blue-700"></div>
+        <div style="width: 48px; height: 48px; background: var(--blue-800); border-radius: var(--border-radius-small);" title="blue-800"></div>
+        <div style="width: 48px; height: 48px; background: var(--blue-900); border-radius: var(--border-radius-small);" title="blue-900"></div>
+      </div>
+    </div>
+
+    <div class="fixture-row-label">Red / Green / Purple</div>
+    <div class="fixture-row">
+      <div style="display: flex; gap: 2px;">
+        <div style="width: 48px; height: 48px; background: var(--red-100); border-radius: var(--border-radius-small);" title="red-100"></div>
+        <div style="width: 48px; height: 48px; background: var(--red-300); border-radius: var(--border-radius-small);" title="red-300"></div>
+        <div style="width: 48px; height: 48px; background: var(--red-500); border-radius: var(--border-radius-small);" title="red-500"></div>
+        <div style="width: 48px; height: 48px; background: var(--red-700); border-radius: var(--border-radius-small);" title="red-700"></div>
+        <div style="width: 48px; height: 48px; background: var(--red-900); border-radius: var(--border-radius-small);" title="red-900"></div>
+      </div>
+      <div style="display: flex; gap: 2px;">
+        <div style="width: 48px; height: 48px; background: var(--green-100); border-radius: var(--border-radius-small);" title="green-100"></div>
+        <div style="width: 48px; height: 48px; background: var(--green-300); border-radius: var(--border-radius-small);" title="green-300"></div>
+        <div style="width: 48px; height: 48px; background: var(--green-500); border-radius: var(--border-radius-small);" title="green-500"></div>
+        <div style="width: 48px; height: 48px; background: var(--green-700); border-radius: var(--border-radius-small);" title="green-700"></div>
+        <div style="width: 48px; height: 48px; background: var(--green-900); border-radius: var(--border-radius-small);" title="green-900"></div>
+      </div>
+      <div style="display: flex; gap: 2px;">
+        <div style="width: 48px; height: 48px; background: var(--purple-100); border-radius: var(--border-radius-small);" title="purple-100"></div>
+        <div style="width: 48px; height: 48px; background: var(--purple-300); border-radius: var(--border-radius-small);" title="purple-300"></div>
+        <div style="width: 48px; height: 48px; background: var(--purple-500); border-radius: var(--border-radius-small);" title="purple-500"></div>
+        <div style="width: 48px; height: 48px; background: var(--purple-700); border-radius: var(--border-radius-small);" title="purple-700"></div>
+        <div style="width: 48px; height: 48px; background: var(--purple-900); border-radius: var(--border-radius-small);" title="purple-900"></div>
+      </div>
+    </div>
+
+    <div class="fixture-row-label">Semantic / Feedback</div>
+    <div class="fixture-row">
+      <div style="display: flex; gap: var(--space-8);">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: var(--space-4);">
+          <div style="width: 48px; height: 48px; background: var(--success-color); border-radius: var(--border-radius-small);"></div>
+          <span style="font-size: var(--font-xs); color: var(--text-secondary);">Success</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: var(--space-4);">
+          <div style="width: 48px; height: 48px; background: var(--warning-color); border-radius: var(--border-radius-small);"></div>
+          <span style="font-size: var(--font-xs); color: var(--text-secondary);">Warning</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: var(--space-4);">
+          <div style="width: 48px; height: 48px; background: var(--error-color); border-radius: var(--border-radius-small);"></div>
+          <span style="font-size: var(--font-xs); color: var(--text-secondary);">Error</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: var(--space-4);">
+          <div style="width: 48px; height: 48px; background: var(--info-color); border-radius: var(--border-radius-small);"></div>
+          <span style="font-size: var(--font-xs); color: var(--text-secondary);">Info</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: var(--space-4);">
+          <div style="width: 48px; height: 48px; background: var(--accent-primary); border-radius: var(--border-radius-small);"></div>
+          <span style="font-size: var(--font-xs); color: var(--text-secondary);">Accent</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 6: TYPOGRAPHY SCALE
+       ====================================================================== -->
+  <section class="fixture-section">
+    <h2>6. Typography Scale</h2>
+
+    <div style="display: flex; flex-direction: column; gap: var(--space-16);">
+      <div style="display: flex; align-items: baseline; gap: var(--space-16);">
+        <span style="font-size: var(--font-xs); color: var(--text-secondary); width: 80px; flex-shrink: 0;">--font-xxl</span>
+        <span style="font-size: var(--font-xxl); font-weight: var(--font-weight-bold);">Каразін UniVerse — 24px Bold</span>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: var(--space-16);">
+        <span style="font-size: var(--font-xs); color: var(--text-secondary); width: 80px; flex-shrink: 0;">--font-xl</span>
+        <span style="font-size: var(--font-xl); font-weight: var(--font-weight-bold);">Розклад занять — 20px Bold</span>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: var(--space-16);">
+        <span style="font-size: var(--font-xs); color: var(--text-secondary); width: 80px; flex-shrink: 0;">--font-lg</span>
+        <span style="font-size: var(--font-lg); font-weight: var(--font-weight-medium);">Математичний аналіз — 18px Medium</span>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: var(--space-16);">
+        <span style="font-size: var(--font-xs); color: var(--text-secondary); width: 80px; flex-shrink: 0;">--font-md</span>
+        <span style="font-size: var(--font-md); font-weight: var(--font-weight-regular);">Основний текст інтерфейсу — 16px Regular</span>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: var(--space-16);">
+        <span style="font-size: var(--font-xs); color: var(--text-secondary); width: 80px; flex-shrink: 0;">--font-sm</span>
+        <span style="font-size: var(--font-sm); font-weight: var(--font-weight-regular); color: var(--text-secondary);">Метадані таблиці, навігація — 14px Regular</span>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: var(--space-16);">
+        <span style="font-size: var(--font-xs); color: var(--text-secondary); width: 80px; flex-shrink: 0;">--font-xs</span>
+        <span style="font-size: var(--font-xs); font-weight: var(--font-weight-medium); color: var(--text-secondary);">Бейджі, таймстемпи, підписи — 12px Medium</span>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

@@ -57,7 +57,7 @@ export const en = {
   'nav.grades': 'Grades',
   'nav.grades.full': 'Gradebook & Scores',
   'nav.opportunities': 'Opportunities',
-  'nav.opportunities.full': 'Opportunities Platform',
+  'nav.opportunities.full': 'Opportunities & Projects',
 
   // Sidebar & Header
   'sidebar.logout': 'Log out',
@@ -255,9 +255,6 @@ export const en = {
 
   // Gamification
   'badge.unlocked': 'Achievement',
-  'admission.admitted': 'Admitted to the exam ({score} / 60 pts — threshold of 30 pts reached)',
-  'admission.notAdmitted':
-    'Not admitted to the exam ({score} / 60 pts — {remaining} pts needed to qualify)',
 
   // Modal
   'modal.close': 'Close',
@@ -288,7 +285,6 @@ export const en = {
 
   // Quick Actions
   'quickActions.title': 'Quick Actions',
-  'quickActions.moodle': 'Moodle LMS',
   'quickActions.moodleBadge': 'Karazin',
   'quickActions.moodleTitle': 'Open Moodle LMS platform in a new tab',
   'quickActions.moodleDescription': 'Course platform',
@@ -328,57 +324,7 @@ export const en = {
   'overview.viewCourseMaterials': 'View course materials: {name}',
   'student.courseGroupFormat': 'Year {course}, group {group}',
 
-  // Feature Gating & Opportunities
-  'quickActions.opportunities': 'Opportunities',
-  'quickActions.newBadge': 'New',
-  'quickActions.opportunitiesDescription': 'Internships, hackathons, grants',
-  'quickActions.opportunitiesTitle': 'Go to opportunities and internships platform',
-
-  'opportunities.title': 'Opportunities Platform',
-  'opportunities.subtitle':
-    'Career opportunities, internships, research grants, and Karazin student initiatives',
-  'opportunities.badge': 'Beta Preview',
-  'opportunities.filterAll': 'All Opportunities',
-  'opportunities.filterInternships': 'Internships & Tech',
-  'opportunities.filterGrants': 'Grants & Scholarships',
-  'opportunities.filterExchange': 'Academic Mobility',
-  'opportunities.apply': 'Apply',
-  'opportunities.details': 'Details',
-  'opportunities.deadline': 'Deadline:',
-  'opportunities.empty': 'No open opportunities found in this category',
-  'opportunities.tagInternships': 'IT & Internships',
-  'opportunities.tagGrants': 'Grants & Scholarships',
-  'opportunities.tagExchange': 'Academic Mobility',
-  'opportunities.item1Title': 'Junior Full-Stack Web Development Practicum',
-  'opportunities.item1Org': 'Karazin Tech Innovation Hub',
-  'opportunities.item1Desc':
-    'Hands-on practice on university open-source projects with a modern tech stack (React, Node.js, Cloud).',
-  'opportunities.item2Title': 'International Academic Exchange Program',
-  'opportunities.item2Org': 'Karazin International Relations Office',
-  'opportunities.item2Desc':
-    'Semester study opportunities at partner European universities for undergraduate and graduate students.',
-  'opportunities.item3Title': 'Karazin Young Researchers Grant Program',
-  'opportunities.item3Org': 'Scientific Society of V. N. Karazin Kharkiv National University',
-  'opportunities.item3Desc':
-    'Funding support for student and postgraduate research projects in natural and technical sciences.',
-  'opportunities.item4Title': 'Campus Frontend Mentorship Workshop',
-  'opportunities.item4Org': 'CS Department Alumni Association',
-  'opportunities.item4Desc':
-    'Intensive peer mentorship, design patterns, and code review practice with experienced alumni.',
-  'devPanel.openButton': 'Open feature toggles panel',
-  'devPanel.title': 'Feature Toggles',
-  'devPanel.devTag': 'Dev',
-  'devPanel.closeButton': 'Close feature toggles panel',
-  'devPanel.reset': 'Reset',
-  'devPanel.resetSuccess': 'Reset!',
-  'devPanel.overrideTag': 'Override',
-  'devPanel.moodleLabel': 'Moodle LMS',
-  'devPanel.moodleDesc': 'Courses, grades, assignments, GPA',
-  'devPanel.eDeanLabel': 'e-Dean',
-  'devPanel.eDeanDesc': 'Class schedule, student card',
-  'devPanel.opportunitiesLabel': 'Opportunities',
-  'devPanel.opportunitiesDesc': 'Project and internship board',
-  // Added from PR:
+  // Opportunities
   'opportunities.tabs.catalog': 'Catalog',
   'opportunities.tabs.myOpportunities': 'My Opportunities',
   'opportunities.tabs.myApplications': 'My Applications',
