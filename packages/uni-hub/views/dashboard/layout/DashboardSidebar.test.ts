@@ -50,41 +50,47 @@ describe('DashboardSidebar navigation & feature gating', () => {
   });
 
   it('renders correctly with LanguageProvider, ThemeProvider, and FeatureToggleProvider', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(
-        ThemeProvider,
-        null,
+    const originalEdean = process.env.NEXT_PUBLIC_FEATURE_EDEAN;
+
+    process.env.NEXT_PUBLIC_FEATURE_EDEAN = 'true';
+
+    try {
+      const html = renderToStaticMarkup(
         React.createElement(
-          LanguageProvider,
+          ThemeProvider,
           null,
           React.createElement(
-            FeatureToggleProvider,
-            {
-              initialFlags: {
-                isMoodleIntegrationEnabled: false,
-                isEDeanEnabled: true,
-                isOpportunitiesPlatformEnabled: true,
-              },
-            },
-            React.createElement(DashboardSidebar, {
-              collapsed: false,
-              onToggleCollapsed: () => {},
-              mobileMenuOpen: false,
-              onCloseMobileMenu: () => {},
-              activeKey: 'overview',
-              onSelectKey: () => {},
-              soundEnabled: false,
-              onLogout: () => {},
-            }),
+            LanguageProvider,
+            null,
+            React.createElement(
+              FeatureToggleProvider,
+              null,
+              React.createElement(DashboardSidebar, {
+                collapsed: false,
+                onToggleCollapsed: () => {},
+                mobileMenuOpen: false,
+                onCloseMobileMenu: () => {},
+                activeKey: 'overview',
+                onSelectKey: () => {},
+                soundEnabled: false,
+                onLogout: () => {},
+              }),
+            ),
           ),
         ),
-      ),
-    );
+      );
 
-    // Moodle links should not be present
-    expect(html).not.toContain('moodle.universemvp.tech');
-    // Overview and Schedule should be rendered
-    expect(html).toContain('Картка студента');
-    expect(html).toContain('Розклад');
+      // Moodle links should not be present
+      expect(html).not.toContain('moodle.universemvp.tech');
+      // Overview and Schedule should be rendered
+      expect(html).toContain('Картка студента');
+      expect(html).toContain('Розклад');
+    } finally {
+      if (originalEdean !== undefined) {
+        process.env.NEXT_PUBLIC_FEATURE_EDEAN = originalEdean;
+      } else {
+        delete process.env.NEXT_PUBLIC_FEATURE_EDEAN;
+      }
+    }
   });
 });
