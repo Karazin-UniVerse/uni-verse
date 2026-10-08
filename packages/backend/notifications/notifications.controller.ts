@@ -6,6 +6,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Notification, Prisma } from '@universe/database';
 import { NotificationsService } from './notifications.service';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 
@@ -17,7 +18,7 @@ export class NotificationsController {
   @ApiBearerAuth()
   @Get()
   @ApiOperation({ summary: 'Get all notifications for current user' })
-  getMyNotifications(@GetUser('sub') userId: string): Promise<unknown> {
+  getMyNotifications(@GetUser('sub') userId: string): Promise<Notification[]> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.notificationsService.getMyNotifications(userId);
@@ -29,7 +30,7 @@ export class NotificationsController {
   markAsRead(
     @GetUser('sub') userId: string,
     @Param('id') id: string,
-  ): Promise<unknown> {
+  ): Promise<Notification> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.notificationsService.markAsRead(userId, id);
@@ -38,7 +39,7 @@ export class NotificationsController {
   @ApiBearerAuth()
   @Post('read-all')
   @ApiOperation({ summary: 'Mark all notifications as read' })
-  markAllAsRead(@GetUser('sub') userId: string): Promise<unknown> {
+  markAllAsRead(@GetUser('sub') userId: string): Promise<Prisma.BatchPayload> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.notificationsService.markAllAsRead(userId);
