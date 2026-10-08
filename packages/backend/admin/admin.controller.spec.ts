@@ -60,7 +60,7 @@ describe('AdminController', () => {
   describe('setRole', () => {
     it('should throw ForbiddenException if role is not ADMIN', () => {
       expect(() =>
-        controller.setRole(Role.STUDENT, '1', Role.MODERATOR),
+        controller.setRole(Role.STUDENT, '1', Role.OPPORTUNITIES_MODERATOR),
       ).toThrow(ForbiddenException);
     });
 
@@ -69,15 +69,22 @@ describe('AdminController', () => {
         id: '1',
         email: 'test@test.com',
         name: 'Test',
-        role: Role.MODERATOR,
+        role: Role.OPPORTUNITIES_MODERATOR,
       };
 
       jest.mocked(service.setRole).mockResolvedValue(mockUser);
 
-      const result = await controller.setRole(Role.ADMIN, '1', Role.MODERATOR);
+      const result = await controller.setRole(
+        Role.ADMIN,
+        '1',
+        Role.OPPORTUNITIES_MODERATOR,
+      );
 
       expect(result).toEqual(mockUser);
-      expect(service.setRole).toHaveBeenCalledWith('1', Role.MODERATOR);
+      expect(service.setRole).toHaveBeenCalledWith(
+        '1',
+        Role.OPPORTUNITIES_MODERATOR,
+      );
     });
   });
 });

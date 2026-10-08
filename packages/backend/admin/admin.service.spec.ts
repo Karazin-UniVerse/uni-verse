@@ -62,9 +62,9 @@ describe('AdminService', () => {
     it('should throw NotFoundException if user not found', async () => {
       jest.mocked(prismaService.user.findUnique).mockResolvedValue(null);
 
-      await expect(service.setRole('1', Role.MODERATOR)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.setRole('1', Role.OPPORTUNITIES_MODERATOR),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should update and return user role', async () => {
@@ -74,7 +74,7 @@ describe('AdminService', () => {
         name: 'Test',
         role: 'STUDENT',
       };
-      const updatedUser = { ...mockUser, role: Role.MODERATOR };
+      const updatedUser = { ...mockUser, role: Role.OPPORTUNITIES_MODERATOR };
 
       jest
         .mocked(prismaService.user.findUnique)
@@ -83,13 +83,13 @@ describe('AdminService', () => {
         .mocked(prismaService.user.update)
         .mockResolvedValue(updatedUser as any);
 
-      const result = await service.setRole('1', Role.MODERATOR);
+      const result = await service.setRole('1', Role.OPPORTUNITIES_MODERATOR);
 
       expect(result).toEqual(updatedUser);
       expect(prismaService.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: '1' },
-          data: { role: Role.MODERATOR },
+          data: { role: Role.OPPORTUNITIES_MODERATOR },
         }),
       );
     });
