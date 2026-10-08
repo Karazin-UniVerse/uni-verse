@@ -37,25 +37,14 @@ const getEnvDefaults = (): FeatureFlags => {
 
 export interface FeatureToggleProviderProps {
   children?: React.ReactNode;
-  allowOverrides?: boolean;
-  initialFlags?: Partial<FeatureFlags>;
 }
 
-export const FeatureToggleProvider: React.FC<FeatureToggleProviderProps> = ({
-  children,
-  allowOverrides: allowOverridesProp,
-  initialFlags,
-}) => {
-  // Production safeguard: feature overrides are disabled by default in production
-  const isProduction = process.env.NODE_ENV === 'production';
-  const allowOverrides = allowOverridesProp ?? !isProduction;
-
+export const FeatureToggleProvider: React.FC<FeatureToggleProviderProps> = ({ children }) => {
   const envDefaults = useMemo(() => getEnvDefaults(), []);
 
-  const store = useMemo(
-    () => createOverrideStore({ allowOverrides, initialFlags }),
-    [allowOverrides, initialFlags],
-  );
+  // Overrides are allowed outside production OR when the feature panel is explicitly enabled in env
+  const allowOverrides = process.env.NODE_ENV !== 'production' || envDefaults.isFeaturePanelEnabled;
+  const store = useMemo(() => createOverrideStore({ allowOverrides }), [allowOverrides]);
 
   const overrides = useSyncExternalStore(
     store.subscribe,
@@ -87,13 +76,15 @@ export const FeatureToggleProvider: React.FC<FeatureToggleProviderProps> = ({
 
   const isOverridden = useCallback(
     (feature?: FeatureFlagKey): boolean => {
+      const currentOverrides = store.getSnapshot();
+
       if (feature) {
-        return overrides[feature] !== undefined;
+        return currentOverrides[feature] !== undefined;
       }
 
-      return Object.keys(overrides).length > 0;
+      return Object.keys(currentOverrides).length > 0;
     },
-    [overrides],
+    [store],
   );
 
   const contextValue = useMemo<FeatureContextValue>(() => {
