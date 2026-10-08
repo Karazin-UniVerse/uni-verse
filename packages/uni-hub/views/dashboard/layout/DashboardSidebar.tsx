@@ -23,7 +23,7 @@ import { useFeatures } from '@uni-hub/features';
 import type { FeatureFlags, FeatureFlagKey } from '@core/constants/features';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
-import { type DashboardSidebarProps, NavKey } from '../types';
+import { type DashboardSidebarProps, type NavKey, NAV_KEY } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export interface NavItemConfig {
@@ -36,41 +36,41 @@ export interface NavItemConfig {
 
 export const NAV_ITEMS: NavItemConfig[] = [
   {
-    key: NavKey.Overview,
+    key: NAV_KEY.Overview,
     icon: <LayoutDashboard size={18} />,
     labelKey: 'nav.overview.full',
     shortLabelKey: 'nav.overview',
   },
   {
-    key: NavKey.Courses,
+    key: NAV_KEY.Courses,
     icon: <BookOpen size={18} />,
     labelKey: 'nav.courses.full',
     shortLabelKey: 'nav.courses',
     featureFlag: 'isMoodleIntegrationEnabled',
   },
   {
-    key: NavKey.Grades,
+    key: NAV_KEY.Grades,
     icon: <ClipboardList size={18} />,
     labelKey: 'nav.grades.full',
     shortLabelKey: 'nav.grades',
     featureFlag: 'isMoodleIntegrationEnabled',
   },
   {
-    key: NavKey.Schedule,
+    key: NAV_KEY.Schedule,
     icon: <CalendarDays size={18} />,
     labelKey: 'nav.schedule.full',
     shortLabelKey: 'nav.schedule',
     featureFlag: 'isEDeanEnabled',
   },
   {
-    key: NavKey.Assignments,
+    key: NAV_KEY.Assignments,
     icon: <FileEdit size={18} />,
     labelKey: 'nav.assignments.full',
     shortLabelKey: 'nav.assignments',
     featureFlag: 'isMoodleIntegrationEnabled',
   },
   {
-    key: NavKey.Opportunities,
+    key: NAV_KEY.Opportunities,
     icon: <Sparkles size={18} />,
     labelKey: 'nav.opportunities.full',
     shortLabelKey: 'nav.opportunities',
@@ -88,7 +88,7 @@ export const getVisibleNavItems = (
     return [
       ...baseItems,
       {
-        key: NavKey.ConnectMoodle,
+        key: NAV_KEY.ConnectMoodle,
         icon: <Link2 size={18} />,
         labelKey: 'nav.connectMoodle.full',
         shortLabelKey: 'nav.connectMoodle',

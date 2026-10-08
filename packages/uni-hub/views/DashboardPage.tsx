@@ -15,7 +15,8 @@ import { BadgeSystem, GradeSimulator } from '@uni-hub/components/gamification';
 import { ScheduleView } from '@uni-hub/components/schedule';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import {
-  NavKey,
+  NAV_KEY,
+  type NavKey,
   isNavKey,
   fallbackStudentProfile,
   DashboardSidebar,
@@ -37,13 +38,13 @@ import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './DashboardPage.module.scss';
 
 const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
-  [NavKey.Overview]: 'nav.overview.full',
-  [NavKey.Courses]: 'nav.courses.full',
-  [NavKey.Grades]: 'nav.grades.full',
-  [NavKey.Schedule]: 'nav.schedule.full',
-  [NavKey.Assignments]: 'nav.assignments.full',
-  [NavKey.Opportunities]: 'nav.opportunities.full',
-  [NavKey.ConnectMoodle]: 'nav.connectMoodle.full',
+  [NAV_KEY.Overview]: 'nav.overview.full',
+  [NAV_KEY.Courses]: 'nav.courses.full',
+  [NAV_KEY.Grades]: 'nav.grades.full',
+  [NAV_KEY.Schedule]: 'nav.schedule.full',
+  [NAV_KEY.Assignments]: 'nav.assignments.full',
+  [NAV_KEY.Opportunities]: 'nav.opportunities.full',
+  [NAV_KEY.ConnectMoodle]: 'nav.connectMoodle.full',
 };
 
 const DashboardPage: React.FC = () => {
@@ -62,7 +63,7 @@ const DashboardPage: React.FC = () => {
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeKey, setActiveKey] = useState<NavKey>(NavKey.Overview);
+  const [activeKey, setActiveKey] = useState<NavKey>(NAV_KEY.Overview);
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();
   const [mounted, setMounted] = useState(false);
@@ -168,8 +169,8 @@ const DashboardPage: React.FC = () => {
     const requestedTab = searchParams.get('tab');
 
     if (requestedTab && isNavKey(requestedTab)) {
-      if (requestedTab === NavKey.ConnectMoodle && isMoodleLinked) {
-        setActiveKey(NavKey.Overview);
+      if (requestedTab === NAV_KEY.ConnectMoodle && isMoodleLinked) {
+        setActiveKey(NAV_KEY.Overview);
 
         return;
       }
@@ -183,14 +184,14 @@ const DashboardPage: React.FC = () => {
       }
     }
 
-    setActiveKey(NavKey.Overview);
+    setActiveKey(NAV_KEY.Overview);
   }, [searchParams, isMoodleLinked]);
 
   useEffect(() => {
     const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
 
     if (activeItem?.featureFlag && !flags[activeItem.featureFlag]) {
-      setActiveKey(NavKey.Overview);
+      setActiveKey(NAV_KEY.Overview);
     }
   }, [flags, activeKey]);
 
@@ -223,14 +224,14 @@ const DashboardPage: React.FC = () => {
   const renderActiveContent = () => {
     const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
     let effectiveKey: NavKey =
-      activeItem?.featureFlag && !flags[activeItem.featureFlag] ? NavKey.Overview : activeKey;
+      activeItem?.featureFlag && !flags[activeItem.featureFlag] ? NAV_KEY.Overview : activeKey;
 
-    if (effectiveKey === NavKey.ConnectMoodle && isMoodleLinked) {
-      effectiveKey = NavKey.Overview;
+    if (effectiveKey === NAV_KEY.ConnectMoodle && isMoodleLinked) {
+      effectiveKey = NAV_KEY.Overview;
     }
 
     switch (effectiveKey) {
-      case NavKey.Overview:
+      case NAV_KEY.Overview:
         return (
           <OverviewTab
             courses={data.courses}
@@ -244,13 +245,13 @@ const DashboardPage: React.FC = () => {
             isMoodleLinked={isMoodleLinked}
           />
         );
-      case NavKey.Courses:
+      case NAV_KEY.Courses:
         return <CoursesTab courses={data.courses} soundEnabled={soundEnabled} />;
-      case NavKey.Grades:
+      case NAV_KEY.Grades:
         return <GradesTab grades={data.grades} onOpenSimulator={() => setSimulatorOpen(true)} />;
-      case NavKey.Schedule:
+      case NAV_KEY.Schedule:
         return <ScheduleView />;
-      case NavKey.Assignments:
+      case NAV_KEY.Assignments:
         return (
           <AssignmentsTab
             assignments={data.assignments}
@@ -277,9 +278,9 @@ const DashboardPage: React.FC = () => {
             }}
           />
         );
-      case NavKey.Opportunities:
+      case NAV_KEY.Opportunities:
         return <OpportunitiesTab />;
-      case NavKey.ConnectMoodle:
+      case NAV_KEY.ConnectMoodle:
         return <ConnectMoodleTab onConnect={() => openLinkModal(LinkMoodleMode.CONNECT)} />;
       default:
         return null;

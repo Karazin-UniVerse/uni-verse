@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
 import { FeatureToggleProvider } from '@uni-hub/features';
-import { NavKey } from '../types';
+import { NAV_KEY } from '../types';
 import type { FeatureFlags } from '@core/constants/features';
 import { NAV_ITEMS, getVisibleNavItems, DashboardSidebar } from './DashboardSidebar';
 
@@ -20,16 +20,16 @@ describe('DashboardSidebar helpers', () => {
     const items = getVisibleNavItems(allEnabledFlags, true);
 
     expect(items).toEqual(NAV_ITEMS);
-    expect(items.some((item) => item.key === NavKey.ConnectMoodle)).toBe(false);
+    expect(items.some((item) => item.key === NAV_KEY.ConnectMoodle)).toBe(false);
   });
 
   it('includes connectMoodle item when isMoodleLinked is false', () => {
     const items = getVisibleNavItems(allEnabledFlags, false);
 
     expect(items.length).toBe(NAV_ITEMS.length + 1);
-    expect(items.some((item) => item.key === NavKey.ConnectMoodle)).toBe(true);
+    expect(items.some((item) => item.key === NAV_KEY.ConnectMoodle)).toBe(true);
 
-    const connectItem = items.find((item) => item.key === NavKey.ConnectMoodle);
+    const connectItem = items.find((item) => item.key === NAV_KEY.ConnectMoodle);
 
     expect(connectItem?.labelKey).toBe('nav.connectMoodle.full');
     expect(connectItem?.shortLabelKey).toBe('nav.connectMoodle');
@@ -43,12 +43,12 @@ describe('DashboardSidebar navigation & feature gating', () => {
     const visible = getVisibleNavItems(allEnabledFlags, true);
 
     expect(visible.map((item) => item.key)).toEqual([
-      NavKey.Overview,
-      NavKey.Courses,
-      NavKey.Grades,
-      NavKey.Schedule,
-      NavKey.Assignments,
-      NavKey.Opportunities,
+      NAV_KEY.Overview,
+      NAV_KEY.Courses,
+      NAV_KEY.Grades,
+      NAV_KEY.Schedule,
+      NAV_KEY.Assignments,
+      NAV_KEY.Opportunities,
     ]);
   });
 
@@ -63,7 +63,7 @@ describe('DashboardSidebar navigation & feature gating', () => {
       true,
     );
 
-    expect(visible.map((item) => item.key)).toEqual([NavKey.Overview, NavKey.Schedule]);
+    expect(visible.map((item) => item.key)).toEqual([NAV_KEY.Overview, NAV_KEY.Schedule]);
   });
 
   it('retains only overview if all feature flags are turned off', () => {
@@ -77,7 +77,7 @@ describe('DashboardSidebar navigation & feature gating', () => {
       true,
     );
 
-    expect(visible.map((item) => item.key)).toEqual([NavKey.Overview]);
+    expect(visible.map((item) => item.key)).toEqual([NAV_KEY.Overview]);
   });
 
   it('renders correctly with LanguageProvider, ThemeProvider, and FeatureToggleProvider', () => {

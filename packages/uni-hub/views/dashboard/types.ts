@@ -9,7 +9,7 @@ import type {
   CourseStatistics,
 } from '@uni-hub/types';
 
-export const NavKey = {
+export const NAV_KEY = {
   Overview: 'overview',
   Courses: 'courses',
   Grades: 'grades',
@@ -19,9 +19,9 @@ export const NavKey = {
   Opportunities: 'opportunities',
 } as const;
 
-export type NavKey = (typeof NavKey)[keyof typeof NavKey];
+export type NavKey = (typeof NAV_KEY)[keyof typeof NAV_KEY];
 
-export const NAV_KEYS = Object.values(NavKey);
+export const NAV_KEYS = Object.values(NAV_KEY);
 
 const NAV_KEYS_SET: ReadonlySet<string> = new Set(NAV_KEYS);
 
