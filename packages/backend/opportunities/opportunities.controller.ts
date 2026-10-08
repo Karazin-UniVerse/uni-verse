@@ -20,6 +20,7 @@ import {
   FindOpportunitiesDto,
 } from './dto';
 import { GetUser } from '../auth/decorators/get-user.decorator';
+import { Opportunity, OpportunityApplication } from '@universe/database';
 import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Opportunities')
@@ -36,7 +37,7 @@ export class OpportunitiesController {
   create(
     @GetUser('sub') userId: string,
     @Body() dto: CreateOpportunityDto,
-  ): Promise<unknown> {
+  ): Promise<Opportunity> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.create(userId, dto);
@@ -52,7 +53,7 @@ export class OpportunitiesController {
   findAll(
     @GetUser('role') role: string,
     @Query() query: FindOpportunitiesDto,
-  ): Promise<unknown> {
+  ): Promise<Opportunity> {
     return this.opportunitiesService.findAll(query, role);
   }
 
@@ -62,7 +63,9 @@ export class OpportunitiesController {
    * Get current user opportunities
    */
   @ApiOperation({ summary: 'Get current user opportunities' })
-  getMyOpportunities(@GetUser('sub') userId: string): Promise<unknown> {
+  getMyOpportunities(
+    @GetUser('sub') userId: string,
+  ): Promise<{ data: Opportunity[]; total: number }> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.getMyOpportunities(userId);
@@ -77,7 +80,7 @@ export class OpportunitiesController {
   withdrawApplication(
     @GetUser('sub') userId: string,
     @Param('id') applicationId: string,
-  ): Promise<unknown> {
+  ): Promise<Opportunity[]> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.withdrawApplication(userId, applicationId);
@@ -89,7 +92,9 @@ export class OpportunitiesController {
    * Get current user applications
    */
   @ApiOperation({ summary: 'Get current user applications' })
-  getMyApplications(@GetUser('sub') userId: string): Promise<unknown> {
+  getMyApplications(
+    @GetUser('sub') userId: string,
+  ): Promise<OpportunityApplication[]> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.getMyApplications(userId);
@@ -106,7 +111,7 @@ export class OpportunitiesController {
     @Param('id') id: string,
     @GetUser('sub') userId?: string,
     @GetUser('role') role?: string,
-  ): Promise<unknown> {
+  ): Promise<OpportunityApplication[]> {
     return this.opportunitiesService.findOne(id, userId, role);
   }
 
@@ -120,7 +125,7 @@ export class OpportunitiesController {
     @GetUser('sub') userId: string,
     @Param('id') id: string,
     @Body() dto: UpdateOpportunityDto,
-  ): Promise<unknown> {
+  ): Promise<Opportunity> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.update(userId, id, dto);
@@ -136,7 +141,7 @@ export class OpportunitiesController {
     @GetUser('sub') userId: string,
     @Param('id') id: string,
     @Body('status') status: 'READY_FOR_REVIEW',
-  ): Promise<unknown> {
+  ): Promise<Opportunity> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.changeStatus(userId, id, status);
@@ -152,7 +157,7 @@ export class OpportunitiesController {
     @GetUser('sub') userId: string,
     @Param('id') id: string,
     @Body() dto: ChangeLifecycleStateDto,
-  ): Promise<unknown> {
+  ): Promise<Opportunity> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.changeLifecycleState(
@@ -170,7 +175,7 @@ export class OpportunitiesController {
   getOpportunityApplications(
     @GetUser('sub') userId: string,
     @Param('id') id: string,
-  ): Promise<unknown> {
+  ): Promise<Opportunity> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.getOpportunityApplications(userId, id);
@@ -186,7 +191,7 @@ export class OpportunitiesController {
     @GetUser('sub') userId: string,
     @Param('appId') appId: string,
     @Body() dto: UpdateApplicationStatusDto,
-  ): Promise<unknown> {
+  ): Promise<OpportunityApplication[]> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.updateApplicationStatus({
@@ -207,7 +212,7 @@ export class OpportunitiesController {
     @GetUser('sub') userId: string,
     @Param('id') id: string,
     @Body() dto: ApplyOpportunityDto,
-  ): Promise<unknown> {
+  ): Promise<OpportunityApplication> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.apply(userId, id, dto);
@@ -225,7 +230,7 @@ export class OpportunitiesController {
     @GetUser('sub') userId: string,
     @Param('id') id: string,
     @Body() dto: ModerateOpportunityDto,
-  ): Promise<unknown> {
+  ): Promise<OpportunityApplication> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.moderate(userId, id, dto);
