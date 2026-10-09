@@ -16,3 +16,5 @@ export interface RejectModalState {
   id: string | null;
   comment: string;
 }
+
+export type ModerationAction = 'APPROVE' | 'REJECT' | 'REQUIRE_CHANGES';

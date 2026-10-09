@@ -9,7 +9,12 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { OpportunitiesService } from './opportunities.service';
+import {
+  OpportunitiesService,
+  OpportunityWithOwner,
+  ApplicationWithApplicant,
+  ApplicationWithOpportunity,
+} from './opportunities.service';
 import {
   CreateOpportunityDto,
   UpdateOpportunityDto,
@@ -54,11 +59,7 @@ export class OpportunitiesController {
   findAll(
     @GetUser('role') role: string,
     @Query() query: FindOpportunitiesDto,
-  ): Promise<
-    (Opportunity & {
-      owner: { id: string; name: string | null; email: string };
-    })[]
-  > {
+  ): Promise<OpportunityWithOwner[]> {
     return this.opportunitiesService.findAll(query, role);
   }
 
@@ -97,7 +98,7 @@ export class OpportunitiesController {
   @ApiOperation({ summary: 'Get current user applications' })
   getMyApplications(
     @GetUser('sub') userId: string,
-  ): Promise<OpportunityApplication[]> {
+  ): Promise<ApplicationWithOpportunity[]> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.getMyApplications(userId);
@@ -114,9 +115,7 @@ export class OpportunitiesController {
     @Param('id') id: string,
     @GetUser('sub') userId?: string,
     @GetUser('role') role?: string,
-  ): Promise<
-    Opportunity & { owner: { id: string; name: string | null; email: string } }
-  > {
+  ): Promise<OpportunityWithOwner> {
     return this.opportunitiesService.findOne(id, userId, role);
   }
 
@@ -180,11 +179,7 @@ export class OpportunitiesController {
   getOpportunityApplications(
     @GetUser('sub') userId: string,
     @Param('id') id: string,
-  ): Promise<
-    (OpportunityApplication & {
-      applicant: { name: string | null; email: string };
-    })[]
-  > {
+  ): Promise<ApplicationWithApplicant[]> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.getOpportunityApplications(userId, id);

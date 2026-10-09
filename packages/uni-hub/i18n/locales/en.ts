@@ -433,6 +433,8 @@ export const en = {
   'opportunities.toast.stateUpdated': 'Project state updated',
   'opportunities.toast.statusUpdateError': 'Error updating status',
   'opportunities.confirm.withdraw': 'Are you sure you want to withdraw your application?',
+  'opportunities.confirm.withdrawTitle': 'Withdraw application',
+  'opportunities.confirm.withdrawConfirm': 'Withdraw',
   'opportunities.toast.withdrawn': 'Application withdrawn',
   'opportunities.toast.approved': 'Opportunity approved and published in the catalog!',
   'opportunities.toast.rejected': 'Opportunity rejected',

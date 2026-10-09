@@ -772,6 +772,10 @@ export async function fetchPullRequestDetails({ repo, prNumber, token }) {
   const response = await fetch(url, { headers });
 
   if (!response.ok) {
+    const errorText = await response.text();
+
+    console.warn(`Failed to fetch PR #${prNumber} details (HTTP ${response.status}): ${errorText}`);
+
     return null;
   }
 
@@ -938,35 +942,14 @@ export async function handleCiFailure() {
   await sendDiscordWebhook(payload);
 }
 
-export async function handlePullRequest() {
-  const eventPath = process.env.GITHUB_EVENT_PATH;
-
-  if (!eventPath || !existsSync(eventPath)) {
-    console.warn('GITHUB_EVENT_PATH not found. Cannot process PR event.');
-    process.exit(0);
-  }
-
-  const eventData = JSON.parse(readFileSync(eventPath, 'utf8'));
-  const { action, pull_request: pr, repository } = eventData;
-
-  if (!pr) {
-    console.info('No pull_request payload found. Skipping.');
-    process.exit(0);
-  }
-
-  // Skip draft PR creation; notify only when marked ready for review
-  if (action === 'opened' && pr.draft) {
-    console.info('Pull Request is a Draft. Skipping notification until ready for review.');
-    process.exit(0);
-  }
-
+export function buildPullRequestPayload({ pr, action, repository, users = discordUsers }) {
   let statusLabel = '';
   let color = 0x5865f2; // Blurple
   let content = '';
 
-  const authorMention = formatUserMention(pr.user?.login);
+  const authorMention = formatUserMention(pr.user?.login, users);
   const reviewers = pr.requested_reviewers || [];
-  const reviewersMentions = reviewers.map((reviewer) => formatUserMention(reviewer.login));
+  const reviewersMentions = reviewers.map((reviewer) => formatUserMention(reviewer.login, users));
 
   if (action === 'closed') {
     if (pr.merged) {
@@ -991,15 +974,14 @@ export async function handlePullRequest() {
     color = 0xfee75c; // Yellow
     content = `@here Pull Request **#${pr.number}** було перевідкрито.`;
   } else {
-    console.info(`Action "${action}" does not require a notification.`);
-    process.exit(0);
+    return null;
   }
 
   const additions = pr.additions ?? 0;
   const deletions = pr.deletions ?? 0;
   const changedFiles = pr.changed_files ?? 0;
 
-  const payload = {
+  return {
     content,
     embeds: [
       {
@@ -1041,6 +1023,76 @@ export async function handlePullRequest() {
       },
     ],
   };
+}
+
+export async function handlePullRequest() {
+  const eventPath = process.env.GITHUB_EVENT_PATH;
+
+  if (!eventPath || !existsSync(eventPath)) {
+    console.warn('GITHUB_EVENT_PATH not found. Cannot process PR event.');
+    process.exit(0);
+  }
+
+  const eventData = JSON.parse(readFileSync(eventPath, 'utf8'));
+  const { action, pull_request: initialPr, repository } = eventData;
+
+  if (!initialPr) {
+    console.info('No pull_request payload found. Skipping.');
+    process.exit(0);
+  }
+
+  // Skip draft PR creation; notify only when marked ready for review
+  if (action === 'opened' && initialPr.draft) {
+    console.info('Pull Request is a Draft. Skipping notification until ready for review.');
+    process.exit(0);
+  }
+
+  let pr = initialPr;
+  const token = process.env.GITHUB_TOKEN;
+  const repo = repository?.full_name || process.env.GITHUB_REPOSITORY;
+
+  if (token && repo && (action === 'opened' || action === 'ready_for_review')) {
+    const waitMs =
+      process.env.PR_REVIEWERS_WAIT_MS !== undefined
+        ? Number(process.env.PR_REVIEWERS_WAIT_MS)
+        : 10000;
+
+    if (waitMs > 0) {
+      console.info(`Waiting ${waitMs}ms for CODEOWNERS to assign reviewers...`);
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+    }
+
+    try {
+      const freshDetails = await fetchPullRequestDetails({
+        repo,
+        prNumber: pr.number,
+        token,
+      });
+
+      if (freshDetails) {
+        pr = {
+          ...pr,
+          ...freshDetails,
+        };
+      } else {
+        console.warn(
+          `Could not retrieve fresh details for PR #${pr.number}, falling back to event payload.`,
+        );
+      }
+    } catch (err) {
+      console.warn(
+        'Could not fetch updated PR details, falling back to event payload:',
+        err.message,
+      );
+    }
+  }
+
+  const payload = buildPullRequestPayload({ pr, action, repository });
+
+  if (!payload) {
+    console.info(`Action "${action}" does not require a notification.`);
+    process.exit(0);
+  }
 
   await sendDiscordWebhook(payload);
 }

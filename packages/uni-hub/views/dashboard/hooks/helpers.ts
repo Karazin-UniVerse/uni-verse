@@ -1,4 +1,5 @@
 import { moodleApi } from '@uni-hub/services/api';
+import { asList } from '@uni-hub/utils/arrays';
 import { isBrowser } from '@uni-hub/utils/browser';
 import type { Grade, Assignment } from '@uni-hub/types';
 import type { StudentProfile } from '@core/types';
@@ -49,11 +50,7 @@ export function parseDateFilterSeconds(dateString?: string): number | null {
 }
 
 export function resolveGradesResponse(gradesResponse?: GradesApiResponse | null): Grade[] {
-  if (Array.isArray(gradesResponse?.data?.grades)) {
-    return gradesResponse.data.grades;
-  }
-
-  return [];
+  return asList(gradesResponse?.data?.grades);
 }
 
 export type MoodleApiResponseTuple = [
@@ -74,13 +71,11 @@ export function assembleDashboardData([
   statsRes,
 ]: MoodleApiResponseTuple): DashboardData {
   return {
-    courses: Array.isArray(coursesRes?.data) ? coursesRes.data : [],
+    courses: asList(coursesRes?.data),
     grades: resolveGradesResponse(gradesRes),
-    assignments: Array.isArray(assignmentsRes?.data) ? assignmentsRes.data : [],
-    events: Array.isArray(eventsRes?.data) ? eventsRes.data : [],
-    notifications: Array.isArray(notificationsRes?.data?.notifications)
-      ? notificationsRes.data.notifications
-      : [],
+    assignments: asList(assignmentsRes?.data),
+    events: asList(eventsRes?.data),
+    notifications: asList(notificationsRes?.data?.notifications),
     unreadCount: notificationsRes?.data?.unreadCount || 0,
     statistics: statsRes?.data || null,
   };
