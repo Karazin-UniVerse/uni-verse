@@ -23,4 +23,4 @@ USER node
 EXPOSE 3001
 
 WORKDIR /app/packages/backend
-CMD ["sh", "-c", "pnpm db:push && node dist/main"]
+CMD ["sh", "-c", "if [ \"$PRISMA_ACCEPT_DATA_LOSS\" = \"true\" ] || [ \"$PRISMA_ACCEPT_DATA_LOSS\" = \"1\" ]; then pnpm db:push:force; else pnpm db:push; fi && node dist/main"]

@@ -24,6 +24,7 @@
     "prepare": "husky",
     "db:generate": "pnpm --filter @universe/backend db:generate",
     "db:migrate": "pnpm --filter @universe/backend db:push",
+    "db:migrate:force": "pnpm --filter @universe/backend db:push:force",
     "db:studio": "pnpm --filter @universe/backend db:studio"
   },
   "devDependencies": {
