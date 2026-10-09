@@ -21,6 +21,13 @@ import {
   OpportunityStatus,
 } from '@universe/database';
 
+export type UpdateApplicationStatusParams = {
+  userId: string;
+  applicationId: string;
+  status: ApplicationStatus;
+  ownerComment?: string;
+};
+
 @Injectable()
 export class OpportunitiesService {
   constructor(
@@ -203,12 +210,12 @@ export class OpportunitiesService {
   /**
    * Update the status of an application.
    */
-  async updateApplicationStatus(
-    userId: string,
-    applicationId: string,
-    status: ApplicationStatus,
-    ownerComment?: string,
-  ) {
+  async updateApplicationStatus({
+    userId,
+    applicationId,
+    status,
+    ownerComment,
+  }: UpdateApplicationStatusParams) {
     const app = await this.prisma.opportunityApplication.findUnique({
       where: { id: applicationId },
       include: { opportunity: true },
@@ -226,18 +233,18 @@ export class OpportunitiesService {
 
     let statusText: string = status;
 
-    if (status === 'ACCEPTED') statusText = 'принят';
+    if (status === 'ACCEPTED') statusText = 'прийнято';
 
-    if (status === 'REJECTED') statusText = 'отклонен';
+    if (status === 'REJECTED') statusText = 'відхилено';
 
-    if (status === 'UNDER_REVIEW') statusText = 'на рассмотрении';
+    if (status === 'UNDER_REVIEW') statusText = 'на розгляді';
 
-    await this.notificationsService.createNotification(
-      app.applicantId,
-      'Статус отклика изменен',
-      `Ваш отклик на "${app.opportunity.title}" теперь ${statusText}.${ownerComment ? ` Комментарий: ${ownerComment}` : ''}`,
-      `/my-applications`,
-    );
+    await this.notificationsService.createNotification({
+      userId: app.applicantId,
+      title: 'Статус відгуку змінено',
+      message: `Ваш відгук на "${app.opportunity.title}" тепер має статус: ${statusText}.${ownerComment ? ` Коментар: ${ownerComment}` : ''}`,
+      link: '/my-applications',
+    });
 
     return updated;
   }
@@ -292,12 +299,12 @@ export class OpportunitiesService {
       throw error;
     }
 
-    await this.notificationsService.createNotification(
-      opportunity.ownerId,
-      'Новый отклик!',
-      `Пользователь ${dto.applicantName} откликнулся на вашу возможность "${opportunity.title}".`,
-      `/my-opportunities/${id}`,
-    );
+    await this.notificationsService.createNotification({
+      userId: opportunity.ownerId,
+      title: 'Новий відгук!',
+      message: `Користувач ${dto.applicantName} відгукнувся на вашу можливість "${opportunity.title}".`,
+      link: `/my-opportunities/${id}`,
+    });
 
     return app;
   }
@@ -371,13 +378,13 @@ export class OpportunitiesService {
 
     if (dto.action === ModerateAction.APPROVE) {
       newStatus = 'PUBLISHED';
-      actionText = 'одобрена';
+      actionText = 'схвалена';
     } else if (dto.action === ModerateAction.REJECT) {
       newStatus = 'REJECTED';
-      actionText = 'отклонена';
+      actionText = 'відхилена';
     } else if (dto.action === ModerateAction.REQUIRE_CHANGES) {
       newStatus = 'REQUIRES_CHANGES';
-      actionText = 'возвращена на правки';
+      actionText = 'повернута на доопрацювання';
     } else {
       throw new BadRequestException('Unknown moderation action');
     }
@@ -390,12 +397,12 @@ export class OpportunitiesService {
       },
     });
 
-    await this.notificationsService.createNotification(
-      opp.ownerId,
-      `Возможность ${actionText}`,
-      `Ваша возможность "${opp.title}" была ${actionText} модератором.${dto.comment ? ` Комментарий: ${dto.comment}` : ''}`,
-      `/my-opportunities`,
-    );
+    await this.notificationsService.createNotification({
+      userId: opp.ownerId,
+      title: `Можливість ${actionText}`,
+      message: `Ваша можливість "${opp.title}" була ${actionText} модератором.${dto.comment ? ` Коментар: ${dto.comment}` : ''}`,
+      link: '/my-opportunities',
+    });
 
     return opp;
   }

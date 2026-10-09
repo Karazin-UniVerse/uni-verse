@@ -57,4 +57,22 @@ describe('AtGuard', () => {
     expect(result).toBe(true);
     expect(superCanActivateSpy).toHaveBeenCalledWith(context);
   });
+
+  it('should delegate to super.canActivate if public metadata is undefined', () => {
+    const context = {
+      getHandler: jest.fn(),
+      getClass: jest.fn(),
+      switchToHttp: jest.fn(),
+    } as unknown as ExecutionContext;
+
+    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(undefined);
+    const superCanActivateSpy = jest
+      .spyOn(AuthGuard('jwt').prototype, 'canActivate')
+      .mockReturnValue(false);
+
+    const result = guard.canActivate(context);
+
+    expect(result).toBe(false);
+    expect(superCanActivateSpy).toHaveBeenCalledWith(context);
+  });
 });

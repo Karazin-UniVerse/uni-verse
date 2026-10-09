@@ -342,7 +342,13 @@ export class AuthService {
     return bcrypt.hash(data, 10);
   }
 
-  async getTokens({ userId, email, moodleToken, moodleId, role }: GetTokensParams & { role?: string }) {
+  async getTokens({
+    userId,
+    email,
+    moodleToken,
+    moodleId,
+    role,
+  }: GetTokensParams & { role?: string }) {
     const atSecret = process.env.AT_SECRET;
     const rtSecret = process.env.RT_SECRET;
     const knownPlaceholders = new Set([

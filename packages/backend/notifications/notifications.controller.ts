@@ -5,6 +5,7 @@ import {
   Param,
   ForbiddenException,
 } from '@nestjs/common';
+import { Notification } from '@universe/database';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { GetUser } from '../auth/decorators/get-user.decorator';
@@ -17,7 +18,9 @@ export class NotificationsController {
   @ApiBearerAuth()
   @Get()
   @ApiOperation({ summary: 'Get all notifications for current user' })
-  getMyNotifications(@GetUser('sub') userId: string): Promise<unknown> {
+  async getMyNotifications(
+    @GetUser('sub') userId: string,
+  ): Promise<Notification[]> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.notificationsService.getMyNotifications(userId);
@@ -26,10 +29,10 @@ export class NotificationsController {
   @ApiBearerAuth()
   @Post(':id/read')
   @ApiOperation({ summary: 'Mark a notification as read' })
-  markAsRead(
+  async markAsRead(
     @GetUser('sub') userId: string,
     @Param('id') id: string,
-  ): Promise<unknown> {
+  ): Promise<Notification> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.notificationsService.markAsRead(userId, id);
@@ -38,7 +41,9 @@ export class NotificationsController {
   @ApiBearerAuth()
   @Post('read-all')
   @ApiOperation({ summary: 'Mark all notifications as read' })
-  markAllAsRead(@GetUser('sub') userId: string): Promise<unknown> {
+  async markAllAsRead(
+    @GetUser('sub') userId: string,
+  ): Promise<{ count: number }> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.notificationsService.markAllAsRead(userId);

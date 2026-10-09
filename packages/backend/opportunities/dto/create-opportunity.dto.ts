@@ -1,10 +1,6 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-export enum PaymentType {
-  PAID = 'PAID',
-  UNPAID = 'UNPAID',
-}
+import { PaymentType } from '@universe/database';
 
 export class CreateOpportunityDto {
   @ApiProperty()

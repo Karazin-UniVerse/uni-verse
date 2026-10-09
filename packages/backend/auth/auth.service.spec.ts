@@ -176,6 +176,14 @@ describe('AuthService', () => {
       );
     });
 
+    it('should throw ForbiddenException with default message if Moodle throws non-Error', async () => {
+      mockGetCreds.getToken.mockRejectedValue('string rejection');
+
+      await expect(authService.login(loginDto)).rejects.toThrow(
+        'Invalid Moodle credentials',
+      );
+    });
+
     it('should login an existing user and update moodle credentials', async () => {
       mockGetCreds.getToken.mockResolvedValue('fresh-moodle-token');
       mockGetCreds.getUserId.mockResolvedValue('5001');
@@ -308,6 +316,26 @@ describe('AuthService', () => {
         'user-uuid-1',
         expect.objectContaining({ refreshToken: 'new-rt-hash' }),
       );
+    });
+
+    it('should refresh tokens when user has moodle token present', async () => {
+      mockUserService.findById.mockResolvedValue({
+        ...sampleUser,
+        token: 'existing-moodle-token',
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('fresh-at')
+        .mockResolvedValueOnce('fresh-rt');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-rt-hash');
+      mockUserService.updateUser.mockResolvedValue(sampleUser);
+
+      const result = await authService.refreshTokens('user-uuid-1', 'valid-rt');
+
+      expect(result).toEqual({
+        access_token: 'fresh-at',
+        refresh_token: 'fresh-rt',
+      });
     });
 
     it('should throw ForbiddenException if user not found or has no refresh token', async () => {
