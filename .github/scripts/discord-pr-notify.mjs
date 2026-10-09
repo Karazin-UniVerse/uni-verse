@@ -772,6 +772,10 @@ export async function fetchPullRequestDetails({ repo, prNumber, token }) {
   const response = await fetch(url, { headers });
 
   if (!response.ok) {
+    const errorText = await response.text();
+
+    console.warn(`Failed to fetch PR #${prNumber} details (HTTP ${response.status}): ${errorText}`);
+
     return null;
   }
 
@@ -1070,6 +1074,10 @@ export async function handlePullRequest() {
           ...pr,
           ...freshDetails,
         };
+      } else {
+        console.warn(
+          `Could not retrieve fresh details for PR #${pr.number}, falling back to event payload.`,
+        );
       }
     } catch (err) {
       console.warn(

@@ -692,6 +692,28 @@ test('fetchPullRequestDetails retrieves single PR details', async () => {
   }
 });
 
+test('fetchPullRequestDetails returns null and warns on non-2xx response', async () => {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = async () => ({
+    ok: false,
+    status: 404,
+    text: async () => 'Not Found',
+  });
+
+  try {
+    const details = await fetchPullRequestDetails({
+      repo: 'test/repo',
+      prNumber: 999,
+      token: 'fake',
+    });
+
+    assert.equal(details, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('buildPullRequestPayload formats open PR with reviewer mentions when requested_reviewers is populated', () => {
   const users = {
     Skyzary: '1283760288402898964',
