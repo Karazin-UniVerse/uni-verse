@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "db:generate": "prisma generate",
-    "db:push": "prisma db push",
+    "db:push": "prisma db push --accept-data-loss",
     "db:seed:opportunities": "ts-node -r dotenv/config prisma/seed-opportunities.ts",
     "build": "pnpm --filter @universe/core build && pnpm db:generate && nest build",
     "format": "prettier --write \"**/*.ts\" \"test/**/*.ts\"",
