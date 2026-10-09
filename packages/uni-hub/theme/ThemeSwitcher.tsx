@@ -1,24 +1,26 @@
 'use client';
 
 import React from 'react';
-import { Sun, Moon, Zap, ChevronDown } from 'lucide-react';
+import { Sun, Moon, Zap, GraduationCap, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
 import { Dropdown, DropdownOption, type PopoverPlacement } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
-import { useTheme, type AppTheme } from './ThemeContext';
+import { APP_THEMES, useTheme, type AppTheme } from './ThemeContext';
 import styles from './ThemeSwitcher.module.scss';
 
 const THEME_ICONS: Record<AppTheme, React.ReactNode> = {
   light: <Sun size={18} />,
   dark: <Moon size={18} />,
   cyberpunk: <Zap size={18} />,
+  karazinClassic: <GraduationCap size={18} />,
 };
 
 const THEME_KEYS: Record<AppTheme, TranslationKey> = {
   light: 'theme.light',
   dark: 'theme.dark',
   cyberpunk: 'theme.cyberpunk',
+  karazinClassic: 'theme.karazinClassic',
 };
 
 type ThemeSwitcherProps = {
@@ -71,7 +73,7 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
         )}
       >
         {(close) =>
-          (Object.keys(THEME_ICONS) as AppTheme[]).map((themeOption) => (
+          APP_THEMES.map((themeOption) => (
             <DropdownOption
               key={themeOption}
               icon={THEME_ICONS[themeOption]}
@@ -94,7 +96,7 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
       className={clsx(styles.switcher, className)}
       aria-label={formatMessage('theme.select')}
     >
-      {(Object.keys(THEME_ICONS) as AppTheme[]).map((themeOption) => {
+      {APP_THEMES.map((themeOption) => {
         const isSelectedTheme = theme === themeOption;
         const optionLabel = formatMessage(THEME_KEYS[themeOption]);
 

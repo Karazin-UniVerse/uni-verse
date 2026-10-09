@@ -246,6 +246,25 @@ $space-64: 64px;
   --btn-secondary-hover: var(--accent-secondary-hover);
   --btn-secondary-active: var(--accent-secondary-active);
   --btn-secondary-text: var(--accent-text-on-secondary);
+
+  /* Region backgrounds: any CSS background value, so a color or a gradient */
+  --bg-page: var(--bg-color);
+  --bg-content: var(--neutral-surface);
+
+  /* Sidebar */
+  --sidebar-bg: var(--bg-surface);
+  --sidebar-border: var(--border-color);
+  --sidebar-brand: var(--text-primary);
+  --sidebar-text: var(--text-secondary);
+  --sidebar-text-strong: var(--text-primary);
+  --sidebar-text-active: var(--blue-700);
+  --sidebar-item-hover-bg: var(--bg-hover);
+  --sidebar-item-active-bg: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+  --sidebar-item-active-accent: transparent;
+
+  /* Header */
+  --header-bg: var(--bg-color);
+  --header-border: var(--border-color);
 }
 
 /* -----------------------------------------
@@ -276,6 +295,7 @@ $space-64: 64px;
   --accent-text-on-secondary: var(--neutral-text-primary);
   --focus-ring-color: rgb(119 148 246 / 45%);
   --bg-hover: var(--gray-700);
+  --sidebar-text-active: var(--white-10);
 
   /* RGB color channels for alpha blending and mesh gradients */
   --primary-rgb: 119, 148, 246;
@@ -382,6 +402,7 @@ $space-64: 64px;
   --focus-ring-width: 2px;
   --focus-ring-offset: 1px;
   --bg-hover: var(--cyberpunk-gray);
+  --sidebar-text-active: var(--blue-400);
 
   /* Cyberpunk Font stack overrides */
   --font-family-heading: 'Orbitron', sans-serif;
@@ -417,12 +438,84 @@ $space-64: 64px;
   --chart-bar-radius: 0px;
 }
 
+/* -----------------------------------------
+   Karazin Classic Theme
+   ----------------------------------------- */
+[data-theme='karazinClassic'] {
+  /* Karazin Palette */
+  --karazin-navy-900: #142545;
+  --karazin-navy-700: #203979;
+  --karazin-blue-600: #2f4f93;
+  --karazin-navy-100: #dbe3f3;
+  --karazin-slate-500: #55678b;
+  --karazin-gray-50: #f5f7fb;
+  --karazin-gray-100: #eef2f9;
+  --karazin-gray-200: #e3e8f1;
+  --karazin-gray-300: #d3dbea;
+  --karazin-gold-100: #fbf3dc;
+  --karazin-gold-200: #f6e3ae;
+  --karazin-gold-300: #f0d283;
+  --karazin-gold-400: #e8c05f;
+  --karazin-gold-500: #e0b04a;
+  --karazin-gold-600: #c4902c;
+  --karazin-gold-700: #9a6f1d;
+
+  /* Neutral Colors override */
+  --neutral-bg: var(--white-10);
+  --neutral-surface: var(--white-10);
+  --neutral-border: var(--gray-200);
+  --neutral-text-primary: var(--gray-900);
+  --neutral-text-secondary: var(--karazin-slate-500);
+  --neutral-text-disabled: var(--gray-500);
+
+  /* Accent Colors override */
+  --accent-primary: var(--karazin-navy-700);
+  --accent-primary-hover: var(--karazin-blue-600);
+  --accent-primary-active: var(--karazin-navy-900);
+  --accent-text-on-primary: var(--white-10);
+  --accent-secondary: var(--karazin-gray-200);
+  --accent-secondary-hover: var(--karazin-gray-300);
+  --accent-secondary-active: var(--karazin-gray-300);
+  --accent-text-on-secondary: var(--karazin-navy-900);
+  --focus-ring-color: rgb(32 57 121 / 35%);
+  --bg-hover: var(--karazin-gray-100);
+
+  /* RGB color channels for alpha blending and mesh gradients */
+  --primary-rgb: 32, 57, 121;
+  --secondary-rgb: 224, 176, 74;
+  --surface-rgb: 255, 255, 255;
+  --text-primary-rgb: 33, 37, 41;
+
+  /* Surfaces: white cards on a light gray content area */
+  --bg-surface: var(--white-10);
+  --bg-content: var(--karazin-gray-50);
+  --btn-primary-disabled: var(--karazin-gray-200);
+
+  /* Navy sidebar */
+  --sidebar-bg: var(--karazin-navy-900);
+  --sidebar-border: rgb(224 176 74 / 22%);
+  --sidebar-brand: var(--karazin-gold-300);
+  --sidebar-text: var(--karazin-navy-100);
+  --sidebar-text-strong: var(--white-10);
+  --sidebar-text-active: var(--white-10);
+  --sidebar-item-hover-bg: rgb(224 176 74 / 12%);
+  --sidebar-item-active-bg: var(--karazin-navy-700);
+  --sidebar-item-active-accent: var(--karazin-gold-500);
+
+  /* White header with a gold hairline */
+  --header-border: var(--karazin-gold-200);
+
+  /* Serif headings: Source Serif 4 from next/font, Georgia when it is not loaded */
+  --font-family-heading: var(--font-source-serif, georgia), 'Times New Roman', serif;
+  --font-mono: ui-monospace, 'SF Mono', menlo, consolas, monospace;
+}
+
 /* ==========================================================================
    5. GLOBAL BASE STYLES
    ========================================================================== */
 html,
 body {
-  background-color: var(--bg-color);
+  background: var(--bg-page);
   color: var(--text-primary);
   font-family: var(--font-family-regular), var(--font-family-base), sans-serif;
   margin: 0;
