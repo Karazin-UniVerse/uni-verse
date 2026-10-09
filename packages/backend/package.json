@@ -8,6 +8,7 @@
   "scripts": {
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
+    "db:seed:opportunities": "ts-node -r dotenv/config prisma/seed-opportunities.ts",
     "build": "pnpm --filter @universe/core build && pnpm db:generate && nest build",
     "format": "prettier --write \"**/*.ts\" \"test/**/*.ts\"",
     "dev": "nest start --watch",
@@ -102,6 +103,7 @@
       "!test/**",
       "!node_modules/**",
       "!prisma.config.ts",
+      "!prisma/seed*.ts",
       "!main.ts",
       "!**/*.module.ts",
       "!**/*.dto.ts",
