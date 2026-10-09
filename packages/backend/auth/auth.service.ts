@@ -310,7 +310,11 @@ export class AuthService {
       throw new BadRequestException('User not found');
     }
 
-    const tokens = await this.getTokens({ userId: user.id, email: user.email });
+    const tokens = await this.getTokens({
+      userId: user.id,
+      email: user.email,
+      roles: user.roles,
+    });
     const refreshTokenHash = await this.hashData(tokens.refresh_token);
 
     await this.userService.updateUser(userId, {

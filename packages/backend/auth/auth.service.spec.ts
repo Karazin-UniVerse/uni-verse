@@ -840,6 +840,11 @@ describe('AuthService', () => {
         moodleId: null,
         refreshToken: 'hashed-unlinked-rt',
       });
+      expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ roles: sampleUser.roles }),
+        expect.any(Object),
+      );
     });
   });
 
