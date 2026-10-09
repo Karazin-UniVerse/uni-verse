@@ -7,7 +7,13 @@ import React, {
   useSyncExternalStore,
 } from 'react';
 
-export const APP_THEMES = ['light', 'dark', 'cyberpunk', 'karazinClassic'] as const;
+export const APP_THEMES = [
+  'light',
+  'dark',
+  'cyberpunk',
+  'karazinClassic',
+  'universeSpace',
+] as const;
 
 export type AppTheme = (typeof APP_THEMES)[number];
 

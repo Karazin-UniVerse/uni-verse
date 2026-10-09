@@ -35,11 +35,13 @@
 }
 
 :global([data-theme='dark']) .warning,
+:global([data-theme='universeSpace']) .warning,
 :global([data-theme='cyberpunk']) .warning {
   color: var(--warning-light, #fbbf24);
 }
 
 :global([data-theme='dark']) .danger,
+:global([data-theme='universeSpace']) .danger,
 :global([data-theme='cyberpunk']) .danger {
   color: var(--red-300);
 }

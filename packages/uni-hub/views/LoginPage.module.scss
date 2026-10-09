@@ -4,11 +4,7 @@
 
   /* Modern Mesh Gradient Background */
   background-color: var(--bg-color);
-  background-image:
-    radial-gradient(at 0% 0%, rgb(var(--primary-rgb, 0, 112, 243), 0.15) 0, transparent 50%),
-    radial-gradient(at 100% 0%, rgb(var(--secondary-rgb, 121, 40, 202), 0.15) 0, transparent 50%),
-    radial-gradient(at 100% 100%, rgb(var(--primary-rgb, 0, 112, 243), 0.15) 0, transparent 50%),
-    radial-gradient(at 0% 100%, rgb(var(--secondary-rgb, 121, 40, 202), 0.15) 0, transparent 50%);
+  background-image: var(--bg-mesh);
   background-attachment: fixed;
 }
 

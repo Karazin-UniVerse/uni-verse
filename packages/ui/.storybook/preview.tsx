@@ -40,6 +40,7 @@ export const globalTypes = {
         { value: 'dark', title: 'Dark' },
         { value: 'cyberpunk', title: 'Cyberpunk' },
         { value: 'karazinClassic', title: 'Karazin Classic' },
+        { value: 'universeSpace', title: 'UniVerse Space' },
       ],
     },
   },

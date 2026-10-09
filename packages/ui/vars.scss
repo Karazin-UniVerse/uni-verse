@@ -1,5 +1,13 @@
 @forward './breakpoints';
 
+/* Four-corner mesh gradient from the --primary-rgb / --secondary-rgb channels of the active theme */
+@function mesh-gradient($alpha) {
+  @return radial-gradient(at 0% 0%, rgb(var(--primary-rgb), $alpha) 0, transparent 50%),
+    radial-gradient(at 100% 0%, rgb(var(--secondary-rgb), $alpha) 0, transparent 50%),
+    radial-gradient(at 100% 100%, rgb(var(--primary-rgb), $alpha) 0, transparent 50%),
+    radial-gradient(at 0% 100%, rgb(var(--secondary-rgb), $alpha) 0, transparent 50%);
+}
+
 /* ==========================================================================
    1. BASE & LAYOUT TOKENS (Non-thematic)
    ========================================================================== */
@@ -100,6 +108,20 @@ $space-64: 64px;
   --gray-700: #495057;
   --gray-800: #343a40;
   --gray-900: #212529;
+
+  /* Slate Palette (light theme: cool grays with a blue undertone) */
+  --slate-50: #f4f6fb;
+  --slate-100: #eaeef6;
+  --slate-200: #dde3ee;
+  --slate-300: #cbd3e1;
+  --slate-400: #8a94a7;
+  --slate-500: #5b667c;
+  --slate-900: #0f172a;
+
+  /* Night Palette (dark themes) */
+  --night-950: #0b0c10;
+  --night-900: #161922;
+  --night-850: #11131a;
 
   /* Blue Palette */
   --blue-50: #edf1fe;
@@ -265,22 +287,62 @@ $space-64: 64px;
   /* Header */
   --header-bg: var(--bg-color);
   --header-border: var(--border-color);
+
+  /* Cards: background value (a color or glass) and optional backdrop blur */
+  --bg-card: var(--bg-surface);
+  --card-backdrop: none;
+
+  /* Mesh gradients in three strengths: soft (light dashboard), default (login, dark), strong (Space) */
+  --bg-mesh-soft: #{mesh-gradient(0.08)};
+  --bg-mesh: #{mesh-gradient(0.15)};
+  --bg-mesh-strong: #{mesh-gradient(0.34)};
+}
+
+/* -----------------------------------------
+   Light Theme refinement: crisper contrast.
+   Scoped to light only so the shared defaults above stay as they are for the other themes.
+   ----------------------------------------- */
+:root:not([data-theme]),
+[data-theme='light'] {
+  /* White surfaces on a cool canvas; stronger borders and text */
+  --neutral-surface: var(--white-10);
+  --neutral-border: var(--slate-300);
+  --neutral-text-primary: var(--slate-900);
+  --neutral-text-secondary: var(--slate-500);
+  --neutral-text-disabled: var(--slate-400);
+  --accent-secondary: var(--slate-100);
+  --accent-secondary-hover: var(--slate-200);
+  --accent-secondary-active: var(--slate-300);
+  --bg-hover: var(--slate-100);
+  --btn-primary-disabled: var(--slate-100);
+
+  /* Cards stand out with a visible border and a soft layered shadow */
+  --card-border: rgb(15 23 42 / 10%);
+  --card-shadow: 0 1px 2px rgb(15 23 42 / 6%), 0 4px 12px rgb(15 23 42 / 6%);
+  --card-shadow-hover: 0 2px 4px rgb(15 23 42 / 8%), 0 12px 28px rgb(15 23 42 / 10%);
+
+  /* Mesh-gradient canvas (kept soft so it does not compete with the content), white header, accent bar on the active nav item */
+  --bg-page: var(--bg-mesh-soft), var(--slate-50);
+  --bg-content: transparent;
+  --header-bg: var(--white-10);
+  --sidebar-item-active-accent: var(--accent-primary);
 }
 
 /* -----------------------------------------
    Dark Theme
    ----------------------------------------- */
-[data-theme='dark'] {
+[data-theme='dark'],
+[data-theme='universeSpace'] {
   /* Neutral Colors */
-  --neutral-bg: #121212;
-  --neutral-surface: var(--gray-800);
-  --neutral-border: var(--gray-700);
+  --neutral-bg: var(--night-950);
+  --neutral-surface: var(--night-900);
+  --neutral-border: rgb(255 255 255 / 12%);
   --neutral-text-primary: var(--gray-50);
   --neutral-text-secondary: var(--gray-400);
   --neutral-text-disabled: var(--gray-600);
 
   /* Cards */
-  --card-border: rgb(255 255 255 / 8%);
+  --card-border: rgb(255 255 255 / 10%);
   --card-shadow: 0 4px 12px rgb(0 0 0 / 40%);
   --card-shadow-hover: 0 8px 24px rgb(0 0 0 / 60%);
 
@@ -289,18 +351,29 @@ $space-64: 64px;
   --accent-primary-hover: var(--blue-1100);
   --accent-primary-active: var(--blue-800);
   --accent-text-on-primary: #fff;
-  --accent-secondary: var(--gray-700);
-  --accent-secondary-hover: var(--gray-600);
-  --accent-secondary-active: var(--gray-500);
+  --accent-secondary: rgb(255 255 255 / 8%);
+  --accent-secondary-hover: rgb(255 255 255 / 12%);
+  --accent-secondary-active: rgb(255 255 255 / 16%);
   --accent-text-on-secondary: var(--neutral-text-primary);
   --focus-ring-color: rgb(119 148 246 / 45%);
-  --bg-hover: var(--gray-700);
+  --bg-hover: rgb(255 255 255 / 7%);
+
+  /* Primary button: white text needs a stronger blue than the accent used for links */
+  --btn-primary-bg: var(--blue-500);
+  --btn-primary-hover: var(--blue-600);
+  --btn-primary-active: var(--blue-700);
+
+  /* Mesh-gradient page; content and header let it show through */
+  --bg-page: var(--bg-mesh), var(--bg-color);
+  --bg-content: transparent;
+  --header-bg: transparent;
+  --sidebar-bg: var(--night-850);
   --sidebar-text-active: var(--white-10);
 
   /* RGB color channels for alpha blending and mesh gradients */
   --primary-rgb: 119, 148, 246;
   --secondary-rgb: 168, 85, 247;
-  --surface-rgb: 52, 58, 64;
+  --surface-rgb: 22, 25, 34;
   --text-primary-rgb: 248, 249, 250;
 
   /* Chart tokens */
@@ -327,6 +400,30 @@ $space-64: 64px;
   --chart-series-5: var(--chart-info);
   --chart-glow: none;
   --chart-bar-radius: var(--border-radius-small);
+}
+
+/* -----------------------------------------
+   UniVerse Space Theme (dark base + vivid glass)
+   ----------------------------------------- */
+[data-theme='universeSpace'] {
+  --bg-page: var(--bg-mesh-strong), var(--bg-color);
+  --neutral-border: rgb(150 165 255 / 16%);
+
+  /* Glass cards, sidebar and header over the mesh */
+  --bg-card: rgb(24 27 40 / 62%);
+  --card-backdrop: blur(14px);
+  --card-border: rgb(150 165 255 / 16%);
+  --card-shadow: 0 8px 28px rgb(60 70 200 / 14%);
+  --card-shadow-hover: 0 12px 36px rgb(60 70 200 / 24%);
+  --header-bg: rgb(10 11 18 / 55%);
+  --sidebar-bg: rgb(14 16 26 / 72%);
+  --sidebar-border: rgb(150 165 255 / 14%);
+  --sidebar-item-active-bg: linear-gradient(
+    90deg,
+    rgb(var(--primary-rgb), 0.38),
+    rgb(var(--secondary-rgb), 0.22)
+  );
+  --sidebar-item-active-accent: var(--accent-primary);
 }
 
 /* -----------------------------------------

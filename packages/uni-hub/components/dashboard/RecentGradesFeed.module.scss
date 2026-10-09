@@ -1,5 +1,6 @@
 .recentGradesPanel {
-  background: var(--bg-surface);
+  background: var(--bg-card);
+  backdrop-filter: var(--card-backdrop);
   border: 1px solid var(--card-border);
   border-radius: 16px;
   padding: var(--space-24);

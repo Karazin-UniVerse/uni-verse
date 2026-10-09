@@ -53,6 +53,7 @@ export const uk = {
   'theme.dark': 'Темна',
   'theme.cyberpunk': 'Cyberpunk',
   'theme.karazinClassic': 'Karazin Classic',
+  'theme.universeSpace': 'UniVerse Space',
   'theme.select': 'Вибір теми',
 
   // Navigation (short & full)
