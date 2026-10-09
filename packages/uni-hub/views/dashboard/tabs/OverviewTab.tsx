@@ -28,6 +28,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   activeStudentProfile,
   loading,
   onNavigate,
+  isMoodleLinked,
 }) => {
   const router = useRouter();
   const { formatMessage } = useLanguage();
@@ -51,7 +52,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   return (
     <div className={styles.stack}>
-      <StudentCard activeStudentProfile={activeStudentProfile} />
+      <StudentCard activeStudentProfile={activeStudentProfile} isMoodleLinked={isMoodleLinked} />
 
       {isMoodleIntegrationEnabled && (
         <div className={styles.overviewHero}>

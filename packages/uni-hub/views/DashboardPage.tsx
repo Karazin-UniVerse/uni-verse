@@ -6,16 +6,16 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
 import { RotateCw, AlertCircle, Link2 } from 'lucide-react';
 import { Button, Spinner } from '@una';
-import { isLoggedIn } from '@core/auth';
+import { isLoggedIn } from '@core/utils/auth';
 import type { CourseModule } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
-import { LinkMoodleModal } from '@uni-hub/components/auth';
+import { LinkMoodleModal, UnlinkMoodleModal, LinkMoodleMode } from '@uni-hub/components/auth';
 import { DashboardSkeleton, MobileBottomNav } from '@uni-hub/components/dashboard';
 import { BadgeSystem, GradeSimulator } from '@uni-hub/components/gamification';
 import { ScheduleView } from '@uni-hub/components/schedule';
-import { safeStorage } from '@uni-hub/services/api';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import {
+  NAV_KEY,
   type NavKey,
   isNavKey,
   fallbackStudentProfile,
@@ -25,23 +25,26 @@ import {
   CoursesTab,
   GradesTab,
   AssignmentsTab,
+  ConnectMoodleTab,
   OpportunitiesTab,
   NAV_ITEMS,
 } from './dashboard';
 import { useFeatures } from '@uni-hub/features';
 import { formatLastSync } from './dashboard/tabs/helpers';
 import { useDashboardData, clearUserSessionStorage } from './dashboard/hooks/useDashboardData';
+import { useMoodleLink } from './dashboard/hooks/useMoodleLink';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './DashboardPage.module.scss';
 
 const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
-  overview: 'nav.overview.full',
-  courses: 'nav.courses.full',
-  grades: 'nav.grades.full',
-  schedule: 'nav.schedule.full',
-  assignments: 'nav.assignments.full',
-  opportunities: 'nav.opportunities.full',
+  [NAV_KEY.Overview]: 'nav.overview.full',
+  [NAV_KEY.Courses]: 'nav.courses.full',
+  [NAV_KEY.Grades]: 'nav.grades.full',
+  [NAV_KEY.Schedule]: 'nav.schedule.full',
+  [NAV_KEY.Assignments]: 'nav.assignments.full',
+  [NAV_KEY.Opportunities]: 'nav.opportunities.full',
+  [NAV_KEY.ConnectMoodle]: 'nav.connectMoodle.full',
 };
 
 const DashboardPage: React.FC = () => {
@@ -60,7 +63,7 @@ const DashboardPage: React.FC = () => {
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeKey, setActiveKey] = useState<NavKey>('overview');
+  const [activeKey, setActiveKey] = useState<NavKey>(NAV_KEY.Overview);
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();
   const [mounted, setMounted] = useState(false);
@@ -74,17 +77,10 @@ const DashboardPage: React.FC = () => {
   const [selectedAssignmentModule, setSelectedAssignmentModule] = useState<CourseModule | null>(
     null,
   );
-  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
-  const [isMoodleLinked, setIsMoodleLinked] = useState<boolean>(() => {
-    if (typeof window === 'undefined') {
-      return true;
-    }
-
-    return safeStorage.getItem('isMoodleLinked') !== 'false';
-  });
 
   const {
     data,
+    setData,
     loading,
     hasLoadedOnce,
     lastSyncTime,
@@ -100,6 +96,37 @@ const DashboardPage: React.FC = () => {
     hideCompleted,
     enabled: flags.isMoodleIntegrationEnabled,
     onUnauthorized: () => router.push('/login'),
+  });
+
+  const {
+    isMoodleLinked,
+    linkModalMode,
+    isLinkModalOpen,
+    isUnlinkModalOpen,
+    openLinkModal,
+    closeLinkModal,
+    openUnlinkModal,
+    closeUnlinkModal,
+    handleLinkSuccess,
+    handleUnlinkSuccess,
+  } = useMoodleLink({
+    activeKey,
+    setActiveKey,
+    onLinkSuccess: () => {
+      void fetchData();
+    },
+    onUnlinkSuccess: () => {
+      cancelPendingFetch();
+      setData({
+        courses: [],
+        grades: [],
+        assignments: [],
+        events: [],
+        notifications: [],
+        unreadCount: 0,
+        statistics: null,
+      });
+    },
   });
 
   const activeStudentProfile = studentProfile ?? fallbackStudentProfile;
@@ -142,6 +169,12 @@ const DashboardPage: React.FC = () => {
     const requestedTab = searchParams.get('tab');
 
     if (requestedTab && isNavKey(requestedTab)) {
+      if (requestedTab === NAV_KEY.ConnectMoodle && isMoodleLinked) {
+        setActiveKey(NAV_KEY.Overview);
+
+        return;
+      }
+
       const targetItem = NAV_ITEMS.find((item) => item.key === requestedTab);
 
       if (!targetItem?.featureFlag || flagsRef.current[targetItem.featureFlag]) {
@@ -151,14 +184,14 @@ const DashboardPage: React.FC = () => {
       }
     }
 
-    setActiveKey('overview');
-  }, [searchParams]);
+    setActiveKey(NAV_KEY.Overview);
+  }, [searchParams, isMoodleLinked]);
 
   useEffect(() => {
     const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
 
     if (activeItem?.featureFlag && !flags[activeItem.featureFlag]) {
-      setActiveKey('overview');
+      setActiveKey(NAV_KEY.Overview);
     }
   }, [flags, activeKey]);
 
@@ -190,11 +223,15 @@ const DashboardPage: React.FC = () => {
 
   const renderActiveContent = () => {
     const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
-    const effectiveKey =
-      activeItem?.featureFlag && !flags[activeItem.featureFlag] ? 'overview' : activeKey;
+    let effectiveKey: NavKey =
+      activeItem?.featureFlag && !flags[activeItem.featureFlag] ? NAV_KEY.Overview : activeKey;
+
+    if (effectiveKey === NAV_KEY.ConnectMoodle && isMoodleLinked) {
+      effectiveKey = NAV_KEY.Overview;
+    }
 
     switch (effectiveKey) {
-      case 'overview':
+      case NAV_KEY.Overview:
         return (
           <OverviewTab
             courses={data.courses}
@@ -205,15 +242,16 @@ const DashboardPage: React.FC = () => {
             activeStudentProfile={activeStudentProfile}
             loading={loading}
             onNavigate={setActiveKey}
+            isMoodleLinked={isMoodleLinked}
           />
         );
-      case 'courses':
+      case NAV_KEY.Courses:
         return <CoursesTab courses={data.courses} soundEnabled={soundEnabled} />;
-      case 'grades':
+      case NAV_KEY.Grades:
         return <GradesTab grades={data.grades} onOpenSimulator={() => setSimulatorOpen(true)} />;
-      case 'schedule':
+      case NAV_KEY.Schedule:
         return <ScheduleView />;
-      case 'assignments':
+      case NAV_KEY.Assignments:
         return (
           <AssignmentsTab
             assignments={data.assignments}
@@ -240,8 +278,10 @@ const DashboardPage: React.FC = () => {
             }}
           />
         );
-      case 'opportunities':
+      case NAV_KEY.Opportunities:
         return <OpportunitiesTab />;
+      case NAV_KEY.ConnectMoodle:
+        return <ConnectMoodleTab onConnect={() => openLinkModal(LinkMoodleMode.CONNECT)} />;
       default:
         return null;
     }
@@ -264,6 +304,7 @@ const DashboardPage: React.FC = () => {
         onSelectKey={setActiveKey}
         soundEnabled={soundEnabled}
         onLogout={handleLogout}
+        isMoodleLinked={isMoodleLinked}
       />
       <MobileBottomNav
         activeKey={activeKey}
@@ -284,6 +325,9 @@ const DashboardPage: React.FC = () => {
           notifications={data.notifications}
           unreadCount={data.unreadCount}
           activeStudentProfile={activeStudentProfile}
+          isMoodleLinked={isMoodleLinked}
+          onOpenLinkMoodle={openLinkModal}
+          onOpenUnlinkMoodle={openUnlinkModal}
         />
 
         <main className={styles.content}>
@@ -340,7 +384,7 @@ const DashboardPage: React.FC = () => {
                 type="button"
                 variant="primary"
                 size="small"
-                onClick={() => setIsLinkModalOpen(true)}
+                onClick={() => openLinkModal(LinkMoodleMode.CONNECT)}
               >
                 {formatMessage('dashboard.linkMoodleAction')}
               </Button>
@@ -371,14 +415,16 @@ const DashboardPage: React.FC = () => {
           />
 
           <LinkMoodleModal
+            mode={linkModalMode}
             open={isLinkModalOpen}
-            onClose={() => setIsLinkModalOpen(false)}
-            onSuccess={() => {
-              setIsLinkModalOpen(false);
-              setIsMoodleLinked(true);
-              safeStorage.setItem('isMoodleLinked', 'true');
-              fetchData();
-            }}
+            onClose={closeLinkModal}
+            onSuccess={handleLinkSuccess}
+          />
+
+          <UnlinkMoodleModal
+            open={isUnlinkModalOpen}
+            onClose={closeUnlinkModal}
+            onSuccess={handleUnlinkSuccess}
           />
 
           <GradeSimulator

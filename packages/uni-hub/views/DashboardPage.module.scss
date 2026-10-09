@@ -1,5 +1,8 @@
 @use '@universe/ui/breakpoints.scss' as *;
 
+$sidebar-width: 264px;
+$sidebar-collapsed-width: 88px;
+
 @keyframes fadeUp {
   from {
     opacity: 0;
@@ -25,25 +28,66 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: $sidebar-width 1fr;
   height: 100vh;
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
-  background: var(--bg-color);
+  background: var(--bg-page);
   transition: grid-template-columns var(--transition-medium) var(--ease-standard);
 }
 
 .collapsed {
-  grid-template-columns: 72px 1fr;
+  grid-template-columns: $sidebar-collapsed-width 1fr;
 }
 
 .sider {
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--border-color);
-  background: var(--bg-surface);
+  border-right: 1px solid var(--sidebar-border);
+  background: var(--sidebar-bg);
   min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.edgeToggle {
+  position: absolute;
+  top: calc(var(--space-32) - var(--space-12));
+  right: calc(var(--space-12) * -1);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-full);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+
+  svg {
+    transition: transform var(--transition-medium);
+  }
+
+  &:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+  }
+
+  &:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+  }
+}
+
+.collapsed .edgeToggle svg {
+  transform: rotate(180deg);
 }
 
 .brand {
@@ -55,7 +99,8 @@
   padding: 0 var(--space-16);
   font: var(--font-heading);
   font-size: var(--font-lg);
-  border-bottom: 1px solid var(--border-color);
+  color: var(--sidebar-brand);
+  border-bottom: 1px solid var(--sidebar-border);
 }
 
 .nav {
@@ -76,16 +121,17 @@
   -webkit-tap-highlight-color: transparent;
   border: none;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--sidebar-text);
   padding: var(--space-12) var(--space-16);
   border-radius: var(--border-radius-medium);
   cursor: pointer;
   font: inherit;
+  font-size: var(--font-sm);
   text-align: left;
   transition: color var(--transition-fast) var(--ease-standard);
 
   &:hover {
-    color: var(--text-primary);
+    color: var(--sidebar-text-strong);
   }
 
   > *:not(.activePill) {
@@ -101,26 +147,20 @@
 .activePill {
   position: absolute;
   inset: 0;
-  background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+  background: var(--sidebar-item-active-bg);
+  border-left: 3px solid var(--sidebar-item-active-accent);
   border-radius: var(--border-radius-medium);
   z-index: 0;
 }
 
 .active {
-  color: var(--text-primary);
+  color: var(--sidebar-text-active);
   font-weight: 600;
 }
 
-:global([data-theme='light']) .active {
-  color: var(--blue-700);
-}
-
-:global([data-theme='dark']) .active {
-  color: var(--white-10);
-}
-
-:global([data-theme='cyberpunk']) .active {
-  color: var(--blue-400);
+.collapsed .brand {
+  justify-content: center;
+  padding: 0;
 }
 
 .collapsed .navItem {
@@ -130,10 +170,12 @@
 
 .siderFooter {
   padding: var(--space-12);
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--sidebar-border);
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
+
+  --chevron-color: var(--sidebar-text);
 }
 
 .moodleStatusLink {
@@ -144,7 +186,7 @@
   border-radius: var(--border-radius-medium);
   background: rgb(34 197 94 / 8%);
   border: 1px solid rgb(34 197 94 / 20%);
-  color: var(--text-primary);
+  color: var(--sidebar-text-strong);
   text-decoration: none;
   font-size: var(--font-xs);
   transition: all var(--transition-fast) var(--ease-standard);
@@ -207,11 +249,14 @@
   gap: var(--space-12);
   padding: var(--space-12) var(--space-16);
   border-radius: var(--border-radius-medium);
-  color: var(--text-secondary);
+  color: var(--sidebar-text);
+  font-size: var(--font-sm);
   font-weight: 400;
 
   &:hover {
-    color: var(--text-primary);
+    color: var(--sidebar-text-strong);
+    background: var(--sidebar-item-hover-bg);
+    border-color: var(--sidebar-border);
   }
 }
 
@@ -237,8 +282,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--space-24);
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-color);
+  border-bottom: 1px solid var(--header-border);
+  background: var(--header-bg);
   gap: var(--space-16);
 }
 
@@ -336,8 +381,7 @@
   margin-bottom: var(--space-16);
 }
 
-:global([data-theme='dark']) .offlineBanner,
-:global([data-theme='cyberpunk']) .offlineBanner {
+:global([data-color-scheme='dark']) .offlineBanner {
   color: var(--warning-light, #fbbf24);
 }
 
@@ -432,10 +476,6 @@
   flex-shrink: 0;
 }
 
-.notifWrap {
-  position: relative;
-}
-
 .badge {
   position: absolute;
   top: 2px;
@@ -450,21 +490,6 @@
   line-height: 16px;
   text-align: center;
   animation: pulse 1.6s var(--ease-standard) infinite;
-}
-
-.notifDropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  width: 360px;
-  max-width: 90vw;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-large);
-  box-shadow: var(--box-shadow-large);
-  z-index: 20;
-  overflow: hidden;
-  transform-origin: top right;
 }
 
 .notifHeader {
@@ -504,7 +529,7 @@
   flex: 1;
   overflow: hidden auto;
   padding: var(--space-24);
-  background: var(--neutral-surface);
+  background: var(--bg-content);
   position: relative;
   min-width: 0;
   max-width: 100%;
@@ -523,7 +548,8 @@
 }
 
 .statCard {
-  background: var(--bg-surface);
+  background: var(--bg-card);
+  backdrop-filter: var(--card-backdrop);
   border: 1px solid var(--card-border);
   border-radius: 16px;
   padding: var(--space-24);
@@ -612,7 +638,8 @@
 }
 
 .panel {
-  background: var(--bg-surface);
+  background: var(--bg-card);
+  backdrop-filter: var(--card-backdrop);
   border: 1px solid var(--card-border);
   border-radius: 16px;
   padding: var(--space-24);
@@ -765,7 +792,8 @@
 }
 
 .courseCard {
-  background: var(--bg-surface);
+  background: var(--bg-card);
+  backdrop-filter: var(--card-backdrop);
   border: 1px solid var(--card-border);
   border-radius: 16px;
   padding: var(--space-24);
@@ -834,7 +862,8 @@
 .assignmentCard {
   width: 100%;
   text-align: left;
-  background: var(--bg-surface);
+  background: var(--bg-card);
+  backdrop-filter: var(--card-backdrop);
   border: 1px solid var(--card-border);
   border-left: 4px solid var(--accent-primary);
   border-radius: var(--border-radius-large, 12px);
@@ -868,7 +897,8 @@
 .assignmentCardAwaitingReview {
   border-color: color-mix(in srgb, var(--warning-color) 25%, var(--card-border));
   border-left-color: var(--warning-color);
-  background: color-mix(in srgb, var(--warning-color) 3%, var(--bg-surface));
+  background: color-mix(in srgb, var(--warning-color) 3%, var(--bg-card));
+  backdrop-filter: var(--card-backdrop);
 
   &:hover {
     border-color: color-mix(in srgb, var(--warning-color) 40%, var(--card-border));
@@ -879,7 +909,8 @@
 .assignmentCardCompleted {
   border-color: color-mix(in srgb, var(--success-color) 25%, var(--card-border));
   border-left-color: var(--success-color);
-  background: color-mix(in srgb, var(--success-color) 3%, var(--bg-surface));
+  background: color-mix(in srgb, var(--success-color) 3%, var(--bg-card));
+  backdrop-filter: var(--card-backdrop);
 
   &:hover {
     border-color: color-mix(in srgb, var(--success-color) 40%, var(--card-border));
@@ -1084,7 +1115,7 @@
 
 @include narrower-than('lg') {
   .layout {
-    grid-template-columns: 72px 1fr;
+    grid-template-columns: $sidebar-collapsed-width 1fr;
   }
 
   .split,
@@ -1095,11 +1126,13 @@
 
   /* Don't hide text if menu is explicitly open on mobile */
   .layout:not(.mobileOpen) .brand span,
+  .layout:not(.mobileOpen) .edgeToggle,
   .layout:not(.mobileOpen) .navItem .desktopLabel,
   .layout:not(.mobileOpen) .logoutBtn span {
     display: none;
   }
 
+  .layout:not(.mobileOpen) .brand,
   .layout:not(.mobileOpen) .navItem,
   .layout:not(.mobileOpen) .themeBtn,
   .layout:not(.mobileOpen) .logoutBtn {
@@ -1183,7 +1216,8 @@
 }
 
 .studentCard {
-  background: var(--bg-surface);
+  background: var(--bg-card);
+  backdrop-filter: var(--card-backdrop);
   border: 1px solid var(--card-border); /* Ледь помітна рамка замість різкої */
   border-radius: 16px; /* Збільшене заокруглення */
   padding: var(--space-24);
@@ -1370,23 +1404,6 @@
   }
 }
 
-.userWrap {
-  position: relative;
-}
-
-.userDropdown {
-  position: absolute;
-  top: calc(100% + 12px);
-  right: 0;
-  width: 240px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-large);
-  box-shadow: var(--box-shadow-large);
-  z-index: 30;
-  overflow: hidden;
-}
-
 .userDropdownHeader {
   padding: var(--space-12) var(--space-16);
   border-bottom: 1px solid var(--border-color);
@@ -1402,6 +1419,68 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+.dropdownSection {
+  padding: var(--space-8) var(--space-12);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.moodleStatusHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+
+.moodleStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-medium);
+
+  &.linked {
+    color: var(--success-color, #22c55e);
+  }
+
+  &.unlinked {
+    color: var(--text-secondary);
+  }
+}
+
+.moodleDropdownActions {
+  display: flex;
+  gap: var(--space-6, 6px);
+
+  > * {
+    flex: 1;
+  }
+}
+
+.connectMoodleNavItem {
+  color: var(--accent-primary);
+  border: 1px dashed color-mix(in srgb, var(--accent-primary) 40%, transparent);
+
+  &:hover {
+    border-color: var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  }
+}
+
+.navBadgePulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  display: inline-block;
+  margin-left: auto;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+  animation: pulse 1.8s infinite;
 }
 
 .mobileOnlyItem {

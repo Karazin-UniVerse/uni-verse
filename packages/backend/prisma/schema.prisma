@@ -133,7 +133,7 @@ model OpportunityApplication {
   applicantId String
   applicant   User   @relation("Applicant", fields: [applicantId], references: [id])
 
-  comments    Comment[]
+  comments Comment[]
 
   @@unique([applicantId, opportunityId])
 }
@@ -160,8 +160,8 @@ model Comment {
   author   User   @relation(fields: [authorId], references: [id])
 
   opportunityId String?
-  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
 
   applicationId String?
-  application   OpportunityApplication? @relation(fields: [applicationId], references: [id])
+  application   OpportunityApplication? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }

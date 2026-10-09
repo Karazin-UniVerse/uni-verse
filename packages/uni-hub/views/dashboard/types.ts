@@ -1,4 +1,5 @@
 import type { StudentProfile } from '@core/types';
+import type { LinkMoodleMode } from '@uni-hub/components/auth';
 import type {
   Course,
   Grade,
@@ -7,21 +8,7 @@ import type {
   Notification,
   CourseStatistics,
 } from '@uni-hub/types';
-
-export const NAV_KEYS = [
-  'overview',
-  'courses',
-  'grades',
-  'schedule',
-  'assignments',
-  'opportunities',
-] as const;
-
-export type NavKey = (typeof NAV_KEYS)[number];
-
-const NAV_KEYS_SET: ReadonlySet<string> = new Set(NAV_KEYS);
-
-export const isNavKey = (value: string): value is NavKey => NAV_KEYS_SET.has(value);
+import type { NavKey } from './constants';
 
 export interface DashboardData {
   courses: Course[];
@@ -42,6 +29,7 @@ export interface OverviewTabProps {
   activeStudentProfile: StudentProfile;
   loading: boolean;
   onNavigate: (key: NavKey) => void;
+  isMoodleLinked?: boolean;
 }
 
 export interface CoursesTabProps {
@@ -77,6 +65,7 @@ export interface DashboardSidebarProps {
   onSelectKey: (key: NavKey) => void;
   soundEnabled: boolean;
   onLogout: () => void;
+  isMoodleLinked?: boolean;
 }
 
 export interface DashboardHeaderProps {
@@ -87,4 +76,7 @@ export interface DashboardHeaderProps {
   notifications: Notification[];
   unreadCount: number;
   activeStudentProfile: StudentProfile;
+  isMoodleLinked?: boolean;
+  onOpenLinkMoodle?: (mode?: LinkMoodleMode) => void;
+  onOpenUnlinkMoodle?: () => void;
 }

@@ -1,5 +1,6 @@
 .actionCard {
-  background: var(--bg-surface);
+  background: var(--bg-card);
+  backdrop-filter: var(--card-backdrop);
   border: 1px solid var(--card-border);
   border-radius: var(--border-radius-large);
   padding: var(--space-16);

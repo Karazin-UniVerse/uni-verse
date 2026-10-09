@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -8,9 +9,9 @@ import {
   ClipboardList,
   CalendarDays,
   FileEdit,
-  PanelLeftClose,
-  PanelLeftOpen,
+  ChevronLeft,
   LogOut,
+  Link2,
   Sparkles,
 } from 'lucide-react';
 import { Button } from '@una';
@@ -21,7 +22,8 @@ import { useFeatures } from '@uni-hub/features';
 import type { FeatureFlags, FeatureFlagKey } from '@core/constants/features';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
-import type { DashboardSidebarProps, NavKey } from '../types';
+import { NAV_KEY, type NavKey } from '../constants';
+import type { DashboardSidebarProps } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export interface NavItemConfig {
@@ -29,69 +31,73 @@ export interface NavItemConfig {
   icon: React.ReactNode;
   labelKey: TranslationKey;
   shortLabelKey: TranslationKey;
-  label: string;
-  shortLabel: string;
   featureFlag?: FeatureFlagKey;
 }
 
 export const NAV_ITEMS: NavItemConfig[] = [
   {
-    key: 'overview',
+    key: NAV_KEY.Overview,
     icon: <LayoutDashboard size={18} />,
     labelKey: 'nav.overview.full',
     shortLabelKey: 'nav.overview',
-    label: 'Картка студента / Огляд',
-    shortLabel: 'Огляд',
   },
   {
-    key: 'courses',
+    key: NAV_KEY.Courses,
     icon: <BookOpen size={18} />,
     labelKey: 'nav.courses.full',
     shortLabelKey: 'nav.courses',
-    label: 'Індивідуальний план',
-    shortLabel: 'Курси',
     featureFlag: 'isMoodleIntegrationEnabled',
   },
   {
-    key: 'grades',
+    key: NAV_KEY.Grades,
     icon: <ClipboardList size={18} />,
     labelKey: 'nav.grades.full',
     shortLabelKey: 'nav.grades',
-    label: 'Заліковка та бали',
-    shortLabel: 'Оцінки',
     featureFlag: 'isMoodleIntegrationEnabled',
   },
   {
-    key: 'schedule',
+    key: NAV_KEY.Schedule,
     icon: <CalendarDays size={18} />,
     labelKey: 'nav.schedule.full',
     shortLabelKey: 'nav.schedule',
-    label: 'Розклад занять',
-    shortLabel: 'Розклад',
     featureFlag: 'isEDeanEnabled',
   },
   {
-    key: 'assignments',
+    key: NAV_KEY.Assignments,
     icon: <FileEdit size={18} />,
     labelKey: 'nav.assignments.full',
     shortLabelKey: 'nav.assignments',
-    label: 'Завдання',
-    shortLabel: 'Завдання',
     featureFlag: 'isMoodleIntegrationEnabled',
   },
   {
-    key: 'opportunities',
+    key: NAV_KEY.Opportunities,
     icon: <Sparkles size={18} />,
     labelKey: 'nav.opportunities.full',
     shortLabelKey: 'nav.opportunities',
-    label: 'Платформа можливостей',
-    shortLabel: 'Можливості',
     featureFlag: 'isOpportunitiesPlatformEnabled',
   },
 ];
 
-export const getVisibleNavItems = (flags: FeatureFlags): NavItemConfig[] =>
-  NAV_ITEMS.filter((item) => !item.featureFlag || flags[item.featureFlag]);
+export const getVisibleNavItems = (
+  flags: FeatureFlags,
+  isMoodleLinked: boolean,
+): NavItemConfig[] => {
+  const baseItems = NAV_ITEMS.filter((item) => !item.featureFlag || flags[item.featureFlag]);
+
+  if (!isMoodleLinked && flags.isMoodleIntegrationEnabled) {
+    return [
+      ...baseItems,
+      {
+        key: NAV_KEY.ConnectMoodle,
+        icon: <Link2 size={18} />,
+        labelKey: 'nav.connectMoodle.full',
+        shortLabelKey: 'nav.connectMoodle',
+      },
+    ];
+  }
+
+  return baseItems;
+};
 
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   collapsed,
@@ -102,10 +108,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   onSelectKey,
   soundEnabled,
   onLogout,
+  isMoodleLinked = true,
 }) => {
   const { formatMessage } = useLanguage();
   const flags = useFeatures();
-  const visibleNavItems = getVisibleNavItems(flags);
+  const visibleNavItems = getVisibleNavItems(flags, isMoodleLinked);
   const siderRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -193,30 +200,36 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         />
       )}
       <aside ref={siderRef} id="dashboard-sidebar" className={styles.sider} aria-label="Навігація">
+        <button
+          type="button"
+          className={styles.edgeToggle}
+          onClick={onToggleCollapsed}
+          aria-label={formatMessage(collapsed ? 'sidebar.expand' : 'sidebar.collapse')}
+          aria-expanded={!collapsed}
+          aria-controls="dashboard-sidebar"
+        >
+          <ChevronLeft size={14} aria-hidden />
+        </button>
+
         <div className={styles.brand}>
           <span>{collapsed && !mobileMenuOpen ? 'U' : 'UNiVerse'}</span>
-          <Button
-            type="button"
-            variant="secondary"
-            size="small"
-            isTransparent
-            onClick={onToggleCollapsed}
-            aria-label={collapsed ? 'Розгорнути меню' : 'Згорнути меню'}
-          >
-            {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-          </Button>
         </div>
 
         <nav className={styles.nav}>
           {visibleNavItems.map((item) => {
             const label = formatMessage(item.labelKey);
             const shortLabel = formatMessage(item.shortLabelKey);
+            const isConnect = item.key === 'connectMoodle';
 
             return (
               <button
                 key={item.key}
                 type="button"
-                className={`${styles.navItem} ${activeKey === item.key ? styles.active : ''}`}
+                className={clsx(
+                  styles.navItem,
+                  activeKey === item.key && styles.active,
+                  isConnect && styles.connectMoodleNavItem,
+                )}
                 onClick={() => {
                   playClick(soundEnabled);
                   onSelectKey(item.key);
@@ -237,6 +250,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                   <>
                     <span className={styles.desktopLabel}>{label}</span>
                     <span className={styles.mobileLabel}>{shortLabel}</span>
+                    {isConnect && <span className={styles.navBadgePulse} aria-hidden />}
                   </>
                 )}
               </button>
@@ -265,10 +279,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             compact
             showLabel={!collapsed || mobileMenuOpen}
             variant="sider"
-            placement="bottom-up-left"
+            placement="top-start"
           />
           <ThemeSwitcher
             compact
+            placement="top-start"
             showLabel={!collapsed || mobileMenuOpen}
             className={styles.themeBtn}
           />
