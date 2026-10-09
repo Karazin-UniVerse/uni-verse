@@ -19,6 +19,7 @@ import { useFeatures } from '@uni-hub/features';
 import {
   type NavKey,
   NAV_KEY,
+  NAV_ITEMS,
   isNavKey,
   fallbackStudentProfile,
   DashboardSidebar,
@@ -47,7 +48,7 @@ const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
 const DashboardPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isOpportunitiesPlatformEnabled } = useFeatures();
+  const features = useFeatures();
   const checkIn = useGamificationStore((s) => s.checkIn);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const setSoundEnabled = useGamificationStore((s) => s.setSoundEnabled);
@@ -131,13 +132,15 @@ const DashboardPage: React.FC = () => {
     const requestedTab = searchParams.get('tab');
 
     if (requestedTab && isNavKey(requestedTab)) {
-      if (requestedTab === NAV_KEY.Opportunities && !isOpportunitiesPlatformEnabled) {
-        setActiveKey(NAV_KEY.Overview);
-      } else {
+      const targetItem = NAV_ITEMS.find((item) => item.key === requestedTab);
+
+      if (!targetItem?.featureFlag || features[targetItem.featureFlag]) {
         setActiveKey(requestedTab);
+      } else {
+        setActiveKey(NAV_KEY.Overview);
       }
     }
-  }, [isOpportunitiesPlatformEnabled, searchParams]);
+  }, [features, searchParams]);
 
   useEffect(() => {
     if (!isLoggedIn()) {

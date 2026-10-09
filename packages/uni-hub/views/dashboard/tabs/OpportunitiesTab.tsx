@@ -235,9 +235,12 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
         rejectModal={rejectModal}
         onClose={() => setRejectModal({ open: false, id: null, comment: '' })}
         onCommentChange={(comment) => setRejectModal((prev) => ({ ...prev, comment }))}
-        onConfirm={(id, action, comment) => {
-          void handleModerate(id, action, comment);
-          setRejectModal({ open: false, id: null, comment: '' });
+        onConfirm={async (id, action, comment) => {
+          const success = await handleModerate(id, action, comment);
+
+          if (success) {
+            setRejectModal({ open: false, id: null, comment: '' });
+          }
         }}
       />
     </div>

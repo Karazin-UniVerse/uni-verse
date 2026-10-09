@@ -194,7 +194,7 @@ export function useOpportunityModals({
     id: string,
     action: 'APPROVE' | 'REJECT' | 'REQUIRE_CHANGES',
     comment?: string,
-  ) => {
+  ): Promise<boolean> => {
     try {
       await opportunitiesApi.moderate(id, action, comment);
       setModerationQueue((prev) => prev.filter((item) => item.id !== id));
@@ -205,8 +205,12 @@ export function useOpportunityModals({
       } as const;
 
       toast.success(formatMessage(toastMap[action]));
+
+      return true;
     } catch (err: unknown) {
       toast.error((err as Error).message || formatMessage('opportunities.toast.moderateError'));
+
+      return false;
     }
   };
 
