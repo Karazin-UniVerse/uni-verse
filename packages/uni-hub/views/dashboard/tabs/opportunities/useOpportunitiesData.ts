@@ -36,12 +36,18 @@ export function useOpportunitiesData() {
   const isModeratorOrAdmin = userRole === 'OPPORTUNITIES_MODERATOR' || userRole === 'ADMIN';
 
   const activeSubTabRef = useRef(activeSubTab);
+  const catalogRequestId = useRef(0);
+  const myOpportunitiesRequestId = useRef(0);
+  const myApplicationsRequestId = useRef(0);
+  const moderationQueueRequestId = useRef(0);
 
   useEffect(() => {
     activeSubTabRef.current = activeSubTab;
   }, [activeSubTab]);
 
   const fetchCatalog = useCallback(async () => {
+    const requestId = ++catalogRequestId.current;
+
     if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Catalog) {
       setLoading(true);
     }
@@ -49,21 +55,32 @@ export function useOpportunitiesData() {
     try {
       const res = await opportunitiesApi.getOpportunities();
 
-      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Catalog) {
+      if (
+        requestId === catalogRequestId.current &&
+        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Catalog
+      ) {
         setOpportunities(Array.isArray(res.data) ? res.data : []);
       }
     } catch {
-      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Catalog) {
+      if (
+        requestId === catalogRequestId.current &&
+        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Catalog
+      ) {
         setOpportunities([]);
       }
     } finally {
-      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Catalog) {
+      if (
+        requestId === catalogRequestId.current &&
+        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Catalog
+      ) {
         setLoading(false);
       }
     }
   }, []);
 
   const fetchMyOpportunities = useCallback(async () => {
+    const requestId = ++myOpportunitiesRequestId.current;
+
     if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyOpportunities) {
       setLoading(true);
     }
@@ -71,21 +88,32 @@ export function useOpportunitiesData() {
     try {
       const res = await opportunitiesApi.getMyOpportunities();
 
-      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyOpportunities) {
+      if (
+        requestId === myOpportunitiesRequestId.current &&
+        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyOpportunities
+      ) {
         setMyOpportunities(Array.isArray(res.data) ? res.data : []);
       }
     } catch {
-      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyOpportunities) {
+      if (
+        requestId === myOpportunitiesRequestId.current &&
+        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyOpportunities
+      ) {
         setMyOpportunities([]);
       }
     } finally {
-      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyOpportunities) {
+      if (
+        requestId === myOpportunitiesRequestId.current &&
+        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyOpportunities
+      ) {
         setLoading(false);
       }
     }
   }, []);
 
   const fetchMyApplications = useCallback(async () => {
+    const requestId = ++myApplicationsRequestId.current;
+
     if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyApplications) {
       setLoading(true);
     }
@@ -93,21 +121,32 @@ export function useOpportunitiesData() {
     try {
       const res = await opportunitiesApi.getMyApplications();
 
-      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyApplications) {
+      if (
+        requestId === myApplicationsRequestId.current &&
+        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyApplications
+      ) {
         setMyApplications(Array.isArray(res.data) ? res.data : []);
       }
     } catch {
-      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyApplications) {
+      if (
+        requestId === myApplicationsRequestId.current &&
+        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyApplications
+      ) {
         setMyApplications([]);
       }
     } finally {
-      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyApplications) {
+      if (
+        requestId === myApplicationsRequestId.current &&
+        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyApplications
+      ) {
         setLoading(false);
       }
     }
   }, []);
 
   const fetchModerationQueue = useCallback(async () => {
+    const requestId = ++moderationQueueRequestId.current;
+
     if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Moderation) {
       setLoading(true);
     }
@@ -115,15 +154,24 @@ export function useOpportunitiesData() {
     try {
       const res = await opportunitiesApi.getOpportunities({ status: 'READY_FOR_REVIEW' });
 
-      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Moderation) {
+      if (
+        requestId === moderationQueueRequestId.current &&
+        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Moderation
+      ) {
         setModerationQueue(Array.isArray(res.data) ? res.data : []);
       }
     } catch {
-      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Moderation) {
+      if (
+        requestId === moderationQueueRequestId.current &&
+        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Moderation
+      ) {
         setModerationQueue([]);
       }
     } finally {
-      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Moderation) {
+      if (
+        requestId === moderationQueueRequestId.current &&
+        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Moderation
+      ) {
         setLoading(false);
       }
     }
