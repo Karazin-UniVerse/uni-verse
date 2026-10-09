@@ -6,6 +6,8 @@ export const GetUser = createParamDecorator(
     const request = ctx.switchToHttp().getRequest<Request>();
     const user = request.user as Record<string, unknown>;
 
+    if (!user) return undefined;
+
     if (!data) return user;
 
     return user[data];
