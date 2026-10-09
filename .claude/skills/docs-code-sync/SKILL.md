@@ -26,9 +26,9 @@ Read `docs/ai/requirements-docs.md` first. It defines the register format and th
 6. Ask the user about the rows, one by one or grouped, and record each answer in `Decision`. Never decide for the user.
 7. Apply the decisions:
    - `update-doc`: edit the PRD or test cases.
-   - `implementation-task`: write the task draft in the register's "Task drafts" section. Do not create it in Notion unless the user asks.
+   - `implementation-task`: write the task draft in `docs/tasks/<project>/<feature>.md`. Do not create it in Notion unless the user asks.
    - `leave`: record the reason in `Decision`.
-8. When every row is closed, show the user the task drafts (skip this when there are none), ask them to copy them where needed, and ask to confirm deleting the register. Delete it only after they confirm; if they decline, keep it.
+8. When every row is closed, tell the user where the task drafts are (skip this when there are none) and ask to confirm deleting the register. Delete it only after they confirm; if they decline, keep it.
 
 ## Review checklist
 

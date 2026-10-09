@@ -8,6 +8,7 @@ A PRD, its test cases and the code it describes are kept in step. The skills `pr
 docs/prd/<project>/<feature>.md
 docs/test-cases/<project>/<feature>.md
 docs/discrepancies/<project>/<feature>.md   # temporary
+docs/tasks/<project>/<feature>.md           # task drafts, kept until the tasks are done
 ```
 
 `<project>` is the kebab-case name of a UniVerse service or module (`uni-hub`, `opportunities`), not a repository package: one project can span `core`, `backend` and `uni-hub`. Reuse an existing folder; ask before creating a new project folder. `<feature>` is the kebab-case feature name (`board`, `opportunity-alerts`). Documents are written in English. Expected results quote UI text by translation key, not by a literal string.
@@ -105,7 +106,7 @@ One file per feature. It starts with `# Test cases: <feature name>` and a line `
 | D-01 | REQ-OPP-01.1 lists only published | the list also shows archived | `packages/backend/opportunities/opportunities.service.ts:88` | implementation-task |          |
 ```
 
-`Proposed resolution` and `Decision` are one of `update-doc`, `implementation-task`, `leave`; for `leave`, write the reason after it in `Decision` (`leave: archived items are intended`). Task text drafted for `implementation-task` rows goes in a "Task drafts" section below the table: one heading per task (`Task N: <title>`), then `Closes` (the rows), `What`, `Where` and `Satisfies` (criterion and case IDs) lines, and an optional `After` line for a dependency. Rows that belong together are one task. It is written for the Notion Project Dashboard and is not created there unless the user asks.
+`Proposed resolution` and `Decision` are one of `update-doc`, `implementation-task`, `leave`; for `leave`, write the reason after it in `Decision` (`leave: archived items are intended`). Task text drafted for `implementation-task` rows goes in `docs/tasks/<project>/<feature>.md`, not in the register, because the register is deleted. Each task has a heading (`Task N: <title>`), then `Closes` (the rows), `What`, `Where` and `Satisfies` (criterion and case IDs) lines, and an optional `After` line for a dependency. Rows that belong together are one task. It is written for the Notion Project Dashboard and is not created there unless the user asks.
 
 ## Shared procedure
 
