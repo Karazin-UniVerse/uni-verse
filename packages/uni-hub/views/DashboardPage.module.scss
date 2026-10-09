@@ -492,39 +492,6 @@ $sidebar-collapsed-width: 88px;
   animation: pulse 1.6s var(--ease-standard) infinite;
 }
 
-.notifHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-12) var(--space-16);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.notifList {
-  max-height: 360px;
-  overflow: auto;
-}
-
-.notifItem {
-  padding: var(--space-12) var(--space-16);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.unread {
-  background: var(--accent-secondary);
-}
-
-.notifSubject {
-  font-weight: var(--font-weight-medium);
-  margin-bottom: var(--space-4);
-}
-
-.notifTime {
-  margin-top: var(--space-4);
-  font-size: var(--font-xs);
-  color: var(--text-secondary);
-}
-
 .content {
   flex: 1;
   overflow: hidden auto;

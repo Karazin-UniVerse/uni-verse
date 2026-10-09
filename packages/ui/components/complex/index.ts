@@ -6,3 +6,4 @@ export * from './GradeFeedItem';
 export * from './TopicChips';
 export * from './ContactInfoGrid';
 export * from './StatusBanner';
+export * from './NotificationList';

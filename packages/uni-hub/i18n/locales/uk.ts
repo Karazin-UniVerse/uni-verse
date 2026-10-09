@@ -80,6 +80,7 @@ export const uk = {
   'sidebar.moodleConnected': 'Moodle LMS (підключено)',
   'header.notifications': 'Сповіщення',
   'header.notifications.empty': 'Немає сповіщень',
+  'header.notifications.unreadItem': 'Непрочитане:',
   'header.moodleConnected': 'Підключено',
   'header.moodleNotConnected': 'Не підключено',
   'header.moodleChange': 'Змінити акаунт',
@@ -245,7 +246,7 @@ export const uk = {
   'header.soundUnmute': 'Увімкнути звук',
   'header.openMenu': 'Відкрити меню',
   'header.userMenu': 'Меню профілю користувача',
-  'header.unreadCount': 'нових',
+  'header.unreadCount': '{count} нових',
 
   // Assignment Modal
   'assignmentModal.defaultTitle': 'Завдання',

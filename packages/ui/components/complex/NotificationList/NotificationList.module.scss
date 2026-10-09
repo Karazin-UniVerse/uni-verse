@@ -1,0 +1,74 @@
+.notificationList {
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-16);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.heading {
+  margin: 0;
+  font: inherit;
+  font-weight: var(--font-weight-bold);
+}
+
+.list {
+  max-height: 360px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-12) var(--space-16) var(--space-12) var(--space-12);
+  border-bottom: 1px solid var(--border-color);
+  border-inline-start: var(--space-4) solid transparent;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.unread {
+  background: var(--accent-secondary);
+  border-inline-start-color: var(--accent-primary);
+}
+
+.title {
+  margin: 0;
+  font-weight: var(--font-weight-medium);
+}
+
+.message {
+  margin: 0;
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+
+.time {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
