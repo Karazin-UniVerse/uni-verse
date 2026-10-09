@@ -1,215 +1,227 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  Sparkles,
-  Briefcase,
-  GraduationCap,
-  Globe,
-  Building2,
-  Calendar,
-  ExternalLink,
-} from 'lucide-react';
-import { Tag, Button } from '@una';
+import React from 'react';
+import { Plus, Briefcase, ShieldCheck, Users, FileText } from 'lucide-react';
+import { Button } from '@una';
+import { ConfirmModal } from '@universe/ui';
+import { ROLE } from '@core/constants/roles';
+import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './OpportunitiesTab.module.scss';
+import {
+  CatalogTab,
+  MyOpportunitiesTab,
+  MyApplicationsTab,
+  ModerationQueueTab,
+  OpportunityDetailModal,
+  CreateOpportunityModal,
+  ApplyOpportunityModal,
+  ApplicantsModal,
+  ModerationRejectModal,
+  OPPORTUNITY_SUB_TAB,
+} from './opportunities';
+import { useApplicantActions } from './opportunities/useApplicantActions';
+import { useApplicants } from './opportunities/useApplicants';
+import { useCreateOpportunity } from './opportunities/useCreateOpportunity';
+import { useModeration } from './opportunities/useModeration';
+import { useOpportunitiesData } from './opportunities/useOpportunitiesData';
+import { useOpportunityDetail } from './opportunities/useOpportunityDetail';
 
-type OpportunityCategory = 'all' | 'internships' | 'grants' | 'exchange';
-
-interface OpportunityItem {
-  id: string;
-  category: OpportunityCategory;
-  titleKey: TranslationKey;
-  orgKey: TranslationKey;
-  descKey: TranslationKey;
-  tagKey: TranslationKey;
-  deadline: string;
-  externalUrl: string;
+export interface OpportunitiesTabProps {
+  soundEnabled?: boolean;
 }
 
-type OpportunityTuple = readonly [
-  id: string,
-  category: OpportunityCategory,
-  titleKey: TranslationKey,
-  orgKey: TranslationKey,
-  descKey: TranslationKey,
-  tagKey: TranslationKey,
-  deadline: string,
-  externalUrl: string,
-];
-
-const RAW_OPPORTUNITIES: readonly OpportunityTuple[] = [
-  [
-    'opp-1',
-    'internships',
-    'opportunities.item1Title',
-    'opportunities.item1Org',
-    'opportunities.item1Desc',
-    'opportunities.tagInternships',
-    '2026-11-15',
-    'https://karazin.ua/',
-  ],
-  [
-    'opp-2',
-    'exchange',
-    'opportunities.item2Title',
-    'opportunities.item2Org',
-    'opportunities.item2Desc',
-    'opportunities.tagExchange',
-    '2026-12-01',
-    'https://international.karazin.ua',
-  ],
-  [
-    'opp-3',
-    'grants',
-    'opportunities.item3Title',
-    'opportunities.item3Org',
-    'opportunities.item3Desc',
-    'opportunities.tagGrants',
-    '2026-10-25',
-    'https://science.karazin.ua',
-  ],
-  [
-    'opp-4',
-    'internships',
-    'opportunities.item4Title',
-    'opportunities.item4Org',
-    'opportunities.item4Desc',
-    'opportunities.tagInternships',
-    '2026-11-20',
-    'https://karazin.ua/',
-  ],
-];
-
-const OPPORTUNITIES: readonly OpportunityItem[] = RAW_OPPORTUNITIES.map(
-  ([id, category, titleKey, orgKey, descKey, tagKey, deadline, externalUrl]) => ({
-    id,
-    category,
-    titleKey,
-    orgKey,
-    descKey,
-    tagKey,
-    deadline,
-    externalUrl,
-  }),
-);
-
-interface FilterOption {
-  category: OpportunityCategory;
-  labelKey: TranslationKey;
-  icon?: React.ComponentType<{ size: number }>;
-}
-
-const FILTER_OPTIONS: readonly FilterOption[] = [
-  { category: 'all', labelKey: 'opportunities.filterAll' },
-  { category: 'internships', labelKey: 'opportunities.filterInternships', icon: Briefcase },
-  { category: 'grants', labelKey: 'opportunities.filterGrants', icon: GraduationCap },
-  { category: 'exchange', labelKey: 'opportunities.filterExchange', icon: Globe },
-];
-
-function parseLocalDate(deadline: string): Date {
-  const [year, month, day] = deadline.split('-').map(Number);
-
-  return new Date(year, (month ?? 1) - 1, day ?? 1);
-}
-
-export const OpportunitiesTab: React.FC = () => {
-  const { formatMessage, localeTag } = useLanguage();
-  const [selectedCategory, setSelectedCategory] = useState<OpportunityCategory>('all');
-
-  const filteredItems = OPPORTUNITIES.filter(
-    (item) => selectedCategory === 'all' || item.category === selectedCategory,
-  );
+export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
+  const { formatMessage } = useLanguage();
+  const currentUser = useCurrentUser();
+  const isModerator = currentUser.role === ROLE.OPPORTUNITIES_MODERATOR;
+  const data = useOpportunitiesData(isModerator);
+  const { activeSubTab, setActiveSubTab } = data;
+  const detail = useOpportunityDetail(data.myOpportunities.refetch);
+  const create = useCreateOpportunity({
+    onCreated: () => setActiveSubTab(OPPORTUNITY_SUB_TAB.MyOpportunities),
+  });
+  const applicants = useApplicants();
+  const applicantActions = useApplicantActions({
+    currentUser,
+    selectedOpportunity: detail.selectedOpportunity,
+    setApplications: data.myApplications.setItems,
+  });
+  const moderation = useModeration(data.moderationQueue.setItems);
 
   return (
     <div className={styles.container}>
-      <header className={styles.header}>
-        <div className={styles.headerTop}>
-          <div className={styles.titleRow}>
-            <Sparkles size={24} className={styles.sparklesIcon} />
-            <h2>{formatMessage('opportunities.title')}</h2>
-          </div>
-          <Tag tone="info">{formatMessage('opportunities.badge')}</Tag>
-        </div>
+      {/* Top Segmented Navigation & Action */}
+      <div className={styles.topBar}>
+        <div className={styles.segmentedControl} role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeSubTab === OPPORTUNITY_SUB_TAB.Catalog}
+            aria-controls="panel-catalog"
+            className={`${styles.segmentItem} ${activeSubTab === OPPORTUNITY_SUB_TAB.Catalog ? styles.activeSegment : ''}`}
+            onClick={() => setActiveSubTab(OPPORTUNITY_SUB_TAB.Catalog)}
+          >
+            <Briefcase size={16} />
+            {formatMessage('opportunities.tabs.catalog')}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeSubTab === OPPORTUNITY_SUB_TAB.MyOpportunities}
+            aria-controls="panel-my-opportunities"
+            className={`${styles.segmentItem} ${activeSubTab === OPPORTUNITY_SUB_TAB.MyOpportunities ? styles.activeSegment : ''}`}
+            onClick={() => setActiveSubTab(OPPORTUNITY_SUB_TAB.MyOpportunities)}
+          >
+            <FileText size={16} />
+            {formatMessage('opportunities.tabs.myOpportunities')}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeSubTab === OPPORTUNITY_SUB_TAB.MyApplications}
+            aria-controls="panel-my-applications"
+            className={`${styles.segmentItem} ${activeSubTab === OPPORTUNITY_SUB_TAB.MyApplications ? styles.activeSegment : ''}`}
+            onClick={() => setActiveSubTab(OPPORTUNITY_SUB_TAB.MyApplications)}
+          >
+            <Users size={16} />
+            {formatMessage('opportunities.tabs.myApplications')}
+          </button>
 
-        <p className={styles.subtitle}>{formatMessage('opportunities.subtitle')}</p>
-
-        <div className={styles.filterBar}>
-          {FILTER_OPTIONS.map(({ category, labelKey, icon: Icon }) => (
+          {isModerator && (
             <button
-              key={category}
               type="button"
-              className={`${styles.filterBtn} ${selectedCategory === category ? styles.active : ''}`}
-              onClick={() => setSelectedCategory(category)}
-              aria-pressed={selectedCategory === category}
+              role="tab"
+              aria-selected={activeSubTab === OPPORTUNITY_SUB_TAB.Moderation}
+              aria-controls="panel-moderation"
+              className={`${styles.segmentItem} ${activeSubTab === OPPORTUNITY_SUB_TAB.Moderation ? styles.activeSegment : ''}`}
+              onClick={() => setActiveSubTab(OPPORTUNITY_SUB_TAB.Moderation)}
             >
-              {Icon && <Icon size={14} />}
-              {formatMessage(labelKey)}
+              <ShieldCheck size={16} />
+              {formatMessage('opportunities.tabs.moderation')}
+              {data.moderationQueue.items.length > 0 && (
+                <span className={styles.badgePill}>{data.moderationQueue.items.length}</span>
+              )}
             </button>
-          ))}
+          )}
         </div>
-      </header>
 
-      {filteredItems.length === 0 ? (
-        <div className={styles.emptyNotice}>
-          <p>{formatMessage('opportunities.empty')}</p>
+        <div className={styles.createBtnWrapper}>
+          <Button
+            variant="primary"
+            size="small"
+            onClick={() => create.setIsOpen(true)}
+            className={styles.createBtn}
+          >
+            <Plus size={16} />
+            {formatMessage('opportunities.actions.create')}
+          </Button>
         </div>
-      ) : (
-        <div className={styles.grid}>
-          {filteredItems.map((item) => {
-            const title = formatMessage(item.titleKey);
-            const organization = formatMessage(item.orgKey);
-            const formattedDeadline = parseLocalDate(item.deadline).toLocaleDateString(localeTag, {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            });
+      </div>
 
-            return (
-              <article key={item.id} className={styles.card}>
-                <div className={styles.cardTop}>
-                  <div className={styles.cardMeta}>
-                    <span className={styles.categoryTag}>{formatMessage(item.tagKey)}</span>
-                    <div className={styles.deadlineContainer}>
-                      <Calendar size={13} />
-                      <span>
-                        {formatMessage('opportunities.deadline')} {formattedDeadline}
-                      </span>
-                    </div>
-                  </div>
+      {/* SubTab Views */}
+      <div role="tabpanel" id={`panel-${activeSubTab}`}>
+        {activeSubTab === OPPORTUNITY_SUB_TAB.Catalog && (
+          <CatalogTab
+            loading={data.catalog.loading}
+            opportunities={data.catalog.items}
+            search={data.search}
+            onSearchChange={data.setSearch}
+            paymentFilter={data.paymentFilter}
+            onPaymentFilterChange={data.setPaymentFilter}
+            onOpenDetail={detail.open}
+          />
+        )}
 
-                  <h3 className={styles.cardTitle}>{title}</h3>
+        {activeSubTab === OPPORTUNITY_SUB_TAB.MyOpportunities && (
+          <MyOpportunitiesTab
+            loading={data.myOpportunities.loading}
+            myOpportunities={data.myOpportunities.items}
+            onOpenApplicants={applicants.open}
+            onOpenDetail={detail.open}
+          />
+        )}
 
-                  <div className={styles.organization}>
-                    <Building2 size={15} />
-                    <span>{organization}</span>
-                  </div>
+        {activeSubTab === OPPORTUNITY_SUB_TAB.MyApplications && (
+          <MyApplicationsTab
+            loading={data.myApplications.loading}
+            myApplications={data.myApplications.items}
+            onWithdraw={applicantActions.setWithdrawApplicationId}
+          />
+        )}
 
-                  <p className={styles.cardDescription}>{formatMessage(item.descKey)}</p>
-                </div>
+        {activeSubTab === OPPORTUNITY_SUB_TAB.Moderation && isModerator && (
+          <ModerationQueueTab
+            loading={data.moderationQueue.loading}
+            moderationQueue={data.moderationQueue.items}
+            onModerate={moderation.handleModerate}
+            onOpenRejectModal={moderation.openRejectModal}
+          />
+        )}
+      </div>
 
-                <div className={styles.cardBottom}>
-                  <div className={styles.actionsRow}>
-                    <Button
-                      isLink
-                      href={item.externalUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      variant="primary"
-                      size="small"
-                      className={styles.applyButton}
-                    >
-                      <ExternalLink size={14} className={styles.btnIcon} />
-                      {formatMessage('opportunities.apply')}
-                    </Button>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
+      {/* Modals */}
+      <OpportunityDetailModal
+        open={detail.isOpen}
+        onClose={() => detail.setIsOpen(false)}
+        opportunity={detail.selectedOpportunity}
+        userId={currentUser.userId}
+        onSendToReview={detail.handleSendToReview}
+        onLifecycleChange={detail.handleLifecycleChange}
+        onOpenApply={() => {
+          detail.setIsOpen(false);
+          applicantActions.setIsApplyOpen(true);
+        }}
+      />
+
+      <CreateOpportunityModal
+        open={create.isOpen}
+        onClose={() => create.setIsOpen(false)}
+        formData={create.formData}
+        setFormData={create.setFormData}
+        onSubmit={create.handleSubmit}
+        submitting={create.creating}
+      />
+
+      <ApplyOpportunityModal
+        open={applicantActions.isApplyOpen}
+        onClose={() => applicantActions.setIsApplyOpen(false)}
+        opportunityTitle={detail.selectedOpportunity?.title}
+        motivation={applicantActions.motivation}
+        onMotivationChange={applicantActions.setMotivation}
+        contactInfo={applicantActions.contactInfo}
+        onContactInfoChange={applicantActions.setContactInfo}
+        onSubmit={applicantActions.handleApplySubmit}
+        submitting={applicantActions.applying}
+      />
+
+      <ApplicantsModal
+        open={applicants.isOpen}
+        onClose={() => applicants.setIsOpen(false)}
+        applications={applicants.applications}
+        loading={applicants.loading}
+        onUpdateStatus={applicants.handleUpdateStatus}
+      />
+
+      <ConfirmModal
+        open={applicantActions.withdrawApplicationId !== null}
+        onClose={() => applicantActions.setWithdrawApplicationId(null)}
+        onConfirm={applicantActions.handleWithdraw}
+        title={formatMessage('opportunities.confirm.withdrawTitle')}
+        message={formatMessage('opportunities.confirm.withdraw')}
+        cancelLabel={formatMessage('common.cancel')}
+        confirmLabel={formatMessage('opportunities.confirm.withdrawConfirm')}
+        closeLabel={formatMessage('modal.close')}
+        loading={applicantActions.withdrawing}
+        variant="danger"
+      />
+
+      <ModerationRejectModal
+        rejectModal={moderation.rejectModal}
+        onClose={moderation.closeRejectModal}
+        onCommentChange={moderation.changeRejectComment}
+        onConfirm={moderation.handleRejectConfirm}
+      />
     </div>
   );
 };
