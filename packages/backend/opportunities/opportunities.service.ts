@@ -318,7 +318,7 @@ export class OpportunitiesService {
     });
 
     if (existing) {
-      throw new BadRequestException('Already applied to this opportunity');
+      throw new ConflictException('Already applied to this opportunity');
     }
 
     let app;
