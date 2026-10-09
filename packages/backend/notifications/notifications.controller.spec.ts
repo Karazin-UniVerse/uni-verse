@@ -31,59 +31,55 @@ describe('NotificationsController', () => {
   });
 
   describe('getMyNotifications', () => {
-    it('throws ForbiddenException if userId is missing', async () => {
-      await expect(controller.getMyNotifications('')).rejects.toThrow(
+    it('should throw ForbiddenException if no userId', () => {
+      expect(() => controller.getMyNotifications('')).toThrow(
         ForbiddenException,
       );
     });
 
-    it('delegates to service.getMyNotifications', async () => {
-      const mockResult = [{ id: 'notif-1' }] as any;
+    it('should return user notifications', async () => {
+      const mockNotifs = [{ id: 'n1', title: 'Test' }];
 
-      (service.getMyNotifications as jest.Mock).mockResolvedValue(mockResult);
+      jest
+        .mocked(service.getMyNotifications)
+        .mockResolvedValue(mockNotifs as any);
 
-      const result = await controller.getMyNotifications('user-1');
+      const result = await controller.getMyNotifications('1');
 
-      expect(service.getMyNotifications).toHaveBeenCalledWith('user-1');
-      expect(result).toBe(mockResult);
+      expect(result).toEqual(mockNotifs);
+      expect(service.getMyNotifications).toHaveBeenCalledWith('1');
     });
   });
 
   describe('markAsRead', () => {
-    it('throws ForbiddenException if userId is missing', async () => {
-      await expect(controller.markAsRead('', 'notif-1')).rejects.toThrow(
-        ForbiddenException,
-      );
+    it('should throw ForbiddenException if no userId', () => {
+      expect(() => controller.markAsRead('', 'n1')).toThrow(ForbiddenException);
     });
 
-    it('delegates to service.markAsRead', async () => {
-      const mockResult = { id: 'notif-1', isRead: true } as any;
+    it('should call markAsRead on service', async () => {
+      const mockNotif = { id: 'n1', isRead: true };
 
-      (service.markAsRead as jest.Mock).mockResolvedValue(mockResult);
+      jest.mocked(service.markAsRead).mockResolvedValue(mockNotif as any);
 
-      const result = await controller.markAsRead('user-1', 'notif-1');
+      const result = await controller.markAsRead('1', 'n1');
 
-      expect(service.markAsRead).toHaveBeenCalledWith('user-1', 'notif-1');
-      expect(result).toBe(mockResult);
+      expect(result).toEqual(mockNotif);
+      expect(service.markAsRead).toHaveBeenCalledWith('1', 'n1');
     });
   });
 
   describe('markAllAsRead', () => {
-    it('throws ForbiddenException if userId is missing', async () => {
-      await expect(controller.markAllAsRead('')).rejects.toThrow(
-        ForbiddenException,
-      );
+    it('should throw ForbiddenException if no userId', () => {
+      expect(() => controller.markAllAsRead('')).toThrow(ForbiddenException);
     });
 
-    it('delegates to service.markAllAsRead', async () => {
-      const mockResult = { count: 5 };
+    it('should call markAllAsRead on service', async () => {
+      jest.mocked(service.markAllAsRead).mockResolvedValue({ count: 5 } as any);
 
-      (service.markAllAsRead as jest.Mock).mockResolvedValue(mockResult);
+      const result = await controller.markAllAsRead('1');
 
-      const result = await controller.markAllAsRead('user-1');
-
-      expect(service.markAllAsRead).toHaveBeenCalledWith('user-1');
-      expect(result).toBe(mockResult);
+      expect(result).toEqual({ count: 5 });
+      expect(service.markAllAsRead).toHaveBeenCalledWith('1');
     });
   });
 });

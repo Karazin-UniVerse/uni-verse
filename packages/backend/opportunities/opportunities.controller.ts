@@ -17,10 +17,11 @@ import {
   ModerateOpportunityDto,
   UpdateApplicationStatusDto,
   ChangeLifecycleStateDto,
+  ChangeOpportunityStatusDto,
   FindOpportunitiesDto,
 } from './dto';
-import { Opportunity, OpportunityApplication } from '@universe/database';
 import { GetUser } from '../auth/decorators/get-user.decorator';
+import { Opportunity, OpportunityApplication } from '@universe/database';
 import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Opportunities')
@@ -53,7 +54,11 @@ export class OpportunitiesController {
   findAll(
     @GetUser('role') role: string,
     @Query() query: FindOpportunitiesDto,
-  ): Promise<Opportunity[]> {
+  ): Promise<
+    (Opportunity & {
+      owner: { id: string; name: string | null; email: string };
+    })[]
+  > {
     return this.opportunitiesService.findAll(query, role);
   }
 
@@ -109,7 +114,9 @@ export class OpportunitiesController {
     @Param('id') id: string,
     @GetUser('sub') userId?: string,
     @GetUser('role') role?: string,
-  ): Promise<Opportunity> {
+  ): Promise<
+    Opportunity & { owner: { id: string; name: string | null; email: string } }
+  > {
     return this.opportunitiesService.findOne(id, userId, role);
   }
 
@@ -138,11 +145,11 @@ export class OpportunitiesController {
   changeStatus(
     @GetUser('sub') userId: string,
     @Param('id') id: string,
-    @Body('status') status: 'READY_FOR_REVIEW',
+    @Body() dto: ChangeOpportunityStatusDto,
   ): Promise<Opportunity> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
-    return this.opportunitiesService.changeStatus(userId, id, status);
+    return this.opportunitiesService.changeStatus(userId, id, dto.status);
   }
 
   @ApiBearerAuth()
@@ -173,7 +180,11 @@ export class OpportunitiesController {
   getOpportunityApplications(
     @GetUser('sub') userId: string,
     @Param('id') id: string,
-  ): Promise<OpportunityApplication[]> {
+  ): Promise<
+    (OpportunityApplication & {
+      applicant: { name: string | null; email: string };
+    })[]
+  > {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.getOpportunityApplications(userId, id);
@@ -219,9 +230,11 @@ export class OpportunitiesController {
   @ApiBearerAuth()
   @Post(':id/moderate')
   /**
-   * Moderate an opportunity (MODERATOR only)
+   * Moderate an opportunity (OPPORTUNITIES_MODERATOR only)
    */
-  @ApiOperation({ summary: 'Moderate an opportunity (MODERATOR only)' })
+  @ApiOperation({
+    summary: 'Moderate an opportunity (OPPORTUNITIES_MODERATOR only)',
+  })
   moderate(
     @GetUser('sub') userId: string,
     @Param('id') id: string,

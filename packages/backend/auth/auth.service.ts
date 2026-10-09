@@ -24,6 +24,7 @@ export type GetTokensParams = {
   email: string;
   moodleToken?: string;
   moodleId?: string;
+  role?: string;
 };
 
 @Injectable()
@@ -323,7 +324,7 @@ export class AuthService {
       userId: user.id,
       email: user.email,
       moodleToken: user.token ?? undefined,
-      moodleId: undefined,
+      moodleId: user.moodleId ?? undefined,
       role: user.role,
     });
 
@@ -348,7 +349,7 @@ export class AuthService {
     moodleToken,
     moodleId,
     role,
-  }: GetTokensParams & { role?: string }) {
+  }: GetTokensParams) {
     const atSecret = process.env.AT_SECRET;
     const rtSecret = process.env.RT_SECRET;
     const knownPlaceholders = new Set([

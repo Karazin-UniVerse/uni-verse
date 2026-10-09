@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ForbiddenException } from '@nestjs/common';
+import { OpportunityStatus } from '@universe/database';
 import { OpportunitiesController } from './opportunities.controller';
 import { OpportunitiesService } from './opportunities.service';
-import { ForbiddenException } from '@nestjs/common';
 
 describe('OpportunitiesController', () => {
   let controller: OpportunitiesController;
@@ -41,130 +42,134 @@ describe('OpportunitiesController', () => {
   });
 
   describe('create', () => {
-    it('throws ForbiddenException if unauthenticated', () => {
+    it('throws ForbiddenException when userId is empty', () => {
       expect(() => controller.create('', {} as any)).toThrow(
         ForbiddenException,
       );
     });
 
-    it('calls service.create', async () => {
+    it('delegates to service.create', async () => {
       await controller.create('user1', {} as any);
       expect(service.create).toHaveBeenCalledWith('user1', {});
     });
   });
 
   describe('findAll', () => {
-    it('calls service.findAll', async () => {
+    it('delegates to service.findAll', async () => {
       await controller.findAll('STUDENT', {} as any);
       expect(service.findAll).toHaveBeenCalledWith({}, 'STUDENT');
     });
   });
 
   describe('getMyOpportunities', () => {
-    it('throws ForbiddenException if unauthenticated', () => {
+    it('throws ForbiddenException when userId is empty', () => {
       expect(() => controller.getMyOpportunities('')).toThrow(
         ForbiddenException,
       );
     });
 
-    it('calls service.getMyOpportunities', async () => {
+    it('delegates to service.getMyOpportunities', async () => {
       await controller.getMyOpportunities('user1');
       expect(service.getMyOpportunities).toHaveBeenCalledWith('user1');
     });
   });
 
   describe('withdrawApplication', () => {
-    it('throws ForbiddenException if unauthenticated', () => {
+    it('throws ForbiddenException when userId is empty', () => {
       expect(() => controller.withdrawApplication('', 'app1')).toThrow(
         ForbiddenException,
       );
     });
 
-    it('calls service.withdrawApplication', async () => {
+    it('delegates to service.withdrawApplication', async () => {
       await controller.withdrawApplication('user1', 'app1');
       expect(service.withdrawApplication).toHaveBeenCalledWith('user1', 'app1');
     });
   });
 
   describe('getMyApplications', () => {
-    it('throws ForbiddenException if unauthenticated', () => {
+    it('throws ForbiddenException when userId is empty', () => {
       expect(() => controller.getMyApplications('')).toThrow(
         ForbiddenException,
       );
     });
 
-    it('calls service.getMyApplications', async () => {
+    it('delegates to service.getMyApplications', async () => {
       await controller.getMyApplications('user1');
       expect(service.getMyApplications).toHaveBeenCalledWith('user1');
     });
   });
 
   describe('findOne', () => {
-    it('calls service.findOne', async () => {
+    it('delegates to service.findOne', async () => {
       await controller.findOne('opp1', 'user1', 'STUDENT');
       expect(service.findOne).toHaveBeenCalledWith('opp1', 'user1', 'STUDENT');
     });
   });
 
   describe('update', () => {
-    it('throws ForbiddenException if unauthenticated', () => {
+    it('throws ForbiddenException when userId is empty', () => {
       expect(() => controller.update('', 'opp1', {} as any)).toThrow(
         ForbiddenException,
       );
     });
 
-    it('calls service.update', async () => {
+    it('delegates to service.update', async () => {
       await controller.update('user1', 'opp1', {} as any);
       expect(service.update).toHaveBeenCalledWith('user1', 'opp1', {});
     });
   });
 
   describe('changeStatus', () => {
-    it('throws ForbiddenException if unauthenticated', () => {
+    it('throws ForbiddenException when userId is empty', () => {
       expect(() =>
-        controller.changeStatus('', 'opp1', 'READY_FOR_REVIEW'),
+        controller.changeStatus('', 'opp1', {
+          status: OpportunityStatus.READY_FOR_REVIEW,
+        }),
       ).toThrow(ForbiddenException);
     });
 
-    it('calls service.changeStatus', async () => {
-      await controller.changeStatus('user1', 'opp1', 'READY_FOR_REVIEW');
+    it('delegates to service.changeStatus', async () => {
+      await controller.changeStatus('user1', 'opp1', {
+        status: OpportunityStatus.READY_FOR_REVIEW,
+      });
       expect(service.changeStatus).toHaveBeenCalledWith(
         'user1',
         'opp1',
-        'READY_FOR_REVIEW',
+        OpportunityStatus.READY_FOR_REVIEW,
       );
     });
   });
 
   describe('changeLifecycleState', () => {
-    it('throws ForbiddenException if unauthenticated', () => {
+    it('throws ForbiddenException when userId is empty', () => {
       expect(() =>
         controller.changeLifecycleState('', 'opp1', {
-          lifecycleState: 'ACTIVE',
+          lifecycleState: 'CLOSED',
         } as any),
       ).toThrow(ForbiddenException);
     });
 
-    it('calls service.changeLifecycleState', async () => {
+    it('delegates to service.changeLifecycleState', async () => {
       await controller.changeLifecycleState('user1', 'opp1', {
-        lifecycleState: 'ACTIVE',
+        lifecycleState: 'CLOSED',
       } as any);
       expect(service.changeLifecycleState).toHaveBeenCalledWith(
         'user1',
         'opp1',
-        'ACTIVE',
+        'CLOSED',
       );
     });
   });
 
   describe('getOpportunityApplications', () => {
-    it('throws ForbiddenException if unauthenticated', () => {
+    it('throws ForbiddenException when userId is empty', () => {
       expect(() => controller.getOpportunityApplications('', 'opp1')).toThrow(
         ForbiddenException,
       );
     });
 
-    it('calls service.getOpportunityApplications', async () => {
+    it('delegates to service.getOpportunityApplications', async () => {
       await controller.getOpportunityApplications('user1', 'opp1');
       expect(service.getOpportunityApplications).toHaveBeenCalledWith(
         'user1',
@@ -174,50 +179,49 @@ describe('OpportunitiesController', () => {
   });
 
   describe('updateApplicationStatus', () => {
-    it('throws ForbiddenException if unauthenticated', () => {
+    it('throws ForbiddenException when userId is empty', () => {
       expect(() =>
         controller.updateApplicationStatus('', 'app1', {
           status: 'ACCEPTED',
-          comment: 'ok',
         } as any),
       ).toThrow(ForbiddenException);
     });
 
-    it('calls service.updateApplicationStatus', async () => {
+    it('delegates to service.updateApplicationStatus', async () => {
       await controller.updateApplicationStatus('user1', 'app1', {
         status: 'ACCEPTED',
-        comment: 'ok',
+        comment: 'Welcome',
       } as any);
       expect(service.updateApplicationStatus).toHaveBeenCalledWith({
         userId: 'user1',
         applicationId: 'app1',
         status: 'ACCEPTED',
-        ownerComment: 'ok',
+        ownerComment: 'Welcome',
       });
     });
   });
 
   describe('apply', () => {
-    it('throws ForbiddenException if unauthenticated', () => {
+    it('throws ForbiddenException when userId is empty', () => {
       expect(() => controller.apply('', 'opp1', {} as any)).toThrow(
         ForbiddenException,
       );
     });
 
-    it('calls service.apply', async () => {
+    it('delegates to service.apply', async () => {
       await controller.apply('user1', 'opp1', {} as any);
       expect(service.apply).toHaveBeenCalledWith('user1', 'opp1', {});
     });
   });
 
   describe('moderate', () => {
-    it('throws ForbiddenException if unauthenticated', () => {
+    it('throws ForbiddenException when userId is empty', () => {
       expect(() => controller.moderate('', 'opp1', {} as any)).toThrow(
         ForbiddenException,
       );
     });
 
-    it('calls service.moderate', async () => {
+    it('delegates to service.moderate', async () => {
       await controller.moderate('user1', 'opp1', {} as any);
       expect(service.moderate).toHaveBeenCalledWith('user1', 'opp1', {});
     });

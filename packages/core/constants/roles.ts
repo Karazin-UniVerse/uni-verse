@@ -1,9 +1,9 @@
-export const Role = {
-  STUDENT: 'student',
-  ADMIN: 'admin',
-  STAFF: 'staff',
-  LECTURER: 'lecturer',
-  OPPORTUNITIES_MODERATOR: 'opportunitiesModerator',
+export const ROLE = {
+  USER: 'USER',
+  STUDENT: 'STUDENT',
+  INSTRUCTOR: 'INSTRUCTOR',
+  ADMIN: 'ADMIN',
+  OPPORTUNITIES_MODERATOR: 'OPPORTUNITIES_MODERATOR',
 } as const;
 
-export type Role = (typeof Role)[keyof typeof Role];
+export type Role = (typeof ROLE)[keyof typeof ROLE];

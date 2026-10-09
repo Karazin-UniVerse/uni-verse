@@ -1,4 +1,8 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { Observable } from 'rxjs';
@@ -19,9 +23,38 @@ export class AtGuard extends AuthGuard('jwt') {
     ]);
 
     if (isPublic) {
-      return true;
+      const request = context.switchToHttp?.()?.getRequest?.();
+      const authHeader = request?.headers?.authorization;
+
+      if (!authHeader) {
+        return true;
+      }
     }
 
     return super.canActivate(context);
+  }
+
+  handleRequest<TUser = unknown>(
+    ...args: [unknown, unknown, unknown, ExecutionContext]
+  ): TUser {
+    const [err, user, , context] = args;
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (isPublic) {
+      return (user || undefined) as TUser;
+    }
+
+    if (err instanceof Error) {
+      throw err;
+    }
+
+    if (err || !user) {
+      throw new UnauthorizedException();
+    }
+
+    return user as TUser;
   }
 }

@@ -6,6 +6,7 @@ export type CreateNotificationParams = {
   title: string;
   message: string;
   link?: string;
+  type?: string;
 };
 
 @Injectable()
@@ -17,6 +18,7 @@ export class NotificationsService {
     title,
     message,
     link,
+    type,
   }: CreateNotificationParams) {
     return this.prisma.notification.create({
       data: {
@@ -24,6 +26,7 @@ export class NotificationsService {
         title,
         message,
         link,
+        type,
       },
     });
   }
