@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Filter } from 'lucide-react';
-import { TextInput as SimpleInput, Select, CheckBox, Button as SimpleButton } from '@una';
+import { TextInput as SimpleInput, Select, CheckBox, Button } from '@una';
 import {
   AssignmentCard,
   AssignmentsEmptyState,
@@ -64,7 +64,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   return (
     <div className={styles.stack}>
       <div className={styles.mobileFilterToggle}>
-        <SimpleButton
+        <Button
           type="button"
           onClick={() => setFiltersOpen(!filtersOpen)}
           variant="secondary"
@@ -75,7 +75,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
           {filtersOpen
             ? formatMessage('assignments.hideFilters')
             : formatMessage('assignments.filters')}
-        </SimpleButton>
+        </Button>
       </div>
       <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
         <SimpleInput
