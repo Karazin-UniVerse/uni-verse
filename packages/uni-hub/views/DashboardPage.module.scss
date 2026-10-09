@@ -381,9 +381,7 @@ $sidebar-collapsed-width: 88px;
   margin-bottom: var(--space-16);
 }
 
-:global([data-theme='dark']) .offlineBanner,
-:global([data-theme='universeSpace']) .offlineBanner,
-:global([data-theme='cyberpunk']) .offlineBanner {
+:global([data-color-scheme='dark']) .offlineBanner {
   color: var(--warning-light, #fbbf24);
 }
 

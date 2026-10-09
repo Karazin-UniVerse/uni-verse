@@ -6,16 +6,7 @@ import React, {
   useMemo,
   useSyncExternalStore,
 } from 'react';
-
-export const APP_THEMES = [
-  'light',
-  'dark',
-  'cyberpunk',
-  'karazinClassic',
-  'universeSpace',
-] as const;
-
-export type AppTheme = (typeof APP_THEMES)[number];
+import { APP_THEMES, THEME_COLOR_SCHEME, type AppTheme } from '@core/constants/themes';
 
 const STORAGE_KEY = 'universe-theme';
 
@@ -28,6 +19,8 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function applyTheme(theme: AppTheme) {
   const root = document.documentElement;
+
+  root.dataset.colorScheme = THEME_COLOR_SCHEME[theme];
 
   if (theme === 'light') {
     delete root.dataset.theme;

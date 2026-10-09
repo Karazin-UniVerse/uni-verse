@@ -118,10 +118,26 @@ $space-64: 64px;
   --slate-500: #5b667c;
   --slate-900: #0f172a;
 
+  /* Karazin Gold Palette */
+  --karazin-gold-100: #fbf3dc;
+  --karazin-gold-200: #f6e3ae;
+  --karazin-gold-300: #f0d283;
+  --karazin-gold-400: #e8c05f;
+  --karazin-gold-500: #e0b04a;
+  --karazin-gold-600: #c4902c;
+  --karazin-gold-700: #9a6f1d;
+
   /* Night Palette (dark themes) */
   --night-950: #0b0c10;
   --night-900: #161922;
   --night-850: #11131a;
+
+  /* Obsidian and Cream Palette (Karazin Gold theme) */
+  --obsidian-950: #0c0a10;
+  --obsidian-900: #161219;
+  --obsidian-300: #bab2c2;
+  --obsidian-200: #d0c8da;
+  --cream-50: #f6f0e2;
 
   /* Blue Palette */
   --blue-50: #edf1fe;
@@ -288,6 +304,10 @@ $space-64: 64px;
   --header-bg: var(--bg-color);
   --header-border: var(--border-color);
 
+  /* Headings follow the text color unless a theme sets its own */
+  --heading-color: var(--text-primary);
+  --heading-shadow: none;
+
   /* Cards: background value (a color or glass) and optional backdrop blur */
   --bg-card: var(--bg-surface);
   --card-backdrop: none;
@@ -332,7 +352,8 @@ $space-64: 64px;
    Dark Theme
    ----------------------------------------- */
 [data-theme='dark'],
-[data-theme='universeSpace'] {
+[data-theme='universeSpace'],
+[data-theme='karazinGold'] {
   /* Neutral Colors */
   --neutral-bg: var(--night-950);
   --neutral-surface: var(--night-900);
@@ -536,6 +557,67 @@ $space-64: 64px;
 }
 
 /* -----------------------------------------
+   Karazin Gold Theme (dark base + gold accents)
+   ----------------------------------------- */
+[data-theme='karazinGold'] {
+  --neutral-bg: var(--obsidian-950);
+  --neutral-surface: var(--obsidian-900);
+  --neutral-border: rgb(224 176 74 / 24%);
+  --neutral-text-primary: var(--cream-50);
+  --neutral-text-secondary: var(--obsidian-300);
+
+  /* Gold accent; the primary button is gold with dark text */
+  --accent-primary: var(--karazin-gold-400);
+  --accent-primary-hover: var(--karazin-gold-300);
+  --accent-primary-active: var(--karazin-gold-600);
+  --accent-text-on-primary: var(--obsidian-950);
+  --btn-primary-bg: var(--karazin-gold-500);
+  --btn-primary-hover: var(--karazin-gold-400);
+  --btn-primary-active: var(--karazin-gold-600);
+  --focus-ring-color: rgb(224 176 74 / 50%);
+
+  /* RGB color channels for alpha blending and mesh gradients */
+  --primary-rgb: 224, 176, 74;
+  --secondary-rgb: 110, 60, 200;
+  --surface-rgb: 22, 18, 25;
+  --text-primary-rgb: 246, 240, 226;
+
+  /* Mostly gold glows with a single violet accent in the top-right corner */
+  --bg-page:
+    radial-gradient(at 0% 0%, rgb(var(--primary-rgb), 0.18) 0, transparent 48%),
+    radial-gradient(at 100% 100%, rgb(var(--primary-rgb), 0.15) 0, transparent 48%),
+    radial-gradient(at 100% 0%, rgb(var(--secondary-rgb), 0.14) 0, transparent 50%),
+    radial-gradient(at 0% 100%, rgb(var(--primary-rgb), 0.08) 0, transparent 50%),
+    var(--obsidian-950);
+
+  /* Glass cards with a gold hairline and a soft gold glow */
+  --bg-card: rgb(22 18 26 / 62%);
+  --card-backdrop: blur(14px);
+  --card-border: rgb(224 176 74 / 38%);
+  --card-shadow: 0 0 24px rgb(224 176 74 / 9%);
+  --card-shadow-hover: 0 0 32px rgb(224 176 74 / 18%);
+  --header-bg: rgb(12 10 16 / 60%);
+  --sidebar-bg: rgb(12 10 16 / 78%);
+  --sidebar-border: rgb(224 176 74 / 24%);
+  --sidebar-text: var(--obsidian-200);
+  --sidebar-text-strong: var(--cream-50);
+  --sidebar-text-active: var(--karazin-gold-200);
+  --sidebar-item-active-bg: linear-gradient(90deg, rgb(224 176 74 / 30%), rgb(224 176 74 / 10%));
+  --sidebar-item-active-accent: var(--karazin-gold-400);
+
+  /* Golden headings with a soft glow */
+  --heading-color: var(--karazin-gold-300);
+  --heading-shadow: 0 0 18px rgb(224 176 74 / 35%);
+
+  /* Chart series lead with gold */
+  --chart-series-1: var(--karazin-gold-400);
+  --chart-series-2: var(--blue-400);
+  --chart-series-3: var(--green-400);
+  --chart-series-4: var(--red-400);
+  --chart-series-5: var(--purple-400);
+}
+
+/* -----------------------------------------
    Karazin Classic Theme
    ----------------------------------------- */
 [data-theme='karazinClassic'] {
@@ -549,13 +631,6 @@ $space-64: 64px;
   --karazin-gray-100: #eef2f9;
   --karazin-gray-200: #e3e8f1;
   --karazin-gray-300: #d3dbea;
-  --karazin-gold-100: #fbf3dc;
-  --karazin-gold-200: #f6e3ae;
-  --karazin-gold-300: #f0d283;
-  --karazin-gold-400: #e8c05f;
-  --karazin-gold-500: #e0b04a;
-  --karazin-gold-600: #c4902c;
-  --karazin-gold-700: #9a6f1d;
 
   /* Neutral Colors override */
   --neutral-bg: var(--white-10);
@@ -637,7 +712,8 @@ h4,
 h5,
 h6 {
   font-family: var(--font-family-heading), var(--font-family-base), sans-serif;
-  color: var(--text-primary);
+  color: var(--heading-color);
+  text-shadow: var(--heading-shadow);
 }
 
 button,

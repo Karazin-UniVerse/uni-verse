@@ -40,9 +40,7 @@
   inset: auto auto calc(100% + 8px) 0;
 }
 
-:global([data-theme='dark']) .popover,
-:global([data-theme='universeSpace']) .popover,
-:global([data-theme='cyberpunk']) .popover {
+:global([data-color-scheme='dark']) .popover {
   background: rgb(30 41 59 / 96%);
   border-color: rgb(255 255 255 / 15%);
 }
