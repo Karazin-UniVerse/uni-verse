@@ -82,7 +82,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
         <Dropdown
           width={360}
-          trigger={(triggerProps) => (
+          renderTrigger={(triggerProps) => (
             <Button
               {...triggerProps}
               type="button"
@@ -132,7 +132,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
         <Dropdown
           width={240}
-          trigger={(triggerProps) => (
+          renderTrigger={(triggerProps) => (
             <button
               {...triggerProps}
               type="button"

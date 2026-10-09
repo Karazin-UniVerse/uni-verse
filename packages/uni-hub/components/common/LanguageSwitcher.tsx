@@ -40,7 +40,7 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
       isFullWidth={variant === 'sider'}
       isPadded
       placement={placement}
-      trigger={(triggerProps, isOpen) => (
+      renderTrigger={(triggerProps, isOpen) => (
         <button
           {...triggerProps}
           type="button"

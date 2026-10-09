@@ -7,7 +7,7 @@ import type { DropdownTriggerProps } from './Dropdown.types';
 describe('UNA Dropdown Component', () => {
   it('renders only the trigger while closed', () => {
     const html = renderToString(
-      <Dropdown trigger={(triggerProps) => <button {...triggerProps}>Open</button>}>
+      <Dropdown renderTrigger={(triggerProps) => <button {...triggerProps}>Open</button>}>
         <div>Panel Content</div>
       </Dropdown>,
     );
@@ -24,7 +24,7 @@ describe('UNA Dropdown Component', () => {
 
     renderToString(
       <Dropdown
-        trigger={(triggerProps, isOpen) => {
+        renderTrigger={(triggerProps, isOpen) => {
           receivedProps = triggerProps;
           receivedIsOpen = isOpen;
 
@@ -44,7 +44,7 @@ describe('UNA Dropdown Component', () => {
       <Dropdown
         className="custom-wrapper"
         isFullWidth
-        trigger={(triggerProps) => <button {...triggerProps}>Open</button>}
+        renderTrigger={(triggerProps) => <button {...triggerProps}>Open</button>}
       >
         <div>Body</div>
       </Dropdown>,

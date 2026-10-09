@@ -8,8 +8,8 @@ export type DropdownTriggerProps = {
 };
 
 export type DropdownProps = {
-  trigger: (triggerProps: DropdownTriggerProps, isOpen: boolean) => ReactNode;
   children: ReactNode | ((close: () => void) => ReactNode);
+  renderTrigger: (triggerProps: DropdownTriggerProps, isOpen: boolean) => ReactNode;
   className?: string;
   isFullWidth?: boolean;
   isPadded?: boolean;

@@ -71,7 +71,7 @@ export const Options: Story = {
   args: {
     isPadded: true,
     placement: 'bottom-end',
-    trigger: (triggerProps, isOpen) => (
+    renderTrigger: (triggerProps, isOpen) => (
       <Button variant="secondary" aria-label="Select language" {...triggerProps}>
         <Globe size={16} />
         <ChevronDown size={14} style={{ transform: isOpen ? 'rotate(180deg)' : undefined }} />
@@ -85,7 +85,7 @@ export const FreeContent: Story = {
   args: {
     placement: 'bottom-start',
     width: 280,
-    trigger: (triggerProps) => (
+    renderTrigger: (triggerProps) => (
       <Button variant="secondary" {...triggerProps}>
         Notifications
       </Button>

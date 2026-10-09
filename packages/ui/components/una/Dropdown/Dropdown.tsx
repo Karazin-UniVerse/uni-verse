@@ -26,8 +26,8 @@ function resolvePlacement(
 }
 
 export const Dropdown: React.FC<DropdownProps> = ({
-  trigger,
   children,
+  renderTrigger,
   className,
   width,
   isFullWidth = false,
@@ -77,7 +77,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
       }}
       className={clsx(styles.dropdown, isFullWidth && styles.fullWidth, className)}
     >
-      {trigger(triggerProps, isOpen)}
+      {renderTrigger(triggerProps, isOpen)}
 
       {isOpen && (
         <div

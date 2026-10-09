@@ -43,7 +43,7 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
       <Dropdown
         isPadded
         placement={placement}
-        trigger={(triggerProps, isOpen) => (
+        renderTrigger={(triggerProps, isOpen) => (
           <button
             {...triggerProps}
             type="button"
