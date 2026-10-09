@@ -64,3 +64,4 @@ Before creating any component, decide which tier fits. If the placement is ambig
 - Services contain all business logic.
 - Inject Prisma as a service (managed through `@universe/database`).
 - Use dependency injection and keep modules highly cohesive.
+- Procedures for modules, DTOs, errors and tests: the `nestjs-patterns` skill. For Prisma schema, queries and transactions: the `prisma-patterns` skill.
