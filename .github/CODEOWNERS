@@ -26,3 +26,7 @@
 
 # End-to-End & Integration Testing
 /tests/                   @khaliggo @alnnvsk @brodion-230 @iamredl-lab @blepame
+
+# Product Requirements and Test Cases
+/docs/prd/                @brodion-230 @iamredl-lab @RiderTr @alnnvsk @blepame @l-v-s-l
+/docs/test-cases/         @brodion-230 @iamredl-lab @RiderTr @alnnvsk @blepame @l-v-s-l
