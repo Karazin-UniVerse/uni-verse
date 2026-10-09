@@ -26,7 +26,7 @@ export default meta;
 type Story = StoryObj<typeof CustomDateTime>;
 
 const InteractiveTemplate = (args: React.ComponentProps<typeof CustomDateTime>) => {
-  const [date, setDate] = useState<Date | null>(new Date());
+  const [date, setDate] = useState<Date | null>(() => new Date());
 
   return (
     <div style={{ minHeight: '400px' }}>
