@@ -360,7 +360,7 @@ const DashboardPage: React.FC = () => {
               </span>
             </div>
           )}
-          {!isMoodleLinked && (
+          {features.isMoodleIntegrationEnabled && !isMoodleLinked && (
             <output className={styles.linkMoodleBanner}>
               <div className={styles.linkMoodleBannerContent}>
                 <Link2 size={16} className={styles.linkMoodleIcon} />
@@ -400,18 +400,22 @@ const DashboardPage: React.FC = () => {
             dueUnixSec={selectedDueUnixSec}
           />
 
-          <LinkMoodleModal
-            mode={linkModalMode}
-            open={isLinkModalOpen}
-            onClose={closeLinkModal}
-            onSuccess={handleLinkSuccess}
-          />
+          {features.isMoodleIntegrationEnabled && (
+            <>
+              <LinkMoodleModal
+                mode={linkModalMode}
+                open={isLinkModalOpen}
+                onClose={closeLinkModal}
+                onSuccess={handleLinkSuccess}
+              />
 
-          <UnlinkMoodleModal
-            open={isUnlinkModalOpen}
-            onClose={closeUnlinkModal}
-            onSuccess={handleUnlinkSuccess}
-          />
+              <UnlinkMoodleModal
+                open={isUnlinkModalOpen}
+                onClose={closeUnlinkModal}
+                onSuccess={handleUnlinkSuccess}
+              />
+            </>
+          )}
 
           <GradeSimulator
             open={simulatorOpen}
