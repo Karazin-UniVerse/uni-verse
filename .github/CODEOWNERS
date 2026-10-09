@@ -21,8 +21,8 @@
 /packages/uni-hub/        @iamredl-lab @Kostik565 @Skyzary @RiderTr
 
 # Backend Services & Database
-/packages/backend/        @brodion-230 @RiderTr @Skyzary @Artebah
-/packages/database/       @brodion-230 @RiderTr @Skyzary @Artebah
+/packages/backend/        @brodion-230 @iamredl-lab @RiderTr @Skyzary @Artebah
+/packages/database/       @brodion-230 @iamredl-lab @RiderTr @Skyzary @Artebah
 
 # End-to-End & Integration Testing
 /tests/                   @khaliggo @alnnvsk @brodion-230 @iamredl-lab @blepame
