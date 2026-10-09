@@ -16,11 +16,26 @@ import {
   FindOpportunitiesDto,
 } from './dto';
 import {
+  Opportunity,
+  OpportunityApplication,
   OpportunityLifecycleState,
-  ApplicationStatus,
   OpportunityStatus,
+  ApplicationStatus,
+  Prisma,
   Role,
 } from '@universe/database';
+
+export type OpportunityWithOwner = Opportunity & {
+  owner: { id: string; name: string | null; email: string };
+};
+
+export type ApplicationWithApplicant = OpportunityApplication & {
+  applicant: { name: string | null; email: string };
+};
+
+export type ApplicationWithOpportunity = OpportunityApplication & {
+  opportunity: Opportunity;
+};
 
 export type UpdateApplicationStatusParams = {
   userId: string;
@@ -39,7 +54,10 @@ export class OpportunitiesService {
   /**
    * Create a new opportunity as a draft
    */
-  async create(userId: string, dto: CreateOpportunityDto) {
+  async create(
+    userId: string,
+    dto: CreateOpportunityDto,
+  ): Promise<Opportunity> {
     return this.prisma.opportunity.create({
       data: {
         ...dto,
@@ -53,9 +71,12 @@ export class OpportunitiesService {
    * Find all opportunities matching the query.
    * If user is not moderator, only PUBLISHED opportunities are returned.
    */
-  async findAll(query: FindOpportunitiesDto, userRole?: string) {
+  async findAll(
+    query: FindOpportunitiesDto,
+    userRole?: string,
+  ): Promise<OpportunityWithOwner[]> {
     const { paymentType, ownerId, search, status } = query;
-    const where: Record<string, unknown> = {};
+    const where: Prisma.OpportunityWhereInput = {};
 
     if (
       status &&
@@ -91,7 +112,11 @@ export class OpportunitiesService {
    * Retrieve an opportunity by ID.
    * Ensures that unpublished opportunities are only visible to their owners or moderators/admins.
    */
-  async findOne(id: string, userId?: string, userRole?: string) {
+  async findOne(
+    id: string,
+    userId?: string,
+    userRole?: string,
+  ): Promise<OpportunityWithOwner> {
     const opportunity = await this.prisma.opportunity.findUnique({
       where: { id },
       include: {
@@ -116,7 +141,11 @@ export class OpportunitiesService {
    * Update an existing opportunity.
    * If it was already published, it is reverted to READY_FOR_REVIEW to prevent bypassing moderation.
    */
-  async update(userId: string, id: string, dto: UpdateOpportunityDto) {
+  async update(
+    userId: string,
+    id: string,
+    dto: UpdateOpportunityDto,
+  ): Promise<Opportunity> {
     const opportunity = await this.findOne(id, userId);
 
     if (opportunity.ownerId !== userId) {
@@ -125,16 +154,10 @@ export class OpportunitiesService {
       );
     }
 
-    const {
-      status: _status,
-      moderationComment: _comment,
-      ...safeDto
-    } = dto as Record<string, unknown>;
-    const data: Record<string, unknown> = { ...safeDto };
-
-    if (opportunity.status === OpportunityStatus.PUBLISHED) {
-      data.status = OpportunityStatus.READY_FOR_REVIEW;
-    }
+    const data: Prisma.OpportunityUpdateInput =
+      opportunity.status === OpportunityStatus.PUBLISHED
+        ? { ...dto, status: OpportunityStatus.READY_FOR_REVIEW }
+        : dto;
 
     return this.prisma.opportunity.update({
       where: { id },
@@ -145,7 +168,11 @@ export class OpportunitiesService {
   /**
    * Submit an opportunity for moderation.
    */
-  async changeStatus(userId: string, id: string, status: OpportunityStatus) {
+  async changeStatus(
+    userId: string,
+    id: string,
+    status: OpportunityStatus,
+  ): Promise<Opportunity> {
     const opportunity = await this.findOne(id, userId);
 
     if (opportunity.ownerId !== userId)
@@ -179,7 +206,7 @@ export class OpportunitiesService {
     userId: string,
     id: string,
     lifecycleState: OpportunityLifecycleState,
-  ) {
+  ): Promise<Opportunity> {
     const opportunity = await this.findOne(id, userId);
 
     if (opportunity.ownerId !== userId)
@@ -194,7 +221,10 @@ export class OpportunitiesService {
   /**
    * Retrieve all applications for a specific opportunity.
    */
-  async getOpportunityApplications(userId: string, id: string) {
+  async getOpportunityApplications(
+    userId: string,
+    id: string,
+  ): Promise<ApplicationWithApplicant[]> {
     const opportunity = await this.findOne(id, userId);
 
     if (opportunity.ownerId !== userId)
@@ -215,7 +245,7 @@ export class OpportunitiesService {
     applicationId,
     status,
     ownerComment,
-  }: UpdateApplicationStatusParams) {
+  }: UpdateApplicationStatusParams): Promise<OpportunityApplication> {
     const app = await this.prisma.opportunityApplication.findUnique({
       where: { id: applicationId },
       include: { opportunity: true },
@@ -264,7 +294,11 @@ export class OpportunitiesService {
   /**
    * Apply to an opportunity.
    */
-  async apply(userId: string, id: string, dto: ApplyOpportunityDto) {
+  async apply(
+    userId: string,
+    id: string,
+    dto: ApplyOpportunityDto,
+  ): Promise<OpportunityApplication> {
     const opportunity = await this.findOne(id, userId);
 
     if (opportunity.status !== OpportunityStatus.PUBLISHED) {
@@ -284,7 +318,7 @@ export class OpportunitiesService {
     });
 
     if (existing) {
-      throw new BadRequestException('Already applied to this opportunity');
+      throw new ConflictException('Already applied to this opportunity');
     }
 
     let app;
@@ -328,7 +362,10 @@ export class OpportunitiesService {
   /**
    * Withdraw an application.
    */
-  async withdrawApplication(userId: string, applicationId: string) {
+  async withdrawApplication(
+    userId: string,
+    applicationId: string,
+  ): Promise<OpportunityApplication> {
     const app = await this.prisma.opportunityApplication.findUnique({
       where: { id: applicationId },
     });
@@ -353,7 +390,9 @@ export class OpportunitiesService {
   /**
    * Retrieve all applications submitted by a user.
    */
-  async getMyApplications(userId: string) {
+  async getMyApplications(
+    userId: string,
+  ): Promise<ApplicationWithOpportunity[]> {
     return this.prisma.opportunityApplication.findMany({
       where: { applicantId: userId },
       include: { opportunity: true },
@@ -364,7 +403,7 @@ export class OpportunitiesService {
   /**
    * Retrieve all opportunities owned by a user.
    */
-  async getMyOpportunities(userId: string) {
+  async getMyOpportunities(userId: string): Promise<Opportunity[]> {
     return this.prisma.opportunity.findMany({
       where: { ownerId: userId },
       orderBy: { createdAt: 'desc' },
@@ -374,7 +413,11 @@ export class OpportunitiesService {
   /**
    * Moderate an opportunity. Enforces real-time role check from the database.
    */
-  async moderate(userId: string, id: string, dto: ModerateOpportunityDto) {
+  async moderate(
+    userId: string,
+    id: string,
+    dto: ModerateOpportunityDto,
+  ): Promise<Opportunity> {
     // Real-time role check to prevent using cached demoted admin tokens
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 

@@ -707,7 +707,7 @@ describe('OpportunitiesService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('throws BadRequestException if already applied', async () => {
+    it('throws ConflictException if already applied', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
         status: 'PUBLISHED',
@@ -722,7 +722,7 @@ describe('OpportunitiesService', () => {
           applicantName: 'Іван',
           contactInfo: 'ivan@karazin.ua',
         }),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(ConflictException);
     });
 
     it('creates application and sends notification to owner', async () => {
