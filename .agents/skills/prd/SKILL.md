@@ -16,7 +16,7 @@ Pick the mode from the request. Ask when it is unclear.
 ### From an idea or sources (`origin: idea`)
 
 1. Run shared procedure steps 1-6.
-2. Turn the input into candidate requirements. A short informal list (for example ten one-line improvements) becomes one candidate per line. Do not guess missing criteria; ask about them.
+2. Turn the input into candidate requirements. When the user gives both sources and code, the sources are the basis; use the code for Intersections and risks only, and do not copy rules from it into requirements (behaviour that exists only in the code is a `docs-code-sync` finding). A short informal list (for example ten one-line improvements) becomes one candidate per line. Do not guess missing criteria; ask about them.
 3. Ask only about gaps that block a checkable acceptance criterion: the goal, the scope, who the role is, what "done" looks like. Two or three questions at a time. Propose a priority for each requirement and ask the user to confirm it.
 4. Choose the feature code and file name, propose them to the user, and write the file with `status: draft`.
 
@@ -39,6 +39,7 @@ Before presenting, run the independent review (shared procedure step 7) with thi
 
 - every acceptance criterion is specific and can be checked without interpretation;
 - no two requirements contradict each other;
+- every requirement traces to a source the user gave, or to a clearly implied reading of it; nothing is invented, and in idea mode nothing is copied from the code;
 - the scope says what is out;
 - Intersections match the code and the other documents (verified by search, not from memory);
 - security and privacy risks and edge cases are raised in Requirements or Open questions; for example, messages that reveal whether an account exists are flagged with a safer alternative, not copied as a requirement;

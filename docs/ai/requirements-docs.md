@@ -26,7 +26,7 @@ Sections, in this order. Omit a section that has nothing to say.
 
 1. **Goal**: one to three sentences, the problem and the outcome.
 2. **Scope**: what is in and what is out.
-3. **Requirements**: each `REQ-…` has a role-based statement, a priority (`must`, `should`, `could`) and numbered acceptance criteria that can be checked.
+3. **Requirements**: each `REQ-…` has a role-based statement, a priority (`must`, `should`, `could`) and numbered acceptance criteria that can be checked. Separate requirements with a horizontal rule (`---`).
 4. **Non-functional**: i18n (uk and en), accessibility, performance, security; only when relevant.
 5. **Intersections**: neighbouring features, shared types and APIs, related documents.
 6. **Open questions**: ambiguities, risks, suspected defects.
@@ -90,6 +90,7 @@ One file per feature. It starts with `# Test cases: <feature name>` and a line `
 - `automated-at` is a test path, filled only when a test containing the `TC-` ID exists; otherwise a dash. Omit `preconditions` when there are none.
 - A case added by the skill on its own initiative carries `- proposed: yes` until the team confirms it.
 - A final section `Intersections` lists cases that exercise neighbouring features; omit it when there are none.
+- Separate cases with a horizontal rule (`---`), including before the `Intersections` section.
 - There is no coverage matrix in the file; `docs-code-sync` computes it.
 
 ## Discrepancy register
@@ -104,7 +105,7 @@ One file per feature. It starts with `# Test cases: <feature name>` and a line `
 | D-01 | REQ-OPP-01.1 lists only published | the list also shows archived | `packages/backend/opportunities/opportunities.service.ts:88` | implementation-task |          |
 ```
 
-`Proposed resolution` and `Decision` are one of `update-doc`, `implementation-task`, `leave`; for `leave`, write the reason after it in `Decision` (`leave: archived items are intended`). Task text drafted for `implementation-task` rows goes in a "Task drafts" section below the table: a heading `D-NN: <title>`, then `What`, `Where` and `Satisfies` lines (a criterion or case ID). It is written for the Notion Project Dashboard and is not created there unless the user asks.
+`Proposed resolution` and `Decision` are one of `update-doc`, `implementation-task`, `leave`; for `leave`, write the reason after it in `Decision` (`leave: archived items are intended`). Task text drafted for `implementation-task` rows goes in a "Task drafts" section below the table: one heading per task (`Task N: <title>`), then `Closes` (the rows), `What`, `Where` and `Satisfies` (criterion and case IDs) lines, and an optional `After` line for a dependency. Rows that belong together are one task. It is written for the Notion Project Dashboard and is not created there unless the user asks.
 
 ## Shared procedure
 

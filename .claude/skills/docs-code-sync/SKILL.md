@@ -13,12 +13,14 @@ Read `docs/ai/requirements-docs.md` first. It defines the register format and th
 
 1. Identify the project and feature. Find `docs/prd/<project>/<feature>.md` and `docs/test-cases/<project>/<feature>.md`. If one is missing, say so and offer the `prd` or `test-cases` skill; compare what exists.
 2. Run shared procedure steps 2-5 to learn the code paths and tests that belong to the feature. If the code paths are not clear, ask.
-3. Compare. Record a row for each mismatch of these kinds:
+3. Compare what the user sees as well as the backend: check that data the backend produces is actually shown in the interface, and read the interface code for each criterion. Record a row for each mismatch of these kinds:
    - an acceptance criterion with no test case;
    - a case with `verification` other than `manual` and no test (`automated-at` is a dash, or the path does not exist);
    - a test that cites a `TC-` ID that is in no document;
    - behaviour in the code that no document describes;
    - a document and the code that say different things.
+
+   When no case has a test yet, write one row for the second kind instead of one per case.
 4. Write `docs/discrepancies/<project>/<feature>.md` in the register format, one row per mismatch. The proposed resolution is a suggestion backed by the evidence: when asking, name the other two options and what each would change.
 5. Run the independent review (shared procedure step 7) with the checklist below, then fix its findings.
 6. Ask the user about the rows, one by one or grouped, and record each answer in `Decision`. Never decide for the user.
