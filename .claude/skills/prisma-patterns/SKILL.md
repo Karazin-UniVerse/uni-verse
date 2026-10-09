@@ -42,7 +42,7 @@ Rely on the database constraint instead of check-then-insert: `@@unique([applica
 
 ## Traps
 
-**Returning rows from bulk writes.** For bulk updates that need to return the modified records, use `updateManyAndReturn()` (supported on PostgreSQL in Prisma 7); it preserves the original filter and avoids race conditions. Plain `updateMany` and `deleteMany` return only `{ count }`. If you need rows affected by `deleteMany`, read them first using the exact same `where` filter inside an interactive transaction before deleting. `notifications.service.ts` uses `updateMany`, so keep this in mind when changing it.
+**Returning rows from bulk writes.** For bulk updates that need to return modified records, use `updateManyAndReturn()` (supported on PostgreSQL in Prisma 7); it executes a single `UPDATE ... RETURNING` query, preserving the original filter and avoiding race conditions. Plain `updateMany` and `deleteMany` return only `{ count }`. If you need rows affected by `deleteMany`, wrap the pre-read and `deleteMany` in an interactive transaction with `RepeatableRead` or `Serializable` isolation (or use row-level locking) so concurrent writes cannot alter the set between reading and deleting. `notifications.service.ts` uses `updateMany`, so keep this in mind when changing it.
 
 **`@updatedAt` is applied by Prisma Client, not by the database.** The column has no database default or trigger, so `$executeRaw` / `$queryRaw` updates leave it unchanged; set `"updatedAt" = now()` in the SQL yourself. Prisma sets it for its own write methods when you do not supply a value, and an empty `data` object leaves it unchanged.
 

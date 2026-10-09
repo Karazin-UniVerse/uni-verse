@@ -15,7 +15,7 @@ Ensure work happens in an isolated workspace. Prefer your platform's native work
 
 ## Step 0: Detect Existing Isolation
 
-**Before creating anything, check if you are already in an isolated workspace.**
+**Before creating anything, check if you are already in an isolated workspace, or if a worktree for the task already exists.**
 
 ```bash
 GIT_DIR=$(cd "$(git rev-parse --git-dir)" 2>/dev/null && pwd -P)
@@ -36,7 +36,21 @@ Report with branch state:
 - On a branch: "Already in isolated workspace at `<path>` on branch `<name>`."
 - Detached HEAD: "Already in isolated workspace at `<path>` (detached HEAD, externally managed). Branch creation needed at finish time."
 
-**If `GIT_DIR == GIT_COMMON` (or in a submodule):** You are in a normal repo checkout.
+**Check for an existing worktree matching the task:** If you are in the main checkout (`GIT_DIR == GIT_COMMON`), search existing worktrees for the requested task branch before prompting or creating a new one:
+
+```bash
+git worktree list
+```
+
+If an existing worktree is already on the target task branch, switch to its directory and reuse it instead of creating another worktree:
+
+```bash
+cd "<existing-worktree-path>"
+```
+
+Then skip to Step 2 (Project Setup).
+
+**If no existing worktree matches:** You are in a normal repo checkout.
 
 Has the user already indicated their worktree preference in your instructions? If not, ask for consent before creating a worktree:
 
@@ -54,7 +68,7 @@ The user has asked for an isolated workspace (Step 0 consent). Do you already ha
 
 Native tools handle directory placement, branch creation, and cleanup automatically. Using `git worktree add` when you have a native tool creates phantom state your harness can't see or manage.
 
-Pull requests target `develop`, so the new branch must start from `origin/develop`. A native tool may base the branch on another ref: after creating it, compare `git rev-parse HEAD` with `git rev-parse origin/develop`, and if they differ, recreate the branch from `origin/develop` before any work. Name the branch with a prefix from [workflow](../../../docs/ai/workflow.md#branches-commits-pull-requests) (`feature/`, `fix/`, `chore/`).
+Pull requests target `develop`, so the new branch must start from `origin/develop`. A native tool may base the branch on another ref: after creating it, run `git fetch origin develop`, then compare `git rev-parse HEAD` with `git rev-parse origin/develop`. If they differ, recreate the branch from `origin/develop` before any work. Name the branch with a prefix from [workflow](../../../docs/ai/workflow.md#branches-commits-pull-requests) (`feature/`, `fix/`, `refactor/`, `chore/`, `hotfix/`).
 
 Only proceed to Step 1b if you have no native worktree tool available.
 
@@ -131,6 +145,7 @@ Ready to implement <feature-name>
 | Situation | Action |
 |-----------|--------|
 | Already in linked worktree | Skip creation (Step 0) |
+| Matching worktree exists for task | Switch to it and reuse (Step 0) |
 | In a submodule | Treat as normal repo (Step 0 guard) |
 | Native worktree tool available | Use it (Step 1a) |
 | No native tool | Git worktree fallback (Step 1b) |
