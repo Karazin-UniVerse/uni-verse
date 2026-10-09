@@ -4,7 +4,8 @@ import React, { useMemo, useState } from 'react';
 import { Globe, FileText, Calendar, Building2, Sparkles } from 'lucide-react';
 import { ActionCard } from '@ui';
 import type { Assignment } from '@uni-hub/types';
-import type { NavKey } from '@uni-hub/views/dashboard/constants';
+import { NAV_KEY, STUDY_VIEW } from '@uni-hub/views/dashboard/constants';
+import type { NavigateHandler } from '@uni-hub/views/dashboard/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useFeatures } from '@uni-hub/features';
 import { DeanContactModal } from './DeanContactModal';
@@ -13,7 +14,7 @@ import styles from './QuickActions.module.scss';
 
 export interface QuickActionsProps {
   assignments: Assignment[];
-  onNavigate: (tab: NavKey) => void;
+  onNavigate: NavigateHandler;
 }
 
 const MOODLE_URL = process.env.NEXT_PUBLIC_MOODLE_URL || 'https://moodle.universemvp.tech';
@@ -65,7 +66,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
                   : formatMessage('quickActions.allDone')
               }
               cardTitle={formatMessage('quickActions.assignmentsTitle')}
-              onClick={() => onNavigate('assignments')}
+              onClick={() => onNavigate(NAV_KEY.Study, STUDY_VIEW.Assignments)}
             />
           )}
 
@@ -76,7 +77,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
               title={formatMessage('quickActions.schedule')}
               description={formatMessage('quickActions.scheduleDescription')}
               cardTitle={formatMessage('quickActions.scheduleTitle')}
-              onClick={() => onNavigate('schedule')}
+              onClick={() => onNavigate(NAV_KEY.Schedule)}
             />
           )}
 
@@ -100,7 +101,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ assignments, onNavig
               badgeTone="info"
               description={formatMessage('quickActions.opportunitiesDescription')}
               cardTitle={formatMessage('quickActions.opportunitiesTitle')}
-              onClick={() => onNavigate('opportunities')}
+              onClick={() => onNavigate(NAV_KEY.Opportunities)}
             />
           )}
         </div>

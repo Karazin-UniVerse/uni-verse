@@ -4,7 +4,8 @@ import React from 'react';
 import { Video, ExternalLink } from 'lucide-react';
 import { Empty } from '@una';
 import type { MoodleEvent, Assignment } from '@uni-hub/types';
-import type { NavKey } from '../constants';
+import { NAV_KEY, STUDY_VIEW } from '../constants';
+import type { NavigateHandler } from '../types';
 import { extractMeetingUrl } from './helpers';
 import { stripHtml } from '../utils';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -13,7 +14,7 @@ import styles from '@uni-hub/views/DashboardPage.module.scss';
 export interface UpcomingEventsListProps {
   events: MoodleEvent[];
   assignments: Assignment[];
-  onNavigate: (tab: NavKey) => void;
+  onNavigate: NavigateHandler;
 }
 
 export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
@@ -74,7 +75,7 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
             key={assignment.id}
             type="button"
             className={`${styles.listItem} ${styles.assignmentItemClickable}`}
-            onClick={() => onNavigate('assignments')}
+            onClick={() => onNavigate(NAV_KEY.Study, STUDY_VIEW.Assignments)}
             style={{ animationDelay: `${index * 40}ms` }}
             title={formatMessage('recentGrades.viewAssignment', {
               name: assignment.name,

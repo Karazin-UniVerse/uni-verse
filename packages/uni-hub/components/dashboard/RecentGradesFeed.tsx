@@ -5,14 +5,15 @@ import { Award } from 'lucide-react';
 import { Empty, Button } from '@una';
 import { GradeFeedItem } from '@ui';
 import type { Assignment } from '@uni-hub/types';
-import type { NavKey } from '@uni-hub/views/dashboard/constants';
+import { NAV_KEY, STUDY_VIEW } from '@uni-hub/views/dashboard/constants';
+import type { NavigateHandler } from '@uni-hub/views/dashboard/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { getScoreToneClass, formatRecentGradeDate } from './helpers';
 import styles from './RecentGradesFeed.module.scss';
 
 export interface RecentGradesFeedProps {
   assignments: Assignment[];
-  onNavigate: (tab: NavKey) => void;
+  onNavigate: NavigateHandler;
   maxItems?: number;
 }
 
@@ -56,7 +57,7 @@ export const RecentGradesFeed: React.FC<RecentGradesFeedProps> = ({
           variant="secondary"
           size="small"
           isTransparent
-          onClick={() => onNavigate('grades')}
+          onClick={() => onNavigate(NAV_KEY.Study, STUDY_VIEW.Grades)}
           title={formatMessage('recentGrades.allGradesTitle')}
         >
           {formatMessage('recentGrades.allGrades')}
@@ -85,7 +86,7 @@ export const RecentGradesFeed: React.FC<RecentGradesFeedProps> = ({
                 titleTooltip={formatMessage('recentGrades.viewAssignment', {
                   name: assignment.name,
                 })}
-                onClick={() => onNavigate('assignments')}
+                onClick={() => onNavigate(NAV_KEY.Study, STUDY_VIEW.Assignments)}
               />
             );
           })}

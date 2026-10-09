@@ -59,21 +59,17 @@ export const en = {
   'theme.karazinGold': 'Karazin Gold',
   'theme.select': 'Theme selection',
 
-  // Navigation (short & full)
-  'nav.overview': 'Overview',
-  'nav.overview.full': 'Student Card / Overview',
-  'nav.courses': 'Courses',
-  'nav.courses.full': 'Study Plan',
-  'nav.assignments': 'Assignments',
-  'nav.assignments.full': 'Assignments',
+  // Navigation
+  'nav.overview': 'Wall',
+  'nav.study': 'My Courses',
   'nav.schedule': 'Schedule',
-  'nav.schedule.full': 'Class Schedule',
-  'nav.grades': 'Grades',
-  'nav.grades.full': 'Gradebook & Scores',
   'nav.connectMoodle': 'Connect Moodle',
-  'nav.connectMoodle.full': 'Connect Moodle LMS Account',
   'nav.opportunities': 'Opportunities',
-  'nav.opportunities.full': 'Opportunities Platform',
+
+  // Study views
+  'study.views.subjects': 'Subjects',
+  'study.views.grades': 'Grades',
+  'study.views.assignments': 'Assignments',
 
   // Sidebar & Header
   'sidebar.logout': 'Log out',

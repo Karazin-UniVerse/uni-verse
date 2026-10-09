@@ -3,7 +3,7 @@
 import React from 'react';
 import { Plus, Briefcase, ShieldCheck, Users, FileText } from 'lucide-react';
 import { Button } from '@una';
-import { ConfirmModal } from '@universe/ui';
+import { ConfirmModal, SegmentedControl, type SegmentedControlItem } from '@universe/ui';
 import { ROLE } from '@core/constants/roles';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -19,6 +19,7 @@ import {
   ApplicantsModal,
   ModerationRejectModal,
   OPPORTUNITY_SUB_TAB,
+  type OpportunitySubTab,
 } from './opportunities';
 import { useApplicantActions } from './opportunities/useApplicantActions';
 import { useApplicants } from './opportunities/useApplicants';
@@ -49,62 +50,45 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
   });
   const moderation = useModeration(data.moderationQueue.setItems);
 
+  const segmentItems: SegmentedControlItem<OpportunitySubTab>[] = [
+    {
+      id: OPPORTUNITY_SUB_TAB.Catalog,
+      label: formatMessage('opportunities.tabs.catalog'),
+      icon: <Briefcase size={16} />,
+    },
+    {
+      id: OPPORTUNITY_SUB_TAB.MyOpportunities,
+      label: formatMessage('opportunities.tabs.myOpportunities'),
+      icon: <FileText size={16} />,
+    },
+    {
+      id: OPPORTUNITY_SUB_TAB.MyApplications,
+      label: formatMessage('opportunities.tabs.myApplications'),
+      icon: <Users size={16} />,
+    },
+    ...(isModerator
+      ? [
+          {
+            id: OPPORTUNITY_SUB_TAB.Moderation,
+            label: formatMessage('opportunities.tabs.moderation'),
+            icon: <ShieldCheck size={16} />,
+            badge: data.moderationQueue.items.length,
+          },
+        ]
+      : []),
+  ];
+
   return (
     <div className={styles.container}>
       {/* Top Segmented Navigation & Action */}
       <div className={styles.topBar}>
-        <div className={styles.segmentedControl} role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeSubTab === OPPORTUNITY_SUB_TAB.Catalog}
-            aria-controls="panel-catalog"
-            className={`${styles.segmentItem} ${activeSubTab === OPPORTUNITY_SUB_TAB.Catalog ? styles.activeSegment : ''}`}
-            onClick={() => setActiveSubTab(OPPORTUNITY_SUB_TAB.Catalog)}
-          >
-            <Briefcase size={16} />
-            {formatMessage('opportunities.tabs.catalog')}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeSubTab === OPPORTUNITY_SUB_TAB.MyOpportunities}
-            aria-controls="panel-my-opportunities"
-            className={`${styles.segmentItem} ${activeSubTab === OPPORTUNITY_SUB_TAB.MyOpportunities ? styles.activeSegment : ''}`}
-            onClick={() => setActiveSubTab(OPPORTUNITY_SUB_TAB.MyOpportunities)}
-          >
-            <FileText size={16} />
-            {formatMessage('opportunities.tabs.myOpportunities')}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeSubTab === OPPORTUNITY_SUB_TAB.MyApplications}
-            aria-controls="panel-my-applications"
-            className={`${styles.segmentItem} ${activeSubTab === OPPORTUNITY_SUB_TAB.MyApplications ? styles.activeSegment : ''}`}
-            onClick={() => setActiveSubTab(OPPORTUNITY_SUB_TAB.MyApplications)}
-          >
-            <Users size={16} />
-            {formatMessage('opportunities.tabs.myApplications')}
-          </button>
-
-          {isModerator && (
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeSubTab === OPPORTUNITY_SUB_TAB.Moderation}
-              aria-controls="panel-moderation"
-              className={`${styles.segmentItem} ${activeSubTab === OPPORTUNITY_SUB_TAB.Moderation ? styles.activeSegment : ''}`}
-              onClick={() => setActiveSubTab(OPPORTUNITY_SUB_TAB.Moderation)}
-            >
-              <ShieldCheck size={16} />
-              {formatMessage('opportunities.tabs.moderation')}
-              {data.moderationQueue.items.length > 0 && (
-                <span className={styles.badgePill}>{data.moderationQueue.items.length}</span>
-              )}
-            </button>
-          )}
-        </div>
+        <SegmentedControl
+          items={segmentItems}
+          selectedId={activeSubTab}
+          panelIdPrefix="panel"
+          ariaLabel={formatMessage('opportunities.title')}
+          onSelect={setActiveSubTab}
+        />
 
         <div className={styles.createBtnWrapper}>
           <Button

@@ -17,13 +17,17 @@ import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { useFeatures } from '@uni-hub/features';
 import {
   NAV_KEY,
+  STUDY_VIEW,
   type NavKey,
+  type StudyView,
   NAV_ITEMS,
   isNavKey,
+  isStudyView,
   fallbackStudentProfile,
   DashboardSidebar,
   DashboardHeader,
   OverviewTab,
+  StudyTab,
   CoursesTab,
   GradesTab,
   AssignmentsTab,
@@ -38,13 +42,11 @@ import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './DashboardPage.module.scss';
 
 const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
-  [NAV_KEY.Overview]: 'nav.overview.full',
-  [NAV_KEY.Courses]: 'nav.courses.full',
-  [NAV_KEY.Grades]: 'nav.grades.full',
-  [NAV_KEY.Schedule]: 'nav.schedule.full',
-  [NAV_KEY.Assignments]: 'nav.assignments.full',
-  [NAV_KEY.Opportunities]: 'nav.opportunities.full',
-  [NAV_KEY.ConnectMoodle]: 'nav.connectMoodle.full',
+  [NAV_KEY.Overview]: 'nav.overview',
+  [NAV_KEY.Study]: 'nav.study',
+  [NAV_KEY.Schedule]: 'nav.schedule',
+  [NAV_KEY.Opportunities]: 'nav.opportunities',
+  [NAV_KEY.ConnectMoodle]: 'nav.connectMoodle',
 };
 
 const DashboardPage: React.FC = () => {
@@ -59,6 +61,7 @@ const DashboardPage: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeKey, setActiveKey] = useState<NavKey>(NAV_KEY.Overview);
+  const [studyView, setStudyView] = useState<StudyView>(STUDY_VIEW.Subjects);
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();
 
@@ -157,6 +160,7 @@ const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     const requestedTab = searchParams.get('tab');
+    const requestedStudyView = searchParams.get('view');
 
     if (requestedTab && isNavKey(requestedTab)) {
       if (requestedTab === NAV_KEY.ConnectMoodle && isMoodleLinked) {
@@ -169,6 +173,14 @@ const DashboardPage: React.FC = () => {
 
       if (!targetItem?.featureFlag || features[targetItem.featureFlag]) {
         setActiveKey(requestedTab);
+
+        if (
+          requestedTab === NAV_KEY.Study &&
+          requestedStudyView &&
+          isStudyView(requestedStudyView)
+        ) {
+          setStudyView(requestedStudyView);
+        }
       } else {
         setActiveKey(NAV_KEY.Overview);
       }
@@ -213,37 +225,21 @@ const DashboardPage: React.FC = () => {
     router.push('/login');
   };
 
-  const renderActiveContent = () => {
-    const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
-    let effectiveKey: NavKey =
-      activeItem?.featureFlag && !features[activeItem.featureFlag] ? NAV_KEY.Overview : activeKey;
+  const navigateTo = (key: NavKey, view?: StudyView) => {
+    setActiveKey(key);
 
-    if (effectiveKey === NAV_KEY.ConnectMoodle && isMoodleLinked) {
-      effectiveKey = NAV_KEY.Overview;
+    if (view) {
+      setStudyView(view);
     }
+  };
 
-    switch (effectiveKey) {
-      case NAV_KEY.Overview:
-        return (
-          <OverviewTab
-            courses={data.courses}
-            events={data.events}
-            assignments={data.assignments}
-            grades={data.grades}
-            statistics={data.statistics}
-            activeStudentProfile={activeStudentProfile}
-            loading={loading}
-            onNavigate={setActiveKey}
-            isMoodleLinked={isMoodleLinked}
-          />
-        );
-      case NAV_KEY.Courses:
+  const renderStudyView = () => {
+    switch (studyView) {
+      case STUDY_VIEW.Subjects:
         return <CoursesTab courses={data.courses} soundEnabled={soundEnabled} />;
-      case NAV_KEY.Grades:
+      case STUDY_VIEW.Grades:
         return <GradesTab grades={data.grades} onOpenSimulator={() => setSimulatorOpen(true)} />;
-      case NAV_KEY.Schedule:
-        return <ScheduleView />;
-      case NAV_KEY.Assignments:
+      case STUDY_VIEW.Assignments:
         return (
           <AssignmentsTab
             assignments={data.assignments}
@@ -270,6 +266,43 @@ const DashboardPage: React.FC = () => {
             }}
           />
         );
+      default:
+        return null;
+    }
+  };
+
+  const renderActiveContent = () => {
+    const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
+    let effectiveKey: NavKey =
+      activeItem?.featureFlag && !features[activeItem.featureFlag] ? NAV_KEY.Overview : activeKey;
+
+    if (effectiveKey === NAV_KEY.ConnectMoodle && isMoodleLinked) {
+      effectiveKey = NAV_KEY.Overview;
+    }
+
+    switch (effectiveKey) {
+      case NAV_KEY.Overview:
+        return (
+          <OverviewTab
+            courses={data.courses}
+            events={data.events}
+            assignments={data.assignments}
+            grades={data.grades}
+            statistics={data.statistics}
+            activeStudentProfile={activeStudentProfile}
+            loading={loading}
+            onNavigate={navigateTo}
+            isMoodleLinked={isMoodleLinked}
+          />
+        );
+      case NAV_KEY.Study:
+        return (
+          <StudyTab view={studyView} onViewChange={setStudyView}>
+            {renderStudyView()}
+          </StudyTab>
+        );
+      case NAV_KEY.Schedule:
+        return <ScheduleView />;
       case NAV_KEY.Opportunities:
         return <OpportunitiesTab soundEnabled={soundEnabled} />;
       case NAV_KEY.ConnectMoodle:
