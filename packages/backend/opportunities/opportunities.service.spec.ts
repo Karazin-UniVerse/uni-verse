@@ -632,6 +632,47 @@ describe('OpportunitiesService', () => {
         }),
       ).rejects.toThrow(BadRequestException);
     });
+
+    it('throws BadRequestException if status is not allowed', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue({
+          id: 'app-1',
+          opportunity: { ownerId: 'owner-1', title: 'Opp' },
+        } as any);
+
+      await expect(
+        service.updateApplicationStatus({
+          userId: 'owner-1',
+          applicationId: 'app-1',
+          status: 'INVALID_STATUS' as any,
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('updates status and sends notification without comment', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue({
+          id: 'app-1',
+          applicantId: 'applicant-1',
+          opportunity: { ownerId: 'owner-1', title: 'Opp' },
+        } as any);
+      const mockUpdated = { id: 'app-1', status: 'REJECTED' };
+
+      jest
+        .spyOn(prisma.opportunityApplication, 'update')
+        .mockResolvedValue(mockUpdated as any);
+
+      const result = await service.updateApplicationStatus({
+        userId: 'owner-1',
+        applicationId: 'app-1',
+        status: 'REJECTED',
+      });
+
+      expect(result).toBe(mockUpdated);
+      expect(notificationsService.createNotification).toHaveBeenCalled();
+    });
   });
 
   describe('apply', () => {
@@ -709,6 +750,56 @@ describe('OpportunitiesService', () => {
       expect(prisma.opportunityApplication.create).toHaveBeenCalled();
       expect(result.id).toBe('app-new');
     });
+
+    it('throws ConflictException on Prisma unique constraint error P2002', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: 'opp-1',
+        title: 'Title',
+        status: 'PUBLISHED',
+        lifecycleState: 'ACTIVE',
+        ownerId: 'owner-1',
+      } as any);
+      jest
+        .spyOn(prisma.opportunityApplication, 'findFirst')
+        .mockResolvedValue(null);
+      const error = { code: 'P2002' };
+
+      jest
+        .spyOn(prisma.opportunityApplication, 'create')
+        .mockRejectedValue(error);
+
+      await expect(
+        service.apply('user-1', 'opp-1', {
+          applicantName: 'Student',
+          contactInfo: 'student@example.com',
+        } as any),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('rethrows other database errors', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: 'opp-1',
+        title: 'Title',
+        status: 'PUBLISHED',
+        lifecycleState: 'ACTIVE',
+        ownerId: 'owner-1',
+      } as any);
+      jest
+        .spyOn(prisma.opportunityApplication, 'findFirst')
+        .mockResolvedValue(null);
+      const error = new Error('Database down');
+
+      jest
+        .spyOn(prisma.opportunityApplication, 'create')
+        .mockRejectedValue(error);
+
+      await expect(
+        service.apply('user-1', 'opp-1', {
+          applicantName: 'Student',
+          contactInfo: 'student@example.com',
+        } as any),
+      ).rejects.toThrow(error);
+    });
   });
 
   describe('withdrawApplication', () => {
@@ -765,187 +856,6 @@ describe('OpportunitiesService', () => {
       const result = await service.withdrawApplication('user-1', 'app-1');
 
       expect(result.status).toBe('WITHDRAWN');
-    });
-  });
-
-  describe('updateApplicationStatus', () => {
-    it('throws NotFoundException if application not found', async () => {
-      jest
-        .spyOn(prisma.opportunityApplication, 'findUnique')
-        .mockResolvedValue(null);
-
-      await expect(
-        service.updateApplicationStatus({
-          userId: 'owner-1',
-          applicationId: 'app-1',
-          status: 'ACCEPTED',
-        }),
-      ).rejects.toThrow(NotFoundException);
-    });
-
-    it('throws ForbiddenException if user is not the opportunity owner', async () => {
-      jest
-        .spyOn(prisma.opportunityApplication, 'findUnique')
-        .mockResolvedValue({
-          id: 'app-1',
-          opportunity: { ownerId: 'other-user', title: 'Opp' },
-        } as any);
-
-      await expect(
-        service.updateApplicationStatus({
-          userId: 'owner-1',
-          applicationId: 'app-1',
-          status: 'ACCEPTED',
-        }),
-      ).rejects.toThrow(ForbiddenException);
-    });
-
-    it('throws BadRequestException if status is not allowed', async () => {
-      jest
-        .spyOn(prisma.opportunityApplication, 'findUnique')
-        .mockResolvedValue({
-          id: 'app-1',
-          opportunity: { ownerId: 'owner-1', title: 'Opp' },
-        } as any);
-
-      await expect(
-        service.updateApplicationStatus({
-          userId: 'owner-1',
-          applicationId: 'app-1',
-          status: 'INVALID_STATUS' as any,
-        }),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('updates status and sends notification with comment', async () => {
-      jest
-        .spyOn(prisma.opportunityApplication, 'findUnique')
-        .mockResolvedValue({
-          id: 'app-1',
-          applicantId: 'applicant-1',
-          opportunity: { ownerId: 'owner-1', title: 'Opp' },
-        } as any);
-      const mockUpdated = { id: 'app-1', status: 'ACCEPTED' };
-
-      jest
-        .spyOn(prisma.opportunityApplication, 'update')
-        .mockResolvedValue(mockUpdated as any);
-
-      const result = await service.updateApplicationStatus({
-        userId: 'owner-1',
-        applicationId: 'app-1',
-        status: 'ACCEPTED',
-        ownerComment: 'Welcome!',
-      });
-
-      expect(result).toBe(mockUpdated);
-      expect(notificationsService.createNotification).toHaveBeenCalled();
-    });
-
-    it('updates status and sends notification without comment', async () => {
-      jest
-        .spyOn(prisma.opportunityApplication, 'findUnique')
-        .mockResolvedValue({
-          id: 'app-1',
-          applicantId: 'applicant-1',
-          opportunity: { ownerId: 'owner-1', title: 'Opp' },
-        } as any);
-      const mockUpdated = { id: 'app-1', status: 'REJECTED' };
-
-      jest
-        .spyOn(prisma.opportunityApplication, 'update')
-        .mockResolvedValue(mockUpdated as any);
-
-      const result = await service.updateApplicationStatus({
-        userId: 'owner-1',
-        applicationId: 'app-1',
-        status: 'REJECTED',
-      });
-
-      expect(result).toBe(mockUpdated);
-      expect(notificationsService.createNotification).toHaveBeenCalled();
-    });
-  });
-
-  describe('apply', () => {
-    it('applies to opportunity and creates notification', async () => {
-      const opportunity = {
-        id: 'opp-1',
-        title: 'Title',
-        status: 'PUBLISHED',
-        lifecycleState: 'ACTIVE',
-        ownerId: 'owner-1',
-      };
-
-      jest
-        .spyOn(prisma.opportunity, 'findUnique')
-        .mockResolvedValue(opportunity as any);
-      jest
-        .spyOn(prisma.opportunityApplication, 'findFirst')
-        .mockResolvedValue(null);
-      const mockCreated = { id: 'app-1', applicantId: 'user-1' };
-
-      jest
-        .spyOn(prisma.opportunityApplication, 'create')
-        .mockResolvedValue(mockCreated as any);
-
-      const result = await service.apply('user-1', 'opp-1', {
-        applicantName: 'Student',
-        contactInfo: 'student@example.com',
-      } as any);
-
-      expect(result).toBe(mockCreated);
-      expect(notificationsService.createNotification).toHaveBeenCalled();
-    });
-
-    it('throws ConflictException on Prisma unique constraint error P2002', async () => {
-      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
-        id: 'opp-1',
-        title: 'Title',
-        status: 'PUBLISHED',
-        lifecycleState: 'ACTIVE',
-        ownerId: 'owner-1',
-      } as any);
-      jest
-        .spyOn(prisma.opportunityApplication, 'findFirst')
-        .mockResolvedValue(null);
-      const error = { code: 'P2002' };
-
-      jest
-        .spyOn(prisma.opportunityApplication, 'create')
-        .mockRejectedValue(error);
-
-      await expect(
-        service.apply('user-1', 'opp-1', {
-          applicantName: 'Student',
-          contactInfo: 'student@example.com',
-        } as any),
-      ).rejects.toThrow(ConflictException);
-    });
-
-    it('rethrows other database errors', async () => {
-      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
-        id: 'opp-1',
-        title: 'Title',
-        status: 'PUBLISHED',
-        lifecycleState: 'ACTIVE',
-        ownerId: 'owner-1',
-      } as any);
-      jest
-        .spyOn(prisma.opportunityApplication, 'findFirst')
-        .mockResolvedValue(null);
-      const error = new Error('Database down');
-
-      jest
-        .spyOn(prisma.opportunityApplication, 'create')
-        .mockRejectedValue(error);
-
-      await expect(
-        service.apply('user-1', 'opp-1', {
-          applicantName: 'Student',
-          contactInfo: 'student@example.com',
-        } as any),
-      ).rejects.toThrow(error);
     });
   });
 

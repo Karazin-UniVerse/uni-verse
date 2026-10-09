@@ -15,7 +15,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "pnpm db:push && node dist/main",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
     "test": "pnpm db:generate && node --experimental-vm-modules node_modules/jest/bin/jest.js",
