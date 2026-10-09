@@ -8,24 +8,7 @@ import type {
   Notification,
   CourseStatistics,
 } from '@uni-hub/types';
-
-export const NAV_KEY = {
-  Overview: 'overview',
-  Courses: 'courses',
-  Grades: 'grades',
-  Schedule: 'schedule',
-  Assignments: 'assignments',
-  ConnectMoodle: 'connectMoodle',
-  Opportunities: 'opportunities',
-} as const;
-
-export type NavKey = (typeof NAV_KEY)[keyof typeof NAV_KEY];
-
-export const NAV_KEYS = Object.values(NAV_KEY);
-
-const NAV_KEYS_SET: ReadonlySet<string> = new Set(NAV_KEYS);
-
-export const isNavKey = (value: string): value is NavKey => NAV_KEYS_SET.has(value);
+import type { NavKey } from './constants';
 
 export interface DashboardData {
   courses: Course[];

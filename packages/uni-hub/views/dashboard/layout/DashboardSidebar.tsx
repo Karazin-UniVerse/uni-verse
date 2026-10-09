@@ -23,7 +23,8 @@ import { useFeatures } from '@uni-hub/features';
 import type { FeatureFlags, FeatureFlagKey } from '@core/constants/features';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
-import { type DashboardSidebarProps, type NavKey, NAV_KEY } from '../types';
+import { NAV_KEY, type NavKey } from '../constants';
+import type { DashboardSidebarProps } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export interface NavItemConfig {

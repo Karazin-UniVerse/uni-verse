@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import { safeStorage } from '@uni-hub/services/api';
 import { isBrowser } from '@uni-hub/utils/browser';
 import { LinkMoodleMode } from '@uni-hub/components/auth';
-import type { NavKey } from '../types';
+import type { NavKey } from '../constants';
 
 export interface UseMoodleLinkOptions {
   activeKey?: NavKey;

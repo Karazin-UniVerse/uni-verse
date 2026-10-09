@@ -6,6 +6,7 @@ import {
   stripHtml,
   parseGradeScore,
   getExamScoreDisplay,
+  isNavKey,
 } from './utils';
 
 describe('dashboard utils', () => {
@@ -75,6 +76,24 @@ describe('dashboard utils', () => {
 
     it('returns string score for exam', () => {
       expect(getExamScoreDisplay(38, 'exam')).toBe('38');
+    });
+  });
+
+  describe('isNavKey', () => {
+    it('returns true for canonical navigation keys', () => {
+      expect(isNavKey('overview')).toBe(true);
+      expect(isNavKey('courses')).toBe(true);
+      expect(isNavKey('grades')).toBe(true);
+      expect(isNavKey('schedule')).toBe(true);
+      expect(isNavKey('assignments')).toBe(true);
+      expect(isNavKey('connectMoodle')).toBe(true);
+      expect(isNavKey('opportunities')).toBe(true);
+    });
+
+    it('returns false for unknown or invalid keys', () => {
+      expect(isNavKey('unknown')).toBe(false);
+      expect(isNavKey('')).toBe(false);
+      expect(isNavKey('Overview')).toBe(false);
     });
   });
 });

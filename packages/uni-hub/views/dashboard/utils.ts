@@ -2,6 +2,7 @@ import { CONTROL_TYPES, TRADITIONAL_GRADES } from '@core/constants/grades';
 import type { ControlType } from '@core/utils/grades';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { getGradeRawValue } from '@uni-hub/utils/grades';
+import { NAV_KEYS, type NavKey } from './constants';
 
 const CONTROL_TYPE_KEYS: Record<ControlType, TranslationKey> = {
   [CONTROL_TYPES.EXAM]: 'control.exam',
@@ -110,3 +111,7 @@ export function getExamScoreDisplay(
 
   return String(examScore);
 }
+
+const NAV_KEYS_SET: ReadonlySet<string> = new Set(NAV_KEYS);
+
+export const isNavKey = (value: string): value is NavKey => NAV_KEYS_SET.has(value);

@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
 import { FeatureToggleProvider } from '@uni-hub/features';
-import { NAV_KEY } from '../types';
+import { NAV_KEY } from '../constants';
 import type { FeatureFlags } from '@core/constants/features';
 import { NAV_ITEMS, getVisibleNavItems, DashboardSidebar } from './DashboardSidebar';
 
