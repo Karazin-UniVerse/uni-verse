@@ -1,4 +1,4 @@
-# Global codeowners
+# Global fallback (Tech Lead & Project Owner)
 * @brodion-230 @iamredl-lab @RiderTr
 
 # CI/CD, Workflows and System Configuration
@@ -13,8 +13,16 @@
 /sonar-project.properties @brodion-230 @iamredl-lab @RiderTr
 /.oxlintrc.json           @brodion-230 @iamredl-lab @RiderTr
 
-# Monorepo packages
-/packages/backend/        @brodion-230 @Skyzary @RiderTr @iamredl-lab
-/packages/uni-hub/        @brodion-230 @iamredl-lab @RiderTr
-/packages/ui/             @RiderTr @brodion-230 @iamredl-lab
-/packages/database/       @brodion-230 @Skyzary @RiderTr @iamredl-lab
+# Core Domain & Shared Contracts
+/packages/core/           @brodion-230 @iamredl-lab @Skyzary @RiderTr @Artebah
+
+# Frontend Applications & Design System
+/packages/ui/             @Skyzary @Kostik565 @iamredl-lab @RiderTr
+/packages/uni-hub/        @iamredl-lab @Kostik565 @Skyzary @RiderTr
+
+# Backend Services & Database
+/packages/backend/        @brodion-230 @RiderTr @Skyzary @Artebah
+/packages/database/       @brodion-230 @RiderTr @Skyzary @Artebah
+
+# End-to-End & Integration Testing
+/tests/                   @khaliggo @alnnvsk @brodion-230 @iamredl-lab @blepame
