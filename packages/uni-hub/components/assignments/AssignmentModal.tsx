@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Download, ExternalLink } from 'lucide-react';
-import { Button as SimpleButton, FileInput, SimpleForm, Modal, Spinner, Tag, useToast } from '@una';
+import { Button, FileInput, Form, Modal, Spinner, Tag, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
 import type { CourseModule } from '@uni-hub/types';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
@@ -213,7 +213,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         <div className={styles.content}>
           {moodleUrl && (
             <div className={styles.moodleActionRow}>
-              <SimpleButton
+              <Button
                 isLink
                 href={moodleUrl}
                 target="_blank"
@@ -223,7 +223,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
               >
                 <ExternalLink size={14} style={{ marginRight: 6 }} />{' '}
                 {formatMessage('assignmentModal.openMoodle')}
-              </SimpleButton>
+              </Button>
             </div>
           )}
 
@@ -246,7 +246,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                   return (
                     <li key={`${file.filename}-${idx}`} className={styles.fileItem}>
                       <span>{file.filename}</span>
-                      <SimpleButton
+                      <Button
                         isLink
                         href={url}
                         target="_blank"
@@ -255,7 +255,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                         size="small"
                       >
                         <Download size={14} /> {formatMessage('assignmentModal.download')}
-                      </SimpleButton>
+                      </Button>
                     </li>
                   );
                 })}
@@ -294,7 +294,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
           {canSubmit && (
             <section>
               <h4>{formatMessage('assignmentModal.submitTitle')}</h4>
-              <SimpleForm variant="simple" action={handleSubmit} className={styles.form}>
+              <Form variant="simple" action={handleSubmit} className={styles.form}>
                 <label className={styles.field}>
                   <span>{formatMessage('assignmentModal.answerText')}</span>
                   <textarea
@@ -320,27 +320,16 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                 {formError && <p className={styles.error}>{formError}</p>}
 
                 <div className={styles.actions}>
-                  <SimpleButton
-                    type="button"
-                    variant="secondary"
-                    size="medium"
-                    onClick={onClose}
-                    disabled={submitting}
-                  >
+                  <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
                     {formatMessage('assignmentModal.cancel')}
-                  </SimpleButton>
-                  <SimpleButton
-                    type="submit"
-                    variant="primary"
-                    size="medium"
-                    disabled={submitting || uploadingFile}
-                  >
+                  </Button>
+                  <Button type="submit" variant="primary" disabled={submitting || uploadingFile}>
                     {uploadingFile
                       ? formatMessage('assignmentModal.uploading')
                       : formatMessage('assignmentModal.submit')}
-                  </SimpleButton>
+                  </Button>
                 </div>
-              </SimpleForm>
+              </Form>
             </section>
           )}
         </div>

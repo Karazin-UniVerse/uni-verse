@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { User, Lock, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Button, SimpleForm, useToast } from '@una';
+import { Button, Form, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -173,7 +173,7 @@ const LoginPage: React.FC = () => {
       </div>
       <div className={styles.center}>
         {isLinkingMoodle ? (
-          <SimpleForm className={styles.card} action={handleLinkMoodle}>
+          <Form className={styles.card} action={handleLinkMoodle}>
             <div className={styles.brand}>
               <h1>{formatMessage('login.title')}</h1>
               <p>{formatMessage('login.linkMoodleTitle')}</p>
@@ -246,9 +246,9 @@ const LoginPage: React.FC = () => {
                 {formatMessage('login.linkMoodleBack')}
               </Button>
             </div>
-          </SimpleForm>
+          </Form>
         ) : (
-          <SimpleForm className={styles.card} action={handleLogin}>
+          <Form className={styles.card} action={handleLogin}>
             <div className={styles.brand}>
               <h1>{formatMessage('login.title')}</h1>
               <p>{formatMessage('login.subtitle')}</p>
@@ -325,7 +325,7 @@ const LoginPage: React.FC = () => {
                 {loading ? formatMessage('login.loading') : formatMessage('login.submit')}
               </Button>
             </motion.div>
-          </SimpleForm>
+          </Form>
         )}
       </div>
     </div>

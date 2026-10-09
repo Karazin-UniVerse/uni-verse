@@ -13,7 +13,7 @@ import {
   ArrowLeft,
   ChevronDown,
 } from 'lucide-react';
-import { Button as SimpleButton, Spinner, Empty, useToast } from '@una';
+import { Button, Spinner, Empty, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
@@ -191,15 +191,14 @@ const CourseContents: React.FC = () => {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <SimpleButton
+        <Button
           type="button"
           variant="secondary"
-          size="medium"
           isTransparent
           onClick={() => router.push('/?tab=courses')}
         >
           <ArrowLeft size={16} /> {formatMessage('courseContents.back')}
-        </SimpleButton>
+        </Button>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
           <LanguageSwitcher />

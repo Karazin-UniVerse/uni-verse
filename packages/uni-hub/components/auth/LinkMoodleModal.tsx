@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { User, Lock } from 'lucide-react';
-import { Modal, Button, SimpleForm, useToast } from '@una';
+import { Modal, Button, Form, useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi, getErrorMessage } from '@uni-hub/services/api';
 import { AuthField } from './AuthField';
@@ -74,7 +74,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
       closeLabel={formatMessage('modal.close')}
       width={400}
     >
-      <SimpleForm variant="simple" action={handleLink} className={styles.modalContent}>
+      <Form variant="simple" action={handleLink} className={styles.modalContent}>
         <p className={styles.description}>{hint}</p>
 
         <AuthField
@@ -110,7 +110,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
             {loading ? formatMessage('login.linkMoodleLoading') : submitLabel}
           </Button>
         </div>
-      </SimpleForm>
+      </Form>
     </Modal>
   );
 };
