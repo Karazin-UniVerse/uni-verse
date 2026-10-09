@@ -58,6 +58,24 @@ describe('AtGuard', () => {
     expect(superCanActivateSpy).toHaveBeenCalledWith(context);
   });
 
+  it('should delegate to super.canActivate if public metadata is undefined', () => {
+    const context = {
+      getHandler: jest.fn(),
+      getClass: jest.fn(),
+      switchToHttp: jest.fn(),
+    } as unknown as ExecutionContext;
+
+    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(undefined);
+    const superCanActivateSpy = jest
+      .spyOn(AuthGuard('jwt').prototype, 'canActivate')
+      .mockReturnValue(false);
+
+    const result = guard.canActivate(context);
+
+    expect(result).toBe(false);
+    expect(superCanActivateSpy).toHaveBeenCalledWith(context);
+  });
+
   it('should delegate to super.canActivate on public route if authorization header is present', () => {
     const mockHandler = () => 'test-handler';
     const mockClass = class TestController {};
@@ -133,6 +151,34 @@ describe('AtGuard', () => {
       jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(false);
 
       expect(() => guard.handleRequest(null, null, null, context)).toThrow();
+    });
+
+    it('throws err if err is an Error on protected route', () => {
+      const context = {
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+      } as unknown as ExecutionContext;
+
+      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(false);
+
+      const error = new Error('Custom error');
+
+      expect(() => guard.handleRequest(error, null, null, context)).toThrow(
+        error,
+      );
+    });
+
+    it('throws UnauthorizedException if err is not an Error instance on protected route', () => {
+      const context = {
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+      } as unknown as ExecutionContext;
+
+      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(false);
+
+      expect(() =>
+        guard.handleRequest('string error', null, null, context),
+      ).toThrow();
     });
   });
 });

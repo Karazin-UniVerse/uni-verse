@@ -60,6 +60,33 @@ describe('NotificationsService', () => {
         data: dto,
       });
     });
+
+    it('should create a notification with type', async () => {
+      const dto = {
+        userId: '1',
+        title: 'Test',
+        message: 'Test Msg',
+        type: 'OPPORTUNITY_MODERATED',
+      };
+      const mockNotif = {
+        id: 'n2',
+        ...dto,
+        link: undefined,
+        isRead: false,
+        createdAt: new Date(),
+      };
+
+      jest
+        .mocked(prismaService.notification.create)
+        .mockResolvedValue(mockNotif as any);
+
+      const result = await service.createNotification(dto);
+
+      expect(result).toEqual(mockNotif);
+      expect(prismaService.notification.create).toHaveBeenCalledWith({
+        data: dto,
+      });
+    });
   });
 
   describe('getMyNotifications', () => {

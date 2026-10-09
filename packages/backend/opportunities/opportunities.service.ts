@@ -384,7 +384,11 @@ export class OpportunitiesService {
       );
     }
 
-    const opportunityToModerate = await this.findOne(id, userId, user.role);
+    const opportunityToModerate = await this.findOne(
+      id,
+      userId,
+      Role.OPPORTUNITIES_MODERATOR,
+    );
 
     if (opportunityToModerate.status !== OpportunityStatus.READY_FOR_REVIEW) {
       throw new BadRequestException(

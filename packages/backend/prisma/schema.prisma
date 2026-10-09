@@ -133,7 +133,7 @@ model OpportunityApplication {
   applicantId String
   applicant   User   @relation("Applicant", fields: [applicantId], references: [id])
 
-  comments Comment[]
+  comments    Comment[]
 
   @@unique([applicantId, opportunityId])
 }
