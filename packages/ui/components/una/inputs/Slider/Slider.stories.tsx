@@ -1,10 +1,5 @@
-<<<<<<< HEAD:packages/ui/components/una/inputs/Slider/Slider.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react';
-import { Slider } from './Slider';
-=======
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { SimpleSlider } from './SimpleSlider';
->>>>>>> origin/develop:packages/ui/components/una/inputs/SimpleSlider/SimpleSlider.stories.tsx
+import { Slider } from './Slider';
 
 const meta: Meta<typeof Slider> = {
   title: 'Una/Inputs/Slider',
