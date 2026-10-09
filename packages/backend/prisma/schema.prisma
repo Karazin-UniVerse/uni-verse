@@ -13,22 +13,27 @@ enum Role {
   STUDENT
   INSTRUCTOR
   ADMIN
+  OPPORTUNITIES_MODERATOR
 }
 
 model User {
-  id           String       @id @default(uuid())
-  email        String       @unique
+  id           String   @id @default(uuid())
+  email        String   @unique
   name         String?
   password     String
-  role         Role         @default(STUDENT)
+  role         Role     @default(STUDENT)
   token        String?
   moodleId     String?
   refreshToken String?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  courses      Course[]     @relation("CourseInstructors")
-  enrollments  Enrollment[]
+  courses                 Course[]                 @relation("CourseInstructors")
+  enrollments             Enrollment[]
+  ownedOpportunities      Opportunity[]            @relation("OpportunityOwner")
+  opportunityApplications OpportunityApplication[] @relation("Applicant")
+  notifications           Notification[]           @relation("UserNotifications")
+  comments                Comment[]
 }
 
 model Course {
@@ -40,9 +45,9 @@ model Course {
   updatedAt   DateTime @updatedAt
 
   instructorId String
-  instructor   User    @relation("CourseInstructors", fields: [instructorId], references: [id])
-  
-  enrollments  Enrollment[]
+  instructor   User   @relation("CourseInstructors", fields: [instructorId], references: [id])
+
+  enrollments Enrollment[]
 }
 
 model Enrollment {
@@ -55,4 +60,108 @@ model Enrollment {
   course Course @relation(fields: [courseId], references: [id])
 
   @@unique([userId, courseId])
+}
+
+enum OpportunityStatus {
+  DRAFT
+  READY_FOR_REVIEW
+  REQUIRES_CHANGES
+  PUBLISHED
+  REJECTED
+}
+
+enum OpportunityLifecycleState {
+  START
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentType {
+  PAID
+  UNPAID
+}
+
+model Opportunity {
+  id                String                    @id @default(uuid())
+  title             String
+  description       String
+  ownerContactInfo  String
+  partnerInfo       String?
+  status            OpportunityStatus         @default(DRAFT)
+  lifecycleState    OpportunityLifecycleState @default(START)
+  paymentType       PaymentType               @default(UNPAID)
+  paymentDetails    String?
+  details           String?
+  moderationComment String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownerId String
+  owner   User   @relation("OpportunityOwner", fields: [ownerId], references: [id])
+
+  applications OpportunityApplication[] @relation("OpportunityToApplication")
+  comments     Comment[]
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+model OpportunityApplication {
+  id               String            @id @default(uuid())
+  applicantName    String
+  contactInfo      String
+  briefDescription String?
+  motivation       String?
+  answers          String?
+  status           ApplicationStatus @default(SUBMITTED)
+  ownerComment     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  opportunityId String
+  opportunity   Opportunity @relation("OpportunityToApplication", fields: [opportunityId], references: [id])
+
+  applicantId String
+  applicant   User   @relation("Applicant", fields: [applicantId], references: [id])
+
+  comments Comment[]
+
+  @@unique([applicantId, opportunityId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  type      String?
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation("UserNotifications", fields: [userId], references: [id])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  text      String
+  createdAt DateTime @default(now())
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  opportunityId String?
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  applicationId String?
+  application   OpportunityApplication? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }

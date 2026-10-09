@@ -45,8 +45,7 @@ describe('AuthController (HTTP Integration / E2E)', () => {
       }),
       create: jest.fn().mockImplementation(async ({ data }) => {
         const id =
-          data.id ||
-          `user-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+          data.id || `user-${Date.now()}-${crypto.randomUUID().slice(0, 5)}`;
         const user = {
           id,
           name: null,
