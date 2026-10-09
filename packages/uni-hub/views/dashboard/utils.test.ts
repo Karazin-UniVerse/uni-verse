@@ -7,6 +7,7 @@ import {
   parseGradeScore,
   getExamScoreDisplay,
   isNavKey,
+  toNotificationListItem,
 } from './utils';
 
 describe('dashboard utils', () => {
@@ -94,6 +95,44 @@ describe('dashboard utils', () => {
       expect(isNavKey('unknown')).toBe(false);
       expect(isNavKey('')).toBe(false);
       expect(isNavKey('Overview')).toBe(false);
+    });
+  });
+
+  describe('toNotificationListItem', () => {
+    const notification = {
+      id: 7,
+      subject: 'New assignment',
+      message: '<p>Lab&nbsp;4 is <b>available</b></p>',
+      timecreated: 1_788_000_000,
+      read: false,
+    };
+
+    it('maps the notification fields and strips html from the message', () => {
+      const item = toNotificationListItem(notification, 'en-US');
+
+      expect(item.id).toBe(7);
+      expect(item.title).toBe('New assignment');
+      expect(item.message).toBe('Lab 4 is available');
+      expect(item.isRead).toBe(false);
+    });
+
+    it('exposes the creation time as a locale string and an ISO date', () => {
+      const item = toNotificationListItem(notification, 'en-US');
+
+      expect(item.dateTime).toBe(new Date(1_788_000_000 * 1000).toISOString());
+      expect(item.time).not.toBe('');
+    });
+
+    it('truncates messages longer than 100 characters', () => {
+      const item = toNotificationListItem({ ...notification, message: 'a'.repeat(150) }, 'en-US');
+
+      expect(item.message).toBe(`${'a'.repeat(100)}...`);
+    });
+
+    it('keeps messages of exactly 100 characters untouched', () => {
+      const item = toNotificationListItem({ ...notification, message: 'a'.repeat(100) }, 'en-US');
+
+      expect(item.message).toBe('a'.repeat(100));
     });
   });
 });

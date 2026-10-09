@@ -2,8 +2,8 @@
 
 import React from 'react';
 import clsx from 'clsx';
-import { Volume2, VolumeX } from 'lucide-react';
-import { Button } from '@una';
+import { User, Volume2, VolumeX } from 'lucide-react';
+import { Button, Dropdown } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -19,7 +19,6 @@ export interface UserDropdownProps {
   onToggleSound: () => void;
   onOpenLinkMoodle?: (mode?: LinkMoodleMode) => void;
   onOpenUnlinkMoodle?: () => void;
-  onClose: () => void;
   onLogout: () => void;
 }
 
@@ -43,7 +42,6 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   onToggleSound,
   onOpenLinkMoodle,
   onOpenUnlinkMoodle,
-  onClose,
   onLogout,
   isMoodleLinked = true,
 }) => {
@@ -51,132 +49,157 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   const statusDetails = getMoodleStatusDetails(Boolean(isMoodleLinked));
 
   return (
-    <>
-      <div className={styles.userDropdownHeader}>
-        {/* intentional: suppressHydrationWarning – student name loaded client-side */}
-        <strong suppressHydrationWarning>{activeStudentProfile.fullName}</strong>
-        {/* intentional: suppressHydrationWarning – student group loaded client-side */}
-        <div className={styles.muted} suppressHydrationWarning>
-          {activeStudentProfile.group}
-        </div>
-      </div>
-
-      <div className={styles.dropdownSection}>
-        <div className={styles.moodleStatusHeader}>
-          <span>Moodle LMS</span>
-          <span
-            className={clsx(
-              styles.moodleStatusBadge,
-              statusDetails.isLinked ? styles.linked : styles.unlinked,
-            )}
-          >
-            <span
-              className={styles.statusDot}
-              style={{
-                backgroundColor: statusDetails.dotColor,
-              }}
-              aria-hidden
-            />
-            {formatMessage(statusDetails.statusKey)}
+    <Dropdown
+      width={240}
+      renderTrigger={(triggerProps) => (
+        <button
+          {...triggerProps}
+          type="button"
+          className={styles.user}
+          title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
+          aria-label={formatMessage('header.userMenu')}
+          // intentional: suppressHydrationWarning – user profile is hydrated from client localStorage
+          suppressHydrationWarning
+        >
+          <span className={styles.avatar}>
+            <User size={16} />
           </span>
-        </div>
-
-        {isMoodleLinked ? (
-          <div className={styles.moodleDropdownActions}>
-            <Button
-              type="button"
-              variant="secondary"
-              size="small"
-              onClick={() => {
-                onClose();
-                onOpenLinkMoodle?.(LinkMoodleMode.CHANGE);
-              }}
-            >
-              {formatMessage('header.moodleChange')}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              size="small"
-              onClick={() => {
-                onClose();
-                onOpenUnlinkMoodle?.();
-              }}
-              style={{ color: 'var(--error-color)' }}
-            >
-              {formatMessage('header.moodleDisconnect')}
-            </Button>
+          {/* intentional: suppressHydrationWarning – user profile is hydrated from client localStorage */}
+          <span suppressHydrationWarning>{activeStudentProfile.fullName}</span>
+        </button>
+      )}
+    >
+      {(close) => (
+        <>
+          <div className={styles.userDropdownHeader}>
+            {/* intentional: suppressHydrationWarning – student name loaded client-side */}
+            <strong suppressHydrationWarning>{activeStudentProfile.fullName}</strong>
+            {/* intentional: suppressHydrationWarning – student group loaded client-side */}
+            <div className={styles.muted} suppressHydrationWarning>
+              {activeStudentProfile.group}
+            </div>
           </div>
-        ) : (
-          <Button
-            type="button"
-            variant="primary"
-            size="small"
-            onClick={() => {
-              onClose();
-              onOpenLinkMoodle?.(LinkMoodleMode.CONNECT);
-            }}
-            style={{ width: '100%' }}
-          >
-            {formatMessage('header.moodleConnect')}
-          </Button>
-        )}
-      </div>
 
-      <div className={styles.userDropdownBody}>
-        <div className={styles.mobileOnlyItem} style={{ marginBottom: 6 }}>
-          <LanguageSwitcher compact={false} />
-        </div>
+          <div className={styles.dropdownSection}>
+            <div className={styles.moodleStatusHeader}>
+              <span>Moodle LMS</span>
+              <span
+                className={clsx(
+                  styles.moodleStatusBadge,
+                  statusDetails.isLinked ? styles.linked : styles.unlinked,
+                )}
+              >
+                <span
+                  className={styles.statusDot}
+                  style={{
+                    backgroundColor: statusDetails.dotColor,
+                  }}
+                  aria-hidden
+                />
+                {formatMessage(statusDetails.statusKey)}
+              </span>
+            </div>
 
-        <div className={styles.mobileOnlyItem}>
-          <ThemeSwitcher compact={false} showLabel={true} />
-        </div>
-
-        <div className={styles.mobileOnlyItem}>
-          <Button
-            type="button"
-            variant="secondary"
-            size="small"
-            onClick={onToggleSound}
-            style={{ width: '100%', justifyContent: 'flex-start' }}
-          >
-            {soundEnabled ? (
-              <Volume2 size={16} style={{ marginRight: 8 }} />
+            {isMoodleLinked ? (
+              <div className={styles.moodleDropdownActions}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="small"
+                  onClick={() => {
+                    close();
+                    onOpenLinkMoodle?.(LinkMoodleMode.CHANGE);
+                  }}
+                >
+                  {formatMessage('header.moodleChange')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="small"
+                  onClick={() => {
+                    close();
+                    onOpenUnlinkMoodle?.();
+                  }}
+                  style={{ color: 'var(--error-color)' }}
+                >
+                  {formatMessage('header.moodleDisconnect')}
+                </Button>
+              </div>
             ) : (
-              <VolumeX size={16} style={{ marginRight: 8 }} />
+              <Button
+                type="button"
+                variant="primary"
+                size="small"
+                onClick={() => {
+                  close();
+                  onOpenLinkMoodle?.(LinkMoodleMode.CONNECT);
+                }}
+                style={{ width: '100%' }}
+              >
+                {formatMessage('header.moodleConnect')}
+              </Button>
             )}
-            {soundEnabled ? formatMessage('header.soundMute') : formatMessage('header.soundUnmute')}
-          </Button>
-        </div>
+          </div>
 
-        <div className={styles.mobileOnlyItem} style={{ marginBottom: 8 }}>
-          <a
-            href="https://moodle.universemvp.tech"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.moodleStatusLink}
-          >
-            <span className={styles.statusDot} aria-hidden />
-            <span>Moodle LMS</span>
-          </a>
-        </div>
+          <div className={styles.userDropdownBody}>
+            <div className={styles.mobileOnlyItem} style={{ marginBottom: 6 }}>
+              <LanguageSwitcher compact={false} />
+            </div>
 
-        <div className={styles.mobileOnlyItem}>
-          <Button
-            type="button"
-            variant="secondary"
-            size="small"
-            onClick={onLogout}
-            style={{
-              width: '100%',
-              justifyContent: 'flex-start',
-              color: 'var(--text-primary)',
-            }}
-          >
-            {formatMessage('sidebar.logout')}
-          </Button>
-        </div>
-      </div>
-    </>
+            <div className={styles.mobileOnlyItem}>
+              <ThemeSwitcher compact={false} showLabel={true} />
+            </div>
+
+            <div className={styles.mobileOnlyItem}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="small"
+                onClick={onToggleSound}
+                style={{ width: '100%', justifyContent: 'flex-start' }}
+              >
+                {soundEnabled ? (
+                  <Volume2 size={16} style={{ marginRight: 8 }} />
+                ) : (
+                  <VolumeX size={16} style={{ marginRight: 8 }} />
+                )}
+                {soundEnabled
+                  ? formatMessage('header.soundMute')
+                  : formatMessage('header.soundUnmute')}
+              </Button>
+            </div>
+
+            <div className={styles.mobileOnlyItem} style={{ marginBottom: 8 }}>
+              <a
+                href="https://moodle.universemvp.tech"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.moodleStatusLink}
+              >
+                <span className={styles.statusDot} aria-hidden />
+                <span>Moodle LMS</span>
+              </a>
+            </div>
+
+            <div className={styles.mobileOnlyItem}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="small"
+                onClick={onLogout}
+                style={{
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {formatMessage('sidebar.logout')}
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+    </Dropdown>
   );
 };

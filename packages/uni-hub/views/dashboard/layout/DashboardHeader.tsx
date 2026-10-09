@@ -1,14 +1,14 @@
 'use client';
 
 import React from 'react';
-import { Menu, Volume2, VolumeX, Bell, User } from 'lucide-react';
-import { Button, Dropdown, Tag, Empty } from '@una';
+import { Menu, Volume2, VolumeX } from 'lucide-react';
+import { Button } from '@una';
 import { StreakBadge } from '@uni-hub/components/gamification';
 import { DevFeaturePanel, useFeatures } from '@uni-hub/features';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi } from '@uni-hub/services/api';
 import type { DashboardHeaderProps } from '../types';
-import { stripHtml } from '../utils';
+import { NotificationsDropdown } from './NotificationsDropdown';
 import { UserDropdown } from './UserDropdown';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
@@ -24,7 +24,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onOpenUnlinkMoodle,
   isMoodleLinked = true,
 }) => {
-  const { localeTag, formatMessage } = useLanguage();
+  const { formatMessage } = useLanguage();
   const { isFeaturePanelEnabled } = useFeatures();
 
   const handleLogout = async () => {
@@ -80,89 +80,17 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
         </Button>
 
-        <Dropdown
-          width={360}
-          renderTrigger={(triggerProps) => (
-            <Button
-              {...triggerProps}
-              type="button"
-              variant="secondary"
-              size="medium"
-              isTransparent
-              aria-label={formatMessage('header.notifications')}
-            >
-              <Bell size={18} />
-              {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
-            </Button>
-          )}
-        >
-          <div className={styles.notifHeader}>
-            <strong>{formatMessage('header.notifications')}</strong>
-            {unreadCount > 0 && (
-              <Tag tone="info">
-                {unreadCount} {formatMessage('header.unreadCount')}
-              </Tag>
-            )}
-          </div>
-          <div className={styles.notifList}>
-            {notifications.length > 0 ? (
-              notifications.map((item) => {
-                const message = stripHtml(item.message);
+        <NotificationsDropdown notifications={notifications} unreadCount={unreadCount} />
 
-                return (
-                  <div
-                    key={item.id}
-                    className={`${styles.notifItem} ${item.read ? '' : styles.unread}`}
-                  >
-                    <div className={styles.notifSubject}>{item.subject}</div>
-                    <div className={styles.muted}>
-                      {message.length > 100 ? `${message.substring(0, 100)}...` : message}
-                    </div>
-                    <div className={styles.notifTime}>
-                      {new Date(item.timecreated * 1000).toLocaleString(localeTag)}
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <Empty description={formatMessage('header.notifications.empty')} />
-            )}
-          </div>
-        </Dropdown>
-
-        <Dropdown
-          width={240}
-          renderTrigger={(triggerProps) => (
-            <button
-              {...triggerProps}
-              type="button"
-              className={styles.user}
-              title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
-              aria-label={formatMessage('header.userMenu')}
-              // intentional: suppressHydrationWarning – user profile is hydrated from client localStorage
-              suppressHydrationWarning
-            >
-              <span className={styles.avatar}>
-                <User size={16} />
-              </span>
-              {/* intentional: suppressHydrationWarning – user profile is hydrated from client localStorage */}
-              <span suppressHydrationWarning>{activeStudentProfile.fullName}</span>
-            </button>
-          )}
-        >
-          {(close) => (
-            <UserDropdown
-              activeStudentProfile={activeStudentProfile}
-              isMoodleLinked={isMoodleLinked}
-              soundEnabled={soundEnabled}
-              onToggleSound={onToggleSound}
-              onOpenLinkMoodle={onOpenLinkMoodle}
-              onOpenUnlinkMoodle={onOpenUnlinkMoodle}
-              onClose={close}
-              onLogout={handleLogout}
-            />
-          )}
-        </Dropdown>
+        <UserDropdown
+          activeStudentProfile={activeStudentProfile}
+          isMoodleLinked={isMoodleLinked}
+          soundEnabled={soundEnabled}
+          onToggleSound={onToggleSound}
+          onOpenLinkMoodle={onOpenLinkMoodle}
+          onOpenUnlinkMoodle={onOpenUnlinkMoodle}
+          onLogout={handleLogout}
+        />
       </div>
     </header>
   );
