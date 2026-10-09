@@ -30,6 +30,8 @@ import {
 } from './dto';
 import { AUTH_ROUTES } from '@universe/core/constants/routes';
 
+interface UnlinkMoodleResponse extends Promise<GoogleAuthResponseDto> {}
+
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
@@ -120,6 +122,29 @@ export class AuthController {
       access_token: result.access_token,
       isLinked: result.isLinked,
     };
+  }
+
+  @ApiBearerAuth()
+  @Post(AUTH_ROUTES.MOODLE_UNLINK)
+  @ApiOperation({ summary: 'Unlink Moodle account from authenticated user' })
+  @ApiResponse({
+    status: 200,
+    type: GoogleAuthResponseDto,
+    description: 'Moodle account successfully unlinked.',
+  })
+  @HttpCode(HttpStatus.OK)
+  unlinkMoodle(
+    @GetUser('sub') userId: string,
+    @Res({ passthrough: true }) res: Response,
+  ): UnlinkMoodleResponse {
+    return this.authService.unlinkMoodleAccount(userId).then((result) => {
+      this.setRefreshTokenCookie(res, result.refresh_token);
+
+      return {
+        access_token: result.access_token,
+        isLinked: result.isLinked,
+      };
+    });
   }
 
   @ApiBearerAuth()

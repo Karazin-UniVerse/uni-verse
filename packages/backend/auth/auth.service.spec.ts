@@ -756,6 +756,44 @@ describe('AuthService', () => {
     });
   });
 
+  describe('unlinkMoodleAccount', () => {
+    it('should throw BadRequestException if user is not found', async () => {
+      mockUserService.findById.mockResolvedValue(null);
+
+      await expect(
+        authService.unlinkMoodleAccount('non-existent-id'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should successfully unlink Moodle account and return isLinked=false with new tokens', async () => {
+      const unlinkedUser: User = {
+        ...sampleUser,
+        token: null,
+        moodleId: null,
+      };
+
+      mockUserService.findById.mockResolvedValue(sampleUser);
+      mockUserService.updateUser.mockResolvedValue(unlinkedUser);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('unlinked-at')
+        .mockResolvedValueOnce('unlinked-rt');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-unlinked-rt');
+
+      const result = await authService.unlinkMoodleAccount(sampleUser.id);
+
+      expect(result).toEqual({
+        access_token: 'unlinked-at',
+        refresh_token: 'unlinked-rt',
+        isLinked: false,
+      });
+      expect(mockUserService.updateUser).toHaveBeenCalledWith(sampleUser.id, {
+        token: null,
+        moodleId: null,
+        refreshToken: 'hashed-unlinked-rt',
+      });
+    });
+  });
+
   describe('getTokens secrets verification', () => {
     it('should throw Error if JWT secrets are placeholders or missing', async () => {
       // AT_SECRET placeholder

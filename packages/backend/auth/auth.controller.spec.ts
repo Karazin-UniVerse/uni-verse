@@ -36,6 +36,7 @@ describe('AuthController', () => {
       refreshTokens: jest.fn(),
       loginWithGoogle: jest.fn(),
       linkMoodleAccount: jest.fn(),
+      unlinkMoodleAccount: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -244,6 +245,35 @@ describe('AuthController', () => {
       expect(result).toEqual({
         access_token: 'new-linked-at',
         isLinked: true,
+      });
+    });
+  });
+
+  describe('unlinkMoodle', () => {
+    it('should unlink Moodle account, set refresh cookie, and return new access token with isLinked=false', async () => {
+      const userId = 'user-uuid-123';
+      const response = createMockResponse();
+
+      authService.unlinkMoodleAccount.mockResolvedValue({
+        access_token: 'new-unlinked-at',
+        refresh_token: 'new-unlinked-rt',
+        isLinked: false,
+      });
+
+      const result = await controller.unlinkMoodle(userId, response);
+
+      expect(authService.unlinkMoodleAccount).toHaveBeenCalledWith(userId);
+      expect(response.cookie).toHaveBeenCalledWith(
+        'refreshToken',
+        'new-unlinked-rt',
+        expect.objectContaining({
+          httpOnly: true,
+          sameSite: 'strict',
+        }),
+      );
+      expect(result).toEqual({
+        access_token: 'new-unlinked-at',
+        isLinked: false,
       });
     });
   });

@@ -298,6 +298,29 @@ export class AuthService {
     };
   }
 
+  async unlinkMoodleAccount(userId: string) {
+    const user = await this.userService.findById(userId);
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const tokens = await this.getTokens({ userId: user.id, email: user.email });
+    const refreshTokenHash = await this.hashData(tokens.refresh_token);
+
+    await this.userService.updateUser(userId, {
+      token: null,
+      moodleId: null,
+      refreshToken: refreshTokenHash,
+    });
+
+    return {
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      isLinked: false,
+    };
+  }
+
   async logout(userId: string) {
     await this.userService.updateUser(userId, { refreshToken: null });
   }

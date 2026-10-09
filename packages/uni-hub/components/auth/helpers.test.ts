@@ -1,5 +1,32 @@
 import { describe, it, expect } from 'vitest';
-import { parseGoogleClaims } from './helpers';
+import { parseGoogleClaims, getLinkMoodleContentKeys, LinkMoodleMode } from './helpers';
+
+describe('getLinkMoodleContentKeys', () => {
+  it('returns default connect mode translation keys', () => {
+    const keys = getLinkMoodleContentKeys(LinkMoodleMode.CONNECT);
+
+    expect(keys.titleKey).toBe('login.linkMoodleTitle');
+    expect(keys.hintKey).toBe('login.linkMoodleHint');
+    expect(keys.submitKey).toBe('login.linkMoodleSubmit');
+    expect(keys.successKey).toBe('login.linkMoodleSuccess');
+  });
+
+  it('defaults to connect mode when no argument passed', () => {
+    const keys = getLinkMoodleContentKeys();
+
+    expect(keys.titleKey).toBe('login.linkMoodleTitle');
+    expect(keys.hintKey).toBe('login.linkMoodleHint');
+  });
+
+  it('returns change mode translation keys when mode is CHANGE', () => {
+    const keys = getLinkMoodleContentKeys(LinkMoodleMode.CHANGE);
+
+    expect(keys.titleKey).toBe('login.changeMoodleTitle');
+    expect(keys.hintKey).toBe('login.changeMoodleHint');
+    expect(keys.submitKey).toBe('login.changeMoodleSubmit');
+    expect(keys.successKey).toBe('login.changeMoodleSuccess');
+  });
+});
 
 describe('parseGoogleClaims', () => {
   it('correctly parses claims from a valid mock JWT token', () => {
