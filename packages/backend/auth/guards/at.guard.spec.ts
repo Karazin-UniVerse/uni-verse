@@ -152,5 +152,33 @@ describe('AtGuard', () => {
 
       expect(() => guard.handleRequest(null, null, null, context)).toThrow();
     });
+
+    it('throws err if err is an Error on protected route', () => {
+      const context = {
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+      } as unknown as ExecutionContext;
+
+      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(false);
+
+      const error = new Error('Custom error');
+
+      expect(() => guard.handleRequest(error, null, null, context)).toThrow(
+        error,
+      );
+    });
+
+    it('throws UnauthorizedException if err is not an Error instance on protected route', () => {
+      const context = {
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+      } as unknown as ExecutionContext;
+
+      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(false);
+
+      expect(() =>
+        guard.handleRequest('string error', null, null, context),
+      ).toThrow();
+    });
   });
 });

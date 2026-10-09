@@ -338,6 +338,27 @@ describe('AuthService', () => {
       });
     });
 
+    it('should refresh tokens when user does not have moodleId or token', async () => {
+      mockUserService.findById.mockResolvedValue({
+        ...sampleUser,
+        token: null,
+        moodleId: null,
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('fresh-at')
+        .mockResolvedValueOnce('fresh-rt');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-rt-hash');
+      mockUserService.updateUser.mockResolvedValue(sampleUser);
+
+      const result = await authService.refreshTokens('user-uuid-1', 'valid-rt');
+
+      expect(result).toEqual({
+        access_token: 'fresh-at',
+        refresh_token: 'fresh-rt',
+      });
+    });
+
     it('should throw ForbiddenException if user not found or has no refresh token', async () => {
       mockUserService.findById.mockResolvedValue(null);
 
