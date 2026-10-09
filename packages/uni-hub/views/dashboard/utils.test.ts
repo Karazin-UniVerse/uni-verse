@@ -11,6 +11,7 @@ import {
   isNavKey,
   resolveNavKey,
   toNotificationListItem,
+  isStudyView,
 } from './utils';
 
 describe('dashboard utils', () => {
@@ -86,10 +87,8 @@ describe('dashboard utils', () => {
   describe('isNavKey', () => {
     it('returns true for canonical navigation keys', () => {
       expect(isNavKey('overview')).toBe(true);
-      expect(isNavKey('courses')).toBe(true);
-      expect(isNavKey('grades')).toBe(true);
+      expect(isNavKey('study')).toBe(true);
       expect(isNavKey('schedule')).toBe(true);
-      expect(isNavKey('assignments')).toBe(true);
       expect(isNavKey('connectMoodle')).toBe(true);
       expect(isNavKey('opportunities')).toBe(true);
     });
@@ -98,6 +97,26 @@ describe('dashboard utils', () => {
       expect(isNavKey('unknown')).toBe(false);
       expect(isNavKey('')).toBe(false);
       expect(isNavKey('Overview')).toBe(false);
+    });
+
+    it('returns false for keys merged into the study tab', () => {
+      expect(isNavKey('courses')).toBe(false);
+      expect(isNavKey('grades')).toBe(false);
+      expect(isNavKey('assignments')).toBe(false);
+    });
+  });
+
+  describe('isStudyView', () => {
+    it('returns true for canonical study views', () => {
+      expect(isStudyView('subjects')).toBe(true);
+      expect(isStudyView('grades')).toBe(true);
+      expect(isStudyView('assignments')).toBe(true);
+    });
+
+    it('returns false for unknown or invalid views', () => {
+      expect(isStudyView('courses')).toBe(false);
+      expect(isStudyView('')).toBe(false);
+      expect(isStudyView('Grades')).toBe(false);
     });
   });
 
@@ -149,7 +168,7 @@ describe('dashboard utils', () => {
 describe('resolveNavKey', () => {
   const navItems = [
     { key: NAV_KEY.Overview },
-    { key: NAV_KEY.Courses, featureFlag: 'isMoodleIntegrationEnabled' as const },
+    { key: NAV_KEY.Study, featureFlag: 'isMoodleIntegrationEnabled' as const },
     { key: NAV_KEY.ConnectMoodle },
   ];
   const features: FeatureFlags = {
@@ -160,14 +179,14 @@ describe('resolveNavKey', () => {
   };
 
   it('keeps a key whose feature is enabled', () => {
-    expect(resolveNavKey(NAV_KEY.Courses, { navItems, features, isMoodleLinked: true })).toBe(
-      NAV_KEY.Courses,
+    expect(resolveNavKey(NAV_KEY.Study, { navItems, features, isMoodleLinked: true })).toBe(
+      NAV_KEY.Study,
     );
   });
 
   it('falls back to the overview when the feature of the key is off', () => {
     expect(
-      resolveNavKey(NAV_KEY.Courses, {
+      resolveNavKey(NAV_KEY.Study, {
         navItems,
         features: { ...features, isMoodleIntegrationEnabled: false },
         isMoodleLinked: true,

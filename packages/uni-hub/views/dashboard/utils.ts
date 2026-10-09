@@ -5,7 +5,7 @@ import type { TranslationKey } from '@uni-hub/i18n/translations';
 import type { Notification } from '@core/types/moodle';
 import { getGradeRawValue } from '@uni-hub/utils/grades';
 import type { FeatureFlagKey, FeatureFlags } from '@core/constants/features';
-import { NAV_KEY, NAV_KEYS, type NavKey } from './constants';
+import { NAV_KEY, NAV_KEYS, STUDY_VIEWS, type NavKey, type StudyView } from './constants';
 
 const NOTIFICATION_MESSAGE_MAX_LENGTH = 100;
 
@@ -166,3 +166,7 @@ export function resolveNavKey(
 
   return key;
 }
+
+const STUDY_VIEWS_SET: ReadonlySet<string> = new Set(STUDY_VIEWS);
+
+export const isStudyView = (value: string): value is StudyView => STUDY_VIEWS_SET.has(value);
