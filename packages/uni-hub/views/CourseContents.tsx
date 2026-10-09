@@ -25,7 +25,10 @@ import {
   type CourseModuleName,
 } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
+import { NAV_KEY, STUDY_VIEW } from './dashboard/constants';
 import styles from './CourseContents.module.scss';
+
+const STUDY_SUBJECTS_HREF = `/?tab=${NAV_KEY.Study}&view=${STUDY_VIEW.Subjects}`;
 
 const getModuleIcon = (modname: CourseModuleName) => {
   switch (modname) {
@@ -196,7 +199,7 @@ const CourseContents: React.FC = () => {
           variant="secondary"
           size="medium"
           isTransparent
-          onClick={() => router.push('/?tab=courses')}
+          onClick={() => router.push(STUDY_SUBJECTS_HREF)}
         >
           <ArrowLeft size={16} /> {formatMessage('courseContents.back')}
         </SimpleButton>
@@ -209,7 +212,7 @@ const CourseContents: React.FC = () => {
 
       <main className={styles.content}>
         <nav className={styles.breadcrumb} aria-label={formatMessage('courseContents.breadcrumbs')}>
-          <Link href="/?tab=courses">{formatMessage('courseContents.breadcrumbs')}</Link>
+          <Link href={STUDY_SUBJECTS_HREF}>{formatMessage('courseContents.breadcrumbs')}</Link>
           <span>/</span>
           <span>{formatMessage('courseContents.title')}</span>
         </nav>

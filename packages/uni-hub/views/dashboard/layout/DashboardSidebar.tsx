@@ -6,9 +6,7 @@ import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
   BookOpen,
-  ClipboardList,
   CalendarDays,
-  FileEdit,
   ChevronLeft,
   LogOut,
   Link2,
@@ -30,7 +28,6 @@ export interface NavItemConfig {
   key: NavKey;
   icon: React.ReactNode;
   labelKey: TranslationKey;
-  shortLabelKey: TranslationKey;
   featureFlag?: FeatureFlagKey;
 }
 
@@ -38,42 +35,24 @@ export const NAV_ITEMS: NavItemConfig[] = [
   {
     key: NAV_KEY.Overview,
     icon: <LayoutDashboard size={18} />,
-    labelKey: 'nav.overview.full',
-    shortLabelKey: 'nav.overview',
+    labelKey: 'nav.overview',
   },
   {
-    key: NAV_KEY.Courses,
+    key: NAV_KEY.Study,
     icon: <BookOpen size={18} />,
-    labelKey: 'nav.courses.full',
-    shortLabelKey: 'nav.courses',
-    featureFlag: 'isMoodleIntegrationEnabled',
-  },
-  {
-    key: NAV_KEY.Grades,
-    icon: <ClipboardList size={18} />,
-    labelKey: 'nav.grades.full',
-    shortLabelKey: 'nav.grades',
+    labelKey: 'nav.study',
     featureFlag: 'isMoodleIntegrationEnabled',
   },
   {
     key: NAV_KEY.Schedule,
     icon: <CalendarDays size={18} />,
-    labelKey: 'nav.schedule.full',
-    shortLabelKey: 'nav.schedule',
+    labelKey: 'nav.schedule',
     featureFlag: 'isEDeanEnabled',
-  },
-  {
-    key: NAV_KEY.Assignments,
-    icon: <FileEdit size={18} />,
-    labelKey: 'nav.assignments.full',
-    shortLabelKey: 'nav.assignments',
-    featureFlag: 'isMoodleIntegrationEnabled',
   },
   {
     key: NAV_KEY.Opportunities,
     icon: <Sparkles size={18} />,
-    labelKey: 'nav.opportunities.full',
-    shortLabelKey: 'nav.opportunities',
+    labelKey: 'nav.opportunities',
     featureFlag: 'isOpportunitiesPlatformEnabled',
   },
 ];
@@ -90,8 +69,7 @@ export const getVisibleNavItems = (
       {
         key: NAV_KEY.ConnectMoodle,
         icon: <Link2 size={18} />,
-        labelKey: 'nav.connectMoodle.full',
-        shortLabelKey: 'nav.connectMoodle',
+        labelKey: 'nav.connectMoodle',
       },
     ];
   }
@@ -218,7 +196,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         <nav className={styles.nav}>
           {visibleNavItems.map((item) => {
             const label = formatMessage(item.labelKey);
-            const shortLabel = formatMessage(item.shortLabelKey);
             const isConnect = item.key === 'connectMoodle';
 
             return (
@@ -249,7 +226,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 {(!collapsed || mobileMenuOpen) && (
                   <>
                     <span className={styles.desktopLabel}>{label}</span>
-                    <span className={styles.mobileLabel}>{shortLabel}</span>
                     {isConnect && <span className={styles.navBadgePulse} aria-hidden />}
                   </>
                 )}

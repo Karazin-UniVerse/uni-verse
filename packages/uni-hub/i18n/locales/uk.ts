@@ -57,21 +57,17 @@ export const uk = {
   'theme.karazinGold': 'Karazin Gold',
   'theme.select': 'Вибір теми',
 
-  // Navigation (short & full)
-  'nav.overview': 'Огляд',
-  'nav.overview.full': 'Картка студента / Огляд',
-  'nav.courses': 'Курси',
-  'nav.courses.full': 'Індивідуальний план',
-  'nav.assignments': 'Завдання',
-  'nav.assignments.full': 'Завдання',
+  // Navigation
+  'nav.overview': 'Стіна',
+  'nav.study': 'Мої курси',
   'nav.schedule': 'Розклад',
-  'nav.schedule.full': 'Розклад занять',
-  'nav.grades': 'Оцінки',
-  'nav.grades.full': 'Заліковка та бали',
   'nav.connectMoodle': 'Підключити Moodle',
-  'nav.connectMoodle.full': 'Підключити акаунт Moodle LMS',
   'nav.opportunities': 'Можливості',
-  'nav.opportunities.full': 'Платформа можливостей',
+
+  // Study views
+  'study.views.subjects': 'Дисципліни',
+  'study.views.grades': 'Оцінки',
+  'study.views.assignments': 'Завдання',
 
   // Sidebar & Header
   'sidebar.logout': 'Вийти',

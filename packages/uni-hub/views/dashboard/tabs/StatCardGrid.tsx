@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { BookOpen, FileEdit, GraduationCap } from 'lucide-react';
-import type { NavKey } from '../constants';
+import { NAV_KEY, STUDY_VIEW } from '../constants';
+import type { NavigateHandler } from '../types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
@@ -10,7 +11,7 @@ export interface StatCardGridProps {
   coursesCount: number;
   assignmentsCount: number;
   gpa: number | string;
-  onNavigate: (tab: NavKey) => void;
+  onNavigate: NavigateHandler;
 }
 
 export const StatCardGrid: React.FC<StatCardGridProps> = ({
@@ -23,7 +24,7 @@ export const StatCardGrid: React.FC<StatCardGridProps> = ({
 
   const cards = [
     {
-      tab: 'courses' as const,
+      studyView: STUDY_VIEW.Subjects,
       delayMs: 0,
       title: formatMessage('overview.coursesTitle'),
       label: formatMessage('overview.totalCourses'),
@@ -32,7 +33,7 @@ export const StatCardGrid: React.FC<StatCardGridProps> = ({
       value: coursesCount,
     },
     {
-      tab: 'assignments' as const,
+      studyView: STUDY_VIEW.Assignments,
       delayMs: 40,
       title: formatMessage('overview.assignmentsTitle'),
       label: formatMessage('overview.pendingAssignments'),
@@ -41,7 +42,7 @@ export const StatCardGrid: React.FC<StatCardGridProps> = ({
       value: assignmentsCount,
     },
     {
-      tab: 'grades' as const,
+      studyView: STUDY_VIEW.Grades,
       delayMs: 80,
       title: formatMessage('overview.gradesTitle'),
       label: formatMessage('overview.gpa'),
@@ -55,10 +56,10 @@ export const StatCardGrid: React.FC<StatCardGridProps> = ({
     <div className={styles.statGrid}>
       {cards.map((card) => (
         <button
-          key={card.tab}
+          key={card.studyView}
           type="button"
           className={`${styles.statCard} ${styles.statCardClickable}`}
-          onClick={() => onNavigate(card.tab)}
+          onClick={() => onNavigate(NAV_KEY.Study, card.studyView)}
           style={{ animationDelay: `${card.delayMs}ms` }}
           title={card.title}
         >

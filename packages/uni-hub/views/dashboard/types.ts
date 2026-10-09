@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { StudentProfile } from '@core/types';
 import type { LinkMoodleMode } from '@uni-hub/components/auth';
 import type {
@@ -8,7 +9,7 @@ import type {
   Notification,
   CourseStatistics,
 } from '@uni-hub/types';
-import type { NavKey } from './constants';
+import type { NavKey, StudyView } from './constants';
 
 export interface DashboardData {
   courses: Course[];
@@ -20,6 +21,8 @@ export interface DashboardData {
   statistics: CourseStatistics | null;
 }
 
+export type NavigateHandler = (key: NavKey, studyView?: StudyView) => void;
+
 export interface OverviewTabProps {
   courses: Course[];
   events: MoodleEvent[];
@@ -28,8 +31,14 @@ export interface OverviewTabProps {
   statistics: CourseStatistics | null;
   activeStudentProfile: StudentProfile;
   loading: boolean;
-  onNavigate: (key: NavKey) => void;
+  onNavigate: NavigateHandler;
   isMoodleLinked?: boolean;
+}
+
+export interface StudyTabProps {
+  view: StudyView;
+  onViewChange: (view: StudyView) => void;
+  children: ReactNode;
 }
 
 export interface CoursesTabProps {

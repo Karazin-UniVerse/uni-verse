@@ -31,23 +31,20 @@ describe('DashboardSidebar helpers', () => {
 
     const connectItem = items.find((item) => item.key === NAV_KEY.ConnectMoodle);
 
-    expect(connectItem?.labelKey).toBe('nav.connectMoodle.full');
-    expect(connectItem?.shortLabelKey).toBe('nav.connectMoodle');
+    expect(connectItem?.labelKey).toBe('nav.connectMoodle');
   });
 });
 
 describe('DashboardSidebar navigation & feature gating', () => {
   it('includes all navigation items when all feature flags are enabled', () => {
-    expect(NAV_ITEMS).toHaveLength(6);
+    expect(NAV_ITEMS).toHaveLength(4);
 
     const visible = getVisibleNavItems(allEnabledFlags, true);
 
     expect(visible.map((item) => item.key)).toEqual([
       NAV_KEY.Overview,
-      NAV_KEY.Courses,
-      NAV_KEY.Grades,
+      NAV_KEY.Study,
       NAV_KEY.Schedule,
-      NAV_KEY.Assignments,
       NAV_KEY.Opportunities,
     ]);
   });
@@ -114,7 +111,7 @@ describe('DashboardSidebar navigation & feature gating', () => {
       // Moodle links should not be present
       expect(html).not.toContain('moodle.universemvp.tech');
       // Overview and Schedule should be rendered
-      expect(html).toContain('Картка студента');
+      expect(html).toContain('Стіна');
       expect(html).toContain('Розклад');
     } finally {
       if (originalEdean !== undefined) {

@@ -29,7 +29,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       <ul className={styles.nav}>
         {visibleNavItems.map((item) => {
           const label = formatMessage(item.labelKey);
-          const shortLabel = formatMessage(item.shortLabelKey);
 
           return (
             <li key={item.key} className={styles.navItemWrapper}>
@@ -51,7 +50,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                   />
                 )}
                 <span className={styles.iconWrapper}>{item.icon}</span>
-                <span className={styles.mobileLabel}>{shortLabel}</span>
+                <span className={styles.mobileLabel}>{label}</span>
               </button>
             </li>
           );
