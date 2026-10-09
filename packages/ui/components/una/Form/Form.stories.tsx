@@ -1,6 +1,11 @@
 import React from 'react';
+<<<<<<< HEAD:packages/ui/components/una/Form/Form.stories.tsx
 import type { Meta, StoryObj } from '@storybook/react';
 import { Form } from './Form';
+=======
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { SimpleForm } from './SimpleForm';
+>>>>>>> origin/develop:packages/ui/components/una/Form/SimpleForm.stories.tsx
 import { TextInput } from '../inputs/TextInput/TextInput';
 import { Button } from '../Button/Button';
 
