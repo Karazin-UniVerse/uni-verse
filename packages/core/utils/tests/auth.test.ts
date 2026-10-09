@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test, { describe } from 'node:test';
-import { isLoggedIn } from '../../auth.ts';
+import { isLoggedIn } from '../auth.ts';
 
 describe('auth utilities', () => {
   test('isLoggedIn returns false when storage is empty or missing credentials', () => {

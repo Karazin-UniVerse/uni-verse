@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
 import { RotateCw, AlertCircle, Link2 } from 'lucide-react';
 import { Button, Spinner } from '@una';
-import { isLoggedIn } from '@core/auth';
+import { isLoggedIn } from '@core/utils/auth';
 import type { CourseModule } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
 import { LinkMoodleModal, UnlinkMoodleModal, LinkMoodleMode } from '@uni-hub/components/auth';
