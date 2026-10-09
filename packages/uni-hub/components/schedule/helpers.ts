@@ -19,10 +19,10 @@ export const startOfWeek = (date: Date): Date => {
   return dateCopy;
 };
 
-export const isSameDay = (leftDate: Date, rightDate: Date): boolean =>
-  leftDate.getFullYear() === rightDate.getFullYear() &&
-  leftDate.getMonth() === rightDate.getMonth() &&
-  leftDate.getDate() === rightDate.getDate();
+export const isSameDay = (leftDate: Date, rightDate?: Date | null): boolean =>
+  leftDate.getFullYear() === rightDate?.getFullYear() &&
+  leftDate.getMonth() === rightDate?.getMonth() &&
+  leftDate.getDate() === rightDate?.getDate();
 
 export const KARAZIN_PAIRS = [
   { startHour: 8, startMin: 30, endHour: 9, endMin: 50, label: '1 пара (08:30 – 09:50)' },

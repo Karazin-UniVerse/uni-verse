@@ -6,6 +6,7 @@ export const NAV_KEY = {
   Grades: 'grades',
   Schedule: 'schedule',
   Assignments: 'assignments',
+  ConnectMoodle: 'connectMoodle',
   Opportunities: 'opportunities',
 } as const;
 
