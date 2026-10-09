@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Globe, FileText, Calendar, Building2 } from 'lucide-react';
 import { BREAKPOINTS } from '@universe/core/constants/breakpoints';
 
