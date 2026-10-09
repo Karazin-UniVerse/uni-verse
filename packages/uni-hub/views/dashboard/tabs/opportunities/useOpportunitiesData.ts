@@ -1,230 +1,100 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { safeStorage } from '@uni-hub/services/api.storage';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
-import { parseJwt } from '@uni-hub/utils/jwt';
+import { asList } from '@uni-hub/utils/arrays';
 import type { Opportunity, OpportunityApplication, OpportunityPaymentType } from '@uni-hub/types';
 import { OPPORTUNITY_SUB_TAB, type OpportunitySubTab } from './constants';
 
-export function useOpportunitiesData() {
-  const [activeSubTab, setActiveSubTab] = useState<OpportunitySubTab>(OPPORTUNITY_SUB_TAB.Catalog);
+export interface AsyncList<T> {
+  items: T[];
+  loading: boolean;
+  refetch: () => Promise<void>;
+  setItems: React.Dispatch<React.SetStateAction<T[]>>;
+}
+
+async function loadCatalog(): Promise<Opportunity[]> {
+  const response = await opportunitiesApi.getOpportunities();
+
+  return asList(response.data);
+}
+
+async function loadMyOpportunities(): Promise<Opportunity[]> {
+  const response = await opportunitiesApi.getMyOpportunities();
+
+  return asList(response.data);
+}
+
+async function loadMyApplications(): Promise<OpportunityApplication[]> {
+  const response = await opportunitiesApi.getMyApplications();
+
+  return asList(response.data);
+}
+
+async function loadModerationQueue(): Promise<Opportunity[]> {
+  const response = await opportunitiesApi.getOpportunities({ status: 'READY_FOR_REVIEW' });
+
+  return asList(response.data);
+}
+
+function useAsyncList<T>(load: () => Promise<T[]>): AsyncList<T> {
+  const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
+  const latestRequestId = useRef(0);
 
-  const [userId] = useState<string | null>(() => {
-    const token = safeStorage.getItem('accessToken');
+  const refetch = useCallback(async (): Promise<void> => {
+    const requestId = ++latestRequestId.current;
 
-    if (!token) return null;
+    setLoading(true);
 
-    return parseJwt(token)?.sub ?? null;
-  });
+    const loaded = await load().catch((): T[] => []);
 
-  const [userRole] = useState<string | null>(() => {
-    const token = safeStorage.getItem('accessToken');
+    if (requestId !== latestRequestId.current) return;
 
-    if (!token) return null;
+    setItems(loaded);
+    setLoading(false);
+  }, [load]);
 
-    return (parseJwt(token)?.role as string) ?? null;
-  });
+  return { items, loading, refetch, setItems };
+}
 
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+export function useOpportunitiesData(isModerator: boolean) {
+  const [activeSubTab, setActiveSubTab] = useState<OpportunitySubTab>(OPPORTUNITY_SUB_TAB.Catalog);
   const [search, setSearch] = useState('');
   const [paymentFilter, setPaymentFilter] = useState<OpportunityPaymentType | ''>('');
 
-  const [myOpportunities, setMyOpportunities] = useState<Opportunity[]>([]);
-  const [myApplications, setMyApplications] = useState<OpportunityApplication[]>([]);
-  const [moderationQueue, setModerationQueue] = useState<Opportunity[]>([]);
+  const catalog = useAsyncList(loadCatalog);
+  const myOpportunities = useAsyncList(loadMyOpportunities);
+  const myApplications = useAsyncList(loadMyApplications);
+  const moderationQueue = useAsyncList(loadModerationQueue);
 
-  const isModeratorOrAdmin = userRole === 'OPPORTUNITIES_MODERATOR' || userRole === 'ADMIN';
-
-  const activeSubTabRef = useRef(activeSubTab);
-  const catalogRequestId = useRef(0);
-  const myOpportunitiesRequestId = useRef(0);
-  const myApplicationsRequestId = useRef(0);
-  const moderationQueueRequestId = useRef(0);
-
-  useEffect(() => {
-    activeSubTabRef.current = activeSubTab;
-  }, [activeSubTab]);
-
-  const fetchCatalog = useCallback(async () => {
-    const requestId = ++catalogRequestId.current;
-
-    if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Catalog) {
-      setLoading(true);
-    }
-
-    try {
-      const res = await opportunitiesApi.getOpportunities();
-
-      if (
-        requestId === catalogRequestId.current &&
-        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Catalog
-      ) {
-        setOpportunities(Array.isArray(res.data) ? res.data : []);
-      }
-    } catch {
-      if (
-        requestId === catalogRequestId.current &&
-        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Catalog
-      ) {
-        setOpportunities([]);
-      }
-    } finally {
-      if (
-        requestId === catalogRequestId.current &&
-        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Catalog
-      ) {
-        setLoading(false);
-      }
-    }
-  }, []);
-
-  const fetchMyOpportunities = useCallback(async () => {
-    const requestId = ++myOpportunitiesRequestId.current;
-
-    if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyOpportunities) {
-      setLoading(true);
-    }
-
-    try {
-      const res = await opportunitiesApi.getMyOpportunities();
-
-      if (
-        requestId === myOpportunitiesRequestId.current &&
-        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyOpportunities
-      ) {
-        setMyOpportunities(Array.isArray(res.data) ? res.data : []);
-      }
-    } catch {
-      if (
-        requestId === myOpportunitiesRequestId.current &&
-        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyOpportunities
-      ) {
-        setMyOpportunities([]);
-      }
-    } finally {
-      if (
-        requestId === myOpportunitiesRequestId.current &&
-        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyOpportunities
-      ) {
-        setLoading(false);
-      }
-    }
-  }, []);
-
-  const fetchMyApplications = useCallback(async () => {
-    const requestId = ++myApplicationsRequestId.current;
-
-    if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyApplications) {
-      setLoading(true);
-    }
-
-    try {
-      const res = await opportunitiesApi.getMyApplications();
-
-      if (
-        requestId === myApplicationsRequestId.current &&
-        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyApplications
-      ) {
-        setMyApplications(Array.isArray(res.data) ? res.data : []);
-      }
-    } catch {
-      if (
-        requestId === myApplicationsRequestId.current &&
-        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyApplications
-      ) {
-        setMyApplications([]);
-      }
-    } finally {
-      if (
-        requestId === myApplicationsRequestId.current &&
-        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyApplications
-      ) {
-        setLoading(false);
-      }
-    }
-  }, []);
-
-  const fetchModerationQueue = useCallback(async () => {
-    const requestId = ++moderationQueueRequestId.current;
-
-    if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Moderation) {
-      setLoading(true);
-    }
-
-    try {
-      const res = await opportunitiesApi.getOpportunities({ status: 'READY_FOR_REVIEW' });
-
-      if (
-        requestId === moderationQueueRequestId.current &&
-        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Moderation
-      ) {
-        setModerationQueue(Array.isArray(res.data) ? res.data : []);
-      }
-    } catch {
-      if (
-        requestId === moderationQueueRequestId.current &&
-        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Moderation
-      ) {
-        setModerationQueue([]);
-      }
-    } finally {
-      if (
-        requestId === moderationQueueRequestId.current &&
-        activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Moderation
-      ) {
-        setLoading(false);
-      }
-    }
-  }, []);
-
-  /* oxlint-disable react/set-state-in-effect */
-  useEffect(() => {
-    if (activeSubTab === OPPORTUNITY_SUB_TAB.Catalog) {
-      void fetchCatalog();
-    } else if (activeSubTab === OPPORTUNITY_SUB_TAB.MyOpportunities) {
-      void fetchMyOpportunities();
-    } else if (activeSubTab === OPPORTUNITY_SUB_TAB.MyApplications) {
-      void fetchMyApplications();
-    } else if (activeSubTab === OPPORTUNITY_SUB_TAB.Moderation) {
-      void fetchModerationQueue();
-    }
-  }, [activeSubTab, fetchCatalog, fetchMyOpportunities, fetchMyApplications, fetchModerationQueue]);
-  /* oxlint-enable react/set-state-in-effect */
+  const listsBySubTab = {
+    [OPPORTUNITY_SUB_TAB.Catalog]: catalog,
+    [OPPORTUNITY_SUB_TAB.MyOpportunities]: myOpportunities,
+    [OPPORTUNITY_SUB_TAB.MyApplications]: myApplications,
+    [OPPORTUNITY_SUB_TAB.Moderation]: moderationQueue,
+  };
+  const { refetch: refetchActiveList } = listsBySubTab[activeSubTab];
+  const { refetch: refetchModerationQueue } = moderationQueue;
 
   useEffect(() => {
-    if (isModeratorOrAdmin) {
-      opportunitiesApi
-        .getOpportunities({ status: 'READY_FOR_REVIEW' })
-        .then((res) => {
-          if (Array.isArray(res.data)) {
-            setModerationQueue(res.data);
-          }
-        })
-        .catch(() => {});
+    void refetchActiveList();
+  }, [refetchActiveList]);
+
+  useEffect(() => {
+    if (isModerator) {
+      void refetchModerationQueue();
     }
-  }, [isModeratorOrAdmin]);
+  }, [isModerator, refetchModerationQueue]);
 
   return {
     activeSubTab,
     setActiveSubTab,
-    loading,
-    userId,
-    userRole,
-    opportunities,
     search,
     setSearch,
     paymentFilter,
     setPaymentFilter,
+    catalog,
     myOpportunities,
-    setMyOpportunities,
     myApplications,
-    setMyApplications,
     moderationQueue,
-    setModerationQueue,
-    isModeratorOrAdmin,
-    fetchCatalog,
-    fetchMyOpportunities,
-    fetchMyApplications,
-    fetchModerationQueue,
   };
 }

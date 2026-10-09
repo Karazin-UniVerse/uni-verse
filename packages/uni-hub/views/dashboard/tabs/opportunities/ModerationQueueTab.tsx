@@ -17,15 +17,12 @@ import type { Opportunity } from '@uni-hub/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { TabStateWrapper } from './TabStateWrapper';
 import styles from '../OpportunitiesTab.module.scss';
+import type { ModerationAction } from './types';
 
 export interface ModerationQueueTabProps {
   loading: boolean;
   moderationQueue: Opportunity[];
-  onModerate: (
-    id: string,
-    action: 'APPROVE' | 'REJECT' | 'REQUIRE_CHANGES',
-    comment?: string,
-  ) => void;
+  onModerate: (id: string, action: ModerationAction, comment?: string) => void;
   onOpenRejectModal: (id: string) => void;
 }
 
@@ -35,7 +32,7 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
   onModerate,
   onOpenRejectModal,
 }) => {
-  const { formatMessage, language } = useLanguage();
+  const { formatMessage, localeTag } = useLanguage();
 
   return (
     <TabStateWrapper
@@ -56,14 +53,11 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                   <span className={styles.submissionDate}>
                     <Calendar size={12} />
                     {formatMessage('opportunities.moderation.submittedOn', {
-                      date: new Date(item.createdAt).toLocaleDateString(
-                        language === 'uk' ? 'uk-UA' : 'en-US',
-                        {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                        },
-                      ),
+                      date: new Date(item.createdAt).toLocaleDateString(localeTag, {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      }),
                     })}
                   </span>
                 </div>
@@ -145,7 +139,7 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                   className={styles.approveBtn}
                   onClick={() => onModerate(item.id, 'APPROVE')}
                 >
-                  <CheckCircle2 size={14} style={{ marginRight: '6px' }} />
+                  <CheckCircle2 size={14} className={styles.btnIcon} />
                   {formatMessage('opportunities.moderation.approve')}
                 </Button>
                 <Button
@@ -154,7 +148,7 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                   className={styles.reviseBtn}
                   onClick={() => onOpenRejectModal(item.id)}
                 >
-                  <AlertCircle size={14} style={{ marginRight: '6px' }} />
+                  <AlertCircle size={14} className={styles.btnIcon} />
                   {formatMessage('opportunities.moderation.revise')}
                 </Button>
                 <Button
@@ -163,7 +157,7 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                   className={styles.rejectBtn}
                   onClick={() => onOpenRejectModal(item.id)}
                 >
-                  <XCircle size={14} style={{ marginRight: '6px' }} />
+                  <XCircle size={14} className={styles.btnIcon} />
                   {formatMessage('opportunities.moderation.reject')}
                 </Button>
               </div>

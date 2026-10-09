@@ -434,6 +434,8 @@ export const uk = {
   'opportunities.toast.stateUpdated': 'Стан проекту оновлено',
   'opportunities.toast.statusUpdateError': 'Помилка оновлення статусу',
   'opportunities.confirm.withdraw': 'Ви впевнені, що бажаєте відкликати свій відгук?',
+  'opportunities.confirm.withdrawTitle': 'Відкликання відгуку',
+  'opportunities.confirm.withdrawConfirm': 'Відкликати',
   'opportunities.toast.withdrawn': 'Відгук відкликано',
   'opportunities.toast.approved': 'Можливість схвалено та опубліковано в каталозі!',
   'opportunities.toast.rejected': 'Можливість відхилено',

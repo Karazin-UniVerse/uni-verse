@@ -23,7 +23,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
   loading,
   onUpdateStatus,
 }) => {
-  const { formatMessage, language } = useLanguage();
+  const { formatMessage, localeTag } = useLanguage();
 
   let content;
 
@@ -81,14 +81,11 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
               <span className={styles.submissionDate}>
                 <Calendar size={12} />
                 {formatMessage('opportunities.applicantsModal.submittedOn', {
-                  date: new Date(app.createdAt).toLocaleDateString(
-                    language === 'uk' ? 'uk-UA' : 'en-US',
-                    {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    },
-                  ),
+                  date: new Date(app.createdAt).toLocaleDateString(localeTag, {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  }),
                 })}
               </span>
 
@@ -100,7 +97,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                     className={styles.approveBtn}
                     onClick={() => onUpdateStatus(app.id, 'ACCEPTED')}
                   >
-                    <CheckCircle2 size={14} style={{ marginRight: '6px' }} />
+                    <CheckCircle2 size={14} className={styles.btnIcon} />
                     {formatMessage('opportunities.applicantsModal.accept')}
                   </Button>
                 )}
@@ -111,7 +108,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                     className={styles.reviseBtn}
                     onClick={() => onUpdateStatus(app.id, 'UNDER_REVIEW')}
                   >
-                    <Clock size={14} style={{ marginRight: '6px' }} />
+                    <Clock size={14} className={styles.btnIcon} />
                     {formatMessage('opportunities.applicantsModal.underReview')}
                   </Button>
                 )}
@@ -122,7 +119,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                     className={styles.rejectBtn}
                     onClick={() => onUpdateStatus(app.id, 'REJECTED')}
                   >
-                    <XCircle size={14} style={{ marginRight: '6px' }} />
+                    <XCircle size={14} className={styles.btnIcon} />
                     {formatMessage('opportunities.applicantsModal.reject')}
                   </Button>
                 )}

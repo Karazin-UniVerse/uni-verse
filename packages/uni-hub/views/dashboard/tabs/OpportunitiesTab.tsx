@@ -3,9 +3,11 @@
 import React from 'react';
 import { Plus, Briefcase, ShieldCheck, Users, FileText } from 'lucide-react';
 import { Button } from '@una';
+import { ConfirmModal } from '@universe/ui';
+import { ROLE } from '@core/constants/roles';
+import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import styles from './OpportunitiesTab.module.scss';
-import { useOpportunities } from './opportunities/useOpportunities';
 import {
   CatalogTab,
   MyOpportunitiesTab,
@@ -18,6 +20,12 @@ import {
   ModerationRejectModal,
   OPPORTUNITY_SUB_TAB,
 } from './opportunities';
+import { useApplicantActions } from './opportunities/useApplicantActions';
+import { useApplicants } from './opportunities/useApplicants';
+import { useCreateOpportunity } from './opportunities/useCreateOpportunity';
+import { useModeration } from './opportunities/useModeration';
+import { useOpportunitiesData } from './opportunities/useOpportunitiesData';
+import { useOpportunityDetail } from './opportunities/useOpportunityDetail';
 
 export interface OpportunitiesTabProps {
   soundEnabled?: boolean;
@@ -25,51 +33,21 @@ export interface OpportunitiesTabProps {
 
 export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
   const { formatMessage } = useLanguage();
-  const {
-    activeSubTab,
-    setActiveSubTab,
-    loading,
-    userId,
-    opportunities,
-    search,
-    setSearch,
-    paymentFilter,
-    setPaymentFilter,
-    myOpportunities,
-    myApplications,
-    moderationQueue,
-    selectedOpportunity,
-    setSelectedOpportunity,
-    isDetailModalOpen,
-    setIsDetailModalOpen,
-    isCreateModalOpen,
-    setIsCreateModalOpen,
-    createFormData,
-    setCreateFormData,
-    creating,
-    isApplyModalOpen,
-    setIsApplyModalOpen,
-    applyMotivation,
-    setApplyMotivation,
-    applyContactInfo,
-    setApplyContactInfo,
-    applying,
-    isApplicantsModalOpen,
-    setIsApplicantsModalOpen,
-    activeOpportunityApplications,
-    loadingApplicants,
-    rejectModal,
-    setRejectModal,
-    handleCreateSubmit,
-    handleApplySubmit,
-    handleSendToReview,
-    handleLifecycleChange,
-    handleOpenApplicants,
-    handleUpdateAppStatus,
-    handleWithdrawApplication,
-    handleModerate,
-    isModeratorOrAdmin,
-  } = useOpportunities();
+  const currentUser = useCurrentUser();
+  const isModerator = currentUser.role === ROLE.OPPORTUNITIES_MODERATOR;
+  const data = useOpportunitiesData(isModerator);
+  const { activeSubTab, setActiveSubTab } = data;
+  const detail = useOpportunityDetail(data.myOpportunities.refetch);
+  const create = useCreateOpportunity({
+    onCreated: () => setActiveSubTab(OPPORTUNITY_SUB_TAB.MyOpportunities),
+  });
+  const applicants = useApplicants();
+  const applicantActions = useApplicantActions({
+    currentUser,
+    selectedOpportunity: detail.selectedOpportunity,
+    setApplications: data.myApplications.setItems,
+  });
+  const moderation = useModeration(data.moderationQueue.setItems);
 
   return (
     <div className={styles.container}>
@@ -110,7 +88,7 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
             {formatMessage('opportunities.tabs.myApplications')}
           </button>
 
-          {isModeratorOrAdmin && (
+          {isModerator && (
             <button
               type="button"
               role="tab"
@@ -121,8 +99,8 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
             >
               <ShieldCheck size={16} />
               {formatMessage('opportunities.tabs.moderation')}
-              {moderationQueue.length > 0 && (
-                <span className={styles.badgePill}>{moderationQueue.length}</span>
+              {data.moderationQueue.items.length > 0 && (
+                <span className={styles.badgePill}>{data.moderationQueue.items.length}</span>
               )}
             </button>
           )}
@@ -132,8 +110,8 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
           <Button
             variant="primary"
             size="small"
-            onClick={() => setIsCreateModalOpen(true)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+            onClick={() => create.setIsOpen(true)}
+            className={styles.createBtn}
           >
             <Plus size={16} />
             {formatMessage('opportunities.actions.create')}
@@ -145,103 +123,104 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
       <div role="tabpanel" id={`panel-${activeSubTab}`}>
         {activeSubTab === OPPORTUNITY_SUB_TAB.Catalog && (
           <CatalogTab
-            loading={loading}
-            opportunities={opportunities}
-            search={search}
-            onSearchChange={setSearch}
-            paymentFilter={paymentFilter}
-            onPaymentFilterChange={setPaymentFilter}
-            onOpenDetail={(item) => {
-              setSelectedOpportunity(item);
-              setIsDetailModalOpen(true);
-            }}
+            loading={data.catalog.loading}
+            opportunities={data.catalog.items}
+            search={data.search}
+            onSearchChange={data.setSearch}
+            paymentFilter={data.paymentFilter}
+            onPaymentFilterChange={data.setPaymentFilter}
+            onOpenDetail={detail.open}
           />
         )}
 
         {activeSubTab === OPPORTUNITY_SUB_TAB.MyOpportunities && (
           <MyOpportunitiesTab
-            loading={loading}
-            myOpportunities={myOpportunities}
-            onOpenApplicants={handleOpenApplicants}
-            onOpenDetail={(item) => {
-              setSelectedOpportunity(item);
-              setIsDetailModalOpen(true);
-            }}
+            loading={data.myOpportunities.loading}
+            myOpportunities={data.myOpportunities.items}
+            onOpenApplicants={applicants.open}
+            onOpenDetail={detail.open}
           />
         )}
 
         {activeSubTab === OPPORTUNITY_SUB_TAB.MyApplications && (
           <MyApplicationsTab
-            loading={loading}
-            myApplications={myApplications}
-            onWithdraw={handleWithdrawApplication}
+            loading={data.myApplications.loading}
+            myApplications={data.myApplications.items}
+            onWithdraw={applicantActions.setWithdrawApplicationId}
           />
         )}
 
-        {activeSubTab === OPPORTUNITY_SUB_TAB.Moderation && isModeratorOrAdmin && (
+        {activeSubTab === OPPORTUNITY_SUB_TAB.Moderation && isModerator && (
           <ModerationQueueTab
-            loading={loading}
-            moderationQueue={moderationQueue}
-            onModerate={handleModerate}
-            onOpenRejectModal={(id) => setRejectModal({ open: true, id, comment: '' })}
+            loading={data.moderationQueue.loading}
+            moderationQueue={data.moderationQueue.items}
+            onModerate={moderation.handleModerate}
+            onOpenRejectModal={moderation.openRejectModal}
           />
         )}
       </div>
 
       {/* Modals */}
       <OpportunityDetailModal
-        open={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
-        opportunity={selectedOpportunity}
-        userId={userId}
-        onSendToReview={handleSendToReview}
-        onLifecycleChange={handleLifecycleChange}
+        open={detail.isOpen}
+        onClose={() => detail.setIsOpen(false)}
+        opportunity={detail.selectedOpportunity}
+        userId={currentUser.userId}
+        onSendToReview={detail.handleSendToReview}
+        onLifecycleChange={detail.handleLifecycleChange}
         onOpenApply={() => {
-          setIsDetailModalOpen(false);
-          setIsApplyModalOpen(true);
+          detail.setIsOpen(false);
+          applicantActions.setIsApplyOpen(true);
         }}
       />
 
       <CreateOpportunityModal
-        open={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        formData={createFormData}
-        setFormData={setCreateFormData}
-        onSubmit={handleCreateSubmit}
-        submitting={creating}
+        open={create.isOpen}
+        onClose={() => create.setIsOpen(false)}
+        formData={create.formData}
+        setFormData={create.setFormData}
+        onSubmit={create.handleSubmit}
+        submitting={create.creating}
       />
 
       <ApplyOpportunityModal
-        open={isApplyModalOpen}
-        onClose={() => setIsApplyModalOpen(false)}
-        opportunityTitle={selectedOpportunity?.title}
-        motivation={applyMotivation}
-        onMotivationChange={setApplyMotivation}
-        contactInfo={applyContactInfo}
-        onContactInfoChange={setApplyContactInfo}
-        onSubmit={handleApplySubmit}
-        submitting={applying}
+        open={applicantActions.isApplyOpen}
+        onClose={() => applicantActions.setIsApplyOpen(false)}
+        opportunityTitle={detail.selectedOpportunity?.title}
+        motivation={applicantActions.motivation}
+        onMotivationChange={applicantActions.setMotivation}
+        contactInfo={applicantActions.contactInfo}
+        onContactInfoChange={applicantActions.setContactInfo}
+        onSubmit={applicantActions.handleApplySubmit}
+        submitting={applicantActions.applying}
       />
 
       <ApplicantsModal
-        open={isApplicantsModalOpen}
-        onClose={() => setIsApplicantsModalOpen(false)}
-        applications={activeOpportunityApplications}
-        loading={loadingApplicants}
-        onUpdateStatus={handleUpdateAppStatus}
+        open={applicants.isOpen}
+        onClose={() => applicants.setIsOpen(false)}
+        applications={applicants.applications}
+        loading={applicants.loading}
+        onUpdateStatus={applicants.handleUpdateStatus}
+      />
+
+      <ConfirmModal
+        open={applicantActions.withdrawApplicationId !== null}
+        onClose={() => applicantActions.setWithdrawApplicationId(null)}
+        onConfirm={applicantActions.handleWithdraw}
+        title={formatMessage('opportunities.confirm.withdrawTitle')}
+        message={formatMessage('opportunities.confirm.withdraw')}
+        cancelLabel={formatMessage('common.cancel')}
+        confirmLabel={formatMessage('opportunities.confirm.withdrawConfirm')}
+        closeLabel={formatMessage('modal.close')}
+        loading={applicantActions.withdrawing}
+        variant="danger"
       />
 
       <ModerationRejectModal
-        rejectModal={rejectModal}
-        onClose={() => setRejectModal({ open: false, id: null, comment: '' })}
-        onCommentChange={(comment) => setRejectModal((prev) => ({ ...prev, comment }))}
-        onConfirm={async (id, action, comment) => {
-          const success = await handleModerate(id, action, comment);
-
-          if (success) {
-            setRejectModal({ open: false, id: null, comment: '' });
-          }
-        }}
+        rejectModal={moderation.rejectModal}
+        onClose={moderation.closeRejectModal}
+        onCommentChange={moderation.changeRejectComment}
+        onConfirm={moderation.handleRejectConfirm}
       />
     </div>
   );

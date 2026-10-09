@@ -23,7 +23,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   onOpenApplicants,
   variant = 'catalog',
 }) => {
-  const { formatMessage } = useLanguage();
+  const { formatMessage, localeTag } = useLanguage();
   const isPaid = opportunity.paymentType === 'PAID';
   const ownerName =
     opportunity.owner?.name ||
@@ -78,8 +78,8 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
       <div className={styles.cardMetaRow}>
         {variant === 'owner' ? (
           <>
-            <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-secondary)' }}>
-              {new Date(opportunity.createdAt).toLocaleDateString('uk-UA')}
+            <span className={styles.cardDate}>
+              {new Date(opportunity.createdAt).toLocaleDateString(localeTag)}
             </span>
             <div className={styles.cardActions}>
               <Button

@@ -1395,3 +1395,13 @@
   justify-content: center;
   padding: var(--space-48) 0;
 }
+
+.createBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.btnIcon {
+  margin-right: var(--space-8);
+}

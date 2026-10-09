@@ -32,7 +32,7 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
   myApplications,
   onWithdraw,
 }) => {
-  const { formatMessage, language } = useLanguage();
+  const { formatMessage, localeTag } = useLanguage();
 
   return (
     <TabStateWrapper
@@ -60,14 +60,11 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
                   <span className={styles.submissionDate}>
                     <Calendar size={12} />
                     {formatMessage('opportunities.myApplications.submittedOn', {
-                      date: new Date(app.createdAt).toLocaleDateString(
-                        language === 'uk' ? 'uk-UA' : 'en-US',
-                        {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                        },
-                      ),
+                      date: new Date(app.createdAt).toLocaleDateString(localeTag, {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      }),
                     })}
                   </span>
                 </div>
@@ -160,7 +157,7 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
                     className={styles.withdrawBtn}
                     onClick={() => onWithdraw(app.id)}
                   >
-                    <X size={14} style={{ marginRight: '6px' }} />
+                    <X size={14} className={styles.btnIcon} />
                     {formatMessage('opportunities.myApplications.withdrawBtn')}
                   </Button>
                 )}
