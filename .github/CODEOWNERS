@@ -1,20 +1,28 @@
-# Global codeowners
-* @brodion-230 @iamredl-lab @RiderTr
+# Global fallback (Tech Lead & Project Owner)
+* @brodion-230 @iamredl-lab
 
 # CI/CD, Workflows and System Configuration
-/.github/                 @brodion-230 @iamredl-lab @RiderTr
-/configs/                 @brodion-230 @iamredl-lab @RiderTr
-/Dockerfile*              @brodion-230 @iamredl-lab @RiderTr
-/.dockerignore            @brodion-230 @iamredl-lab @RiderTr
-/package.json             @brodion-230 @iamredl-lab @RiderTr
-/pnpm-lock.yaml           @brodion-230 @iamredl-lab @RiderTr
-/pnpm-workspace.yaml      @brodion-230 @iamredl-lab @RiderTr
-/turbo.json               @brodion-230 @iamredl-lab @RiderTr
-/sonar-project.properties @brodion-230 @iamredl-lab @RiderTr
-/.oxlintrc.json           @brodion-230 @iamredl-lab @RiderTr
+/.github/                 @brodion-230 @iamredl-lab
+/configs/                 @brodion-230 @iamredl-lab
+/Dockerfile*              @brodion-230 @iamredl-lab
+/.dockerignore            @brodion-230 @iamredl-lab
+/package.json             @brodion-230 @iamredl-lab
+/pnpm-lock.yaml           @brodion-230 @iamredl-lab
+/pnpm-workspace.yaml      @brodion-230 @iamredl-lab
+/turbo.json               @brodion-230 @iamredl-lab
+/sonar-project.properties @brodion-230 @iamredl-lab
+/.oxlintrc.json           @brodion-230 @iamredl-lab
 
-# Monorepo packages
-/packages/backend/        @brodion-230 @Skyzary @RiderTr @iamredl-lab
-/packages/uni-hub/        @brodion-230 @iamredl-lab @RiderTr
-/packages/ui/             @RiderTr @brodion-230 @iamredl-lab
-/packages/database/       @brodion-230 @Skyzary @RiderTr @iamredl-lab
+# Core Domain & Shared Contracts
+/packages/core/           @brodion-230 @iamredl-lab @Skyzary
+
+# Frontend Applications & Design System
+/packages/ui/             @Skyzary @Kostik565 @iamredl-lab
+/packages/uni-hub/        @Kostik565 @Skyzary @RiderTr
+
+# Backend Services & Database
+/packages/backend/        @brodion-230 @RiderTr @Skyzary @Artebah
+/packages/database/       @brodion-230 @RiderTr
+
+# End-to-End & Integration Testing
+/tests/                   @khaliggo @alnnvsk @brodion-230

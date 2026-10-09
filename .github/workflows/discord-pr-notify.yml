@@ -26,4 +26,5 @@ jobs:
       - name: Send Discord PR Notification
         env:
           DISCORD_PR_WEBHOOK: ${{ secrets.DISCORD_PR_WEBHOOK }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node .github/scripts/discord-pr-notify.mjs
