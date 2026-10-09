@@ -57,10 +57,10 @@ export class OpportunitiesController {
    */
   @ApiOperation({ summary: 'Get all published opportunities (or filter)' })
   findAll(
-    @GetUser('role') role: string,
+    @GetUser('roles') roles: string[] | undefined,
     @Query() query: FindOpportunitiesDto,
   ): Promise<OpportunityWithOwner[]> {
-    return this.opportunitiesService.findAll(query, role);
+    return this.opportunitiesService.findAll(query, roles);
   }
 
   @ApiBearerAuth()
@@ -114,9 +114,9 @@ export class OpportunitiesController {
   findOne(
     @Param('id') id: string,
     @GetUser('sub') userId?: string,
-    @GetUser('role') role?: string,
+    @GetUser('roles') roles?: string[],
   ): Promise<OpportunityWithOwner> {
-    return this.opportunitiesService.findOne(id, userId, role);
+    return this.opportunitiesService.findOne(id, userId, roles);
   }
 
   @ApiBearerAuth()

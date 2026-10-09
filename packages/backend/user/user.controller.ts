@@ -18,7 +18,7 @@ function toUserResponse(user: User): UserResponseDto {
     id: user.id,
     email: user.email,
     name: user.name,
-    role: user.role,
+    roles: user.roles,
     moodleId: user.moodleId,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
