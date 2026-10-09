@@ -97,6 +97,13 @@ describe('schedule helpers', () => {
 
       expect(isSameDay(dateA, dateB)).toBe(false);
     });
+
+    it('returns false when rightDate is null or undefined', () => {
+      const dateA = new Date(2026, 4, 10);
+
+      expect(isSameDay(dateA, null)).toBe(false);
+      expect(isSameDay(dateA, undefined)).toBe(false);
+    });
   });
 
   describe('getTypeTone', () => {
