@@ -18,7 +18,7 @@
 
 # Frontend Applications & Design System
 /packages/ui/             @Skyzary @Kostik565 @iamredl-lab
-/packages/uni-hub/        @Kostik565 @Skyzary @RiderTr
+/packages/uni-hub/        @iamredl-lab @Kostik565 @Skyzary @RiderTr
 
 # Backend Services & Database
 /packages/backend/        @brodion-230 @RiderTr @Skyzary @Artebah
