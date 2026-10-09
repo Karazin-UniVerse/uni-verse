@@ -6,3 +6,7 @@ export * from './GradeFeedItem';
 export * from './TopicChips';
 export * from './ContactInfoGrid';
 export * from './StatusBanner';
+export * from './ApplyOpportunityModal';
+export * from './CreateOpportunityModal';
+export * from './ModerationRejectModal';
+export * from './OpportunityDetailModal';

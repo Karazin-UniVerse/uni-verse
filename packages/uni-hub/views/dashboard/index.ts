@@ -10,3 +10,4 @@ export * from './tabs/GradesTab';
 export * from './tabs/AssignmentsTab';
 export * from './tabs/ConnectMoodleTab';
 export * from './tabs/OpportunitiesTab';
+export * from './tabs/OpportunityCard';
