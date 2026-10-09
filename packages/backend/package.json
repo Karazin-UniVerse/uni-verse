@@ -8,6 +8,7 @@
   "scripts": {
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
+    "db:push:force": "prisma db push --accept-data-loss",
     "build": "pnpm --filter @universe/core build && pnpm db:generate && nest build",
     "format": "prettier --write \"**/*.ts\" \"test/**/*.ts\"",
     "dev": "nest start --watch",
