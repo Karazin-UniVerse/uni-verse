@@ -432,10 +432,6 @@
   flex-shrink: 0;
 }
 
-.notifWrap {
-  position: relative;
-}
-
 .badge {
   position: absolute;
   top: 2px;
@@ -450,21 +446,6 @@
   line-height: 16px;
   text-align: center;
   animation: pulse 1.6s var(--ease-standard) infinite;
-}
-
-.notifDropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  width: 360px;
-  max-width: 90vw;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-large);
-  box-shadow: var(--box-shadow-large);
-  z-index: 20;
-  overflow: hidden;
-  transform-origin: top right;
 }
 
 .notifHeader {
@@ -1368,23 +1349,6 @@
       display: flex;
     }
   }
-}
-
-.userWrap {
-  position: relative;
-}
-
-.userDropdown {
-  position: absolute;
-  top: calc(100% + 12px);
-  right: 0;
-  width: 240px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-large);
-  box-shadow: var(--box-shadow-large);
-  z-index: 30;
-  overflow: hidden;
 }
 
 .userDropdownHeader {

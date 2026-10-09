@@ -279,10 +279,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             compact
             showLabel={!collapsed || mobileMenuOpen}
             variant="sider"
-            placement="bottom-up-left"
+            placement="top-start"
           />
           <ThemeSwitcher
             compact
+            placement="top-start"
             showLabel={!collapsed || mobileMenuOpen}
             className={styles.themeBtn}
           />

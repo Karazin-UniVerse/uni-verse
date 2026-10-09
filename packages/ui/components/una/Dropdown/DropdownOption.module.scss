@@ -1,0 +1,37 @@
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  width: 100%;
+  padding: var(--space-8) var(--space-12);
+  border: none;
+  border-radius: var(--border-radius-small);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--font-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+
+  &.active {
+    background: var(--bg-active);
+    color: var(--accent-primary);
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--font-md);
+  line-height: 1;
+}
+
+.check {
+  margin-left: auto;
+  color: var(--accent-primary);
+}

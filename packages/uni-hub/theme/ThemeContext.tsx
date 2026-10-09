@@ -14,12 +14,9 @@ const STORAGE_KEY = 'universe-theme';
 type ThemeContextValue = {
   theme: AppTheme;
   setTheme: (theme: AppTheme) => void;
-  cycleTheme: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
-
-const THEMES: AppTheme[] = ['light', 'dark', 'cyberpunk'];
 
 function applyTheme(theme: AppTheme) {
   const root = document.documentElement;
@@ -66,15 +63,7 @@ export const ThemeProvider: React.FC<Readonly<{ children: React.ReactNode }>> = 
     window.dispatchEvent(new Event('theme-change'));
   }, []);
 
-  const cycleTheme = useCallback(() => {
-    const currentTheme = getThemeSnapshot();
-    const currentThemeIndex = THEMES.indexOf(currentTheme);
-    const nextTheme = THEMES[(currentThemeIndex + 1) % THEMES.length];
-
-    setTheme(nextTheme);
-  }, [setTheme]);
-
-  const value = useMemo(() => ({ theme, setTheme, cycleTheme }), [theme, setTheme, cycleTheme]);
+  const value = useMemo(() => ({ theme, setTheme }), [theme, setTheme]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };

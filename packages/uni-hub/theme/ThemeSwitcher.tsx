@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Sun, Moon, Zap } from 'lucide-react';
+import { Sun, Moon, Zap, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
+import { Dropdown, DropdownOption, type PopoverPlacement } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { useTheme, type AppTheme } from './ThemeContext';
@@ -23,6 +24,7 @@ const THEME_KEYS: Record<AppTheme, TranslationKey> = {
 type ThemeSwitcherProps = {
   compact?: boolean;
   showLabel?: boolean;
+  placement?: PopoverPlacement;
   className?: string;
 };
 
@@ -30,31 +32,60 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
   className,
   compact = false,
   showLabel = true,
+  placement = 'bottom-end',
 }) => {
-  const { theme, setTheme, cycleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { formatMessage } = useLanguage();
-
   const currentThemeLabel = formatMessage(THEME_KEYS[theme]);
 
   if (compact) {
     return (
-      <button
-        type="button"
-        className={clsx(styles.compactBtn, className)}
-        onClick={cycleTheme}
-        aria-label={`${formatMessage('theme.select')}: ${currentThemeLabel}`}
-        title={currentThemeLabel}
-        // intentional: suppressHydrationWarning – currentThemeLabel resolved client-side from stored preference; server renders default theme
-        suppressHydrationWarning
-      >
-        {THEME_ICONS[theme]}
-        {showLabel && (
-          // intentional: suppressHydrationWarning – label text derived from client-side theme state
-          <span className={styles.compactLabel} suppressHydrationWarning>
-            {currentThemeLabel}
-          </span>
+      <Dropdown
+        isPadded
+        placement={placement}
+        renderTrigger={(triggerProps, isOpen) => (
+          <button
+            {...triggerProps}
+            type="button"
+            className={clsx(styles.compactBtn, className)}
+            aria-label={`${formatMessage('theme.select')}: ${currentThemeLabel}`}
+            title={currentThemeLabel}
+            // intentional: suppressHydrationWarning – currentThemeLabel resolved client-side from stored preference; server renders default theme
+            suppressHydrationWarning
+          >
+            {THEME_ICONS[theme]}
+            {showLabel && (
+              <>
+                {/* intentional: suppressHydrationWarning – label text derived from client-side theme state */}
+                <span className={styles.compactLabel} suppressHydrationWarning>
+                  {currentThemeLabel}
+                </span>
+                <ChevronDown
+                  size={14}
+                  className={clsx(styles.chevron, isOpen && styles.chevronOpen)}
+                  aria-hidden
+                />
+              </>
+            )}
+          </button>
         )}
-      </button>
+      >
+        {(close) =>
+          (Object.keys(THEME_ICONS) as AppTheme[]).map((themeOption) => (
+            <DropdownOption
+              key={themeOption}
+              icon={THEME_ICONS[themeOption]}
+              isSelected={theme === themeOption}
+              onSelect={() => {
+                setTheme(themeOption);
+                close();
+              }}
+            >
+              {formatMessage(THEME_KEYS[themeOption])}
+            </DropdownOption>
+          ))
+        }
+      </Dropdown>
     );
   }
 
