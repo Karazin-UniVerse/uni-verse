@@ -7,23 +7,7 @@ import type {
   Notification,
   CourseStatistics,
 } from '@uni-hub/types';
-
-export const ENABLE_OPPORTUNITIES_TAB = process.env.NEXT_PUBLIC_ENABLE_OPPORTUNITIES_TAB === 'true';
-
-export const NAV_KEYS = [
-  'overview',
-  'courses',
-  'grades',
-  'schedule',
-  'assignments',
-  'opportunities',
-] as const;
-
-export type NavKey = (typeof NAV_KEYS)[number];
-
-const NAV_KEYS_SET: ReadonlySet<string> = new Set(NAV_KEYS);
-
-export const isNavKey = (value: string): value is NavKey => NAV_KEYS_SET.has(value);
+import type { NavKey } from './constants';
 
 export interface DashboardData {
   courses: Course[];

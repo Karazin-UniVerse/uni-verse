@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { Search, X } from 'lucide-react';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { TabStateWrapper } from './TabStateWrapper';
 import type { Opportunity, OpportunityPaymentType } from '@uni-hub/types';
 import { OpportunityCard } from '../OpportunityCard';
@@ -26,6 +27,7 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
   onPaymentFilterChange,
   onOpenDetail,
 }) => {
+  const { formatMessage } = useLanguage();
   // Filter catalog opportunities in memory without cascading re-renders or spinner flashes
   const filteredOpportunities = useMemo(() => {
     return opportunities.filter((opp) => {
@@ -57,17 +59,17 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
           <input
             type="text"
             className={styles.searchInput}
-            placeholder="Пошук за назвою або ключовими словами..."
+            placeholder={formatMessage('opportunities.catalog.searchPlaceholder')}
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            aria-label="Пошук можливостей"
+            aria-label={formatMessage('opportunities.catalog.searchAria')}
           />
           {search && (
             <button
               type="button"
               className={styles.clearSearchBtn}
               onClick={() => onSearchChange('')}
-              aria-label="Очистити поле пошуку"
+              aria-label={formatMessage('opportunities.catalog.clearSearchAria')}
             >
               <X size={14} />
             </button>
@@ -81,27 +83,28 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
               className={`${styles.filterChip} ${paymentFilter === '' ? styles.activeChip : ''}`}
               onClick={() => onPaymentFilterChange('')}
             >
-              Усі
+              {formatMessage('opportunities.catalog.filterAll')}
             </button>
             <button
               type="button"
               className={`${styles.filterChip} ${paymentFilter === 'PAID' ? styles.activeChip : ''}`}
               onClick={() => onPaymentFilterChange('PAID')}
             >
-              Оплачувані
+              {formatMessage('opportunities.catalog.filterPaid')}
             </button>
             <button
               type="button"
               className={`${styles.filterChip} ${paymentFilter === 'UNPAID' ? styles.activeChip : ''}`}
               onClick={() => onPaymentFilterChange('UNPAID')}
             >
-              Волонтерство / Практика
+              {formatMessage('opportunities.catalog.filterUnpaid')}
             </button>
           </div>
 
           {!loading && (
             <span className={styles.resultCount}>
-              Знайдено: <strong>{filteredOpportunities.length}</strong>
+              {formatMessage('opportunities.catalog.foundPrefix')}{' '}
+              <strong>{filteredOpportunities.length}</strong>
             </span>
           )}
         </div>
@@ -110,7 +113,7 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
       <TabStateWrapper
         loading={loading}
         isEmpty={filteredOpportunities.length === 0}
-        emptyDescription="За вашим запитом не знайдено доступних можливостей"
+        emptyDescription={formatMessage('opportunities.catalog.emptyDescription')}
       >
         <div className={styles.grid}>
           {filteredOpportunities.map((opp) => (

@@ -1,12 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
+import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import type { Opportunity, OpportunityApplication } from '@uni-hub/types';
 import { CatalogTab } from './CatalogTab';
 import { MyOpportunitiesTab } from './MyOpportunitiesTab';
 import { MyApplicationsTab } from './MyApplicationsTab';
 import { ModerationQueueTab } from './ModerationQueueTab';
-import { getStatusBadge, getApplicationStatusBadge } from './badges';
+import { OpportunityStatusBadge } from './OpportunityStatusBadge';
+import { ApplicationStatusBadge } from './ApplicationStatusBadge';
 
 describe('Opportunities decomposed subtabs', () => {
   const mockOpportunity: Opportunity = {
@@ -43,15 +45,19 @@ describe('Opportunities decomposed subtabs', () => {
 
   it('renders CatalogTab with search bar, filter chips, and card', () => {
     const html = renderToString(
-      React.createElement(CatalogTab, {
-        loading: false,
-        opportunities: [mockOpportunity],
-        search: '',
-        onSearchChange: () => {},
-        paymentFilter: '',
-        onPaymentFilterChange: () => {},
-        onOpenDetail: () => {},
-      }),
+      React.createElement(
+        LanguageProvider,
+        null,
+        React.createElement(CatalogTab, {
+          loading: false,
+          opportunities: [mockOpportunity],
+          search: '',
+          onSearchChange: () => {},
+          paymentFilter: '',
+          onPaymentFilterChange: () => {},
+          onOpenDetail: () => {},
+        }),
+      ),
     );
 
     expect(html).toContain('Пошук за назвою або ключовими словами...');
@@ -62,12 +68,16 @@ describe('Opportunities decomposed subtabs', () => {
 
   it('renders MyOpportunitiesTab with owner cards', () => {
     const html = renderToString(
-      React.createElement(MyOpportunitiesTab, {
-        loading: false,
-        myOpportunities: [mockOpportunity],
-        onOpenApplicants: () => {},
-        onOpenDetail: () => {},
-      }),
+      React.createElement(
+        LanguageProvider,
+        null,
+        React.createElement(MyOpportunitiesTab, {
+          loading: false,
+          myOpportunities: [mockOpportunity],
+          onOpenApplicants: () => {},
+          onOpenDetail: () => {},
+        }),
+      ),
     );
 
     expect(html).toContain('Frontend Developer');
@@ -76,11 +86,15 @@ describe('Opportunities decomposed subtabs', () => {
 
   it('renders MyApplicationsTab with application details and withdraw button', () => {
     const html = renderToString(
-      React.createElement(MyApplicationsTab, {
-        loading: false,
-        myApplications: [mockApplication],
-        onWithdraw: () => {},
-      }),
+      React.createElement(
+        LanguageProvider,
+        null,
+        React.createElement(MyApplicationsTab, {
+          loading: false,
+          myApplications: [mockApplication],
+          onWithdraw: () => {},
+        }),
+      ),
     );
 
     expect(html).toContain('Frontend Developer');
@@ -90,12 +104,16 @@ describe('Opportunities decomposed subtabs', () => {
 
   it('renders ModerationQueueTab with moderation actions', () => {
     const html = renderToString(
-      React.createElement(ModerationQueueTab, {
-        loading: false,
-        moderationQueue: [mockOpportunity],
-        onModerate: () => {},
-        onOpenRejectModal: () => {},
-      }),
+      React.createElement(
+        LanguageProvider,
+        null,
+        React.createElement(ModerationQueueTab, {
+          loading: false,
+          moderationQueue: [mockOpportunity],
+          onModerate: () => {},
+          onOpenRejectModal: () => {},
+        }),
+      ),
     );
 
     expect(html).toContain('Frontend Developer');
@@ -105,11 +123,23 @@ describe('Opportunities decomposed subtabs', () => {
   });
 
   it('renders badges correctly', () => {
-    const draftBadge = renderToString(getStatusBadge('DRAFT'));
+    const draftBadge = renderToString(
+      React.createElement(
+        LanguageProvider,
+        null,
+        React.createElement(OpportunityStatusBadge, { status: 'DRAFT' }),
+      ),
+    );
 
     expect(draftBadge).toContain('Чернетка');
 
-    const appBadge = renderToString(getApplicationStatusBadge('ACCEPTED'));
+    const appBadge = renderToString(
+      React.createElement(
+        LanguageProvider,
+        null,
+        React.createElement(ApplicationStatusBadge, { status: 'ACCEPTED' }),
+      ),
+    );
 
     expect(appBadge).toContain('Прийнято');
   });

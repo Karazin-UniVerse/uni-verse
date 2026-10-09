@@ -3,6 +3,7 @@
 import React, { useId } from 'react';
 import { Button, TextInput, Select, Modal } from '@una';
 import type { OpportunityPaymentType } from '@uni-hub/types';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { CreateOpportunityFormData } from '../types';
 import styles from '../../OpportunitiesTab.module.scss';
 
@@ -23,6 +24,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   onSubmit,
   submitting,
 }) => {
+  const { formatMessage } = useLanguage();
   const createTitleId = useId();
   const createDescId = useId();
   const createContactId = useId();
@@ -32,59 +34,55 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
     <Modal
       open={open}
       onClose={onClose}
-      title="Створити нову можливість"
+      title={formatMessage('opportunities.createModal.title')}
       width={560}
     >
       <form onSubmit={onSubmit} className={styles.modalStack}>
         <div className={styles.fieldGroup}>
           <label htmlFor={createTitleId} className={styles.fieldLabel}>
-            Назва можливості *
+            {formatMessage('opportunities.createModal.titleLabel')}
           </label>
           <TextInput
             id={createTitleId}
-            placeholder="Наприклад: React-розробник у студентський стартап"
+            placeholder={formatMessage('opportunities.createModal.titlePlaceholder')}
             value={formData.title}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, title: e.target.value }))
-            }
+            onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
             required
           />
         </div>
 
         <div className={styles.fieldGroup}>
           <label htmlFor={createDescId} className={styles.fieldLabel}>
-            Опис, завдання та вимоги до кандидата *
+            {formatMessage('opportunities.createModal.descLabel')}
           </label>
           <textarea
             id={createDescId}
             rows={5}
             className={styles.textarea}
-            placeholder="Детально розкажіть про проект, задачі, очікувану зайнятість та необхідні навички..."
+            placeholder={formatMessage('opportunities.createModal.descPlaceholder')}
             value={formData.description}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, description: e.target.value }))
-            }
+            onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
             required
           />
         </div>
 
         <div className={styles.fieldGroup}>
           <label htmlFor={createContactId} className={styles.fieldLabel}>
-            Контактні дані організатора *
+            {formatMessage('opportunities.createModal.contactLabel')}
           </label>
           <TextInput
             id={createContactId}
-            placeholder="Telegram (@username) або Email"
+            placeholder={formatMessage('opportunities.createModal.contactPlaceholder')}
             value={formData.ownerContactInfo}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, ownerContactInfo: e.target.value }))
-            }
+            onChange={(e) => setFormData((prev) => ({ ...prev, ownerContactInfo: e.target.value }))}
             required
           />
         </div>
 
         <div className={styles.fieldGroup}>
-          <span className={styles.fieldLabel}>Тип винагороди</span>
+          <span className={styles.fieldLabel}>
+            {formatMessage('opportunities.createModal.paymentTypeLabel')}
+          </span>
           <Select
             value={formData.paymentType}
             onChange={(val) =>
@@ -94,8 +92,14 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
               }))
             }
             options={[
-              { value: 'UNPAID', label: 'Неоплачувана (Практика, досвід)' },
-              { value: 'PAID', label: 'Оплачувана' },
+              {
+                value: 'UNPAID',
+                label: formatMessage('opportunities.createModal.unpaidOption'),
+              },
+              {
+                value: 'PAID',
+                label: formatMessage('opportunities.createModal.paidOption'),
+              },
             ]}
           />
         </div>
@@ -103,30 +107,25 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
         {formData.paymentType === 'PAID' && (
           <div className={styles.fieldGroup}>
             <label htmlFor={createPaymentDetailsId} className={styles.fieldLabel}>
-              Деталі та розмір оплати
+              {formatMessage('opportunities.createModal.paymentDetailsLabel')}
             </label>
             <TextInput
               id={createPaymentDetailsId}
-              placeholder="Наприклад: $400/місяць або 5000 грн за етап"
+              placeholder={formatMessage('opportunities.createModal.paymentDetailsPlaceholder')}
               value={formData.paymentDetails}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, paymentDetails: e.target.value }))
-              }
+              onChange={(e) => setFormData((prev) => ({ ...prev, paymentDetails: e.target.value }))}
             />
           </div>
         )}
 
         <div className={styles.modalFooter}>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onClose}
-            disabled={submitting}
-          >
-            Скасувати
+          <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+            {formatMessage('opportunities.createModal.cancel')}
           </Button>
           <Button type="submit" variant="primary" disabled={submitting}>
-            {submitting ? 'Збереження...' : 'Створити чернетку'}
+            {submitting
+              ? formatMessage('opportunities.createModal.saving')
+              : formatMessage('opportunities.createModal.submit')}
           </Button>
         </div>
       </form>

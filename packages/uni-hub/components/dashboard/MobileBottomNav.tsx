@@ -6,7 +6,7 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useFeatures } from '@uni-hub/features';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import { getVisibleNavItems } from '@uni-hub/views/dashboard/layout/DashboardSidebar';
-import type { NavKey } from '@uni-hub/views/dashboard/types';
+import type { NavKey } from '@uni-hub/views/dashboard/constants';
 import styles from './MobileBottomNav.module.scss';
 
 interface MobileBottomNavProps {

@@ -4,8 +4,8 @@ import React from 'react';
 import { Button, Spinner, Empty, Modal } from '@una';
 import { Mail, MessageSquare, Calendar, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import type { OpportunityApplication, OpportunityAppStatus } from '@uni-hub/types';
-import { getApplicationStatusBadge } from '../badges';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { ApplicationStatusBadge } from '../ApplicationStatusBadge';
 import styles from '../../OpportunitiesTab.module.scss';
 
 export interface ApplicantsModalProps {
@@ -23,7 +23,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
   loading,
   onUpdateStatus,
 }) => {
-  const { formatMessage } = useLanguage();
+  const { formatMessage, language } = useLanguage();
 
   let content;
 
@@ -34,7 +34,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
       </div>
     );
   } else if (applications.length === 0) {
-    content = <Empty description={formatMessage('opportunities.applicants.empty')} />;
+    content = <Empty description={formatMessage('opportunities.applicantsModal.empty')} />;
   } else {
     content = (
       <div className={styles.listStack}>
@@ -48,7 +48,9 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                 <div className={styles.ownerMeta}>
                   <div className={styles.ownerRow}>
                     <span className={styles.applicantName}>
-                      {app.applicant?.name || app.applicantName || 'Студент'}
+                      {app.applicant?.name ||
+                        app.applicantName ||
+                        formatMessage('opportunities.applicantsModal.defaultApplicant')}
                     </span>
                     {(app.applicant?.email || app.contactInfo) && (
                       <span className={styles.authorContactTag}>
@@ -61,7 +63,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
               </div>
 
               <div className={styles.applicantStatusRow}>
-                {getApplicationStatusBadge(app.status)}
+                <ApplicationStatusBadge status={app.status} />
               </div>
             </div>
 
@@ -69,7 +71,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
               <div className={styles.applicantMotivationBox}>
                 <div className={styles.motivationLabel}>
                   <MessageSquare size={13} />
-                  Супровідне повідомлення:
+                  {formatMessage('opportunities.applicantsModal.motivationLabel')}
                 </div>
                 <p className={styles.motivationText}>{app.motivation}</p>
               </div>
@@ -78,11 +80,15 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
             <div className={styles.applicantFooter}>
               <span className={styles.submissionDate}>
                 <Calendar size={12} />
-                Подано{' '}
-                {new Date(app.createdAt).toLocaleDateString('uk-UA', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
+                {formatMessage('opportunities.applicantsModal.submittedOn', {
+                  date: new Date(app.createdAt).toLocaleDateString(
+                    language === 'uk' ? 'uk-UA' : 'en-US',
+                    {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    },
+                  ),
                 })}
               </span>
 
@@ -95,7 +101,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                     onClick={() => onUpdateStatus(app.id, 'ACCEPTED')}
                   >
                     <CheckCircle2 size={14} style={{ marginRight: '6px' }} />
-                    Прийняти
+                    {formatMessage('opportunities.applicantsModal.accept')}
                   </Button>
                 )}
                 {app.status !== 'UNDER_REVIEW' && (
@@ -106,7 +112,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                     onClick={() => onUpdateStatus(app.id, 'UNDER_REVIEW')}
                   >
                     <Clock size={14} style={{ marginRight: '6px' }} />
-                    На розгляд
+                    {formatMessage('opportunities.applicantsModal.underReview')}
                   </Button>
                 )}
                 {app.status !== 'REJECTED' && (
@@ -117,7 +123,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                     onClick={() => onUpdateStatus(app.id, 'REJECTED')}
                   >
                     <XCircle size={14} style={{ marginRight: '6px' }} />
-                    Відхилити
+                    {formatMessage('opportunities.applicantsModal.reject')}
                   </Button>
                 )}
               </div>
@@ -132,7 +138,9 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
     <Modal
       open={open}
       onClose={onClose}
-      title={`Кандидати на можливість (${applications.length})`}
+      title={formatMessage('opportunities.applicantsModal.title', {
+        count: applications.length,
+      })}
       width={720}
     >
       <div className={styles.modalStack}>
@@ -140,7 +148,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
 
         <div className={styles.modalFooter}>
           <Button variant="secondary" onClick={onClose}>
-            Закрити
+            {formatMessage('opportunities.applicantsModal.close')}
           </Button>
         </div>
       </div>

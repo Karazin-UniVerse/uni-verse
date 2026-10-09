@@ -15,10 +15,11 @@ import { BadgeSystem, GradeSimulator } from '@uni-hub/components/gamification';
 import { ScheduleView } from '@uni-hub/components/schedule';
 import { safeStorage } from '@uni-hub/services/api';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
+import { useFeatures } from '@uni-hub/features';
 import {
   type NavKey,
+  NAV_KEY,
   isNavKey,
-  ENABLE_OPPORTUNITIES_TAB,
   fallbackStudentProfile,
   DashboardSidebar,
   DashboardHeader,
@@ -35,17 +36,18 @@ import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './DashboardPage.module.scss';
 
 const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
-  overview: 'nav.overview.full',
-  courses: 'nav.courses.full',
-  grades: 'nav.grades.full',
-  schedule: 'nav.schedule.full',
-  assignments: 'nav.assignments.full',
-  opportunities: 'nav.opportunities.full',
+  [NAV_KEY.Overview]: 'nav.overview.full',
+  [NAV_KEY.Courses]: 'nav.courses.full',
+  [NAV_KEY.Grades]: 'nav.grades.full',
+  [NAV_KEY.Schedule]: 'nav.schedule.full',
+  [NAV_KEY.Assignments]: 'nav.assignments.full',
+  [NAV_KEY.Opportunities]: 'nav.opportunities.full',
 };
 
 const DashboardPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isOpportunitiesPlatformEnabled } = useFeatures();
   const checkIn = useGamificationStore((s) => s.checkIn);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const setSoundEnabled = useGamificationStore((s) => s.setSoundEnabled);
@@ -129,13 +131,13 @@ const DashboardPage: React.FC = () => {
     const requestedTab = searchParams.get('tab');
 
     if (requestedTab && isNavKey(requestedTab)) {
-      if (requestedTab === 'opportunities' && !ENABLE_OPPORTUNITIES_TAB) {
-        setActiveKey('overview');
+      if (requestedTab === NAV_KEY.Opportunities && !isOpportunitiesPlatformEnabled) {
+        setActiveKey(NAV_KEY.Overview);
       } else {
         setActiveKey(requestedTab);
       }
     }
-  }, [searchParams]);
+  }, [isOpportunitiesPlatformEnabled, searchParams]);
 
   useEffect(() => {
     if (!isLoggedIn()) {

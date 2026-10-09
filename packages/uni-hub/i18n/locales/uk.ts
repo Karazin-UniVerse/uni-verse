@@ -379,7 +379,6 @@ export const uk = {
   'devPanel.opportunitiesLabel': 'Можливості',
   'devPanel.opportunitiesDesc': 'Дошка проєктів та стажувань',
 
-  // Added from PR:
   // Opportunities
   'opportunities.tabs.catalog': 'Каталог',
   'opportunities.tabs.myOpportunities': 'Мої можливості',
@@ -410,6 +409,132 @@ export const uk = {
   'opportunities.card.management': 'Управління',
   'opportunities.card.details': 'Деталі',
   'opportunities.card.detailsAria': 'Детальніше про {title}',
+  'opportunities.catalog.searchPlaceholder': 'Пошук за назвою або ключовими словами...',
+  'opportunities.catalog.searchAria': 'Пошук можливостей',
+  'opportunities.catalog.clearSearchAria': 'Очистити поле пошуку',
+  'opportunities.catalog.filterAll': 'Усі',
+  'opportunities.catalog.filterPaid': 'Оплачувані',
+  'opportunities.catalog.filterUnpaid': 'Волонтерство / Практика',
+  'opportunities.catalog.foundPrefix': 'Знайдено:',
+  'opportunities.catalog.emptyDescription': 'За вашим запитом не знайдено доступних можливостей',
+
+  // Opportunities Status Badges
+  'opportunities.status.draft': 'Чернетка',
+  'opportunities.status.readyForReview': 'На модерації',
+  'opportunities.status.requiresChanges': 'Потребує правок',
+  'opportunities.status.published': 'Опубліковано',
+  'opportunities.status.rejected': 'Відхилено',
+
+  // Opportunities Application Status Badges
+  'opportunities.appStatus.submitted': 'Надіслано',
+  'opportunities.appStatus.underReview': 'На розгляді',
+  'opportunities.appStatus.accepted': 'Прийнято',
+  'opportunities.appStatus.rejected': 'Відхилено',
+  'opportunities.appStatus.withdrawn': 'Відкликано',
+
+  // Opportunities SubTabs
+  'opportunities.myOpportunities.empty': 'Ви ще не опублікували жодної власної можливості',
+  'opportunities.myApplications.empty': 'Ви ще не відгукувалися на жодну можливість',
+  'opportunities.myApplications.submittedOn': 'Подано {date}',
+  'opportunities.myApplications.defaultTitle': 'Проектна можливість',
+  'opportunities.myApplications.paidWithAmount': 'Оплачувана ({amount})',
+  'opportunities.myApplications.paid': 'Оплачувана',
+  'opportunities.myApplications.unpaid': 'Практика',
+  'opportunities.myApplications.motivationLabel': 'Ваш супровідний лист / мотивація:',
+  'opportunities.myApplications.ownerFeedbackLabel': 'Відповідь автора пропозиції:',
+  'opportunities.myApplications.withdrawBtn': 'Відкликати відгук',
+  'opportunities.myApplications.statusAccepted': 'Вашу кандидатуру схвалено організатором',
+  'opportunities.myApplications.statusRejected': 'Організатор відхилив відгук',
+  'opportunities.myApplications.statusWithdrawn': 'Ви відкликали цей відгук',
+
+  'opportunities.moderation.empty':
+    'Черга модерації порожня! Немає нових можливостей для перевірки.',
+  'opportunities.moderation.needsModeration': 'Потребує модерації',
+  'opportunities.moderation.submittedOn': 'Подано {date}',
+  'opportunities.moderation.unknownOwner': 'Невідомо',
+  'opportunities.moderation.paidWithAmount': 'Оплачувана ({amount})',
+  'opportunities.moderation.paid': 'Оплачувана',
+  'opportunities.moderation.practice': 'Практика',
+  'opportunities.moderation.descLabel': 'Опис пропозиції',
+  'opportunities.moderation.prevCommentLabel': 'Попередній коментар модерації:',
+  'opportunities.moderation.approve': 'Схвалити',
+  'opportunities.moderation.revise': 'На доопрацювання',
+  'opportunities.moderation.reject': 'Відхилити',
+
+  // Modals - Create
+  'opportunities.createModal.title': 'Створити нову можливість',
+  'opportunities.createModal.titleLabel': 'Назва можливості *',
+  'opportunities.createModal.titlePlaceholder': 'Наприклад: React-розробник у студентський стартап',
+  'opportunities.createModal.descLabel': 'Опис, завдання та вимоги до кандидата *',
+  'opportunities.createModal.descPlaceholder':
+    'Детально розкажіть про проект, задачі, очікувану зайнятість та необхідні навички...',
+  'opportunities.createModal.contactLabel': 'Контактні дані організатора *',
+  'opportunities.createModal.contactPlaceholder': 'Telegram (@username) або Email',
+  'opportunities.createModal.paymentTypeLabel': 'Тип винагороди',
+  'opportunities.createModal.unpaidOption': 'Неоплачувана (Практика, досвід)',
+  'opportunities.createModal.paidOption': 'Оплачувана',
+  'opportunities.createModal.paymentDetailsLabel': 'Деталі та розмір оплати',
+  'opportunities.createModal.paymentDetailsPlaceholder':
+    'Наприклад: $400/місяць або 5000 грн за етап',
+  'opportunities.createModal.cancel': 'Скасувати',
+  'opportunities.createModal.saving': 'Збереження...',
+  'opportunities.createModal.submit': 'Створити чернетку',
+
+  // Modals - Reject / Revise
+  'opportunities.rejectModal.title': 'Зауваження або повернення на доопрацювання',
+  'opportunities.rejectModal.commentLabel':
+    'Опишіть зауваження або причину (буде надіслано автору):',
+  'opportunities.rejectModal.placeholder':
+    'Вкажіть, що саме необхідно виправити перед повторною подачею...',
+  'opportunities.rejectModal.cancel': 'Скасувати',
+  'opportunities.rejectModal.revise': 'На доопрацювання',
+  'opportunities.rejectModal.reject': 'Відхилити',
+
+  // Modals - Detail
+  'opportunities.detailModal.defaultTitle': 'Деталі можливості',
+  'opportunities.detailModal.paidWithDetails': 'Оплата: {details}',
+  'opportunities.detailModal.paidProvided': 'Передбачена',
+  'opportunities.detailModal.unpaid': 'Без оплати (Практика / Досвід)',
+  'opportunities.detailModal.lifecycleState': 'Стан: {state}',
+  'opportunities.detailModal.organizer': 'Організатор:',
+  'opportunities.detailModal.defaultOrganizer': 'Каразінський університет',
+  'opportunities.detailModal.publishedOn': 'Опубліковано: {date}',
+  'opportunities.detailModal.descTitle': 'Опис проекту та вимоги',
+  'opportunities.detailModal.contacts': 'Контакти для звʼязку:',
+  'opportunities.detailModal.manageTitle': 'Керування вашою можливістю',
+  'opportunities.detailModal.sendToReview': 'Надіслати на модерацію',
+  'opportunities.detailModal.phaseLabel': 'Фаза:',
+  'opportunities.detailModal.phaseStart': 'Старт',
+  'opportunities.detailModal.phaseActive': 'Активна фаза',
+  'opportunities.detailModal.phasePaused': 'На паузі',
+  'opportunities.detailModal.phaseCompleted': 'Завершено',
+  'opportunities.detailModal.phaseCancelled': 'Скасовано',
+  'opportunities.detailModal.close': 'Закрити',
+  'opportunities.detailModal.apply': 'Відгукнутися на можливість',
+
+  // Modals - Apply
+  'opportunities.applyModal.title': 'Відгук: {title}',
+  'opportunities.applyModal.motivationLabel':
+    'Супровідне повідомлення (чому вам цікавий цей проект) *',
+  'opportunities.applyModal.motivationPlaceholder':
+    'Коротко опишіть ваш досвід, стек та чому ви хочете взяти участь...',
+  'opportunities.applyModal.contactLabel': 'Ваш Telegram або номер телефону для звʼязку',
+  'opportunities.applyModal.contactPlaceholder': '@username або +380...',
+  'opportunities.applyModal.defaultContact': 'Вказано в профілі',
+  'opportunities.applyModal.cancel': 'Скасувати',
+  'opportunities.applyModal.submitting': 'Відправка...',
+  'opportunities.applyModal.submit': 'Надіслати відгук',
+
+  // Modals - Applicants
+  'opportunities.applicantsModal.title': 'Кандидати на можливість ({count})',
+  'opportunities.applicantsModal.empty': 'На цю можливість ще немає відгуків',
+  'opportunities.applicantsModal.defaultApplicant': 'Студент',
+  'opportunities.applicantsModal.motivationLabel': 'Супровідне повідомлення:',
+  'opportunities.applicantsModal.submittedOn': 'Подано {date}',
+  'opportunities.applicantsModal.accept': 'Прийняти',
+  'opportunities.applicantsModal.underReview': 'На розгляд',
+  'opportunities.applicantsModal.reject': 'Відхилити',
+  'opportunities.applicantsModal.close': 'Закрити',
 };
 
 export type TranslationKey = keyof typeof uk;

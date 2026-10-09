@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Button, Modal } from '@una';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { RejectModalState } from '../types';
 import styles from '../../OpportunitiesTab.module.scss';
 
@@ -18,22 +19,24 @@ export const ModerationRejectModal: React.FC<ModerationRejectModalProps> = ({
   onCommentChange,
   onConfirm,
 }) => {
+  const { formatMessage } = useLanguage();
+
   return (
     <Modal
       open={rejectModal.open}
       onClose={onClose}
-      title="Зауваження або повернення на доопрацювання"
+      title={formatMessage('opportunities.rejectModal.title')}
       width={540}
     >
       <div className={styles.modalStack}>
         <div className={styles.fieldGroup}>
           <label className={styles.fieldLabel}>
-            Опишіть зауваження або причину (буде надіслано автору):
+            {formatMessage('opportunities.rejectModal.commentLabel')}
           </label>
           <textarea
             rows={4}
             className={styles.textarea}
-            placeholder="Вкажіть, що саме необхідно виправити перед повторною подачею..."
+            placeholder={formatMessage('opportunities.rejectModal.placeholder')}
             value={rejectModal.comment}
             onChange={(e) => onCommentChange(e.target.value)}
           />
@@ -41,7 +44,7 @@ export const ModerationRejectModal: React.FC<ModerationRejectModalProps> = ({
 
         <div className={styles.modalFooter}>
           <Button variant="secondary" onClick={onClose}>
-            Скасувати
+            {formatMessage('opportunities.rejectModal.cancel')}
           </Button>
           <Button
             variant="primary"
@@ -57,7 +60,7 @@ export const ModerationRejectModal: React.FC<ModerationRejectModalProps> = ({
               color: '#fff',
             }}
           >
-            На доопрацювання
+            {formatMessage('opportunities.rejectModal.revise')}
           </Button>
           <Button
             variant="primary"
@@ -73,7 +76,7 @@ export const ModerationRejectModal: React.FC<ModerationRejectModalProps> = ({
               color: '#fff',
             }}
           >
-            Відхилити
+            {formatMessage('opportunities.rejectModal.reject')}
           </Button>
         </div>
       </div>

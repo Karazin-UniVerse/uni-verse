@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { BookOpen, FileEdit, GraduationCap } from 'lucide-react';
-import type { NavKey } from '../types';
+import type { NavKey } from '../constants';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 

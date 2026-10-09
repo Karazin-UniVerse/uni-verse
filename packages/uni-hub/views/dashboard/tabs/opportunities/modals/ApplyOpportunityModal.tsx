@@ -2,6 +2,7 @@
 
 import React, { useId } from 'react';
 import { Button, TextInput, Modal } from '@una';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import styles from '../../OpportunitiesTab.module.scss';
 
 export interface ApplyOpportunityModalProps {
@@ -27,6 +28,7 @@ export const ApplyOpportunityModal: React.FC<ApplyOpportunityModalProps> = ({
   onSubmit,
   submitting,
 }) => {
+  const { formatMessage } = useLanguage();
   const applyMotivationId = useId();
   const applyContactId = useId();
 
@@ -34,19 +36,21 @@ export const ApplyOpportunityModal: React.FC<ApplyOpportunityModalProps> = ({
     <Modal
       open={open}
       onClose={onClose}
-      title={`Відгук: ${opportunityTitle || ''}`}
+      title={formatMessage('opportunities.applyModal.title', {
+        title: opportunityTitle || '',
+      })}
       width={560}
     >
       <form onSubmit={onSubmit} className={styles.modalStack}>
         <div className={styles.fieldGroup}>
           <label htmlFor={applyMotivationId} className={styles.fieldLabel}>
-            Супровідне повідомлення (чому вам цікавий цей проект) *
+            {formatMessage('opportunities.applyModal.motivationLabel')}
           </label>
           <textarea
             id={applyMotivationId}
             rows={4}
             className={styles.textarea}
-            placeholder="Коротко опишіть ваш досвід, стек та чому ви хочете взяти участь..."
+            placeholder={formatMessage('opportunities.applyModal.motivationPlaceholder')}
             value={motivation}
             onChange={(e) => onMotivationChange(e.target.value)}
             required
@@ -55,31 +59,24 @@ export const ApplyOpportunityModal: React.FC<ApplyOpportunityModalProps> = ({
 
         <div className={styles.fieldGroup}>
           <label htmlFor={applyContactId} className={styles.fieldLabel}>
-            Ваш Telegram або номер телефону для звʼязку
+            {formatMessage('opportunities.applyModal.contactLabel')}
           </label>
           <TextInput
             id={applyContactId}
-            placeholder="@username або +380..."
+            placeholder={formatMessage('opportunities.applyModal.contactPlaceholder')}
             value={contactInfo}
             onChange={(e) => onContactInfoChange(e.target.value)}
           />
         </div>
 
         <div className={styles.modalFooter}>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onClose}
-            disabled={submitting}
-          >
-            Скасувати
+          <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+            {formatMessage('opportunities.applyModal.cancel')}
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={submitting || !motivation.trim()}
-          >
-            {submitting ? 'Відправка...' : 'Надіслати відгук'}
+          <Button type="submit" variant="primary" disabled={submitting || !motivation.trim()}>
+            {submitting
+              ? formatMessage('opportunities.applyModal.submitting')
+              : formatMessage('opportunities.applyModal.submit')}
           </Button>
         </div>
       </form>

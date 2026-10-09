@@ -4,7 +4,8 @@ import React from 'react';
 import { Button, Tag, Select, Modal } from '@una';
 import { Mail, Send } from 'lucide-react';
 import type { Opportunity, OpportunityLifecycle } from '@uni-hub/types';
-import { getStatusBadge } from '../badges';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { OpportunityStatusBadge } from '../OpportunityStatusBadge';
 import styles from '../../OpportunitiesTab.module.scss';
 
 export interface OpportunityDetailModalProps {
@@ -26,27 +27,38 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
   onLifecycleChange,
   onOpenApply,
 }) => {
+  const { formatMessage, language } = useLanguage();
+
   if (!opportunity) return null;
 
   const isOwner = userId === opportunity.ownerId;
+  const paymentTagText =
+    opportunity.paymentType === 'PAID'
+      ? formatMessage('opportunities.detailModal.paidWithDetails', {
+          details:
+            opportunity.paymentDetails || formatMessage('opportunities.detailModal.paidProvided'),
+        })
+      : formatMessage('opportunities.detailModal.unpaid');
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={opportunity.title ?? 'Деталі можливості'}
+      title={opportunity.title ?? formatMessage('opportunities.detailModal.defaultTitle')}
       width={680}
     >
       <div className={styles.modalStack}>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           <Tag tone={opportunity.paymentType === 'PAID' ? 'success' : 'neutral'}>
-            {opportunity.paymentType === 'PAID'
-              ? `Оплата: ${opportunity.paymentDetails || 'Передбачена'}`
-              : 'Без оплати (Практика / Досвід)'}
+            {paymentTagText}
           </Tag>
-          {getStatusBadge(opportunity.status)}
+          <OpportunityStatusBadge status={opportunity.status} />
           {opportunity.lifecycleState && (
-            <Tag tone="info">Стан: {opportunity.lifecycleState}</Tag>
+            <Tag tone="info">
+              {formatMessage('opportunities.detailModal.lifecycleState', {
+                state: opportunity.lifecycleState,
+              })}
+            </Tag>
           )}
         </div>
 
@@ -61,21 +73,42 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
           }}
         >
           <span>
-            Організатор: <strong>{opportunity.owner?.name || opportunity.owner?.email || 'Каразінський університет'}</strong>
+            {formatMessage('opportunities.detailModal.organizer')}{' '}
+            <strong>
+              {opportunity.owner?.name ||
+                opportunity.owner?.email ||
+                formatMessage('opportunities.detailModal.defaultOrganizer')}
+            </strong>
           </span>
           <span>•</span>
-          <span>Опубліковано: {new Date(opportunity.createdAt).toLocaleDateString('uk-UA')}</span>
+          <span>
+            {formatMessage('opportunities.detailModal.publishedOn', {
+              date: new Date(opportunity.createdAt).toLocaleDateString(
+                language === 'uk' ? 'uk-UA' : 'en-US',
+              ),
+            })}
+          </span>
         </div>
 
         <div className={styles.detailSection}>
-          <div className={styles.detailSectionTitle}>Опис проекту та вимоги</div>
+          <div className={styles.detailSectionTitle}>
+            {formatMessage('opportunities.detailModal.descTitle')}
+          </div>
           <div className={styles.detailSectionText}>{opportunity.description}</div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--font-sm)' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: 'var(--font-sm)',
+          }}
+        >
           <Mail size={16} style={{ color: 'var(--accent-primary)' }} />
           <span>
-            Контакти для звʼязку: <strong>{opportunity.ownerContactInfo}</strong>
+            {formatMessage('opportunities.detailModal.contacts')}{' '}
+            <strong>{opportunity.ownerContactInfo}</strong>
           </span>
         </div>
 
@@ -91,7 +124,7 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
                 color: 'var(--accent-primary)',
               }}
             >
-              Керування вашою можливістю
+              {formatMessage('opportunities.detailModal.manageTitle')}
             </div>
 
             <div
@@ -103,21 +136,27 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
                 flexWrap: 'wrap',
               }}
             >
-              {(opportunity.status === 'DRAFT' ||
-                opportunity.status === 'REQUIRES_CHANGES') && (
+              {(opportunity.status === 'DRAFT' || opportunity.status === 'REQUIRES_CHANGES') && (
                 <Button
                   variant="primary"
                   size="small"
                   onClick={() => onSendToReview(opportunity.id)}
                 >
                   <Send size={14} style={{ marginRight: '6px' }} />
-                  Надіслати на модерацію
+                  {formatMessage('opportunities.detailModal.sendToReview')}
                 </Button>
               )}
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginLeft: 'auto',
+                }}
+              >
                 <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-secondary)' }}>
-                  Фаза:
+                  {formatMessage('opportunities.detailModal.phaseLabel')}
                 </span>
                 <Select
                   value={opportunity.lifecycleState}
@@ -125,11 +164,26 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
                     onLifecycleChange(opportunity.id, state as OpportunityLifecycle)
                   }
                   options={[
-                    { value: 'START', label: 'Старт' },
-                    { value: 'ACTIVE', label: 'Активна фаза' },
-                    { value: 'PAUSED', label: 'На паузі' },
-                    { value: 'COMPLETED', label: 'Завершено' },
-                    { value: 'CANCELLED', label: 'Скасовано' },
+                    {
+                      value: 'START',
+                      label: formatMessage('opportunities.detailModal.phaseStart'),
+                    },
+                    {
+                      value: 'ACTIVE',
+                      label: formatMessage('opportunities.detailModal.phaseActive'),
+                    },
+                    {
+                      value: 'PAUSED',
+                      label: formatMessage('opportunities.detailModal.phasePaused'),
+                    },
+                    {
+                      value: 'COMPLETED',
+                      label: formatMessage('opportunities.detailModal.phaseCompleted'),
+                    },
+                    {
+                      value: 'CANCELLED',
+                      label: formatMessage('opportunities.detailModal.phaseCancelled'),
+                    },
                   ]}
                 />
               </div>
@@ -139,11 +193,11 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
 
         <div className={styles.modalFooter}>
           <Button variant="secondary" onClick={onClose}>
-            Закрити
+            {formatMessage('opportunities.detailModal.close')}
           </Button>
           {!isOwner && opportunity.status === 'PUBLISHED' && (
             <Button variant="primary" onClick={onOpenApply}>
-              Відгукнутися на можливість
+              {formatMessage('opportunities.detailModal.apply')}
             </Button>
           )}
         </div>

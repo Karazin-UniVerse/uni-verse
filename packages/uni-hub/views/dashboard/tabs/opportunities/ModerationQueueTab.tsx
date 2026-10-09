@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@una';
 import type { Opportunity } from '@uni-hub/types';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { TabStateWrapper } from './TabStateWrapper';
 import styles from '../OpportunitiesTab.module.scss';
 
@@ -34,11 +35,13 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
   onModerate,
   onOpenRejectModal,
 }) => {
+  const { formatMessage, language } = useLanguage();
+
   return (
     <TabStateWrapper
       loading={loading}
       isEmpty={moderationQueue.length === 0}
-      emptyDescription="Черга модерації порожня! Немає нових можливостей для перевірки."
+      emptyDescription={formatMessage('opportunities.moderation.empty')}
     >
       <div className={styles.listStack}>
         {moderationQueue.map((item) => (
@@ -48,15 +51,19 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                 <div className={styles.moderationBadgeRow}>
                   <span className={styles.reviewPendingBadge}>
                     <Clock size={12} />
-                    Потребує модерації
+                    {formatMessage('opportunities.moderation.needsModeration')}
                   </span>
                   <span className={styles.submissionDate}>
                     <Calendar size={12} />
-                    Подано{' '}
-                    {new Date(item.createdAt).toLocaleDateString('uk-UA', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
+                    {formatMessage('opportunities.moderation.submittedOn', {
+                      date: new Date(item.createdAt).toLocaleDateString(
+                        language === 'uk' ? 'uk-UA' : 'en-US',
+                        {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        },
+                      ),
                     })}
                   </span>
                 </div>
@@ -70,7 +77,9 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                   <div className={styles.ownerMeta}>
                     <div className={styles.ownerRow}>
                       <span className={styles.ownerName}>
-                        {item.owner?.name || item.owner?.email || 'Невідомо'}
+                        {item.owner?.name ||
+                          item.owner?.email ||
+                          formatMessage('opportunities.moderation.unknownOwner')}
                       </span>
                       {item.ownerContactInfo && (
                         <span className={styles.authorContactTag}>
@@ -88,20 +97,26 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                   <span className={styles.compensationPill}>
                     <Coins size={13} />
                     <span>
-                      {item.paymentDetails ? `Оплачувана (${item.paymentDetails})` : 'Оплачувана'}
+                      {item.paymentDetails
+                        ? formatMessage('opportunities.moderation.paidWithAmount', {
+                            amount: item.paymentDetails,
+                          })
+                        : formatMessage('opportunities.moderation.paid')}
                     </span>
                   </span>
                 ) : (
                   <span className={styles.unpaidPill}>
                     <Briefcase size={13} />
-                    <span>Практика</span>
+                    <span>{formatMessage('opportunities.moderation.practice')}</span>
                   </span>
                 )}
               </div>
             </div>
 
             <div className={styles.moderationDescriptionBox}>
-              <div className={styles.moderationDescriptionLabel}>Опис пропозиції</div>
+              <div className={styles.moderationDescriptionLabel}>
+                {formatMessage('opportunities.moderation.descLabel')}
+              </div>
               <p className={styles.moderationDescriptionText}>{item.description}</p>
             </div>
 
@@ -109,7 +124,9 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
               <div className={styles.previousCommentBox}>
                 <AlertCircle size={15} className={styles.commentIcon} />
                 <div>
-                  <span className={styles.commentLabel}>Попередній коментар модерації: </span>
+                  <span className={styles.commentLabel}>
+                    {formatMessage('opportunities.moderation.prevCommentLabel')}{' '}
+                  </span>
                   <span className={styles.commentText}>{item.moderationComment}</span>
                 </div>
               </div>
@@ -129,7 +146,7 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                   onClick={() => onModerate(item.id, 'APPROVE')}
                 >
                   <CheckCircle2 size={14} style={{ marginRight: '6px' }} />
-                  Схвалити
+                  {formatMessage('opportunities.moderation.approve')}
                 </Button>
                 <Button
                   variant="secondary"
@@ -138,16 +155,16 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                   onClick={() => onOpenRejectModal(item.id)}
                 >
                   <AlertCircle size={14} style={{ marginRight: '6px' }} />
-                  На доопрацювання
+                  {formatMessage('opportunities.moderation.revise')}
                 </Button>
                 <Button
                   variant="secondary"
                   size="small"
                   className={styles.rejectBtn}
-                  onClick={() => onModerate(item.id, 'REJECT')}
+                  onClick={() => onOpenRejectModal(item.id)}
                 >
                   <XCircle size={14} style={{ marginRight: '6px' }} />
-                  Відхилити
+                  {formatMessage('opportunities.moderation.reject')}
                 </Button>
               </div>
             </div>

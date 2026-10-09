@@ -1,6 +1,7 @@
 import type { OpportunityPaymentType } from '@uni-hub/types';
+import type { OpportunitySubTab } from './constants';
 
-export type SubTabKey = 'catalog' | 'my-opportunities' | 'my-applications' | 'moderation';
+export type SubTabKey = OpportunitySubTab;
 
 export interface CreateOpportunityFormData {
   title: string;

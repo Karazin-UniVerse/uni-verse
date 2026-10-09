@@ -2,9 +2,10 @@
 
 import React from 'react';
 import type { Opportunity } from '@uni-hub/types';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { OpportunityCard } from '../OpportunityCard';
 import { TabStateWrapper } from './TabStateWrapper';
-import { getStatusBadge } from './badges';
+import { OpportunityStatusBadge } from './OpportunityStatusBadge';
 import styles from '../OpportunitiesTab.module.scss';
 
 export interface MyOpportunitiesTabProps {
@@ -20,11 +21,13 @@ export const MyOpportunitiesTab: React.FC<MyOpportunitiesTabProps> = ({
   onOpenApplicants,
   onOpenDetail,
 }) => {
+  const { formatMessage } = useLanguage();
+
   return (
     <TabStateWrapper
       loading={loading}
       isEmpty={myOpportunities.length === 0}
-      emptyDescription="Ви ще не опублікували жодної власної можливості"
+      emptyDescription={formatMessage('opportunities.myOpportunities.empty')}
     >
       <div className={styles.grid}>
         {myOpportunities.map((opp) => (
@@ -32,7 +35,7 @@ export const MyOpportunitiesTab: React.FC<MyOpportunitiesTabProps> = ({
             key={opp.id}
             opportunity={opp}
             variant="owner"
-            statusBadge={getStatusBadge(opp.status)}
+            statusBadge={<OpportunityStatusBadge status={opp.status} />}
             onOpenApplicants={onOpenApplicants}
             onOpenDetail={onOpenDetail}
           />

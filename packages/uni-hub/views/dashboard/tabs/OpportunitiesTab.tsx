@@ -16,6 +16,7 @@ import {
   ApplyOpportunityModal,
   ApplicantsModal,
   ModerationRejectModal,
+  OPPORTUNITY_SUB_TAB,
 } from './opportunities';
 
 export interface OpportunitiesTabProps {
@@ -78,10 +79,10 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
           <button
             type="button"
             role="tab"
-            aria-selected={activeSubTab === 'catalog'}
+            aria-selected={activeSubTab === OPPORTUNITY_SUB_TAB.Catalog}
             aria-controls="panel-catalog"
-            className={`${styles.segmentItem} ${activeSubTab === 'catalog' ? styles.activeSegment : ''}`}
-            onClick={() => setActiveSubTab('catalog')}
+            className={`${styles.segmentItem} ${activeSubTab === OPPORTUNITY_SUB_TAB.Catalog ? styles.activeSegment : ''}`}
+            onClick={() => setActiveSubTab(OPPORTUNITY_SUB_TAB.Catalog)}
           >
             <Briefcase size={16} />
             {formatMessage('opportunities.tabs.catalog')}
@@ -89,10 +90,10 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
           <button
             type="button"
             role="tab"
-            aria-selected={activeSubTab === 'my-opportunities'}
+            aria-selected={activeSubTab === OPPORTUNITY_SUB_TAB.MyOpportunities}
             aria-controls="panel-my-opportunities"
-            className={`${styles.segmentItem} ${activeSubTab === 'my-opportunities' ? styles.activeSegment : ''}`}
-            onClick={() => setActiveSubTab('my-opportunities')}
+            className={`${styles.segmentItem} ${activeSubTab === OPPORTUNITY_SUB_TAB.MyOpportunities ? styles.activeSegment : ''}`}
+            onClick={() => setActiveSubTab(OPPORTUNITY_SUB_TAB.MyOpportunities)}
           >
             <FileText size={16} />
             {formatMessage('opportunities.tabs.myOpportunities')}
@@ -100,10 +101,10 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
           <button
             type="button"
             role="tab"
-            aria-selected={activeSubTab === 'my-applications'}
+            aria-selected={activeSubTab === OPPORTUNITY_SUB_TAB.MyApplications}
             aria-controls="panel-my-applications"
-            className={`${styles.segmentItem} ${activeSubTab === 'my-applications' ? styles.activeSegment : ''}`}
-            onClick={() => setActiveSubTab('my-applications')}
+            className={`${styles.segmentItem} ${activeSubTab === OPPORTUNITY_SUB_TAB.MyApplications ? styles.activeSegment : ''}`}
+            onClick={() => setActiveSubTab(OPPORTUNITY_SUB_TAB.MyApplications)}
           >
             <Users size={16} />
             {formatMessage('opportunities.tabs.myApplications')}
@@ -113,10 +114,10 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
             <button
               type="button"
               role="tab"
-              aria-selected={activeSubTab === 'moderation'}
+              aria-selected={activeSubTab === OPPORTUNITY_SUB_TAB.Moderation}
               aria-controls="panel-moderation"
-              className={`${styles.segmentItem} ${activeSubTab === 'moderation' ? styles.activeSegment : ''}`}
-              onClick={() => setActiveSubTab('moderation')}
+              className={`${styles.segmentItem} ${activeSubTab === OPPORTUNITY_SUB_TAB.Moderation ? styles.activeSegment : ''}`}
+              onClick={() => setActiveSubTab(OPPORTUNITY_SUB_TAB.Moderation)}
             >
               <ShieldCheck size={16} />
               {formatMessage('opportunities.tabs.moderation')}
@@ -142,7 +143,7 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
 
       {/* SubTab Views */}
       <div role="tabpanel" id={`panel-${activeSubTab}`}>
-        {activeSubTab === 'catalog' && (
+        {activeSubTab === OPPORTUNITY_SUB_TAB.Catalog && (
           <CatalogTab
             loading={loading}
             opportunities={opportunities}
@@ -157,7 +158,7 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
           />
         )}
 
-        {activeSubTab === 'my-opportunities' && (
+        {activeSubTab === OPPORTUNITY_SUB_TAB.MyOpportunities && (
           <MyOpportunitiesTab
             loading={loading}
             myOpportunities={myOpportunities}
@@ -169,7 +170,7 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
           />
         )}
 
-        {activeSubTab === 'my-applications' && (
+        {activeSubTab === OPPORTUNITY_SUB_TAB.MyApplications && (
           <MyApplicationsTab
             loading={loading}
             myApplications={myApplications}
@@ -177,7 +178,7 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
           />
         )}
 
-        {activeSubTab === 'moderation' && isModeratorOrAdmin && (
+        {activeSubTab === OPPORTUNITY_SUB_TAB.Moderation && isModeratorOrAdmin && (
           <ModerationQueueTab
             loading={loading}
             moderationQueue={moderationQueue}
