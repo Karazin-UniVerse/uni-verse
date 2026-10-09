@@ -93,6 +93,7 @@ const DashboardPage: React.FC = () => {
     dateFrom,
     dateTo,
     hideCompleted,
+    enabled: features.isMoodleIntegrationEnabled,
     onUnauthorized: () => router.push('/login'),
   });
 

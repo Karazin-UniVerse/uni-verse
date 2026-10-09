@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useToast } from '@una';
+import { safeStorage } from '@uni-hub/services/api.storage';
+import { parseJwt } from '@uni-hub/utils/jwt';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type {
@@ -100,9 +102,14 @@ export function useOpportunityModals({
     setApplying(true);
 
     try {
+      const token = safeStorage.getItem('accessToken');
+      const jwt = token ? parseJwt(token) : null;
+      const applicantName = jwt?.name || jwt?.email || 'Студент';
+      const contactInfo = applyContactInfo.trim() || jwt?.email || '';
+
       await opportunitiesApi.apply(selectedOpportunity.id, {
-        applicantName: 'Студент',
-        contactInfo: applyContactInfo.trim() || 'Вказано в профілі',
+        applicantName,
+        contactInfo,
         motivation: applyMotivation.trim(),
       });
 

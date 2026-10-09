@@ -1,12 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Button, Tag, Select, Modal } from '@una';
-import { Mail, Send } from 'lucide-react';
+import { OpportunityDetailModal as OpportunityDetailModalUI } from '@universe/ui';
 import type { Opportunity, OpportunityLifecycle } from '@uni-hub/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { OpportunityStatusBadge } from '../OpportunityStatusBadge';
-import styles from '../../OpportunitiesTab.module.scss';
 
 export interface OpportunityDetailModalProps {
   open: boolean;
@@ -17,6 +15,14 @@ export interface OpportunityDetailModalProps {
   onLifecycleChange: (id: string, state: OpportunityLifecycle) => void;
   onOpenApply: () => void;
 }
+
+const lifecycleLabelKey = {
+  START: 'opportunities.detailModal.phaseStart',
+  ACTIVE: 'opportunities.detailModal.phaseActive',
+  PAUSED: 'opportunities.detailModal.phasePaused',
+  COMPLETED: 'opportunities.detailModal.phaseCompleted',
+  CANCELLED: 'opportunities.detailModal.phaseCancelled',
+} as const;
 
 export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
   open,
@@ -40,168 +46,83 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
         })
       : formatMessage('opportunities.detailModal.unpaid');
 
+  const lifecycleLabel = opportunity.lifecycleState
+    ? formatMessage(
+        lifecycleLabelKey[opportunity.lifecycleState] ?? 'opportunities.detailModal.phaseActive',
+      )
+    : '';
+
+  const lifecycleTagText = lifecycleLabel
+    ? `${formatMessage('opportunities.detailModal.phaseLabel')} ${lifecycleLabel}`
+    : undefined;
+
+  const lifecycleOptions = [
+    {
+      value: 'START',
+      label: formatMessage('opportunities.detailModal.phaseStart'),
+    },
+    {
+      value: 'ACTIVE',
+      label: formatMessage('opportunities.detailModal.phaseActive'),
+    },
+    {
+      value: 'PAUSED',
+      label: formatMessage('opportunities.detailModal.phasePaused'),
+    },
+    {
+      value: 'COMPLETED',
+      label: formatMessage('opportunities.detailModal.phaseCompleted'),
+    },
+    {
+      value: 'CANCELLED',
+      label: formatMessage('opportunities.detailModal.phaseCancelled'),
+    },
+  ];
+
+  const canApply =
+    !isOwner && opportunity.status === 'PUBLISHED' && opportunity.lifecycleState === 'ACTIVE';
+
   return (
-    <Modal
+    <OpportunityDetailModalUI
       open={open}
       onClose={onClose}
       title={opportunity.title ?? formatMessage('opportunities.detailModal.defaultTitle')}
-      width={680}
-    >
-      <div className={styles.modalStack}>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <Tag tone={opportunity.paymentType === 'PAID' ? 'success' : 'neutral'}>
-            {paymentTagText}
-          </Tag>
-          <OpportunityStatusBadge status={opportunity.status} />
-          {opportunity.lifecycleState && (
-            <Tag tone="info">
-              {formatMessage('opportunities.detailModal.lifecycleState', {
-                state: opportunity.lifecycleState,
-              })}
-            </Tag>
-          )}
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            gap: '16px',
-            fontSize: 'var(--font-xs)',
-            color: 'var(--text-secondary)',
-            padding: '6px 0',
-            borderBottom: '1px solid var(--card-border)',
-          }}
-        >
-          <span>
-            {formatMessage('opportunities.detailModal.organizer')}{' '}
-            <strong>
-              {opportunity.owner?.name ||
-                opportunity.owner?.email ||
-                formatMessage('opportunities.detailModal.defaultOrganizer')}
-            </strong>
-          </span>
-          <span>•</span>
-          <span>
-            {formatMessage('opportunities.detailModal.publishedOn', {
-              date: new Date(opportunity.createdAt).toLocaleDateString(
-                language === 'uk' ? 'uk-UA' : 'en-US',
-              ),
-            })}
-          </span>
-        </div>
-
-        <div className={styles.detailSection}>
-          <div className={styles.detailSectionTitle}>
-            {formatMessage('opportunities.detailModal.descTitle')}
-          </div>
-          <div className={styles.detailSectionText}>{opportunity.description}</div>
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: 'var(--font-sm)',
-          }}
-        >
-          <Mail size={16} style={{ color: 'var(--accent-primary)' }} />
-          <span>
-            {formatMessage('opportunities.detailModal.contacts')}{' '}
-            <strong>{opportunity.ownerContactInfo}</strong>
-          </span>
-        </div>
-
-        {/* Author Management Box */}
-        {isOwner && (
-          <div className={styles.authorControlPanel}>
-            <div
-              style={{
-                fontSize: 'var(--font-xs)',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-                color: 'var(--accent-primary)',
-              }}
-            >
-              {formatMessage('opportunities.detailModal.manageTitle')}
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '12px',
-                flexWrap: 'wrap',
-              }}
-            >
-              {(opportunity.status === 'DRAFT' || opportunity.status === 'REQUIRES_CHANGES') && (
-                <Button
-                  variant="primary"
-                  size="small"
-                  onClick={() => onSendToReview(opportunity.id)}
-                >
-                  <Send size={14} style={{ marginRight: '6px' }} />
-                  {formatMessage('opportunities.detailModal.sendToReview')}
-                </Button>
-              )}
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginLeft: 'auto',
-                }}
-              >
-                <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-secondary)' }}>
-                  {formatMessage('opportunities.detailModal.phaseLabel')}
-                </span>
-                <Select
-                  value={opportunity.lifecycleState}
-                  onChange={(state) =>
-                    onLifecycleChange(opportunity.id, state as OpportunityLifecycle)
-                  }
-                  options={[
-                    {
-                      value: 'START',
-                      label: formatMessage('opportunities.detailModal.phaseStart'),
-                    },
-                    {
-                      value: 'ACTIVE',
-                      label: formatMessage('opportunities.detailModal.phaseActive'),
-                    },
-                    {
-                      value: 'PAUSED',
-                      label: formatMessage('opportunities.detailModal.phasePaused'),
-                    },
-                    {
-                      value: 'COMPLETED',
-                      label: formatMessage('opportunities.detailModal.phaseCompleted'),
-                    },
-                    {
-                      value: 'CANCELLED',
-                      label: formatMessage('opportunities.detailModal.phaseCancelled'),
-                    },
-                  ]}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className={styles.modalFooter}>
-          <Button variant="secondary" onClick={onClose}>
-            {formatMessage('opportunities.detailModal.close')}
-          </Button>
-          {!isOwner && opportunity.status === 'PUBLISHED' && (
-            <Button variant="primary" onClick={onOpenApply}>
-              {formatMessage('opportunities.detailModal.apply')}
-            </Button>
-          )}
-        </div>
-      </div>
-    </Modal>
+      paymentTagText={paymentTagText}
+      paymentTone={opportunity.paymentType === 'PAID' ? 'success' : 'neutral'}
+      statusBadge={<OpportunityStatusBadge status={opportunity.status} />}
+      lifecycleTagText={lifecycleTagText}
+      organizerLabel={formatMessage('opportunities.detailModal.organizer')}
+      organizerName={
+        opportunity.owner?.name ||
+        opportunity.owner?.email ||
+        formatMessage('opportunities.detailModal.defaultOrganizer')
+      }
+      publishedDateText={formatMessage('opportunities.detailModal.publishedOn', {
+        date: new Date(opportunity.createdAt).toLocaleDateString(
+          language === 'uk' ? 'uk-UA' : 'en-US',
+        ),
+      })}
+      descriptionTitle={formatMessage('opportunities.detailModal.descTitle')}
+      descriptionText={opportunity.description}
+      contactLabel={formatMessage('opportunities.detailModal.contacts')}
+      contactValue={opportunity.ownerContactInfo}
+      isOwner={isOwner}
+      canSendToReview={
+        isOwner && (opportunity.status === 'DRAFT' || opportunity.status === 'REQUIRES_CHANGES')
+      }
+      onSendToReview={() => onSendToReview(opportunity.id)}
+      sendToReviewText={formatMessage('opportunities.detailModal.sendToReview')}
+      manageTitle={formatMessage('opportunities.detailModal.manageTitle')}
+      phaseLabel={formatMessage('opportunities.detailModal.phaseLabel')}
+      lifecycleState={opportunity.lifecycleState}
+      lifecycleOptions={lifecycleOptions}
+      onLifecycleChange={(state) =>
+        onLifecycleChange(opportunity.id, state as OpportunityLifecycle)
+      }
+      closeText={formatMessage('opportunities.detailModal.close')}
+      canApply={canApply}
+      applyText={formatMessage('opportunities.detailModal.apply')}
+      onOpenApply={onOpenApply}
+    />
   );
 };

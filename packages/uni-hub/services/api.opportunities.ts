@@ -4,6 +4,7 @@ import type {
   OpportunityStatus,
   OpportunityLifecycle,
   OpportunityPaymentType,
+  OpportunityAppStatus,
 } from '@uni-hub/types';
 import { request, buildQueryString } from './api.request';
 
@@ -90,7 +91,7 @@ export class OpportunitiesApi {
 
   async updateApplicationStatus(
     appId: string,
-    status: string,
+    status: OpportunityAppStatus,
     comment?: string,
   ): Promise<{ data: OpportunityApplication }> {
     return request<OpportunityApplication>(`/opportunities/applications/${appId}/status`, {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { safeStorage } from '@uni-hub/services/api.storage';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { parseJwt } from '@uni-hub/utils/jwt';
@@ -35,17 +35,29 @@ export function useOpportunitiesData() {
 
   const isModeratorOrAdmin = userRole === 'OPPORTUNITIES_MODERATOR' || userRole === 'ADMIN';
 
+  const activeSubTabRef = useRef(activeSubTab);
+
+  useEffect(() => {
+    activeSubTabRef.current = activeSubTab;
+  }, [activeSubTab]);
+
   const fetchCatalog = useCallback(async () => {
     setLoading(true);
 
     try {
       const res = await opportunitiesApi.getOpportunities();
 
-      setOpportunities(Array.isArray(res.data) ? res.data : []);
+      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Catalog) {
+        setOpportunities(Array.isArray(res.data) ? res.data : []);
+      }
     } catch {
-      setOpportunities([]);
+      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Catalog) {
+        setOpportunities([]);
+      }
     } finally {
-      setLoading(false);
+      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Catalog) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -55,11 +67,17 @@ export function useOpportunitiesData() {
     try {
       const res = await opportunitiesApi.getMyOpportunities();
 
-      setMyOpportunities(Array.isArray(res.data) ? res.data : []);
+      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyOpportunities) {
+        setMyOpportunities(Array.isArray(res.data) ? res.data : []);
+      }
     } catch {
-      setMyOpportunities([]);
+      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyOpportunities) {
+        setMyOpportunities([]);
+      }
     } finally {
-      setLoading(false);
+      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyOpportunities) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -69,11 +87,17 @@ export function useOpportunitiesData() {
     try {
       const res = await opportunitiesApi.getMyApplications();
 
-      setMyApplications(Array.isArray(res.data) ? res.data : []);
+      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyApplications) {
+        setMyApplications(Array.isArray(res.data) ? res.data : []);
+      }
     } catch {
-      setMyApplications([]);
+      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyApplications) {
+        setMyApplications([]);
+      }
     } finally {
-      setLoading(false);
+      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyApplications) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -83,29 +107,33 @@ export function useOpportunitiesData() {
     try {
       const res = await opportunitiesApi.getOpportunities({ status: 'READY_FOR_REVIEW' });
 
-      setModerationQueue(Array.isArray(res.data) ? res.data : []);
+      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Moderation) {
+        setModerationQueue(Array.isArray(res.data) ? res.data : []);
+      }
     } catch {
-      setModerationQueue([]);
+      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Moderation) {
+        setModerationQueue([]);
+      }
     } finally {
-      setLoading(false);
+      if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Moderation) {
+        setLoading(false);
+      }
     }
   }, []);
 
+  /* oxlint-disable react/set-state-in-effect */
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (activeSubTab === OPPORTUNITY_SUB_TAB.Catalog) {
-        void fetchCatalog();
-      } else if (activeSubTab === OPPORTUNITY_SUB_TAB.MyOpportunities) {
-        void fetchMyOpportunities();
-      } else if (activeSubTab === OPPORTUNITY_SUB_TAB.MyApplications) {
-        void fetchMyApplications();
-      } else if (activeSubTab === OPPORTUNITY_SUB_TAB.Moderation) {
-        void fetchModerationQueue();
-      }
-    }, 0);
-
-    return () => clearTimeout(timer);
+    if (activeSubTab === OPPORTUNITY_SUB_TAB.Catalog) {
+      void fetchCatalog();
+    } else if (activeSubTab === OPPORTUNITY_SUB_TAB.MyOpportunities) {
+      void fetchMyOpportunities();
+    } else if (activeSubTab === OPPORTUNITY_SUB_TAB.MyApplications) {
+      void fetchMyApplications();
+    } else if (activeSubTab === OPPORTUNITY_SUB_TAB.Moderation) {
+      void fetchModerationQueue();
+    }
   }, [activeSubTab, fetchCatalog, fetchMyOpportunities, fetchMyApplications, fetchModerationQueue]);
+  /* oxlint-enable react/set-state-in-effect */
 
   useEffect(() => {
     if (isModeratorOrAdmin) {
