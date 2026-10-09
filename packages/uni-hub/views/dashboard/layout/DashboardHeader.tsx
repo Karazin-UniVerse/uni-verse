@@ -20,12 +20,14 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   notifications,
   unreadCount,
   activeStudentProfile,
+  isMoodleIntegrationEnabled,
   onOpenLinkMoodle,
   onOpenUnlinkMoodle,
   isMoodleLinked = true,
 }) => {
   const { localeTag, formatMessage } = useLanguage();
-  const { isFeaturePanelEnabled } = useFeatures();
+  const { isFeaturePanelEnabled, isMoodleIntegrationEnabled: featureMoodleEnabled } = useFeatures();
+  const effectiveMoodleEnabled = isMoodleIntegrationEnabled ?? featureMoodleEnabled;
 
   const handleLogout = async () => {
     try {
@@ -153,13 +155,14 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           {(close) => (
             <UserDropdown
               activeStudentProfile={activeStudentProfile}
-              isMoodleLinked={isMoodleLinked}
               soundEnabled={soundEnabled}
               onToggleSound={onToggleSound}
-              onOpenLinkMoodle={onOpenLinkMoodle}
-              onOpenUnlinkMoodle={onOpenUnlinkMoodle}
               onClose={close}
               onLogout={handleLogout}
+              isMoodleIntegrationEnabled={effectiveMoodleEnabled}
+              isMoodleLinked={isMoodleLinked}
+              onOpenLinkMoodle={onOpenLinkMoodle}
+              onOpenUnlinkMoodle={onOpenUnlinkMoodle}
             />
           )}
         </Dropdown>

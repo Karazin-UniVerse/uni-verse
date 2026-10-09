@@ -14,13 +14,14 @@ import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export interface UserDropdownProps {
   activeStudentProfile: StudentProfile;
-  isMoodleLinked?: boolean;
   soundEnabled: boolean;
   onToggleSound: () => void;
-  onOpenLinkMoodle?: (mode?: LinkMoodleMode) => void;
-  onOpenUnlinkMoodle?: () => void;
   onClose: () => void;
   onLogout: () => void;
+  onOpenLinkMoodle?: (mode?: LinkMoodleMode) => void;
+  onOpenUnlinkMoodle?: () => void;
+  isMoodleIntegrationEnabled?: boolean;
+  isMoodleLinked?: boolean;
 }
 
 export interface MoodleStatusDetails {
@@ -41,10 +42,11 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   activeStudentProfile,
   soundEnabled,
   onToggleSound,
-  onOpenLinkMoodle,
-  onOpenUnlinkMoodle,
   onClose,
   onLogout,
+  onOpenLinkMoodle,
+  onOpenUnlinkMoodle,
+  isMoodleIntegrationEnabled = true,
   isMoodleLinked = true,
 }) => {
   const { formatMessage } = useLanguage();
@@ -61,67 +63,69 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
         </div>
       </div>
 
-      <div className={styles.dropdownSection}>
-        <div className={styles.moodleStatusHeader}>
-          <span>Moodle LMS</span>
-          <span
-            className={clsx(
-              styles.moodleStatusBadge,
-              statusDetails.isLinked ? styles.linked : styles.unlinked,
-            )}
-          >
+      {isMoodleIntegrationEnabled && (
+        <div className={styles.dropdownSection}>
+          <div className={styles.moodleStatusHeader}>
+            <span>Moodle LMS</span>
             <span
-              className={styles.statusDot}
-              style={{
-                backgroundColor: statusDetails.dotColor,
-              }}
-              aria-hidden
-            />
-            {formatMessage(statusDetails.statusKey)}
-          </span>
-        </div>
-
-        {isMoodleLinked ? (
-          <div className={styles.moodleDropdownActions}>
-            <Button
-              type="button"
-              variant="secondary"
-              size="small"
-              onClick={() => {
-                onClose();
-                onOpenLinkMoodle?.(LinkMoodleMode.CHANGE);
-              }}
+              className={clsx(
+                styles.moodleStatusBadge,
+                statusDetails.isLinked ? styles.linked : styles.unlinked,
+              )}
             >
-              {formatMessage('header.moodleChange')}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              size="small"
-              onClick={() => {
-                onClose();
-                onOpenUnlinkMoodle?.();
-              }}
-              style={{ color: 'var(--error-color)' }}
-            >
-              {formatMessage('header.moodleDisconnect')}
-            </Button>
+              <span
+                className={styles.statusDot}
+                style={{
+                  backgroundColor: statusDetails.dotColor,
+                }}
+                aria-hidden
+              />
+              {formatMessage(statusDetails.statusKey)}
+            </span>
           </div>
-        ) : (
-          <Button
-            type="button"
-            variant="primary"
-            size="small"
-            onClick={() => {
-              onClose();
-              onOpenLinkMoodle?.(LinkMoodleMode.CONNECT);
-            }}
-            style={{ width: '100%' }}
-          >
-            {formatMessage('header.moodleConnect')}
-          </Button>
-        )}
-      </div>
+
+          {isMoodleLinked ? (
+            <div className={styles.moodleDropdownActions}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="small"
+                onClick={() => {
+                  onClose();
+                  onOpenLinkMoodle?.(LinkMoodleMode.CHANGE);
+                }}
+              >
+                {formatMessage('header.moodleChange')}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="small"
+                onClick={() => {
+                  onClose();
+                  onOpenUnlinkMoodle?.();
+                }}
+                style={{ color: 'var(--error-color)' }}
+              >
+                {formatMessage('header.moodleDisconnect')}
+              </Button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="primary"
+              size="small"
+              onClick={() => {
+                onClose();
+                onOpenLinkMoodle?.(LinkMoodleMode.CONNECT);
+              }}
+              style={{ width: '100%' }}
+            >
+              {formatMessage('header.moodleConnect')}
+            </Button>
+          )}
+        </div>
+      )}
 
       <div className={styles.userDropdownBody}>
         <div className={styles.mobileOnlyItem} style={{ marginBottom: 6 }}>
@@ -149,17 +153,19 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
           </Button>
         </div>
 
-        <div className={styles.mobileOnlyItem} style={{ marginBottom: 8 }}>
-          <a
-            href="https://moodle.universemvp.tech"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.moodleStatusLink}
-          >
-            <span className={styles.statusDot} aria-hidden />
-            <span>Moodle LMS</span>
-          </a>
-        </div>
+        {isMoodleIntegrationEnabled && (
+          <div className={styles.mobileOnlyItem} style={{ marginBottom: 8 }}>
+            <a
+              href="https://moodle.universemvp.tech"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.moodleStatusLink}
+            >
+              <span className={styles.statusDot} aria-hidden />
+              <span>Moodle LMS</span>
+            </a>
+          </div>
+        )}
 
         <div className={styles.mobileOnlyItem}>
           <Button

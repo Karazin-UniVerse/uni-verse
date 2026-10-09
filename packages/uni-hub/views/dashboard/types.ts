@@ -76,7 +76,8 @@ export interface DashboardHeaderProps {
   notifications: Notification[];
   unreadCount: number;
   activeStudentProfile: StudentProfile;
-  isMoodleLinked?: boolean;
+  isMoodleIntegrationEnabled?: boolean;
   onOpenLinkMoodle?: (mode?: LinkMoodleMode) => void;
   onOpenUnlinkMoodle?: () => void;
+  isMoodleLinked?: boolean;
 }
