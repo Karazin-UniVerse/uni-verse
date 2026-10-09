@@ -314,7 +314,6 @@ const DashboardPage: React.FC = () => {
           notifications={data.notifications}
           unreadCount={data.unreadCount}
           activeStudentProfile={activeStudentProfile}
-          isMoodleIntegrationEnabled={features.isMoodleIntegrationEnabled}
           isMoodleLinked={isMoodleLinked}
           onOpenLinkMoodle={openLinkModal}
           onOpenUnlinkMoodle={openUnlinkModal}

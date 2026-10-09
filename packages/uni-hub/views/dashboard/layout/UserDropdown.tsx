@@ -66,7 +66,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
       {isMoodleIntegrationEnabled && (
         <div className={styles.dropdownSection}>
           <div className={styles.moodleStatusHeader}>
-            <span>Moodle LMS</span>
+            <span>{formatMessage('header.moodleLms')}</span>
             <span
               className={clsx(
                 styles.moodleStatusBadge,
@@ -162,7 +162,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
               className={styles.moodleStatusLink}
             >
               <span className={styles.statusDot} aria-hidden />
-              <span>Moodle LMS</span>
+              <span>{formatMessage('header.moodleLms')}</span>
             </a>
           </div>
         )}

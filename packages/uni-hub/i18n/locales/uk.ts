@@ -80,6 +80,7 @@ export const uk = {
   'sidebar.moodleConnected': 'Moodle LMS (підключено)',
   'header.notifications': 'Сповіщення',
   'header.notifications.empty': 'Немає сповіщень',
+  'header.moodleLms': 'Moodle LMS',
   'header.moodleConnected': 'Підключено',
   'header.moodleNotConnected': 'Не підключено',
   'header.moodleChange': 'Змінити акаунт',
