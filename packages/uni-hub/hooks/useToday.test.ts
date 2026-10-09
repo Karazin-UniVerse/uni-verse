@@ -12,19 +12,33 @@ describe('useToday', () => {
     vi.useRealTimers();
   });
 
-  it('returns current date on initial render', () => {
-    const fixedDate = new Date(2026, 9, 7, 10, 0, 0);
-
-    vi.setSystemTime(fixedDate);
-
+  it('keeps today unset on server render by default to prevent hydration mismatch', () => {
     const TestComponent = () => {
       const today = useToday();
 
       return React.createElement(
         'div',
         null,
-        React.createElement('span', { id: 'year' }, String(today.getFullYear())),
-        React.createElement('span', { id: 'date' }, String(today.getDate())),
+        React.createElement('span', { id: 'status' }, today ? 'set' : 'unset'),
+      );
+    };
+
+    const html = renderToString(React.createElement(TestComponent));
+
+    expect(html).toContain('id="status">unset</span>');
+  });
+
+  it('returns initialDate on server render when provided', () => {
+    const fixedDate = new Date(2026, 9, 7, 10, 0, 0);
+
+    const TestComponent = () => {
+      const today = useToday(fixedDate);
+
+      return React.createElement(
+        'div',
+        null,
+        React.createElement('span', { id: 'year' }, String(today?.getFullYear())),
+        React.createElement('span', { id: 'date' }, String(today?.getDate())),
       );
     };
 
