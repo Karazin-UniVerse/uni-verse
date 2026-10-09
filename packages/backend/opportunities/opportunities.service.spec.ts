@@ -112,6 +112,14 @@ describe('OpportunitiesService', () => {
         NotFoundException,
       );
     });
+
+    it('throws NotFoundException if opportunity not found in DB', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue(null);
+
+      await expect(service.findOne('non-existent')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
   });
 
   describe('update', () => {
@@ -126,6 +134,22 @@ describe('OpportunitiesService', () => {
       expect(prisma.opportunity.update).toHaveBeenCalledWith({
         where: { id: '1' },
         data: { title: 'new', status: 'READY_FOR_REVIEW' },
+      });
+    });
+
+    it('does not reset status if it was DRAFT', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'DRAFT',
+        ownerId: 'user1',
+      } as any);
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({} as any);
+
+      await service.update('user1', '1', { title: 'new' } as any);
+
+      expect(prisma.opportunity.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: { title: 'new' },
       });
     });
 
