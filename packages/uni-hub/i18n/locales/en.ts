@@ -54,6 +54,9 @@ export const en = {
   'theme.light': 'Light',
   'theme.dark': 'Dark',
   'theme.cyberpunk': 'Cyberpunk',
+  'theme.karazinClassic': 'Karazin Classic',
+  'theme.universeSpace': 'UniVerse Space',
+  'theme.karazinGold': 'Karazin Gold',
   'theme.select': 'Theme selection',
 
   // Navigation (short & full)
@@ -74,6 +77,8 @@ export const en = {
 
   // Sidebar & Header
   'sidebar.logout': 'Log out',
+  'sidebar.collapse': 'Collapse menu',
+  'sidebar.expand': 'Expand menu',
   'sidebar.moodleConnected': 'Moodle LMS (connected)',
   'header.notifications': 'Notifications',
   'header.notifications.empty': 'No notifications',

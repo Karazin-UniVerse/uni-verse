@@ -1,6 +1,16 @@
 import '../vars.scss';
 import React from 'react';
 import type { Decorator, Preview } from '@storybook/react-vite';
+import { APP_THEMES, THEME_COLOR_SCHEME, type AppTheme } from '@universe/core/constants/themes';
+
+const THEME_TITLES: Record<AppTheme, string> = {
+  light: 'Light',
+  dark: 'Dark',
+  cyberpunk: 'Cyberpunk',
+  karazinClassic: 'Karazin Classic',
+  universeSpace: 'UniVerse Space',
+  karazinGold: 'Karazin Gold',
+};
 
 const preview: Preview = {
   parameters: {
@@ -35,21 +45,18 @@ export const globalTypes = {
     defaultValue: 'light',
     toolbar: {
       icon: 'circlehollow',
-      items: [
-        { value: 'light', title: 'Light' },
-        { value: 'dark', title: 'Dark' },
-        { value: 'cyberpunk', title: 'Cyberpunk' },
-      ],
+      items: APP_THEMES.map((theme: AppTheme) => ({ value: theme, title: THEME_TITLES[theme] })),
     },
   },
 };
 
 export const decorators: Decorator[] = [
   (Story, context) => {
-    const theme = (context.globals?.theme as string) ?? 'light';
+    const theme = (context.globals?.theme as AppTheme | undefined) ?? 'light';
 
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.setAttribute('data-color-scheme', THEME_COLOR_SCHEME[theme]);
     }
 
     return <Story />;

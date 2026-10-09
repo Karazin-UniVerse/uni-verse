@@ -52,6 +52,9 @@ export const uk = {
   'theme.light': 'Світла',
   'theme.dark': 'Темна',
   'theme.cyberpunk': 'Cyberpunk',
+  'theme.karazinClassic': 'Karazin Classic',
+  'theme.universeSpace': 'UniVerse Space',
+  'theme.karazinGold': 'Karazin Gold',
   'theme.select': 'Вибір теми',
 
   // Navigation (short & full)
@@ -72,6 +75,8 @@ export const uk = {
 
   // Sidebar & Header
   'sidebar.logout': 'Вийти',
+  'sidebar.collapse': 'Згорнути меню',
+  'sidebar.expand': 'Розгорнути меню',
   'sidebar.moodleConnected': 'Moodle LMS (підключено)',
   'header.notifications': 'Сповіщення',
   'header.notifications.empty': 'Немає сповіщень',

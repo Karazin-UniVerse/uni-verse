@@ -9,8 +9,7 @@ import {
   ClipboardList,
   CalendarDays,
   FileEdit,
-  PanelLeftClose,
-  PanelLeftOpen,
+  ChevronLeft,
   LogOut,
   Link2,
   Sparkles,
@@ -201,18 +200,19 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         />
       )}
       <aside ref={siderRef} id="dashboard-sidebar" className={styles.sider} aria-label="Навігація">
+        <button
+          type="button"
+          className={styles.edgeToggle}
+          onClick={onToggleCollapsed}
+          aria-label={formatMessage(collapsed ? 'sidebar.expand' : 'sidebar.collapse')}
+          aria-expanded={!collapsed}
+          aria-controls="dashboard-sidebar"
+        >
+          <ChevronLeft size={14} aria-hidden />
+        </button>
+
         <div className={styles.brand}>
           <span>{collapsed && !mobileMenuOpen ? 'U' : 'UNiVerse'}</span>
-          <Button
-            type="button"
-            variant="secondary"
-            size="small"
-            isTransparent
-            onClick={onToggleCollapsed}
-            aria-label={collapsed ? 'Розгорнути меню' : 'Згорнути меню'}
-          >
-            {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-          </Button>
         </div>
 
         <nav className={styles.nav}>
@@ -279,10 +279,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             compact
             showLabel={!collapsed || mobileMenuOpen}
             variant="sider"
-            placement="bottom-up-left"
+            placement="top-start"
           />
           <ThemeSwitcher
             compact
+            placement="top-start"
             showLabel={!collapsed || mobileMenuOpen}
             className={styles.themeBtn}
           />
