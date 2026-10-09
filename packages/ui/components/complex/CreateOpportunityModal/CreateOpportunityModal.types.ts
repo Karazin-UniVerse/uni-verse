@@ -1,4 +1,4 @@
-import type { FormEvent, Dispatch, SetStateAction } from 'react';
+import type { SyntheticEvent, Dispatch, SetStateAction } from 'react';
 
 export type OpportunityPaymentType = 'PAID' | 'UNPAID';
 
@@ -16,7 +16,7 @@ export type CreateOpportunityModalProps = {
   title: string;
   formData: CreateOpportunityFormData;
   setFormData: Dispatch<SetStateAction<CreateOpportunityFormData>>;
-  onSubmit: (e: FormEvent) => void;
+  onSubmit: (e: SyntheticEvent<HTMLFormElement>) => void;
   titleLabel: string;
   titlePlaceholder: string;
   descLabel: string;

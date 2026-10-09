@@ -499,8 +499,8 @@
   border-radius: 50%;
   background: linear-gradient(
     135deg,
-    var(--accent-primary),
-    color-mix(in srgb, var(--accent-primary) 60%, #8b5cf6)
+    var(--blue-600, #2563eb),
+    color-mix(in srgb, var(--blue-600, #2563eb) 50%, var(--purple-700, #7e22ce))
   );
   color: #fff;
   display: flex;
@@ -827,8 +827,8 @@
 }
 
 .approveBtn {
-  background: var(--success-color, #10b981);
-  border-color: var(--success-color, #10b981);
+  background: var(--green-700, #15803d);
+  border-color: var(--green-700, #15803d);
   color: #fff;
   font-weight: 600;
   transition: all 180ms ease;
@@ -836,7 +836,7 @@
   &:hover {
     filter: brightness(1.08);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--success-color, #10b981) 30%, transparent);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--green-700, #15803d) 30%, transparent);
   }
 }
 

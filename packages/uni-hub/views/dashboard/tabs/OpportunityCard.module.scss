@@ -191,8 +191,8 @@
   border-radius: 50%;
   background: linear-gradient(
     135deg,
-    var(--accent-primary),
-    color-mix(in srgb, var(--accent-primary) 60%, #8b5cf6)
+    var(--blue-600, #2563eb),
+    color-mix(in srgb, var(--blue-600, #2563eb) 50%, var(--purple-700, #7e22ce))
   );
   color: #fff;
   display: flex;

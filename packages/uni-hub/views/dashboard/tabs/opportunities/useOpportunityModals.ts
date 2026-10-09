@@ -63,7 +63,7 @@ export function useOpportunityModals({
     comment: '',
   });
 
-  const handleCreateSubmit = async (e: React.FormEvent) => {
+  const handleCreateSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setCreating(true);
 
@@ -94,7 +94,7 @@ export function useOpportunityModals({
     }
   };
 
-  const handleApplySubmit = async (e: React.FormEvent) => {
+  const handleApplySubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!selectedOpportunity) return;
@@ -135,7 +135,7 @@ export function useOpportunityModals({
       toast.success(formatMessage('opportunities.toast.sentToReview'));
       void fetchMyOpportunities();
 
-      if (selectedOpportunity && selectedOpportunity.id === id) {
+      if (selectedOpportunity?.id === id) {
         setSelectedOpportunity({ ...selectedOpportunity, status: 'READY_FOR_REVIEW' });
       }
     } catch (err: unknown) {
@@ -149,7 +149,7 @@ export function useOpportunityModals({
       toast.success(formatMessage('opportunities.toast.stateUpdated'));
       void fetchMyOpportunities();
 
-      if (selectedOpportunity && selectedOpportunity.id === id) {
+      if (selectedOpportunity?.id === id) {
         setSelectedOpportunity({ ...selectedOpportunity, lifecycleState: state });
       }
     } catch (err: unknown) {

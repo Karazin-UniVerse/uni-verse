@@ -20,7 +20,7 @@ export function parseJwt(token: string): JwtPayload | null {
     const jsonPayload = decodeURIComponent(
       atob(padded)
         .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .map((c) => '%' + (c.codePointAt(0) ?? 0).toString(16).padStart(2, '0'))
         .join(''),
     );
 

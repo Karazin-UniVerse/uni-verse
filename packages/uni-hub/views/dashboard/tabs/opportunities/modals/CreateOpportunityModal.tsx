@@ -10,7 +10,7 @@ export interface CreateOpportunityModalProps {
   onClose: () => void;
   formData: CreateOpportunityFormData;
   setFormData: React.Dispatch<React.SetStateAction<CreateOpportunityFormData>>;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: React.SyntheticEvent<HTMLFormElement>) => void;
   submitting: boolean;
 }
 

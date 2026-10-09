@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react';
+import type { SyntheticEvent } from 'react';
 
 export type ApplyOpportunityModalProps = {
   open: boolean;
@@ -8,7 +8,7 @@ export type ApplyOpportunityModalProps = {
   onMotivationChange: (val: string) => void;
   contactInfo: string;
   onContactInfoChange: (val: string) => void;
-  onSubmit: (e: FormEvent) => void;
+  onSubmit: (e: SyntheticEvent<HTMLFormElement>) => void;
   motivationLabel: string;
   motivationPlaceholder: string;
   contactLabel: string;
