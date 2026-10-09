@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Download, ExternalLink } from 'lucide-react';
-import { Button, FileInput, SimpleForm, Modal, Spinner, Tag, useToast } from '@una';
+import { Button, FileInput, Form, Modal, Spinner, Tag, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
 import type { CourseModule } from '@uni-hub/types';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
@@ -294,7 +294,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
           {canSubmit && (
             <section>
               <h4>{formatMessage('assignmentModal.submitTitle')}</h4>
-              <SimpleForm variant="simple" action={handleSubmit} className={styles.form}>
+              <Form variant="simple" action={handleSubmit} className={styles.form}>
                 <label className={styles.field}>
                   <span>{formatMessage('assignmentModal.answerText')}</span>
                   <textarea
@@ -329,7 +329,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                       : formatMessage('assignmentModal.submit')}
                   </Button>
                 </div>
-              </SimpleForm>
+              </Form>
             </section>
           )}
         </div>

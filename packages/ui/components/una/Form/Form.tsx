@@ -1,11 +1,11 @@
 import React from 'react';
-import css from './SimpleForm.module.scss';
+import css from './Form.module.scss';
 import clsx from 'clsx';
 
-import type { SimpleFormProps } from './SimpleForm.types';
+import type { FormProps } from './Form.types';
 
 /**
- * SimpleForm
+ * Form
  *
  * Lightweight form wrapper that normalizes form submission into two flows:
  * - `action(formData)` for custom server-side or async handlers
@@ -24,10 +24,10 @@ import type { SimpleFormProps } from './SimpleForm.types';
  *
  * Example:
  * ```tsx
- * <SimpleForm onData={data => console.log(data)}>
+ * <Form onData={data => console.log(data)}>
  *   <TextInput name="email" />
  *   <Button type="submit" variant="primary">Send</Button>
- * </SimpleForm>
+ * </Form>
  * ```
  * @param props
  */
@@ -51,7 +51,7 @@ function parseFormData(
   return data;
 }
 
-export const SimpleForm: React.FC<Readonly<SimpleFormProps>> = ({
+export const Form: React.FC<Readonly<FormProps>> = ({
   children,
   className,
   action,
@@ -82,4 +82,4 @@ export const SimpleForm: React.FC<Readonly<SimpleFormProps>> = ({
   );
 };
 
-export default SimpleForm;
+export default Form;

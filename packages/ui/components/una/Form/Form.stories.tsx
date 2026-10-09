@@ -1,12 +1,12 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { SimpleForm } from './SimpleForm';
+import { Form } from './Form';
 import { TextInput } from '../inputs/TextInput/TextInput';
 import { Button } from '../Button/Button';
 
 const meta = {
-  title: 'Una/Form/SimpleForm',
-  component: SimpleForm,
+  title: 'Una/Form/Form',
+  component: Form,
   parameters: {
     layout: 'centered',
   },
@@ -20,7 +20,7 @@ const meta = {
       description: 'Внешний вид формы',
     },
   },
-} satisfies Meta<typeof SimpleForm>;
+} satisfies Meta<typeof Form>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

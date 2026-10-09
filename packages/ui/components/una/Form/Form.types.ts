@@ -1,6 +1,6 @@
 import type { FormHTMLAttributes } from 'react';
 
-export interface SimpleFormProps extends Omit<
+export interface FormProps extends Omit<
   FormHTMLAttributes<HTMLFormElement>,
   'action' | 'onSubmit'
 > {
