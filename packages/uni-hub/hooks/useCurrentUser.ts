@@ -4,7 +4,7 @@ import { parseJwt, type JwtPayload } from '@uni-hub/utils/jwt';
 
 export interface CurrentUser {
   userId: string | null;
-  role: string | null;
+  roles: string[];
   email?: string;
   name?: string;
 }
@@ -18,7 +18,7 @@ export function useCurrentUser(): CurrentUser {
 
   return {
     userId: jwt?.sub ?? null,
-    role: jwt?.role ?? null,
+    roles: jwt?.roles ?? [],
     email: jwt?.email,
     name: jwt?.name,
   };

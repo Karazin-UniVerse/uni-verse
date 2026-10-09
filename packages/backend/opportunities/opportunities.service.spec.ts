@@ -74,7 +74,7 @@ describe('OpportunitiesService', () => {
         status: 'DRAFT',
         ownerId: 'other',
       } as any);
-      await expect(service.findOne('1', 'user', 'STUDENT')).rejects.toThrow(
+      await expect(service.findOne('1', 'user', ['STUDENT'])).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -85,7 +85,7 @@ describe('OpportunitiesService', () => {
         status: 'DRAFT',
         ownerId: 'owner1',
       } as any);
-      const res = await service.findOne('1', 'owner1', 'STUDENT');
+      const res = await service.findOne('1', 'owner1', ['STUDENT']);
 
       expect(res).toEqual({ id: '1', status: 'DRAFT', ownerId: 'owner1' });
     });
@@ -96,7 +96,23 @@ describe('OpportunitiesService', () => {
         status: 'DRAFT',
         ownerId: 'owner1',
       } as any);
-      const res = await service.findOne('1', 'mod1', 'OPPORTUNITIES_MODERATOR');
+      const res = await service.findOne('1', 'mod1', [
+        'OPPORTUNITIES_MODERATOR',
+      ]);
+
+      expect(res).toEqual({ id: '1', status: 'DRAFT', ownerId: 'owner1' });
+    });
+
+    it('returns opportunity if unpublished and caller holds OPPORTUNITIES_MODERATOR among several roles', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'DRAFT',
+        ownerId: 'owner1',
+      } as any);
+      const res = await service.findOne('1', 'mod1', [
+        'INSTRUCTOR',
+        'OPPORTUNITIES_MODERATOR',
+      ]);
 
       expect(res).toEqual({ id: '1', status: 'DRAFT', ownerId: 'owner1' });
     });
@@ -108,7 +124,7 @@ describe('OpportunitiesService', () => {
         ownerId: 'owner1',
       } as any);
 
-      await expect(service.findOne('1', 'admin1', 'ADMIN')).rejects.toThrow(
+      await expect(service.findOne('1', 'admin1', ['ADMIN'])).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -170,7 +186,7 @@ describe('OpportunitiesService', () => {
     it('throws Forbidden if user is not OPPORTUNITIES_MODERATOR', async () => {
       jest
         .spyOn(prisma.user, 'findUnique')
-        .mockResolvedValue({ id: 'user1', role: 'STUDENT' } as any);
+        .mockResolvedValue({ id: 'user1', roles: ['STUDENT'] } as any);
       await expect(
         service.moderate('user1', 'opp1', {} as any),
       ).rejects.toThrow(ForbiddenException);
@@ -179,7 +195,7 @@ describe('OpportunitiesService', () => {
     it('throws Forbidden if user is ADMIN because only OPPORTUNITIES_MODERATOR can moderate', async () => {
       jest
         .spyOn(prisma.user, 'findUnique')
-        .mockResolvedValue({ id: 'user1', role: 'ADMIN' } as any);
+        .mockResolvedValue({ id: 'user1', roles: ['ADMIN'] } as any);
       await expect(
         service.moderate('user1', 'opp1', {} as any),
       ).rejects.toThrow(ForbiddenException);
@@ -188,7 +204,7 @@ describe('OpportunitiesService', () => {
     it('throws BadRequestException if opportunity is not in READY_FOR_REVIEW', async () => {
       jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
         id: 'user1',
-        role: 'OPPORTUNITIES_MODERATOR',
+        roles: ['OPPORTUNITIES_MODERATOR'],
       } as any);
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: 'opp1',
@@ -205,7 +221,7 @@ describe('OpportunitiesService', () => {
     it('updates status and sends notification if user is OPPORTUNITIES_MODERATOR (APPROVE)', async () => {
       jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
         id: 'user1',
-        role: 'OPPORTUNITIES_MODERATOR',
+        roles: ['OPPORTUNITIES_MODERATOR'],
       } as any);
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: 'opp1',
@@ -229,7 +245,7 @@ describe('OpportunitiesService', () => {
     it('updates status to REJECTED when action is REJECT', async () => {
       jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
         id: 'user1',
-        role: 'OPPORTUNITIES_MODERATOR',
+        roles: ['OPPORTUNITIES_MODERATOR'],
       } as any);
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: 'opp1',
@@ -261,7 +277,7 @@ describe('OpportunitiesService', () => {
     it('updates status to REQUIRES_CHANGES when action is REQUIRE_CHANGES', async () => {
       jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
         id: 'user1',
-        role: 'OPPORTUNITIES_MODERATOR',
+        roles: ['OPPORTUNITIES_MODERATOR'],
       } as any);
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: 'opp1',
@@ -293,7 +309,7 @@ describe('OpportunitiesService', () => {
     it('throws BadRequestException for unknown moderation action', async () => {
       jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
         id: 'user1',
-        role: 'OPPORTUNITIES_MODERATOR',
+        roles: ['OPPORTUNITIES_MODERATOR'],
       } as any);
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: 'opp1',
@@ -372,10 +388,9 @@ describe('OpportunitiesService', () => {
     it('allows OPPORTUNITIES_MODERATOR to query specific statuses', async () => {
       jest.spyOn(prisma.opportunity, 'findMany').mockResolvedValue([] as any);
 
-      await service.findAll(
-        { status: 'READY_FOR_REVIEW' as any },
+      await service.findAll({ status: 'READY_FOR_REVIEW' as any }, [
         'OPPORTUNITIES_MODERATOR',
-      );
+      ]);
 
       expect(prisma.opportunity.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -387,7 +402,7 @@ describe('OpportunitiesService', () => {
     it('forces PUBLISHED status when user is ADMIN or regular user', async () => {
       jest.spyOn(prisma.opportunity, 'findMany').mockResolvedValue([] as any);
 
-      await service.findAll({ status: 'DRAFT' as any }, 'ADMIN');
+      await service.findAll({ status: 'DRAFT' as any }, ['ADMIN']);
 
       expect(prisma.opportunity.findMany).toHaveBeenCalledWith(
         expect.objectContaining({

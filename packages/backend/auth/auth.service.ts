@@ -24,7 +24,7 @@ export type GetTokensParams = {
   email: string;
   moodleToken?: string;
   moodleId?: string;
-  role?: string;
+  roles?: string[];
 };
 
 @Injectable()
@@ -85,7 +85,7 @@ export class AuthService {
       email: user.email,
       moodleToken: user.token ?? undefined,
       moodleId: user.moodleId ?? undefined,
-      role: user.role,
+      roles: user.roles,
     });
 
     await this.updateRtHash(user.id, tokens.refresh_token);
@@ -142,7 +142,7 @@ export class AuthService {
       email: user.email,
       moodleToken,
       moodleId,
-      role: user.role,
+      roles: user.roles,
     });
 
     await this.updateRtHash(user.id, tokens.refresh_token);
@@ -161,7 +161,7 @@ export class AuthService {
       email: user.email,
       moodleToken: user.token ?? undefined,
       moodleId: user.moodleId ?? undefined,
-      role: user.role,
+      roles: user.roles,
     });
 
     await this.updateRtHash(user.id, tokens.refresh_token);
@@ -291,7 +291,7 @@ export class AuthService {
       email: updatedUser.email,
       moodleToken,
       moodleId,
-      role: updatedUser.role,
+      roles: updatedUser.roles,
     });
 
     await this.updateRtHash(updatedUser.id, tokens.refresh_token);
@@ -310,7 +310,11 @@ export class AuthService {
       throw new BadRequestException('User not found');
     }
 
-    const tokens = await this.getTokens({ userId: user.id, email: user.email });
+    const tokens = await this.getTokens({
+      userId: user.id,
+      email: user.email,
+      roles: user.roles,
+    });
     const refreshTokenHash = await this.hashData(tokens.refresh_token);
 
     await this.userService.updateUser(userId, {
@@ -348,7 +352,7 @@ export class AuthService {
       email: user.email,
       moodleToken: user.token ?? undefined,
       moodleId: user.moodleId ?? undefined,
-      role: user.role,
+      roles: user.roles,
     });
 
     await this.updateRtHash(user.id, tokens.refresh_token);
@@ -371,7 +375,7 @@ export class AuthService {
     email,
     moodleToken,
     moodleId,
-    role,
+    roles,
   }: GetTokensParams) {
     const atSecret = process.env.AT_SECRET;
     const rtSecret = process.env.RT_SECRET;
@@ -398,7 +402,7 @@ export class AuthService {
           email,
           moodleToken,
           moodleId,
-          role,
+          roles,
         },
         {
           secret: atSecret,
