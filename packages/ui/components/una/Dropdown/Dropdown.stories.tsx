@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChevronDown, Globe } from 'lucide-react';
 import { Button } from '../Button/Button';
 import { Dropdown } from './Dropdown';
@@ -17,11 +17,6 @@ const meta = {
       control: 'select',
       options: ['bottom-end', 'bottom-start', 'top-end', 'top-start'],
       description: 'Panel placement relative to the trigger',
-    },
-    panelRole: {
-      control: 'select',
-      options: [undefined, 'listbox', 'menu'],
-      description: 'ARIA role of the panel; also sets aria-haspopup on the trigger',
     },
     isPadded: {
       control: 'boolean',
@@ -47,7 +42,7 @@ const LANGUAGES = [
   { code: 'pl', label: 'Polski', flag: '🇵🇱' },
 ];
 
-const ListboxDemo = (args: React.ComponentProps<typeof Dropdown>) => {
+const OptionsDemo = (args: React.ComponentProps<typeof Dropdown>) => {
   const [selectedCode, setSelectedCode] = useState('uk');
 
   return (
@@ -71,15 +66,13 @@ const ListboxDemo = (args: React.ComponentProps<typeof Dropdown>) => {
   );
 };
 
-export const Listbox: Story = {
-  render: ListboxDemo,
+export const Options: Story = {
+  render: OptionsDemo,
   args: {
     isPadded: true,
-    panelLabel: 'Select language',
-    panelRole: 'listbox',
     placement: 'bottom-end',
     trigger: (triggerProps, isOpen) => (
-      <Button variant="secondary" {...triggerProps}>
+      <Button variant="secondary" aria-label="Select language" {...triggerProps}>
         <Globe size={16} />
         <ChevronDown size={14} style={{ transform: isOpen ? 'rotate(180deg)' : undefined }} />
       </Button>
@@ -98,18 +91,18 @@ export const FreeContent: Story = {
       </Button>
     ),
     children: (
-      <div style={{ padding: '16px' }}>
+      <div style={{ padding: 'var(--space-16)' }}>
         <strong>No new notifications</strong>
-        <p style={{ margin: '8px 0 0' }}>Anything can be placed inside the panel.</p>
+        <p style={{ margin: 'var(--space-8) 0 0' }}>Anything can be placed inside the panel.</p>
       </div>
     ),
   },
 };
 
 export const OpensUpwards: Story = {
-  render: ListboxDemo,
+  render: OptionsDemo,
   args: {
-    ...Listbox.args,
+    ...Options.args,
     placement: 'top-start',
   },
 };

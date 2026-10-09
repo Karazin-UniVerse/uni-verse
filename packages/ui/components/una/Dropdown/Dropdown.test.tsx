@@ -18,13 +18,12 @@ describe('UNA Dropdown Component', () => {
     expect(html).not.toContain('Panel Content');
   });
 
-  it('passes the closed state and panel role to the trigger', () => {
+  it('passes the closed state to the trigger', () => {
     let receivedProps: DropdownTriggerProps | undefined;
     let receivedIsOpen: boolean | undefined;
 
     renderToString(
       <Dropdown
-        panelRole="listbox"
         trigger={(triggerProps, isOpen) => {
           receivedProps = triggerProps;
           receivedIsOpen = isOpen;
@@ -38,7 +37,6 @@ describe('UNA Dropdown Component', () => {
 
     expect(receivedIsOpen).toBe(false);
     expect(receivedProps?.['aria-expanded']).toBe(false);
-    expect(receivedProps?.['aria-haspopup']).toBe('listbox');
   });
 
   it('applies the custom className and full width modifier to the wrapper', () => {
@@ -65,8 +63,7 @@ describe('UNA DropdownOption Component', () => {
       </DropdownOption>,
     );
 
-    expect(html).toContain('role="option"');
-    expect(html).toContain('aria-selected="true"');
+    expect(html).toContain('aria-pressed="true"');
     expect(html).toContain('English');
     expect(html).toContain('<svg');
   });
@@ -78,7 +75,7 @@ describe('UNA DropdownOption Component', () => {
       </DropdownOption>,
     );
 
-    expect(html).toContain('aria-selected="false"');
+    expect(html).toContain('aria-pressed="false"');
     expect(html).not.toContain('<svg');
   });
 });

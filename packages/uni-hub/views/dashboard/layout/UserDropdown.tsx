@@ -87,7 +87,6 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
               type="button"
               variant="secondary"
               size="small"
-              role="menuitem"
               onClick={() => {
                 onClose();
                 onOpenLinkMoodle?.(LinkMoodleMode.CHANGE);
@@ -99,7 +98,6 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
               type="button"
               variant="secondary"
               size="small"
-              role="menuitem"
               onClick={() => {
                 onClose();
                 onOpenUnlinkMoodle?.();
@@ -114,7 +112,6 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
             type="button"
             variant="primary"
             size="small"
-            role="menuitem"
             onClick={() => {
               onClose();
               onOpenLinkMoodle?.(LinkMoodleMode.CONNECT);
@@ -128,7 +125,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
 
       <div className={styles.userDropdownBody}>
         <div className={styles.mobileOnlyItem} style={{ marginBottom: 6 }}>
-          <LanguageSwitcher compact={false} placement="top-down" />
+          <LanguageSwitcher compact={false} />
         </div>
 
         <div className={styles.mobileOnlyItem}>
@@ -140,7 +137,6 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
             type="button"
             variant="secondary"
             size="small"
-            role="menuitem"
             onClick={onToggleSound}
             style={{ width: '100%', justifyContent: 'flex-start' }}
           >
@@ -170,7 +166,6 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
             type="button"
             variant="secondary"
             size="small"
-            role="menuitem"
             onClick={onLogout}
             style={{
               width: '100%',

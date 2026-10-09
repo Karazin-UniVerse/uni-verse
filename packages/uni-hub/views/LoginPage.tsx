@@ -168,7 +168,7 @@ const LoginPage: React.FC = () => {
   return (
     <div className={styles.page}>
       <div className={styles.toolbar}>
-        <LanguageSwitcher variant="glass" placement="top-down" />
+        <LanguageSwitcher variant="glass" />
         <ThemeSwitcher compact className={styles.themeTrigger} />
       </div>
       <div className={styles.center}>

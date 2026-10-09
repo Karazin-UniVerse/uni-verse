@@ -12,8 +12,7 @@ export const DropdownOption: React.FC<DropdownOptionProps> = ({
 }) => (
   <button
     type="button"
-    role="option"
-    aria-selected={isSelected}
+    aria-pressed={isSelected}
     className={clsx(styles.option, isSelected && styles.active)}
     onClick={onSelect}
   >

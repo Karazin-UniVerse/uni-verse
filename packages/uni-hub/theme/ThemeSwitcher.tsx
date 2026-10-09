@@ -3,7 +3,7 @@
 import React from 'react';
 import { Sun, Moon, Zap, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
-import { Dropdown, DropdownOption } from '@una';
+import { Dropdown, DropdownOption, type PopoverPlacement } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { useTheme, type AppTheme } from './ThemeContext';
@@ -24,7 +24,7 @@ const THEME_KEYS: Record<AppTheme, TranslationKey> = {
 type ThemeSwitcherProps = {
   compact?: boolean;
   showLabel?: boolean;
-  placement?: 'down' | 'up';
+  placement?: PopoverPlacement;
   className?: string;
 };
 
@@ -32,7 +32,7 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
   className,
   compact = false,
   showLabel = true,
-  placement = 'down',
+  placement = 'bottom-end',
 }) => {
   const { theme, setTheme } = useTheme();
   const { formatMessage } = useLanguage();
@@ -42,9 +42,7 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
     return (
       <Dropdown
         isPadded
-        panelLabel={formatMessage('theme.select')}
-        panelRole="listbox"
-        placement={placement === 'up' ? 'top-end' : 'bottom-end'}
+        placement={placement}
         trigger={(triggerProps, isOpen) => (
           <button
             {...triggerProps}

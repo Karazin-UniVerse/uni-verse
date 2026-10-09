@@ -131,7 +131,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </Dropdown>
 
         <Dropdown
-          panelRole="menu"
           width={240}
           trigger={(triggerProps) => (
             <button
