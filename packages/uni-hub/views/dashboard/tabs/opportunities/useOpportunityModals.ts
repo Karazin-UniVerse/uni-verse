@@ -104,7 +104,8 @@ export function useOpportunityModals({
     try {
       const token = safeStorage.getItem('accessToken');
       const jwt = token ? parseJwt(token) : null;
-      const applicantName = jwt?.name || jwt?.email || 'Студент';
+      const defaultApplicantName = formatMessage('opportunities.applyModal.defaultApplicantName');
+      const applicantName = jwt?.name || jwt?.email || defaultApplicantName;
       const contactInfo = applyContactInfo.trim() || jwt?.email || '';
 
       await opportunitiesApi.apply(selectedOpportunity.id, {

@@ -31,7 +31,7 @@ export type OpportunityDetailModalProps = {
   lifecycleOptions?: OpportunityLifecycleOption[];
   onLifecycleChange?: (state: string) => void;
   // Footer
-  closeText?: string;
+  closeText: string;
   canApply?: boolean;
   applyText?: string;
   onOpenApply?: () => void;

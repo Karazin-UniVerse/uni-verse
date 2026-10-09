@@ -553,6 +553,7 @@ export const en = {
   'opportunities.applyModal.contactLabel': 'Your Telegram or phone number',
   'opportunities.applyModal.contactPlaceholder': '@username or +380...',
   'opportunities.applyModal.defaultContact': 'Specified in profile',
+  'opportunities.applyModal.defaultApplicantName': 'Student',
   'opportunities.applyModal.cancel': 'Cancel',
   'opportunities.applyModal.submitting': 'Submitting...',
   'opportunities.applyModal.submit': 'Submit Application',

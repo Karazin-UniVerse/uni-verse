@@ -1,14 +1,14 @@
 export type ModerationRejectModalProps = {
   open: boolean;
   onClose: () => void;
-  title?: string;
+  title: string;
   comment: string;
   onCommentChange: (comment: string) => void;
-  commentLabel?: string;
-  placeholder?: string;
-  cancelText?: string;
-  reviseText?: string;
-  rejectText?: string;
+  commentLabel: string;
+  placeholder: string;
+  cancelText: string;
+  reviseText: string;
+  rejectText: string;
   onRevise: () => void;
   onReject: () => void;
   isSubmitting?: boolean;

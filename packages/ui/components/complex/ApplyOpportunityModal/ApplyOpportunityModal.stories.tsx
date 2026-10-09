@@ -20,6 +20,13 @@ const meta = {
     contactInfo: '',
     onContactInfoChange: () => {},
     submitting: false,
+    motivationLabel: 'Мотиваційний лист / коментар',
+    motivationPlaceholder: 'Опишіть, чому вас зацікавила ця можливість та ваш досвід...',
+    contactLabel: 'Контактні дані для зв’язку',
+    contactPlaceholder: 'Telegram, телефон або додатковий email',
+    cancelText: 'Скасувати',
+    submitText: 'Подати заявку',
+    submittingText: 'Надсилання...',
   },
 } satisfies Meta<typeof ApplyOpportunityModal>;
 

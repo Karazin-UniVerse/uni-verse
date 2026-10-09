@@ -18,6 +18,12 @@ const meta = {
     comment: '',
     onCommentChange: () => {},
     isSubmitting: false,
+    title: 'Модерація можливості',
+    commentLabel: 'Причина відхилення або коментар для доопрацювання',
+    placeholder: 'Вкажіть, що саме потрібно виправити або причину відхилення...',
+    cancelText: 'Скасувати',
+    reviseText: 'На доопрацювання',
+    rejectText: 'Відхилити остаточно',
   },
 } satisfies Meta<typeof ModerationRejectModal>;
 

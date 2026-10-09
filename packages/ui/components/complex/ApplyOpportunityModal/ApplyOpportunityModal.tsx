@@ -14,15 +14,15 @@ export const ApplyOpportunityModal: React.FC<ApplyOpportunityModalProps> = ({
   contactInfo,
   onContactInfoChange,
   onSubmit,
+  motivationLabel,
+  motivationPlaceholder,
+  contactLabel,
+  contactPlaceholder,
+  cancelText,
+  submitText,
+  submittingText,
   className,
   submitting = false,
-  motivationLabel = 'Мотиваційний лист / коментар',
-  motivationPlaceholder = 'Опишіть, чому вас зацікавила ця можливість та ваш досвід...',
-  contactLabel = 'Контактні дані для зв’язку',
-  contactPlaceholder = 'Telegram, телефон або додатковий email',
-  cancelText = 'Скасувати',
-  submitText = 'Подати заявку',
-  submittingText = 'Надсилання...',
 }) => {
   const motivationId = useId();
   const contactId = useId();

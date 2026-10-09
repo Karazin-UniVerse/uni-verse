@@ -42,7 +42,9 @@ export function useOpportunitiesData() {
   }, [activeSubTab]);
 
   const fetchCatalog = useCallback(async () => {
-    setLoading(true);
+    if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Catalog) {
+      setLoading(true);
+    }
 
     try {
       const res = await opportunitiesApi.getOpportunities();
@@ -62,7 +64,9 @@ export function useOpportunitiesData() {
   }, []);
 
   const fetchMyOpportunities = useCallback(async () => {
-    setLoading(true);
+    if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyOpportunities) {
+      setLoading(true);
+    }
 
     try {
       const res = await opportunitiesApi.getMyOpportunities();
@@ -82,7 +86,9 @@ export function useOpportunitiesData() {
   }, []);
 
   const fetchMyApplications = useCallback(async () => {
-    setLoading(true);
+    if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.MyApplications) {
+      setLoading(true);
+    }
 
     try {
       const res = await opportunitiesApi.getMyApplications();
@@ -102,7 +108,9 @@ export function useOpportunitiesData() {
   }, []);
 
   const fetchModerationQueue = useCallback(async () => {
-    setLoading(true);
+    if (activeSubTabRef.current === OPPORTUNITY_SUB_TAB.Moderation) {
+      setLoading(true);
+    }
 
     try {
       const res = await opportunitiesApi.getOpportunities({ status: 'READY_FOR_REVIEW' });

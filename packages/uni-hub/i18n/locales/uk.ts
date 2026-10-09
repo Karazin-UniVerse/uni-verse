@@ -556,6 +556,7 @@ export const uk = {
   'opportunities.applyModal.contactLabel': 'Ваш Telegram або номер телефону для звʼязку',
   'opportunities.applyModal.contactPlaceholder': '@username або +380...',
   'opportunities.applyModal.defaultContact': 'Вказано в профілі',
+  'opportunities.applyModal.defaultApplicantName': 'Студент',
   'opportunities.applyModal.cancel': 'Скасувати',
   'opportunities.applyModal.submitting': 'Відправка...',
   'opportunities.applyModal.submit': 'Надіслати відгук',

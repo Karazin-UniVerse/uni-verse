@@ -7,17 +7,17 @@ import styles from './ModerationRejectModal.module.scss';
 export const ModerationRejectModal: React.FC<ModerationRejectModalProps> = ({
   open,
   onClose,
+  title,
   comment,
   onCommentChange,
+  commentLabel,
+  placeholder,
+  cancelText,
+  reviseText,
+  rejectText,
   onRevise,
   onReject,
   className,
-  title = 'Модерація можливості',
-  commentLabel = 'Причина відхилення або коментар для доопрацювання',
-  placeholder = 'Вкажіть, що саме потрібно виправити або причину відхилення...',
-  cancelText = 'Скасувати',
-  reviseText = 'На доопрацювання',
-  rejectText = 'Відхилити остаточно',
   isSubmitting = false,
 }) => {
   const commentId = useId();
