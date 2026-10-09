@@ -1,0 +1,113 @@
+.modalStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20, 20px);
+}
+
+.tagsRow {
+  display: flex;
+  gap: var(--space-8, 8px);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.metaRow {
+  display: flex;
+  gap: var(--space-16, 16px);
+  font-size: var(--font-xs, 12px);
+  color: var(--text-secondary);
+  padding: var(--space-8, 8px) 0;
+  border-bottom: 1px solid var(--card-border, #e5e7eb);
+}
+
+.metaDot {
+  color: var(--text-secondary);
+}
+
+.detailSection {
+  padding: var(--space-16, 16px);
+  background: var(--bg-hover, #f3f4f6);
+  border-radius: var(--border-radius-medium, 12px);
+  border: 1px solid var(--card-border, #e5e7eb);
+}
+
+.detailSectionTitle {
+  margin: 0 0 var(--space-8, 8px) 0;
+  font-size: var(--font-xs, 12px);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.detailSectionText {
+  margin: 0;
+  font-size: var(--font-sm, 14px);
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+.contactRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 8px);
+  font-size: var(--font-sm, 14px);
+  color: var(--text-primary);
+}
+
+.contactIcon {
+  color: var(--accent-primary, #3b82f6);
+  flex-shrink: 0;
+}
+
+.authorControlPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12, 12px);
+  padding: var(--space-16, 16px);
+  background: color-mix(in srgb, var(--accent-primary, #3b82f6) 6%, var(--bg-surface, #fff));
+  border: 1px solid color-mix(in srgb, var(--accent-primary, #3b82f6) 20%, transparent);
+  border-radius: var(--border-radius-medium, 12px);
+}
+
+.manageTitle {
+  font-size: var(--font-xs, 12px);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent-primary, #3b82f6);
+}
+
+.controlsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12, 12px);
+  flex-wrap: wrap;
+}
+
+.phaseWrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 8px);
+  margin-left: auto;
+}
+
+.phaseLabel {
+  font-size: var(--font-xs, 12px);
+  color: var(--text-secondary);
+}
+
+.modalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-12, 12px);
+  padding-top: var(--space-16, 16px);
+  border-top: 1px solid var(--card-border, #e5e7eb);
+}
+
+.btnIcon {
+  margin-right: var(--space-8, 8px);
+}
