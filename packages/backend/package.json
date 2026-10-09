@@ -8,14 +8,13 @@
   "scripts": {
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:seed:opportunities": "ts-node -r dotenv/config prisma/seed-opportunities.ts",
     "build": "pnpm --filter @universe/core build && pnpm db:generate && nest build",
     "format": "prettier --write \"**/*.ts\" \"test/**/*.ts\"",
     "dev": "nest start --watch",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "pnpm db:push && node dist/main",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
     "test": "pnpm db:generate && node --experimental-vm-modules node_modules/jest/bin/jest.js",
@@ -46,7 +45,8 @@
     "passport-jwt": "^4.0.1",
     "pg": "^8.23.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "tslib": "^2.8.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.7",

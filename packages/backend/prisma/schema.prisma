@@ -134,6 +134,8 @@ model OpportunityApplication {
   applicant   User   @relation("Applicant", fields: [applicantId], references: [id])
 
   comments Comment[]
+
+  @@unique([applicantId, opportunityId])
 }
 
 model Notification {

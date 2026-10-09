@@ -23,4 +23,4 @@ USER node
 EXPOSE 3001
 
 WORKDIR /app/packages/backend
-CMD ["node", "dist/main"]
+CMD ["sh", "-c", "pnpm db:push && node dist/main"]
