@@ -30,7 +30,7 @@ Rely on the database constraint instead of check-then-insert: `@@unique([applica
 
 ## Schema
 
-- PostgreSQL does not index foreign key columns automatically, and `@unique` / `@@unique` only cover the exact columns they name. Add `@@index` for every foreign key and for columns used in frequent `where` or `orderBy` clauses. The current schema declares unique constraints only, so check new models explicitly.
+- PostgreSQL does not index foreign key columns automatically. Ensure foreign keys have suitable index coverage: add `@@index` only when no existing index (such as `@unique` or a composite constraint whose leading column matches the foreign key) covers it. Also add `@@index` for columns used in frequent `where` or `orderBy` clauses. The current schema declares unique constraints only, so check new models explicitly.
 - Add `deletedAt DateTime?` only when a model really needs soft delete; see the soft-delete trap below.
 
 ## Queries
@@ -42,7 +42,7 @@ Rely on the database constraint instead of check-then-insert: `@@unique([applica
 
 ## Traps
 
-**`updateMany` and `deleteMany` return `{ count }`, not records.** To use the affected rows, read their ids first, write with `where: { id: { in: ids } }`, then read them again. `notifications.service.ts` uses `updateMany`, so keep this in mind when changing it.
+**Returning rows from bulk writes.** For bulk updates that need to return the modified records, use `updateManyAndReturn()` (supported on PostgreSQL in Prisma 7); it preserves the original filter and avoids race conditions. Plain `updateMany` and `deleteMany` return only `{ count }`. If you need rows affected by `deleteMany`, read them first using the exact same `where` filter inside an interactive transaction before deleting. `notifications.service.ts` uses `updateMany`, so keep this in mind when changing it.
 
 **`@updatedAt` is applied by Prisma Client, not by the database.** The column has no database default or trigger, so `$executeRaw` / `$queryRaw` updates leave it unchanged; set `"updatedAt" = now()` in the SQL yourself. Prisma sets it for its own write methods when you do not supply a value, and an empty `data` object leaves it unchanged.
 

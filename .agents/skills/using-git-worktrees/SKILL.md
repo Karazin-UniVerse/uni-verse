@@ -66,16 +66,16 @@ Only proceed to Step 1b if you have no native worktree tool available.
 
 Follow this priority order. Explicit user preference always beats observed filesystem state.
 
-1. **Check your instructions for a declared worktree directory preference.** If the user has already specified one, use it without asking.
+1. **Check your instructions for a declared worktree directory preference.** If the user has already specified one, set `WORKTREE_BASE_DIR` to that path without asking.
 
-2. **Otherwise use `.claude/worktrees/` at the project root.** This is where the existing worktrees of this project live.
+2. **Otherwise use `.claude/worktrees/` at the project root.** Set `WORKTREE_BASE_DIR=".claude/worktrees"`. This is where the existing worktrees of this project live.
 
 #### Safety Verification
 
 **MUST verify directory is ignored before creating worktree:**
 
 ```bash
-git check-ignore -q .claude/worktrees
+git check-ignore -q "$WORKTREE_BASE_DIR"
 ```
 
 **If NOT ignored:** Do not commit a `.gitignore` change inside the feature branch. Tell the user and ask where to put the worktree.
@@ -85,15 +85,18 @@ git check-ignore -q .claude/worktrees
 #### Create the Worktree
 
 ```bash
+# Set BRANCH_NAME for the task (e.g. feature/my-feature, fix/my-bug)
+BRANCH_NAME="<task-branch-name>"
+
 # Determine path based on chosen location; branch names contain "/", so flatten them for the folder
-path=".claude/worktrees/${BRANCH_NAME//\//-}"
+path="$WORKTREE_BASE_DIR/${BRANCH_NAME//\//-}"
 
 git fetch origin develop
 git worktree add "$path" -b "$BRANCH_NAME" origin/develop
 cd "$path"
 ```
 
-**Sandbox fallback:** If `git worktree add` fails with a permission error (sandbox denial), tell the user the sandbox blocked worktree creation and you're working in the current directory instead. Then run setup and baseline tests in place.
+**Sandbox fallback:** If `git worktree add` fails with a permission error (sandbox denial), inform the user that the sandbox blocked worktree creation and ask whether to proceed in the current checkout or stop. Do NOT run setup or tests in place without explicit user approval.
 
 ## Step 2: Project Setup
 
@@ -135,7 +138,7 @@ Ready to implement <feature-name>
 | No preference | Use `.claude/worktrees/` (verify ignored) |
 | Directory not ignored | Tell the user, do not commit a `.gitignore` change |
 | Branch does not start at `origin/develop` | Recreate it from `origin/develop` |
-| Permission error on create | Sandbox fallback, work in place |
+| Permission error on create | Sandbox fallback: ask user before working in current checkout |
 | Tests fail during baseline | Report failures + ask |
 
 ## Common Rationalizations
