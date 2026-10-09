@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { SimpleForm } from './SimpleForm';
 import { TextInput } from '../inputs/TextInput/TextInput';
 import { Button } from '../Button/Button';

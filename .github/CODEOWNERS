@@ -17,12 +17,12 @@
 /packages/core/           @brodion-230 @iamredl-lab @Skyzary @RiderTr @Artebah
 
 # Frontend Applications & Design System
-/packages/ui/             @Skyzary @Kostik565 @iamredl-lab @RiderTr
-/packages/uni-hub/        @iamredl-lab @Kostik565 @Skyzary @RiderTr
+/packages/ui/             @Skyzary @Kostik565 @iamredl-lab @RiderTr @Artebah
+/packages/uni-hub/        @iamredl-lab @Kostik565 @Skyzary @RiderTr @Artebah
 
 # Backend Services & Database
-/packages/backend/        @brodion-230 @RiderTr @Skyzary @Artebah
-/packages/database/       @brodion-230 @RiderTr @Skyzary @Artebah
+/packages/backend/        @brodion-230 @iamredl-lab @RiderTr @Skyzary @Artebah
+/packages/database/       @brodion-230 @iamredl-lab @RiderTr @Skyzary @Artebah
 
 # End-to-End & Integration Testing
 /tests/                   @khaliggo @alnnvsk @brodion-230 @iamredl-lab @blepame

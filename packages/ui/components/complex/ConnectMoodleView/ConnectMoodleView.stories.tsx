@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import React from 'react';
 import { Award, CalendarDays, BookOpen } from 'lucide-react';
 import { ConnectMoodleView } from './ConnectMoodleView';
