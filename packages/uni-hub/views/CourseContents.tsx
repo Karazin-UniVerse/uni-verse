@@ -194,7 +194,6 @@ const CourseContents: React.FC = () => {
         <SimpleButton
           type="button"
           variant="secondary"
-          size="medium"
           isTransparent
           onClick={() => router.push('/?tab=courses')}
         >

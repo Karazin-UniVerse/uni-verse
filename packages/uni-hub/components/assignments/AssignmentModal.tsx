@@ -323,7 +323,6 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                   <SimpleButton
                     type="button"
                     variant="secondary"
-                    size="medium"
                     onClick={onClose}
                     disabled={submitting}
                   >
@@ -332,7 +331,6 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                   <SimpleButton
                     type="submit"
                     variant="primary"
-                    size="medium"
                     disabled={submitting || uploadingFile}
                   >
                     {uploadingFile

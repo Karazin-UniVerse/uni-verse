@@ -100,7 +100,6 @@ export const DevFeaturePanel: React.FC = () => {
       <Button
         type="button"
         variant="secondary"
-        size="medium"
         isTransparent
         onClick={handleToggle}
         aria-label={formatMessage('devPanel.openButton')}

@@ -290,7 +290,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           <Button
             type="button"
             variant="secondary"
-            size="medium"
             isTransparent
             onClick={onLogout}
             className={styles.logoutBtn}

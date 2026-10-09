@@ -14,7 +14,7 @@ import css from './Button.module.scss';
  * @param {'primary'|'secondary'} variant - Visual variant determining color/style.
  * @param children
  * @param className
- * @param {'small'|'medium'|'large'} [size='small'] - Size token used for padding and font.
+ * @param {'small'|'medium'|'large'} [size='medium'] - Size token used for padding and font.
  * @param {boolean} [isLink=false] - Render as an anchor element instead of a button.
  * @param {boolean} [isTransparent=false] - Render a transparent style variant.
  * @param {React.ButtonHTMLAttributes<HTMLButtonElement> | React.AnchorHTMLAttributes<HTMLAnchorElement>} props - Native element attributes forwarded.

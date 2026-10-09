@@ -81,7 +81,6 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         <SimpleInput
           type="date"
           lang={localeTag}
-          size="medium"
           min="2000-01-01"
           max="2099-12-31"
           value={dateFrom}
@@ -91,7 +90,6 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         <SimpleInput
           type="date"
           lang={localeTag}
-          size="medium"
           min="2000-01-01"
           max="2099-12-31"
           value={dateTo}
