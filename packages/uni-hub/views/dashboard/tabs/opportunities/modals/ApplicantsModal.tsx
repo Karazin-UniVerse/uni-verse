@@ -95,7 +95,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
               <div className={styles.applicantActions}>
                 {app.status !== 'ACCEPTED' && (
                   <Button
-                    size="small"
+                    size="medium"
                     variant="primary"
                     className={styles.approveBtn}
                     onClick={() => onUpdateStatus(app.id, 'ACCEPTED')}
@@ -106,7 +106,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                 )}
                 {app.status !== 'UNDER_REVIEW' && (
                   <Button
-                    size="small"
+                    size="medium"
                     variant="secondary"
                     className={styles.reviseBtn}
                     onClick={() => onUpdateStatus(app.id, 'UNDER_REVIEW')}
@@ -117,7 +117,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                 )}
                 {app.status !== 'REJECTED' && (
                   <Button
-                    size="small"
+                    size="medium"
                     variant="secondary"
                     className={styles.rejectBtn}
                     onClick={() => onUpdateStatus(app.id, 'REJECTED')}

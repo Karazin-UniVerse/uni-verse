@@ -131,7 +131,7 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
         <div className={styles.createBtnWrapper}>
           <Button
             variant="primary"
-            size="small"
+            size="medium"
             onClick={() => setIsCreateModalOpen(true)}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
           >
