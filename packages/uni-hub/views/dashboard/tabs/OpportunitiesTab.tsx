@@ -109,7 +109,7 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
         <div className={styles.createBtnWrapper}>
           <Button
             variant="primary"
-            size="small"
+            size="medium"
             onClick={() => create.setIsOpen(true)}
             className={styles.createBtn}
           >

@@ -84,12 +84,12 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
             <div className={styles.cardActions}>
               <Button
                 variant="secondary"
-                size="small"
+                size="medium"
                 onClick={() => onOpenApplicants?.(opportunity)}
               >
                 {formatMessage('opportunities.card.applications')}
               </Button>
-              <Button variant="primary" size="small" onClick={() => onOpenDetail?.(opportunity)}>
+              <Button variant="primary" size="medium" onClick={() => onOpenDetail?.(opportunity)}>
                 {formatMessage('opportunities.card.management')}
               </Button>
             </div>
