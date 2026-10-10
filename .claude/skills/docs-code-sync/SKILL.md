@@ -21,6 +21,7 @@ Read `docs/ai/requirements-docs.md` first. It defines the register format and th
    - a document and the code that say different things.
 
    When no case has a test yet, write one row for the second kind instead of one per case.
+
 4. Write `docs/discrepancies/<project>/<feature>.md` in the register format, one row per mismatch. The proposed resolution is a suggestion backed by the evidence: when asking, name the other two options and what each would change.
 5. Run the independent review (shared procedure step 7) with the checklist below, then fix its findings.
 6. Ask the user about the rows, one by one or grouped, and record each answer in `Decision`. Never decide for the user.

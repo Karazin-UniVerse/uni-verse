@@ -15,7 +15,7 @@ Written for the Notion Project Dashboard; not created there. Each task gets its 
 
 - Closes: D-04
 - What: add a `visibility` value to an opportunity: visible (default), hidden by owner, hidden by moderator. An owner hides and shows their own published opportunity; a moderator hides and shows any published one; an owner cannot lift a moderator's hiding. Hidden opportunities leave the catalog for ordinary users and refuse new applications; moderation status, phase and applications do not change. Add the actions to the owner's views and to the moderation tab, and show the value.
-- Where: `packages/database/client/schema.prisma` (`model Opportunity`), `packages/backend/opportunities` (service, controller, DTOs), `packages/uni-hub/views/dashboard/tabs/opportunities` (details modal, my opportunities, moderation tab), `packages/uni-hub/types`, translation files uk and en. The database is updated with the project's `db:push` flow; check whether a data step is needed before running it on each environment.
+- Where: `packages/backend/prisma/schema.prisma` (`model Opportunity`), `packages/backend/opportunities` (service, controller, DTOs), `packages/uni-hub/views/dashboard/tabs/opportunities` (details modal, my opportunities, moderation tab), `packages/uni-hub/types`, translation files uk and en. The database is updated with the project's `db:push` flow; check whether a data step is needed before running it on each environment.
 - Satisfies: REQ-OPP-04.1, 04.2, 04.3, 09.4, 17.1, 17.2, 17.3, 05.1; TC-OPP-13, 14, 15, 53.
 
 ### Task 3: Edit and moderation flow
