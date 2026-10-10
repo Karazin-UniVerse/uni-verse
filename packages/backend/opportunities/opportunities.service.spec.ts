@@ -8,6 +8,7 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
+import { Role } from '@universe/database';
 
 describe('OpportunitiesService', () => {
   let service: OpportunitiesService;
@@ -235,6 +236,32 @@ describe('OpportunitiesService', () => {
         ownerId: 'owner1',
       } as any);
       await service.moderate('user1', 'opp1', { action: 'APPROVE' } as any);
+      expect(prisma.opportunity.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'PUBLISHED' }),
+        }),
+      );
+    });
+
+    it('succeeds if user holds OPPORTUNITIES_MODERATOR among several roles', async () => {
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        id: 'user1',
+        roles: [Role.INSTRUCTOR, Role.OPPORTUNITIES_MODERATOR],
+      } as any);
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: 'opp1',
+        title: 'test',
+        ownerId: 'owner1',
+        status: 'READY_FOR_REVIEW',
+      } as any);
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        id: 'opp1',
+        title: 'test',
+        ownerId: 'owner1',
+      } as any);
+
+      await service.moderate('user1', 'opp1', { action: 'APPROVE' } as any);
+
       expect(prisma.opportunity.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ status: 'PUBLISHED' }),

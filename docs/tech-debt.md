@@ -50,28 +50,3 @@ Components and hooks compare against `'PAID'`, `'READY_FOR_REVIEW'`, `'ACCEPTED'
 `useCurrentUser` reads `safeStorage` during the first render. There is no hydration mismatch today because the opportunities tab mounts only after client-side navigation, but it breaks if the tab ever renders on the server. A reviewer asked for `useSyncExternalStore` or an effect (PR #182).
 
 - **Fix:** read the token with `useSyncExternalStore` on `safeStorage`, or move the user into a provider.
-
-### `OpportunitiesTab.module.scss` uses raw values
-
-About a thousand lines use values outside the design tokens (`padding: 5px 12px`, `gap: 26px`, `font-size: 11px`, `border-radius: 14px`, hex fallbacks). Raised by CodeRabbit in PR #182. The unused classes were already removed.
-
-- **Why deferred:** converting them moves the layout by a pixel or two in many places and needs a visual check of every sub-tab and theme.
-- **Fix:** a separate PR with before/after screenshots, using the tokens from [design-system](ai/design-system.md).
-
-### `ApplicantsModal` is still an application component
-
-`views/dashboard/tabs/opportunities/modals/ApplicantsModal.tsx` (about 160 lines) holds the markup and styling for the applicants list. The other four opportunities modals were moved to `packages/ui/components/complex` with stories.
-
-- **Fix:** move the presentation to `ui/complex/ApplicantsModal` with a story and keep a thin translating wrapper in uni-hub.
-
-### `useAsyncList` is private to one file
-
-`useAsyncList` in `useOpportunitiesData.ts` (per-list loading, stale-response protection) is generic, but it has one consumer, so it stays private by the [reuse rule](ai/code-style.md#reuse-before-writing-dry).
-
-- **Fix:** when a second consumer appears, move it to `packages/uni-hub/hooks/useAsyncList.ts` with a unit test for the stale-request case.
-
-### `asList` is not used everywhere
-
-`asList` (`packages/uni-hub/utils/arrays.ts`) replaces the `Array.isArray(x) ? x : []` fallback. The backend (`moodle-*.service.ts`) still has similar checks, but it cannot import from uni-hub.
-
-- **Fix:** if the backend needs the same helper, promote it to `@universe/core/utils/arrays.ts`.

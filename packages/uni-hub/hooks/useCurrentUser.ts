@@ -18,7 +18,7 @@ export function useCurrentUser(): CurrentUser {
 
   return {
     userId: jwt?.sub ?? null,
-    roles: jwt?.roles ?? [],
+    roles: Array.isArray(jwt?.roles) ? jwt.roles : [],
     email: jwt?.email,
     name: jwt?.name,
   };
