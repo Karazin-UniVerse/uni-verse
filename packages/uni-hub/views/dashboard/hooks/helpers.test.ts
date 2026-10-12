@@ -171,6 +171,18 @@ describe('getInitialUserProfile', () => {
     expect(getInitialUserProfile()).toEqual(profile);
   });
 
+  it.each([
+    ['an array', '[]'],
+    ['an empty object', '{}'],
+    ['a partial profile', JSON.stringify({ fullName: 'Partial Student' })],
+    ['invalid JSON', '{not json'],
+  ])('ignores a cached profile that is %s', (_label: string, cached: string) => {
+    localStorage.setItem('universe_student_profile', cached);
+    localStorage.setItem('username', 'saved.user');
+
+    expect(getInitialUserProfile()?.fullName).toBe('saved.user');
+  });
+
   it('builds a profile from the saved username when nothing is cached', () => {
     localStorage.setItem('username', 'saved.user');
 

@@ -223,15 +223,31 @@ export function getInitialSyncTime(): number | null {
   }
 }
 
+const REQUIRED_PROFILE_KEYS = Object.keys(fallbackStudentProfile).filter(
+  (key: string) => key !== 'avatarUrl',
+);
+
+function isStudentProfile(value: unknown): value is StudentProfile {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+
+  return REQUIRED_PROFILE_KEYS.every(
+    (key: string) => record[key] !== undefined && record[key] !== null,
+  );
+}
+
 function getCachedUserProfile(): StudentProfile | null {
   try {
     const cachedProfile = localStorage.getItem('universe_student_profile');
 
     if (!cachedProfile) return null;
 
-    const parsedProfile = JSON.parse(cachedProfile) as StudentProfile;
+    const parsedProfile: unknown = JSON.parse(cachedProfile);
 
-    if (parsedProfile && typeof parsedProfile === 'object') {
+    if (isStudentProfile(parsedProfile)) {
       return parsedProfile;
     }
   } catch {
