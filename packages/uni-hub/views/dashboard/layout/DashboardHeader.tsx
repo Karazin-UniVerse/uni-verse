@@ -51,7 +51,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         <Button
           type="button"
           variant="secondary"
-          size="medium"
           isTransparent
           className={styles.mobileMenuBtn}
           onClick={onOpenMobileMenu}
@@ -69,7 +68,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         <Button
           type="button"
           variant="secondary"
-          size="medium"
           isTransparent
           onClick={onToggleSound}
           aria-label={
@@ -87,7 +85,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               {...triggerProps}
               type="button"
               variant="secondary"
-              size="medium"
               isTransparent
               aria-label={formatMessage('header.notifications')}
             >
