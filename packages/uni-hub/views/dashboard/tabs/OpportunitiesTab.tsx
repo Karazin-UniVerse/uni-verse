@@ -34,7 +34,7 @@ export interface OpportunitiesTabProps {
 export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
   const { formatMessage } = useLanguage();
   const currentUser = useCurrentUser();
-  const isModerator = currentUser.role === ROLE.OPPORTUNITIES_MODERATOR;
+  const isModerator = currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR);
   const data = useOpportunitiesData(isModerator);
   const { activeSubTab, setActiveSubTab } = data;
   const detail = useOpportunityDetail(data.myOpportunities.refetch);

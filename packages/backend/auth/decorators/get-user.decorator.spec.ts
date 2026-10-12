@@ -34,14 +34,14 @@ describe('GetUser Decorator', () => {
   });
 
   it('should return the full user object if no data key is provided', () => {
-    const user = { id: 'user-1', role: 'ADMIN' };
+    const user = { id: 'user-1', roles: ['ADMIN'] };
     const ctx = createMockContext(user);
 
     expect(factory(undefined, ctx)).toEqual(user);
   });
 
   it('should return the specific property when data key is provided', () => {
-    const user = { sub: 'user-1', role: 'ADMIN' };
+    const user = { sub: 'user-1', roles: ['ADMIN'] };
     const ctx = createMockContext(user);
 
     expect(factory('sub', ctx)).toBe('user-1');

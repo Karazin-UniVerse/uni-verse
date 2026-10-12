@@ -79,7 +79,7 @@ export class UserService {
         email: createUserDto.email,
         name: createUserDto.name ?? null,
         password: createUserDto.password ?? '',
-        role: Role.STUDENT,
+        roles: [Role.STUDENT],
         token: createUserDto.token ?? null,
         moodleId: createUserDto.moodleId ?? null,
         refreshToken: null,
