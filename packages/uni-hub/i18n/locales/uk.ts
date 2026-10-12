@@ -86,6 +86,7 @@ export const uk = {
   'header.moodleChange': 'Змінити акаунт',
   'header.moodleDisconnect': "Від'єднати",
   'header.moodleConnect': 'Підключити Moodle',
+  'header.moodleLabel': 'Moodle LMS',
   'dashboard.sessionExpired': 'Сесія застаріла або недійсна. Будь ласка, увійдіть знову.',
   'dashboard.loadError':
     'Помилка завантаження даних. Будь ласка, переконайтеся, що бекенд запущено.',

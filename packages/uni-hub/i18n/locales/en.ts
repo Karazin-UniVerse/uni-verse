@@ -88,6 +88,7 @@ export const en = {
   'header.moodleChange': 'Change account',
   'header.moodleDisconnect': 'Disconnect',
   'header.moodleConnect': 'Connect Moodle',
+  'header.moodleLabel': 'Moodle LMS',
   'dashboard.sessionExpired': 'Session expired or invalid. Please sign in again.',
   'dashboard.loadError': 'Failed to load data. Please ensure the backend is running.',
   'dashboard.syncSuccess': 'Data refreshed successfully',
