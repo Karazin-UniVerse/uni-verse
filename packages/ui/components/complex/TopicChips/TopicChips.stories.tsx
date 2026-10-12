@@ -1,16 +1,36 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { BREAKPOINTS } from '@universe/core/constants/breakpoints';
 
+import { VariantRow } from '../../../storybook/VariantMatrix/VariantRow';
 import { TopicChips } from './TopicChips';
+import type { TopicChipsProps } from './TopicChips.types';
 
-const sampleChips = [
+type MatrixLabel = 'with label' | 'without label';
+
+const SAMPLE_CHIPS = [
   { id: 'cert', label: 'Enrollment Certificate' },
   { id: 'transcript', label: 'Academic Transcript' },
   { id: 'session', label: 'Exam Session Questions' },
   { id: 'individual', label: 'Individual Study Plan' },
   { id: 'other', label: 'Other Inquiries' },
 ];
+const MATRIX_LABELS: Record<MatrixLabel, Pick<TopicChipsProps, 'label' | 'ariaLabel'>> = {
+  'with label': { label: 'Select inquiry topic' },
+  'without label': { ariaLabel: 'Inquiry topics' },
+};
+
+function MatrixTopicChips(props: Pick<TopicChipsProps, 'label' | 'ariaLabel'>) {
+  const [selectedId, setSelectedId] = useState(SAMPLE_CHIPS[0].id);
+
+  return (
+    <TopicChips
+      {...props}
+      options={SAMPLE_CHIPS}
+      selectedId={selectedId}
+      onSelect={setSelectedId}
+    />
+  );
+}
 
 const meta = {
   title: 'Complex/TopicChips',
@@ -19,13 +39,6 @@ const meta = {
   parameters: {
     layout: 'centered',
   },
-  decorators: [
-    (Story) => (
-      <div style={{ width: `${BREAKPOINTS.xs}px`, maxWidth: '100%' }}>
-        <Story />
-      </div>
-    ),
-  ],
   argTypes: {
     label: {
       control: 'text',
@@ -37,26 +50,22 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const InteractiveTopicChips = (args: React.ComponentProps<typeof TopicChips>) => {
-  const [selected, setSelected] = useState(args.selectedId || sampleChips[0].id);
-
-  return <TopicChips {...args} selectedId={selected} onSelect={setSelected} />;
-};
-
-export const Default: Story = {
-  render: InteractiveTopicChips,
+export const Matrix: Story = {
   args: {
-    label: 'Select inquiry topic',
-    options: sampleChips,
-    selectedId: 'cert',
+    options: [],
+    onSelect: () => {},
   },
-};
-
-export const WithoutLabel: Story = {
-  render: InteractiveTopicChips,
-  args: {
-    ariaLabel: 'Inquiry topics',
-    options: sampleChips,
-    selectedId: 'session',
+  parameters: {
+    layout: 'padded',
   },
+  render: () => (
+    <VariantRow
+      columns={Object.keys(MATRIX_LABELS) as MatrixLabel[]}
+      renderCell={(label: MatrixLabel) => (
+        <div style={{ width: '360px' }}>
+          <MatrixTopicChips {...MATRIX_LABELS[label]} />
+        </div>
+      )}
+    />
+  ),
 };

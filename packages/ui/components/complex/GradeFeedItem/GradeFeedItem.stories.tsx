@@ -1,8 +1,10 @@
-import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { BREAKPOINTS } from '@universe/core/constants/breakpoints';
 
+import { VariantColumn } from '../../../storybook/VariantMatrix/VariantColumn';
 import { GradeFeedItem } from './GradeFeedItem';
+import type { GradeScoreTone } from './GradeFeedItem.types';
+
+const MATRIX_TONES: readonly GradeScoreTone[] = ['success', 'info', 'warning', 'danger', 'default'];
 
 const meta = {
   title: 'Complex/GradeFeedItem',
@@ -11,13 +13,6 @@ const meta = {
   parameters: {
     layout: 'centered',
   },
-  decorators: [
-    (Story) => (
-      <div style={{ width: `${BREAKPOINTS.xs}px`, maxWidth: '100%' }}>
-        <Story />
-      </div>
-    ),
-  ],
   argTypes: {
     scoreTone: {
       control: 'select',
@@ -46,52 +41,30 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const ExcellentScore: Story = {
+export const Matrix: Story = {
   args: {
-    title: 'Lab 3: Database Normalization',
-    courseName: 'Databases',
+    title: 'Title',
+    courseName: 'Course',
     dateText: 'Sep 12',
-    score: '98 / 100',
-    scoreTone: 'success',
+    score: '0',
   },
-};
-
-export const GoodScore: Story = {
-  args: {
-    title: 'Practical: Microservices Architecture',
-    courseName: 'Software Engineering',
-    dateText: 'Sep 10',
-    score: '85 / 100',
-    scoreTone: 'info',
+  parameters: {
+    layout: 'padded',
   },
-};
-
-export const WarningScore: Story = {
-  args: {
-    title: 'Quiz 1: Operating Systems',
-    courseName: 'Systems Programming',
-    dateText: 'Sep 05',
-    score: '68 / 100',
-    scoreTone: 'warning',
-  },
-};
-
-export const LowScore: Story = {
-  args: {
-    title: 'Midterm: Mathematical Analysis',
-    courseName: 'Calculus',
-    dateText: 'Sep 01',
-    score: '52 / 100',
-    scoreTone: 'danger',
-  },
-};
-
-export const PassedStatus: Story = {
-  args: {
-    title: 'Credit: Physical Education',
-    courseName: 'Sports',
-    dateText: 'Aug 28',
-    score: 'Passed',
-    scoreTone: 'success',
-  },
+  render: () => (
+    <VariantColumn
+      rows={MATRIX_TONES}
+      renderCell={(scoreTone: GradeScoreTone) => (
+        <div style={{ width: '360px' }}>
+          <GradeFeedItem
+            title="Lab 3: Normalization"
+            courseName="Databases"
+            dateText="Sep 12"
+            score="85 / 100"
+            scoreTone={scoreTone}
+          />
+        </div>
+      )}
+    />
+  ),
 };
