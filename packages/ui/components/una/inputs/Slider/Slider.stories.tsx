@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { SimpleSlider } from './SimpleSlider';
+import { Slider } from './Slider';
 
-const meta: Meta<typeof SimpleSlider> = {
-  title: 'Una/Inputs/SimpleSlider',
-  component: SimpleSlider,
+const meta: Meta<typeof Slider> = {
+  title: 'Una/Inputs/Slider',
+  component: Slider,
   tags: ['autodocs'],
   argTypes: {
     onChange: { action: 'changed' },
@@ -26,7 +26,7 @@ const meta: Meta<typeof SimpleSlider> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof SimpleSlider>;
+type Story = StoryObj<typeof Slider>;
 
 export const Default: Story = {
   args: {

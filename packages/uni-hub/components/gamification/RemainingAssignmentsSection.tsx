@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Assignment } from '@uni-hub/types';
-import { SimpleSlider } from '@una';
+import { Slider } from '@una';
 import styles from './GradeSimulator.module.scss';
 
 export type RemainingAssignmentsSectionProps = {
@@ -38,7 +38,7 @@ export const RemainingAssignmentsSection: React.FC<RemainingAssignmentsSectionPr
                 </span>
                 <span className={styles.score}>{score} %</span>
               </div>
-              <SimpleSlider
+              <Slider
                 aria-label={`Бал за завдання ${assignment.name}`}
                 min={0}
                 max={100}
