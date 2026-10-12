@@ -56,8 +56,8 @@ describe('OpportunitiesController', () => {
 
   describe('findAll', () => {
     it('delegates to service.findAll', async () => {
-      await controller.findAll('STUDENT', {} as any);
-      expect(service.findAll).toHaveBeenCalledWith({}, 'STUDENT');
+      await controller.findAll(['STUDENT'], {} as any);
+      expect(service.findAll).toHaveBeenCalledWith({}, ['STUDENT']);
     });
   });
 
@@ -102,8 +102,10 @@ describe('OpportunitiesController', () => {
 
   describe('findOne', () => {
     it('delegates to service.findOne', async () => {
-      await controller.findOne('opp1', 'user1', 'STUDENT');
-      expect(service.findOne).toHaveBeenCalledWith('opp1', 'user1', 'STUDENT');
+      await controller.findOne('opp1', 'user1', ['STUDENT']);
+      expect(service.findOne).toHaveBeenCalledWith('opp1', 'user1', [
+        'STUDENT',
+      ]);
     });
   });
 

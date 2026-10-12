@@ -7,8 +7,9 @@
   "license": "UNLICENSED",
   "scripts": {
     "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:push:force": "prisma db push --accept-data-loss",
+    "db:backfill-roles": "prisma db execute --file prisma/scripts/backfill-roles.sql",
+    "db:push": "pnpm db:backfill-roles && prisma db push",
+    "db:push:force": "pnpm db:backfill-roles && prisma db push --accept-data-loss",
     "build": "pnpm --filter @universe/core build && pnpm db:generate && nest build",
     "format": "prettier --write \"**/*.ts\" \"test/**/*.ts\"",
     "dev": "nest start --watch",

@@ -55,7 +55,7 @@ describe('AuthService', () => {
     id: 'user-uuid-1',
     email: 'student@student.karazin.ua',
     name: 'Test Student',
-    role: Role.STUDENT,
+    roles: [Role.STUDENT],
     password: 'hashed-password',
     token: 'moodle-token-123',
     moodleId: '5001',
@@ -840,6 +840,11 @@ describe('AuthService', () => {
         moodleId: null,
         refreshToken: 'hashed-unlinked-rt',
       });
+      expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ roles: sampleUser.roles }),
+        expect.any(Object),
+      );
     });
   });
 

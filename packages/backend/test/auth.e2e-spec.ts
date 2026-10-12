@@ -49,7 +49,7 @@ describe('AuthController (HTTP Integration / E2E)', () => {
         const user = {
           id,
           name: null,
-          role: 'STUDENT',
+          roles: ['STUDENT'],
           createdAt: new Date(),
           updatedAt: new Date(),
           ...data,
