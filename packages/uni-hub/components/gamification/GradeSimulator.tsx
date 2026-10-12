@@ -7,7 +7,7 @@ import {
   getValidGrades,
 } from '@uni-hub/utils/grades';
 import { useCountUp } from '@uni-hub/hooks/useCountUp';
-import { Modal, Select, Empty, ProgressBar, SimpleSlider, Tag } from '@una';
+import { Modal, Select, Empty, ProgressBar, Slider, Tag } from '@una';
 import { clampScore, projectSemesterWithAssignments } from '@uni-hub/utils/gradeMath';
 import {
   MAX_EXAM,
@@ -247,7 +247,7 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
               {semesterScore} / {maxSemester} б.
             </span>
           </div>
-          <SimpleSlider
+          <Slider
             aria-label="Семестровий бал"
             min={0}
             max={maxSemester}
@@ -268,7 +268,7 @@ export const GradeSimulator: React.FC<GradeSimulatorProps> = ({
                 </Tag>
               </div>
             </div>
-            <SimpleSlider
+            <Slider
               aria-label="Екзаменаційний бал"
               min={0}
               max={MAX_EXAM}

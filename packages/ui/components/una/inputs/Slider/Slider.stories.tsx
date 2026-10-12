@@ -1,21 +1,21 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { VariantMatrix } from '../../../../storybook/VariantMatrix/VariantMatrix';
-import { SimpleSlider } from './SimpleSlider';
-import type { SimpleSliderProps } from './SimpleSlider.types';
+import { Slider } from './Slider';
+import type { SliderProps } from './Slider.types';
 
 type MatrixState = 'enabled' | 'disabled';
 
 const MATRIX_VALUES = { '0%': 0, '50%': 50, '100%': 100 } as const;
-const MATRIX_STATES: Record<MatrixState, Pick<SimpleSliderProps, 'disabled'>> = {
+const MATRIX_STATES: Record<MatrixState, Pick<SliderProps, 'disabled'>> = {
   enabled: {},
   disabled: { disabled: true },
 };
 
 type MatrixValue = keyof typeof MATRIX_VALUES;
 
-const meta: Meta<typeof SimpleSlider> = {
-  title: 'Una/Inputs/SimpleSlider',
-  component: SimpleSlider,
+const meta: Meta<typeof Slider> = {
+  title: 'Una/Inputs/Slider',
+  component: Slider,
   tags: ['autodocs'],
   argTypes: {
     onChange: { action: 'changed' },
@@ -38,7 +38,7 @@ const meta: Meta<typeof SimpleSlider> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof SimpleSlider>;
+type Story = StoryObj<typeof Slider>;
 
 export const Matrix: Story = {
   args: {
@@ -54,7 +54,7 @@ export const Matrix: Story = {
       columns={Object.keys(MATRIX_STATES) as MatrixState[]}
       renderCell={(value: MatrixValue, state: MatrixState) => (
         <div style={{ width: '160px' }}>
-          <SimpleSlider
+          <Slider
             value={MATRIX_VALUES[value]}
             onChange={() => {}}
             aria-label={`${value} ${state}`}

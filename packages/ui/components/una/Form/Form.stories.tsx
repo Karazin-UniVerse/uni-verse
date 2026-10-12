@@ -1,22 +1,22 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { SimpleForm } from './SimpleForm';
+import { Form } from './Form';
 import { TextInput } from '../inputs/TextInput/TextInput';
 import { Button } from '../Button/Button';
 import { VariantMatrix } from '../../../storybook/VariantMatrix/VariantMatrix';
-import type { SimpleFormProps } from './SimpleForm.types';
+import type { FormProps } from './Form.types';
 
-type MatrixVariant = NonNullable<SimpleFormProps['variant']>;
+type MatrixVariant = NonNullable<FormProps['variant']>;
 type MatrixGap = 'default gap' | 'large gap';
 
 const MATRIX_VARIANTS: readonly MatrixVariant[] = ['simple', 'card'];
-const MATRIX_GAPS: Record<MatrixGap, Pick<SimpleFormProps, 'style'>> = {
+const MATRIX_GAPS: Record<MatrixGap, Pick<FormProps, 'style'>> = {
   'default gap': { style: { width: '300px' } },
   'large gap': { style: { width: '300px', gap: 'var(--gap-large)' } },
 };
 
 const meta = {
-  title: 'Una/Form/SimpleForm',
-  component: SimpleForm,
+  title: 'Una/Form/Form',
+  component: Form,
   parameters: {
     layout: 'centered',
   },
@@ -30,7 +30,7 @@ const meta = {
       description: 'Внешний вид формы',
     },
   },
-} satisfies Meta<typeof SimpleForm>;
+} satisfies Meta<typeof Form>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -44,13 +44,13 @@ export const Matrix: Story = {
       rows={MATRIX_VARIANTS}
       columns={Object.keys(MATRIX_GAPS) as MatrixGap[]}
       renderCell={(variant: MatrixVariant, gap: MatrixGap) => (
-        <SimpleForm variant={variant} {...MATRIX_GAPS[gap]}>
+        <Form variant={variant} {...MATRIX_GAPS[gap]}>
           <TextInput type="email" name="email" placeholder="Email address" />
           <TextInput type="text" name="subject" placeholder="Subject" />
           <Button variant="primary" size="medium" type="submit">
             Send
           </Button>
-        </SimpleForm>
+        </Form>
       )}
     />
   ),
