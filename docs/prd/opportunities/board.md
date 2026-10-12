@@ -16,7 +16,7 @@ Students and staff publish "opportunities" (projects, internships, offers) and f
 
 In: creating and moderating opportunities, the catalog with a filter and search, applying and managing applications, notifications, paid and unpaid opportunities, hiding an opportunity from the catalog.
 
-Out: managing moderators through an administrator role (moderators are assigned manually in the database for now), a separate notifications page (notifications are listed in the portal header), notifications about deletions, a moderation history log (only the latest moderator comment is kept), application fields defined by the owner (the form is fixed), the user profile (owned by the portal), the split of the work into pull requests.
+Out: managing moderators through an administrator role (moderators are assigned manually in the database for now), a separate notifications page (notifications are listed in the portal header), notifications about deletions, a moderation history log (only the latest moderator comment is kept), application fields defined by the owner (the form is fixed), structured payment details (amount, currency, periodicity), a payment link that opens a private message, a list of the opportunities a user takes part in, deleting opportunities and applications (hiding and withdrawing replace deletion), rules for free text and limits on text length or on the number of applications (a general security task outside this feature), the user profile (owned by the portal), the split of the work into pull requests.
 
 ## Requirements
 
@@ -52,6 +52,7 @@ As a moderator, I approve, return or reject opportunities submitted for review.
 - REQ-OPP-03.3 Returning for changes requires a comment, sets the status to requires changes and notifies the owner.
 - REQ-OPP-03.4 Rejecting requires a comment, sets the status to rejected, which is final, and notifies the owner.
 - REQ-OPP-03.5 Users without the moderator role cannot moderate. The role is checked against current data on every request, so a removed role stops working at once.
+- REQ-OPP-03.7 A moderator can moderate their own opportunities.
 
 ---
 
@@ -62,6 +63,7 @@ As a moderator, I take a published opportunity out of the catalog.
 - REQ-OPP-04.1 A moderator can hide a published opportunity from the moderation tab.
 - REQ-OPP-04.2 Hiding only removes the opportunity from the catalog for ordinary users and stops new applications; the opportunity, its moderation status, its phase and its applications are kept.
 - REQ-OPP-04.3 An opportunity hidden by a moderator can be made visible again only by a moderator.
+- REQ-OPP-04.4 The owner is notified when a moderator hides their opportunity.
 
 ---
 
@@ -70,7 +72,7 @@ As a moderator, I take a published opportunity out of the catalog.
 As a user, I see all published opportunities with brief information.
 
 - REQ-OPP-05.1 For an ordinary user the catalog lists published, visible opportunities only.
-- REQ-OPP-05.2 Each card shows title, description, owner, creation date and current status.
+- REQ-OPP-05.2 Each card shows title, description, owner, creation date and phase.
 - REQ-OPP-05.3 An empty catalog shows an empty-state message, not a blank page.
 - REQ-OPP-05.4 A moderator can view all opportunities in a separate moderation tab and filter them by moderation status.
 - REQ-OPP-05.5 The catalog, the details of an opportunity and the opportunity lists are available only to signed-in users.
@@ -150,6 +152,7 @@ As an owner, I decide on the applications to my opportunity.
 - REQ-OPP-12.1 An owner sees the applications only to their own opportunities.
 - REQ-OPP-12.2 An owner sees the list of applicants and the details of each application, including the contact the applicant typed and their corporate email. The owner can set an application to under review, accepted or rejected, with an optional comment, and can change a decision later.
 - REQ-OPP-12.3 A moderator can view all applications, read-only.
+- REQ-OPP-12.4 An owner can still decide on the existing applications of an opportunity that is hidden, paused, cancelled or completed; those states stop only new applications.
 
 ---
 
@@ -160,7 +163,9 @@ As a user, I am told about important changes.
 - REQ-OPP-13.1 The user is notified when their opportunity is submitted for review, approved, returned for changes or rejected.
 - REQ-OPP-13.2 The notifications of the portal are listed in the notification list in the header, together with the other portal notifications; each has a short description and a link to the opportunity.
 - REQ-OPP-13.3 Notifications are shown in Ukrainian and English.
-- REQ-OPP-13.4 A notification is either read or unread.
+- REQ-OPP-13.4 A notification is either read or unread. Following a notification marks it read, and a "mark all as read" action marks all of them.
+- REQ-OPP-13.5 The owner is notified of each new application to their opportunity.
+- REQ-OPP-13.6 The applicant is notified of each status change of their application, with the owner's comment.
 
 ---
 
@@ -213,15 +218,3 @@ As an owner, I take my published opportunity out of the catalog myself.
 - Shared data: users and roles, and the opportunity, application, comment and notification models in the database package.
 - Talent Profile: the Notion page "Улучшения/Импрувмент", item 10, says it is connected with Opportunities; the relation is not defined.
 - Sources: Notion "Перечень функционала Uni Opportunities" (feature list) and "opportunities_erd" (data model), both under the Opportunities project page.
-
-## Open questions
-
-- Which contact details besides the corporate email in the profile does the owner type in at creation? The source also says more creation fields are "to be defined later".
-- Does "current status" on a catalog card mean the phase, since every listed item is published?
-- When a moderator hides an opportunity, is the owner notified? What happens to existing applications of a hidden, paused, cancelled or completed opportunity: can the owner still decide on them?
-- Should an owner be able to delete an opportunity instead of, or as well as, hiding it, and what then happens to its applications? Can users delete applications?
-- Confirm that the owner is told about a new application and the applicant about every status change of their application (the code already does both).
-- What marks a notification as read: opening it or a separate action?
-- May a moderator moderate their own opportunity? Is the Notion "Admin (main moderator)" the same as the existing administrator role?
-- Are there rules for free text (description, comments, motivation) and for limiting the number of applications, to prevent abuse?
-- Improvements for later: application fields defined by the owner, a moderation history log, structured payment details (amount, currency, periodicity), what "payment details: private message (clickable)" opens, where the list of opportunities a user takes part in is shown.

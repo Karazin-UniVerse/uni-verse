@@ -173,15 +173,15 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 
 ### TC-OPP-13 A moderator hides a published opportunity
 
-- covers: REQ-OPP-04.1, REQ-OPP-04.2, REQ-OPP-09.4
+- covers: REQ-OPP-04.1, REQ-OPP-04.2, REQ-OPP-04.4, REQ-OPP-09.4
 - type: functional
 - priority: medium
 - preconditions: a published opportunity with one application exists; moderator is signed in
 - steps:
   1. As the moderator, hide the opportunity from the moderation tab.
   2. As the applicant, open the catalog and try to apply to the opportunity by its address.
-  3. As the owner, open my opportunities and the applications of that opportunity.
-- expected: the opportunity is not in the catalog; applying is refused; its moderation status stays published and its phase is unchanged; the owner still sees it and the application; its visibility shows hidden by moderator.
+  3. As the owner, open my opportunities, the applications of that opportunity and the notifications.
+- expected: the opportunity is not in the catalog; applying is refused; its moderation status stays published and its phase is unchanged; the owner still sees it and the application and has a notification about the hiding; its visibility shows hidden by moderator.
 - verification: playwright
 - automated-at: -
 
@@ -225,7 +225,7 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 - preconditions: a published opportunity exists
 - steps:
   1. Open the catalog and look at its card.
-- expected: the card shows title, description, owner, creation date and current status.
+- expected: the card shows title, description, owner, creation date and phase.
 - verification: playwright
 - automated-at: -
 
@@ -539,7 +539,7 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
   1. Open the notification list in the header.
   2. Follow the link of one opportunity notification.
   3. Open the list again.
-- expected: the list shows the opportunity notifications together with the other portal notifications, each with a short description and a link to the opportunity; each notification shows whether it is read; the followed one is marked read (to be confirmed by the team) and the others stay unread.
+- expected: the list shows the opportunity notifications together with the other portal notifications, each with a short description and a link to the opportunity; each notification shows whether it is read; following a notification marks it read and the others stay unread; the "mark all as read" action marks all of them.
 - verification: playwright
 - automated-at: -
 
@@ -753,6 +753,51 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 - steps:
   1. Send a new application to the same opportunity.
 - expected: the request is refused and no second application exists.
+- verification: unit
+- automated-at: -
+
+---
+
+### TC-OPP-56 An owner decides on applications of a hidden, paused, cancelled or completed opportunity
+
+- covers: REQ-OPP-12.4
+- type: state
+- priority: medium
+- preconditions: an opportunity has applications in sent; the owner is signed in
+- steps:
+  1. Put the opportunity, one at a time, into: hidden by a moderator, paused, cancelled, completed.
+  2. In each state set one application to accepted and one to rejected as the owner.
+- expected: in every state the owner can decide on the existing applications; new applications are refused in each of them.
+- verification: unit
+- automated-at: -
+
+---
+
+### TC-OPP-57 Notifications about applications
+
+- covers: REQ-OPP-13.5, REQ-OPP-13.6
+- type: functional
+- priority: high
+- preconditions: a published opportunity in the active phase exists; applicant and owner are signed in
+- steps:
+  1. As the applicant, apply to the opportunity.
+  2. As the owner, accept the application with the comment "Welcome".
+- expected: after step 1 the owner has a notification about the new application; after step 2 the applicant has a notification about the new status with the comment "Welcome".
+- verification: playwright
+- automated-at: -
+
+---
+
+### TC-OPP-58 A moderator moderates their own opportunity
+
+- covers: REQ-OPP-03.7
+- type: functional
+- priority: medium
+- preconditions: a moderator is signed in
+- steps:
+  1. As the moderator, create an opportunity and submit it for review.
+  2. As the same moderator, approve it.
+- expected: the approval is accepted and the opportunity is published.
 - verification: unit
 - automated-at: -
 
