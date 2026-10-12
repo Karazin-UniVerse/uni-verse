@@ -94,4 +94,24 @@ describe('AssignmentCard component', () => {
 
     expect(html).toContain('Здано із запізненням');
   });
+
+  it('does not render submitted late tag when assignment is not completed even if isLate is true', () => {
+    const lateAssignment: Assignment = {
+      ...mockAssignment,
+      isLate: true,
+    };
+
+    const html = renderToString(
+      React.createElement(AssignmentCard, {
+        assignment: lateAssignment,
+        status: 'new',
+        nowSec: 1750000000,
+        soundEnabled: false,
+        onOpenAssignment: () => {},
+      }),
+    );
+
+    expect(html).not.toContain('Здано із запізненням');
+    expect(html).toContain('Прострочено');
+  });
 });

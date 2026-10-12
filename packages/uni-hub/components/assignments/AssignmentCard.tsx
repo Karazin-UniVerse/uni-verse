@@ -64,8 +64,9 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
   const hasDeadline = Boolean(assignment.duedate && assignment.duedate > 0);
   const isOverdue = Boolean(hasDeadline && assignment.duedate < nowSec && !isCompleted);
   const isLate = Boolean(
-    assignment.isLate ||
-    (assignment.submittedAt && hasDeadline && assignment.submittedAt > assignment.duedate),
+    isCompleted &&
+    (assignment.isLate ||
+      (assignment.submittedAt && hasDeadline && assignment.submittedAt > assignment.duedate)),
   );
   const statusInfo = getAssignmentStatusInfo({ status, isGraded, isAwaitingReview, isOverdue });
 

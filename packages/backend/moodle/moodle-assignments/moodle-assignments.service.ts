@@ -88,6 +88,7 @@ export class MoodleAssignmentsService {
                     assign.graded = sub.status === 'graded';
                     assign.submittedAt = sub.submittedAt;
                     assign.isLate = Boolean(
+                      (sub.status === 'submitted' || sub.status === 'graded') &&
                       sub.submittedAt &&
                       assign.duedate > 0 &&
                       sub.submittedAt > assign.duedate,

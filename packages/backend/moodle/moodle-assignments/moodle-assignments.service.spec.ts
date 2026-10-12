@@ -122,6 +122,32 @@ describe('MoodleAssignmentsService', () => {
       expect(result[0].isLate).toBe(true);
     });
 
+    it('should set isLate to false when submission status is new even if timemodified is after duedate', async () => {
+      mockMoodleClientService.client
+        .mockResolvedValueOnce({
+          courses: [
+            {
+              fullname: 'Algorithms',
+              shortname: 'ALG',
+              assignments: [
+                { id: 1, name: 'A1', duedate: 1000, intro: 'Test' },
+              ],
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          lastattempt: {
+            gradingstatus: 'notgraded',
+            submission: { status: 'new', timemodified: 1500 },
+          },
+        });
+
+      const result = await service.getAssignments('token', 'id', true);
+
+      expect(result.length).toBe(1);
+      expect(result[0].isLate).toBe(false);
+    });
+
     it('should gracefully handle individual submission status errors when includeStatus is true', async () => {
       mockMoodleClientService.client
         .mockResolvedValueOnce({
