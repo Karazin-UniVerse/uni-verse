@@ -29,49 +29,33 @@
 
 ---
 
-### Task 1: Configure Path Aliases in `packages/backend` and `packages/ui`
+### Task 1: Configure Path Aliases in `packages/ui` and Jest in `packages/backend`
 
 **Files:**
 
-- Modify: `packages/backend/tsconfig.json`
-- Modify: `packages/backend/package.json:65-75`
+- Modify: `packages/backend/package.json`
 - Modify: `packages/ui/tsconfig.json`
-- Modify: `packages/ui/.storybook/main.ts:15-25`
+- Modify: `packages/ui/.storybook/main.ts`
 
 **Interfaces:**
 
-- Produces: TypeScript, Jest, and Vite resolution for `@core/*` in backend and ui.
+- Produces: TypeScript and Vite resolution for `@core/*` and `@una` in UI, and Jest resolution for `@universe/core/*` in backend.
 
-- [x] **Step 1: Add `@core/*` paths to `packages/backend/tsconfig.json`**
+- [x] **Step 1: Keep backend standard workspace resolution in `packages/backend/tsconfig.json`**
 
-In `packages/backend/tsconfig.json`, add to `compilerOptions`:
+In `packages/backend`, Node.js runs unbundled CommonJS in production (`node dist/main`). Backend relies on native workspace package resolution for `@universe/core/*` without path-mapping aliases.
 
-```json
-"paths": {
-  "@core": ["../core/index.ts"],
-  "@core/*": ["../core/*"]
-}
-```
+- [x] **Step 2: Clean up Jest `moduleNameMapper` in `packages/backend/package.json`**
 
-- [x] **Step 2: Update Jest `moduleNameMapper` in `packages/backend/package.json`**
-
-Replace:
+Remove dead non-existent `core/index.ts` mapping and keep wildcard package matcher:
 
 ```json
-"^@universe/core/(.*)$": "<rootDir>/../core/$1",
-"^@universe/core$": "<rootDir>/../core/index.ts",
+"^@universe/core/(.*)$": "<rootDir>/../core/$1"
 ```
 
-with:
+- [x] **Step 3: Add `@core/*` and `@una` paths to `packages/ui/tsconfig.json`**
 
-```json
-"^@core/(.*)$": "<rootDir>/../core/$1",
-"^@core$": "<rootDir>/../core/index.ts",
-```
-
-- [x] **Step 3: Add `@core/*` paths to `packages/ui/tsconfig.json`**
-
-In `packages/ui/tsconfig.json`, add to `compilerOptions`:
+In `packages/ui/tsconfig.json`, add to `compilerOptions.paths`:
 
 ```json
 "paths": {
@@ -83,17 +67,11 @@ In `packages/ui/tsconfig.json`, add to `compilerOptions`:
 
 - [x] **Step 4: Update Vite alias in `packages/ui/.storybook/main.ts`**
 
-In `packages/ui/.storybook/main.ts`, update `viteFinal` alias:
-Replace:
-
-```ts
-'@universe/core': resolve(dirname(fileURLToPath(import.meta.url)), '../../core'),
-```
-
-with:
+In `packages/ui/.storybook/main.ts`, configure `viteFinal` aliases for `@core` and `@una`:
 
 ```ts
 '@core': resolve(dirname(fileURLToPath(import.meta.url)), '../../core'),
+'@una': resolve(dirname(fileURLToPath(import.meta.url)), '../components/una'),
 ```
 
 - [x] **Step 5: Run tests and typecheck to verify configurations**
@@ -106,46 +84,22 @@ Expected: PASS
 
 - [x] **Step 6: Commit configuration changes**
 
-```bash
-git add packages/backend/tsconfig.json packages/backend/package.json packages/ui/tsconfig.json packages/ui/.storybook/main.ts
-git commit -m "chore(config): add @core path aliases to backend and ui configs"
-```
-
 ---
 
-### Task 2: Refactor Imports in `packages/backend` to `@core/*`
+### Task 2: Backend Architecture & Runtime Compatibility Verification
 
 **Files:**
 
-- Modify: `packages/backend/auth/auth.controller.ts:1-25`
-- Modify: `packages/backend/moodle/moodle-assignments/moodle-assignments.helpers.ts:1-15`
-- Modify: `packages/backend/moodle/moodle-grades/moodle-grades-dto.ts:1-15`
-- Modify: `packages/backend/moodle/moodle-grades/moodle-grades.service.ts:1-20`
-- Modify: `packages/backend/moodle/moodle-profile/moodle-profile-dto.ts:1-15`
+- Verify: `packages/backend/`
 
 **Interfaces:**
 
-- Consumes: `@core/*` path alias configured in Task 1.
-- Produces: Backend codebase with zero `@universe/core/*` import statements.
+- Produces: Verified backend runtime module resolution under unbundled Node.js (`node dist/main`).
 
-- [x] **Step 1: Replace `@universe/core` imports in `packages/backend` files**
+- [x] **Step 1: Verify architectural decision on backend runtime imports**
 
-In `packages/backend/auth/auth.controller.ts`:
-Replace `@universe/core/constants/routes` with `@core/constants/routes`.
-
-In `packages/backend/moodle/moodle-assignments/moodle-assignments.helpers.ts`:
-Replace `@universe/core/utils/boolean` with `@core/utils/boolean`.
-
-In `packages/backend/moodle/moodle-grades/moodle-grades-dto.ts`:
-Replace `@universe/core/types` with `@core/types`.
-Replace `@universe/core/utils/grades` with `@core/utils/grades`.
-
-In `packages/backend/moodle/moodle-grades/moodle-grades.service.ts`:
-Replace `@universe/core/constants/grades` with `@core/constants/grades`.
-Replace `@universe/core/utils/grades` with `@core/utils/grades`.
-
-In `packages/backend/moodle/moodle-profile/moodle-profile-dto.ts`:
-Replace `@universe/core/types` with `@core/types`.
+In `packages/backend`, `nest build` runs `tsc` targeting unbundled CommonJS in `dist/`. Path mapping `@core/*` pointing to `../core/dist/*.d.ts` resulted in `tsc` generating `require("../../core/dist/constants/routes.d.js")`, which crashes with `MODULE_NOT_FOUND` at runtime because `.d.js` does not exist.
+Per monorepo architecture guidelines, backend imports intentionally remain on the workspace package `@universe/core/*`, resolved natively by Node.js.
 
 - [x] **Step 2: Run backend tests and typecheck**
 
@@ -154,13 +108,6 @@ Expected: 41 test suites pass (350+ tests).
 
 Run: `pnpm --filter @universe/backend typecheck`
 Expected: 0 errors.
-
-- [x] **Step 3: Commit backend changes**
-
-```bash
-git add packages/backend/
-git commit -m "refactor(backend): use @core path alias for all core imports"
-```
 
 ---
 

@@ -93,8 +93,7 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "moduleNameMapper": {
-      "^@universe/core/(.*)$": "<rootDir>/../core/$1",
-      "^@universe/core$": "<rootDir>/../core/index.ts"
+      "^@universe/core/(.*)$": "<rootDir>/../core/$1"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s",

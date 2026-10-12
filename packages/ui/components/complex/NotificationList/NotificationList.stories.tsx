@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { BREAKPOINTS } from '@universe/core/constants/breakpoints';
+import { BREAKPOINTS } from '@core/constants/breakpoints';
 
 import { NotificationList } from './NotificationList';
 import type { NotificationListItem } from './NotificationList.types';

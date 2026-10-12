@@ -14,7 +14,6 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "paths": {
-      "@core": ["../core/index.ts"],
       "@core/*": ["../core/*"],
       "@una": ["./components/una/index.ts"],
       "@una/*": ["./components/una/*"]

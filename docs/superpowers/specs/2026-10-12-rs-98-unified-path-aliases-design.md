@@ -20,13 +20,13 @@ All packages (`packages/backend`, `packages/ui`, `packages/uni-hub`) will adhere
 
 ### Canonical Aliases
 
-| Alias     | Target                                                            | Consumers                  | Purpose                                            |
-| --------- | ----------------------------------------------------------------- | -------------------------- | -------------------------------------------------- |
-| `@core/*` | `packages/core/*` (`index.ts`, `types`, `constants/*`, `utils/*`) | `backend`, `uni-hub`, `ui` | Shared contracts, grade math, constants, utilities |
-| `@ui`     | `packages/ui/index.ts`                                            | `uni-hub`                  | Complex composite UI components                    |
-| `@una`    | `packages/ui/components/una/index.ts`                             | `uni-hub`, `ui`            | Atomic Una design system primitives                |
+| Alias     | Target                                                | Consumers                 | Purpose                                            |
+| --------- | ----------------------------------------------------- | ------------------------- | -------------------------------------------------- |
+| `@core/*` | `packages/core/*` (`types`, `constants/*`, `utils/*`) | `uni-hub`, `ui` (bundled) | Shared contracts, grade math, constants, utilities |
+| `@ui`     | `packages/ui/index.ts`                                | `uni-hub`                 | Complex composite UI components                    |
+| `@una`    | `packages/ui/components/una/index.ts`                 | `uni-hub`, `ui`           | Atomic Una design system primitives                |
 
-_Note: Package names in `package.json` remain `@universe/core`, `@universe/ui`, and `@universe/backend` to satisfy pnpm workspace rules and e2e requirements._
+_Note: In `packages/backend`, Node.js runs unbundled CommonJS in production (`node dist/main`). To preserve native Node runtime module resolution without broken `.d.js` imports or runtime path shims, backend imports intentionally remain on the `@universe/core/*` workspace package._
 
 ---
 
@@ -35,22 +35,14 @@ _Note: Package names in `package.json` remain `@universe/core`, `@universe/ui`, 
 ### 3.1 `packages/backend`
 
 1. **TypeScript (`tsconfig.json`)**:
-   Add paths:
-   ```json
-   "paths": {
-     "@core": ["../core/index.ts"],
-     "@core/*": ["../core/*"]
-   }
-   ```
+   Backend relies on standard workspace package resolution for `@universe/core/*`. No custom path aliases needed.
 2. **Jest (`package.json`)**:
-   Update `moduleNameMapper`:
+   Jest maps the workspace package to local source files for fast testing without prior compilation:
    ```json
-   "^@core/(.*)$": "<rootDir>/../core/$1",
-   "^@core$": "<rootDir>/../core/index.ts"
+   "^@universe/core/(.*)$": "<rootDir>/../core/$1"
    ```
-   Remove obsolete `^@universe/core/(.*)$` and `^@universe/core$`.
 3. **Build & Runtime**:
-   Ensure `nest build` and `tsc` emit runnable JavaScript. If runtime requires module alias resolution, verify tsconfig-paths integration.
+   `nest build` runs `tsc` targeting `dist/`. Since imports use `@universe/core/*`, Node.js natively resolves them through pnpm workspace symlinks in production (`node dist/main`).
 
 ### 3.2 `packages/ui`
 
@@ -87,13 +79,9 @@ _Note: Package names in `package.json` remain `@universe/core`, `@universe/ui`, 
 
 ### 4.1 Backend (`packages/backend`)
 
-Replace all `@universe/core/*` imports with `@core/*`:
+Per monorepo architecture guidelines and runtime verification, `packages/backend` compiles to unbundled CommonJS (`node dist/main`). Rewriting imports to `@core/*` breaks runtime module resolution under Node.js without bundlers or path-mapping runtime shims.
 
-- `auth/auth.controller.ts`: `@universe/core/constants/routes` $\to$ `@core/constants/routes`
-- `moodle/moodle-assignments/moodle-assignments.helpers.ts`: `@universe/core/utils/boolean` $\to$ `@core/utils/boolean`
-- `moodle/moodle-grades/moodle-grades-dto.ts`: `@universe/core/types`, `@universe/core/utils/grades` $\to$ `@core/types`, `@core/utils/grades`
-- `moodle/moodle-grades/moodle-grades.service.ts`: `@universe/core/constants/grades`, `@universe/core/utils/grades` $\to$ `@core/constants/grades`, `@core/utils/grades`
-- `moodle/moodle-profile/moodle-profile-dto.ts`: `@universe/core/types` $\to$ `@core/types`
+Therefore, backend imports intentionally remain on the workspace package `@universe/core/*`. No import refactoring is performed in backend.
 
 ### 4.2 UI Library (`packages/ui`)
 
