@@ -93,8 +93,6 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "moduleNameMapper": {
-      "^@universe/core/(.*)$": "<rootDir>/../core/$1",
-      "^@universe/core$": "<rootDir>/../core/index.ts",
       "^@core/(.*)$": "<rootDir>/../core/$1",
       "^@core$": "<rootDir>/../core/index.ts"
     },
