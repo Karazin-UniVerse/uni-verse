@@ -28,3 +28,7 @@ Evaluate the change strictly against these failure modes:
 ## Reviewer canon
 
 Patterns, requests and reviews from team reviewers on GitHub Pull Requests (for example `iamredl-lab`) are top-priority standards. Learn from them and check for every previously flagged issue in future reviews.
+
+## Comments you received
+
+To address the review comments on your own pull request, use the `review-pr-comments` skill.
