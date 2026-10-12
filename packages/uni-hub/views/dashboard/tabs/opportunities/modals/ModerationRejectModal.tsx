@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ModerationRejectModal as ModerationRejectModalUI } from '@universe/ui';
+import { ModerationRejectModal as ModerationRejectModalUI } from '@ui';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { RejectModalState } from '../types';
 
