@@ -6,13 +6,13 @@ Context: [PR #132 discussion r4106555092](https://github.com/Karazin-UniVerse/un
 
 ## 1. Goal
 
-Eliminate verbose, inconsistent import paths (such as `@universe/core/*` and `@universe/ui`) across the monorepo by establishing a clean, uniform set of short path aliases:
+Eliminate verbose, inconsistent import paths (such as `@universe/core/*` and `@universe/ui`) across frontend packages (`packages/uni-hub`, `packages/ui`) by establishing a clean, uniform set of short path aliases:
 
-- `@core/*` for all `@universe/core` contracts, domain models, constants, and utilities.
+- `@core/*` for all `@universe/core` contracts, domain models, constants, and utilities in frontend applications (`packages/uni-hub`) and UI components (`packages/ui`).
 - `@ui` for composite UI-only components from `@universe/ui`.
 - `@una` for Una design system primitives from `@universe/ui/components/una`.
 
-All packages (`packages/backend`, `packages/ui`, `packages/uni-hub`) will adhere to this single canonical import convention.
+Frontend packages (`packages/ui`, `packages/uni-hub`) adhere to this canonical alias convention. In `packages/backend`, imports intentionally remain on the `@universe/core/*` workspace package to preserve native Node.js runtime module resolution for unbundled CommonJS (`node dist/main`).
 
 ---
 

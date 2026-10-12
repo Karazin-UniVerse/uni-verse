@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Unify and standardize import paths across the monorepo to short canonical aliases (`@core/*`, `@ui`, `@una`), eliminating verbose and inconsistent `@universe/core/*` and `@universe/ui` paths.
+**Goal:** Unify and standardize import paths across frontend packages (`packages/uni-hub`, `packages/ui`) to short canonical aliases (`@core/*`, `@ui`, `@una`), eliminating verbose and inconsistent `@universe/core/*` and `@universe/ui` paths, while preserving native workspace package resolution (`@universe/core/*`) in `packages/backend` for unbundled Node.js runtime execution.
 
-**Architecture:** Add path mappings to TypeScript, Jest, and Vite configs in `packages/backend` and `packages/ui`, then refactor imports in backend, UI stories, and uni-hub to their canonical aliases. Finally, sync documentation and AI instructions and run the full test suite.
+**Architecture:** Add path mappings to TypeScript and Vite configs in `packages/ui` and verify Jest resolution in `packages/backend`, then refactor imports in UI stories and uni-hub to their canonical aliases. Finally, sync documentation and AI instructions and run the full test suite.
 
 **Tech Stack:** TypeScript 6.0, NestJS 12, Next.js 16, Vite / Storybook 10, Turborepo, pnpm workspaces, Jest, Vitest, oxlint.
 
@@ -13,7 +13,8 @@
 ## Global Constraints
 
 - Package names in `package.json` MUST remain `@universe/core`, `@universe/ui`, and `@universe/backend` (pnpm workspace dependencies use `"workspace:*"`).
-- All shared contracts, constants, and utils from `packages/core` MUST be imported via `@core/*` (e.g. `@core/types`, `@core/constants/grades`, `@core/utils/grades`).
+- Frontend packages (`packages/uni-hub`, `packages/ui`): All shared contracts, constants, and utils from `packages/core` MUST be imported via `@core/*` (e.g. `@core/types`, `@core/constants/grades`, `@core/utils/grades`).
+- Backend (`packages/backend`): Imports from `packages/core` intentionally remain on `@universe/core/*` for unbundled Node.js runtime compatibility.
 - All complex UI components MUST be imported from `@ui` (`packages/ui/index.ts`).
 - All Una primitives MUST be imported from `@una` (`packages/ui/components/una/index.ts`).
 - Zero lint warnings (`oxlint --deny-warnings`) and zero typecheck errors across all 7 packages.
@@ -208,8 +209,8 @@ git commit -m "refactor(uni-hub): use canonical @ui alias instead of @universe/u
 
 In `docs/ai/architecture.md`:
 Under `Core layout`:
-Ensure standard rule specifies importing via `@core/*` (e.g. `@core/utils/browser`, `@core/constants/grades`, `@core/types`) across all packages.
-Remove outdated `@universe/core/utils/browser` notation.
+Ensure standard rule specifies importing via `@core/*` (e.g. `@core/utils/browser`, `@core/constants/grades`, `@core/types`) on the frontend (`uni-hub`, `ui`), while backend imports via `@universe/core/*` for unbundled Node.js runtime execution.
+Remove outdated `@universe/core/utils/browser` frontend notation.
 
 - [x] **Step 2: Sync GEMINI.md**
 
