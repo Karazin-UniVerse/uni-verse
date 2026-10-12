@@ -36,8 +36,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
             )}
           </div>
           <div className={styles.studentMainInfo}>
-            {/* intentional: suppressHydrationWarning – user profile is hydrated from client localStorage */}
-            <h3 suppressHydrationWarning>{activeStudentProfile.fullName}</h3>
+            <h3>{activeStudentProfile.fullName}</h3>
             {isEDeanEnabled ? (
               <div className={styles.muted}>
                 {formatMessage('overview.specialty')} {activeStudentProfile.specialty} •{' '}
