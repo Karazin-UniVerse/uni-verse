@@ -49,6 +49,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
 }) => {
   const { formatMessage } = useLanguage();
   const statusDetails = getMoodleStatusDetails(Boolean(isMoodleLinked));
+  const moodleUrl = process.env.NEXT_PUBLIC_MOODLE_URL;
 
   return (
     <Dropdown
@@ -167,10 +168,10 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
               </Button>
             </div>
 
-            {isMoodleIntegrationEnabled && (
+            {isMoodleIntegrationEnabled && Boolean(moodleUrl) && (
               <div className={styles.mobileOnlyItem} style={{ marginBottom: 8 }}>
                 <a
-                  href={process.env.NEXT_PUBLIC_MOODLE_URL}
+                  href={moodleUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={styles.moodleStatusLink}
