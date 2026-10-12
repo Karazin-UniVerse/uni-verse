@@ -27,7 +27,7 @@ describe('UserService', () => {
     email: 'student@karazin.ua',
     name: 'Karazin Student',
     password: 'hashed-pwd',
-    role: Role.STUDENT,
+    roles: [Role.STUDENT],
     token: 'sample-token',
     moodleId: 'moodle-123',
     refreshToken: null,
@@ -248,7 +248,7 @@ describe('UserService', () => {
       expect(created.id).toBeDefined();
       expect(created.email).toBe(dto.email);
       expect(created.name).toBe(dto.name);
-      expect(created.role).toBe(Role.STUDENT);
+      expect(created.roles).toEqual([Role.STUDENT]);
     });
   });
 
