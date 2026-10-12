@@ -43,7 +43,7 @@ Handles API security and access control.
 
 ### 2. `UserModule` (User Management)
 
-Manages user accounts and role-based access (`USER`, `STUDENT`, `INSTRUCTOR`, `ADMIN`).
+Manages user accounts and role-based access (`USER`, `STUDENT`, `INSTRUCTOR`, `ADMIN`, `OPPORTUNITIES_MODERATOR`; a user can hold several roles).
 
 ### 3. `MoodleModule` (Moodle LMS Integration)
 
@@ -146,7 +146,7 @@ The project encapsulates domain logic and reusable helpers into utility function
 
 The schema lives in `packages/backend/prisma/schema.prisma` and generates the client into `packages/database/client` (`pnpm db:generate`). Core models:
 
-- **`User`**: Account identity (email, password, role) and Moodle integration data (`moodleId`, `token` for the Moodle token, `refreshToken`).
+- **`User`**: Account identity (email, password, roles) and Moodle integration data (`moodleId`, `token` for the Moodle token, `refreshToken`).
 - **`Course`**: Internal courses created by users with the `INSTRUCTOR` role.
 - **`Enrollment`**: Many-to-many junction model linking users to enrolled courses (unique per `userId` + `courseId`).
 

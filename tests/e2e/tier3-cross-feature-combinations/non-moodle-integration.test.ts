@@ -28,7 +28,7 @@ describe('Tier 3 - Non-Moodle Platform & Core Integration Suite', () => {
         id: 'usr-uuid-offline',
         email: 'student.offline@karazin.ua',
         name: 'Офлайн Студент',
-        role: 'STUDENT',
+        roles: ['STUDENT'],
         password: '$2b$10$e8wFakeHashedPasswordStringForIntegrationTesting',
         token: 'secret-moodle-token-xyz',
         refreshToken: '$2b$10$e8wFakeRefreshTokenHash',
@@ -41,7 +41,7 @@ describe('Tier 3 - Non-Moodle Platform & Core Integration Suite', () => {
         id: internalUserRecord.id,
         email: internalUserRecord.email,
         name: internalUserRecord.name,
-        role: internalUserRecord.role,
+        roles: internalUserRecord.roles,
         createdAt: internalUserRecord.createdAt,
         updatedAt: internalUserRecord.updatedAt,
       };

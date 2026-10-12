@@ -21,7 +21,7 @@ model User {
   email        String   @unique
   name         String?
   password     String
-  role         Role     @default(STUDENT)
+  roles        Role[]   @default([STUDENT])
   token        String?
   moodleId     String?
   refreshToken String?
