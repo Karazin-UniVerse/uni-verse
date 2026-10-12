@@ -151,7 +151,7 @@ One file per feature. Each case:
 
 - `type`: `functional`, `edge`, `error` or `state`. `priority`: `high`, `medium` or `low`.
 - `covers` lists acceptance-criterion IDs. Every criterion has at least one case.
-- `verification`: `vitest` for logic and contracts, `playwright` for browser user flows, `manual` for visual or subjective checks.
+- `verification`: `unit` for logic and contracts, `playwright` for browser user flows, `manual` for visual or subjective checks.
 - `automated-at` is a test path, filled only when a test containing the `TC-` ID exists; otherwise a dash. Omit `preconditions` when there are none.
 - A case added by the skill on its own initiative carries `- proposed: yes` until the team confirms it.
 - A final section `Intersections` lists cases that exercise neighbouring features.
@@ -169,7 +169,7 @@ One file per feature. Each case:
 | D-01 | REQ-OPP-01.1 lists only published | the list also shows archived | `packages/backend/opportunities/opportunities.service.ts:88` | implementation-task |          |
 ```
 
-`Proposed resolution` and `Decision` are one of `update-doc`, `implementation-task`, `leave`. Task text drafted for `implementation-task` rows goes in a "Task drafts" section below the table; it is written for the Notion Project Dashboard and is not created there unless the user asks.
+`Proposed resolution` and `Decision` are one of `update-doc`, `implementation-task`, `leave`. Task text drafted for `implementation-task` rows goes in `docs/tasks/<project>/<feature>.md`, not in the register, because the register is deleted. Each task has a heading (`Task N: <title>`), then `Closes` (the rows), `What`, `Where` and `Satisfies` (criterion and case IDs) lines, and an optional `After` line for a dependency. It is written for the Notion Project Dashboard and is not created there unless the user asks.
 
 ## Shared procedure
 
@@ -367,7 +367,7 @@ Read `docs/ai/requirements-docs.md` first. It defines the layout, IDs, the test-
    - an expired session, a lost network, Moodle unavailable;
    - leaving the page and coming back.
 3. Add an `Intersections` section with cases that exercise neighbouring features found in the PRD's Intersections and in the repository search.
-4. Choose `verification` per case: `vitest` for logic and contracts, `playwright` for browser user flows, `manual` for visual or subjective checks. For browser automation, use the `playwright-cli` skill when it is available.
+4. Choose `verification` per case: `unit` for logic and contracts, `playwright` for browser user flows, `manual` for visual or subjective checks. For browser automation, use the `playwright-cli` skill when it is available.
 5. Fill `automated-at` only when a test whose title contains the `TC-` ID exists (search the repository for the ID); otherwise write a dash.
 6. Quote UI text by translation key in `expected`.
 7. Write the file.
@@ -456,7 +456,7 @@ Read `docs/ai/requirements-docs.md` first. It defines the register format and th
 6. Ask the user about the rows, one by one or grouped, and record each answer in `Decision`. Never decide for the user.
 7. Apply the decisions:
    - `update-doc`: edit the PRD or test cases. Keep IDs; never renumber.
-   - `implementation-task`: write task text in a "Task drafts" section of the register: what to change, where, which criterion or case it satisfies. Do not create it in Notion unless the user asks.
+   - `implementation-task`: write the task draft in `docs/tasks/<project>/<feature>.md`: what to change, where, which criterion or case it satisfies. Do not create it in Notion unless the user asks.
    - `leave`: note the reason in the row.
 8. When every row is closed, show the user the task drafts, ask them to copy them where needed, and ask to confirm deleting the register. Delete it only after they confirm.
 

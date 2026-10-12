@@ -539,6 +539,7 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
   1. Open the notification list in the header.
   2. Follow the link of one opportunity notification.
   3. Open the list again.
+  4. Choose "mark all as read".
 - expected: the list shows the opportunity notifications together with the other portal notifications, each with a short description and a link to the opportunity; each notification shows whether it is read; following a notification marks it read and the others stay unread; the "mark all as read" action marks all of them.
 - verification: playwright
 - automated-at: -
@@ -569,7 +570,7 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 - steps:
   1. As the owner, create an opportunity and submit it.
   2. As the moderator, return it for changes; as the owner, resubmit it.
-  3. As the moderator, approve it; as the owner, edit it and then hide it.
+  3. As the moderator, approve it; as the owner, edit it; as the moderator, approve it again; as the owner, hide it.
   4. As the moderator, open the notifications.
 - expected: the moderator has notifications for the new or submitted opportunity, for the resubmission, for the change of the published opportunity and for hiding it.
 - verification: playwright
@@ -617,7 +618,7 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 - preconditions: a published opportunity exists; applicant is signed in
 - steps:
   1. Fill in the application form and double-click send.
-- expected: one application is created and one notification is sent.
+- expected: one application is created; the applicant and the owner each receive one notification.
 - verification: playwright
 - automated-at: -
 
@@ -707,8 +708,7 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 - steps:
   1. Request the opportunity list (`GET /opportunities`).
   2. Request the details of the published opportunity.
-  3. Open the catalog address in the browser.
-- expected: the requests are refused and the browser goes to the sign-in page; no opportunity data, no owner email and no contact information is returned.
+- expected: the requests are refused; no opportunity data, no owner email and no contact information is returned.
 - verification: unit
 - automated-at: -
 
@@ -799,6 +799,21 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
   2. As the same moderator, approve it.
 - expected: the approval is accepted and the opportunity is published.
 - verification: unit
+- automated-at: -
+
+---
+
+### TC-OPP-59 The catalog address redirects a visitor to sign-in
+
+- covers: REQ-OPP-05.5
+- type: error
+- priority: high
+- preconditions: no user is signed in
+- steps:
+  1. Open the catalog address in the browser.
+  2. Open the address of an opportunity in the browser.
+- expected: the browser goes to the sign-in page both times and no opportunity data is shown.
+- verification: playwright
 - automated-at: -
 
 ---

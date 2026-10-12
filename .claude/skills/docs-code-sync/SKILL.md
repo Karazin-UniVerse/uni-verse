@@ -15,7 +15,7 @@ Read `docs/ai/requirements-docs.md` first. It defines the register format and th
 2. Run shared procedure steps 2-5 to learn the code paths and tests that belong to the feature. If the code paths are not clear, ask.
 3. Compare what the user sees as well as the backend: check that data the backend produces is actually shown in the interface, and read the interface code for each criterion. Record a row for each mismatch of these kinds:
    - an acceptance criterion with no test case;
-   - a case with `verification` other than `manual` and no test (`automated-at` is a dash, or the path does not exist);
+   - a case with `verification` other than `manual` and no test (`automated-at` is a dash, the path does not exist, or the file does not contain the case's `TC-` ID);
    - a test that cites a `TC-` ID that is in no document;
    - behaviour in the code that no document describes;
    - a document and the code that say different things.

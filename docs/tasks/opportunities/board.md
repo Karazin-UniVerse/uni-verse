@@ -9,7 +9,7 @@ Written for the Notion Project Dashboard; not created there. Each task gets its 
 - Closes: D-16, D-36, D-12, D-38
 - What: make the catalog, the opportunity details and the opportunity lists available only to signed-in users (no public access, no owner email or contact information for visitors). Read the role from the database, not from the sign-in token, wherever the role decides access (unpublished items, the moderation queue, moderation). Let a moderator read the applications of any opportunity, read-only. Show the owner, for each applicant, the contact the applicant typed and the corporate email.
 - Where: `packages/backend/opportunities/opportunities.controller.ts` (the `@Public()` routes), `opportunities.service.ts` (`findAll`, `findOne`, `getOpportunityApplications`), `packages/uni-hub/views/dashboard/tabs/opportunities/modals/ApplicantsModal.tsx`.
-- Satisfies: REQ-OPP-05.5, 03.5, 15.2, 12.2, 12.3; TC-OPP-52, 43, 37, 35, 36.
+- Satisfies: REQ-OPP-05.5, 03.5, 15.2, 12.2, 12.3; TC-OPP-52, 59, 43, 37, 35, 36.
 
 ### Task 2: Hide and show an opportunity (visibility)
 
@@ -54,4 +54,4 @@ Written for the Notion Project Dashboard; not created there. Each task gets its 
 - Closes: D-22
 - What: every automated case (`unit` or `playwright`) gets a test whose title contains its `TC-` ID, written together with the code of Tasks 1 to 6; existing specs that already cover a case get the ID too. After each task, fill `automated-at` in the test cases. Decide where Playwright tests live, as the repository has no Playwright configuration yet.
 - Where: `packages/backend/opportunities/*.spec.ts`, `packages/uni-hub/**/*.test.ts`, `tests/e2e`, `docs/test-cases/opportunities/board.md`.
-- Satisfies: all cases TC-OPP-01 to TC-OPP-58 whose `verification` is not `manual`.
+- Satisfies: all cases TC-OPP-01 to TC-OPP-59 whose `verification` is not `manual`.
