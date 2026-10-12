@@ -7,7 +7,7 @@ export type JwtPayload = {
   email: string;
   moodleToken?: string;
   moodleId?: string;
-  role?: string;
+  roles?: string[];
 };
 
 @Injectable()

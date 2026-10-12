@@ -109,7 +109,7 @@ describe('AtGuard', () => {
 
       jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(true);
 
-      const user = { id: 'u1', role: 'STUDENT' };
+      const user = { id: 'u1', roles: ['STUDENT'] };
       const result = guard.handleRequest(null, user, null, context);
 
       expect(result).toBe(user);

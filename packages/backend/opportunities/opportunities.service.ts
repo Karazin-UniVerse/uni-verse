@@ -73,16 +73,16 @@ export class OpportunitiesService {
    */
   async findAll(
     query: FindOpportunitiesDto,
-    userRole?: string,
+    userRoles: string[] = [],
   ): Promise<OpportunityWithOwner[]> {
     const { paymentType, ownerId, search, status } = query;
     const where: Prisma.OpportunityWhereInput = {};
 
-    if (
-      status &&
-      status !== OpportunityStatus.PUBLISHED &&
-      userRole === Role.OPPORTUNITIES_MODERATOR
-    ) {
+    const isModerator = Boolean(
+      userRoles?.includes(Role.OPPORTUNITIES_MODERATOR),
+    );
+
+    if (status && status !== OpportunityStatus.PUBLISHED && isModerator) {
       where.status = status;
     } else {
       where.status = OpportunityStatus.PUBLISHED;
@@ -115,7 +115,7 @@ export class OpportunitiesService {
   async findOne(
     id: string,
     userId?: string,
-    userRole?: string,
+    userRoles: string[] = [],
   ): Promise<OpportunityWithOwner> {
     const opportunity = await this.prisma.opportunity.findUnique({
       where: { id },
@@ -126,10 +126,14 @@ export class OpportunitiesService {
 
     if (!opportunity) throw new NotFoundException('Opportunity not found');
 
+    const isModerator = Boolean(
+      userRoles?.includes(Role.OPPORTUNITIES_MODERATOR),
+    );
+
     if (
       opportunity.status !== OpportunityStatus.PUBLISHED &&
       opportunity.ownerId !== userId &&
-      userRole !== Role.OPPORTUNITIES_MODERATOR
+      !isModerator
     ) {
       throw new NotFoundException('Opportunity not found');
     }
@@ -421,17 +425,15 @@ export class OpportunitiesService {
     // Real-time role check to prevent using cached demoted admin tokens
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
-    if (user?.role !== Role.OPPORTUNITIES_MODERATOR) {
+    if (!user?.roles?.includes(Role.OPPORTUNITIES_MODERATOR)) {
       throw new ForbiddenException(
         'Only OPPORTUNITIES_MODERATOR can moderate opportunities',
       );
     }
 
-    const opportunityToModerate = await this.findOne(
-      id,
-      userId,
+    const opportunityToModerate = await this.findOne(id, userId, [
       Role.OPPORTUNITIES_MODERATOR,
-    );
+    ]);
 
     if (opportunityToModerate.status !== OpportunityStatus.READY_FOR_REVIEW) {
       throw new BadRequestException(
