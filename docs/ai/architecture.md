@@ -6,7 +6,7 @@
 uni-verse/
 ├── packages/
 │   ├── core/       # @universe/core — contracts, domain models, grade logic, constants, utils
-│   │   └── types/  # import as '@universe/core/types'
+│   │   └── types/  # shared types (source: packages/core/types, imported as '@core/types')
 │   ├── ui/         # @universe/ui — Una design system (@una), SCSS tokens, Storybook
 │   ├── backend/    # @universe/backend — NestJS gateway over the Moodle LMS
 │   ├── database/   # @universe/database — Prisma ORM data layer
@@ -15,15 +15,15 @@ uni-verse/
 └── tests/e2e/      # standalone requirement-driven Vitest suite
 ```
 
-- **`@universe/core`**: Zero internal dependencies. Holds all shared types, DTO contracts, constants and grading math. Shared types and DTOs used by both frontend and backend live in `@universe/core/types`.
+- **`@universe/core`**: Zero internal dependencies. Holds all shared types, DTO contracts, constants and grading math. Shared types and DTOs live in `packages/core/types` (imported as `@core/types` on the frontend, `@universe/core/types` on the backend).
 - Never create a standalone `packages/types` package. An empty `packages/types` directory may exist locally; it is not a package.
 - **`@universe/ui`**: consumed by frontend packages.
-- **`@universe/backend`**: all DTOs and models must align with `@universe/core/types`.
+- **`@universe/backend`**: all DTOs and models must align with shared contracts from `@universe/core/types`.
 - **`@universe/uni-hub`**: prefer React Server Components, see [frontend](frontend.md).
 
 ### Core layout
 
-- One file per domain, grouped by kind: `constants/grades.ts`, `constants/breakpoints.ts`, `utils/grades.ts`, `utils/browser.ts`. Import the specific module (`@universe/core/utils/browser`, or the `@core/utils/browser` alias inside uni-hub), never the package root.
+- One file per domain, grouped by kind: `constants/grades.ts`, `constants/breakpoints.ts`, `utils/grades.ts`, `utils/browser.ts`. On the frontend (`uni-hub`, `ui`), import the specific module via the `@core/*` alias (for example `@core/utils/browser`, `@core/constants/grades`, `@core/types`). On the backend, import via `@universe/core/*` (Node.js runtime without a bundler). Never import the package root.
 - No barrel `index.ts` in `constants/` and `utils/`. Barrels hide where code lives and force a split later; add domain files from the start.
 - Types, constants and functions never share a file (except types derived directly from a constant, such as `type GradesThreshold = (typeof GRADES_THRESHOLD)[keyof typeof GRADES_THRESHOLD]`). Other types stay under `types/`.
 - Tests sit next to the code in a sibling `tests/` directory (`utils/tests/grades.test.ts`).
@@ -46,7 +46,7 @@ uni-verse/
 | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | Design system primitives — `packages/ui/components/una/`       | Atomic elements: buttons, inputs, modal, toast, tag                                                                              | Language-agnostic, zero application logic, imported via `@una`                                                                                |
 | Complex UI-Only Components — `packages/ui/components/complex/` | Composite presentational components built from Una primitives                                                                    | **Strictly UI-only**: no business logic, no domain data fetching, no application store or context; driven purely by props and event callbacks |
-| Application components — `packages/uni-hub/components/`        | Business logic, domain workflows, store subscriptions (for example `useGamificationStore`), API calls (Moodle auth, assignments) | Compose and reuse `complex` components from `@universe/ui` instead of embedding composite presentation layouts inside logic components        |
+| Application components — `packages/uni-hub/components/`        | Business logic, domain workflows, store subscriptions (for example `useGamificationStore`), API calls (Moodle auth, assignments) | Compose and reuse `complex` components from `@ui` instead of embedding composite presentation layouts inside logic components                 |
 
 Before creating any component, decide which tier fits. If the placement is ambiguous, ask the user before writing code.
 

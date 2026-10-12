@@ -12,7 +12,12 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "@core/*": ["../core/*"],
+      "@una": ["./components/una/index.ts"],
+      "@una/*": ["./components/una/*"]
+    }
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts"],
   "exclude": ["node_modules", "dist", "**/*.stories.tsx", "**/*.stories.ts"]
