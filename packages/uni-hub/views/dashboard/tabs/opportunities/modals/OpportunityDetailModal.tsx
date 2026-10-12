@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { OpportunityDetailModal as OpportunityDetailModalUI } from '@universe/ui';
+import { OpportunityDetailModal as OpportunityDetailModalUI } from '@ui';
 import type { Opportunity, OpportunityLifecycle } from '@uni-hub/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { OpportunityStatusBadge } from '../OpportunityStatusBadge';
