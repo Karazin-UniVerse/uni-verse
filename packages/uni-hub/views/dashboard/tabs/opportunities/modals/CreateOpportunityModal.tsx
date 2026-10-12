@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CreateOpportunityModal as CreateOpportunityModalUI } from '@universe/ui';
+import { CreateOpportunityModal as CreateOpportunityModalUI } from '@ui';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { CreateOpportunityFormData } from '../types';
 

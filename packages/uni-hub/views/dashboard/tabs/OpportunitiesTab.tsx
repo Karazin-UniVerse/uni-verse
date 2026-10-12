@@ -3,7 +3,7 @@
 import React from 'react';
 import { Plus, Briefcase, ShieldCheck, Users, FileText } from 'lucide-react';
 import { Button } from '@una';
-import { ConfirmModal } from '@universe/ui';
+import { ConfirmModal } from '@ui';
 import { ROLE } from '@core/constants/roles';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
