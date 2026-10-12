@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
-    "lucide-react": "^1.49.0",
+    "lucide-react": "^1.54.0",
     "recharts": "^3.10.1",
     "sass": "^1.105.1"
   },
