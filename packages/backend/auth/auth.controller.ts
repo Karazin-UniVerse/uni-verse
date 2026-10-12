@@ -28,7 +28,7 @@ import {
   LinkMoodleDto,
   GoogleAuthResponseDto,
 } from './dto';
-import { AUTH_ROUTES } from '@core/constants/routes';
+import { AUTH_ROUTES } from '@universe/core/constants/routes';
 
 interface UnlinkMoodleResponse extends Promise<GoogleAuthResponseDto> {}
 

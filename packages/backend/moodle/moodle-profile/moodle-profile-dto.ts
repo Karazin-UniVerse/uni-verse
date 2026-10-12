@@ -1,4 +1,7 @@
-import type { StudentProfile, StudentAcademicStatus } from '@core/types';
+import type {
+  StudentProfile,
+  StudentAcademicStatus,
+} from '@universe/core/types';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class StudentProfileDto implements StudentProfile {

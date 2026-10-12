@@ -23,11 +23,6 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,
     "strictBindCallApply": true,
-    "noFallthroughCasesInSwitch": true,
-    "paths": {
-      "@core": ["../core/dist/types/index.d.ts"],
-      "@core/types": ["../core/dist/types/index.d.ts"],
-      "@core/*": ["../core/dist/*.d.ts", "../core/dist/*/index.d.ts"]
-    }
+    "noFallthroughCasesInSwitch": true
   }
 }
