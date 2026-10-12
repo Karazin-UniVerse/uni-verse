@@ -1,9 +1,9 @@
 import React from 'react';
 import clsx from 'clsx';
-import type { SimpleSliderProps } from './SimpleSlider.types';
-import styles from './SimpleSlider.module.scss';
+import type { SliderProps } from './Slider.types';
+import styles from './Slider.module.scss';
 
-export const SimpleSlider: React.FC<SimpleSliderProps> = ({
+export const Slider: React.FC<SliderProps> = ({
   value,
   onChange,
   className,
@@ -30,4 +30,4 @@ export const SimpleSlider: React.FC<SimpleSliderProps> = ({
   );
 };
 
-export default SimpleSlider;
+export default Slider;

@@ -102,16 +102,10 @@ export const DeanContactModal: React.FC<DeanContactModalProps> = ({
           </div>
 
           <div className={styles.modalFooter}>
-            <Button
-              type="button"
-              variant="secondary"
-              size="medium"
-              onClick={onClose}
-              disabled={isSubmitting}
-            >
+            <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
               {formatMessage('dean.cancel')}
             </Button>
-            <Button type="submit" variant="primary" size="medium" disabled={isSubmitting}>
+            <Button type="submit" variant="primary" disabled={isSubmitting}>
               {isSubmitting ? (
                 formatMessage('dean.sending')
               ) : (
