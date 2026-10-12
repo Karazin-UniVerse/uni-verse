@@ -43,7 +43,7 @@ All stories must follow the CSF3 object syntax with strict TypeScript typing.
 ### Standard Template
 
 ```tsx
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { ComponentName } from './ComponentName';
 
@@ -128,6 +128,7 @@ Showcase all meaningful states:
 | **Complex component with `title: 'Una/...'`** | Pollutes core design system primitives | Place under `Complex/*` |
 | **CSF2 `Template.bind({})`** | Deprecated legacy Storybook format | Use CSF3 object syntax `export const Story: StoryObj = { args: { ... } }` |
 | **`args: any` in templates** | Violates monorepo strict typing standard | Use `React.ComponentProps<typeof Component>` |
+| **Importing `Meta`/`StoryObj` from `@storybook/react`** | `@storybook/react` is not a dependency of `packages/ui`; the IDE cannot resolve it under strict pnpm | Import from the framework package: `@storybook/react-vite` (it re-exports the same types) |
 | **Hardcoding inline styles instead of tokens** | Breaks dark/cyberpunk theme rendering | Use Una CSS custom properties (`var(--...)`) |
 
 ---

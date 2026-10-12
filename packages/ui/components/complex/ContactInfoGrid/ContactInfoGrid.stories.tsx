@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Mail, Phone, Clock, Send } from 'lucide-react';
 import { BREAKPOINTS } from '@universe/core/constants/breakpoints';
 
