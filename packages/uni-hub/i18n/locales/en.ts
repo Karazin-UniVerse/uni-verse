@@ -82,12 +82,13 @@ export const en = {
   'sidebar.moodleConnected': 'Moodle LMS (connected)',
   'header.notifications': 'Notifications',
   'header.notifications.empty': 'No notifications',
-  'header.moodleLms': 'Moodle LMS',
+  'header.notifications.unreadItem': 'Unread:',
   'header.moodleConnected': 'Connected',
   'header.moodleNotConnected': 'Not connected',
   'header.moodleChange': 'Change account',
   'header.moodleDisconnect': 'Disconnect',
   'header.moodleConnect': 'Connect Moodle',
+  'header.moodleLabel': 'Moodle LMS',
   'dashboard.sessionExpired': 'Session expired or invalid. Please sign in again.',
   'dashboard.loadError': 'Failed to load data. Please ensure the backend is running.',
   'dashboard.syncSuccess': 'Data refreshed successfully',
@@ -247,7 +248,7 @@ export const en = {
   'header.soundUnmute': 'Unmute sound',
   'header.openMenu': 'Open menu',
   'header.userMenu': 'User profile menu',
-  'header.unreadCount': 'new',
+  'header.unreadCount': '{count} new',
 
   // Assignment Modal
   'assignmentModal.defaultTitle': 'Assignment',

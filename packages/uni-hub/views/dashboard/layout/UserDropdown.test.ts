@@ -4,10 +4,6 @@ import { renderToString } from 'react-dom/server';
 import { fallbackStudentProfile } from '../constants';
 import { UserDropdown, getMoodleStatusDetails } from './UserDropdown';
 
-vi.mock('@uni-hub/theme/ThemeSwitcher', () => ({
-  ThemeSwitcher: () => null,
-}));
-
 describe('UserDropdown helpers', () => {
   it('returns linked status details when isMoodleLinked is true', () => {
     const details = getMoodleStatusDetails(true);
@@ -26,48 +22,23 @@ describe('UserDropdown helpers', () => {
   });
 });
 
-describe('UserDropdown component', () => {
-  it('renders Moodle LMS section when isMoodleIntegrationEnabled is true', () => {
-    const html = renderToString(
-      React.createElement(UserDropdown, {
-        activeStudentProfile: fallbackStudentProfile,
-        soundEnabled: false,
-        onToggleSound: vi.fn(),
-        onClose: vi.fn(),
-        onLogout: vi.fn(),
-        isMoodleIntegrationEnabled: true,
-      }),
-    );
+describe('UserDropdown', () => {
+  const html = renderToString(
+    React.createElement(UserDropdown, {
+      activeStudentProfile: fallbackStudentProfile,
+      soundEnabled: true,
+      onToggleSound: vi.fn(),
+      onLogout: vi.fn(),
+    }),
+  );
 
-    expect(html).toContain('Moodle LMS');
+  it('renders a collapsed trigger with the student name and an accessible name', () => {
+    expect(html).toContain(fallbackStudentProfile.fullName);
+    expect(html).toContain('aria-label="Меню профілю користувача"');
+    expect(html).toContain('aria-expanded="false"');
   });
 
-  it('hides Moodle LMS section when isMoodleIntegrationEnabled is false', () => {
-    const html = renderToString(
-      React.createElement(UserDropdown, {
-        activeStudentProfile: fallbackStudentProfile,
-        soundEnabled: false,
-        onToggleSound: vi.fn(),
-        onClose: vi.fn(),
-        onLogout: vi.fn(),
-        isMoodleIntegrationEnabled: false,
-      }),
-    );
-
+  it('keeps the menu content hidden until the dropdown is opened', () => {
     expect(html).not.toContain('Moodle LMS');
-  });
-
-  it('renders Moodle LMS section by default when isMoodleIntegrationEnabled is omitted', () => {
-    const html = renderToString(
-      React.createElement(UserDropdown, {
-        activeStudentProfile: fallbackStudentProfile,
-        soundEnabled: false,
-        onToggleSound: vi.fn(),
-        onClose: vi.fn(),
-        onLogout: vi.fn(),
-      }),
-    );
-
-    expect(html).toContain('Moodle LMS');
   });
 });

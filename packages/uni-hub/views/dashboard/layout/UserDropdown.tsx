@@ -2,8 +2,8 @@
 
 import React from 'react';
 import clsx from 'clsx';
-import { Volume2, VolumeX } from 'lucide-react';
-import { Button } from '@una';
+import { User, Volume2, VolumeX } from 'lucide-react';
+import { Button, Dropdown } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -14,14 +14,13 @@ import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export interface UserDropdownProps {
   activeStudentProfile: StudentProfile;
-  soundEnabled: boolean;
-  onToggleSound: () => void;
-  onClose: () => void;
-  onLogout: () => void;
-  onOpenLinkMoodle?: (mode?: LinkMoodleMode) => void;
-  onOpenUnlinkMoodle?: () => void;
   isMoodleIntegrationEnabled?: boolean;
   isMoodleLinked?: boolean;
+  soundEnabled: boolean;
+  onToggleSound: () => void;
+  onOpenLinkMoodle?: (mode?: LinkMoodleMode) => void;
+  onOpenUnlinkMoodle?: () => void;
+  onLogout: () => void;
 }
 
 export interface MoodleStatusDetails {
@@ -42,10 +41,9 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   activeStudentProfile,
   soundEnabled,
   onToggleSound,
-  onClose,
-  onLogout,
   onOpenLinkMoodle,
   onOpenUnlinkMoodle,
+  onLogout,
   isMoodleIntegrationEnabled = true,
   isMoodleLinked = true,
 }) => {
@@ -53,136 +51,154 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   const statusDetails = getMoodleStatusDetails(Boolean(isMoodleLinked));
 
   return (
-    <>
-      <div className={styles.userDropdownHeader}>
-        {/* intentional: suppressHydrationWarning – student name loaded client-side */}
-        <strong suppressHydrationWarning>{activeStudentProfile.fullName}</strong>
-        {/* intentional: suppressHydrationWarning – student group loaded client-side */}
-        <div className={styles.muted} suppressHydrationWarning>
-          {activeStudentProfile.group}
-        </div>
-      </div>
-
-      {isMoodleIntegrationEnabled && (
-        <div className={styles.dropdownSection}>
-          <div className={styles.moodleStatusHeader}>
-            <span>{formatMessage('header.moodleLms')}</span>
-            <span
-              className={clsx(
-                styles.moodleStatusBadge,
-                statusDetails.isLinked ? styles.linked : styles.unlinked,
-              )}
-            >
-              <span
-                className={styles.statusDot}
-                style={{
-                  backgroundColor: statusDetails.dotColor,
-                }}
-                aria-hidden
-              />
-              {formatMessage(statusDetails.statusKey)}
-            </span>
+    <Dropdown
+      width={240}
+      renderTrigger={(triggerProps) => (
+        <button
+          {...triggerProps}
+          type="button"
+          className={styles.user}
+          title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
+          aria-label={formatMessage('header.userMenu')}
+        >
+          <span className={styles.avatar}>
+            <User size={16} />
+          </span>
+          <span>{activeStudentProfile.fullName}</span>
+        </button>
+      )}
+    >
+      {(close) => (
+        <>
+          <div className={styles.userDropdownHeader}>
+            <strong>{activeStudentProfile.fullName}</strong>
+            <div className={styles.muted}>{activeStudentProfile.group}</div>
           </div>
 
-          {isMoodleLinked ? (
-            <div className={styles.moodleDropdownActions}>
+          {isMoodleIntegrationEnabled && (
+            <div className={styles.dropdownSection}>
+              <div className={styles.moodleStatusHeader}>
+                <span>{formatMessage('header.moodleLabel')}</span>
+                <span
+                  className={clsx(
+                    styles.moodleStatusBadge,
+                    statusDetails.isLinked ? styles.linked : styles.unlinked,
+                  )}
+                >
+                  <span
+                    className={styles.statusDot}
+                    style={{
+                      backgroundColor: statusDetails.dotColor,
+                    }}
+                    aria-hidden
+                  />
+                  {formatMessage(statusDetails.statusKey)}
+                </span>
+              </div>
+
+              {isMoodleLinked ? (
+                <div className={styles.moodleDropdownActions}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="small"
+                    onClick={() => {
+                      close();
+                      onOpenLinkMoodle?.(LinkMoodleMode.CHANGE);
+                    }}
+                  >
+                    {formatMessage('header.moodleChange')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="small"
+                    onClick={() => {
+                      close();
+                      onOpenUnlinkMoodle?.();
+                    }}
+                    style={{ color: 'var(--error-color)' }}
+                  >
+                    {formatMessage('header.moodleDisconnect')}
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="small"
+                  onClick={() => {
+                    close();
+                    onOpenLinkMoodle?.(LinkMoodleMode.CONNECT);
+                  }}
+                  style={{ width: '100%' }}
+                >
+                  {formatMessage('header.moodleConnect')}
+                </Button>
+              )}
+            </div>
+          )}
+
+          <div className={styles.userDropdownBody}>
+            <div className={styles.mobileOnlyItem} style={{ marginBottom: 6 }}>
+              <LanguageSwitcher compact={false} />
+            </div>
+
+            <div className={styles.mobileOnlyItem}>
+              <ThemeSwitcher compact={false} showLabel={true} />
+            </div>
+
+            <div className={styles.mobileOnlyItem}>
               <Button
                 type="button"
                 variant="secondary"
                 size="small"
-                onClick={() => {
-                  onClose();
-                  onOpenLinkMoodle?.(LinkMoodleMode.CHANGE);
-                }}
+                onClick={onToggleSound}
+                style={{ width: '100%', justifyContent: 'flex-start' }}
               >
-                {formatMessage('header.moodleChange')}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                size="small"
-                onClick={() => {
-                  onClose();
-                  onOpenUnlinkMoodle?.();
-                }}
-                style={{ color: 'var(--error-color)' }}
-              >
-                {formatMessage('header.moodleDisconnect')}
+                {soundEnabled ? (
+                  <Volume2 size={16} style={{ marginRight: 8 }} />
+                ) : (
+                  <VolumeX size={16} style={{ marginRight: 8 }} />
+                )}
+                {soundEnabled
+                  ? formatMessage('header.soundMute')
+                  : formatMessage('header.soundUnmute')}
               </Button>
             </div>
-          ) : (
-            <Button
-              type="button"
-              variant="primary"
-              size="small"
-              onClick={() => {
-                onClose();
-                onOpenLinkMoodle?.(LinkMoodleMode.CONNECT);
-              }}
-              style={{ width: '100%' }}
-            >
-              {formatMessage('header.moodleConnect')}
-            </Button>
-          )}
-        </div>
-      )}
 
-      <div className={styles.userDropdownBody}>
-        <div className={styles.mobileOnlyItem} style={{ marginBottom: 6 }}>
-          <LanguageSwitcher compact={false} />
-        </div>
-
-        <div className={styles.mobileOnlyItem}>
-          <ThemeSwitcher compact={false} showLabel={true} />
-        </div>
-
-        <div className={styles.mobileOnlyItem}>
-          <Button
-            type="button"
-            variant="secondary"
-            size="small"
-            onClick={onToggleSound}
-            style={{ width: '100%', justifyContent: 'flex-start' }}
-          >
-            {soundEnabled ? (
-              <Volume2 size={16} style={{ marginRight: 8 }} />
-            ) : (
-              <VolumeX size={16} style={{ marginRight: 8 }} />
+            {isMoodleIntegrationEnabled && (
+              <div className={styles.mobileOnlyItem} style={{ marginBottom: 8 }}>
+                <a
+                  href={process.env.NEXT_PUBLIC_MOODLE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.moodleStatusLink}
+                >
+                  <span className={styles.statusDot} aria-hidden />
+                  <span>{formatMessage('header.moodleLabel')}</span>
+                </a>
+              </div>
             )}
-            {soundEnabled ? formatMessage('header.soundMute') : formatMessage('header.soundUnmute')}
-          </Button>
-        </div>
 
-        {isMoodleIntegrationEnabled && (
-          <div className={styles.mobileOnlyItem} style={{ marginBottom: 8 }}>
-            <a
-              href={process.env.NEXT_PUBLIC_MOODLE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.moodleStatusLink}
-            >
-              <span className={styles.statusDot} aria-hidden />
-              <span>{formatMessage('header.moodleLms')}</span>
-            </a>
+            <div className={styles.mobileOnlyItem}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="small"
+                onClick={onLogout}
+                style={{
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {formatMessage('sidebar.logout')}
+              </Button>
+            </div>
           </div>
-        )}
-
-        <div className={styles.mobileOnlyItem}>
-          <Button
-            type="button"
-            variant="secondary"
-            size="small"
-            onClick={onLogout}
-            style={{
-              width: '100%',
-              justifyContent: 'flex-start',
-              color: 'var(--text-primary)',
-            }}
-          >
-            {formatMessage('sidebar.logout')}
-          </Button>
-        </div>
-      </div>
-    </>
+        </>
+      )}
+    </Dropdown>
   );
 };

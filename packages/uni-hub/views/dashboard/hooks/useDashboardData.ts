@@ -18,7 +18,6 @@ import {
   persistDashboardSnapshot,
   syncStudentProfile,
 } from './helpers';
-import { isBrowser } from '@uni-hub/utils/browser';
 
 export { clearUserSessionStorage } from './helpers';
 
@@ -67,28 +66,6 @@ function getInitialHasLoadedOnce(): boolean {
   }
 }
 
-function getCachedStudentProfile(): StudentProfile | null {
-  if (!isBrowser) {
-    return null;
-  }
-
-  try {
-    const cachedProfile = localStorage.getItem('universe_student_profile');
-
-    if (!cachedProfile) return null;
-
-    const parsedProfile = JSON.parse(cachedProfile) as StudentProfile;
-
-    if (parsedProfile && typeof parsedProfile === 'object') {
-      return parsedProfile;
-    }
-  } catch {
-    // ignore invalid JSON / storage errors
-  }
-
-  return null;
-}
-
 export function useDashboardData({
   sortOrder,
   dateFrom,
@@ -104,9 +81,7 @@ export function useDashboardData({
   const [hasLoadedOnce, setHasLoadedOnce] = useState(getInitialHasLoadedOnce);
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(getInitialSyncTime);
   const [isOfflineData, setIsOfflineData] = useState(false);
-  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(
-    getCachedStudentProfile,
-  );
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const [data, setData] = useState<DashboardData>(getInitialDashboardData);
 
   const fetchRequestIdRef = useRef(0);
