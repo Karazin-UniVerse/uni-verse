@@ -65,8 +65,8 @@ export class UserResponseDto {
   @ApiProperty({ nullable: true })
   name: string | null;
 
-  @ApiProperty()
-  role: string;
+  @ApiProperty({ type: [String] })
+  roles: string[];
 
   @ApiProperty({ nullable: true })
   moodleId: string | null;
