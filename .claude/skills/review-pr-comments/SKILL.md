@@ -18,10 +18,10 @@ The goal of every change is less complexity, more readability, more reliability 
 
 ## 1. Collect
 
-Find the pull request of the current branch, or use the number the user gives. If there is none, ask.
+Find the pull request of the current branch, or use the number the user gives (put it in place of `[NUMBER]`, leave it out for the current branch). If there is none, ask.
 
 ```bash
-gh pr view --json number,url,headRefName,baseRefName,author,isCrossRepository
+gh pr view [NUMBER] --json number,url,headRefName,baseRefName,author,isCrossRepository
 gh repo view --json owner,name
 ```
 
