@@ -42,7 +42,7 @@
 
 - Produces: TypeScript, Jest, and Vite resolution for `@core/*` in backend and ui.
 
-- [ ] **Step 1: Add `@core/*` paths to `packages/backend/tsconfig.json`**
+- [x] **Step 1: Add `@core/*` paths to `packages/backend/tsconfig.json`**
 
 In `packages/backend/tsconfig.json`, add to `compilerOptions`:
 
@@ -53,7 +53,7 @@ In `packages/backend/tsconfig.json`, add to `compilerOptions`:
 }
 ```
 
-- [ ] **Step 2: Update Jest `moduleNameMapper` in `packages/backend/package.json`**
+- [x] **Step 2: Update Jest `moduleNameMapper` in `packages/backend/package.json`**
 
 Replace:
 
@@ -69,7 +69,7 @@ with:
 "^@core$": "<rootDir>/../core/index.ts",
 ```
 
-- [ ] **Step 3: Add `@core/*` paths to `packages/ui/tsconfig.json`**
+- [x] **Step 3: Add `@core/*` paths to `packages/ui/tsconfig.json`**
 
 In `packages/ui/tsconfig.json`, add to `compilerOptions`:
 
@@ -81,7 +81,7 @@ In `packages/ui/tsconfig.json`, add to `compilerOptions`:
 }
 ```
 
-- [ ] **Step 4: Update Vite alias in `packages/ui/.storybook/main.ts`**
+- [x] **Step 4: Update Vite alias in `packages/ui/.storybook/main.ts`**
 
 In `packages/ui/.storybook/main.ts`, update `viteFinal` alias:
 Replace:
@@ -96,7 +96,7 @@ with:
 '@core': resolve(dirname(fileURLToPath(import.meta.url)), '../../core'),
 ```
 
-- [ ] **Step 5: Run tests and typecheck to verify configurations**
+- [x] **Step 5: Run tests and typecheck to verify configurations**
 
 Run: `pnpm --filter @universe/backend test opportunities.service.spec.ts`
 Expected: PASS
@@ -104,7 +104,7 @@ Expected: PASS
 Run: `pnpm --filter @universe/ui typecheck`
 Expected: PASS
 
-- [ ] **Step 6: Commit configuration changes**
+- [x] **Step 6: Commit configuration changes**
 
 ```bash
 git add packages/backend/tsconfig.json packages/backend/package.json packages/ui/tsconfig.json packages/ui/.storybook/main.ts
@@ -128,7 +128,7 @@ git commit -m "chore(config): add @core path aliases to backend and ui configs"
 - Consumes: `@core/*` path alias configured in Task 1.
 - Produces: Backend codebase with zero `@universe/core/*` import statements.
 
-- [ ] **Step 1: Replace `@universe/core` imports in `packages/backend` files**
+- [x] **Step 1: Replace `@universe/core` imports in `packages/backend` files**
 
 In `packages/backend/auth/auth.controller.ts`:
 Replace `@universe/core/constants/routes` with `@core/constants/routes`.
@@ -147,7 +147,7 @@ Replace `@universe/core/utils/grades` with `@core/utils/grades`.
 In `packages/backend/moodle/moodle-profile/moodle-profile-dto.ts`:
 Replace `@universe/core/types` with `@core/types`.
 
-- [ ] **Step 2: Run backend tests and typecheck**
+- [x] **Step 2: Run backend tests and typecheck**
 
 Run: `pnpm --filter @universe/backend test`
 Expected: 41 test suites pass (350+ tests).
@@ -155,7 +155,7 @@ Expected: 41 test suites pass (350+ tests).
 Run: `pnpm --filter @universe/backend typecheck`
 Expected: 0 errors.
 
-- [ ] **Step 3: Commit backend changes**
+- [x] **Step 3: Commit backend changes**
 
 ```bash
 git add packages/backend/
@@ -180,7 +180,7 @@ git commit -m "refactor(backend): use @core path alias for all core imports"
 - Consumes: `@core/*` path alias in `packages/ui`.
 - Produces: UI library stories with zero `@universe/core/*` import statements.
 
-- [ ] **Step 1: Replace `@universe/core` imports in `packages/ui` stories and preview**
+- [x] **Step 1: Replace `@universe/core` imports in `packages/ui` stories and preview**
 
 In `packages/ui/.storybook/preview.tsx`:
 Replace `@universe/core/constants/themes` with `@core/constants/themes`.
@@ -188,7 +188,7 @@ Replace `@universe/core/constants/themes` with `@core/constants/themes`.
 In `ActionCard.stories.tsx`, `ContactInfoGrid.stories.tsx`, `GradeFeedItem.stories.tsx`, `StatusBanner.stories.tsx`, `TopicChips.stories.tsx`:
 Replace `@universe/core/constants/breakpoints` with `@core/constants/breakpoints`.
 
-- [ ] **Step 2: Run UI typecheck, unit tests, and Storybook build**
+- [x] **Step 2: Run UI typecheck, unit tests, and Storybook build**
 
 Run: `pnpm --filter @universe/ui typecheck`
 Expected: 0 errors.
@@ -199,7 +199,7 @@ Expected: PASS.
 Run: `pnpm --filter @universe/ui build-storybook`
 Expected: Storybook build completes successfully.
 
-- [ ] **Step 3: Commit UI changes**
+- [x] **Step 3: Commit UI changes**
 
 ```bash
 git add packages/ui/
@@ -225,11 +225,11 @@ git commit -m "refactor(ui): use @core path alias in preview and stories"
 - Consumes: `@ui` alias from `packages/uni-hub/tsconfig.json`.
 - Produces: Uni-hub application with zero `@universe/ui` import statements in TS/TSX code.
 
-- [ ] **Step 1: Replace `@universe/ui` imports with `@ui`**
+- [x] **Step 1: Replace `@universe/ui` imports with `@ui`**
 
 In all 7 files, change `from '@universe/ui'` to `from '@ui'`.
 
-- [ ] **Step 2: Run uni-hub tests and typecheck**
+- [x] **Step 2: Run uni-hub tests and typecheck**
 
 Run: `pnpm --filter @universe/uni-hub test`
 Expected: 30 test files pass (190 tests).
@@ -237,7 +237,7 @@ Expected: 30 test files pass (190 tests).
 Run: `pnpm --filter @universe/uni-hub typecheck`
 Expected: 0 errors.
 
-- [ ] **Step 3: Commit uni-hub changes**
+- [x] **Step 3: Commit uni-hub changes**
 
 ```bash
 git add packages/uni-hub/
@@ -257,19 +257,19 @@ git commit -m "refactor(uni-hub): use canonical @ui alias instead of @universe/u
 
 - Produces: Updated architecture guidelines mandating `@core/*`, `@ui`, and `@una`.
 
-- [ ] **Step 1: Update `docs/ai/architecture.md`**
+- [x] **Step 1: Update `docs/ai/architecture.md`**
 
 In `docs/ai/architecture.md`:
 Under `Core layout`:
 Ensure standard rule specifies importing via `@core/*` (e.g. `@core/utils/browser`, `@core/constants/grades`, `@core/types`) across all packages.
 Remove outdated `@universe/core/utils/browser` notation.
 
-- [ ] **Step 2: Sync GEMINI.md**
+- [x] **Step 2: Sync GEMINI.md**
 
 Run: `pnpm gemini:sync`
 Expected: `GEMINI.md` regenerated matching `docs/ai/`.
 
-- [ ] **Step 3: Full Monorepo Verification**
+- [x] **Step 3: Full Monorepo Verification**
 
 Run: `pnpm typecheck`
 Expected: All 7 packages pass.
@@ -289,7 +289,7 @@ Expected: 0 errors.
 Run: `pnpm exec prettier --check packages/ docs/`
 Expected: All files properly formatted.
 
-- [ ] **Step 4: Commit documentation and sync**
+- [x] **Step 4: Commit documentation and sync**
 
 ```bash
 git add docs/ai/architecture.md GEMINI.md
