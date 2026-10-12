@@ -1,7 +1,7 @@
 import '../vars.scss';
 import React from 'react';
 import type { Decorator, Preview } from '@storybook/react-vite';
-import { APP_THEMES, THEME_COLOR_SCHEME, type AppTheme } from '@universe/core/constants/themes';
+import { APP_THEMES, THEME_COLOR_SCHEME, type AppTheme } from '@core/constants/themes';
 
 const THEME_TITLES: Record<AppTheme, string> = {
   light: 'Light',
