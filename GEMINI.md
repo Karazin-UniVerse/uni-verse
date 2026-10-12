@@ -186,7 +186,7 @@ uni-verse/
 
 ### Core layout
 
-- One file per domain, grouped by kind: `constants/grades.ts`, `constants/breakpoints.ts`, `utils/grades.ts`, `utils/browser.ts`. Import the specific module (`@universe/core/utils/browser`, or the `@core/utils/browser` alias inside uni-hub), never the package root.
+- One file per domain, grouped by kind: `constants/grades.ts`, `constants/breakpoints.ts`, `utils/grades.ts`, `utils/browser.ts`. Import the specific module via the `@core/*` alias (for example `@core/utils/browser`, `@core/constants/grades`, `@core/types`), never the package root.
 - No barrel `index.ts` in `constants/` and `utils/`. Barrels hide where code lives and force a split later; add domain files from the start.
 - Types, constants and functions never share a file (except types derived directly from a constant, such as `type GradesThreshold = (typeof GRADES_THRESHOLD)[keyof typeof GRADES_THRESHOLD]`). Other types stay under `types/`.
 - Tests sit next to the code in a sibling `tests/` directory (`utils/tests/grades.test.ts`).
@@ -209,7 +209,7 @@ uni-verse/
 | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | Design system primitives — `packages/ui/components/una/`       | Atomic elements: buttons, inputs, modal, toast, tag                                                                              | Language-agnostic, zero application logic, imported via `@una`                                                                                |
 | Complex UI-Only Components — `packages/ui/components/complex/` | Composite presentational components built from Una primitives                                                                    | **Strictly UI-only**: no business logic, no domain data fetching, no application store or context; driven purely by props and event callbacks |
-| Application components — `packages/uni-hub/components/`        | Business logic, domain workflows, store subscriptions (for example `useGamificationStore`), API calls (Moodle auth, assignments) | Compose and reuse `complex` components from `@universe/ui` instead of embedding composite presentation layouts inside logic components        |
+| Application components — `packages/uni-hub/components/`        | Business logic, domain workflows, store subscriptions (for example `useGamificationStore`), API calls (Moodle auth, assignments) | Compose and reuse `complex` components from `@ui` instead of embedding composite presentation layouts inside logic components                 |
 
 Before creating any component, decide which tier fits. If the placement is ambiguous, ask the user before writing code.
 
