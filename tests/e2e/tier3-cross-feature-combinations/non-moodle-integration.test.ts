@@ -193,11 +193,11 @@ describe('Tier 3 - Non-Moodle Platform & Core Integration Suite', () => {
       expect(una.Spinner).toBeDefined();
       expect(una.Skeleton).toBeDefined();
       expect(una.Empty).toBeDefined();
-      expect(una.SimpleForm).toBeDefined();
+      expect(una.Form).toBeDefined();
       expect(una.TextInput).toBeDefined();
       expect(una.CheckBox).toBeDefined();
       expect(una.RadioButton).toBeDefined();
-      expect(una.SimpleSlider).toBeDefined();
+      expect(una.Slider).toBeDefined();
       expect(una.FileInput).toBeDefined();
       expect(una.ToastProvider).toBeDefined();
       expect(una.useToast).toBeDefined();
