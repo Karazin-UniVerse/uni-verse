@@ -1,4 +1,4 @@
-export type SimpleSliderProps = {
+export type SliderProps = {
   value: number;
   onChange: (value: number) => void;
   min?: number;
