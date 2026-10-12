@@ -126,7 +126,7 @@ As a user, I can tell whether an opportunity has passed review, what stage it is
 As a user, I apply to a published opportunity.
 
 - REQ-OPP-10.1 A published, visible opportunity in the start or active phase has an apply button.
-- REQ-OPP-10.2 The application form asks for contact information and motivation; name and corporate email come from the profile (REQ-OPP-10.4).
+- REQ-OPP-10.2 The application form asks for contact information, motivation and a short description of the candidate; name and corporate email come from the profile (REQ-OPP-10.4).
 - REQ-OPP-10.3 After sending, the applicant is notified, and so is the owner.
 - REQ-OPP-10.4 The applicant's name and corporate email are filled in from their profile.
 - REQ-OPP-10.5 An owner cannot apply to their own opportunity, and the server refuses it too.
@@ -150,7 +150,7 @@ As an applicant, I track what happens with each application.
 As an owner, I decide on the applications to my opportunity.
 
 - REQ-OPP-12.1 An owner sees the applications only to their own opportunities.
-- REQ-OPP-12.2 An owner sees the list of applicants and the details of each application, including the contact the applicant typed and their corporate email. The owner can set an application to under review, accepted or rejected, with an optional comment, and can change a decision later.
+- REQ-OPP-12.2 An owner sees the list of applicants and the details of each application, including the contact the applicant typed, their corporate email, their motivation and the short description of the candidate. The owner can set an application to under review, accepted or rejected, with an optional comment, and can change a decision later.
 - REQ-OPP-12.3 A moderator can view all applications, read-only.
 - REQ-OPP-12.4 An owner can still decide on the existing applications of an opportunity that is hidden, paused, cancelled or completed; those states stop only new applications.
 
@@ -217,4 +217,5 @@ As an owner, I take my published opportunity out of the catalog myself.
 - Notifications: the backend notifications service and the notification list in the dashboard header, shared with other features (the header list currently shows Moodle notifications only).
 - Shared data: users and roles, and the opportunity, application, comment and notification models in the database package.
 - Talent Profile: the Notion page "Улучшения/Импрувмент", item 10, says it is connected with Opportunities; the relation is not defined.
+- The ERD relation "Moderates" (a user moderates an opportunity) is not implemented: the moderator who decided is not stored, only the latest comment is (see the moderation history log in Out of scope).
 - Sources: Notion "Перечень функционала Uni Opportunities" (feature list) and "opportunities_erd" (data model), both under the Opportunities project page.

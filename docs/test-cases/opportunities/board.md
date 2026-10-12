@@ -429,9 +429,9 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 - preconditions: published, visible opportunities exist in the start and in the active phase; applicant is signed in
 - steps:
   1. Open the opportunity in the start phase and choose apply (`opportunities.detailModal.apply`).
-  2. Fill in the contact and the motivation and send.
+  2. Fill in the contact, the motivation and the short description of the candidate and send.
   3. Repeat steps 1 and 2 for the opportunity in the active phase.
-- expected: the apply button is present in both phases; the form asks for contact and motivation; after sending, `opportunities.toast.applySuccess` is shown and both the applicant and the owner have a notification.
+- expected: the apply button is present in both phases; the form asks for contact, motivation and a short description of the candidate; after sending, `opportunities.toast.applySuccess` is shown and both the applicant and the owner have a notification.
 - verification: playwright
 - automated-at: -
 
@@ -473,12 +473,12 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 - covers: REQ-OPP-12.2
 - type: functional
 - priority: high
-- preconditions: owner has an opportunity with two applications in sent; the applicant typed the contact "@applicant" in the form
+- preconditions: owner has an opportunity with two applications in sent; the applicant typed the contact "@applicant", the motivation "I want to learn" and the description "Third-year student" in the form
 - steps:
   1. Open the applications of the opportunity and view the details of the first one.
   2. Set it to under review, then to accepted with the comment "Welcome", then to rejected.
   3. Set the second one to rejected without a comment.
-- expected: the details show the contact "@applicant" and the applicant's corporate email; the first application shows `opportunities.appStatus.underReview`, then `opportunities.appStatus.accepted` with the comment visible to the applicant, then `opportunities.appStatus.rejected`; the second shows `opportunities.appStatus.rejected`.
+- expected: the details show the contact "@applicant", the applicant's corporate email, the motivation "I want to learn" and the description "Third-year student"; the first application shows `opportunities.appStatus.underReview`, then `opportunities.appStatus.accepted` with the comment visible to the applicant, then `opportunities.appStatus.rejected`; the second shows `opportunities.appStatus.rejected`.
 - verification: playwright
 - automated-at: -
 

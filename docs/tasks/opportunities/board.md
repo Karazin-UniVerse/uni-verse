@@ -28,9 +28,9 @@ Written for the Notion Project Dashboard; not created there. Each task gets its 
 
 ### Task 4: Applications
 
-- Closes: D-33, D-17, D-11, D-27, D-30
-- What: refuse an application to one's own opportunity on the server; accept applications in the start and active phases (server and the apply button); notify the applicant after sending (the owner is still notified); return the owner with each application so that my applications shows it; let the owner add a comment to a decision in the interface. Keep allowing the owner to decide on the existing applications of a hidden, paused, cancelled or completed opportunity (cover it with a test).
-- Where: `packages/backend/opportunities/opportunities.service.ts` (`apply`, `getMyApplications`), `views/dashboard/tabs/opportunities/modals/OpportunityDetailModal.tsx` (`canApply`), `modals/ApplicantsModal.tsx`, `useApplicants.ts`, `MyApplicationsTab.tsx`.
+- Closes: D-33, D-17, D-11, D-27, D-30, D-39
+- What: add the short description of the candidate to the application form and show it, with the motivation, in the applicant's details for the owner (the backend already accepts `briefDescription`); refuse an application to one's own opportunity on the server; accept applications in the start and active phases (server and the apply button); notify the applicant after sending (the owner is still notified); return the owner with each application so that my applications shows it; let the owner add a comment to a decision in the interface. Keep allowing the owner to decide on the existing applications of a hidden, paused, cancelled or completed opportunity (cover it with a test).
+- Where: `packages/backend/opportunities/opportunities.service.ts` (`apply`, `getMyApplications`), `views/dashboard/tabs/opportunities/modals/OpportunityDetailModal.tsx` (`canApply`), `modals/ApplyOpportunityModal.tsx`, `useApplicantActions.ts`, `OpportunitiesTab.tsx`, `modals/ApplicantsModal.tsx`, `useApplicants.ts`, `MyApplicationsTab.tsx`, translation files uk and en.
 - Satisfies: REQ-OPP-10.1, 10.3, 10.5, 11.1, 12.2, 12.4; TC-OPP-32, 54, 33, 35, 46, 56.
 - After: Task 2 (a hidden opportunity refuses applications).
 
