@@ -32,6 +32,7 @@ import {
 } from './dashboard';
 import { formatLastSync } from './dashboard/tabs/helpers';
 import { useDashboardData, clearUserSessionStorage } from './dashboard/hooks/useDashboardData';
+import { getInitialUserProfile } from './dashboard/hooks/helpers';
 import { useMoodleLink } from './dashboard/hooks/useMoodleLink';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
@@ -139,17 +140,10 @@ const DashboardPage: React.FC = () => {
       return;
     }
 
-    const savedUser = localStorage.getItem('username');
+    const initialProfile = getInitialUserProfile();
 
-    if (savedUser && savedUser !== fallbackStudentProfile.fullName) {
-      setStudentProfile(
-        (previousProfile) =>
-          previousProfile ?? {
-            ...fallbackStudentProfile,
-            fullName: savedUser,
-            email: savedUser.includes('@') ? savedUser : `${savedUser}@karazin.ua`,
-          },
-      );
+    if (initialProfile) {
+      setStudentProfile((previousProfile) => previousProfile ?? initialProfile);
     }
 
     checkIn();

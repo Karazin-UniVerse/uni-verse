@@ -58,26 +58,19 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
           className={styles.user}
           title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
           aria-label={formatMessage('header.userMenu')}
-          // intentional: suppressHydrationWarning – user profile is hydrated from client localStorage
-          suppressHydrationWarning
         >
           <span className={styles.avatar}>
             <User size={16} />
           </span>
-          {/* intentional: suppressHydrationWarning – user profile is hydrated from client localStorage */}
-          <span suppressHydrationWarning>{activeStudentProfile.fullName}</span>
+          <span>{activeStudentProfile.fullName}</span>
         </button>
       )}
     >
       {(close) => (
         <>
           <div className={styles.userDropdownHeader}>
-            {/* intentional: suppressHydrationWarning – student name loaded client-side */}
-            <strong suppressHydrationWarning>{activeStudentProfile.fullName}</strong>
-            {/* intentional: suppressHydrationWarning – student group loaded client-side */}
-            <div className={styles.muted} suppressHydrationWarning>
-              {activeStudentProfile.group}
-            </div>
+            <strong>{activeStudentProfile.fullName}</strong>
+            <div className={styles.muted}>{activeStudentProfile.group}</div>
           </div>
 
           <div className={styles.dropdownSection}>

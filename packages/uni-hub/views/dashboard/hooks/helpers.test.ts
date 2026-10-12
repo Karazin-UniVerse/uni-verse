@@ -12,7 +12,9 @@ import {
   buildFallbackData,
   isMoodleUnlinked,
   syncStudentProfile,
+  getInitialUserProfile,
 } from './helpers';
+import { fallbackStudentProfile } from '../constants';
 
 vi.mock('@uni-hub/utils/browser', () => ({
   isBrowser: true,
@@ -156,6 +158,41 @@ describe('syncStudentProfile', () => {
     syncStudentProfile(undefined, setter);
 
     expect(setter).not.toHaveBeenCalled();
+  });
+});
+
+describe('getInitialUserProfile', () => {
+  it('prefers the cached profile over the saved username', () => {
+    const profile = { ...fallbackStudentProfile, fullName: 'Cached Student' };
+
+    localStorage.setItem('universe_student_profile', JSON.stringify(profile));
+    localStorage.setItem('username', 'saved.user');
+
+    expect(getInitialUserProfile()).toEqual(profile);
+  });
+
+  it('builds a profile from the saved username when nothing is cached', () => {
+    localStorage.setItem('username', 'saved.user');
+
+    expect(getInitialUserProfile()).toEqual({
+      ...fallbackStudentProfile,
+      fullName: 'saved.user',
+      email: 'saved.user@karazin.ua',
+    });
+  });
+
+  it('keeps an email username as the email', () => {
+    localStorage.setItem('username', 'student@karazin.ua');
+
+    expect(getInitialUserProfile()?.email).toBe('student@karazin.ua');
+  });
+
+  it('returns null when there is no cache and no usable username', () => {
+    expect(getInitialUserProfile()).toBeNull();
+
+    localStorage.setItem('username', fallbackStudentProfile.fullName);
+
+    expect(getInitialUserProfile()).toBeNull();
   });
 });
 

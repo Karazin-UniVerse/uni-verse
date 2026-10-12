@@ -4,6 +4,7 @@ import { isBrowser } from '@uni-hub/utils/browser';
 import type { Grade, Assignment } from '@uni-hub/types';
 import type { StudentProfile } from '@core/types';
 import type { DashboardData } from '../types';
+import { fallbackStudentProfile } from '../constants';
 
 export type GradesApiResponse = Awaited<ReturnType<typeof moodleApi.getGrades>>;
 
@@ -220,6 +221,44 @@ export function getInitialSyncTime(): number | null {
   } catch {
     return null;
   }
+}
+
+function getCachedUserProfile(): StudentProfile | null {
+  try {
+    const cachedProfile = localStorage.getItem('universe_student_profile');
+
+    if (!cachedProfile) return null;
+
+    const parsedProfile = JSON.parse(cachedProfile) as StudentProfile;
+
+    if (parsedProfile && typeof parsedProfile === 'object') {
+      return parsedProfile;
+    }
+  } catch {
+    // ignore invalid JSON / storage errors
+  }
+
+  return null;
+}
+
+export function getInitialUserProfile(): StudentProfile | null {
+  const cachedProfile = getCachedUserProfile();
+
+  if (cachedProfile) {
+    return cachedProfile;
+  }
+
+  const savedUser = localStorage.getItem('username');
+
+  if (!savedUser || savedUser === fallbackStudentProfile.fullName) {
+    return null;
+  }
+
+  return {
+    ...fallbackStudentProfile,
+    fullName: savedUser,
+    email: savedUser.includes('@') ? savedUser : `${savedUser}@karazin.ua`,
+  };
 }
 
 export function syncStudentProfile(
