@@ -56,4 +56,18 @@ describe('UserDropdown component', () => {
 
     expect(html).not.toContain('Moodle LMS');
   });
+
+  it('renders Moodle LMS section by default when isMoodleIntegrationEnabled is omitted', () => {
+    const html = renderToString(
+      React.createElement(UserDropdown, {
+        activeStudentProfile: fallbackStudentProfile,
+        soundEnabled: false,
+        onToggleSound: vi.fn(),
+        onClose: vi.fn(),
+        onLogout: vi.fn(),
+      }),
+    );
+
+    expect(html).toContain('Moodle LMS');
+  });
 });

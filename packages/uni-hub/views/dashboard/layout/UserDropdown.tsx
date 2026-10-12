@@ -156,7 +156,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
         {isMoodleIntegrationEnabled && (
           <div className={styles.mobileOnlyItem} style={{ marginBottom: 8 }}>
             <a
-              href="https://moodle.universemvp.tech"
+              href={process.env.NEXT_PUBLIC_MOODLE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.moodleStatusLink}

@@ -159,7 +159,10 @@ const DashboardPage: React.FC = () => {
     const requestedTab = searchParams.get('tab');
 
     if (requestedTab && isNavKey(requestedTab)) {
-      if (requestedTab === NAV_KEY.ConnectMoodle && isMoodleLinked) {
+      if (
+        requestedTab === NAV_KEY.ConnectMoodle &&
+        (isMoodleLinked || !features.isMoodleIntegrationEnabled)
+      ) {
         setActiveKey(NAV_KEY.Overview);
 
         return;
@@ -218,7 +221,10 @@ const DashboardPage: React.FC = () => {
     let effectiveKey: NavKey =
       activeItem?.featureFlag && !features[activeItem.featureFlag] ? NAV_KEY.Overview : activeKey;
 
-    if (effectiveKey === NAV_KEY.ConnectMoodle && isMoodleLinked) {
+    if (
+      effectiveKey === NAV_KEY.ConnectMoodle &&
+      (isMoodleLinked || !features.isMoodleIntegrationEnabled)
+    ) {
       effectiveKey = NAV_KEY.Overview;
     }
 
