@@ -23,6 +23,10 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,
     "strictBindCallApply": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@core": ["../core/index.ts"],
+      "@core/*": ["../core/*"]
+    }
   }
 }

@@ -25,6 +25,7 @@ const config: StorybookConfig = {
     config.resolve = config.resolve || {};
     config.resolve.alias = {
       ...config.resolve.alias,
+      '@core': resolve(dirname(fileURLToPath(import.meta.url)), '../../core'),
       '@universe/core': resolve(dirname(fileURLToPath(import.meta.url)), '../../core'),
     };
 
