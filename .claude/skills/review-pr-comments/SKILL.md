@@ -91,6 +91,8 @@ Present one table: thread, author, verdict, and what changed or why nothing did 
 
 ## 6. Publish (only after the user's explicit go-ahead)
 
+If no files were fixed, skip the commit and push and go on to the replies below.
+
 Commit only the files you fixed, as a new commit that follows Conventional Commits (`fix:`, `refactor:`, `docs:`, `test:`, `chore:` by content; see `docs/ai/workflow.md`), then push:
 
 ```bash

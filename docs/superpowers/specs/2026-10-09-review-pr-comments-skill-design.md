@@ -65,6 +65,7 @@ Present one table: thread, author, verdict, what changed or why not. Add the sug
 
 ### 6. Publish (only after "move on")
 
+- If no files were fixed, skip the commit and push and go on to the replies.
 - Commit with Conventional Commits, as a new commit (no amend, no force push), staging only the fixed files. Push; if the push is rejected, stop and report.
 - Reply in every handled thread through the REST replies endpoint on the first comment of the thread (`gh api repos/{owner}/{repo}/pulls/{pr}/comments/{databaseId}/replies`). `fix` and `alternative`: what changed and the commit SHA. `already`: where it is handled. `reject`: the reason with evidence. No gratitude phrases, no "you are right".
 - A finding from a review body or an issue comment has no thread; answer it with a top-level pull request comment.

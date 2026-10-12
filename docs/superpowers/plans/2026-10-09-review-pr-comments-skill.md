@@ -212,7 +212,7 @@ Expected: `.claude/skills matches .agents/skills` and `GEMINI.md is up to date (
 
 - [ ] **Step 4: Check formatting**
 
-Run: `../../../node_modules/.bin/prettier --check .agents/skills/review-pr-comments/SKILL.md .claude/skills/review-pr-comments/SKILL.md docs/ai/review.md docs/superpowers/specs/2026-10-09-review-pr-comments-skill-design.md docs/superpowers/plans/2026-10-09-review-pr-comments-skill.md`
+Run: `pnpm exec prettier --check .agents/skills/review-pr-comments/SKILL.md .claude/skills/review-pr-comments/SKILL.md docs/ai/review.md docs/superpowers/specs/2026-10-09-review-pr-comments-skill-design.md docs/superpowers/plans/2026-10-09-review-pr-comments-skill.md`
 Expected: `All matched files use Prettier code style!` (run from the worktree root; if prettier reports a file, run it with `--write` and re-check).
 
 ---
