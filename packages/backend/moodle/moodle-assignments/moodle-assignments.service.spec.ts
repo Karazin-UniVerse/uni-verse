@@ -146,6 +146,8 @@ describe('MoodleAssignmentsService', () => {
 
       expect(result.length).toBe(1);
       expect(result[0].isLate).toBe(false);
+      expect(result[0].submissionStatus).toBe('new');
+      expect(result[0].submittedAt).toBeUndefined();
     });
 
     it('should gracefully handle individual submission status errors when includeStatus is true', async () => {
@@ -227,6 +229,21 @@ describe('MoodleAssignmentsService', () => {
 
     it('should default to new status when lastattempt has no submission info', async () => {
       mockMoodleClientService.client.mockResolvedValue({});
+
+      const result = await service.getSubmissionStatus('token', 'id', 1);
+
+      expect(result.status).toBe('new');
+      expect(result.grade).toBeUndefined();
+    });
+
+    it('should ignore grade when Moodle returns -1 sentinel grade', async () => {
+      mockMoodleClientService.client.mockResolvedValue({
+        lastattempt: {
+          gradingstatus: 'notgraded',
+          submission: { status: 'new' },
+        },
+        feedback: { grade: { grade: -1 } },
+      });
 
       const result = await service.getSubmissionStatus('token', 'id', 1);
 

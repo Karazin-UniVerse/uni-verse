@@ -58,15 +58,18 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
   status = 'new',
 }) => {
   const { localeTag, formatMessage } = useLanguage();
-  const isGraded = status === 'graded' || Boolean(grade) || Boolean(assignment.graded);
+  const hasValidGrade = Boolean(grade) && Number(grade) !== -1;
+  const isGraded = status === 'graded' || hasValidGrade || Boolean(assignment.graded);
   const isAwaitingReview = !isGraded && status === 'submitted';
   const isCompleted = isGraded || isAwaitingReview;
   const hasDeadline = Boolean(assignment.duedate && assignment.duedate > 0);
   const isOverdue = Boolean(hasDeadline && assignment.duedate < nowSec && !isCompleted);
   const isLate = Boolean(
     isCompleted &&
-    (assignment.isLate ||
-      (assignment.submittedAt && hasDeadline && assignment.submittedAt > assignment.duedate)),
+    (assignment.isLate ??
+      Boolean(
+        assignment.submittedAt && hasDeadline && assignment.submittedAt > assignment.duedate,
+      )),
   );
   const statusInfo = getAssignmentStatusInfo({ status, isGraded, isAwaitingReview, isOverdue });
 
@@ -129,7 +132,7 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
         )}
 
         <Tag tone={statusInfo.tone}>
-          {grade ? (
+          {hasValidGrade ? (
             <>
               <Award size={13} style={{ marginRight: 4 }} />
               {`${formatMessage('assignments.grade')}: ${grade}`}
