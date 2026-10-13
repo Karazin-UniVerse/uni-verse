@@ -122,6 +122,34 @@ describe('MoodleAssignmentsService', () => {
       expect(result[0].isLate).toBe(true);
     });
 
+    it('should set isLate to false when submission status is new even if timemodified is after duedate', async () => {
+      mockMoodleClientService.client
+        .mockResolvedValueOnce({
+          courses: [
+            {
+              fullname: 'Algorithms',
+              shortname: 'ALG',
+              assignments: [
+                { id: 1, name: 'A1', duedate: 1000, intro: 'Test' },
+              ],
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          lastattempt: {
+            gradingstatus: 'notgraded',
+            submission: { status: 'new', timemodified: 1500 },
+          },
+        });
+
+      const result = await service.getAssignments('token', 'id', true);
+
+      expect(result.length).toBe(1);
+      expect(result[0].isLate).toBe(false);
+      expect(result[0].submissionStatus).toBe('new');
+      expect(result[0].submittedAt).toBeUndefined();
+    });
+
     it('should gracefully handle individual submission status errors when includeStatus is true', async () => {
       mockMoodleClientService.client
         .mockResolvedValueOnce({
@@ -201,6 +229,21 @@ describe('MoodleAssignmentsService', () => {
 
     it('should default to new status when lastattempt has no submission info', async () => {
       mockMoodleClientService.client.mockResolvedValue({});
+
+      const result = await service.getSubmissionStatus('token', 'id', 1);
+
+      expect(result.status).toBe('new');
+      expect(result.grade).toBeUndefined();
+    });
+
+    it('should ignore grade when Moodle returns -1 sentinel grade', async () => {
+      mockMoodleClientService.client.mockResolvedValue({
+        lastattempt: {
+          gradingstatus: 'notgraded',
+          submission: { status: 'new' },
+        },
+        feedback: { grade: { grade: -1 } },
+      });
 
       const result = await service.getSubmissionStatus('token', 'id', 1);
 
