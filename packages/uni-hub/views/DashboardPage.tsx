@@ -32,6 +32,7 @@ import {
 } from './dashboard';
 import { formatLastSync } from './dashboard/tabs/helpers';
 import { useDashboardData, clearUserSessionStorage } from './dashboard/hooks/useDashboardData';
+import { getInitialUserProfile } from './dashboard/hooks/helpers';
 import { useMoodleLink } from './dashboard/hooks/useMoodleLink';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
@@ -139,17 +140,10 @@ const DashboardPage: React.FC = () => {
       return;
     }
 
-    const savedUser = localStorage.getItem('username');
+    const initialProfile = getInitialUserProfile();
 
-    if (savedUser && savedUser !== fallbackStudentProfile.fullName) {
-      setStudentProfile(
-        (previousProfile) =>
-          previousProfile ?? {
-            ...fallbackStudentProfile,
-            fullName: savedUser,
-            email: savedUser.includes('@') ? savedUser : `${savedUser}@karazin.ua`,
-          },
-      );
+    if (initialProfile) {
+      setStudentProfile((previousProfile) => previousProfile ?? initialProfile);
     }
 
     checkIn();
@@ -159,7 +153,10 @@ const DashboardPage: React.FC = () => {
     const requestedTab = searchParams.get('tab');
 
     if (requestedTab && isNavKey(requestedTab)) {
-      if (requestedTab === NAV_KEY.ConnectMoodle && isMoodleLinked) {
+      if (
+        requestedTab === NAV_KEY.ConnectMoodle &&
+        (isMoodleLinked || !features.isMoodleIntegrationEnabled)
+      ) {
         setActiveKey(NAV_KEY.Overview);
 
         return;
@@ -218,7 +215,10 @@ const DashboardPage: React.FC = () => {
     let effectiveKey: NavKey =
       activeItem?.featureFlag && !features[activeItem.featureFlag] ? NAV_KEY.Overview : activeKey;
 
-    if (effectiveKey === NAV_KEY.ConnectMoodle && isMoodleLinked) {
+    if (
+      effectiveKey === NAV_KEY.ConnectMoodle &&
+      (isMoodleLinked || !features.isMoodleIntegrationEnabled)
+    ) {
       effectiveKey = NAV_KEY.Overview;
     }
 
@@ -360,7 +360,7 @@ const DashboardPage: React.FC = () => {
               </span>
             </div>
           )}
-          {!isMoodleLinked && (
+          {features.isMoodleIntegrationEnabled && !isMoodleLinked && (
             <output className={styles.linkMoodleBanner}>
               <div className={styles.linkMoodleBannerContent}>
                 <Link2 size={16} className={styles.linkMoodleIcon} />
@@ -400,18 +400,22 @@ const DashboardPage: React.FC = () => {
             dueUnixSec={selectedDueUnixSec}
           />
 
-          <LinkMoodleModal
-            mode={linkModalMode}
-            open={isLinkModalOpen}
-            onClose={closeLinkModal}
-            onSuccess={handleLinkSuccess}
-          />
+          {features.isMoodleIntegrationEnabled && (
+            <>
+              <LinkMoodleModal
+                mode={linkModalMode}
+                open={isLinkModalOpen}
+                onClose={closeLinkModal}
+                onSuccess={handleLinkSuccess}
+              />
 
-          <UnlinkMoodleModal
-            open={isUnlinkModalOpen}
-            onClose={closeUnlinkModal}
-            onSuccess={handleUnlinkSuccess}
-          />
+              <UnlinkMoodleModal
+                open={isUnlinkModalOpen}
+                onClose={closeUnlinkModal}
+                onSuccess={handleUnlinkSuccess}
+              />
+            </>
+          )}
 
           <GradeSimulator
             open={simulatorOpen}

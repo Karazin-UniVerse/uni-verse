@@ -9,11 +9,13 @@ import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi, getErrorMessage, safeStorage } from '@uni-hub/services/api';
 import { GoogleLoginButton, AuthField, parseGoogleClaims } from '@uni-hub/components/auth';
+import { useFeatures } from '@uni-hub/features';
 import { motion } from 'framer-motion';
 import styles from './LoginPage.module.scss';
 
 const LoginPage: React.FC = () => {
   const { formatMessage } = useLanguage();
+  const { isMoodleIntegrationEnabled } = useFeatures();
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -40,9 +42,9 @@ const LoginPage: React.FC = () => {
 
       const res = await authApi.loginWithGoogle(idToken);
 
-      if (res.data?.isLinked) {
+      if (res.data?.isLinked || !isMoodleIntegrationEnabled) {
         safeStorage.setItem('isLoggedIn', 'true');
-        safeStorage.setItem('isMoodleLinked', 'true');
+        safeStorage.setItem('isMoodleLinked', res.data?.isLinked ? 'true' : 'false');
 
         if (displayName) {
           safeStorage.setItem('username', displayName);
