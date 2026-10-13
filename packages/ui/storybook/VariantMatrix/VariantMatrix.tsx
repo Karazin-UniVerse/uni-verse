@@ -11,7 +11,7 @@ export function VariantMatrix<Row extends string, Column extends string>({
   rows,
   columns,
   renderCell,
-}: VariantMatrixProps<Row, Column>) {
+}: Readonly<VariantMatrixProps<Row, Column>>) {
   return (
     <table className={css.matrix}>
       <thead>

@@ -6,7 +6,10 @@ export type VariantColumnProps<Row extends string> = {
   renderCell: (row: Row) => ReactNode;
 };
 
-export function VariantColumn<Row extends string>({ rows, renderCell }: VariantColumnProps<Row>) {
+export function VariantColumn<Row extends string>({
+  rows,
+  renderCell,
+}: Readonly<VariantColumnProps<Row>>) {
   return (
     <table className={css.matrix}>
       <tbody>

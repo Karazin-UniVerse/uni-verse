@@ -6,7 +6,7 @@ export type PlacementCellProps = {
   placement: PopoverPlacement;
 };
 
-export function PlacementCell({ children, placement }: PlacementCellProps) {
+export function PlacementCell({ children, placement }: Readonly<PlacementCellProps>) {
   const isTop = placement.startsWith('top');
   const isEnd = placement.endsWith('end');
 

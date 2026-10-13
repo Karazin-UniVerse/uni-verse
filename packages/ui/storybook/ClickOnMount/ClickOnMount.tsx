@@ -6,7 +6,7 @@ export type ClickOnMountProps = {
 };
 
 /** Opens a self-managed popup by clicking its trigger once, so the open state shows in a matrix. */
-export function ClickOnMount({ children, selector }: ClickOnMountProps) {
+export function ClickOnMount({ children, selector }: Readonly<ClickOnMountProps>) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

@@ -9,7 +9,7 @@ export type VariantRowProps<Column extends string> = {
 export function VariantRow<Column extends string>({
   columns,
   renderCell,
-}: VariantRowProps<Column>) {
+}: Readonly<VariantRowProps<Column>>) {
   return (
     <table className={css.matrix}>
       <thead>

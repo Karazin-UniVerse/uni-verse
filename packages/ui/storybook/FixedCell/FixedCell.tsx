@@ -7,7 +7,7 @@ export type FixedCellProps = {
 };
 
 /** A transformed ancestor becomes the containing block of `position: fixed` children. */
-export function FixedCell({ children, height, width }: FixedCellProps) {
+export function FixedCell({ children, height, width }: Readonly<FixedCellProps>) {
   return (
     <div
       style={{
