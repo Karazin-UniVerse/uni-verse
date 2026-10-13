@@ -212,6 +212,7 @@ export const uk = {
   'assignments.hideFilters': 'Сховати фільтри',
   'assignments.dateFrom': 'Дата від',
   'assignments.dateTo': 'Дата до',
+  'assignments.datePicker': 'Вибір дати',
   'assignments.oldestFirst': 'Спочатку старі',
   'assignments.newestFirst': 'Спочатку нові',
   'assignments.hideCompleted': 'Сховати виконані',

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { CustomDateTime } from './CustomDateTime';
+import { DateTime } from './DateTime';
 
-const meta: Meta<typeof CustomDateTime> = {
-  title: 'Una/Inputs/CustomDateTime',
-  component: CustomDateTime,
+const meta: Meta<typeof DateTime> = {
+  title: 'Una/Inputs/DateTime',
+  component: DateTime,
   tags: ['autodocs'],
   argTypes: {
     size: {
@@ -23,14 +23,14 @@ const meta: Meta<typeof CustomDateTime> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof CustomDateTime>;
+type Story = StoryObj<typeof DateTime>;
 
-const InteractiveTemplate = (args: React.ComponentProps<typeof CustomDateTime>) => {
+const InteractiveTemplate = (args: React.ComponentProps<typeof DateTime>) => {
   const [date, setDate] = useState<Date | null>(() => new Date());
 
   return (
     <div style={{ minHeight: '400px' }}>
-      <CustomDateTime {...args} selected={date} onChange={setDate} />
+      <DateTime {...args} selected={date} onChange={setDate} />
     </div>
   );
 };

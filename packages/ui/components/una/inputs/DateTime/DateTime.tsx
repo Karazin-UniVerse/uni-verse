@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect, useId, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useId, useMemo, useCallback } from 'react';
 import clsx from 'clsx';
-import css from './CustomDateTime.module.scss';
+import css from './DateTime.module.scss';
 import { TextInput } from '../TextInput/TextInput';
-import type { CustomDateTimeProps } from './DateTimePicker.types';
+import type { DateTimeProps } from './DateTime.types';
 
 const MONTHS = [
   'January',
@@ -21,25 +21,31 @@ const MONTHS = [
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-export function CustomDateTime({
+export function DateTime({
   selected,
   onChange,
   className,
   clearLabel,
+  dialogLabel,
   locale,
   todayLabel,
   showTime = true,
   size = 'medium',
   ...props
-}: Readonly<CustomDateTimeProps>) {
+}: Readonly<DateTimeProps>) {
   const pickerDialogId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [prevSelected, setPrevSelected] = useState(selected);
   const [viewDate, setViewDate] = useState(() => selected || new Date());
   const containerRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const timeListRef = useRef<HTMLDivElement>(null);
 
-  if (selected !== prevSelected) {
+  const prevTime = prevSelected?.getTime();
+  const selectedTime = selected?.getTime();
+
+  if (selectedTime !== prevTime) {
     setPrevSelected(selected);
 
     if (selected) {
@@ -73,6 +79,11 @@ export function CustomDateTime({
     }
   }, [locale]);
 
+  const closePicker = useCallback(() => {
+    setIsOpen(false);
+    inputRef.current?.focus();
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -84,6 +95,22 @@ export function CustomDateTime({
 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      const frameId = requestAnimationFrame(() => {
+        if (dialogRef.current) {
+          const firstFocusable = dialogRef.current.querySelector<HTMLElement>(
+            'button:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          );
+
+          firstFocusable?.focus();
+        }
+      });
+
+      return () => cancelAnimationFrame(frameId);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && selected && timeListRef.current) {
@@ -139,7 +166,7 @@ export function CustomDateTime({
     setViewDate(newDate);
 
     if (!showTime) {
-      setIsOpen(false);
+      closePicker();
     }
   };
 
@@ -201,10 +228,42 @@ export function CustomDateTime({
     }
   };
 
+  const handleDialogKeyDown = (event: React.KeyboardEvent<HTMLDialogElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      closePicker();
+
+      return;
+    }
+
+    if (event.key === 'Tab' && dialogRef.current) {
+      const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+
+      if (focusables.length === 0) {
+        return;
+      }
+
+      const firstEl = focusables[0];
+      const lastEl = focusables[focusables.length - 1];
+
+      if (event.shiftKey && document.activeElement === firstEl) {
+        event.preventDefault();
+        lastEl.focus();
+      } else if (!event.shiftKey && document.activeElement === lastEl) {
+        event.preventDefault();
+        firstEl.focus();
+      }
+    }
+  };
+
   return (
     <div className={clsx(css.wrapper, className)} ref={containerRef}>
       <TextInput
         {...props}
+        ref={inputRef}
         size={size}
         value={formatDateTime(selected)}
         readOnly
@@ -218,9 +277,11 @@ export function CustomDateTime({
       {isOpen && (
         <dialog
           open
+          ref={dialogRef}
           id={pickerDialogId}
-          aria-label={showTime ? 'Date and time picker' : 'Date picker'}
+          aria-label={dialogLabel || (showTime ? 'Date and time picker' : 'Date picker')}
           className={clsx(css.popper, css[`size-${size}`])}
+          onKeyDown={handleDialogKeyDown}
         >
           <div className={css.calendar}>
             <div className={css.header}>
@@ -304,7 +365,7 @@ export function CustomDateTime({
                     className={css.footerButton}
                     onClick={() => {
                       onChange(null);
-                      setIsOpen(false);
+                      closePicker();
                     }}
                   >
                     {clearLabel}
@@ -325,7 +386,7 @@ export function CustomDateTime({
                       setViewDate(today);
 
                       if (!showTime) {
-                        setIsOpen(false);
+                        closePicker();
                       }
                     }}
                   >
@@ -364,3 +425,5 @@ export function CustomDateTime({
     </div>
   );
 }
+
+export default DateTime;

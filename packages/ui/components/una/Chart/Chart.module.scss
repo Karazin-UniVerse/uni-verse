@@ -46,13 +46,15 @@
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
-    outline: none;
 
-    &:focus,
-    &:focus-visible,
-    &:focus-within {
+    &:focus:not(:focus-visible) {
       outline: none;
     }
+  }
+
+  :global(.recharts-wrapper:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 }
 

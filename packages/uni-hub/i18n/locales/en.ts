@@ -212,6 +212,7 @@ export const en = {
   'assignments.hideFilters': 'Hide filters',
   'assignments.dateFrom': 'Date from',
   'assignments.dateTo': 'Date to',
+  'assignments.datePicker': 'Date picker',
   'assignments.oldestFirst': 'Oldest first',
   'assignments.newestFirst': 'Newest first',
   'assignments.hideCompleted': 'Hide completed',

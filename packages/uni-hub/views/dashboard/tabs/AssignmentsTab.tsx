@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Filter } from 'lucide-react';
-import { CustomDateTime, Select, CheckBox, Button } from '@una';
+import { DateTime, Select, CheckBox, Button } from '@una';
 import {
   AssignmentCard,
   AssignmentsEmptyState,
@@ -71,6 +71,9 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   const nowMs = useNow(30_000);
   const nowSec = Math.floor(nowMs / 1000);
 
+  const selectedDateFrom = useMemo(() => parseFilterDate(dateFrom), [dateFrom]);
+  const selectedDateTo = useMemo(() => parseFilterDate(dateTo), [dateTo]);
+
   return (
     <div className={styles.stack}>
       <div className={styles.mobileFilterToggle}>
@@ -88,24 +91,26 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         </Button>
       </div>
       <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
-        <CustomDateTime
+        <DateTime
           showTime={false}
           locale={localeTag}
-          selected={parseFilterDate(dateFrom)}
+          selected={selectedDateFrom}
           onChange={(newDate) => onDateFromChange(formatFilterDate(newDate))}
           placeholder={formatMessage('assignments.dateFrom')}
           aria-label={formatMessage('assignments.dateFrom')}
+          dialogLabel={formatMessage('assignments.datePicker')}
           clearLabel={formatMessage('common.clear')}
           todayLabel={formatMessage('common.today')}
           className={styles.dateFilterInput}
         />
-        <CustomDateTime
+        <DateTime
           showTime={false}
           locale={localeTag}
-          selected={parseFilterDate(dateTo)}
+          selected={selectedDateTo}
           onChange={(newDate) => onDateToChange(formatFilterDate(newDate))}
           placeholder={formatMessage('assignments.dateTo')}
           aria-label={formatMessage('assignments.dateTo')}
+          dialogLabel={formatMessage('assignments.datePicker')}
           clearLabel={formatMessage('common.clear')}
           todayLabel={formatMessage('common.today')}
           className={styles.dateFilterInput}
