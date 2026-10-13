@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ApplyOpportunityModal as ApplyOpportunityModalUI } from '@universe/ui';
+import { ApplyOpportunityModal as ApplyOpportunityModalUI } from '@ui';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 
 export interface ApplyOpportunityModalProps {

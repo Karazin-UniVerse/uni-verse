@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Award, CalendarDays, BookOpen } from 'lucide-react';
-import { ConnectMoodleView } from '@universe/ui';
+import { ConnectMoodleView } from '@ui';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 
 export interface ConnectMoodleTabProps {
