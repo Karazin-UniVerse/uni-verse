@@ -264,10 +264,10 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 - covers: REQ-OPP-06.5
 - type: edge
 - priority: low
-- preconditions: published opportunities exist
+- preconditions: published opportunities exist, and no opportunity is in at least one phase (for example completed)
 - steps:
   1. Type a text that no opportunity contains in the search box.
-  2. Clear it and filter by a phase that no opportunity has.
+  2. Clear it and filter by that phase.
 - expected: in both cases a message says that nothing matched and it differs from the empty-catalog message of TC-OPP-17.
 - verification: playwright
 - automated-at: -
@@ -308,11 +308,11 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 - covers: REQ-OPP-07.2
 - type: functional
 - priority: medium
-- preconditions: an opportunity returned once with the comment "Add a deadline" and then resubmitted exists; moderator and applicant are signed in
+- preconditions: a published opportunity with an application was returned by a moderator with the comment "Add a deadline" (REQ-OPP-18.1); moderator and applicant are signed in
 - steps:
   1. As the moderator, open the opportunity.
-  2. As the applicant, open a published opportunity.
-- expected: the moderator sees the latest moderator comment "Add a deadline"; the moderation actions are in the moderation tab, not on this page; the applicant sees no moderator comment.
+  2. As the applicant, open the same opportunity from "My applications".
+- expected: the moderator sees the latest moderator comment "Add a deadline"; the moderation actions are in the moderation tab, not on this page; the applicant sees the opportunity read-only and no moderator comment.
 - verification: playwright
 - automated-at: -
 
@@ -762,7 +762,7 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 - covers: REQ-OPP-05.5
 - type: error
 - priority: high
-- preconditions: no user is signed in
+- preconditions: no user is signed in; a published opportunity exists
 - steps:
   1. Open the catalog address in the browser.
   2. Open the address of an opportunity in the browser.

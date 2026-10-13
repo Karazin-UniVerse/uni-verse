@@ -1,6 +1,6 @@
 # Tasks: Opportunities board
 
-Drafts of the implementation tasks that close the mismatches found between `docs/prd/opportunities/board.md`, `docs/test-cases/opportunities/board.md` and the code. `D-NN` in `Closes` are rows of the discrepancy register (`docs/discrepancies/opportunities/board.md`), which is deleted when every row is closed; each task below is complete without it.
+Drafts of the implementation tasks that close the mismatches found between `docs/prd/opportunities/board.md`, `docs/test-cases/opportunities/board.md` and the code. `D-NN` in `Closes` are rows of the discrepancy register (`docs/discrepancies/opportunities/board.md`), which is deleted when every row is closed and the user confirms it; each task below is complete without it.
 
 Written for the Notion Project Dashboard; not created there. Each task gets its own design, plan and implementation. Tests are written together with the code and carry the `TC-` ID of the case they implement (Task 7).
 
