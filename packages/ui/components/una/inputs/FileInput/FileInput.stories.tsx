@@ -1,6 +1,19 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { VariantMatrix } from '../../../../storybook/VariantMatrix/VariantMatrix';
 import FileInput from './FileInput';
+import type { FileInputProps } from './FileInput.types';
+
+type MatrixRow = 'primary' | 'secondary' | 'disabled' | 'error';
+type MatrixSize = NonNullable<FileInputProps['size']>;
+
+const MATRIX_ROWS: Record<MatrixRow, Pick<FileInputProps, 'variant' | 'disabled' | 'error'>> = {
+  primary: { variant: 'primary' },
+  secondary: { variant: 'secondary' },
+  disabled: { disabled: true },
+  error: { error: 'File is too large' },
+};
+const MATRIX_SIZES: readonly MatrixSize[] = ['small', 'medium', 'large'];
 
 const meta: Meta<typeof FileInput> = {
   title: 'Una/Inputs/FileInput',
@@ -30,81 +43,6 @@ const meta: Meta<typeof FileInput> = {
 export default meta;
 type Story = StoryObj<typeof FileInput>;
 
-const InteractiveTemplate = (args: React.ComponentProps<typeof FileInput>) => {
-  const [files, setFiles] = useState<File[]>([]);
-
-  return (
-    <div style={{ maxWidth: '500px', padding: '20px' }}>
-      <FileInput {...args} files={files} onFilesChange={setFiles} />
-    </div>
-  );
-};
-
-export const Primary: Story = {
-  render: InteractiveTemplate,
-  args: {
-    label: 'Upload Document',
-    hint: 'PNG, JPG, PDF up to 10MB',
-    size: 'medium',
-    variant: 'primary',
-  },
-};
-
-export const MultipleFiles: Story = {
-  render: InteractiveTemplate,
-  args: {
-    label: 'Upload Multiple Attachments',
-    hint: 'Drag & drop multiple files',
-    multiple: true,
-    size: 'medium',
-  },
-};
-
-export const Small: Story = {
-  render: InteractiveTemplate,
-  args: {
-    label: 'Compact File Upload',
-    size: 'small',
-    hint: 'SVG or PNG only',
-  },
-};
-
-export const Large: Story = {
-  render: InteractiveTemplate,
-  args: {
-    label: 'Large Dropzone',
-    size: 'large',
-    hint: 'Supports high resolution images',
-    multiple: true,
-  },
-};
-
-export const Secondary: Story = {
-  render: InteractiveTemplate,
-  args: {
-    label: 'Secondary Variant',
-    variant: 'secondary',
-    hint: 'Subtle background style',
-  },
-};
-
-export const Disabled: Story = {
-  render: InteractiveTemplate,
-  args: {
-    label: 'Disabled File Upload',
-    disabled: true,
-    hint: 'Uploading is disabled',
-  },
-};
-
-export const ErrorState: Story = {
-  render: InteractiveTemplate,
-  args: {
-    label: 'Upload with Error',
-    error: 'File size exceeds maximum limit of 5MB',
-  },
-};
-
 const WithInitialFilesComponent = () => {
   const sampleFile1 = new File(['hello'], 'document.pdf', { type: 'application/pdf' });
   const sampleFile2 = new File(['image content'], 'avatar.png', { type: 'image/png' });
@@ -119,4 +57,21 @@ const WithInitialFilesComponent = () => {
 
 export const WithInitialFiles: Story = {
   render: () => <WithInitialFilesComponent />,
+};
+
+export const Matrix: Story = {
+  parameters: {
+    layout: 'padded',
+  },
+  render: () => (
+    <VariantMatrix
+      rows={Object.keys(MATRIX_ROWS) as MatrixRow[]}
+      columns={MATRIX_SIZES}
+      renderCell={(row: MatrixRow, size: MatrixSize) => (
+        <div style={{ width: '240px' }}>
+          <FileInput size={size} label="Upload" hint="PNG or PDF" {...MATRIX_ROWS[row]} />
+        </div>
+      )}
+    />
+  ),
 };

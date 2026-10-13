@@ -1,7 +1,33 @@
-import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
+import { VariantMatrix } from '../../../storybook/VariantMatrix/VariantMatrix';
 import { Skeleton } from './Skeleton';
+import type { SkeletonProps } from './Skeleton.types';
+
+type MatrixShape = 'text line' | 'avatar' | 'block';
+type MatrixSize = 'small' | 'medium' | 'large';
+
+const MATRIX_SIZES: readonly MatrixSize[] = ['small', 'medium', 'large'];
+const MATRIX_SHAPES: Record<
+  MatrixShape,
+  Record<MatrixSize, Pick<SkeletonProps, 'width' | 'height' | 'borderRadius'>>
+> = {
+  'text line': {
+    small: { width: 120, height: 12, borderRadius: 4 },
+    medium: { width: 240, height: 16, borderRadius: 4 },
+    large: { width: 360, height: 20, borderRadius: 4 },
+  },
+  avatar: {
+    small: { width: 32, height: 32, borderRadius: '50%' },
+    medium: { width: 48, height: 48, borderRadius: '50%' },
+    large: { width: 64, height: 64, borderRadius: '50%' },
+  },
+  block: {
+    small: { width: 120, height: 60, borderRadius: 8 },
+    medium: { width: 240, height: 120, borderRadius: 8 },
+    large: { width: 320, height: 160, borderRadius: 8 },
+  },
+};
 
 const meta = {
   title: 'Una/Feedback/Skeleton',
@@ -29,28 +55,19 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
-  args: {
-    width: '320px',
-    height: '140px',
-    borderRadius: '8px',
+export const Matrix: Story = {
+  parameters: {
+    layout: 'padded',
   },
-};
-
-export const Avatar: Story = {
-  args: {
-    width: '48px',
-    height: '48px',
-    borderRadius: '50%',
-  },
-};
-
-export const TextLine: Story = {
-  args: {
-    width: '240px',
-    height: '16px',
-    borderRadius: '4px',
-  },
+  render: () => (
+    <VariantMatrix
+      rows={Object.keys(MATRIX_SHAPES) as MatrixShape[]}
+      columns={MATRIX_SIZES}
+      renderCell={(shape: MatrixShape, size: MatrixSize) => (
+        <Skeleton {...MATRIX_SHAPES[shape][size]} />
+      )}
+    />
+  ),
 };
 
 export const CardMockup: Story = {

@@ -1,6 +1,18 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { CheckBox } from './CheckBox';
-import React from 'react';
+import { VariantMatrix } from '../../../../storybook/VariantMatrix/VariantMatrix';
+import type { CheckBoxProps } from './CheckBox.types';
+
+type MatrixVariant = CheckBoxProps['variant'];
+type MatrixState = 'unchecked' | 'checked' | 'disabled' | 'disabled checked';
+
+const MATRIX_VARIANTS: readonly MatrixVariant[] = ['primary', 'secondary'];
+const MATRIX_STATES: Record<MatrixState, Pick<CheckBoxProps, 'defaultChecked' | 'disabled'>> = {
+  unchecked: {},
+  checked: { defaultChecked: true },
+  disabled: { disabled: true },
+  'disabled checked': { defaultChecked: true, disabled: true },
+};
 
 const meta: Meta<typeof CheckBox> = {
   title: 'Una/Inputs/CheckBox',
@@ -26,59 +38,17 @@ const meta: Meta<typeof CheckBox> = {
 export default meta;
 type Story = StoryObj<typeof CheckBox>;
 
-export const Primary: Story = {
-  args: {
-    variant: 'primary',
-    name: 'primary-checkbox',
+export const Matrix: Story = {
+  parameters: {
+    layout: 'padded',
   },
-};
-
-export const Secondary: Story = {
-  args: {
-    variant: 'secondary',
-    name: 'secondary-checkbox',
-  },
-};
-
-export const Checked: Story = {
-  args: {
-    variant: 'primary',
-    checked: true,
-    readOnly: true,
-  },
-};
-
-export const Disabled: Story = {
-  args: {
-    variant: 'primary',
-    disabled: true,
-  },
-};
-
-export const DisabledChecked: Story = {
-  args: {
-    variant: 'primary',
-    disabled: true,
-    checked: true,
-    readOnly: true,
-  },
-};
-
-export const CheckboxGroup: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
-      <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <CheckBox variant="primary" name="group1" value="option1" defaultChecked />
-        Option 1
-      </label>
-      <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <CheckBox variant="primary" name="group1" value="option2" />
-        Option 2
-      </label>
-      <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <CheckBox variant="primary" name="group1" value="option3" disabled />
-        Option 3 (Disabled)
-      </label>
-    </div>
+    <VariantMatrix
+      rows={MATRIX_VARIANTS}
+      columns={Object.keys(MATRIX_STATES) as MatrixState[]}
+      renderCell={(variant: MatrixVariant, state: MatrixState) => (
+        <CheckBox variant={variant} aria-label={`${variant} ${state}`} {...MATRIX_STATES[state]} />
+      )}
+    />
   ),
 };

@@ -1,7 +1,17 @@
-import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
+import { VariantMatrix } from '../../../storybook/VariantMatrix/VariantMatrix';
 import { Spinner } from './Spinner';
+import type { SpinnerProps } from './Spinner.types';
+
+type MatrixSize = NonNullable<SpinnerProps['size']>;
+type MatrixContent = 'plain' | 'with tip';
+
+const MATRIX_SIZES: readonly MatrixSize[] = ['small', 'medium', 'large'];
+const MATRIX_CONTENT: Record<MatrixContent, Pick<SpinnerProps, 'tip'>> = {
+  plain: {},
+  'with tip': { tip: 'Loading…' },
+};
 
 const meta = {
   title: 'Una/Feedback/Spinner',
@@ -30,37 +40,17 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Medium: Story = {
-  args: {
-    size: 'medium',
+export const Matrix: Story = {
+  parameters: {
+    layout: 'padded',
   },
-};
-
-export const Small: Story = {
-  args: {
-    size: 'small',
-  },
-};
-
-export const Large: Story = {
-  args: {
-    size: 'large',
-  },
-};
-
-export const WithTip: Story = {
-  args: {
-    size: 'medium',
-    tip: 'Завантаження даних розкладу...',
-  },
-};
-
-export const AllSizes: Story = {
   render: () => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-      <Spinner size="small" />
-      <Spinner size="medium" />
-      <Spinner size="large" />
-    </div>
+    <VariantMatrix
+      rows={MATRIX_SIZES}
+      columns={Object.keys(MATRIX_CONTENT) as MatrixContent[]}
+      renderCell={(size: MatrixSize, content: MatrixContent) => (
+        <Spinner size={size} {...MATRIX_CONTENT[content]} />
+      )}
+    />
   ),
 };

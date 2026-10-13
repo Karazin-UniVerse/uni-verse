@@ -1,6 +1,18 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RadioButton } from './RadioButton';
-import React from 'react';
+import { VariantMatrix } from '../../../../storybook/VariantMatrix/VariantMatrix';
+import type { RadioButtonProps } from './RadioButton.types';
+
+type MatrixVariant = RadioButtonProps['variant'];
+type MatrixState = 'unchecked' | 'checked' | 'disabled' | 'disabled checked';
+
+const MATRIX_VARIANTS: readonly MatrixVariant[] = ['primary', 'secondary'];
+const MATRIX_STATES: Record<MatrixState, Pick<RadioButtonProps, 'defaultChecked' | 'disabled'>> = {
+  unchecked: {},
+  checked: { defaultChecked: true },
+  disabled: { disabled: true },
+  'disabled checked': { defaultChecked: true, disabled: true },
+};
 
 const meta: Meta<typeof RadioButton> = {
   title: 'Una/Inputs/RadioButton',
@@ -26,41 +38,21 @@ const meta: Meta<typeof RadioButton> = {
 export default meta;
 type Story = StoryObj<typeof RadioButton>;
 
-export const Primary: Story = {
-  args: {
-    variant: 'primary',
-    name: 'primary-radio',
+export const Matrix: Story = {
+  parameters: {
+    layout: 'padded',
   },
-};
-
-export const Secondary: Story = {
-  args: {
-    variant: 'secondary',
-    name: 'secondary-radio',
-  },
-};
-
-export const Disabled: Story = {
-  args: {
-    variant: 'primary',
-    disabled: true,
-  },
-};
-
-export const Checked: Story = {
-  args: {
-    variant: 'primary',
-    checked: true,
-    readOnly: true,
-  },
-};
-
-export const RadioGroup: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '10px' }}>
-      <RadioButton variant="primary" name="group1" value="option1" defaultChecked />
-      <RadioButton variant="primary" name="group1" value="option2" />
-      <RadioButton variant="primary" name="group1" value="option3" disabled />
-    </div>
+    <VariantMatrix
+      rows={MATRIX_VARIANTS}
+      columns={Object.keys(MATRIX_STATES) as MatrixState[]}
+      renderCell={(variant: MatrixVariant, state: MatrixState) => (
+        <RadioButton
+          variant={variant}
+          aria-label={`${variant} ${state}`}
+          {...MATRIX_STATES[state]}
+        />
+      )}
+    />
   ),
 };
