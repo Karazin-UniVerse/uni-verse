@@ -1,8 +1,18 @@
-import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Form } from './Form';
 import { TextInput } from '../inputs/TextInput/TextInput';
 import { Button } from '../Button/Button';
+import { VariantMatrix } from '../../../storybook/VariantMatrix/VariantMatrix';
+import type { FormProps } from './Form.types';
+
+type MatrixVariant = NonNullable<FormProps['variant']>;
+type MatrixGap = 'default gap' | 'large gap';
+
+const MATRIX_VARIANTS: readonly MatrixVariant[] = ['simple', 'card'];
+const MATRIX_GAPS: Record<MatrixGap, Pick<FormProps, 'style'>> = {
+  'default gap': { style: { width: '300px' } },
+  'large gap': { style: { width: '300px', gap: 'var(--gap-large)' } },
+};
 
 const meta = {
   title: 'Una/Form/Form',
@@ -25,76 +35,23 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Simple: Story = {
-  args: {
-    variant: 'simple',
-    children: (
-      <>
-        <TextInput type="text" name="username" placeholder="Enter your username" required />
-        <TextInput type="password" name="password" placeholder="Enter your password" required />
-        <Button variant="primary" size="medium" type="submit">
-          Login
-        </Button>
-      </>
-    ),
-    style: { width: '300px' } as React.CSSProperties,
+export const Matrix: Story = {
+  parameters: {
+    layout: 'padded',
   },
-};
-
-export const CustomGap: Story = {
-  args: {
-    variant: 'simple',
-    children: (
-      <>
-        <TextInput type="email" name="email" placeholder="Email address" required />
-        <TextInput type="text" name="subject" placeholder="Subject" />
-        <Button variant="primary" size="medium" type="submit">
-          Send Message
-        </Button>
-      </>
-    ),
-    style: {
-      gap: 'var(--gap-large)',
-      width: '400px',
-    } as React.CSSProperties,
-  },
-};
-
-export const CardForm: Story = {
-  args: {
-    variant: 'card',
-    children: (
-      <>
-        <h3
-          style={{
-            margin: '0 0 var(--margin-small) 0',
-            fontFamily: 'var(--font-family-heading)',
-            fontSize: 'var(--font-xxl)',
-            fontWeight: 'var(--font-weight-bold)',
-            lineHeight: '1.2',
-          }}
-        >
-          Subscribe
-        </h3>
-        <p
-          style={{
-            margin: '0 0 var(--margin-medium) 0',
-            fontFamily: 'var(--font-family-regular)',
-            fontSize: 'var(--font-md)',
-            fontWeight: 'var(--font-weight-regular)',
-            lineHeight: '1.5',
-          }}
-        >
-          Get our latest news delivered to your inbox.
-        </p>
-        <TextInput type="email" name="newsletter_email" placeholder="Your email address" required />
-        <Button variant="primary" size="medium" type="submit">
-          Subscribe
-        </Button>
-      </>
-    ),
-    style: {
-      width: '350px',
-    } as React.CSSProperties,
-  },
+  render: () => (
+    <VariantMatrix
+      rows={MATRIX_VARIANTS}
+      columns={Object.keys(MATRIX_GAPS) as MatrixGap[]}
+      renderCell={(variant: MatrixVariant, gap: MatrixGap) => (
+        <Form variant={variant} {...MATRIX_GAPS[gap]}>
+          <TextInput type="email" name="email" placeholder="Email address" />
+          <TextInput type="text" name="subject" placeholder="Subject" />
+          <Button variant="primary" size="medium" type="submit">
+            Send
+          </Button>
+        </Form>
+      )}
+    />
+  ),
 };

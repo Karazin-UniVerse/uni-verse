@@ -1,7 +1,33 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
+import { VariantMatrix } from '../../../../storybook/VariantMatrix/VariantMatrix';
 import { CustomDateTime } from './CustomDateTime';
+import type { CustomDateTimeProps } from './DateTimePicker.types';
+
+type MatrixRow =
+  'primary' | 'secondary' | 'transparent' | 'primary disabled' | 'secondary disabled';
+type MatrixSize = NonNullable<CustomDateTimeProps['size']>;
+type MatrixDateTimeProps = Omit<CustomDateTimeProps, 'selected' | 'onChange'>;
+
+const MATRIX_DATE = new Date(2026, 0, 15, 12, 0);
+const MATRIX_ROWS: Record<
+  MatrixRow,
+  Pick<CustomDateTimeProps, 'variant' | 'isTransparent' | 'disabled'>
+> = {
+  primary: { variant: 'primary' },
+  secondary: { variant: 'secondary' },
+  transparent: { isTransparent: true },
+  'primary disabled': { variant: 'primary', disabled: true },
+  'secondary disabled': { variant: 'secondary', disabled: true },
+};
+const MATRIX_SIZES: readonly MatrixSize[] = ['small', 'medium', 'large'];
+
+function MatrixDateTime(props: MatrixDateTimeProps) {
+  const [date, setDate] = useState<Date | null>(MATRIX_DATE);
+
+  return <CustomDateTime {...props} selected={date} onChange={setDate} />;
+}
 
 const meta: Meta<typeof CustomDateTime> = {
   title: 'Una/Inputs/CustomDateTime',
@@ -25,45 +51,21 @@ const meta: Meta<typeof CustomDateTime> = {
 export default meta;
 type Story = StoryObj<typeof CustomDateTime>;
 
-const InteractiveTemplate = (args: React.ComponentProps<typeof CustomDateTime>) => {
-  const [date, setDate] = useState<Date | null>(() => new Date());
-
-  return (
-    <div style={{ minHeight: '400px' }}>
-      <CustomDateTime {...args} selected={date} onChange={setDate} />
-    </div>
-  );
-};
-
-export const Primary: Story = {
-  render: InteractiveTemplate,
+export const Matrix: Story = {
   args: {
-    size: 'medium',
-    placeholder: 'Select date and time',
+    selected: null,
+    onChange: () => {},
   },
-};
-
-export const Small: Story = {
-  render: InteractiveTemplate,
-  args: {
-    size: 'small',
-    placeholder: 'Small DatePicker',
+  parameters: {
+    layout: 'padded',
   },
-};
-
-export const Large: Story = {
-  render: InteractiveTemplate,
-  args: {
-    size: 'large',
-    placeholder: 'Large DatePicker',
-  },
-};
-
-export const Disabled: Story = {
-  render: InteractiveTemplate,
-  args: {
-    size: 'medium',
-    disabled: true,
-    placeholder: 'Disabled DatePicker',
-  },
+  render: () => (
+    <VariantMatrix
+      rows={Object.keys(MATRIX_ROWS) as MatrixRow[]}
+      columns={MATRIX_SIZES}
+      renderCell={(row: MatrixRow, size: MatrixSize) => (
+        <MatrixDateTime size={size} aria-label={`${row} ${size}`} {...MATRIX_ROWS[row]} />
+      )}
+    />
+  ),
 };

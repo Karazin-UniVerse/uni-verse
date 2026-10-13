@@ -1,9 +1,25 @@
-import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ChevronDown, Globe } from 'lucide-react';
 import { Button } from '../Button/Button';
+import { ClickOnMount } from '../../../storybook/ClickOnMount/ClickOnMount';
+import { PlacementCell } from '../../../storybook/PlacementCell/PlacementCell';
+import { VariantRow } from '../../../storybook/VariantMatrix/VariantRow';
 import { Dropdown } from './Dropdown';
 import { DropdownOption } from './DropdownOption';
+import type { DropdownProps } from './Dropdown.types';
+
+type MatrixPlacement = NonNullable<DropdownProps['placement']>;
+
+const MATRIX_PLACEMENTS: readonly MatrixPlacement[] = [
+  'bottom-start',
+  'bottom-end',
+  'top-start',
+  'top-end',
+];
+const LANGUAGES = [
+  { code: 'uk', label: 'Українська', flag: '🇺🇦' },
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'pl', label: 'Polski', flag: '🇵🇱' },
+];
 
 const meta = {
   title: 'Una/Feedback/Dropdown',
@@ -36,73 +52,43 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const LANGUAGES = [
-  { code: 'uk', label: 'Українська', flag: '🇺🇦' },
-  { code: 'en', label: 'English', flag: '🇬🇧' },
-  { code: 'pl', label: 'Polski', flag: '🇵🇱' },
-];
-
-const OptionsDemo = (args: React.ComponentProps<typeof Dropdown>) => {
-  const [selectedCode, setSelectedCode] = useState('uk');
-
-  return (
-    <Dropdown {...args}>
-      {(close) =>
-        LANGUAGES.map((language) => (
-          <DropdownOption
-            key={language.code}
-            icon={language.flag}
-            isSelected={language.code === selectedCode}
-            onSelect={() => {
-              setSelectedCode(language.code);
-              close();
-            }}
-          >
-            {language.label}
-          </DropdownOption>
-        ))
-      }
-    </Dropdown>
-  );
-};
-
-export const Options: Story = {
-  render: OptionsDemo,
+export const Matrix: Story = {
   args: {
-    isPadded: true,
-    placement: 'bottom-end',
-    renderTrigger: (triggerProps, isOpen) => (
-      <Button variant="secondary" aria-label="Select language" {...triggerProps}>
-        <Globe size={16} />
-        <ChevronDown size={14} style={{ transform: isOpen ? 'rotate(180deg)' : undefined }} />
-      </Button>
-    ),
     children: null,
+    renderTrigger: () => null,
   },
-};
-
-export const FreeContent: Story = {
-  args: {
-    placement: 'bottom-start',
-    width: 280,
-    renderTrigger: (triggerProps) => (
-      <Button variant="secondary" {...triggerProps}>
-        Notifications
-      </Button>
-    ),
-    children: (
-      <div style={{ padding: 'var(--space-16)' }}>
-        <strong>No new notifications</strong>
-        <p style={{ margin: 'var(--space-8) 0 0' }}>Anything can be placed inside the panel.</p>
-      </div>
-    ),
+  parameters: {
+    layout: 'padded',
   },
-};
-
-export const OpensUpwards: Story = {
-  render: OptionsDemo,
-  args: {
-    ...Options.args,
-    placement: 'top-start',
-  },
+  render: () => (
+    <VariantRow
+      columns={MATRIX_PLACEMENTS}
+      renderCell={(placement: MatrixPlacement) => (
+        <ClickOnMount selector="button">
+          <PlacementCell placement={placement}>
+            <Dropdown
+              isPadded
+              placement={placement}
+              renderTrigger={(triggerProps) => (
+                <Button variant="secondary" {...triggerProps}>
+                  Open
+                </Button>
+              )}
+            >
+              {LANGUAGES.map((language, index) => (
+                <DropdownOption
+                  key={language.code}
+                  icon={language.flag}
+                  isSelected={index === 0}
+                  onSelect={() => {}}
+                >
+                  {language.label}
+                </DropdownOption>
+              ))}
+            </Dropdown>
+          </PlacementCell>
+        </ClickOnMount>
+      )}
+    />
+  ),
 };
