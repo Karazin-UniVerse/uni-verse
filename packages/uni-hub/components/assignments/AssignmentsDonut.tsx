@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { PieChart } from 'lucide-react';
 import type { Assignment, Grade } from '@uni-hub/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { getGradeCourseName, getValidGrades } from '@uni-hub/utils/grades';
 import { Chart } from '@una';
+import styles from './AssignmentsDonut.module.scss';
 
 type AssignmentsDonutProps = {
   assignments: Assignment[];
@@ -97,12 +99,23 @@ export const AssignmentsDonut: React.FC<AssignmentsDonutProps> = ({ assignments,
   }, [assignments, grades, nowSec, formatMessage]);
 
   return (
-    <Chart
-      type="donut"
-      title={formatMessage('donut.title')}
-      data={segments}
-      height={DONUT_CHART_HEIGHT}
-      emptyDescription={formatMessage('donut.empty')}
-    />
+    <section className={styles.donutPanel} aria-label={formatMessage('donut.title')}>
+      <div className={styles.panelHeader}>
+        <h3>
+          <PieChart size={18} className={styles.headerIcon} />
+          <span>{formatMessage('donut.title')}</span>
+        </h3>
+      </div>
+
+      <div className={styles.chartWrapper}>
+        <Chart
+          type="donut"
+          data={segments}
+          height={DONUT_CHART_HEIGHT}
+          emptyDescription={formatMessage('donut.empty')}
+          className={styles.donutChart}
+        />
+      </div>
+    </section>
   );
 };
