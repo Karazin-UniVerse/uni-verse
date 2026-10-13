@@ -153,7 +153,6 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
                 {(app.status === 'SUBMITTED' || app.status === 'UNDER_REVIEW') && (
                   <Button
                     variant="secondary"
-                    size="medium"
                     className={styles.withdrawBtn}
                     onClick={() => onWithdraw(app.id)}
                   >

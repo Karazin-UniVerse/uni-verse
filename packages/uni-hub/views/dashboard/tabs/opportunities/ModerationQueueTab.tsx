@@ -135,7 +135,6 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
               <div className={styles.moderationActions}>
                 <Button
                   variant="primary"
-                  size="medium"
                   className={styles.approveBtn}
                   onClick={() => onModerate(item.id, 'APPROVE')}
                 >
@@ -144,7 +143,6 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                 </Button>
                 <Button
                   variant="secondary"
-                  size="medium"
                   className={styles.reviseBtn}
                   onClick={() => onOpenRejectModal(item.id)}
                 >
@@ -153,7 +151,6 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                 </Button>
                 <Button
                   variant="secondary"
-                  size="medium"
                   className={styles.rejectBtn}
                   onClick={() => onOpenRejectModal(item.id)}
                 >
