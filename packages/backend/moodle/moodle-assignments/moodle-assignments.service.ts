@@ -83,11 +83,17 @@ export class MoodleAssignmentsService {
                       assign.id,
                     );
 
+                    const isCompleted =
+                      sub.status === 'submitted' || sub.status === 'graded';
+
                     assign.submissionStatus = sub.status;
                     assign.grade = sub.grade;
                     assign.graded = sub.status === 'graded';
-                    assign.submittedAt = sub.submittedAt;
+                    assign.submittedAt = isCompleted
+                      ? sub.submittedAt
+                      : undefined;
                     assign.isLate = Boolean(
+                      isCompleted &&
                       sub.submittedAt &&
                       assign.duedate > 0 &&
                       sub.submittedAt > assign.duedate,
@@ -130,8 +136,13 @@ export class MoodleAssignmentsService {
 
     const submissionStatus = data?.lastattempt?.submission?.status ?? 'new';
     const gradingStatus = data?.lastattempt?.gradingstatus;
+    const storedGrade = data?.feedback?.grade?.grade;
     const rawGrade =
-      data?.feedback?.grade?.gradefordisplay ?? data?.feedback?.grade?.grade;
+      storedGrade !== undefined &&
+      storedGrade !== null &&
+      Number(storedGrade) === -1
+        ? undefined
+        : (data?.feedback?.grade?.gradefordisplay ?? storedGrade);
 
     let grade: string | undefined;
 
@@ -145,7 +156,10 @@ export class MoodleAssignmentsService {
 
     const finalStatus =
       gradingStatus === 'graded' ? 'graded' : submissionStatus;
-    const submittedAt = data?.lastattempt?.submission?.timemodified;
+    const isSubmitted = finalStatus === 'submitted' || finalStatus === 'graded';
+    const submittedAt = isSubmitted
+      ? data?.lastattempt?.submission?.timemodified
+      : undefined;
 
     return { status: finalStatus, grade, submittedAt };
   }
