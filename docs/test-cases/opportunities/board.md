@@ -127,15 +127,16 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 
 ---
 
-### TC-OPP-09 Only opportunities submitted for review can be moderated
+### TC-OPP-09 Moderation actions apply only to the allowed statuses
 
 - covers: REQ-OPP-03.1, REQ-OPP-02.4
 - type: error
 - priority: medium
 - preconditions: moderator is signed in; opportunities exist in draft, requires changes, rejected and published
 - steps:
-  1. Send each moderation action (approve, return, reject) for each of the four opportunities.
-- expected: every request is refused and no status changes; in particular a rejected opportunity cannot be reopened.
+  1. Send the approve action for each of the four opportunities.
+  2. Send the return and the reject actions, with a comment, for the draft, the requires-changes and the rejected opportunity.
+- expected: every request is refused and no status changes; in particular a rejected opportunity cannot be reopened. Returning or rejecting the published one is allowed and is covered by TC-OPP-60.
 - verification: unit
 - automated-at: -
 
@@ -171,47 +172,15 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 
 ---
 
-### TC-OPP-13 A moderator hides a published opportunity
-
-- covers: REQ-OPP-04.1, REQ-OPP-04.2, REQ-OPP-04.4, REQ-OPP-09.4
-- type: functional
-- priority: medium
-- preconditions: a published opportunity with one application exists; moderator is signed in
-- steps:
-  1. As the moderator, hide the opportunity from the moderation tab.
-  2. As the applicant, open the catalog and try to apply to the opportunity by its address.
-  3. As the owner, open my opportunities, the applications of that opportunity and the notifications.
-- expected: the opportunity is not in the catalog; applying is refused; its moderation status stays published and its phase is unchanged; the owner still sees it and the application and has a notification about the hiding; its visibility shows hidden by moderator.
-- verification: playwright
-- automated-at: -
-
----
-
-### TC-OPP-14 An owner hides and shows their own opportunity
-
-- covers: REQ-OPP-17.1, REQ-OPP-17.2, REQ-OPP-17.3, REQ-OPP-09.4
-- type: functional
-- priority: medium
-- preconditions: owner has a published opportunity with one application
-- steps:
-  1. As the owner, hide the opportunity.
-  2. As the applicant, open the catalog.
-  3. As the owner, make it visible again.
-- expected: after step 1 the visibility shows hidden by owner; in step 2 the opportunity is not in the catalog; after step 3 it is back in the catalog; the moderation status, the phase and the application are the same throughout.
-- verification: playwright
-- automated-at: -
-
----
-
-### TC-OPP-15 The catalog lists only published, visible opportunities
+### TC-OPP-15 The catalog lists only published opportunities in the start or active phase
 
 - covers: REQ-OPP-05.1
 - type: functional
 - priority: high
-- preconditions: one opportunity in each status exists (draft, ready for review, requires changes, published, rejected), one published opportunity hidden by its owner and one hidden by a moderator; applicant is signed in
+- preconditions: one opportunity in each status exists (draft, ready for review, requires changes, published, rejected); published opportunities exist in each phase (start, active, paused, completed, cancelled); applicant is signed in
 - steps:
   1. Open the catalog.
-- expected: only the published opportunity that is visible is listed.
+- expected: only the published opportunities in the start and active phases are listed.
 - verification: playwright
 - automated-at: -
 
@@ -281,7 +250,7 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 - covers: REQ-OPP-06.4
 - type: functional
 - priority: medium
-- preconditions: published opportunities in different phases exist
+- preconditions: published opportunities in the start and in the active phase exist
 - steps:
   1. Filter by one phase (for example `opportunities.detailModal.phaseActive`).
 - expected: only the opportunities in that phase are listed.
@@ -349,17 +318,17 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 
 ---
 
-### TC-OPP-27 An unpublished opportunity is hidden from other users
+### TC-OPP-27 An opportunity outside the catalog is hidden from other users
 
 - covers: REQ-OPP-07.3
 - type: error
 - priority: high
-- preconditions: owner has a draft opportunity; applicant and moderator exist
+- preconditions: owner has a draft opportunity and a published opportunity in the paused phase; a user with no application to them and a moderator exist
 - steps:
-  1. As the applicant, open the draft by its address.
-  2. As the owner, open it.
-  3. As the moderator, open it.
-- expected: step 1 is refused (not found or forbidden); steps 2 and 3 show it.
+  1. As that user, open the draft by its address, then the paused one.
+  2. As the owner, open both.
+  3. As the moderator, open both.
+- expected: step 1 is refused (not found or forbidden) for both; steps 2 and 3 show both.
 - verification: unit
 - automated-at: -
 
@@ -426,7 +395,7 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 - covers: REQ-OPP-10.1, REQ-OPP-10.2, REQ-OPP-10.3
 - type: functional
 - priority: high
-- preconditions: published, visible opportunities exist in the start and in the active phase; applicant is signed in
+- preconditions: published opportunities exist in the start and in the active phase; applicant is signed in
 - steps:
   1. Open the opportunity in the start phase and choose apply (`opportunities.detailModal.apply`).
   2. Fill in the contact, the motivation and the short description of the candidate and send.
@@ -570,9 +539,9 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 - steps:
   1. As the owner, create an opportunity and submit it.
   2. As the moderator, return it for changes; as the owner, resubmit it.
-  3. As the moderator, approve it; as the owner, edit it; as the moderator, approve it again; as the owner, hide it.
+  3. As the moderator, approve it; as the owner, edit it.
   4. As the moderator, open the notifications.
-- expected: the moderator has notifications for the new or submitted opportunity, for the resubmission, for the change of the published opportunity and for hiding it.
+- expected: the moderator has notifications for the new or submitted opportunity, for the resubmission and for the edit of the published opportunity, which sends it back to review.
 - verification: playwright
 - automated-at: -
 
@@ -640,10 +609,10 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 
 ### TC-OPP-46 Applying to an opportunity that cannot take applications is refused
 
-- covers: REQ-OPP-10.1, REQ-OPP-04.2
+- covers: REQ-OPP-10.1, REQ-OPP-18.3
 - type: error
 - priority: medium
-- preconditions: opportunities exist: a draft, one hidden by a moderator, one in the paused phase and one in the completed phase; applicant is signed in
+- preconditions: opportunities exist: a draft, a published one returned for changes by a moderator, a rejected one, one in the paused phase, one in the completed phase and one in the cancelled phase; applicant is signed in
 - steps:
   1. Send an application (`POST /opportunities/:id/apply`) for each of them.
 - expected: all requests are refused and no application is created.
@@ -669,7 +638,7 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 
 ---
 
-### TC-OPP-48 The phase changes independently of the status and visibility
+### TC-OPP-48 The phase changes independently of the status
 
 - covers: REQ-OPP-09.2, REQ-OPP-09.3
 - type: functional
@@ -677,7 +646,7 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 - preconditions: the owner has a draft and a published opportunity
 - steps:
   1. On each, change the phase through start, active, paused, completed, cancelled.
-- expected: after each change the phase shows the matching `opportunities.detailModal.phase…` label; the moderation status and the visibility do not change; a new opportunity starts in the start phase.
+- expected: after each change the phase shows the matching `opportunities.detailModal.phase…` label; the moderation status does not change; a new opportunity starts in the start phase.
 - verification: playwright
 - automated-at: -
 
@@ -714,21 +683,6 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 
 ---
 
-### TC-OPP-53 Only a moderator can lift a moderator's hiding
-
-- covers: REQ-OPP-04.3
-- type: error
-- priority: medium
-- preconditions: a published opportunity is hidden by a moderator
-- steps:
-  1. As the owner, try to make it visible again.
-  2. As a moderator, make it visible again.
-- expected: step 1 is refused and the opportunity stays hidden; step 2 shows it in the catalog again.
-- verification: unit
-- automated-at: -
-
----
-
 ### TC-OPP-54 An owner cannot apply to their own opportunity
 
 - covers: REQ-OPP-10.5
@@ -758,14 +712,14 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
 
 ---
 
-### TC-OPP-56 An owner decides on applications of a hidden, paused, cancelled or completed opportunity
+### TC-OPP-56 An owner decides on applications of a paused, cancelled, completed or taken-down opportunity
 
 - covers: REQ-OPP-12.4
 - type: state
 - priority: medium
 - preconditions: an opportunity has applications in sent; the owner is signed in
 - steps:
-  1. Put the opportunity, one at a time, into: hidden by a moderator, paused, cancelled, completed.
+  1. Put the opportunity, one at a time, into: returned for changes by a moderator after publication, rejected by a moderator after publication, the paused phase, the cancelled phase, the completed phase.
   2. In each state set one application to accepted and one to rejected as the owner.
 - expected: in every state the owner can decide on the existing applications; new applications are refused in each of them.
 - verification: unit
@@ -813,6 +767,122 @@ Users in the preconditions: owner (an ordinary signed-in user who creates opport
   1. Open the catalog address in the browser.
   2. Open the address of an opportunity in the browser.
 - expected: the browser goes to the sign-in page both times and no opportunity data is shown.
+- verification: playwright
+- automated-at: -
+
+---
+
+### TC-OPP-60 A moderator takes down a published opportunity
+
+- covers: REQ-OPP-18.1, REQ-OPP-18.2, REQ-OPP-18.3, REQ-OPP-03.9
+- type: state
+- priority: medium
+- preconditions: two published opportunities in the active phase, each with one application, exist; moderator is signed in
+- steps:
+  1. As the moderator, choose return for changes (`opportunities.moderation.revise`) on the first one, leave the comment empty and try to confirm.
+  2. Enter the comment "Outdated" and confirm.
+  3. As the applicant, open the catalog and send an application to the first one (`POST /opportunities/:id/apply`).
+  4. As the owner, open my opportunities, the applications of the first one and the notifications.
+  5. As the moderator, reject the second one with the comment "Out of scope".
+  6. As the owner, try to edit the second one.
+- expected: step 1 is not performed; after step 2 the status is `opportunities.status.requiresChanges`, the opportunity is not in the catalog, the comment "Outdated" is stored with the moderator as its author and the owner is notified; step 3 is refused; in step 4 the owner sees the opportunity with the comment, its phase is still active and the application is kept; after step 5 the status is `opportunities.status.rejected`, the opportunity is not in the catalog and the owner is notified; step 6 is refused.
+- verification: playwright
+- automated-at: -
+
+---
+
+### TC-OPP-61 An owner takes an opportunity out of the catalog by changing the phase
+
+- covers: REQ-OPP-09.3, REQ-OPP-05.1
+- type: state
+- priority: medium
+- preconditions: owner has a published opportunity in the active phase with one application
+- steps:
+  1. As the owner, change the phase to paused.
+  2. As the applicant, open the catalog.
+  3. As the owner, change the phase back to active.
+  4. Repeat steps 1 to 3 with the phases completed and cancelled.
+- expected: after step 1 (and after the same step for completed and cancelled) the opportunity is not in the catalog, but the owner still sees it in my opportunities; its status stays published and the application is unchanged; after step 3 it is in the catalog again.
+- verification: playwright
+- automated-at: -
+
+---
+
+### TC-OPP-62 Any moderator can moderate any opportunity
+
+- covers: REQ-OPP-03.8, REQ-OPP-03.9
+- type: functional
+- priority: medium
+- preconditions: two moderators, A and B, exist; an owner who is neither of them has an opportunity in ready for review
+- steps:
+  1. As moderator A, return the opportunity for changes with the comment "Add a deadline".
+  2. As the owner, edit and submit it again.
+  3. As moderator B, return it for changes with the comment "Add a budget".
+  4. Read the stored comment of the opportunity.
+- expected: both moderators' actions are accepted without any assignment; the opportunity keeps only the comment "Add a budget", and its author is moderator B.
+- verification: unit
+- automated-at: -
+
+---
+
+### TC-OPP-63 The owner's comment on a decision belongs to the application
+
+- covers: REQ-OPP-12.5, REQ-OPP-11.1
+- type: functional
+- priority: medium
+- preconditions: owner has an application in sent
+- steps:
+  1. As the owner, accept the application with the comment "Welcome".
+  2. As the owner, change the decision to rejected with the comment "Position filled".
+  3. Read the stored comment of the application and open my applications as the applicant.
+  4. As the owner, change the decision to under review without a comment and read the stored comment again.
+- expected: after step 2 the application has one comment, "Position filled", and its author is the owner; in step 3 the applicant sees "Position filled" and does not see "Welcome"; after step 4 the application has no comment.
+- verification: unit
+- automated-at: -
+
+---
+
+### TC-OPP-64 A notification stores its type and values, not a ready text
+
+- covers: REQ-OPP-13.7, REQ-OPP-13.3
+- type: functional
+- priority: medium
+- preconditions: a moderator returned an owner's opportunity with the comment "Add a deadline"
+- steps:
+  1. Read the stored notification of the owner.
+  2. Build its text for the Ukrainian and for the English interface.
+- expected: the stored notification has a type and the values it needs (the opportunity and the comment) and no ready text; the two built texts are in the matching languages and contain the opportunity title and the comment "Add a deadline".
+- verification: unit
+- automated-at: -
+
+---
+
+### TC-OPP-65 An applicant opens an opportunity that left the catalog, read-only
+
+- covers: REQ-OPP-07.4, REQ-OPP-07.3
+- type: state
+- priority: medium
+- preconditions: applicant has an application to a published opportunity whose owner then changed the phase to paused; a second user has no application to it
+- steps:
+  1. As the applicant, open my applications and open the opportunity.
+  2. Look for the apply button.
+  3. As the second user, open the opportunity by its address.
+- expected: step 1 shows the opportunity; step 2 finds no apply button; step 3 is refused (not found or forbidden).
+- verification: playwright
+- automated-at: -
+
+---
+
+### TC-OPP-66 My opportunities and the moderation tab filter by phase
+
+- covers: REQ-OPP-06.6
+- type: functional
+- priority: low
+- preconditions: owner has opportunities in the start, active and paused phases; moderator is signed in
+- steps:
+  1. As the owner, open my opportunities and filter by the paused phase.
+  2. As the moderator, open the moderation tab and filter by the paused phase.
+- expected: each list shows only the opportunities in the paused phase.
 - verification: playwright
 - automated-at: -
 
