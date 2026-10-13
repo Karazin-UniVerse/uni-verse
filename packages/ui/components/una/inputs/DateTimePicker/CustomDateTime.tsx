@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useId } from 'react';
+import React, { useState, useRef, useEffect, useId, useMemo } from 'react';
 import clsx from 'clsx';
 import css from './CustomDateTime.module.scss';
 import { TextInput } from '../TextInput/TextInput';
@@ -24,6 +24,11 @@ const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 export function CustomDateTime({
   selected,
   onChange,
+  className,
+  clearLabel,
+  locale,
+  todayLabel,
+  showTime = true,
   size = 'medium',
   ...props
 }: Readonly<CustomDateTimeProps>) {
@@ -41,6 +46,32 @@ export function CustomDateTime({
       setViewDate(selected);
     }
   }
+
+  const months = useMemo(() => {
+    try {
+      const formatter = new Intl.DateTimeFormat(locale, { month: 'long' });
+
+      return Array.from({ length: 12 }, (_, index) => {
+        const monthName = formatter.format(new Date(2026, index, 1));
+
+        return monthName.charAt(0).toUpperCase() + monthName.slice(1);
+      });
+    } catch {
+      return MONTHS;
+    }
+  }, [locale]);
+
+  const weekdays = useMemo(() => {
+    try {
+      const formatter = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+
+      return Array.from({ length: 7 }, (_, index) =>
+        formatter.format(new Date(2026, 0, 4 + index)),
+      );
+    } catch {
+      return WEEKDAYS;
+    }
+  }, [locale]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -97,7 +128,7 @@ export function CustomDateTime({
   const handleDayClick = (dayInfo: (typeof days)[0]) => {
     const newDate = new Date(year, month + dayInfo.monthOffset, dayInfo.day);
 
-    if (selected) {
+    if (selected && showTime) {
       newDate.setHours(selected.getHours());
       newDate.setMinutes(selected.getMinutes());
     } else {
@@ -106,6 +137,10 @@ export function CustomDateTime({
 
     onChange(newDate);
     setViewDate(newDate);
+
+    if (!showTime) {
+      setIsOpen(false);
+    }
   };
 
   const handleTimeClick = (hours: number, minutes: number) => {
@@ -136,7 +171,15 @@ export function CustomDateTime({
       return '';
     }
 
-    const formattedDate = `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+    if (!showTime) {
+      return new Intl.DateTimeFormat(locale, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }).format(date);
+    }
+
+    const formattedDate = `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
     const rawHours = date.getHours();
     const minutes = date.getMinutes().toString().padStart(2, '0');
     const meridiem = rawHours >= 12 ? 'PM' : 'AM';
@@ -159,7 +202,7 @@ export function CustomDateTime({
   };
 
   return (
-    <div className={css.wrapper} ref={containerRef}>
+    <div className={clsx(css.wrapper, className)} ref={containerRef}>
       <TextInput
         {...props}
         size={size}
@@ -176,7 +219,7 @@ export function CustomDateTime({
         <dialog
           open
           id={pickerDialogId}
-          aria-label="Date and time picker"
+          aria-label={showTime ? 'Date and time picker' : 'Date picker'}
           className={clsx(css.popper, css[`size-${size}`])}
         >
           <div className={css.calendar}>
@@ -194,7 +237,7 @@ export function CustomDateTime({
                   value={month}
                   onChange={(event) => setViewDate(new Date(year, Number(event.target.value), 1))}
                 >
-                  {MONTHS.map((monthName, monthIndex) => (
+                  {months.map((monthName, monthIndex) => (
                     <option key={monthName} value={monthIndex}>
                       {monthName}
                     </option>
@@ -222,7 +265,7 @@ export function CustomDateTime({
             </div>
 
             <div className={css.dayNames}>
-              {WEEKDAYS.map((weekday) => (
+              {weekdays.map((weekday) => (
                 <div key={weekday} className={css.dayName}>
                   {weekday}
                 </div>
@@ -252,29 +295,70 @@ export function CustomDateTime({
                 );
               })}
             </div>
-          </div>
 
-          <div className={css.timeContainer}>
-            <div className={css.timeHeader}>Time</div>
-            <div className={css.timeList} ref={timeListRef}>
-              {timeOptions.map((timeOption) => {
-                const isSelected =
-                  selected?.getHours() === timeOption.hours &&
-                  selected.getMinutes() === timeOption.minutes;
-
-                return (
+            {(clearLabel || todayLabel) && (
+              <div className={css.footer}>
+                {clearLabel && (
                   <button
-                    key={`${timeOption.hours}-${timeOption.minutes}`}
                     type="button"
-                    className={clsx(css.timeItem, isSelected && css.selected)}
-                    onClick={() => handleTimeClick(timeOption.hours, timeOption.minutes)}
+                    className={css.footerButton}
+                    onClick={() => {
+                      onChange(null);
+                      setIsOpen(false);
+                    }}
                   >
-                    {formatTime(timeOption.hours, timeOption.minutes)}
+                    {clearLabel}
                   </button>
-                );
-              })}
-            </div>
+                )}
+                {todayLabel && (
+                  <button
+                    type="button"
+                    className={css.footerButton}
+                    onClick={() => {
+                      const today = new Date();
+
+                      if (!showTime) {
+                        today.setHours(0, 0, 0, 0);
+                      }
+
+                      onChange(today);
+                      setViewDate(today);
+
+                      if (!showTime) {
+                        setIsOpen(false);
+                      }
+                    }}
+                  >
+                    {todayLabel}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
+
+          {showTime && (
+            <div className={css.timeContainer}>
+              <div className={css.timeHeader}>Time</div>
+              <div className={css.timeList} ref={timeListRef}>
+                {timeOptions.map((timeOption) => {
+                  const isSelected =
+                    selected?.getHours() === timeOption.hours &&
+                    selected.getMinutes() === timeOption.minutes;
+
+                  return (
+                    <button
+                      key={`${timeOption.hours}-${timeOption.minutes}`}
+                      type="button"
+                      className={clsx(css.timeItem, isSelected && css.selected)}
+                      onClick={() => handleTimeClick(timeOption.hours, timeOption.minutes)}
+                    >
+                      {formatTime(timeOption.hours, timeOption.minutes)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </dialog>
       )}
     </div>

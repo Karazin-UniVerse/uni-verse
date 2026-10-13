@@ -3,6 +3,8 @@ export const uk = {
   'lang.uk': 'Українська',
   'lang.en': 'English',
   'lang.select': 'Мова інтерфейсу',
+  'common.clear': 'Очистити',
+  'common.today': 'Сьогодні',
 
   // Login
   'login.title': 'UNiHub',

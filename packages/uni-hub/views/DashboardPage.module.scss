@@ -818,6 +818,14 @@ $sidebar-collapsed-width: 88px;
   align-items: center;
 }
 
+.dateFilterInput {
+  width: 170px;
+
+  @include narrower-than('md') {
+    width: 100%;
+  }
+}
+
 .checkLabel {
   display: inline-flex;
   align-items: center;

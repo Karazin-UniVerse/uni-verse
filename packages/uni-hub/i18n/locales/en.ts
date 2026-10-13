@@ -5,6 +5,8 @@ export const en = {
   'lang.uk': 'Ukrainian',
   'lang.en': 'English',
   'lang.select': 'Interface Language',
+  'common.clear': 'Clear',
+  'common.today': 'Today',
 
   // Login
   'login.title': 'UNiHub',
