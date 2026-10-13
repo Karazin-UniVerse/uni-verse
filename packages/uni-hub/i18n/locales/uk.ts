@@ -222,6 +222,11 @@ export const uk = {
   'assignments.emptyNotFound': 'Завдань не знайдено',
   'assignments.emptyDateFilter': 'За обраними датами завдань не знайдено',
   'assignments.emptyAllDone': 'Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉',
+  'assignments.status.graded': 'Оцінено',
+  'assignments.status.awaitingReview': 'Очікує перевірки',
+  'assignments.status.overdue': 'Прострочено',
+  'assignments.status.inProgress': 'В процесі',
+  'assignments.status.submitted': 'Здано на перевірку',
 
   // Schedule View
   'schedule.modeMonth': 'Місяць',

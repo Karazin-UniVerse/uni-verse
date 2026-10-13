@@ -223,6 +223,11 @@ export const en = {
   'assignments.emptyDateFilter': 'No assignments found for selected dates',
   'assignments.emptyAllDone':
     'Hooray, all assignments completed! Time to relax or review lectures 🎉',
+  'assignments.status.graded': 'Graded',
+  'assignments.status.awaitingReview': 'Awaiting review',
+  'assignments.status.overdue': 'Overdue',
+  'assignments.status.inProgress': 'In progress',
+  'assignments.status.submitted': 'Submitted for review',
 
   // Schedule View
   'schedule.modeMonth': 'Month',

@@ -17,7 +17,7 @@ describe('getAssignmentStatusInfo', () => {
 
     expect(result).toEqual({
       tone: 'success',
-      label: 'Оцінено',
+      labelKey: 'assignments.status.graded',
     });
   });
 
@@ -31,7 +31,7 @@ describe('getAssignmentStatusInfo', () => {
 
     expect(result).toEqual({
       tone: 'warning',
-      label: 'Очікує перевірки',
+      labelKey: 'assignments.status.awaitingReview',
     });
   });
 
@@ -44,7 +44,7 @@ describe('getAssignmentStatusInfo', () => {
 
     expect(result).toEqual({
       tone: 'success',
-      label: 'Здано на перевірку',
+      labelKey: 'assignments.status.submitted',
     });
   });
 
@@ -57,7 +57,7 @@ describe('getAssignmentStatusInfo', () => {
 
     expect(result).toEqual({
       tone: 'danger',
-      label: 'Прострочено',
+      labelKey: 'assignments.status.overdue',
     });
   });
 
@@ -70,7 +70,7 @@ describe('getAssignmentStatusInfo', () => {
 
     expect(result).toEqual({
       tone: 'info',
-      label: 'В процесі',
+      labelKey: 'assignments.status.inProgress',
     });
   });
 
@@ -84,7 +84,7 @@ describe('getAssignmentStatusInfo', () => {
 
     expect(result).toEqual({
       tone: 'warning',
-      label: 'Очікує перевірки',
+      labelKey: 'assignments.status.awaitingReview',
     });
   });
 
@@ -98,7 +98,7 @@ describe('getAssignmentStatusInfo', () => {
 
     expect(result).toEqual({
       tone: 'success',
-      label: 'Оцінено',
+      labelKey: 'assignments.status.graded',
     });
   });
 
@@ -112,7 +112,7 @@ describe('getAssignmentStatusInfo', () => {
 
     expect(result).toEqual({
       tone: 'danger',
-      label: 'Прострочено',
+      labelKey: 'assignments.status.overdue',
     });
   });
 });

@@ -170,4 +170,18 @@ describe('AssignmentCard component', () => {
 
     expect(html).not.toContain('Оцінка:');
   });
+
+  it('renders in-progress status label when not completed and before deadline', () => {
+    const html = renderToString(
+      React.createElement(AssignmentCard, {
+        assignment: mockAssignment,
+        status: 'new',
+        nowSec: 1700000000,
+        soundEnabled: false,
+        onOpenAssignment: () => {},
+      }),
+    );
+
+    expect(html).toContain('В процесі');
+  });
 });
