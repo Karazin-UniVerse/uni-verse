@@ -43,7 +43,7 @@ For each thread, look at the code at HEAD and record a verdict with evidence (`f
 | ------------- | --------------------------------------------------------------------------------------------- |
 | `fix`         | Valid and a real improvement; do what the comment asks.                                       |
 | `alternative` | The problem is real but the suggested change is not the best one; do the simpler fix instead. |
-| `already`     | Already fixed or no longer applicable (outdated thread, moved code).                          |
+| `already`     | Checked at HEAD and already fixed or gone. An outdated flag alone is not evidence.            |
 | `reject`      | Not valid for this codebase, breaks something, or adds complexity; reply with the evidence.   |
 | `ask`         | Unclear, or in conflict with an earlier decision of the user.                                 |
 

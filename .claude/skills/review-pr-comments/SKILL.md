@@ -101,7 +101,7 @@ git commit -m "fix: address review feedback on <topic>"
 git push
 ```
 
-If the push is rejected or the pull request comes from a fork, stop and report; do not force-push.
+If the push is rejected, stop and report; do not force-push.
 
 Answer every handled thread in the thread itself, on the first comment of the thread (`comments.nodes[0].databaseId`):
 
