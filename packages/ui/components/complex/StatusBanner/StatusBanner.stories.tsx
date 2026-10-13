@@ -1,8 +1,18 @@
-import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { BREAKPOINTS } from '@core/constants/breakpoints';
 
+import { VariantMatrix } from '../../../storybook/VariantMatrix/VariantMatrix';
 import { StatusBanner } from './StatusBanner';
+import type { StatusBannerTone } from './StatusBanner.types';
+
+type MatrixIcon = 'with icon' | 'without icon';
+
+const MATRIX_TONES: Record<StatusBannerTone, string> = {
+  success: '🟢',
+  danger: '🔴',
+  warning: '⚠️',
+  info: 'ℹ️',
+};
+const MATRIX_ICONS: readonly MatrixIcon[] = ['with icon', 'without icon'];
 
 const meta = {
   title: 'Complex/StatusBanner',
@@ -11,13 +21,6 @@ const meta = {
   parameters: {
     layout: 'centered',
   },
-  decorators: [
-    (Story) => (
-      <div style={{ width: `${BREAKPOINTS.xs}px`, maxWidth: '100%' }}>
-        <Story />
-      </div>
-    ),
-  ],
   argTypes: {
     tone: {
       control: 'select',
@@ -34,34 +37,25 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Success: Story = {
-  args: {
-    tone: 'success',
-    icon: '🟢',
-    children: 'Admitted to the exam (45 / 60 pts — threshold of 30 pts reached)',
-  },
-};
-
-export const Danger: Story = {
-  args: {
-    tone: 'danger',
-    icon: '🔴',
-    children: 'Not admitted to the exam (22 / 60 pts — 8 pts needed to qualify)',
-  },
-};
-
-export const Warning: Story = {
-  args: {
-    tone: 'warning',
-    icon: '⚠️',
-    children: 'Notice: Submission deadline for the individual study plan ends in 2 days',
-  },
-};
-
-export const Info: Story = {
+export const Matrix: Story = {
   args: {
     tone: 'info',
-    icon: 'ℹ️',
-    children: 'Registration for elective courses in the spring semester is now open',
+    children: null,
   },
+  parameters: {
+    layout: 'padded',
+  },
+  render: () => (
+    <VariantMatrix
+      rows={Object.keys(MATRIX_TONES) as StatusBannerTone[]}
+      columns={MATRIX_ICONS}
+      renderCell={(tone: StatusBannerTone, icon: MatrixIcon) => (
+        <div style={{ width: '360px' }}>
+          <StatusBanner tone={tone} icon={icon === 'with icon' ? MATRIX_TONES[tone] : undefined}>
+            Registration for elective courses is now open
+          </StatusBanner>
+        </div>
+      )}
+    />
+  ),
 };
