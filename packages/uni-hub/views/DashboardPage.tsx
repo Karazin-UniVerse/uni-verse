@@ -249,6 +249,7 @@ const DashboardPage: React.FC = () => {
 
   // Spinner only after mount — keeps SSR and first client render identical
   const showUpdatingIndicator = mounted && loading && hasCachedData;
+  const showSkeleton = !mounted || (loading && !hasCachedData);
 
   return (
     <div
@@ -346,12 +347,12 @@ const DashboardPage: React.FC = () => {
               </Button>
             </output>
           )}
-          {loading && !hasCachedData ? (
+          {showSkeleton ? (
             <DashboardSkeleton />
           ) : (
             <motion.div
               key={activeKey}
-              initial={mounted ? { opacity: 0, y: 6 } : false}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
             >

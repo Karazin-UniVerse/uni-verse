@@ -171,18 +171,19 @@ export type FilterFallbackAssignmentsOptions = {
 
 export function filterFallbackAssignments({
   assignments,
-  hideCompleted,
+  hideCompleted: _hideCompleted,
   dateFrom,
   dateTo,
 }: FilterFallbackAssignmentsOptions): Assignment[] {
   let list = assignments ?? [];
 
-  if (hideCompleted) {
-    list = list.filter(
-      (assignment) =>
-        assignment.submissionStatus !== 'graded' && assignment.submissionStatus !== 'submitted',
-    );
-  }
+  list = list.filter(
+    (assignment) =>
+      assignment.submissionStatus !== 'graded' &&
+      assignment.submissionStatus !== 'submitted' &&
+      !assignment.isLate &&
+      !assignment.submittedAt,
+  );
 
   const fromSec = parseDateFilterSeconds(dateFrom);
 

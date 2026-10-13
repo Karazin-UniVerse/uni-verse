@@ -115,6 +115,7 @@ export const ScheduleView: React.FC = () => {
         {viewMode === 'day' && (
           <ScheduleDayView
             selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
             events={getEventsForDate(selectedDate)}
             locale={locale}
             getTypeName={getTypeName}

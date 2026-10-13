@@ -111,6 +111,7 @@ $space-64: 64px;
   --blue-900: #0f2860;
   --blue-1000: #60a5fa;
   --blue-1100: #93c5fd;
+  --blue-1200: #1e40af;
 
   /* Red Palette */
   --red-50: #fef2f2;
@@ -190,8 +191,6 @@ $space-64: 64px;
   --text-primary-rgb: 0, 0, 0;
 
   /* Chart tokens */
-  --chart-bg: var(--neutral-surface);
-  --chart-border: var(--neutral-border);
   --chart-grid: var(--gray-200);
   --chart-tick: var(--neutral-text-secondary);
   --chart-axis: var(--neutral-border);
@@ -211,8 +210,10 @@ $space-64: 64px;
   --chart-series-3: var(--chart-warning);
   --chart-series-4: var(--chart-danger);
   --chart-series-5: var(--chart-info);
-  --chart-glow: none;
   --chart-bar-radius: var(--border-radius-small);
+  --chart-bg: var(--bg-surface);
+  --chart-border: var(--card-border);
+  --chart-glow: var(--card-shadow);
 
   /* ==========================================================================
      4. COMPONENT & SEMANTIC ALIASES
@@ -281,8 +282,6 @@ $space-64: 64px;
   --text-primary-rgb: 248, 249, 250;
 
   /* Chart tokens */
-  --chart-bg: var(--neutral-surface);
-  --chart-border: var(--neutral-border);
   --chart-grid: rgb(255 255 255 / 8%);
   --chart-tick: var(--neutral-text-secondary);
   --chart-axis: var(--neutral-border);
@@ -302,8 +301,10 @@ $space-64: 64px;
   --chart-series-3: var(--chart-warning);
   --chart-series-4: var(--chart-danger);
   --chart-series-5: var(--chart-info);
-  --chart-glow: none;
   --chart-bar-radius: var(--border-radius-small);
+  --chart-bg: var(--bg-surface);
+  --chart-border: var(--card-border);
+  --chart-glow: var(--card-shadow);
 }
 
 /* -----------------------------------------
@@ -389,8 +390,6 @@ $space-64: 64px;
   --font-regular: var(--font-weight-regular) var(--font-md) / 1.4 var(--font-family-regular);
 
   /* Chart tokens */
-  --chart-bg: var(--cyberpunk-dark);
-  --chart-border: var(--cyberpunk-cyan);
   --chart-grid: rgb(0 240 255 / 18%);
   --chart-tick: var(--cyberpunk-cyan);
   --chart-axis: rgb(255 0 85 / 55%);
@@ -410,8 +409,10 @@ $space-64: 64px;
   --chart-series-3: var(--cyberpunk-pink);
   --chart-series-4: #7c5cff;
   --chart-series-5: #0f8;
-  --chart-glow: 0 0 12px rgb(0 240 255 / 35%), 0 0 24px rgb(255 0 85 / 18%);
   --chart-bar-radius: 0px;
+  --chart-bg: var(--bg-surface);
+  --chart-border: color-mix(in srgb, var(--accent-primary) 35%, transparent);
+  --chart-glow: 0 0 10px rgb(0 240 255 / 20%);
 }
 
 /* ==========================================================================

@@ -45,7 +45,16 @@ export const ContextualGreeting: React.FC<ContextualGreetingProps> = ({ assignme
 
   const cta = useMemo(() => {
     const upcoming = assignments
-      .filter((assignment) => assignment.duedate > nowSec)
+      .filter((assignment) => {
+        const isCompleted =
+          assignment.submissionStatus === 'submitted' ||
+          assignment.submissionStatus === 'graded' ||
+          Boolean(assignment.graded) ||
+          Boolean(assignment.grade) ||
+          Boolean(assignment.submittedAt);
+
+        return assignment.duedate > nowSec && !isCompleted;
+      })
       .sort((a, b) => a.duedate - b.duedate);
 
     if (upcoming.length === 0) {

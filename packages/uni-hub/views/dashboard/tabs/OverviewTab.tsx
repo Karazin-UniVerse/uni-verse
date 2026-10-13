@@ -41,7 +41,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     const nowSec = Math.floor(nowMs / 1000);
 
     return assignments
-      .filter((assignment) => assignment.duedate > nowSec)
+      .filter((assignment) => {
+        const isCompleted =
+          assignment.submissionStatus === 'submitted' ||
+          assignment.submissionStatus === 'graded' ||
+          Boolean(assignment.graded) ||
+          Boolean(assignment.grade) ||
+          Boolean(assignment.submittedAt);
+
+        return assignment.duedate > nowSec && !isCompleted;
+      })
       .sort(
         (firstAssignment, secondAssignment) => firstAssignment.duedate - secondAssignment.duedate,
       )[0];

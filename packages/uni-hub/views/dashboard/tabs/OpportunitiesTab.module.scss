@@ -72,8 +72,8 @@
 
   &.active {
     color: #fff;
-    background: var(--accent-active, #1d4ed8);
-    border-color: var(--accent-active, #1d4ed8);
+    background: var(--blue-600);
+    border-color: var(--blue-600);
   }
 }
 
@@ -123,8 +123,8 @@
   letter-spacing: 0.05em;
   padding: 3px 8px;
   border-radius: 6px;
-  background: rgb(29 78 216 / 10%);
-  color: var(--accent-active, #1d4ed8);
+  background: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  color: var(--blue-1000);
 }
 
 .cardTitle {
@@ -187,6 +187,16 @@
 
 .applyButton {
   text-decoration: none;
+
+  &:hover {
+    background-color: var(--blue-600);
+    border-color: var(--blue-600);
+    color: #fff;
+  }
+
+  &:active {
+    background-color: var(--blue-1200);
+  }
 }
 
 .btnIcon {

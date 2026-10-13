@@ -2,7 +2,9 @@
 
 import React, { useState, useMemo } from 'react';
 import { Filter } from 'lucide-react';
-import { TextInput as SimpleInput, Select, CheckBox, Button as SimpleButton } from '@una';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { Select, CheckBox, Button as SimpleButton } from '@una';
 import {
   AssignmentCard,
   AssignmentsEmptyState,
@@ -12,6 +14,24 @@ import { useNow } from '@uni-hub/hooks/useNow';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { AssignmentsTabProps } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
+
+function parseDate(value: string): Date | null {
+  if (!value) return null;
+
+  const date = new Date(`${value}T00:00:00`);
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function toDateString(date: Date | null): string {
+  if (!date) return '';
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
 
 export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   assignments,
@@ -26,28 +46,9 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   soundEnabled,
   onOpenAssignment,
 }) => {
-  const { localeTag, formatMessage } = useLanguage();
+  const { formatMessage } = useLanguage();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const localStatuses = useAssignmentStatuses(assignments);
-
-  const handleDateChange =
-    (setter: (value: string) => void) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      const value = event.target.value;
-
-      if (!value) {
-        setter('');
-
-        return;
-      }
-
-      const [yearStr] = value.split('-');
-
-      if (yearStr && yearStr.length > 4) {
-        return;
-      }
-
-      setter(value);
-    };
 
   const visibleAssignments = useMemo(() => {
     return assignments.filter((item) => {
@@ -77,27 +78,36 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
             : formatMessage('assignments.filters')}
         </SimpleButton>
       </div>
+
       <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
-        <SimpleInput
-          type="date"
-          lang={localeTag}
-          size="medium"
-          min="2000-01-01"
-          max="2099-12-31"
-          value={dateFrom}
-          onChange={handleDateChange(onDateFromChange)}
+        <DatePicker
+          selected={parseDate(dateFrom)}
+          onChange={(date: Date | null) => onDateFromChange(toDateString(date))}
+          dateFormat="yyyy-MM-dd"
+          isClearable
+          placeholderText={formatMessage('assignments.dateFrom')}
           aria-label={formatMessage('assignments.dateFrom')}
+          className={styles.dateInput}
+          calendarClassName={styles.dateCalendar}
+          todayButton={formatMessage('assignments.today') ?? 'Сьогодні'}
+          minDate={new Date(2000, 0, 1)}
+          maxDate={new Date(2099, 11, 31)}
         />
-        <SimpleInput
-          type="date"
-          lang={localeTag}
-          size="medium"
-          min="2000-01-01"
-          max="2099-12-31"
-          value={dateTo}
-          onChange={handleDateChange(onDateToChange)}
+
+        <DatePicker
+          selected={parseDate(dateTo)}
+          onChange={(date: Date | null) => onDateToChange(toDateString(date))}
+          dateFormat="yyyy-MM-dd"
+          isClearable
+          placeholderText={formatMessage('assignments.dateTo')}
           aria-label={formatMessage('assignments.dateTo')}
+          className={styles.dateInput}
+          calendarClassName={styles.dateCalendar}
+          todayButton={formatMessage('assignments.today') ?? 'Сьогодні'}
+          minDate={new Date(2000, 0, 1)}
+          maxDate={new Date(2099, 11, 31)}
         />
+
         <Select
           value={sortOrder}
           onChange={(value) => onSortOrderChange(value as 'asc' | 'desc')}
@@ -106,6 +116,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
             { value: 'desc', label: formatMessage('assignments.newestFirst') },
           ]}
         />
+
         <label className={styles.checkLabel}>
           <CheckBox
             variant="primary"

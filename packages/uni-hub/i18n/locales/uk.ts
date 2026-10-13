@@ -215,6 +215,8 @@ export const uk = {
   'schedule.typePractice': 'Практичне заняття',
   'schedule.typeExam': 'Іспит',
   'schedule.typeOther': 'Консультація',
+  'schedule.prevDay': 'Попередній день',
+  'schedule.nextDay': 'Наступний день',
 
   // Header & Audio
   'header.soundMute': 'Вимкнути звук',

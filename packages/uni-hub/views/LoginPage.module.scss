@@ -127,6 +127,12 @@
 
 .submit {
   width: 100%;
+
+  &:hover {
+    background-color: var(--blue-500);
+    border-color: var(--blue-500);
+    color: #fff;
+  }
 }
 
 .googleSection {
