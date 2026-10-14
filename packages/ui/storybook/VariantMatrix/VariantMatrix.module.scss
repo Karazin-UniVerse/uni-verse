@@ -1,0 +1,31 @@
+.matrix {
+  border-collapse: collapse;
+  font-family: var(--font-family-base);
+  color: var(--text-primary);
+
+  th,
+  td {
+    padding: var(--space-16) var(--space-24);
+    vertical-align: middle;
+  }
+
+  th {
+    font-size: var(--font-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  thead th {
+    text-align: center;
+  }
+
+  tbody th {
+    text-align: right;
+  }
+
+  tbody td {
+    border: 1px dashed var(--border-color);
+    text-align: center;
+  }
+}
