@@ -82,14 +82,10 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
               {new Date(opportunity.createdAt).toLocaleDateString(localeTag)}
             </span>
             <div className={styles.cardActions}>
-              <Button
-                variant="secondary"
-                size="small"
-                onClick={() => onOpenApplicants?.(opportunity)}
-              >
+              <Button variant="secondary" onClick={() => onOpenApplicants?.(opportunity)}>
                 {formatMessage('opportunities.card.applications')}
               </Button>
-              <Button variant="primary" size="small" onClick={() => onOpenDetail?.(opportunity)}>
+              <Button variant="primary" onClick={() => onOpenDetail?.(opportunity)}>
                 {formatMessage('opportunities.card.management')}
               </Button>
             </div>
