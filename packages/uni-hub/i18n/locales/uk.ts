@@ -3,6 +3,8 @@ export const uk = {
   'lang.uk': 'Українська',
   'lang.en': 'English',
   'lang.select': 'Мова інтерфейсу',
+  'common.clear': 'Очистити',
+  'common.today': 'Сьогодні',
 
   // Login
   'login.title': 'UNiHub',
@@ -210,6 +212,7 @@ export const uk = {
   'assignments.hideFilters': 'Сховати фільтри',
   'assignments.dateFrom': 'Дата від',
   'assignments.dateTo': 'Дата до',
+  'assignments.datePicker': 'Вибір дати',
   'assignments.oldestFirst': 'Спочатку старі',
   'assignments.newestFirst': 'Спочатку нові',
   'assignments.hideCompleted': 'Сховати виконані',
@@ -222,6 +225,11 @@ export const uk = {
   'assignments.emptyNotFound': 'Завдань не знайдено',
   'assignments.emptyDateFilter': 'За обраними датами завдань не знайдено',
   'assignments.emptyAllDone': 'Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉',
+  'assignments.status.graded': 'Оцінено',
+  'assignments.status.awaitingReview': 'Очікує перевірки',
+  'assignments.status.overdue': 'Прострочено',
+  'assignments.status.inProgress': 'В процесі',
+  'assignments.status.submitted': 'Здано на перевірку',
 
   // Schedule View
   'schedule.modeMonth': 'Місяць',

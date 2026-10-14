@@ -1,19 +1,18 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-
 import { VariantMatrix } from '../../../../storybook/VariantMatrix/VariantMatrix';
-import { CustomDateTime } from './CustomDateTime';
-import type { CustomDateTimeProps } from './DateTimePicker.types';
+import { DateTime } from './DateTime';
+import type { DateTimeProps } from './DateTime.types';
 
 type MatrixRow =
   'primary' | 'secondary' | 'transparent' | 'primary disabled' | 'secondary disabled';
-type MatrixSize = NonNullable<CustomDateTimeProps['size']>;
-type MatrixDateTimeProps = Omit<CustomDateTimeProps, 'selected' | 'onChange'>;
+type MatrixSize = NonNullable<DateTimeProps['size']>;
+type MatrixDateTimeProps = Omit<DateTimeProps, 'selected' | 'onChange'>;
 
 const MATRIX_DATE = new Date(2026, 0, 15, 12, 0);
 const MATRIX_ROWS: Record<
   MatrixRow,
-  Pick<CustomDateTimeProps, 'variant' | 'isTransparent' | 'disabled'>
+  Pick<DateTimeProps, 'variant' | 'isTransparent' | 'disabled'>
 > = {
   primary: { variant: 'primary' },
   secondary: { variant: 'secondary' },
@@ -26,12 +25,12 @@ const MATRIX_SIZES: readonly MatrixSize[] = ['small', 'medium', 'large'];
 function MatrixDateTime(props: MatrixDateTimeProps) {
   const [date, setDate] = useState<Date | null>(MATRIX_DATE);
 
-  return <CustomDateTime {...props} selected={date} onChange={setDate} />;
+  return <DateTime {...props} selected={date} onChange={setDate} />;
 }
 
-const meta: Meta<typeof CustomDateTime> = {
-  title: 'Una/Inputs/CustomDateTime',
-  component: CustomDateTime,
+const meta: Meta<typeof DateTime> = {
+  title: 'Una/Inputs/DateTime',
+  component: DateTime,
   tags: ['autodocs'],
   argTypes: {
     size: {
@@ -49,7 +48,7 @@ const meta: Meta<typeof CustomDateTime> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof CustomDateTime>;
+type Story = StoryObj<typeof DateTime>;
 
 export const Matrix: Story = {
   args: {

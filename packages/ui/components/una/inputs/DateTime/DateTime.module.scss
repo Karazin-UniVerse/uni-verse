@@ -95,6 +95,15 @@
     background-color: var(--bg-hover);
   }
 
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 1px;
+  }
+
   &.outside {
     color: var(--text-disabled);
   }
@@ -213,5 +222,39 @@
     width: 2.5rem;
     height: 2.5rem;
     font-size: var(--font-lg);
+  }
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--border-color);
+  margin-top: var(--space-8);
+}
+
+.footerButton {
+  background: none;
+  border: none;
+  color: var(--accent-primary);
+  cursor: pointer;
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--font-xs);
+  font-weight: 500;
+  border-radius: var(--border-radius-small);
+  transition: background-color var(--transition-fast) var(--ease-standard);
+
+  &:hover {
+    background-color: var(--bg-hover);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 1px;
   }
 }

@@ -68,7 +68,9 @@ const renderBarShape = (
 ) => {
   const { key: _key, ...restProps } = props as Record<string, unknown>;
 
-  return <Rectangle {...restProps} fill={(props.payload?.color ?? props.fill) as string} />;
+  return (
+    <Rectangle {...restProps} fill={(props.payload?.color ?? props.fill) as string} stroke="none" />
+  );
 };
 
 export function Chart({
@@ -178,6 +180,7 @@ export function Chart({
             radius={[0, barRadius, barRadius, 0]}
             maxBarSize={maxBarSize}
             isAnimationActive={animate}
+            activeBar={false}
             shape={renderBarShape}
           />
         </BarChart>
