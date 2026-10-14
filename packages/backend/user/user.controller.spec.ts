@@ -20,7 +20,7 @@ describe('UserController', () => {
     email: 'test@karazin.ua',
     name: 'Test Student',
     password: 'hashed-password',
-    roles: [Role.STUDENT],
+    roles: [Role.MOODLE_STUDENT],
     token: 'moodle-secret-token',
     moodleId: '12345',
     refreshToken: 'hashed-refresh-token',

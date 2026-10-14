@@ -10,6 +10,7 @@ import { GetCreds } from '../utils/get-creds';
 import { randomBytes } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
+import { Role } from '@universe/database';
 import { RegisterDto, LoginDto, GoogleAuthDto, LinkMoodleDto } from './dto';
 import {
   normalizeEmail,
@@ -281,9 +282,14 @@ export class AuthService {
       );
     }
 
+    const roles: Role[] = Array.from(
+      new Set([...user.roles, Role.MOODLE_STUDENT]),
+    );
+
     const updatedUser = await this.userService.updateUser(userId, {
       token: moodleToken,
       moodleId,
+      roles,
     });
 
     const tokens = await this.getTokens({
@@ -310,10 +316,14 @@ export class AuthService {
       throw new BadRequestException('User not found');
     }
 
+    const roles: Role[] = Array.from(
+      new Set([...user.roles, Role.OPPORTUNITIES_USER, Role.MOODLE_STUDENT]),
+    );
+
     const tokens = await this.getTokens({
       userId: user.id,
       email: user.email,
-      roles: user.roles,
+      roles,
     });
     const refreshTokenHash = await this.hashData(tokens.refresh_token);
 
@@ -321,6 +331,7 @@ export class AuthService {
       token: null,
       moodleId: null,
       refreshToken: refreshTokenHash,
+      roles,
     });
 
     return {

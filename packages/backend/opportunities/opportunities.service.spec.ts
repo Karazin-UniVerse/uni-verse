@@ -75,9 +75,9 @@ describe('OpportunitiesService', () => {
         status: 'DRAFT',
         ownerId: 'other',
       } as any);
-      await expect(service.findOne('1', 'user', ['STUDENT'])).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.findOne('1', 'user', ['MOODLE_STUDENT']),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('returns opportunity if unpublished and caller is owner', async () => {
@@ -86,7 +86,7 @@ describe('OpportunitiesService', () => {
         status: 'DRAFT',
         ownerId: 'owner1',
       } as any);
-      const res = await service.findOne('1', 'owner1', ['STUDENT']);
+      const res = await service.findOne('1', 'owner1', ['MOODLE_STUDENT']);
 
       expect(res).toEqual({ id: '1', status: 'DRAFT', ownerId: 'owner1' });
     });
@@ -187,7 +187,7 @@ describe('OpportunitiesService', () => {
     it('throws Forbidden if user is not OPPORTUNITIES_MODERATOR', async () => {
       jest
         .spyOn(prisma.user, 'findUnique')
-        .mockResolvedValue({ id: 'user1', roles: ['STUDENT'] } as any);
+        .mockResolvedValue({ id: 'user1', roles: ['MOODLE_STUDENT'] } as any);
       await expect(
         service.moderate('user1', 'opp1', {} as any),
       ).rejects.toThrow(ForbiddenException);

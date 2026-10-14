@@ -9,8 +9,8 @@ generator client {
 }
 
 enum Role {
-  USER
-  STUDENT
+  OPPORTUNITIES_USER
+  MOODLE_STUDENT
   INSTRUCTOR
   ADMIN
   OPPORTUNITIES_MODERATOR
@@ -21,7 +21,7 @@ model User {
   email        String   @unique
   name         String?
   password     String
-  roles        Role[]   @default([STUDENT])
+  roles        Role[]   @default([OPPORTUNITIES_USER])
   token        String?
   moodleId     String?
   refreshToken String?

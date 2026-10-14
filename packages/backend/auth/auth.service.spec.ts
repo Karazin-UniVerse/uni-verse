@@ -55,7 +55,7 @@ describe('AuthService', () => {
     id: 'user-uuid-1',
     email: 'student@student.karazin.ua',
     name: 'Test Student',
-    roles: [Role.STUDENT],
+    roles: [Role.OPPORTUNITIES_USER],
     password: 'hashed-password',
     token: 'moodle-token-123',
     moodleId: '5001',
@@ -772,6 +772,7 @@ describe('AuthService', () => {
       expect(mockUserService.updateUser).toHaveBeenCalledWith(sampleUser.id, {
         token: 'linked-moodle-token',
         moodleId: '7777',
+        roles: [Role.OPPORTUNITIES_USER, Role.MOODLE_STUDENT],
       });
     });
 
@@ -839,10 +840,13 @@ describe('AuthService', () => {
         token: null,
         moodleId: null,
         refreshToken: 'hashed-unlinked-rt',
+        roles: [Role.OPPORTUNITIES_USER, Role.MOODLE_STUDENT],
       });
       expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
         1,
-        expect.objectContaining({ roles: sampleUser.roles }),
+        expect.objectContaining({
+          roles: [Role.OPPORTUNITIES_USER, Role.MOODLE_STUDENT],
+        }),
         expect.any(Object),
       );
     });

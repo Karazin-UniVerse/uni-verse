@@ -7,7 +7,7 @@ BEGIN
       AND table_name = 'User'
       AND column_name = 'role'
   ) THEN
-    ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "roles" "Role"[] NOT NULL DEFAULT ARRAY['STUDENT']::"Role"[];
+    ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "roles" "Role"[] NOT NULL DEFAULT ARRAY['OPPORTUNITIES_USER']::"Role"[];
     UPDATE "User" SET "roles" = ARRAY["role"];
     ALTER TABLE "User" DROP COLUMN "role";
   END IF;
