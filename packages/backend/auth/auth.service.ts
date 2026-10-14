@@ -317,7 +317,7 @@ export class AuthService {
     }
 
     const roles: Role[] = Array.from(
-      new Set([...user.roles, Role.OPPORTUNITIES_USER, Role.MOODLE_STUDENT]),
+      new Set([...user.roles, Role.OPPORTUNITIES_USER]),
     );
 
     const tokens = await this.getTokens({
