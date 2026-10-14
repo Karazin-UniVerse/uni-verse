@@ -442,6 +442,8 @@ export const uk = {
   'opportunities.toast.sentToReview': 'Можливість надіслана на модерацію!',
   'opportunities.toast.genericError': 'Помилка',
   'opportunities.toast.stateUpdated': 'Стан проекту оновлено',
+  'opportunities.toast.updated': 'Зміни успішно збережено!',
+  'opportunities.toast.updateError': 'Помилка оновлення можливості',
   'opportunities.toast.statusUpdateError': 'Помилка оновлення статусу',
   'opportunities.confirm.withdraw': 'Ви впевнені, що бажаєте відкликати свій відгук?',
   'opportunities.confirm.withdrawTitle': 'Відкликання відгуку',
@@ -515,6 +517,7 @@ export const uk = {
 
   // Modals - Create
   'opportunities.createModal.title': 'Створити нову можливість',
+  'opportunities.createModal.editTitle': 'Редагувати можливість',
   'opportunities.createModal.titleLabel': 'Назва можливості *',
   'opportunities.createModal.titlePlaceholder': 'Наприклад: React-розробник у студентський стартап',
   'opportunities.createModal.descLabel': 'Опис, завдання та вимоги до кандидата *',
@@ -531,6 +534,7 @@ export const uk = {
   'opportunities.createModal.cancel': 'Скасувати',
   'opportunities.createModal.saving': 'Збереження...',
   'opportunities.createModal.submit': 'Створити чернетку',
+  'opportunities.createModal.saveChanges': 'Зберегти зміни',
 
   // Modals - Reject / Revise
   'opportunities.rejectModal.title': 'Зауваження або повернення на доопрацювання',
@@ -555,6 +559,8 @@ export const uk = {
   'opportunities.detailModal.contacts': 'Контакти для звʼязку:',
   'opportunities.detailModal.manageTitle': 'Керування вашою можливістю',
   'opportunities.detailModal.sendToReview': 'Надіслати на модерацію',
+  'opportunities.detailModal.edit': 'Редагувати',
+  'opportunities.detailModal.moderationFeedback': 'Зауваження модератора',
   'opportunities.detailModal.phaseLabel': 'Фаза:',
   'opportunities.detailModal.phaseStart': 'Старт',
   'opportunities.detailModal.phaseActive': 'Активна фаза',

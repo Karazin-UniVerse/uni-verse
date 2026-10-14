@@ -1,5 +1,5 @@
 import React, { useId } from 'react';
-import { Mail, Send } from 'lucide-react';
+import { Mail, Send, Pencil } from 'lucide-react';
 import { Modal } from '../../una/Modal';
 import { Button } from '../../una/Button';
 import { Tag } from '../../una/Tag';
@@ -24,6 +24,10 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
   contactValue,
   onSendToReview,
   sendToReviewText,
+  onEdit,
+  editText,
+  moderationComment,
+  moderationCommentTitle,
   manageTitle,
   phaseLabel,
   lifecycleState,
@@ -33,6 +37,7 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
   className,
   paymentTone = 'neutral',
   isOwner = false,
+  canEdit = false,
   canSendToReview = false,
   lifecycleOptions = [],
   canApply = false,
@@ -60,6 +65,15 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
           </div>
         )}
 
+        {isOwner && moderationComment && (
+          <div className={styles.moderationFeedbackBox}>
+            {moderationCommentTitle && (
+              <div className={styles.moderationFeedbackTitle}>{moderationCommentTitle}</div>
+            )}
+            <div className={styles.moderationFeedbackText}>{moderationComment}</div>
+          </div>
+        )}
+
         {descriptionText && (
           <div className={styles.detailSection}>
             <div className={styles.detailSectionTitle}>{descriptionTitle}</div>
@@ -82,12 +96,21 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
             <div className={styles.manageTitle}>{manageTitle}</div>
 
             <div className={styles.controlsRow}>
-              {canSendToReview && onSendToReview && (
-                <Button variant="primary" onClick={onSendToReview}>
-                  <Send size={14} className={styles.btnIcon} />
-                  {sendToReviewText}
-                </Button>
-              )}
+              <div className={styles.actionButtons}>
+                {canEdit && onEdit && (
+                  <Button variant="secondary" onClick={onEdit}>
+                    <Pencil size={14} className={styles.btnIcon} />
+                    {editText}
+                  </Button>
+                )}
+
+                {canSendToReview && onSendToReview && (
+                  <Button variant="primary" onClick={onSendToReview}>
+                    <Send size={14} className={styles.btnIcon} />
+                    {sendToReviewText}
+                  </Button>
+                )}
+              </div>
 
               {onLifecycleChange && lifecycleOptions.length > 0 && (
                 <div className={styles.phaseWrapper}>

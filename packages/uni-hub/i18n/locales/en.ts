@@ -441,6 +441,8 @@ export const en = {
   'opportunities.toast.sentToReview': 'Opportunity sent for moderation!',
   'opportunities.toast.genericError': 'Error',
   'opportunities.toast.stateUpdated': 'Project state updated',
+  'opportunities.toast.updated': 'Changes saved successfully!',
+  'opportunities.toast.updateError': 'Failed to update opportunity',
   'opportunities.toast.statusUpdateError': 'Error updating status',
   'opportunities.confirm.withdraw': 'Are you sure you want to withdraw your application?',
   'opportunities.confirm.withdrawTitle': 'Withdraw application',
@@ -514,6 +516,7 @@ export const en = {
 
   // Modals - Create
   'opportunities.createModal.title': 'Create New Opportunity',
+  'opportunities.createModal.editTitle': 'Edit opportunity',
   'opportunities.createModal.titleLabel': 'Opportunity Title *',
   'opportunities.createModal.titlePlaceholder': 'E.g.: React Developer in a student startup',
   'opportunities.createModal.descLabel': 'Description, tasks, and requirements *',
@@ -530,6 +533,7 @@ export const en = {
   'opportunities.createModal.cancel': 'Cancel',
   'opportunities.createModal.saving': 'Saving...',
   'opportunities.createModal.submit': 'Create Draft',
+  'opportunities.createModal.saveChanges': 'Save changes',
 
   // Modals - Reject / Revise
   'opportunities.rejectModal.title': 'Feedback or Return for Revision',
@@ -552,6 +556,8 @@ export const en = {
   'opportunities.detailModal.contacts': 'Contacts:',
   'opportunities.detailModal.manageTitle': 'Manage Your Opportunity',
   'opportunities.detailModal.sendToReview': 'Submit for Review',
+  'opportunities.detailModal.edit': 'Edit',
+  'opportunities.detailModal.moderationFeedback': 'Moderator comments',
   'opportunities.detailModal.phaseLabel': 'Phase:',
   'opportunities.detailModal.phaseStart': 'Start',
   'opportunities.detailModal.phaseActive': 'Active',

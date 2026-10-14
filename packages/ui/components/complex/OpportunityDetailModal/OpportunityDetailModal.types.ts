@@ -22,9 +22,14 @@ export type OpportunityDetailModalProps = {
   contactValue?: string;
   // Author controls
   isOwner?: boolean;
+  canEdit?: boolean;
+  onEdit?: () => void;
+  editText?: string;
   canSendToReview?: boolean;
   onSendToReview?: () => void;
   sendToReviewText?: string;
+  moderationComment?: string | null;
+  moderationCommentTitle?: string;
   manageTitle?: string;
   phaseLabel?: string;
   lifecycleState?: string;

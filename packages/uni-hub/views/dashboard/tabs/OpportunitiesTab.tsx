@@ -29,17 +29,24 @@ import { useOpportunityDetail } from './opportunities/useOpportunityDetail';
 
 export interface OpportunitiesTabProps {
   soundEnabled?: boolean;
+  refreshTrigger?: number;
 }
 
-export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
+export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({ refreshTrigger }) => {
   const { formatMessage } = useLanguage();
   const currentUser = useCurrentUser();
   const isModerator = currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR);
   const data = useOpportunitiesData(isModerator);
   const { activeSubTab, setActiveSubTab } = data;
-  const detail = useOpportunityDetail(data.myOpportunities.refetch);
+  const detail = useOpportunityDetail(data.refetchOpportunities);
   const create = useCreateOpportunity({
-    onCreated: () => setActiveSubTab(OPPORTUNITY_SUB_TAB.MyOpportunities),
+    onCreated: () => {
+      void data.refetchOpportunities();
+      setActiveSubTab(OPPORTUNITY_SUB_TAB.MyOpportunities);
+    },
+    onUpdated: () => {
+      void data.refetchOpportunities();
+    },
   });
   const applicants = useApplicants();
   const applicantActions = useApplicantActions({
@@ -47,7 +54,15 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
     selectedOpportunity: detail.selectedOpportunity,
     setApplications: data.myApplications.setItems,
   });
-  const moderation = useModeration(data.moderationQueue.setItems);
+  const moderation = useModeration(data.moderationQueue.setItems, () => {
+    void data.catalog.refetch();
+  });
+
+  React.useEffect(() => {
+    if (refreshTrigger && refreshTrigger > 0) {
+      void data.refetchActiveList();
+    }
+  }, [refreshTrigger, data]);
 
   return (
     <div className={styles.container}>
@@ -107,11 +122,7 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
         </div>
 
         <div className={styles.createBtnWrapper}>
-          <Button
-            variant="primary"
-            onClick={() => create.setIsOpen(true)}
-            className={styles.createBtn}
-          >
+          <Button variant="primary" onClick={create.openCreate} className={styles.createBtn}>
             <Plus size={16} />
             {formatMessage('opportunities.actions.create')}
           </Button>
@@ -167,6 +178,10 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
         userId={currentUser.userId}
         onSendToReview={detail.handleSendToReview}
         onLifecycleChange={detail.handleLifecycleChange}
+        onEdit={(opportunity) => {
+          detail.setIsOpen(false);
+          create.openEdit(opportunity);
+        }}
         onOpenApply={() => {
           detail.setIsOpen(false);
           applicantActions.setIsApplyOpen(true);
@@ -175,11 +190,12 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
 
       <CreateOpportunityModal
         open={create.isOpen}
-        onClose={() => create.setIsOpen(false)}
+        onClose={create.close}
         formData={create.formData}
         setFormData={create.setFormData}
         onSubmit={create.handleSubmit}
         submitting={create.creating}
+        isEdit={create.isEdit}
       />
 
       <ApplyOpportunityModal
@@ -220,6 +236,7 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
         onClose={moderation.closeRejectModal}
         onCommentChange={moderation.changeRejectComment}
         onConfirm={moderation.handleRejectConfirm}
+        isSubmitting={moderation.submitting}
       />
     </div>
   );

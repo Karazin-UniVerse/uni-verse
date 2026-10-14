@@ -318,15 +318,16 @@ $sidebar-collapsed-width: 88px;
 .pageUpdatingIndicator {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-8);
-  padding: var(--space-4) var(--space-12);
-  border-radius: var(--border-radius-full);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--box-shadow-small);
+  gap: var(--space-6);
   font-size: var(--font-xs);
   color: var(--text-secondary);
   animation: fadeUp 0.2s var(--ease-standard);
+
+  > div {
+    padding: 0;
+    flex-direction: row;
+    gap: var(--space-6);
+  }
 }
 
 .syncActions {

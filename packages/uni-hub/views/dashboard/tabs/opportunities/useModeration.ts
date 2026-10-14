@@ -14,11 +14,15 @@ const SUCCESS_MESSAGE_KEYS = {
   REQUIRE_CHANGES: 'opportunities.toast.requiresChanges',
 } as const;
 
-export function useModeration(setQueue: React.Dispatch<React.SetStateAction<Opportunity[]>>) {
+export function useModeration(
+  setQueue: React.Dispatch<React.SetStateAction<Opportunity[]>>,
+  onModerated?: () => void,
+) {
   const toast = useToast();
   const { formatMessage } = useLanguage();
 
   const [rejectModal, setRejectModal] = useState<RejectModalState>(CLOSED_REJECT_MODAL);
+  const [submitting, setSubmitting] = useState(false);
 
   const openRejectModal = (id: string): void => setRejectModal({ open: true, id, comment: '' });
 
@@ -36,6 +40,7 @@ export function useModeration(setQueue: React.Dispatch<React.SetStateAction<Oppo
       await opportunitiesApi.moderate(id, action, comment);
       setQueue((current) => current.filter((item) => item.id !== id));
       toast.success(formatMessage(SUCCESS_MESSAGE_KEYS[action]));
+      onModerated?.();
 
       return true;
     } catch (err: unknown) {
@@ -50,13 +55,20 @@ export function useModeration(setQueue: React.Dispatch<React.SetStateAction<Oppo
     action: ModerationAction,
     comment: string,
   ): Promise<void> => {
-    if (await handleModerate(id, action, comment)) {
-      closeRejectModal();
+    setSubmitting(true);
+
+    try {
+      if (await handleModerate(id, action, comment)) {
+        closeRejectModal();
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return {
     rejectModal,
+    submitting,
     openRejectModal,
     closeRejectModal,
     changeRejectComment,

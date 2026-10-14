@@ -10,6 +10,7 @@ export interface ModerationRejectModalProps {
   onClose: () => void;
   onCommentChange: (comment: string) => void;
   onConfirm: (id: string, action: 'REQUIRE_CHANGES' | 'REJECT', comment: string) => void;
+  isSubmitting?: boolean;
 }
 
 export const ModerationRejectModal: React.FC<ModerationRejectModalProps> = ({
@@ -17,6 +18,7 @@ export const ModerationRejectModal: React.FC<ModerationRejectModalProps> = ({
   onClose,
   onCommentChange,
   onConfirm,
+  isSubmitting = false,
 }) => {
   const { formatMessage } = useLanguage();
 
@@ -24,6 +26,7 @@ export const ModerationRejectModal: React.FC<ModerationRejectModalProps> = ({
     <ModerationRejectModalUI
       open={rejectModal.open}
       onClose={onClose}
+      isSubmitting={isSubmitting}
       title={formatMessage('opportunities.rejectModal.title')}
       comment={rejectModal.comment}
       onCommentChange={onCommentChange}

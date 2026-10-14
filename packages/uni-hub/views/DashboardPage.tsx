@@ -72,6 +72,7 @@ const DashboardPage: React.FC = () => {
   const [selectedAssignmentModule, setSelectedAssignmentModule] = useState<CourseModule | null>(
     null,
   );
+  const [opportunitiesRefreshTrigger, setOpportunitiesRefreshTrigger] = useState(0);
 
   const {
     data,
@@ -271,13 +272,26 @@ const DashboardPage: React.FC = () => {
           />
         );
       case NAV_KEY.Opportunities:
-        return <OpportunitiesTab soundEnabled={soundEnabled} />;
+        return (
+          <OpportunitiesTab
+            soundEnabled={soundEnabled}
+            refreshTrigger={opportunitiesRefreshTrigger}
+          />
+        );
       case NAV_KEY.ConnectMoodle:
         return <ConnectMoodleTab onConnect={() => openLinkModal(LinkMoodleMode.CONNECT)} />;
       default:
         return null;
     }
   };
+
+  const handleRefresh = useCallback((): void => {
+    if (activeKey === NAV_KEY.Opportunities) {
+      setOpportunitiesRefreshTrigger((current) => current + 1);
+    }
+
+    void fetchData(true);
+  }, [activeKey, fetchData]);
 
   return (
     <div
@@ -337,7 +351,7 @@ const DashboardPage: React.FC = () => {
                 type="button"
                 variant="secondary"
                 size="small"
-                onClick={() => fetchData(true)}
+                onClick={handleRefresh}
                 disabled={loading}
                 aria-label={formatMessage('dashboard.refreshData')}
                 className={styles.refreshBtn}
