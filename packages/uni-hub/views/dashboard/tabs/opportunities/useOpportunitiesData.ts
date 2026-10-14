@@ -66,28 +66,37 @@ export function useOpportunitiesData(isModerator: boolean) {
   const myApplications = useAsyncList(loadMyApplications);
   const moderationQueue = useAsyncList(loadModerationQueue);
 
+  const { refetch: refetchCatalog } = catalog;
+  const { refetch: refetchMyOpportunities } = myOpportunities;
+  const { refetch: refetchMyApplications } = myApplications;
+  const { refetch: refetchModerationQueue } = moderationQueue;
+
   const refetchActiveList = useCallback(async (): Promise<void> => {
     switch (activeSubTab) {
       case OPPORTUNITY_SUB_TAB.Catalog:
-        await catalog.refetch();
+        await refetchCatalog();
         break;
       case OPPORTUNITY_SUB_TAB.MyOpportunities:
-        await myOpportunities.refetch();
+        await refetchMyOpportunities();
         break;
       case OPPORTUNITY_SUB_TAB.MyApplications:
-        await myApplications.refetch();
+        await refetchMyApplications();
         break;
       case OPPORTUNITY_SUB_TAB.Moderation:
-        await moderationQueue.refetch();
+        await refetchModerationQueue();
         break;
     }
-  }, [activeSubTab, catalog, myOpportunities, myApplications, moderationQueue]);
+  }, [
+    activeSubTab,
+    refetchCatalog,
+    refetchMyOpportunities,
+    refetchMyApplications,
+    refetchModerationQueue,
+  ]);
 
   const refetchOpportunities = useCallback(async (): Promise<void> => {
-    await Promise.all([catalog.refetch(), myOpportunities.refetch()]);
-  }, [catalog, myOpportunities]);
-
-  const { refetch: refetchModerationQueue } = moderationQueue;
+    await Promise.all([refetchCatalog(), refetchMyOpportunities()]);
+  }, [refetchCatalog, refetchMyOpportunities]);
 
   useEffect(() => {
     void refetchActiveList();

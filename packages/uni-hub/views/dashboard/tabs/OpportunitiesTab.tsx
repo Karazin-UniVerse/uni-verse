@@ -37,15 +37,15 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({ refreshTrigg
   const currentUser = useCurrentUser();
   const isModerator = currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR);
   const data = useOpportunitiesData(isModerator);
-  const { activeSubTab, setActiveSubTab } = data;
-  const detail = useOpportunityDetail(data.refetchOpportunities);
+  const { activeSubTab, setActiveSubTab, refetchActiveList, refetchOpportunities } = data;
+  const detail = useOpportunityDetail(refetchOpportunities);
   const create = useCreateOpportunity({
     onCreated: () => {
-      void data.refetchOpportunities();
+      void refetchOpportunities();
       setActiveSubTab(OPPORTUNITY_SUB_TAB.MyOpportunities);
     },
     onUpdated: () => {
-      void data.refetchOpportunities();
+      void refetchOpportunities();
     },
   });
   const applicants = useApplicants();
@@ -55,14 +55,14 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({ refreshTrigg
     setApplications: data.myApplications.setItems,
   });
   const moderation = useModeration(data.moderationQueue.setItems, () => {
-    void data.catalog.refetch();
+    void refetchOpportunities();
   });
 
   React.useEffect(() => {
     if (refreshTrigger && refreshTrigger > 0) {
-      void data.refetchActiveList();
+      void refetchActiveList();
     }
-  }, [refreshTrigger, data]);
+  }, [refreshTrigger, refetchActiveList]);
 
   return (
     <div className={styles.container}>

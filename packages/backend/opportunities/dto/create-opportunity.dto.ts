@@ -22,8 +22,8 @@ export class CreateOpportunityDto {
   @IsEnum(PaymentType)
   paymentType: PaymentType;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ nullable: true })
   @IsString()
   @IsOptional()
-  paymentDetails?: string;
+  paymentDetails?: string | null;
 }

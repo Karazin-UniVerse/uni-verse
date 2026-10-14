@@ -63,7 +63,8 @@ export function useCreateOpportunity({ onCreated, onUpdated }: UseCreateOpportun
           description: formData.description.trim(),
           ownerContactInfo: formData.ownerContactInfo.trim(),
           paymentType: formData.paymentType,
-          paymentDetails: formData.paymentDetails.trim() || undefined,
+          paymentDetails:
+            (formData.paymentType === 'PAID' && formData.paymentDetails.trim()) || null,
         });
 
         toast.success(formatMessage('opportunities.toast.updated'));

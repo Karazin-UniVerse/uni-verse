@@ -21,7 +21,7 @@ export interface UpdateOpportunityDto {
   description?: string;
   ownerContactInfo?: string;
   paymentType?: OpportunityPaymentType;
-  paymentDetails?: string;
+  paymentDetails?: string | null;
 }
 
 export interface ApplyOpportunityDto {
