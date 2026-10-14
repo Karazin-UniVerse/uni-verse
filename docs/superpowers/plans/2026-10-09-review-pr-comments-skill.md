@@ -83,7 +83,8 @@ query($owner:String!,$repo:String!,$number:Int!){
         pageInfo{hasNextPage endCursor}
         nodes{
           id isResolved isOutdated path line originalLine
-          comments(first:50){nodes{databaseId author{login} body}}
+          comments(first:50){totalCount nodes{databaseId author{login} body}}
+          lastComment: comments(last:1){nodes{databaseId author{login} body}}
         }
       }
     }
@@ -92,7 +93,8 @@ query($owner:String!,$repo:String!,$number:Int!){
 ```
 
 - Keep only threads with `isResolved` false. An outdated thread has `line` null: use `originalLine`. When `hasNextPage` is true, repeat the query with `reviewThreads(first:100, after:"<endCursor>")`.
-- Skip a thread whose last comment is already from the pull request author and contains the answer you would give.
+- When a thread has a `totalCount` above 50, read all of its comments with `gh api repos/OWNER/REPO/pulls/NUMBER/comments --paginate` before judging it.
+- Skip a thread whose last comment (`lastComment.nodes[0]`) is already from the pull request author and contains the answer you would give.
 - Also read `gh pr view NUMBER --json reviews,comments`, and keep only entries with a concrete finding. Bot walkthroughs, summaries and status notes are not threads to answer.
 - If nothing is left, say so and stop.
 
@@ -117,7 +119,7 @@ An `ask` stops work on that thread until the user answers; continue with the oth
 ## 3. Fix
 
 - One thread at a time, the smallest change that solves it, following `docs/ai`: search for an existing helper before writing one, add no compatibility aliases, no abstraction with a single caller.
-- Small, low-risk improvements next to the lines you already change are allowed when they match best practices. Anything bigger or riskier goes into the report as a suggestion and stays out of the code.
+- Do not make opportunistic edits outside what the threads require. Any additional improvement or refactoring idea goes into the report as a suggestion for the user, and stays out of the code unless the user explicitly asks for it.
 - After each fix run the narrowest check that proves it. At the end run the pre-commit checklist from `docs/ai/workflow.md`.
 
 ## 4. Independent review
@@ -132,14 +134,16 @@ Do one round: fix the valid findings and report the rest. If you cannot start a 
 
 ## 5. Show the user
 
-Present one table: thread, author, verdict, and what changed or why nothing did. Add your suggestions, the check results and the reviewer findings, and state that nothing is committed. Ask the user to review. Apply the changes the user asks for and show the table again. Repeat until the user says to move on.
+Present one table: thread, author, verdict, and what changed or why nothing did. Add your suggestions, the check results and the reviewer findings, and state that nothing is committed. Ask the user to review. Apply the changes the user asks for, rerun the narrowest checks (they are not reviewed by the independent reviewer again), clearly mark in the report what changed after the initial review (offering an independent re-review if the updates are significant), and show the table again. Repeat until the user says to move on.
 
 ## 6. Publish (only after the user says to move on)
 
-Commit only the files you fixed, as a new commit that follows Conventional Commits (`fix:`, `refactor:`, `docs:`, `test:`, `chore:` by content; see `docs/ai/workflow.md`), then push:
+Stage only the fixed files with `git add <fixed files>` (or `git add -p` for selective staging). Before committing, show `git diff --cached --stat` and `git diff --cached` to verify that no extraneous or unauthorized changes are staged. Commit only after the user's explicit confirmation of the staged diff, following Conventional Commits (`fix:`, `refactor:`, `docs:`, `test:`, `chore:` by content; see `docs/ai/workflow.md`), then push:
 
 ```bash
 git add <fixed files>
+git diff --cached --stat
+git diff --cached
 git commit -m "fix: address review feedback on <topic>"
 git push
 ```
@@ -151,6 +155,8 @@ Answer every handled thread in the thread itself, on the first comment of the th
 ```bash
 gh api repos/OWNER/REPO/pulls/NUMBER/comments/COMMENT_ID/replies -f body='...'
 ```
+
+This endpoint has not been exercised in this repository yet. Prompt the user for confirmation before posting the first reply, verify that it appears inside the thread on GitHub before posting the rest, and note in the PR description that this step is verified.
 
 - `fix` and `alternative`: what changed, and the commit SHA.
 - `already`: where it is handled.

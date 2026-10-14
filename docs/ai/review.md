@@ -27,7 +27,7 @@ Evaluate the change strictly against these failure modes:
 
 ## Reviewer canon
 
-Patterns, requests and reviews from team reviewers on GitHub Pull Requests (for example `iamredl-lab`) are top-priority standards. Learn from them and check for every previously flagged issue in future reviews.
+Patterns and recurring feedback from team reviewers on GitHub Pull Requests are key areas for verification. Learn from them, check for previously flagged issues in future reviews, and verify findings against `docs/ai` and the code at HEAD.
 
 ## Comments you received
 
