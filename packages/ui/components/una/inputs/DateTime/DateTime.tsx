@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect, useId } from 'react';
+import React, { useState, useRef, useEffect, useId, useMemo, useCallback } from 'react';
 import clsx from 'clsx';
-import css from './CustomDateTime.module.scss';
+import css from './DateTime.module.scss';
 import { TextInput } from '../TextInput/TextInput';
-import type { CustomDateTimeProps } from './DateTimePicker.types';
+import type { DateTimeProps } from './DateTime.types';
 
 const MONTHS = [
   'January',
@@ -21,26 +21,68 @@ const MONTHS = [
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-export function CustomDateTime({
+export function DateTime({
   selected,
   onChange,
+  className,
+  clearLabel,
+  dialogLabel,
+  locale,
+  todayLabel,
+  showTime = true,
   size = 'medium',
   ...props
-}: Readonly<CustomDateTimeProps>) {
+}: Readonly<DateTimeProps>) {
   const pickerDialogId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [prevSelected, setPrevSelected] = useState(selected);
   const [viewDate, setViewDate] = useState(() => selected || new Date());
   const containerRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const timeListRef = useRef<HTMLDivElement>(null);
 
-  if (selected !== prevSelected) {
+  const prevTime = prevSelected?.getTime();
+  const selectedTime = selected?.getTime();
+
+  if (selectedTime !== prevTime) {
     setPrevSelected(selected);
 
     if (selected) {
       setViewDate(selected);
     }
   }
+
+  const months = useMemo(() => {
+    try {
+      const formatter = new Intl.DateTimeFormat(locale, { month: 'long' });
+
+      return Array.from({ length: 12 }, (_, index) => {
+        const monthName = formatter.format(new Date(2026, index, 1));
+
+        return monthName.charAt(0).toUpperCase() + monthName.slice(1);
+      });
+    } catch {
+      return MONTHS;
+    }
+  }, [locale]);
+
+  const weekdays = useMemo(() => {
+    try {
+      const formatter = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+
+      return Array.from({ length: 7 }, (_, index) =>
+        formatter.format(new Date(2026, 0, 4 + index)),
+      );
+    } catch {
+      return WEEKDAYS;
+    }
+  }, [locale]);
+
+  const closePicker = useCallback(() => {
+    setIsOpen(false);
+    inputRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -53,6 +95,22 @@ export function CustomDateTime({
 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      const frameId = requestAnimationFrame(() => {
+        if (dialogRef.current) {
+          const firstFocusable = dialogRef.current.querySelector<HTMLElement>(
+            'button:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          );
+
+          firstFocusable?.focus();
+        }
+      });
+
+      return () => cancelAnimationFrame(frameId);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && selected && timeListRef.current) {
@@ -97,7 +155,7 @@ export function CustomDateTime({
   const handleDayClick = (dayInfo: (typeof days)[0]) => {
     const newDate = new Date(year, month + dayInfo.monthOffset, dayInfo.day);
 
-    if (selected) {
+    if (selected && showTime) {
       newDate.setHours(selected.getHours());
       newDate.setMinutes(selected.getMinutes());
     } else {
@@ -106,6 +164,10 @@ export function CustomDateTime({
 
     onChange(newDate);
     setViewDate(newDate);
+
+    if (!showTime) {
+      closePicker();
+    }
   };
 
   const handleTimeClick = (hours: number, minutes: number) => {
@@ -136,7 +198,15 @@ export function CustomDateTime({
       return '';
     }
 
-    const formattedDate = `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+    if (!showTime) {
+      return new Intl.DateTimeFormat(locale, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }).format(date);
+    }
+
+    const formattedDate = `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
     const rawHours = date.getHours();
     const minutes = date.getMinutes().toString().padStart(2, '0');
     const meridiem = rawHours >= 12 ? 'PM' : 'AM';
@@ -158,10 +228,42 @@ export function CustomDateTime({
     }
   };
 
+  const handleDialogKeyDown = (event: React.KeyboardEvent<HTMLDialogElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      closePicker();
+
+      return;
+    }
+
+    if (event.key === 'Tab' && dialogRef.current) {
+      const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+
+      if (focusables.length === 0) {
+        return;
+      }
+
+      const firstEl = focusables[0];
+      const lastEl = focusables[focusables.length - 1];
+
+      if (event.shiftKey && document.activeElement === firstEl) {
+        event.preventDefault();
+        lastEl.focus();
+      } else if (!event.shiftKey && document.activeElement === lastEl) {
+        event.preventDefault();
+        firstEl.focus();
+      }
+    }
+  };
+
   return (
-    <div className={css.wrapper} ref={containerRef}>
+    <div className={clsx(css.wrapper, className)} ref={containerRef}>
       <TextInput
         {...props}
+        ref={inputRef}
         size={size}
         value={formatDateTime(selected)}
         readOnly
@@ -175,9 +277,11 @@ export function CustomDateTime({
       {isOpen && (
         <dialog
           open
+          ref={dialogRef}
           id={pickerDialogId}
-          aria-label="Date and time picker"
+          aria-label={dialogLabel || (showTime ? 'Date and time picker' : 'Date picker')}
           className={clsx(css.popper, css[`size-${size}`])}
+          onKeyDown={handleDialogKeyDown}
         >
           <div className={css.calendar}>
             <div className={css.header}>
@@ -194,7 +298,7 @@ export function CustomDateTime({
                   value={month}
                   onChange={(event) => setViewDate(new Date(year, Number(event.target.value), 1))}
                 >
-                  {MONTHS.map((monthName, monthIndex) => (
+                  {months.map((monthName, monthIndex) => (
                     <option key={monthName} value={monthIndex}>
                       {monthName}
                     </option>
@@ -222,7 +326,7 @@ export function CustomDateTime({
             </div>
 
             <div className={css.dayNames}>
-              {WEEKDAYS.map((weekday) => (
+              {weekdays.map((weekday) => (
                 <div key={weekday} className={css.dayName}>
                   {weekday}
                 </div>
@@ -252,31 +356,74 @@ export function CustomDateTime({
                 );
               })}
             </div>
-          </div>
 
-          <div className={css.timeContainer}>
-            <div className={css.timeHeader}>Time</div>
-            <div className={css.timeList} ref={timeListRef}>
-              {timeOptions.map((timeOption) => {
-                const isSelected =
-                  selected?.getHours() === timeOption.hours &&
-                  selected.getMinutes() === timeOption.minutes;
-
-                return (
+            {(clearLabel || todayLabel) && (
+              <div className={css.footer}>
+                {clearLabel && (
                   <button
-                    key={`${timeOption.hours}-${timeOption.minutes}`}
                     type="button"
-                    className={clsx(css.timeItem, isSelected && css.selected)}
-                    onClick={() => handleTimeClick(timeOption.hours, timeOption.minutes)}
+                    className={css.footerButton}
+                    onClick={() => {
+                      onChange(null);
+                      closePicker();
+                    }}
                   >
-                    {formatTime(timeOption.hours, timeOption.minutes)}
+                    {clearLabel}
                   </button>
-                );
-              })}
-            </div>
+                )}
+                {todayLabel && (
+                  <button
+                    type="button"
+                    className={css.footerButton}
+                    onClick={() => {
+                      const today = new Date();
+
+                      if (!showTime) {
+                        today.setHours(0, 0, 0, 0);
+                      }
+
+                      onChange(today);
+                      setViewDate(today);
+
+                      if (!showTime) {
+                        closePicker();
+                      }
+                    }}
+                  >
+                    {todayLabel}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
+
+          {showTime && (
+            <div className={css.timeContainer}>
+              <div className={css.timeHeader}>Time</div>
+              <div className={css.timeList} ref={timeListRef}>
+                {timeOptions.map((timeOption) => {
+                  const isSelected =
+                    selected?.getHours() === timeOption.hours &&
+                    selected.getMinutes() === timeOption.minutes;
+
+                  return (
+                    <button
+                      key={`${timeOption.hours}-${timeOption.minutes}`}
+                      type="button"
+                      className={clsx(css.timeItem, isSelected && css.selected)}
+                      onClick={() => handleTimeClick(timeOption.hours, timeOption.minutes)}
+                    >
+                      {formatTime(timeOption.hours, timeOption.minutes)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </dialog>
       )}
     </div>
   );
 }
+
+export default DateTime;

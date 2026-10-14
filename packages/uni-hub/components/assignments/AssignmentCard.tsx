@@ -140,7 +140,7 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
           ) : (
             <>
               {renderStatusIcon(statusInfo.tone)}
-              {statusInfo.label}
+              {formatMessage(statusInfo.labelKey)}
             </>
           )}
         </Tag>

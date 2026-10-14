@@ -1,5 +1,5 @@
 export * from './CheckBox';
-export * from './DateTimePicker';
+export * from './DateTime';
 export * from './FileInput';
 export * from './RadioButton';
 export * from './Slider';

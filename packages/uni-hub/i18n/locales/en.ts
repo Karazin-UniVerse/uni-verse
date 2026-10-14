@@ -5,6 +5,8 @@ export const en = {
   'lang.uk': 'Ukrainian',
   'lang.en': 'English',
   'lang.select': 'Interface Language',
+  'common.clear': 'Clear',
+  'common.today': 'Today',
 
   // Login
   'login.title': 'UNiHub',
@@ -210,6 +212,7 @@ export const en = {
   'assignments.hideFilters': 'Hide filters',
   'assignments.dateFrom': 'Date from',
   'assignments.dateTo': 'Date to',
+  'assignments.datePicker': 'Date picker',
   'assignments.oldestFirst': 'Oldest first',
   'assignments.newestFirst': 'Newest first',
   'assignments.hideCompleted': 'Hide completed',
@@ -223,6 +226,11 @@ export const en = {
   'assignments.emptyDateFilter': 'No assignments found for selected dates',
   'assignments.emptyAllDone':
     'Hooray, all assignments completed! Time to relax or review lectures 🎉',
+  'assignments.status.graded': 'Graded',
+  'assignments.status.awaitingReview': 'Awaiting review',
+  'assignments.status.overdue': 'Overdue',
+  'assignments.status.inProgress': 'In progress',
+  'assignments.status.submitted': 'Submitted for review',
 
   // Schedule View
   'schedule.modeMonth': 'Month',

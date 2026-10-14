@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Filter } from 'lucide-react';
-import { TextInput, Select, CheckBox, Button } from '@una';
+import { DateTime, Select, CheckBox, Button } from '@una';
 import {
   AssignmentCard,
   AssignmentsEmptyState,
@@ -12,6 +12,35 @@ import { useNow } from '@uni-hub/hooks/useNow';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { AssignmentsTabProps } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
+
+function parseFilterDate(dateStr: string): Date | null {
+  if (!dateStr) {
+    return null;
+  }
+
+  const [yearStr, monthStr, dayStr] = dateStr.split('-');
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const day = Number(dayStr);
+
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  return new Date(year, month - 1, day);
+}
+
+function formatFilterDate(date: Date | null): string {
+  if (!date) {
+    return '';
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
 
 export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   assignments,
@@ -30,25 +59,6 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const localStatuses = useAssignmentStatuses(assignments);
 
-  const handleDateChange =
-    (setter: (value: string) => void) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      const value = event.target.value;
-
-      if (!value) {
-        setter('');
-
-        return;
-      }
-
-      const [yearStr] = value.split('-');
-
-      if (yearStr && yearStr.length > 4) {
-        return;
-      }
-
-      setter(value);
-    };
-
   const visibleAssignments = useMemo(() => {
     return assignments.filter((item) => {
       const status = item.submissionStatus ?? localStatuses[item.id]?.status;
@@ -60,6 +70,9 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
 
   const nowMs = useNow(30_000);
   const nowSec = Math.floor(nowMs / 1000);
+
+  const selectedDateFrom = useMemo(() => parseFilterDate(dateFrom), [dateFrom]);
+  const selectedDateTo = useMemo(() => parseFilterDate(dateTo), [dateTo]);
 
   return (
     <div className={styles.stack}>
@@ -78,23 +91,29 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         </Button>
       </div>
       <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
-        <TextInput
-          type="date"
-          lang={localeTag}
-          min="2000-01-01"
-          max="2099-12-31"
-          value={dateFrom}
-          onChange={handleDateChange(onDateFromChange)}
+        <DateTime
+          showTime={false}
+          locale={localeTag}
+          selected={selectedDateFrom}
+          onChange={(newDate) => onDateFromChange(formatFilterDate(newDate))}
+          placeholder={formatMessage('assignments.dateFrom')}
           aria-label={formatMessage('assignments.dateFrom')}
+          dialogLabel={formatMessage('assignments.datePicker')}
+          clearLabel={formatMessage('common.clear')}
+          todayLabel={formatMessage('common.today')}
+          className={styles.dateFilterInput}
         />
-        <TextInput
-          type="date"
-          lang={localeTag}
-          min="2000-01-01"
-          max="2099-12-31"
-          value={dateTo}
-          onChange={handleDateChange(onDateToChange)}
+        <DateTime
+          showTime={false}
+          locale={localeTag}
+          selected={selectedDateTo}
+          onChange={(newDate) => onDateToChange(formatFilterDate(newDate))}
+          placeholder={formatMessage('assignments.dateTo')}
           aria-label={formatMessage('assignments.dateTo')}
+          dialogLabel={formatMessage('assignments.datePicker')}
+          clearLabel={formatMessage('common.clear')}
+          todayLabel={formatMessage('common.today')}
+          className={styles.dateFilterInput}
         />
         <Select
           value={sortOrder}
