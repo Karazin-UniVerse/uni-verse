@@ -14,7 +14,7 @@ import { useNow } from '@uni-hub/hooks/useNow';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { AssignmentsTabProps } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
-
+import { uk } from 'date-fns/locale';
 function parseDate(value: string): Date | null {
   if (!value) return null;
 
@@ -83,13 +83,14 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         <DatePicker
           selected={parseDate(dateFrom)}
           onChange={(date: Date | null) => onDateFromChange(toDateString(date))}
+          locale={uk}
           dateFormat="yyyy-MM-dd"
           isClearable
           placeholderText={formatMessage('assignments.dateFrom')}
           aria-label={formatMessage('assignments.dateFrom')}
           className={styles.dateInput}
           calendarClassName={styles.dateCalendar}
-          todayButton={formatMessage('assignments.today') ?? 'Сьогодні'}
+          todayButton="Сьогодні"
           minDate={new Date(2000, 0, 1)}
           maxDate={new Date(2099, 11, 31)}
         />
@@ -97,13 +98,14 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         <DatePicker
           selected={parseDate(dateTo)}
           onChange={(date: Date | null) => onDateToChange(toDateString(date))}
+          locale={uk}
           dateFormat="yyyy-MM-dd"
           isClearable
           placeholderText={formatMessage('assignments.dateTo')}
           aria-label={formatMessage('assignments.dateTo')}
           className={styles.dateInput}
           calendarClassName={styles.dateCalendar}
-          todayButton={formatMessage('assignments.today') ?? 'Сьогодні'}
+          todayButton="Сьогодні"
           minDate={new Date(2000, 0, 1)}
           maxDate={new Date(2099, 11, 31)}
         />

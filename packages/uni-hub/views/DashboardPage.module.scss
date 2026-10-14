@@ -1416,15 +1416,15 @@
   width: 100%;
   min-width: 140px;
   height: 40px;
-  padding: 0 var(--space-12);
+  padding: 0 28px 0 12px;
   box-sizing: border-box;
-  background: var(--bg-surface);
+  background-color: var(--bg-surface);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-medium);
   font-family: inherit;
   font-size: var(--font-sm);
-  line-height: 1.2;
+  line-height: 40px;
 
   &::placeholder {
     color: var(--text-secondary);
@@ -1432,7 +1432,7 @@
   }
 
   &:hover {
-    border-color: var(--border-color-hover, var(--accent-primary));
+    border-color: var(--accent-primary);
   }
 
   &:focus {
@@ -1443,18 +1443,30 @@
 }
 
 :global(.react-datepicker-wrapper) {
+  display: inline-block;
   width: auto;
-  min-width: 140px;
+  min-width: 150px;
 }
 
 :global(.react-datepicker__input-container) {
+  display: block;
   width: 100%;
+  position: relative;
 }
 
-:global(.react-datepicker__close-icon) {
+:global(.react-datepicker__input-container .react-datepicker__close-icon) {
+  right: 4px;
+  padding: 0;
+  height: 100%;
+
   &::after {
     background-color: var(--text-secondary);
     color: var(--bg-surface);
+    font-size: 12px;
+    height: 16px;
+    width: 16px;
+    line-height: 14px;
+    padding: 0;
   }
 }
 
@@ -1471,42 +1483,97 @@
   }
 
   :global(.react-datepicker__current-month),
-  :global(.react-datepicker__day-name),
-  :global(.react-datepicker__day) {
+  :global(.react-datepicker__day-name) {
     color: var(--text-primary);
   }
 
-  :global(.react-datepicker__day--selected),
-  :global(.react-datepicker__day--keyboard-selected) {
-    background-color: var(--accent-primary);
-    color: var(--accent-text-on-primary, #fff);
-    border: none;
-    outline: none;
-    box-shadow: none;
-  }
-
-  :global(.react-datepicker__day:hover) {
-    background: var(--bg-hover, color-mix(in srgb, var(--accent-primary) 12%, transparent));
-  }
-
-  :global(.react-datepicker__day--outside-month) {
-    color: var(--text-disabled, var(--text-secondary));
-  }
-
-  :global(.react-datepicker__today-button) {
-    border-top: 1px solid var(--border-color);
-    background: transparent;
-    color: var(--accent-primary);
-    outline: none;
+  :global(.react-datepicker__day) {
+    color: var(--text-primary);
 
     &:hover {
-      background: var(--bg-hover);
-    }
-
-    &:focus,
-    &:focus-visible {
-      outline: 2px solid var(--accent-primary);
-      outline-offset: 1px;
+      background: var(--bg-hover, rgb(0 0 0 / 6%));
     }
   }
+}
+
+/* =========================================================
+   Стилі react-datepicker для Dark та Cyberpunk тем
+   ========================================================= */
+
+/* Фон та рамка календаря: */
+:global([data-theme='dark']) :global(.react-datepicker),
+:global([data-theme='cyberpunk']) :global(.react-datepicker) {
+  background-color: var(--bg-surface, #1e242d);
+  border: 1px solid var(--border-color, #374151);
+  color: var(--text-primary, #fff);
+}
+
+:global([data-theme='dark']) :global(.react-datepicker__header),
+:global([data-theme='cyberpunk']) :global(.react-datepicker__header) {
+  background-color: var(--neutral-surface, #111827);
+  border-bottom: 1px solid var(--border-color, #374151);
+}
+
+:global([data-theme='dark']) :global(.react-datepicker__day),
+:global([data-theme='dark']) :global(.react-datepicker__day-name),
+:global([data-theme='dark']) :global(.react-datepicker__current-month),
+:global([data-theme='cyberpunk']) :global(.react-datepicker__day),
+:global([data-theme='cyberpunk']) :global(.react-datepicker__day-name),
+:global([data-theme='cyberpunk']) :global(.react-datepicker__current-month) {
+  color: var(--text-primary);
+}
+
+:global([data-theme='dark']) :global(.react-datepicker__day--outside-month),
+:global([data-theme='cyberpunk']) :global(.react-datepicker__day--outside-month) {
+  color: var(--text-disabled, #6b7280);
+  opacity: 0.5;
+}
+
+/* 1. У звичайній темній темі (голубий фон, білий текст): */
+:global([data-theme='dark']) :global(.react-datepicker__day.react-datepicker__day--selected) {
+  background-color: var(--blue-500);
+  color: #fff;
+}
+
+/* 2. У темі Кіберпанк (жовтий фон, темно-синій текст!): */
+:global([data-theme='cyberpunk']) :global(.react-datepicker__day.react-datepicker__day--selected) {
+  background-color: var(--cyberpunk-yellow);
+  color: var(--cyberpunk-gray);
+  font-weight: 700;
+}
+
+:global([data-theme='cyberpunk'])
+  :global(.react-datepicker__day.react-datepicker__day--selected:hover) {
+  background-color: var(--cyberpunk-yellow);
+  color: var(--cyberpunk-gray);
+}
+
+:global([data-theme='dark']) :global(.react-datepicker__day.react-datepicker__day:hover),
+:global([data-theme='dark'])
+  :global(.react-datepicker__day.react-datepicker__day--keyboard-selected),
+:global([data-theme='cyberpunk']) :global(.react-datepicker__day.react-datepicker__day:hover),
+:global([data-theme='cyberpunk'])
+  :global(.react-datepicker__day.react-datepicker__day--keyboard-selected) {
+  background-color: var(--accent-secondary, #374151);
+  color: var(--text-primary);
+}
+
+/* Кнопка «Сьогодні» внизу (прибираємо білу плашку!): */
+:global([data-theme='dark'])
+  :global(.react-datepicker__today-button.react-datepicker__today-button),
+:global([data-theme='cyberpunk'])
+  :global(.react-datepicker__today-button.react-datepicker__today-button) {
+  background-color: var(--neutral-surface, #111827);
+  border-top: 1px solid var(--border-color, #374151);
+  color: var(--accent-primary, #60a5fa);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+:global([data-theme='dark'])
+  :global(.react-datepicker__today-button.react-datepicker__today-button:hover),
+:global([data-theme='cyberpunk'])
+  :global(.react-datepicker__today-button.react-datepicker__today-button:hover) {
+  background-color: var(--accent-secondary, #1f2937);
+  color: var(--accent-primary-hover, #93c5fd);
 }
