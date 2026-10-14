@@ -83,7 +83,7 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
 
             <div className={styles.controlsRow}>
               {canSendToReview && onSendToReview && (
-                <Button variant="primary" size="small" onClick={onSendToReview}>
+                <Button variant="primary" onClick={onSendToReview}>
                   <Send size={14} className={styles.btnIcon} />
                   {sendToReviewText}
                 </Button>
