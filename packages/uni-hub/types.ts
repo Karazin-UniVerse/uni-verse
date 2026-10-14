@@ -117,22 +117,14 @@ export interface CourseSection {
 }
 
 export type OpportunityStatus =
-  | 'DRAFT'
-  | 'READY_FOR_REVIEW'
-  | 'REQUIRES_CHANGES'
-  | 'PUBLISHED'
-  | 'REJECTED';
+  'DRAFT' | 'READY_FOR_REVIEW' | 'REQUIRES_CHANGES' | 'PUBLISHED' | 'REJECTED';
 
 export type OpportunityLifecycle = 'START' | 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'CANCELLED';
 
 export type OpportunityPaymentType = 'PAID' | 'UNPAID';
 
 export type OpportunityAppStatus =
-  | 'SUBMITTED'
-  | 'UNDER_REVIEW'
-  | 'ACCEPTED'
-  | 'REJECTED'
-  | 'WITHDRAWN';
+  'SUBMITTED' | 'UNDER_REVIEW' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN';
 
 export interface OpportunityOwner {
   id: string;
@@ -147,6 +139,7 @@ export interface Opportunity {
   ownerContactInfo: string;
   status: OpportunityStatus;
   lifecycleState: OpportunityLifecycle;
+  acceptsApplications?: boolean;
   paymentType: OpportunityPaymentType;
   paymentDetails?: string | null;
   moderationComment?: string | null;
@@ -173,4 +166,3 @@ export interface OpportunityApplication {
   createdAt: string;
   updatedAt: string;
 }
-

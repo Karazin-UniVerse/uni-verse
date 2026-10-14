@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { getPrismaErrorCode } from '../utils/prisma-error';
 import {
   CreateOpportunityDto,
   UpdateOpportunityDto,
@@ -158,10 +159,21 @@ export class OpportunitiesService {
       );
     }
 
-    const data: Prisma.OpportunityUpdateInput =
-      opportunity.status === OpportunityStatus.PUBLISHED
-        ? { ...dto, status: OpportunityStatus.READY_FOR_REVIEW }
-        : dto;
+    const hasContentChanges =
+      dto.title !== undefined ||
+      dto.description !== undefined ||
+      dto.ownerContactInfo !== undefined ||
+      dto.paymentType !== undefined ||
+      dto.paymentDetails !== undefined;
+
+    const data: Prisma.OpportunityUpdateInput = { ...dto };
+
+    if (
+      opportunity.status === OpportunityStatus.PUBLISHED &&
+      hasContentChanges
+    ) {
+      data.status = OpportunityStatus.READY_FOR_REVIEW;
+    }
 
     return this.prisma.opportunity.update({
       where: { id },
@@ -311,9 +323,19 @@ export class OpportunitiesService {
       );
     }
 
+    if (opportunity.ownerId === userId) {
+      throw new ForbiddenException('Cannot apply to your own opportunity');
+    }
+
     if (opportunity.lifecycleState !== OpportunityLifecycleState.ACTIVE) {
       throw new BadRequestException(
         'Cannot apply to an opportunity that is not active',
+      );
+    }
+
+    if (!opportunity.acceptsApplications) {
+      throw new BadRequestException(
+        'This opportunity is not currently accepting applications',
       );
     }
 
@@ -337,12 +359,7 @@ export class OpportunitiesService {
         },
       });
     } catch (error) {
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'code' in error &&
-        (error as Record<string, unknown>).code === 'P2002'
-      ) {
+      if (getPrismaErrorCode(error) === 'P2002') {
         throw new ConflictException('Already applied to this opportunity');
       }
 
@@ -448,6 +465,12 @@ export class OpportunitiesService {
     } else if (dto.action === ModerateAction.REJECT) {
       newStatus = OpportunityStatus.REJECTED;
     } else if (dto.action === ModerateAction.REQUIRE_CHANGES) {
+      if (!dto.comment?.trim()) {
+        throw new BadRequestException(
+          'Comment is required when requesting changes',
+        );
+      }
+
       newStatus = OpportunityStatus.REQUIRES_CHANGES;
     } else {
       throw new BadRequestException('Unknown moderation action');
