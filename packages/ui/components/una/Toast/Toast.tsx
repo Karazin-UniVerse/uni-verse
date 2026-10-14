@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import styles from './Toast.module.scss';
+import { ToastMessage } from './ToastMessage';
 
 import type { ToastApi, ToastItem, ToastKind, ToastProviderProps } from './Toast.types';
 
@@ -47,9 +48,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
       {children}
       <div className={styles.viewport} aria-live="polite">
         {items.map((item) => (
-          <div key={item.id} className={`${styles.toast} ${styles[item.kind]}`}>
-            {item.text}
-          </div>
+          <ToastMessage key={item.id} kind={item.kind} text={item.text} />
         ))}
       </div>
     </ToastContext.Provider>
