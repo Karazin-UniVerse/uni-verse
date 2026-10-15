@@ -93,10 +93,11 @@ describe('buildAssignmentParams', () => {
 });
 
 describe('filterFallbackAssignments', () => {
-  it('filters assignments based on object parameters', () => {
+  it('filters assignments based on object parameters when hideCompleted is true', () => {
     const assignments = [
       { id: 1, submissionStatus: 'graded', duedate: 1000 },
       { id: 2, submissionStatus: 'new', duedate: 2000 },
+      { id: 3, submissionStatus: 'new', isLate: true, duedate: 1500 },
     ] as any;
 
     const filtered = filterFallbackAssignments({
@@ -106,6 +107,21 @@ describe('filterFallbackAssignments', () => {
 
     expect(filtered.length).toBe(1);
     expect(filtered[0].id).toBe(2);
+  });
+
+  it('preserves completed and late assignments when hideCompleted is false', () => {
+    const assignments = [
+      { id: 1, submissionStatus: 'graded', duedate: 1000 },
+      { id: 2, submissionStatus: 'new', duedate: 2000 },
+      { id: 3, submissionStatus: 'new', isLate: true, duedate: 1500 },
+    ] as any;
+
+    const filtered = filterFallbackAssignments({
+      assignments,
+      hideCompleted: false,
+    });
+
+    expect(filtered.length).toBe(3);
   });
 });
 

@@ -1,13 +1,15 @@
 import React from 'react';
-import { Empty, Tag } from '@una';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button, Empty, Tag } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { formatScheduleDate, formatScheduleTime, getTypeTone } from './helpers';
+import { addDays, formatScheduleDate, formatScheduleTime, getTypeTone } from './helpers';
 import styles from './ScheduleView.module.scss';
 
 import type { ScheduleDayViewProps } from './ScheduleView.types';
 
 export const ScheduleDayView: React.FC<ScheduleDayViewProps> = ({
   selectedDate,
+  onSelectDate,
   events,
   locale,
   getTypeName,
@@ -16,14 +18,37 @@ export const ScheduleDayView: React.FC<ScheduleDayViewProps> = ({
 
   return (
     <section className={styles.panel}>
-      <h3>
-        {formatMessage('schedule.scheduleFor')}{' '}
-        {formatScheduleDate(
-          selectedDate,
-          { day: 'numeric', month: 'long', year: 'numeric' },
-          locale,
-        )}
-      </h3>
+      <div className={styles.dayNav}>
+        <Button
+          type="button"
+          variant="secondary"
+          size="small"
+          onClick={() => onSelectDate(addDays(selectedDate, -1))}
+          aria-label={formatMessage('schedule.prevDay')}
+        >
+          <ChevronLeft size={16} />
+        </Button>
+
+        <h3>
+          {formatMessage('schedule.scheduleFor')}{' '}
+          {formatScheduleDate(
+            selectedDate,
+            { day: 'numeric', month: 'long', year: 'numeric' },
+            locale,
+          )}
+        </h3>
+
+        <Button
+          type="button"
+          variant="secondary"
+          size="small"
+          onClick={() => onSelectDate(addDays(selectedDate, 1))}
+          aria-label={formatMessage('schedule.nextDay')}
+        >
+          <ChevronRight size={16} />
+        </Button>
+      </div>
+
       {events.length > 0 ? (
         <ul className={styles.timeline}>
           {events.map((event) => (

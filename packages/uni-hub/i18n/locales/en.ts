@@ -250,6 +250,8 @@ export const en = {
   'schedule.typePractice': 'Practical class',
   'schedule.typeExam': 'Exam',
   'schedule.typeOther': 'Consultation',
+  'schedule.prevDay': 'Previous day',
+  'schedule.nextDay': 'Next day',
 
   // Header & Audio
   'header.soundMute': 'Mute sound',

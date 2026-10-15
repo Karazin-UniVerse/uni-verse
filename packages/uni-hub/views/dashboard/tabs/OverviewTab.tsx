@@ -14,6 +14,7 @@ import type { OverviewTabProps } from '../types';
 import { mockKarazinCurriculum } from '../constants';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useFeatures } from '@uni-hub/features';
+import { isAssignmentCompleted } from '@uni-hub/utils/assignments';
 import { StudentCard } from './StudentCard';
 import { StatCardGrid } from './StatCardGrid';
 import { UpcomingEventsList } from './UpcomingEventsList';
@@ -42,7 +43,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     const nowSec = Math.floor(nowMs / 1000);
 
     return assignments
-      .filter((assignment) => assignment.duedate > nowSec)
+      .filter((assignment) => assignment.duedate > nowSec && !isAssignmentCompleted(assignment))
       .sort(
         (firstAssignment, secondAssignment) => firstAssignment.duedate - secondAssignment.duedate,
       )[0];

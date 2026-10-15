@@ -21,6 +21,10 @@
 
 .is-link {
   text-decoration: none;
+
+  &:hover {
+    text-decoration: none;
+  }
 }
 
 /* Primary Button Styles */
@@ -32,11 +36,13 @@
   &:hover {
     background-color: var(--btn-primary-hover);
     border-color: var(--btn-primary-hover);
+    color: var(--btn-primary-text);
   }
 
   &:active {
     background-color: var(--btn-primary-active);
     border-color: var(--btn-primary-active);
+    color: var(--btn-primary-text);
   }
 
   &:disabled {

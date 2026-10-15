@@ -184,7 +184,10 @@ export function filterFallbackAssignments({
   if (hideCompleted) {
     list = list.filter(
       (assignment) =>
-        assignment.submissionStatus !== 'graded' && assignment.submissionStatus !== 'submitted',
+        assignment.submissionStatus !== 'graded' &&
+        assignment.submissionStatus !== 'submitted' &&
+        !assignment.isLate &&
+        !assignment.submittedAt,
     );
   }
 

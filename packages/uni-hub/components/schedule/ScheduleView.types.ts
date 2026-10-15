@@ -17,6 +17,7 @@ export interface ScheduleToolbarProps {
 
 export interface ScheduleDayViewProps {
   selectedDate: Date;
+  onSelectDate: (date: Date) => void;
   events: ScheduleEvent[];
   locale: string;
   getTypeName: (type: string) => string;
