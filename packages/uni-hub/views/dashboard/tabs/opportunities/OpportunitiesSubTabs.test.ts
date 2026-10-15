@@ -50,6 +50,8 @@ describe('Opportunities decomposed subtabs', () => {
         null,
         React.createElement(CatalogTab, {
           loading: false,
+          isError: false,
+          onRetry: () => {},
           opportunities: [mockOpportunity],
           search: '',
           onSearchChange: () => {},
@@ -73,6 +75,8 @@ describe('Opportunities decomposed subtabs', () => {
         null,
         React.createElement(MyOpportunitiesTab, {
           loading: false,
+          isError: false,
+          onRetry: () => {},
           myOpportunities: [mockOpportunity],
           onOpenApplicants: () => {},
           onOpenDetail: () => {},
@@ -91,6 +95,8 @@ describe('Opportunities decomposed subtabs', () => {
         null,
         React.createElement(MyApplicationsTab, {
           loading: false,
+          isError: false,
+          onRetry: () => {},
           myApplications: [mockApplication],
           onWithdraw: () => {},
         }),
@@ -109,6 +115,8 @@ describe('Opportunities decomposed subtabs', () => {
         null,
         React.createElement(ModerationQueueTab, {
           loading: false,
+          isError: false,
+          onRetry: () => {},
           moderationQueue: [mockOpportunity],
           onModerate: () => {},
           onOpenRejectModal: () => {},
@@ -142,5 +150,25 @@ describe('Opportunities decomposed subtabs', () => {
     );
 
     expect(appBadge).toContain('Прийнято');
+  });
+
+  it('renders the retry state instead of the list when loading failed', () => {
+    const html = renderToString(
+      React.createElement(
+        LanguageProvider,
+        null,
+        React.createElement(MyOpportunitiesTab, {
+          loading: false,
+          isError: true,
+          onRetry: () => {},
+          myOpportunities: [],
+          onOpenApplicants: () => {},
+          onOpenDetail: () => {},
+        }),
+      ),
+    );
+
+    expect(html).toContain('Не вдалося завантажити дані');
+    expect(html).toContain('Спробувати знову');
   });
 });

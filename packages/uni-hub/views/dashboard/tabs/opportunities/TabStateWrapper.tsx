@@ -1,9 +1,12 @@
 import React from 'react';
 import { Spinner, Empty } from '@una';
 import styles from '../OpportunitiesTab.module.scss';
+import { LoadErrorState } from './LoadErrorState';
 
 export interface TabStateWrapperProps {
   loading: boolean;
+  isError: boolean;
+  onRetry: () => void;
   isEmpty: boolean;
   emptyDescription: string;
   children: React.ReactNode;
@@ -11,6 +14,8 @@ export interface TabStateWrapperProps {
 
 export const TabStateWrapper: React.FC<TabStateWrapperProps> = ({
   loading,
+  isError,
+  onRetry,
   isEmpty,
   emptyDescription,
   children,
@@ -21,6 +26,10 @@ export const TabStateWrapper: React.FC<TabStateWrapperProps> = ({
         <Spinner size="large" />
       </div>
     );
+  }
+
+  if (isError) {
+    return <LoadErrorState onRetry={onRetry} />;
   }
 
   if (isEmpty) {

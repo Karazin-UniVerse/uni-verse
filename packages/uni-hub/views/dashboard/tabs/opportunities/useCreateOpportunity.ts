@@ -1,32 +1,54 @@
 import React, { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@una';
 import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity } from '@core/types/opportunities';
+import type {
+  CreateOpportunityRequest,
+  Opportunity,
+  UpdateOpportunityRequest,
+} from '@core/types/opportunities';
+import { OPPORTUNITY_PAYMENT_TYPE } from '@core/constants/opportunities';
+import { invalidateOpportunities } from './cache';
 import type { CreateOpportunityFormData } from './types';
 
 const INITIAL_FORM_DATA: CreateOpportunityFormData = {
   title: '',
   description: '',
   ownerContactInfo: '',
-  paymentType: 'UNPAID',
+  paymentType: OPPORTUNITY_PAYMENT_TYPE.UNPAID,
   paymentDetails: '',
 };
 
-export interface UseCreateOpportunityProps {
-  onCreated?: () => void;
-  onUpdated?: () => void;
+interface OpportunityUpdate {
+  id: string;
+  request: UpdateOpportunityRequest;
 }
 
-export function useCreateOpportunity({ onCreated, onUpdated }: UseCreateOpportunityProps) {
+export interface UseCreateOpportunityProps {
+  onCreated: () => void;
+}
+
+export function useCreateOpportunity({ onCreated }: UseCreateOpportunityProps) {
   const toast = useToast();
   const { formatMessage } = useLanguage();
+  const queryClient = useQueryClient();
 
   const [isOpen, setIsOpen] = useState(false);
   const [editingOpportunityId, setEditingOpportunityId] = useState<string | null>(null);
   const [formData, setFormData] = useState<CreateOpportunityFormData>(INITIAL_FORM_DATA);
-  const [creating, setCreating] = useState(false);
+
+  const createMutation = useMutation({
+    mutationFn: (request: CreateOpportunityRequest) => opportunitiesApi.createOpportunity(request),
+    onSuccess: () => invalidateOpportunities(queryClient),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, request }: OpportunityUpdate) =>
+      opportunitiesApi.updateOpportunity(id, request),
+    onSuccess: () => invalidateOpportunities(queryClient),
+  });
 
   const openCreate = (): void => {
     setEditingOpportunityId(null);
@@ -54,24 +76,27 @@ export function useCreateOpportunity({ onCreated, onUpdated }: UseCreateOpportun
 
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
-    setCreating(true);
 
     try {
       if (editingOpportunityId) {
-        await opportunitiesApi.updateOpportunity(editingOpportunityId, {
-          title: formData.title.trim(),
-          description: formData.description.trim(),
-          ownerContactInfo: formData.ownerContactInfo.trim(),
-          paymentType: formData.paymentType,
-          paymentDetails:
-            (formData.paymentType === 'PAID' && formData.paymentDetails.trim()) || null,
+        await updateMutation.mutateAsync({
+          id: editingOpportunityId,
+          request: {
+            title: formData.title.trim(),
+            description: formData.description.trim(),
+            ownerContactInfo: formData.ownerContactInfo.trim(),
+            paymentType: formData.paymentType,
+            paymentDetails:
+              (formData.paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID &&
+                formData.paymentDetails.trim()) ||
+              null,
+          },
         });
 
         toast.success(formatMessage('opportunities.toast.updated'));
         close();
-        onUpdated?.();
       } else {
-        await opportunitiesApi.createOpportunity({
+        await createMutation.mutateAsync({
           title: formData.title.trim(),
           description: formData.description.trim(),
           ownerContactInfo: formData.ownerContactInfo.trim(),
@@ -81,7 +106,7 @@ export function useCreateOpportunity({ onCreated, onUpdated }: UseCreateOpportun
 
         toast.success(formatMessage('opportunities.toast.createdDraft'));
         close();
-        onCreated?.();
+        onCreated();
       }
     } catch (err: unknown) {
       const errorKey = editingOpportunityId
@@ -89,17 +114,14 @@ export function useCreateOpportunity({ onCreated, onUpdated }: UseCreateOpportun
         : 'opportunities.toast.createError';
 
       toast.error(getErrorMessage(err, formatMessage(errorKey)));
-    } finally {
-      setCreating(false);
     }
   };
 
   return {
     isOpen,
-    setIsOpen,
     formData,
     setFormData,
-    creating,
+    creating: createMutation.isPending || updateMutation.isPending,
     isEdit: editingOpportunityId !== null,
     openCreate,
     openEdit,

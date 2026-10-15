@@ -11,6 +11,8 @@ import styles from '../OpportunitiesTab.module.scss';
 
 export interface CatalogTabProps {
   loading: boolean;
+  isError: boolean;
+  onRetry: () => void;
   opportunities: Opportunity[];
   search: string;
   onSearchChange: (val: string) => void;
@@ -21,6 +23,8 @@ export interface CatalogTabProps {
 
 export const CatalogTab: React.FC<CatalogTabProps> = ({
   loading,
+  isError,
+  onRetry,
   opportunities,
   search,
   onSearchChange,
@@ -113,6 +117,8 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
 
       <TabStateWrapper
         loading={loading}
+        isError={isError}
+        onRetry={onRetry}
         isEmpty={filteredOpportunities.length === 0}
         emptyDescription={formatMessage('opportunities.catalog.emptyDescription')}
       >

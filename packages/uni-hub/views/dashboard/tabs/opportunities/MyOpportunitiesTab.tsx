@@ -10,6 +10,8 @@ import styles from '../OpportunitiesTab.module.scss';
 
 export interface MyOpportunitiesTabProps {
   loading: boolean;
+  isError: boolean;
+  onRetry: () => void;
   myOpportunities: Opportunity[];
   onOpenApplicants: (opp: Opportunity) => void;
   onOpenDetail: (opp: Opportunity) => void;
@@ -17,6 +19,8 @@ export interface MyOpportunitiesTabProps {
 
 export const MyOpportunitiesTab: React.FC<MyOpportunitiesTabProps> = ({
   loading,
+  isError,
+  onRetry,
   myOpportunities,
   onOpenApplicants,
   onOpenDetail,
@@ -26,6 +30,8 @@ export const MyOpportunitiesTab: React.FC<MyOpportunitiesTabProps> = ({
   return (
     <TabStateWrapper
       loading={loading}
+      isError={isError}
+      onRetry={onRetry}
       isEmpty={myOpportunities.length === 0}
       emptyDescription={formatMessage('opportunities.myOpportunities.empty')}
     >

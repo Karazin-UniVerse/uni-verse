@@ -23,12 +23,16 @@ import styles from '../OpportunitiesTab.module.scss';
 
 export interface MyApplicationsTabProps {
   loading: boolean;
+  isError: boolean;
+  onRetry: () => void;
   myApplications: OpportunityApplication[];
   onWithdraw: (appId: string) => void;
 }
 
 export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
   loading,
+  isError,
+  onRetry,
   myApplications,
   onWithdraw,
 }) => {
@@ -37,6 +41,8 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
   return (
     <TabStateWrapper
       loading={loading}
+      isError={isError}
+      onRetry={onRetry}
       isEmpty={myApplications.length === 0}
       emptyDescription={formatMessage('opportunities.myApplications.empty')}
     >

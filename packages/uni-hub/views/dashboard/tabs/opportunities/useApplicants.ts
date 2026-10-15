@@ -1,50 +1,63 @@
 import { useState } from 'react';
+import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@una';
 import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
-import { asList } from '@uni-hub/utils/arrays';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
+import type { Opportunity } from '@core/types/opportunities';
 import type { OpportunityAppStatus } from '@core/constants/opportunities';
+import { invalidateOpportunities } from './cache';
+import { loadApplicants } from './queries';
+import { opportunityKeys } from './queryKeys';
+
+interface ApplicationStatusChange {
+  applicationId: string;
+  status: OpportunityAppStatus;
+}
 
 export function useApplicants() {
   const toast = useToast();
   const { formatMessage } = useLanguage();
+  const queryClient = useQueryClient();
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [applications, setApplications] = useState<OpportunityApplication[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [opportunityId, setOpportunityId] = useState<string | null>(null);
 
-  const open = async (opportunity: Opportunity): Promise<void> => {
-    setIsOpen(true);
-    setLoading(true);
+  const applicationsQuery = useQuery({
+    queryKey: opportunityKeys.applicants(opportunityId ?? ''),
+    queryFn: opportunityId ? () => loadApplicants(opportunityId) : skipToken,
+  });
 
-    try {
-      const response = await opportunitiesApi.getOpportunityApplications(opportunity.id);
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ applicationId, status }: ApplicationStatusChange) =>
+      opportunitiesApi.updateApplicationStatus(applicationId, status),
+    onSuccess: () => invalidateOpportunities(queryClient),
+  });
 
-      setApplications(asList(response.data));
-    } catch {
-      setApplications([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const open = (opportunity: Opportunity): void => setOpportunityId(opportunity.id);
+
+  const close = (): void => setOpportunityId(null);
 
   const handleUpdateStatus = async (
     applicationId: string,
     status: OpportunityAppStatus,
   ): Promise<void> => {
     try {
-      await opportunitiesApi.updateApplicationStatus(applicationId, status);
-      setApplications((current) =>
-        current.map((application) =>
-          application.id === applicationId ? { ...application, status } : application,
-        ),
-      );
+      await updateStatusMutation.mutateAsync({ applicationId, status });
     } catch (err: unknown) {
       toast.error(getErrorMessage(err, formatMessage('opportunities.toast.statusUpdateError')));
     }
   };
 
-  return { isOpen, setIsOpen, applications, loading, open, handleUpdateStatus };
+  return {
+    isOpen: opportunityId !== null,
+    applications: applicationsQuery.data ?? [],
+    loading: applicationsQuery.isLoading,
+    isError: applicationsQuery.isError,
+    refetch: () => {
+      void applicationsQuery.refetch();
+    },
+    open,
+    close,
+    handleUpdateStatus,
+  };
 }

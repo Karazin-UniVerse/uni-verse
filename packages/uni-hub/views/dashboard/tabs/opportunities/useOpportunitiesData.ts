@@ -1,60 +1,31 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
-import { asList } from '@uni-hub/utils/arrays';
+import { useState } from 'react';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import type { OpportunityPaymentType } from '@core/constants/opportunities';
 import { OPPORTUNITY_SUB_TAB, type OpportunitySubTab } from './constants';
+import {
+  catalogQueryOptions,
+  moderationQueueQueryOptions,
+  myApplicationsQueryOptions,
+  myOpportunitiesQueryOptions,
+} from './queries';
 
-export interface AsyncList<T> {
+export interface ListState<T> {
   items: T[];
   loading: boolean;
-  refetch: () => Promise<void>;
-  setItems: React.Dispatch<React.SetStateAction<T[]>>;
+  isError: boolean;
+  refetch: () => void;
 }
 
-async function loadCatalog(): Promise<Opportunity[]> {
-  const response = await opportunitiesApi.getOpportunities();
-
-  return asList(response.data);
-}
-
-async function loadMyOpportunities(): Promise<Opportunity[]> {
-  const response = await opportunitiesApi.getMyOpportunities();
-
-  return asList(response.data);
-}
-
-async function loadMyApplications(): Promise<OpportunityApplication[]> {
-  const response = await opportunitiesApi.getMyApplications();
-
-  return asList(response.data);
-}
-
-async function loadModerationQueue(): Promise<Opportunity[]> {
-  const response = await opportunitiesApi.getOpportunities({ status: 'READY_FOR_REVIEW' });
-
-  return asList(response.data);
-}
-
-function useAsyncList<T>(load: () => Promise<T[]>): AsyncList<T> {
-  const [items, setItems] = useState<T[]>([]);
-  const [loading, setLoading] = useState(true);
-  const latestRequestId = useRef(0);
-
-  const refetch = useCallback(async (): Promise<void> => {
-    const requestId = ++latestRequestId.current;
-
-    setLoading(true);
-
-    const loaded = await load().catch((): T[] => []);
-
-    if (requestId !== latestRequestId.current) return;
-
-    setItems(loaded);
-    setLoading(false);
-  }, [load]);
-
-  return { items, loading, refetch, setItems };
+function toListState<T>(query: UseQueryResult<T[]>): ListState<T> {
+  return {
+    items: query.data ?? [],
+    loading: query.isLoading,
+    isError: query.isError && query.data === undefined,
+    refetch: () => {
+      void query.refetch();
+    },
+  };
 }
 
 export function useOpportunitiesData(isModerator: boolean) {
@@ -62,52 +33,19 @@ export function useOpportunitiesData(isModerator: boolean) {
   const [search, setSearch] = useState('');
   const [paymentFilter, setPaymentFilter] = useState<OpportunityPaymentType | ''>('');
 
-  const catalog = useAsyncList(loadCatalog);
-  const myOpportunities = useAsyncList(loadMyOpportunities);
-  const myApplications = useAsyncList(loadMyApplications);
-  const moderationQueue = useAsyncList(loadModerationQueue);
-
-  const { refetch: refetchCatalog } = catalog;
-  const { refetch: refetchMyOpportunities } = myOpportunities;
-  const { refetch: refetchMyApplications } = myApplications;
-  const { refetch: refetchModerationQueue } = moderationQueue;
-
-  const refetchActiveList = useCallback(async (): Promise<void> => {
-    switch (activeSubTab) {
-      case OPPORTUNITY_SUB_TAB.Catalog:
-        await refetchCatalog();
-        break;
-      case OPPORTUNITY_SUB_TAB.MyOpportunities:
-        await refetchMyOpportunities();
-        break;
-      case OPPORTUNITY_SUB_TAB.MyApplications:
-        await refetchMyApplications();
-        break;
-      case OPPORTUNITY_SUB_TAB.Moderation:
-        await refetchModerationQueue();
-        break;
-    }
-  }, [
-    activeSubTab,
-    refetchCatalog,
-    refetchMyOpportunities,
-    refetchMyApplications,
-    refetchModerationQueue,
-  ]);
-
-  const refetchOpportunities = useCallback(async (): Promise<void> => {
-    await Promise.all([refetchCatalog(), refetchMyOpportunities()]);
-  }, [refetchCatalog, refetchMyOpportunities]);
-
-  useEffect(() => {
-    void refetchActiveList();
-  }, [refetchActiveList]);
-
-  useEffect(() => {
-    if (isModerator) {
-      void refetchModerationQueue();
-    }
-  }, [isModerator, refetchModerationQueue]);
+  const catalog = useQuery({
+    ...catalogQueryOptions,
+    enabled: activeSubTab === OPPORTUNITY_SUB_TAB.Catalog,
+  });
+  const myOpportunities = useQuery({
+    ...myOpportunitiesQueryOptions,
+    enabled: activeSubTab === OPPORTUNITY_SUB_TAB.MyOpportunities,
+  });
+  const myApplications = useQuery({
+    ...myApplicationsQueryOptions,
+    enabled: activeSubTab === OPPORTUNITY_SUB_TAB.MyApplications,
+  });
+  const moderationQueue = useQuery({ ...moderationQueueQueryOptions, enabled: isModerator });
 
   return {
     activeSubTab,
@@ -116,11 +54,9 @@ export function useOpportunitiesData(isModerator: boolean) {
     setSearch,
     paymentFilter,
     setPaymentFilter,
-    catalog,
-    myOpportunities,
-    myApplications,
-    moderationQueue,
-    refetchActiveList,
-    refetchOpportunities,
+    catalog: toListState<Opportunity>(catalog),
+    myOpportunities: toListState<Opportunity>(myOpportunities),
+    myApplications: toListState<OpportunityApplication>(myApplications),
+    moderationQueue: toListState<Opportunity>(moderationQueue),
   };
 }

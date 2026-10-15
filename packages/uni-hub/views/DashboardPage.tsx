@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
+import { useQueryClient } from '@tanstack/react-query';
 import { RotateCw, AlertCircle, Link2 } from 'lucide-react';
 import { Button, Spinner } from '@una';
 import { isLoggedIn } from '@core/utils/auth';
@@ -31,6 +32,7 @@ import {
   OpportunitiesTab,
 } from './dashboard';
 import { formatLastSync } from './dashboard/tabs/helpers';
+import { invalidateOpportunities } from './dashboard/tabs/opportunities/cache';
 import { useDashboardData, clearUserSessionStorage } from './dashboard/hooks/useDashboardData';
 import { getInitialUserProfile } from './dashboard/hooks/helpers';
 import { useMoodleLink } from './dashboard/hooks/useMoodleLink';
@@ -72,7 +74,7 @@ const DashboardPage: React.FC = () => {
   const [selectedAssignmentModule, setSelectedAssignmentModule] = useState<CourseModule | null>(
     null,
   );
-  const [opportunitiesRefreshTrigger, setOpportunitiesRefreshTrigger] = useState(0);
+  const queryClient = useQueryClient();
 
   const {
     data,
@@ -272,12 +274,7 @@ const DashboardPage: React.FC = () => {
           />
         );
       case NAV_KEY.Opportunities:
-        return (
-          <OpportunitiesTab
-            soundEnabled={soundEnabled}
-            refreshTrigger={opportunitiesRefreshTrigger}
-          />
-        );
+        return <OpportunitiesTab soundEnabled={soundEnabled} />;
       case NAV_KEY.ConnectMoodle:
         return <ConnectMoodleTab onConnect={() => openLinkModal(LinkMoodleMode.CONNECT)} />;
       default:
@@ -286,12 +283,9 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleRefresh = useCallback((): void => {
-    if (activeKey === NAV_KEY.Opportunities) {
-      setOpportunitiesRefreshTrigger((current) => current + 1);
-    }
-
+    void invalidateOpportunities(queryClient);
     void fetchData(true);
-  }, [activeKey, fetchData]);
+  }, [queryClient, fetchData]);
 
   return (
     <div
