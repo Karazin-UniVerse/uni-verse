@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
-import type { Opportunity } from '@uni-hub/types';
+import type { Opportunity } from '@core/types/opportunities';
 import { OpportunityCard } from './OpportunityCard';
 
 describe('OpportunityCard component', () => {

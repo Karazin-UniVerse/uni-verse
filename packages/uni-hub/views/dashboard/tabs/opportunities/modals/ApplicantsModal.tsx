@@ -3,7 +3,8 @@
 import React from 'react';
 import { Button, Spinner, Empty, Modal } from '@una';
 import { Mail, MessageSquare, Calendar, CheckCircle2, Clock, XCircle } from 'lucide-react';
-import type { OpportunityApplication, OpportunityAppStatus } from '@uni-hub/types';
+import type { OpportunityApplication } from '@core/types/opportunities';
+import type { OpportunityAppStatus } from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { ApplicationStatusBadge } from '../ApplicationStatusBadge';
 import styles from '../../OpportunitiesTab.module.scss';

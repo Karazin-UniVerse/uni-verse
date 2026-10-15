@@ -5,7 +5,7 @@ import clsx from 'clsx';
 import { Briefcase, Sparkles, Coins, ArrowUpRight } from 'lucide-react';
 import { Button } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity } from '@uni-hub/types';
+import type { Opportunity } from '@core/types/opportunities';
 import styles from './OpportunityCard.module.scss';
 
 export interface OpportunityCardProps {

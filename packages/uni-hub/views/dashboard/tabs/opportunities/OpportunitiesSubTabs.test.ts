@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity, OpportunityApplication } from '@uni-hub/types';
+import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import { CatalogTab } from './CatalogTab';
 import { MyOpportunitiesTab } from './MyOpportunitiesTab';
 import { MyApplicationsTab } from './MyApplicationsTab';

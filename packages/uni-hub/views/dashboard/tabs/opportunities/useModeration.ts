@@ -3,8 +3,9 @@ import { useToast } from '@una';
 import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity } from '@uni-hub/types';
-import type { ModerationAction, RejectModalState } from './types';
+import type { Opportunity } from '@core/types/opportunities';
+import type { OpportunityModerateAction } from '@core/constants/opportunities';
+import type { RejectModalState } from './types';
 
 const CLOSED_REJECT_MODAL: RejectModalState = { open: false, id: null, comment: '' };
 
@@ -33,7 +34,7 @@ export function useModeration(
 
   const handleModerate = async (
     id: string,
-    action: ModerationAction,
+    action: OpportunityModerateAction,
     comment?: string,
   ): Promise<boolean> => {
     try {
@@ -52,7 +53,7 @@ export function useModeration(
 
   const handleRejectConfirm = async (
     id: string,
-    action: ModerationAction,
+    action: OpportunityModerateAction,
     comment: string,
   ): Promise<void> => {
     setSubmitting(true);

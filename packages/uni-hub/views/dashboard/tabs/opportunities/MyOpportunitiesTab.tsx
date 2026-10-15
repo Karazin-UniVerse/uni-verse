@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { Opportunity } from '@uni-hub/types';
+import type { Opportunity } from '@core/types/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { OpportunityCard } from '../OpportunityCard';
 import { TabStateWrapper } from './TabStateWrapper';

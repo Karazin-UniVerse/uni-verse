@@ -3,7 +3,8 @@ import { useToast } from '@una';
 import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity, OpportunityLifecycle } from '@uni-hub/types';
+import type { Opportunity } from '@core/types/opportunities';
+import type { OpportunityLifecycle } from '@core/constants/opportunities';
 
 export function useOpportunityDetail(onOpportunityUpdated?: () => Promise<void> | void) {
   const toast = useToast();
