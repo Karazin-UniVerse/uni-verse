@@ -35,7 +35,7 @@ export interface Assignment {
   name: string;
   duedate: number;
   description: string;
-  year?: number | null;
+  year?: string | null;
   semester?: number | null;
   submissionStatus?: string;
   grade?: string | null;
