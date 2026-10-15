@@ -29,6 +29,22 @@ describe('moodle queries', () => {
     expect(getCourseContents).toHaveBeenCalledWith(7);
   });
 
+  it('drops sections without a name or without modules from the course contents', async () => {
+    const visibleSection = sections[0];
+
+    vi.spyOn(moodleApi, 'getCourseContents').mockResolvedValue({
+      data: [
+        { id: 2, name: '', summary: '', modules: visibleSection.modules },
+        { id: 3, name: 'Empty week', summary: '', modules: [] },
+        visibleSection,
+      ],
+    });
+
+    await expect(queryClient.fetchQuery(courseContentsQueryOptions(7))).resolves.toEqual([
+      visibleSection,
+    ]);
+  });
+
   it('rejects instead of returning an empty list when the contents request fails', async () => {
     vi.spyOn(moodleApi, 'getCourseContents').mockRejectedValue(new Error('HTTP error 500'));
 

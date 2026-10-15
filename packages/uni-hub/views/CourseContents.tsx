@@ -24,7 +24,6 @@ import type { CourseModule } from '@core/types/moodle';
 import { COURSE_MODULE_NAMES, type CourseModuleName } from '@core/constants/moodle';
 import { AssignmentModal } from '@uni-hub/components/assignments';
 import { LoadErrorState } from '@uni-hub/components/common/LoadErrorState';
-import { selectVisibleSections } from './course-contents.helpers';
 import styles from './CourseContents.module.scss';
 
 const getModuleIcon = (modname: CourseModuleName) => {
@@ -53,7 +52,6 @@ const CourseContents: React.FC = () => {
   const courseIdNumber = Number.parseInt(courseId, 10);
   const contentsQuery = useQuery({
     ...courseContentsQueryOptions(courseIdNumber),
-    select: selectVisibleSections,
     enabled: Number.isInteger(courseIdNumber),
   });
   const sections = contentsQuery.data ?? [];

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canSubmitAssignment, extractUploadedItemId } from './assignment-submission.helpers';
+import { canSubmitAssignment, extractUploadedItemId } from './helpers';
 
 describe('extractUploadedItemId', () => {
   it('returns the item id of the first uploaded file', () => {

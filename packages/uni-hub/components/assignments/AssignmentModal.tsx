@@ -12,11 +12,7 @@ import { BADGES } from '@uni-hub/constants/gamification';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { LoadErrorState } from '@uni-hub/components/common/LoadErrorState';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
-import {
-  canSubmitAssignment,
-  extractUploadedItemId,
-  readFileAsDataUrl,
-} from './assignment-submission.helpers';
+import { canSubmitAssignment, extractUploadedItemId, readFileAsDataUrl } from './helpers';
 import styles from './AssignmentModal.module.scss';
 
 interface SubmissionRequest {
