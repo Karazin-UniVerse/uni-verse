@@ -5,6 +5,7 @@ import type { OpportunityPaymentType } from '@core/constants/opportunities';
 import { OPPORTUNITY_SUB_TAB, type OpportunitySubTab } from './constants';
 import {
   catalogQueryOptions,
+  hasLoadFailed,
   moderationQueueQueryOptions,
   myApplicationsQueryOptions,
   myOpportunitiesQueryOptions,
@@ -21,7 +22,7 @@ function toListState<T>(query: UseQueryResult<T[]>): ListState<T> {
   return {
     items: query.data ?? [],
     loading: query.isLoading,
-    isError: query.isError && query.data === undefined,
+    isError: hasLoadFailed(query),
     refetch: () => {
       void query.refetch();
     },

@@ -7,7 +7,7 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { Opportunity } from '@core/types/opportunities';
 import type { OpportunityAppStatus } from '@core/constants/opportunities';
 import { invalidateOpportunities } from './cache';
-import { loadApplicants } from './queries';
+import { hasLoadFailed, loadApplicants } from './queries';
 import { opportunityKeys } from './queryKeys';
 
 interface ApplicationStatusChange {
@@ -52,7 +52,7 @@ export function useApplicants() {
     isOpen: opportunityId !== null,
     applications: applicationsQuery.data ?? [],
     loading: applicationsQuery.isLoading,
-    isError: applicationsQuery.isError,
+    isError: hasLoadFailed(applicationsQuery),
     refetch: () => {
       void applicationsQuery.refetch();
     },

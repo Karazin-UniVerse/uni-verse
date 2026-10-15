@@ -1,12 +1,13 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { QueryClient } from '@tanstack/react-query';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MutationObserver, QueryClient } from '@tanstack/react-query';
 import type { Opportunity } from '@core/types/opportunities';
 import {
   invalidateOpportunities,
+  isLastPendingModeration,
   removeFromModerationQueue,
   restoreModerationQueue,
 } from './cache';
-import { opportunityKeys } from './queryKeys';
+import { moderateMutationKey, opportunityKeys } from './queryKeys';
 import { buildOpportunity } from './test-utils';
 
 describe('opportunities cache', () => {
@@ -80,6 +81,56 @@ describe('opportunities cache', () => {
       restoreModerationQueue(queryClient, undefined);
 
       expect(queryClient.getQueryData(opportunityKeys.moderation())).toBeUndefined();
+    });
+  });
+
+  describe('isLastPendingModeration', () => {
+    function startModeration(): { finish: () => Promise<void> } {
+      let resolveRequest: () => void = () => {};
+      const request = new Promise<void>((resolve) => {
+        resolveRequest = resolve;
+      });
+      const observer = new MutationObserver(queryClient, {
+        mutationKey: moderateMutationKey,
+        mutationFn: () => request,
+      });
+      const settled = observer.mutate();
+
+      return {
+        finish: async () => {
+          resolveRequest();
+          await settled;
+        },
+      };
+    }
+
+    function pendingModerations(): number {
+      return queryClient.isMutating({ mutationKey: moderateMutationKey });
+    }
+
+    it('is true when no other moderation is in flight', async () => {
+      const only = startModeration();
+
+      await vi.waitFor(() => expect(pendingModerations()).toBe(1));
+
+      expect(isLastPendingModeration(queryClient)).toBe(true);
+
+      await only.finish();
+    });
+
+    it('is false while another moderation is still in flight', async () => {
+      const first = startModeration();
+      const second = startModeration();
+
+      await vi.waitFor(() => expect(pendingModerations()).toBe(2));
+
+      expect(isLastPendingModeration(queryClient)).toBe(false);
+
+      await first.finish();
+
+      expect(isLastPendingModeration(queryClient)).toBe(true);
+
+      await second.finish();
     });
   });
 });

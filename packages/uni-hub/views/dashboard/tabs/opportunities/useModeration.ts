@@ -7,9 +7,11 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { OpportunityModerateAction } from '@core/constants/opportunities';
 import {
   invalidateOpportunities,
+  isLastPendingModeration,
   removeFromModerationQueue,
   restoreModerationQueue,
 } from './cache';
+import { moderateMutationKey } from './queryKeys';
 import type { RejectModalState } from './types';
 
 const CLOSED_REJECT_MODAL: RejectModalState = { open: false, id: null, comment: '' };
@@ -34,12 +36,20 @@ export function useModeration() {
   const [rejectModal, setRejectModal] = useState<RejectModalState>(CLOSED_REJECT_MODAL);
 
   const moderateMutation = useMutation({
+    mutationKey: moderateMutationKey,
     mutationFn: ({ id, action, comment }: ModerationRequest) =>
       opportunitiesApi.moderate(id, action, comment),
     onMutate: ({ id }) => removeFromModerationQueue(queryClient, id),
-    onError: (_error, _request, previousQueue) =>
-      restoreModerationQueue(queryClient, previousQueue),
-    onSettled: () => invalidateOpportunities(queryClient),
+    onError: (_error, _request, previousQueue) => {
+      if (isLastPendingModeration(queryClient)) {
+        restoreModerationQueue(queryClient, previousQueue);
+      }
+    },
+    onSettled: () => {
+      if (isLastPendingModeration(queryClient)) {
+        return invalidateOpportunities(queryClient);
+      }
+    },
   });
 
   const openRejectModal = (id: string): void => setRejectModal({ open: true, id, comment: '' });

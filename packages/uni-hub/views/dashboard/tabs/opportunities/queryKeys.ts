@@ -7,3 +7,5 @@ export const opportunityKeys = {
   applicants: (opportunityId: string) =>
     [...opportunityKeys.all, 'applicants', opportunityId] as const,
 };
+
+export const moderateMutationKey = [...opportunityKeys.all, 'moderate'] as const;
