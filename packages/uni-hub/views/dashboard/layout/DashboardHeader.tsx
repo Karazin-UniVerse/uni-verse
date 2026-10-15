@@ -6,7 +6,7 @@ import { Button } from '@una';
 import { StreakBadge } from '@uni-hub/components/gamification';
 import { DevFeaturePanel, useFeatures } from '@uni-hub/features';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { authApi } from '@uni-hub/services/api';
+import { useLogout } from '@uni-hub/hooks/useAuthMutations';
 import type { DashboardHeaderProps } from '../types';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { UserDropdown } from './UserDropdown';
@@ -27,22 +27,14 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const { formatMessage } = useLanguage();
   const { isFeaturePanelEnabled, isMoodleIntegrationEnabled } = useFeatures();
 
-  const handleLogout = async () => {
-    try {
-      await authApi.logout();
-    } catch {
-      try {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('moodleToken');
-        localStorage.removeItem('universe_dashboard_data');
-        localStorage.removeItem('universe_last_sync_time');
-      } catch {
-        // Ignore storage errors
-      }
-    } finally {
-      window.location.href = '/login';
-    }
+  const logout = useLogout();
+
+  const handleLogout = (): void => {
+    logout.mutate(undefined, {
+      onSettled: () => {
+        window.location.href = '/login';
+      },
+    });
   };
 
   return (

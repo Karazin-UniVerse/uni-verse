@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { Assignment } from '@core/types/moodle';
+import { withQueryClient } from '@uni-hub/utils/with-query-client';
 import {
   getAssignmentsNeedingStatus,
   toLocalStatuses,
@@ -21,9 +21,7 @@ function buildAssignment(id: number, submissionStatus?: string): Assignment {
 }
 
 function renderWithClient(element: React.ReactElement): string {
-  const queryClient = new QueryClient();
-
-  return renderToString(React.createElement(QueryClientProvider, { client: queryClient }, element));
+  return renderToString(withQueryClient(element));
 }
 
 describe('getAssignmentsNeedingStatus', () => {

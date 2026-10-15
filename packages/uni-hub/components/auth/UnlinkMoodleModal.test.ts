@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
+import { withQueryClient } from '@uni-hub/utils/with-query-client';
 import { UnlinkMoodleModal } from './UnlinkMoodleModal';
 
 vi.mock('@una', async () => {
@@ -37,11 +38,13 @@ vi.mock('@una', async () => {
 describe('UnlinkMoodleModal component', () => {
   it('renders confirmation prompt and actions when open', () => {
     const html = renderToString(
-      React.createElement(UnlinkMoodleModal, {
-        open: true,
-        onClose: vi.fn(),
-        onSuccess: vi.fn(),
-      }),
+      withQueryClient(
+        React.createElement(UnlinkMoodleModal, {
+          open: true,
+          onClose: vi.fn(),
+          onSuccess: vi.fn(),
+        }),
+      ),
     );
 
     expect(html).toContain('Від&#x27;єднання акаунта Moodle');
@@ -51,11 +54,13 @@ describe('UnlinkMoodleModal component', () => {
 
   it('renders nothing visible when closed', () => {
     const html = renderToString(
-      React.createElement(UnlinkMoodleModal, {
-        open: false,
-        onClose: vi.fn(),
-        onSuccess: vi.fn(),
-      }),
+      withQueryClient(
+        React.createElement(UnlinkMoodleModal, {
+          open: false,
+          onClose: vi.fn(),
+          onSuccess: vi.fn(),
+        }),
+      ),
     );
 
     expect(html).not.toContain("Ви дійсно бажаєте від'єднати");

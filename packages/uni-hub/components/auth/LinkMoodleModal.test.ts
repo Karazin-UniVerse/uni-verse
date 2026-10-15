@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
+import { withQueryClient } from '@uni-hub/utils/with-query-client';
 import { LinkMoodleModal } from './LinkMoodleModal';
 import { LinkMoodleMode } from './helpers';
 
@@ -38,12 +39,14 @@ vi.mock('@una', async () => {
 describe('LinkMoodleModal component', () => {
   it('renders default connect mode correctly when open', () => {
     const html = renderToString(
-      React.createElement(LinkMoodleModal, {
-        open: true,
-        mode: LinkMoodleMode.CONNECT,
-        onClose: vi.fn(),
-        onSuccess: vi.fn(),
-      }),
+      withQueryClient(
+        React.createElement(LinkMoodleModal, {
+          open: true,
+          mode: LinkMoodleMode.CONNECT,
+          onClose: vi.fn(),
+          onSuccess: vi.fn(),
+        }),
+      ),
     );
 
     expect(html).toContain('Прив&#x27;язка акаунта Moodle');
@@ -54,12 +57,14 @@ describe('LinkMoodleModal component', () => {
 
   it('renders change mode correctly when open with mode="change"', () => {
     const html = renderToString(
-      React.createElement(LinkMoodleModal, {
-        open: true,
-        mode: LinkMoodleMode.CHANGE,
-        onClose: vi.fn(),
-        onSuccess: vi.fn(),
-      }),
+      withQueryClient(
+        React.createElement(LinkMoodleModal, {
+          open: true,
+          mode: LinkMoodleMode.CHANGE,
+          onClose: vi.fn(),
+          onSuccess: vi.fn(),
+        }),
+      ),
     );
 
     expect(html).toContain('Зміна акаунта Moodle');
@@ -69,11 +74,13 @@ describe('LinkMoodleModal component', () => {
 
   it('renders nothing visible when closed', () => {
     const html = renderToString(
-      React.createElement(LinkMoodleModal, {
-        open: false,
-        onClose: vi.fn(),
-        onSuccess: vi.fn(),
-      }),
+      withQueryClient(
+        React.createElement(LinkMoodleModal, {
+          open: false,
+          onClose: vi.fn(),
+          onSuccess: vi.fn(),
+        }),
+      ),
     );
 
     expect(html).not.toContain('modal-link-moodle-username');
