@@ -18,6 +18,8 @@ Evaluate the change strictly against these failure modes:
 12. **MAGIC VALUES:** bare numbers or domain strings in logic instead of core constants. Rule: [api-and-config](api-and-config.md#no-magic-values).
 13. **MISSING OPERATIONAL CHANGES:** a new env variable absent from `.env.example`, a new script or service without docs, UI changes without screenshots. Rules: [config](api-and-config.md#config-and-environment), [PR screenshots](workflow.md#branches-commits-pull-requests).
 14. **API ACCESS OUTSIDE CLIENT CLASSES:** direct `fetch` or raw `request` calls in components, hooks or backend services other than the client class itself. Flag the existing `request()` function only when the PR touches it. Rule: [api-and-config](api-and-config.md#api-clients).
+15. **SERVER STATE OUTSIDE TANSTACK QUERY:** API data copied into `useState`, fetched in `useEffect`, or wrapped in a hand-rolled `loading` / `refetch` helper; a failed load turned into an empty list; a mutation that refetches lists by hand instead of invalidating the feature's key. Rule: [data and contracts](data-and-contracts.md#server-state-tanstack-query).
+16. **CONTRACT DRIFT:** an API shape declared again in `packages/uni-hub` or in a backend DTO instead of imported from `@universe/core`; a DTO that does not `implements` the core type; a status union repeated in several packages. Rule: [data and contracts](data-and-contracts.md#shared-api-contracts).
 
 ## Output requirements
 
