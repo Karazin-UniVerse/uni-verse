@@ -67,7 +67,7 @@ const CourseContents: React.FC = () => {
   const [selectedModule, setSelectedModule] = useState<CourseModule | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
-  const handleModuleClick = (courseModule: CourseModule) => {
+  const handleModuleClick = (courseModule: CourseModule): void => {
     if (courseModule.modname === COURSE_MODULE_NAMES.ASSIGN) {
       setSelectedModule(courseModule);
       setModalVisible(true);
@@ -76,7 +76,7 @@ const CourseContents: React.FC = () => {
     }
   };
 
-  const toggleSection = (id: string) => {
+  const toggleSection = (id: string): void => {
     const next = new Set(openSections);
 
     if (next.has(id)) next.delete(id);
@@ -85,7 +85,7 @@ const CourseContents: React.FC = () => {
     setOpenState({ courseId: courseIdNumber, sectionIds: next });
   };
 
-  const renderSections = () => {
+  const renderSections = (): React.ReactNode => {
     if (contentsQuery.isLoading) {
       return <Spinner size="large" tip={formatMessage('courseContents.loading')} />;
     }

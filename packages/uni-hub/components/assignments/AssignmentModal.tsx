@@ -106,7 +106,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     onClose();
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (instance === undefined) return;
 
     if (!text.trim() && files.length === 0) {
