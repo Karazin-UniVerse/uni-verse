@@ -38,6 +38,7 @@ const meta = {
     descriptionTitle: 'Опис можливості',
     contactLabel: 'Контакти:',
     sendToReviewText: 'Відправити на модерацію',
+    editText: 'Редагувати',
     manageTitle: 'Керування можливістю (автор)',
     phaseLabel: 'Фаза:',
     lifecycleOptions: defaultLifecycleOptions,
@@ -82,6 +83,24 @@ export const DraftUnderReview: Story = {
     canApply: false,
     canSendToReview: true,
     onSendToReview: () => {},
+    lifecycleState: 'START',
+  },
+};
+
+export const AuthorDraftWithRevision: Story = {
+  args: {
+    title: 'Розробник сайту факультету',
+    paymentTagText: 'Оплачувана',
+    paymentTone: 'success',
+    statusBadge: <Tag tone="warning">Потребує змін</Tag>,
+    lifecycleTagText: 'Стан: Початок',
+    isOwner: true,
+    canEdit: true,
+    onEdit: () => {},
+    canSendToReview: true,
+    onSendToReview: () => {},
+    moderationCommentTitle: 'Зауваження модератора',
+    moderationComment: 'Будь ласка, уточніть стек технологій та очікуване тижневе навантаження.',
     lifecycleState: 'START',
   },
 };

@@ -49,6 +49,9 @@
 
   @include narrower-than('sm') {
     width: 100%;
+    padding: 4px;
+    gap: 6px;
+    box-sizing: border-box;
   }
 }
 
@@ -69,6 +72,12 @@
   white-space: nowrap;
   flex-shrink: 0;
   transition: all var(--transition-fast) var(--ease-standard);
+
+  @include narrower-than('sm') {
+    padding: 8px 12px;
+    font-size: var(--font-xs);
+    gap: 6px;
+  }
 
   &:hover {
     color: var(--text-primary);

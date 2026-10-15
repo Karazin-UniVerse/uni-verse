@@ -28,6 +28,8 @@
   font-size: var(--font-sm, 14px);
   line-height: 1.6;
   resize: vertical;
+  min-height: 80px;
+  max-height: 240px;
   box-sizing: border-box;
   transition:
     border-color var(--transition-fast, 150ms) ease,

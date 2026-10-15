@@ -14,6 +14,7 @@ export interface OpportunityDetailModalProps {
   onSendToReview: (id: string) => void;
   onLifecycleChange: (id: string, state: OpportunityLifecycle) => void;
   onOpenApply: () => void;
+  onEdit?: (opportunity: Opportunity) => void;
 }
 
 const lifecycleLabelKey = {
@@ -32,6 +33,7 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
   onSendToReview,
   onLifecycleChange,
   onOpenApply,
+  onEdit,
 }) => {
   const { formatMessage, language } = useLanguage();
 
@@ -110,11 +112,18 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
       contactLabel={formatMessage('opportunities.detailModal.contacts')}
       contactValue={opportunity.ownerContactInfo}
       isOwner={isOwner}
+      canEdit={
+        isOwner && (opportunity.status === 'DRAFT' || opportunity.status === 'REQUIRES_CHANGES')
+      }
+      onEdit={onEdit ? () => onEdit(opportunity) : undefined}
+      editText={formatMessage('opportunities.detailModal.edit')}
       canSendToReview={
         isOwner && (opportunity.status === 'DRAFT' || opportunity.status === 'REQUIRES_CHANGES')
       }
       onSendToReview={() => onSendToReview(opportunity.id)}
       sendToReviewText={formatMessage('opportunities.detailModal.sendToReview')}
+      moderationComment={isOwner ? opportunity.moderationComment : undefined}
+      moderationCommentTitle={formatMessage('opportunities.detailModal.moderationFeedback')}
       manageTitle={formatMessage('opportunities.detailModal.manageTitle')}
       phaseLabel={formatMessage('opportunities.detailModal.phaseLabel')}
       lifecycleState={opportunity.lifecycleState}
