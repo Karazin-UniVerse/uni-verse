@@ -3,7 +3,6 @@ import { QueryClient } from '@tanstack/react-query';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import {
   catalogQueryOptions,
-  hasLoadFailed,
   loadApplicants,
   moderationQueueQueryOptions,
   myOpportunitiesQueryOptions,
@@ -55,19 +54,5 @@ describe('opportunities queries', () => {
 
     await expect(loadApplicants('opp-7')).resolves.toEqual([]);
     expect(getApplications).toHaveBeenCalledWith('opp-7');
-  });
-
-  describe('hasLoadFailed', () => {
-    it('is true when the load failed and nothing is cached', () => {
-      expect(hasLoadFailed({ isError: true, data: undefined })).toBe(true);
-    });
-
-    it('is false when a refetch failed but cached data is still there', () => {
-      expect(hasLoadFailed({ isError: true, data: [buildOpportunity('opp-1')] })).toBe(false);
-    });
-
-    it('is false when the load did not fail', () => {
-      expect(hasLoadFailed({ isError: false, data: undefined })).toBe(false);
-    });
   });
 });

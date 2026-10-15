@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Spinner, Empty } from '@una';
+import { hasLoadFailed } from '@uni-hub/queries/load-state';
 import { courseContentsQueryOptions } from '@uni-hub/queries/moodle/queries';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
@@ -91,7 +92,7 @@ const CourseContents: React.FC = () => {
       return <Spinner size="large" tip={formatMessage('courseContents.loading')} />;
     }
 
-    if (contentsQuery.isError) {
+    if (hasLoadFailed(contentsQuery)) {
       return <LoadErrorState onRetry={() => void contentsQuery.refetch()} />;
     }
 

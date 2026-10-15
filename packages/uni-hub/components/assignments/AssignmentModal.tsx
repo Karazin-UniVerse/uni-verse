@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Download, ExternalLink } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, FileInput, Form, Modal, Spinner, Tag, useToast } from '@una';
+import { hasLoadFailed } from '@uni-hub/queries/load-state';
 import { assignmentStatusQueryOptions } from '@uni-hub/queries/moodle/queries';
 import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import { moodleApi } from '@uni-hub/services/api.moodle';
@@ -165,7 +166,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
   let statusContent: React.ReactNode;
 
-  if (statusQuery.isError) {
+  if (hasLoadFailed(statusQuery)) {
     statusContent = <LoadErrorState onRetry={() => void statusQuery.refetch()} />;
   } else if (status) {
     statusContent = (
