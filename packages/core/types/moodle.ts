@@ -16,11 +16,9 @@ export type GradeValue = string | number | null;
 export interface Grade {
   courseId?: number;
   courseName?: string;
-  course_name?: string;
   grade: string;
   rawGrade?: GradeValue;
-  rawgrade?: GradeValue;
-  year?: GradeValue;
+  year?: string | null;
   semester?: number | null;
   controlType?: ControlType;
   currentScore?: number | null;
