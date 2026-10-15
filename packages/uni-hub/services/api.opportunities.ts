@@ -13,7 +13,8 @@ export interface CreateOpportunityDto {
   description: string;
   ownerContactInfo: string;
   paymentType: OpportunityPaymentType;
-  paymentDetails?: string;
+  paymentDetails?: string | null;
+  acceptsApplications?: boolean;
 }
 
 export interface UpdateOpportunityDto {
@@ -22,6 +23,7 @@ export interface UpdateOpportunityDto {
   ownerContactInfo?: string;
   paymentType?: OpportunityPaymentType;
   paymentDetails?: string | null;
+  acceptsApplications?: boolean;
 }
 
 export interface ApplyOpportunityDto {

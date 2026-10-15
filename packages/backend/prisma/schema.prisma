@@ -84,17 +84,18 @@ enum PaymentType {
 }
 
 model Opportunity {
-  id                String                    @id @default(uuid())
-  title             String
-  description       String
-  ownerContactInfo  String
-  partnerInfo       String?
-  status            OpportunityStatus         @default(DRAFT)
-  lifecycleState    OpportunityLifecycleState @default(START)
-  paymentType       PaymentType               @default(UNPAID)
-  paymentDetails    String?
-  details           String?
-  moderationComment String?
+  id                  String                    @id @default(uuid())
+  title               String
+  description         String
+  ownerContactInfo    String
+  partnerInfo         String?
+  status              OpportunityStatus         @default(DRAFT)
+  lifecycleState      OpportunityLifecycleState @default(START)
+  acceptsApplications Boolean                   @default(true)
+  paymentType         PaymentType               @default(UNPAID)
+  paymentDetails      String?
+  details             String?
+  moderationComment   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

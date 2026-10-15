@@ -1,4 +1,10 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaymentType } from '@universe/database';
 
@@ -26,4 +32,9 @@ export class CreateOpportunityDto {
   @IsString()
   @IsOptional()
   paymentDetails?: string | null;
+
+  @ApiPropertyOptional({ default: true })
+  @IsBoolean()
+  @IsOptional()
+  acceptsApplications?: boolean;
 }
