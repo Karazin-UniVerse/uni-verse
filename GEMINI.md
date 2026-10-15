@@ -128,6 +128,15 @@ Rules:
 - Backend DTO helpers go into `<module>.helpers.ts`; never keep helper functions in DTO files.
 - A helper used by exactly one other function stays in that function's module as a private function, not a new file.
 
+## Preservation of business logic
+
+Never alter existing business logic, domain calculations, grading rules, access control, or status lifecycles under the guise of refactoring, cleanup, or addressing review feedback:
+
+- Refactorings must preserve strict behavioral equivalence.
+- Do not simplify away domain edge cases, validations, or permissions unless the task explicitly requires changing that specific business requirement.
+- When addressing review comments from automated tools (such as CodeRabbit) or bots, any suggestion that modifies domain logic, formulas, or permissions must be explicitly confirmed with the user before implementation.
+- Flag unexpected business logic conflicts instead of resolving them unilaterally.
+
 ## Comments
 
 Write self-documenting code. Add comments only for complex logic or business rules.
