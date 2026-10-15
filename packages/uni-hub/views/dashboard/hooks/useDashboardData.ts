@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useToast } from '@una';
 import type { StudentProfile } from '@core/types';
@@ -18,7 +18,7 @@ import {
 } from './helpers';
 import { dashboardQueryOptions, profileQueryOptions } from './queries';
 
-export const EMPTY_DASHBOARD_DATA: DashboardData = {
+const EMPTY_DASHBOARD_DATA: DashboardData = {
   courses: [],
   grades: [],
   assignments: [],
@@ -37,28 +37,16 @@ export interface UseDashboardDataOptions {
   enabled?: boolean;
 }
 
-export interface UseDashboardDataResult extends DashboardState {
+export interface UseDashboardDataResult extends Omit<DashboardState, 'cachedData'> {
   data: DashboardData;
   studentProfile: StudentProfile | null;
   refresh: () => Promise<void>;
 }
 
-interface DashboardSnapshot {
-  data: DashboardData;
-  updatedAt: number | undefined;
-}
-
-function readDashboardSnapshot(): DashboardSnapshot | undefined {
+function readDashboardSnapshot(): DashboardData | undefined {
   const cachedData = loadCachedDashboardData();
 
-  if (!cachedData) {
-    return undefined;
-  }
-
-  return {
-    data: { ...EMPTY_DASHBOARD_DATA, ...cachedData },
-    updatedAt: getInitialSyncTime() ?? undefined,
-  };
+  return cachedData ? { ...EMPTY_DASHBOARD_DATA, ...cachedData } : undefined;
 }
 
 export function useDashboardData({
@@ -78,16 +66,25 @@ export function useDashboardData({
     ...dashboardQueryOptions({ sortOrder, dateFrom, dateTo, hideCompleted }),
     enabled,
     placeholderData: keepPreviousData,
-    initialData: () => readDashboardSnapshot()?.data,
-    initialDataUpdatedAt: () => readDashboardSnapshot()?.updatedAt,
+    initialData: readDashboardSnapshot,
+    initialDataUpdatedAt: 0,
+    refetchOnWindowFocus: false,
   });
   const profileQuery = useQuery({
     ...profileQueryOptions,
     enabled,
-    placeholderData: () => getInitialUserProfile() ?? undefined,
+    initialData: () => getInitialUserProfile() ?? undefined,
+    initialDataUpdatedAt: 0,
   });
 
-  const { error, errorUpdatedAt, data: queryData } = dashboardQuery;
+  const { error, errorUpdatedAt, data: queryData, isError } = dashboardQuery;
+
+  const snapshot = useMemo(
+    () => (isError && queryData === undefined ? readDashboardSnapshot() : undefined),
+    [isError, queryData],
+  );
+  const state = deriveDashboardState({ ...dashboardQuery, snapshot });
+  const { cachedData } = state;
 
   useEffect(() => {
     if (!error || errorUpdatedAt === handledErrorAt.current || isMoodleUnlinked()) {
@@ -105,19 +102,18 @@ export function useDashboardData({
 
     console.error(error);
 
-    if (queryData) {
+    if (cachedData) {
       toast.info(formatMessage('dashboard.offlineNotice'));
     } else {
       toast.error(formatMessage('dashboard.loadError'));
     }
-  }, [error, errorUpdatedAt, queryData, toast, formatMessage, onUnauthorized]);
+  }, [error, errorUpdatedAt, cachedData, toast, formatMessage, onUnauthorized]);
 
-  const state = deriveDashboardState(dashboardQuery);
-  let data = queryData ?? EMPTY_DASHBOARD_DATA;
+  let data = cachedData ?? EMPTY_DASHBOARD_DATA;
 
-  if (state.isOfflineData && queryData) {
+  if (state.isOfflineData && cachedData) {
     data = buildFallbackData({
-      cachedData: queryData,
+      cachedData,
       previousData: EMPTY_DASHBOARD_DATA,
       hideCompleted,
       dateFrom,
@@ -137,5 +133,13 @@ export function useDashboardData({
     }
   };
 
-  return { ...state, data, studentProfile: profileQuery.data ?? null, refresh };
+  return {
+    loading: state.loading,
+    hasLoadedOnce: state.hasLoadedOnce,
+    isOfflineData: state.isOfflineData,
+    lastSyncTime: state.lastSyncTime ?? getInitialSyncTime(),
+    data,
+    studentProfile: profileQuery.data ?? null,
+    refresh,
+  };
 }

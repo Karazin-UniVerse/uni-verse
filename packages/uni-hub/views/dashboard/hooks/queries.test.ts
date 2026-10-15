@@ -1,4 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.hoisted(() => {
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+});
+
+vi.mock('@uni-hub/utils/browser', () => ({
+  isBrowser: true,
+}));
+
 import { QueryClient } from '@tanstack/react-query';
 import { moodleApi } from '@uni-hub/services/api.moodle';
 import type { BuildAssignmentParamsOptions } from './helpers';
@@ -82,6 +91,16 @@ describe('loadDashboardData', () => {
 
     expect(storage.accessToken).toBeUndefined();
     expect(storage.universe_dashboard_data).toBeUndefined();
+  });
+
+  it('does not rewrite the snapshot when Moodle was unlinked while the request ran', async () => {
+    mockMoodleResponses();
+    storage.isMoodleLinked = 'false';
+
+    await loadDashboardData(filters);
+
+    expect(storage.universe_dashboard_data).toBeUndefined();
+    expect(storage.universe_last_sync_time).toBeUndefined();
   });
 
   it('keeps the stored snapshot when the request fails for another reason', async () => {

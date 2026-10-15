@@ -7,6 +7,7 @@ import {
   assembleDashboardData,
   buildAssignmentParams,
   clearUserSessionStorage,
+  isMoodleUnlinked,
   isUnauthorizedError,
   persistDashboardSnapshot,
   syncStudentProfile,
@@ -27,7 +28,9 @@ export async function loadDashboardData(
     ]);
     const freshData = assembleDashboardData(responses);
 
-    persistDashboardSnapshot(Date.now(), freshData);
+    if (!isMoodleUnlinked()) {
+      persistDashboardSnapshot(Date.now(), freshData);
+    }
 
     return freshData;
   } catch (error) {

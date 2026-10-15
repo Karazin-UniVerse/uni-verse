@@ -174,23 +174,19 @@ describe('storage helpers', () => {
 });
 
 describe('syncStudentProfile', () => {
-  it('saves student profile to storage and calls setter callback', () => {
-    const setter = vi.fn();
+  it('saves the student profile to storage', () => {
     const profile: any = { id: '1', fullName: 'John Doe' };
 
-    syncStudentProfile(profile, setter);
+    syncStudentProfile(profile);
 
-    expect(setter).toHaveBeenCalledWith(profile);
     expect(localStorage.getItem('universe_student_profile')).toBe(JSON.stringify(profile));
   });
 
   it('does nothing when profile is null or undefined', () => {
-    const setter = vi.fn();
+    syncStudentProfile(null);
+    syncStudentProfile(undefined);
 
-    syncStudentProfile(null, setter);
-    syncStudentProfile(undefined, setter);
-
-    expect(setter).not.toHaveBeenCalled();
+    expect(localStorage.getItem('universe_student_profile')).toBeNull();
   });
 });
 
@@ -322,6 +318,7 @@ describe('deriveDashboardState', () => {
         dataUpdatedAt: 1_700_000_000_000,
       }),
     ).toEqual({
+      cachedData: dashboardData,
       loading: true,
       hasLoadedOnce: true,
       isOfflineData: false,
@@ -339,6 +336,33 @@ describe('deriveDashboardState', () => {
 
     expect(state.isOfflineData).toBe(true);
     expect(state.loading).toBe(false);
+  });
+
+  it('falls back to the stored snapshot when the load of new filters failed', () => {
+    const state = deriveDashboardState({
+      data: undefined,
+      isError: true,
+      isFetching: false,
+      dataUpdatedAt: 0,
+      snapshot: dashboardData,
+    });
+
+    expect(state.cachedData).toBe(dashboardData);
+    expect(state.isOfflineData).toBe(true);
+    expect(state.hasLoadedOnce).toBe(true);
+  });
+
+  it('ignores the stored snapshot while there is no error', () => {
+    const state = deriveDashboardState({
+      data: undefined,
+      isError: false,
+      isFetching: true,
+      dataUpdatedAt: 0,
+      snapshot: dashboardData,
+    });
+
+    expect(state.cachedData).toBeUndefined();
+    expect(state.isOfflineData).toBe(false);
   });
 
   it('does not flag offline data when nothing was ever loaded', () => {
