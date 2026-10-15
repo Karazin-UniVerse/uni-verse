@@ -4,7 +4,7 @@ import { moodleApi } from '@uni-hub/services/api.moodle';
 import { createLimiter } from '@uni-hub/utils/concurrency';
 import { moodleKeys } from './queryKeys';
 
-type MoodleQueryOptions<TData, TKey extends QueryKey> = ReturnType<
+export type MoodleQueryOptions<TData, TKey extends QueryKey> = ReturnType<
   typeof queryOptions<TData, Error, TData, TKey>
 >;
 
