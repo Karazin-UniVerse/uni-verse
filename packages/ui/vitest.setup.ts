@@ -1,11 +1,12 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
+import { isBrowser } from '@universe/core/utils/browser';
 
 afterEach(() => {
   cleanup();
 
-  if (typeof window !== 'undefined') {
+  if (isBrowser()) {
     window.localStorage?.clear();
     window.sessionStorage?.clear();
   }
