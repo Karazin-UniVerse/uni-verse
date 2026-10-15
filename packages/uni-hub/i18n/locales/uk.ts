@@ -173,7 +173,6 @@ export const uk = {
   'courseContents.breadcrumbs': 'Курси',
   'courseContents.title': 'Вміст курсу',
   'courseContents.loading': 'Завантаження вмісту...',
-  'courseContents.loadError': 'Не вдалося завантажити вміст курсу',
   'courseContents.empty': 'У цьому курсі поки що немає доступних матеріалів.',
   'courseContents.moduleType': 'Тип',
 

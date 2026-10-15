@@ -173,7 +173,6 @@ export const en = {
   'courseContents.breadcrumbs': 'Courses',
   'courseContents.title': 'Course Contents',
   'courseContents.loading': 'Loading contents...',
-  'courseContents.loadError': 'Failed to load course contents',
   'courseContents.empty': 'There are no materials available in this course yet.',
   'courseContents.moduleType': 'Type',
 
