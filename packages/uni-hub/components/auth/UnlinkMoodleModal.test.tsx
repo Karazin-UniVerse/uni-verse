@@ -17,10 +17,10 @@ vi.mock('@una', async () => {
       children?: React.ReactNode;
     }) =>
       open ? (
-        <div role="dialog" aria-label={title}>
+        <dialog open aria-label={title}>
           {title ? <h2>{title}</h2> : null}
           {children}
-        </div>
+        </dialog>
       ) : null,
     useToast: () => ({
       success: vi.fn(),

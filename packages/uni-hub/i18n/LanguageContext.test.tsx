@@ -8,12 +8,12 @@ import { ThemeProvider } from '../theme/ThemeContext';
 
 describe('LanguageContext and translations', () => {
   it('should have consistent translation keys for uk and en', () => {
-    const ukKeys = Object.keys(uk).sort();
-    const enKeys = Object.keys(en).sort();
+    const ukKeys = Object.keys(uk).sort((a, b) => a.localeCompare(b));
+    const enKeys = Object.keys(en).sort((a, b) => a.localeCompare(b));
 
     expect(ukKeys).toEqual(enKeys);
-    expect(Object.keys(TRANSLATIONS.uk).sort()).toEqual(ukKeys);
-    expect(Object.keys(TRANSLATIONS.en).sort()).toEqual(enKeys);
+    expect(Object.keys(TRANSLATIONS.uk).sort((a, b) => a.localeCompare(b))).toEqual(ukKeys);
+    expect(Object.keys(TRANSLATIONS.en).sort((a, b) => a.localeCompare(b))).toEqual(enKeys);
   });
 
   it('should render default Ukrainian language', () => {
