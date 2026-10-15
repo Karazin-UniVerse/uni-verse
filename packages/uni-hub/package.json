@@ -11,6 +11,7 @@
     "test": "vitest run --config vitest.config.mts"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.104.3",
     "@universe/core": "workspace:*",
     "@universe/ui": "workspace:*",
     "canvas-confetti": "^1.9.4",
