@@ -1,17 +1,17 @@
 import type { StudentProfile } from '@core/types';
 import type { LinkMoodleMode } from '@uni-hub/components/auth';
 import type {
-  Course,
+  MoodleCourse,
   Grade,
   Assignment,
   MoodleEvent,
   Notification,
   CourseStatistics,
-} from '@uni-hub/types';
+} from '@core/types/moodle';
 import type { NavKey } from './constants';
 
 export interface DashboardData {
-  courses: Course[];
+  courses: MoodleCourse[];
   grades: Grade[];
   assignments: Assignment[];
   events: MoodleEvent[];
@@ -21,7 +21,7 @@ export interface DashboardData {
 }
 
 export interface OverviewTabProps {
-  courses: Course[];
+  courses: MoodleCourse[];
   events: MoodleEvent[];
   assignments: Assignment[];
   grades: Grade[];
@@ -33,7 +33,7 @@ export interface OverviewTabProps {
 }
 
 export interface CoursesTabProps {
-  courses: Course[];
+  courses: MoodleCourse[];
   soundEnabled: boolean;
 }
 

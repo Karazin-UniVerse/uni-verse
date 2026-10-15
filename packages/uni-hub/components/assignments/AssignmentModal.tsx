@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Download, ExternalLink } from 'lucide-react';
 import { Button, FileInput, Form, Modal, Spinner, Tag, useToast } from '@una';
 import { moodleApi } from '@uni-hub/services/api';
-import type { CourseModule } from '@uni-hub/types';
+import type { CourseModule } from '@core/types/moodle';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { BADGES } from '@uni-hub/constants/gamification';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';

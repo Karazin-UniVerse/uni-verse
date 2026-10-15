@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
-import type { Assignment } from '@uni-hub/types';
+import type { Assignment } from '@core/types/moodle';
 import { useAssignmentStatuses } from './useAssignmentStatuses';
 
 describe('useAssignmentStatuses hook', () => {

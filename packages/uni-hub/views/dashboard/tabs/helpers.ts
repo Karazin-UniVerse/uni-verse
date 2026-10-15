@@ -1,5 +1,5 @@
 import type { TranslationKey } from '@uni-hub/i18n/translations';
-import type { MoodleEvent } from '@uni-hub/types';
+import type { MoodleEvent } from '@core/types/moodle';
 
 export type AssignmentStatusInfo = {
   tone: 'success' | 'danger' | 'info' | 'warning';
