@@ -64,7 +64,29 @@ export class AuthApi {
       if (response.data.isLinked) {
         safeStorage.setItem('isLoggedIn', 'true');
         safeStorage.setItem('isMoodleLinked', 'true');
+        safeStorage.removeItem('universe_dashboard_data');
+        safeStorage.removeItem('universe_last_sync_time');
       }
+    }
+
+    return response;
+  }
+
+  async unlinkMoodleAccount(): Promise<{ data: { access_token: string; isLinked: boolean } }> {
+    const response = await request<{ access_token: string; isLinked: boolean }>(
+      '/auth/moodle/unlink',
+      {
+        method: 'POST',
+        retries: 0,
+      },
+    );
+
+    if (response.data?.access_token) {
+      safeStorage.setItem('accessToken', response.data.access_token);
+      safeStorage.setItem('isMoodleLinked', 'false');
+      safeStorage.removeItem('moodleToken');
+      safeStorage.removeItem('universe_dashboard_data');
+      safeStorage.removeItem('universe_last_sync_time');
     }
 
     return response;

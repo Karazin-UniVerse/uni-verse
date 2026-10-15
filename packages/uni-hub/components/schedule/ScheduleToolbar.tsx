@@ -40,7 +40,7 @@ export const ScheduleToolbar: React.FC<ScheduleToolbarProps> = ({
         ))}
       </div>
 
-      <Button type="button" variant="primary" size="medium" onClick={onExportICS}>
+      <Button type="button" variant="primary" onClick={onExportICS}>
         <Download size={16} /> {formatMessage('schedule.exportICal')}
       </Button>
     </div>

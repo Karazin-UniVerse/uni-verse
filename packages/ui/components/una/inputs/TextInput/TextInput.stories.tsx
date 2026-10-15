@@ -1,6 +1,24 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
+import { VariantMatrix } from '../../../../storybook/VariantMatrix/VariantMatrix';
 import { TextInput } from './TextInput';
+import type { TextInputProps } from './TextInput.types';
+
+type MatrixRow =
+  'primary' | 'secondary' | 'transparent' | 'primary disabled' | 'secondary disabled';
+type MatrixSize = NonNullable<TextInputProps['size']>;
+
+const MATRIX_ROWS: Record<
+  MatrixRow,
+  Pick<TextInputProps, 'variant' | 'isTransparent' | 'disabled'>
+> = {
+  primary: { variant: 'primary' },
+  secondary: { variant: 'secondary' },
+  transparent: { isTransparent: true },
+  'primary disabled': { variant: 'primary', disabled: true },
+  'secondary disabled': { variant: 'secondary', disabled: true },
+};
+const MATRIX_SIZES: readonly MatrixSize[] = ['small', 'medium', 'large'];
 
 const meta: Meta<typeof TextInput> = {
   title: 'Una/Inputs/TextInput',
@@ -27,52 +45,22 @@ const meta: Meta<typeof TextInput> = {
 export default meta;
 type Story = StoryObj<typeof TextInput>;
 
-export const Primary: Story = {
-  args: {
-    variant: 'primary',
-    size: 'medium',
-    placeholder: 'Primary Input',
+export const Matrix: Story = {
+  parameters: {
+    layout: 'padded',
   },
-};
-
-export const Secondary: Story = {
-  args: {
-    variant: 'secondary',
-    size: 'medium',
-    placeholder: 'Secondary Input',
-  },
-};
-
-export const Large: Story = {
-  args: {
-    variant: 'primary',
-    size: 'large',
-    placeholder: 'Large Input',
-  },
-};
-
-export const Small: Story = {
-  args: {
-    variant: 'primary',
-    size: 'small',
-    placeholder: 'Small Input',
-  },
-};
-
-export const Transparent: Story = {
-  args: {
-    variant: 'primary',
-    size: 'medium',
-    isTransparent: true,
-    placeholder: 'Transparent Input',
-  },
-};
-
-export const Disabled: Story = {
-  args: {
-    variant: 'primary',
-    size: 'medium',
-    disabled: true,
-    placeholder: 'Disabled Input',
-  },
+  render: () => (
+    <VariantMatrix
+      rows={Object.keys(MATRIX_ROWS) as MatrixRow[]}
+      columns={MATRIX_SIZES}
+      renderCell={(row: MatrixRow, size: MatrixSize) => (
+        <TextInput
+          size={size}
+          placeholder="Input"
+          aria-label={`${row} ${size}`}
+          {...MATRIX_ROWS[row]}
+        />
+      )}
+    />
+  ),
 };

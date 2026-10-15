@@ -9,15 +9,17 @@ import type { DashboardData } from '../types';
 import {
   assembleDashboardData,
   buildAssignmentParams,
+  buildFallbackData,
   clearUserSessionStorage,
-  filterFallbackAssignments,
   getInitialSyncTime,
+  isMoodleUnlinked,
   isUnauthorizedError,
   loadCachedDashboardData,
   persistDashboardSnapshot,
-} from './useDashboardData.helpers';
-import { isBrowser } from '@uni-hub/utils/browser';
-export { clearUserSessionStorage } from './useDashboardData.helpers';
+  syncStudentProfile,
+} from './helpers';
+
+export { clearUserSessionStorage } from './helpers';
 
 export interface UseDashboardDataOptions {
   sortOrder: 'asc' | 'desc';
@@ -64,28 +66,6 @@ function getInitialHasLoadedOnce(): boolean {
   }
 }
 
-function getCachedStudentProfile(): StudentProfile | null {
-  if (!isBrowser) {
-    return null;
-  }
-
-  try {
-    const cachedProfile = localStorage.getItem('universe_student_profile');
-
-    if (!cachedProfile) return null;
-
-    const parsedProfile = JSON.parse(cachedProfile) as StudentProfile;
-
-    if (parsedProfile && typeof parsedProfile === 'object') {
-      return parsedProfile;
-    }
-  } catch {
-    // ignore invalid JSON / storage errors
-  }
-
-  return null;
-}
-
 export function useDashboardData({
   sortOrder,
   dateFrom,
@@ -101,9 +81,7 @@ export function useDashboardData({
   const [hasLoadedOnce, setHasLoadedOnce] = useState(getInitialHasLoadedOnce);
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(getInitialSyncTime);
   const [isOfflineData, setIsOfflineData] = useState(false);
-  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(
-    getCachedStudentProfile,
-  );
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const [data, setData] = useState<DashboardData>(getInitialDashboardData);
 
   const fetchRequestIdRef = useRef(0);
@@ -139,7 +117,7 @@ export function useDashboardData({
         moodleApi.getProfile().catch(() => null),
       ]);
 
-      if (requestId !== fetchRequestIdRef.current) {
+      if (requestId !== fetchRequestIdRef.current || isMoodleUnlinked()) {
         return;
       }
 
@@ -155,16 +133,7 @@ export function useDashboardData({
       setData(freshData);
       setHasLoadedOnce(true);
       setIsOfflineData(false);
-
-      if (profileRes?.data) {
-        setStudentProfile(profileRes.data);
-
-        try {
-          localStorage.setItem('universe_student_profile', JSON.stringify(profileRes.data));
-        } catch {
-          // Ignore storage quota errors
-        }
-      }
+      syncStudentProfile(profileRes?.data, setStudentProfile);
 
       const nowTimestamp = Date.now();
 
@@ -175,7 +144,7 @@ export function useDashboardData({
         toast.success(formatMessage('dashboard.syncSuccess'));
       }
     } catch (error) {
-      if (requestId !== fetchRequestIdRef.current) {
+      if (requestId !== fetchRequestIdRef.current || isMoodleUnlinked()) {
         return;
       }
 
@@ -191,19 +160,16 @@ export function useDashboardData({
 
       const cachedData = loadCachedDashboardData();
 
-      if (cachedData) {
-        const fallbackAssignments = filterFallbackAssignments({
-          assignments: cachedData.assignments,
-          hideCompleted,
-          dateFrom,
-          dateTo,
-        });
-
-        setData((previous) => ({
-          ...previous,
-          ...cachedData,
-          assignments: fallbackAssignments,
-        }));
+      if (cachedData && !isMoodleUnlinked()) {
+        setData((previous) =>
+          buildFallbackData({
+            cachedData,
+            previousData: previous,
+            hideCompleted,
+            dateFrom,
+            dateTo,
+          }),
+        );
         setIsOfflineData(true);
         setHasLoadedOnce(true);
         toast.info(formatMessage('dashboard.offlineNotice'));
@@ -211,7 +177,9 @@ export function useDashboardData({
         return;
       }
 
-      toast.error(formatMessage('dashboard.loadError'));
+      if (!isMoodleUnlinked()) {
+        toast.error(formatMessage('dashboard.loadError'));
+      }
     } finally {
       if (requestId === fetchRequestIdRef.current) {
         setLoading(false);
@@ -221,6 +189,7 @@ export function useDashboardData({
 
   const cancelPendingFetch = () => {
     fetchRequestIdRef.current += 1;
+    setLoading(false);
   };
 
   return {

@@ -7,14 +7,16 @@
   "license": "UNLICENSED",
   "scripts": {
     "db:generate": "prisma generate",
-    "db:push": "prisma db push",
+    "db:backfill-roles": "prisma db execute --file prisma/scripts/backfill-roles.sql",
+    "db:push": "pnpm db:backfill-roles && prisma db push",
+    "db:push:force": "pnpm db:backfill-roles && prisma db push --accept-data-loss",
     "build": "pnpm --filter @universe/core build && pnpm db:generate && nest build",
     "format": "prettier --write \"**/*.ts\" \"test/**/*.ts\"",
     "dev": "nest start --watch",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "pnpm db:push && node dist/main",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
     "test": "pnpm db:generate && node --experimental-vm-modules node_modules/jest/bin/jest.js",
@@ -39,13 +41,14 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "cookie-parser": "^1.4.7",
-    "google-auth-library": "^11.1.0",
+    "google-auth-library": "^11.2.0",
     "morgan": "^1.12.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.23.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "tslib": "^2.8.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.7",
@@ -62,7 +65,7 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.11.11",
     "@types/supertest": "^7.0.0",
-    "eslint": "^10.11.0",
+    "eslint": "^10.12.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^17.13.0",
@@ -70,13 +73,13 @@
     "prettier": "^3.9.9",
     "prisma": "^7.10.0",
     "source-map-support": "^0.5.21",
-    "supertest": "^7.3.0",
+    "supertest": "^7.3.1",
     "ts-jest": "^29.4.14",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.70.1"
+    "typescript-eslint": "^8.71.0"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -90,10 +93,7 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "moduleNameMapper": {
-      "^@universe/core/(.*)$": "<rootDir>/../core/$1",
-      "^@universe/core$": "<rootDir>/../core/index.ts",
-      "^@core/(.*)$": "<rootDir>/../core/$1",
-      "^@core$": "<rootDir>/../core/index.ts"
+      "^@universe/core/(.*)$": "<rootDir>/../core/$1"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s",
@@ -102,6 +102,7 @@
       "!test/**",
       "!node_modules/**",
       "!prisma.config.ts",
+      "!prisma/seed*.ts",
       "!main.ts",
       "!**/*.module.ts",
       "!**/*.dto.ts",

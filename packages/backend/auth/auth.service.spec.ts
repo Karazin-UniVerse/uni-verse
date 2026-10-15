@@ -55,7 +55,7 @@ describe('AuthService', () => {
     id: 'user-uuid-1',
     email: 'student@student.karazin.ua',
     name: 'Test Student',
-    role: Role.STUDENT,
+    roles: [Role.OPPORTUNITIES_USER],
     password: 'hashed-password',
     token: 'moodle-token-123',
     moodleId: '5001',
@@ -173,6 +173,14 @@ describe('AuthService', () => {
 
       await expect(authService.login(loginDto)).rejects.toThrow(
         ForbiddenException,
+      );
+    });
+
+    it('should throw ForbiddenException with default message if Moodle throws non-Error', async () => {
+      mockGetCreds.getToken.mockRejectedValue('string rejection');
+
+      await expect(authService.login(loginDto)).rejects.toThrow(
+        'Invalid Moodle credentials',
       );
     });
 
@@ -308,6 +316,47 @@ describe('AuthService', () => {
         'user-uuid-1',
         expect.objectContaining({ refreshToken: 'new-rt-hash' }),
       );
+    });
+
+    it('should refresh tokens when user has moodle token present', async () => {
+      mockUserService.findById.mockResolvedValue({
+        ...sampleUser,
+        token: 'existing-moodle-token',
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('fresh-at')
+        .mockResolvedValueOnce('fresh-rt');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-rt-hash');
+      mockUserService.updateUser.mockResolvedValue(sampleUser);
+
+      const result = await authService.refreshTokens('user-uuid-1', 'valid-rt');
+
+      expect(result).toEqual({
+        access_token: 'fresh-at',
+        refresh_token: 'fresh-rt',
+      });
+    });
+
+    it('should refresh tokens when user does not have moodleId or token', async () => {
+      mockUserService.findById.mockResolvedValue({
+        ...sampleUser,
+        token: null,
+        moodleId: null,
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('fresh-at')
+        .mockResolvedValueOnce('fresh-rt');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-rt-hash');
+      mockUserService.updateUser.mockResolvedValue(sampleUser);
+
+      const result = await authService.refreshTokens('user-uuid-1', 'valid-rt');
+
+      expect(result).toEqual({
+        access_token: 'fresh-at',
+        refresh_token: 'fresh-rt',
+      });
     });
 
     it('should throw ForbiddenException if user not found or has no refresh token', async () => {
@@ -723,6 +772,7 @@ describe('AuthService', () => {
       expect(mockUserService.updateUser).toHaveBeenCalledWith(sampleUser.id, {
         token: 'linked-moodle-token',
         moodleId: '7777',
+        roles: [Role.OPPORTUNITIES_USER, Role.MOODLE_STUDENT],
       });
     });
 
@@ -753,6 +803,88 @@ describe('AuthService', () => {
         refresh_token: 'relinked-rt',
         isLinked: true,
       });
+    });
+  });
+
+  describe('unlinkMoodleAccount', () => {
+    it('should throw BadRequestException if user is not found', async () => {
+      mockUserService.findById.mockResolvedValue(null);
+
+      await expect(
+        authService.unlinkMoodleAccount('non-existent-id'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should successfully unlink Moodle account and return isLinked=false with new tokens', async () => {
+      const unlinkedUser: User = {
+        ...sampleUser,
+        token: null,
+        moodleId: null,
+      };
+
+      mockUserService.findById.mockResolvedValue(sampleUser);
+      mockUserService.updateUser.mockResolvedValue(unlinkedUser);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('unlinked-at')
+        .mockResolvedValueOnce('unlinked-rt');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-unlinked-rt');
+
+      const result = await authService.unlinkMoodleAccount(sampleUser.id);
+
+      expect(result).toEqual({
+        access_token: 'unlinked-at',
+        refresh_token: 'unlinked-rt',
+        isLinked: false,
+      });
+      expect(mockUserService.updateUser).toHaveBeenCalledWith(sampleUser.id, {
+        token: null,
+        moodleId: null,
+        refreshToken: 'hashed-unlinked-rt',
+        roles: [Role.OPPORTUNITIES_USER],
+      });
+      expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          roles: [Role.OPPORTUNITIES_USER],
+        }),
+        expect.any(Object),
+      );
+    });
+
+    it('should preserve MOODLE_STUDENT role on unlink if user previously had it', async () => {
+      const studentUser: User = {
+        ...sampleUser,
+        roles: [Role.OPPORTUNITIES_USER, Role.MOODLE_STUDENT],
+      };
+      const unlinkedUser: User = {
+        ...studentUser,
+        token: null,
+        moodleId: null,
+      };
+
+      mockUserService.findById.mockResolvedValue(studentUser);
+      mockUserService.updateUser.mockResolvedValue(unlinkedUser);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('unlinked-at')
+        .mockResolvedValueOnce('unlinked-rt');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-unlinked-rt');
+
+      const result = await authService.unlinkMoodleAccount(studentUser.id);
+
+      expect(result.isLinked).toBe(false);
+      expect(mockUserService.updateUser).toHaveBeenCalledWith(studentUser.id, {
+        token: null,
+        moodleId: null,
+        refreshToken: 'hashed-unlinked-rt',
+        roles: [Role.OPPORTUNITIES_USER, Role.MOODLE_STUDENT],
+      });
+      expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          roles: [Role.OPPORTUNITIES_USER, Role.MOODLE_STUDENT],
+        }),
+        expect.any(Object),
+      );
     });
   });
 

@@ -1,8 +1,9 @@
+import type { TranslationKey } from '@uni-hub/i18n/translations';
 import type { MoodleEvent } from '@uni-hub/types';
 
 export type AssignmentStatusInfo = {
   tone: 'success' | 'danger' | 'info' | 'warning';
-  label: string;
+  labelKey: TranslationKey;
 };
 
 export type AssignmentStatusInfoParams = {
@@ -20,32 +21,32 @@ export function getAssignmentStatusInfo({
 }: AssignmentStatusInfoParams): AssignmentStatusInfo {
   if (typeof isOverdue === 'boolean') {
     if (isGraded) {
-      return { tone: 'success', label: 'Оцінено' };
+      return { tone: 'success', labelKey: 'assignments.status.graded' };
     }
 
     if (isAwaitingReview) {
-      return { tone: 'warning', label: 'Очікує перевірки' };
+      return { tone: 'warning', labelKey: 'assignments.status.awaitingReview' };
     }
 
     if (isOverdue) {
-      return { tone: 'danger', label: 'Прострочено' };
+      return { tone: 'danger', labelKey: 'assignments.status.overdue' };
     }
 
-    return { tone: 'info', label: 'В процесі' };
+    return { tone: 'info', labelKey: 'assignments.status.inProgress' };
   }
 
   if (isGraded) {
     return {
       tone: 'success',
-      label: status === 'graded' ? 'Оцінено' : 'Здано на перевірку',
+      labelKey: status === 'graded' ? 'assignments.status.graded' : 'assignments.status.submitted',
     };
   }
 
   if (isAwaitingReview) {
-    return { tone: 'danger', label: 'Прострочено' };
+    return { tone: 'danger', labelKey: 'assignments.status.overdue' };
   }
 
-  return { tone: 'info', label: 'В процесі' };
+  return { tone: 'info', labelKey: 'assignments.status.inProgress' };
 }
 
 export function formatLastSync(timestamp: number): string {

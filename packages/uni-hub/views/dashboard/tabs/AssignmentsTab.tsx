@@ -2,9 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Filter } from 'lucide-react';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import { Select, CheckBox, Button as SimpleButton } from '@una';
+import { DateTime, Select, CheckBox, Button } from '@una';
 import {
   AssignmentCard,
   AssignmentsEmptyState,
@@ -15,16 +13,27 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { AssignmentsTabProps } from '../types';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
-function parseDate(value: string): Date | null {
-  if (!value) return null;
+function parseFilterDate(dateStr: string): Date | null {
+  if (!dateStr) {
+    return null;
+  }
 
-  const date = new Date(`${value}T00:00:00`);
+  const [yearStr, monthStr, dayStr] = dateStr.split('-');
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const day = Number(dayStr);
 
-  return Number.isNaN(date.getTime()) ? null : date;
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  return new Date(year, month - 1, day);
 }
 
-function toDateString(date: Date | null): string {
-  if (!date) return '';
+function formatFilterDate(date: Date | null): string {
+  if (!date) {
+    return '';
+  }
 
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -46,7 +55,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   soundEnabled,
   onOpenAssignment,
 }) => {
-  const { formatMessage } = useLanguage();
+  const { localeTag, formatMessage } = useLanguage();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const localStatuses = useAssignmentStatuses(assignments);
 
@@ -62,10 +71,13 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
   const nowMs = useNow(30_000);
   const nowSec = Math.floor(nowMs / 1000);
 
+  const selectedDateFrom = useMemo(() => parseFilterDate(dateFrom), [dateFrom]);
+  const selectedDateTo = useMemo(() => parseFilterDate(dateTo), [dateTo]);
+
   return (
     <div className={styles.stack}>
       <div className={styles.mobileFilterToggle}>
-        <SimpleButton
+        <Button
           type="button"
           onClick={() => setFiltersOpen(!filtersOpen)}
           variant="secondary"
@@ -76,38 +88,33 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
           {filtersOpen
             ? formatMessage('assignments.hideFilters')
             : formatMessage('assignments.filters')}
-        </SimpleButton>
+        </Button>
       </div>
-
       <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
-        <DatePicker
-          selected={parseDate(dateFrom)}
-          onChange={(date: Date | null) => onDateFromChange(toDateString(date))}
-          dateFormat="yyyy-MM-dd"
-          isClearable
-          placeholderText={formatMessage('assignments.dateFrom')}
+        <DateTime
+          showTime={false}
+          locale={localeTag}
+          selected={selectedDateFrom}
+          onChange={(newDate) => onDateFromChange(formatFilterDate(newDate))}
+          placeholder={formatMessage('assignments.dateFrom')}
           aria-label={formatMessage('assignments.dateFrom')}
-          className={styles.dateInput}
-          calendarClassName={styles.dateCalendar}
-          todayButton={formatMessage('assignments.today') ?? 'Сьогодні'}
-          minDate={new Date(2000, 0, 1)}
-          maxDate={new Date(2099, 11, 31)}
+          dialogLabel={formatMessage('assignments.datePicker')}
+          clearLabel={formatMessage('common.clear')}
+          todayLabel={formatMessage('common.today')}
+          className={styles.dateFilterInput}
         />
-
-        <DatePicker
-          selected={parseDate(dateTo)}
-          onChange={(date: Date | null) => onDateToChange(toDateString(date))}
-          dateFormat="yyyy-MM-dd"
-          isClearable
-          placeholderText={formatMessage('assignments.dateTo')}
+        <DateTime
+          showTime={false}
+          locale={localeTag}
+          selected={selectedDateTo}
+          onChange={(newDate) => onDateToChange(formatFilterDate(newDate))}
+          placeholder={formatMessage('assignments.dateTo')}
           aria-label={formatMessage('assignments.dateTo')}
-          className={styles.dateInput}
-          calendarClassName={styles.dateCalendar}
-          todayButton={formatMessage('assignments.today') ?? 'Сьогодні'}
-          minDate={new Date(2000, 0, 1)}
-          maxDate={new Date(2099, 11, 31)}
+          dialogLabel={formatMessage('assignments.datePicker')}
+          clearLabel={formatMessage('common.clear')}
+          todayLabel={formatMessage('common.today')}
+          className={styles.dateFilterInput}
         />
-
         <Select
           value={sortOrder}
           onChange={(value) => onSortOrderChange(value as 'asc' | 'desc')}
@@ -116,7 +123,6 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
             { value: 'desc', label: formatMessage('assignments.newestFirst') },
           ]}
         />
-
         <label className={styles.checkLabel}>
           <CheckBox
             variant="primary"

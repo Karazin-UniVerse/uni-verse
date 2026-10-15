@@ -10,9 +10,13 @@ import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export interface StudentCardProps {
   activeStudentProfile: StudentProfile;
+  isMoodleLinked?: boolean;
 }
 
-export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }) => {
+export const StudentCard: React.FC<StudentCardProps> = ({
+  activeStudentProfile,
+  isMoodleLinked = true,
+}) => {
   const { formatMessage } = useLanguage();
   const { isEDeanEnabled, isMoodleIntegrationEnabled } = useFeatures();
 
@@ -32,8 +36,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }
             )}
           </div>
           <div className={styles.studentMainInfo}>
-            {/* intentional: suppressHydrationWarning – user profile is hydrated from client localStorage */}
-            <h3 suppressHydrationWarning>{activeStudentProfile.fullName}</h3>
+            <h3>{activeStudentProfile.fullName}</h3>
             {isEDeanEnabled ? (
               <div className={styles.muted}>
                 {formatMessage('overview.specialty')} {activeStudentProfile.specialty} •{' '}
@@ -44,16 +47,27 @@ export const StudentCard: React.FC<StudentCardProps> = ({ activeStudentProfile }
             )}
           </div>
         </div>
-        {isEDeanEnabled && (
-          <div className={styles.studentTags}>
-            <Tag tone="success">{formatMessage('student.fullTime')}</Tag>
-            <Tag tone="info">{formatMessage('student.budget')}</Tag>
-            <Tag tone="success">
-              <Award size={12} style={{ marginRight: 4 }} />
-              {formatMessage('student.scholarship')}
+        <div className={styles.studentTags}>
+          {isEDeanEnabled && (
+            <>
+              <Tag tone="success">{formatMessage('student.fullTime')}</Tag>
+              <Tag tone="info">{formatMessage('student.budget')}</Tag>
+              <Tag tone="success">
+                <Award size={12} style={{ marginRight: 4 }} />
+                {formatMessage('student.scholarship')}
+              </Tag>
+            </>
+          )}
+          {isMoodleIntegrationEnabled && (
+            <Tag tone={isMoodleLinked ? 'success' : 'warning'}>
+              {formatMessage('student.moodleStatus', {
+                status: formatMessage(
+                  isMoodleLinked ? 'header.moodleConnected' : 'header.moodleNotConnected',
+                ),
+              })}
             </Tag>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {(isEDeanEnabled || isMoodleIntegrationEnabled) && (

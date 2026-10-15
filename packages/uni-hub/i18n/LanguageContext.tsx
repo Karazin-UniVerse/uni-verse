@@ -18,7 +18,7 @@ type LanguageContextValue = {
   language: AppLanguage;
   localeTag: string;
   setLanguage: (lang: AppLanguage) => void;
-  formatMessage: (key: string, values?: Record<string, string | number>) => string;
+  formatMessage: (key: TranslationKey, values?: Record<string, string | number>) => string;
 };
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);

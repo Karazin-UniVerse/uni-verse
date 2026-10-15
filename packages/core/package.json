@@ -30,10 +30,6 @@
     "./utils/*": {
       "types": "./dist/utils/*.d.ts",
       "default": "./dist/utils/*.js"
-    },
-    "./auth": {
-      "types": "./dist/auth.d.ts",
-      "default": "./dist/auth.js"
     }
   },
   "devDependencies": {

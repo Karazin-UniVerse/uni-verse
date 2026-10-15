@@ -4,6 +4,7 @@ export type Option = {
 };
 
 export type SelectProps = {
+  id?: string;
   value: string;
   onChange: (value: string) => void;
   options: Option[];

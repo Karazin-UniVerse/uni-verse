@@ -1,6 +1,18 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
+import { VariantRow } from '../../storybook/VariantMatrix/VariantRow';
 import { ExampleComponent } from './example';
+import type { ExampleComponentProps } from './example';
+
+type MatrixContent = 'title only' | 'with description';
+
+const MATRIX_CONTENT: Record<MatrixContent, ExampleComponentProps> = {
+  'title only': { title: 'Example complex component' },
+  'with description': {
+    title: 'Complex Component Overview',
+    description: 'This is an example complex component story demonstrating CSF3 format.',
+  },
+};
 
 const meta = {
   title: 'Complex/ExampleComponent',
@@ -24,15 +36,14 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
-  args: {
-    title: 'Example complex component',
+export const Matrix: Story = {
+  parameters: {
+    layout: 'padded',
   },
-};
-
-export const WithDescription: Story = {
-  args: {
-    title: 'Complex Component Overview',
-    description: 'This is an example complex component story demonstrating CSF3 format and section separation.',
-  },
+  render: () => (
+    <VariantRow
+      columns={Object.keys(MATRIX_CONTENT) as MatrixContent[]}
+      renderCell={(content: MatrixContent) => <ExampleComponent {...MATRIX_CONTENT[content]} />}
+    />
+  ),
 };

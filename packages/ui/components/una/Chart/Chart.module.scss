@@ -2,12 +2,12 @@
   width: 100%;
   min-width: 0;
   background: var(--chart-bg, var(--bg-surface));
-  border: 1px solid var(--chart-border, var(--card-border));
+  border: 1px solid var(--chart-border, var(--border-color));
   border-radius: var(--border-radius-large);
   padding: var(--space-16);
   box-sizing: border-box;
   overflow: hidden;
-  box-shadow: var(--chart-glow, var(--card-shadow));
+  box-shadow: var(--chart-glow, none);
   transition:
     background-color var(--transition-medium) var(--ease-standard),
     border-color var(--transition-medium) var(--ease-standard),
@@ -37,17 +37,24 @@
 
   :global(.recharts-wrapper),
   :global(.recharts-surface),
-  :global(.recharts-surface *),
-  :global(.recharts-wrapper *) {
-    outline: none;
+  :global(.recharts-layer),
+  :global(.recharts-bar-rectangle),
+  :global(.recharts-rectangle),
+  :global(svg),
+  :global(rect),
+  :global(path) {
+    user-select: none;
+    -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
 
-    &:focus,
-    &:focus-visible,
-    &:active {
+    &:focus:not(:focus-visible) {
       outline: none;
-      box-shadow: none;
     }
+  }
+
+  :global(.recharts-wrapper:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 }
 

@@ -14,3 +14,4 @@ export { AuthApi, authApi } from './api.auth';
 export type { GoogleAuthResponse } from './api.auth';
 export { MoodleApi, moodleApi } from './api.moodle';
 export type { GetAssignmentsParams } from './api.moodle';
+export { OpportunitiesApi, opportunitiesApi } from './api.opportunities';

@@ -28,7 +28,7 @@ describe('Tier 3 - Non-Moodle Platform & Core Integration Suite', () => {
         id: 'usr-uuid-offline',
         email: 'student.offline@karazin.ua',
         name: 'Офлайн Студент',
-        role: 'STUDENT',
+        roles: ['OPPORTUNITIES_USER'],
         password: '$2b$10$e8wFakeHashedPasswordStringForIntegrationTesting',
         token: 'secret-moodle-token-xyz',
         refreshToken: '$2b$10$e8wFakeRefreshTokenHash',
@@ -41,7 +41,7 @@ describe('Tier 3 - Non-Moodle Platform & Core Integration Suite', () => {
         id: internalUserRecord.id,
         email: internalUserRecord.email,
         name: internalUserRecord.name,
-        role: internalUserRecord.role,
+        roles: internalUserRecord.roles,
         createdAt: internalUserRecord.createdAt,
         updatedAt: internalUserRecord.updatedAt,
       };
@@ -193,11 +193,11 @@ describe('Tier 3 - Non-Moodle Platform & Core Integration Suite', () => {
       expect(una.Spinner).toBeDefined();
       expect(una.Skeleton).toBeDefined();
       expect(una.Empty).toBeDefined();
-      expect(una.SimpleForm).toBeDefined();
+      expect(una.Form).toBeDefined();
       expect(una.TextInput).toBeDefined();
       expect(una.CheckBox).toBeDefined();
       expect(una.RadioButton).toBeDefined();
-      expect(una.SimpleSlider).toBeDefined();
+      expect(una.Slider).toBeDefined();
       expect(una.FileInput).toBeDefined();
       expect(una.ToastProvider).toBeDefined();
       expect(una.useToast).toBeDefined();

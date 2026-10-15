@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { FEATURE_STORAGE_KEYS } from '@core/constants/features';
@@ -53,7 +53,10 @@ describe('FeatureToggleContext and Components', () => {
     expect(html).toContain('id="panel">false</span>');
   });
 
-  it('applies initialFlags overrides correctly', () => {
+  it('resolves environment variables in FeatureToggleProvider correctly', () => {
+    process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
+    process.env.NEXT_PUBLIC_FEATURE_EDEAN = 'true';
+
     const TestConsumer = () => {
       const { isMoodleIntegrationEnabled, isEDeanEnabled } = useFeatures();
 
@@ -67,14 +70,60 @@ describe('FeatureToggleContext and Components', () => {
 
     const tree = React.createElement(
       FeatureToggleProvider,
-      { initialFlags: { isMoodleIntegrationEnabled: false, isEDeanEnabled: false } },
+      null,
       React.createElement(TestConsumer),
     );
 
     const html = renderToString(tree);
 
-    expect(html).toContain('id="moodle">false</span>');
-    expect(html).toContain('id="edean">false</span>');
+    expect(html).toContain('id="moodle">true</span>');
+    expect(html).toContain('id="edean">true</span>');
+  });
+
+  it('applies initialFlags on createOverrideStore correctly', () => {
+    const store = createOverrideStore({
+      allowOverrides: true,
+      initialFlags: { isMoodleIntegrationEnabled: false, isEDeanEnabled: false },
+    });
+
+    const snapshot = store.getSnapshot();
+
+    expect(snapshot.isMoodleIntegrationEnabled).toBe(false);
+    expect(snapshot.isEDeanEnabled).toBe(false);
+  });
+
+  it('allows overrides in production when NEXT_PUBLIC_FEATURE_PANEL is enabled', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    process.env.NEXT_PUBLIC_FEATURE_PANEL = 'true';
+
+    try {
+      const TestConsumer = () => {
+        const controls = useFeatureControls();
+
+        if (!controls.isOverridden('isMoodleIntegrationEnabled')) {
+          controls.setFeatureOverride('isMoodleIntegrationEnabled', false);
+        }
+
+        return React.createElement(
+          'span',
+          { id: 'is-overridden' },
+          String(controls.isOverridden('isMoodleIntegrationEnabled')),
+        );
+      };
+
+      const tree = React.createElement(
+        FeatureToggleProvider,
+        null,
+        React.createElement(TestConsumer),
+      );
+
+      const html = renderToString(tree);
+
+      expect(html).toContain('id="is-overridden">true</span>');
+    } finally {
+      vi.unstubAllEnvs();
+      delete process.env.NEXT_PUBLIC_FEATURE_PANEL;
+    }
   });
 
   it('throws an error when useFeatures is called outside FeatureToggleProvider', () => {

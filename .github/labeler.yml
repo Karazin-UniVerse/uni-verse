@@ -11,6 +11,31 @@ backend:
   - changed-files:
       - any-glob-to-any-file:
           - 'packages/backend/**'
+          - 'Dockerfile'
+
+database:
+  - changed-files:
+      - any-glob-to-any-file:
           - 'packages/database/**'
           - '**/prisma/**'
-          - 'Dockerfile'
+
+core:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/core/**'
+
+testing:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'tests/**'
+          - '**/*.test.*'
+          - '**/*.spec.*'
+
+infrastructure:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**'
+          - 'configs/**'
+          - 'turbo.json'
+          - 'package.json'
+          - 'pnpm-workspace.yaml'

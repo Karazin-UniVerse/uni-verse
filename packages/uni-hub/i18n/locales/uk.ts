@@ -3,6 +3,8 @@ export const uk = {
   'lang.uk': 'Українська',
   'lang.en': 'English',
   'lang.select': 'Мова інтерфейсу',
+  'common.clear': 'Очистити',
+  'common.today': 'Сьогодні',
 
   // Login
   'login.title': 'UNiHub',
@@ -36,11 +38,25 @@ export const uk = {
   'login.linkMoodleEnterPassword': 'Будь ласка, введіть пароль від Moodle',
   'login.linkMoodleRequired': 'Для завершення входу необхідно прив’язати акаунт Moodle',
   'login.linkMoodleError': 'Помилка прив’язки акаунта. Перевірте логін та пароль.',
+  'login.changeMoodleTitle': 'Зміна акаунта Moodle',
+  'login.changeMoodleHint': 'Введіть нові облікові дані Moodle для заміни підключеного акаунту.',
+  'login.changeMoodleSubmit': 'Змінити акаунт',
+  'login.changeMoodleSuccess': 'Moodle-акаунт успішно змінено!',
+  'login.unlinkMoodleTitle': "Від'єднання акаунта Moodle",
+  'login.unlinkMoodlePrompt':
+    "Ви дійсно бажаєте від'єднати свій акаунт Moodle? Після від'єднання оцінки, курси та дедлайни не відображатимуться до повторного підключення.",
+  'login.unlinkMoodleConfirm': "Від'єднати",
+  'login.unlinkMoodleLoading': "Від'єднання...",
+  'login.unlinkMoodleSuccess': "Moodle-акаунт успішно від'єднано!",
+  'login.unlinkMoodleError': "Помилка від'єднання акаунта Moodle. Спробуйте пізніше.",
 
   // Themes
   'theme.light': 'Світла',
   'theme.dark': 'Темна',
   'theme.cyberpunk': 'Cyberpunk',
+  'theme.karazinClassic': 'Karazin Classic',
+  'theme.universeSpace': 'UniVerse Space',
+  'theme.karazinGold': 'Karazin Gold',
   'theme.select': 'Вибір теми',
 
   // Navigation (short & full)
@@ -54,14 +70,25 @@ export const uk = {
   'nav.schedule.full': 'Розклад занять',
   'nav.grades': 'Оцінки',
   'nav.grades.full': 'Заліковка та бали',
+  'nav.connectMoodle': 'Підключити Moodle',
+  'nav.connectMoodle.full': 'Підключити акаунт Moodle LMS',
   'nav.opportunities': 'Можливості',
   'nav.opportunities.full': 'Платформа можливостей',
 
   // Sidebar & Header
   'sidebar.logout': 'Вийти',
+  'sidebar.collapse': 'Згорнути меню',
+  'sidebar.expand': 'Розгорнути меню',
   'sidebar.moodleConnected': 'Moodle LMS (підключено)',
   'header.notifications': 'Сповіщення',
   'header.notifications.empty': 'Немає сповіщень',
+  'header.notifications.unreadItem': 'Непрочитане:',
+  'header.moodleConnected': 'Підключено',
+  'header.moodleNotConnected': 'Не підключено',
+  'header.moodleChange': 'Змінити акаунт',
+  'header.moodleDisconnect': "Від'єднати",
+  'header.moodleConnect': 'Підключити Moodle',
+  'header.moodleLabel': 'Moodle LMS',
   'dashboard.sessionExpired': 'Сесія застаріла або недійсна. Будь ласка, увійдіть знову.',
   'dashboard.loadError':
     'Помилка завантаження даних. Будь ласка, переконайтеся, що бекенд запущено.',
@@ -95,6 +122,7 @@ export const uk = {
   'student.fullTime': 'Денна форма',
   'student.budget': 'Бюджет',
   'student.scholarship': 'Відмінник (Академічна стипендія)',
+  'student.moodleStatus': 'Moodle: {status}',
   'student.faculty': 'Факультет / Інститут',
   'student.department': 'Кафедра',
   'student.courseAndGroup': 'Курс / Академічна група',
@@ -184,6 +212,7 @@ export const uk = {
   'assignments.hideFilters': 'Сховати фільтри',
   'assignments.dateFrom': 'Дата від',
   'assignments.dateTo': 'Дата до',
+  'assignments.datePicker': 'Вибір дати',
   'assignments.oldestFirst': 'Спочатку старі',
   'assignments.newestFirst': 'Спочатку нові',
   'assignments.hideCompleted': 'Сховати виконані',
@@ -196,6 +225,11 @@ export const uk = {
   'assignments.emptyNotFound': 'Завдань не знайдено',
   'assignments.emptyDateFilter': 'За обраними датами завдань не знайдено',
   'assignments.emptyAllDone': 'Ура, всі завдання виконані! Час відпочити або переглянути лекції 🎉',
+  'assignments.status.graded': 'Оцінено',
+  'assignments.status.awaitingReview': 'Очікує перевірки',
+  'assignments.status.overdue': 'Прострочено',
+  'assignments.status.inProgress': 'В процесі',
+  'assignments.status.submitted': 'Здано на перевірку',
 
   // Schedule View
   'schedule.modeMonth': 'Місяць',
@@ -223,7 +257,7 @@ export const uk = {
   'header.soundUnmute': 'Увімкнути звук',
   'header.openMenu': 'Відкрити меню',
   'header.userMenu': 'Меню профілю користувача',
-  'header.unreadCount': 'нових',
+  'header.unreadCount': '{count} нових',
 
   // Assignment Modal
   'assignmentModal.defaultTitle': 'Завдання',
@@ -329,6 +363,22 @@ export const uk = {
   'overview.viewCourseMaterials': 'Переглянути матеріали курсу: {name}',
   'student.courseGroupFormat': '{course} курс, група {group}',
 
+  // Connect Moodle Tab
+  'connectMoodle.title': 'Підключення акаунту Moodle LMS',
+  'connectMoodle.subtitle':
+    "Об'єднайте UniVerse з вашим навчальним кабінетом Moodle для автоматичної синхронізації успішності, дедлайнів та курсів.",
+  'connectMoodle.cta': 'Підключити Moodle зараз',
+  'connectMoodle.openMoodleLms': 'Відкрити Moodle LMS',
+  'connectMoodle.featureGradesTitle': 'Синхронізація оцінок',
+  'connectMoodle.featureGradesDesc':
+    'Всі поточні бали за лабораторні, практичні та контрольні роботи автоматично оновлюються в електронній заліковці.',
+  'connectMoodle.featureDeadlinesTitle': 'Дедлайни та завдання',
+  'connectMoodle.featureDeadlinesDesc':
+    'Відстежуйте терміни здачі робіт, отримуйте сповіщення про наближення дедлайнів та уникайте запізнень.',
+  'connectMoodle.featureCoursesTitle': 'Матеріали та курси',
+  'connectMoodle.featureCoursesDesc':
+    'Швидкий доступ до навчальних планів, переліку дисциплін та контактів викладачів.',
+
   // Feature Gating & Opportunities
   'quickActions.opportunities': 'Можливості',
   'quickActions.newBadge': 'Нове',
@@ -347,6 +397,7 @@ export const uk = {
   'opportunities.details': 'Детальніше',
   'opportunities.deadline': 'Дедлайн:',
   'opportunities.empty': 'Наразі немає відкритих можливостей у цій категорії',
+  'opportunities.applicants.empty': 'На цю можливість ще немає відгуків від студентів',
   'opportunities.tagInternships': 'IT & Стажування',
   'opportunities.tagGrants': 'Гранти та стипендії',
   'opportunities.tagExchange': 'Академічна мобільність',
@@ -379,6 +430,172 @@ export const uk = {
   'devPanel.eDeanDesc': 'Розклад занять, студентська картка',
   'devPanel.opportunitiesLabel': 'Можливості',
   'devPanel.opportunitiesDesc': 'Дошка проєктів та стажувань',
+
+  // Opportunities
+  'opportunities.tabs.catalog': 'Каталог',
+  'opportunities.tabs.myOpportunities': 'Мої можливості',
+  'opportunities.tabs.myApplications': 'Мої відгуки',
+  'opportunities.tabs.moderation': 'Модерація',
+  'opportunities.actions.create': 'Створити можливість',
+  'opportunities.toast.createdDraft': 'Можливість успішно створена як чернетка!',
+  'opportunities.toast.createError': 'Помилка створення можливості',
+  'opportunities.toast.applySuccess': 'Ваш відгук успішно надіслано організатору!',
+  'opportunities.toast.applyError': 'Не вдалося подати відгук',
+  'opportunities.toast.sentToReview': 'Можливість надіслана на модерацію!',
+  'opportunities.toast.genericError': 'Помилка',
+  'opportunities.toast.stateUpdated': 'Стан проекту оновлено',
+  'opportunities.toast.updated': 'Зміни успішно збережено!',
+  'opportunities.toast.updateError': 'Помилка оновлення можливості',
+  'opportunities.toast.statusUpdateError': 'Помилка оновлення статусу',
+  'opportunities.confirm.withdraw': 'Ви впевнені, що бажаєте відкликати свій відгук?',
+  'opportunities.confirm.withdrawTitle': 'Відкликання відгуку',
+  'opportunities.confirm.withdrawConfirm': 'Відкликати',
+  'opportunities.toast.withdrawn': 'Відгук відкликано',
+  'opportunities.toast.approved': 'Можливість схвалено та опубліковано в каталозі!',
+  'opportunities.toast.rejected': 'Можливість відхилено',
+  'opportunities.toast.requiresChanges': 'Можливість повернуто на доопрацювання автору',
+  'opportunities.toast.moderateError': 'Помилка модерації',
+  'opportunities.card.defaultOwner': 'Каразінський університет',
+  'opportunities.card.vacancy': 'Вакансія',
+  'opportunities.card.practice': 'Практика',
+  'opportunities.card.paidDefault': 'Оплачувано',
+  'opportunities.card.experience': 'Досвід / Практика',
+  'opportunities.card.moderatorNote': 'Зауваження модератора:',
+  'opportunities.card.applications': 'Відгуки',
+  'opportunities.card.management': 'Управління',
+  'opportunities.card.details': 'Деталі',
+  'opportunities.card.detailsAria': 'Детальніше про {title}',
+  'opportunities.catalog.searchPlaceholder': 'Пошук за назвою або ключовими словами...',
+  'opportunities.catalog.searchAria': 'Пошук можливостей',
+  'opportunities.catalog.clearSearchAria': 'Очистити поле пошуку',
+  'opportunities.catalog.filterAll': 'Усі',
+  'opportunities.catalog.filterPaid': 'Оплачувані',
+  'opportunities.catalog.filterUnpaid': 'Волонтерство / Практика',
+  'opportunities.catalog.foundPrefix': 'Знайдено:',
+  'opportunities.catalog.emptyDescription': 'За вашим запитом не знайдено доступних можливостей',
+
+  // Opportunities Status Badges
+  'opportunities.status.draft': 'Чернетка',
+  'opportunities.status.readyForReview': 'На модерації',
+  'opportunities.status.requiresChanges': 'Потребує правок',
+  'opportunities.status.published': 'Опубліковано',
+  'opportunities.status.rejected': 'Відхилено',
+
+  // Opportunities Application Status Badges
+  'opportunities.appStatus.submitted': 'Надіслано',
+  'opportunities.appStatus.underReview': 'На розгляді',
+  'opportunities.appStatus.accepted': 'Прийнято',
+  'opportunities.appStatus.rejected': 'Відхилено',
+  'opportunities.appStatus.withdrawn': 'Відкликано',
+
+  // Opportunities SubTabs
+  'opportunities.myOpportunities.empty': 'Ви ще не опублікували жодної власної можливості',
+  'opportunities.myApplications.empty': 'Ви ще не відгукувалися на жодну можливість',
+  'opportunities.myApplications.submittedOn': 'Подано {date}',
+  'opportunities.myApplications.defaultTitle': 'Проектна можливість',
+  'opportunities.myApplications.paidWithAmount': 'Оплачувана ({amount})',
+  'opportunities.myApplications.paid': 'Оплачувана',
+  'opportunities.myApplications.unpaid': 'Практика',
+  'opportunities.myApplications.motivationLabel': 'Ваш супровідний лист / мотивація:',
+  'opportunities.myApplications.ownerFeedbackLabel': 'Відповідь автора пропозиції:',
+  'opportunities.myApplications.withdrawBtn': 'Відкликати відгук',
+  'opportunities.myApplications.statusAccepted': 'Вашу кандидатуру схвалено організатором',
+  'opportunities.myApplications.statusRejected': 'Організатор відхилив відгук',
+  'opportunities.myApplications.statusWithdrawn': 'Ви відкликали цей відгук',
+
+  'opportunities.moderation.empty':
+    'Черга модерації порожня! Немає нових можливостей для перевірки.',
+  'opportunities.moderation.needsModeration': 'Потребує модерації',
+  'opportunities.moderation.submittedOn': 'Подано {date}',
+  'opportunities.moderation.unknownOwner': 'Невідомо',
+  'opportunities.moderation.paidWithAmount': 'Оплачувана ({amount})',
+  'opportunities.moderation.paid': 'Оплачувана',
+  'opportunities.moderation.practice': 'Практика',
+  'opportunities.moderation.descLabel': 'Опис пропозиції',
+  'opportunities.moderation.prevCommentLabel': 'Попередній коментар модерації:',
+  'opportunities.moderation.approve': 'Схвалити',
+  'opportunities.moderation.revise': 'На доопрацювання',
+  'opportunities.moderation.reject': 'Відхилити',
+
+  // Modals - Create
+  'opportunities.createModal.title': 'Створити нову можливість',
+  'opportunities.createModal.editTitle': 'Редагувати можливість',
+  'opportunities.createModal.titleLabel': 'Назва можливості *',
+  'opportunities.createModal.titlePlaceholder': 'Наприклад: React-розробник у студентський стартап',
+  'opportunities.createModal.descLabel': 'Опис, завдання та вимоги до кандидата *',
+  'opportunities.createModal.descPlaceholder':
+    'Детально розкажіть про проект, задачі, очікувану зайнятість та необхідні навички...',
+  'opportunities.createModal.contactLabel': 'Контактні дані організатора *',
+  'opportunities.createModal.contactPlaceholder': 'Telegram (@username) або Email',
+  'opportunities.createModal.paymentTypeLabel': 'Тип винагороди',
+  'opportunities.createModal.unpaidOption': 'Неоплачувана (Практика, досвід)',
+  'opportunities.createModal.paidOption': 'Оплачувана',
+  'opportunities.createModal.paymentDetailsLabel': 'Деталі та розмір оплати',
+  'opportunities.createModal.paymentDetailsPlaceholder':
+    'Наприклад: $400/місяць або 5000 грн за етап',
+  'opportunities.createModal.cancel': 'Скасувати',
+  'opportunities.createModal.saving': 'Збереження...',
+  'opportunities.createModal.submit': 'Створити чернетку',
+  'opportunities.createModal.saveChanges': 'Зберегти зміни',
+
+  // Modals - Reject / Revise
+  'opportunities.rejectModal.title': 'Зауваження або повернення на доопрацювання',
+  'opportunities.rejectModal.commentLabel':
+    'Опишіть зауваження або причину (буде надіслано автору):',
+  'opportunities.rejectModal.placeholder':
+    'Вкажіть, що саме необхідно виправити перед повторною подачею...',
+  'opportunities.rejectModal.cancel': 'Скасувати',
+  'opportunities.rejectModal.revise': 'На доопрацювання',
+  'opportunities.rejectModal.reject': 'Відхилити',
+
+  // Modals - Detail
+  'opportunities.detailModal.defaultTitle': 'Деталі можливості',
+  'opportunities.detailModal.paidWithDetails': 'Оплата: {details}',
+  'opportunities.detailModal.paidProvided': 'Передбачена',
+  'opportunities.detailModal.unpaid': 'Без оплати (Практика / Досвід)',
+  'opportunities.detailModal.lifecycleState': 'Стан: {state}',
+  'opportunities.detailModal.organizer': 'Організатор:',
+  'opportunities.detailModal.defaultOrganizer': 'Каразінський університет',
+  'opportunities.detailModal.publishedOn': 'Опубліковано: {date}',
+  'opportunities.detailModal.descTitle': 'Опис проекту та вимоги',
+  'opportunities.detailModal.contacts': 'Контакти для звʼязку:',
+  'opportunities.detailModal.manageTitle': 'Керування вашою можливістю',
+  'opportunities.detailModal.sendToReview': 'Надіслати на модерацію',
+  'opportunities.detailModal.edit': 'Редагувати',
+  'opportunities.detailModal.moderationFeedback': 'Зауваження модератора',
+  'opportunities.detailModal.phaseLabel': 'Фаза:',
+  'opportunities.detailModal.phaseStart': 'Старт',
+  'opportunities.detailModal.phaseActive': 'Активна фаза',
+  'opportunities.detailModal.phasePaused': 'На паузі',
+  'opportunities.detailModal.phaseCompleted': 'Завершено',
+  'opportunities.detailModal.phaseCancelled': 'Скасовано',
+  'opportunities.detailModal.close': 'Закрити',
+  'opportunities.detailModal.apply': 'Відгукнутися на можливість',
+
+  // Modals - Apply
+  'opportunities.applyModal.title': 'Відгук: {title}',
+  'opportunities.applyModal.motivationLabel':
+    'Супровідне повідомлення (чому вам цікавий цей проект) *',
+  'opportunities.applyModal.motivationPlaceholder':
+    'Коротко опишіть ваш досвід, стек та чому ви хочете взяти участь...',
+  'opportunities.applyModal.contactLabel': 'Ваш Telegram або номер телефону для звʼязку',
+  'opportunities.applyModal.contactPlaceholder': '@username або +380...',
+  'opportunities.applyModal.defaultContact': 'Вказано в профілі',
+  'opportunities.applyModal.defaultApplicantName': 'Студент',
+  'opportunities.applyModal.cancel': 'Скасувати',
+  'opportunities.applyModal.submitting': 'Відправка...',
+  'opportunities.applyModal.submit': 'Надіслати відгук',
+
+  // Modals - Applicants
+  'opportunities.applicantsModal.title': 'Кандидати на можливість ({count})',
+  'opportunities.applicantsModal.empty': 'На цю можливість ще немає відгуків',
+  'opportunities.applicantsModal.defaultApplicant': 'Студент',
+  'opportunities.applicantsModal.motivationLabel': 'Супровідне повідомлення:',
+  'opportunities.applicantsModal.submittedOn': 'Подано {date}',
+  'opportunities.applicantsModal.accept': 'Прийняти',
+  'opportunities.applicantsModal.underReview': 'На розгляд',
+  'opportunities.applicantsModal.reject': 'Відхилити',
+  'opportunities.applicantsModal.close': 'Закрити',
 };
 
 export type TranslationKey = keyof typeof uk;

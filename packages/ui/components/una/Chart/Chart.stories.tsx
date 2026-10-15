@@ -1,7 +1,23 @@
-import React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
+import { VariantRow } from '../../../storybook/VariantMatrix/VariantRow';
 import { Chart } from './Chart';
+import type { ChartProps } from './Chart.types';
+
+type MatrixKind = 'horizontal bar' | 'vertical bar' | 'donut';
+
+const MOCK_DATA = [
+  { name: 'Київ', value: 45 },
+  { name: 'Харків', value: 30 },
+  { name: 'Львів', value: 25 },
+  { name: 'Одеса', value: 18 },
+  { name: 'Дніпро', value: 12 },
+];
+const MATRIX_KINDS: Record<MatrixKind, Pick<ChartProps, 'type' | 'layout' | 'showLegend'>> = {
+  'horizontal bar': { type: 'bar', layout: 'horizontal' },
+  'vertical bar': { type: 'bar', layout: 'vertical' },
+  donut: { type: 'donut', showLegend: true },
+};
 
 const meta = {
   title: 'Una/Charts/Chart',
@@ -42,46 +58,21 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const mockData = [
-  { name: 'Київ', value: 45 },
-  { name: 'Харків', value: 30 },
-  { name: 'Львів', value: 25 },
-  { name: 'Одеса', value: 18 },
-  { name: 'Дніпро', value: 12 },
-];
-
-export const HorizontalBar: Story = {
-  args: {
-    data: mockData,
-    type: 'bar',
-    layout: 'horizontal',
-    title: 'Регіональний розподіл',
-    valueLabel: 'Кількість',
-  },
-};
-
-export const VerticalBar: Story = {
-  args: {
-    data: mockData,
-    type: 'bar',
-    layout: 'vertical',
-    title: 'Статистика за містами',
-    valueLabel: 'Кількість',
-  },
-};
-
-export const Donut: Story = {
-  args: {
-    data: mockData,
-    type: 'donut',
-    title: 'Частка за категоріями',
-    showLegend: true,
-  },
-};
-
-export const Empty: Story = {
+export const Matrix: Story = {
   args: {
     data: [],
-    emptyDescription: 'Немає даних для відображення',
   },
+  parameters: {
+    layout: 'padded',
+  },
+  render: () => (
+    <VariantRow
+      columns={Object.keys(MATRIX_KINDS) as MatrixKind[]}
+      renderCell={(kind: MatrixKind) => (
+        <div style={{ width: '320px' }}>
+          <Chart title="Title" valueLabel="Count" data={MOCK_DATA} {...MATRIX_KINDS[kind]} />
+        </div>
+      )}
+    />
+  ),
 };

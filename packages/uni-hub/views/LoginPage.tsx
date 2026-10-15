@@ -3,17 +3,19 @@
 import React, { useState } from 'react';
 import { User, Lock, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Button, SimpleForm, useToast } from '@una';
+import { Button, Form, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { authApi, getErrorMessage, safeStorage } from '@uni-hub/services/api';
 import { GoogleLoginButton, AuthField, parseGoogleClaims } from '@uni-hub/components/auth';
+import { useFeatures } from '@uni-hub/features';
 import { motion } from 'framer-motion';
 import styles from './LoginPage.module.scss';
 
 const LoginPage: React.FC = () => {
   const { formatMessage } = useLanguage();
+  const { isMoodleIntegrationEnabled } = useFeatures();
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -40,9 +42,9 @@ const LoginPage: React.FC = () => {
 
       const res = await authApi.loginWithGoogle(idToken);
 
-      if (res.data?.isLinked) {
+      if (res.data?.isLinked || !isMoodleIntegrationEnabled) {
         safeStorage.setItem('isLoggedIn', 'true');
-        safeStorage.setItem('isMoodleLinked', 'true');
+        safeStorage.setItem('isMoodleLinked', res.data?.isLinked ? 'true' : 'false');
 
         if (displayName) {
           safeStorage.setItem('username', displayName);
@@ -167,15 +169,13 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className={styles.page}>
-      <div className={styles.themeBar}>
-        <ThemeSwitcher compact />
-      </div>
-      <div className={styles.languageBar}>
-        <LanguageSwitcher variant="glass" placement="bottom-up" />
+      <div className={styles.toolbar}>
+        <LanguageSwitcher variant="glass" />
+        <ThemeSwitcher compact className={styles.themeTrigger} />
       </div>
       <div className={styles.center}>
         {isLinkingMoodle ? (
-          <SimpleForm className={styles.card} action={handleLinkMoodle}>
+          <Form className={styles.card} action={handleLinkMoodle}>
             <div className={styles.brand}>
               <h1>{formatMessage('login.title')}</h1>
               <p>{formatMessage('login.linkMoodleTitle')}</p>
@@ -248,9 +248,9 @@ const LoginPage: React.FC = () => {
                 {formatMessage('login.linkMoodleBack')}
               </Button>
             </div>
-          </SimpleForm>
+          </Form>
         ) : (
-          <SimpleForm className={styles.card} action={handleLogin}>
+          <Form className={styles.card} action={handleLogin}>
             <div className={styles.brand}>
               <h1>{formatMessage('login.title')}</h1>
               <p>{formatMessage('login.subtitle')}</p>
@@ -327,7 +327,7 @@ const LoginPage: React.FC = () => {
                 {loading ? formatMessage('login.loading') : formatMessage('login.submit')}
               </Button>
             </motion.div>
-          </SimpleForm>
+          </Form>
         )}
       </div>
     </div>

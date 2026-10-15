@@ -23,7 +23,6 @@ import {
   type AssignmentStatusInfo,
 } from '@uni-hub/views/dashboard/tabs/helpers';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
-import type { TranslationKey } from '@uni-hub/i18n/translations';
 
 export type AssignmentCardProps = {
   assignment: Assignment;
@@ -50,21 +49,6 @@ function renderStatusIcon(tone: AssignmentStatusInfo['tone']) {
   return <Clock size={13} style={{ marginRight: 4 }} />;
 }
 
-function getLocalizedStatus(label: string, formatMessage: (key: TranslationKey) => string) {
-  switch (label) {
-    case 'Прострочено':
-      return formatMessage('donut.overdue');
-    case 'Очікує перевірки':
-    case 'Здано на перевірку':
-      return formatMessage('donut.awaitingReview');
-    case 'В процесі':
-      return formatMessage('donut.inProgress');
-    case 'Оцінено':
-      return formatMessage('assignmentModal.statusGraded');
-    default:
-      return label;
-  }
-}
 export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
   assignment,
   grade,
@@ -74,17 +58,19 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
   status = 'new',
 }) => {
   const { localeTag, formatMessage } = useLanguage();
+  const hasValidGrade = Boolean(grade) && Number(grade) !== -1;
+  const isGraded = status === 'graded' || hasValidGrade || Boolean(assignment.graded);
+  const isAwaitingReview = !isGraded && status === 'submitted';
+  const isCompleted = isGraded || isAwaitingReview;
   const hasDeadline = Boolean(assignment.duedate && assignment.duedate > 0);
+  const isOverdue = Boolean(hasDeadline && assignment.duedate < nowSec && !isCompleted);
   const isLate = Boolean(
-    assignment.isLate ||
-    (assignment.submittedAt && hasDeadline && assignment.submittedAt > assignment.duedate),
+    isCompleted &&
+    (assignment.isLate ??
+      Boolean(
+        assignment.submittedAt && hasDeadline && assignment.submittedAt > assignment.duedate,
+      )),
   );
-  const isGraded = status === 'graded' || Boolean(grade) || Boolean(assignment.graded);
-
-  const isSubmitted = status === 'submitted' || isLate || Boolean(assignment.submittedAt);
-  const isAwaitingReview = !isGraded && isSubmitted;
-  const isCompleted = isGraded || isAwaitingReview || isLate;
-  const isOverdue = Boolean(hasDeadline && assignment.duedate < nowSec && !isCompleted && !isLate);
   const statusInfo = getAssignmentStatusInfo({ status, isGraded, isAwaitingReview, isOverdue });
 
   return (
@@ -146,7 +132,7 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
         )}
 
         <Tag tone={statusInfo.tone}>
-          {grade ? (
+          {hasValidGrade ? (
             <>
               <Award size={13} style={{ marginRight: 4 }} />
               {`${formatMessage('assignments.grade')}: ${grade}`}
@@ -154,7 +140,7 @@ export const AssignmentCard: React.FC<Readonly<AssignmentCardProps>> = ({
           ) : (
             <>
               {renderStatusIcon(statusInfo.tone)}
-              {getLocalizedStatus(statusInfo.label, formatMessage)}
+              {formatMessage(statusInfo.labelKey)}
             </>
           )}
         </Tag>

@@ -14,6 +14,7 @@ import {
   fetchPullRequestsGraphQL,
   fetchOpenPullRequests,
   fetchPullRequestDetails,
+  buildPullRequestPayload,
 } from '../discord-pr-notify.mjs';
 
 test('formatPrAge calculates friendly Ukrainian time strings', () => {
@@ -689,4 +690,122 @@ test('fetchPullRequestDetails retrieves single PR details', async () => {
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test('fetchPullRequestDetails returns null and warns on non-2xx response', async () => {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = async () => ({
+    ok: false,
+    status: 404,
+    text: async () => 'Not Found',
+  });
+
+  try {
+    const details = await fetchPullRequestDetails({
+      repo: 'test/repo',
+      prNumber: 999,
+      token: 'fake',
+    });
+
+    assert.equal(details, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('buildPullRequestPayload formats open PR with reviewer mentions when requested_reviewers is populated', () => {
+  const users = {
+    Skyzary: '1283760288402898964',
+    Kostik565: '1055920927306694697',
+  };
+
+  const pr = {
+    number: 164,
+    title: 'feat: reviewers automation',
+    html_url: 'https://github.com/Karazin-UniVerse/uni-verse/pull/164',
+    body: 'Automate PR reviewers assignment',
+    head: { ref: 'feat/reviewers' },
+    base: { ref: 'develop' },
+    user: { login: 'brodion-230' },
+    requested_reviewers: [{ login: 'Skyzary' }, { login: 'Kostik565' }],
+    additions: 120,
+    deletions: 15,
+    changed_files: 3,
+  };
+
+  const payload = buildPullRequestPayload({
+    pr,
+    action: 'opened',
+    repository: { full_name: 'Karazin-UniVerse/uni-verse' },
+    users,
+  });
+
+  assert.ok(payload);
+  assert.match(payload.content, /🔔 Запит на рев'ю:/);
+  assert.match(payload.content, /<@1283760288402898964>/);
+  assert.match(payload.content, /<@1055920927306694697>/);
+  assert.equal(payload.embeds[0].title, 'PR #164: feat: reviewers automation');
+});
+
+test('buildPullRequestPayload falls back to @here when requested_reviewers is empty', () => {
+  const pr = {
+    number: 165,
+    title: 'chore: cleanup',
+    html_url: 'https://github.com/Karazin-UniVerse/uni-verse/pull/165',
+    head: { ref: 'chore/cleanup' },
+    base: { ref: 'develop' },
+    user: { login: 'brodion-230' },
+    requested_reviewers: [],
+  };
+
+  const payload = buildPullRequestPayload({
+    pr,
+    action: 'opened',
+    repository: { full_name: 'Karazin-UniVerse/uni-verse' },
+    users: {},
+  });
+
+  assert.ok(payload);
+  assert.match(payload.content, /@here новий PR потребує перегляду!/);
+});
+
+test('buildPullRequestPayload formats merged and closed without merge events', () => {
+  const prMerged = {
+    number: 166,
+    title: 'feat: done',
+    html_url: 'https://github.com/Karazin-UniVerse/uni-verse/pull/166',
+    head: { ref: 'feat/done' },
+    base: { ref: 'develop' },
+    merged: true,
+  };
+
+  const mergedPayload = buildPullRequestPayload({
+    pr: prMerged,
+    action: 'closed',
+    repository: { full_name: 'Karazin-UniVerse/uni-verse' },
+    users: {},
+  });
+
+  assert.ok(mergedPayload);
+  assert.match(mergedPayload.content, /успішно вмерджено в `develop`/);
+
+  const prClosed = {
+    number: 167,
+    title: 'feat: abandoned',
+    html_url: 'https://github.com/Karazin-UniVerse/uni-verse/pull/167',
+    head: { ref: 'feat/abandoned' },
+    base: { ref: 'develop' },
+    merged: false,
+  };
+
+  const closedPayload = buildPullRequestPayload({
+    pr: prClosed,
+    action: 'closed',
+    repository: { full_name: 'Karazin-UniVerse/uni-verse' },
+    users: {},
+  });
+
+  assert.ok(closedPayload);
+  assert.match(closedPayload.content, /закрито без мержа/);
 });

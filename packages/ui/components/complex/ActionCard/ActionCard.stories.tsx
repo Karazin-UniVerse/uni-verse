@@ -1,9 +1,24 @@
-import React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { Globe, FileText, Calendar, Building2 } from 'lucide-react';
-import { BREAKPOINTS } from '@universe/core/constants/breakpoints';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { FileText } from 'lucide-react';
 
+import { VariantMatrix } from '../../../storybook/VariantMatrix/VariantMatrix';
 import { ActionCard } from './ActionCard';
+import type { ActionCardIconTone, ActionCardProps } from './ActionCard.types';
+
+type MatrixBadge = 'no badge' | 'with badge';
+
+const MATRIX_ICON_TONES: readonly ActionCardIconTone[] = [
+  'default',
+  'moodle',
+  'assignments',
+  'schedule',
+  'dean',
+  'opportunities',
+];
+const MATRIX_BADGES: Record<MatrixBadge, Pick<ActionCardProps, 'badge' | 'badgeTone'>> = {
+  'no badge': {},
+  'with badge': { badge: 3, badgeTone: 'alert' },
+};
 
 const meta = {
   title: 'Complex/ActionCard',
@@ -12,13 +27,6 @@ const meta = {
   parameters: {
     layout: 'centered',
   },
-  decorators: [
-    (Story) => (
-      <div style={{ width: `${BREAKPOINTS.xs}px`, maxWidth: '100%' }}>
-        <Story />
-      </div>
-    ),
-  ],
   argTypes: {
     iconTone: {
       control: 'select',
@@ -52,45 +60,30 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
+export const Matrix: Story = {
   args: {
-    title: 'Class Schedule',
-    description: 'View upcoming classes and deadlines',
-    icon: <Calendar size={22} />,
-    iconTone: 'schedule',
+    title: 'Title',
+    description: 'Description',
+    icon: null,
   },
-};
-
-export const WithAlertBadge: Story = {
-  args: {
-    title: 'My Assignments',
-    description: '3 assignments pending submission',
-    icon: <FileText size={22} />,
-    iconTone: 'assignments',
-    badge: 3,
-    badgeTone: 'alert',
+  parameters: {
+    layout: 'padded',
   },
-};
-
-export const ExternalLinkCard: Story = {
-  args: {
-    title: 'Moodle LMS',
-    description: 'Access university learning portal',
-    icon: <Globe size={22} />,
-    iconTone: 'moodle',
-    badge: 'Moodle',
-    badgeTone: 'info',
-    href: 'https://moodle.karazin.ua',
-    target: '_blank',
-    isExternal: true,
-  },
-};
-
-export const DeanContactCard: Story = {
-  args: {
-    title: "Dean's Office Online",
-    description: 'Contact administration and request certificates',
-    icon: <Building2 size={22} />,
-    iconTone: 'dean',
-  },
+  render: () => (
+    <VariantMatrix
+      rows={MATRIX_ICON_TONES}
+      columns={Object.keys(MATRIX_BADGES) as MatrixBadge[]}
+      renderCell={(iconTone: ActionCardIconTone, badge: MatrixBadge) => (
+        <div style={{ width: '240px' }}>
+          <ActionCard
+            title="Action"
+            description="Short description"
+            icon={<FileText size={22} />}
+            iconTone={iconTone}
+            {...MATRIX_BADGES[badge]}
+          />
+        </div>
+      )}
+    />
+  ),
 };

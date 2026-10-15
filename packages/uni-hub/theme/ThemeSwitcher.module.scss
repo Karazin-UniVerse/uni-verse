@@ -58,3 +58,13 @@
 .compactLabel {
   display: inline;
 }
+
+.chevron {
+  margin-left: auto;
+  color: var(--chevron-color, var(--text-secondary));
+  transition: transform var(--transition-fast);
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}

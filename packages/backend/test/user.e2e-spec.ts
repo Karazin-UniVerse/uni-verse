@@ -38,12 +38,11 @@ describe('UserController (HTTP Integration / E2E)', () => {
       }),
       create: jest.fn().mockImplementation(async ({ data }) => {
         const id =
-          data.id ||
-          `user-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+          data.id || `user-${Date.now()}-${crypto.randomUUID().slice(0, 5)}`;
         const user = {
           id,
           name: null,
-          role: 'STUDENT',
+          roles: ['OPPORTUNITIES_USER'],
           createdAt: new Date(),
           updatedAt: new Date(),
           ...data,
@@ -135,7 +134,7 @@ describe('UserController (HTTP Integration / E2E)', () => {
         id: 'u1',
         email: 'user1@karazin.ua',
         name: 'User One',
-        role: 'STUDENT',
+        roles: ['OPPORTUNITIES_USER'],
         password: 'hashed-secret-pwd',
         token: 'sensitive-moodle-token',
         refreshToken: 'sensitive-refresh-token',
@@ -212,7 +211,7 @@ describe('UserController (HTTP Integration / E2E)', () => {
         id: 'u-target',
         email: 'target@karazin.ua',
         name: 'Target User',
-        role: 'STUDENT',
+        roles: ['OPPORTUNITIES_USER'],
         moodleId: 'initial-moodle-id',
         password: 'hashed-password',
         createdAt: new Date().toISOString(),
@@ -234,7 +233,7 @@ describe('UserController (HTTP Integration / E2E)', () => {
         id: 'u-del',
         email: 'del@karazin.ua',
         name: 'To Delete',
-        role: 'STUDENT',
+        roles: ['OPPORTUNITIES_USER'],
         password: 'hashed-password',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),

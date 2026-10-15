@@ -29,15 +29,15 @@ export class CreateUserDto {
 }
 
 export class UpdateUserDto {
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, nullable: true })
   @IsOptional()
   @IsString()
-  moodleId?: string;
+  moodleId?: string | null;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, nullable: true })
   @IsOptional()
   @IsString()
-  token?: string;
+  token?: string | null;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -65,8 +65,8 @@ export class UserResponseDto {
   @ApiProperty({ nullable: true })
   name: string | null;
 
-  @ApiProperty()
-  role: string;
+  @ApiProperty({ type: [String] })
+  roles: string[];
 
   @ApiProperty({ nullable: true })
   moodleId: string | null;

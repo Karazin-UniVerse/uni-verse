@@ -6,6 +6,8 @@ import {
   stripHtml,
   parseGradeScore,
   getExamScoreDisplay,
+  isNavKey,
+  toNotificationListItem,
 } from './utils';
 
 describe('dashboard utils', () => {
@@ -75,6 +77,62 @@ describe('dashboard utils', () => {
 
     it('returns string score for exam', () => {
       expect(getExamScoreDisplay(38, 'exam')).toBe('38');
+    });
+  });
+
+  describe('isNavKey', () => {
+    it('returns true for canonical navigation keys', () => {
+      expect(isNavKey('overview')).toBe(true);
+      expect(isNavKey('courses')).toBe(true);
+      expect(isNavKey('grades')).toBe(true);
+      expect(isNavKey('schedule')).toBe(true);
+      expect(isNavKey('assignments')).toBe(true);
+      expect(isNavKey('connectMoodle')).toBe(true);
+      expect(isNavKey('opportunities')).toBe(true);
+    });
+
+    it('returns false for unknown or invalid keys', () => {
+      expect(isNavKey('unknown')).toBe(false);
+      expect(isNavKey('')).toBe(false);
+      expect(isNavKey('Overview')).toBe(false);
+    });
+  });
+
+  describe('toNotificationListItem', () => {
+    const notification = {
+      id: 7,
+      subject: 'New assignment',
+      message: '<p>Lab&nbsp;4 is <b>available</b></p>',
+      timecreated: 1_788_000_000,
+      read: false,
+    };
+
+    it('maps the notification fields and strips html from the message', () => {
+      const item = toNotificationListItem(notification, 'en-US');
+
+      expect(item.id).toBe(7);
+      expect(item.title).toBe('New assignment');
+      expect(item.message).toBe('Lab 4 is available');
+      expect(item.isRead).toBe(false);
+    });
+
+    it('exposes the creation time as a locale string and an ISO date', () => {
+      const item = toNotificationListItem(notification, 'en-US');
+
+      expect(item.dateTime).toBe(new Date(1_788_000_000 * 1000).toISOString());
+      expect(item.time).not.toBe('');
+    });
+
+    it('truncates messages longer than 100 characters', () => {
+      const item = toNotificationListItem({ ...notification, message: 'a'.repeat(150) }, 'en-US');
+
+      expect(item.message).toBe(`${'a'.repeat(100)}...`);
+    });
+
+    it('keeps messages of exactly 100 characters untouched', () => {
+      const item = toNotificationListItem({ ...notification, message: 'a'.repeat(100) }, 'en-US');
+
+      expect(item.message).toBe('a'.repeat(100));
     });
   });
 });

@@ -1,8 +1,21 @@
-import React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { Inbox, SearchX } from 'lucide-react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { SearchX } from 'lucide-react';
 
+import { VariantMatrix } from '../../../storybook/VariantMatrix/VariantMatrix';
 import { Empty } from './Empty';
+import type { EmptyProps } from './Empty.types';
+
+type MatrixIcon = 'default icon' | 'custom icon';
+type MatrixText = 'default text' | 'custom text';
+
+const MATRIX_ICONS: Record<MatrixIcon, Pick<EmptyProps, 'icon'>> = {
+  'default icon': {},
+  'custom icon': { icon: <SearchX size={48} aria-hidden /> },
+};
+const MATRIX_TEXTS: Record<MatrixText, Pick<EmptyProps, 'description'>> = {
+  'default text': {},
+  'custom text': { description: 'No results found' },
+};
 
 const meta = {
   title: 'Una/Feedback/Empty',
@@ -22,26 +35,17 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
-  args: {},
-};
-
-export const CustomDescription: Story = {
-  args: {
-    description: 'Нічого не знайдено за вашим запитом',
+export const Matrix: Story = {
+  parameters: {
+    layout: 'padded',
   },
-};
-
-export const WithInboxIcon: Story = {
-  args: {
-    description: 'Вхідних повідомлень немає',
-    icon: <Inbox size={48} aria-hidden />,
-  },
-};
-
-export const SearchEmpty: Story = {
-  args: {
-    description: 'За вказаними фільтрами результатів не знайдено',
-    icon: <SearchX size={48} aria-hidden />,
-  },
+  render: () => (
+    <VariantMatrix
+      rows={Object.keys(MATRIX_ICONS) as MatrixIcon[]}
+      columns={Object.keys(MATRIX_TEXTS) as MatrixText[]}
+      renderCell={(icon: MatrixIcon, text: MatrixText) => (
+        <Empty {...MATRIX_ICONS[icon]} {...MATRIX_TEXTS[text]} />
+      )}
+    />
+  ),
 };

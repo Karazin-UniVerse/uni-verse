@@ -1,7 +1,21 @@
-import React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
+import { VariantMatrix } from '../../../storybook/VariantMatrix/VariantMatrix';
 import { Tag } from './Tag';
+import type { TagTone } from './Tag.types';
+
+const MATRIX_TONES: readonly TagTone[] = [
+  'default',
+  'neutral',
+  'success',
+  'warning',
+  'info',
+  'danger',
+];
+const MATRIX_CONTENT = {
+  short: 'Tag',
+  long: 'A considerably longer tag label',
+} as const;
 
 const meta = {
   title: 'Una/DataDisplay/Tag',
@@ -26,57 +40,17 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
-  args: {
-    children: 'За замовчуванням',
-    tone: 'default',
+export const Matrix: Story = {
+  parameters: {
+    layout: 'padded',
   },
-};
-
-export const Neutral: Story = {
-  args: {
-    children: 'Нейтральний',
-    tone: 'neutral',
-  },
-};
-
-export const Success: Story = {
-  args: {
-    children: 'Успішно',
-    tone: 'success',
-  },
-};
-
-export const Warning: Story = {
-  args: {
-    children: 'Попередження',
-    tone: 'warning',
-  },
-};
-
-export const Info: Story = {
-  args: {
-    children: 'Інформація',
-    tone: 'info',
-  },
-};
-
-export const Danger: Story = {
-  args: {
-    children: 'Помилка',
-    tone: 'danger',
-  },
-};
-
-export const AllTones: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-      <Tag tone="default">Default</Tag>
-      <Tag tone="neutral">Neutral</Tag>
-      <Tag tone="info">Info</Tag>
-      <Tag tone="success">Success</Tag>
-      <Tag tone="warning">Warning</Tag>
-      <Tag tone="danger">Danger</Tag>
-    </div>
+    <VariantMatrix
+      rows={MATRIX_TONES}
+      columns={Object.keys(MATRIX_CONTENT) as (keyof typeof MATRIX_CONTENT)[]}
+      renderCell={(tone: TagTone, content: keyof typeof MATRIX_CONTENT) => (
+        <Tag tone={tone}>{MATRIX_CONTENT[content]}</Tag>
+      )}
+    />
   ),
 };

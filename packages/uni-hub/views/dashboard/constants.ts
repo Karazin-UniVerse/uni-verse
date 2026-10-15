@@ -1,5 +1,19 @@
 import type { StudentProfile, CurriculumItem } from '@core/types';
 
+export const NAV_KEY = {
+  Overview: 'overview',
+  Courses: 'courses',
+  Grades: 'grades',
+  Schedule: 'schedule',
+  Assignments: 'assignments',
+  ConnectMoodle: 'connectMoodle',
+  Opportunities: 'opportunities',
+} as const;
+
+export type NavKey = (typeof NAV_KEY)[keyof typeof NAV_KEY];
+
+export const NAV_KEYS = Object.values(NAV_KEY);
+
 export const fallbackStudentProfile: StudentProfile = {
   id: 'karazin-student-001',
   moodleId: 4021,

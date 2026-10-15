@@ -79,7 +79,7 @@ export class UserService {
         email: createUserDto.email,
         name: createUserDto.name ?? null,
         password: createUserDto.password ?? '',
-        role: Role.STUDENT,
+        roles: [Role.OPPORTUNITIES_USER],
         token: createUserDto.token ?? null,
         moodleId: createUserDto.moodleId ?? null,
         refreshToken: null,
@@ -111,7 +111,9 @@ export class UserService {
 
   async updateUser(
     id: string,
-    updateUserDto: Partial<UpdateUserDto & { refreshToken?: string | null }>,
+    updateUserDto: Partial<
+      UpdateUserDto & { refreshToken?: string | null; roles?: Role[] }
+    >,
   ): Promise<User> {
     try {
       return await this.prisma.user.update({

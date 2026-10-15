@@ -1,7 +1,12 @@
 import { CONTROL_TYPES, TRADITIONAL_GRADES } from '@core/constants/grades';
 import type { ControlType } from '@core/utils/grades';
+import type { NotificationListItem } from '@ui';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
+import type { Notification } from '@uni-hub/types';
 import { getGradeRawValue } from '@uni-hub/utils/grades';
+import { NAV_KEYS, type NavKey } from './constants';
+
+const NOTIFICATION_MESSAGE_MAX_LENGTH = 100;
 
 const CONTROL_TYPE_KEYS: Record<ControlType, TranslationKey> = {
   [CONTROL_TYPES.EXAM]: 'control.exam',
@@ -69,6 +74,26 @@ export function stripHtml(html?: string | null): string {
     .trim();
 }
 
+function truncateText(text: string, maxLength: number): string {
+  return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+}
+
+export function toNotificationListItem(
+  notification: Notification,
+  localeTag: string,
+): NotificationListItem {
+  const createdAt = new Date(notification.timecreated * 1000);
+
+  return {
+    id: notification.id,
+    title: notification.subject,
+    message: truncateText(stripHtml(notification.message), NOTIFICATION_MESSAGE_MAX_LENGTH),
+    time: createdAt.toLocaleString(localeTag),
+    dateTime: createdAt.toISOString(),
+    isRead: notification.read,
+  };
+}
+
 export function parseGradeScore(gradeItem: unknown): number {
   if (typeof gradeItem === 'number' && !Number.isNaN(gradeItem)) {
     return Math.min(100, Math.max(0, Math.round(gradeItem)));
@@ -110,3 +135,7 @@ export function getExamScoreDisplay(
 
   return String(examScore);
 }
+
+const NAV_KEYS_SET: ReadonlySet<string> = new Set(NAV_KEYS);
+
+export const isNavKey = (value: string): value is NavKey => NAV_KEYS_SET.has(value);

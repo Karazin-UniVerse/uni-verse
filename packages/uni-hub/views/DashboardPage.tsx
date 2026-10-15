@@ -1,22 +1,24 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
 import { RotateCw, AlertCircle, Link2 } from 'lucide-react';
 import { Button, Spinner } from '@una';
-import { isLoggedIn } from '@core/auth';
+import { isLoggedIn } from '@core/utils/auth';
 import type { CourseModule } from '@uni-hub/types';
 import { AssignmentModal } from '@uni-hub/components/assignments';
-import { LinkMoodleModal } from '@uni-hub/components/auth';
+import { LinkMoodleModal, UnlinkMoodleModal, LinkMoodleMode } from '@uni-hub/components/auth';
 import { DashboardSkeleton, MobileBottomNav } from '@uni-hub/components/dashboard';
 import { BadgeSystem, GradeSimulator } from '@uni-hub/components/gamification';
 import { ScheduleView } from '@uni-hub/components/schedule';
-import { safeStorage } from '@uni-hub/services/api';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
+import { useFeatures } from '@uni-hub/features';
 import {
+  NAV_KEY,
   type NavKey,
+  NAV_ITEMS,
   isNavKey,
   fallbackStudentProfile,
   DashboardSidebar,
@@ -25,45 +27,41 @@ import {
   CoursesTab,
   GradesTab,
   AssignmentsTab,
+  ConnectMoodleTab,
   OpportunitiesTab,
-  NAV_ITEMS,
 } from './dashboard';
-import { useFeatures } from '@uni-hub/features';
 import { formatLastSync } from './dashboard/tabs/helpers';
 import { useDashboardData, clearUserSessionStorage } from './dashboard/hooks/useDashboardData';
+import { getInitialUserProfile } from './dashboard/hooks/helpers';
+import { useMoodleLink } from './dashboard/hooks/useMoodleLink';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import styles from './DashboardPage.module.scss';
 
 const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
-  overview: 'nav.overview.full',
-  courses: 'nav.courses.full',
-  grades: 'nav.grades.full',
-  schedule: 'nav.schedule.full',
-  assignments: 'nav.assignments.full',
-  opportunities: 'nav.opportunities.full',
+  [NAV_KEY.Overview]: 'nav.overview.full',
+  [NAV_KEY.Courses]: 'nav.courses.full',
+  [NAV_KEY.Grades]: 'nav.grades.full',
+  [NAV_KEY.Schedule]: 'nav.schedule.full',
+  [NAV_KEY.Assignments]: 'nav.assignments.full',
+  [NAV_KEY.Opportunities]: 'nav.opportunities.full',
+  [NAV_KEY.ConnectMoodle]: 'nav.connectMoodle.full',
 };
 
 const DashboardPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const features = useFeatures();
   const checkIn = useGamificationStore((s) => s.checkIn);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const setSoundEnabled = useGamificationStore((s) => s.setSoundEnabled);
   const { formatMessage } = useLanguage();
-  const flags = useFeatures();
-  const flagsRef = useRef(flags);
-
-  useEffect(() => {
-    flagsRef.current = flags;
-  });
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeKey, setActiveKey] = useState<NavKey>('overview');
+  const [activeKey, setActiveKey] = useState<NavKey>(NAV_KEY.Overview);
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();
-  const [mounted, setMounted] = useState(false);
 
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -74,17 +72,11 @@ const DashboardPage: React.FC = () => {
   const [selectedAssignmentModule, setSelectedAssignmentModule] = useState<CourseModule | null>(
     null,
   );
-  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
-  const [isMoodleLinked, setIsMoodleLinked] = useState<boolean>(() => {
-    if (typeof window === 'undefined') {
-      return true;
-    }
-
-    return safeStorage.getItem('isMoodleLinked') !== 'false';
-  });
+  const [opportunitiesRefreshTrigger, setOpportunitiesRefreshTrigger] = useState(0);
 
   const {
     data,
+    setData,
     loading,
     hasLoadedOnce,
     lastSyncTime,
@@ -98,8 +90,39 @@ const DashboardPage: React.FC = () => {
     dateFrom,
     dateTo,
     hideCompleted,
-    enabled: flags.isMoodleIntegrationEnabled,
+    enabled: features.isMoodleIntegrationEnabled,
     onUnauthorized: () => router.push('/login'),
+  });
+
+  const {
+    isMoodleLinked,
+    linkModalMode,
+    isLinkModalOpen,
+    isUnlinkModalOpen,
+    openLinkModal,
+    closeLinkModal,
+    openUnlinkModal,
+    closeUnlinkModal,
+    handleLinkSuccess,
+    handleUnlinkSuccess,
+  } = useMoodleLink({
+    activeKey,
+    setActiveKey,
+    onLinkSuccess: () => {
+      void fetchData();
+    },
+    onUnlinkSuccess: () => {
+      cancelPendingFetch();
+      setData({
+        courses: [],
+        grades: [],
+        assignments: [],
+        events: [],
+        notifications: [],
+        unreadCount: 0,
+        statistics: null,
+      });
+    },
   });
 
   const activeStudentProfile = studentProfile ?? fallbackStudentProfile;
@@ -112,27 +135,16 @@ const DashboardPage: React.FC = () => {
     hasLoadedOnce;
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
     if (!isLoggedIn()) {
       router.push('/login');
 
       return;
     }
 
-    const savedUser = localStorage.getItem('username');
+    const initialProfile = getInitialUserProfile();
 
-    if (savedUser && savedUser !== fallbackStudentProfile.fullName) {
-      setStudentProfile(
-        (previousProfile) =>
-          previousProfile ?? {
-            ...fallbackStudentProfile,
-            fullName: savedUser,
-            email: savedUser.includes('@') ? savedUser : `${savedUser}@karazin.ua`,
-          },
-      );
+    if (initialProfile) {
+      setStudentProfile((previousProfile) => previousProfile ?? initialProfile);
     }
 
     checkIn();
@@ -142,25 +154,36 @@ const DashboardPage: React.FC = () => {
     const requestedTab = searchParams.get('tab');
 
     if (requestedTab && isNavKey(requestedTab)) {
-      const targetItem = NAV_ITEMS.find((item) => item.key === requestedTab);
-
-      if (!targetItem?.featureFlag || flagsRef.current[targetItem.featureFlag]) {
-        setActiveKey(requestedTab);
+      if (
+        requestedTab === NAV_KEY.ConnectMoodle &&
+        (isMoodleLinked || !features.isMoodleIntegrationEnabled)
+      ) {
+        setActiveKey(NAV_KEY.Overview);
 
         return;
       }
+
+      const targetItem = NAV_ITEMS.find((item) => item.key === requestedTab);
+
+      if (!targetItem?.featureFlag || features[targetItem.featureFlag]) {
+        setActiveKey(requestedTab);
+      } else {
+        setActiveKey(NAV_KEY.Overview);
+      }
+
+      return;
     }
 
-    setActiveKey('overview');
-  }, [searchParams]);
+    setActiveKey(NAV_KEY.Overview);
+  }, [features, searchParams, isMoodleLinked]);
 
   useEffect(() => {
     const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
 
-    if (activeItem?.featureFlag && !flags[activeItem.featureFlag]) {
-      setActiveKey('overview');
+    if (activeItem?.featureFlag && !features[activeItem.featureFlag]) {
+      setActiveKey(NAV_KEY.Overview);
     }
-  }, [flags, activeKey]);
+  }, [features, activeKey]);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -173,7 +196,7 @@ const DashboardPage: React.FC = () => {
       cancelPendingFetch();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router, sortOrder, dateFrom, dateTo, hideCompleted, flags.isMoodleIntegrationEnabled]);
+  }, [router, sortOrder, dateFrom, dateTo, hideCompleted]);
 
   const closeMobileMenu = useCallback(() => {
     setMobileMenuOpen(false);
@@ -190,11 +213,18 @@ const DashboardPage: React.FC = () => {
 
   const renderActiveContent = () => {
     const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
-    const effectiveKey =
-      activeItem?.featureFlag && !flags[activeItem.featureFlag] ? 'overview' : activeKey;
+    let effectiveKey: NavKey =
+      activeItem?.featureFlag && !features[activeItem.featureFlag] ? NAV_KEY.Overview : activeKey;
+
+    if (
+      effectiveKey === NAV_KEY.ConnectMoodle &&
+      (isMoodleLinked || !features.isMoodleIntegrationEnabled)
+    ) {
+      effectiveKey = NAV_KEY.Overview;
+    }
 
     switch (effectiveKey) {
-      case 'overview':
+      case NAV_KEY.Overview:
         return (
           <OverviewTab
             courses={data.courses}
@@ -205,15 +235,16 @@ const DashboardPage: React.FC = () => {
             activeStudentProfile={activeStudentProfile}
             loading={loading}
             onNavigate={setActiveKey}
+            isMoodleLinked={isMoodleLinked}
           />
         );
-      case 'courses':
+      case NAV_KEY.Courses:
         return <CoursesTab courses={data.courses} soundEnabled={soundEnabled} />;
-      case 'grades':
+      case NAV_KEY.Grades:
         return <GradesTab grades={data.grades} onOpenSimulator={() => setSimulatorOpen(true)} />;
-      case 'schedule':
+      case NAV_KEY.Schedule:
         return <ScheduleView />;
-      case 'assignments':
+      case NAV_KEY.Assignments:
         return (
           <AssignmentsTab
             assignments={data.assignments}
@@ -240,16 +271,27 @@ const DashboardPage: React.FC = () => {
             }}
           />
         );
-      case 'opportunities':
-        return <OpportunitiesTab />;
+      case NAV_KEY.Opportunities:
+        return (
+          <OpportunitiesTab
+            soundEnabled={soundEnabled}
+            refreshTrigger={opportunitiesRefreshTrigger}
+          />
+        );
+      case NAV_KEY.ConnectMoodle:
+        return <ConnectMoodleTab onConnect={() => openLinkModal(LinkMoodleMode.CONNECT)} />;
       default:
         return null;
     }
   };
 
-  // Spinner only after mount — keeps SSR and first client render identical
-  const showUpdatingIndicator = mounted && loading && hasCachedData;
-  const showSkeleton = !mounted || (loading && !hasCachedData);
+  const handleRefresh = useCallback((): void => {
+    if (activeKey === NAV_KEY.Opportunities) {
+      setOpportunitiesRefreshTrigger((current) => current + 1);
+    }
+
+    void fetchData(true);
+  }, [activeKey, fetchData]);
 
   return (
     <div
@@ -265,6 +307,7 @@ const DashboardPage: React.FC = () => {
         onSelectKey={setActiveKey}
         soundEnabled={soundEnabled}
         onLogout={handleLogout}
+        isMoodleLinked={isMoodleLinked}
       />
       <MobileBottomNav
         activeKey={activeKey}
@@ -285,20 +328,21 @@ const DashboardPage: React.FC = () => {
           notifications={data.notifications}
           unreadCount={data.unreadCount}
           activeStudentProfile={activeStudentProfile}
+          isMoodleLinked={isMoodleLinked}
+          onOpenLinkMoodle={openLinkModal}
+          onOpenUnlinkMoodle={openUnlinkModal}
         />
 
         <main className={styles.content}>
           <div className={styles.pageTitleRow}>
             <h2 className={styles.pageTitle}>{formatMessage(PAGE_TITLE_KEYS[activeKey])}</h2>
-
-            {showUpdatingIndicator && (
+            {loading && hasCachedData && (
               <div className={styles.pageUpdatingIndicator} role="status" aria-live="polite">
                 <Spinner size="small" tip={formatMessage('dashboard.updating')} />
               </div>
             )}
-
             <div className={styles.syncActions}>
-              {mounted && lastSyncTime && (
+              {lastSyncTime && (
                 <span className={styles.lastSyncText}>
                   {formatMessage('dashboard.dataUpdated')}: {formatLastSync(lastSyncTime)}
                 </span>
@@ -307,7 +351,7 @@ const DashboardPage: React.FC = () => {
                 type="button"
                 variant="secondary"
                 size="small"
-                onClick={() => fetchData(true)}
+                onClick={handleRefresh}
                 disabled={loading}
                 aria-label={formatMessage('dashboard.refreshData')}
                 className={styles.refreshBtn}
@@ -318,7 +362,7 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {mounted && isOfflineData && (
+          {isOfflineData && (
             <div className={styles.offlineBanner} role="alert">
               <AlertCircle size={16} className={styles.offlineIcon} />
               <span>
@@ -330,8 +374,7 @@ const DashboardPage: React.FC = () => {
               </span>
             </div>
           )}
-
-          {!isMoodleLinked && (
+          {features.isMoodleIntegrationEnabled && !isMoodleLinked && (
             <output className={styles.linkMoodleBanner}>
               <div className={styles.linkMoodleBannerContent}>
                 <Link2 size={16} className={styles.linkMoodleIcon} />
@@ -341,13 +384,13 @@ const DashboardPage: React.FC = () => {
                 type="button"
                 variant="primary"
                 size="small"
-                onClick={() => setIsLinkModalOpen(true)}
+                onClick={() => openLinkModal(LinkMoodleMode.CONNECT)}
               >
                 {formatMessage('dashboard.linkMoodleAction')}
               </Button>
             </output>
           )}
-          {showSkeleton ? (
+          {loading && !hasCachedData ? (
             <DashboardSkeleton />
           ) : (
             <motion.div
@@ -371,16 +414,22 @@ const DashboardPage: React.FC = () => {
             dueUnixSec={selectedDueUnixSec}
           />
 
-          <LinkMoodleModal
-            open={isLinkModalOpen}
-            onClose={() => setIsLinkModalOpen(false)}
-            onSuccess={() => {
-              setIsLinkModalOpen(false);
-              setIsMoodleLinked(true);
-              safeStorage.setItem('isMoodleLinked', 'true');
-              fetchData();
-            }}
-          />
+          {features.isMoodleIntegrationEnabled && (
+            <>
+              <LinkMoodleModal
+                mode={linkModalMode}
+                open={isLinkModalOpen}
+                onClose={closeLinkModal}
+                onSuccess={handleLinkSuccess}
+              />
+
+              <UnlinkMoodleModal
+                open={isUnlinkModalOpen}
+                onClose={closeUnlinkModal}
+                onSuccess={handleUnlinkSuccess}
+              />
+            </>
+          )}
 
           <GradeSimulator
             open={simulatorOpen}

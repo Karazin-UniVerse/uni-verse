@@ -10,6 +10,7 @@ import { GetCreds } from '../utils/get-creds';
 import { randomBytes } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
+import { Role } from '@universe/database';
 import { RegisterDto, LoginDto, GoogleAuthDto, LinkMoodleDto } from './dto';
 import {
   normalizeEmail,
@@ -24,6 +25,7 @@ export type GetTokensParams = {
   email: string;
   moodleToken?: string;
   moodleId?: string;
+  roles?: string[];
 };
 
 @Injectable()
@@ -84,6 +86,7 @@ export class AuthService {
       email: user.email,
       moodleToken: user.token ?? undefined,
       moodleId: user.moodleId ?? undefined,
+      roles: user.roles,
     });
 
     await this.updateRtHash(user.id, tokens.refresh_token);
@@ -140,6 +143,7 @@ export class AuthService {
       email: user.email,
       moodleToken,
       moodleId,
+      roles: user.roles,
     });
 
     await this.updateRtHash(user.id, tokens.refresh_token);
@@ -158,6 +162,7 @@ export class AuthService {
       email: user.email,
       moodleToken: user.token ?? undefined,
       moodleId: user.moodleId ?? undefined,
+      roles: user.roles,
     });
 
     await this.updateRtHash(user.id, tokens.refresh_token);
@@ -277,9 +282,14 @@ export class AuthService {
       );
     }
 
+    const roles: Role[] = Array.from(
+      new Set([...user.roles, Role.MOODLE_STUDENT]),
+    );
+
     const updatedUser = await this.userService.updateUser(userId, {
       token: moodleToken,
       moodleId,
+      roles,
     });
 
     const tokens = await this.getTokens({
@@ -287,6 +297,7 @@ export class AuthService {
       email: updatedUser.email,
       moodleToken,
       moodleId,
+      roles: updatedUser.roles,
     });
 
     await this.updateRtHash(updatedUser.id, tokens.refresh_token);
@@ -295,6 +306,38 @@ export class AuthService {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       isLinked: true,
+    };
+  }
+
+  async unlinkMoodleAccount(userId: string) {
+    const user = await this.userService.findById(userId);
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const roles: Role[] = Array.from(
+      new Set([...user.roles, Role.OPPORTUNITIES_USER]),
+    );
+
+    const tokens = await this.getTokens({
+      userId: user.id,
+      email: user.email,
+      roles,
+    });
+    const refreshTokenHash = await this.hashData(tokens.refresh_token);
+
+    await this.userService.updateUser(userId, {
+      token: null,
+      moodleId: null,
+      refreshToken: refreshTokenHash,
+      roles,
+    });
+
+    return {
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      isLinked: false,
     };
   }
 
@@ -319,6 +362,8 @@ export class AuthService {
       userId: user.id,
       email: user.email,
       moodleToken: user.token ?? undefined,
+      moodleId: user.moodleId ?? undefined,
+      roles: user.roles,
     });
 
     await this.updateRtHash(user.id, tokens.refresh_token);
@@ -336,7 +381,13 @@ export class AuthService {
     return bcrypt.hash(data, 10);
   }
 
-  async getTokens({ userId, email, moodleToken, moodleId }: GetTokensParams) {
+  async getTokens({
+    userId,
+    email,
+    moodleToken,
+    moodleId,
+    roles,
+  }: GetTokensParams) {
     const atSecret = process.env.AT_SECRET;
     const rtSecret = process.env.RT_SECRET;
     const knownPlaceholders = new Set([
@@ -362,6 +413,7 @@ export class AuthService {
           email,
           moodleToken,
           moodleId,
+          roles,
         },
         {
           secret: atSecret,

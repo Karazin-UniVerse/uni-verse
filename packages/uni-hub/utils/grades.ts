@@ -1,4 +1,5 @@
 import { GRADES_THRESHOLD } from '@core/constants/grades';
+import { asList } from './arrays';
 import type { Grade, GradeValue } from '../types';
 
 export function getGradeCourseName(grade: Grade): string {
@@ -43,11 +44,7 @@ export function getGradeRawValue(grade: Grade): number | null {
 }
 
 export function getValidGrades(grades: Grade[]): Grade[] {
-  if (!Array.isArray(grades)) {
-    return [];
-  }
-
-  return grades.filter((grade) => {
+  return asList(grades).filter((grade) => {
     const rawValue = getGradeRawValue(grade);
 
     if (rawValue === null) {

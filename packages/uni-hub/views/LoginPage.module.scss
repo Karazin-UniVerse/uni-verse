@@ -4,26 +4,28 @@
 
   /* Modern Mesh Gradient Background */
   background-color: var(--bg-color);
-  background-image:
-    radial-gradient(at 0% 0%, rgb(var(--primary-rgb, 0, 112, 243), 0.15) 0, transparent 50%),
-    radial-gradient(at 100% 0%, rgb(var(--secondary-rgb, 121, 40, 202), 0.15) 0, transparent 50%),
-    radial-gradient(at 100% 100%, rgb(var(--primary-rgb, 0, 112, 243), 0.15) 0, transparent 50%),
-    radial-gradient(at 0% 100%, rgb(var(--secondary-rgb, 121, 40, 202), 0.15) 0, transparent 50%);
+  background-image: var(--bg-mesh);
   background-attachment: fixed;
 }
 
-.themeBar {
+.toolbar {
   position: absolute;
   top: var(--space-24);
   right: var(--space-24);
   z-index: 2;
-}
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
 
-.languageBar {
-  position: absolute;
-  bottom: var(--space-24);
-  right: var(--space-24);
-  z-index: 2;
+  .themeTrigger {
+    padding: var(--space-8) var(--space-12);
+    border-radius: var(--border-radius-medium);
+    border-color: rgb(var(--text-primary-rgb, 0, 0, 0), 0.12);
+    background: rgb(var(--surface-rgb, 255, 255, 255), 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 8%);
+  }
 }
 
 .center {

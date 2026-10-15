@@ -4,7 +4,7 @@ import React from 'react';
 import { Video, ExternalLink } from 'lucide-react';
 import { Empty } from '@una';
 import type { MoodleEvent, Assignment } from '@uni-hub/types';
-import type { NavKey } from '../types';
+import type { NavKey } from '../constants';
 import { extractMeetingUrl } from './helpers';
 import { stripHtml } from '../utils';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
