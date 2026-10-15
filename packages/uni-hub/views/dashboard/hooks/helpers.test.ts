@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   assembleDashboardData,
+  deriveDashboardState,
   parseDateFilterSeconds,
   resolveGradesResponse,
   buildAssignmentParams,
@@ -287,5 +288,67 @@ describe('buildFallbackData', () => {
     expect(result.courses).toEqual([{ id: 1 }]);
     expect(result.assignments.length).toBe(1);
     expect(result.assignments[0].id).toBe(20);
+  });
+});
+
+describe('deriveDashboardState', () => {
+  const dashboardData = {
+    courses: [],
+    grades: [],
+    assignments: [],
+    events: [],
+    notifications: [],
+    unreadCount: 0,
+    statistics: null,
+  };
+
+  it('is loading without data on the first load', () => {
+    expect(
+      deriveDashboardState({
+        data: undefined,
+        isError: false,
+        isFetching: true,
+        dataUpdatedAt: 0,
+      }),
+    ).toEqual({ loading: true, hasLoadedOnce: false, isOfflineData: false, lastSyncTime: null });
+  });
+
+  it('stays loading while a refetch runs and reports that data exists', () => {
+    expect(
+      deriveDashboardState({
+        data: dashboardData,
+        isError: false,
+        isFetching: true,
+        dataUpdatedAt: 1_700_000_000_000,
+      }),
+    ).toEqual({
+      loading: true,
+      hasLoadedOnce: true,
+      isOfflineData: false,
+      lastSyncTime: 1_700_000_000_000,
+    });
+  });
+
+  it('flags offline data when the last load failed but data is still there', () => {
+    const state = deriveDashboardState({
+      data: dashboardData,
+      isError: true,
+      isFetching: false,
+      dataUpdatedAt: 1_700_000_000_000,
+    });
+
+    expect(state.isOfflineData).toBe(true);
+    expect(state.loading).toBe(false);
+  });
+
+  it('does not flag offline data when nothing was ever loaded', () => {
+    expect(
+      deriveDashboardState({
+        data: undefined,
+        isError: true,
+        isFetching: false,
+        dataUpdatedAt: 0,
+      }).isOfflineData,
+    ).toBe(false);
   });
 });

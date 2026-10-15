@@ -333,3 +333,28 @@ export function buildFallbackData({
     assignments: fallbackAssignments,
   };
 }
+
+export interface DashboardQueryState {
+  data: DashboardData | undefined;
+  isError: boolean;
+  isFetching: boolean;
+  dataUpdatedAt: number;
+}
+
+export interface DashboardState {
+  loading: boolean;
+  hasLoadedOnce: boolean;
+  isOfflineData: boolean;
+  lastSyncTime: number | null;
+}
+
+export function deriveDashboardState(query: DashboardQueryState): DashboardState {
+  const hasData = query.data !== undefined;
+
+  return {
+    loading: query.isFetching,
+    hasLoadedOnce: hasData,
+    isOfflineData: query.isError && hasData,
+    lastSyncTime: query.dataUpdatedAt > 0 ? query.dataUpdatedAt : null,
+  };
+}
