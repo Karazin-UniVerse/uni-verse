@@ -262,7 +262,6 @@ export const en = {
   // Assignment Modal
   'assignmentModal.defaultTitle': 'Assignment',
   'assignmentModal.loadingStatus': 'Loading status...',
-  'assignmentModal.loadStatusError': 'Failed to load assignment status',
   'assignmentModal.openMoodle': 'Open original assignment on Moodle',
   'assignmentModal.description': 'Description',
   'assignmentModal.attachedFiles': 'Attached files',

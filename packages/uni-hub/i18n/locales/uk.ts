@@ -261,7 +261,6 @@ export const uk = {
   // Assignment Modal
   'assignmentModal.defaultTitle': 'Завдання',
   'assignmentModal.loadingStatus': 'Завантаження статусу...',
-  'assignmentModal.loadStatusError': 'Не вдалося завантажити статус завдання',
   'assignmentModal.openMoodle': 'Відкрити оригінальне завдання на Moodle',
   'assignmentModal.description': 'Опис',
   'assignmentModal.attachedFiles': 'Прикріплені файли',
