@@ -13,7 +13,6 @@ import {
   UpdateOpportunityDto,
   ApplyOpportunityDto,
   ModerateOpportunityDto,
-  ModerateAction,
   FindOpportunitiesDto,
 } from './dto';
 import {
@@ -25,6 +24,7 @@ import {
   Prisma,
   Role,
 } from '@universe/database';
+import { OPPORTUNITY_MODERATE_ACTION } from '@universe/core/constants/opportunities';
 
 export type OpportunityWithOwner = Opportunity & {
   owner: { id: string; name: string | null; email: string };
@@ -460,11 +460,11 @@ export class OpportunitiesService {
 
     let newStatus: OpportunityStatus;
 
-    if (dto.action === ModerateAction.APPROVE) {
+    if (dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE) {
       newStatus = OpportunityStatus.PUBLISHED;
-    } else if (dto.action === ModerateAction.REJECT) {
+    } else if (dto.action === OPPORTUNITY_MODERATE_ACTION.REJECT) {
       newStatus = OpportunityStatus.REJECTED;
-    } else if (dto.action === ModerateAction.REQUIRE_CHANGES) {
+    } else if (dto.action === OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES) {
       if (!dto.comment?.trim()) {
         throw new BadRequestException(
           'Comment is required when requesting changes',

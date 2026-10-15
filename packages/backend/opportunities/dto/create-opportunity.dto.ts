@@ -7,8 +7,9 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaymentType } from '@universe/database';
+import type { CreateOpportunityRequest } from '@universe/core/types/opportunities';
 
-export class CreateOpportunityDto {
+export class CreateOpportunityDto implements CreateOpportunityRequest {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
