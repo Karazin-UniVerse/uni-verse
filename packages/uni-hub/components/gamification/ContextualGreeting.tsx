@@ -6,6 +6,7 @@ import type { TimeOfDay } from '@uni-hub/constants/gamification';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { useNow } from '@uni-hub/hooks/useNow';
+import { isAssignmentCompleted } from '@uni-hub/utils/assignments';
 import styles from './ContextualGreeting.module.scss';
 
 type ContextualGreetingProps = {
@@ -45,16 +46,7 @@ export const ContextualGreeting: React.FC<ContextualGreetingProps> = ({ assignme
 
   const cta = useMemo(() => {
     const upcoming = assignments
-      .filter((assignment) => {
-        const isCompleted =
-          assignment.submissionStatus === 'submitted' ||
-          assignment.submissionStatus === 'graded' ||
-          Boolean(assignment.graded) ||
-          Boolean(assignment.grade) ||
-          Boolean(assignment.submittedAt);
-
-        return assignment.duedate > nowSec && !isCompleted;
-      })
+      .filter((assignment) => assignment.duedate > nowSec && !isAssignmentCompleted(assignment))
       .sort((a, b) => a.duedate - b.duedate);
 
     if (upcoming.length === 0) {
