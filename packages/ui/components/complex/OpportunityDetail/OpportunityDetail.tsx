@@ -45,7 +45,7 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   return (
     <div className={className}>
       <div className={styles.stack}>
-        <Button variant="secondary" isTransparent onClick={onBack}>
+        <Button variant="secondary" isTransparent onClick={onBack} className={styles.backButton}>
           <ArrowLeft size={16} className={styles.btnIcon} />
           {backText}
         </Button>
