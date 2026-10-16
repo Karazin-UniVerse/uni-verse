@@ -104,7 +104,12 @@ export function useDashboardData({
 
   const fetchData = async (isManual = false) => {
     const requestId = ++fetchRequestIdRef.current;
+const loadPlatformNotifications = () =>
+  notificationsApi.getMyNotifications().catch((error: unknown) => {
+    console.error('Failed to load platform notifications', error);
 
+    return null;
+  });
     if (!enabled || isMoodleUnlinked()) {
       await syncPlatformOnly(requestId);
 
