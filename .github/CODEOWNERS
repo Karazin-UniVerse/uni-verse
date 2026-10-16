@@ -17,12 +17,25 @@
 /packages/core/           @brodion-230 @iamredl-lab @Skyzary @RiderTr @Artebah
 
 # Frontend Applications & Design System
-/packages/ui/             @Skyzary @Kostik565 @iamredl-lab @RiderTr @Artebah
-/packages/uni-hub/        @iamredl-lab @Kostik565 @Skyzary @RiderTr @Artebah
+/packages/ui/             @Skyzary @Kostik565 @iamredl-lab @RiderTr @Artebah @ra1ndropp
+/packages/uni-hub/        @iamredl-lab @Kostik565 @Skyzary @RiderTr @Artebah @ra1ndropp
 
 # Backend Services & Database
-/packages/backend/        @brodion-230 @iamredl-lab @RiderTr @Skyzary @Artebah
-/packages/database/       @brodion-230 @iamredl-lab @RiderTr @Skyzary @Artebah
+/packages/backend/        @brodion-230 @iamredl-lab @RiderTr @Skyzary @Artebah @ra1ndropp
+/packages/database/       @brodion-230 @iamredl-lab @RiderTr @Skyzary @Artebah @ra1ndropp
 
 # End-to-End & Integration Testing
 /tests/                   @khaliggo @alnnvsk @brodion-230 @iamredl-lab @blepame
+
+# AI Instructions, Agents & Rules (Business Logic Governance)
+/.agents/                 @brodion-230 @iamredl-lab @RiderTr @l-v-s-l @khaliggo
+/.claude/                 @brodion-230 @iamredl-lab @RiderTr @l-v-s-l @khaliggo
+/.gemini/                 @brodion-230 @iamredl-lab @RiderTr @l-v-s-l @khaliggo
+/docs/ai/                 @brodion-230 @iamredl-lab @RiderTr @l-v-s-l @khaliggo
+/AGENTS.md                @brodion-230 @iamredl-lab @RiderTr @l-v-s-l @khaliggo
+/CLAUDE.md                @brodion-230 @iamredl-lab @RiderTr @l-v-s-l @khaliggo
+/GEMINI.md                @brodion-230 @iamredl-lab @RiderTr @l-v-s-l @khaliggo
+/.coderabbit.yaml         @brodion-230 @iamredl-lab @RiderTr @l-v-s-l @khaliggo
+/skills-lock.json         @brodion-230 @iamredl-lab @RiderTr @l-v-s-l @khaliggo
+
+
