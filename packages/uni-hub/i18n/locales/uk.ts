@@ -61,7 +61,7 @@ export const uk = {
 
   // Navigation
   'nav.overview': 'Стіна',
-  'nav.study': 'Мої курси',
+  'nav.study': 'Навчання',
   'nav.schedule': 'Розклад',
   'nav.connectMoodle': 'Підключити Moodle',
   'nav.opportunities': 'Можливості',

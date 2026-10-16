@@ -63,7 +63,7 @@ export const en = {
 
   // Navigation
   'nav.overview': 'Wall',
-  'nav.study': 'My Courses',
+  'nav.study': 'Study',
   'nav.schedule': 'Schedule',
   'nav.connectMoodle': 'Connect Moodle',
   'nav.opportunities': 'Opportunities',
