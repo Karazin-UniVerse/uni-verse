@@ -78,7 +78,7 @@ describe('ModerationQueueTab component', () => {
     expect(onModerate).toHaveBeenCalledWith(mockOpportunity.id, 'APPROVE');
   });
 
-  it("should call onModerate with 'request_changes' when clicking Request Changes button", async () => {
+  it('should call onOpenRejectModal and not onModerate when clicking Request Changes button', async () => {
     const user = userEvent.setup();
     const onModerate = vi.fn();
     const onOpenRejectModal = vi.fn();

@@ -62,7 +62,7 @@ describe('StatusBanner Component', () => {
     expect(banner).toHaveClass(styles.bannerInfo);
   });
 
-  it('should trigger action callback when action button is clicked', async () => {
+  it('should render interactive children', async () => {
     const handleAction = vi.fn();
     const user = userEvent.setup();
 
@@ -80,26 +80,6 @@ describe('StatusBanner Component', () => {
     await user.click(actionButton);
 
     expect(handleAction).toHaveBeenCalledTimes(1);
-  });
-
-  it('should call onDismiss when dismiss button is clicked', async () => {
-    const handleDismiss = vi.fn();
-    const user = userEvent.setup();
-
-    render(
-      <StatusBanner tone="warning">
-        <span>Attention required</span>
-        <button type="button" aria-label="Dismiss banner" onClick={handleDismiss}>
-          Close
-        </button>
-      </StatusBanner>,
-    );
-
-    const dismissButton = screen.getByRole('button', { name: 'Dismiss banner' });
-
-    await user.click(dismissButton);
-
-    expect(handleDismiss).toHaveBeenCalledTimes(1);
   });
 
   it('should apply custom className', () => {

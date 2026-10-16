@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BREAKPOINTS } from '@core/constants/breakpoints';
@@ -24,6 +24,10 @@ describe('ScheduleView component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useMediaQuery).mockReturnValue(false);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   const renderScheduleView = () =>
@@ -136,6 +140,9 @@ describe('ScheduleView component', () => {
   });
 
   it('should switch to day view when a day cell is clicked in month view', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 4, 10));
+
     const user = userEvent.setup();
 
     renderScheduleView();

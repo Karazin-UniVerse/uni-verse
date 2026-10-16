@@ -277,15 +277,15 @@ Run these commands after creating or updating any unit test file:
 
 ```bash
 # 1. Execute the new unit test file
-cmd /c "pnpm --filter @universe/uni-hub test <TestFileName> --run"
+pnpm --filter @universe/uni-hub test <TestFileName> --run
 # (or @universe/ui for UI package tests)
 
 # 2. Verify Oxlint (0 warnings, 0 errors)
-cmd /c "pnpm exec oxlint path/to/file.test.tsx"
+pnpm exec oxlint path/to/file.test.tsx
 
 # 3. Verify TypeScript compilation across the package
-cmd /c "pnpm --filter @universe/uni-hub typecheck"
+pnpm --filter @universe/uni-hub typecheck
 
 # 4. Format with Prettier
-cmd /c "pnpm exec prettier --write path/to/file.test.tsx"
+pnpm exec prettier --write path/to/file.test.tsx
 ```

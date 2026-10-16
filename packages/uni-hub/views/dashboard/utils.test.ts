@@ -50,7 +50,7 @@ describe('dashboard utils', () => {
   });
 
   describe('stripHtml', () => {
-    it('should strip html tags and decodes common entities', () => {
+    it('should strip html tags and decode common entities', () => {
       expect(stripHtml('<p>Hello &amp; <strong>World</strong></p>')).toBe('Hello & World');
       expect(stripHtml(null)).toBe('');
       expect(stripHtml(undefined)).toBe('');

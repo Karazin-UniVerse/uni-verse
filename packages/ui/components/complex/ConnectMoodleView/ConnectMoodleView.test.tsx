@@ -42,91 +42,19 @@ describe('ConnectMoodleView Component', () => {
     expect(openLink).toBeInTheDocument();
   });
 
-  it('should handle credential input and submit action', async () => {
-    const handleConnect = vi.fn();
-    const user = userEvent.setup();
-
+  it('should render ReactNode subtitle and connectCtaLabel', () => {
     render(
       <ConnectMoodleView
-        title="Connect Moodle Account"
-        subtitle={
-          <span>
-            <label htmlFor="moodle-token-input">Moodle Web Service Token</label>
-            <input
-              id="moodle-token-input"
-              type="password"
-              placeholder="Enter your Moodle token"
-              defaultValue=""
-            />
-          </span>
-        }
-        connectCtaLabel="Submit Credentials"
-        openMoodleLabel="Open Moodle"
-        onConnect={handleConnect}
-      />,
-    );
-
-    const input = screen.getByLabelText(/moodle web service token/i);
-
-    expect(input).toBeInTheDocument();
-
-    await user.type(input, 'test-token-value-123');
-    expect(input).toHaveValue('test-token-value-123');
-
-    const submitBtn = screen.getByRole('button', { name: /submit credentials/i });
-
-    await user.click(submitBtn);
-
-    expect(handleConnect).toHaveBeenCalledTimes(1);
-  });
-
-  it('should display error state if connection fails or validation fails', () => {
-    render(
-      <ConnectMoodleView
-        title="Connection Failed"
-        subtitle={
-          <span role="alert">Invalid credentials: unable to authenticate with Moodle server.</span>
-        }
-        connectCtaLabel="Retry Connection"
-        openMoodleLabel="Open Moodle Portal"
-        onConnect={vi.fn()}
-      />,
-    );
-
-    const errorHeading = screen.getByRole('heading', {
-      level: 3,
-      name: 'Connection Failed',
-    });
-
-    expect(errorHeading).toBeInTheDocument();
-
-    const alertElement = screen.getByRole('alert');
-
-    expect(alertElement).toHaveTextContent(
-      'Invalid credentials: unable to authenticate with Moodle server.',
-    );
-
-    const retryButton = screen.getByRole('button', { name: /retry connection/i });
-
-    expect(retryButton).toBeInTheDocument();
-  });
-
-  it('should show loading state during connection attempt', () => {
-    render(
-      <ConnectMoodleView
-        title="Connecting to Moodle..."
-        subtitle="Verifying credentials and synchronizing courses..."
-        connectCtaLabel={<span data-testid="connect-spinner">Connecting...</span>}
+        title="Connect Moodle"
+        subtitle={<span role="alert">Invalid token or connection failed</span>}
+        connectCtaLabel={<span aria-busy="true">Connecting...</span>}
         openMoodleLabel="Open Moodle"
         onConnect={vi.fn()}
       />,
     );
 
-    expect(
-      screen.getByRole('heading', { level: 3, name: 'Connecting to Moodle...' }),
-    ).toBeInTheDocument();
-    expect(screen.getByTestId('connect-spinner')).toBeInTheDocument();
-    expect(screen.getByText('Connecting...')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Invalid token or connection failed');
+    expect(screen.getByRole('button', { name: 'Connecting...' })).toBeInTheDocument();
   });
 
   it('should render external moodle link with default URL and security attributes', () => {

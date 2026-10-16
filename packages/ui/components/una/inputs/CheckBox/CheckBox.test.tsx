@@ -98,16 +98,13 @@ describe('UNA CheckBox Component', () => {
     expect(checkbox).toHaveClass('another-custom-class');
   });
 
-  it('should support indeterminate state via aria-checked attribute', () => {
+  it('should pass through aria-checked attribute', () => {
     render(<CheckBox aria-checked="mixed" variant="primary" aria-label="Indeterminate option" />);
 
     const checkbox = screen.getByRole('checkbox', {
       name: /indeterminate option/i,
-    }) as HTMLInputElement;
+    });
 
-    checkbox.indeterminate = true;
-
-    expect(checkbox.indeterminate).toBe(true);
     expect(checkbox).toHaveAttribute('aria-checked', 'mixed');
   });
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
@@ -199,6 +199,13 @@ describe('DashboardPage', () => {
       fetchData: vi.fn().mockResolvedValue(undefined),
       cancelPendingFetch: vi.fn(),
     };
+  });
+
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
+    delete process.env.NEXT_PUBLIC_FEATURE_EDEAN;
+    delete process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES;
+    delete process.env.NEXT_PUBLIC_FEATURE_PANEL;
   });
 
   it('should render loading skeleton when dashboard data is loading', () => {

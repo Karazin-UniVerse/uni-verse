@@ -326,7 +326,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
   it('should show error message when GoogleLoginButton triggers onError', async () => {
     renderLoginPage();
 
-    expect(capturedGoogleError).toBeDefined();
+    expect(capturedGoogleError).not.toBeNull();
 
     act(() => {
       capturedGoogleError?.('Помилка авторизації через Google');

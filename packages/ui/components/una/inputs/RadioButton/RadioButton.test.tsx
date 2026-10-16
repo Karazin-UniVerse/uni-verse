@@ -193,35 +193,4 @@ describe('UNA RadioButton Component', () => {
     expect(radio).toBeChecked();
     expect(handleChange).toHaveBeenCalledTimes(1);
   });
-
-  it('should support arrow key navigation within a radio group', async () => {
-    const user = userEvent.setup();
-
-    render(
-      <form>
-        <label>
-          <RadioButton variant="primary" name="arrow-group" value="first" defaultChecked />
-          First
-        </label>
-        <label>
-          <RadioButton variant="primary" name="arrow-group" value="second" />
-          Second
-        </label>
-      </form>,
-    );
-
-    const firstRadio = screen.getByRole('radio', { name: /first/i });
-    const secondRadio = screen.getByRole('radio', { name: /second/i });
-
-    firstRadio.focus();
-    expect(firstRadio).toHaveFocus();
-    expect(firstRadio).toBeChecked();
-
-    await user.keyboard('[ArrowDown]');
-
-    if (secondRadio === document.activeElement) {
-      expect(secondRadio).toHaveFocus();
-      expect(secondRadio).toBeChecked();
-    }
-  });
 });

@@ -90,7 +90,7 @@ describe('useOpportunitiesData hook', () => {
     localStorage.setItem('universe-lang', 'uk');
   });
 
-  it('should load catalog, myOpportunities, and myApplications on mount', async () => {
+  it('should load only the active catalog list on mount', async () => {
     mockOpportunitiesApi.getOpportunities.mockResolvedValueOnce({ data: mockCatalog });
 
     const { result } = renderHook(() => useOpportunitiesData(false), { wrapper });

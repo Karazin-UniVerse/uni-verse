@@ -39,7 +39,7 @@ describe('ContactInfoGrid Component', () => {
     expect(screen.getByText('Main Building, Room 201')).toBeInTheDocument();
   });
 
-  it('should format external links with rel="noopener noreferrer" for security', () => {
+  it('should render ReactNode link values', () => {
     const linkItems: ContactInfoItem[] = [
       {
         id: 'website',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ToastProvider } from '@una';
@@ -130,6 +130,10 @@ describe('CourseContents view', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockParams = { courseId: '123' };
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('should render loading spinner initially while fetching sections', () => {

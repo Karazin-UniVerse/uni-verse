@@ -31,16 +31,16 @@ This skill provides an orchestration framework for parallelizing test writing, m
 
 ### Strict Isolation Rules:
 1. **One File Per Subagent**: Each subagent has strict, exclusive ownership over **one single test file** (e.g. `ComponentA.test.tsx`). No two subagents may ever touch or modify the same file.
-2. **Subagents NEVER Commit**: Subagents MUST NOT run `git add`, `git commit`, `git push`, or `pnpm skills:sync`. Only the parent orchestrator executes git commits and repository-level sync commands.
+2. **Subagents NEVER Commit or Rename via Git**: Subagents MUST NOT run `git add`, `git commit`, `git mv`, `git push`, or `pnpm skills:sync`. Only the parent orchestrator executes git commands (including any `.test.ts` to `.test.tsx` `git mv` renames prior to spawning subagents) and repository-level sync commands.
 3. **Subagents Verify Locally**: Each subagent must run Vitest and Oxlint targeting exclusively its assigned file:
    ```bash
-   cmd /c "pnpm --filter <pkg> test <TestName> --run"
-   cmd /c "pnpm exec oxlint path/to/MyComponent.test.tsx"
+   pnpm --filter <pkg> test <TestName> --run
+   pnpm exec oxlint path/to/MyComponent.test.tsx
    ```
 4. **Model Tier**: Always use `Model: "inherit"` unless the user explicitly specifies a tier.
 5. **Prompt Structure**: Every subagent prompt must contain:
    - Target source file path and target test file path.
-   - Reference to `.agents/skills/unit-test-writing/SKILL.md` (or `.agents/skills/rtl-test-migrator/SKILL.md`).
+   - Reference to [`unit-test-writing`](../unit-test-writing/SKILL.md) (or [`rtl-test-migrator`](../rtl-test-migrator/SKILL.md)).
    - Guardrails: Strict `'should ...'` naming, no `div role="dialog"`, no comparator-less `.sort()`, no `Math.random()`, and `universe/vertical-spacing` compliance.
    - Command to verify its file.
 
@@ -49,19 +49,19 @@ This skill provides an orchestration framework for parallelizing test writing, m
 ## Orchestrator Loop
 
 For each batch of files:
-1. **Batch Selection**: Group remaining untested or unmigrated components into batches of up to 5 items.
+1. **Batch Selection & Pre-Batch Git Renames**: Group remaining untested or unmigrated components into batches of up to 5 items. If any legacy `.test.ts` file in the batch requires JSX, the parent orchestrator runs `git mv path/to/File.test.ts path/to/File.test.tsx` before spawning subagents.
 2. **Launch Subagents**: Call `invoke_subagent` with the 5 subagent specifications in parallel.
 3. **Await Completion**: Subagents run asynchronously in the background. Wait for automatic completion notifications without polling in a loop.
 4. **Post-Batch Quality Verification**:
    - Run prettier formatting on touched files:
      ```bash
-     cmd /c "pnpm exec prettier --write path/to/file1.test.tsx path/to/file2.test.tsx ..."
+     pnpm exec prettier --write path/to/file1.test.tsx path/to/file2.test.tsx ...
      ```
    - Run package tests, typecheck, and linting:
      ```bash
-     cmd /c "pnpm --filter @universe/ui test --run" # or @universe/uni-hub
-     cmd /c "pnpm --filter @universe/ui typecheck"
-     cmd /c "pnpm lint"
+     pnpm --filter @universe/ui test --run # or @universe/uni-hub
+     pnpm --filter @universe/ui typecheck
+     pnpm lint
      ```
 5. **Atomic Commit**: Stage modified test files and commit using conventional commits (e.g., `test(ui): add unit tests for una primitives`).
 
@@ -71,7 +71,7 @@ For each batch of files:
 
 ```markdown
 You are a frontend unit test specialist working in the Uni-Verse monorepo.
-Follow `.agents/skills/unit-test-writing/SKILL.md` to write a comprehensive unit test suite for:
+Follow [unit-test-writing](../unit-test-writing/SKILL.md) to write a comprehensive unit test suite for:
 - Source: <source_file_path>
 - Test Target: <target_test_file_path>
 
@@ -86,7 +86,7 @@ Requirements:
    - NEVER use Math.random() or sort without comparator.
    - Keep oxlint happy: blank line after variable declarations and before return (universe/vertical-spacing).
 4. Verify your test by running:
-   cmd /c "pnpm --filter <pkg> test <TestName> --run"
-   cmd /c "pnpm exec oxlint <target_test_file_path>"
-5. Do NOT run git add, git commit, or any git commands.
+   pnpm --filter <pkg> test <TestName> --run
+   pnpm exec oxlint <target_test_file_path>
+5. Do NOT run git add, git commit, git mv, or any git commands.
 ```

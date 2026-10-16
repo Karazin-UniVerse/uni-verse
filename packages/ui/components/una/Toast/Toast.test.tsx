@@ -186,14 +186,14 @@ describe('Toast Component', () => {
   });
 
   it('should throw error when useToast is used outside ToastProvider', () => {
-    const originalError = console.error;
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    console.error = vi.fn();
-
-    expect(() => renderHook(() => useToast())).toThrow(
-      'useToast must be used within ToastProvider',
-    );
-
-    console.error = originalError;
+    try {
+      expect(() => renderHook(() => useToast())).toThrow(
+        'useToast must be used within ToastProvider',
+      );
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 });

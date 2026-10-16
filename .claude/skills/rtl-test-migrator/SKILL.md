@@ -36,7 +36,7 @@ It supports processing:
 
 ### Step 2: File Extension Check (TSX vs TS)
 - If the test renders React components using JSX syntax (`<Component ... />`), the file extension **MUST** be `.test.tsx`.
-- If the legacy file is named `.test.ts`, rename it using git:
+- If the legacy file is named `.test.ts`, rename it using git (when orchestrating in parallel via `parallel-test-orchestrator`, the parent orchestrator performs all `git mv` renames before spawning subagents):
   ```bash
   git mv path/to/MyComponent.test.ts path/to/MyComponent.test.tsx
   ```
@@ -130,9 +130,9 @@ expect(result.current.value).toBe('updated');
 After migrating each file or batch:
 ```bash
 # Run Vitest on the modified test file
-cmd /c "pnpm test path/to/file.test.tsx"
+pnpm test path/to/file.test.tsx
 
 # Verify formatting and linter
-cmd /c "pnpm exec oxlint path/to/file.test.tsx"
-cmd /c "pnpm exec prettier --check path/to/file.test.tsx"
+pnpm exec oxlint path/to/file.test.tsx
+pnpm exec prettier --check path/to/file.test.tsx
 ```
