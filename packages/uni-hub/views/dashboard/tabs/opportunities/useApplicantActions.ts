@@ -79,6 +79,14 @@ export function useApplicantActions({
     }
   };
 
+  const requestWithdraw = (id: string): void => {
+    setWithdrawApplicationId(id);
+  };
+
+  const cancelWithdraw = (): void => {
+    setWithdrawApplicationId(null);
+  };
+
   return {
     isApplyOpen,
     setIsApplyOpen,
@@ -90,6 +98,8 @@ export function useApplicantActions({
     handleApplySubmit,
     withdrawApplicationId,
     setWithdrawApplicationId,
+    requestWithdraw,
+    cancelWithdraw,
     withdrawing,
     handleWithdraw,
   };
