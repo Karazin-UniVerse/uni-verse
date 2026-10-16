@@ -1,4 +1,4 @@
-export { default as AssignmentModal } from './AssignmentModal';
+export * from './AssignmentDetail';
 export * from './AssignmentsDonut';
 export * from './AssignmentCard';
 export * from './AssignmentsEmptyState';

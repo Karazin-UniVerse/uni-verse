@@ -255,6 +255,7 @@ export const en = {
   'header.unreadCount': '{count} new',
 
   // Assignment Modal
+  'assignmentPage.back': 'Back to assignments',
   'assignmentModal.defaultTitle': 'Assignment',
   'assignmentModal.loadingStatus': 'Loading status...',
   'assignmentModal.openMoodle': 'Open original assignment on Moodle',

@@ -254,6 +254,7 @@ export const uk = {
   'header.unreadCount': '{count} нових',
 
   // Assignment Modal
+  'assignmentPage.back': 'Назад до завдань',
   'assignmentModal.defaultTitle': 'Завдання',
   'assignmentModal.loadingStatus': 'Завантаження статусу...',
   'assignmentModal.openMoodle': 'Відкрити оригінальне завдання на Moodle',
