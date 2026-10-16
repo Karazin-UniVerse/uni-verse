@@ -55,6 +55,7 @@
     ],
     "universe/vertical-spacing": "error",
     "universe/destructuring-props-order": "error",
+    "universe/required-members-first": "error",
     "universe/no-suppress-hydration-without-comment": "warn",
     "universe/nestjs-require-api-response-type": "error",
     "universe/nestjs-require-bearer-auth-decorator": "error",
@@ -179,6 +180,12 @@
             ]
           }
         ]
+      }
+    },
+    {
+      "files": ["packages/backend/**/dto/*.dto.ts"],
+      "rules": {
+        "universe/dto-implements-core-contract": "error"
       }
     },
     {

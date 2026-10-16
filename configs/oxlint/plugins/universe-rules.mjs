@@ -322,6 +322,43 @@ export default {
       },
     },
 
+    'required-members-first': {
+      meta: {
+        type: 'suggestion',
+        docs: {
+          description:
+            'Require interface and type literal members without `?` to be declared before optional ones.',
+        },
+      },
+      create(context) {
+        function check(node) {
+          let firstOptional = null;
+
+          for (const member of node.body) {
+            if (member.type !== 'TSPropertySignature' && member.type !== 'TSMethodSignature') {
+              continue;
+            }
+
+            if (member.optional) {
+              firstOptional ??= member;
+            } else if (firstOptional) {
+              context.report({
+                node: member,
+                message: 'Declare required members before optional ones.',
+              });
+            }
+          }
+        }
+
+        return {
+          TSInterfaceBody: check,
+          TSTypeLiteral(node) {
+            check({ body: node.members });
+          },
+        };
+      },
+    },
+
     // ─── HYDRATION / RENDERING ────────────────────────────────────────
 
     'no-suppress-hydration-without-comment': {
@@ -653,6 +690,28 @@ export default {
                 message: 'Silent error: .catch() returns empty fallback.',
               });
             }
+          },
+        };
+      },
+    },
+
+    'dto-implements-core-contract': {
+      meta: {
+        type: 'problem',
+        docs: {
+          description:
+            'Backend DTO classes must implement a shared contract from @universe/core/types.',
+        },
+      },
+      create(context) {
+        return {
+          ClassDeclaration(node) {
+            if (node.implements?.length) return;
+
+            context.report({
+              node: node.id ?? node,
+              message: `DTO '${node.id?.name ?? 'anonymous'}' must implement its contract from '@universe/core/types' (for example 'implements ${node.id?.name?.replace(/Dto$/, '')}Request').`,
+            });
           },
         };
       },

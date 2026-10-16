@@ -71,6 +71,19 @@ export interface ModerateOpportunityRequest {
   comment?: string;
 }
 
+export interface ChangeLifecycleStateRequest {
+  lifecycleState: OpportunityLifecycle;
+}
+
+export interface ChangeOpportunityStatusRequest {
+  status: OpportunityStatus;
+}
+
+export interface UpdateApplicationStatusRequest {
+  status: OpportunityAppStatus;
+  comment?: string;
+}
+
 export interface GetOpportunitiesParams {
   status?: OpportunityStatus;
   paymentType?: OpportunityPaymentType | '';

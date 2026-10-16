@@ -28,8 +28,8 @@ vi.mock('@uni-hub/services/api', () => ({
 
 describe('useMoodleLink hook', () => {
   interface ConsumerProps {
-    options?: UseMoodleLinkOptions;
     onReady: (hook: ReturnType<typeof useMoodleLink>) => void;
+    options?: UseMoodleLinkOptions;
   }
 
   const TestConsumer: React.FC<ConsumerProps> = ({ options, onReady }) => {
