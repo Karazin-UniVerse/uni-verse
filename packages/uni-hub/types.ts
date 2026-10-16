@@ -54,7 +54,7 @@ export interface MoodleEvent {
 }
 
 export interface Notification {
-  id: number;
+  id: number | string;
   subject: string;
   message: string;
   timecreated: number;

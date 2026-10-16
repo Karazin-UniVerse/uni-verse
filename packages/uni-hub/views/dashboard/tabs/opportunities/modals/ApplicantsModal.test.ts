@@ -29,7 +29,7 @@ describe('ApplicantsModal', () => {
         LanguageProvider,
         null,
         React.createElement(ApplicantsModal, {
-          isOpen: true,
+          open: true,
           onClose: () => {},
           loading: false,
           applications: [mockApplication],

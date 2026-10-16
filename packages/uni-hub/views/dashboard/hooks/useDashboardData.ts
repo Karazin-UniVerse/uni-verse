@@ -95,9 +95,7 @@ export function useDashboardData({
     if (!enabled || isMoodleUnlinked()) {
       setLoading(false);
 
-      const platformResponse = await notificationsApi
-        .getMyNotifications()
-        .catch(() => ({ data: [] }));
+      const platformResponse = await notificationsApi.getMyNotifications().catch(() => null);
 
       if (requestId !== fetchRequestIdRef.current) {
         return;
@@ -137,7 +135,7 @@ export function useDashboardData({
         moodleApi.getNotifications(),
         moodleApi.getStatistics(),
         moodleApi.getProfile().catch(() => null),
-        notificationsApi.getMyNotifications().catch(() => ({ data: [] })),
+        notificationsApi.getMyNotifications().catch(() => null),
       ]);
 
       if (requestId !== fetchRequestIdRef.current || isMoodleUnlinked()) {
