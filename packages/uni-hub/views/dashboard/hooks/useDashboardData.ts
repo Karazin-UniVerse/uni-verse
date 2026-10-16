@@ -137,7 +137,7 @@ const loadPlatformNotifications = () =>
         moodleApi.getNotifications(),
         moodleApi.getStatistics(),
         moodleApi.getProfile().catch(() => null),
-        notificationsApi.getMyNotifications().catch(() => null),
+        loadPlatformNotifications(),
       ]);
 
       if (isAbortedMoodleFetch(requestId, fetchRequestIdRef.current)) {
