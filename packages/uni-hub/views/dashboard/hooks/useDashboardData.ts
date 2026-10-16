@@ -198,7 +198,9 @@ export function useDashboardData({
         return;
       }
 
-      toast.error(formatMessage('dashboard.loadError'));
+      if (!isMoodleUnlinked()) {
+  toast.error(formatMessage('dashboard.loadError'));
+}
     } finally {
       if (requestId === fetchRequestIdRef.current) {
         setLoading(false);
