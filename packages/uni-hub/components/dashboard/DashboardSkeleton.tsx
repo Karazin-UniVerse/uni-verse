@@ -1,4 +1,5 @@
 import React from 'react';
+import clsx from 'clsx';
 import { Skeleton } from '@una';
 import pageStyles from '@uni-hub/views/DashboardPage.module.scss';
 import styles from './DashboardSkeleton.module.scss';
@@ -8,8 +9,12 @@ const SKELETON_STAT_CARDS = ['st1', 'st2', 'st3'];
 const SKELETON_PANEL1_ITEMS = ['p1-1', 'p1-2', 'p1-3'];
 const SKELETON_PANEL2_ITEMS = ['p2-1', 'p2-2', 'p2-3', 'p2-4'];
 
-export const DashboardSkeleton: React.FC = () => (
-  <div className={pageStyles.stack} aria-busy="true" aria-label="Загрузка данных">
+export interface DashboardSkeletonProps {
+  className?: string;
+}
+
+export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({ className }) => (
+  <div className={clsx(pageStyles.stack, className)} aria-busy="true" aria-label="Загрузка данных">
     <section className={pageStyles.studentCard}>
       <div className={pageStyles.studentCardTop}>
         <div className={pageStyles.studentIdentity}>

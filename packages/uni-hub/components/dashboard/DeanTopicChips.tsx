@@ -14,15 +14,24 @@ export const DEAN_TOPIC_KEYS: TranslationKey[] = [
 ];
 
 export interface DeanTopicChipsProps {
+  topics?: (TranslationKey | string)[];
   selectedTopic: string;
   onSelectTopic: (topic: string) => void;
+  disabled?: boolean;
+  className?: string;
 }
 
-export const DeanTopicChips: React.FC<DeanTopicChipsProps> = ({ selectedTopic, onSelectTopic }) => {
+export const DeanTopicChips: React.FC<DeanTopicChipsProps> = ({
+  selectedTopic,
+  onSelectTopic,
+  disabled,
+  className,
+  topics = DEAN_TOPIC_KEYS,
+}) => {
   const { formatMessage } = useLanguage();
 
-  const options = DEAN_TOPIC_KEYS.map((key) => {
-    const topic = formatMessage(key);
+  const options = topics.map((key) => {
+    const topic = formatMessage(key as TranslationKey);
 
     return {
       id: topic,
@@ -36,6 +45,8 @@ export const DeanTopicChips: React.FC<DeanTopicChipsProps> = ({ selectedTopic, o
       options={options}
       selectedId={selectedTopic}
       onSelect={onSelectTopic}
+      disabled={disabled}
+      className={className}
     />
   );
 };
