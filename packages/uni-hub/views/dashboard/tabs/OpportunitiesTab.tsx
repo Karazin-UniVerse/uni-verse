@@ -27,11 +27,7 @@ import { useModeration } from './opportunities/useModeration';
 import { useOpportunitiesData } from './opportunities/useOpportunitiesData';
 import { useOpportunityDetail } from './opportunities/useOpportunityDetail';
 
-export interface OpportunitiesTabProps {
-  soundEnabled?: boolean;
-}
-
-export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = () => {
+export const OpportunitiesTab: React.FC = () => {
   const { formatMessage } = useLanguage();
   const currentUser = useCurrentUser();
   const isModerator = currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR);

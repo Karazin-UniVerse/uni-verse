@@ -18,10 +18,25 @@ export interface UseApplicantActionsProps {
   selectedOpportunity: Opportunity | null;
 }
 
+interface UseApplicantActionsResult {
+  isApplyOpen: boolean;
+  setIsApplyOpen: (isOpen: boolean) => void;
+  motivation: string;
+  setMotivation: (motivation: string) => void;
+  contactInfo: string;
+  setContactInfo: (contactInfo: string) => void;
+  applying: boolean;
+  handleApplySubmit: (event: React.SyntheticEvent<HTMLFormElement>) => Promise<void>;
+  withdrawApplicationId: string | null;
+  setWithdrawApplicationId: (applicationId: string | null) => void;
+  withdrawing: boolean;
+  handleWithdraw: () => Promise<void>;
+}
+
 export function useApplicantActions({
   currentUser,
   selectedOpportunity,
-}: UseApplicantActionsProps) {
+}: UseApplicantActionsProps): UseApplicantActionsResult {
   const toast = useToast();
   const { formatMessage } = useLanguage();
   const queryClient = useQueryClient();

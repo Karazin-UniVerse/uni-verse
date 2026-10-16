@@ -274,7 +274,7 @@ const DashboardPage: React.FC = () => {
           />
         );
       case NAV_KEY.Opportunities:
-        return <OpportunitiesTab soundEnabled={soundEnabled} />;
+        return <OpportunitiesTab />;
       case NAV_KEY.ConnectMoodle:
         return <ConnectMoodleTab onConnect={() => openLinkModal(LinkMoodleMode.CONNECT)} />;
       default:

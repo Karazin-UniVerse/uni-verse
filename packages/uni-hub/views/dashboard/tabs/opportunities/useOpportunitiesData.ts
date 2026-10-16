@@ -11,11 +11,24 @@ import {
   myOpportunitiesQueryOptions,
 } from './queries';
 
-export interface ListState<T> {
+interface ListState<T> {
   items: T[];
   loading: boolean;
   isError: boolean;
   refetch: () => void;
+}
+
+interface UseOpportunitiesDataResult {
+  activeSubTab: OpportunitySubTab;
+  setActiveSubTab: (subTab: OpportunitySubTab) => void;
+  search: string;
+  setSearch: (search: string) => void;
+  paymentFilter: OpportunityPaymentType | '';
+  setPaymentFilter: (paymentType: OpportunityPaymentType | '') => void;
+  catalog: ListState<Opportunity>;
+  myOpportunities: ListState<Opportunity>;
+  myApplications: ListState<OpportunityApplication>;
+  moderationQueue: ListState<Opportunity>;
 }
 
 function toListState<T>(query: UseQueryResult<T[]>): ListState<T> {
@@ -29,7 +42,7 @@ function toListState<T>(query: UseQueryResult<T[]>): ListState<T> {
   };
 }
 
-export function useOpportunitiesData(isModerator: boolean) {
+export function useOpportunitiesData(isModerator: boolean): UseOpportunitiesDataResult {
   const [activeSubTab, setActiveSubTab] = useState<OpportunitySubTab>(OPPORTUNITY_SUB_TAB.Catalog);
   const [search, setSearch] = useState('');
   const [paymentFilter, setPaymentFilter] = useState<OpportunityPaymentType | ''>('');

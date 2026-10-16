@@ -13,7 +13,16 @@ interface LifecycleChange {
   state: OpportunityLifecycle;
 }
 
-export function useOpportunityDetail() {
+interface UseOpportunityDetailResult {
+  selectedOpportunity: Opportunity | null;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  open: (opportunity: Opportunity) => void;
+  handleSendToReview: (id: string) => Promise<void>;
+  handleLifecycleChange: (id: string, state: OpportunityLifecycle) => Promise<void>;
+}
+
+export function useOpportunityDetail(): UseOpportunityDetailResult {
   const toast = useToast();
   const { formatMessage } = useLanguage();
   const queryClient = useQueryClient();

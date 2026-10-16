@@ -30,7 +30,21 @@ export interface UseCreateOpportunityProps {
   onCreated: () => void;
 }
 
-export function useCreateOpportunity({ onCreated }: UseCreateOpportunityProps) {
+interface UseCreateOpportunityResult {
+  isOpen: boolean;
+  formData: CreateOpportunityFormData;
+  setFormData: React.Dispatch<React.SetStateAction<CreateOpportunityFormData>>;
+  creating: boolean;
+  isEdit: boolean;
+  openCreate: () => void;
+  openEdit: (opportunity: Opportunity) => void;
+  close: () => void;
+  handleSubmit: (event: React.SyntheticEvent<HTMLFormElement>) => Promise<void>;
+}
+
+export function useCreateOpportunity({
+  onCreated,
+}: UseCreateOpportunityProps): UseCreateOpportunityResult {
   const toast = useToast();
   const { formatMessage } = useLanguage();
   const queryClient = useQueryClient();

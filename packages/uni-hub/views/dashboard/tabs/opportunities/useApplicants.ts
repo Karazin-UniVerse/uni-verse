@@ -4,7 +4,7 @@ import { useToast } from '@una';
 import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity } from '@core/types/opportunities';
+import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import type { OpportunityAppStatus } from '@core/constants/opportunities';
 import { invalidateOpportunities } from './cache';
 import { hasLoadFailed, loadApplicants } from './queries';
@@ -15,7 +15,18 @@ interface ApplicationStatusChange {
   status: OpportunityAppStatus;
 }
 
-export function useApplicants() {
+interface UseApplicantsResult {
+  isOpen: boolean;
+  applications: OpportunityApplication[];
+  loading: boolean;
+  isError: boolean;
+  refetch: () => void;
+  open: (opportunity: Opportunity) => void;
+  close: () => void;
+  handleUpdateStatus: (applicationId: string, status: OpportunityAppStatus) => Promise<void>;
+}
+
+export function useApplicants(): UseApplicantsResult {
   const toast = useToast();
   const { formatMessage } = useLanguage();
   const queryClient = useQueryClient();

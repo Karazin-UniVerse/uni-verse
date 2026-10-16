@@ -28,7 +28,25 @@ interface ModerationRequest {
   comment?: string;
 }
 
-export function useModeration() {
+interface UseModerationResult {
+  rejectModal: RejectModalState;
+  submitting: boolean;
+  openRejectModal: (id: string) => void;
+  closeRejectModal: () => void;
+  changeRejectComment: (comment: string) => void;
+  handleModerate: (
+    id: string,
+    action: OpportunityModerateAction,
+    comment?: string,
+  ) => Promise<boolean>;
+  handleRejectConfirm: (
+    id: string,
+    action: OpportunityModerateAction,
+    comment: string,
+  ) => Promise<void>;
+}
+
+export function useModeration(): UseModerationResult {
   const toast = useToast();
   const { formatMessage } = useLanguage();
   const queryClient = useQueryClient();
