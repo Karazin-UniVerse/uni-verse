@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   File,
   Folder,
@@ -18,16 +17,13 @@ import { Button, Spinner, Empty } from '@una';
 import { hasLoadFailed } from '@uni-hub/queries/load-state';
 import { courseContentsQueryOptions } from '@uni-hub/queries/moodle/queries';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
-import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import type { CourseModule } from '@core/types/moodle';
 import { COURSE_MODULE_NAMES, type CourseModuleName } from '@core/constants/moodle';
-import { AssignmentModal } from '@uni-hub/components/assignments';
 import { LoadErrorState } from '@uni-hub/components/common/LoadErrorState';
-import { NAV_KEY, STUDY_VIEW } from './dashboard/constants';
+import { STUDY_VIEW } from '../constants';
+import { getAssignmentHref, getStudyHref } from '../routes';
+import type { CourseContentsProps } from '../types';
 import styles from './CourseContents.module.scss';
-
-const STUDY_SUBJECTS_HREF = `/?tab=${NAV_KEY.Study}&view=${STUDY_VIEW.Subjects}`;
 
 const getModuleIcon = (modname: CourseModuleName) => {
   switch (modname) {
@@ -46,34 +42,25 @@ const getModuleIcon = (modname: CourseModuleName) => {
   }
 };
 
-const CourseContents: React.FC = () => {
-  const params = useParams();
-  const courseId = (params?.courseId as string) || '';
+const isAssignmentPageModule = (
+  courseModule: CourseModule,
+): courseModule is CourseModule & { instance: number } =>
+  courseModule.modname === COURSE_MODULE_NAMES.ASSIGN && courseModule.instance !== undefined;
+
+export const CourseContents: React.FC<CourseContentsProps> = ({ courseId }) => {
   const router = useRouter();
   const { formatMessage } = useLanguage();
 
-  const courseIdNumber = Number.parseInt(courseId, 10);
-  const contentsQuery = useQuery({
-    ...courseContentsQueryOptions(courseIdNumber),
-    enabled: Number.isInteger(courseIdNumber),
-  });
+  const contentsQuery = useQuery(courseContentsQueryOptions(courseId));
   const sections = contentsQuery.data ?? [];
 
-  const [openState, setOpenState] = useState<{ courseId: number; sectionIds: Set<string> } | null>(
-    null,
-  );
+  const [openSectionIds, setOpenSectionIds] = useState<Set<string> | null>(null);
   const openSections =
-    openState?.courseId === courseIdNumber
-      ? openState.sectionIds
-      : new Set(sections.slice(0, 1).map((section) => section.id.toString()));
-
-  const [selectedModule, setSelectedModule] = useState<CourseModule | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
+    openSectionIds ?? new Set(sections.slice(0, 1).map((section) => section.id.toString()));
 
   const handleModuleClick = (courseModule: CourseModule): void => {
-    if (courseModule.modname === COURSE_MODULE_NAMES.ASSIGN) {
-      setSelectedModule(courseModule);
-      setModalVisible(true);
+    if (isAssignmentPageModule(courseModule)) {
+      router.push(getAssignmentHref(courseModule.instance));
     } else if (courseModule.url) {
       window.open(courseModule.url, '_blank', 'noopener,noreferrer');
     }
@@ -85,7 +72,7 @@ const CourseContents: React.FC = () => {
     if (next.has(id)) next.delete(id);
     else next.add(id);
 
-    setOpenState({ courseId: courseIdNumber, sectionIds: next });
+    setOpenSectionIds(next);
   };
 
   const renderSections = (): React.ReactNode => {
@@ -122,8 +109,7 @@ const CourseContents: React.FC = () => {
                 <ul className={styles.moduleList}>
                   {section.modules.map((courseModule) => {
                     const clickable =
-                      courseModule.modname === COURSE_MODULE_NAMES.ASSIGN ||
-                      Boolean(courseModule.url);
+                      isAssignmentPageModule(courseModule) || Boolean(courseModule.url);
 
                     return (
                       <li key={courseModule.id}>
@@ -157,44 +143,20 @@ const CourseContents: React.FC = () => {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <Button
-          type="button"
-          variant="secondary"
-          isTransparent
-          onClick={() => router.push(STUDY_SUBJECTS_HREF)}
-        >
-          <ArrowLeft size={16} /> {formatMessage('courseContents.back')}
-        </Button>
+      <Button
+        type="button"
+        variant="secondary"
+        isTransparent
+        onClick={() => router.push(getStudyHref(STUDY_VIEW.Subjects))}
+      >
+        <ArrowLeft size={16} /> {formatMessage('courseContents.back')}
+      </Button>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <LanguageSwitcher />
-          <ThemeSwitcher />
-        </div>
-      </header>
+      <div className={styles.panel}>
+        <h3>{formatMessage('courseContents.title')}</h3>
 
-      <main className={styles.content}>
-        <nav className={styles.breadcrumb} aria-label={formatMessage('courseContents.breadcrumbs')}>
-          <Link href={STUDY_SUBJECTS_HREF}>{formatMessage('courseContents.breadcrumbs')}</Link>
-          <span>/</span>
-          <span>{formatMessage('courseContents.title')}</span>
-        </nav>
-
-        <div className={styles.panel}>
-          <h1>{formatMessage('courseContents.title')}</h1>
-
-          {renderSections()}
-        </div>
-      </main>
-
-      <AssignmentModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        module={selectedModule}
-        dueUnixSec={selectedModule?.dueUnixSec ?? selectedModule?.duedate}
-      />
+        {renderSections()}
+      </div>
     </div>
   );
 };
-
-export default CourseContents;

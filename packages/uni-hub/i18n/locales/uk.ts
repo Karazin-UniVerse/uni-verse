@@ -166,7 +166,6 @@ export const uk = {
 
   // Course Contents
   'courseContents.back': 'Назад до курсів',
-  'courseContents.breadcrumbs': 'Курси',
   'courseContents.title': 'Вміст курсу',
   'courseContents.loading': 'Завантаження вмісту...',
   'courseContents.empty': 'У цьому курсі поки що немає доступних матеріалів.',

@@ -43,6 +43,10 @@ export interface StudyTabProps {
   children: ReactNode;
 }
 
+export interface CourseContentsProps {
+  courseId: number;
+}
+
 export interface CoursesTabProps {
   courses: MoodleCourse[];
   soundEnabled: boolean;

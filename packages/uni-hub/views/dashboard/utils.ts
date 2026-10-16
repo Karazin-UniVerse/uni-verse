@@ -170,3 +170,11 @@ export function resolveNavKey(
 const STUDY_VIEWS_SET: ReadonlySet<string> = new Set(STUDY_VIEWS);
 
 export const isStudyView = (value: string): value is StudyView => STUDY_VIEWS_SET.has(value);
+
+export function parseRouteId(rawId: string | string[] | undefined): number | null {
+  if (typeof rawId !== 'string' || !/^\d+$/.test(rawId)) {
+    return null;
+  }
+
+  return Number.parseInt(rawId, 10);
+}

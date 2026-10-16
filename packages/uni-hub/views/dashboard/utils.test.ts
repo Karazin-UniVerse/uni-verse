@@ -12,6 +12,7 @@ import {
   resolveNavKey,
   toNotificationListItem,
   isStudyView,
+  parseRouteId,
 } from './utils';
 
 describe('dashboard utils', () => {
@@ -208,5 +209,18 @@ describe('resolveNavKey', () => {
         isMoodleLinked: false,
       }),
     ).toBe(NAV_KEY.Overview);
+  });
+
+  describe('parseRouteId', () => {
+    it('parses a positive integer segment', () => {
+      expect(parseRouteId('5')).toBe(5);
+    });
+
+    it('returns null for non-numeric, decimal, missing or repeated segments', () => {
+      expect(parseRouteId('abc')).toBeNull();
+      expect(parseRouteId('5.5')).toBeNull();
+      expect(parseRouteId(undefined)).toBeNull();
+      expect(parseRouteId(['5'])).toBeNull();
+    });
   });
 });

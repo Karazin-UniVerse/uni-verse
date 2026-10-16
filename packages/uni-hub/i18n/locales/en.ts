@@ -166,7 +166,6 @@ export const en = {
 
   // Course Contents
   'courseContents.back': 'Back to courses',
-  'courseContents.breadcrumbs': 'Courses',
   'courseContents.title': 'Course Contents',
   'courseContents.loading': 'Loading contents...',
   'courseContents.empty': 'There are no materials available in this course yet.',
