@@ -110,10 +110,12 @@ const DashboardPage: React.FC = () => {
     handleLinkSuccess,
     handleUnlinkSuccess,
   } = useMoodleLink({
-    activeKey: selectedKey,
-    setActiveKey,
     onLinkSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: moodleKeys.all });
+
+      if (selectedKey === NAV_KEY.ConnectMoodle) {
+        setActiveKey(NAV_KEY.Overview);
+      }
     },
     onUnlinkSuccess: () => {
       queryClient.removeQueries({ queryKey: moodleKeys.all });

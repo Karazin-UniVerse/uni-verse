@@ -10,6 +10,8 @@ import type {
   CourseStatistics,
 } from '@core/types/moodle';
 import type { NavKey, StudyView } from './constants';
+import type { UseDashboardDataResult } from './hooks/useDashboardData';
+import type { useMoodleLink } from './hooks/useMoodleLink';
 
 export interface DashboardData {
   courses: MoodleCourse[];
@@ -88,4 +90,21 @@ export interface DashboardHeaderProps {
   onOpenLinkMoodle?: (mode?: LinkMoodleMode) => void;
   onOpenUnlinkMoodle?: () => void;
   isMoodleLinked?: boolean;
+}
+
+export interface DashboardContextValue
+  extends
+    Pick<UseDashboardDataResult, 'data' | 'loading' | 'isOfflineData' | 'lastSyncTime'>,
+    ReturnType<typeof useMoodleLink> {
+  hasCachedData: boolean;
+  activeStudentProfile: StudentProfile;
+  refresh: () => void;
+  dateFrom: string;
+  dateTo: string;
+  sortOrder: 'asc' | 'desc';
+  hideCompleted: boolean;
+  setDateFrom: (value: string) => void;
+  setDateTo: (value: string) => void;
+  setSortOrder: (value: 'asc' | 'desc') => void;
+  setHideCompleted: (value: boolean) => void;
 }
