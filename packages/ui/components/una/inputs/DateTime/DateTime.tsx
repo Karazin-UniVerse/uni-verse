@@ -21,6 +21,16 @@ const MONTHS = [
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
+function parseDate(value: Date | string | number | null | undefined): Date | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export function DateTime({
   selected,
   onChange,
@@ -29,27 +39,29 @@ export function DateTime({
   dialogLabel,
   locale,
   todayLabel,
+  format,
   showTime = true,
   size = 'medium',
   ...props
 }: Readonly<DateTimeProps>) {
+  const parsedSelected = useMemo(() => parseDate(selected), [selected]);
   const pickerDialogId = useId();
   const [isOpen, setIsOpen] = useState(false);
-  const [prevSelected, setPrevSelected] = useState(selected);
-  const [viewDate, setViewDate] = useState(() => selected || new Date());
+  const [prevSelected, setPrevSelected] = useState<Date | null>(parsedSelected);
+  const [viewDate, setViewDate] = useState(() => parsedSelected || new Date());
   const containerRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const timeListRef = useRef<HTMLDivElement>(null);
 
   const prevTime = prevSelected?.getTime();
-  const selectedTime = selected?.getTime();
+  const selectedTime = parsedSelected?.getTime();
 
   if (selectedTime !== prevTime) {
-    setPrevSelected(selected);
+    setPrevSelected(parsedSelected);
 
-    if (selected) {
-      setViewDate(selected);
+    if (parsedSelected) {
+      setViewDate(parsedSelected);
     }
   }
 
@@ -113,14 +125,14 @@ export function DateTime({
   }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen && selected && timeListRef.current) {
+    if (isOpen && parsedSelected && timeListRef.current) {
       const selectedEl = timeListRef.current.querySelector(`.${css.selected}`);
 
       if (selectedEl) {
-        selectedEl.scrollIntoView({ block: 'center' });
+        selectedEl.scrollIntoView?.({ block: 'center' });
       }
     }
-  }, [isOpen, selected]);
+  }, [isOpen, parsedSelected]);
 
   const handleInputClick = () => {
     setIsOpen(!isOpen);
@@ -155,9 +167,9 @@ export function DateTime({
   const handleDayClick = (dayInfo: (typeof days)[0]) => {
     const newDate = new Date(year, month + dayInfo.monthOffset, dayInfo.day);
 
-    if (selected && showTime) {
-      newDate.setHours(selected.getHours());
-      newDate.setMinutes(selected.getMinutes());
+    if (parsedSelected && showTime) {
+      newDate.setHours(parsedSelected.getHours());
+      newDate.setMinutes(parsedSelected.getMinutes());
     } else {
       newDate.setHours(0, 0, 0, 0);
     }
@@ -171,7 +183,7 @@ export function DateTime({
   };
 
   const handleTimeClick = (hours: number, minutes: number) => {
-    const newDate = selected ? new Date(selected) : new Date(viewDate);
+    const newDate = parsedSelected ? new Date(parsedSelected) : new Date(viewDate);
 
     newDate.setHours(hours);
     newDate.setMinutes(minutes);
@@ -196,6 +208,22 @@ export function DateTime({
   const formatDateTime = (date: Date | null) => {
     if (!date) {
       return '';
+    }
+
+    if (typeof format === 'function') {
+      return format(date);
+    }
+
+    if (typeof format === 'string') {
+      const pad = (n: number) => n.toString().padStart(2, '0');
+
+      return format
+        .replace(/YYYY/g, date.getFullYear().toString())
+        .replace(/MM/g, pad(date.getMonth() + 1))
+        .replace(/DD/g, pad(date.getDate()))
+        .replace(/HH/g, pad(date.getHours()))
+        .replace(/mm/g, pad(date.getMinutes()))
+        .replace(/ss/g, pad(date.getSeconds()));
     }
 
     if (!showTime) {
@@ -265,7 +293,7 @@ export function DateTime({
         {...props}
         ref={inputRef}
         size={size}
-        value={formatDateTime(selected)}
+        value={formatDateTime(parsedSelected)}
         readOnly
         onClick={handleInputClick}
         onKeyDown={handleKeyDown}
@@ -336,9 +364,10 @@ export function DateTime({
             <div className={css.daysGrid}>
               {days.map((dayInfo) => {
                 const isSelected =
-                  selected?.getDate() === dayInfo.day &&
-                  selected.getMonth() === (month + dayInfo.monthOffset + 12) % 12 &&
-                  selected.getFullYear() === year + Math.floor((month + dayInfo.monthOffset) / 12);
+                  parsedSelected?.getDate() === dayInfo.day &&
+                  parsedSelected.getMonth() === (month + dayInfo.monthOffset + 12) % 12 &&
+                  parsedSelected.getFullYear() ===
+                    year + Math.floor((month + dayInfo.monthOffset) / 12);
 
                 return (
                   <button
@@ -403,8 +432,8 @@ export function DateTime({
               <div className={css.timeList} ref={timeListRef}>
                 {timeOptions.map((timeOption) => {
                   const isSelected =
-                    selected?.getHours() === timeOption.hours &&
-                    selected.getMinutes() === timeOption.minutes;
+                    parsedSelected?.getHours() === timeOption.hours &&
+                    parsedSelected?.getMinutes() === timeOption.minutes;
 
                   return (
                     <button

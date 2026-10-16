@@ -18,6 +18,34 @@
   color: var(--text-primary);
   font-size: var(--font-sm);
   animation: slide-in var(--transition-medium) var(--ease-standard);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.text {
+  flex: 1;
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+
+  &:hover {
+    opacity: 1;
+  }
 }
 
 .success {
@@ -30,6 +58,10 @@
 
 .info {
   border-color: var(--info-color);
+}
+
+.warning {
+  border-color: var(--warning-color);
 }
 
 @keyframes slide-in {

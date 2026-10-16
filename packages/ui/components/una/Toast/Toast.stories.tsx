@@ -5,7 +5,7 @@ import { ToastProvider } from './Toast';
 import { ToastMessage } from './ToastMessage';
 import type { ToastKind } from './Toast.types';
 
-const MATRIX_KINDS: readonly ToastKind[] = ['info', 'success', 'error'];
+const MATRIX_KINDS: readonly ToastKind[] = ['info', 'success', 'warning', 'error'];
 
 const meta = {
   title: 'Una/Feedback/Toast',
