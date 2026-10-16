@@ -95,7 +95,7 @@ export function useDashboardData({
   const syncPlatformOnly = async (requestId: number): Promise<void> => {
     setLoading(false);
 
-    const platformResponse = await notificationsApi.getMyNotifications().catch(() => null);
+  const platformResponse = await loadPlatformNotifications();
 
     if (requestId === fetchRequestIdRef.current) {
       setData((previous) => applyPlatformNotifications(previous, platformResponse?.data));
