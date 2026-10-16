@@ -3,12 +3,12 @@
 import { useState, useRef } from 'react';
 import { moodleApi } from '@uni-hub/services/api';
 import { notificationsApi } from '@uni-hub/services/api.notifications';
-import { asList } from '@uni-hub/utils/arrays';
 import type { StudentProfile } from '@core/types';
 import { useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { DashboardData } from '../types';
 import {
+  applyPlatformNotifications,
   assembleDashboardData,
   buildAssignmentParams,
   buildFallbackData,
@@ -17,7 +17,6 @@ import {
   isMoodleUnlinked,
   isUnauthorizedError,
   loadCachedDashboardData,
-  mapPlatformNotification,
   persistDashboardSnapshot,
   syncStudentProfile,
 } from './helpers';
@@ -69,6 +68,10 @@ function getInitialHasLoadedOnce(): boolean {
   }
 }
 
+function isAbortedMoodleFetch(requestId: number, currentRequestId: number): boolean {
+  return requestId !== currentRequestId || isMoodleUnlinked();
+}
+
 export function useDashboardData({
   sortOrder,
   dateFrom,
@@ -89,27 +92,21 @@ export function useDashboardData({
 
   const fetchRequestIdRef = useRef(0);
 
+  const syncPlatformOnly = async (requestId: number): Promise<void> => {
+    setLoading(false);
+
+    const platformResponse = await notificationsApi.getMyNotifications().catch(() => null);
+
+    if (requestId === fetchRequestIdRef.current) {
+      setData((previous) => applyPlatformNotifications(previous, platformResponse?.data));
+    }
+  };
+
   const fetchData = async (isManual = false) => {
     const requestId = ++fetchRequestIdRef.current;
 
     if (!enabled || isMoodleUnlinked()) {
-      setLoading(false);
-
-      const platformResponse = await notificationsApi.getMyNotifications().catch(() => null);
-
-      if (requestId !== fetchRequestIdRef.current) {
-        return;
-      }
-
-      const platformItems = asList(platformResponse?.data);
-
-      setData((previous) => ({
-        ...previous,
-        notifications: platformItems
-          .map(mapPlatformNotification)
-          .sort((first, second) => second.timecreated - first.timecreated),
-        unreadCount: platformItems.filter((notification) => !notification.isRead).length,
-      }));
+      await syncPlatformOnly(requestId);
 
       return;
     }
@@ -138,7 +135,7 @@ export function useDashboardData({
         notificationsApi.getMyNotifications().catch(() => null),
       ]);
 
-      if (requestId !== fetchRequestIdRef.current || isMoodleUnlinked()) {
+      if (isAbortedMoodleFetch(requestId, fetchRequestIdRef.current)) {
         return;
       }
 
@@ -168,7 +165,7 @@ export function useDashboardData({
         toast.success(formatMessage('dashboard.syncSuccess'));
       }
     } catch (error) {
-      if (requestId !== fetchRequestIdRef.current || isMoodleUnlinked()) {
+      if (isAbortedMoodleFetch(requestId, fetchRequestIdRef.current)) {
         return;
       }
 
@@ -184,7 +181,7 @@ export function useDashboardData({
 
       const cachedData = loadCachedDashboardData();
 
-      if (cachedData && !isMoodleUnlinked()) {
+      if (cachedData) {
         setData((previous) =>
           buildFallbackData({
             cachedData,
@@ -201,9 +198,7 @@ export function useDashboardData({
         return;
       }
 
-      if (!isMoodleUnlinked()) {
-        toast.error(formatMessage('dashboard.loadError'));
-      }
+      toast.error(formatMessage('dashboard.loadError'));
     } finally {
       if (requestId === fetchRequestIdRef.current) {
         setLoading(false);

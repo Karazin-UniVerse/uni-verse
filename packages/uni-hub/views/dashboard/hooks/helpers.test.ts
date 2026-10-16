@@ -14,6 +14,7 @@ import {
   syncStudentProfile,
   getInitialUserProfile,
   mapPlatformNotification,
+  applyPlatformNotifications,
   assembleDashboardData,
 } from './helpers';
 import { fallbackStudentProfile } from '../constants';
@@ -346,3 +347,41 @@ describe('assembleDashboardData', () => {
     expect(result.unreadCount).toBe(1);
   });
 });
+
+describe('applyPlatformNotifications', () => {
+  it('updates notifications and unreadCount on existing dashboard state', () => {
+    const previousData: any = {
+      courses: [],
+      grades: [],
+      assignments: [],
+      events: [],
+      notifications: [],
+      unreadCount: 0,
+      statistics: null,
+    };
+
+    const result = applyPlatformNotifications(previousData, [
+      {
+        id: 'plat-1',
+        userId: 'user-1',
+        title: 'Title 1',
+        message: 'Message 1',
+        isRead: false,
+        createdAt: '2025-01-01T12:00:00Z',
+      },
+      {
+        id: 'plat-2',
+        userId: 'user-1',
+        title: 'Title 2',
+        message: 'Message 2',
+        isRead: true,
+        createdAt: '2025-01-02T12:00:00Z',
+      },
+    ]);
+
+    expect(result.notifications).toHaveLength(2);
+    expect(result.notifications[0].id).toBe('plat-2');
+    expect(result.unreadCount).toBe(1);
+  });
+});
+

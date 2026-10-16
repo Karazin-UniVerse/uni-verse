@@ -171,5 +171,54 @@ describe('dashboard utils', () => {
       expect(withFormatter.title).toBe('Application Status');
       expect(withFormatter.message).toBe('Frontend Intern: accepted (Welcome!)');
     });
+
+    it('translates new application and moderation platform notifications and handles invalid JSON', () => {
+      const formatter = (key: string, values?: Record<string, string | number>) =>
+        `${key}:${JSON.stringify(values ?? {})}`;
+
+      const newAppItem = toNotificationListItem(
+        {
+          id: 'plat-2',
+          subject: 'notifications.opportunityNewApplication.title',
+          message: JSON.stringify({ opportunityTitle: 'AI Lab', applicantName: 'Oleh' }),
+          timecreated: 1_788_000_000,
+          read: false,
+        },
+        'en-US',
+        formatter,
+      );
+
+      expect(newAppItem.message).toContain('notifications.opportunityNewApplication.message');
+      expect(newAppItem.message).toContain('AI Lab');
+
+      const moderatedItem = toNotificationListItem(
+        {
+          id: 'plat-3',
+          subject: 'notifications.opportunityModerated.title',
+          message: JSON.stringify({ opportunityTitle: 'AI Lab', action: 'APPROVE' }),
+          timecreated: 1_788_000_000,
+          read: true,
+        },
+        'en-US',
+        formatter,
+      );
+
+      expect(moderatedItem.message).toContain('notifications.opportunityModerated.message');
+
+      const invalidJsonItem = toNotificationListItem(
+        {
+          id: 'plat-4',
+          subject: 'notifications.opportunityModerated.title',
+          message: '{bad-json}',
+          timecreated: 1_788_000_000,
+          read: true,
+        },
+        'en-US',
+        formatter,
+      );
+
+      expect(invalidJsonItem.message).toBe('{bad-json}');
+    });
   });
 });
+

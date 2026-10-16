@@ -95,69 +95,84 @@ type MessageFormatter = (
   values?: Record<string, string | number>,
 ) => string;
 
+type PlatformNotificationPayload = {
+  opportunityTitle?: string;
+  applicantName?: string;
+  status?: string;
+  action?: string;
+  comment?: string | null;
+};
+
+function parsePlatformPayload(rawMessage: string): PlatformNotificationPayload | null {
+  if (!rawMessage.startsWith('{') || !rawMessage.endsWith('}')) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawMessage) as PlatformNotificationPayload;
+  } catch {
+    return null;
+  }
+}
+
+function translateCode(
+  code: string | undefined,
+  keyMap: Record<string, TranslationKey>,
+  formatMessage: MessageFormatter,
+): string {
+  if (!code) {
+    return '';
+  }
+
+  const translationKey = keyMap[code];
+
+  return translationKey ? formatMessage(translationKey) : code;
+}
+
 function formatPlatformMessage(
   subject: string,
   rawMessage: string,
   formatMessage: MessageFormatter,
 ): string {
-  if (!rawMessage.startsWith('{') || !rawMessage.endsWith('}')) {
+  const parsed = parsePlatformPayload(rawMessage);
+
+  if (!parsed) {
     return rawMessage;
   }
 
-  try {
-    const parsed = JSON.parse(rawMessage) as {
-      opportunityTitle?: string;
-      applicantName?: string;
-      status?: string;
-      action?: string;
-      comment?: string | null;
-    };
-    const opportunityTitle = parsed.opportunityTitle || '';
+  const opportunityTitle = parsed.opportunityTitle ?? '';
 
-    if (subject === 'notifications.opportunityApplicationStatus.title') {
-      const statusKey = parsed.status ? PLATFORM_STATUS_KEYS[parsed.status] : undefined;
-      const status = statusKey ? formatMessage(statusKey) : parsed.status || '';
+  if (subject === 'notifications.opportunityApplicationStatus.title') {
+    const status = translateCode(parsed.status, PLATFORM_STATUS_KEYS, formatMessage);
+    const messageKey = parsed.comment
+      ? 'notifications.opportunityApplicationStatus.messageWithComment'
+      : 'notifications.opportunityApplicationStatus.message';
 
-      if (parsed.comment) {
-        return formatMessage('notifications.opportunityApplicationStatus.messageWithComment', {
-          opportunityTitle,
-          status,
-          comment: parsed.comment,
-        });
-      }
+    return formatMessage(messageKey, {
+      opportunityTitle,
+      status,
+      comment: parsed.comment ?? '',
+    });
+  }
 
-      return formatMessage('notifications.opportunityApplicationStatus.message', {
-        opportunityTitle,
-        status,
-      });
-    }
+  if (subject === 'notifications.opportunityNewApplication.title') {
+    return formatMessage('notifications.opportunityNewApplication.message', {
+      opportunityTitle,
+      applicantName: parsed.applicantName ?? '',
+    });
+  }
 
-    if (subject === 'notifications.opportunityNewApplication.title') {
-      return formatMessage('notifications.opportunityNewApplication.message', {
-        opportunityTitle,
-        applicantName: parsed.applicantName || '',
-      });
-    }
+  if (subject === 'notifications.opportunityModerated.title') {
+    const action = translateCode(parsed.action, PLATFORM_ACTION_KEYS, formatMessage);
+    const messageKey = parsed.comment
+      ? 'notifications.opportunityModerated.messageWithComment'
+      : 'notifications.opportunityModerated.message';
 
-    if (subject === 'notifications.opportunityModerated.title') {
-      const actionKey = parsed.action ? PLATFORM_ACTION_KEYS[parsed.action] : undefined;
-      const action = actionKey ? formatMessage(actionKey) : parsed.action || '';
-
-      if (parsed.comment) {
-        return formatMessage('notifications.opportunityModerated.messageWithComment', {
-          opportunityTitle,
-          action,
-          comment: parsed.comment,
-        });
-      }
-
-      return formatMessage('notifications.opportunityModerated.message', {
-        opportunityTitle,
-        action,
-      });
-    }
-  } catch {
-    return rawMessage;
+    return formatMessage(messageKey, {
+      opportunityTitle,
+      action,
+      comment: parsed.comment ?? '',
+    });
   }
 
   return rawMessage;

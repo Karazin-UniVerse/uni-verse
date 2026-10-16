@@ -74,6 +74,21 @@ export function mapPlatformNotification(item: PlatformNotification): Notificatio
   };
 }
 
+export function applyPlatformNotifications(
+  previousData: DashboardData,
+  platformNotifications?: PlatformNotification[] | null,
+): DashboardData {
+  const platformItems = asList(platformNotifications);
+
+  return {
+    ...previousData,
+    notifications: platformItems
+      .map(mapPlatformNotification)
+      .sort((first, second) => second.timecreated - first.timecreated),
+    unreadCount: platformItems.filter((notification) => !notification.isRead).length,
+  };
+}
+
 export function assembleDashboardData(
   [
     coursesRes,
