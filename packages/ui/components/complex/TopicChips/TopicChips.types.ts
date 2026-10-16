@@ -10,5 +10,4 @@ export type TopicChipsProps = {
   selectedId?: string;
   onSelect: (id: string) => void;
   className?: string;
-  disabled?: boolean;
 };

@@ -56,13 +56,4 @@ describe('DashboardSkeleton', () => {
       borderRadius: '50%',
     });
   });
-
-  it('should apply custom className if supported', () => {
-    const customClass = 'custom-dashboard-skeleton';
-    const { container } = render(<DashboardSkeleton className={customClass} />);
-    const root = container.firstElementChild as HTMLElement;
-
-    expect(root).toHaveClass(customClass);
-    expect(root).toHaveClass(pageStyles.stack);
-  });
 });

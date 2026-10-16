@@ -78,15 +78,9 @@ describe('ContactInfoGrid Component', () => {
     expect(telegramLink).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
-  it('should handle empty or null contact info safely', () => {
+  it('should handle empty items array or empty item values safely', () => {
     const { container, rerender } = render(<ContactInfoGrid items={[]} />);
 
-    expect(container.firstChild).toBeInTheDocument();
-
-    rerender(<ContactInfoGrid items={undefined} />);
-    expect(container.firstChild).toBeInTheDocument();
-
-    rerender(<ContactInfoGrid items={null as unknown as ContactInfoItem[]} />);
     expect(container.firstChild).toBeInTheDocument();
 
     rerender(

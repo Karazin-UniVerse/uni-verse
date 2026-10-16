@@ -10,16 +10,11 @@ export const TopicChips: React.FC<TopicChipsProps> = ({
   selectedId,
   onSelect,
   className,
-  disabled = false,
 }) => {
   const groupRef = useRef<HTMLDivElement>(null);
   const hasSelection = options.some((option) => option.id === selectedId);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, currentIndex: number) => {
-    if (disabled) {
-      return;
-    }
-
     let targetIndex: number | null = null;
 
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
@@ -68,14 +63,9 @@ export const TopicChips: React.FC<TopicChipsProps> = ({
               type="button"
               role="radio"
               aria-checked={isActive}
-              tabIndex={isFocusable && !disabled ? 0 : -1}
-              disabled={disabled}
+              tabIndex={isFocusable ? 0 : -1}
               className={clsx(styles.chipBtn, isActive && styles.chipBtnActive)}
-              onClick={() => {
-                if (!disabled) {
-                  onSelect(option.id);
-                }
-              }}
+              onClick={() => onSelect(option.id)}
               onKeyDown={(e) => handleKeyDown(e, index)}
             >
               {option.label}

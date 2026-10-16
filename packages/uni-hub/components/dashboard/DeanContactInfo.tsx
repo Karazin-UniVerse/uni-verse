@@ -5,21 +5,7 @@ import { Mail, Phone, Clock } from 'lucide-react';
 import { ContactInfoGrid } from '@ui';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 
-export interface DeanContactInfoProps {
-  className?: string;
-  schedule?: string;
-  email?: string;
-  phone?: string;
-  telegram?: string;
-}
-
-export const DeanContactInfo: React.FC<DeanContactInfoProps> = ({
-  className,
-  schedule,
-  email = 'dean.cs@karazin.ua',
-  phone = '+38 (057) 707-55-55',
-  telegram = '@karazin_edean',
-}) => {
+export const DeanContactInfo: React.FC = () => {
   const { formatMessage } = useLanguage();
 
   const items = [
@@ -27,35 +13,27 @@ export const DeanContactInfo: React.FC<DeanContactInfoProps> = ({
       id: 'email',
       icon: <Mail size={16} />,
       label: formatMessage('dean.email'),
-      value: <a href={`mailto:${email}`}>{email}</a>,
+      value: 'dean.cs@karazin.ua',
     },
     {
       id: 'phone',
       icon: <Phone size={16} />,
       label: formatMessage('dean.phone'),
-      value: <a href={`tel:${phone.replace(/[^\d+]/g, '')}`}>{phone}</a>,
+      value: '+38 (057) 707-55-55',
     },
     {
       id: 'schedule',
       icon: <Clock size={16} />,
       label: formatMessage('dean.schedule'),
-      value: schedule ?? formatMessage('dean.scheduleValue'),
+      value: formatMessage('dean.scheduleValue'),
     },
     {
       id: 'telegram',
       icon: <span>✈️</span>,
       label: formatMessage('dean.telegram'),
-      value: (
-        <a
-          href={`https://t.me/${telegram.replace('@', '')}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {telegram}
-        </a>
-      ),
+      value: '@karazin_edean',
     },
   ];
 
-  return <ContactInfoGrid className={className} items={items} />;
+  return <ContactInfoGrid items={items} />;
 };

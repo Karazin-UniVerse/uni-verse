@@ -7,12 +7,6 @@ export type ChartDatum = {
 export type ChartProps = {
   data: ChartDatum[];
   animate?: boolean;
-  'aria-label'?: string;
-  ariaLabel?: string;
-  'aria-labelledby'?: string;
-  ariaLabelledBy?: string;
-  'aria-describedby'?: string;
-  ariaDescribedBy?: string;
   /** Y-axis label width for horizontal bar charts */
   categoryWidth?: number;
   className?: string;
@@ -25,7 +19,6 @@ export type ChartProps = {
   maxBarSize?: number;
   maxCategoryLength?: number;
   outerRadius?: number;
-  role?: string;
   rowHeight?: number;
   showLegend?: boolean;
   title?: string;

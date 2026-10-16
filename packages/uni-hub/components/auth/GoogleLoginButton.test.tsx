@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
 import { GoogleLoginButton } from './GoogleLoginButton';
 
@@ -73,42 +72,12 @@ describe('GoogleLoginButton component', () => {
     expect(button.querySelector('svg')).toBeInTheDocument();
   });
 
-  it('should call onClick/login handler when clicked', async () => {
-    const handleClick = vi.fn();
-    const handleSuccess = vi.fn();
-    const user = userEvent.setup();
-
-    render(<GoogleLoginButton onClick={handleClick} onSuccess={handleSuccess} />);
-
-    const button = screen.getByRole('button', { name: /продовжити з google/i });
-
-    await user.click(button);
-
-    expect(handleClick).toHaveBeenCalledTimes(1);
-  });
-
-  it('should be disabled or show loading indicator when isLoading or disabled is true', () => {
-    const { rerender } = render(<GoogleLoginButton disabled={true} onSuccess={vi.fn()} />);
+  it('should disable button when disabled prop is true', () => {
+    render(<GoogleLoginButton disabled={true} onSuccess={vi.fn()} />);
 
     const disabledButton = screen.getByRole('button', { name: /продовжити з google/i });
 
     expect(disabledButton).toBeDisabled();
-
-    rerender(<GoogleLoginButton isLoading={true} onSuccess={vi.fn()} />);
-
-    const loadingButton = screen.getByRole('button', { name: /завантаження.../i });
-
-    expect(loadingButton).toBeDisabled();
-    expect(loadingButton).toHaveAttribute('aria-busy', 'true');
-    expect(screen.getByText('Завантаження...')).toBeInTheDocument();
-  });
-
-  it('should apply custom className', () => {
-    const { container } = render(
-      <GoogleLoginButton className="custom-login-class" onSuccess={vi.fn()} />,
-    );
-
-    expect(container.firstElementChild).toHaveClass('custom-login-class');
   });
 
   it('should initialize and render google button when script is loaded and client id is configured', () => {

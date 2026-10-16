@@ -45,31 +45,16 @@ const MOCK_DATA: ChartDatum[] = [
 ];
 
 describe('UNA Chart Component', () => {
-  it('should render chart container with accessible title/aria attributes', () => {
-    const { container, rerender } = render(<Chart title="Статистика студентів" data={MOCK_DATA} />);
+  it('should render chart container with heading when title is provided', () => {
+    const { rerender } = render(<Chart title="Статистика студентів" data={MOCK_DATA} />);
 
     const heading = screen.getByRole('heading', { level: 3, name: 'Статистика студентів' });
 
     expect(heading).toBeInTheDocument();
 
-    const region = screen.getByRole('region', { name: 'Статистика студентів' });
+    rerender(<Chart data={MOCK_DATA} />);
 
-    expect(region).toBeInTheDocument();
-    expect(container.firstChild).toBe(region);
-
-    rerender(
-      <Chart
-        title="Статистика студентів"
-        aria-label="Спеціальний опис діаграми"
-        aria-describedby="desc-id"
-        data={MOCK_DATA}
-      />,
-    );
-
-    const customRegion = screen.getByRole('region', { name: 'Спеціальний опис діаграми' });
-
-    expect(customRegion).toBeInTheDocument();
-    expect(customRegion).toHaveAttribute('aria-describedby', 'desc-id');
+    expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument();
   });
 
   it('should render chart with provided series/data', () => {
@@ -81,23 +66,13 @@ describe('UNA Chart Component', () => {
     expect(screen.getByText('Львів')).toBeInTheDocument();
   });
 
-  it('should handle empty or null data safely without throwing', () => {
+  it('should handle empty data safely with default and custom empty description', () => {
     const { rerender } = render(<Chart data={[]} />);
 
     expect(screen.getByText('Нет данных')).toBeInTheDocument();
 
     rerender(<Chart data={[]} emptyDescription="Немає інформації для відображення" />);
     expect(screen.getByText('Немає інформації для відображення')).toBeInTheDocument();
-
-    expect(() => {
-      rerender(<Chart data={null as unknown as ChartDatum[]} />);
-    }).not.toThrow();
-    expect(screen.getByText('Нет данных')).toBeInTheDocument();
-
-    expect(() => {
-      rerender(<Chart data={undefined as unknown as ChartDatum[]} />);
-    }).not.toThrow();
-    expect(screen.getByText('Нет данных')).toBeInTheDocument();
   });
 
   it('should render vertical bar chart layout with data', () => {

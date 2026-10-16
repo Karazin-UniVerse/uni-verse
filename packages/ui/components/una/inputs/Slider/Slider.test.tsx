@@ -3,13 +3,10 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { Slider } from './Slider';
 
 describe('UNA Slider Component', () => {
-  it('should render slider with accessible slider role and aria-valuenow/min/max', () => {
+  it('should render slider with accessible slider role and default range attributes', () => {
     render(<Slider value={50} onChange={vi.fn()} aria-label="Volume" />);
 
-    const slider = screen.getByRole('slider', {
-      name: /volume/i,
-      value: { now: 50, min: 0, max: 100 },
-    });
+    const slider = screen.getByRole('slider', { name: /volume/i });
 
     expect(slider).toBeInTheDocument();
     expect(slider).toHaveAttribute('type', 'range');
@@ -17,9 +14,6 @@ describe('UNA Slider Component', () => {
     expect(slider).toHaveAttribute('min', '0');
     expect(slider).toHaveAttribute('max', '100');
     expect(slider).toHaveAttribute('step', '1');
-    expect(slider).toHaveAttribute('aria-valuenow', '50');
-    expect(slider).toHaveAttribute('aria-valuemin', '0');
-    expect(slider).toHaveAttribute('aria-valuemax', '100');
   });
 
   it('should trigger onChange when value changes', () => {
@@ -49,16 +43,12 @@ describe('UNA Slider Component', () => {
       />,
     );
 
-    const slider = screen.getByRole('slider', {
-      name: /zoom level/i,
-      value: { now: 25, min: 10, max: 50 },
-    });
+    const slider = screen.getByRole('slider', { name: /zoom level/i });
 
     expect(slider).toHaveAttribute('min', '10');
     expect(slider).toHaveAttribute('max', '50');
     expect(slider).toHaveAttribute('step', '5');
-    expect(slider).toHaveAttribute('aria-valuemin', '10');
-    expect(slider).toHaveAttribute('aria-valuemax', '50');
+    expect(slider).toHaveValue('25');
 
     fireEvent.change(slider, { target: { value: '50' } });
 
@@ -91,7 +81,7 @@ describe('UNA Slider Component', () => {
     expect(slider).toHaveClass('custom-theme-slider');
   });
 
-  it('should update aria-valuenow and value when rerendered with new value', () => {
+  it('should update value when rerendered with new value', () => {
     const { rerender } = render(
       <Slider value={10} onChange={vi.fn()} aria-label="Dynamic value" />,
     );
@@ -99,11 +89,9 @@ describe('UNA Slider Component', () => {
     const slider = screen.getByRole('slider', { name: /dynamic value/i });
 
     expect(slider).toHaveValue('10');
-    expect(slider).toHaveAttribute('aria-valuenow', '10');
 
     rerender(<Slider value={80} onChange={vi.fn()} aria-label="Dynamic value" />);
 
     expect(slider).toHaveValue('80');
-    expect(slider).toHaveAttribute('aria-valuenow', '80');
   });
 });

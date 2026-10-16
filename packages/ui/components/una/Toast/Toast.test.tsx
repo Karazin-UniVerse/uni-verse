@@ -1,6 +1,6 @@
 import React, { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, renderHook, screen } from '@testing-library/react';
+import { render, renderHook, screen } from '@testing-library/react';
 import { ToastProvider, useToast } from './Toast';
 import styles from './Toast.module.scss';
 import type { ToastApi, ToastKind } from './Toast.types';
@@ -22,9 +22,6 @@ const ToastTrigger = ({ onReady }: { onReady?: (api: ToastApi) => void }) => {
       </button>
       <button type="button" onClick={() => toast.info('Info message')}>
         Trigger Info
-      </button>
-      <button type="button" onClick={() => toast.warning('Warning message')}>
-        Trigger Warning
       </button>
     </div>
   );
@@ -59,7 +56,7 @@ describe('Toast Component', () => {
     expect(screen.getByText('Hello world notification')).toBeInTheDocument();
   });
 
-  it('should render appropriate variant styles and icons for all variants', () => {
+  it('should render appropriate variant styles for all toast kinds', () => {
     let api!: ToastApi;
 
     render(
@@ -76,7 +73,6 @@ describe('Toast Component', () => {
       { kind: 'success', message: 'Operation succeeded' },
       { kind: 'error', message: 'Operation failed' },
       { kind: 'info', message: 'System note' },
-      { kind: 'warning', message: 'Proceed with caution' },
     ];
 
     for (const { kind, message } of variants) {
@@ -92,38 +88,7 @@ describe('Toast Component', () => {
 
       expect(toastContainer).toBeInTheDocument();
       expect(toastContainer).toHaveClass(styles[kind]);
-      expect(toastContainer).toHaveAttribute('data-variant', kind);
-
-      const icon = screen.getByTestId(`toast-icon-${kind}`);
-
-      expect(icon).toBeInTheDocument();
     }
-  });
-
-  it('should dismiss toast when close button is clicked', () => {
-    let api!: ToastApi;
-
-    render(
-      <ToastProvider>
-        <ToastTrigger
-          onReady={(toast) => {
-            api = toast;
-          }}
-        />
-      </ToastProvider>,
-    );
-
-    act(() => {
-      api.info('Dismissible notification');
-    });
-
-    expect(screen.getByText('Dismissible notification')).toBeInTheDocument();
-
-    const closeButton = screen.getByRole('button', { name: /close/i });
-
-    fireEvent.click(closeButton);
-
-    expect(screen.queryByText('Dismissible notification')).not.toBeInTheDocument();
   });
 
   it('should auto-dismiss after timeout', () => {
@@ -218,30 +183,6 @@ describe('Toast Component', () => {
       api.info('Debounced message');
     });
     expect(screen.getAllByText('Debounced message')).toHaveLength(2);
-  });
-
-  it('should dismiss toast programmatically via dismiss action', () => {
-    let api!: ToastApi;
-
-    render(
-      <ToastProvider>
-        <ToastTrigger
-          onReady={(toast) => {
-            api = toast;
-          }}
-        />
-      </ToastProvider>,
-    );
-
-    act(() => {
-      api.info('Programmatic dismiss message');
-    });
-    expect(screen.getByText('Programmatic dismiss message')).toBeInTheDocument();
-
-    act(() => {
-      api.dismiss();
-    });
-    expect(screen.queryByText('Programmatic dismiss message')).not.toBeInTheDocument();
   });
 
   it('should throw error when useToast is used outside ToastProvider', () => {

@@ -6,8 +6,6 @@ import styles from './AuthField.module.scss';
 
 export interface AuthFieldProps {
   autoComplete?: string;
-  className?: string;
-  disabled?: boolean;
   icon: React.ReactNode;
   id: string;
   label: string;
@@ -21,8 +19,6 @@ export interface AuthFieldProps {
 
 export const AuthField: React.FC<AuthFieldProps> = ({
   autoComplete,
-  className,
-  disabled,
   icon,
   id,
   label,
@@ -34,12 +30,10 @@ export const AuthField: React.FC<AuthFieldProps> = ({
   type = 'text',
 }) => {
   return (
-    <label htmlFor={id} className={`${styles.field}${className ? ` ${className}` : ''}`}>
+    <label htmlFor={id} className={styles.field}>
       <span className={styles.label}>{label}</span>
       <div className={`${styles.inputWrap} ${rightElement ? styles.hasRightElement : ''}`}>
-        <span className={styles.icon} aria-hidden="true">
-          {icon}
-        </span>
+        <span className={styles.icon}>{icon}</span>
         <TextInput
           id={id}
           name={name}
@@ -49,7 +43,6 @@ export const AuthField: React.FC<AuthFieldProps> = ({
           value={value}
           onChange={onChange}
           autoComplete={autoComplete}
-          disabled={disabled}
         />
         {rightElement ? <div className={styles.rightElement}>{rightElement}</div> : null}
       </div>

@@ -31,13 +31,10 @@ export const ActionCard: React.FC<ActionCardProps> = ({
   onClick,
   className,
   cardTitle,
-  disabled,
-  variant,
   iconTone = 'default',
   badgeTone = 'default',
 }) => {
-  const effectiveTone = variant || iconTone;
-  const iconClass = iconToneClassMap[effectiveTone] || styles.iconDefault;
+  const iconClass = iconToneClassMap[iconTone] || styles.iconDefault;
   const badgeClass = badgeToneClassMap[badgeTone] || styles.badgeDefault;
 
   const content = (
@@ -56,7 +53,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
     </>
   );
 
-  if (href && !disabled) {
+  if (href) {
     return (
       <a
         href={href}
@@ -76,8 +73,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
       type="button"
       className={clsx(styles.actionCard, className)}
       title={cardTitle}
-      onClick={disabled ? undefined : onClick}
-      disabled={disabled}
+      onClick={onClick}
     >
       {content}
     </button>

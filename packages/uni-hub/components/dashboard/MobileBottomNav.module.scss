@@ -83,33 +83,3 @@
   border-radius: 32px;
   z-index: 1;
 }
-
-.badge {
-  position: absolute;
-  top: 4px;
-  right: calc(50% - 16px);
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 16px;
-  color: #fff;
-  background: var(--accent-danger, #ef4444);
-  border-radius: 9999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 3;
-}
-
-.indicator {
-  position: absolute;
-  top: 6px;
-  right: calc(50% - 12px);
-  width: 8px;
-  height: 8px;
-  background: var(--accent-primary, #3b82f6);
-  border-radius: 50%;
-  z-index: 3;
-}

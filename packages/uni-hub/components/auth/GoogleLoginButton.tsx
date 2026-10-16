@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Script from 'next/script';
-import clsx from 'clsx';
 import styles from './GoogleLoginButton.module.scss';
 import { useTheme } from '@uni-hub/theme/ThemeContext';
 import { Button } from '@una';
@@ -12,18 +11,12 @@ export interface GoogleLoginButtonProps {
   onSuccess: (idToken: string) => void;
   disabled?: boolean;
   onError?: (error: string) => void;
-  className?: string;
-  onClick?: () => void;
-  isLoading?: boolean;
 }
 
 export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   onSuccess,
   disabled,
   onError,
-  className,
-  onClick,
-  isLoading,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scriptLoaded, setScriptLoaded] = useState(
@@ -34,8 +27,6 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
 
   const onSuccessRef = useRef(onSuccess);
   const onErrorRef = useRef(onError);
-
-  const isButtonDisabled = Boolean(disabled || isLoading);
 
   useEffect(() => {
     onSuccessRef.current = onSuccess;
@@ -77,7 +68,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   }, [scriptLoaded, clientId, theme]);
 
   return (
-    <div className={clsx(styles.wrapper, className)}>
+    <div className={styles.wrapper}>
       <Script
         src="https://accounts.google.com/gsi/client"
         strategy="afterInteractive"
@@ -88,19 +79,17 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
           variant="secondary"
           size="large"
           className={styles.customButton}
-          disabled={isButtonDisabled}
-          onClick={onClick}
-          aria-busy={isLoading}
+          disabled={disabled}
         >
           <span className={styles.iconWrapper}>
             <FaGoogle size={18} />
           </span>
-          <span>{isLoading ? 'Завантаження...' : 'Продовжити з Google'}</span>
+          <span>Продовжити з Google</span>
         </Button>
       </div>
       <div
         ref={containerRef}
-        className={`${styles.buttonContainer} ${isButtonDisabled ? styles.disabled : ''}`}
+        className={`${styles.buttonContainer} ${disabled ? styles.disabled : ''}`}
       />
     </div>
   );

@@ -238,7 +238,7 @@ describe('useApplicantActions hook', () => {
     const { result } = renderActionsHook();
 
     act(() => {
-      result.current.requestWithdraw('app-to-withdraw');
+      result.current.setWithdrawApplicationId('app-to-withdraw');
     });
 
     expect(result.current.withdrawApplicationId).toBe('app-to-withdraw');
@@ -312,17 +312,17 @@ describe('useApplicantActions hook', () => {
     ]);
   });
 
-  it('should cancel withdraw dialog when cancelWithdraw is called', () => {
+  it('should clear withdrawApplicationId when setWithdrawApplicationId(null) is called', () => {
     const { result } = renderActionsHook();
 
     act(() => {
-      result.current.requestWithdraw('app-to-withdraw');
+      result.current.setWithdrawApplicationId('app-to-withdraw');
     });
 
     expect(result.current.withdrawApplicationId).toBe('app-to-withdraw');
 
     act(() => {
-      result.current.cancelWithdraw();
+      result.current.setWithdrawApplicationId(null);
     });
 
     expect(result.current.withdrawApplicationId).toBeNull();
@@ -348,7 +348,7 @@ describe('useApplicantActions hook', () => {
     const { result } = renderActionsHook();
 
     act(() => {
-      result.current.requestWithdraw('app-to-withdraw');
+      result.current.setWithdrawApplicationId('app-to-withdraw');
     });
 
     await act(async () => {

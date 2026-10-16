@@ -47,11 +47,6 @@
     outline: var(--focus-ring-width) solid var(--accent-primary);
     outline-offset: var(--focus-ring-offset);
   }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
 }
 
 .chipBtnActive {

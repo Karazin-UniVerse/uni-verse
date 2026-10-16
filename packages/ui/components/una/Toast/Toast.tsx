@@ -12,14 +12,6 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [items, setItems] = useState<ToastItem[]>([]);
   const activeTextsRef = useRef<Map<string, number>>(new Map());
 
-  const dismiss = useCallback((id?: number) => {
-    if (id !== undefined) {
-      setItems((prev) => prev.filter((t) => t.id !== id));
-    } else {
-      setItems([]);
-    }
-  }, []);
-
   const push = useCallback((kind: ToastKind, text: string) => {
     const key = `${kind}:${text}`;
     const now = Date.now();
@@ -47,10 +39,8 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
       success: (text) => push('success', text),
       error: (text) => push('error', text),
       info: (text) => push('info', text),
-      warning: (text) => push('warning', text),
-      dismiss,
     }),
-    [push, dismiss],
+    [push],
   );
 
   return (
@@ -58,12 +48,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
       {children}
       <div className={styles.viewport} aria-live="polite">
         {items.map((item) => (
-          <ToastMessage
-            key={item.id}
-            kind={item.kind}
-            text={item.text}
-            onDismiss={() => dismiss(item.id)}
-          />
+          <ToastMessage key={item.id} kind={item.kind} text={item.text} />
         ))}
       </div>
     </ToastContext.Provider>

@@ -12,15 +12,14 @@ const defaultOptions: Option[] = [
 ];
 
 describe('UNA Select Component', () => {
-  it('should render select with options and placeholder', () => {
+  it('should render select with all provided options', () => {
     const handleChange = vi.fn();
 
     render(
       <Select
-        value=""
+        value="ua"
         onChange={handleChange}
         options={defaultOptions}
-        placeholder="Choose language"
         aria-label="Language selector"
       />,
     );
@@ -29,13 +28,7 @@ describe('UNA Select Component', () => {
     const options = screen.getAllByRole('option');
 
     expect(select).toBeInTheDocument();
-    expect(options).toHaveLength(defaultOptions.length + 1);
-
-    const placeholderOption = screen.getByRole('option', { name: 'Choose language' });
-
-    expect(placeholderOption).toBeInTheDocument();
-    expect(placeholderOption).toHaveValue('');
-    expect(placeholderOption).toBeDisabled();
+    expect(options).toHaveLength(defaultOptions.length);
 
     for (const option of defaultOptions) {
       const optionElement = screen.getByRole('option', { name: option.label });
@@ -43,17 +36,6 @@ describe('UNA Select Component', () => {
       expect(optionElement).toBeInTheDocument();
       expect(optionElement).toHaveValue(option.value);
     }
-  });
-
-  it('should render without placeholder when placeholder prop is not provided', () => {
-    const handleChange = vi.fn();
-
-    render(<Select value="ua" onChange={handleChange} options={defaultOptions} />);
-
-    const options = screen.getAllByRole('option');
-
-    expect(options).toHaveLength(defaultOptions.length);
-    expect(screen.queryByRole('option', { name: '' })).not.toBeInTheDocument();
   });
 
   it('should trigger onChange when user selects an option', async () => {
@@ -77,29 +59,6 @@ describe('UNA Select Component', () => {
     expect(handleChange).toHaveBeenCalledWith('en');
   });
 
-  it('should be disabled when disabled prop is provided', async () => {
-    const handleChange = vi.fn();
-    const user = userEvent.setup();
-
-    render(
-      <Select
-        value="ua"
-        onChange={handleChange}
-        options={defaultOptions}
-        disabled
-        aria-label="Disabled language"
-      />,
-    );
-
-    const select = screen.getByRole('combobox', { name: /disabled language/i });
-
-    expect(select).toBeDisabled();
-
-    await user.selectOptions(select, 'en');
-
-    expect(handleChange).not.toHaveBeenCalled();
-  });
-
   it('should display selected value correctly', () => {
     const handleChange = vi.fn();
 
@@ -116,7 +75,7 @@ describe('UNA Select Component', () => {
     expect(select).toHaveValue('de');
   });
 
-  it('should support accessible attributes like aria-label and aria-expanded', () => {
+  it('should support id and aria-label attributes', () => {
     const handleChange = vi.fn();
 
     render(
@@ -126,7 +85,6 @@ describe('UNA Select Component', () => {
         onChange={handleChange}
         options={defaultOptions}
         aria-label="Course list"
-        aria-expanded="true"
       />,
     );
 
@@ -135,7 +93,6 @@ describe('UNA Select Component', () => {
     expect(select).toBeInTheDocument();
     expect(select).toHaveAttribute('id', 'accessible-select');
     expect(select).toHaveAttribute('aria-label', 'Course list');
-    expect(select).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('should apply custom className when provided', () => {

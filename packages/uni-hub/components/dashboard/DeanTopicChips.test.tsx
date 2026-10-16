@@ -46,48 +46,4 @@ describe('DeanTopicChips component', () => {
     expect(inactiveChip).toHaveAttribute('aria-checked', 'false');
     expect(inactiveChip).toHaveAttribute('tabindex', '-1');
   });
-
-  it('should be disabled when disabled prop is true', async () => {
-    const handleSelectTopic = vi.fn();
-    const user = userEvent.setup();
-
-    render(<DeanTopicChips disabled={true} selectedTopic="" onSelectTopic={handleSelectTopic} />);
-
-    const chips = screen.getAllByRole('radio');
-
-    expect(chips.length).toBeGreaterThan(0);
-
-    for (const chip of chips) {
-      expect(chip).toBeDisabled();
-    }
-
-    await user.click(chips[0]);
-
-    expect(handleSelectTopic).not.toHaveBeenCalled();
-  });
-
-  it('should apply custom className', () => {
-    const customClass = 'custom-dean-chips';
-
-    const { container } = render(
-      <DeanTopicChips className={customClass} selectedTopic="" onSelectTopic={vi.fn()} />,
-    );
-
-    expect(container.firstChild).toHaveClass(customClass);
-  });
-
-  it('should render custom topics when provided', () => {
-    const customTopics = ['dean.topic.certificate', 'dean.topic.other'] as const;
-
-    render(<DeanTopicChips topics={[...customTopics]} selectedTopic="" onSelectTopic={vi.fn()} />);
-
-    const chips = screen.getAllByRole('radio');
-
-    expect(chips).toHaveLength(2);
-    expect(screen.getByRole('radio', { name: uk['dean.topic.certificate'] })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: uk['dean.topic.other'] })).toBeInTheDocument();
-    expect(
-      screen.queryByRole('radio', { name: uk['dean.topic.transcript'] }),
-    ).not.toBeInTheDocument();
-  });
 });

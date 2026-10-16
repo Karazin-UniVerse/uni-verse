@@ -101,32 +101,6 @@ describe('AuthField component', () => {
     expect(input).toHaveAttribute('type', 'password');
   });
 
-  it('should be disabled when disabled prop is true', async () => {
-    const handleChange = vi.fn();
-    const user = userEvent.setup();
-
-    render(
-      <AuthField
-        id="disabled-field"
-        name="disabledInput"
-        label="Disabled Input"
-        placeholder="Cannot edit"
-        value="locked"
-        disabled={true}
-        onChange={handleChange}
-        icon={<span>🔒</span>}
-      />,
-    );
-
-    const input = screen.getByRole('textbox', { name: /Disabled Input/i });
-
-    expect(input).toBeDisabled();
-
-    await user.type(input, 'typing attempt');
-
-    expect(handleChange).not.toHaveBeenCalled();
-  });
-
   it('should pass autoComplete attribute to input', () => {
     const { container } = render(
       <AuthField
@@ -145,25 +119,6 @@ describe('AuthField component', () => {
     const input = container.querySelector('input');
 
     expect(input).toHaveAttribute('autocomplete', 'current-password');
-  });
-
-  it('should apply custom className when provided', () => {
-    const { container } = render(
-      <AuthField
-        id="custom-class-field"
-        name="customClass"
-        label="Custom Field"
-        placeholder="Custom"
-        value=""
-        className="test-custom-class"
-        onChange={vi.fn()}
-        icon={<span>⚙️</span>}
-      />,
-    );
-
-    const fieldLabel = container.querySelector('label');
-
-    expect(fieldLabel).toHaveClass('test-custom-class');
   });
 
   it('should render custom rightElement content', () => {

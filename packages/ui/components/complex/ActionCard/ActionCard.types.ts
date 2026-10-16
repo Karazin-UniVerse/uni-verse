@@ -3,8 +3,6 @@ import type { ReactNode } from 'react';
 export type ActionCardIconTone =
   'moodle' | 'assignments' | 'schedule' | 'dean' | 'opportunities' | 'default';
 
-export type ActionCardVariant = ActionCardIconTone;
-
 export type ActionCardBadgeTone = 'info' | 'alert' | 'default';
 
 export type ActionCardProps = {
@@ -12,7 +10,6 @@ export type ActionCardProps = {
   description: string;
   icon: ReactNode;
   iconTone?: ActionCardIconTone;
-  variant?: ActionCardVariant;
   badge?: string | number;
   badgeTone?: ActionCardBadgeTone;
   href?: string;
@@ -22,5 +19,4 @@ export type ActionCardProps = {
   onClick?: () => void;
   className?: string;
   cardTitle?: string;
-  disabled?: boolean;
 };

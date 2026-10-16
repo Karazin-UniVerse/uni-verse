@@ -78,13 +78,6 @@ export function Chart({
   height,
   title,
   className,
-  role,
-  'aria-label': ariaLabelProp,
-  ariaLabel,
-  'aria-labelledby': ariaLabelledByProp,
-  ariaLabelledBy,
-  'aria-describedby': ariaDescribedByProp,
-  ariaDescribedBy,
   type = 'bar',
   layout = 'horizontal',
   domain = [0, 100],
@@ -102,39 +95,27 @@ export function Chart({
   const [rootEl, setRootEl] = useState<HTMLDivElement | null>(null);
   const theme = useChartTheme(rootEl);
 
-  const chartData = useMemo(() => {
-    const list = Array.isArray(data) ? data : [];
+  const chartData = useMemo(
+    () =>
+      data.map((datum, index) => {
+        const fallback = theme.series[index % theme.series.length];
+        const raw = datum.color ?? DEFAULT_SERIES_VARS[index % DEFAULT_SERIES_VARS.length];
+        const resolvedColor = resolveCssColor(rootEl, raw, fallback);
 
-    return list.map((datum, index) => {
-      const fallback = theme.series[index % theme.series.length];
-      const raw = datum.color ?? DEFAULT_SERIES_VARS[index % DEFAULT_SERIES_VARS.length];
-      const resolvedColor = resolveCssColor(rootEl, raw, fallback);
-
-      return {
-        ...datum,
-        color: resolvedColor,
-        fill: resolvedColor,
-      };
-    });
-  }, [data, rootEl, theme.series]);
-
-  const resolvedAriaLabel = ariaLabelProp ?? ariaLabel ?? title;
-  const resolvedAriaLabelledBy = ariaLabelledByProp ?? ariaLabelledBy;
-  const resolvedAriaDescribedBy = ariaDescribedByProp ?? ariaDescribedBy;
-  const resolvedRole = role ?? (resolvedAriaLabel || resolvedAriaLabelledBy ? 'region' : undefined);
+        return {
+          ...datum,
+          color: resolvedColor,
+          fill: resolvedColor,
+        };
+      }),
+    [data, rootEl, theme.series],
+  );
 
   const barRadius = theme.themeKey === 'cyberpunk' ? 0 : 4;
 
   if (chartData.length === 0) {
     return (
-      <div
-        ref={setRootEl}
-        className={clsx(css.wrap, className)}
-        role={resolvedRole}
-        aria-label={resolvedAriaLabel}
-        aria-labelledby={resolvedAriaLabelledBy}
-        aria-describedby={resolvedAriaDescribedBy}
-      >
+      <div ref={setRootEl} className={clsx(css.wrap, className)}>
         {title && <h3 className={css.title}>{title}</h3>}
         <div className={css.empty}>{emptyDescription}</div>
       </div>
@@ -237,14 +218,7 @@ export function Chart({
   };
 
   return (
-    <div
-      ref={setRootEl}
-      className={clsx(css.wrap, className)}
-      role={resolvedRole}
-      aria-label={resolvedAriaLabel}
-      aria-labelledby={resolvedAriaLabelledBy}
-      aria-describedby={resolvedAriaDescribedBy}
-    >
+    <div ref={setRootEl} className={clsx(css.wrap, className)}>
       {title && <h3 className={css.title}>{title}</h3>}
       <div className={css.chart} style={{ height: plotHeight }}>
         <ResponsiveContainer key={theme.themeKey} width="100%" height={plotHeight} debounce={50}>

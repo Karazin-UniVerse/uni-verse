@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-export type ToastKind = 'success' | 'error' | 'info' | 'warning';
+export type ToastKind = 'success' | 'error' | 'info';
 
 export type ToastItem = {
   id: number;
@@ -12,8 +12,6 @@ export type ToastApi = {
   success: (text: string) => void;
   error: (text: string) => void;
   info: (text: string) => void;
-  warning: (text: string) => void;
-  dismiss: (id?: number) => void;
 };
 
 export type ToastProviderProps = {

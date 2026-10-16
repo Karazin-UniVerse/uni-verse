@@ -8,6 +8,6 @@ export type ContactInfoItem = {
 };
 
 export type ContactInfoGridProps = {
-  items?: ContactInfoItem[];
+  items: ContactInfoItem[];
   className?: string;
 };

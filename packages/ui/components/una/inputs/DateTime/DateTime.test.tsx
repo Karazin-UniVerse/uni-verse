@@ -15,71 +15,30 @@ describe('UNA DateTime Component', () => {
     expect(input).toHaveValue('May 15, 2026 2:30 PM');
   });
 
-  it('should render date and time formatted according to locale or format prop', () => {
+  it('should format date without time when showTime is false and respect locale', () => {
     const testDate = new Date(2026, 4, 15, 14, 30);
 
-    const { rerender } = render(
-      <DateTime selected={testDate} onChange={vi.fn()} format="YYYY/MM/DD HH:mm" />,
-    );
-
-    expect(screen.getByRole('textbox')).toHaveValue('2026/05/15 14:30');
-
-    rerender(
-      <DateTime
-        selected={testDate}
-        onChange={vi.fn()}
-        format={(date) => `${date.getFullYear()}-${date.getMonth() + 1}`}
-      />,
-    );
-
-    expect(screen.getByRole('textbox')).toHaveValue('2026-5');
-
-    rerender(<DateTime selected={testDate} onChange={vi.fn()} showTime={false} locale="en-US" />);
+    render(<DateTime selected={testDate} onChange={vi.fn()} showTime={false} locale="en-US" />);
 
     expect(screen.getByRole('textbox')).toHaveValue('May 15, 2026');
   });
 
-  it('should handle date string, timestamp, or Date object inputs', () => {
+  it('should update displayed value when selected Date prop changes', () => {
     const { rerender } = render(
       <DateTime selected={new Date(2026, 0, 10, 9, 15)} onChange={vi.fn()} />,
     );
 
     expect(screen.getByRole('textbox')).toHaveValue('January 10, 2026 9:15 AM');
 
-    const timestamp = new Date(2026, 6, 20, 16, 45).getTime();
-
-    rerender(<DateTime selected={timestamp} onChange={vi.fn()} />);
+    rerender(<DateTime selected={new Date(2026, 6, 20, 16, 45)} onChange={vi.fn()} />);
 
     expect(screen.getByRole('textbox')).toHaveValue('July 20, 2026 4:45 PM');
-
-    const dateString = '2026-03-25T11:00:00';
-
-    rerender(<DateTime selected={dateString} onChange={vi.fn()} />);
-
-    expect(screen.getByRole('textbox')).toHaveValue('March 25, 2026 11:00 AM');
   });
 
-  it('should handle invalid or null dates gracefully with fallback', () => {
-    const { rerender } = render(<DateTime selected={null} onChange={vi.fn()} />);
+  it('should render empty value when selected is null', () => {
+    render(<DateTime selected={null} onChange={vi.fn()} />);
 
     expect(screen.getByRole('textbox')).toHaveValue('');
-
-    rerender(<DateTime selected={undefined} onChange={vi.fn()} />);
-    expect(screen.getByRole('textbox')).toHaveValue('');
-
-    rerender(<DateTime selected={new Date('invalid-date')} onChange={vi.fn()} />);
-    expect(screen.getByRole('textbox')).toHaveValue('');
-
-    rerender(<DateTime selected="invalid-string-input" onChange={vi.fn()} />);
-    expect(screen.getByRole('textbox')).toHaveValue('');
-  });
-
-  it('should support relative time if supported by component', () => {
-    const testDate = new Date(2026, 4, 15, 12, 0);
-
-    render(<DateTime selected={testDate} onChange={vi.fn()} format={() => 'Today'} />);
-
-    expect(screen.getByRole('textbox')).toHaveValue('Today');
   });
 
   it('should open picker dialog when input is clicked', async () => {

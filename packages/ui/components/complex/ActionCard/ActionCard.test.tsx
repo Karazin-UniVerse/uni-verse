@@ -64,34 +64,28 @@ describe('ActionCard Component', () => {
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
-  it('should be disabled when disabled prop is true', async () => {
-    const handleClick = vi.fn();
-    const user = userEvent.setup();
-
+  it('should apply cardTitle attribute and support zero badge value', () => {
     render(
       <ActionCard
-        disabled
-        title="Disabled Action"
-        description="Cannot perform action"
-        icon={<span>Disabled</span>}
-        onClick={handleClick}
+        title="Zero Tasks"
+        description="No pending tasks"
+        cardTitle="Tooltip title"
+        badge={0}
+        icon={<span>Check</span>}
       />,
     );
 
-    const button = screen.getByRole('button', { name: /disabled action/i });
+    const button = screen.getByRole('button', { name: /zero tasks/i });
 
-    expect(button).toBeDisabled();
-
-    await user.click(button);
-
-    expect(handleClick).not.toHaveBeenCalled();
+    expect(button).toHaveAttribute('title', 'Tooltip title');
+    expect(screen.getByText('0')).toBeInTheDocument();
   });
 
-  it('should support custom className and variant', () => {
+  it('should support custom className and iconTone', () => {
     render(
       <ActionCard
         className="custom-test-card"
-        variant="schedule"
+        iconTone="schedule"
         title="Schedule"
         description="View class timetable"
         icon={<span data-testid="schedule-icon">Cal</span>}
