@@ -1,45 +1,104 @@
 ---
 name: rtl-test-migrator
-description: Migrates legacy React test files (renderToString, shallow HTML string matching, manual hook mocks) to React Testing Library (RTL) with Happy-DOM, and generates or expands comprehensive component/hook unit tests with strict accessibility, security, and quality standards.
+description: Migrates legacy React test files (renderToString, shallow HTML string matching, manual hook mocks) to React Testing Library (RTL) with Happy-DOM, screen, within, and userEvent. Accepts a single file, file list, or directory path.
 ---
 
-# RTL Test Migrator & Generator Skill
+# RTL Test Migrator Skill
 
 ## Overview
-This skill guides the migration, generation, and expansion of unit test suites for React components and hooks across the codebase using **React Testing Library (RTL)**, **Happy-DOM**, and **@testing-library/jest-dom**.
+This skill migrates legacy React component and hook test suites from static string matching (`renderToString` / `renderToStaticMarkup` from `react-dom/server` executed under Node.js) to modern **React Testing Library (RTL)** with **Happy-DOM** and **@testing-library/jest-dom**.
 
-It supports three operational modes:
-1. **Mode A (Migrate Legacy Tests)**: Converts legacy `renderToString` / `renderToStaticMarkup` tests from static string matching to RTL DOM queries and assertions.
-2. **Mode B (Generate Missing Test Files)**: Creates comprehensive, zero-bloat test suites from scratch for untested components or hooks.
-3. **Mode C (Expand Existing Test Files)**: Audits existing test suites and adds missing high-value test cases (accessibility, keyboard navigation, user interactions, edge cases).
+It supports processing:
+1. **A single file path**: e.g., `packages/ui/components/una/Button/Button.test.tsx`
+2. **A list of file paths**: e.g., multiple space- or comma-separated test file paths.
+3. **A directory path**: e.g., `packages/ui/components/una` (recursively identifies and migrates all `*.test.ts*` files).
+
+> **Related Skills**:
+> - For writing new unit tests from scratch or expanding test coverage on untested components/hooks, use [`unit-test-writing`](../unit-test-writing/SKILL.md).
+> - For migrating or generating 5+ test files in parallel via subagents, use [`parallel-test-orchestrator`](../parallel-test-orchestrator/SKILL.md).
 
 ---
 
-## Operational Modes
+## When to Use
+- Migrating existing test suites from `renderToString` / `renderToStaticMarkup` or `React.createElement` to RTL.
+- Upgrading component tests from substring assertions (`expect(html).toContain(...)`) to semantic DOM assertions (`expect(element).toBeInTheDocument()`).
+- Refactoring hook tests to use `renderHook` and dispatch real DOM events in Happy-DOM.
 
-### Mode A: Migrate Legacy Test Files
-- **Detect**: Check for imports from `react-dom/server` (`renderToString`, `renderToStaticMarkup`) or static string matching (`expect(html).toContain(...)`).
-- **File Extension**: If the test contains JSX, ensure the file is `.test.tsx` (rename via `git mv` if currently `.test.ts`). Pure hooks/utilities remain `.test.ts`.
-- **Refactor**: Replace `renderToString(<Comp />)` with `render(<Comp />)`.
-- **Assertions**: Replace substring checks with semantic RTL queries (`screen.getByRole`, `expect(element).toBeInTheDocument()`).
+---
 
-### Mode B: Generate Missing Test Files
-- **Target Identification**: When a component or hook has no corresponding test file (`[Name].test.tsx` or `[Name].test.ts`), create one adjacent to the source file.
-- **File Naming Standard**:
-  - React Component: `[Name].test.tsx`
-  - React Hook: `[Name].test.ts` (or `.test.tsx` if it requires a JSX wrapper/provider)
-  - Pure Utility: `[Name].test.ts`
-- **Core Test Cases to Include**:
-  1. Default render with accessible labels/roles (`'should render ...'`).
-  2. Core user interactions (clicks, keyboard input, toggles via `userEvent`).
-  3. Key props/variants (disabled states, custom classes, conditional content).
-  4. Accessibility (`aria-*` attributes, role semantics, keyboard navigation).
-  5. Security & edge cases (safe rendering of arbitrary strings, empty/null states, external links having `rel="noopener noreferrer"`).
+## Migration Workflow
 
-### Mode C: Expand Incomplete Existing Tests
-- Audit existing test cases to ensure they cover critical user interactions and error boundaries without bloat.
-- Add missing interaction tests (e.g. form submission, outside click handling, keyboard Escape/Enter).
-- Verify accessibility attributes and roles.
+### Step 1: Input Resolution & Target Discovery
+- If input is a directory: find all `*.test.ts` and `*.test.tsx` files within it.
+- If input is a list of files: process each sequentially (or batch via `parallel-test-orchestrator`).
+- If input is a single file: process that file.
+- Inspect the file content to confirm whether it contains legacy patterns (`renderToString`, `renderToStaticMarkup`, `react-dom/server`, string assertions).
+
+### Step 2: File Extension Check (TSX vs TS)
+- If the test renders React components using JSX syntax (`<Component ... />`), the file extension **MUST** be `.test.tsx`.
+- If the legacy file is named `.test.ts`, rename it using git:
+  ```bash
+  git mv path/to/MyComponent.test.ts path/to/MyComponent.test.tsx
+  ```
+- Pure utility or non-JSX hook tests may remain `.test.ts`.
+
+### Step 3: Imports Refactoring
+- **Remove**:
+  ```ts
+  import { renderToString, renderToStaticMarkup } from 'react-dom/server';
+  ```
+- **Add**:
+  ```ts
+  import { render, screen, within } from '@testing-library/react';
+  import userEvent from '@testing-library/user-event';
+  ```
+- If testing hooks:
+  ```ts
+  import { renderHook, act } from '@testing-library/react';
+  ```
+- Note: `@testing-library/jest-dom/vitest` matchers (`toBeInTheDocument`, `toBeDisabled`, etc.) are globally registered via `vitest.setup.ts`, so no per-file matcher import is necessary.
+
+### Step 4: Component Rendering & Queries
+- Replace `renderToString(<Component ... />)` or `renderToStaticMarkup(React.createElement(Component, props))` with:
+  ```tsx
+  render(<Component {...props} />);
+  ```
+- **Query Priority (Accessibility First)**:
+  1. `screen.getByRole('button', { name: /save/i })` (accessible role + name)
+  2. `screen.getByLabelText(/username/i)` (form fields)
+  3. `screen.getByPlaceholderText(...)`
+  4. `screen.getByText(/content/i)`
+  5. `screen.getByTestId(...)` (last resort when no accessible role or label exists)
+
+### Step 5: Assertions Migration
+Replace fragile string comparisons with semantic DOM assertions:
+- `expect(html).toContain('<button')` ➡️ `expect(screen.getByRole('button')).toBeInTheDocument()`
+- `expect(html).toContain('disabled')` ➡️ `expect(button).toBeDisabled()`
+- `expect(html).toContain('custom-class')` ➡️ `expect(element).toHaveClass('custom-class')`
+- `expect(html).toContain('href="/path"')` ➡️ `expect(link).toHaveAttribute('href', '/path')`
+- `expect(html).not.toContain('<button')` ➡️ `expect(screen.queryByRole('button')).not.toBeInTheDocument()`
+
+### Step 6: User Interactions
+When testing clicks, typing, or keyboard navigation:
+```tsx
+const user = userEvent.setup();
+render(<Button onClick={handleClick}>Click</Button>);
+
+await user.click(screen.getByRole('button', { name: /click/i }));
+expect(handleClick).toHaveBeenCalledTimes(1);
+```
+
+### Step 7: Hook Migration
+Replace manual helper tests with `renderHook`:
+```tsx
+const { result } = renderHook(() => useMyHook());
+expect(result.current.value).toBe(expected);
+
+act(() => {
+  result.current.setValue('updated');
+});
+expect(result.current.value).toBe('updated');
+```
 
 ---
 
@@ -49,69 +108,31 @@ It supports three operational modes:
    - Every single `it(...)` or `test(...)` description **MUST** start with `'should ...'`:
      ```tsx
      it('should render standard button element with accessible label', () => { ... });
-     it('should call onClick handler when clicked by user', async () => { ... });
      ```
 
 2. **No Test Bloat**:
-   - Do NOT test trivial CSS/internal class implementations unless they reflect accessible state (e.g. `aria-disabled`).
-   - Do NOT duplicate tests for every minor prop; focus on user-visible behavior and interactive contracts.
+   - Do not test trivial implementation details (internal variables, class names that don't affect behavior).
+   - Test user-visible outcomes and accessibility states.
 
-3. **Accessibility First (a11y)**:
-   - Query by accessible role first: `screen.getByRole('button', { name: /save/i })`.
-   - Query by form label: `screen.getByLabelText(/email/i)`.
-   - Use `screen.getByTestId(...)` only when no accessible semantic identifier is available.
+3. **Accessibility (a11y) & Security**:
+   - Verify ARIA attributes (`aria-expanded`, `aria-label`, `aria-hidden`, `role`).
+   - Check keyboard navigation (`Enter`, `Escape`, `Tab`) where interactive components are involved.
+   - For user inputs, ensure strings are rendered safely without XSS vulnerability.
 
 4. **SonarCloud & Oxlint Guardrails (`docs/ai/quality.md`)**:
    - In mocks for modal dialogs, **NEVER** use `<div role="dialog">`. Always use `<dialog open aria-label={title}>` (Sonar rule `S6819`/`S6847`).
    - **NEVER** call `.sort()` without a comparator; always pass `(a, b) => a.localeCompare(b)` or `(a, b) => a - b` (Sonar rule `S2871`).
    - **NEVER** use `Math.random()` in test data or mocks (Sonar rule `S2245`).
-   - Avoid `import { X } from 'y'; export { X };` re-exports in test files; keep imports clean (`oxlint --deny-warnings`).
-
-5. **Path Aliases & Imports**:
-   - Use path aliases: `@core/*` for core utilities (e.g., `@core/utils/browser`), `@una` for `@universe/ui` UNA primitives.
-   - Matchers (`toBeInTheDocument`, `toBeDisabled`, `toHaveClass`, etc.) are globally registered via `vitest.setup.ts`.
 
 ---
 
-## Step-by-Step Test Template
-
-```tsx
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
-import { MyComponent } from './MyComponent';
-
-describe('MyComponent', () => {
-  it('should render with default props and accessible role', () => {
-    render(<MyComponent label="Click me" />);
-    expect(screen.getByRole('button', { name: /click me/i })).toBeInTheDocument();
-  });
-
-  it('should trigger callback when clicked by user', async () => {
-    const user = userEvent.setup();
-    const handleClick = vi.fn();
-    render(<MyComponent label="Submit" onClick={handleClick} />);
-
-    await user.click(screen.getByRole('button', { name: /submit/i }));
-    expect(handleClick).toHaveBeenCalledTimes(1);
-  });
-
-  it('should be disabled when disabled prop is true', () => {
-    render(<MyComponent label="Disabled" disabled />);
-    expect(screen.getByRole('button', { name: /disabled/i })).toBeDisabled();
-  });
-});
-```
-
----
-
-## Validation Commands
-
+## Step 8: Validation
+After migrating each file or batch:
 ```bash
-# Run Vitest on the target test file
+# Run Vitest on the modified test file
 cmd /c "pnpm test path/to/file.test.tsx"
 
-# Typecheck and lint check
+# Verify formatting and linter
 cmd /c "pnpm exec oxlint path/to/file.test.tsx"
 cmd /c "pnpm exec prettier --check path/to/file.test.tsx"
 ```
