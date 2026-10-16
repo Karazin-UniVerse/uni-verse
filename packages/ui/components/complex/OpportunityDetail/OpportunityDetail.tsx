@@ -1,5 +1,6 @@
 import React, { useId } from 'react';
-import { ArrowLeft, Mail, Send, Pencil } from 'lucide-react';
+import { Mail, Send, Pencil } from 'lucide-react';
+import { BackButton } from '../BackButton';
 import { Button } from '../../una/Button';
 import { Tag } from '../../una/Tag';
 import { Select } from '../../una/Select';
@@ -45,10 +46,7 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   return (
     <div className={className}>
       <div className={styles.stack}>
-        <Button variant="secondary" isTransparent onClick={onBack} className={styles.backButton}>
-          <ArrowLeft size={16} className={styles.btnIcon} />
-          {backText}
-        </Button>
+        <BackButton label={backText} onClick={onBack} />
 
         <h3 className={styles.title}>{title}</h3>
 

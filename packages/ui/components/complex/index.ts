@@ -12,3 +12,4 @@ export * from './CreateOpportunityModal';
 export * from './ModerationRejectModal';
 export * from './OpportunityDetail';
 export * from './SegmentedControl';
+export * from './BackButton';

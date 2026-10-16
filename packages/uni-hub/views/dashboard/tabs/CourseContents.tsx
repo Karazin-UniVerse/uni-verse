@@ -9,11 +9,11 @@ import {
   HelpCircle,
   MessageSquare,
   LayoutGrid,
-  ArrowLeft,
   ChevronDown,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Spinner, Empty } from '@una';
+import { Spinner, Empty } from '@una';
+import { BackButton } from '@ui';
 import { hasLoadFailed } from '@uni-hub/queries/load-state';
 import { courseContentsQueryOptions } from '@uni-hub/queries/moodle/queries';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -143,14 +143,10 @@ export const CourseContents: React.FC<CourseContentsProps> = ({ courseId }) => {
 
   return (
     <div className={styles.page}>
-      <Button
-        type="button"
-        variant="secondary"
-        isTransparent
+      <BackButton
+        label={formatMessage('courseContents.back')}
         onClick={() => router.push(getStudyHref(STUDY_VIEW.Subjects))}
-      >
-        <ArrowLeft size={16} /> {formatMessage('courseContents.back')}
-      </Button>
+      />
 
       <div className={styles.panel}>
         <h3>{formatMessage('courseContents.title')}</h3>

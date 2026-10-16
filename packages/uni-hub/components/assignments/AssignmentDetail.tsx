@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Download, ExternalLink } from 'lucide-react';
+import { Download, ExternalLink } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, FileInput, Form, Spinner, Tag, useToast } from '@una';
+import { BackButton } from '@ui';
 import { hasLoadFailed } from '@uni-hub/queries/load-state';
 import {
   assignmentStatusQueryOptions,
@@ -193,9 +194,7 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
 
   return (
     <div className={styles.page}>
-      <Button type="button" variant="secondary" isTransparent onClick={handleBack}>
-        <ArrowLeft size={16} /> {formatMessage('assignmentPage.back')}
-      </Button>
+      <BackButton label={formatMessage('assignmentPage.back')} onClick={handleBack} />
 
       <h3>
         {assignment?.name ?? courseModule?.name ?? formatMessage('assignmentModal.defaultTitle')}
