@@ -9,7 +9,7 @@ Applies when working on the student portal (UniHub), shared domain contracts, gr
 
 ## Shared domain types
 
-- Domain entities (`StudentProfile`, `CurriculumItem`, `GradeRecord`, …) come from `@universe/core/types`; newer domains such as opportunities have their own file (`@universe/core/types/opportunities`).
+- Every domain has its own file in `packages/core/types/` (`@universe/core/types/opportunities`). The older entities (`StudentProfile`, `CurriculumItem`, `GradeRecord`, …) still come from `@universe/core/types`; when you change one of them, move it to its own `types/<domain>.ts` file.
 - Grade constants and calculation contracts (`CONTROL_TYPES`, `TRADITIONAL_GRADES`, `TraditionalGrade`, `ControlType`, `EctsGrade`, `GradeAccumulationParams`, `GradeAccumulationResult`) come from `@universe/core/constants/grades` (or `@universe/core/utils/grades` for calculations).
 - Alias and re-export rules: [code-style](code-style.md).
 
