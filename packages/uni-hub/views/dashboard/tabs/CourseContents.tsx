@@ -60,7 +60,7 @@ export const CourseContents: React.FC<CourseContentsProps> = ({ courseId }) => {
 
   const handleModuleClick = (courseModule: CourseModule): void => {
     if (isAssignmentPageModule(courseModule)) {
-      router.push(getAssignmentHref(courseModule.instance));
+      router.push(getAssignmentHref(courseModule.instance, courseId));
     } else if (courseModule.url) {
       window.open(courseModule.url, '_blank', 'noopener,noreferrer');
     }

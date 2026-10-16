@@ -1,7 +1,6 @@
 export const moodleKeys = {
   all: ['moodle'] as const,
-  allCourseContents: () => [...moodleKeys.all, 'course-contents'] as const,
-  courseContents: (courseId: number) => [...moodleKeys.allCourseContents(), courseId] as const,
+  courseContents: (courseId: number) => [...moodleKeys.all, 'course-contents', courseId] as const,
   assignmentStatus: (assignmentId: number) =>
     [...moodleKeys.all, 'assignment-status', assignmentId] as const,
   dashboard: (filters: Readonly<Record<string, string | boolean>>) =>

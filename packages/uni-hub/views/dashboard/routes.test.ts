@@ -65,6 +65,7 @@ describe('dashboard routes', () => {
       expect(getStudyHref(STUDY_VIEW.Assignments)).toBe('/study?view=assignments');
       expect(getCourseHref(5)).toBe('/study/courses/5');
       expect(getAssignmentHref(7)).toBe('/study/assignments/7');
+      expect(getAssignmentHref(7, 5)).toBe('/study/assignments/7?course=5');
       expect(getOpportunityHref('x1')).toBe('/opportunities/x1');
     });
   });

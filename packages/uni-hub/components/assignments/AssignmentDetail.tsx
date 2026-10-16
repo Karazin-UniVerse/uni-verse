@@ -4,10 +4,13 @@ import { ArrowLeft, Download, ExternalLink } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, FileInput, Form, Spinner, Tag, useToast } from '@una';
 import { hasLoadFailed } from '@uni-hub/queries/load-state';
-import { assignmentStatusQueryOptions } from '@uni-hub/queries/moodle/queries';
+import {
+  assignmentStatusQueryOptions,
+  courseContentsQueryOptions,
+} from '@uni-hub/queries/moodle/queries';
 import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import { moodleApi } from '@uni-hub/services/api.moodle';
-import type { Assignment, CourseSection } from '@core/types/moodle';
+import type { Assignment } from '@core/types/moodle';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { BADGES } from '@uni-hub/constants/gamification';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -31,6 +34,7 @@ interface SubmissionRequest {
 
 interface AssignmentDetailProps {
   assignmentId: number;
+  courseId: number | null;
   assignment: Assignment | undefined;
 }
 
@@ -58,7 +62,11 @@ export const getAssignmentStatusLabel = (
   }
 };
 
-export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({ assignmentId, assignment }) => {
+export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
+  assignmentId,
+  courseId,
+  assignment,
+}) => {
   const router = useRouter();
   const { formatMessage } = useLanguage();
   const toast = useToast();
@@ -68,12 +76,11 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({ assignmentId
   const [files, setFiles] = useState<File[]>([]);
   const [formError, setFormError] = useState('');
 
-  const courseModule = findAssignmentModule(
-    queryClient
-      .getQueriesData<CourseSection[]>({ queryKey: moodleKeys.allCourseContents() })
-      .map(([, sections]) => sections),
-    assignmentId,
-  );
+  const courseContentsQuery = useQuery({
+    ...courseContentsQueryOptions(courseId ?? 0),
+    enabled: courseId !== null,
+  });
+  const courseModule = findAssignmentModule([courseContentsQuery.data], assignmentId);
   const statusQuery = useQuery(assignmentStatusQueryOptions(assignmentId));
   const status = statusQuery.data;
 
