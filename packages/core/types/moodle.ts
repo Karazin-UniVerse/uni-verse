@@ -14,9 +14,9 @@ export interface MoodleCourse {
 export type GradeValue = string | number | null;
 
 export interface Grade {
+  grade: string;
   courseId?: number;
   courseName?: string;
-  grade: string;
   rawGrade?: GradeValue;
   year?: string | null;
   semester?: number | null;
@@ -56,21 +56,21 @@ export interface UploadedFile {
 export interface MoodleEvent {
   id: number;
   name: string;
+  timestart: number;
+  eventtype: string;
   description?: string;
   courseName?: string;
-  timestart: number;
   timeduration?: number;
   formattedtime?: string;
-  eventtype: string;
   url?: string;
 }
 
 export interface Notification {
   id: number;
   subject: string;
-  fullmessage?: string;
   timecreated: number;
   read: boolean;
+  fullmessage?: string;
 }
 
 export interface NotificationsResponse {
@@ -93,9 +93,9 @@ export interface CourseModuleFile {
 
 export interface CourseModule {
   id: number;
-  url?: string;
   name: string;
   modname: CourseModuleName;
+  url?: string;
   description?: string;
   instance?: number;
   contents?: CourseModuleFile[];
