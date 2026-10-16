@@ -148,7 +148,7 @@ const LoginPage: React.FC = () => {
     router.push('/');
   };
 
-  const handleCancelLink = () => {
+  const handleCancelLink = (): void => {
     setIsLinkingMoodle(false);
     setGoogleUserName('');
     setLinkUsername('');

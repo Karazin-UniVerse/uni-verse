@@ -119,7 +119,7 @@ const DashboardPage: React.FC = () => {
       dateTo,
       hideCompleted,
       enabled: features.isMoodleIntegrationEnabled && isMoodleLinked && isLoggedIn(),
-      onUnauthorized: () => {
+      onUnauthorized: (): void => {
         endSession(queryClient);
         router.push('/login');
       },
@@ -152,7 +152,7 @@ const DashboardPage: React.FC = () => {
     menuButton?.focus();
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = (): void => {
     endSession(queryClient);
     router.push('/login');
   };
