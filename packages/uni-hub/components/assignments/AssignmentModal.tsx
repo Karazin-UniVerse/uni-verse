@@ -137,8 +137,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         }
       }
 
-      setText('');
-      setFiles([]);
+      resetForm();
     } catch (error) {
       console.error(error);
       toast.error(formatMessage('assignmentModal.submitError'));
