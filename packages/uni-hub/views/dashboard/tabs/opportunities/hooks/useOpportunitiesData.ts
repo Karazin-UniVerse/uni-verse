@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import type { OpportunityPaymentType } from '@core/constants/opportunities';
 import { hasLoadFailed } from '@uni-hub/queries/load-state';
+import { useOpportunitiesStore } from '@uni-hub/store/useOpportunitiesStore';
 import { OPPORTUNITY_SUB_TAB, type OpportunitySubTab } from '../constants';
 import {
   catalogQueryOptions,
@@ -43,9 +43,12 @@ function toListState<T>(query: UseQueryResult<T[]>): ListState<T> {
 }
 
 export function useOpportunitiesData(isModerator: boolean): UseOpportunitiesDataResult {
-  const [activeSubTab, setActiveSubTab] = useState<OpportunitySubTab>(OPPORTUNITY_SUB_TAB.Catalog);
-  const [search, setSearch] = useState('');
-  const [paymentFilter, setPaymentFilter] = useState<OpportunityPaymentType | ''>('');
+  const activeSubTab = useOpportunitiesStore((state) => state.activeSubTab);
+  const setActiveSubTab = useOpportunitiesStore((state) => state.setActiveSubTab);
+  const search = useOpportunitiesStore((state) => state.search);
+  const setSearch = useOpportunitiesStore((state) => state.setSearch);
+  const paymentFilter = useOpportunitiesStore((state) => state.paymentFilter);
+  const setPaymentFilter = useOpportunitiesStore((state) => state.setPaymentFilter);
 
   const catalog = useQuery({
     ...catalogQueryOptions,

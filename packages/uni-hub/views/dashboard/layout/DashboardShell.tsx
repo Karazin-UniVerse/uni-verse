@@ -16,6 +16,7 @@ import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { endSession } from '@uni-hub/services/api.session';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
+import { useOpportunitiesStore } from '@uni-hub/store/useOpportunitiesStore';
 import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import { useQueryClient } from '@tanstack/react-query';
 import { NAV_KEY, type NavKey } from '../constants';
@@ -63,6 +64,14 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
   const completeUnlink = useMoodleStore((state) => state.completeUnlink);
 
   useDashboardErrorHandling();
+
+  useEffect(
+    () => () => {
+      useMoodleStore.setState(useMoodleStore.getInitialState());
+      useOpportunitiesStore.setState(useOpportunitiesStore.getInitialState());
+    },
+    [],
+  );
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
