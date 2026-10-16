@@ -1,14 +1,15 @@
 import type {
   OpportunityAppStatus,
   OpportunityLifecycle,
+  OpportunityModerateAction,
   OpportunityPaymentType,
   OpportunityStatus,
 } from '../constants/opportunities.ts';
 
 export interface OpportunityOwner {
   id: string;
-  name?: string | null;
   email: string;
+  name?: string | null;
 }
 
 export interface Opportunity {
@@ -18,14 +19,14 @@ export interface Opportunity {
   ownerContactInfo: string;
   status: OpportunityStatus;
   lifecycleState: OpportunityLifecycle;
-  acceptsApplications?: boolean;
   paymentType: OpportunityPaymentType;
-  paymentDetails?: string | null;
-  moderationComment?: string | null;
   ownerId: string;
-  owner?: OpportunityOwner;
   createdAt: string;
   updatedAt: string;
+  acceptsApplications?: boolean;
+  paymentDetails?: string | null;
+  moderationComment?: string | null;
+  owner?: OpportunityOwner;
   applications?: OpportunityApplication[];
 }
 
@@ -33,17 +34,17 @@ export interface OpportunityApplication {
   id: string;
   applicantName: string;
   contactInfo: string;
+  status: OpportunityAppStatus;
+  opportunityId: string;
+  applicantId: string;
+  createdAt: string;
+  updatedAt: string;
   motivation?: string | null;
   briefDescription?: string | null;
   answers?: string | null;
-  status: OpportunityAppStatus;
   ownerComment?: string | null;
-  opportunityId: string;
   opportunity?: Opportunity;
-  applicantId: string;
-  applicant?: OpportunityOwner;
-  createdAt: string;
-  updatedAt: string;
+  applicant?: Pick<OpportunityOwner, 'name' | 'email'>;
 }
 
 export interface CreateOpportunityRequest {
@@ -63,6 +64,11 @@ export interface ApplyOpportunityRequest {
   motivation?: string;
   briefDescription?: string;
   answers?: string;
+}
+
+export interface ModerateOpportunityRequest {
+  action: OpportunityModerateAction;
+  comment?: string;
 }
 
 export interface GetOpportunitiesParams {
