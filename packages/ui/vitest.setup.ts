@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
-import { isBrowser } from '@universe/core/utils/browser';
+import { isBrowser } from '@core/utils/browser';
 
 afterEach(() => {
   cleanup();
