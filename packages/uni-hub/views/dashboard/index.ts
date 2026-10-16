@@ -2,7 +2,6 @@ export * from './types';
 export * from './constants';
 export * from './utils';
 export * from './routes';
-export * from './DashboardContext';
 export * from './StudyPage';
 export * from './AssignmentPage';
 export * from './layout/DashboardSidebar';
