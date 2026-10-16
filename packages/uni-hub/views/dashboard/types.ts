@@ -1,4 +1,4 @@
-import type { StudentProfile } from '@core/types';
+import type { StudentProfile, CurriculumItem } from '@core/types';
 import type { LinkMoodleMode } from '@uni-hub/components/auth';
 import type {
   Course,
@@ -33,7 +33,7 @@ export interface OverviewTabProps {
 }
 
 export interface CoursesTabProps {
-  courses: Course[];
+  courses: (Course | CurriculumItem)[];
   soundEnabled: boolean;
 }
 
