@@ -562,7 +562,7 @@ export const en = {
   'opportunities.detailModal.phasePaused': 'Paused',
   'opportunities.detailModal.phaseCompleted': 'Completed',
   'opportunities.detailModal.phaseCancelled': 'Cancelled',
-  'opportunities.detailModal.close': 'Close',
+  'opportunities.detail.back': 'Back to opportunities',
   'opportunities.detailModal.apply': 'Apply for Opportunity',
 
   // Modals - Apply

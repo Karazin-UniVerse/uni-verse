@@ -565,7 +565,7 @@ export const uk = {
   'opportunities.detailModal.phasePaused': 'На паузі',
   'opportunities.detailModal.phaseCompleted': 'Завершено',
   'opportunities.detailModal.phaseCancelled': 'Скасовано',
-  'opportunities.detailModal.close': 'Закрити',
+  'opportunities.detail.back': 'Назад до можливостей',
   'opportunities.detailModal.apply': 'Відгукнутися на можливість',
 
   // Modals - Apply

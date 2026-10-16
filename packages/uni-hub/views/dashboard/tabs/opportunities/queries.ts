@@ -56,3 +56,13 @@ export const moderationQueueQueryOptions = queryOptions({
   queryKey: opportunityKeys.moderation(),
   queryFn: loadModerationQueue,
 });
+
+export const opportunityDetailQueryOptions = (
+  opportunityId: string,
+): ReturnType<
+  typeof queryOptions<Opportunity, Error, Opportunity, ReturnType<typeof opportunityKeys.detail>>
+> =>
+  queryOptions({
+    queryKey: opportunityKeys.detail(opportunityId),
+    queryFn: async () => (await opportunitiesApi.getOpportunity(opportunityId)).data,
+  });

@@ -1,17 +1,15 @@
 import React, { useId } from 'react';
-import { Mail, Send, Pencil } from 'lucide-react';
-import { Modal } from '../../una/Modal';
+import { ArrowLeft, Mail, Send, Pencil } from 'lucide-react';
 import { Button } from '../../una/Button';
 import { Tag } from '../../una/Tag';
 import { Select } from '../../una/Select';
-import type { OpportunityDetailModalProps } from './OpportunityDetailModal.types';
-import styles from './OpportunityDetailModal.module.scss';
+import type { OpportunityDetailProps } from './OpportunityDetail.types';
+import styles from './OpportunityDetail.module.scss';
 
-export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
-  open,
-  onClose,
+export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
+  onBack,
+  backText,
   title,
-  closeText,
   paymentTagText,
   statusBadge,
   lifecycleTagText,
@@ -45,8 +43,15 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
   const phaseSelectId = useId();
 
   return (
-    <Modal open={open} onClose={onClose} title={title} width={680} className={className}>
-      <div className={styles.modalStack}>
+    <div className={className}>
+      <div className={styles.stack}>
+        <Button variant="secondary" isTransparent onClick={onBack}>
+          <ArrowLeft size={16} className={styles.btnIcon} />
+          {backText}
+        </Button>
+
+        <h3 className={styles.title}>{title}</h3>
+
         <div className={styles.tagsRow}>
           {paymentTagText && <Tag tone={paymentTone}>{paymentTagText}</Tag>}
           {statusBadge}
@@ -130,19 +135,16 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
           </div>
         )}
 
-        <div className={styles.modalFooter}>
-          <Button variant="secondary" onClick={onClose}>
-            {closeText}
-          </Button>
-          {canApply && onOpenApply && (
+        {canApply && onOpenApply && (
+          <div className={styles.footer}>
             <Button variant="primary" onClick={onOpenApply}>
               {applyText}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-    </Modal>
+    </div>
   );
 };
 
-export default OpportunityDetailModal;
+export default OpportunityDetail;

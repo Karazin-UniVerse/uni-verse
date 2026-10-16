@@ -6,6 +6,7 @@ import {
   loadApplicants,
   moderationQueueQueryOptions,
   myOpportunitiesQueryOptions,
+  opportunityDetailQueryOptions,
 } from './queries';
 import { buildOpportunity } from './test-utils';
 
@@ -54,5 +55,17 @@ describe('opportunities queries', () => {
 
     await expect(loadApplicants('opp-7')).resolves.toEqual([]);
     expect(getApplications).toHaveBeenCalledWith('opp-7');
+  });
+
+  it('loads one opportunity by id under its own query key', async () => {
+    const opportunity = buildOpportunity('opp-9');
+    const getOpportunity = vi
+      .spyOn(opportunitiesApi, 'getOpportunity')
+      .mockResolvedValue({ data: opportunity });
+    const options = opportunityDetailQueryOptions('opp-9');
+
+    expect(options.queryKey).toEqual(['opportunities', 'detail', 'opp-9']);
+    await expect(queryClient.fetchQuery(options)).resolves.toEqual(opportunity);
+    expect(getOpportunity).toHaveBeenCalledWith('opp-9');
   });
 });
