@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button, Spinner, Empty, Modal } from '@una';
-import { Mail, MessageSquare, Calendar, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { Mail, MessageSquare, Calendar, CheckCircle2, Clock, XCircle, Send } from 'lucide-react';
 import type { OpportunityApplication, OpportunityAppStatus } from '@uni-hub/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { ApplicationStatusBadge } from '../ApplicationStatusBadge';
@@ -52,10 +52,22 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                         app.applicantName ||
                         formatMessage('opportunities.applicantsModal.defaultApplicant')}
                     </span>
-                    {(app.applicant?.email || app.contactInfo) && (
-                      <span className={styles.authorContactTag}>
+                    {app.applicant?.email && (
+                      <span
+                        className={styles.authorContactTag}
+                        title={formatMessage('opportunities.applicantsModal.emailLabel')}
+                      >
                         <Mail size={12} />
-                        {app.applicant?.email || app.contactInfo}
+                        {app.applicant.email}
+                      </span>
+                    )}
+                    {app.contactInfo && (
+                      <span
+                        className={styles.authorContactTag}
+                        title={formatMessage('opportunities.applicantsModal.directContactLabel')}
+                      >
+                        <Send size={12} />
+                        {app.contactInfo}
                       </span>
                     )}
                   </div>

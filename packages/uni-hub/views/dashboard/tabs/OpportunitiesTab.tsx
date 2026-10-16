@@ -37,8 +37,18 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({ refreshTrigg
   const currentUser = useCurrentUser();
   const isModerator = currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR);
   const data = useOpportunitiesData(isModerator);
-  const { activeSubTab, setActiveSubTab, refetchActiveList, refetchOpportunities } = data;
-  const detail = useOpportunityDetail(refetchOpportunities);
+  const detail = useOpportunityDetail((id, patch) => {
+    if (id && patch) {
+      data.myOpportunities.setItems((items) =>
+        items.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+      );
+      data.catalog.setItems((items) =>
+        items.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+      );
+    }
+
+    void refetchOpportunities();
+  });
   const create = useCreateOpportunity({
     onCreated: () => {
       void refetchOpportunities();

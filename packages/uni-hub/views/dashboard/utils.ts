@@ -78,16 +78,111 @@ function truncateText(text: string, maxLength: number): string {
   return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
 }
 
+const PLATFORM_STATUS_KEYS: Record<string, TranslationKey> = {
+  ACCEPTED: 'notifications.status.ACCEPTED',
+  REJECTED: 'notifications.status.REJECTED',
+  UNDER_REVIEW: 'notifications.status.UNDER_REVIEW',
+};
+
+const PLATFORM_ACTION_KEYS: Record<string, TranslationKey> = {
+  APPROVE: 'notifications.action.APPROVE',
+  REJECT: 'notifications.action.REJECT',
+  REQUIRE_CHANGES: 'notifications.action.REQUIRE_CHANGES',
+};
+
+type MessageFormatter = (
+  key: TranslationKey,
+  values?: Record<string, string | number>,
+) => string;
+
+function formatPlatformMessage(
+  subject: string,
+  rawMessage: string,
+  formatMessage: MessageFormatter,
+): string {
+  if (!rawMessage.startsWith('{') || !rawMessage.endsWith('}')) {
+    return rawMessage;
+  }
+
+  try {
+    const parsed = JSON.parse(rawMessage) as {
+      opportunityTitle?: string;
+      applicantName?: string;
+      status?: string;
+      action?: string;
+      comment?: string | null;
+    };
+    const opportunityTitle = parsed.opportunityTitle || '';
+
+    if (subject === 'notifications.opportunityApplicationStatus.title') {
+      const statusKey = parsed.status ? PLATFORM_STATUS_KEYS[parsed.status] : undefined;
+      const status = statusKey ? formatMessage(statusKey) : parsed.status || '';
+
+      if (parsed.comment) {
+        return formatMessage('notifications.opportunityApplicationStatus.messageWithComment', {
+          opportunityTitle,
+          status,
+          comment: parsed.comment,
+        });
+      }
+
+      return formatMessage('notifications.opportunityApplicationStatus.message', {
+        opportunityTitle,
+        status,
+      });
+    }
+
+    if (subject === 'notifications.opportunityNewApplication.title') {
+      return formatMessage('notifications.opportunityNewApplication.message', {
+        opportunityTitle,
+        applicantName: parsed.applicantName || '',
+      });
+    }
+
+    if (subject === 'notifications.opportunityModerated.title') {
+      const actionKey = parsed.action ? PLATFORM_ACTION_KEYS[parsed.action] : undefined;
+      const action = actionKey ? formatMessage(actionKey) : parsed.action || '';
+
+      if (parsed.comment) {
+        return formatMessage('notifications.opportunityModerated.messageWithComment', {
+          opportunityTitle,
+          action,
+          comment: parsed.comment,
+        });
+      }
+
+      return formatMessage('notifications.opportunityModerated.message', {
+        opportunityTitle,
+        action,
+      });
+    }
+  } catch {
+    return rawMessage;
+  }
+
+  return rawMessage;
+}
+
 export function toNotificationListItem(
   notification: Notification,
   localeTag: string,
+  formatMessage?: MessageFormatter,
 ): NotificationListItem {
   const createdAt = new Date(notification.timecreated * 1000);
+  const isPlatformKey = notification.subject.startsWith('notifications.');
+  const title =
+    formatMessage && isPlatformKey
+      ? formatMessage(notification.subject as TranslationKey)
+      : notification.subject;
+  const resolvedMessage =
+    formatMessage && isPlatformKey
+      ? formatPlatformMessage(notification.subject, notification.message, formatMessage)
+      : notification.message;
 
   return {
     id: notification.id,
-    title: notification.subject,
-    message: truncateText(stripHtml(notification.message), NOTIFICATION_MESSAGE_MAX_LENGTH),
+    title,
+    message: truncateText(stripHtml(resolvedMessage), NOTIFICATION_MESSAGE_MAX_LENGTH),
     time: createdAt.toLocaleString(localeTag),
     dateTime: createdAt.toISOString(),
     isRead: notification.read,

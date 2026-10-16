@@ -1,7 +1,8 @@
 import { moodleApi } from '@uni-hub/services/api';
+import type { PlatformNotification } from '@uni-hub/services/api.notifications';
 import { asList } from '@uni-hub/utils/arrays';
 import { isBrowser } from '@uni-hub/utils/browser';
-import type { Grade, Assignment } from '@uni-hub/types';
+import type { Grade, Assignment, Notification } from '@uni-hub/types';
 import type { StudentProfile } from '@core/types';
 import type { DashboardData } from '../types';
 import { fallbackStudentProfile } from '../constants';
@@ -63,21 +64,44 @@ export type MoodleApiResponseTuple = [
   Awaited<ReturnType<typeof moodleApi.getStatistics>>,
 ];
 
-export function assembleDashboardData([
-  coursesRes,
-  gradesRes,
-  assignmentsRes,
-  eventsRes,
-  notificationsRes,
-  statsRes,
-]: MoodleApiResponseTuple): DashboardData {
+export function mapPlatformNotification(item: PlatformNotification): Notification {
+  return {
+    id: item.id,
+    subject: item.title,
+    message: item.message,
+    timecreated: Math.floor(new Date(item.createdAt).getTime() / 1000),
+    read: item.isRead,
+  };
+}
+
+export function assembleDashboardData(
+  [
+    coursesRes,
+    gradesRes,
+    assignmentsRes,
+    eventsRes,
+    notificationsRes,
+    statsRes,
+  ]: MoodleApiResponseTuple,
+  platformNotifications: PlatformNotification[] = [],
+): DashboardData {
+  const moodleList = asList(notificationsRes?.data?.notifications);
+  const platformList = platformNotifications.map(mapPlatformNotification);
+  const combinedNotifications = [...moodleList, ...platformList].sort(
+    (first, second) => second.timecreated - first.timecreated,
+  );
+  const moodleUnread = notificationsRes?.data?.unreadCount || 0;
+  const platformUnread = platformNotifications.filter(
+    (notification) => !notification.isRead,
+  ).length;
+
   return {
     courses: asList(coursesRes?.data),
     grades: resolveGradesResponse(gradesRes),
     assignments: asList(assignmentsRes?.data),
     events: asList(eventsRes?.data),
-    notifications: asList(notificationsRes?.data?.notifications),
-    unreadCount: notificationsRes?.data?.unreadCount || 0,
+    notifications: combinedNotifications,
+    unreadCount: moodleUnread + platformUnread,
     statistics: statsRes?.data || null,
   };
 }

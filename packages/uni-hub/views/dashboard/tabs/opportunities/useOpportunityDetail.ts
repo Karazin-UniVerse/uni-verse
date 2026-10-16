@@ -5,7 +5,9 @@ import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { Opportunity, OpportunityLifecycle } from '@uni-hub/types';
 
-export function useOpportunityDetail(onOpportunityUpdated?: () => Promise<void> | void) {
+export function useOpportunityDetail(
+  onOpportunityUpdated?: (id?: string, patch?: Partial<Opportunity>) => Promise<void> | void,
+) {
   const toast = useToast();
   const { formatMessage } = useLanguage();
 
@@ -25,8 +27,8 @@ export function useOpportunityDetail(onOpportunityUpdated?: () => Promise<void> 
     try {
       await opportunitiesApi.changeStatus(id, 'READY_FOR_REVIEW');
       toast.success(formatMessage('opportunities.toast.sentToReview'));
-      void onOpportunityUpdated?.();
       patchSelected(id, { status: 'READY_FOR_REVIEW' });
+      void onOpportunityUpdated?.(id, { status: 'READY_FOR_REVIEW' });
     } catch (err: unknown) {
       toast.error(getErrorMessage(err, formatMessage('opportunities.toast.genericError')));
     }
@@ -36,8 +38,8 @@ export function useOpportunityDetail(onOpportunityUpdated?: () => Promise<void> 
     try {
       await opportunitiesApi.changeLifecycle(id, state);
       toast.success(formatMessage('opportunities.toast.stateUpdated'));
-      void onOpportunityUpdated?.();
       patchSelected(id, { lifecycleState: state });
+      void onOpportunityUpdated?.(id, { lifecycleState: state });
     } catch (err: unknown) {
       toast.error(getErrorMessage(err, formatMessage('opportunities.toast.genericError')));
     }

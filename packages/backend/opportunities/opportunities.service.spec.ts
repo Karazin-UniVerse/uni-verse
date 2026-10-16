@@ -462,10 +462,20 @@ describe('OpportunitiesService', () => {
       );
     });
 
-    it('forces PUBLISHED status when user is ADMIN or regular user', async () => {
+    it('throws ForbiddenException when non-moderator queries unpublished status', async () => {
+      await expect(
+        service.findAll({ status: 'DRAFT' as any }, ['ADMIN']),
+      ).rejects.toThrow(ForbiddenException);
+
+      await expect(
+        service.findAll({ status: 'READY_FOR_REVIEW' as any }, []),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('defaults to PUBLISHED when status is omitted', async () => {
       jest.spyOn(prisma.opportunity, 'findMany').mockResolvedValue([] as any);
 
-      await service.findAll({ status: 'DRAFT' as any }, ['ADMIN']);
+      await service.findAll({});
 
       expect(prisma.opportunity.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -803,21 +813,28 @@ describe('OpportunitiesService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('throws BadRequestException if opportunity is on START phase', async () => {
+    it('allows applying if opportunity is on START phase and accepting applications', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
         status: 'PUBLISHED',
         lifecycleState: 'START',
         acceptsApplications: true,
         ownerId: 'owner-1',
+        title: 'Тест',
       } as any);
+      jest
+        .spyOn(prisma.opportunityApplication, 'findFirst')
+        .mockResolvedValue(null);
+      jest
+        .spyOn(prisma.opportunityApplication, 'create')
+        .mockResolvedValue({ id: 'app-1' } as any);
 
-      await expect(
-        service.apply('user-1', '1', {
-          applicantName: 'Іван',
-          contactInfo: 'ivan@karazin.ua',
-        }),
-      ).rejects.toThrow(BadRequestException);
+      const res = await service.apply('user-1', '1', {
+        applicantName: 'Іван',
+        contactInfo: '@ivan_tg',
+      });
+
+      expect(res).toEqual({ id: 'app-1' });
     });
 
     it('throws BadRequestException if opportunity is not accepting applications', async () => {

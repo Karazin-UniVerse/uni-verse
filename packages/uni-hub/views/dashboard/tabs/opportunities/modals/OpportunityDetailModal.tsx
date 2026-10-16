@@ -84,7 +84,7 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
   const canApply =
     !isOwner &&
     opportunity.status === 'PUBLISHED' &&
-    opportunity.lifecycleState === 'ACTIVE' &&
+    (opportunity.lifecycleState === 'ACTIVE' || opportunity.lifecycleState === 'START') &&
     opportunity.acceptsApplications !== false;
 
   return (

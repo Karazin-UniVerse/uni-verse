@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useToast } from '@una';
+import { isValidContactInfo } from '@core/utils/contacts';
 import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -33,6 +34,12 @@ export function useApplicantActions({
 
     if (!selectedOpportunity) return;
 
+    if (!isValidContactInfo(contactInfo)) {
+      toast.error(formatMessage('opportunities.applyModal.invalidContact'));
+
+      return;
+    }
+
     setApplying(true);
 
     try {
@@ -41,7 +48,7 @@ export function useApplicantActions({
           currentUser.name ||
           currentUser.email ||
           formatMessage('opportunities.applyModal.defaultApplicantName'),
-        contactInfo: contactInfo.trim() || currentUser.email || '',
+        contactInfo: contactInfo.trim(),
         motivation: motivation.trim(),
       });
 

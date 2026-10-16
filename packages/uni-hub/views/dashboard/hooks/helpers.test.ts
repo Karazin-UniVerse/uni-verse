@@ -13,6 +13,8 @@ import {
   isMoodleUnlinked,
   syncStudentProfile,
   getInitialUserProfile,
+  mapPlatformNotification,
+  assembleDashboardData,
 } from './helpers';
 import { fallbackStudentProfile } from '../constants';
 
@@ -271,5 +273,76 @@ describe('buildFallbackData', () => {
     expect(result.courses).toEqual([{ id: 1 }]);
     expect(result.assignments.length).toBe(1);
     expect(result.assignments[0].id).toBe(20);
+  });
+});
+
+describe('mapPlatformNotification', () => {
+  it('maps platform notification fields and converts ISO timestamp to seconds', () => {
+    const raw = {
+      id: 'plat-1',
+      userId: 'user-1',
+      title: 'notifications.opportunityApplicationStatus.title',
+      message: JSON.stringify({
+        opportunityTitle: 'Frontend Intern',
+        status: 'ACCEPTED',
+        comment: 'Welcome to the team!',
+      }),
+      type: 'OPPORTUNITY_APPLICATION_STATUS',
+      isRead: false,
+      createdAt: '2025-01-01T12:00:00Z',
+    };
+
+    const mapped = mapPlatformNotification(raw);
+
+    expect(mapped.id).toBe('plat-1');
+    expect(mapped.subject).toBe('notifications.opportunityApplicationStatus.title');
+    expect(mapped.message).toBe(raw.message);
+    expect(mapped.read).toBe(false);
+    expect(mapped.timecreated).toBe(Math.floor(new Date('2025-01-01T12:00:00Z').getTime() / 1000));
+  });
+});
+
+describe('assembleDashboardData', () => {
+  it('combines and sorts moodle and platform notifications by timecreated desc and calculates total unread count', () => {
+    const moodleResponses: any = [
+      { data: [] },
+      { data: { grades: [] } },
+      { data: [] },
+      { data: { events: [] } },
+      {
+        data: {
+          notifications: [
+            {
+              id: 1,
+              subject: 'Moodle Notif',
+              message: 'Old moodle message',
+              timecreated: 1000,
+              read: true,
+            },
+          ],
+          unreadCount: 0,
+        },
+      },
+      { data: null },
+    ];
+
+    const platformNotifications = [
+      {
+        id: 'plat-1',
+        userId: 'user-1',
+        title: 'Platform Notif',
+        message: 'New platform message',
+        type: 'CUSTOM',
+        isRead: false,
+        createdAt: new Date(2000 * 1000).toISOString(),
+      },
+    ];
+
+    const result = assembleDashboardData(moodleResponses, platformNotifications);
+
+    expect(result.notifications.length).toBe(2);
+    expect(result.notifications[0].id).toBe('plat-1');
+    expect(result.notifications[1].id).toBe(1);
+    expect(result.unreadCount).toBe(1);
   });
 });

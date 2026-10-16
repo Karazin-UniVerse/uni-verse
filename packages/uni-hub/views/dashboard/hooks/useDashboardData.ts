@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { moodleApi } from '@uni-hub/services/api';
+import { notificationsApi } from '@uni-hub/services/api.notifications';
+import { asList } from '@uni-hub/utils/arrays';
 import type { StudentProfile } from '@core/types';
 import { useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -15,6 +17,7 @@ import {
   isMoodleUnlinked,
   isUnauthorizedError,
   loadCachedDashboardData,
+  mapPlatformNotification,
   persistDashboardSnapshot,
   syncStudentProfile,
 } from './helpers';
@@ -87,13 +90,31 @@ export function useDashboardData({
   const fetchRequestIdRef = useRef(0);
 
   const fetchData = async (isManual = false) => {
-    if (!enabled) {
+    const requestId = ++fetchRequestIdRef.current;
+
+    if (!enabled || isMoodleUnlinked()) {
       setLoading(false);
+
+      const platformResponse = await notificationsApi
+        .getMyNotifications()
+        .catch(() => ({ data: [] }));
+
+      if (requestId !== fetchRequestIdRef.current) {
+        return;
+      }
+
+      const platformItems = asList(platformResponse?.data);
+
+      setData((previous) => ({
+        ...previous,
+        notifications: platformItems
+          .map(mapPlatformNotification)
+          .sort((first, second) => second.timecreated - first.timecreated),
+        unreadCount: platformItems.filter((notification) => !notification.isRead).length,
+      }));
 
       return;
     }
-
-    const requestId = ++fetchRequestIdRef.current;
 
     setLoading(true);
 
@@ -107,6 +128,7 @@ export function useDashboardData({
         notificationsRes,
         statsRes,
         profileRes,
+        platformNotificationsRes,
       ] = await Promise.all([
         moodleApi.getCourses(),
         moodleApi.getGrades(),
@@ -115,20 +137,24 @@ export function useDashboardData({
         moodleApi.getNotifications(),
         moodleApi.getStatistics(),
         moodleApi.getProfile().catch(() => null),
+        notificationsApi.getMyNotifications().catch(() => ({ data: [] })),
       ]);
 
       if (requestId !== fetchRequestIdRef.current || isMoodleUnlinked()) {
         return;
       }
 
-      const freshData = assembleDashboardData([
-        coursesRes,
-        gradesRes,
-        assignmentsRes,
-        eventsRes,
-        notificationsRes,
-        statsRes,
-      ]);
+      const freshData = assembleDashboardData(
+        [
+          coursesRes,
+          gradesRes,
+          assignmentsRes,
+          eventsRes,
+          notificationsRes,
+          statsRes,
+        ],
+        platformNotificationsRes?.data,
+      );
 
       setData(freshData);
       setHasLoadedOnce(true);

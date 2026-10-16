@@ -134,5 +134,42 @@ describe('dashboard utils', () => {
 
       expect(item.message).toBe('a'.repeat(100));
     });
+
+    it('translates platform notification subject and JSON message using formatMessage', () => {
+      const platformNotif = {
+        id: 'plat-1',
+        subject: 'notifications.opportunityApplicationStatus.title',
+        message: JSON.stringify({
+          opportunityTitle: 'Frontend Intern',
+          status: 'ACCEPTED',
+          comment: 'Welcome!',
+        }),
+        timecreated: 1_788_000_000,
+        read: false,
+      };
+
+      const withFormatter = toNotificationListItem(
+        platformNotif,
+        'en-US',
+        (key, values) => {
+          if (key === 'notifications.opportunityApplicationStatus.title') {
+            return 'Application Status';
+          }
+
+          if (key === 'notifications.status.ACCEPTED') {
+            return 'accepted';
+          }
+
+          if (key === 'notifications.opportunityApplicationStatus.messageWithComment') {
+            return `${values?.opportunityTitle}: ${values?.status} (${values?.comment})`;
+          }
+
+          return key;
+        },
+      );
+
+      expect(withFormatter.title).toBe('Application Status');
+      expect(withFormatter.message).toBe('Frontend Intern: accepted (Welcome!)');
+    });
   });
 });
