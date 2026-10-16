@@ -97,18 +97,19 @@ Native Oxlint `react` plugin rules:
 
 ---
 
-## 3. NestJS / Backend Rules (Custom)
+## 3. NestJS / Backend Rules
 
 | Rule                                            | Files                     | Description                                                                     |
 | ----------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------- |
 | `universe/nestjs-require-api-response-type`     | `*.controller.ts`         | `@ApiResponse` on 200/201 endpoints must include `type` for Orval codegen       |
 | `universe/nestjs-require-bearer-auth-decorator` | `*.controller.ts`         | Endpoints using `@GetUser()` must have `@ApiBearerAuth()` or `@ApiCookieAuth()` |
-| `universe/nestjs-controller-return-type`        | `*.controller.ts`         | HTTP handler methods must declare explicit return types                         |
-| `universe/nestjs-controller-no-prisma`          | `*.controller.ts`         | Controllers must not import `PrismaService` directly                            |
 | `universe/no-empty-catch-in-services`           | `*.service.ts`            | `catch` blocks that silently return empty data must log or rethrow              |
-| `universe/una-primitive-purity`                 | `ui/**/una/**`            | Design system components must not import business-layer packages                |
-| `universe/core-package-isolation`               | `packages/core/**`        | `@universe/core` must not import NestJS, Prisma, React, or Next                 |
 | `universe/dto-implements-core-contract`         | `backend/**/dto/*.dto.ts` | DTO classes must `implements` a request contract from `@universe/core/types`    |
+
+Covered by existing rules instead of custom ones:
+
+- `ts-eslint/explicit-function-return-type` (`@typescript-eslint/eslint-plugin` loaded through `jsPlugins`) on `*.controller.ts`: explicit return types.
+- `no-restricted-imports` overrides in `.oxlintrc.json`: controllers must not import `PrismaService`, `una/` components must not import application state or routing, and `@universe/core` must not import framework or database packages.
 
 ---
 

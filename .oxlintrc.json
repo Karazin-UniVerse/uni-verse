@@ -1,7 +1,10 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "react", "unicorn", "oxc", "import"],
-  "jsPlugins": ["./configs/oxlint/plugins/universe-rules.mjs"],
+  "jsPlugins": [
+    "./configs/oxlint/plugins/universe-rules.mjs",
+    { "name": "ts-eslint", "specifier": "@typescript-eslint/eslint-plugin" }
+  ],
   "env": {
     "browser": true,
     "node": true,
@@ -59,11 +62,7 @@
     "universe/no-suppress-hydration-without-comment": "warn",
     "universe/nestjs-require-api-response-type": "error",
     "universe/nestjs-require-bearer-auth-decorator": "error",
-    "universe/nestjs-controller-return-type": "error",
-    "universe/una-primitive-purity": "error",
-    "universe/nestjs-controller-no-prisma": "error",
-    "universe/no-empty-catch-in-services": "error",
-    "universe/core-package-isolation": "error"
+    "universe/no-empty-catch-in-services": "error"
   },
   "overrides": [
     {
@@ -158,6 +157,33 @@
       }
     },
     {
+      "files": ["packages/ui/components/una/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@uni-hub",
+                  "@uni-hub/**",
+                  "@universe/backend",
+                  "@universe/backend/**",
+                  "@universe/database",
+                  "@universe/database/**"
+                ],
+                "message": "UI package cannot depend on application packages. Design system must remain independent."
+              },
+              {
+                "group": ["zustand", "next/navigation", "next/router"],
+                "message": "Design system primitives must not import application state or routing."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["packages/backend/**/*.{ts}"],
       "rules": {
         "no-restricted-imports": [
@@ -180,6 +206,41 @@
             ]
           }
         ]
+      }
+    },
+    {
+      "files": ["packages/backend/**/*.controller.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "react",
+                  "react-dom",
+                  "next",
+                  "next/**",
+                  "@uni-hub",
+                  "@uni-hub/**",
+                  "@universe/ui",
+                  "@universe/ui/**"
+                ],
+                "message": "Backend cannot import frontend or React libraries."
+              },
+              {
+                "group": ["**/prisma.service", "**/prisma.module"],
+                "message": "Controllers must not import PrismaService directly. Go through a service."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/backend/**/*.controller.ts"],
+      "rules": {
+        "ts-eslint/explicit-function-return-type": ["error", { "allowExpressions": true }]
       }
     },
     {
@@ -209,6 +270,8 @@
                   "@universe/database/**",
                   "express",
                   "zustand",
+                  "prisma",
+                  "@prisma/**",
                   "@universe/ui",
                   "@universe/ui/**",
                   "@uni-hub",
