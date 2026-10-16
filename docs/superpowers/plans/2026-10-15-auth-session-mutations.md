@@ -4,7 +4,7 @@
 
 **Goal:** Make login, Google login, linking and unlinking Moodle and logout TanStack Query mutations, and make every session boundary clear the query cache so one user's cached data can never be shown to the next user in the same tab.
 
-**Architecture:** One session module owns the list of `localStorage` keys that belong to a session and two plain functions that take a `QueryClient`: `beginSession` (a login succeeded) and `endSession` (logout, expired token). The three copies of the key list that exist today (`clearUserSessionStorage` in the dashboard helpers, `AuthApi.logout`, the `DashboardHeader` fallback) collapse into it. Auth mutations live in one hook file and replace the `loading` / `try` / `catch` boilerplate in `LoginPage`, `LinkMoodleModal` and `UnlinkMoodleModal`.
+**Architecture:** One session module owns the list of `localStorage` keys that belong to a session and one plain function that takes a `QueryClient`: `endSession` (logout, expired token). A successful login calls `queryClient.clear()` directly. The three copies of the key list that exist today (`clearUserSessionStorage` in the dashboard helpers, `AuthApi.logout`, the `DashboardHeader` fallback) collapse into it. Auth mutations live in one hook file and replace the `loading` / `try` / `catch` boilerplate in `LoginPage`, `LinkMoodleModal` and `UnlinkMoodleModal`.
 
 **Tech Stack:** `@tanstack/react-query` v5, Next.js 16 router, Vitest (node env).
 
@@ -33,12 +33,12 @@
 
 ## File Structure
 
-| File (under `packages/uni-hub/`)                                                                                          | Responsibility                                                                       |
-| ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `services/api.session.ts` + `services/api.session.test.ts` (create)                                                       | `USER_SESSION_STORAGE_KEYS`, `clearUserSessionStorage`, `beginSession`, `endSession` |
-| `hooks/useAuthMutations.ts` (create)                                                                                      | `useLogin`, `useGoogleLogin`, `useLinkMoodle`, `useUnlinkMoodle`, `useLogout`        |
-| `services/api.auth.ts`, `views/dashboard/hooks/helpers.ts`, `views/dashboard/layout/DashboardHeader.tsx` (modify)         | Use the single key list                                                              |
-| `views/LoginPage.tsx`, `components/auth/LinkMoodleModal.tsx`, `UnlinkMoodleModal.tsx`, `views/DashboardPage.tsx` (modify) | Use the mutations and `endSession`                                                   |
+| File (under `packages/uni-hub/`)                                                                                          | Responsibility                                                                |
+| ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `services/api.session.ts` + `services/api.session.test.ts` (create)                                                       | `USER_SESSION_STORAGE_KEYS`, `clearUserSessionStorage`, `endSession`          |
+| `hooks/useAuthMutations.ts` (create)                                                                                      | `useLogin`, `useGoogleLogin`, `useLinkMoodle`, `useUnlinkMoodle`, `useLogout` |
+| `services/api.auth.ts`, `views/dashboard/hooks/helpers.ts`, `views/dashboard/layout/DashboardHeader.tsx` (modify)         | Use the single key list                                                       |
+| `views/LoginPage.tsx`, `components/auth/LinkMoodleModal.tsx`, `UnlinkMoodleModal.tsx`, `views/DashboardPage.tsx` (modify) | Use the mutations and `endSession`                                            |
 
 ---
 
@@ -48,7 +48,7 @@
 
 **Interfaces:**
 
-- Produces: `USER_SESSION_STORAGE_KEYS: readonly string[]`; `clearUserSessionStorage(): void`; `beginSession(queryClient: QueryClient): void`; `endSession(queryClient: QueryClient): void`.
+- Produces: `USER_SESSION_STORAGE_KEYS: readonly string[]`; `clearUserSessionStorage(): void`; `endSession(queryClient: QueryClient): void`.
 
 - [ ] **Step 1: Collect the key lists**
 
@@ -60,7 +60,6 @@ Run `grep -rn "universe_dashboard_data\|universe_student_profile\|moodleToken" p
 
 1. `clearUserSessionStorage` removes every key of `USER_SESSION_STORAGE_KEYS` and leaves unrelated keys (for example a language preference) alone.
 2. `endSession` clears the storage keys and empties the query cache (seed `opportunityKeys.mine()` and `moodleKeys.dashboard(...)` with data; afterwards `queryClient.getQueryCache().getAll()` is empty).
-3. `beginSession` empties a cache that holds another user's data (regression test for the cross-user leak) and does not remove the new session's own storage keys.
    Run `pnpm --filter @universe/uni-hub test -- api.session`. Expected: FAIL, module not found.
 
 - [ ] **Step 3: Implement**
@@ -86,17 +85,13 @@ export function clearUserSessionStorage(): void {
   }
 }
 
-export function beginSession(queryClient: QueryClient): void {
-  queryClient.clear();
-}
-
 export function endSession(queryClient: QueryClient): void {
   clearUserSessionStorage();
   queryClient.clear();
 }
 ```
 
-`beginSession` is kept as its own function so the login mutations state their intent; if the review finds that it adds nothing beyond `queryClient.clear()`, call `queryClient.clear()` there directly and delete the function and its test case (record the ruling).
+Login does not get its own function: `beginSession` would only proxy `queryClient.clear()`, so the login mutations call `queryClient.clear()` directly (review ruling, KISS). `endSession` stays because it coordinates the storage clearing and the cache clearing.
 
 - [ ] **Step 4: Replace the duplicates**
 
@@ -115,8 +110,8 @@ Delete `clearUserSessionStorage` from `views/dashboard/hooks/helpers.ts` and its
 **Interfaces:**
 
 - Produces: `useLogin()`, `useGoogleLogin()`, `useLinkMoodle()`, `useUnlinkMoodle()`, `useLogout()`; each returns the `UseMutationResult` of its mutation.
-  - `useLogin` variables `{ username, password }`; `onSuccess` calls `beginSession(queryClient)`.
-  - `useGoogleLogin` variables `idToken: string`; `onSuccess` calls `beginSession` only when `response.data.isLinked` or the Moodle integration flag is off (the same condition `LoginPage` uses to mark the user logged in).
+  - `useLogin` variables `{ username, password }`; `onSuccess` calls `queryClient.clear()`.
+  - `useGoogleLogin` variables `idToken: string`; `onSuccess` calls `queryClient.clear()` only when `response.data.isLinked` or the Moodle integration flag is off (the same condition `LoginPage` uses to mark the user logged in).
   - `useLinkMoodle` variables `{ username, password }`; no cache change at the login page (the cache is already empty); in the dashboard modal the existing `onSuccess` callback (PR 6) invalidates `moodleKeys.all`.
   - `useUnlinkMoodle`: no variables; `onSuccess` does nothing to the cache here (PR 6's `onUnlinkSuccess` removes Moodle queries).
   - `useLogout`: `mutationFn: () => authApi.logout()`; `onSettled: () => { endSession(queryClient); window.location.assign('/login'); }` (the page reload that exists today stays, the cache clear makes the SPA paths safe too).
@@ -131,7 +126,7 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: ({ username, password }: Credentials) => authApi.login(username, password),
-    onSuccess: () => beginSession(queryClient),
+    onSuccess: () => queryClient.clear(),
   });
 }
 ```
