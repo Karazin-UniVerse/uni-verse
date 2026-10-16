@@ -22,8 +22,8 @@ describe('Tier 1 - Feature 8: UniHub Package Dependencies & Imports Alignment (@
     expect(pkg.dependencies?.['@universe/ui']).toBe('workspace:*');
   });
 
-  it('F8-3: UniHub DashboardPage should import components from @universe/ui package root', () => {
-    const dashboardPath = 'packages/uni-hub/views/DashboardPage.tsx';
+  it('F8-3: UniHub DashboardShell should import components from @universe/ui package root', () => {
+    const dashboardPath = 'packages/uni-hub/views/dashboard/layout/DashboardShell.tsx';
 
     expect(fileExists(dashboardPath)).toBe(true);
     const content = readWorkspaceFile(dashboardPath);
@@ -42,7 +42,7 @@ describe('Tier 1 - Feature 8: UniHub Package Dependencies & Imports Alignment (@
   });
 
   it('F8-5: packages/uni-hub should not have broken relative imports outside workspace boundaries', () => {
-    const dashboardPath = 'packages/uni-hub/views/DashboardPage.tsx';
+    const dashboardPath = 'packages/uni-hub/views/dashboard/layout/DashboardShell.tsx';
     const content = readWorkspaceFile(dashboardPath);
 
     expect(content).not.toMatch(/\.\.\/\.\.\/\.\.\/packages/);
