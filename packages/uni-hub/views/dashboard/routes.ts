@@ -28,6 +28,9 @@ export function getNavKeyFromPathname(pathname: string): NavKey {
 
 export const getStudyHref = (view: StudyView): string => `${ROUTE.Study}?view=${view}`;
 
+export const getNavHref = (navKey: NavKey, studyView?: StudyView): string =>
+  studyView ? getStudyHref(studyView) : NAV_KEY_ROUTE[navKey];
+
 export const getCourseHref = (courseId: number): string => `${ROUTE.Study}/courses/${courseId}`;
 
 export const getAssignmentHref = (assignmentId: number): string =>

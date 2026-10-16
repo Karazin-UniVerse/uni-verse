@@ -3,6 +3,7 @@ import { NAV_KEY, STUDY_VIEW } from './constants';
 import {
   getAssignmentHref,
   getCourseHref,
+  getNavHref,
   getNavKeyFromPathname,
   getOpportunityHref,
   getStudyHref,
@@ -45,6 +46,17 @@ describe('dashboard routes', () => {
         [NAV_KEY.Opportunities]: ROUTE.Opportunities,
         [NAV_KEY.ConnectMoodle]: ROUTE.ConnectMoodle,
       });
+    });
+  });
+
+  describe('getNavHref', () => {
+    it('returns the route of the nav key', () => {
+      expect(getNavHref(NAV_KEY.Schedule)).toBe('/schedule');
+      expect(getNavHref(NAV_KEY.Study)).toBe('/study');
+    });
+
+    it('adds the study view when one is given', () => {
+      expect(getNavHref(NAV_KEY.Study, STUDY_VIEW.Grades)).toBe('/study?view=grades');
     });
   });
 

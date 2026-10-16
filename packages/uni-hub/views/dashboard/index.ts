@@ -5,6 +5,7 @@ export * from './routes';
 export * from './DashboardContext';
 export * from './layout/DashboardSidebar';
 export * from './layout/DashboardHeader';
+export * from './layout/DashboardShell';
 export * from './layout/NotificationsDropdown';
 export * from './layout/UserDropdown';
 export * from './tabs/OverviewTab';
