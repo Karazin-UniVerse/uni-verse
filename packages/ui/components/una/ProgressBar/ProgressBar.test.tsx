@@ -1,39 +1,45 @@
 import { describe, it, expect } from 'vitest';
-import React from 'react';
-import { renderToString } from 'react-dom/server';
+import { render, screen } from '@testing-library/react';
 import { ProgressBar } from './ProgressBar';
 
 describe('UNA ProgressBar Component', () => {
   it('should render progressbar element with role="progressbar" and accessibility labels', () => {
-    const html = renderToString(<ProgressBar value={75} max={100} />);
+    render(<ProgressBar value={75} max={100} />);
 
-    expect(html).toContain('role="progressbar"');
-    expect(html).toContain('aria-valuenow="75"');
-    expect(html).toContain('aria-valuemin="0"');
-    expect(html).toContain('aria-valuemax="100"');
-    expect(html).toContain('aria-valuetext="75%"');
+    const progressbar = screen.getByRole('progressbar');
+
+    expect(progressbar).toBeInTheDocument();
+    expect(progressbar).toHaveAttribute('aria-valuenow', '75');
+    expect(progressbar).toHaveAttribute('aria-valuemin', '0');
+    expect(progressbar).toHaveAttribute('aria-valuemax', '100');
+    expect(progressbar).toHaveAttribute('aria-valuetext', '75%');
   });
 
   it('should clamp values safely to [0, max]', () => {
-    const overHtml = renderToString(<ProgressBar value={150} max={100} />);
-    const underHtml = renderToString(<ProgressBar value={-20} max={100} />);
+    const { rerender } = render(<ProgressBar value={150} max={100} />);
 
-    expect(overHtml).toContain('aria-valuenow="100"');
-    expect(underHtml).toContain('aria-valuenow="0"');
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '100');
+
+    rerender(<ProgressBar value={-20} max={100} />);
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
   });
 
   it('should support custom ariaLabel and custom className', () => {
-    const html = renderToString(
+    render(
       <ProgressBar value={50} ariaLabel="Успішність студента" className="academic-progress" />,
     );
 
-    expect(html).toContain('aria-label="Успішність студента"');
-    expect(html).toContain('academic-progress');
+    const progressbar = screen.getByRole('progressbar', { name: 'Успішність студента' });
+
+    expect(progressbar).toBeInTheDocument();
+    expect(progressbar).toHaveClass('academic-progress');
   });
 
   it('should render tone class on fill element', () => {
-    const html = renderToString(<ProgressBar value={60} tone="success" />);
+    const { container } = render(<ProgressBar value={60} tone="success" />);
 
-    expect(html).toContain('success');
+    const fillElement = container.querySelector('[class*="success"]');
+
+    expect(fillElement).toBeInTheDocument();
   });
 });
