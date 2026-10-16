@@ -8,7 +8,6 @@ import {
   stripHtml,
   parseGradeScore,
   getExamScoreDisplay,
-  isNavKey,
   resolveNavKey,
   toNotificationListItem,
   isStudyView,
@@ -82,28 +81,6 @@ describe('dashboard utils', () => {
 
     it('returns string score for exam', () => {
       expect(getExamScoreDisplay(38, 'exam')).toBe('38');
-    });
-  });
-
-  describe('isNavKey', () => {
-    it('returns true for canonical navigation keys', () => {
-      expect(isNavKey('overview')).toBe(true);
-      expect(isNavKey('study')).toBe(true);
-      expect(isNavKey('schedule')).toBe(true);
-      expect(isNavKey('connectMoodle')).toBe(true);
-      expect(isNavKey('opportunities')).toBe(true);
-    });
-
-    it('returns false for unknown or invalid keys', () => {
-      expect(isNavKey('unknown')).toBe(false);
-      expect(isNavKey('')).toBe(false);
-      expect(isNavKey('Overview')).toBe(false);
-    });
-
-    it('returns false for keys merged into the study tab', () => {
-      expect(isNavKey('courses')).toBe(false);
-      expect(isNavKey('grades')).toBe(false);
-      expect(isNavKey('assignments')).toBe(false);
     });
   });
 

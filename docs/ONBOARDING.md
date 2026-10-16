@@ -69,7 +69,18 @@ The client-side architecture is organized into clear domain directories. Pages p
 
 ### 1. `app` (Routing)
 
-Next.js App Router: `app/page.tsx` (dashboard entry), `app/login`, `app/courses/[courseId]/contents`, plus `layout.tsx` and `providers.tsx`. Route files stay thin and render the corresponding `views`.
+Next.js App Router: `app/login`, the `app/(dashboard)/` route group, plus `layout.tsx` and `providers.tsx`. `app/page.tsx` redirects to `/wall`. The group layout mounts `DashboardProvider` (data, filters, Moodle link state) and `DashboardShell` (sidebar, header, bottom nav), so they stay mounted while you navigate. Route files stay thin and render the corresponding `views`.
+
+| URL                                 | Content                                                |
+| ----------------------------------- | ------------------------------------------------------ |
+| `/wall`                             | Overview                                               |
+| `/study`                            | Subjects / Grades / Assignments (local switch, no URL) |
+| `/study/courses/{courseId}`         | Course contents                                        |
+| `/study/assignments/{assignmentId}` | Assignment details and submission                      |
+| `/schedule`                         | Schedule                                               |
+| `/opportunities`                    | Opportunities catalog and sub-tabs (local switch)      |
+| `/opportunities/{opportunityId}`    | Opportunity details                                    |
+| `/connect-moodle`                   | Moodle linking prompt                                  |
 
 ### 2. `services` (API Client)
 
@@ -84,7 +95,7 @@ A `fetch`-based client for backend communication. `services/api.ts` is a barrel 
 
 ### 3. `views` (Pages)
 
-- **`DashboardPage`** with `views/dashboard/`: Main student portal. Tabs (`OverviewTab`, `AssignmentsTab`, `GradesTab`, `CoursesTab`), sections such as `StudentCard`, `StatCardGrid`, `UpcomingEventsList`, and the `useDashboardData` hook that aggregates schedule, grades, assignments and metrics.
+- **`views/dashboard/`**: Main student portal. Page views (`OverviewTab`, `StudyPage` with `AssignmentsTab`, `GradesTab`, `CoursesTab`, `CourseContents`), sections such as `StudentCard`, `StatCardGrid`, `UpcomingEventsList`, and the `useDashboardData` hook that aggregates schedule, grades, assignments and metrics.
 - **`CourseContents`**: Course sections and learning materials viewer.
 - **`LoginPage`**: User login and authentication view.
 
@@ -92,7 +103,7 @@ A `fetch`-based client for backend communication. `services/api.ts` is a barrel 
 
 Components with business logic, grouped by domain:
 
-- **`assignments`**: `AssignmentCard`, `AssignmentModal` (inspect details, submit files/text), `AssignmentsDonut` (chart), `AssignmentsEmptyState`, and the `useAssignmentStatuses` hook.
+- **`assignments`**: `AssignmentCard`, `AssignmentDetail` (assignment page: details, submit files/text), `AssignmentsDonut` (chart), `AssignmentsEmptyState`, and the `useAssignmentStatuses` hook.
 - **`auth`**: `AuthField`, `GoogleLoginButton`, `LinkMoodleModal`.
 - **`dashboard`**: `DashboardSkeleton`, `DeanContactModal` (`DeanContactInfo`, `DeanTopicChips`), `QuickActions`, `RecentGradesFeed`, `MobileBottomNav`.
 - **`gamification`**: `GradeSimulator` ("What-if?" simulator), `BadgeSystem`, `StreakBadge`, `ExamTargetsGrid`, `AdmissionBanner`, `LiveCountdown`, `ContextualGreeting`.
