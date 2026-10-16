@@ -10,8 +10,8 @@ import type {
   UpdateOpportunityRequest,
 } from '@core/types/opportunities';
 import { OPPORTUNITY_PAYMENT_TYPE } from '@core/constants/opportunities';
-import { invalidateOpportunities } from './cache';
-import type { CreateOpportunityFormData } from './types';
+import { invalidateOpportunities } from '../cache';
+import type { CreateOpportunityFormData } from '../types';
 
 const INITIAL_FORM_DATA: CreateOpportunityFormData = {
   title: '',

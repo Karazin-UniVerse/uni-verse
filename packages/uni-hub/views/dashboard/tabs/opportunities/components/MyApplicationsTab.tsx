@@ -19,7 +19,7 @@ import type { OpportunityApplication } from '@core/types/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { ApplicationStatusBadge } from './ApplicationStatusBadge';
 import { TabStateWrapper } from './TabStateWrapper';
-import styles from '../OpportunitiesTab.module.scss';
+import styles from '../../OpportunitiesTab.module.scss';
 
 export interface MyApplicationsTabProps {
   loading: boolean;

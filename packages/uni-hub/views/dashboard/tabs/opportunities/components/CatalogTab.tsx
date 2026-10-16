@@ -6,8 +6,8 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { TabStateWrapper } from './TabStateWrapper';
 import type { Opportunity } from '@core/types/opportunities';
 import type { OpportunityPaymentType } from '@core/constants/opportunities';
-import { OpportunityCard } from '../OpportunityCard';
-import styles from '../OpportunitiesTab.module.scss';
+import { OpportunityCard } from '../../OpportunityCard';
+import styles from '../../OpportunitiesTab.module.scss';
 
 export interface CatalogTabProps {
   loading: boolean;

@@ -17,7 +17,7 @@ import type { Opportunity } from '@core/types/opportunities';
 import type { OpportunityModerateAction } from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { TabStateWrapper } from './TabStateWrapper';
-import styles from '../OpportunitiesTab.module.scss';
+import styles from '../../OpportunitiesTab.module.scss';
 
 export interface ModerationQueueTabProps {
   loading: boolean;

@@ -6,7 +6,7 @@ import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { ApplyOpportunityRequest, Opportunity } from '@core/types/opportunities';
 import type { CurrentUser } from '@uni-hub/hooks/useCurrentUser';
-import { invalidateOpportunities } from './cache';
+import { invalidateOpportunities } from '../cache';
 
 interface ApplicationSubmission {
   opportunityId: string;

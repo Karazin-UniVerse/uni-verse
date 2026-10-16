@@ -6,7 +6,7 @@ import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { Opportunity } from '@core/types/opportunities';
 import { OPPORTUNITY_STATUS, type OpportunityLifecycle } from '@core/constants/opportunities';
-import { invalidateOpportunities } from './cache';
+import { invalidateOpportunities } from '../cache';
 
 interface LifecycleChange {
   id: string;

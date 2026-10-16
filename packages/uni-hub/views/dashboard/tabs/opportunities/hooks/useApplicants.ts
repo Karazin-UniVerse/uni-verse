@@ -6,9 +6,9 @@ import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import type { OpportunityAppStatus } from '@core/constants/opportunities';
-import { invalidateOpportunities } from './cache';
-import { hasLoadFailed, loadApplicants } from './queries';
-import { opportunityKeys } from './queryKeys';
+import { invalidateOpportunities } from '../cache';
+import { hasLoadFailed, loadApplicants } from '../queries';
+import { opportunityKeys } from '../queryKeys';
 
 interface ApplicationStatusChange {
   applicationId: string;

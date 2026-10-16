@@ -1,6 +1,6 @@
 import React from 'react';
 import { Spinner, Empty } from '@una';
-import styles from '../OpportunitiesTab.module.scss';
+import styles from '../../OpportunitiesTab.module.scss';
 import { LoadErrorState } from './LoadErrorState';
 
 export interface TabStateWrapperProps {

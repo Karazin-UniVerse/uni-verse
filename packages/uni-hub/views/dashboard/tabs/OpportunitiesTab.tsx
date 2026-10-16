@@ -18,14 +18,14 @@ import {
   ApplyOpportunityModal,
   ApplicantsModal,
   ModerationRejectModal,
+  useApplicantActions,
+  useApplicants,
+  useCreateOpportunity,
+  useModeration,
+  useOpportunitiesData,
+  useOpportunityDetail,
   OPPORTUNITY_SUB_TAB,
 } from './opportunities';
-import { useApplicantActions } from './opportunities/useApplicantActions';
-import { useApplicants } from './opportunities/useApplicants';
-import { useCreateOpportunity } from './opportunities/useCreateOpportunity';
-import { useModeration } from './opportunities/useModeration';
-import { useOpportunitiesData } from './opportunities/useOpportunitiesData';
-import { useOpportunityDetail } from './opportunities/useOpportunityDetail';
 
 export const OpportunitiesTab: React.FC = () => {
   const { formatMessage } = useLanguage();

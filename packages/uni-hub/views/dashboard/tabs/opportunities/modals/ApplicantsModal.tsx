@@ -6,8 +6,8 @@ import { Mail, MessageSquare, Calendar, CheckCircle2, Clock, XCircle } from 'luc
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { OPPORTUNITY_APP_STATUS, type OpportunityAppStatus } from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { ApplicationStatusBadge } from '../ApplicationStatusBadge';
-import { LoadErrorState } from '../LoadErrorState';
+import { ApplicationStatusBadge } from '../components/ApplicationStatusBadge';
+import { LoadErrorState } from '../components/LoadErrorState';
 import styles from '../../OpportunitiesTab.module.scss';
 
 export interface ApplicantsModalProps {

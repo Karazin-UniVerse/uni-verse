@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button, Empty } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import styles from '../OpportunitiesTab.module.scss';
+import styles from '../../OpportunitiesTab.module.scss';
 
 export interface LoadErrorStateProps {
   onRetry: () => void;

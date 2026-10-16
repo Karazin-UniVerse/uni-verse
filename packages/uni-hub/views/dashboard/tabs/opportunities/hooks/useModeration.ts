@@ -10,9 +10,9 @@ import {
   isLastPendingModeration,
   removeFromModerationQueue,
   restoreModerationQueue,
-} from './cache';
-import { moderateMutationKey } from './queryKeys';
-import type { RejectModalState } from './types';
+} from '../cache';
+import { moderateMutationKey } from '../queryKeys';
+import type { RejectModalState } from '../types';
 
 const CLOSED_REJECT_MODAL: RejectModalState = { open: false, id: null, comment: '' };
 

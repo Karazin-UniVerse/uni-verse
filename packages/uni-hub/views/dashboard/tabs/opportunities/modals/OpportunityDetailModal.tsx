@@ -5,7 +5,7 @@ import { OpportunityDetailModal as OpportunityDetailModalUI } from '@ui';
 import type { Opportunity } from '@core/types/opportunities';
 import type { OpportunityLifecycle } from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { OpportunityStatusBadge } from '../OpportunityStatusBadge';
+import { OpportunityStatusBadge } from '../components/OpportunityStatusBadge';
 
 export interface OpportunityDetailModalProps {
   open: boolean;

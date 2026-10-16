@@ -3,10 +3,10 @@
 import React from 'react';
 import type { Opportunity } from '@core/types/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { OpportunityCard } from '../OpportunityCard';
+import { OpportunityCard } from '../../OpportunityCard';
 import { TabStateWrapper } from './TabStateWrapper';
 import { OpportunityStatusBadge } from './OpportunityStatusBadge';
-import styles from '../OpportunitiesTab.module.scss';
+import styles from '../../OpportunitiesTab.module.scss';
 
 export interface MyOpportunitiesTabProps {
   loading: boolean;
