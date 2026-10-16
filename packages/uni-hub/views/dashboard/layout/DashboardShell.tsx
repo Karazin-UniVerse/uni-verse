@@ -48,9 +48,6 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
   const setSoundEnabled = useGamificationStore((state) => state.setSoundEnabled);
   const { formatMessage } = useLanguage();
 
-  // Login and logout write the flag outside React, so read it again every time the dashboard mounts.
-  useState(() => useMoodleStore.getState().syncLinkedFromStorage());
-
   const dashboard = useDashboardData();
   const isMoodleLinked = useMoodleStore((state) => state.isMoodleLinked);
   const linkModalMode = useMoodleStore((state) => state.linkModalMode);
@@ -65,13 +62,14 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useDashboardErrorHandling();
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    useMoodleStore.getState().syncLinkedFromStorage();
+
+    return () => {
       useMoodleStore.setState(useMoodleStore.getInitialState());
       useOpportunitiesStore.setState(useOpportunitiesStore.getInitialState());
-    },
-    [],
-  );
+    };
+  }, []);
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
