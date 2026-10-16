@@ -1,12 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
+import { renderHook } from '@testing-library/react';
 import { shouldTriggerClickOutside, useClickOutside } from '../useClickOutside';
 
 describe('useClickOutside & shouldTriggerClickOutside', () => {
-  it('exports useClickOutside function', () => {
+  it('should export useClickOutside function', () => {
     expect(typeof useClickOutside).toBe('function');
   });
 
-  it('returns false when target or eventTarget is missing', () => {
+  it('should return false when target or eventTarget is missing', () => {
     const node = {} as Node;
 
     expect(shouldTriggerClickOutside(null, node)).toBe(false);
@@ -14,7 +15,7 @@ describe('useClickOutside & shouldTriggerClickOutside', () => {
     expect(shouldTriggerClickOutside(null, null)).toBe(false);
   });
 
-  it('returns false when target contains eventTarget', () => {
+  it('should return false when target contains eventTarget', () => {
     const child = {} as Node;
     const parent = {
       contains: vi.fn((n: unknown) => n === child),
@@ -24,7 +25,7 @@ describe('useClickOutside & shouldTriggerClickOutside', () => {
     expect(parent.contains).toHaveBeenCalledWith(child);
   });
 
-  it('returns false when ignoreElement contains eventTarget', () => {
+  it('should return false when ignoreElement contains eventTarget', () => {
     const eventTarget = {} as Node;
     const target = {
       contains: vi.fn(() => false),
@@ -36,7 +37,7 @@ describe('useClickOutside & shouldTriggerClickOutside', () => {
     expect(shouldTriggerClickOutside(target, eventTarget, ignoreElement)).toBe(false);
   });
 
-  it('returns true when eventTarget is outside target and ignoreElement', () => {
+  it('should return true when eventTarget is outside target and ignoreElement', () => {
     const outsideNode = {} as Node;
     const target = {
       contains: vi.fn(() => false),
@@ -47,5 +48,27 @@ describe('useClickOutside & shouldTriggerClickOutside', () => {
 
     expect(shouldTriggerClickOutside(target, outsideNode, ignoreElement)).toBe(true);
     expect(shouldTriggerClickOutside(target, outsideNode)).toBe(true);
+  });
+
+  it('should trigger handler on mousedown outside target element', () => {
+    const targetEl = document.createElement('div');
+    const outsideEl = document.createElement('button');
+
+    document.body.appendChild(targetEl);
+    document.body.appendChild(outsideEl);
+
+    const handler = vi.fn();
+    const ref = { current: targetEl };
+
+    renderHook(() => useClickOutside(ref, handler));
+
+    outsideEl.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    targetEl.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    document.body.removeChild(targetEl);
+    document.body.removeChild(outsideEl);
   });
 });
