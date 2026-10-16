@@ -33,8 +33,11 @@ export const getNavHref = (navKey: NavKey, studyView?: StudyView): string =>
 
 export const getCourseHref = (courseId: number): string => `${ROUTE.Study}/courses/${courseId}`;
 
-export const getAssignmentHref = (assignmentId: number, courseId?: number): string =>
-  `${ROUTE.Study}/assignments/${assignmentId}${courseId === undefined ? '' : `?course=${courseId}`}`;
+export const getAssignmentHref = (assignmentId: number, courseId?: number): string => {
+  const href = `${ROUTE.Study}/assignments/${assignmentId}`;
+
+  return courseId === undefined ? href : `${href}?course=${courseId}`;
+};
 
 export const getOpportunityHref = (opportunityId: string): string =>
   `${ROUTE.Opportunities}/${opportunityId}`;

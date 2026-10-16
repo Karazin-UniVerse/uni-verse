@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { isLoggedIn } from '@core/utils/auth';
@@ -27,62 +27,120 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [hideCompleted, setHideCompleted] = useState(false);
 
-  const moodleLink = useMoodleLink({
-    onLinkSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: moodleKeys.all });
+  const onLinkSuccess = useCallback((): void => {
+    void queryClient.invalidateQueries({ queryKey: moodleKeys.all });
 
-      if (pathname === ROUTE.ConnectMoodle) {
-        router.push(ROUTE.Wall);
-      }
-    },
-    onUnlinkSuccess: () => {
-      queryClient.removeQueries({ queryKey: moodleKeys.all });
-    },
-  });
+    if (pathname === ROUTE.ConnectMoodle) {
+      router.push(ROUTE.Wall);
+    }
+  }, [queryClient, pathname, router]);
+
+  const onUnlinkSuccess = useCallback((): void => {
+    queryClient.removeQueries({ queryKey: moodleKeys.all });
+  }, [queryClient]);
+
+  const {
+    isMoodleLinked,
+    linkModalMode,
+    isLinkModalOpen,
+    isUnlinkModalOpen,
+    openLinkModal,
+    closeLinkModal,
+    openUnlinkModal,
+    closeUnlinkModal,
+    setIsMoodleLinked,
+    handleLinkSuccess,
+    handleUnlinkSuccess,
+  } = useMoodleLink({ onLinkSuccess, onUnlinkSuccess });
 
   const dashboard = useDashboardData({
     sortOrder,
     dateFrom,
     dateTo,
     hideCompleted,
-    enabled: features.isMoodleIntegrationEnabled && moodleLink.isMoodleLinked && isLoggedIn(),
+    enabled: features.isMoodleIntegrationEnabled && isMoodleLinked && isLoggedIn(),
     onUnauthorized: (): void => {
       endSession(queryClient);
       router.push('/login');
     },
   });
 
-  const { data } = dashboard;
+  const {
+    data,
+    loading,
+    isOfflineData,
+    lastSyncTime,
+    studentProfile,
+    hasLoadedOnce,
+    refresh: refreshDashboard,
+  } = dashboard;
   const hasCachedData =
     data.courses.length > 0 ||
     data.grades.length > 0 ||
     data.assignments.length > 0 ||
     data.events.length > 0 ||
-    dashboard.hasLoadedOnce;
+    hasLoadedOnce;
+  const activeStudentProfile = studentProfile ?? fallbackStudentProfile;
 
-  const refresh = (): void => {
+  const refresh = useCallback((): void => {
     void invalidateOpportunities(queryClient);
-    void dashboard.refresh();
-  };
+    void refreshDashboard();
+  }, [queryClient, refreshDashboard]);
 
-  const value: DashboardContextValue = {
-    ...moodleLink,
-    data,
-    loading: dashboard.loading,
-    isOfflineData: dashboard.isOfflineData,
-    lastSyncTime: dashboard.lastSyncTime,
-    hasCachedData,
-    activeStudentProfile: dashboard.studentProfile ?? fallbackStudentProfile,
-    refresh,
-    dateFrom,
-    dateTo,
-    sortOrder,
-    hideCompleted,
-    setDateFrom,
-    setDateTo,
-    setSortOrder,
-    setHideCompleted,
-  };
+  const value = useMemo<DashboardContextValue>(
+    () => ({
+      data,
+      loading,
+      isOfflineData,
+      lastSyncTime,
+      hasCachedData,
+      activeStudentProfile,
+      refresh,
+      dateFrom,
+      dateTo,
+      sortOrder,
+      hideCompleted,
+      setDateFrom,
+      setDateTo,
+      setSortOrder,
+      setHideCompleted,
+      isMoodleLinked,
+      setIsMoodleLinked,
+      linkModalMode,
+      isLinkModalOpen,
+      isUnlinkModalOpen,
+      openLinkModal,
+      closeLinkModal,
+      openUnlinkModal,
+      closeUnlinkModal,
+      handleLinkSuccess,
+      handleUnlinkSuccess,
+    }),
+    [
+      data,
+      loading,
+      isOfflineData,
+      lastSyncTime,
+      hasCachedData,
+      activeStudentProfile,
+      refresh,
+      dateFrom,
+      dateTo,
+      sortOrder,
+      hideCompleted,
+      isMoodleLinked,
+      setIsMoodleLinked,
+      linkModalMode,
+      isLinkModalOpen,
+      isUnlinkModalOpen,
+      openLinkModal,
+      closeLinkModal,
+      openUnlinkModal,
+      closeUnlinkModal,
+      handleLinkSuccess,
+      handleUnlinkSuccess,
+    ],
+  );
 
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;
 };
