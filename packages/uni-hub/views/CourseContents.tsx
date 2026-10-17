@@ -18,12 +18,8 @@ import { moodleApi } from '@uni-hub/services/api';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
-import {
-  COURSE_MODULE_NAMES,
-  type CourseSection,
-  type CourseModule,
-  type CourseModuleName,
-} from '@uni-hub/types';
+import type { CourseSection, CourseModule } from '@core/types/moodle';
+import { COURSE_MODULE_NAMES, type CourseModuleName } from '@core/constants/moodle';
 import { AssignmentModal } from '@uni-hub/components/assignments';
 import styles from './CourseContents.module.scss';
 

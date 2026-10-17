@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { Grade } from '@uni-hub/types';
+import type { Grade } from '@core/types/moodle';
 import {
   getValidGrades,
   getGradeBarColor,

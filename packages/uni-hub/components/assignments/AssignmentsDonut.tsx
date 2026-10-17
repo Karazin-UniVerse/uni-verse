@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { PieChart } from 'lucide-react';
-import type { Assignment, Grade } from '@uni-hub/types';
+import type { Assignment, Grade } from '@core/types/moodle';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { getGradeCourseName, getValidGrades } from '@uni-hub/utils/grades';
 import { Chart } from '@una';

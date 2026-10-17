@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
+  assembleDashboardData,
   parseDateFilterSeconds,
   resolveGradesResponse,
   buildAssignmentParams,
@@ -44,6 +45,21 @@ beforeEach(() => {
 
   vi.stubGlobal('localStorage', storageMock);
   vi.stubGlobal('window', { localStorage: storageMock });
+});
+
+describe('assembleDashboardData', () => {
+  it('reads the unread notification count from the unreadcount field the backend sends', () => {
+    const dashboardData = assembleDashboardData([
+      { data: [] },
+      { data: { grades: [] } },
+      { data: [] },
+      { data: [] },
+      { data: { notifications: [], unreadcount: 3 } },
+      { data: { total: 0 } },
+    ]);
+
+    expect(dashboardData.unreadCount).toBe(3);
+  });
 });
 
 describe('parseDateFilterSeconds', () => {

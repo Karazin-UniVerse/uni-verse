@@ -1,7 +1,7 @@
 import { moodleApi } from '@uni-hub/services/api';
 import { asList } from '@uni-hub/utils/arrays';
 import { isBrowser } from '@uni-hub/utils/browser';
-import type { Grade, Assignment } from '@uni-hub/types';
+import type { Grade, Assignment } from '@core/types/moodle';
 import type { StudentProfile } from '@core/types';
 import type { DashboardData } from '../types';
 import { fallbackStudentProfile } from '../constants';
@@ -77,7 +77,7 @@ export function assembleDashboardData([
     assignments: asList(assignmentsRes?.data),
     events: asList(eventsRes?.data),
     notifications: asList(notificationsRes?.data?.notifications),
-    unreadCount: notificationsRes?.data?.unreadCount || 0,
+    unreadCount: notificationsRes?.data?.unreadcount || 0,
     statistics: statsRes?.data || null,
   };
 }

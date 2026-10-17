@@ -2,7 +2,7 @@ import { CONTROL_TYPES, TRADITIONAL_GRADES } from '@core/constants/grades';
 import type { ControlType } from '@core/utils/grades';
 import type { NotificationListItem } from '@ui';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
-import type { Notification } from '@uni-hub/types';
+import type { Notification } from '@core/types/moodle';
 import { getGradeRawValue } from '@uni-hub/utils/grades';
 import { NAV_KEYS, type NavKey } from './constants';
 
@@ -87,7 +87,10 @@ export function toNotificationListItem(
   return {
     id: notification.id,
     title: notification.subject,
-    message: truncateText(stripHtml(notification.message), NOTIFICATION_MESSAGE_MAX_LENGTH),
+    message: truncateText(
+      stripHtml(notification.fullmessage ?? ''),
+      NOTIFICATION_MESSAGE_MAX_LENGTH,
+    ),
     time: createdAt.toLocaleString(localeTag),
     dateTime: createdAt.toISOString(),
     isRead: notification.read,

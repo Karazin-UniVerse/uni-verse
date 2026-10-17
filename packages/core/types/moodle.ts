@@ -1,10 +1,12 @@
-import type { ControlType } from '@core/utils/grades';
+import type { ControlType } from '../constants/grades.ts';
+import type { CourseModuleName } from '../constants/moodle.ts';
 
-export interface Course {
+export interface MoodleCourse {
   id: number;
   fullname: string;
-  shortname: string;
-  summary: string;
+  shortname?: string;
+  summary?: string;
+  progress?: number | null;
   year?: number | null;
   semester?: number | null;
 }
@@ -12,13 +14,11 @@ export interface Course {
 export type GradeValue = string | number | null;
 
 export interface Grade {
+  grade: string;
   courseId?: number;
   courseName?: string;
-  course_name?: string;
-  grade: string;
   rawGrade?: GradeValue;
-  rawgrade?: GradeValue;
-  year?: GradeValue;
+  year?: string | null;
   semester?: number | null;
   controlType?: ControlType;
   currentScore?: number | null;
@@ -33,7 +33,7 @@ export interface Assignment {
   name: string;
   duedate: number;
   description: string;
-  year?: number | null;
+  year?: string | null;
   semester?: number | null;
   submissionStatus?: string;
   grade?: string | null;
@@ -42,51 +42,45 @@ export interface Assignment {
   isLate?: boolean;
 }
 
+export interface SubmissionStatus {
+  status: string;
+  grade?: string;
+  submittedAt?: number;
+  isLate?: boolean;
+}
+
+export interface UploadedFile {
+  itemid?: number;
+}
+
 export interface MoodleEvent {
   id: number;
   name: string;
-  description: string;
-  courseName: string;
   timestart: number;
-  formattedtime: string;
   eventtype: string;
+  description?: string;
+  courseName?: string;
+  timeduration?: number;
+  formattedtime?: string;
   url?: string;
 }
 
 export interface Notification {
   id: number;
   subject: string;
-  message: string;
   timecreated: number;
   read: boolean;
+  fullmessage?: string;
 }
 
 export interface NotificationsResponse {
   notifications: Notification[];
-  unreadCount: number;
-}
-
-export interface AuthResponse {
-  access_token?: string;
-  refresh_token?: string;
-  token?: string;
-  userID?: string;
+  unreadcount: number;
 }
 
 export interface CourseStatistics {
   total: number;
 }
-
-export const COURSE_MODULE_NAMES = {
-  RESOURCE: 'resource',
-  FOLDER: 'folder',
-  ASSIGN: 'assign',
-  QUIZ: 'quiz',
-  FORUM: 'forum',
-} as const;
-
-export type CourseModuleName =
-  (typeof COURSE_MODULE_NAMES)[keyof typeof COURSE_MODULE_NAMES] | (string & {});
 
 export interface CourseModuleFile {
   filename?: string;
@@ -99,9 +93,9 @@ export interface CourseModuleFile {
 
 export interface CourseModule {
   id: number;
-  url?: string;
   name: string;
   modname: CourseModuleName;
+  url?: string;
   description?: string;
   instance?: number;
   contents?: CourseModuleFile[];

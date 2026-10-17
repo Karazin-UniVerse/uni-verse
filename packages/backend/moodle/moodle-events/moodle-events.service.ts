@@ -31,6 +31,8 @@ export class MoodleEventsService {
         timeduration: event.timeduration,
         eventtype: event.eventtype,
         courseName: event.course ? event.course.fullname : undefined,
+        url: event.url,
+        formattedtime: event.formattedtime,
       }));
     } catch (error) {
       this.logger.error(`Failed to fetch upcoming events: ${error}`);
