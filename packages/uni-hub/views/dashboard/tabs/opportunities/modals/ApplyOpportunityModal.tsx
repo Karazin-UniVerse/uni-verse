@@ -7,13 +7,13 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 export interface ApplyOpportunityModalProps {
   open: boolean;
   onClose: () => void;
-  opportunityTitle?: string;
   motivation: string;
   onMotivationChange: (val: string) => void;
   contactInfo: string;
   onContactInfoChange: (val: string) => void;
   onSubmit: (e: React.SyntheticEvent<HTMLFormElement>) => void;
   submitting: boolean;
+  opportunityTitle?: string;
 }
 
 export const ApplyOpportunityModal: React.FC<ApplyOpportunityModalProps> = ({

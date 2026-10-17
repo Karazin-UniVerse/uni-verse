@@ -9,6 +9,7 @@ export type OpportunityDetailModalProps = {
   open: boolean;
   onClose: () => void;
   title: string;
+  closeText: string;
   paymentTagText?: string;
   paymentTone?: 'success' | 'neutral';
   statusBadge?: ReactNode;
@@ -36,7 +37,6 @@ export type OpportunityDetailModalProps = {
   lifecycleOptions?: OpportunityLifecycleOption[];
   onLifecycleChange?: (state: string) => void;
   // Footer
-  closeText: string;
   canApply?: boolean;
   applyText?: string;
   onOpenApply?: () => void;
