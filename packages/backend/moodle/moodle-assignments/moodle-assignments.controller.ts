@@ -85,7 +85,7 @@ export class MoodleAssignmentsController {
   private filterAndSortAssignments(
     assignments: AssignmentItemDto[],
     query: GetAssignmentsQueryDto,
-  ) {
+  ): AssignmentItemDto[] {
     let result = assignments;
 
     if (query.year) {

@@ -26,11 +26,11 @@ import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export type AssignmentCardProps = {
   assignment: Assignment;
-  status?: string;
-  grade?: string;
   nowSec: number;
   soundEnabled: boolean;
   onOpenAssignment: (assignment: Assignment) => void;
+  status?: string;
+  grade?: string;
 };
 
 function renderStatusIcon(tone: AssignmentStatusInfo['tone']) {
