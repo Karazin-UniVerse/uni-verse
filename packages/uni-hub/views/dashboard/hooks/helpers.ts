@@ -1,12 +1,20 @@
-import { moodleApi } from '@uni-hub/services/api';
+import type { PlatformNotification } from '@uni-hub/services/api.notifications';
 import { asList } from '@uni-hub/utils/arrays';
 import { isBrowser } from '@uni-hub/utils/browser';
-import type { Grade, Assignment } from '@uni-hub/types';
+import type {
+  Course,
+  Grade,
+  Assignment,
+  MoodleEvent,
+  Notification,
+  NotificationsResponse,
+  CourseStatistics,
+} from '@uni-hub/types';
 import type { StudentProfile } from '@core/types';
 import type { DashboardData } from '../types';
 import { fallbackStudentProfile } from '../constants';
 
-export type GradesApiResponse = Awaited<ReturnType<typeof moodleApi.getGrades>>;
+export type GradesApiResponse = { data?: { grades?: Grade[] | null } | null };
 
 export function parseDateFilterSeconds(dateString?: string): number | null {
   if (!dateString) {
@@ -55,29 +63,73 @@ export function resolveGradesResponse(gradesResponse?: GradesApiResponse | null)
 }
 
 export type MoodleApiResponseTuple = [
-  Awaited<ReturnType<typeof moodleApi.getCourses>>,
-  Awaited<ReturnType<typeof moodleApi.getGrades>>,
-  Awaited<ReturnType<typeof moodleApi.getAssignments>>,
-  Awaited<ReturnType<typeof moodleApi.getEvents>>,
-  Awaited<ReturnType<typeof moodleApi.getNotifications>>,
-  Awaited<ReturnType<typeof moodleApi.getStatistics>>,
+  { data?: Course[] | null },
+  GradesApiResponse,
+  { data?: Assignment[] | null },
+  { data?: MoodleEvent[] | null },
+  { data?: NotificationsResponse | null },
+  { data?: CourseStatistics | null },
 ];
 
-export function assembleDashboardData([
-  coursesRes,
-  gradesRes,
-  assignmentsRes,
-  eventsRes,
-  notificationsRes,
-  statsRes,
-]: MoodleApiResponseTuple): DashboardData {
+export function mapPlatformNotification(item: PlatformNotification): Notification {
+  return {
+    id: item.id,
+    subject: item.title,
+    message: item.message,
+    timecreated: Math.floor(new Date(item.createdAt).getTime() / 1000),
+    read: item.isRead,
+  };
+}
+
+export function applyPlatformNotifications(
+  previousData: DashboardData,
+  platformNotifications?: PlatformNotification[] | null,
+): DashboardData {
+  const platformItems = asList(platformNotifications);
+  const keptMoodle = isMoodleUnlinked()
+    ? []
+    : previousData.notifications.filter((item) => typeof item.id === 'number');
+  const mapped = platformItems.map(mapPlatformNotification);
+
+  return {
+    ...previousData,
+    notifications: [...keptMoodle, ...mapped].sort(
+      (first, second) => second.timecreated - first.timecreated,
+    ),
+    unreadCount:
+      keptMoodle.filter((item) => !item.read).length +
+      platformItems.filter((notification) => !notification.isRead).length,
+  };
+}
+
+export function assembleDashboardData(
+  [
+    coursesRes,
+    gradesRes,
+    assignmentsRes,
+    eventsRes,
+    notificationsRes,
+    statsRes,
+  ]: MoodleApiResponseTuple,
+  platformNotifications: PlatformNotification[] = [],
+): DashboardData {
+  const moodleList = asList(notificationsRes?.data?.notifications);
+  const platformList = platformNotifications.map(mapPlatformNotification);
+  const combinedNotifications = [...moodleList, ...platformList].sort(
+    (first, second) => second.timecreated - first.timecreated,
+  );
+  const moodleUnread = notificationsRes?.data?.unreadCount || 0;
+  const platformUnread = platformNotifications.filter(
+    (notification) => !notification.isRead,
+  ).length;
+
   return {
     courses: asList(coursesRes?.data),
     grades: resolveGradesResponse(gradesRes),
     assignments: asList(assignmentsRes?.data),
     events: asList(eventsRes?.data),
-    notifications: asList(notificationsRes?.data?.notifications),
-    unreadCount: notificationsRes?.data?.unreadCount || 0,
+    notifications: combinedNotifications,
+    unreadCount: moodleUnread + platformUnread,
     statistics: statsRes?.data || null,
   };
 }
@@ -311,6 +363,7 @@ export interface BuildFallbackDataOptions {
   hideCompleted: boolean;
   dateFrom: string;
   dateTo: string;
+  platformNotifications?: PlatformNotification[] | null;
 }
 
 export function buildFallbackData({
@@ -319,6 +372,7 @@ export function buildFallbackData({
   hideCompleted,
   dateFrom,
   dateTo,
+  platformNotifications,
 }: BuildFallbackDataOptions): DashboardData {
   const fallbackAssignments = filterFallbackAssignments({
     assignments: cachedData.assignments ?? previousData.assignments,
@@ -327,9 +381,11 @@ export function buildFallbackData({
     dateTo,
   });
 
-  return {
+  const merged: DashboardData = {
     ...previousData,
     ...cachedData,
     assignments: fallbackAssignments,
   };
+
+  return platformNotifications ? applyPlatformNotifications(merged, platformNotifications) : merged;
 }

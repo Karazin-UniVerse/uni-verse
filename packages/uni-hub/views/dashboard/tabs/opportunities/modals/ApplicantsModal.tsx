@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { Button, Spinner, Empty, Modal } from '@una';
-import { Mail, MessageSquare, Calendar, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { Mail, MessageSquare, Calendar, CheckCircle2, Clock, XCircle, Send } from 'lucide-react';
 import type { OpportunityApplication } from '@core/types/opportunities';
-import type { OpportunityAppStatus } from '@core/constants/opportunities';
+import { OPPORTUNITY_APP_STATUS, type OpportunityAppStatus } from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { ApplicationStatusBadge } from '../ApplicationStatusBadge';
 import styles from '../../OpportunitiesTab.module.scss';
@@ -53,10 +53,22 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                         app.applicantName ||
                         formatMessage('opportunities.applicantsModal.defaultApplicant')}
                     </span>
-                    {(app.applicant?.email || app.contactInfo) && (
-                      <span className={styles.authorContactTag}>
+                    {app.applicant?.email && (
+                      <span
+                        className={styles.authorContactTag}
+                        title={formatMessage('opportunities.applicantsModal.emailLabel')}
+                      >
                         <Mail size={12} />
-                        {app.applicant?.email || app.contactInfo}
+                        {app.applicant.email}
+                      </span>
+                    )}
+                    {app.contactInfo && (
+                      <span
+                        className={styles.authorContactTag}
+                        title={formatMessage('opportunities.applicantsModal.directContactLabel')}
+                      >
+                        <Send size={12} />
+                        {app.contactInfo}
                       </span>
                     )}
                   </div>
@@ -91,31 +103,31 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
               </span>
 
               <div className={styles.applicantActions}>
-                {app.status !== 'ACCEPTED' && (
+                {app.status !== OPPORTUNITY_APP_STATUS.ACCEPTED && (
                   <Button
                     variant="primary"
                     className={styles.approveBtn}
-                    onClick={() => onUpdateStatus(app.id, 'ACCEPTED')}
+                    onClick={() => onUpdateStatus(app.id, OPPORTUNITY_APP_STATUS.ACCEPTED)}
                   >
                     <CheckCircle2 size={14} className={styles.btnIcon} />
                     {formatMessage('opportunities.applicantsModal.accept')}
                   </Button>
                 )}
-                {app.status !== 'UNDER_REVIEW' && (
+                {app.status !== OPPORTUNITY_APP_STATUS.UNDER_REVIEW && (
                   <Button
                     variant="secondary"
                     className={styles.reviseBtn}
-                    onClick={() => onUpdateStatus(app.id, 'UNDER_REVIEW')}
+                    onClick={() => onUpdateStatus(app.id, OPPORTUNITY_APP_STATUS.UNDER_REVIEW)}
                   >
                     <Clock size={14} className={styles.btnIcon} />
                     {formatMessage('opportunities.applicantsModal.underReview')}
                   </Button>
                 )}
-                {app.status !== 'REJECTED' && (
+                {app.status !== OPPORTUNITY_APP_STATUS.REJECTED && (
                   <Button
                     variant="secondary"
                     className={styles.rejectBtn}
-                    onClick={() => onUpdateStatus(app.id, 'REJECTED')}
+                    onClick={() => onUpdateStatus(app.id, OPPORTUNITY_APP_STATUS.REJECTED)}
                   >
                     <XCircle size={14} className={styles.btnIcon} />
                     {formatMessage('opportunities.applicantsModal.reject')}
