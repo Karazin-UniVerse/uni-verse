@@ -28,6 +28,7 @@ uni-verse/
 - Types, constants and functions never share a file (except types derived directly from a constant, such as `type GradesThreshold = (typeof GRADES_THRESHOLD)[keyof typeof GRADES_THRESHOLD]`). Other types stay under `types/`.
 - Tests sit next to the code in a sibling `tests/` directory (`utils/tests/grades.test.ts`).
 - Do not write unit tests for types and constants; test behavior only.
+- Shared API contracts (domain type files imported by path, value-set constants, DTOs that `implements` them): [data and contracts](data-and-contracts.md#shared-api-contracts).
 
 ## Monorepo rules
 
