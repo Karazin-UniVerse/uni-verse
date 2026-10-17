@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity, OpportunityApplication } from '@uni-hub/types';
+import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import { CatalogTab } from './CatalogTab';
 import { MyOpportunitiesTab } from './MyOpportunitiesTab';
 import { MyApplicationsTab } from './MyApplicationsTab';

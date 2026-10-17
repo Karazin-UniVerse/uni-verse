@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Tag } from '@una';
-import type { OpportunityStatus } from '@uni-hub/types';
+import type { OpportunityStatus } from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 
 export interface OpportunityStatusBadgeProps {
