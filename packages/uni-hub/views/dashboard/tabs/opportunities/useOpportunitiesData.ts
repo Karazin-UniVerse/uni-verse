@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { asList } from '@uni-hub/utils/arrays';
-import type { Opportunity, OpportunityApplication, OpportunityPaymentType } from '@uni-hub/types';
+import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
+import type { OpportunityPaymentType } from '@core/constants/opportunities';
 import { OPPORTUNITY_SUB_TAB, type OpportunitySubTab } from './constants';
 
 export interface AsyncList<T> {

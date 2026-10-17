@@ -4,7 +4,8 @@ import React, { useMemo } from 'react';
 import { Search, X } from 'lucide-react';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { TabStateWrapper } from './TabStateWrapper';
-import type { Opportunity, OpportunityPaymentType } from '@uni-hub/types';
+import type { Opportunity } from '@core/types/opportunities';
+import type { OpportunityPaymentType } from '@core/constants/opportunities';
 import { OpportunityCard } from '../OpportunityCard';
 import styles from '../OpportunitiesTab.module.scss';
 

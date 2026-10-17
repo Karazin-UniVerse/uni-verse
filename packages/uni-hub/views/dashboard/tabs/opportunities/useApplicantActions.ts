@@ -3,7 +3,7 @@ import { useToast } from '@una';
 import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity, OpportunityApplication } from '@uni-hub/types';
+import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import type { CurrentUser } from '@uni-hub/hooks/useCurrentUser';
 
 export interface UseApplicantActionsProps {

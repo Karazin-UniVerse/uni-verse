@@ -13,16 +13,16 @@ import {
   XCircle,
 } from 'lucide-react';
 import { Button } from '@una';
-import type { Opportunity } from '@uni-hub/types';
+import type { Opportunity } from '@core/types/opportunities';
+import type { OpportunityModerateAction } from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { TabStateWrapper } from './TabStateWrapper';
 import styles from '../OpportunitiesTab.module.scss';
-import type { ModerationAction } from './types';
 
 export interface ModerationQueueTabProps {
   loading: boolean;
   moderationQueue: Opportunity[];
-  onModerate: (id: string, action: ModerationAction, comment?: string) => void;
+  onModerate: (id: string, action: OpportunityModerateAction, comment?: string) => void;
   onOpenRejectModal: (id: string) => void;
 }
 
