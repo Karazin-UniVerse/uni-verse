@@ -1,25 +1,32 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { moodleApi } from '@uni-hub/services/api';
-import type { StudentProfile } from '@core/types';
+import { useEffect, useMemo, useRef } from 'react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useToast } from '@una';
+import type { StudentProfile } from '@core/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { DashboardData } from '../types';
 import {
-  assembleDashboardData,
-  buildAssignmentParams,
   buildFallbackData,
-  clearUserSessionStorage,
+  deriveDashboardState,
   getInitialSyncTime,
+  getInitialUserProfile,
   isMoodleUnlinked,
   isUnauthorizedError,
   loadCachedDashboardData,
-  persistDashboardSnapshot,
-  syncStudentProfile,
+  type DashboardState,
 } from './helpers';
+import { dashboardQueryOptions, profileQueryOptions } from './queries';
 
-export { clearUserSessionStorage } from './helpers';
+const EMPTY_DASHBOARD_DATA: DashboardData = {
+  courses: [],
+  grades: [],
+  assignments: [],
+  events: [],
+  notifications: [],
+  unreadCount: 0,
+  statistics: null,
+};
 
 export interface UseDashboardDataOptions {
   sortOrder: 'asc' | 'desc';
@@ -30,40 +37,16 @@ export interface UseDashboardDataOptions {
   enabled?: boolean;
 }
 
-function getInitialDashboardData(): DashboardData {
-  const initial: DashboardData = {
-    courses: [],
-    grades: [],
-    assignments: [],
-    events: [],
-    notifications: [],
-    unreadCount: 0,
-    statistics: null,
-  };
-
-  if (typeof window === 'undefined') {
-    return initial;
-  }
-
-  try {
-    const cachedData = loadCachedDashboardData();
-
-    return cachedData ? { ...initial, ...cachedData } : initial;
-  } catch {
-    return initial;
-  }
+export interface UseDashboardDataResult extends Omit<DashboardState, 'cachedData'> {
+  data: DashboardData;
+  studentProfile: StudentProfile | null;
+  refresh: () => Promise<void>;
 }
 
-function getInitialHasLoadedOnce(): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
+function readDashboardSnapshot(): DashboardData | undefined {
+  const cachedData = loadCachedDashboardData();
 
-  try {
-    return Boolean(loadCachedDashboardData());
-  } catch {
-    return false;
-  }
+  return cachedData ? { ...EMPTY_DASHBOARD_DATA, ...cachedData } : undefined;
 }
 
 export function useDashboardData({
@@ -73,135 +56,90 @@ export function useDashboardData({
   hideCompleted,
   onUnauthorized,
   enabled = true,
-}: UseDashboardDataOptions) {
+}: UseDashboardDataOptions): UseDashboardDataResult {
   const toast = useToast();
   const { formatMessage } = useLanguage();
 
-  const [loading, setLoading] = useState(enabled);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(getInitialHasLoadedOnce);
-  const [lastSyncTime, setLastSyncTime] = useState<number | null>(getInitialSyncTime);
-  const [isOfflineData, setIsOfflineData] = useState(false);
-  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
-  const [data, setData] = useState<DashboardData>(getInitialDashboardData);
+  const handledErrorAt = useRef(0);
 
-  const fetchRequestIdRef = useRef(0);
+  const dashboardQuery = useQuery({
+    ...dashboardQueryOptions({ sortOrder, dateFrom, dateTo, hideCompleted }),
+    enabled,
+    placeholderData: keepPreviousData,
+    initialData: readDashboardSnapshot,
+    initialDataUpdatedAt: 0,
+    refetchOnWindowFocus: false,
+  });
+  const profileQuery = useQuery({
+    ...profileQueryOptions,
+    enabled,
+    initialData: () => getInitialUserProfile() ?? undefined,
+    initialDataUpdatedAt: 0,
+  });
 
-  const fetchData = async (isManual = false) => {
-    if (!enabled) {
-      setLoading(false);
+  const { error, errorUpdatedAt, data: queryData, isError } = dashboardQuery;
+
+  const snapshot = useMemo(
+    () => (isError && queryData === undefined ? readDashboardSnapshot() : undefined),
+    [isError, queryData],
+  );
+  const state = deriveDashboardState({ ...dashboardQuery, snapshot });
+  const { cachedData } = state;
+
+  useEffect(() => {
+    if (!error || errorUpdatedAt === handledErrorAt.current || isMoodleUnlinked()) {
+      return;
+    }
+
+    handledErrorAt.current = errorUpdatedAt;
+
+    if (isUnauthorizedError(error)) {
+      toast.error(formatMessage('dashboard.sessionExpired'));
+      onUnauthorized();
 
       return;
     }
 
-    const requestId = ++fetchRequestIdRef.current;
+    console.error(error);
 
-    setLoading(true);
+    if (cachedData) {
+      toast.info(formatMessage('dashboard.offlineNotice'));
+    } else {
+      toast.error(formatMessage('dashboard.loadError'));
+    }
+  }, [error, errorUpdatedAt, cachedData, toast, formatMessage, onUnauthorized]);
 
-    try {
-      const params = buildAssignmentParams({ sortOrder, dateFrom, dateTo, hideCompleted });
-      const [
-        coursesRes,
-        gradesRes,
-        assignmentsRes,
-        eventsRes,
-        notificationsRes,
-        statsRes,
-        profileRes,
-      ] = await Promise.all([
-        moodleApi.getCourses(),
-        moodleApi.getGrades(),
-        moodleApi.getAssignments(params),
-        moodleApi.getEvents(),
-        moodleApi.getNotifications(),
-        moodleApi.getStatistics(),
-        moodleApi.getProfile().catch(() => null),
-      ]);
+  let data = cachedData ?? EMPTY_DASHBOARD_DATA;
 
-      if (requestId !== fetchRequestIdRef.current || isMoodleUnlinked()) {
-        return;
-      }
+  if (state.isOfflineData && cachedData) {
+    data = buildFallbackData({
+      cachedData,
+      previousData: EMPTY_DASHBOARD_DATA,
+      hideCompleted,
+      dateFrom,
+      dateTo,
+    });
+  }
 
-      const freshData = assembleDashboardData([
-        coursesRes,
-        gradesRes,
-        assignmentsRes,
-        eventsRes,
-        notificationsRes,
-        statsRes,
-      ]);
+  const refresh = async (): Promise<void> => {
+    if (!enabled) {
+      return;
+    }
 
-      setData(freshData);
-      setHasLoadedOnce(true);
-      setIsOfflineData(false);
-      syncStudentProfile(profileRes?.data, setStudentProfile);
+    const result = await dashboardQuery.refetch();
 
-      const nowTimestamp = Date.now();
-
-      setLastSyncTime(nowTimestamp);
-      persistDashboardSnapshot(nowTimestamp, freshData);
-
-      if (isManual) {
-        toast.success(formatMessage('dashboard.syncSuccess'));
-      }
-    } catch (error) {
-      if (requestId !== fetchRequestIdRef.current || isMoodleUnlinked()) {
-        return;
-      }
-
-      if (isUnauthorizedError(error)) {
-        clearUserSessionStorage();
-        toast.error(formatMessage('dashboard.sessionExpired'));
-        onUnauthorized();
-
-        return;
-      }
-
-      console.error(error);
-
-      const cachedData = loadCachedDashboardData();
-
-      if (cachedData && !isMoodleUnlinked()) {
-        setData((previous) =>
-          buildFallbackData({
-            cachedData,
-            previousData: previous,
-            hideCompleted,
-            dateFrom,
-            dateTo,
-          }),
-        );
-        setIsOfflineData(true);
-        setHasLoadedOnce(true);
-        toast.info(formatMessage('dashboard.offlineNotice'));
-
-        return;
-      }
-
-      if (!isMoodleUnlinked()) {
-        toast.error(formatMessage('dashboard.loadError'));
-      }
-    } finally {
-      if (requestId === fetchRequestIdRef.current) {
-        setLoading(false);
-      }
+    if (!result.isError) {
+      toast.success(formatMessage('dashboard.syncSuccess'));
     }
   };
 
-  const cancelPendingFetch = () => {
-    fetchRequestIdRef.current += 1;
-    setLoading(false);
-  };
-
   return {
+    loading: state.loading,
+    hasLoadedOnce: state.hasLoadedOnce,
+    isOfflineData: state.isOfflineData,
+    lastSyncTime: state.lastSyncTime ?? getInitialSyncTime(),
     data,
-    setData,
-    loading,
-    hasLoadedOnce,
-    lastSyncTime,
-    isOfflineData,
-    studentProfile,
-    setStudentProfile,
-    fetchData,
-    cancelPendingFetch,
+    studentProfile: profileQuery.data ?? null,
+    refresh,
   };
 }
