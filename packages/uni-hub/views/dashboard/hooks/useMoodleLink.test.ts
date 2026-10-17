@@ -60,14 +60,11 @@ describe('useMoodleLink hook', () => {
     expect(typeof result.current.closeUnlinkModal).toBe('function');
   });
 
-  it('should execute handleLinkSuccess and redirect connectMoodle active tab to overview', () => {
+  it('should execute handleLinkSuccess and trigger onLinkSuccess callback', () => {
     const onLinkSuccess = vi.fn();
-    const setActiveKey = vi.fn();
 
     const { result } = renderHook(() =>
       useMoodleLink({
-        activeKey: 'connectMoodle',
-        setActiveKey,
         onLinkSuccess,
       }),
     );
@@ -77,7 +74,6 @@ describe('useMoodleLink hook', () => {
     });
 
     expect(mockStorage.isMoodleLinked).toBe('true');
-    expect(setActiveKey).toHaveBeenCalledWith('overview');
     expect(onLinkSuccess).toHaveBeenCalledTimes(1);
   });
 

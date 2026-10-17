@@ -166,7 +166,6 @@ export const uk = {
 
   // Course Contents
   'courseContents.back': 'Назад до курсів',
-  'courseContents.breadcrumbs': 'Курси',
   'courseContents.title': 'Вміст курсу',
   'courseContents.loading': 'Завантаження вмісту...',
   'courseContents.empty': 'У цьому курсі поки що немає доступних матеріалів.',
@@ -255,6 +254,7 @@ export const uk = {
   'header.unreadCount': '{count} нових',
 
   // Assignment Modal
+  'assignmentPage.back': 'Назад до завдань',
   'assignmentModal.defaultTitle': 'Завдання',
   'assignmentModal.loadingStatus': 'Завантаження статусу...',
   'assignmentModal.openMoodle': 'Відкрити оригінальне завдання на Moodle',
@@ -565,7 +565,7 @@ export const uk = {
   'opportunities.detailModal.phasePaused': 'На паузі',
   'opportunities.detailModal.phaseCompleted': 'Завершено',
   'opportunities.detailModal.phaseCancelled': 'Скасовано',
-  'opportunities.detailModal.close': 'Закрити',
+  'opportunities.detail.back': 'Назад до можливостей',
   'opportunities.detailModal.apply': 'Відгукнутися на можливість',
 
   // Modals - Apply

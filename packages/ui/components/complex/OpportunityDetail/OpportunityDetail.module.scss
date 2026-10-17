@@ -1,4 +1,4 @@
-.modalStack {
+.stack {
   display: flex;
   flex-direction: column;
   gap: var(--space-20, 20px);
@@ -130,7 +130,7 @@
   color: var(--text-secondary);
 }
 
-.modalFooter {
+.footer {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -141,4 +141,9 @@
 
 .btnIcon {
   margin-right: var(--space-8, 8px);
+}
+
+.title {
+  margin: 0;
+  font: var(--font-heading);
 }

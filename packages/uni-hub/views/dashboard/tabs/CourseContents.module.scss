@@ -1,45 +1,8 @@
-@use '@universe/ui/breakpoints.scss' as *;
-
 .page {
-  min-height: 100vh;
-  background: var(--neutral-surface);
-}
-
-.header {
-  height: 64px;
   display: flex;
-  align-items: center;
-  padding: 0 var(--space-24);
-  background: var(--bg-color);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.content {
-  padding: var(--space-24) var(--space-48);
-}
-
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  margin-bottom: var(--space-16);
-  color: var(--text-secondary);
-  font-size: var(--font-sm);
-
-  button,
-  a {
-    background: none;
-    border: none;
-    color: var(--accent-primary);
-    cursor: pointer;
-    font: inherit;
-    padding: 0;
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-16);
 }
 
 .panel {
@@ -48,8 +11,10 @@
   border-radius: var(--border-radius-large);
   padding: var(--space-24);
   min-height: 280px;
+  width: 100%;
+  box-sizing: border-box;
 
-  h1 {
+  h3 {
     margin: 0 0 var(--space-24);
     font: var(--font-heading);
   }
@@ -148,10 +113,4 @@
   margin-top: 2px;
   color: var(--text-secondary);
   font-size: var(--font-sm);
-}
-
-@include narrower-than('md') {
-  .content {
-    padding: var(--space-16);
-  }
 }

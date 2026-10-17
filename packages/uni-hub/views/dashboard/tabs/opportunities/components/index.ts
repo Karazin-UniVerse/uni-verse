@@ -4,3 +4,4 @@ export * from './CatalogTab';
 export * from './MyOpportunitiesTab';
 export * from './MyApplicationsTab';
 export * from './ModerationQueueTab';
+export * from './OpportunityDetailView';

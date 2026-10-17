@@ -4,21 +4,13 @@ import { useState, useCallback } from 'react';
 import { safeStorage } from '@uni-hub/services/api';
 import { isBrowser } from '@uni-hub/utils/browser';
 import { LinkMoodleMode } from '@uni-hub/components/auth';
-import type { NavKey } from '../constants';
 
 export interface UseMoodleLinkOptions {
-  activeKey?: NavKey;
-  setActiveKey?: (key: NavKey) => void;
   onLinkSuccess?: () => void;
   onUnlinkSuccess?: () => void;
 }
 
-export function useMoodleLink({
-  activeKey,
-  setActiveKey,
-  onLinkSuccess,
-  onUnlinkSuccess,
-}: UseMoodleLinkOptions = {}) {
+export function useMoodleLink({ onLinkSuccess, onUnlinkSuccess }: UseMoodleLinkOptions = {}) {
   const [linkModalMode, setLinkModalMode] = useState<LinkMoodleMode>(LinkMoodleMode.CONNECT);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [isUnlinkModalOpen, setIsUnlinkModalOpen] = useState(false);
@@ -52,12 +44,8 @@ export function useMoodleLink({
     setIsMoodleLinked(true);
     safeStorage.setItem('isMoodleLinked', 'true');
 
-    if (activeKey === 'connectMoodle') {
-      setActiveKey?.('overview');
-    }
-
     onLinkSuccess?.();
-  }, [activeKey, onLinkSuccess, setActiveKey]);
+  }, [onLinkSuccess]);
 
   const handleUnlinkSuccess = useCallback(() => {
     setIsUnlinkModalOpen(false);
