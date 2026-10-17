@@ -31,6 +31,8 @@ describe('ApplicantsModal', () => {
           open: true,
           onClose: () => {},
           loading: false,
+          isError: false,
+          onRetry: () => {},
           applications: [mockApplication],
           onUpdateStatus: () => {},
         }),

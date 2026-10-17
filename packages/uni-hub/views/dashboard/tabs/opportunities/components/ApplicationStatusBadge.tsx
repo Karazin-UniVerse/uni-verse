@@ -6,7 +6,7 @@ import { Tag } from '@una';
 import { Send, Clock, CheckCircle2, XCircle, X } from 'lucide-react';
 import type { OpportunityAppStatus } from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import styles from '../OpportunitiesTab.module.scss';
+import styles from '../../OpportunitiesTab.module.scss';
 
 export interface ApplicationStatusBadgeProps {
   status: OpportunityAppStatus;

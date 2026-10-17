@@ -5,7 +5,6 @@ import { Plus, Briefcase, ShieldCheck, Users, FileText } from 'lucide-react';
 import { Button } from '@una';
 import { ConfirmModal } from '@ui';
 import { ROLE } from '@core/constants/roles';
-import type { Opportunity } from '@core/types/opportunities';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import styles from './OpportunitiesTab.module.scss';
@@ -19,58 +18,31 @@ import {
   ApplyOpportunityModal,
   ApplicantsModal,
   ModerationRejectModal,
+  useApplicantActions,
+  useApplicants,
+  useCreateOpportunity,
+  useModeration,
+  useOpportunitiesData,
+  useOpportunityDetail,
   OPPORTUNITY_SUB_TAB,
 } from './opportunities';
-import { useApplicantActions } from './opportunities/useApplicantActions';
-import { useApplicants } from './opportunities/useApplicants';
-import { useCreateOpportunity } from './opportunities/useCreateOpportunity';
-import { useModeration } from './opportunities/useModeration';
-import { useOpportunitiesData } from './opportunities/useOpportunitiesData';
-import { useOpportunityDetail } from './opportunities/useOpportunityDetail';
 
-export interface OpportunitiesTabProps {
-  soundEnabled?: boolean;
-  refreshTrigger?: number;
-}
-
-export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({ refreshTrigger }) => {
+export const OpportunitiesTab: React.FC = () => {
   const { formatMessage } = useLanguage();
   const currentUser = useCurrentUser();
   const isModerator = currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR);
   const data = useOpportunitiesData(isModerator);
-  const { activeSubTab, setActiveSubTab, refetchActiveList, refetchOpportunities } = data;
-  const detail = useOpportunityDetail((id, patch) => {
-    const applyPatch = (items: Opportunity[]): Opportunity[] =>
-      items.map((item) => (item.id === id ? { ...item, ...patch } : item));
-
-    data.myOpportunities.setItems(applyPatch);
-    data.catalog.setItems(applyPatch);
-    void refetchOpportunities();
-  });
+  const { activeSubTab, setActiveSubTab } = data;
+  const detail = useOpportunityDetail();
   const create = useCreateOpportunity({
-    onCreated: () => {
-      void refetchOpportunities();
-      setActiveSubTab(OPPORTUNITY_SUB_TAB.MyOpportunities);
-    },
-    onUpdated: () => {
-      void refetchOpportunities();
-    },
+    onCreated: () => setActiveSubTab(OPPORTUNITY_SUB_TAB.MyOpportunities),
   });
   const applicants = useApplicants();
   const applicantActions = useApplicantActions({
     currentUser,
     selectedOpportunity: detail.selectedOpportunity,
-    setApplications: data.myApplications.setItems,
   });
-  const moderation = useModeration(data.moderationQueue.setItems, () => {
-    void refetchOpportunities();
-  });
-
-  React.useEffect(() => {
-    if (refreshTrigger && refreshTrigger > 0) {
-      void refetchActiveList();
-    }
-  }, [refreshTrigger, refetchActiveList]);
+  const moderation = useModeration();
 
   return (
     <div className={styles.container}>
@@ -142,6 +114,8 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({ refreshTrigg
         {activeSubTab === OPPORTUNITY_SUB_TAB.Catalog && (
           <CatalogTab
             loading={data.catalog.loading}
+            isError={data.catalog.isError}
+            onRetry={data.catalog.refetch}
             opportunities={data.catalog.items}
             search={data.search}
             onSearchChange={data.setSearch}
@@ -154,6 +128,8 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({ refreshTrigg
         {activeSubTab === OPPORTUNITY_SUB_TAB.MyOpportunities && (
           <MyOpportunitiesTab
             loading={data.myOpportunities.loading}
+            isError={data.myOpportunities.isError}
+            onRetry={data.myOpportunities.refetch}
             myOpportunities={data.myOpportunities.items}
             onOpenApplicants={applicants.open}
             onOpenDetail={detail.open}
@@ -163,6 +139,8 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({ refreshTrigg
         {activeSubTab === OPPORTUNITY_SUB_TAB.MyApplications && (
           <MyApplicationsTab
             loading={data.myApplications.loading}
+            isError={data.myApplications.isError}
+            onRetry={data.myApplications.refetch}
             myApplications={data.myApplications.items}
             onWithdraw={applicantActions.setWithdrawApplicationId}
           />
@@ -171,6 +149,8 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({ refreshTrigg
         {activeSubTab === OPPORTUNITY_SUB_TAB.Moderation && isModerator && (
           <ModerationQueueTab
             loading={data.moderationQueue.loading}
+            isError={data.moderationQueue.isError}
+            onRetry={data.moderationQueue.refetch}
             moderationQueue={data.moderationQueue.items}
             onModerate={moderation.handleModerate}
             onOpenRejectModal={moderation.openRejectModal}
@@ -220,9 +200,11 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({ refreshTrigg
 
       <ApplicantsModal
         open={applicants.isOpen}
-        onClose={() => applicants.setIsOpen(false)}
+        onClose={applicants.close}
         applications={applicants.applications}
         loading={applicants.loading}
+        isError={applicants.isError}
+        onRetry={applicants.refetch}
         onUpdateStatus={applicants.handleUpdateStatus}
       />
 

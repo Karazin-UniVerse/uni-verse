@@ -17,10 +17,12 @@ import type { Opportunity } from '@core/types/opportunities';
 import type { OpportunityModerateAction } from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { TabStateWrapper } from './TabStateWrapper';
-import styles from '../OpportunitiesTab.module.scss';
+import styles from '../../OpportunitiesTab.module.scss';
 
 export interface ModerationQueueTabProps {
   loading: boolean;
+  isError: boolean;
+  onRetry: () => void;
   moderationQueue: Opportunity[];
   onModerate: (id: string, action: OpportunityModerateAction, comment?: string) => void;
   onOpenRejectModal: (id: string) => void;
@@ -28,6 +30,8 @@ export interface ModerationQueueTabProps {
 
 export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
   loading,
+  isError,
+  onRetry,
   moderationQueue,
   onModerate,
   onOpenRejectModal,
@@ -37,6 +41,8 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
   return (
     <TabStateWrapper
       loading={loading}
+      isError={isError}
+      onRetry={onRetry}
       isEmpty={moderationQueue.length === 0}
       emptyDescription={formatMessage('opportunities.moderation.empty')}
     >

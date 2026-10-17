@@ -6,7 +6,8 @@ import { Mail, MessageSquare, Calendar, CheckCircle2, Clock, XCircle, Send } fro
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { OPPORTUNITY_APP_STATUS, type OpportunityAppStatus } from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { ApplicationStatusBadge } from '../ApplicationStatusBadge';
+import { ApplicationStatusBadge } from '../components/ApplicationStatusBadge';
+import { LoadErrorState } from '../components/LoadErrorState';
 import styles from '../../OpportunitiesTab.module.scss';
 
 export interface ApplicantsModalProps {
@@ -14,6 +15,8 @@ export interface ApplicantsModalProps {
   onClose: () => void;
   applications: OpportunityApplication[];
   loading: boolean;
+  isError: boolean;
+  onRetry: () => void;
   onUpdateStatus: (appId: string, status: OpportunityAppStatus) => void;
 }
 
@@ -22,6 +25,8 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
   onClose,
   applications,
   loading,
+  isError,
+  onRetry,
   onUpdateStatus,
 }) => {
   const { formatMessage, localeTag } = useLanguage();
@@ -34,6 +39,8 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
         <Spinner size="large" />
       </div>
     );
+  } else if (isError) {
+    content = <LoadErrorState onRetry={onRetry} />;
   } else if (applications.length === 0) {
     content = <Empty description={formatMessage('opportunities.applicantsModal.empty')} />;
   } else {
