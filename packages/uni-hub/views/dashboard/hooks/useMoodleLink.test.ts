@@ -5,6 +5,10 @@ import { useMoodleLink } from './useMoodleLink';
 
 const mockStorage: Record<string, string> = {};
 
+vi.hoisted(() => {
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+});
+
 vi.mock('@uni-hub/utils/browser', () => ({
   isBrowser: true,
 }));

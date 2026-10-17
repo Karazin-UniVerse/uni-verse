@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { withQueryClient } from '@uni-hub/utils/with-query-client';
 import { LinkMoodleModal } from './LinkMoodleModal';
 import { LinkMoodleMode } from './helpers';
 
@@ -35,12 +36,14 @@ vi.mock('@una', async () => {
 describe('LinkMoodleModal component', () => {
   it('should render default connect mode correctly when open', () => {
     render(
-      <LinkMoodleModal
-        open={true}
-        mode={LinkMoodleMode.CONNECT}
-        onClose={vi.fn()}
-        onSuccess={vi.fn()}
-      />,
+      withQueryClient(
+        <LinkMoodleModal
+          open={true}
+          mode={LinkMoodleMode.CONNECT}
+          onClose={vi.fn()}
+          onSuccess={vi.fn()}
+        />,
+      ),
     );
 
     expect(screen.getByRole('dialog', { name: "Прив'язка акаунта Moodle" })).toBeInTheDocument();
@@ -49,12 +52,14 @@ describe('LinkMoodleModal component', () => {
 
   it('should render change mode correctly when open with mode="change"', () => {
     render(
-      <LinkMoodleModal
-        open={true}
-        mode={LinkMoodleMode.CHANGE}
-        onClose={vi.fn()}
-        onSuccess={vi.fn()}
-      />,
+      withQueryClient(
+        <LinkMoodleModal
+          open={true}
+          mode={LinkMoodleMode.CHANGE}
+          onClose={vi.fn()}
+          onSuccess={vi.fn()}
+        />,
+      ),
     );
 
     expect(screen.getByRole('dialog', { name: 'Зміна акаунта Moodle' })).toBeInTheDocument();
@@ -63,7 +68,9 @@ describe('LinkMoodleModal component', () => {
   });
 
   it('should render nothing visible when closed', () => {
-    render(<LinkMoodleModal open={false} onClose={vi.fn()} onSuccess={vi.fn()} />);
+    render(
+      withQueryClient(<LinkMoodleModal open={false} onClose={vi.fn()} onSuccess={vi.fn()} />),
+    );
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });

@@ -7,7 +7,10 @@ import { Button, Form, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { authApi, getErrorMessage, safeStorage } from '@uni-hub/services/api';
+import { useQueryClient } from '@tanstack/react-query';
+import { getErrorMessage, safeStorage } from '@uni-hub/services/api';
+import { endSession } from '@uni-hub/services/api.session';
+import { useGoogleLogin, useLinkMoodle, useLogin } from '@uni-hub/hooks/useAuthMutations';
 import { GoogleLoginButton, AuthField, parseGoogleClaims } from '@uni-hub/components/auth';
 import { useFeatures } from '@uni-hub/features';
 import { motion } from 'framer-motion';
@@ -16,7 +19,6 @@ import styles from './LoginPage.module.scss';
 const LoginPage: React.FC = () => {
   const { formatMessage } = useLanguage();
   const { isMoodleIntegrationEnabled } = useFeatures();
-  const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -27,9 +29,13 @@ const LoginPage: React.FC = () => {
   const [isLinkingMoodle, setIsLinkingMoodle] = useState(false);
   const router = useRouter();
   const toast = useToast();
+  const queryClient = useQueryClient();
+  const login = useLogin();
+  const googleLogin = useGoogleLogin();
+  const linkMoodle = useLinkMoodle();
+  const loading = login.isPending || googleLogin.isPending || linkMoodle.isPending;
 
-  const handleGoogleSuccess = async (idToken: string) => {
-    setLoading(true);
+  const handleGoogleSuccess = async (idToken: string): Promise<void> => {
     setError('');
 
     try {
@@ -40,7 +46,7 @@ const LoginPage: React.FC = () => {
         setGoogleUserName(displayName);
       }
 
-      const res = await authApi.loginWithGoogle(idToken);
+      const res = await googleLogin.mutateAsync(idToken);
 
       if (res.data?.isLinked || !isMoodleIntegrationEnabled) {
         safeStorage.setItem('isLoggedIn', 'true');
@@ -63,12 +69,10 @@ const LoginPage: React.FC = () => {
 
       setError(message);
       toast.error(message);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleLogin = async () => {
+  const handleLogin = async (): Promise<void> => {
     setError('');
 
     if (!username.trim()) {
@@ -83,10 +87,8 @@ const LoginPage: React.FC = () => {
       return;
     }
 
-    setLoading(true);
-
     try {
-      await authApi.login(username, password);
+      await login.mutateAsync({ username, password });
 
       toast.success(formatMessage('login.success'));
       safeStorage.setItem('isLoggedIn', 'true');
@@ -99,12 +101,10 @@ const LoginPage: React.FC = () => {
 
       setError(message);
       toast.error(message);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleLinkMoodle = async () => {
+  const handleLinkMoodle = async (): Promise<void> => {
     setError('');
 
     if (!linkUsername.trim()) {
@@ -119,10 +119,8 @@ const LoginPage: React.FC = () => {
       return;
     }
 
-    setLoading(true);
-
     try {
-      await authApi.linkMoodleAccount(linkUsername.trim(), linkPassword);
+      await linkMoodle.mutateAsync({ username: linkUsername.trim(), password: linkPassword });
 
       toast.success(formatMessage('login.linkMoodleSuccess'));
       toast.success(formatMessage('login.success'));
@@ -135,8 +133,6 @@ const LoginPage: React.FC = () => {
 
       setError(message);
       toast.error(message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -152,15 +148,12 @@ const LoginPage: React.FC = () => {
     router.push('/');
   };
 
-  const handleCancelLink = () => {
+  const handleCancelLink = (): void => {
     setIsLinkingMoodle(false);
     setGoogleUserName('');
     setLinkUsername('');
     setLinkPassword('');
-    safeStorage.removeItem('accessToken');
-    safeStorage.removeItem('isLoggedIn');
-    safeStorage.removeItem('isMoodleLinked');
-    safeStorage.removeItem('username');
+    endSession(queryClient);
   };
 
   return (

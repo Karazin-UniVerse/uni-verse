@@ -152,20 +152,6 @@ export function isUnauthorizedError(error: unknown): boolean {
   return message.includes('401') || message.includes('unauthorized');
 }
 
-export function clearUserSessionStorage(): void {
-  try {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('moodleToken');
-    localStorage.removeItem('username');
-    localStorage.removeItem('universe_student_profile');
-    localStorage.removeItem('universe_dashboard_data');
-    localStorage.removeItem('universe_last_sync_time');
-  } catch {
-    // Ignore storage errors
-  }
-}
-
 export type FilterFallbackAssignmentsOptions = {
   assignments: Assignment[] | undefined;
   hideCompleted: boolean;

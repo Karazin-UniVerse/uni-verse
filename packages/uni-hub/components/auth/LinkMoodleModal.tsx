@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { User, Lock } from 'lucide-react';
 import { Modal, Button, Form, useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { authApi, getErrorMessage } from '@uni-hub/services/api';
+import { getErrorMessage } from '@uni-hub/services/api';
+import { useLinkMoodle } from '@uni-hub/hooks/useAuthMutations';
 import { AuthField } from './AuthField';
 import { LinkMoodleMode, getLinkMoodleContentKeys } from './helpers';
 import styles from './LinkMoodleModal.module.scss';
@@ -25,7 +26,8 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
   const { formatMessage } = useLanguage();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const linkMoodle = useLinkMoodle();
+  const loading = linkMoodle.isPending;
   const [error, setError] = useState('');
   const toast = useToast();
 
@@ -34,7 +36,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
   const hint = formatMessage(contentKeys.hintKey);
   const submitLabel = formatMessage(contentKeys.submitKey);
 
-  const handleLink = async () => {
+  const handleLink = async (): Promise<void> => {
     setError('');
 
     if (!username.trim()) {
@@ -49,10 +51,8 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
       return;
     }
 
-    setLoading(true);
-
     try {
-      await authApi.linkMoodleAccount(username.trim(), password);
+      await linkMoodle.mutateAsync({ username: username.trim(), password });
 
       toast.success(formatMessage(contentKeys.successKey));
       onSuccess();
@@ -61,8 +61,6 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
 
       setError(message);
       toast.error(message);
-    } finally {
-      setLoading(false);
     }
   };
 
