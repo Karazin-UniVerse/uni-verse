@@ -42,17 +42,21 @@ describe('Opportunities decomposed subtabs', () => {
     opportunity: mockOpportunity,
   };
 
+  const noop = (): void => {};
+
   it('should render CatalogTab with search bar, filter chips, and card', () => {
     render(
       <LanguageProvider>
         <CatalogTab
           loading={false}
+          isError={false}
+          onRetry={noop}
           opportunities={[mockOpportunity]}
           search=""
-          onSearchChange={() => {}}
+          onSearchChange={noop}
           paymentFilter=""
-          onPaymentFilterChange={() => {}}
-          onOpenDetail={() => {}}
+          onPaymentFilterChange={noop}
+          onOpenDetail={noop}
         />
       </LanguageProvider>,
     );
@@ -70,9 +74,11 @@ describe('Opportunities decomposed subtabs', () => {
       <LanguageProvider>
         <MyOpportunitiesTab
           loading={false}
+          isError={false}
+          onRetry={noop}
           myOpportunities={[mockOpportunity]}
-          onOpenApplicants={() => {}}
-          onOpenDetail={() => {}}
+          onOpenApplicants={noop}
+          onOpenDetail={noop}
         />
       </LanguageProvider>,
     );
@@ -86,8 +92,10 @@ describe('Opportunities decomposed subtabs', () => {
       <LanguageProvider>
         <MyApplicationsTab
           loading={false}
+          isError={false}
+          onRetry={noop}
           myApplications={[mockApplication]}
-          onWithdraw={() => {}}
+          onWithdraw={noop}
         />
       </LanguageProvider>,
     );
@@ -102,9 +110,11 @@ describe('Opportunities decomposed subtabs', () => {
       <LanguageProvider>
         <ModerationQueueTab
           loading={false}
+          isError={false}
+          onRetry={noop}
           moderationQueue={[mockOpportunity]}
-          onModerate={() => {}}
-          onOpenRejectModal={() => {}}
+          onModerate={noop}
+          onOpenRejectModal={noop}
         />
       </LanguageProvider>,
     );
