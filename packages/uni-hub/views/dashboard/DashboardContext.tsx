@@ -61,7 +61,7 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     enabled: features.isMoodleIntegrationEnabled && isMoodleLinked && isLoggedIn(),
     onUnauthorized: (): void => {
       endSession(queryClient);
-      router.push('/login');
+      router.replace('/login');
     },
   });
 
