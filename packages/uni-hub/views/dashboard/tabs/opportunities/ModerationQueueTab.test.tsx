@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity } from '@uni-hub/types';
+import type { Opportunity } from '@core/types/opportunities';
 import { ModerationQueueTab, type ModerationQueueTabProps } from './ModerationQueueTab';
 
 const mockOpportunity: Opportunity = {

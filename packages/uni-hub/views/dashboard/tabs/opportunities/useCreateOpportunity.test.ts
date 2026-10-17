@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity } from '@uni-hub/types';
+import type { Opportunity } from '@core/types/opportunities';
 import { useCreateOpportunity, type UseCreateOpportunityProps } from './useCreateOpportunity';
 import type { CreateOpportunityFormData } from './types';
 

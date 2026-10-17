@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { OpportunityApplication } from '@uni-hub/types';
+import type { OpportunityApplication } from '@core/types/opportunities';
 import { ApplicantsModal, type ApplicantsModalProps } from './ApplicantsModal';
 
 vi.mock('@una', async () => {
@@ -45,7 +45,6 @@ const mockApplications: OpportunityApplication[] = [
     opportunityId: 'opp-1',
     applicantId: 'user-1',
     applicant: {
-      id: 'user-1',
       name: 'Олена Коваль',
       email: 'olena@karazin.ua',
     },
@@ -61,7 +60,6 @@ const mockApplications: OpportunityApplication[] = [
     opportunityId: 'opp-1',
     applicantId: 'user-2',
     applicant: {
-      id: 'user-2',
       name: 'Іван Петренко',
       email: 'ivan@karazin.ua',
     },

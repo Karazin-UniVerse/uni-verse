@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { OpportunityStatus } from '@uni-hub/types';
+import type { OpportunityStatus } from '@core/constants/opportunities';
 import { OpportunityStatusBadge } from './OpportunityStatusBadge';
 
 vi.mock('@una', async () => {

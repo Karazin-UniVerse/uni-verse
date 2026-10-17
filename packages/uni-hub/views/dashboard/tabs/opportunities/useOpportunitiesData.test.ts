@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity, OpportunityApplication } from '@uni-hub/types';
+import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import { OPPORTUNITY_SUB_TAB } from './constants';
 import { useOpportunitiesData } from './useOpportunitiesData';
 

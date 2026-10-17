@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { OpportunityApplication } from '@uni-hub/types';
+import type { OpportunityApplication } from '@core/types/opportunities';
 import { MyApplicationsTab, type MyApplicationsTabProps } from './MyApplicationsTab';
 
 const mockApplications: OpportunityApplication[] = [

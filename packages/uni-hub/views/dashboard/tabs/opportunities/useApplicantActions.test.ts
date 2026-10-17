@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity, OpportunityApplication } from '@uni-hub/types';
+import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import type { CurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { useApplicantActions } from './useApplicantActions';
 

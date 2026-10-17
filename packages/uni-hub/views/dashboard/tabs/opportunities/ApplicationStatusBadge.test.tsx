@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { OpportunityAppStatus } from '@uni-hub/types';
+import type { OpportunityAppStatus } from '@core/constants/opportunities';
 import { ApplicationStatusBadge } from './ApplicationStatusBadge';
 
 const renderBadge = (status: OpportunityAppStatus | string) => {
