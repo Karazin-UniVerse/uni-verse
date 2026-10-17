@@ -15,12 +15,17 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { endSession } from '@uni-hub/services/api.session';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
+import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
+import { useOpportunitiesStore } from '@uni-hub/store/useOpportunitiesStore';
+import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import { useQueryClient } from '@tanstack/react-query';
 import { NAV_KEY, type NavKey } from '../constants';
-import { useDashboard } from '../DashboardContext';
-import { NAV_KEY_ROUTE, getNavKeyFromPathname } from '../routes';
+import { useDashboardData } from '../hooks/useDashboardData';
+import { useDashboardErrorHandling } from '../hooks/useDashboardErrorHandling';
+import { NAV_KEY_ROUTE, ROUTE, getNavKeyFromPathname } from '../routes';
 import { resolveNavKey } from '../utils';
 import { formatLastSync } from '../tabs/helpers';
+import { invalidateOpportunities } from '../tabs/opportunities/cache';
 import { DashboardHeader } from './DashboardHeader';
 import { DashboardSidebar, NAV_ITEMS } from './DashboardSidebar';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
@@ -42,8 +47,29 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
   const soundEnabled = useGamificationStore((state) => state.soundEnabled);
   const setSoundEnabled = useGamificationStore((state) => state.setSoundEnabled);
   const { formatMessage } = useLanguage();
-  const dashboard = useDashboard();
-  const { isMoodleLinked, openLinkModal } = dashboard;
+
+  const dashboard = useDashboardData();
+  const isMoodleLinked = useMoodleStore((state) => state.isMoodleLinked);
+  const linkModalMode = useMoodleStore((state) => state.linkModalMode);
+  const isLinkModalOpen = useMoodleStore((state) => state.isLinkModalOpen);
+  const isUnlinkModalOpen = useMoodleStore((state) => state.isUnlinkModalOpen);
+  const openLinkModal = useMoodleStore((state) => state.openLinkModal);
+  const closeLinkModal = useMoodleStore((state) => state.closeLinkModal);
+  const openUnlinkModal = useMoodleStore((state) => state.openUnlinkModal);
+  const closeUnlinkModal = useMoodleStore((state) => state.closeUnlinkModal);
+  const completeLink = useMoodleStore((state) => state.completeLink);
+  const completeUnlink = useMoodleStore((state) => state.completeUnlink);
+
+  useDashboardErrorHandling();
+
+  useEffect(() => {
+    useMoodleStore.getState().syncLinkedFromStorage();
+
+    return () => {
+      useMoodleStore.setState(useMoodleStore.getInitialState());
+      useOpportunitiesStore.setState(useOpportunitiesStore.getInitialState());
+    };
+  }, []);
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -86,6 +112,25 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const selectKey = (key: NavKey): void => router.push(NAV_KEY_ROUTE[key]);
 
+  const handleRefresh = (): void => {
+    void invalidateOpportunities(queryClient);
+    void dashboard.refresh();
+  };
+
+  const handleLinkSuccess = (): void => {
+    completeLink();
+    void queryClient.invalidateQueries({ queryKey: moodleKeys.all });
+
+    if (pathname === ROUTE.ConnectMoodle) {
+      router.push(ROUTE.Wall);
+    }
+  };
+
+  const handleUnlinkSuccess = (): void => {
+    completeUnlink();
+    queryClient.removeQueries({ queryKey: moodleKeys.all });
+  };
+
   const content = activeKey === pathNavKey ? children : null;
 
   return (
@@ -118,10 +163,10 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
           onToggleSound={() => setSoundEnabled(!soundEnabled)}
           notifications={dashboard.data.notifications}
           unreadCount={dashboard.data.unreadCount}
-          activeStudentProfile={dashboard.activeStudentProfile}
+          activeStudentProfile={dashboard.studentProfile}
           isMoodleLinked={isMoodleLinked}
           onOpenLinkMoodle={openLinkModal}
-          onOpenUnlinkMoodle={dashboard.openUnlinkModal}
+          onOpenUnlinkMoodle={openUnlinkModal}
         />
 
         <main className={styles.content}>
@@ -142,7 +187,7 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
                 type="button"
                 variant="secondary"
                 size="small"
-                onClick={dashboard.refresh}
+                onClick={handleRefresh}
                 disabled={dashboard.loading}
                 aria-label={formatMessage('dashboard.refreshData')}
                 className={styles.refreshBtn}
@@ -200,16 +245,16 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
           {features.isMoodleIntegrationEnabled && (
             <>
               <LinkMoodleModal
-                mode={dashboard.linkModalMode}
-                open={dashboard.isLinkModalOpen}
-                onClose={dashboard.closeLinkModal}
-                onSuccess={dashboard.handleLinkSuccess}
+                mode={linkModalMode}
+                open={isLinkModalOpen}
+                onClose={closeLinkModal}
+                onSuccess={handleLinkSuccess}
               />
 
               <UnlinkMoodleModal
-                open={dashboard.isUnlinkModalOpen}
-                onClose={dashboard.closeUnlinkModal}
-                onSuccess={dashboard.handleUnlinkSuccess}
+                open={isUnlinkModalOpen}
+                onClose={closeUnlinkModal}
+                onSuccess={handleUnlinkSuccess}
               />
             </>
           )}
