@@ -83,7 +83,13 @@ export class OpportunitiesService {
       userRoles?.includes(Role.OPPORTUNITIES_MODERATOR),
     );
 
-    if (status && status !== OpportunityStatus.PUBLISHED && isModerator) {
+    if (status && status !== OpportunityStatus.PUBLISHED) {
+      if (!isModerator) {
+        throw new ForbiddenException(
+          'Only OPPORTUNITIES_MODERATOR can view opportunities with status other than PUBLISHED',
+        );
+      }
+
       where.status = status;
     } else {
       where.status = OpportunityStatus.PUBLISHED;
@@ -327,9 +333,14 @@ export class OpportunitiesService {
       throw new ForbiddenException('Cannot apply to your own opportunity');
     }
 
-    if (opportunity.lifecycleState !== OpportunityLifecycleState.ACTIVE) {
+    const allowedStates: OpportunityLifecycleState[] = [
+      OpportunityLifecycleState.START,
+      OpportunityLifecycleState.ACTIVE,
+    ];
+
+    if (!allowedStates.includes(opportunity.lifecycleState)) {
       throw new BadRequestException(
-        'Cannot apply to an opportunity that is not active',
+        'Cannot apply to an opportunity in this phase',
       );
     }
 
