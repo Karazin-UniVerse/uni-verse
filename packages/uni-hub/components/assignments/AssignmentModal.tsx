@@ -1,13 +1,25 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Download, ExternalLink } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, FileInput, Form, Modal, Spinner, Tag, useToast } from '@una';
-import { moodleApi } from '@uni-hub/services/api';
+import { hasLoadFailed } from '@uni-hub/queries/load-state';
+import { assignmentStatusQueryOptions } from '@uni-hub/queries/moodle/queries';
+import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
+import { moodleApi } from '@uni-hub/services/api.moodle';
 import type { CourseModule } from '@core/types/moodle';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { BADGES } from '@uni-hub/constants/gamification';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { LoadErrorState } from '@uni-hub/components/common/LoadErrorState';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
+import { canSubmitAssignment, extractUploadedItemId, readFileAsDataUrl } from './helpers';
 import styles from './AssignmentModal.module.scss';
+
+interface SubmissionRequest {
+  assignmentInstance: number;
+  answerText: string;
+  file: File | undefined;
+}
 
 interface AssignmentModalProps {
   visible: boolean;
@@ -48,85 +60,54 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
   dueUnixSec,
 }) => {
   const { formatMessage } = useLanguage();
-  const formatMessageRef = useRef(formatMessage);
+  const toast = useToast();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    formatMessageRef.current = formatMessage;
-  }, [formatMessage]);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [uploadingFile, setUploadingFile] = useState(false);
-  const [status, setStatus] = useState<{ status?: string; grade?: string } | null>(null);
   const [text, setText] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [formError, setFormError] = useState('');
-  const toast = useToast();
 
-  const fetchStatus = async () => {
-    if (!module?.instance) return;
+  const instance = module?.instance;
+  const statusQuery = useQuery({
+    ...assignmentStatusQueryOptions(instance ?? 0),
+    enabled: visible && instance !== undefined,
+  });
+  const status = statusQuery.data;
 
-    setLoading(true);
+  const submitMutation = useMutation({
+    mutationFn: async ({ assignmentInstance, answerText, file }: SubmissionRequest) => {
+      const uploaded = file
+        ? await moodleApi.uploadFile(file.name, await readFileAsDataUrl(file))
+        : undefined;
 
-    try {
-      const response = await moodleApi.getAssignmentStatus(module.instance);
+      await moodleApi.submitAssignment(
+        assignmentInstance,
+        answerText,
+        extractUploadedItemId(uploaded?.data),
+      );
+    },
+    onSuccess: (_result, request) =>
+      queryClient.invalidateQueries({
+        queryKey: moodleKeys.assignmentStatus(request.assignmentInstance),
+      }),
+  });
 
-      setStatus(response.data as { status?: string; grade?: string } | null);
-    } catch (error) {
-      console.error(error);
-      toast.error(formatMessage('assignmentModal.loadStatusError'));
-    } finally {
-      setLoading(false);
-    }
+  const submitting = submitMutation.isPending;
+  const uploadingFile = submitting && files.length > 0;
+
+  const resetForm = (): void => {
+    setText('');
+    setFiles([]);
+    setFormError('');
   };
 
-  useEffect(() => {
-    let cancelled = false;
+  const handleClose = (): void => {
+    resetForm();
+    onClose();
+  };
 
-    if (visible && module?.instance) {
-      const currentInstance = module.instance;
-
-      queueMicrotask(() => {
-        if (!cancelled) {
-          setLoading(true);
-        }
-      });
-
-      moodleApi
-        .getAssignmentStatus(currentInstance)
-        .then((response) => {
-          if (!cancelled) {
-            setStatus(response.data as { status?: string; grade?: string } | null);
-          }
-        })
-        .catch((error) => {
-          if (!cancelled) {
-            console.error(error);
-            toast.error(formatMessageRef.current('assignmentModal.loadStatusError'));
-          }
-        })
-        .finally(() => {
-          if (!cancelled) {
-            setLoading(false);
-          }
-        });
-    } else {
-      queueMicrotask(() => {
-        if (!cancelled) {
-          setStatus(null);
-          setText('');
-          setFiles([]);
-          setFormError('');
-        }
-      });
-    }
-
-    return () => {
-      cancelled = true;
-    };
-  }, [visible, module?.instance, toast]);
-
-  const handleSubmit = async () => {
-    if (!module?.instance) return;
+  const handleSubmit = async (): Promise<void> => {
+    if (instance === undefined) return;
 
     if (!text.trim() && files.length === 0) {
       setFormError(formatMessage('assignmentModal.formRequired'));
@@ -135,31 +116,13 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     }
 
     setFormError('');
-    setSubmitting(true);
-    let fileItemId: number | undefined;
 
     try {
-      if (files.length > 0) {
-        setUploadingFile(true);
-        const actualFile = files[0];
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-
-          reader.readAsDataURL(actualFile);
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = () =>
-            reject(reader.error ?? new Error('Failed to read file as data URL'));
-        });
-
-        const uploadRes = await moodleApi.uploadFile(actualFile.name, base64);
-        const uploaded = uploadRes.data as Array<{ itemid?: number }> | undefined;
-
-        if (Array.isArray(uploaded) && uploaded.length > 0) {
-          fileItemId = uploaded[0].itemid;
-        }
-      }
-
-      await moodleApi.submitAssignment(module.instance, text, fileItemId);
+      await submitMutation.mutateAsync({
+        assignmentInstance: instance,
+        answerText: text,
+        file: files[0],
+      });
       toast.success(formatMessage('assignmentModal.submitSuccess'));
       useGamificationStore.getState().triggerCelebration();
 
@@ -174,15 +137,10 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         }
       }
 
-      await fetchStatus();
-      setText('');
-      setFiles([]);
+      resetForm();
     } catch (error) {
       console.error(error);
       toast.error(formatMessage('assignmentModal.submitError'));
-    } finally {
-      setUploadingFile(false);
-      setSubmitting(false);
     }
   };
 
@@ -190,7 +148,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     typeof window !== 'undefined'
       ? localStorage.getItem('accessToken') || localStorage.getItem('moodleToken')
       : null;
-  const canSubmit = !status || status.status === 'new' || status.status === 'draft';
+  const canSubmit = canSubmitAssignment(status);
 
   const statusLabel =
     (status?.status && getAssignmentStatusLabel(status.status, formatMessage)) || status?.status;
@@ -201,13 +159,42 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
       ? `https://moodle.universemvp.tech/mod/assign/view.php?a=${module.instance}`
       : undefined);
 
+  let statusContent: React.ReactNode;
+
+  if (hasLoadFailed(statusQuery)) {
+    statusContent = <LoadErrorState onRetry={() => void statusQuery.refetch()} />;
+  } else if (status) {
+    statusContent = (
+      <div className={styles.box}>
+        <div className={styles.statusRow}>
+          <strong>{formatMessage('assignmentModal.status')}: </strong>
+          <Tag
+            tone={
+              status.status === 'submitted' || status.status === 'graded' ? 'success' : 'warning'
+            }
+          >
+            {statusLabel}
+          </Tag>
+        </div>
+        {status.grade && (
+          <div>
+            <strong>{formatMessage('assignmentModal.grade')}: </strong>
+            <span>{status.grade}</span>
+          </div>
+        )}
+      </div>
+    );
+  } else {
+    statusContent = <p className={styles.muted}>{formatMessage('assignmentModal.noStatusData')}</p>;
+  }
+
   return (
     <Modal
       open={visible}
-      onClose={onClose}
+      onClose={handleClose}
       title={module?.name || formatMessage('assignmentModal.defaultTitle')}
     >
-      {loading ? (
+      {statusQuery.isLoading ? (
         <Spinner tip={formatMessage('assignmentModal.loadingStatus')} />
       ) : (
         <div className={styles.content}>
@@ -265,30 +252,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
           <section>
             <h4>{formatMessage('assignmentModal.submissionStatus')}</h4>
-            {status ? (
-              <div className={styles.box}>
-                <div className={styles.statusRow}>
-                  <strong>{formatMessage('assignmentModal.status')}: </strong>
-                  <Tag
-                    tone={
-                      status.status === 'submitted' || status.status === 'graded'
-                        ? 'success'
-                        : 'warning'
-                    }
-                  >
-                    {statusLabel}
-                  </Tag>
-                </div>
-                {status.grade && (
-                  <div>
-                    <strong>{formatMessage('assignmentModal.grade')}: </strong>
-                    <span>{status.grade}</span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className={styles.muted}>{formatMessage('assignmentModal.noStatusData')}</p>
-            )}
+            {statusContent}
           </section>
 
           {canSubmit && (
@@ -320,7 +284,12 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                 {formError && <p className={styles.error}>{formError}</p>}
 
                 <div className={styles.actions}>
-                  <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleClose}
+                    disabled={submitting}
+                  >
                     {formatMessage('assignmentModal.cancel')}
                   </Button>
                   <Button type="submit" variant="primary" disabled={submitting || uploadingFile}>

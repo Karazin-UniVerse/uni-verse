@@ -31,10 +31,6 @@ async function loadModerationQueue(): Promise<Opportunity[]> {
   return asList(response.data);
 }
 
-export function hasLoadFailed(query: { isError: boolean; data: unknown }): boolean {
-  return query.isError && query.data === undefined;
-}
-
 export async function loadApplicants(opportunityId: string): Promise<OpportunityApplication[]> {
   const response = await opportunitiesApi.getOpportunityApplications(opportunityId);
 
