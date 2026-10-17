@@ -6,6 +6,8 @@
 - All working PRs target `develop`, never `main`.
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `refactor:`, `chore:`, `docs:`, `test:`.
 - Prefer smaller, focused PRs and commits.
+- Large changes ship as a stack of small PRs: each branch is cut from the previous one and each PR targets the branch below it; the first one targets `develop`. Manage the stack with `gh stack`: `gh stack init --base develop <branches…>` adopts existing branches (bottom to top), `gh stack add <branch>` adds a layer, `gh stack submit` pushes the branches and creates or updates the PRs, and `gh stack sync` and `gh stack rebase` keep the layers current after a lower PR merges.
+- Specs (`docs/superpowers/specs/`) and implementation plans (`docs/superpowers/plans/`) are committed; the plan for a later PR of a stack may ship earlier in a docs PR.
 - UI changes include screenshots in the PR description.
 - When people or ownership change, update `.github/CODEOWNERS` in the same PR.
 - Merge criteria, protected branches, Code Freeze and the release cycle: see [CONTRIBUTING.md](../../CONTRIBUTING.md).

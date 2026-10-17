@@ -5,11 +5,11 @@ Applies when working on the student portal (UniHub), shared domain contracts, gr
 ## Moodle gateway (`@universe/backend`)
 
 - The default Moodle host MUST be `https://moodle.universemvp.tech` (not `moodle.karazin.ua`).
-- DTOs in controllers and services must match the contracts in `@universe/core/types`.
+- DTOs in controllers and services must implement the contracts in `@universe/core/types/<domain>` ([core layout](architecture.md#core-layout)).
 
 ## Shared domain types
 
-- Domain entities (`StudentProfile`, `CurriculumItem`, `GradeRecord`, …) come from `@universe/core/types`.
+- Every domain has its own file in `packages/core/types/` (`@universe/core/types/opportunities`). The older entities (`StudentProfile`, `CurriculumItem`, `GradeRecord`, …) still come from `@universe/core/types`; when you change one of them, move it to its own `types/<domain>.ts` file.
 - Grade constants and calculation contracts (`CONTROL_TYPES`, `TRADITIONAL_GRADES`, `TraditionalGrade`, `ControlType`, `EctsGrade`, `GradeAccumulationParams`, `GradeAccumulationResult`) come from `@universe/core/constants/grades` (or `@universe/core/utils/grades` for calculations).
 - Alias and re-export rules: [code-style](code-style.md).
 
