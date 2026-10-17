@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
-import { renderToString } from 'react-dom/server';
+import { renderHook } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { Assignment } from '@core/types/moodle';
-import { withQueryClient } from '@uni-hub/utils/with-query-client';
 import {
   getAssignmentsNeedingStatus,
   toLocalStatuses,
@@ -20,8 +20,17 @@ function buildAssignment(id: number, submissionStatus?: string): Assignment {
   };
 }
 
-function renderWithClient(element: React.ReactElement): string {
-  return renderToString(withQueryClient(element));
+function createWrapper(): React.FC<{ children: React.ReactNode }> {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return ({ children }: { children: React.ReactNode }): React.ReactElement =>
+    React.createElement(QueryClientProvider, { client: queryClient }, children);
 }
 
 describe('getAssignmentsNeedingStatus', () => {
@@ -54,22 +63,28 @@ describe('toLocalStatuses', () => {
 
 describe('useAssignmentStatuses hook', () => {
   it('returns an empty record before any status has loaded', () => {
-    const TestComponent: React.FC = () => {
-      const statuses = useAssignmentStatuses([buildAssignment(101)]);
+    const { result } = renderHook(() => useAssignmentStatuses([buildAssignment(101)]), {
+      wrapper: createWrapper(),
+    });
 
-      return React.createElement('div', null, String(Object.keys(statuses).length));
-    };
-
-    expect(renderWithClient(React.createElement(TestComponent))).toContain('0');
+    expect(result.current).toEqual({});
   });
 
-  it('renders without error when given empty assignments', () => {
-    const TestComponent: React.FC = () => {
-      const statuses = useAssignmentStatuses([]);
+  it('returns an empty record when every assignment already has a status', () => {
+    const assignments: Assignment[] = [buildAssignment(101, 'submitted')];
 
-      return React.createElement('div', null, JSON.stringify(statuses));
-    };
+    const { result } = renderHook(() => useAssignmentStatuses(assignments), {
+      wrapper: createWrapper(),
+    });
 
-    expect(renderWithClient(React.createElement(TestComponent))).toContain('{}');
+    expect(result.current).toEqual({});
+  });
+
+  it('should return empty record when given empty assignments', () => {
+    const { result } = renderHook(() => useAssignmentStatuses([]), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current).toEqual({});
   });
 });
