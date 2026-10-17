@@ -71,7 +71,7 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
     checkIn();
   }, [checkIn, router]);
 
-  const closeMobileMenu = useCallback(() => {
+  const closeMobileMenu = useCallback((): void => {
     setMobileMenuOpen(false);
 
     const menuButton = document.querySelector<HTMLButtonElement>(`.${styles.mobileMenuBtn}`);
