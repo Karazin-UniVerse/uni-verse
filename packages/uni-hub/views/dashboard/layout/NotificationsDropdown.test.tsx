@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import type { Notification } from '@uni-hub/types';
+import type { Notification } from '@core/types/moodle';
 import { NotificationsDropdown } from './NotificationsDropdown';
 
 const notifications: Notification[] = [
   {
     id: 1,
     subject: 'Нове завдання',
-    message: '<p>Перевірте курс</p>',
+    fullmessage: '<p>Перевірте курс</p>',
     timecreated: 0,
     read: false,
   },

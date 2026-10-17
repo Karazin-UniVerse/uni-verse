@@ -16,7 +16,7 @@ import { Tag } from '@una';
 import { LiveCountdown } from '@uni-hub/components/gamification';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { Assignment } from '@uni-hub/types';
+import type { Assignment } from '@core/types/moodle';
 import { cardMotion } from '@uni-hub/views/dashboard/constants';
 import {
   getAssignmentStatusInfo,

@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+import type { CourseModule, CourseSection } from '@universe/core/types/moodle';
 
-export class CourseModuleDto {
+export class CourseModuleDto implements CourseModule {
   @ApiProperty()
   id: number;
 
@@ -10,20 +11,20 @@ export class CourseModuleDto {
   @ApiProperty({ required: false })
   url?: string;
 
-  @ApiProperty({ required: false })
-  modname?: string;
+  @ApiProperty()
+  modname: string;
 }
 
-export class CourseContentDto {
+export class CourseContentDto implements CourseSection {
   @ApiProperty()
   id: number;
 
   @ApiProperty()
   name: string;
 
-  @ApiProperty({ required: false })
-  summary?: string;
+  @ApiProperty()
+  summary: string;
 
-  @ApiProperty({ type: [CourseModuleDto], required: false })
-  modules?: CourseModuleDto[];
+  @ApiProperty({ type: [CourseModuleDto] })
+  modules: CourseModuleDto[];
 }

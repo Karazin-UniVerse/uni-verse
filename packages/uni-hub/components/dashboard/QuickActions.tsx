@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { Globe, FileText, Calendar, Building2, Sparkles } from 'lucide-react';
 import { ActionCard } from '@ui';
-import type { Assignment } from '@uni-hub/types';
+import type { Assignment } from '@core/types/moodle';
 import type { NavKey } from '@uni-hub/views/dashboard/constants';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useFeatures } from '@uni-hub/features';

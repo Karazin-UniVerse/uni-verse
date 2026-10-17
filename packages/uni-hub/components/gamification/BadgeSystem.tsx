@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import type { Grade } from '@uni-hub/types';
+import type { Grade } from '@core/types/moodle';
 import { BADGES } from '@uni-hub/constants/gamification';
 import { evaluateBadgeUnlocks } from '@uni-hub/utils/gamification';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';

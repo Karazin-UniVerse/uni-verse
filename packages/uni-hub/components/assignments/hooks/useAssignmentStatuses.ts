@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import type { Assignment } from '@uni-hub/types';
+import type { Assignment } from '@core/types/moodle';
 import { moodleApi } from '@uni-hub/services/api';
 
 export type AssignmentLocalStatuses = Record<number, { status?: string; grade?: string }>;

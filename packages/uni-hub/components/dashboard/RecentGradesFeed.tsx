@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { Award } from 'lucide-react';
 import { Empty, Button } from '@una';
 import { GradeFeedItem } from '@ui';
-import type { Assignment } from '@uni-hub/types';
+import type { Assignment } from '@core/types/moodle';
 import type { NavKey } from '@uni-hub/views/dashboard/constants';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { getScoreToneClass, formatRecentGradeDate } from './helpers';

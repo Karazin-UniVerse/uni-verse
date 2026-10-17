@@ -86,16 +86,12 @@ const LoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await authApi.login(username, password);
+      await authApi.login(username, password);
 
       toast.success(formatMessage('login.success'));
       safeStorage.setItem('isLoggedIn', 'true');
       safeStorage.setItem('isMoodleLinked', 'true');
       safeStorage.setItem('username', username.trim());
-
-      if (res.data?.token) {
-        safeStorage.setItem('moodleToken', res.data.token);
-      }
 
       router.push('/');
     } catch (err: unknown) {
