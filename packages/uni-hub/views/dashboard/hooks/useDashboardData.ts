@@ -132,7 +132,7 @@ export function useDashboardData({
     }
   };
 
-  const fetchData = async (isManual = false) => {
+  const fetchData = async (isManual = false): Promise<void> => {
     const requestId = ++fetchRequestIdRef.current;
 
     if (!enabled || isMoodleUnlinked()) {
@@ -234,7 +234,7 @@ export function useDashboardData({
     }
   };
 
-  const cancelPendingFetch = () => {
+  const cancelPendingFetch = (): void => {
     fetchRequestIdRef.current += 1;
     setLoading(false);
   };

@@ -16,6 +16,7 @@ import {
   mapPlatformNotification,
   applyPlatformNotifications,
   assembleDashboardData,
+  type MoodleApiResponseTuple,
 } from './helpers';
 import { fallbackStudentProfile } from '../constants';
 import type { DashboardData } from '../types';
@@ -306,11 +307,11 @@ describe('mapPlatformNotification', () => {
 
 describe('assembleDashboardData', () => {
   it('combines and sorts moodle and platform notifications by timecreated desc and calculates total unread count', () => {
-    const moodleResponses: any = [
+    const moodleResponses: MoodleApiResponseTuple = [
       { data: [] },
       { data: { grades: [] } },
       { data: [] },
-      { data: { events: [] } },
+      { data: [] },
       {
         data: {
           notifications: [
@@ -351,7 +352,7 @@ describe('assembleDashboardData', () => {
 
 describe('applyPlatformNotifications', () => {
   it('updates notifications and unreadCount on existing dashboard state', () => {
-    const previousData: any = {
+    const previousData: DashboardData = {
       courses: [],
       grades: [],
       assignments: [],

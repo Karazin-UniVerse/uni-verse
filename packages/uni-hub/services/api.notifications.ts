@@ -2,13 +2,13 @@ import { request } from './api.request';
 
 export interface PlatformNotification {
   id: string;
-  type?: string | null;
   title: string;
   message: string;
-  link?: string | null;
   isRead: boolean;
   createdAt: string;
   userId: string;
+  type?: string | null;
+  link?: string | null;
 }
 
 export class NotificationsApi {

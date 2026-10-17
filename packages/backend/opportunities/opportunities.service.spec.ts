@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import type { ValidationArguments } from 'class-validator';
 import { OpportunitiesService } from './opportunities.service';
+import { IsContactInfoConstraint } from './opportunities.helpers';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
@@ -1030,6 +1032,26 @@ describe('OpportunitiesService', () => {
       const res = await service.getMyOpportunities('user-1');
 
       expect(res).toHaveLength(1);
+    });
+  });
+
+  describe('IsContactInfoConstraint', () => {
+    const constraint = new IsContactInfoConstraint();
+
+    it('validates contact strings and rejects invalid values', () => {
+      expect(constraint.validate('@valid_user')).toBe(true);
+      expect(constraint.validate('+380501234567')).toBe(true);
+      expect(constraint.validate('invalid-contact')).toBe(false);
+      expect(constraint.validate(12345)).toBe(false);
+      expect(constraint.validate(null)).toBe(false);
+    });
+
+    it('returns default error message for property', () => {
+      const message = constraint.defaultMessage({
+        property: 'contactInfo',
+      } as ValidationArguments);
+
+      expect(message).toContain('contactInfo must be a valid Telegram');
     });
   });
 });

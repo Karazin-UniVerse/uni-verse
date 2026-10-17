@@ -151,7 +151,7 @@ describe('dashboard utils', () => {
       const withFormatter = toNotificationListItem(
         platformNotif,
         'en-US',
-        (key, values) => {
+        (key, values): string => {
           if (key === 'notifications.opportunityApplicationStatus.title') {
             return 'Application Status';
           }
@@ -173,7 +173,7 @@ describe('dashboard utils', () => {
     });
 
     it('translates new application and moderation platform notifications and handles invalid JSON', () => {
-      const formatter = (key: string, values?: Record<string, string | number>) =>
+      const formatter = (key: string, values?: Record<string, string | number>): string =>
         `${key}:${JSON.stringify(values ?? {})}`;
 
       const newAppItem = toNotificationListItem(
@@ -230,7 +230,7 @@ describe('dashboard utils', () => {
           read: false,
         },
         'en-US',
-        () => 'Translated Platform Title',
+        (): string => 'Translated Platform Title',
       );
 
       expect(moodleWithCollision.title).toBe('notifications.opportunityModerated.title');
