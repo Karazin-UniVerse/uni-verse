@@ -257,6 +257,12 @@ describe('OpportunitiesService', () => {
           data: expect.objectContaining({ status: 'PUBLISHED' }),
         }),
       );
+      expect(notificationsService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'owner1',
+          link: '/opportunities/opp1',
+        }),
+      );
     });
 
     it('succeeds if user holds OPPORTUNITIES_MODERATOR among several roles', async () => {
@@ -734,6 +740,7 @@ describe('OpportunitiesService', () => {
         .mockResolvedValue({
           id: 'app-1',
           applicantId: 'applicant-1',
+          opportunityId: 'opp-1',
           opportunity: { ownerId: 'owner-1', title: 'Opp' },
         } as any);
       const mockUpdated = { id: 'app-1', status: 'REJECTED' };
@@ -749,7 +756,12 @@ describe('OpportunitiesService', () => {
       });
 
       expect(result).toBe(mockUpdated);
-      expect(notificationsService.createNotification).toHaveBeenCalled();
+      expect(notificationsService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'applicant-1',
+          link: '/opportunities/opp-1',
+        }),
+      );
     });
   });
 
@@ -882,6 +894,12 @@ describe('OpportunitiesService', () => {
 
       expect(prisma.opportunityApplication.create).toHaveBeenCalled();
       expect(result.id).toBe('app-new');
+      expect(notificationsService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'owner-1',
+          link: '/opportunities/1',
+        }),
+      );
     });
 
     it('throws ConflictException on Prisma unique constraint error P2002', async () => {

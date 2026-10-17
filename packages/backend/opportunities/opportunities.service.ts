@@ -25,6 +25,7 @@ import {
   Role,
 } from '@universe/database';
 import { OPPORTUNITY_MODERATE_ACTION } from '@universe/core/constants/opportunities';
+import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 
 export type OpportunityWithOwner = Opportunity & {
   owner: { id: string; name: string | null; email: string };
@@ -301,7 +302,7 @@ export class OpportunitiesService {
         status,
         comment: ownerComment || null,
       }),
-      link: '/my-applications',
+      link: `${OPPORTUNITIES_ROUTE}/${app.opportunityId}`,
     });
 
     return updated;
@@ -374,7 +375,7 @@ export class OpportunitiesService {
         opportunityTitle: opportunity.title,
         applicantName: dto.applicantName,
       }),
-      link: `/my-opportunities/${id}`,
+      link: `${OPPORTUNITIES_ROUTE}/${id}`,
     });
 
     return app;
@@ -493,7 +494,7 @@ export class OpportunitiesService {
         action: dto.action,
         comment: dto.comment || null,
       }),
-      link: '/my-opportunities',
+      link: `${OPPORTUNITIES_ROUTE}/${opp.id}`,
     });
 
     return opp;
