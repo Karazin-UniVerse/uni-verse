@@ -15,7 +15,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { Button } from '@una';
-import type { OpportunityApplication } from '@uni-hub/types';
+import type { OpportunityApplication } from '@core/types/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { ApplicationStatusBadge } from './ApplicationStatusBadge';
 import { TabStateWrapper } from './TabStateWrapper';

@@ -238,4 +238,3 @@ describe('dashboard utils', () => {
     });
   });
 });
-

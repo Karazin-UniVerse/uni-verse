@@ -1,4 +1,5 @@
-const TELEGRAM_REGEX = /^(@[a-zA-Z0-9_]{4,32}|(https?:\/\/)?(www\.)?t\.me\/[a-zA-Z0-9_]{4,32}\/?)$/i;
+const TELEGRAM_REGEX =
+  /^(@[a-zA-Z0-9_]{4,32}|(https?:\/\/)?(www\.)?t\.me\/[a-zA-Z0-9_]{4,32}\/?)$/i;
 const PHONE_CHARS_REGEX = /^\+?[0-9\s\-()]{10,20}$/;
 const MIN_PHONE_DIGITS = 10;
 const MAX_PHONE_DIGITS = 15;
@@ -8,11 +9,7 @@ const MAX_PHONE_DIGITS = 15;
  * or a valid phone number.
  */
 export function isValidContactInfo(value?: string | null): boolean {
-  if (!value) {
-    return false;
-  }
-
-  const trimmed = value.trim();
+  const trimmed = value?.trim();
 
   if (!trimmed) {
     return false;

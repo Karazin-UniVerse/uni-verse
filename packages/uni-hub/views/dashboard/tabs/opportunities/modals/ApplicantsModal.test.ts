@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { OpportunityApplication } from '@uni-hub/types';
+import type { OpportunityApplication } from '@core/types/opportunities';
 import { ApplicantsModal } from './ApplicantsModal';
 
 describe('ApplicantsModal', () => {
@@ -17,7 +17,6 @@ describe('ApplicantsModal', () => {
     createdAt: '2026-10-01T11:00:00.000Z',
     updatedAt: '2026-10-01T11:00:00.000Z',
     applicant: {
-      id: 'user-2',
       name: 'Student Name',
       email: 'student@example.com',
     },

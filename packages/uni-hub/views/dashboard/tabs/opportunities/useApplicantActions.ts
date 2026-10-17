@@ -4,7 +4,8 @@ import { isValidContactInfo } from '@core/utils/contacts';
 import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity, OpportunityApplication } from '@uni-hub/types';
+import { OPPORTUNITY_APP_STATUS } from '@core/constants/opportunities';
+import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import type { CurrentUser } from '@uni-hub/hooks/useCurrentUser';
 
 export interface UseApplicantActionsProps {
@@ -13,11 +14,26 @@ export interface UseApplicantActionsProps {
   setApplications: React.Dispatch<React.SetStateAction<OpportunityApplication[]>>;
 }
 
+export interface UseApplicantActionsResult {
+  isApplyOpen: boolean;
+  setIsApplyOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  motivation: string;
+  setMotivation: React.Dispatch<React.SetStateAction<string>>;
+  contactInfo: string;
+  setContactInfo: React.Dispatch<React.SetStateAction<string>>;
+  applying: boolean;
+  handleApplySubmit: (event: React.SyntheticEvent<HTMLFormElement>) => Promise<void>;
+  withdrawApplicationId: string | null;
+  setWithdrawApplicationId: React.Dispatch<React.SetStateAction<string | null>>;
+  withdrawing: boolean;
+  handleWithdraw: () => Promise<void>;
+}
+
 export function useApplicantActions({
   currentUser,
   selectedOpportunity,
   setApplications,
-}: UseApplicantActionsProps) {
+}: UseApplicantActionsProps): UseApplicantActionsResult {
   const toast = useToast();
   const { formatMessage } = useLanguage();
 
@@ -73,7 +89,7 @@ export function useApplicantActions({
       setApplications((current) =>
         current.map((application) =>
           application.id === withdrawApplicationId
-            ? { ...application, status: 'WITHDRAWN' }
+            ? { ...application, status: OPPORTUNITY_APP_STATUS.WITHDRAWN }
             : application,
         ),
       );

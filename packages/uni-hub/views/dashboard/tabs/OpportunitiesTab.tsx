@@ -5,6 +5,7 @@ import { Plus, Briefcase, ShieldCheck, Users, FileText } from 'lucide-react';
 import { Button } from '@una';
 import { ConfirmModal } from '@ui';
 import { ROLE } from '@core/constants/roles';
+import type { Opportunity } from '@core/types/opportunities';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import styles from './OpportunitiesTab.module.scss';
@@ -39,15 +40,11 @@ export const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({ refreshTrigg
   const data = useOpportunitiesData(isModerator);
   const { activeSubTab, setActiveSubTab, refetchActiveList, refetchOpportunities } = data;
   const detail = useOpportunityDetail((id, patch) => {
-    if (id && patch) {
-      data.myOpportunities.setItems((items) =>
-        items.map((item) => (item.id === id ? { ...item, ...patch } : item)),
-      );
-      data.catalog.setItems((items) =>
-        items.map((item) => (item.id === id ? { ...item, ...patch } : item)),
-      );
-    }
+    const applyPatch = (items: Opportunity[]): Opportunity[] =>
+      items.map((item) => (item.id === id ? { ...item, ...patch } : item));
 
+    data.myOpportunities.setItems(applyPatch);
+    data.catalog.setItems(applyPatch);
     void refetchOpportunities();
   });
   const create = useCreateOpportunity({

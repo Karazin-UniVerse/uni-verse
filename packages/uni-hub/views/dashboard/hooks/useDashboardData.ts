@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { moodleApi } from '@uni-hub/services/api';
 import { notificationsApi, type PlatformNotification } from '@uni-hub/services/api.notifications';
 import type { StudentProfile } from '@core/types';
@@ -30,6 +30,19 @@ export interface UseDashboardDataOptions {
   hideCompleted: boolean;
   onUnauthorized: () => void;
   enabled?: boolean;
+}
+
+export interface UseDashboardDataResult {
+  data: DashboardData;
+  setData: React.Dispatch<React.SetStateAction<DashboardData>>;
+  loading: boolean;
+  hasLoadedOnce: boolean;
+  lastSyncTime: number | null;
+  isOfflineData: boolean;
+  studentProfile: StudentProfile | null;
+  setStudentProfile: React.Dispatch<React.SetStateAction<StudentProfile | null>>;
+  fetchData: (isManual?: boolean) => Promise<void>;
+  cancelPendingFetch: () => void;
 }
 
 function getInitialDashboardData(): DashboardData {
@@ -93,7 +106,7 @@ export function useDashboardData({
   hideCompleted,
   onUnauthorized,
   enabled = true,
-}: UseDashboardDataOptions) {
+}: UseDashboardDataOptions): UseDashboardDataResult {
   const toast = useToast();
   const { formatMessage } = useLanguage();
 
@@ -110,6 +123,34 @@ export function useDashboardData({
     clearUserSessionStorage();
     toast.error(formatMessage('dashboard.sessionExpired'));
     onUnauthorized();
+  };
+
+  const applyMoodleFallback = (platformNotifications?: PlatformNotification[]): void => {
+    const cachedData = loadCachedDashboardData();
+
+    if (cachedData) {
+      setData((previous) =>
+        buildFallbackData({
+          cachedData,
+          previousData: previous,
+          hideCompleted,
+          dateFrom,
+          dateTo,
+          platformNotifications,
+        }),
+      );
+      setIsOfflineData(true);
+      setHasLoadedOnce(true);
+      toast.info(formatMessage('dashboard.offlineNotice'));
+
+      return;
+    }
+
+    if (platformNotifications) {
+      setData((previous) => applyPlatformNotifications(previous, platformNotifications));
+    }
+
+    toast.error(formatMessage('dashboard.loadError'));
   };
 
   const syncPlatformOnly = async (requestId: number): Promise<void> => {
@@ -143,6 +184,8 @@ export function useDashboardData({
 
     setLoading(true);
 
+    const platformNotificationsPromise = loadPlatformNotifications();
+
     try {
       const params = buildAssignmentParams({ sortOrder, dateFrom, dateTo, hideCompleted });
       const [
@@ -162,7 +205,7 @@ export function useDashboardData({
         moodleApi.getNotifications(),
         moodleApi.getStatistics(),
         moodleApi.getProfile().catch(() => null),
-        loadPlatformNotifications(),
+        platformNotificationsPromise,
       ]);
 
       if (isAbortedMoodleFetch(requestId, fetchRequestIdRef.current)) {
@@ -170,14 +213,7 @@ export function useDashboardData({
       }
 
       const freshData = assembleDashboardData(
-        [
-          coursesRes,
-          gradesRes,
-          assignmentsRes,
-          eventsRes,
-          notificationsRes,
-          statsRes,
-        ],
+        [coursesRes, gradesRes, assignmentsRes, eventsRes, notificationsRes, statsRes],
         platformNotificationsRes?.data,
       );
 
@@ -207,26 +243,13 @@ export function useDashboardData({
 
       console.error(error);
 
-      const cachedData = loadCachedDashboardData();
+      const platformNotificationsRes = await platformNotificationsPromise.catch(() => null);
 
-      if (cachedData) {
-        setData((previous) =>
-          buildFallbackData({
-            cachedData,
-            previousData: previous,
-            hideCompleted,
-            dateFrom,
-            dateTo,
-          }),
-        );
-        setIsOfflineData(true);
-        setHasLoadedOnce(true);
-        toast.info(formatMessage('dashboard.offlineNotice'));
-
+      if (isAbortedMoodleFetch(requestId, fetchRequestIdRef.current)) {
         return;
       }
 
-      toast.error(formatMessage('dashboard.loadError'));
+      applyMoodleFallback(platformNotificationsRes?.data);
     } finally {
       if (requestId === fetchRequestIdRef.current) {
         setLoading(false);

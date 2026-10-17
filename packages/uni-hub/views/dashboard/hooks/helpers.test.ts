@@ -277,6 +277,56 @@ describe('buildFallbackData', () => {
     expect(result.assignments.length).toBe(1);
     expect(result.assignments[0].id).toBe(20);
   });
+
+  it('applies fresh platformNotifications onto cached Moodle fallback data', () => {
+    localStorage.setItem('isMoodleLinked', 'true');
+
+    const cachedData: Partial<DashboardData> = {
+      notifications: [
+        {
+          id: 7,
+          subject: 'Cached Moodle Alert',
+          message: 'Cached Moodle body',
+          timecreated: 1000,
+          read: false,
+        },
+      ],
+      unreadCount: 1,
+    };
+
+    const previousData: DashboardData = {
+      courses: [],
+      grades: [],
+      assignments: [],
+      events: [],
+      notifications: [],
+      unreadCount: 0,
+      statistics: null,
+    };
+
+    const result = buildFallbackData({
+      cachedData,
+      previousData,
+      hideCompleted: false,
+      dateFrom: '',
+      dateTo: '',
+      platformNotifications: [
+        {
+          id: 'plat-fresh',
+          userId: 'user-1',
+          title: 'Platform Alert',
+          message: 'Platform body',
+          isRead: false,
+          createdAt: new Date(2000 * 1000).toISOString(),
+        },
+      ],
+    });
+
+    expect(result.notifications).toHaveLength(2);
+    expect(result.notifications[0].id).toBe('plat-fresh');
+    expect(result.notifications[1].id).toBe(7);
+    expect(result.unreadCount).toBe(2);
+  });
 });
 
 describe('mapPlatformNotification', () => {
@@ -459,4 +509,3 @@ describe('applyPlatformNotifications', () => {
     expect(result.unreadCount).toBe(1);
   });
 });
-

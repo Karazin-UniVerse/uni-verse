@@ -3,7 +3,7 @@ import { useToast } from '@una';
 import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity } from '@uni-hub/types';
+import type { Opportunity } from '@core/types/opportunities';
 import type { CreateOpportunityFormData } from './types';
 
 const INITIAL_FORM_DATA: CreateOpportunityFormData = {

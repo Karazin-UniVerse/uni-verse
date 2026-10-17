@@ -4,7 +4,8 @@ import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { asList } from '@uni-hub/utils/arrays';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity, OpportunityApplication, OpportunityAppStatus } from '@uni-hub/types';
+import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
+import type { OpportunityAppStatus } from '@core/constants/opportunities';
 
 export function useApplicants() {
   const toast = useToast();

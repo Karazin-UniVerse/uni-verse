@@ -1,4 +1,5 @@
 import { CONTROL_TYPES, TRADITIONAL_GRADES } from '@core/constants/grades';
+import { OPPORTUNITY_APP_STATUS, OPPORTUNITY_MODERATE_ACTION } from '@core/constants/opportunities';
 import type { ControlType } from '@core/utils/grades';
 import type { NotificationListItem } from '@ui';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
@@ -79,21 +80,25 @@ function truncateText(text: string, maxLength: number): string {
 }
 
 const PLATFORM_STATUS_KEYS: Record<string, TranslationKey> = {
-  ACCEPTED: 'notifications.status.ACCEPTED',
-  REJECTED: 'notifications.status.REJECTED',
-  UNDER_REVIEW: 'notifications.status.UNDER_REVIEW',
+  [OPPORTUNITY_APP_STATUS.ACCEPTED]: 'notifications.status.ACCEPTED',
+  [OPPORTUNITY_APP_STATUS.REJECTED]: 'notifications.status.REJECTED',
+  [OPPORTUNITY_APP_STATUS.UNDER_REVIEW]: 'notifications.status.UNDER_REVIEW',
 };
 
 const PLATFORM_ACTION_KEYS: Record<string, TranslationKey> = {
-  APPROVE: 'notifications.action.APPROVE',
-  REJECT: 'notifications.action.REJECT',
-  REQUIRE_CHANGES: 'notifications.action.REQUIRE_CHANGES',
+  [OPPORTUNITY_MODERATE_ACTION.APPROVE]: 'notifications.action.APPROVE',
+  [OPPORTUNITY_MODERATE_ACTION.REJECT]: 'notifications.action.REJECT',
+  [OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES]: 'notifications.action.REQUIRE_CHANGES',
 };
 
-type MessageFormatter = (
-  key: TranslationKey,
-  values?: Record<string, string | number>,
-) => string;
+const PLATFORM_TITLE_KEYS: Record<string, TranslationKey> = {
+  'notifications.opportunityApplicationStatus.title':
+    'notifications.opportunityApplicationStatus.title',
+  'notifications.opportunityNewApplication.title': 'notifications.opportunityNewApplication.title',
+  'notifications.opportunityModerated.title': 'notifications.opportunityModerated.title',
+};
+
+type MessageFormatter = (key: TranslationKey, values?: Record<string, string | number>) => string;
 
 type PlatformNotificationPayload = {
   opportunityTitle?: string;
@@ -184,15 +189,12 @@ export function toNotificationListItem(
   formatMessage?: MessageFormatter,
 ): NotificationListItem {
   const createdAt = new Date(notification.timecreated * 1000);
-  const isPlatformKey =
-    typeof notification.id === 'string' && notification.subject.startsWith('notifications.');
-  const title =
-    formatMessage && isPlatformKey
-      ? formatMessage(notification.subject as TranslationKey)
-      : notification.subject;
+  const titleKey =
+    typeof notification.id === 'string' ? PLATFORM_TITLE_KEYS[notification.subject] : undefined;
+  const title = formatMessage && titleKey ? formatMessage(titleKey) : notification.subject;
   const resolvedMessage =
-    formatMessage && isPlatformKey
-      ? formatPlatformMessage(notification.subject, notification.message, formatMessage)
+    formatMessage && titleKey
+      ? formatPlatformMessage(titleKey, notification.message, formatMessage)
       : notification.message;
 
   return {

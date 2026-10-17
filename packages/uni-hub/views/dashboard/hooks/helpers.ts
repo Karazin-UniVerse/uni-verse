@@ -363,6 +363,7 @@ export interface BuildFallbackDataOptions {
   hideCompleted: boolean;
   dateFrom: string;
   dateTo: string;
+  platformNotifications?: PlatformNotification[] | null;
 }
 
 export function buildFallbackData({
@@ -371,6 +372,7 @@ export function buildFallbackData({
   hideCompleted,
   dateFrom,
   dateTo,
+  platformNotifications,
 }: BuildFallbackDataOptions): DashboardData {
   const fallbackAssignments = filterFallbackAssignments({
     assignments: cachedData.assignments ?? previousData.assignments,
@@ -379,9 +381,11 @@ export function buildFallbackData({
     dateTo,
   });
 
-  return {
+  const merged: DashboardData = {
     ...previousData,
     ...cachedData,
     assignments: fallbackAssignments,
   };
+
+  return platformNotifications ? applyPlatformNotifications(merged, platformNotifications) : merged;
 }

@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { opportunitiesApi } from './api.opportunities';
 import type {
-  CreateOpportunityDto,
-  UpdateOpportunityDto,
-  ApplyOpportunityDto,
-} from './api.opportunities';
+  ApplyOpportunityRequest,
+  CreateOpportunityRequest,
+  UpdateOpportunityRequest,
+} from '@core/types/opportunities';
 
 describe('OpportunitiesApi', () => {
   beforeEach(() => {
@@ -55,7 +55,7 @@ describe('OpportunitiesApi', () => {
       json: async () => mockData,
     } as Response);
 
-    const dto: CreateOpportunityDto = {
+    const dto: CreateOpportunityRequest = {
       title: 'New Opp',
       description: 'Desc',
       ownerContactInfo: 'test@example.com',
@@ -80,7 +80,7 @@ describe('OpportunitiesApi', () => {
       json: async () => mockData,
     } as Response);
 
-    const dto: UpdateOpportunityDto = { title: 'Updated Opp' };
+    const dto: UpdateOpportunityRequest = { title: 'Updated Opp' };
     const res = await opportunitiesApi.updateOpportunity('1', dto);
 
     expect(res.data).toEqual(mockData);
@@ -135,7 +135,7 @@ describe('OpportunitiesApi', () => {
       json: async () => mockData,
     } as Response);
 
-    const dto: ApplyOpportunityDto = {
+    const dto: ApplyOpportunityRequest = {
       applicantName: 'Test Student',
       contactInfo: 'test@student.karazin.ua',
     };
