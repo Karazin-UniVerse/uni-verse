@@ -1,6 +1,6 @@
 const TELEGRAM_REGEX =
-  /^(@[a-zA-Z0-9_]{4,32}|(https?:\/\/)?(www\.)?t\.me\/[a-zA-Z0-9_]{4,32}\/?)$/i;
-const PHONE_CHARS_REGEX = /^\+?[0-9\s\-()]{10,20}$/;
+  /^(@[a-zA-Z][a-zA-Z0-9_]{3,31}|(https?:\/\/)?(www\.)?t\.me\/[a-zA-Z][a-zA-Z0-9_]{3,31}\/?)$/i;
+const PHONE_CHARS_REGEX = /^\+?[0-9\s\-()]+$/;
 const MIN_PHONE_DIGITS = 10;
 const MAX_PHONE_DIGITS = 15;
 

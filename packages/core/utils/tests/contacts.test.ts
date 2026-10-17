@@ -8,6 +8,7 @@ describe('contacts utils', () => {
       assert.strictEqual(isValidContactInfo('@username'), true);
       assert.strictEqual(isValidContactInfo('@user_123'), true);
       assert.strictEqual(isValidContactInfo('@abcd'), true);
+      assert.strictEqual(isValidContactInfo('@12345'), false);
       assert.strictEqual(isValidContactInfo('@a'), false);
       assert.strictEqual(isValidContactInfo('@'), false);
     });
@@ -17,6 +18,8 @@ describe('contacts utils', () => {
       assert.strictEqual(isValidContactInfo('https://t.me/karazin_dev'), true);
       assert.strictEqual(isValidContactInfo('http://t.me/karazin_dev/'), true);
       assert.strictEqual(isValidContactInfo('https://www.t.me/karazin_dev'), true);
+      assert.strictEqual(isValidContactInfo('t.me/12345'), false);
+      assert.strictEqual(isValidContactInfo('https://t.me/12345'), false);
     });
 
     test('validates phone numbers', () => {
@@ -24,8 +27,10 @@ describe('contacts utils', () => {
       assert.strictEqual(isValidContactInfo('+380 (50) 123-45-67'), true);
       assert.strictEqual(isValidContactInfo('0501234567'), true);
       assert.strictEqual(isValidContactInfo('+12025550123'), true);
+      assert.strictEqual(isValidContactInfo('+123 (456) 789-012345'), true);
       assert.strictEqual(isValidContactInfo('123'), false);
       assert.strictEqual(isValidContactInfo('+123456789012345678'), false);
+      assert.strictEqual(isValidContactInfo('+123 (456) 789-0123456'), false);
     });
 
     test('rejects empty or invalid formats', () => {
