@@ -38,7 +38,9 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
       )}
     >
       <NotificationList
-        items={notifications.map((notification) => toNotificationListItem(notification, localeTag))}
+        items={notifications.map((notification) =>
+          toNotificationListItem(notification, localeTag, formatMessage),
+        )}
         heading={formatMessage('header.notifications')}
         emptyLabel={formatMessage('header.notifications.empty')}
         unreadItemLabel={formatMessage('header.notifications.unreadItem')}

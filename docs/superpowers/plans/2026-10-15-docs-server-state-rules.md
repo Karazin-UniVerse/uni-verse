@@ -19,7 +19,7 @@
 - Do not describe code that does not exist yet as already done; rules are phrased as rules.
 - Commit messages follow Conventional Commits and end with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`.
 - Before every commit show the user `git diff --stat` and the diff and wait for approval (user preference). Do not push or open the PR without being asked.
-- Commands run from `/Users/ReDL/Documents/Programming/Projects/uni-verse`.
+- Commands run from the repository root.
 
 ## Review Focus
 
