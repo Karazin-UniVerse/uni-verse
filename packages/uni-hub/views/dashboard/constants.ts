@@ -2,10 +2,8 @@ import type { StudentProfile, CurriculumItem } from '@core/types';
 
 export const NAV_KEY = {
   Overview: 'overview',
-  Courses: 'courses',
-  Grades: 'grades',
+  Study: 'study',
   Schedule: 'schedule',
-  Assignments: 'assignments',
   ConnectMoodle: 'connectMoodle',
   Opportunities: 'opportunities',
 } as const;
@@ -13,6 +11,16 @@ export const NAV_KEY = {
 export type NavKey = (typeof NAV_KEY)[keyof typeof NAV_KEY];
 
 export const NAV_KEYS = Object.values(NAV_KEY);
+
+export const STUDY_VIEW = {
+  Subjects: 'subjects',
+  Grades: 'grades',
+  Assignments: 'assignments',
+} as const;
+
+export type StudyView = (typeof STUDY_VIEW)[keyof typeof STUDY_VIEW];
+
+export const STUDY_VIEWS = Object.values(STUDY_VIEW);
 
 export const fallbackStudentProfile: StudentProfile = {
   id: 'karazin-student-001',

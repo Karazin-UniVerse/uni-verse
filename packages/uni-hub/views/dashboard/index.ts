@@ -6,6 +6,7 @@ export * from './layout/DashboardHeader';
 export * from './layout/NotificationsDropdown';
 export * from './layout/UserDropdown';
 export * from './tabs/OverviewTab';
+export * from './tabs/StudyTab';
 export * from './tabs/CoursesTab';
 export * from './tabs/GradesTab';
 export * from './tabs/AssignmentsTab';
