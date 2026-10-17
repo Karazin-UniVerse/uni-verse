@@ -6,17 +6,21 @@ description: Migrates legacy React test files (renderToString, shallow HTML stri
 # RTL Test Migrator Skill
 
 ## Overview
-This skill migrates legacy React component and hook test suites from static string matching (`renderToString` from `react-dom/server` executed under Node.js) to modern **React Testing Library (RTL)** with **Happy-DOM** and **@testing-library/jest-dom**.
+This skill migrates legacy React component and hook test suites from static string matching (`renderToString` / `renderToStaticMarkup` from `react-dom/server` executed under Node.js) to modern **React Testing Library (RTL)** with **Happy-DOM** and **@testing-library/jest-dom**.
 
 It supports processing:
 1. **A single file path**: e.g., `packages/ui/components/una/Button/Button.test.tsx`
 2. **A list of file paths**: e.g., multiple space- or comma-separated test file paths.
 3. **A directory path**: e.g., `packages/ui/components/una` (recursively identifies and migrates all `*.test.ts*` files).
 
+> **Related Skills**:
+> - For writing new unit tests from scratch or expanding test coverage on untested components/hooks, use [`unit-test-writing`](../unit-test-writing/SKILL.md).
+> - For migrating or generating 5+ test files in parallel via subagents, use [`parallel-test-orchestrator`](../parallel-test-orchestrator/SKILL.md).
+
 ---
 
 ## When to Use
-- Migrating existing test suites from `renderToString` or `React.createElement` to RTL.
+- Migrating existing test suites from `renderToString` / `renderToStaticMarkup` or `React.createElement` to RTL.
 - Upgrading component tests from substring assertions (`expect(html).toContain(...)`) to semantic DOM assertions (`expect(element).toBeInTheDocument()`).
 - Refactoring hook tests to use `renderHook` and dispatch real DOM events in Happy-DOM.
 
@@ -26,13 +30,13 @@ It supports processing:
 
 ### Step 1: Input Resolution & Target Discovery
 - If input is a directory: find all `*.test.ts` and `*.test.tsx` files within it.
-- If input is a list of files: process each sequentially.
+- If input is a list of files: process each sequentially (or batch via `parallel-test-orchestrator`).
 - If input is a single file: process that file.
-- Inspect the file content to confirm whether it contains legacy patterns (`renderToString`, `react-dom/server`, string assertions).
+- Inspect the file content to confirm whether it contains legacy patterns (`renderToString`, `renderToStaticMarkup`, `react-dom/server`, string assertions).
 
 ### Step 2: File Extension Check (TSX vs TS)
 - If the test renders React components using JSX syntax (`<Component ... />`), the file extension **MUST** be `.test.tsx`.
-- If the legacy file is named `.test.ts`, rename it using git:
+- If the legacy file is named `.test.ts`, rename it using git (when orchestrating in parallel via `parallel-test-orchestrator`, the parent orchestrator performs all `git mv` renames before spawning subagents):
   ```bash
   git mv path/to/MyComponent.test.ts path/to/MyComponent.test.tsx
   ```
@@ -41,7 +45,7 @@ It supports processing:
 ### Step 3: Imports Refactoring
 - **Remove**:
   ```ts
-  import { renderToString } from 'react-dom/server';
+  import { renderToString, renderToStaticMarkup } from 'react-dom/server';
   ```
 - **Add**:
   ```ts
@@ -55,7 +59,7 @@ It supports processing:
 - Note: `@testing-library/jest-dom/vitest` matchers (`toBeInTheDocument`, `toBeDisabled`, etc.) are globally registered via `vitest.setup.ts`, so no per-file matcher import is necessary.
 
 ### Step 4: Component Rendering & Queries
-- Replace `renderToString(<Component ... />)` or `renderToString(React.createElement(Component, props))` with:
+- Replace `renderToString(<Component ... />)` or `renderToStaticMarkup(React.createElement(Component, props))` with:
   ```tsx
   render(<Component {...props} />);
   ```
@@ -98,10 +102,10 @@ expect(result.current.value).toBe('updated');
 
 ---
 
-## Strict Conventions & Quality Guidelines
+## Strict Conventions & Quality Guardrails
 
 1. **Test Naming Convention**:
-   - Every test case description MUST start with `'should ...'`:
+   - Every single `it(...)` or `test(...)` description **MUST** start with `'should ...'`:
      ```tsx
      it('should render standard button element with accessible label', () => { ... });
      ```
@@ -114,6 +118,11 @@ expect(result.current.value).toBe('updated');
    - Verify ARIA attributes (`aria-expanded`, `aria-label`, `aria-hidden`, `role`).
    - Check keyboard navigation (`Enter`, `Escape`, `Tab`) where interactive components are involved.
    - For user inputs, ensure strings are rendered safely without XSS vulnerability.
+
+4. **SonarCloud & Oxlint Guardrails (`docs/ai/quality.md`)**:
+   - In mocks for modal dialogs, **NEVER** use `<div role="dialog">`. Always use `<dialog open aria-label={title}>` (Sonar rule `S6819`/`S6847`).
+   - **NEVER** call `.sort()` without a comparator; always pass `(a, b) => a.localeCompare(b)` or `(a, b) => a - b` (Sonar rule `S2871`).
+   - **NEVER** use `Math.random()` in test data or mocks (Sonar rule `S2245`).
 
 ---
 
