@@ -102,7 +102,7 @@ describe('dashboard utils', () => {
     const notification = {
       id: 7,
       subject: 'New assignment',
-      message: '<p>Lab&nbsp;4 is <b>available</b></p>',
+      fullmessage: '<p>Lab&nbsp;4 is <b>available</b></p>',
       timecreated: 1_788_000_000,
       read: false,
     };
@@ -124,13 +124,19 @@ describe('dashboard utils', () => {
     });
 
     it('truncates messages longer than 100 characters', () => {
-      const item = toNotificationListItem({ ...notification, message: 'a'.repeat(150) }, 'en-US');
+      const item = toNotificationListItem(
+        { ...notification, fullmessage: 'a'.repeat(150) },
+        'en-US',
+      );
 
       expect(item.message).toBe(`${'a'.repeat(100)}...`);
     });
 
     it('keeps messages of exactly 100 characters untouched', () => {
-      const item = toNotificationListItem({ ...notification, message: 'a'.repeat(100) }, 'en-US');
+      const item = toNotificationListItem(
+        { ...notification, fullmessage: 'a'.repeat(100) },
+        'en-US',
+      );
 
       expect(item.message).toBe('a'.repeat(100));
     });

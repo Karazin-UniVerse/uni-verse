@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import type { Assignment, Grade } from '@uni-hub/types';
+import type { Assignment, Grade } from '@core/types/moodle';
 import {
   getGradeCourseName,
   getGradeRawValue,

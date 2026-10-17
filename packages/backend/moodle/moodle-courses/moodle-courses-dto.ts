@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import type { MoodleCourse } from '@universe/core/types/moodle';
 
-export class MoodleCoursesDto {
+export class MoodleCoursesDto implements MoodleCourse {
   @ApiProperty({ example: 101, description: 'ID курса в Moodle' })
   id: number;
 

@@ -3,7 +3,7 @@ import { OPPORTUNITY_APP_STATUS, OPPORTUNITY_MODERATE_ACTION } from '@core/const
 import type { ControlType } from '@core/utils/grades';
 import type { NotificationListItem } from '@ui';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
-import type { Notification } from '@uni-hub/types';
+import type { Notification } from '@core/types/moodle';
 import { getGradeRawValue } from '@uni-hub/utils/grades';
 import { NAV_KEYS, type NavKey } from './constants';
 
@@ -192,10 +192,11 @@ export function toNotificationListItem(
   const titleKey =
     typeof notification.id === 'string' ? PLATFORM_TITLE_KEYS[notification.subject] : undefined;
   const title = formatMessage && titleKey ? formatMessage(titleKey) : notification.subject;
+  const rawMessage = notification.fullmessage ?? notification.message ?? '';
   const resolvedMessage =
     formatMessage && titleKey
-      ? formatPlatformMessage(titleKey, notification.message, formatMessage)
-      : notification.message;
+      ? formatPlatformMessage(titleKey, notification.message ?? '', formatMessage)
+      : rawMessage;
 
   return {
     id: notification.id,

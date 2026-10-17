@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Assignment } from '@uni-hub/types';
+import type { Assignment } from '@core/types/moodle';
 import { Slider } from '@una';
 import styles from './GradeSimulator.module.scss';
 

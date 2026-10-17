@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import type { Assignment } from '@uni-hub/types';
+import type { Assignment } from '@core/types/moodle';
 import { useAssignmentStatuses } from './useAssignmentStatuses';
 
 describe('useAssignmentStatuses hook', () => {

@@ -1,6 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import type {
+  Notification,
+  NotificationsResponse,
+} from '@universe/core/types/moodle';
 
-export class NotificationDto {
+export class NotificationDto implements Notification {
   @ApiProperty({ example: 1 })
   id: number;
 
@@ -17,7 +21,7 @@ export class NotificationDto {
   read: boolean;
 }
 
-export class NotificationsResponseDto {
+export class NotificationsResponseDto implements NotificationsResponse {
   @ApiProperty({ type: [NotificationDto] })
   notifications: NotificationDto[];
 
