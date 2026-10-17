@@ -11,3 +11,4 @@ export * from './ApplyOpportunityModal';
 export * from './CreateOpportunityModal';
 export * from './ModerationRejectModal';
 export * from './OpportunityDetailModal';
+export * from './SegmentedControl';

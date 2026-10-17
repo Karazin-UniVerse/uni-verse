@@ -11,7 +11,7 @@ import { ContextualGreeting, LiveCountdown } from '@uni-hub/components/gamificat
 import { useCountUp } from '@uni-hub/hooks/useCountUp';
 import { useNow } from '@uni-hub/hooks/useNow';
 import type { OverviewTabProps } from '../types';
-import { mockKarazinCurriculum } from '../constants';
+import { NAV_KEY, STUDY_VIEW, mockKarazinCurriculum } from '../constants';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useFeatures } from '@uni-hub/features';
 import { isAssignmentCompleted } from '@uni-hub/utils/assignments';
@@ -97,7 +97,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 variant="secondary"
                 size="small"
                 isTransparent
-                onClick={() => onNavigate('courses')}
+                onClick={() => onNavigate(NAV_KEY.Study, STUDY_VIEW.Subjects)}
               >
                 {formatMessage('overview.all')}
               </Button>
@@ -145,7 +145,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 variant="secondary"
                 size="small"
                 isTransparent
-                onClick={() => onNavigate('assignments')}
+                onClick={() => onNavigate(NAV_KEY.Study, STUDY_VIEW.Assignments)}
               >
                 {formatMessage('overview.all')}
               </Button>
