@@ -23,7 +23,7 @@ import { resolveNavKey } from '../utils';
 import { formatLastSync } from '../tabs/helpers';
 import { DashboardHeader } from './DashboardHeader';
 import { DashboardSidebar, NAV_ITEMS } from './DashboardSidebar';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
   [NAV_KEY.Overview]: 'nav.overview',

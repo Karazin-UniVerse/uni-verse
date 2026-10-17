@@ -7,7 +7,7 @@ import { NotificationList } from '@ui';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { DashboardHeaderProps } from '../types';
 import { toNotificationListItem } from '../utils';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export type NotificationsDropdownProps = Pick<
   DashboardHeaderProps,

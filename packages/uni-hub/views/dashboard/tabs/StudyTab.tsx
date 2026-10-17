@@ -5,7 +5,7 @@ import { SegmentedControl, type SegmentedControlItem } from '@universe/ui';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { StudyTabProps } from '../types';
 import { STUDY_VIEW, type StudyView } from '../constants';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export const StudyTab: React.FC<StudyTabProps> = ({ view, onViewChange, children }) => {
   const { formatMessage } = useLanguage();

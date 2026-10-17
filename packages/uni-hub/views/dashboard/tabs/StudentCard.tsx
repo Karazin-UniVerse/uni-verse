@@ -6,7 +6,7 @@ import { Tag } from '@una';
 import type { StudentProfile } from '@core/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useFeatures } from '@uni-hub/features';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export interface StudentCardProps {
   activeStudentProfile: StudentProfile;

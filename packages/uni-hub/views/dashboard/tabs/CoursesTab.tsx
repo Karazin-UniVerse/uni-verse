@@ -13,7 +13,7 @@ import type { CoursesTabProps } from '../types';
 import { mockKarazinCurriculum, cardMotion } from '../constants';
 import { getCourseHref } from '../routes';
 import { getControlTypeLabel } from '../utils';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export const CoursesTab: React.FC<CoursesTabProps> = ({ courses, soundEnabled }) => {
   const router = useRouter();
