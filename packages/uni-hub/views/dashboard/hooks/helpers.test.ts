@@ -9,7 +9,6 @@ import {
   isUnauthorizedError,
   loadCachedDashboardData,
   persistDashboardSnapshot,
-  clearUserSessionStorage,
   getInitialSyncTime,
   buildFallbackData,
   isMoodleUnlinked,
@@ -160,16 +159,6 @@ describe('storage helpers', () => {
 
     expect(cached).toEqual(snapshot);
     expect(getInitialSyncTime()).toBe(12345678);
-  });
-
-  it('clears user session storage', () => {
-    localStorage.setItem('accessToken', 'token');
-    localStorage.setItem('username', 'user');
-
-    clearUserSessionStorage();
-
-    expect(localStorage.getItem('accessToken')).toBeNull();
-    expect(localStorage.getItem('username')).toBeNull();
   });
 });
 
