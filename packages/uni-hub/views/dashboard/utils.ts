@@ -184,7 +184,8 @@ export function toNotificationListItem(
   formatMessage?: MessageFormatter,
 ): NotificationListItem {
   const createdAt = new Date(notification.timecreated * 1000);
-  const isPlatformKey = notification.subject.startsWith('notifications.');
+  const isPlatformKey =
+    typeof notification.id === 'string' && notification.subject.startsWith('notifications.');
   const title =
     formatMessage && isPlatformKey
       ? formatMessage(notification.subject as TranslationKey)

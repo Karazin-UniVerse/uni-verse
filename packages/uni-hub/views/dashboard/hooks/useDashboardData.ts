@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { moodleApi } from '@uni-hub/services/api';
-import { notificationsApi } from '@uni-hub/services/api.notifications';
+import { notificationsApi, type PlatformNotification } from '@uni-hub/services/api.notifications';
 import type { StudentProfile } from '@core/types';
 import { useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -72,6 +72,16 @@ function isAbortedMoodleFetch(requestId: number, currentRequestId: number): bool
   return requestId !== currentRequestId || isMoodleUnlinked();
 }
 
+async function loadPlatformNotifications(): Promise<{ data: PlatformNotification[] } | null> {
+  try {
+    return await notificationsApi.getMyNotifications();
+  } catch (error) {
+    console.error('Failed to load platform notifications', error);
+
+    return null;
+  }
+}
+
 export function useDashboardData({
   sortOrder,
   dateFrom,
@@ -95,22 +105,16 @@ export function useDashboardData({
   const syncPlatformOnly = async (requestId: number): Promise<void> => {
     setLoading(false);
 
-  const platformResponse = await loadPlatformNotifications();
+    const platformResponse = await loadPlatformNotifications();
 
-    if (requestId === fetchRequestIdRef.current) {
-      setData((previous) => applyPlatformNotifications(previous, platformResponse?.data));
+    if (requestId === fetchRequestIdRef.current && platformResponse) {
+      setData((previous) => applyPlatformNotifications(previous, platformResponse.data));
     }
   };
 
   const fetchData = async (isManual = false) => {
     const requestId = ++fetchRequestIdRef.current;
-const loadPlatformNotifications = () =>
-  notificationsApi.getMyNotifications().catch((error: unknown) => {
-    console.error('Failed to load platform notifications', error);
 
-    return null;
-  });
-    
     if (!enabled || isMoodleUnlinked()) {
       await syncPlatformOnly(requestId);
 
@@ -204,9 +208,7 @@ const loadPlatformNotifications = () =>
         return;
       }
 
-      if (!isMoodleUnlinked()) {
-  toast.error(formatMessage('dashboard.loadError'));
-}
+      toast.error(formatMessage('dashboard.loadError'));
     } finally {
       if (requestId === fetchRequestIdRef.current) {
         setLoading(false);

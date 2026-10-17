@@ -219,6 +219,23 @@ describe('dashboard utils', () => {
 
       expect(invalidJsonItem.message).toBe('{bad-json}');
     });
+
+    it('does not format platform notification if notification ID is numeric (Moodle notification collision)', () => {
+      const moodleWithCollision = toNotificationListItem(
+        {
+          id: 42,
+          subject: 'notifications.opportunityModerated.title',
+          message: 'Original Moodle Message',
+          timecreated: 1_788_000_000,
+          read: false,
+        },
+        'en-US',
+        () => 'Translated Platform Title',
+      );
+
+      expect(moodleWithCollision.title).toBe('notifications.opportunityModerated.title');
+      expect(moodleWithCollision.message).toBe('Original Moodle Message');
+    });
   });
 });
 

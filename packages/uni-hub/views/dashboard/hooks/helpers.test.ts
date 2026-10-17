@@ -18,6 +18,7 @@ import {
   assembleDashboardData,
 } from './helpers';
 import { fallbackStudentProfile } from '../constants';
+import type { DashboardData } from '../types';
 
 vi.mock('@uni-hub/utils/browser', () => ({
   isBrowser: true,
@@ -381,6 +382,79 @@ describe('applyPlatformNotifications', () => {
 
     expect(result.notifications).toHaveLength(2);
     expect(result.notifications[0].id).toBe('plat-2');
+    expect(result.unreadCount).toBe(1);
+  });
+
+  it('preserves existing Moodle notifications and combines unread count', () => {
+    const previousData: DashboardData = {
+      courses: [],
+      grades: [],
+      assignments: [],
+      events: [],
+      notifications: [
+        {
+          id: 101,
+          subject: 'Moodle Notification',
+          message: 'Moodle content',
+          timecreated: 1000,
+          read: false,
+        },
+      ],
+      unreadCount: 1,
+      statistics: null,
+    };
+
+    const result = applyPlatformNotifications(previousData, [
+      {
+        id: 'plat-1',
+        userId: 'user-1',
+        title: 'Platform Title',
+        message: 'Platform Message',
+        isRead: false,
+        createdAt: new Date(2000 * 1000).toISOString(),
+      },
+    ]);
+
+    expect(result.notifications).toHaveLength(2);
+    expect(result.notifications[0].id).toBe('plat-1');
+    expect(result.notifications[1].id).toBe(101);
+    expect(result.unreadCount).toBe(2);
+  });
+
+  it('clears retained Moodle notifications when isMoodleUnlinked is true', () => {
+    localStorage.setItem('isMoodleLinked', 'false');
+
+    const previousData: DashboardData = {
+      courses: [],
+      grades: [],
+      assignments: [],
+      events: [],
+      notifications: [
+        {
+          id: 101,
+          subject: 'Moodle Notification',
+          message: 'Moodle content',
+          timecreated: 1000,
+          read: false,
+        },
+      ],
+      unreadCount: 1,
+      statistics: null,
+    };
+
+    const result = applyPlatformNotifications(previousData, [
+      {
+        id: 'plat-1',
+        userId: 'user-1',
+        title: 'Platform Title',
+        message: 'Platform Message',
+        isRead: false,
+        createdAt: new Date(2000 * 1000).toISOString(),
+      },
+    ]);
+
+    expect(result.notifications).toHaveLength(1);
+    expect(result.notifications[0].id).toBe('plat-1');
     expect(result.unreadCount).toBe(1);
   });
 });

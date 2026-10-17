@@ -1,13 +1,20 @@
-import { moodleApi } from '@uni-hub/services/api';
 import type { PlatformNotification } from '@uni-hub/services/api.notifications';
 import { asList } from '@uni-hub/utils/arrays';
 import { isBrowser } from '@uni-hub/utils/browser';
-import type { Grade, Assignment, Notification } from '@uni-hub/types';
+import type {
+  Course,
+  Grade,
+  Assignment,
+  MoodleEvent,
+  Notification,
+  NotificationsResponse,
+  CourseStatistics,
+} from '@uni-hub/types';
 import type { StudentProfile } from '@core/types';
 import type { DashboardData } from '../types';
 import { fallbackStudentProfile } from '../constants';
 
-export type GradesApiResponse = Awaited<ReturnType<typeof moodleApi.getGrades>>;
+export type GradesApiResponse = { data?: { grades?: Grade[] | null } | null };
 
 export function parseDateFilterSeconds(dateString?: string): number | null {
   if (!dateString) {
@@ -56,12 +63,12 @@ export function resolveGradesResponse(gradesResponse?: GradesApiResponse | null)
 }
 
 export type MoodleApiResponseTuple = [
-  Awaited<ReturnType<typeof moodleApi.getCourses>>,
-  Awaited<ReturnType<typeof moodleApi.getGrades>>,
-  Awaited<ReturnType<typeof moodleApi.getAssignments>>,
-  Awaited<ReturnType<typeof moodleApi.getEvents>>,
-  Awaited<ReturnType<typeof moodleApi.getNotifications>>,
-  Awaited<ReturnType<typeof moodleApi.getStatistics>>,
+  { data?: Course[] | null },
+  GradesApiResponse,
+  { data?: Assignment[] | null },
+  { data?: MoodleEvent[] | null },
+  { data?: NotificationsResponse | null },
+  { data?: CourseStatistics | null },
 ];
 
 export function mapPlatformNotification(item: PlatformNotification): Notification {
@@ -79,13 +86,19 @@ export function applyPlatformNotifications(
   platformNotifications?: PlatformNotification[] | null,
 ): DashboardData {
   const platformItems = asList(platformNotifications);
+  const keptMoodle = isMoodleUnlinked()
+    ? []
+    : previousData.notifications.filter((item) => typeof item.id === 'number');
+  const mapped = platformItems.map(mapPlatformNotification);
 
   return {
     ...previousData,
-    notifications: platformItems
-      .map(mapPlatformNotification)
-      .sort((first, second) => second.timecreated - first.timecreated),
-    unreadCount: platformItems.filter((notification) => !notification.isRead).length,
+    notifications: [...keptMoodle, ...mapped].sort(
+      (first, second) => second.timecreated - first.timecreated,
+    ),
+    unreadCount:
+      keptMoodle.filter((item) => !item.read).length +
+      platformItems.filter((notification) => !notification.isRead).length,
   };
 }
 
