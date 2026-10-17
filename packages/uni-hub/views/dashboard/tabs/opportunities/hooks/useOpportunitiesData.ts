@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import type { OpportunityPaymentType } from '@core/constants/opportunities';
+import { hasLoadFailed } from '@uni-hub/queries/load-state';
 import { OPPORTUNITY_SUB_TAB, type OpportunitySubTab } from '../constants';
 import {
   catalogQueryOptions,
-  hasLoadFailed,
   moderationQueueQueryOptions,
   myApplicationsQueryOptions,
   myOpportunitiesQueryOptions,
