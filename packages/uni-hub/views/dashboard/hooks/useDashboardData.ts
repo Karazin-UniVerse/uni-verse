@@ -110,6 +110,7 @@ const loadPlatformNotifications = () =>
 
     return null;
   });
+    
     if (!enabled || isMoodleUnlinked()) {
       await syncPlatformOnly(requestId);
 
