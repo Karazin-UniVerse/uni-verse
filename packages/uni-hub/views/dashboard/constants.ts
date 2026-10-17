@@ -10,8 +10,6 @@ export const NAV_KEY = {
 
 export type NavKey = (typeof NAV_KEY)[keyof typeof NAV_KEY];
 
-export const NAV_KEYS = Object.values(NAV_KEY);
-
 export const STUDY_VIEW = {
   Subjects: 'subjects',
   Grades: 'grades',

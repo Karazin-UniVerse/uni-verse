@@ -1,19 +1,31 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Download, ExternalLink } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, FileInput, Form, Modal, Spinner, Tag, useToast } from '@una';
+import { Button, FileInput, Form, Spinner, Tag, useToast } from '@una';
+import { BackButton } from '@ui';
 import { hasLoadFailed } from '@uni-hub/queries/load-state';
-import { assignmentStatusQueryOptions } from '@uni-hub/queries/moodle/queries';
+import {
+  assignmentStatusQueryOptions,
+  courseContentsQueryOptions,
+} from '@uni-hub/queries/moodle/queries';
 import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import { moodleApi } from '@uni-hub/services/api.moodle';
-import type { CourseModule } from '@core/types/moodle';
+import type { Assignment } from '@core/types/moodle';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { BADGES } from '@uni-hub/constants/gamification';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { LoadErrorState } from '@uni-hub/components/common/LoadErrorState';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
-import { canSubmitAssignment, extractUploadedItemId, readFileAsDataUrl } from './helpers';
-import styles from './AssignmentModal.module.scss';
+import { STUDY_VIEW } from '@uni-hub/views/dashboard/constants';
+import { getStudyHref } from '@uni-hub/views/dashboard/routes';
+import {
+  canSubmitAssignment,
+  extractUploadedItemId,
+  findAssignmentModule,
+  readFileAsDataUrl,
+} from './helpers';
+import styles from './AssignmentDetail.module.scss';
 
 interface SubmissionRequest {
   assignmentInstance: number;
@@ -21,12 +33,10 @@ interface SubmissionRequest {
   file: File | undefined;
 }
 
-interface AssignmentModalProps {
-  visible: boolean;
-  onClose: () => void;
-  module: CourseModule | null;
-  /** Unix seconds deadline for DEADLINE_SNIPER unlock */
-  dueUnixSec?: number;
+interface AssignmentDetailProps {
+  assignmentId: number;
+  courseId: number | null;
+  assignment: Assignment | undefined;
 }
 
 function stripHtml(html: string): string {
@@ -53,12 +63,12 @@ export const getAssignmentStatusLabel = (
   }
 };
 
-const AssignmentModal: React.FC<AssignmentModalProps> = ({
-  visible,
-  onClose,
-  module,
-  dueUnixSec,
+export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
+  assignmentId,
+  courseId,
+  assignment,
 }) => {
+  const router = useRouter();
   const { formatMessage } = useLanguage();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -67,11 +77,12 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
   const [files, setFiles] = useState<File[]>([]);
   const [formError, setFormError] = useState('');
 
-  const instance = module?.instance;
-  const statusQuery = useQuery({
-    ...assignmentStatusQueryOptions(instance ?? 0),
-    enabled: visible && instance !== undefined,
+  const courseContentsQuery = useQuery({
+    ...courseContentsQueryOptions(courseId ?? 0),
+    enabled: courseId !== null,
   });
+  const courseModule = findAssignmentModule([courseContentsQuery.data], assignmentId);
+  const statusQuery = useQuery(assignmentStatusQueryOptions(assignmentId));
   const status = statusQuery.data;
 
   const submitMutation = useMutation({
@@ -101,14 +112,9 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     setFormError('');
   };
 
-  const handleClose = (): void => {
-    resetForm();
-    onClose();
-  };
+  const handleBack = (): void => router.push(getStudyHref(STUDY_VIEW.Assignments));
 
   const handleSubmit = async (): Promise<void> => {
-    if (instance === undefined) return;
-
     if (!text.trim() && files.length === 0) {
       setFormError(formatMessage('assignmentModal.formRequired'));
 
@@ -119,14 +125,14 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
     try {
       await submitMutation.mutateAsync({
-        assignmentInstance: instance,
+        assignmentInstance: assignmentId,
         answerText: text,
         file: files[0],
       });
       toast.success(formatMessage('assignmentModal.submitSuccess'));
       useGamificationStore.getState().triggerCelebration();
 
-      const deadline = dueUnixSec ?? module?.dueUnixSec ?? module?.duedate;
+      const deadline = assignment?.duedate ?? courseModule?.dueUnixSec ?? courseModule?.duedate;
       const nowSec = Math.floor(Date.now() / 1000);
 
       if (deadline !== null && deadline !== undefined && deadline > 0 && nowSec <= deadline) {
@@ -154,10 +160,8 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
     (status?.status && getAssignmentStatusLabel(status.status, formatMessage)) || status?.status;
 
   const moodleUrl =
-    module?.url ||
-    (module?.instance
-      ? `https://moodle.universemvp.tech/mod/assign/view.php?a=${module.instance}`
-      : undefined);
+    courseModule?.url || `https://moodle.universemvp.tech/mod/assign/view.php?a=${assignmentId}`;
+  const description = courseModule?.description ?? assignment?.description;
 
   let statusContent: React.ReactNode;
 
@@ -189,45 +193,45 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
   }
 
   return (
-    <Modal
-      open={visible}
-      onClose={handleClose}
-      title={module?.name || formatMessage('assignmentModal.defaultTitle')}
-    >
+    <div className={styles.page}>
+      <BackButton label={formatMessage('assignmentPage.back')} onClick={handleBack} />
+
+      <h3>
+        {assignment?.name ?? courseModule?.name ?? formatMessage('assignmentModal.defaultTitle')}
+      </h3>
+
       {statusQuery.isLoading ? (
         <Spinner tip={formatMessage('assignmentModal.loadingStatus')} />
       ) : (
         <div className={styles.content}>
-          {moodleUrl && (
-            <div className={styles.moodleActionRow}>
-              <Button
-                isLink
-                href={moodleUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="secondary"
-                size="small"
-              >
-                <ExternalLink size={14} style={{ marginRight: 6 }} />{' '}
-                {formatMessage('assignmentModal.openMoodle')}
-              </Button>
-            </div>
-          )}
+          <div className={styles.moodleActionRow}>
+            <Button
+              isLink
+              href={moodleUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="secondary"
+              size="small"
+            >
+              <ExternalLink size={14} style={{ marginRight: 6 }} />{' '}
+              {formatMessage('assignmentModal.openMoodle')}
+            </Button>
+          </div>
 
-          {module?.description && (
+          {description && (
             <section>
               <h4>{formatMessage('assignmentModal.description')}</h4>
               <div className={styles.box} style={{ whiteSpace: 'pre-wrap' }}>
-                {stripHtml(module.description)}
+                {stripHtml(description)}
               </div>
             </section>
           )}
 
-          {module?.contents && module.contents.length > 0 && (
+          {courseModule?.contents && courseModule.contents.length > 0 && (
             <section>
               <h4>{formatMessage('assignmentModal.attachedFiles')}</h4>
               <ul className={styles.fileList}>
-                {module.contents.map((file, idx: number) => {
+                {courseModule.contents.map((file, idx: number) => {
                   const url = (file.fileurl || '') + (tokenStr ? `?token=${tokenStr}` : '');
 
                   return (
@@ -287,7 +291,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                   <Button
                     type="button"
                     variant="secondary"
-                    onClick={handleClose}
+                    onClick={handleBack}
                     disabled={submitting}
                   >
                     {formatMessage('assignmentModal.cancel')}
@@ -303,8 +307,6 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
           )}
         </div>
       )}
-    </Modal>
+    </div>
   );
 };
-
-export default AssignmentModal;

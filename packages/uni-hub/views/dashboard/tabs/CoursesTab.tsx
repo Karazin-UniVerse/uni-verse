@@ -11,6 +11,7 @@ import { playClick } from '@uni-hub/utils/soundEffects';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { CoursesTabProps } from '../types';
 import { mockKarazinCurriculum, cardMotion } from '../constants';
+import { getCourseHref } from '../routes';
 import { getControlTypeLabel } from '../utils';
 import styles from '@uni-hub/views/DashboardPage.module.scss';
 
@@ -86,7 +87,7 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({ courses, soundEnabled })
               isTransparent
               onClick={() => {
                 playClick(soundEnabled);
-                router.push(`/courses/${course.id}/contents`);
+                router.push(getCourseHref(course.id));
               }}
             >
               {formatMessage('courses.viewMaterials')}

@@ -5,6 +5,7 @@ import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
 import { FeatureToggleProvider } from '@uni-hub/features';
 import { NAV_KEY } from '../constants';
+import { NAV_KEY_ROUTE } from '../routes';
 import type { FeatureFlags } from '@core/constants/features';
 import { NAV_ITEMS, getVisibleNavItems, DashboardSidebar } from './DashboardSidebar';
 
@@ -14,6 +15,14 @@ const allEnabledFlags: FeatureFlags = {
   isOpportunitiesPlatformEnabled: true,
   isFeaturePanelEnabled: true,
 };
+
+describe('DashboardSidebar routes', () => {
+  it('has a route for every navigation item', () => {
+    for (const item of getVisibleNavItems(allEnabledFlags, false)) {
+      expect(NAV_KEY_ROUTE[item.key]).toMatch(/^\//);
+    }
+  });
+});
 
 describe('DashboardSidebar helpers', () => {
   it('returns standard NAV_ITEMS when isMoodleLinked is true', () => {

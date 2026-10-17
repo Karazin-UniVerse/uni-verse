@@ -166,7 +166,6 @@ export const en = {
 
   // Course Contents
   'courseContents.back': 'Back to courses',
-  'courseContents.breadcrumbs': 'Courses',
   'courseContents.title': 'Course Contents',
   'courseContents.loading': 'Loading contents...',
   'courseContents.empty': 'There are no materials available in this course yet.',
@@ -256,6 +255,7 @@ export const en = {
   'header.unreadCount': '{count} new',
 
   // Assignment Modal
+  'assignmentPage.back': 'Back to assignments',
   'assignmentModal.defaultTitle': 'Assignment',
   'assignmentModal.loadingStatus': 'Loading status...',
   'assignmentModal.openMoodle': 'Open original assignment on Moodle',
@@ -562,7 +562,7 @@ export const en = {
   'opportunities.detailModal.phasePaused': 'Paused',
   'opportunities.detailModal.phaseCompleted': 'Completed',
   'opportunities.detailModal.phaseCancelled': 'Cancelled',
-  'opportunities.detailModal.close': 'Close',
+  'opportunities.detail.back': 'Back to opportunities',
   'opportunities.detailModal.apply': 'Apply for Opportunity',
 
   // Modals - Apply

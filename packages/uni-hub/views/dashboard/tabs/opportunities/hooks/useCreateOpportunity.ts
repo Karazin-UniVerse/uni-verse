@@ -27,7 +27,7 @@ interface OpportunityUpdate {
 }
 
 export interface UseCreateOpportunityProps {
-  onCreated: () => void;
+  onCreated?: () => void;
 }
 
 interface UseCreateOpportunityResult {
@@ -120,7 +120,7 @@ export function useCreateOpportunity({
 
         toast.success(formatMessage('opportunities.toast.createdDraft'));
         close();
-        onCreated();
+        onCreated?.();
       }
     } catch (err: unknown) {
       const errorKey = editingOpportunityId

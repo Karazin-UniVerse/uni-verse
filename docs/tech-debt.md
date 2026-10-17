@@ -41,7 +41,7 @@ Components and hooks compare against `'PAID'`, `'READY_FOR_REVIEW'`, `'ACCEPTED'
 
 ### Other places that read the access token
 
-`useCurrentUser` (`packages/uni-hub/hooks/useCurrentUser.ts`) is the single place to read the user from the token, but `AssignmentModal` still reads `localStorage.accessToken` directly.
+`useCurrentUser` (`packages/uni-hub/hooks/useCurrentUser.ts`) is the single place to read the user from the token, but `AssignmentDetail` still reads `localStorage.accessToken` directly.
 
 - **Fix:** use `useCurrentUser` or a small token helper there.
 

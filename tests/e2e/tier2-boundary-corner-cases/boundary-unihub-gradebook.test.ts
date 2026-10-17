@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readWorkspaceFile } from '../test-helpers';
 
 describe('Tier 2 - Feature 12 & 13: Boundary Cases in Gradebook and URL Handling', () => {
-  const modalPath = 'packages/uni-hub/components/assignments/AssignmentModal.tsx';
+  const modalPath = 'packages/uni-hub/components/assignments/AssignmentDetail.tsx';
 
   it('F12-B1: Zero score (0/100) must render explicitly as 0 and not falsy empty string', () => {
     const formatScore = (val: number | null | undefined) =>
@@ -27,7 +27,7 @@ describe('Tier 2 - Feature 12 & 13: Boundary Cases in Gradebook and URL Handling
     expect(item.examScore).toBeNull();
   });
 
-  it('F13-B1: AssignmentModal should construct valid URL even when instance ID is large number', () => {
+  it('F13-B1: AssignmentDetail should construct valid URL even when instance ID is large number', () => {
     const instanceId = 999999;
     const url = `https://moodle.universemvp.tech/mod/assign/view.php?a=${instanceId}`;
 
@@ -38,7 +38,7 @@ describe('Tier 2 - Feature 12 & 13: Boundary Cases in Gradebook and URL Handling
     expect(parsed.searchParams.get('a')).toBe('999999');
   });
 
-  it('F13-B2: AssignmentModal should handle missing instance ID gracefully by leaving moodleUrl undefined', () => {
+  it('F13-B2: AssignmentDetail should handle missing instance ID gracefully by leaving moodleUrl undefined', () => {
     const module = { instance: undefined, url: undefined };
     const moodleUrl =
       module.url ||
