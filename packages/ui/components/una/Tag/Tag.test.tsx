@@ -1,27 +1,31 @@
 import { describe, it, expect } from 'vitest';
-import React from 'react';
-import { renderToString } from 'react-dom/server';
+import { render, screen } from '@testing-library/react';
 import { Tag } from './Tag';
 
 describe('UNA Tag Component', () => {
   it('should render tag content inside span element', () => {
-    const html = renderToString(<Tag>Active Status</Tag>);
+    render(<Tag>Active Status</Tag>);
 
-    expect(html).toContain('<span');
-    expect(html).toContain('Active Status');
+    const tag = screen.getByText('Active Status');
+
+    expect(tag).toBeInTheDocument();
+    expect(tag.tagName.toLowerCase()).toBe('span');
   });
 
   it('should render with custom tones such as success, warning, neutral', () => {
-    const successHtml = renderToString(<Tag tone="success">Passed</Tag>);
-    const neutralHtml = renderToString(<Tag tone="neutral">Pending</Tag>);
+    const { rerender } = render(<Tag tone="success">Passed</Tag>);
 
-    expect(successHtml).toContain('Passed');
-    expect(neutralHtml).toContain('Pending');
+    expect(screen.getByText('Passed')).toBeInTheDocument();
+
+    rerender(<Tag tone="neutral">Pending</Tag>);
+    expect(screen.getByText('Pending')).toBeInTheDocument();
   });
 
   it('should merge custom className with base tag styles', () => {
-    const html = renderToString(<Tag className="custom-indicator-badge">Custom</Tag>);
+    render(<Tag className="custom-indicator-badge">Custom</Tag>);
 
-    expect(html).toContain('custom-indicator-badge');
+    const tag = screen.getByText('Custom');
+
+    expect(tag).toHaveClass('custom-indicator-badge');
   });
 });
