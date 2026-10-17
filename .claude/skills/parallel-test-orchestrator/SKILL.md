@@ -59,8 +59,8 @@ For each batch of files:
      ```
    - Run package tests, typecheck, and linting:
      ```bash
-     pnpm --filter @universe/ui test --run # or @universe/uni-hub
-     pnpm --filter @universe/ui typecheck
+     pnpm --filter <pkg> test --run # e.g. @universe/ui or @universe/uni-hub
+     pnpm --filter <pkg> typecheck
      pnpm lint
      ```
 5. **Atomic Commit**: Stage modified test files and commit using conventional commits (e.g., `test(ui): add unit tests for una primitives`).

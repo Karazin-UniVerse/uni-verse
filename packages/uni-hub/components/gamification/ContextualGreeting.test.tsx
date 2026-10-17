@@ -302,22 +302,30 @@ describe('ContextualGreeting component', () => {
       ).toBeInTheDocument();
     });
 
-    it('should render in English when language is set to en', () => {
+    it('should render nearest deadline cta in English when language is set to en', () => {
       const fixedDate = new Date(2026, 9, 16, 10, 0, 0);
 
       vi.setSystemTime(fixedDate);
       window.localStorage.setItem('universe-lang', 'en');
 
+      const nowSec = Math.floor(fixedDate.getTime() / 1000);
+
       render(
         <LanguageProvider>
-          <ContextualGreeting assignments={[]} />
+          <ContextualGreeting
+            assignments={[
+              createAssignment({
+                id: 1,
+                name: 'Physics Homework',
+                duedate: nowSec + 3600 * 3,
+              }),
+            ]}
+          />
         </LanguageProvider>,
       );
 
       expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Good morning, student');
-      expect(
-        screen.getByText('No upcoming deadlines — time to relax or review courses.'),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/«Physics Homework».*3/)).toBeInTheDocument();
     });
   });
 

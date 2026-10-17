@@ -63,7 +63,7 @@ Before writing any test code, read the target file and its types to identify:
     onClose?: () => void;
   }) =>
     open ? (
-      <dialog open aria-label={title}>
+      <dialog open aria-label={title || 'Dialog'}>
         <div>{children}</div>
         {footer && <div>{footer}</div>}
         <button type="button" onClick={onClose}>
@@ -284,7 +284,7 @@ pnpm --filter @universe/uni-hub test <TestFileName> --run
 pnpm exec oxlint path/to/file.test.tsx
 
 # 3. Verify TypeScript compilation across the package
-pnpm --filter @universe/uni-hub typecheck
+pnpm --filter <pkg> typecheck
 
 # 4. Format with Prettier
 pnpm exec prettier --write path/to/file.test.tsx
