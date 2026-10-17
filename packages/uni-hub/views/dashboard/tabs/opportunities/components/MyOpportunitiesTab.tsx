@@ -3,13 +3,15 @@
 import React from 'react';
 import type { Opportunity } from '@core/types/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { OpportunityCard } from '../OpportunityCard';
+import { OpportunityCard } from '../../OpportunityCard';
 import { TabStateWrapper } from './TabStateWrapper';
 import { OpportunityStatusBadge } from './OpportunityStatusBadge';
-import styles from '../OpportunitiesTab.module.scss';
+import styles from '../../OpportunitiesTab.module.scss';
 
 export interface MyOpportunitiesTabProps {
   loading: boolean;
+  isError: boolean;
+  onRetry: () => void;
   myOpportunities: Opportunity[];
   onOpenApplicants: (opp: Opportunity) => void;
   onOpenDetail: (opp: Opportunity) => void;
@@ -17,6 +19,8 @@ export interface MyOpportunitiesTabProps {
 
 export const MyOpportunitiesTab: React.FC<MyOpportunitiesTabProps> = ({
   loading,
+  isError,
+  onRetry,
   myOpportunities,
   onOpenApplicants,
   onOpenDetail,
@@ -26,6 +30,8 @@ export const MyOpportunitiesTab: React.FC<MyOpportunitiesTabProps> = ({
   return (
     <TabStateWrapper
       loading={loading}
+      isError={isError}
+      onRetry={onRetry}
       isEmpty={myOpportunities.length === 0}
       emptyDescription={formatMessage('opportunities.myOpportunities.empty')}
     >
