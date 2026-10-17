@@ -1,62 +1,38 @@
-import { describe, it, expect } from 'vitest';
-import React from 'react';
-import { renderToString } from 'react-dom/server';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook } from '@testing-library/react';
 import { BREAKPOINTS } from '@core/constants/breakpoints';
 import { useMediaQuery } from './useMediaQuery';
 
 describe('useMediaQuery hook', () => {
-  it('returns serverFallback when rendered in SSR / Node environment', () => {
-    const TestComponent = () => {
-      const isMatched = useMediaQuery(BREAKPOINTS.md, 'less', false);
-
-      return React.createElement('div', { 'data-testid': 'result' }, String(isMatched));
-    };
-
-    const html = renderToString(React.createElement(TestComponent));
-
-    expect(html).toContain('false');
+  beforeEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it('respects true serverFallback in SSR / Node environment', () => {
-    const TestComponent = () => {
-      const isMatched = useMediaQuery(BREAKPOINTS.md, 'wider', true);
+  it('should return serverFallback when matchMedia is not matching', () => {
+    const { result } = renderHook(() => useMediaQuery(BREAKPOINTS.md, 'less', false));
 
-      return React.createElement('div', { 'data-testid': 'result' }, String(isMatched));
-    };
-
-    const html = renderToString(React.createElement(TestComponent));
-
-    expect(html).toContain('true');
+    expect(result.current).toBe(false);
   });
 
-  it('supports readable comparison-first signature in SSR / Node environment', () => {
-    const TestComponent = () => {
-      const isMobile = useMediaQuery('less', BREAKPOINTS.md, false);
-      const isDesktop = useMediaQuery('wider', BREAKPOINTS.md, true);
+  it('should respect true serverFallback', () => {
+    const { result } = renderHook(() => useMediaQuery(BREAKPOINTS.md, 'wider', true));
 
-      return React.createElement(
-        'div',
-        null,
-        React.createElement('span', { 'data-testid': 'mobile' }, String(isMobile)),
-        React.createElement('span', { 'data-testid': 'desktop' }, String(isDesktop)),
-      );
-    };
-
-    const html = renderToString(React.createElement(TestComponent));
-
-    expect(html).toContain('false');
-    expect(html).toContain('true');
+    expect(result.current).toBe(true);
   });
 
-  it('handles raw query string in SSR', () => {
-    const TestComponent = () => {
-      const isMatched = useMediaQuery('(min-width: 1024px)', true);
+  it('should support readable comparison-first signature', () => {
+    const { result: mobileResult } = renderHook(() => useMediaQuery('less', BREAKPOINTS.md, false));
+    const { result: desktopResult } = renderHook(() =>
+      useMediaQuery('wider', BREAKPOINTS.md, true),
+    );
 
-      return React.createElement('div', { 'data-testid': 'result' }, String(isMatched));
-    };
+    expect(mobileResult.current).toBe(false);
+    expect(desktopResult.current).toBe(true);
+  });
 
-    const html = renderToString(React.createElement(TestComponent));
+  it('should handle raw query string with fallback', () => {
+    const { result } = renderHook(() => useMediaQuery('(min-width: 1024px)', true));
 
-    expect(html).toContain('true');
+    expect(result.current).toBe(true);
   });
 });

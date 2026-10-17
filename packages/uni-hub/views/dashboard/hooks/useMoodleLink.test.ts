@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import React from 'react';
-import { renderToString } from 'react-dom/server';
+import { renderHook, act } from '@testing-library/react';
 import { LinkMoodleMode } from '@uni-hub/components/auth';
-import { useMoodleLink, type UseMoodleLinkOptions } from './useMoodleLink';
+import { useMoodleLink } from './useMoodleLink';
 
 const mockStorage: Record<string, string> = {};
 
@@ -27,34 +26,6 @@ vi.mock('@uni-hub/services/api', () => ({
 }));
 
 describe('useMoodleLink hook', () => {
-  interface ConsumerProps {
-    onReady: (hook: ReturnType<typeof useMoodleLink>) => void;
-    options?: UseMoodleLinkOptions;
-  }
-
-  const TestConsumer: React.FC<ConsumerProps> = ({ options, onReady }) => {
-    const hook = useMoodleLink(options);
-
-    onReady(hook);
-
-    return null;
-  };
-
-  const mountHook = (options: UseMoodleLinkOptions = {}) => {
-    let captured: ReturnType<typeof useMoodleLink> | null = null;
-
-    renderToString(
-      React.createElement(TestConsumer, {
-        options,
-        onReady: (hook) => {
-          captured = hook;
-        },
-      }),
-    );
-
-    return captured!;
-  };
-
   beforeEach(() => {
     for (const key of Object.keys(mockStorage)) {
       delete mockStorage[key];
@@ -63,57 +34,65 @@ describe('useMoodleLink hook', () => {
     vi.clearAllMocks();
   });
 
-  it('initializes with default linked state when storage has no entry', () => {
-    const res = mountHook();
+  it('should initialize with default linked state when storage has no entry', () => {
+    const { result } = renderHook(() => useMoodleLink());
 
-    expect(res.isMoodleLinked).toBe(true);
-    expect(res.isLinkModalOpen).toBe(false);
-    expect(res.isUnlinkModalOpen).toBe(false);
-    expect(res.linkModalMode).toBe(LinkMoodleMode.CONNECT);
+    expect(result.current.isMoodleLinked).toBe(true);
+    expect(result.current.isLinkModalOpen).toBe(false);
+    expect(result.current.isUnlinkModalOpen).toBe(false);
+    expect(result.current.linkModalMode).toBe(LinkMoodleMode.CONNECT);
   });
 
-  it('initializes with false when storage has isMoodleLinked="false"', () => {
+  it('should initialize with false when storage has isMoodleLinked="false"', () => {
     mockStorage.isMoodleLinked = 'false';
 
-    const res = mountHook();
+    const { result } = renderHook(() => useMoodleLink());
 
-    expect(res.isMoodleLinked).toBe(false);
+    expect(result.current.isMoodleLinked).toBe(false);
   });
 
-  it('provides handlers to open and close modals', () => {
-    const res = mountHook();
+  it('should provide handlers to open and close modals', () => {
+    const { result } = renderHook(() => useMoodleLink());
 
-    expect(typeof res.openLinkModal).toBe('function');
-    expect(typeof res.closeLinkModal).toBe('function');
-    expect(typeof res.openUnlinkModal).toBe('function');
-    expect(typeof res.closeUnlinkModal).toBe('function');
+    expect(typeof result.current.openLinkModal).toBe('function');
+    expect(typeof result.current.closeLinkModal).toBe('function');
+    expect(typeof result.current.openUnlinkModal).toBe('function');
+    expect(typeof result.current.closeUnlinkModal).toBe('function');
   });
 
-  it('executes handleLinkSuccess and redirects connectMoodle active tab to overview', () => {
+  it('should execute handleLinkSuccess and redirect connectMoodle active tab to overview', () => {
     const onLinkSuccess = vi.fn();
     const setActiveKey = vi.fn();
 
-    const res = mountHook({
-      activeKey: 'connectMoodle',
-      setActiveKey,
-      onLinkSuccess,
-    });
+    const { result } = renderHook(() =>
+      useMoodleLink({
+        activeKey: 'connectMoodle',
+        setActiveKey,
+        onLinkSuccess,
+      }),
+    );
 
-    res.handleLinkSuccess();
+    act(() => {
+      result.current.handleLinkSuccess();
+    });
 
     expect(mockStorage.isMoodleLinked).toBe('true');
     expect(setActiveKey).toHaveBeenCalledWith('overview');
     expect(onLinkSuccess).toHaveBeenCalledTimes(1);
   });
 
-  it('executes handleUnlinkSuccess and triggers onUnlinkSuccess callback', () => {
+  it('should execute handleUnlinkSuccess and trigger onUnlinkSuccess callback', () => {
     const onUnlinkSuccess = vi.fn();
 
-    const res = mountHook({
-      onUnlinkSuccess,
-    });
+    const { result } = renderHook(() =>
+      useMoodleLink({
+        onUnlinkSuccess,
+      }),
+    );
 
-    res.handleUnlinkSuccess();
+    act(() => {
+      result.current.handleUnlinkSuccess();
+    });
 
     expect(mockStorage.isMoodleLinked).toBe('false');
     expect(onUnlinkSuccess).toHaveBeenCalledTimes(1);

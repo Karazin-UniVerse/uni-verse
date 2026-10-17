@@ -1,19 +1,23 @@
 import { describe, it, expect } from 'vitest';
-import React from 'react';
-import { renderToString } from 'react-dom/server';
+import { render, screen } from '@testing-library/react';
 import { Empty } from './Empty';
 
 describe('UNA Empty Component', () => {
   it('should render default description when none is provided', () => {
-    const html = renderToString(<Empty />);
+    render(<Empty />);
 
-    expect(html).toContain('Нет данных');
-    expect(html).toContain('<svg');
+    expect(screen.getByText('Нет данных')).toBeInTheDocument();
   });
 
   it('should render custom description text', () => {
-    const html = renderToString(<Empty description="Список курсів порожній" />);
+    render(<Empty description="Список курсів порожній" />);
 
-    expect(html).toContain('Список курсів порожній');
+    expect(screen.getByText('Список курсів порожній')).toBeInTheDocument();
+  });
+
+  it('should render custom icon when provided', () => {
+    render(<Empty icon={<span data-testid="custom-icon">Custom Icon</span>} />);
+
+    expect(screen.getByTestId('custom-icon')).toBeInTheDocument();
   });
 });
