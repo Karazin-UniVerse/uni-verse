@@ -76,6 +76,10 @@ async function loadPlatformNotifications(): Promise<{ data: PlatformNotification
   try {
     return await notificationsApi.getMyNotifications();
   } catch (error) {
+    if (isUnauthorizedError(error)) {
+      throw error;
+    }
+
     console.error('Failed to load platform notifications', error);
 
     return null;
@@ -102,13 +106,29 @@ export function useDashboardData({
 
   const fetchRequestIdRef = useRef(0);
 
+  const handleUnauthorized = (): void => {
+    clearUserSessionStorage();
+    toast.error(formatMessage('dashboard.sessionExpired'));
+    onUnauthorized();
+  };
+
   const syncPlatformOnly = async (requestId: number): Promise<void> => {
     setLoading(false);
 
-    const platformResponse = await loadPlatformNotifications();
+    try {
+      const platformResponse = await loadPlatformNotifications();
 
-    if (requestId === fetchRequestIdRef.current && platformResponse) {
-      setData((previous) => applyPlatformNotifications(previous, platformResponse.data));
+      if (requestId === fetchRequestIdRef.current && platformResponse) {
+        setData((previous) => applyPlatformNotifications(previous, platformResponse.data));
+      }
+    } catch (error) {
+      if (!isUnauthorizedError(error)) {
+        throw error;
+      }
+
+      if (requestId === fetchRequestIdRef.current) {
+        handleUnauthorized();
+      }
     }
   };
 
@@ -180,9 +200,7 @@ export function useDashboardData({
       }
 
       if (isUnauthorizedError(error)) {
-        clearUserSessionStorage();
-        toast.error(formatMessage('dashboard.sessionExpired'));
-        onUnauthorized();
+        handleUnauthorized();
 
         return;
       }
