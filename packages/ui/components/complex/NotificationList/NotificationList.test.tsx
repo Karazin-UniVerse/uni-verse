@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import React from 'react';
-import { renderToString } from 'react-dom/server';
+import { render, screen } from '@testing-library/react';
 import { NotificationList } from './NotificationList';
 import type { NotificationListItem } from './NotificationList.types';
 
@@ -24,30 +23,33 @@ const items: NotificationListItem[] = [
 ];
 
 describe('NotificationList Component', () => {
-  it('renders a labelled region with a heading and a list of items', () => {
-    const html = renderToString(
-      <NotificationList items={items} heading="Notifications" emptyLabel="Nothing here" />,
-    );
+  it('should render a labelled region with a heading and a list of items', () => {
+    render(<NotificationList items={items} heading="Notifications" emptyLabel="Nothing here" />);
 
-    expect(html).toContain('<section');
-    expect(html).toMatch(/aria-labelledby="[^"]+"/);
-    expect(html).toContain('<h2');
-    expect(html).toContain('Notifications');
-    expect(html.match(/<li/g)).toHaveLength(2);
+    const heading = screen.getByRole('heading', { level: 2, name: 'Notifications' });
+
+    expect(heading).toBeInTheDocument();
+
+    const region = screen.getByRole('region', { name: 'Notifications' });
+
+    expect(region).toBeInTheDocument();
+
+    const listItems = screen.getAllByRole('listitem');
+
+    expect(listItems).toHaveLength(2);
   });
 
-  it('renders the timestamp in a machine-readable time element', () => {
-    const html = renderToString(
-      <NotificationList items={items} heading="Notifications" emptyLabel="Nothing here" />,
-    );
+  it('should render the timestamp in a machine-readable time element', () => {
+    render(<NotificationList items={items} heading="Notifications" emptyLabel="Nothing here" />);
 
-    expect(html).toContain('<time');
-    expect(html).toContain('dateTime="2026-09-12T10:30:00.000Z"');
-    expect(html).toContain('12 Sep 2026');
+    const timeElement = screen.getByText('12 Sep 2026');
+
+    expect(timeElement.tagName.toLowerCase()).toBe('time');
+    expect(timeElement).toHaveAttribute('dateTime', '2026-09-12T10:30:00.000Z');
   });
 
-  it('announces only unread items to assistive technology', () => {
-    const html = renderToString(
+  it('should announce only unread items to assistive technology', () => {
+    render(
       <NotificationList
         items={items}
         heading="Notifications"
@@ -56,11 +58,13 @@ describe('NotificationList Component', () => {
       />,
     );
 
-    expect(html.match(/Unread:/g)).toHaveLength(1);
+    const unreadAnnouncements = screen.getAllByText('Unread:');
+
+    expect(unreadAnnouncements).toHaveLength(1);
   });
 
-  it('shows the unread summary tag only when a label is provided', () => {
-    const withLabel = renderToString(
+  it('should show the unread summary tag only when a label is provided', () => {
+    const { rerender } = render(
       <NotificationList
         items={items}
         heading="Notifications"
@@ -68,20 +72,17 @@ describe('NotificationList Component', () => {
         unreadLabel="1 new"
       />,
     );
-    const withoutLabel = renderToString(
-      <NotificationList items={items} heading="Notifications" emptyLabel="Nothing here" />,
-    );
 
-    expect(withLabel).toContain('1 new');
-    expect(withoutLabel).not.toContain('1 new');
+    expect(screen.getByText('1 new')).toBeInTheDocument();
+
+    rerender(<NotificationList items={items} heading="Notifications" emptyLabel="Nothing here" />);
+    expect(screen.queryByText('1 new')).not.toBeInTheDocument();
   });
 
-  it('renders the empty state instead of a list when there are no items', () => {
-    const html = renderToString(
-      <NotificationList items={[]} heading="Notifications" emptyLabel="Nothing here" />,
-    );
+  it('should render the empty state instead of a list when there are no items', () => {
+    render(<NotificationList items={[]} heading="Notifications" emptyLabel="Nothing here" />);
 
-    expect(html).toContain('Nothing here');
-    expect(html).not.toContain('<ul');
+    expect(screen.getByText('Nothing here')).toBeInTheDocument();
+    expect(screen.queryByRole('list')).not.toBeInTheDocument();
   });
 });
