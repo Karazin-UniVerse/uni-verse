@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import type { FeatureFlags } from '@core/constants/features';
 import { TRANSLATIONS } from '@uni-hub/i18n/translations';
+import { NAV_KEY } from './constants';
 import {
   getControlTypeLabel,
   getTraditionalGradeLabel,
@@ -7,6 +9,7 @@ import {
   parseGradeScore,
   getExamScoreDisplay,
   isNavKey,
+  resolveNavKey,
   toNotificationListItem,
 } from './utils';
 
@@ -242,5 +245,51 @@ describe('dashboard utils', () => {
       expect(moodleWithCollision.title).toBe('notifications.opportunityModerated.title');
       expect(moodleWithCollision.message).toBe('Original Moodle Message');
     });
+  });
+});
+
+describe('resolveNavKey', () => {
+  const navItems = [
+    { key: NAV_KEY.Overview },
+    { key: NAV_KEY.Courses, featureFlag: 'isMoodleIntegrationEnabled' as const },
+    { key: NAV_KEY.ConnectMoodle },
+  ];
+  const features: FeatureFlags = {
+    isMoodleIntegrationEnabled: true,
+    isEDeanEnabled: false,
+    isOpportunitiesPlatformEnabled: false,
+    isFeaturePanelEnabled: false,
+  };
+
+  it('keeps a key whose feature is enabled', () => {
+    expect(resolveNavKey(NAV_KEY.Courses, { navItems, features, isMoodleLinked: true })).toBe(
+      NAV_KEY.Courses,
+    );
+  });
+
+  it('falls back to the overview when the feature of the key is off', () => {
+    expect(
+      resolveNavKey(NAV_KEY.Courses, {
+        navItems,
+        features: { ...features, isMoodleIntegrationEnabled: false },
+        isMoodleLinked: true,
+      }),
+    ).toBe(NAV_KEY.Overview);
+  });
+
+  it('shows the connect Moodle tab only while Moodle is enabled and not linked', () => {
+    expect(
+      resolveNavKey(NAV_KEY.ConnectMoodle, { navItems, features, isMoodleLinked: false }),
+    ).toBe(NAV_KEY.ConnectMoodle);
+    expect(resolveNavKey(NAV_KEY.ConnectMoodle, { navItems, features, isMoodleLinked: true })).toBe(
+      NAV_KEY.Overview,
+    );
+    expect(
+      resolveNavKey(NAV_KEY.ConnectMoodle, {
+        navItems,
+        features: { ...features, isMoodleIntegrationEnabled: false },
+        isMoodleLinked: false,
+      }),
+    ).toBe(NAV_KEY.Overview);
   });
 });

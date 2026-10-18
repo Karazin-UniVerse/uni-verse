@@ -321,6 +321,10 @@ export function getInitialUserProfile(): StudentProfile | null {
     return cachedProfile;
   }
 
+  if (!isBrowser) {
+    return null;
+  }
+
   const savedUser = localStorage.getItem('username');
 
   if (!savedUser || savedUser === fallbackStudentProfile.fullName) {
@@ -334,15 +338,10 @@ export function getInitialUserProfile(): StudentProfile | null {
   };
 }
 
-export function syncStudentProfile(
-  profileData?: StudentProfile | null,
-  setStudentProfile?: (profile: StudentProfile) => void,
-): void {
+export function syncStudentProfile(profileData?: StudentProfile | null): void {
   if (!profileData) {
     return;
   }
-
-  setStudentProfile?.(profileData);
 
   try {
     localStorage.setItem('universe_student_profile', JSON.stringify(profileData));
@@ -390,4 +389,33 @@ export function buildFallbackData({
   };
 
   return platformNotifications ? applyPlatformNotifications(merged, platformNotifications) : merged;
+}
+
+export interface DashboardQueryState {
+  data: DashboardData | undefined;
+  isError: boolean;
+  isFetching: boolean;
+  dataUpdatedAt: number;
+  snapshot?: DashboardData;
+}
+
+export interface DashboardState {
+  cachedData: DashboardData | undefined;
+  loading: boolean;
+  hasLoadedOnce: boolean;
+  isOfflineData: boolean;
+  lastSyncTime: number | null;
+}
+
+export function deriveDashboardState(query: DashboardQueryState): DashboardState {
+  const cachedData = query.data ?? (query.isError ? query.snapshot : undefined);
+  const hasData = cachedData !== undefined;
+
+  return {
+    cachedData,
+    loading: query.isFetching,
+    hasLoadedOnce: hasData,
+    isOfflineData: query.isError && hasData,
+    lastSyncTime: query.dataUpdatedAt > 0 ? query.dataUpdatedAt : null,
+  };
 }

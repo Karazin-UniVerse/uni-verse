@@ -5,7 +5,8 @@ import type { NotificationListItem } from '@ui';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import type { Notification } from '@core/types/moodle';
 import { getGradeRawValue } from '@uni-hub/utils/grades';
-import { NAV_KEYS, type NavKey } from './constants';
+import type { FeatureFlagKey, FeatureFlags } from '@core/constants/features';
+import { NAV_KEY, NAV_KEYS, type NavKey } from './constants';
 
 const NOTIFICATION_MESSAGE_MAX_LENGTH = 100;
 
@@ -253,3 +254,26 @@ export function getExamScoreDisplay(
 const NAV_KEYS_SET: ReadonlySet<string> = new Set(NAV_KEYS);
 
 export const isNavKey = (value: string): value is NavKey => NAV_KEYS_SET.has(value);
+
+export interface NavKeyContext {
+  navItems: ReadonlyArray<{ key: NavKey; featureFlag?: FeatureFlagKey }>;
+  features: FeatureFlags;
+  isMoodleLinked: boolean;
+}
+
+export function resolveNavKey(
+  key: NavKey,
+  { navItems, features, isMoodleLinked }: NavKeyContext,
+): NavKey {
+  if (key === NAV_KEY.ConnectMoodle && (isMoodleLinked || !features.isMoodleIntegrationEnabled)) {
+    return NAV_KEY.Overview;
+  }
+
+  const featureFlag = navItems.find((item) => item.key === key)?.featureFlag;
+
+  if (featureFlag && !features[featureFlag]) {
+    return NAV_KEY.Overview;
+  }
+
+  return key;
+}

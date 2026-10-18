@@ -21,6 +21,7 @@ import {
   type NavKey,
   NAV_ITEMS,
   isNavKey,
+  resolveNavKey,
   fallbackStudentProfile,
   DashboardSidebar,
   DashboardHeader,
@@ -32,9 +33,10 @@ import {
   OpportunitiesTab,
 } from './dashboard';
 import { formatLastSync } from './dashboard/tabs/helpers';
+import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import { invalidateOpportunities } from './dashboard/tabs/opportunities/cache';
-import { useDashboardData, clearUserSessionStorage } from './dashboard/hooks/useDashboardData';
-import { getInitialUserProfile } from './dashboard/hooks/helpers';
+import { useDashboardData } from './dashboard/hooks/useDashboardData';
+import { clearUserSessionStorage } from './dashboard/hooks/helpers';
 import { useMoodleLink } from './dashboard/hooks/useMoodleLink';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
@@ -61,7 +63,13 @@ const DashboardPage: React.FC = () => {
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeKey, setActiveKey] = useState<NavKey>(NAV_KEY.Overview);
+  const requestedTab = searchParams.get('tab');
+  const [selection, setSelection] = useState<{ requestedTab: string | null; key: NavKey } | null>(
+    null,
+  );
+  const requestedKey = requestedTab && isNavKey(requestedTab) ? requestedTab : NAV_KEY.Overview;
+  const selectedKey = selection?.requestedTab === requestedTab ? selection.key : requestedKey;
+  const setActiveKey = (key: NavKey): void => setSelection({ requestedTab, key });
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();
 
@@ -77,26 +85,6 @@ const DashboardPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const {
-    data,
-    setData,
-    loading,
-    hasLoadedOnce,
-    lastSyncTime,
-    isOfflineData,
-    studentProfile,
-    setStudentProfile,
-    fetchData,
-    cancelPendingFetch,
-  } = useDashboardData({
-    sortOrder,
-    dateFrom,
-    dateTo,
-    hideCompleted,
-    enabled: features.isMoodleIntegrationEnabled,
-    onUnauthorized: () => router.push('/login'),
-  });
-
-  const {
     isMoodleLinked,
     linkModalMode,
     isLinkModalOpen,
@@ -108,24 +96,31 @@ const DashboardPage: React.FC = () => {
     handleLinkSuccess,
     handleUnlinkSuccess,
   } = useMoodleLink({
-    activeKey,
+    activeKey: selectedKey,
     setActiveKey,
     onLinkSuccess: () => {
-      void fetchData();
+      void queryClient.invalidateQueries({ queryKey: moodleKeys.all });
     },
     onUnlinkSuccess: () => {
-      cancelPendingFetch();
-      setData({
-        courses: [],
-        grades: [],
-        assignments: [],
-        events: [],
-        notifications: [],
-        unreadCount: 0,
-        statistics: null,
-      });
+      queryClient.removeQueries({ queryKey: moodleKeys.all });
     },
   });
+
+  const activeKey = resolveNavKey(selectedKey, {
+    navItems: NAV_ITEMS,
+    features,
+    isMoodleLinked,
+  });
+
+  const { data, loading, hasLoadedOnce, lastSyncTime, isOfflineData, studentProfile, refresh } =
+    useDashboardData({
+      sortOrder,
+      dateFrom,
+      dateTo,
+      hideCompleted,
+      enabled: features.isMoodleIntegrationEnabled && isMoodleLinked && isLoggedIn(),
+      onUnauthorized: () => router.push('/login'),
+    });
 
   const activeStudentProfile = studentProfile ?? fallbackStudentProfile;
 
@@ -143,62 +138,8 @@ const DashboardPage: React.FC = () => {
       return;
     }
 
-    const initialProfile = getInitialUserProfile();
-
-    if (initialProfile) {
-      setStudentProfile((previousProfile) => previousProfile ?? initialProfile);
-    }
-
     checkIn();
-  }, [checkIn, router, setStudentProfile]);
-
-  useEffect(() => {
-    const requestedTab = searchParams.get('tab');
-
-    if (requestedTab && isNavKey(requestedTab)) {
-      if (
-        requestedTab === NAV_KEY.ConnectMoodle &&
-        (isMoodleLinked || !features.isMoodleIntegrationEnabled)
-      ) {
-        setActiveKey(NAV_KEY.Overview);
-
-        return;
-      }
-
-      const targetItem = NAV_ITEMS.find((item) => item.key === requestedTab);
-
-      if (!targetItem?.featureFlag || features[targetItem.featureFlag]) {
-        setActiveKey(requestedTab);
-      } else {
-        setActiveKey(NAV_KEY.Overview);
-      }
-
-      return;
-    }
-
-    setActiveKey(NAV_KEY.Overview);
-  }, [features, searchParams, isMoodleLinked]);
-
-  useEffect(() => {
-    const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
-
-    if (activeItem?.featureFlag && !features[activeItem.featureFlag]) {
-      setActiveKey(NAV_KEY.Overview);
-    }
-  }, [features, activeKey]);
-
-  useEffect(() => {
-    if (!isLoggedIn()) {
-      return;
-    }
-
-    void fetchData();
-
-    return () => {
-      cancelPendingFetch();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router, sortOrder, dateFrom, dateTo, hideCompleted]);
+  }, [checkIn, router]);
 
   const closeMobileMenu = useCallback(() => {
     setMobileMenuOpen(false);
@@ -214,18 +155,7 @@ const DashboardPage: React.FC = () => {
   };
 
   const renderActiveContent = () => {
-    const activeItem = NAV_ITEMS.find((item) => item.key === activeKey);
-    let effectiveKey: NavKey =
-      activeItem?.featureFlag && !features[activeItem.featureFlag] ? NAV_KEY.Overview : activeKey;
-
-    if (
-      effectiveKey === NAV_KEY.ConnectMoodle &&
-      (isMoodleLinked || !features.isMoodleIntegrationEnabled)
-    ) {
-      effectiveKey = NAV_KEY.Overview;
-    }
-
-    switch (effectiveKey) {
+    switch (activeKey) {
       case NAV_KEY.Overview:
         return (
           <OverviewTab
@@ -284,8 +214,8 @@ const DashboardPage: React.FC = () => {
 
   const handleRefresh = useCallback((): void => {
     void invalidateOpportunities(queryClient);
-    void fetchData(true);
-  }, [queryClient, fetchData]);
+    void refresh();
+  }, [queryClient, refresh]);
 
   return (
     <div
