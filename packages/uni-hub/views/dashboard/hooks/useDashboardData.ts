@@ -7,6 +7,7 @@ import type { StudentProfile } from '@core/types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { DashboardData } from '../types';
 import {
+  applyPlatformNotifications,
   buildFallbackData,
   deriveDashboardState,
   getInitialSyncTime,
@@ -16,7 +17,11 @@ import {
   loadCachedDashboardData,
   type DashboardState,
 } from './helpers';
-import { dashboardQueryOptions, profileQueryOptions } from './queries';
+import {
+  dashboardQueryOptions,
+  platformNotificationsQueryOptions,
+  profileQueryOptions,
+} from './queries';
 
 const EMPTY_DASHBOARD_DATA: DashboardData = {
   courses: [],
@@ -76,8 +81,12 @@ export function useDashboardData({
     initialData: () => getInitialUserProfile() ?? undefined,
     initialDataUpdatedAt: 0,
   });
+  const platformQuery = useQuery({
+    ...platformNotificationsQueryOptions,
+  });
 
   const { error, errorUpdatedAt, data: queryData, isError } = dashboardQuery;
+  const platformError = platformQuery.error;
 
   const snapshot = useMemo(
     () => (isError && queryData === undefined ? readDashboardSnapshot() : undefined),
@@ -87,6 +96,13 @@ export function useDashboardData({
   const { cachedData } = state;
 
   useEffect(() => {
+    if (platformError && isUnauthorizedError(platformError)) {
+      toast.error(formatMessage('dashboard.sessionExpired'));
+      onUnauthorized();
+
+      return;
+    }
+
     if (!error || errorUpdatedAt === handledErrorAt.current || isMoodleUnlinked()) {
       return;
     }
@@ -107,7 +123,7 @@ export function useDashboardData({
     } else {
       toast.error(formatMessage('dashboard.loadError'));
     }
-  }, [error, errorUpdatedAt, cachedData, toast, formatMessage, onUnauthorized]);
+  }, [error, errorUpdatedAt, platformError, cachedData, toast, formatMessage, onUnauthorized]);
 
   let data = cachedData ?? EMPTY_DASHBOARD_DATA;
 
@@ -118,15 +134,20 @@ export function useDashboardData({
       hideCompleted,
       dateFrom,
       dateTo,
+      platformNotifications: platformQuery.data,
     });
+  } else if (platformQuery.data) {
+    data = applyPlatformNotifications(data, platformQuery.data);
   }
 
   const refresh = async (): Promise<void> => {
     if (!enabled) {
+      await platformQuery.refetch();
+
       return;
     }
 
-    const result = await dashboardQuery.refetch();
+    const [result] = await Promise.all([dashboardQuery.refetch(), platformQuery.refetch()]);
 
     if (!result.isError) {
       toast.success(formatMessage('dashboard.syncSuccess'));
