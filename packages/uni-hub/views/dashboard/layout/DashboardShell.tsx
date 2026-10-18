@@ -13,9 +13,8 @@ import { BadgeSystem } from '@uni-hub/components/gamification';
 import { useFeatures } from '@uni-hub/features';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
-import { endSession } from '@uni-hub/services/api.session';
+import { useLogout } from '@uni-hub/hooks/useAuthMutations';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
-import { useQueryClient } from '@tanstack/react-query';
 import { NAV_KEY, type NavKey } from '../constants';
 import { useDashboard } from '../DashboardContext';
 import { NAV_KEY_ROUTE, getNavKeyFromPathname } from '../routes';
@@ -36,8 +35,8 @@ const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
 export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
-  const queryClient = useQueryClient();
   const features = useFeatures();
+  const logout = useLogout();
   const checkIn = useGamificationStore((state) => state.checkIn);
   const soundEnabled = useGamificationStore((state) => state.soundEnabled);
   const setSoundEnabled = useGamificationStore((state) => state.setSoundEnabled);
@@ -80,8 +79,11 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   const handleLogout = (): void => {
-    endSession(queryClient);
-    router.push('/login');
+    logout.mutate(undefined, {
+      onSettled: () => {
+        router.push('/login');
+      },
+    });
   };
 
   const selectKey = (key: NavKey): void => router.push(NAV_KEY_ROUTE[key]);
