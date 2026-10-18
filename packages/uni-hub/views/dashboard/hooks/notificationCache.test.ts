@@ -135,7 +135,7 @@ describe('notificationCache', () => {
   });
 
   describe('optimisticallyMarkAllNotificationsRead', () => {
-    it('marks all platform notifications and dashboard notifications as read', () => {
+    it('marks all platform notifications as read while preserving moodle notification status', () => {
       const rollback = optimisticallyMarkAllNotificationsRead(queryClient);
 
       const updatedPlatform = queryClient.getQueryData<PlatformNotification[]>(
@@ -146,8 +146,9 @@ describe('notificationCache', () => {
 
       const updatedDashboard = queryClient.getQueryData<DashboardData>(dashboardKey);
 
-      expect(updatedDashboard?.notifications.every((n) => n.read)).toBe(true);
-      expect(updatedDashboard?.unreadCount).toBe(0);
+      expect(updatedDashboard?.notifications.find((n) => n.id === 'plat-1')?.read).toBe(true);
+      expect(updatedDashboard?.notifications.find((n) => n.id === 1)?.read).toBe(false);
+      expect(updatedDashboard?.unreadCount).toBe(1);
 
       rollbackNotificationOptimisticUpdate(queryClient, rollback);
 
@@ -156,6 +157,11 @@ describe('notificationCache', () => {
       );
 
       expect(revertedPlatform?.[0].isRead).toBe(false);
+
+      const revertedDashboard = queryClient.getQueryData<DashboardData>(dashboardKey);
+
+      expect(revertedDashboard?.notifications.find((n) => n.id === 'plat-1')?.read).toBe(false);
+      expect(revertedDashboard?.unreadCount).toBe(2);
     });
   });
 });

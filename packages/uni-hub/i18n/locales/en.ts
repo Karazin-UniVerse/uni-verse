@@ -596,12 +596,6 @@ export const en = {
   'opportunities.applicantsModal.close': 'Close',
 
   // Platform Notifications
-  'notifications.opportunity.newApplication': 'New application from {applicantName} for "{title}"',
-  'notifications.opportunity.statusAccepted': 'Your application for "{title}" was accepted',
-  'notifications.opportunity.statusRejected': 'Your application for "{title}" was rejected',
-  'notifications.opportunity.statusInReview': 'Your application for "{title}" is now in review',
-  'notifications.opportunity.published': 'Your opportunity "{title}" was published',
-  'notifications.opportunity.rejected': 'Your opportunity "{title}" was rejected: {reason}',
   'notifications.opportunityApplicationStatus.title': 'Opportunity Application Status',
   'notifications.opportunityApplicationStatus.message':
     'Application status for "{opportunityTitle}" changed to: {status}.',

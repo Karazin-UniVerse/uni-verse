@@ -98,9 +98,7 @@ export const notificationKeys = {
   platform: () => [...notificationKeys.all, 'platform'] as const,
 };
 
-export const markNotificationReadMutationKey = (
-  id: string,
-): readonly ['notifications', 'read', string] => ['notifications', 'read', id] as const;
+export const markNotificationReadMutationKey = ['notifications', 'read'] as const;
 
 export const markAllNotificationsReadMutationKey = ['notifications', 'read-all'] as const;
 

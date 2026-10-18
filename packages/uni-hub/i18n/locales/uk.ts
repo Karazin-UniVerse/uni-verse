@@ -599,12 +599,6 @@ export const uk = {
   'opportunities.applicantsModal.close': 'Закрити',
 
   // Platform Notifications
-  'notifications.opportunity.newApplication': 'Нова заявка від {applicantName} на «{title}»',
-  'notifications.opportunity.statusAccepted': 'Вашу заявку на «{title}» прийнято',
-  'notifications.opportunity.statusRejected': 'Вашу заявку на «{title}» відхилено',
-  'notifications.opportunity.statusInReview': 'Ваша заявка на «{title}» розглядається',
-  'notifications.opportunity.published': 'Вашу можливість «{title}» опубліковано',
-  'notifications.opportunity.rejected': 'Вашу можливість «{title}» відхилено: {reason}',
   'notifications.opportunityApplicationStatus.title': 'Статус заявки на можливість',
   'notifications.opportunityApplicationStatus.message':
     'Статус заявки на «{opportunityTitle}» змінено на: {status}.',

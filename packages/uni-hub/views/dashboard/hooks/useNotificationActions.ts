@@ -1,6 +1,10 @@
-import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationsApi } from '@uni-hub/services/api';
-import { notificationKeys, markAllNotificationsReadMutationKey } from './queries';
+import {
+  notificationKeys,
+  markNotificationReadMutationKey,
+  markAllNotificationsReadMutationKey,
+} from './queries';
 import {
   optimisticallyMarkNotificationRead,
   optimisticallyMarkAllNotificationsRead,
@@ -14,55 +18,43 @@ export interface UseNotificationActionsResult {
   isPending: boolean;
 }
 
-function createOptimisticHandlers(
-  queryClient: QueryClient,
-  performOptimisticUpdate: () => NotificationRollbackContext,
-) {
-  return {
-    onMutate: async (): Promise<NotificationRollbackContext> => {
-      await queryClient.cancelQueries({ queryKey: notificationKeys.all });
-
-      return performOptimisticUpdate();
-    },
-    onError: (
-      _err: unknown,
-      _vars: unknown,
-      context: NotificationRollbackContext | undefined,
-    ): void => {
-      rollbackNotificationOptimisticUpdate(queryClient, context);
-    },
-    onSettled: async (): Promise<void> => {
-      await queryClient.invalidateQueries({ queryKey: notificationKeys.platform() });
-    },
-  };
-}
-
 export function useNotificationActions(): UseNotificationActionsResult {
   const queryClient = useQueryClient();
 
   const markReadMutation = useMutation({
-    mutationKey: ['notifications', 'read'],
-    mutationFn: async (id: string) => {
+    mutationKey: markNotificationReadMutationKey,
+    mutationFn: async (id: string): Promise<void> => {
       await notificationsApi.markAsRead(id);
     },
-    ...createOptimisticHandlers(queryClient, () => {
-      throw new Error('Not used directly');
-    }),
     onMutate: async (id: string): Promise<NotificationRollbackContext> => {
       await queryClient.cancelQueries({ queryKey: notificationKeys.all });
 
       return optimisticallyMarkNotificationRead(queryClient, id);
     },
+    onError: (_err, _id, context): void => {
+      rollbackNotificationOptimisticUpdate(queryClient, context);
+    },
+    onSettled: async (): Promise<void> => {
+      await queryClient.invalidateQueries({ queryKey: notificationKeys.platform() });
+    },
   });
 
   const markAllReadMutation = useMutation({
     mutationKey: markAllNotificationsReadMutationKey,
-    mutationFn: async () => {
+    mutationFn: async (): Promise<void> => {
       await notificationsApi.markAllAsRead();
     },
-    ...createOptimisticHandlers(queryClient, () =>
-      optimisticallyMarkAllNotificationsRead(queryClient),
-    ),
+    onMutate: async (): Promise<NotificationRollbackContext> => {
+      await queryClient.cancelQueries({ queryKey: notificationKeys.all });
+
+      return optimisticallyMarkAllNotificationsRead(queryClient);
+    },
+    onError: (_err, _vars, context): void => {
+      rollbackNotificationOptimisticUpdate(queryClient, context);
+    },
+    onSettled: async (): Promise<void> => {
+      await queryClient.invalidateQueries({ queryKey: notificationKeys.platform() });
+    },
   });
 
   return {

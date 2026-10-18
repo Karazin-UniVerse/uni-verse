@@ -99,7 +99,7 @@ export function optimisticallyMarkAllNotificationsRead(
     item.isRead ? item : { ...item, isRead: true },
   );
   const previousDashboards = updateDashboardQueriesCache(queryClient, (n) =>
-    n.read ? n : { ...n, read: true },
+    typeof n.id === 'string' && !n.read ? { ...n, read: true } : n,
   );
 
   return { previousPlatform, previousDashboards };
