@@ -35,19 +35,29 @@ export async function loadPlatformNotifications(): Promise<PlatformNotification[
 export async function loadDashboardData(
   filters: BuildAssignmentParamsOptions,
 ): Promise<DashboardData> {
-  const platformNotificationsPromise = loadPlatformNotifications();
-
   try {
-    const responses = await Promise.all([
+    const [
+      coursesRes,
+      gradesRes,
+      assignmentsRes,
+      eventsRes,
+      notificationsRes,
+      statsRes,
+      platformNotifications,
+    ] = await Promise.all([
       moodleApi.getCourses(),
       moodleApi.getGrades(),
       moodleApi.getAssignments(buildAssignmentParams(filters)),
       moodleApi.getEvents(),
       moodleApi.getNotifications(),
       moodleApi.getStatistics(),
+      loadPlatformNotifications(),
     ]);
-    const platformNotifications = await platformNotificationsPromise;
-    const freshData = assembleDashboardData(responses, platformNotifications);
+
+    const freshData = assembleDashboardData(
+      [coursesRes, gradesRes, assignmentsRes, eventsRes, notificationsRes, statsRes],
+      platformNotifications,
+    );
 
     if (!isMoodleUnlinked()) {
       persistDashboardSnapshot(Date.now(), freshData);
