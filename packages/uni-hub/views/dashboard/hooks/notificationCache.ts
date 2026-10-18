@@ -15,10 +15,10 @@ export function patchNotificationInDashboard(
   updater: (item: Notification) => Notification,
 ): DashboardData {
   let changed = false;
-  const nextNotifications = data.notifications.map((n) => {
-    const updated = updater(n);
+  const nextNotifications = data.notifications.map((notification) => {
+    const updated = updater(notification);
 
-    if (updated !== n) {
+    if (updated !== notification) {
       changed = true;
     }
 
@@ -29,7 +29,7 @@ export function patchNotificationInDashboard(
     return data;
   }
 
-  const unreadCount = nextNotifications.filter((n) => !n.read).length;
+  const unreadCount = nextNotifications.filter((notification) => !notification.read).length;
 
   return {
     ...data,
@@ -85,8 +85,10 @@ export function optimisticallyMarkNotificationRead(
   const previousPlatform = updatePlatformQueryCache(queryClient, (item) =>
     item.id === id ? { ...item, isRead: true } : item,
   );
-  const previousDashboards = updateDashboardQueriesCache(queryClient, (n) =>
-    String(n.id) === id && !n.read ? { ...n, read: true } : n,
+  const previousDashboards = updateDashboardQueriesCache(queryClient, (notification) =>
+    String(notification.id) === id && !notification.read
+      ? { ...notification, read: true }
+      : notification,
   );
 
   return { previousPlatform, previousDashboards };
@@ -98,8 +100,10 @@ export function optimisticallyMarkAllNotificationsRead(
   const previousPlatform = updatePlatformQueryCache(queryClient, (item) =>
     item.isRead ? item : { ...item, isRead: true },
   );
-  const previousDashboards = updateDashboardQueriesCache(queryClient, (n) =>
-    typeof n.id === 'string' && !n.read ? { ...n, read: true } : n,
+  const previousDashboards = updateDashboardQueriesCache(queryClient, (notification) =>
+    typeof notification.id === 'string' && !notification.read
+      ? { ...notification, read: true }
+      : notification,
   );
 
   return { previousPlatform, previousDashboards };

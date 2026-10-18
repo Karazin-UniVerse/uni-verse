@@ -1,6 +1,7 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import { notificationsApi } from '@uni-hub/services/api';
 import {
   notificationKeys,
@@ -20,6 +21,10 @@ export interface UseNotificationActionsResult {
   isPending: boolean;
 }
 
+export function isLastPendingNotificationMutation(queryClient: QueryClient): boolean {
+  return queryClient.isMutating({ mutationKey: notificationKeys.all }) <= 1;
+}
+
 export function useNotificationActions(): UseNotificationActionsResult {
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -31,16 +36,24 @@ export function useNotificationActions(): UseNotificationActionsResult {
       await notificationsApi.markAsRead(id);
     },
     onMutate: async (id: string): Promise<NotificationRollbackContext> => {
-      await queryClient.cancelQueries({ queryKey: notificationKeys.all });
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: notificationKeys.all }),
+        queryClient.cancelQueries({ queryKey: moodleKeys.dashboards() }),
+      ]);
 
       return optimisticallyMarkNotificationRead(queryClient, id);
     },
     onError: (_err, _id, context): void => {
-      rollbackNotificationOptimisticUpdate(queryClient, context);
+      if (isLastPendingNotificationMutation(queryClient)) {
+        rollbackNotificationOptimisticUpdate(queryClient, context);
+      }
+
       toast.error(formatMessage('notifications.error.markReadFailed'));
     },
     onSettled: async (): Promise<void> => {
-      await queryClient.invalidateQueries({ queryKey: notificationKeys.platform() });
+      if (isLastPendingNotificationMutation(queryClient)) {
+        await queryClient.invalidateQueries({ queryKey: notificationKeys.platform() });
+      }
     },
   });
 
@@ -50,16 +63,24 @@ export function useNotificationActions(): UseNotificationActionsResult {
       await notificationsApi.markAllAsRead();
     },
     onMutate: async (): Promise<NotificationRollbackContext> => {
-      await queryClient.cancelQueries({ queryKey: notificationKeys.all });
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: notificationKeys.all }),
+        queryClient.cancelQueries({ queryKey: moodleKeys.dashboards() }),
+      ]);
 
       return optimisticallyMarkAllNotificationsRead(queryClient);
     },
     onError: (_err, _vars, context): void => {
-      rollbackNotificationOptimisticUpdate(queryClient, context);
+      if (isLastPendingNotificationMutation(queryClient)) {
+        rollbackNotificationOptimisticUpdate(queryClient, context);
+      }
+
       toast.error(formatMessage('notifications.error.markReadFailed'));
     },
     onSettled: async (): Promise<void> => {
-      await queryClient.invalidateQueries({ queryKey: notificationKeys.platform() });
+      if (isLastPendingNotificationMutation(queryClient)) {
+        await queryClient.invalidateQueries({ queryKey: notificationKeys.platform() });
+      }
     },
   });
 

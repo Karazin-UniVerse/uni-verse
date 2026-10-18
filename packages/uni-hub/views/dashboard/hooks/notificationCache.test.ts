@@ -80,14 +80,14 @@ describe('notificationCache', () => {
     ]);
     queryClient.setQueryData(dashboardKey, {
       ...mockDashboardData,
-      notifications: mockDashboardData.notifications.map((n) => ({ ...n })),
+      notifications: mockDashboardData.notifications.map((notification) => ({ ...notification })),
     });
   });
 
   describe('patchNotificationInDashboard', () => {
     it('updates matching notification and recomputes unreadCount', () => {
-      const patched = patchNotificationInDashboard(mockDashboardData, (n) =>
-        n.id === 'plat-1' ? { ...n, read: true } : n,
+      const patched = patchNotificationInDashboard(mockDashboardData, (notification) =>
+        notification.id === 'plat-1' ? { ...notification, read: true } : notification,
       );
 
       expect(patched.notifications[0].read).toBe(true);
@@ -95,7 +95,10 @@ describe('notificationCache', () => {
     });
 
     it('returns same reference if no changes occurred', () => {
-      const patched = patchNotificationInDashboard(mockDashboardData, (n) => n);
+      const patched = patchNotificationInDashboard(
+        mockDashboardData,
+        (notification) => notification,
+      );
 
       expect(patched).toBe(mockDashboardData);
     });
@@ -142,12 +145,16 @@ describe('notificationCache', () => {
         notificationKeys.platform(),
       );
 
-      expect(updatedPlatform?.every((n) => n.isRead)).toBe(true);
+      expect(updatedPlatform?.every((notification) => notification.isRead)).toBe(true);
 
       const updatedDashboard = queryClient.getQueryData<DashboardData>(dashboardKey);
 
-      expect(updatedDashboard?.notifications.find((n) => n.id === 'plat-1')?.read).toBe(true);
-      expect(updatedDashboard?.notifications.find((n) => n.id === 1)?.read).toBe(false);
+      expect(
+        updatedDashboard?.notifications.find((notification) => notification.id === 'plat-1')?.read,
+      ).toBe(true);
+      expect(
+        updatedDashboard?.notifications.find((notification) => notification.id === 1)?.read,
+      ).toBe(false);
       expect(updatedDashboard?.unreadCount).toBe(1);
 
       rollbackNotificationOptimisticUpdate(queryClient, rollback);
@@ -160,7 +167,9 @@ describe('notificationCache', () => {
 
       const revertedDashboard = queryClient.getQueryData<DashboardData>(dashboardKey);
 
-      expect(revertedDashboard?.notifications.find((n) => n.id === 'plat-1')?.read).toBe(false);
+      expect(
+        revertedDashboard?.notifications.find((notification) => notification.id === 'plat-1')?.read,
+      ).toBe(false);
       expect(revertedDashboard?.unreadCount).toBe(2);
     });
   });

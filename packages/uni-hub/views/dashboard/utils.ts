@@ -284,5 +284,7 @@ export function parseRouteId(rawId: string | string[] | undefined): number | nul
     return null;
   }
 
-  return Number.parseInt(rawId, 10);
+  const id = Number.parseInt(rawId, 10);
+
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
 }

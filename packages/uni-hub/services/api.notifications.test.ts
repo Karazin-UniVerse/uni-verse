@@ -29,9 +29,9 @@ describe('NotificationsApi', () => {
 
     mockFetchResponse(mockData);
 
-    const res = await notificationsApi.getMyNotifications();
+    const response = await notificationsApi.getMyNotifications();
 
-    expect(res.data).toEqual(mockData);
+    expect(response.data).toEqual(mockData);
     expect(vi.mocked(global.fetch)).toHaveBeenCalledTimes(1);
     expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain('/notifications');
   });
@@ -50,9 +50,9 @@ describe('NotificationsApi', () => {
 
     mockFetchResponse(mockData);
 
-    const res = await notificationsApi.markAsRead('notif-1');
+    const response = await notificationsApi.markAsRead('notif-1');
 
-    expect(res.data).toEqual(mockData);
+    expect(response.data).toEqual(mockData);
     expect(vi.mocked(global.fetch)).toHaveBeenCalledTimes(1);
     expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain('/notifications/notif-1/read');
     expect(vi.mocked(global.fetch).mock.calls[0][1]?.method).toBe('POST');
@@ -63,9 +63,9 @@ describe('NotificationsApi', () => {
 
     mockFetchResponse(mockData);
 
-    const res = await notificationsApi.markAllAsRead();
+    const response = await notificationsApi.markAllAsRead();
 
-    expect(res.data).toEqual(mockData);
+    expect(response.data).toEqual(mockData);
     expect(vi.mocked(global.fetch)).toHaveBeenCalledTimes(1);
     expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain('/notifications/read-all');
     expect(vi.mocked(global.fetch).mock.calls[0][1]?.method).toBe('POST');

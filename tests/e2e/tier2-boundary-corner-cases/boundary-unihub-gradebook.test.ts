@@ -27,26 +27,17 @@ describe('Tier 2 - Feature 12 & 13: Boundary Cases in Gradebook and URL Handling
     expect(item.examScore).toBeNull();
   });
 
-  it('F13-B1: AssignmentDetail should construct valid URL even when instance ID is large number', () => {
-    const instanceId = 999999;
-    const url = `https://moodle.universemvp.tech/mod/assign/view.php?a=${instanceId}`;
+  it('F13-B1: AssignmentDetail should construct valid URL using assignmentId fallback', () => {
+    const assignmentId = 999999;
+    const courseModule = { url: undefined };
+    const moodleUrl =
+      courseModule?.url || `https://moodle.universemvp.tech/mod/assign/view.php?a=${assignmentId}`;
 
-    expect(url).toBe('https://moodle.universemvp.tech/mod/assign/view.php?a=999999');
-    const parsed = new URL(url);
+    expect(moodleUrl).toBe('https://moodle.universemvp.tech/mod/assign/view.php?a=999999');
+    const parsed = new URL(moodleUrl);
 
     expect(parsed.hostname).toBe('moodle.universemvp.tech');
     expect(parsed.searchParams.get('a')).toBe('999999');
-  });
-
-  it('F13-B2: AssignmentDetail should handle missing instance ID gracefully by leaving moodleUrl undefined', () => {
-    const module = { instance: undefined, url: undefined };
-    const moodleUrl =
-      module.url ||
-      (module.instance
-        ? `https://moodle.universemvp.tech/mod/assign/view.php?a=${module.instance}`
-        : undefined);
-
-    expect(moodleUrl).toBeUndefined();
   });
 
   it('F13-B3: UniHub code must strictly avoid unencrypted http:// links to Moodle', () => {

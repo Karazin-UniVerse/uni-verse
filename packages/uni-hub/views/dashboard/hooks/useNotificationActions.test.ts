@@ -82,7 +82,7 @@ describe('useNotificationActions', () => {
 
       const cache = queryClient.getQueryData<PlatformNotification[]>(notificationKeys.platform());
 
-      expect(cache?.find((n) => n.id === 'plat-1')?.isRead).toBe(true);
+      expect(cache?.find((notification) => notification.id === 'plat-1')?.isRead).toBe(true);
     });
   });
 
@@ -100,7 +100,7 @@ describe('useNotificationActions', () => {
     await waitFor(() => {
       const cache = queryClient.getQueryData<PlatformNotification[]>(notificationKeys.platform());
 
-      expect(cache?.find((n) => n.id === 'plat-1')?.isRead).toBe(false);
+      expect(cache?.find((notification) => notification.id === 'plat-1')?.isRead).toBe(false);
       expect(mockToast.error).toHaveBeenCalledWith('notifications.error.markReadFailed');
     });
   });
@@ -123,7 +123,7 @@ describe('useNotificationActions', () => {
 
       const cache = queryClient.getQueryData<PlatformNotification[]>(notificationKeys.platform());
 
-      expect(cache?.every((n) => n.isRead)).toBe(true);
+      expect(cache?.every((notification) => notification.isRead)).toBe(true);
     });
   });
 
@@ -141,7 +141,7 @@ describe('useNotificationActions', () => {
     await waitFor(() => {
       const cache = queryClient.getQueryData<PlatformNotification[]>(notificationKeys.platform());
 
-      expect(cache?.every((n) => !n.isRead)).toBe(true);
+      expect(cache?.every((notification) => !notification.isRead)).toBe(true);
       expect(mockToast.error).toHaveBeenCalledWith('notifications.error.markReadFailed');
     });
   });

@@ -105,5 +105,4 @@ export const markAllNotificationsReadMutationKey = ['notifications', 'read-all']
 export const platformNotificationsQueryOptions = queryOptions({
   queryKey: notificationKeys.platform(),
   queryFn: loadPlatformNotifications,
-  staleTime: 60 * 1000,
 });

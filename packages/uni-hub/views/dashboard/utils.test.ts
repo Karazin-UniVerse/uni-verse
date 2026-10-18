@@ -319,5 +319,10 @@ describe('resolveNavKey', () => {
       expect(parseRouteId(undefined)).toBeNull();
       expect(parseRouteId(['5'])).toBeNull();
     });
+
+    it('returns null for zero and unsafe large integers', () => {
+      expect(parseRouteId('0')).toBeNull();
+      expect(parseRouteId('999999999999999999999')).toBeNull();
+    });
   });
 });
