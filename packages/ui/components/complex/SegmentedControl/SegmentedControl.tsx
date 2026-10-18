@@ -12,7 +12,7 @@ export function SegmentedControl<TId extends string>({
   onSelect,
   ariaLabel,
   className,
-}: SegmentedControlProps<TId>): React.ReactElement {
+}: Readonly<SegmentedControlProps<TId>>): React.ReactElement {
   const listRef = useRef<HTMLDivElement>(null);
 
   const handleKeyDown = (
