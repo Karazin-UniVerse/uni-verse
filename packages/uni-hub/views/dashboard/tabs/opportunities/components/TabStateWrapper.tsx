@@ -1,7 +1,7 @@
 import React from 'react';
 import { Spinner, Empty } from '@una';
 import styles from '../../OpportunitiesTab.module.scss';
-import { LoadErrorState } from './LoadErrorState';
+import { LoadErrorState } from '@uni-hub/components/common/LoadErrorState';
 
 export interface TabStateWrapperProps {
   loading: boolean;

@@ -173,7 +173,6 @@ export const en = {
   'courseContents.breadcrumbs': 'Courses',
   'courseContents.title': 'Course Contents',
   'courseContents.loading': 'Loading contents...',
-  'courseContents.loadError': 'Failed to load course contents',
   'courseContents.empty': 'There are no materials available in this course yet.',
   'courseContents.moduleType': 'Type',
 
@@ -263,7 +262,6 @@ export const en = {
   // Assignment Modal
   'assignmentModal.defaultTitle': 'Assignment',
   'assignmentModal.loadingStatus': 'Loading status...',
-  'assignmentModal.loadStatusError': 'Failed to load assignment status',
   'assignmentModal.openMoodle': 'Open original assignment on Moodle',
   'assignmentModal.description': 'Description',
   'assignmentModal.attachedFiles': 'Attached files',
@@ -454,8 +452,8 @@ export const en = {
   'opportunities.toast.rejected': 'Opportunity rejected',
   'opportunities.toast.requiresChanges': 'Opportunity returned to the author for revision',
   'opportunities.toast.moderateError': 'Moderation error',
-  'opportunities.error.load': 'Failed to load data',
-  'opportunities.error.retry': 'Try again',
+  'common.error.load': 'Failed to load data',
+  'common.error.retry': 'Try again',
   'opportunities.card.defaultOwner': 'Karazin University',
   'opportunities.card.vacancy': 'Vacancy',
   'opportunities.card.practice': 'Practice',

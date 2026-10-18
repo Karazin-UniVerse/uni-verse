@@ -173,7 +173,6 @@ export const uk = {
   'courseContents.breadcrumbs': 'Курси',
   'courseContents.title': 'Вміст курсу',
   'courseContents.loading': 'Завантаження вмісту...',
-  'courseContents.loadError': 'Не вдалося завантажити вміст курсу',
   'courseContents.empty': 'У цьому курсі поки що немає доступних матеріалів.',
   'courseContents.moduleType': 'Тип',
 
@@ -262,7 +261,6 @@ export const uk = {
   // Assignment Modal
   'assignmentModal.defaultTitle': 'Завдання',
   'assignmentModal.loadingStatus': 'Завантаження статусу...',
-  'assignmentModal.loadStatusError': 'Не вдалося завантажити статус завдання',
   'assignmentModal.openMoodle': 'Відкрити оригінальне завдання на Moodle',
   'assignmentModal.description': 'Опис',
   'assignmentModal.attachedFiles': 'Прикріплені файли',
@@ -455,8 +453,8 @@ export const uk = {
   'opportunities.toast.rejected': 'Можливість відхилено',
   'opportunities.toast.requiresChanges': 'Можливість повернуто на доопрацювання автору',
   'opportunities.toast.moderateError': 'Помилка модерації',
-  'opportunities.error.load': 'Не вдалося завантажити дані',
-  'opportunities.error.retry': 'Спробувати знову',
+  'common.error.load': 'Не вдалося завантажити дані',
+  'common.error.retry': 'Спробувати знову',
   'opportunities.card.defaultOwner': 'Каразінський університет',
   'opportunities.card.vacancy': 'Вакансія',
   'opportunities.card.practice': 'Практика',

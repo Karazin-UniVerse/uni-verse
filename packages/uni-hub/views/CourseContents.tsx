@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -13,17 +13,20 @@ import {
   ArrowLeft,
   ChevronDown,
 } from 'lucide-react';
-import { Button, Spinner, Empty, useToast } from '@una';
-import { moodleApi } from '@uni-hub/services/api';
+import { useQuery } from '@tanstack/react-query';
+import { Button, Spinner, Empty } from '@una';
+import { hasLoadFailed } from '@uni-hub/queries/load-state';
+import { courseContentsQueryOptions } from '@uni-hub/queries/moodle/queries';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
-import type { CourseSection, CourseModule } from '@core/types/moodle';
+import type { CourseModule } from '@core/types/moodle';
 import { COURSE_MODULE_NAMES, type CourseModuleName } from '@core/constants/moodle';
 import { AssignmentModal } from '@uni-hub/components/assignments';
+import { LoadErrorState } from '@uni-hub/components/common/LoadErrorState';
 import styles from './CourseContents.module.scss';
 
-const getModuleIcon = (modname: CourseModuleName) => {
+const getModuleIcon = (modname: CourseModuleName): React.ReactNode => {
   switch (modname) {
     case COURSE_MODULE_NAMES.RESOURCE:
       return <File size={22} />;
@@ -44,64 +47,27 @@ const CourseContents: React.FC = () => {
   const params = useParams();
   const courseId = (params?.courseId as string) || '';
   const router = useRouter();
-  const toast = useToast();
   const { formatMessage } = useLanguage();
 
-  const [sections, setSections] = useState<CourseSection[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+  const courseIdNumber = Number.parseInt(courseId, 10);
+  const contentsQuery = useQuery({
+    ...courseContentsQueryOptions(courseIdNumber),
+    enabled: Number.isInteger(courseIdNumber),
+  });
+  const sections = contentsQuery.data ?? [];
+
+  const [openState, setOpenState] = useState<{ courseId: number; sectionIds: Set<string> } | null>(
+    null,
+  );
+  const openSections =
+    openState?.courseId === courseIdNumber
+      ? openState.sectionIds
+      : new Set(sections.slice(0, 1).map((section) => section.id.toString()));
 
   const [selectedModule, setSelectedModule] = useState<CourseModule | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
-  const formatMessageRef = useRef(formatMessage);
-
-  useEffect(() => {
-    formatMessageRef.current = formatMessage;
-  }, [formatMessage]);
-
-  useEffect(() => {
-    if (!courseId) return;
-
-    let cancelled = false;
-
-    const fetchContents = async () => {
-      setLoading(true);
-
-      try {
-        const response = await moodleApi.getCourseContents(Number.parseInt(courseId, 10));
-
-        if (cancelled) return;
-
-        const validSections = response.data.filter(
-          (section: CourseSection) => section.name && section.modules && section.modules.length > 0,
-        );
-
-        setSections(validSections);
-
-        if (validSections.length > 0) {
-          setOpenSections(new Set([validSections[0].id.toString()]));
-        }
-      } catch (error) {
-        if (cancelled) return;
-
-        console.error(error);
-        toast.error(formatMessageRef.current('courseContents.loadError'));
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    void fetchContents();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [courseId, toast]);
-
-  const handleModuleClick = (courseModule: CourseModule) => {
+  const handleModuleClick = (courseModule: CourseModule): void => {
     if (courseModule.modname === COURSE_MODULE_NAMES.ASSIGN) {
       setSelectedModule(courseModule);
       setModalVisible(true);
@@ -110,20 +76,22 @@ const CourseContents: React.FC = () => {
     }
   };
 
-  const toggleSection = (id: string) => {
-    setOpenSections((prev) => {
-      const next = new Set(prev);
+  const toggleSection = (id: string): void => {
+    const next = new Set(openSections);
 
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
 
-      return next;
-    });
+    setOpenState({ courseId: courseIdNumber, sectionIds: next });
   };
 
-  const renderSections = () => {
-    if (loading) {
+  const renderSections = (): React.ReactNode => {
+    if (contentsQuery.isLoading) {
       return <Spinner size="large" tip={formatMessage('courseContents.loading')} />;
+    }
+
+    if (hasLoadFailed(contentsQuery)) {
+      return <LoadErrorState onRetry={() => void contentsQuery.refetch()} />;
     }
 
     if (sections.length === 0) {
