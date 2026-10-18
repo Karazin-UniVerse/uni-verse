@@ -52,9 +52,9 @@ file anchors before each task.
 ## Known risk carried by the pilot
 
 #242 does not clear the query cache when a session ends without a page reload
-(`router.push('/login')` after a 401, after unlinking Moodle, and in `DashboardPage.handleLogout`).
-A different user signing in within the same tab can see the previous user's cached opportunities
-for up to the stale time. PR 7 fixes it; until then it is listed in the #242 description.
+(`router.push('/login')` after a 401 and in `DashboardPage.handleLogout`).
+A different user signing in within the same browser tab can see the previous user's cached opportunities
+until the cache is explicitly cleared or garbage-collected (`gcTime`). PR 7 fixes it; until then it is listed in the #242 description.
 
 ## Out of scope
 

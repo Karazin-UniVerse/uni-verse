@@ -20,7 +20,7 @@
 - The API client keeps its current storage side effects for tokens (moving them is a separate refactor tied to `ApiClient`, out of scope).
 - No aliases or shims; one import per module path; explicit return types for new functions; empty line before `return`; every UI string through `formatMessage`.
 - Commit messages follow Conventional Commits and end with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`. Show the diff and wait for approval before each commit (user preference); do not push without being asked.
-- Commands run from `/Users/ReDL/Documents/Programming/Projects/uni-verse`. Final pipeline: `pnpm lint`, `pnpm lint:style`, `pnpm typecheck`, `pnpm test`, `pnpm build`, prettier on changed files.
+- Commands run from the repository root. Final pipeline: `pnpm lint`, `pnpm lint:style`, `pnpm typecheck`, `pnpm test`, `pnpm build`, prettier on changed files.
 
 ## Review Focus
 
@@ -99,7 +99,7 @@ Delete `clearUserSessionStorage` from `views/dashboard/hooks/helpers.ts` and its
 
 - [ ] **Step 5: Verify and commit** (after diff approval)
 
-`pnpm --filter @universe/uni-hub test && typecheck && lint`. Commit: `refactor(uni-hub): centralize session storage clearing`.
+`pnpm --filter @universe/uni-hub test && pnpm typecheck && pnpm lint`. Commit: `refactor(uni-hub): centralize session storage clearing`.
 
 ---
 
@@ -111,7 +111,7 @@ Delete `clearUserSessionStorage` from `views/dashboard/hooks/helpers.ts` and its
 
 - Produces: `useLogin()`, `useGoogleLogin()`, `useLinkMoodle()`, `useUnlinkMoodle()`, `useLogout()`; each returns the `UseMutationResult` of its mutation.
   - `useLogin` variables `{ username, password }`; `onSuccess` calls `queryClient.clear()`.
-  - `useGoogleLogin` variables `idToken: string`; `onSuccess` calls `queryClient.clear()` only when `response.data.isLinked` or the Moodle integration flag is off (the same condition `LoginPage` uses to mark the user logged in).
+  - `useGoogleLogin` variables `idToken: string`; `onSuccess` calls `queryClient.clear()` unconditionally for every successful Google response (including when `response.data.isLinked` is false, ensuring any stale cache from a prior session in the same browser tab is discarded).
   - `useLinkMoodle` variables `{ username, password }`; no cache change at the login page (the cache is already empty); in the dashboard modal the existing `onSuccess` callback (PR 6) invalidates `moodleKeys.all`.
   - `useUnlinkMoodle`: no variables; `onSuccess` does nothing to the cache here (PR 6's `onUnlinkSuccess` removes Moodle queries).
   - `useLogout`: `mutationFn: () => authApi.logout()`; `onSettled: () => { endSession(queryClient); window.location.assign('/login'); }` (the page reload that exists today stays, the cache clear makes the SPA paths safe too).
@@ -121,7 +121,7 @@ Delete `clearUserSessionStorage` from `views/dashboard/hooks/helpers.ts` and its
 Each hook is `useMutation` with `mutationFn` calling the matching `authApi` method; no `loading` state is kept anywhere else. Example:
 
 ```ts
-export function useLogin() {
+export function useLogin(): UseMutationResult<LoginResponse, Error, Credentials> {
   const queryClient = useQueryClient();
 
   return useMutation({
