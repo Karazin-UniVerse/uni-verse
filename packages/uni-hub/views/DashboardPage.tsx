@@ -68,14 +68,11 @@ const DashboardPage: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const requestedTab = searchParams.get('tab');
   const requestedView = searchParams.get('view');
-  const requestedKey = requestedTab && isNavKey(requestedTab) ? requestedTab : NAV_KEY.Overview;
-  const requestedStudyView =
+  const selectedKey = requestedTab && isNavKey(requestedTab) ? requestedTab : NAV_KEY.Overview;
+  const studyView =
     requestedView && isStudyView(requestedView) ? requestedView : STUDY_VIEW.Subjects;
 
-  const selectedKey = requestedKey;
-  const studyView = requestedStudyView;
-
-  const updateNavigation = useCallback(
+  const navigateTo = useCallback(
     (key: NavKey, view?: StudyView): void => {
       const params = new URLSearchParams(searchParams.toString());
 
@@ -94,23 +91,16 @@ const DashboardPage: React.FC = () => {
 
   const setActiveKey = useCallback(
     (key: NavKey): void => {
-      updateNavigation(key);
+      navigateTo(key);
     },
-    [updateNavigation],
+    [navigateTo],
   );
 
   const setStudyView = useCallback(
     (view: StudyView): void => {
-      updateNavigation(NAV_KEY.Study, view);
+      navigateTo(NAV_KEY.Study, view);
     },
-    [updateNavigation],
-  );
-
-  const navigateTo = useCallback(
-    (key: NavKey, view?: StudyView): void => {
-      updateNavigation(key, view);
-    },
-    [updateNavigation],
+    [navigateTo],
   );
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();

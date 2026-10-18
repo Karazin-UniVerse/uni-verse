@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { SegmentedControl, type SegmentedControlItem } from '@universe/ui';
+import { SegmentedControl, type SegmentedControlItem } from '@ui';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { StudyTabProps } from '../types';
 import { STUDY_VIEW, type StudyView } from '../constants';
