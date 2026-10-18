@@ -242,6 +242,24 @@ describe('dashboard utils', () => {
       expect(moodleWithCollision.title).toBe('notifications.opportunityModerated.title');
       expect(moodleWithCollision.message).toBe('Original Moodle Message');
     });
+
+    it('passes through link property on platform notifications', () => {
+      const platformItem = toNotificationListItem(
+        {
+          id: 'plat-1',
+          subject: 'notifications.opportunityNewApplication.title',
+          message: JSON.stringify({ opportunityTitle: 'AI Lab', applicantName: 'Oleh' }),
+          link: '/opportunities/123',
+          timecreated: 1_788_000_000,
+          read: true,
+        },
+        'en-US',
+      );
+
+      expect(platformItem.id).toBe('plat-1');
+      expect(platformItem.link).toBe('/opportunities/123');
+      expect(platformItem.isRead).toBe(true);
+    });
   });
 });
 
@@ -300,6 +318,11 @@ describe('resolveNavKey', () => {
       expect(parseRouteId('5.5')).toBeNull();
       expect(parseRouteId(undefined)).toBeNull();
       expect(parseRouteId(['5'])).toBeNull();
+    });
+
+    it('returns null for zero and unsafe large integers', () => {
+      expect(parseRouteId('0')).toBeNull();
+      expect(parseRouteId('999999999999999999999')).toBeNull();
     });
   });
 });
