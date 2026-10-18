@@ -101,4 +101,26 @@ describe('NotificationsDropdown', () => {
 
     expect(mockMarkAllAsRead).toHaveBeenCalledTimes(1);
   });
+
+  it('should not show mark all button when only moodle notifications are unread', () => {
+    const moodleOnlyNotifications: Notification[] = [
+      {
+        id: 1,
+        subject: 'Нове завдання',
+        fullmessage: '<p>Перевірте курс</p>',
+        timecreated: 1_700_000_000,
+        read: false,
+      },
+    ];
+
+    render(<NotificationsDropdown notifications={moodleOnlyNotifications} unreadCount={1} />);
+
+    const trigger = screen.getByRole('button', { name: /сповіщення/i });
+
+    fireEvent.click(trigger);
+
+    expect(
+      screen.queryByRole('button', { name: /Позначити всі як прочитані/i }),
+    ).not.toBeInTheDocument();
+  });
 });

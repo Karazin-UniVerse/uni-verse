@@ -24,9 +24,13 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   const { localeTag, formatMessage } = useLanguage();
   const { markAsRead, markAllAsRead } = useNotificationActions();
 
+  const hasUnreadPlatform = notifications.some(
+    (notification) => typeof notification.id === 'string' && !notification.read,
+  );
+
   const handleItemClick = (item: NotificationListItem, close: () => void): void => {
     if (!item.isRead && typeof item.id === 'string') {
-      void markAsRead(item.id);
+      markAsRead(item.id);
     }
 
     if (item.link) {
@@ -36,7 +40,7 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   };
 
   const handleMarkAllRead = (): void => {
-    void markAllAsRead();
+    markAllAsRead();
   };
 
   return (
@@ -65,7 +69,7 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
           emptyLabel={formatMessage('header.notifications.empty')}
           unreadItemLabel={formatMessage('header.notifications.unreadItem')}
           markAllReadLabel={
-            unreadCount > 0 ? formatMessage('header.notifications.markAllRead') : undefined
+            hasUnreadPlatform ? formatMessage('header.notifications.markAllRead') : undefined
           }
           unreadLabel={
             unreadCount > 0
@@ -75,7 +79,7 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
           onItemClick={(item) => {
             handleItemClick(item, close);
           }}
-          onMarkAllRead={unreadCount > 0 ? handleMarkAllRead : undefined}
+          onMarkAllRead={hasUnreadPlatform ? handleMarkAllRead : undefined}
         />
       )}
     </Dropdown>

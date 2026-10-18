@@ -63,14 +63,6 @@
   }
 }
 
-.itemContent,
-.itemButton {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-12) var(--space-16) var(--space-12) var(--space-12);
-}
-
 .itemButton {
   all: unset;
   width: 100%;
@@ -86,6 +78,14 @@
     outline: 2px solid var(--accent-primary);
     outline-offset: -2px;
   }
+}
+
+.itemContent,
+.itemButton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-12) var(--space-16) var(--space-12) var(--space-12);
 }
 
 .unread {

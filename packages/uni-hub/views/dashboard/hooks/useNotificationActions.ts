@@ -13,8 +13,8 @@ import {
 } from './notificationCache';
 
 export interface UseNotificationActionsResult {
-  markAsRead: (id: string) => Promise<void>;
-  markAllAsRead: () => Promise<void>;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
   isPending: boolean;
 }
 
@@ -58,11 +58,11 @@ export function useNotificationActions(): UseNotificationActionsResult {
   });
 
   return {
-    markAsRead: async (id: string): Promise<void> => {
-      await markReadMutation.mutateAsync(id);
+    markAsRead: (id: string): void => {
+      markReadMutation.mutate(id);
     },
-    markAllAsRead: async (): Promise<void> => {
-      await markAllReadMutation.mutateAsync();
+    markAllAsRead: (): void => {
+      markAllReadMutation.mutate();
     },
     isPending: markReadMutation.isPending || markAllReadMutation.isPending,
   };
