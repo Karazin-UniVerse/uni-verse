@@ -8,14 +8,14 @@ import {
 } from '@core/utils/grades';
 import { getGradeTone, getGradeCourseName } from '@uni-hub/utils/grades';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { Grade } from '@uni-hub/types';
+import type { Grade } from '@core/types/moodle';
 import {
   getControlTypeLabel,
   getTraditionalGradeLabel,
   parseGradeScore,
   getExamScoreDisplay,
 } from '../utils';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export type GradeDisplayItem = Grade & {
   credits?: number | null;

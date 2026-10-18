@@ -5,16 +5,16 @@ import { TextInput } from '@una';
 import styles from './AuthField.module.scss';
 
 export interface AuthFieldProps {
-  autoComplete?: string;
   icon: React.ReactNode;
   id: string;
   label: string;
   name: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder: string;
+  value: string;
+  autoComplete?: string;
   rightElement?: React.ReactNode;
   type?: string;
-  value: string;
 }
 
 export const AuthField: React.FC<AuthFieldProps> = ({

@@ -24,7 +24,6 @@ export interface StudentProfile {
   moodleId: number | string;
   fullName: string;
   email: string;
-  avatarUrl?: string;
   studentCardNumber: string;
   recordBookNumber: string;
   faculty: string;
@@ -40,6 +39,7 @@ export interface StudentProfile {
   gpa: number;
   totalCreditsEarned: number;
   academicStanding: 'honors' | 'good' | 'warning' | 'probation';
+  avatarUrl?: string;
 }
 
 /**
@@ -50,21 +50,21 @@ export interface CurriculumItem {
   code: string;
   name: string;
   shortName: string;
-  fullname?: string;
-  shortname?: string;
-  description?: string;
   credits: number;
   semester: number;
   academicYear: string;
-  cycle?: 'general' | 'professional' | 'elective';
   controlType: ControlType;
   instructors: Array<{
-    id?: number | string;
     name: string;
+    id?: number | string;
     email?: string;
     role?: string;
   }>;
   status: 'not_started' | 'in_progress' | 'completed';
+  fullname?: string;
+  shortname?: string;
+  description?: string;
+  cycle?: 'general' | 'professional' | 'elective';
   progress?: number;
   moodleCourseId?: number;
   moodleUrl?: string;
@@ -118,9 +118,9 @@ export interface AssignmentItem {
   courseId: number;
   courseName: string;
   name: string;
-  description?: string;
   duedate: number;
   submissionStatus: AssignmentSubmissionStatus;
+  description?: string;
   gradingStatus?: 'not_graded' | 'graded';
   grade?: string | number | null;
   maxGrade?: number;
@@ -136,15 +136,15 @@ export interface AssignmentItem {
  */
 export interface ScheduleItem {
   id: string | number;
-  courseId?: number;
   title: string;
   type: ScheduleEventType;
   instructor: string;
   location: string;
-  onlineLink?: string;
   startTime: string;
   endTime: string;
   dayOfWeek: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  courseId?: number;
+  onlineLink?: string;
   weekType?: 'all' | 'numerator' | 'denominator';
   date?: string;
 }
@@ -157,7 +157,7 @@ export interface LmsConnectionStatus {
   isConnected: boolean;
   status: 'online' | 'offline' | 'degraded' | 'syncing';
   lastSyncTimestamp: number | string;
+  userTokenValid: boolean;
   latencyMs?: number;
   userId?: string | number;
-  userTokenValid: boolean;
 }

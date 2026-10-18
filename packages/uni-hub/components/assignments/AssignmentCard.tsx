@@ -16,21 +16,21 @@ import { Tag } from '@una';
 import { LiveCountdown } from '@uni-hub/components/gamification';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { Assignment } from '@uni-hub/types';
+import type { Assignment } from '@core/types/moodle';
 import { cardMotion } from '@uni-hub/views/dashboard/constants';
 import {
   getAssignmentStatusInfo,
   type AssignmentStatusInfo,
 } from '@uni-hub/views/dashboard/tabs/helpers';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export type AssignmentCardProps = {
   assignment: Assignment;
-  status?: string;
-  grade?: string;
   nowSec: number;
   soundEnabled: boolean;
   onOpenAssignment: (assignment: Assignment) => void;
+  status?: string;
+  grade?: string;
 };
 
 function renderStatusIcon(tone: AssignmentStatusInfo['tone']) {

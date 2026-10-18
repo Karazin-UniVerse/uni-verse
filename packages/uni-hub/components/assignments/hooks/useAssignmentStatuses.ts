@@ -1,72 +1,38 @@
-import { useState, useEffect, useRef } from 'react';
-import type { Assignment } from '@uni-hub/types';
-import { moodleApi } from '@uni-hub/services/api';
+import { useCallback, useMemo } from 'react';
+import { useQueries } from '@tanstack/react-query';
+import type { Assignment, SubmissionStatus } from '@core/types/moodle';
+import { assignmentStatusQueryOptions } from '@uni-hub/queries/moodle/queries';
 
 export type AssignmentLocalStatuses = Record<number, { status?: string; grade?: string }>;
 
-const BATCH_SIZE = 10;
+export function getAssignmentsNeedingStatus(assignments: Assignment[]): number[] {
+  return [...new Set(assignments.filter((item) => !item.submissionStatus).map((item) => item.id))];
+}
+
+export function toLocalStatuses(
+  ids: number[],
+  results: Array<{ data: SubmissionStatus | undefined }>,
+): AssignmentLocalStatuses {
+  const statuses: AssignmentLocalStatuses = {};
+
+  results.forEach((result, index) => {
+    if (result.data) {
+      statuses[ids[index]] = { status: result.data.status, grade: result.data.grade };
+    }
+  });
+
+  return statuses;
+}
 
 export function useAssignmentStatuses(assignments: Assignment[]): AssignmentLocalStatuses {
-  const [localStatuses, setLocalStatuses] = useState<AssignmentLocalStatuses>({});
-  const requestedIdsRef = useRef<Set<number>>(new Set());
+  const ids = useMemo(() => getAssignmentsNeedingStatus(assignments), [assignments]);
+  const combine = useCallback(
+    (results: Array<{ data: SubmissionStatus | undefined }>) => toLocalStatuses(ids, results),
+    [ids],
+  );
 
-  useEffect(() => {
-    let cancelled = false;
-    const requestedIds = requestedIdsRef.current;
-    const inFlightIds = new Set<number>();
-
-    const processNextBatch = async (): Promise<void> => {
-      if (cancelled) return;
-
-      const assignmentsNeedingStatus = assignments.filter(
-        (item) => !item.submissionStatus && !requestedIds.has(item.id),
-      );
-
-      if (assignmentsNeedingStatus.length === 0) {
-        return;
-      }
-
-      const batch = assignmentsNeedingStatus.slice(0, BATCH_SIZE);
-
-      for (const item of batch) {
-        requestedIds.add(item.id);
-        inFlightIds.add(item.id);
-      }
-
-      await Promise.allSettled(
-        batch.map(async (item) => {
-          try {
-            const res = await moodleApi.getAssignmentStatus(item.id);
-
-            if (!cancelled && res?.data) {
-              const data = res.data as { status?: string; grade?: string };
-
-              setLocalStatuses((prev) => ({
-                ...prev,
-                [item.id]: { status: data.status, grade: data.grade },
-              }));
-            }
-          } catch {
-            // Ignore status fetch error for individual item
-          } finally {
-            inFlightIds.delete(item.id);
-          }
-        }),
-      );
-
-      return processNextBatch();
-    };
-
-    void processNextBatch();
-
-    return () => {
-      cancelled = true;
-
-      for (const id of inFlightIds) {
-        requestedIds.delete(id);
-      }
-    };
-  }, [assignments]);
-
-  return localStatuses;
+  return useQueries({
+    queries: ids.map((id) => assignmentStatusQueryOptions(id)),
+    combine,
+  });
 }

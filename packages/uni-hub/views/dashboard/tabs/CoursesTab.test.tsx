@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { Course } from '@uni-hub/types';
+import type { MoodleCourse as Course } from '@core/types/moodle';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import { CoursesTab } from './CoursesTab';
 
@@ -87,6 +87,6 @@ describe('CoursesTab component', () => {
     await user.click(openButton);
 
     expect(playClick).toHaveBeenCalledWith(true);
-    expect(mockPush).toHaveBeenCalledWith('/courses/42/contents');
+    expect(mockPush).toHaveBeenCalledWith('/study/courses/42');
   });
 });

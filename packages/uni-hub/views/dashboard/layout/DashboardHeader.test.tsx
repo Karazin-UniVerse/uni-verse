@@ -2,16 +2,25 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ToastProvider } from '@una';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
 import { FeatureToggleProvider } from '@uni-hub/features';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { authApi } from '@uni-hub/services/api';
 import { LinkMoodleMode } from '@uni-hub/components/auth';
-import type { Notification } from '@uni-hub/types';
+import type { Notification } from '@core/types/moodle';
 import { fallbackStudentProfile } from '../constants';
 import type { DashboardHeaderProps } from '../types';
 import { DashboardHeader } from './DashboardHeader';
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+  }),
+}));
 
 const mockNotifications: Notification[] = [
   {
@@ -41,16 +50,28 @@ const defaultProps: DashboardHeaderProps = {
   isMoodleLinked: true,
 };
 
-const renderHeader = (props: Partial<DashboardHeaderProps> = {}) => {
-  return render(
-    <ThemeProvider>
-      <LanguageProvider>
-        <FeatureToggleProvider>
-          <DashboardHeader {...defaultProps} {...props} />
-        </FeatureToggleProvider>
-      </LanguageProvider>
-    </ThemeProvider>,
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <FeatureToggleProvider>{children}</FeatureToggleProvider>
+          </LanguageProvider>
+        </ThemeProvider>
+      </ToastProvider>
+    </QueryClientProvider>
   );
+};
+
+const renderHeader = (props: Partial<DashboardHeaderProps> = {}) => {
+  return render(<DashboardHeader {...defaultProps} {...props} />, {
+    wrapper: createWrapper(),
+  });
 };
 
 describe('DashboardHeader', () => {
@@ -99,18 +120,12 @@ describe('DashboardHeader', () => {
     expect(soundBtn).toBeInTheDocument();
 
     rerender(
-      <ThemeProvider>
-        <LanguageProvider>
-          <FeatureToggleProvider>
-            <DashboardHeader
-              {...defaultProps}
-              notifications={mockNotifications}
-              unreadCount={2}
-              mobileMenuOpen={true}
-            />
-          </FeatureToggleProvider>
-        </LanguageProvider>
-      </ThemeProvider>,
+      <DashboardHeader
+        {...defaultProps}
+        notifications={mockNotifications}
+        unreadCount={2}
+        mobileMenuOpen={true}
+      />,
     );
 
     expect(screen.getByRole('button', { name: /відкрити меню/i })).toHaveAttribute(
@@ -148,13 +163,7 @@ describe('DashboardHeader', () => {
     expect(onToggleSound).toHaveBeenCalledTimes(1);
 
     rerender(
-      <ThemeProvider>
-        <LanguageProvider>
-          <FeatureToggleProvider>
-            <DashboardHeader {...defaultProps} soundEnabled={false} onToggleSound={onToggleSound} />
-          </FeatureToggleProvider>
-        </LanguageProvider>
-      </ThemeProvider>,
+      <DashboardHeader {...defaultProps} soundEnabled={false} onToggleSound={onToggleSound} />,
     );
 
     const unmuteBtn = screen.getByRole('button', { name: /увімкнути звук/i });
@@ -275,18 +284,12 @@ describe('DashboardHeader', () => {
     expect(onOpenUnlinkMoodle).toHaveBeenCalledTimes(1);
 
     rerender(
-      <ThemeProvider>
-        <LanguageProvider>
-          <FeatureToggleProvider>
-            <DashboardHeader
-              {...defaultProps}
-              isMoodleLinked={false}
-              onOpenLinkMoodle={onOpenLinkMoodle}
-              onOpenUnlinkMoodle={onOpenUnlinkMoodle}
-            />
-          </FeatureToggleProvider>
-        </LanguageProvider>
-      </ThemeProvider>,
+      <DashboardHeader
+        {...defaultProps}
+        isMoodleLinked={false}
+        onOpenLinkMoodle={onOpenLinkMoodle}
+        onOpenUnlinkMoodle={onOpenUnlinkMoodle}
+      />,
     );
 
     await user.click(userMenuButton);

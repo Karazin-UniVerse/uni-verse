@@ -6,7 +6,7 @@ import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { BADGES } from '@uni-hub/constants/gamification';
 import { fireConfetti } from '@uni-hub/utils/confetti';
-import type { Grade } from '@uni-hub/types';
+import type { Grade } from '@core/types/moodle';
 import { BadgeSystem } from './BadgeSystem';
 
 vi.mock('@uni-hub/utils/confetti', () => ({

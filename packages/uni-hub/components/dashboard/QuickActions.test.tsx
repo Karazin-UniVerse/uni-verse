@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { Assignment } from '@uni-hub/types';
+import type { Assignment } from '@core/types/moodle';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { FeatureToggleProvider } from '@uni-hub/features';
 import { QuickActions } from './QuickActions';
@@ -135,7 +135,7 @@ describe('QuickActions component', () => {
     await user.click(assignmentsCard);
 
     expect(handleNavigate).toHaveBeenCalledTimes(1);
-    expect(handleNavigate).toHaveBeenCalledWith('assignments');
+    expect(handleNavigate).toHaveBeenCalledWith('study', 'assignments');
   });
 
   it('should navigate to schedule when schedule card is clicked', async () => {

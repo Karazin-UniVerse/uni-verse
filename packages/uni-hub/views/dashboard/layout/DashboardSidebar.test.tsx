@@ -6,7 +6,7 @@ import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
 import { FeatureToggleProvider } from '@uni-hub/features';
 import * as soundEffects from '@uni-hub/utils/soundEffects';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 import type { FeatureFlags } from '@core/constants/features';
 import { NAV_KEY } from '../constants';
 import type { DashboardSidebarProps } from '../types';
@@ -65,23 +65,21 @@ describe('DashboardSidebar helpers', () => {
 
     const connectItem = items.find((item) => item.key === NAV_KEY.ConnectMoodle);
 
-    expect(connectItem?.labelKey).toBe('nav.connectMoodle.full');
+    expect(connectItem?.labelKey).toBe('nav.connectMoodle');
     expect(connectItem?.shortLabelKey).toBe('nav.connectMoodle');
   });
 });
 
 describe('DashboardSidebar navigation & feature gating', () => {
   it('should include all navigation items when all feature flags are enabled', () => {
-    expect(NAV_ITEMS).toHaveLength(6);
+    expect(NAV_ITEMS).toHaveLength(4);
 
     const visible = getVisibleNavItems(allEnabledFlags, true);
 
     expect(visible.map((item) => item.key)).toEqual([
       NAV_KEY.Overview,
-      NAV_KEY.Courses,
-      NAV_KEY.Grades,
+      NAV_KEY.Study,
       NAV_KEY.Schedule,
-      NAV_KEY.Assignments,
       NAV_KEY.Opportunities,
     ]);
   });
@@ -143,13 +141,13 @@ describe('DashboardSidebar component rendering & interactions', () => {
       soundEnabled: true,
     });
 
-    const overviewBtn = screen.getByRole('button', { name: 'Картка студента / Огляд' });
-    const scheduleBtn = screen.getByRole('button', { name: 'Розклад занять' });
-    const coursesBtn = screen.getByRole('button', { name: 'Індивідуальний план' });
+    const overviewBtn = screen.getByRole('button', { name: 'Стіна' });
+    const scheduleBtn = screen.getByRole('button', { name: 'Розклад' });
+    const studyBtn = screen.getByRole('button', { name: 'Навчання' });
 
     expect(overviewBtn).toBeInTheDocument();
     expect(scheduleBtn).toBeInTheDocument();
-    expect(coursesBtn).toBeInTheDocument();
+    expect(studyBtn).toBeInTheDocument();
 
     expect(overviewBtn).toHaveClass(styles.active);
     expect(scheduleBtn).not.toHaveClass(styles.active);
@@ -215,7 +213,7 @@ describe('DashboardSidebar component rendering & interactions', () => {
     });
 
     const connectMoodleBtn = screen.getByRole('button', {
-      name: 'Підключити акаунт Moodle LMS',
+      name: 'Підключити Moodle',
     });
 
     expect(connectMoodleBtn).toBeInTheDocument();

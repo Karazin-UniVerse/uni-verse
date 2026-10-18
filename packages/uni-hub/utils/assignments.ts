@@ -1,4 +1,4 @@
-import type { Assignment } from '@uni-hub/types';
+import type { Assignment } from '@core/types/moodle';
 
 export function isAssignmentCompleted(
   assignment: Pick<Assignment, 'submissionStatus' | 'graded' | 'grade' | 'submittedAt'>,

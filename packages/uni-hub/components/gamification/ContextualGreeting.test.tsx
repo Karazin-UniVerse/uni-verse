@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
-import type { Assignment } from '@uni-hub/types';
+import type { Assignment } from '@core/types/moodle';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { ContextualGreeting } from './ContextualGreeting';
 

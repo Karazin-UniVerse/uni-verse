@@ -1,7 +1,16 @@
-import { moodleApi } from '@uni-hub/services/api';
+import type { PlatformNotification } from '@uni-hub/services/api.notifications';
 import { asList } from '@uni-hub/utils/arrays';
 import { isBrowser } from '@uni-hub/utils/browser';
-import type { Grade, Assignment } from '@uni-hub/types';
+import type {
+  Grade,
+  Assignment,
+  Notification,
+  MoodleCourse,
+  MoodleEvent,
+  NotificationsResponse,
+  CourseStatistics,
+} from '@core/types/moodle';
+import { moodleApi } from '@uni-hub/services/api';
 import type { StudentProfile } from '@core/types';
 import type { DashboardData } from '../types';
 import { fallbackStudentProfile } from '../constants';
@@ -55,29 +64,75 @@ export function resolveGradesResponse(gradesResponse?: GradesApiResponse | null)
 }
 
 export type MoodleApiResponseTuple = [
-  Awaited<ReturnType<typeof moodleApi.getCourses>>,
-  Awaited<ReturnType<typeof moodleApi.getGrades>>,
-  Awaited<ReturnType<typeof moodleApi.getAssignments>>,
-  Awaited<ReturnType<typeof moodleApi.getEvents>>,
-  Awaited<ReturnType<typeof moodleApi.getNotifications>>,
-  Awaited<ReturnType<typeof moodleApi.getStatistics>>,
+  { data?: MoodleCourse[] | null },
+  GradesApiResponse,
+  { data?: Assignment[] | null },
+  { data?: MoodleEvent[] | null },
+  { data?: NotificationsResponse | null },
+  { data?: CourseStatistics | null },
 ];
 
-export function assembleDashboardData([
-  coursesRes,
-  gradesRes,
-  assignmentsRes,
-  eventsRes,
-  notificationsRes,
-  statsRes,
-]: MoodleApiResponseTuple): DashboardData {
+export function mapPlatformNotification(item: PlatformNotification): Notification {
+  return {
+    id: item.id,
+    subject: item.title,
+    message: item.message,
+    timecreated: Math.floor(new Date(item.createdAt).getTime() / 1000),
+    read: item.isRead,
+    link: item.link ?? null,
+  };
+}
+
+export function applyPlatformNotifications(
+  previousData: DashboardData,
+  platformNotifications?: PlatformNotification[] | null,
+): DashboardData {
+  const platformItems = asList(platformNotifications);
+  const keptMoodle = isMoodleUnlinked()
+    ? []
+    : previousData.notifications.filter((item) => typeof item.id === 'number');
+  const mapped = platformItems.map(mapPlatformNotification);
+
+  return {
+    ...previousData,
+    notifications: [...keptMoodle, ...mapped].sort(
+      (first, second) => second.timecreated - first.timecreated,
+    ),
+    unreadCount:
+      keptMoodle.filter((item) => !item.read).length +
+      platformItems.filter((notification) => !notification.isRead).length,
+  };
+}
+
+export function assembleDashboardData(
+  [
+    coursesRes,
+    gradesRes,
+    assignmentsRes,
+    eventsRes,
+    notificationsRes,
+    statsRes,
+  ]: MoodleApiResponseTuple,
+  platformNotifications: PlatformNotification[] = [],
+): DashboardData {
+  const moodleList = asList(notificationsRes?.data?.notifications);
+  const platformList = platformNotifications.map(mapPlatformNotification);
+  const combinedNotifications = [...moodleList, ...platformList].sort(
+    (first, second) => second.timecreated - first.timecreated,
+  );
+  const moodleUnread =
+    notificationsRes?.data?.unreadcount ?? notificationsRes?.data?.unreadCount ?? 0;
+  const platformUnread = platformNotifications.filter(
+    (notification) => !notification.isRead,
+  ).length;
+
   return {
     courses: asList(coursesRes?.data),
     grades: resolveGradesResponse(gradesRes),
     assignments: asList(assignmentsRes?.data),
     events: asList(eventsRes?.data),
-    notifications: asList(notificationsRes?.data?.notifications),
-    unreadCount: notificationsRes?.data?.unreadCount || 0,
+    notifications: combinedNotifications,
+    unreadCount: moodleUnread + platformUnread,
     statistics: statsRes?.data || null,
   };
 }
@@ -150,20 +205,6 @@ export function isUnauthorizedError(error: unknown): boolean {
   const message = error.message.toLowerCase();
 
   return message.includes('401') || message.includes('unauthorized');
-}
-
-export function clearUserSessionStorage(): void {
-  try {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('moodleToken');
-    localStorage.removeItem('username');
-    localStorage.removeItem('universe_student_profile');
-    localStorage.removeItem('universe_dashboard_data');
-    localStorage.removeItem('universe_last_sync_time');
-  } catch {
-    // Ignore storage errors
-  }
 }
 
 export type FilterFallbackAssignmentsOptions = {
@@ -267,6 +308,10 @@ export function getInitialUserProfile(): StudentProfile | null {
     return cachedProfile;
   }
 
+  if (!isBrowser) {
+    return null;
+  }
+
   const savedUser = localStorage.getItem('username');
 
   if (!savedUser || savedUser === fallbackStudentProfile.fullName) {
@@ -280,15 +325,10 @@ export function getInitialUserProfile(): StudentProfile | null {
   };
 }
 
-export function syncStudentProfile(
-  profileData?: StudentProfile | null,
-  setStudentProfile?: (profile: StudentProfile) => void,
-): void {
+export function syncStudentProfile(profileData?: StudentProfile | null): void {
   if (!profileData) {
     return;
   }
-
-  setStudentProfile?.(profileData);
 
   try {
     localStorage.setItem('universe_student_profile', JSON.stringify(profileData));
@@ -311,6 +351,7 @@ export interface BuildFallbackDataOptions {
   hideCompleted: boolean;
   dateFrom: string;
   dateTo: string;
+  platformNotifications?: PlatformNotification[] | null;
 }
 
 export function buildFallbackData({
@@ -319,6 +360,7 @@ export function buildFallbackData({
   hideCompleted,
   dateFrom,
   dateTo,
+  platformNotifications,
 }: BuildFallbackDataOptions): DashboardData {
   const fallbackAssignments = filterFallbackAssignments({
     assignments: cachedData.assignments ?? previousData.assignments,
@@ -327,9 +369,40 @@ export function buildFallbackData({
     dateTo,
   });
 
-  return {
+  const merged: DashboardData = {
     ...previousData,
     ...cachedData,
     assignments: fallbackAssignments,
+  };
+
+  return platformNotifications ? applyPlatformNotifications(merged, platformNotifications) : merged;
+}
+
+export interface DashboardQueryState {
+  data: DashboardData | undefined;
+  isError: boolean;
+  isFetching: boolean;
+  dataUpdatedAt: number;
+  snapshot?: DashboardData;
+}
+
+export interface DashboardState {
+  cachedData: DashboardData | undefined;
+  loading: boolean;
+  hasLoadedOnce: boolean;
+  isOfflineData: boolean;
+  lastSyncTime: number | null;
+}
+
+export function deriveDashboardState(query: DashboardQueryState): DashboardState {
+  const cachedData = query.data ?? (query.isError ? query.snapshot : undefined);
+  const hasData = cachedData !== undefined;
+
+  return {
+    cachedData,
+    loading: query.isFetching,
+    hasLoadedOnce: hasData,
+    isOfflineData: query.isError && hasData,
+    lastSyncTime: query.dataUpdatedAt > 0 ? query.dataUpdatedAt : null,
   };
 }

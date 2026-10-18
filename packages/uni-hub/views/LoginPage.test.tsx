@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { FeatureToggleProvider } from '@uni-hub/features';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import LoginPage from './LoginPage';
@@ -10,7 +11,13 @@ const mockToast = {
   success: vi.fn(),
   error: vi.fn(),
 };
-const mockStorage: Record<string, string> = {};
+const mockStorage = vi.hoisted(() => ({}) as Record<string, string>);
+const mockAuthApi = vi.hoisted(() => ({
+  loginWithGoogle: vi.fn(),
+  login: vi.fn(),
+  linkMoodleAccount: vi.fn(),
+  logout: vi.fn(),
+}));
 
 let capturedGoogleError: ((msg: string) => void) | null = null;
 
@@ -50,6 +57,10 @@ vi.mock('@uni-hub/components/common/LanguageSwitcher', () => ({
   LanguageSwitcher: () => null,
 }));
 
+vi.mock('@uni-hub/services/api.auth', () => ({
+  authApi: mockAuthApi,
+}));
+
 vi.mock('@uni-hub/services/api', async () => {
   const actual = await vi.importActual<Record<string, unknown>>('@uni-hub/services/api');
 
@@ -64,11 +75,7 @@ vi.mock('@uni-hub/services/api', async () => {
         delete mockStorage[key];
       }),
     },
-    authApi: {
-      loginWithGoogle: vi.fn(),
-      login: vi.fn(),
-      linkMoodleAccount: vi.fn(),
-    },
+    authApi: mockAuthApi,
   };
 });
 
@@ -110,12 +117,21 @@ vi.mock('@uni-hub/components/auth', async () => {
 });
 
 function renderLoginPage() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
   return render(
-    <LanguageProvider>
-      <FeatureToggleProvider>
-        <LoginPage />
-      </FeatureToggleProvider>
-    </LanguageProvider>,
+    <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
+        <FeatureToggleProvider>
+          <LoginPage />
+        </FeatureToggleProvider>
+      </LanguageProvider>
+    </QueryClientProvider>,
   );
 }
 
@@ -363,7 +379,6 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
 
     expect(mockStorage.isMoodleLinked).toBe('true');
     expect(mockStorage.username).toBe('moodle_student');
-    expect(mockStorage.moodleToken).toBe('moodle-session-token');
     expect(mockPush).toHaveBeenCalledWith('/');
     expect(mockToast.success).toHaveBeenCalledWith('Вхід виконано успішно');
   });

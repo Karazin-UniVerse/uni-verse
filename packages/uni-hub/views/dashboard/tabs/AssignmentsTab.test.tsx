@@ -3,7 +3,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { Assignment } from '@uni-hub/types';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { Assignment } from '@core/types/moodle';
 import type { AssignmentsTabProps } from '../types';
 import { AssignmentsTab } from './AssignmentsTab';
 
@@ -52,12 +53,25 @@ const createDefaultProps = (overrides?: Partial<AssignmentsTabProps>): Assignmen
   };
 };
 
-const renderAssignmentsTab = (props: AssignmentsTabProps) => {
-  return render(
-    <LanguageProvider>
-      <AssignmentsTab {...props} />
-    </LanguageProvider>,
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      <LanguageProvider>{children}</LanguageProvider>
+    </QueryClientProvider>
   );
+};
+
+const renderAssignmentsTab = (props: AssignmentsTabProps) => {
+  return render(<AssignmentsTab {...props} />, {
+    wrapper: createWrapper(),
+  });
 };
 
 describe('AssignmentsTab component', () => {
@@ -104,11 +118,7 @@ describe('AssignmentsTab component', () => {
     expect(onHideCompletedChange).toHaveBeenCalledTimes(1);
     expect(onHideCompletedChange).toHaveBeenCalledWith(true);
 
-    rerender(
-      <LanguageProvider>
-        <AssignmentsTab {...props} hideCompleted={true} />
-      </LanguageProvider>,
-    );
+    rerender(<AssignmentsTab {...props} hideCompleted={true} />);
 
     expect(screen.getByText('Лабораторна робота №1')).toBeInTheDocument();
     expect(screen.queryByText('Домашнє завдання №2')).not.toBeInTheDocument();

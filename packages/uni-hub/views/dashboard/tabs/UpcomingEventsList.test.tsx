@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { Assignment, MoodleEvent } from '@uni-hub/types';
+import type { Assignment, MoodleEvent } from '@core/types/moodle';
 import { UpcomingEventsList, type UpcomingEventsListProps } from './UpcomingEventsList';
 
 const renderUpcomingEventsList = (props: UpcomingEventsListProps) => {
@@ -157,7 +157,7 @@ describe('UpcomingEventsList component', () => {
 
     await user.click(buttons[0]!);
 
-    expect(onNavigate).toHaveBeenCalledWith('assignments');
+    expect(onNavigate).toHaveBeenCalledWith('study', 'assignments');
   });
 
   it('should render empty state when both events and assignments are empty', () => {
@@ -183,7 +183,7 @@ describe('UpcomingEventsList component', () => {
         timestart: 1730000000,
         formattedtime: 'Пʼятниця, 09:00',
         eventtype: 'course',
-        url: 'https://moodle.karazin.ua/mod/quiz/view.php?id=12345',
+        url: 'https://moodle.universemvp.tech/mod/quiz/view.php?id=12345',
       },
       {
         id: 21,
@@ -207,7 +207,7 @@ describe('UpcomingEventsList component', () => {
     expect(eventLink).toBeInTheDocument();
     expect(eventLink).toHaveAttribute(
       'href',
-      'https://moodle.karazin.ua/mod/quiz/view.php?id=12345',
+      'https://moodle.universemvp.tech/mod/quiz/view.php?id=12345',
     );
     expect(eventLink).toHaveAttribute('target', '_blank');
     expect(eventLink).toHaveAttribute('rel', 'noopener noreferrer');

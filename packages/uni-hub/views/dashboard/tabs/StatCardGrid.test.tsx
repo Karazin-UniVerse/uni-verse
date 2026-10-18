@@ -69,7 +69,7 @@ describe('StatCardGrid component', () => {
     expect(gradesCard.querySelector('svg')).toBeInTheDocument();
   });
 
-  it("should call onNavigate with 'courses' when courses card is clicked", async () => {
+  it("should call onNavigate with 'study' and 'subjects' when courses card is clicked", async () => {
     const handleNavigate = vi.fn();
     const user = userEvent.setup();
 
@@ -80,10 +80,10 @@ describe('StatCardGrid component', () => {
     await user.click(coursesCard);
 
     expect(handleNavigate).toHaveBeenCalledTimes(1);
-    expect(handleNavigate).toHaveBeenCalledWith('courses');
+    expect(handleNavigate).toHaveBeenCalledWith('study', 'subjects');
   });
 
-  it("should call onNavigate with 'assignments' when assignments card is clicked", async () => {
+  it("should call onNavigate with 'study' and 'assignments' when assignments card is clicked", async () => {
     const handleNavigate = vi.fn();
     const user = userEvent.setup();
 
@@ -94,10 +94,10 @@ describe('StatCardGrid component', () => {
     await user.click(assignmentsCard);
 
     expect(handleNavigate).toHaveBeenCalledTimes(1);
-    expect(handleNavigate).toHaveBeenCalledWith('assignments');
+    expect(handleNavigate).toHaveBeenCalledWith('study', 'assignments');
   });
 
-  it("should call onNavigate with 'grades' when grades card is clicked", async () => {
+  it("should call onNavigate with 'study' and 'grades' when grades card is clicked", async () => {
     const handleNavigate = vi.fn();
     const user = userEvent.setup();
 
@@ -108,7 +108,7 @@ describe('StatCardGrid component', () => {
     await user.click(gradesCard);
 
     expect(handleNavigate).toHaveBeenCalledTimes(1);
-    expect(handleNavigate).toHaveBeenCalledWith('grades');
+    expect(handleNavigate).toHaveBeenCalledWith('study', 'grades');
   });
 
   it('should format string and numeric GPA values correctly', () => {

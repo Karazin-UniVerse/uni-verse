@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
-import type { Assignment, Grade } from '@uni-hub/types';
+import type { Assignment, Grade } from '@core/types/moodle';
 import { LanguageProvider, useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { AssignmentsDonut } from './AssignmentsDonut';
 

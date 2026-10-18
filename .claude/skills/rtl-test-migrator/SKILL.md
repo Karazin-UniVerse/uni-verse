@@ -130,7 +130,7 @@ expect(result.current.value).toBe('updated');
 After migrating each file or batch:
 ```bash
 # Run Vitest on the modified test file
-pnpm test path/to/file.test.tsx
+pnpm --filter <pkg> test <TestFileName> --run
 
 # Verify formatting and linter
 pnpm exec oxlint path/to/file.test.tsx

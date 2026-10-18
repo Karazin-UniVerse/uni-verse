@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import pageStyles from '@uni-hub/views/DashboardPage.module.scss';
+import pageStyles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 import { DashboardSkeleton } from './DashboardSkeleton';
 
 describe('DashboardSkeleton', () => {

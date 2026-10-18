@@ -5,10 +5,10 @@ import { Button } from '../../una';
 import styles from './ConnectMoodleView.module.scss';
 
 export interface ConnectMoodleFeatureItem {
-  id?: string;
-  icon?: React.ReactNode;
   title: React.ReactNode;
   description: React.ReactNode;
+  id?: string;
+  icon?: React.ReactNode;
 }
 
 export interface ConnectMoodleViewProps {
@@ -16,8 +16,8 @@ export interface ConnectMoodleViewProps {
   subtitle: React.ReactNode;
   connectCtaLabel: React.ReactNode;
   openMoodleLabel: React.ReactNode;
-  moodleUrl?: string;
   onConnect: () => void;
+  moodleUrl?: string;
   features?: ConnectMoodleFeatureItem[];
   className?: string;
 }

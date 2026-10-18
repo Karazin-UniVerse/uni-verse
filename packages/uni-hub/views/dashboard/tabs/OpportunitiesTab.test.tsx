@@ -2,10 +2,12 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ToastProvider } from '@una';
 import { ROLE } from '@core/constants/roles';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { OPPORTUNITY_SUB_TAB, type OpportunitySubTab } from './opportunities/constants';
-import { OpportunitiesTab, type OpportunitiesTabProps } from './OpportunitiesTab';
+import { OpportunitiesTab } from './OpportunitiesTab';
 
 let mockCurrentUser = {
   userId: 'user-1',
@@ -14,135 +16,113 @@ let mockCurrentUser = {
   name: 'Student User',
 };
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 vi.mock('@uni-hub/hooks/useCurrentUser', () => ({
   useCurrentUser: () => mockCurrentUser,
 }));
 
+const {
+  mockOpenCreate,
+  mockCloseCreate,
+  mockSetActiveSubTab,
+  mockRefetchActiveList,
+  mockRefetchOpportunities,
+} = vi.hoisted(() => ({
+  mockOpenCreate: vi.fn(),
+  mockCloseCreate: vi.fn(),
+  mockSetActiveSubTab: vi.fn(),
+  mockRefetchActiveList: vi.fn().mockResolvedValue(undefined),
+  mockRefetchOpportunities: vi.fn().mockResolvedValue(undefined),
+}));
+
 let mockActiveSubTab: OpportunitySubTab = OPPORTUNITY_SUB_TAB.Catalog;
 let mockModerationItems: unknown[] = [];
-const mockRefetchActiveList = vi.fn().mockResolvedValue(undefined);
-const mockRefetchOpportunities = vi.fn().mockResolvedValue(undefined);
-const mockSetActiveSubTab = vi.fn();
-
-vi.mock('./opportunities/useOpportunitiesData', () => ({
-  useOpportunitiesData: (isModerator: boolean) => {
-    const [activeSubTab, setActiveSubTab] = React.useState<OpportunitySubTab>(mockActiveSubTab);
-
-    return {
-      activeSubTab,
-      setActiveSubTab: (tab: OpportunitySubTab) => {
-        mockSetActiveSubTab(tab);
-        setActiveSubTab(tab);
-      },
-      search: '',
-      setSearch: vi.fn(),
-      paymentFilter: '',
-      setPaymentFilter: vi.fn(),
-      catalog: { items: [], loading: false, refetch: vi.fn(), setItems: vi.fn() },
-      myOpportunities: { items: [], loading: false, refetch: vi.fn(), setItems: vi.fn() },
-      myApplications: { items: [], loading: false, refetch: vi.fn(), setItems: vi.fn() },
-      moderationQueue: {
-        items: isModerator ? mockModerationItems : [],
-        loading: false,
-        refetch: vi.fn(),
-        setItems: vi.fn(),
-      },
-      refetchActiveList: mockRefetchActiveList,
-      refetchOpportunities: mockRefetchOpportunities,
-    };
-  },
-}));
-
-const mockOpenCreate = vi.fn();
-const mockCloseCreate = vi.fn();
-
-vi.mock('./opportunities/useCreateOpportunity', () => ({
-  useCreateOpportunity: () => {
-    const [isOpen, setIsOpen] = React.useState(false);
-
-    return {
-      isOpen,
-      setIsOpen,
-      formData: {
-        title: '',
-        description: '',
-        ownerContactInfo: '',
-        paymentType: 'UNPAID',
-        paymentDetails: '',
-      },
-      setFormData: vi.fn(),
-      creating: false,
-      isEdit: false,
-      openCreate: vi.fn(() => {
-        mockOpenCreate();
-        setIsOpen(true);
-      }),
-      openEdit: vi.fn(),
-      close: vi.fn(() => {
-        mockCloseCreate();
-        setIsOpen(false);
-      }),
-      handleSubmit: vi.fn(),
-    };
-  },
-}));
-
-vi.mock('./opportunities/useOpportunityDetail', () => ({
-  useOpportunityDetail: () => ({
-    selectedOpportunity: null,
-    isOpen: false,
-    setIsOpen: vi.fn(),
-    open: vi.fn(),
-    handleSendToReview: vi.fn(),
-    handleLifecycleChange: vi.fn(),
-  }),
-}));
-
-vi.mock('./opportunities/useApplicants', () => ({
-  useApplicants: () => ({
-    isOpen: false,
-    setIsOpen: vi.fn(),
-    applications: [],
-    loading: false,
-    open: vi.fn(),
-    handleUpdateStatus: vi.fn(),
-  }),
-}));
-
-vi.mock('./opportunities/useApplicantActions', () => ({
-  useApplicantActions: () => ({
-    isApplyOpen: false,
-    setIsApplyOpen: vi.fn(),
-    motivation: '',
-    setMotivation: vi.fn(),
-    contactInfo: '',
-    setContactInfo: vi.fn(),
-    applying: false,
-    handleApplySubmit: vi.fn(),
-    withdrawApplicationId: null,
-    setWithdrawApplicationId: vi.fn(),
-    withdrawing: false,
-    handleWithdraw: vi.fn(),
-  }),
-}));
-
-vi.mock('./opportunities/useModeration', () => ({
-  useModeration: () => ({
-    rejectModal: { open: false, id: null, comment: '' },
-    submitting: false,
-    openRejectModal: vi.fn(),
-    closeRejectModal: vi.fn(),
-    changeRejectComment: vi.fn(),
-    handleModerate: vi.fn(),
-    handleRejectConfirm: vi.fn(),
-  }),
-}));
 
 vi.mock('./opportunities', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./opportunities')>();
 
   return {
     ...actual,
+    useOpportunitiesData: (isModerator: boolean) => {
+      const [activeSubTab, setActiveSubTab] = React.useState<OpportunitySubTab>(mockActiveSubTab);
+
+      return {
+        activeSubTab,
+        setActiveSubTab: (tab: OpportunitySubTab) => {
+          mockSetActiveSubTab(tab);
+          setActiveSubTab(tab);
+        },
+        search: '',
+        setSearch: vi.fn(),
+        paymentFilter: '',
+        setPaymentFilter: vi.fn(),
+        catalog: { items: [], loading: false, refetch: vi.fn(), setItems: vi.fn() },
+        myOpportunities: { items: [], loading: false, refetch: vi.fn(), setItems: vi.fn() },
+        myApplications: { items: [], loading: false, refetch: vi.fn(), setItems: vi.fn() },
+        moderationQueue: {
+          items: isModerator ? mockModerationItems : [],
+          loading: false,
+          refetch: vi.fn(),
+          setItems: vi.fn(),
+        },
+        refetchActiveList: mockRefetchActiveList,
+        refetchOpportunities: mockRefetchOpportunities,
+      };
+    },
+    useCreateOpportunity: () => {
+      const [isOpen, setIsOpen] = React.useState(false);
+
+      return {
+        isOpen,
+        setIsOpen,
+        formData: {
+          title: '',
+          description: '',
+          ownerContactInfo: '',
+          paymentType: 'UNPAID',
+          paymentDetails: '',
+        },
+        setFormData: vi.fn(),
+        creating: false,
+        isEdit: false,
+        openCreate: vi.fn(() => {
+          mockOpenCreate();
+          setIsOpen(true);
+        }),
+        openEdit: vi.fn(),
+        close: vi.fn(() => {
+          mockCloseCreate();
+          setIsOpen(false);
+        }),
+        handleSubmit: vi.fn(),
+      };
+    },
+    useApplicants: () => ({
+      isOpen: false,
+      setIsOpen: vi.fn(),
+      applications: [],
+      loading: false,
+      open: vi.fn(),
+      handleUpdateStatus: vi.fn(),
+    }),
+    useWithdrawApplication: () => ({
+      withdrawApplicationId: null,
+      setWithdrawApplicationId: vi.fn(),
+      withdrawing: false,
+      handleWithdraw: vi.fn(),
+    }),
+    useModeration: () => ({
+      rejectModal: { open: false, id: null, comment: '' },
+      submitting: false,
+      openRejectModal: vi.fn(),
+      closeRejectModal: vi.fn(),
+      changeRejectComment: vi.fn(),
+      handleModerate: vi.fn(),
+      handleRejectConfirm: vi.fn(),
+    }),
     CreateOpportunityModal: ({ open, onClose }: { open: boolean; onClose: () => void }) =>
       open ? (
         <dialog open aria-label="Створити можливість">
@@ -193,30 +173,46 @@ vi.mock('./opportunities', async (importOriginal) => {
   };
 });
 
-vi.mock('@ui', () => ({
-  ConfirmModal: ({
-    open,
-    title,
-    onClose,
-  }: {
-    open: boolean;
-    title?: string;
-    onClose: () => void;
-  }) =>
-    open ? (
-      <dialog open aria-label={title ?? 'Підтвердження'}>
-        <button type="button" onClick={onClose}>
-          Закрити
-        </button>
-      </dialog>
-    ) : null,
-}));
+vi.mock('@ui', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
 
-const renderOpportunitiesTab = (props?: OpportunitiesTabProps) => {
+  return {
+    ...actual,
+    ConfirmModal: ({
+      open,
+      title,
+      onClose,
+    }: {
+      open: boolean;
+      onClose: () => void;
+      title?: string;
+    }) =>
+      open ? (
+        <dialog open aria-label={title ?? 'Підтвердження'}>
+          <button type="button" onClick={onClose}>
+            Закрити
+          </button>
+        </dialog>
+      ) : null,
+  };
+});
+
+const renderOpportunitiesTab = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
   return render(
-    <LanguageProvider>
-      <OpportunitiesTab {...props} />
-    </LanguageProvider>,
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <LanguageProvider>
+          <OpportunitiesTab />
+        </LanguageProvider>
+      </ToastProvider>
+    </QueryClientProvider>,
   );
 };
 
@@ -307,35 +303,5 @@ describe('OpportunitiesTab component', () => {
 
     expect(mockOpenCreate).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('dialog', { name: /створити можливість/i })).toBeInTheDocument();
-  });
-
-  it('should trigger refetchActiveList when refreshTrigger prop changes', () => {
-    const { rerender } = renderOpportunitiesTab({ refreshTrigger: 0 });
-
-    expect(mockRefetchActiveList).not.toHaveBeenCalled();
-
-    rerender(
-      <LanguageProvider>
-        <OpportunitiesTab refreshTrigger={1} />
-      </LanguageProvider>,
-    );
-
-    expect(mockRefetchActiveList).toHaveBeenCalledTimes(1);
-
-    rerender(
-      <LanguageProvider>
-        <OpportunitiesTab refreshTrigger={2} />
-      </LanguageProvider>,
-    );
-
-    expect(mockRefetchActiveList).toHaveBeenCalledTimes(2);
-
-    rerender(
-      <LanguageProvider>
-        <OpportunitiesTab refreshTrigger={0} />
-      </LanguageProvider>,
-    );
-
-    expect(mockRefetchActiveList).toHaveBeenCalledTimes(2);
   });
 });

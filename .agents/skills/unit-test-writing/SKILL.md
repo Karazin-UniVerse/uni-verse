@@ -113,7 +113,7 @@ import { ExampleCard, type ExampleCardProps } from './ExampleCard';
 
 const defaultProps: ExampleCardProps = {
   title: 'Algorithms & Data Structures',
-  externalUrl: 'https://moodle.karazin.ua/course/view.php?id=42',
+  externalUrl: 'https://moodle.universemvp.tech/course/view.php?id=42',
   disabled: false,
   onAction: vi.fn(),
 };
@@ -182,7 +182,7 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { OpportunityApplication } from '@uni-hub/types';
+import type { OpportunityApplication } from '@core/types/opportunities';
 import { useExampleHook } from './useExampleHook';
 
 const { mockToast, mockApi } = vi.hoisted(() => ({

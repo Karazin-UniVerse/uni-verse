@@ -5,11 +5,11 @@ import { GradesChart } from '@uni-hub/components/grades';
 import { GradeSimulatorTrigger } from '@uni-hub/components/gamification';
 import { getValidGrades, getGradeCourseName } from '@uni-hub/utils/grades';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { Grade } from '@uni-hub/types';
+import type { Grade } from '@core/types/moodle';
 import type { GradesTabProps } from '../types';
 import { mockFallbackGrades } from '../constants';
 import { GradeTableRow, type GradeDisplayItem } from './GradeTableRow';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export const GradesTab: React.FC<GradesTabProps> = ({ grades, onOpenSimulator }) => {
   const { formatMessage } = useLanguage();

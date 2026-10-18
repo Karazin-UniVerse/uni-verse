@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
-import type { Assignment } from '@uni-hub/types';
+import type { Assignment } from '@core/types/moodle';
 import { RemainingAssignmentsSection } from './RemainingAssignmentsSection';
 
 function createAssignment(overrides: Partial<Assignment> = {}): Assignment {

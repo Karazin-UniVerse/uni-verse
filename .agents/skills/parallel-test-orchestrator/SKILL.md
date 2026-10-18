@@ -6,7 +6,7 @@ description: Orchestrates parallel frontend unit test generation and migration a
 # Parallel Test Orchestrator Skill
 
 ## Overview
-This skill provides an orchestration framework for parallelizing test writing, migration, and coverage enhancement across large codebases. It leverages the `invoke_subagent` tool to spawn batches of up to **5 concurrent subagents**, where each subagent is assigned strictly **one test file** to create or upgrade following [`unit-test-writing`](../unit-test-writing/SKILL.md) (for new tests) or [`rtl-test-migrator`](../rtl-test-migrator/SKILL.md) (for legacy migrations).
+This skill provides an orchestration framework for parallelizing test writing, migration, and coverage enhancement across large codebases. It spawns batches of up to **5 concurrent subagents** using the environment's subagent mechanism, where each subagent is assigned strictly **one test file** to create or upgrade following [`unit-test-writing`](../unit-test-writing/SKILL.md) (for new tests) or [`rtl-test-migrator`](../rtl-test-migrator/SKILL.md) (for legacy migrations).
 
 ---
 
@@ -37,7 +37,7 @@ This skill provides an orchestration framework for parallelizing test writing, m
    pnpm --filter <pkg> test <TestName> --run
    pnpm exec oxlint path/to/MyComponent.test.tsx
    ```
-4. **Model Tier**: Always use `Model: "inherit"` unless the user explicitly specifies a tier.
+4. **Model Tier**: Inherit the default session model unless the user explicitly specifies a model.
 5. **Prompt Structure**: Every subagent prompt must contain:
    - Target source file path and target test file path.
    - Reference to [`unit-test-writing`](../unit-test-writing/SKILL.md) (or [`rtl-test-migrator`](../rtl-test-migrator/SKILL.md)).
@@ -50,7 +50,7 @@ This skill provides an orchestration framework for parallelizing test writing, m
 
 For each batch of files:
 1. **Batch Selection & Pre-Batch Git Renames**: Group remaining untested or unmigrated components into batches of up to 5 items. If any legacy `.test.ts` file in the batch requires JSX, the parent orchestrator runs `git mv path/to/File.test.ts path/to/File.test.tsx` before spawning subagents.
-2. **Launch Subagents**: Call `invoke_subagent` with the 5 subagent specifications in parallel.
+2. **Launch Subagents**: Spawn the 5 subagents in parallel using the environment's subagent tool.
 3. **Await Completion**: Subagents run asynchronously in the background. Wait for automatic completion notifications without polling in a loop.
 4. **Post-Batch Quality Verification**:
    - Run prettier formatting on touched files:

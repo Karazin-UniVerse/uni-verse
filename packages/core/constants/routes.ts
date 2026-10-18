@@ -7,3 +7,5 @@ export const AUTH_ROUTES = {
   LOGOUT: 'logout',
   REFRESH: 'refresh',
 } as const;
+
+export const OPPORTUNITIES_ROUTE = '/opportunities';

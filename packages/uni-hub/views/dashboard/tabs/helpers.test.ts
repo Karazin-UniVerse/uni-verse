@@ -5,7 +5,7 @@ import {
   trimTrailingPunctuation,
   extractMeetingUrl,
 } from './helpers';
-import type { MoodleEvent } from '@uni-hub/types';
+import type { MoodleEvent } from '@core/types/moodle';
 
 describe('getAssignmentStatusInfo', () => {
   it('should return graded status when completed and status is graded', () => {

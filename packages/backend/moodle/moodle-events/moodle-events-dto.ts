@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import type { MoodleEvent } from '@universe/core/types/moodle';
 
-export class CalendarEventDto {
+export class CalendarEventDto implements MoodleEvent {
   @ApiProperty({ example: 1 })
   id: number;
 
@@ -21,4 +22,10 @@ export class CalendarEventDto {
 
   @ApiPropertyOptional({ example: 'Course Name' })
   courseName?: string;
+
+  @ApiPropertyOptional({ example: 'https://moodle.example/calendar/view.php' })
+  url?: string;
+
+  @ApiPropertyOptional({ example: 'Monday, 1 January, 10:00 AM' })
+  formattedtime?: string;
 }

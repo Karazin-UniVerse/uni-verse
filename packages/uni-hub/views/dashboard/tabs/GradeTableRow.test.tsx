@@ -169,16 +169,16 @@ describe('GradeTableRow component', () => {
     expect(cells[7]).toHaveTextContent('незадовільно');
   });
 
-  it('should fallback to course_name or generated discipline title when courseName is missing', () => {
-    const gradeWithFallbackName: GradeDisplayItem = {
-      course_name: 'Fallback Biology',
+  it('should fallback to generated discipline title when courseName is missing', () => {
+    const gradeWithName: GradeDisplayItem = {
+      courseName: 'Biology',
       grade: '80',
       totalScore: 80,
     };
 
-    const { unmount } = renderRow(gradeWithFallbackName, 0);
+    const { unmount } = renderRow(gradeWithName, 0);
 
-    expect(screen.getByText('Fallback Biology')).toBeInTheDocument();
+    expect(screen.getByText('Biology')).toBeInTheDocument();
 
     unmount();
 

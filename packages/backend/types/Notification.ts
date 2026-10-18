@@ -3,6 +3,8 @@ export interface MoodleNotification {
   useridfrom: number;
   useridto: number;
   subject: string;
+  timecreated: number;
+  read: boolean;
   shortenedsubject?: string;
   text?: string;
   fullmessage?: string;
@@ -11,10 +13,8 @@ export interface MoodleNotification {
   smallmessage?: string;
   contexturl?: string;
   contexturlname?: string;
-  timecreated: number;
   timecreatedpretty?: string;
   timeread?: number | false;
-  read: boolean;
   deleted?: boolean;
   iconurl?: string;
   component?: string;

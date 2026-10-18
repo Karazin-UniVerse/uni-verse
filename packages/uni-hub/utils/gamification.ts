@@ -1,4 +1,4 @@
-import type { Grade } from '@uni-hub/types';
+import type { Grade } from '@core/types/moodle';
 import { type BadgeId, SEMESTER_MASTER_THRESHOLD } from '@uni-hub/constants/gamification';
 import { getGradeRawValue, getValidGrades } from './grades';
 

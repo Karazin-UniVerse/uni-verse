@@ -39,7 +39,7 @@ const mockApplications: OpportunityApplication[] = [
   {
     id: 'app-1',
     applicantName: 'Олена Коваль',
-    contactInfo: 'olena@karazin.ua',
+    contactInfo: '@olena_tg',
     motivation: 'Маю досвід у React та TypeScript, хочу приєднатися до проєкту.',
     status: 'SUBMITTED',
     opportunityId: 'opp-1',
@@ -74,6 +74,8 @@ const renderApplicantsModal = (props?: Partial<ApplicantsModalProps>) => {
     onClose: vi.fn(),
     applications: mockApplications,
     loading: false,
+    isError: false,
+    onRetry: vi.fn(),
     onUpdateStatus: vi.fn(),
     ...props,
   };
@@ -103,6 +105,7 @@ describe('ApplicantsModal component', () => {
 
     expect(screen.getByText('Олена Коваль')).toBeInTheDocument();
     expect(screen.getByText('olena@karazin.ua')).toBeInTheDocument();
+    expect(screen.getByText('@olena_tg')).toBeInTheDocument();
     expect(screen.getByText('Надіслано')).toBeInTheDocument();
     expect(screen.getAllByText('Супровідне повідомлення:')).toHaveLength(2);
     expect(

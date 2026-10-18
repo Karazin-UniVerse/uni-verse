@@ -1,13 +1,17 @@
 import { describe, it, expect } from 'vitest';
+import type { FeatureFlags } from '@core/constants/features';
 import { TRANSLATIONS } from '@uni-hub/i18n/translations';
+import { NAV_KEY } from './constants';
 import {
   getControlTypeLabel,
   getTraditionalGradeLabel,
   stripHtml,
   parseGradeScore,
   getExamScoreDisplay,
-  isNavKey,
+  resolveNavKey,
   toNotificationListItem,
+  isStudyView,
+  parseRouteId,
 } from './utils';
 
 describe('dashboard utils', () => {
@@ -80,21 +84,17 @@ describe('dashboard utils', () => {
     });
   });
 
-  describe('isNavKey', () => {
-    it('should return true for canonical navigation keys', () => {
-      expect(isNavKey('overview')).toBe(true);
-      expect(isNavKey('courses')).toBe(true);
-      expect(isNavKey('grades')).toBe(true);
-      expect(isNavKey('schedule')).toBe(true);
-      expect(isNavKey('assignments')).toBe(true);
-      expect(isNavKey('connectMoodle')).toBe(true);
-      expect(isNavKey('opportunities')).toBe(true);
+  describe('isStudyView', () => {
+    it('should return true for canonical study views', () => {
+      expect(isStudyView('subjects')).toBe(true);
+      expect(isStudyView('grades')).toBe(true);
+      expect(isStudyView('assignments')).toBe(true);
     });
 
-    it('should return false for unknown or invalid keys', () => {
-      expect(isNavKey('unknown')).toBe(false);
-      expect(isNavKey('')).toBe(false);
-      expect(isNavKey('Overview')).toBe(false);
+    it('should return false for unknown or invalid views', () => {
+      expect(isStudyView('courses')).toBe(false);
+      expect(isStudyView('')).toBe(false);
+      expect(isStudyView('Grades')).toBe(false);
     });
   });
 
@@ -102,7 +102,7 @@ describe('dashboard utils', () => {
     const notification = {
       id: 7,
       subject: 'New assignment',
-      message: '<p>Lab&nbsp;4 is <b>available</b></p>',
+      fullmessage: '<p>Lab&nbsp;4 is <b>available</b></p>',
       timecreated: 1_788_000_000,
       read: false,
     };
@@ -124,15 +124,205 @@ describe('dashboard utils', () => {
     });
 
     it('should truncate messages longer than 100 characters', () => {
-      const item = toNotificationListItem({ ...notification, message: 'a'.repeat(150) }, 'en-US');
+      const item = toNotificationListItem(
+        { ...notification, fullmessage: 'a'.repeat(150) },
+        'en-US',
+      );
 
       expect(item.message).toBe(`${'a'.repeat(100)}...`);
     });
 
     it('should keep messages of exactly 100 characters untouched', () => {
-      const item = toNotificationListItem({ ...notification, message: 'a'.repeat(100) }, 'en-US');
+      const item = toNotificationListItem(
+        { ...notification, fullmessage: 'a'.repeat(100) },
+        'en-US',
+      );
 
       expect(item.message).toBe('a'.repeat(100));
+    });
+
+    it('translates platform notification subject and JSON message using formatMessage', () => {
+      const platformNotif = {
+        id: 'plat-1',
+        subject: 'notifications.opportunityApplicationStatus.title',
+        message: JSON.stringify({
+          opportunityTitle: 'Frontend Intern',
+          status: 'ACCEPTED',
+          comment: 'Welcome!',
+        }),
+        timecreated: 1_788_000_000,
+        read: false,
+      };
+
+      const withFormatter = toNotificationListItem(
+        platformNotif,
+        'en-US',
+        (key, values): string => {
+          if (key === 'notifications.opportunityApplicationStatus.title') {
+            return 'Application Status';
+          }
+
+          if (key === 'notifications.status.ACCEPTED') {
+            return 'accepted';
+          }
+
+          if (key === 'notifications.opportunityApplicationStatus.messageWithComment') {
+            return `${values?.opportunityTitle}: ${values?.status} (${values?.comment})`;
+          }
+
+          return key;
+        },
+      );
+
+      expect(withFormatter.title).toBe('Application Status');
+      expect(withFormatter.message).toBe('Frontend Intern: accepted (Welcome!)');
+    });
+
+    it('translates new application and moderation platform notifications and handles invalid JSON', () => {
+      const formatter = (key: string, values?: Record<string, string | number>): string =>
+        `${key}:${JSON.stringify(values ?? {})}`;
+
+      const newAppItem = toNotificationListItem(
+        {
+          id: 'plat-2',
+          subject: 'notifications.opportunityNewApplication.title',
+          message: JSON.stringify({ opportunityTitle: 'AI Lab', applicantName: 'Oleh' }),
+          timecreated: 1_788_000_000,
+          read: false,
+        },
+        'en-US',
+        formatter,
+      );
+
+      expect(newAppItem.message).toContain('notifications.opportunityNewApplication.message');
+      expect(newAppItem.message).toContain('AI Lab');
+
+      const moderatedItem = toNotificationListItem(
+        {
+          id: 'plat-3',
+          subject: 'notifications.opportunityModerated.title',
+          message: JSON.stringify({ opportunityTitle: 'AI Lab', action: 'APPROVE' }),
+          timecreated: 1_788_000_000,
+          read: true,
+        },
+        'en-US',
+        formatter,
+      );
+
+      expect(moderatedItem.message).toContain('notifications.opportunityModerated.message');
+
+      const invalidJsonItem = toNotificationListItem(
+        {
+          id: 'plat-4',
+          subject: 'notifications.opportunityModerated.title',
+          message: '{bad-json}',
+          timecreated: 1_788_000_000,
+          read: true,
+        },
+        'en-US',
+        formatter,
+      );
+
+      expect(invalidJsonItem.message).toBe('{bad-json}');
+    });
+
+    it('does not format platform notification if notification ID is numeric (Moodle notification collision)', () => {
+      const moodleWithCollision = toNotificationListItem(
+        {
+          id: 42,
+          subject: 'notifications.opportunityModerated.title',
+          message: 'Original Moodle Message',
+          timecreated: 1_788_000_000,
+          read: false,
+        },
+        'en-US',
+        (): string => 'Translated Platform Title',
+      );
+
+      expect(moodleWithCollision.title).toBe('notifications.opportunityModerated.title');
+      expect(moodleWithCollision.message).toBe('Original Moodle Message');
+    });
+
+    it('passes through link property on platform notifications', () => {
+      const platformItem = toNotificationListItem(
+        {
+          id: 'plat-1',
+          subject: 'notifications.opportunityNewApplication.title',
+          message: JSON.stringify({ opportunityTitle: 'AI Lab', applicantName: 'Oleh' }),
+          link: '/opportunities/123',
+          timecreated: 1_788_000_000,
+          read: true,
+        },
+        'en-US',
+      );
+
+      expect(platformItem.id).toBe('plat-1');
+      expect(platformItem.link).toBe('/opportunities/123');
+      expect(platformItem.isRead).toBe(true);
+    });
+  });
+});
+
+describe('resolveNavKey', () => {
+  const navItems = [
+    { key: NAV_KEY.Overview },
+    { key: NAV_KEY.Study, featureFlag: 'isMoodleIntegrationEnabled' as const },
+    { key: NAV_KEY.ConnectMoodle },
+  ];
+  const features: FeatureFlags = {
+    isMoodleIntegrationEnabled: true,
+    isEDeanEnabled: false,
+    isOpportunitiesPlatformEnabled: false,
+    isFeaturePanelEnabled: false,
+  };
+
+  it('keeps a key whose feature is enabled', () => {
+    expect(resolveNavKey(NAV_KEY.Study, { navItems, features, isMoodleLinked: true })).toBe(
+      NAV_KEY.Study,
+    );
+  });
+
+  it('falls back to the overview when the feature of the key is off', () => {
+    expect(
+      resolveNavKey(NAV_KEY.Study, {
+        navItems,
+        features: { ...features, isMoodleIntegrationEnabled: false },
+        isMoodleLinked: true,
+      }),
+    ).toBe(NAV_KEY.Overview);
+  });
+
+  it('shows the connect Moodle tab only while Moodle is enabled and not linked', () => {
+    expect(
+      resolveNavKey(NAV_KEY.ConnectMoodle, { navItems, features, isMoodleLinked: false }),
+    ).toBe(NAV_KEY.ConnectMoodle);
+    expect(resolveNavKey(NAV_KEY.ConnectMoodle, { navItems, features, isMoodleLinked: true })).toBe(
+      NAV_KEY.Overview,
+    );
+    expect(
+      resolveNavKey(NAV_KEY.ConnectMoodle, {
+        navItems,
+        features: { ...features, isMoodleIntegrationEnabled: false },
+        isMoodleLinked: false,
+      }),
+    ).toBe(NAV_KEY.Overview);
+  });
+
+  describe('parseRouteId', () => {
+    it('parses a positive integer segment', () => {
+      expect(parseRouteId('5')).toBe(5);
+    });
+
+    it('returns null for non-numeric, decimal, missing or repeated segments', () => {
+      expect(parseRouteId('abc')).toBeNull();
+      expect(parseRouteId('5.5')).toBeNull();
+      expect(parseRouteId(undefined)).toBeNull();
+      expect(parseRouteId(['5'])).toBeNull();
+    });
+
+    it('returns null for zero and unsafe large integers', () => {
+      expect(parseRouteId('0')).toBeNull();
+      expect(parseRouteId('999999999999999999999')).toBeNull();
     });
   });
 });

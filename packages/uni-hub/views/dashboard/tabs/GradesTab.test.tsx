@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { Grade } from '@uni-hub/types';
+import type { Grade } from '@core/types/moodle';
 import { mockFallbackGrades } from '../constants';
 import { GradesTab } from './GradesTab';
 

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import type { Grade } from '@uni-hub/types';
+import type { Grade } from '@core/types/moodle';
 import { LanguageProvider, useLanguage } from '@uni-hub/i18n/LanguageContext';
 import * as una from '@una';
 import { GradesChart } from './GradesChart';

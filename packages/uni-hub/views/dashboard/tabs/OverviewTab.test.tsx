@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import type { CurriculumItem, StudentProfile } from '@core/types';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { FeatureToggleProvider } from '@uni-hub/features';
-import type { Assignment, Course } from '@uni-hub/types';
+import type { Assignment, MoodleCourse as Course } from '@core/types/moodle';
 import type { OverviewTabProps } from '../types';
 import { OverviewTab } from './OverviewTab';
 
@@ -155,7 +155,7 @@ describe('OverviewTab component', () => {
 
     await user.click(coursesStatCard);
 
-    expect(onNavigate).toHaveBeenCalledWith('courses');
+    expect(onNavigate).toHaveBeenCalledWith('study', 'subjects');
   });
 
   it('should display contextual greeting and nearest deadline countdown when Moodle integration is enabled', () => {
@@ -210,7 +210,7 @@ describe('OverviewTab component', () => {
 
     await user.click(courseButton);
 
-    expect(mockPush).toHaveBeenCalledWith('/courses/42/contents');
+    expect(mockPush).toHaveBeenCalledWith('/study/courses/42');
   });
 
   it('should render empty state when no courses are available and fallback is empty', () => {

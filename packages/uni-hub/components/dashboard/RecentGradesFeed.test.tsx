@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { Assignment } from '@uni-hub/types';
+import type { Assignment } from '@core/types/moodle';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { RecentGradesFeed } from './RecentGradesFeed';
 
@@ -144,7 +144,7 @@ describe('RecentGradesFeed component', () => {
     await user.click(allGradesButton);
 
     expect(handleNavigate).toHaveBeenCalledTimes(1);
-    expect(handleNavigate).toHaveBeenCalledWith('grades');
+    expect(handleNavigate).toHaveBeenCalledWith('study', 'grades');
   });
 
   it('should trigger onNavigate to assignments when a grade feed item is clicked', async () => {
@@ -164,7 +164,7 @@ describe('RecentGradesFeed component', () => {
     await user.click(feedItem);
 
     expect(handleNavigate).toHaveBeenCalledTimes(1);
-    expect(handleNavigate).toHaveBeenCalledWith('assignments');
+    expect(handleNavigate).toHaveBeenCalledWith('study', 'assignments');
   });
 
   it('should respect maxItems limit', () => {

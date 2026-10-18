@@ -39,20 +39,20 @@ describe('MobileBottomNav component', () => {
 
     expect(nav).toBeInTheDocument();
     expect(buttons.length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: /огляд/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /стіна/i })).toBeInTheDocument();
   });
 
   it('should apply active class to the currently selected item', () => {
     render(
       <FeatureToggleProvider>
         <LanguageProvider>
-          <MobileBottomNav activeKey={NAV_KEY.Grades} onSelectKey={vi.fn()} soundEnabled />
+          <MobileBottomNav activeKey={NAV_KEY.Study} onSelectKey={vi.fn()} soundEnabled />
         </LanguageProvider>
       </FeatureToggleProvider>,
     );
 
-    const activeItem = screen.getByRole('button', { name: /заліковка/i });
-    const inactiveItem = screen.getByRole('button', { name: /огляд/i });
+    const activeItem = screen.getByRole('button', { name: /навчання/i });
+    const inactiveItem = screen.getByRole('button', { name: /стіна/i });
 
     expect(activeItem).toHaveClass(styles.active);
     expect(inactiveItem).not.toHaveClass(styles.active);
@@ -74,12 +74,12 @@ describe('MobileBottomNav component', () => {
       </FeatureToggleProvider>,
     );
 
-    const coursesButton = screen.getByRole('button', { name: /індивідуальний план|курси/i });
+    const studyButton = screen.getByRole('button', { name: /навчання/i });
 
-    await user.click(coursesButton);
+    await user.click(studyButton);
 
     expect(handleSelectKey).toHaveBeenCalledTimes(1);
-    expect(handleSelectKey).toHaveBeenCalledWith(NAV_KEY.Courses);
+    expect(handleSelectKey).toHaveBeenCalledWith(NAV_KEY.Study);
     expect(playClickSpy).toHaveBeenCalledWith(true);
   });
 
@@ -110,7 +110,7 @@ describe('MobileBottomNav component', () => {
 
   it('should hide feature-gated nav items when corresponding feature flags are disabled', () => {
     localStorage.setItem(
-      'uni_verse_feature_flags',
+      'universe_feature_overrides',
       JSON.stringify({
         isMoodleIntegrationEnabled: false,
         isEDeanEnabled: false,
@@ -126,7 +126,7 @@ describe('MobileBottomNav component', () => {
       </FeatureToggleProvider>,
     );
 
-    expect(screen.getByRole('button', { name: /огляд/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /стіна/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /можливості/i })).not.toBeInTheDocument();
   });
 });

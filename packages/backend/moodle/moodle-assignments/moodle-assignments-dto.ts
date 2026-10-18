@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+import type { Assignment, SubmissionStatus } from '@universe/core/types/moodle';
 import { parseBooleanQuery } from './moodle-assignments.helpers';
 
 export class SaveSubmissionDto {
@@ -21,7 +22,7 @@ export class SaveSubmissionDto {
   fileItemId?: number;
 }
 
-export class AssignmentItemDto {
+export class AssignmentItemDto implements Assignment {
   @ApiProperty({ example: 1, description: 'Assignment ID' })
   id: number;
 
@@ -37,11 +38,11 @@ export class AssignmentItemDto {
   })
   duedate: number;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: 'Submit your work',
     description: 'Assignment description',
   })
-  description?: string;
+  description: string;
 
   @ApiPropertyOptional({ example: '2025/2026', description: 'Academic year' })
   year?: string | null;
@@ -90,7 +91,7 @@ export class AssignmentItemDto {
   isLate?: boolean;
 }
 
-export class SubmissionStatusDto {
+export class SubmissionStatusDto implements SubmissionStatus {
   @ApiProperty({
     example: 'submitted',
     description: 'Submission status (new, draft, submitted, graded)',

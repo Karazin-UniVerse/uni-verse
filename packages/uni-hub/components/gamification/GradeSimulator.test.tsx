@@ -2,7 +2,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import type { Assignment, Grade } from '@uni-hub/types';
+import type { Assignment, Grade } from '@core/types/moodle';
 import { GradeSimulator } from './GradeSimulator';
 
 vi.mock('@una', async () => {

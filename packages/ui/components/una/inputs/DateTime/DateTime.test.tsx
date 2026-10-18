@@ -1,13 +1,17 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DateTime } from './DateTime';
 
 describe('UNA DateTime Component', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   it('should render date and time formatted according to default format', () => {
     const testDate = new Date(2026, 4, 15, 14, 30);
 
-    render(<DateTime selected={testDate} onChange={vi.fn()} />);
+    render(<DateTime selected={testDate} onChange={vi.fn()} locale="en-US" />);
 
     const input = screen.getByRole('textbox');
 
@@ -25,12 +29,14 @@ describe('UNA DateTime Component', () => {
 
   it('should update displayed value when selected Date prop changes', () => {
     const { rerender } = render(
-      <DateTime selected={new Date(2026, 0, 10, 9, 15)} onChange={vi.fn()} />,
+      <DateTime selected={new Date(2026, 0, 10, 9, 15)} onChange={vi.fn()} locale="en-US" />,
     );
 
     expect(screen.getByRole('textbox')).toHaveValue('January 10, 2026 9:15 AM');
 
-    rerender(<DateTime selected={new Date(2026, 6, 20, 16, 45)} onChange={vi.fn()} />);
+    rerender(
+      <DateTime selected={new Date(2026, 6, 20, 16, 45)} onChange={vi.fn()} locale="en-US" />,
+    );
 
     expect(screen.getByRole('textbox')).toHaveValue('July 20, 2026 4:45 PM');
   });
@@ -188,30 +194,37 @@ describe('UNA DateTime Component', () => {
   });
 
   it('should call onChange with today date when today button is clicked', async () => {
-    const user = userEvent.setup();
-    const handleChange = vi.fn();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 9, 17, 12, 0, 0));
 
-    render(
-      <DateTime
-        selected={new Date(2026, 4, 15)}
-        onChange={handleChange}
-        todayLabel="Choose Today"
-      />,
-    );
+    try {
+      const handleChange = vi.fn();
 
-    await user.click(screen.getByRole('textbox'));
+      render(
+        <DateTime
+          selected={new Date(2026, 4, 15)}
+          onChange={handleChange}
+          todayLabel="Choose Today"
+          locale="en-US"
+        />,
+      );
 
-    const todayBtn = screen.getByRole('button', { name: 'Choose Today' });
+      fireEvent.click(screen.getByRole('textbox'));
 
-    await user.click(todayBtn);
+      const todayBtn = screen.getByRole('button', { name: 'Choose Today' });
 
-    expect(handleChange).toHaveBeenCalledTimes(1);
-    const calledDate = handleChange.mock.calls[0][0] as Date;
-    const now = new Date();
+      fireEvent.click(todayBtn);
 
-    expect(calledDate.getDate()).toBe(now.getDate());
-    expect(calledDate.getMonth()).toBe(now.getMonth());
-    expect(calledDate.getFullYear()).toBe(now.getFullYear());
+      expect(handleChange).toHaveBeenCalledTimes(1);
+      const calledDate = handleChange.mock.calls[0][0] as Date;
+      const now = new Date(2026, 9, 17, 12, 0, 0);
+
+      expect(calledDate.getDate()).toBe(now.getDate());
+      expect(calledDate.getMonth()).toBe(now.getMonth());
+      expect(calledDate.getFullYear()).toBe(now.getFullYear());
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('should navigate to previous and next months using navigation buttons', async () => {
