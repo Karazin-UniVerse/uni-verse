@@ -14,13 +14,13 @@ import styles from '@uni-hub/views/DashboardPage.module.scss';
 
 export interface UserDropdownProps {
   activeStudentProfile: StudentProfile;
-  isMoodleIntegrationEnabled?: boolean;
-  isMoodleLinked?: boolean;
   soundEnabled: boolean;
   onToggleSound: () => void;
+  onLogout: () => void;
+  isMoodleIntegrationEnabled?: boolean;
+  isMoodleLinked?: boolean;
   onOpenLinkMoodle?: (mode?: LinkMoodleMode) => void;
   onOpenUnlinkMoodle?: () => void;
-  onLogout: () => void;
 }
 
 export interface MoodleStatusDetails {

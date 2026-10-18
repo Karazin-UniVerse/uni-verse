@@ -33,6 +33,10 @@ Enforces the convention that required properties must appear before optional pro
 - In function and React component parameter destructuring (`ObjectPattern`), properties without default values (`data`, `height`, `className`) must appear before properties with default values (`type = 'bar'`, `layout = 'horizontal'`).
 - **Autofix (`--fix`)**: Safely reorders properties with pure literal defaults. Automatically falls back to report-only whenever function calls, variable references, rest elements, or comments are present to guarantee semantic safety.
 
+### Required Members First (`universe/required-members-first`)
+
+In interfaces and object type literals, members without `?` must be declared before optional ones (the type-level counterpart of `destructuring-props-order`). Report-only, no autofix.
+
 ### Situation 4: Intra-Package & Monorepo Import Boundaries (`no-restricted-imports`)
 
 Enforces strict architectural separation across the monorepo via `no-restricted-imports` in `.oxlintrc.json`:
@@ -93,17 +97,19 @@ Native Oxlint `react` plugin rules:
 
 ---
 
-## 3. NestJS / Backend Rules (Custom)
+## 3. NestJS / Backend Rules
 
-| Rule                                            | Files              | Description                                                                     |
-| ----------------------------------------------- | ------------------ | ------------------------------------------------------------------------------- |
-| `universe/nestjs-require-api-response-type`     | `*.controller.ts`  | `@ApiResponse` on 200/201 endpoints must include `type` for Orval codegen       |
-| `universe/nestjs-require-bearer-auth-decorator` | `*.controller.ts`  | Endpoints using `@GetUser()` must have `@ApiBearerAuth()` or `@ApiCookieAuth()` |
-| `universe/nestjs-controller-return-type`        | `*.controller.ts`  | HTTP handler methods must declare explicit return types                         |
-| `universe/nestjs-controller-no-prisma`          | `*.controller.ts`  | Controllers must not import `PrismaService` directly                            |
-| `universe/no-empty-catch-in-services`           | `*.service.ts`     | `catch` blocks that silently return empty data must log or rethrow              |
-| `universe/una-primitive-purity`                 | `ui/**/una/**`     | Design system components must not import business-layer packages                |
-| `universe/core-package-isolation`               | `packages/core/**` | `@universe/core` must not import NestJS, Prisma, React, or Next                 |
+| Rule                                            | Files                     | Description                                                                     |
+| ----------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------- |
+| `universe/nestjs-require-api-response-type`     | `*.controller.ts`         | `@ApiResponse` on 200/201 endpoints must include `type` for Orval codegen       |
+| `universe/nestjs-require-bearer-auth-decorator` | `*.controller.ts`         | Endpoints using `@GetUser()` must have `@ApiBearerAuth()` or `@ApiCookieAuth()` |
+| `universe/no-empty-catch-in-services`           | `*.service.ts`            | `catch` blocks that silently return empty data must log or rethrow              |
+| `universe/dto-implements-core-contract`         | `backend/**/dto/*.dto.ts` | DTO classes must `implements` a request contract from `@universe/core/types`    |
+
+Covered by existing rules instead of custom ones:
+
+- `typescript/explicit-function-return-type` (built-in `typescript` plugin) on `*.controller.ts`: explicit return types.
+- `no-restricted-imports` overrides in `.oxlintrc.json`: controllers must not import `PrismaService`, `una/` components must not import application state or routing, and `@universe/core` must not import framework or database packages.
 
 ---
 

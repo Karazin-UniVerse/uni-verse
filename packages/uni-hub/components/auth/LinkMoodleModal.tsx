@@ -11,10 +11,10 @@ import { LinkMoodleMode, getLinkMoodleContentKeys } from './helpers';
 import styles from './LinkMoodleModal.module.scss';
 
 export interface LinkMoodleModalProps {
-  mode?: LinkMoodleMode;
   onClose: () => void;
   onSuccess: () => void;
   open: boolean;
+  mode?: LinkMoodleMode;
 }
 
 export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
