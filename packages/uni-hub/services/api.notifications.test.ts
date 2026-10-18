@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { notificationsApi } from './api.notifications';
 
+function mockFetchResponse(data: unknown): void {
+  global.fetch = vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => data,
+  } as Response);
+}
+
 describe('NotificationsApi', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -20,10 +27,7 @@ describe('NotificationsApi', () => {
       },
     ];
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockData,
-    } as Response);
+    mockFetchResponse(mockData);
 
     const res = await notificationsApi.getMyNotifications();
 
@@ -44,10 +48,7 @@ describe('NotificationsApi', () => {
       createdAt: '2026-04-18T00:00:00.000Z',
     };
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockData,
-    } as Response);
+    mockFetchResponse(mockData);
 
     const res = await notificationsApi.markAsRead('notif-1');
 
@@ -60,10 +61,7 @@ describe('NotificationsApi', () => {
   it('markAllAsRead sends POST to /notifications/read-all', async () => {
     const mockData = { count: 3 };
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockData,
-    } as Response);
+    mockFetchResponse(mockData);
 
     const res = await notificationsApi.markAllAsRead();
 

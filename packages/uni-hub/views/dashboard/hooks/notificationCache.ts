@@ -38,21 +38,26 @@ export function patchNotificationInDashboard(
   };
 }
 
-export function optimisticallyMarkNotificationRead(
+function updatePlatformQueryCache(
   queryClient: QueryClient,
-  id: string,
-): NotificationRollbackContext {
-  const previousPlatform = queryClient.getQueryData<PlatformNotification[]>(
-    notificationKeys.platform(),
-  );
+  updater: (item: PlatformNotification) => PlatformNotification,
+): PlatformNotification[] | undefined {
+  const previous = queryClient.getQueryData<PlatformNotification[]>(notificationKeys.platform());
 
-  if (previousPlatform) {
+  if (previous) {
     queryClient.setQueryData<PlatformNotification[]>(
       notificationKeys.platform(),
-      previousPlatform.map((item) => (item.id === id ? { ...item, isRead: true } : item)),
+      previous.map(updater),
     );
   }
 
+  return previous;
+}
+
+function updateDashboardQueriesCache(
+  queryClient: QueryClient,
+  updater: (item: Notification) => Notification,
+): Array<[readonly unknown[], DashboardData | undefined]> {
   const allDashboardQueries = queryClient
     .getQueryCache()
     .findAll({ queryKey: moodleKeys.dashboards() });
@@ -65,14 +70,24 @@ export function optimisticallyMarkNotificationRead(
     if (prevData) {
       previousDashboards.push([query.queryKey, prevData]);
       queryClient.setQueryData<DashboardData>(query.queryKey, (current) =>
-        current
-          ? patchNotificationInDashboard(current, (n) =>
-              String(n.id) === id && !n.read ? { ...n, read: true } : n,
-            )
-          : current,
+        current ? patchNotificationInDashboard(current, updater) : current,
       );
     }
   }
+
+  return previousDashboards;
+}
+
+export function optimisticallyMarkNotificationRead(
+  queryClient: QueryClient,
+  id: string,
+): NotificationRollbackContext {
+  const previousPlatform = updatePlatformQueryCache(queryClient, (item) =>
+    item.id === id ? { ...item, isRead: true } : item,
+  );
+  const previousDashboards = updateDashboardQueriesCache(queryClient, (n) =>
+    String(n.id) === id && !n.read ? { ...n, read: true } : n,
+  );
 
   return { previousPlatform, previousDashboards };
 }
@@ -80,35 +95,12 @@ export function optimisticallyMarkNotificationRead(
 export function optimisticallyMarkAllNotificationsRead(
   queryClient: QueryClient,
 ): NotificationRollbackContext {
-  const previousPlatform = queryClient.getQueryData<PlatformNotification[]>(
-    notificationKeys.platform(),
+  const previousPlatform = updatePlatformQueryCache(queryClient, (item) =>
+    item.isRead ? item : { ...item, isRead: true },
   );
-
-  if (previousPlatform) {
-    queryClient.setQueryData<PlatformNotification[]>(
-      notificationKeys.platform(),
-      previousPlatform.map((item) => (item.isRead ? item : { ...item, isRead: true })),
-    );
-  }
-
-  const allDashboardQueries = queryClient
-    .getQueryCache()
-    .findAll({ queryKey: moodleKeys.dashboards() });
-
-  const previousDashboards: Array<[readonly unknown[], DashboardData | undefined]> = [];
-
-  for (const query of allDashboardQueries) {
-    const prevData = query.state.data as DashboardData | undefined;
-
-    if (prevData) {
-      previousDashboards.push([query.queryKey, prevData]);
-      queryClient.setQueryData<DashboardData>(query.queryKey, (current) =>
-        current
-          ? patchNotificationInDashboard(current, (n) => (n.read ? n : { ...n, read: true }))
-          : current,
-      );
-    }
-  }
+  const previousDashboards = updateDashboardQueriesCache(queryClient, (n) =>
+    n.read ? n : { ...n, read: true },
+  );
 
   return { previousPlatform, previousDashboards };
 }

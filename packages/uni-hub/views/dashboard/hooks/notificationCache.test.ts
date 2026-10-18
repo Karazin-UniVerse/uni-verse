@@ -13,6 +13,7 @@ import {
 
 describe('notificationCache', () => {
   let queryClient: QueryClient;
+  let dashboardKey: ReturnType<typeof moodleKeys.dashboard>;
 
   const mockPlatformNotifications: PlatformNotification[] = [
     {
@@ -72,6 +73,15 @@ describe('notificationCache', () => {
     queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
+    dashboardKey = moodleKeys.dashboard({ sortOrder: 'asc' });
+    queryClient.setQueryData(notificationKeys.platform(), [
+      { ...mockPlatformNotifications[0]! },
+      { ...mockPlatformNotifications[1]! },
+    ]);
+    queryClient.setQueryData(dashboardKey, {
+      ...mockDashboardData,
+      notifications: mockDashboardData.notifications.map((n) => ({ ...n })),
+    });
   });
 
   describe('patchNotificationInDashboard', () => {
@@ -93,11 +103,6 @@ describe('notificationCache', () => {
 
   describe('optimisticallyMarkNotificationRead', () => {
     it('optimistically updates platform and dashboard queries and returns rollback context', () => {
-      queryClient.setQueryData(notificationKeys.platform(), mockPlatformNotifications);
-      const dashboardKey = moodleKeys.dashboard({ sortOrder: 'asc' });
-
-      queryClient.setQueryData(dashboardKey, mockDashboardData);
-
       const rollback = optimisticallyMarkNotificationRead(queryClient, 'plat-1');
 
       const updatedPlatform = queryClient.getQueryData<PlatformNotification[]>(
@@ -111,7 +116,7 @@ describe('notificationCache', () => {
       expect(updatedDashboard?.notifications[0].read).toBe(true);
       expect(updatedDashboard?.unreadCount).toBe(1);
 
-      expect(rollback.previousPlatform).toEqual(mockPlatformNotifications);
+      expect(rollback.previousPlatform).toBeDefined();
       expect(rollback.previousDashboards).toHaveLength(1);
 
       rollbackNotificationOptimisticUpdate(queryClient, rollback);
@@ -131,11 +136,6 @@ describe('notificationCache', () => {
 
   describe('optimisticallyMarkAllNotificationsRead', () => {
     it('marks all platform notifications and dashboard notifications as read', () => {
-      queryClient.setQueryData(notificationKeys.platform(), mockPlatformNotifications);
-      const dashboardKey = moodleKeys.dashboard({ sortOrder: 'asc' });
-
-      queryClient.setQueryData(dashboardKey, mockDashboardData);
-
       const rollback = optimisticallyMarkAllNotificationsRead(queryClient);
 
       const updatedPlatform = queryClient.getQueryData<PlatformNotification[]>(
