@@ -28,8 +28,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     <nav className={styles.container} aria-label="Мобільна навігація">
       <ul className={styles.nav}>
         {visibleNavItems.map((item) => {
-          const label = formatMessage(item.labelKey);
-          const shortLabel = formatMessage(item.shortLabelKey);
+          const label = formatMessage(item.shortLabelKey ?? item.labelKey);
 
           return (
             <li key={item.key} className={styles.navItemWrapper}>
@@ -51,7 +50,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                   />
                 )}
                 <span className={styles.iconWrapper}>{item.icon}</span>
-                <span className={styles.mobileLabel}>{shortLabel}</span>
+                <span className={styles.mobileLabel}>{label}</span>
               </button>
             </li>
           );

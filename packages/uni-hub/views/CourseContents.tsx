@@ -24,7 +24,10 @@ import type { CourseModule } from '@core/types/moodle';
 import { COURSE_MODULE_NAMES, type CourseModuleName } from '@core/constants/moodle';
 import { AssignmentModal } from '@uni-hub/components/assignments';
 import { LoadErrorState } from '@uni-hub/components/common/LoadErrorState';
+import { NAV_KEY, STUDY_VIEW } from './dashboard/constants';
 import styles from './CourseContents.module.scss';
+
+const STUDY_SUBJECTS_HREF = `/?tab=${NAV_KEY.Study}&view=${STUDY_VIEW.Subjects}`;
 
 const getModuleIcon = (modname: CourseModuleName): React.ReactNode => {
   switch (modname) {
@@ -159,7 +162,7 @@ const CourseContents: React.FC = () => {
           type="button"
           variant="secondary"
           isTransparent
-          onClick={() => router.push('/?tab=courses')}
+          onClick={() => router.push(STUDY_SUBJECTS_HREF)}
         >
           <ArrowLeft size={16} /> {formatMessage('courseContents.back')}
         </Button>
@@ -172,7 +175,7 @@ const CourseContents: React.FC = () => {
 
       <main className={styles.content}>
         <nav className={styles.breadcrumb} aria-label={formatMessage('courseContents.breadcrumbs')}>
-          <Link href="/?tab=courses">{formatMessage('courseContents.breadcrumbs')}</Link>
+          <Link href={STUDY_SUBJECTS_HREF}>{formatMessage('courseContents.breadcrumbs')}</Link>
           <span>/</span>
           <span>{formatMessage('courseContents.title')}</span>
         </nav>
