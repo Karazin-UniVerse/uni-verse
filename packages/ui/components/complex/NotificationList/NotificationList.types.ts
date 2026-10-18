@@ -16,6 +16,7 @@ export type NotificationListProps = {
   unreadLabel?: string;
   markAllReadLabel?: string;
   className?: string;
+  isItemClickable?: (item: NotificationListItem) => boolean;
   onItemClick?: (item: NotificationListItem) => void;
   onMarkAllRead?: () => void;
 };

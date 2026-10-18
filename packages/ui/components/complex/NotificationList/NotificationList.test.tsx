@@ -128,4 +128,24 @@ describe('NotificationList Component', () => {
 
     expect(onMarkAllRead).toHaveBeenCalledTimes(1);
   });
+
+  it('should render non-clickable items as plain container when isItemClickable returns false', () => {
+    const onItemClick = vi.fn();
+
+    render(
+      <NotificationList
+        items={items}
+        heading="Notifications"
+        emptyLabel="Nothing here"
+        onItemClick={onItemClick}
+        isItemClickable={(item) => !item.isRead}
+      />,
+    );
+
+    // First item is unread (isClickable: true) -> button
+    expect(screen.getByRole('button', { name: /New assignment/i })).toBeInTheDocument();
+    // Second item is read (isClickable: false) -> not a button
+    expect(screen.queryByRole('button', { name: /Grade posted/i })).not.toBeInTheDocument();
+    expect(screen.getByText('Grade posted')).toBeInTheDocument();
+  });
 });

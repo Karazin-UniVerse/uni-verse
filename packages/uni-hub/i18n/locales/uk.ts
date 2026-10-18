@@ -599,6 +599,7 @@ export const uk = {
   'opportunities.applicantsModal.close': 'Закрити',
 
   // Platform Notifications
+  'notifications.error.markReadFailed': 'Не вдалося оновити статус сповіщення',
   'notifications.opportunityApplicationStatus.title': 'Статус заявки на можливість',
   'notifications.opportunityApplicationStatus.message':
     'Статус заявки на «{opportunityTitle}» змінено на: {status}.',

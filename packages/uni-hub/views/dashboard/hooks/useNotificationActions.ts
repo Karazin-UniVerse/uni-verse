@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@una';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { notificationsApi } from '@uni-hub/services/api';
 import {
   notificationKeys,
@@ -20,6 +22,8 @@ export interface UseNotificationActionsResult {
 
 export function useNotificationActions(): UseNotificationActionsResult {
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const { formatMessage } = useLanguage();
 
   const markReadMutation = useMutation({
     mutationKey: markNotificationReadMutationKey,
@@ -33,6 +37,7 @@ export function useNotificationActions(): UseNotificationActionsResult {
     },
     onError: (_err, _id, context): void => {
       rollbackNotificationOptimisticUpdate(queryClient, context);
+      toast.error(formatMessage('notifications.error.markReadFailed'));
     },
     onSettled: async (): Promise<void> => {
       await queryClient.invalidateQueries({ queryKey: notificationKeys.platform() });
@@ -51,6 +56,7 @@ export function useNotificationActions(): UseNotificationActionsResult {
     },
     onError: (_err, _vars, context): void => {
       rollbackNotificationOptimisticUpdate(queryClient, context);
+      toast.error(formatMessage('notifications.error.markReadFailed'));
     },
     onSettled: async (): Promise<void> => {
       await queryClient.invalidateQueries({ queryKey: notificationKeys.platform() });

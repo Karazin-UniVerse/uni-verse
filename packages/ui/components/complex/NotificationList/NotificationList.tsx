@@ -12,6 +12,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({
   unreadLabel,
   markAllReadLabel,
   className,
+  isItemClickable,
   onItemClick,
   onMarkAllRead,
 }) => {
@@ -41,22 +42,26 @@ export const NotificationList: React.FC<NotificationListProps> = ({
                 {!item.isRead && unreadItemLabel && (
                   <span className={styles.visuallyHidden}>{unreadItemLabel}</span>
                 )}
-                <p className={styles.title}>{item.title}</p>
-                <p className={styles.message}>{item.message}</p>
+                <span className={styles.title}>{item.title}</span>
+                <span className={styles.message}>{item.message}</span>
                 <time className={styles.time} dateTime={item.dateTime}>
                   {item.time}
                 </time>
               </>
             );
 
+            const isClickable = Boolean(
+              onItemClick && (isItemClickable ? isItemClickable(item) : true),
+            );
+
             return (
               <li key={item.id} className={clsx(styles.item, !item.isRead && styles.unread)}>
-                {onItemClick ? (
+                {isClickable ? (
                   <button
                     type="button"
                     className={styles.itemButton}
                     onClick={() => {
-                      onItemClick(item);
+                      onItemClick?.(item);
                     }}
                   >
                     {content}

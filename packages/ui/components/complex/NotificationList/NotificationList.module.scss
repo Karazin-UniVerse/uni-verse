@@ -71,7 +71,7 @@
   cursor: pointer;
 
   &:hover {
-    background: var(--bg-hover, rgb(0 0 0 / 4%));
+    background: var(--bg-hover);
   }
 
   &:focus-visible {
@@ -91,14 +91,20 @@
 .unread {
   background: var(--accent-secondary);
   border-inline-start-color: var(--accent-primary);
+
+  .itemButton:hover {
+    background: var(--accent-secondary-hover);
+  }
 }
 
 .title {
+  display: block;
   margin: 0;
   font-weight: var(--font-weight-medium);
 }
 
 .message {
+  display: block;
   margin: 0;
   font-size: var(--font-xs);
   color: var(--text-secondary);

@@ -19,6 +19,7 @@ export class NotificationsApi {
   async getMyNotifications(): Promise<{ data: PlatformNotification[] }> {
     return request<PlatformNotification[]>('/notifications');
   }
+
   async markAsRead(id: string): Promise<{ data: PlatformNotification }> {
     return request<PlatformNotification>(`/notifications/${id}/read`, {
       method: 'POST',

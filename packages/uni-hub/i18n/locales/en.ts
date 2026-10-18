@@ -596,6 +596,7 @@ export const en = {
   'opportunities.applicantsModal.close': 'Close',
 
   // Platform Notifications
+  'notifications.error.markReadFailed': 'Failed to update notification status',
   'notifications.opportunityApplicationStatus.title': 'Opportunity Application Status',
   'notifications.opportunityApplicationStatus.message':
     'Application status for "{opportunityTitle}" changed to: {status}.',

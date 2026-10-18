@@ -35,7 +35,12 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
 
     if (item.link) {
       close();
-      router.push(item.link);
+
+      if (item.link.startsWith('/') || item.link.startsWith('#')) {
+        router.push(item.link);
+      } else {
+        window.location.assign(item.link);
+      }
     }
   };
 
@@ -79,6 +84,7 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
           onItemClick={(item) => {
             handleItemClick(item, close);
           }}
+          isItemClickable={(item) => !item.isRead || Boolean(item.link)}
           onMarkAllRead={hasUnreadPlatform ? handleMarkAllRead : undefined}
         />
       )}
