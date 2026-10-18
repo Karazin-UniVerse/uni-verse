@@ -11,6 +11,7 @@ import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
 import { fallbackStudentProfile } from '../constants';
 import type { DashboardData } from '../types';
 import {
+  applyPlatformNotifications,
   buildFallbackData,
   deriveDashboardState,
   getInitialSyncTime,
@@ -18,7 +19,11 @@ import {
   loadCachedDashboardData,
   type DashboardState,
 } from './helpers';
-import { dashboardQueryOptions, profileQueryOptions } from './queries';
+import {
+  dashboardQueryOptions,
+  platformNotificationsQueryOptions,
+  profileQueryOptions,
+} from './queries';
 
 const EMPTY_DASHBOARD_DATA: DashboardData = {
   courses: [],
@@ -36,6 +41,7 @@ export interface UseDashboardDataResult extends Omit<DashboardState, 'cachedData
   hasCachedData: boolean;
   error: Error | null;
   errorUpdatedAt: number;
+  platformError: Error | null;
   refresh: () => Promise<void>;
 }
 
@@ -70,8 +76,12 @@ export function useDashboardData(): UseDashboardDataResult {
     initialData: () => getInitialUserProfile() ?? undefined,
     initialDataUpdatedAt: 0,
   });
+  const platformQuery = useQuery({
+    ...platformNotificationsQueryOptions,
+  });
 
   const { error, errorUpdatedAt, data: queryData, isError } = dashboardQuery;
+  const platformError = platformQuery.error;
 
   const snapshot = useMemo(
     () => (isError && queryData === undefined ? readDashboardSnapshot() : undefined),
@@ -89,21 +99,27 @@ export function useDashboardData(): UseDashboardDataResult {
       hideCompleted,
       dateFrom,
       dateTo,
+      platformNotifications: platformQuery.data,
     });
+  } else if (platformQuery.data) {
+    data = applyPlatformNotifications(data, platformQuery.data);
   }
 
   const { refetch } = dashboardQuery;
+  const { refetch: refetchPlatform } = platformQuery;
   const refresh = useCallback(async (): Promise<void> => {
     if (!enabled) {
+      await refetchPlatform();
+
       return;
     }
 
-    const result = await refetch();
+    const [result] = await Promise.all([refetch(), refetchPlatform()]);
 
     if (!result.isError) {
       toast.success(formatMessage('dashboard.syncSuccess'));
     }
-  }, [enabled, refetch, toast, formatMessage]);
+  }, [enabled, refetch, refetchPlatform, toast, formatMessage]);
 
   return {
     loading: state.loading,
@@ -120,6 +136,7 @@ export function useDashboardData(): UseDashboardDataResult {
       state.hasLoadedOnce,
     error,
     errorUpdatedAt,
+    platformError: (platformError as Error) ?? null,
     refresh,
   };
 }

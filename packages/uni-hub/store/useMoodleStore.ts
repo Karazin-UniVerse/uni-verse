@@ -59,6 +59,8 @@ export const useMoodleStore = create<MoodleState>()((set) => ({
   },
   completeUnlink: () => {
     safeStorage.setItem('isMoodleLinked', 'false');
+    safeStorage.removeItem('universe_dashboard_data');
+    safeStorage.removeItem('universe_last_sync_time');
     set({ isUnlinkModalOpen: false, isMoodleLinked: false });
   },
 }));

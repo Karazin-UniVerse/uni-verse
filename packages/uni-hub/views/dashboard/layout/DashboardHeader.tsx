@@ -10,7 +10,7 @@ import { useLogout } from '@uni-hub/hooks/useAuthMutations';
 import type { DashboardHeaderProps } from '../types';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { UserDropdown } from './UserDropdown';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onOpenMobileMenu,

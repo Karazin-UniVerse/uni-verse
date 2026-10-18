@@ -19,7 +19,7 @@ import { isAssignmentCompleted } from '@uni-hub/utils/assignments';
 import { StudentCard } from './StudentCard';
 import { StatCardGrid } from './StatCardGrid';
 import { UpcomingEventsList } from './UpcomingEventsList';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export const OverviewTab: React.FC<OverviewTabProps> = ({
   courses,

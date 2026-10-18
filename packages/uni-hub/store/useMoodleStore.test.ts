@@ -99,6 +99,8 @@ describe('useMoodleStore', () => {
   });
 
   it('marks Moodle as unlinked, closes the unlink modal and stores the flag', () => {
+    mockStorage.universe_dashboard_data = '{"courses":[]}';
+    mockStorage.universe_last_sync_time = '1000';
     useMoodleStore.setState({ isMoodleLinked: true, isUnlinkModalOpen: true });
 
     useMoodleStore.getState().completeUnlink();
@@ -106,6 +108,8 @@ describe('useMoodleStore', () => {
     expect(useMoodleStore.getState().isMoodleLinked).toBe(false);
     expect(useMoodleStore.getState().isUnlinkModalOpen).toBe(false);
     expect(mockStorage.isMoodleLinked).toBe('false');
+    expect(mockStorage.universe_dashboard_data).toBeUndefined();
+    expect(mockStorage.universe_last_sync_time).toBeUndefined();
   });
 
   it('reads the linked flag from storage and treats a missing flag as linked', () => {

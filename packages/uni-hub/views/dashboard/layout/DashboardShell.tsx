@@ -28,7 +28,7 @@ import { formatLastSync } from '../tabs/helpers';
 import { invalidateOpportunities } from '../tabs/opportunities/cache';
 import { DashboardHeader } from './DashboardHeader';
 import { DashboardSidebar, NAV_ITEMS } from './DashboardSidebar';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
   [NAV_KEY.Overview]: 'nav.overview',
@@ -89,7 +89,7 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
     if (!isLoggedIn()) {
-      router.push('/login');
+      router.replace('/login');
 
       return;
     }
@@ -97,7 +97,7 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
     checkIn();
   }, [checkIn, router]);
 
-  const closeMobileMenu = useCallback(() => {
+  const closeMobileMenu = useCallback((): void => {
     setMobileMenuOpen(false);
 
     const menuButton = document.querySelector<HTMLButtonElement>(`.${styles.mobileMenuBtn}`);

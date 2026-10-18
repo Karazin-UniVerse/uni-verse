@@ -25,7 +25,7 @@ import { getAssignmentHref, getStudyHref } from '../routes';
 import type { CourseContentsProps } from '../types';
 import styles from './CourseContents.module.scss';
 
-const getModuleIcon = (modname: CourseModuleName) => {
+const getModuleIcon = (modname: CourseModuleName): React.ReactNode => {
   switch (modname) {
     case COURSE_MODULE_NAMES.RESOURCE:
       return <File size={22} />;

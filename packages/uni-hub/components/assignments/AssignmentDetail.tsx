@@ -51,13 +51,13 @@ export const getAssignmentStatusLabel = (
 ): string => {
   switch (status) {
     case 'submitted':
-      return formatMessage('assignmentModal.statusSubmitted');
+      return formatMessage('assignmentDetail.statusSubmitted');
     case 'graded':
-      return formatMessage('assignmentModal.statusGraded');
+      return formatMessage('assignmentDetail.statusGraded');
     case 'new':
-      return formatMessage('assignmentModal.statusNew');
+      return formatMessage('assignmentDetail.statusNew');
     case 'draft':
-      return formatMessage('assignmentModal.statusDraft');
+      return formatMessage('assignmentDetail.statusDraft');
     default:
       return status;
   }
@@ -116,7 +116,7 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
 
   const handleSubmit = async (): Promise<void> => {
     if (!text.trim() && files.length === 0) {
-      setFormError(formatMessage('assignmentModal.formRequired'));
+      setFormError(formatMessage('assignmentDetail.formRequired'));
 
       return;
     }
@@ -129,7 +129,7 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
         answerText: text,
         file: files[0],
       });
-      toast.success(formatMessage('assignmentModal.submitSuccess'));
+      toast.success(formatMessage('assignmentDetail.submitSuccess'));
       useGamificationStore.getState().triggerCelebration();
 
       const deadline = assignment?.duedate ?? courseModule?.dueUnixSec ?? courseModule?.duedate;
@@ -146,7 +146,7 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
       resetForm();
     } catch (error) {
       console.error(error);
-      toast.error(formatMessage('assignmentModal.submitError'));
+      toast.error(formatMessage('assignmentDetail.submitError'));
     }
   };
 
@@ -171,7 +171,7 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
     statusContent = (
       <div className={styles.box}>
         <div className={styles.statusRow}>
-          <strong>{formatMessage('assignmentModal.status')}: </strong>
+          <strong>{formatMessage('assignmentDetail.status')}: </strong>
           <Tag
             tone={
               status.status === 'submitted' || status.status === 'graded' ? 'success' : 'warning'
@@ -182,14 +182,16 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
         </div>
         {status.grade && (
           <div>
-            <strong>{formatMessage('assignmentModal.grade')}: </strong>
+            <strong>{formatMessage('assignmentDetail.grade')}: </strong>
             <span>{status.grade}</span>
           </div>
         )}
       </div>
     );
   } else {
-    statusContent = <p className={styles.muted}>{formatMessage('assignmentModal.noStatusData')}</p>;
+    statusContent = (
+      <p className={styles.muted}>{formatMessage('assignmentDetail.noStatusData')}</p>
+    );
   }
 
   return (
@@ -197,11 +199,11 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
       <BackButton label={formatMessage('assignmentPage.back')} onClick={handleBack} />
 
       <h3>
-        {assignment?.name ?? courseModule?.name ?? formatMessage('assignmentModal.defaultTitle')}
+        {assignment?.name ?? courseModule?.name ?? formatMessage('assignmentDetail.defaultTitle')}
       </h3>
 
       {statusQuery.isLoading ? (
-        <Spinner tip={formatMessage('assignmentModal.loadingStatus')} />
+        <Spinner tip={formatMessage('assignmentDetail.loadingStatus')} />
       ) : (
         <div className={styles.content}>
           <div className={styles.moodleActionRow}>
@@ -214,13 +216,13 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
               size="small"
             >
               <ExternalLink size={14} style={{ marginRight: 6 }} />{' '}
-              {formatMessage('assignmentModal.openMoodle')}
+              {formatMessage('assignmentDetail.openMoodle')}
             </Button>
           </div>
 
           {description && (
             <section>
-              <h4>{formatMessage('assignmentModal.description')}</h4>
+              <h4>{formatMessage('assignmentDetail.description')}</h4>
               <div className={styles.box} style={{ whiteSpace: 'pre-wrap' }}>
                 {stripHtml(description)}
               </div>
@@ -229,7 +231,7 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
 
           {courseModule?.contents && courseModule.contents.length > 0 && (
             <section>
-              <h4>{formatMessage('assignmentModal.attachedFiles')}</h4>
+              <h4>{formatMessage('assignmentDetail.attachedFiles')}</h4>
               <ul className={styles.fileList}>
                 {courseModule.contents.map((file, idx: number) => {
                   const url = (file.fileurl || '') + (tokenStr ? `?token=${tokenStr}` : '');
@@ -245,7 +247,7 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
                         variant="primary"
                         size="small"
                       >
-                        <Download size={14} /> {formatMessage('assignmentModal.download')}
+                        <Download size={14} /> {formatMessage('assignmentDetail.download')}
                       </Button>
                     </li>
                   );
@@ -255,20 +257,20 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
           )}
 
           <section>
-            <h4>{formatMessage('assignmentModal.submissionStatus')}</h4>
+            <h4>{formatMessage('assignmentDetail.submissionStatus')}</h4>
             {statusContent}
           </section>
 
           {canSubmit && (
             <section>
-              <h4>{formatMessage('assignmentModal.submitTitle')}</h4>
+              <h4>{formatMessage('assignmentDetail.submitTitle')}</h4>
               <Form variant="simple" action={handleSubmit} className={styles.form}>
                 <label className={styles.field}>
-                  <span>{formatMessage('assignmentModal.answerText')}</span>
+                  <span>{formatMessage('assignmentDetail.answerText')}</span>
                   <textarea
                     className={styles.textarea}
                     rows={6}
-                    placeholder={formatMessage('assignmentModal.placeholder')}
+                    placeholder={formatMessage('assignmentDetail.placeholder')}
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     name="text"
@@ -276,13 +278,13 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
                 </label>
 
                 <FileInput
-                  label={formatMessage('assignmentModal.attachFile')}
+                  label={formatMessage('assignmentDetail.attachFile')}
                   files={files}
                   onFilesChange={setFiles}
                   maxFiles={1}
                   size="small"
-                  dragText={formatMessage('assignmentModal.dragDrop')}
-                  browseText={formatMessage('assignmentModal.browse')}
+                  dragText={formatMessage('assignmentDetail.dragDrop')}
+                  browseText={formatMessage('assignmentDetail.browse')}
                 />
 
                 {formError && <p className={styles.error}>{formError}</p>}
@@ -294,12 +296,12 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
                     onClick={handleBack}
                     disabled={submitting}
                   >
-                    {formatMessage('assignmentModal.cancel')}
+                    {formatMessage('assignmentDetail.cancel')}
                   </Button>
                   <Button type="submit" variant="primary" disabled={submitting || uploadingFile}>
                     {uploadingFile
-                      ? formatMessage('assignmentModal.uploading')
-                      : formatMessage('assignmentModal.submit')}
+                      ? formatMessage('assignmentDetail.uploading')
+                      : formatMessage('assignmentDetail.submit')}
                   </Button>
                 </div>
               </Form>

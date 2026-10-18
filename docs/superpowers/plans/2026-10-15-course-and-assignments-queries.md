@@ -21,7 +21,7 @@
 - No aliases or shims; one import per module path; explicit return types for new functions; empty line before `return`.
 - `uni-hub` tests run in the vitest node environment without jsdom; hooks that now need a provider are rendered with `QueryClientProvider` and `renderToString`.
 - Commit messages follow Conventional Commits and end with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`. Show the diff and wait for approval before each commit (user preference); do not push without being asked.
-- Commands run from `/Users/ReDL/Documents/Programming/Projects/uni-verse`. Final pipeline: `pnpm lint`, `pnpm lint:style`, `pnpm typecheck`, `pnpm test`, `pnpm build`, prettier on changed files.
+- Commands run from the repository root. Final pipeline: `pnpm lint`, `pnpm lint:style`, `pnpm typecheck`, `pnpm test`, `pnpm build`, prettier on changed files.
 
 ## Review Focus
 
@@ -300,7 +300,7 @@ Remove `useToast` if no longer used and any unused imports; `pnpm lint` must be 
 
 - [ ] **Step 4: Verify and commit** (after diff approval)
 
-`pnpm --filter @universe/uni-hub test && typecheck && lint`. Commit: `refactor(uni-hub): load course contents with TanStack Query`.
+`pnpm --filter @universe/uni-hub test && pnpm typecheck && pnpm lint`. Commit: `refactor(uni-hub): load course contents with TanStack Query`.
 
 ---
 
@@ -387,7 +387,7 @@ const statusQuery = useQuery({
 const status = statusQuery.data;
 ```
 
-Reset the form when the modal closes or the assignment changes by giving the form part its own keyed component or by clearing `text`, `files` and `formError` in the close handler and in a `key={instance}` on the form; do not use an effect that calls `setState`. Render order for the status panel: `statusQuery.isLoading` shows the existing spinner, `statusQuery.isError` shows `<LoadErrorState onRetry={() => void statusQuery.refetch()} />`, otherwise the existing status row. Delete the `assignmentModal.loadStatusError` toast and key if unused elsewhere.
+Reset the form when the modal closes or the assignment changes by giving the form part its own keyed component or by clearing `text`, `files` and `formError` in the close handler and in a `key={instance}` on the form; do not use an effect that calls `setState`. Use `canSubmitAssignment(status)` to decide whether to render the submission form (preserving the behavior that submitted and graded assignments do not show the form). Render order for the status panel: `statusQuery.isLoading` shows the existing spinner, `statusQuery.isError` shows `<LoadErrorState onRetry={() => void statusQuery.refetch()} />`, otherwise the existing status row. Delete the `assignmentModal.loadStatusError` toast and key if unused elsewhere.
 
 - [ ] **Step 4: Replace `handleSubmit` with a mutation**
 
@@ -411,7 +411,7 @@ const submitMutation = useMutation({
 
 - [ ] **Step 5: Verify and commit** (after diff approval)
 
-`pnpm --filter @universe/uni-hub test && typecheck && lint`. Commit: `refactor(uni-hub): load and submit assignments with TanStack Query`.
+`pnpm --filter @universe/uni-hub test && pnpm typecheck && pnpm lint`. Commit: `refactor(uni-hub): load and submit assignments with TanStack Query`.
 
 ---
 

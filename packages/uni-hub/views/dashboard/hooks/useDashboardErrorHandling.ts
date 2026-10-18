@@ -14,10 +14,18 @@ export function useDashboardErrorHandling(): void {
   const queryClient = useQueryClient();
   const toast = useToast();
   const { formatMessage } = useLanguage();
-  const { error, errorUpdatedAt, isOfflineData } = useDashboardData();
+  const { error, errorUpdatedAt, isOfflineData, platformError } = useDashboardData();
   const handledErrorAt = useRef(0);
 
   useEffect(() => {
+    if (platformError && isUnauthorizedError(platformError)) {
+      toast.error(formatMessage('dashboard.sessionExpired'));
+      endSession(queryClient);
+      router.push('/login');
+
+      return;
+    }
+
     if (!error || errorUpdatedAt === handledErrorAt.current || isMoodleUnlinked()) {
       return;
     }
@@ -39,5 +47,14 @@ export function useDashboardErrorHandling(): void {
     } else {
       toast.error(formatMessage('dashboard.loadError'));
     }
-  }, [error, errorUpdatedAt, isOfflineData, toast, formatMessage, queryClient, router]);
+  }, [
+    error,
+    errorUpdatedAt,
+    isOfflineData,
+    platformError,
+    toast,
+    formatMessage,
+    queryClient,
+    router,
+  ]);
 }
