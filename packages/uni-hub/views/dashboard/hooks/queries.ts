@@ -82,11 +82,6 @@ export function dashboardQueryOptions(
   });
 }
 
-export const platformNotificationsQueryOptions = queryOptions({
-  queryKey: ['platform-notifications'] as const,
-  queryFn: () => loadPlatformNotifications(),
-});
-
 export const profileQueryOptions = queryOptions({
   queryKey: moodleKeys.profile(),
   queryFn: async () => {
@@ -96,4 +91,19 @@ export const profileQueryOptions = queryOptions({
 
     return response.data;
   },
+});
+
+export const notificationKeys = {
+  all: ['notifications'] as const,
+  platform: () => [...notificationKeys.all, 'platform'] as const,
+};
+
+export const markNotificationReadMutationKey = ['notifications', 'read'] as const;
+
+export const markAllNotificationsReadMutationKey = ['notifications', 'read-all'] as const;
+
+export const platformNotificationsQueryOptions = queryOptions({
+  queryKey: notificationKeys.platform(),
+  queryFn: loadPlatformNotifications,
+  staleTime: 60 * 1000,
 });

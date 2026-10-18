@@ -81,6 +81,7 @@ export const en = {
   'header.notifications': 'Notifications',
   'header.notifications.empty': 'No notifications',
   'header.notifications.unreadItem': 'Unread:',
+  'header.notifications.markAllRead': 'Mark all as read',
   'header.moodleConnected': 'Connected',
   'header.moodleNotConnected': 'Not connected',
   'header.moodleChange': 'Change account',
@@ -595,6 +596,7 @@ export const en = {
   'opportunities.applicantsModal.close': 'Close',
 
   // Platform Notifications
+  'notifications.error.markReadFailed': 'Failed to update notification status',
   'notifications.opportunityApplicationStatus.title': 'Opportunity Application Status',
   'notifications.opportunityApplicationStatus.message':
     'Application status for "{opportunityTitle}" changed to: {status}.',

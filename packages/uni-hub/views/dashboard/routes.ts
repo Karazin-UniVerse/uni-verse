@@ -1,10 +1,11 @@
+import { OPPORTUNITIES_ROUTE } from '@core/constants/routes';
 import { NAV_KEY, type NavKey, type StudyView } from './constants';
 
 export const ROUTE = {
   Wall: '/wall',
   Study: '/study',
   Schedule: '/schedule',
-  Opportunities: '/opportunities',
+  Opportunities: OPPORTUNITIES_ROUTE,
   ConnectMoodle: '/connect-moodle',
 } as const;
 

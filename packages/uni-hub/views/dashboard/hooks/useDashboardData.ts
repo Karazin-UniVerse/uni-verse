@@ -151,7 +151,7 @@ export function useDashboardData({
 
     const [result] = await Promise.all([refetch(), refetchPlatform()]);
 
-    if (!result.isError) {
+    if (!result?.isError) {
       toast.success(formatMessage('dashboard.syncSuccess'));
     }
   }, [enabled, refetch, refetchPlatform, toast, formatMessage]);

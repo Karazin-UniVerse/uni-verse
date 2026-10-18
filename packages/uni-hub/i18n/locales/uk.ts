@@ -79,6 +79,7 @@ export const uk = {
   'header.notifications': 'Сповіщення',
   'header.notifications.empty': 'Немає сповіщень',
   'header.notifications.unreadItem': 'Непрочитане:',
+  'header.notifications.markAllRead': 'Позначити всі як прочитані',
   'header.moodleConnected': 'Підключено',
   'header.moodleNotConnected': 'Не підключено',
   'header.moodleChange': 'Змінити акаунт',
@@ -598,6 +599,7 @@ export const uk = {
   'opportunities.applicantsModal.close': 'Закрити',
 
   // Platform Notifications
+  'notifications.error.markReadFailed': 'Не вдалося оновити статус сповіщення',
   'notifications.opportunityApplicationStatus.title': 'Статус заявки на можливість',
   'notifications.opportunityApplicationStatus.message':
     'Статус заявки на «{opportunityTitle}» змінено на: {status}.',

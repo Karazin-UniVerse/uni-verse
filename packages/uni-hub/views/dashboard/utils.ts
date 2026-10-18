@@ -206,6 +206,7 @@ export function toNotificationListItem(
     time: createdAt.toLocaleString(localeTag),
     dateTime: createdAt.toISOString(),
     isRead: notification.read,
+    link: notification.link ?? undefined,
   };
 }
 
