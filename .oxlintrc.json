@@ -1,10 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "react", "unicorn", "oxc", "import"],
-  "jsPlugins": [
-    "./configs/oxlint/plugins/universe-rules.mjs",
-    { "name": "ts-eslint", "specifier": "@typescript-eslint/eslint-plugin" }
-  ],
+  "jsPlugins": ["./configs/oxlint/plugins/universe-rules.mjs"],
   "env": {
     "browser": true,
     "node": true,
@@ -211,6 +208,12 @@
     {
       "files": ["packages/backend/**/*.controller.ts"],
       "rules": {
+        "typescript/explicit-function-return-type": [
+          "error",
+          {
+            "allowExpressions": true
+          }
+        ],
         "no-restricted-imports": [
           "error",
           {
@@ -229,18 +232,19 @@
                 "message": "Backend cannot import frontend or React libraries."
               },
               {
-                "group": ["**/prisma.service", "**/prisma.module"],
+                "group": [
+                  "**/prisma.service",
+                  "**/prisma.module",
+                  "../**/prisma.service",
+                  "../**/prisma.module",
+                  "../../**/prisma.service",
+                  "../../**/prisma.module"
+                ],
                 "message": "Controllers must not import PrismaService directly. Go through a service."
               }
             ]
           }
         ]
-      }
-    },
-    {
-      "files": ["packages/backend/**/*.controller.ts"],
-      "rules": {
-        "ts-eslint/explicit-function-return-type": ["error", { "allowExpressions": true }]
       }
     },
     {

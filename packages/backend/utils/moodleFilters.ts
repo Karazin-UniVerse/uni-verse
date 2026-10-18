@@ -37,10 +37,10 @@ export function normalizeMoodleText(text?: string | null): string {
 }
 
 export interface Course {
+  [key: string]: unknown;
   fullname: string;
   shortname?: string;
   progress?: number | null;
-  [key: string]: unknown;
 }
 
 export enum CourseStatus {
