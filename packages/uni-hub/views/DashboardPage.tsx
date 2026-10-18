@@ -68,23 +68,50 @@ const DashboardPage: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const requestedTab = searchParams.get('tab');
   const requestedView = searchParams.get('view');
-  const [selection, setSelection] = useState<{ requestedTab: string | null; key: NavKey } | null>(
-    null,
-  );
-  const [studyViewSelection, setStudyViewSelection] = useState<{
-    requestedView: string | null;
-    view: StudyView;
-  } | null>(null);
   const requestedKey = requestedTab && isNavKey(requestedTab) ? requestedTab : NAV_KEY.Overview;
   const requestedStudyView =
     requestedView && isStudyView(requestedView) ? requestedView : STUDY_VIEW.Subjects;
-  const selectedKey = selection?.requestedTab === requestedTab ? selection.key : requestedKey;
-  const studyView =
-    studyViewSelection?.requestedView === requestedView
-      ? studyViewSelection.view
-      : requestedStudyView;
-  const setActiveKey = (key: NavKey): void => setSelection({ requestedTab, key });
-  const setStudyView = (view: StudyView): void => setStudyViewSelection({ requestedView, view });
+
+  const selectedKey = requestedKey;
+  const studyView = requestedStudyView;
+
+  const updateNavigation = useCallback(
+    (key: NavKey, view?: StudyView): void => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      params.set('tab', key);
+
+      if (key === NAV_KEY.Study && view) {
+        params.set('view', view);
+      } else if (key !== NAV_KEY.Study) {
+        params.delete('view');
+      }
+
+      router.push(`/?${params.toString()}`);
+    },
+    [router, searchParams],
+  );
+
+  const setActiveKey = useCallback(
+    (key: NavKey): void => {
+      updateNavigation(key);
+    },
+    [updateNavigation],
+  );
+
+  const setStudyView = useCallback(
+    (view: StudyView): void => {
+      updateNavigation(NAV_KEY.Study, view);
+    },
+    [updateNavigation],
+  );
+
+  const navigateTo = useCallback(
+    (key: NavKey, view?: StudyView): void => {
+      updateNavigation(key, view);
+    },
+    [updateNavigation],
+  );
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [selectedDueUnixSec, setSelectedDueUnixSec] = useState<number | undefined>();
 
@@ -175,14 +202,6 @@ const DashboardPage: React.FC = () => {
         router.push('/login');
       },
     });
-  };
-
-  const navigateTo = (key: NavKey, view?: StudyView) => {
-    setActiveKey(key);
-
-    if (view) {
-      setStudyView(view);
-    }
   };
 
   const renderStudyView = () => {
