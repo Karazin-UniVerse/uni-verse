@@ -2,12 +2,12 @@ import { queryOptions } from '@tanstack/react-query';
 import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import type { MoodleQueryOptions } from '@uni-hub/queries/moodle/queries';
 import { moodleApi } from '@uni-hub/services/api.moodle';
+import { clearUserSessionStorage } from '@uni-hub/services/api.session';
 import { notificationsApi, type PlatformNotification } from '@uni-hub/services/api.notifications';
 import type { DashboardData } from '../types';
 import {
   assembleDashboardData,
   buildAssignmentParams,
-  clearUserSessionStorage,
   isMoodleUnlinked,
   isUnauthorizedError,
   persistDashboardSnapshot,

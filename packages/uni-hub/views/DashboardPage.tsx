@@ -36,7 +36,8 @@ import { formatLastSync } from './dashboard/tabs/helpers';
 import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import { invalidateOpportunities } from './dashboard/tabs/opportunities/cache';
 import { useDashboardData } from './dashboard/hooks/useDashboardData';
-import { clearUserSessionStorage } from './dashboard/hooks/helpers';
+import { endSession } from '@uni-hub/services/api.session';
+import { useLogout } from '@uni-hub/hooks/useAuthMutations';
 import { useMoodleLink } from './dashboard/hooks/useMoodleLink';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
@@ -119,7 +120,10 @@ const DashboardPage: React.FC = () => {
       dateTo,
       hideCompleted,
       enabled: features.isMoodleIntegrationEnabled && isMoodleLinked && isLoggedIn(),
-      onUnauthorized: () => router.push('/login'),
+      onUnauthorized: (): void => {
+        endSession(queryClient);
+        router.push('/login');
+      },
     });
 
   const activeStudentProfile = studentProfile ?? fallbackStudentProfile;
@@ -149,9 +153,14 @@ const DashboardPage: React.FC = () => {
     menuButton?.focus();
   }, []);
 
-  const handleLogout = () => {
-    clearUserSessionStorage();
-    router.push('/login');
+  const logout = useLogout();
+
+  const handleLogout = (): void => {
+    logout.mutate(undefined, {
+      onSettled: () => {
+        router.push('/login');
+      },
+    });
   };
 
   const renderActiveContent = () => {

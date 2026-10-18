@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { ConfirmModal } from '@ui';
 import { useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { authApi, getErrorMessage } from '@uni-hub/services/api';
+import { getErrorMessage } from '@uni-hub/services/api';
+import { useUnlinkMoodle } from '@uni-hub/hooks/useAuthMutations';
 
 export interface UnlinkMoodleModalProps {
   onClose: () => void;
@@ -18,14 +19,12 @@ export const UnlinkMoodleModal: React.FC<UnlinkMoodleModalProps> = ({
   open,
 }) => {
   const { formatMessage } = useLanguage();
-  const [loading, setLoading] = useState(false);
+  const unlinkMoodle = useUnlinkMoodle();
   const toast = useToast();
 
-  const handleUnlink = async () => {
-    setLoading(true);
-
+  const handleUnlink = async (): Promise<void> => {
     try {
-      await authApi.unlinkMoodleAccount();
+      await unlinkMoodle.mutateAsync();
 
       toast.success(formatMessage('login.unlinkMoodleSuccess'));
       onSuccess();
@@ -33,8 +32,6 @@ export const UnlinkMoodleModal: React.FC<UnlinkMoodleModalProps> = ({
       const message = getErrorMessage(err, formatMessage('login.unlinkMoodleError'));
 
       toast.error(message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -48,7 +45,7 @@ export const UnlinkMoodleModal: React.FC<UnlinkMoodleModalProps> = ({
       cancelLabel={formatMessage('common.cancel')}
       confirmLabel={formatMessage('login.unlinkMoodleConfirm')}
       loadingLabel={formatMessage('login.unlinkMoodleLoading')}
-      loading={loading}
+      loading={unlinkMoodle.isPending}
       closeLabel={formatMessage('modal.close')}
       variant="danger"
     />
