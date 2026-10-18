@@ -1,11 +1,15 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 
 const mockStorage = vi.hoisted(() => ({}) as Record<string, string>);
 const mockPush = vi.fn();
 const mockReplace = vi.fn();
+const mockInvalidateQueries = vi.fn();
+const mockRemoveQueries = vi.fn();
 let currentPathname = '/study';
+let capturedLinkModalProps: { onSuccess?: () => void; open?: boolean } | null = null;
+let capturedUnlinkModalProps: { onSuccess?: () => void; open?: boolean } | null = null;
 
 vi.mock('@uni-hub/services/api', () => ({
   safeStorage: {
@@ -34,8 +38,8 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({
-    invalidateQueries: vi.fn(),
-    removeQueries: vi.fn(),
+    invalidateQueries: mockInvalidateQueries,
+    removeQueries: mockRemoveQueries,
   }),
 }));
 
@@ -118,8 +122,16 @@ vi.mock('@uni-hub/components/gamification', () => ({
 }));
 
 vi.mock('@uni-hub/components/auth', () => ({
-  LinkMoodleModal: () => null,
-  UnlinkMoodleModal: () => null,
+  LinkMoodleModal: (props: { onSuccess?: () => void; open?: boolean }) => {
+    capturedLinkModalProps = props;
+
+    return props.open ? <div data-testid="link-modal" /> : null;
+  },
+  UnlinkMoodleModal: (props: { onSuccess?: () => void; open?: boolean }) => {
+    capturedUnlinkModalProps = props;
+
+    return props.open ? <div data-testid="unlink-modal" /> : null;
+  },
   LinkMoodleMode: { CONNECT: 'connect', CHANGE: 'change' },
 }));
 
@@ -194,5 +206,39 @@ describe('DashboardShell', () => {
     );
 
     expect(screen.getByText('Study Children')).toBeInTheDocument();
+  });
+
+  it('invalidates moodle queries and completes link on LinkMoodleModal success', () => {
+    useMoodleStore.setState({ isMoodleLinked: false, isLinkModalOpen: true });
+
+    render(
+      <DashboardShell>
+        <div>Content</div>
+      </DashboardShell>,
+    );
+
+    act(() => {
+      capturedLinkModalProps?.onSuccess?.();
+    });
+
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['moodle'] });
+    expect(useMoodleStore.getState().isMoodleLinked).toBe(true);
+  });
+
+  it('removes moodle queries and completes unlink on UnlinkMoodleModal success', () => {
+    useMoodleStore.setState({ isMoodleLinked: true, isUnlinkModalOpen: true });
+
+    render(
+      <DashboardShell>
+        <div>Content</div>
+      </DashboardShell>,
+    );
+
+    act(() => {
+      capturedUnlinkModalProps?.onSuccess?.();
+    });
+
+    expect(mockRemoveQueries).toHaveBeenCalledWith({ queryKey: ['moodle'] });
+    expect(useMoodleStore.getState().isMoodleLinked).toBe(false);
   });
 });

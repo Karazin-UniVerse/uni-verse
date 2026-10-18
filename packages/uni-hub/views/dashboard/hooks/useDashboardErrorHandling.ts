@@ -26,12 +26,16 @@ export function useDashboardErrorHandling({
   const toast = useToast();
   const { formatMessage } = useLanguage();
   const handledErrorAt = useRef(0);
+  const handledPlatformError = useRef(false);
 
   useEffect(() => {
     if (platformError && isUnauthorizedError(platformError)) {
-      toast.error(formatMessage('dashboard.sessionExpired'));
-      endSession(queryClient);
-      router.replace('/login');
+      if (!handledPlatformError.current) {
+        handledPlatformError.current = true;
+        toast.error(formatMessage('dashboard.sessionExpired'));
+        endSession(queryClient);
+        router.replace('/login');
+      }
 
       return;
     }
