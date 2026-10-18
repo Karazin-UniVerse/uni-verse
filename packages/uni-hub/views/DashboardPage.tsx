@@ -37,6 +37,7 @@ import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import { invalidateOpportunities } from './dashboard/tabs/opportunities/cache';
 import { useDashboardData } from './dashboard/hooks/useDashboardData';
 import { endSession } from '@uni-hub/services/api.session';
+import { useLogout } from '@uni-hub/hooks/useAuthMutations';
 import { useMoodleLink } from './dashboard/hooks/useMoodleLink';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
@@ -152,9 +153,14 @@ const DashboardPage: React.FC = () => {
     menuButton?.focus();
   }, []);
 
+  const logout = useLogout();
+
   const handleLogout = (): void => {
-    endSession(queryClient);
-    router.push('/login');
+    logout.mutate(undefined, {
+      onSettled: () => {
+        router.push('/login');
+      },
+    });
   };
 
   const renderActiveContent = () => {
