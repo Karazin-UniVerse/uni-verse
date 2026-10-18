@@ -1,7 +1,8 @@
-import { moodleApi } from '@uni-hub/services/api';
+import { moodleApi, notificationsApi } from '@uni-hub/services/api';
+import type { PlatformNotification } from '@uni-hub/services/api';
 import { asList } from '@uni-hub/utils/arrays';
 import { isBrowser } from '@uni-hub/utils/browser';
-import type { Grade, Assignment } from '@core/types/moodle';
+import type { Grade, Assignment, Notification } from '@core/types/moodle';
 import type { StudentProfile } from '@core/types';
 import type { DashboardData } from '../types';
 import { fallbackStudentProfile } from '../constants';
@@ -63,15 +64,46 @@ export type MoodleApiResponseTuple = [
   Awaited<ReturnType<typeof moodleApi.getStatistics>>,
 ];
 
-export function assembleDashboardData([
-  coursesRes,
-  gradesRes,
-  assignmentsRes,
-  eventsRes,
-  notificationsRes,
-  statsRes,
-]: MoodleApiResponseTuple): DashboardData {
+export function mapPlatformNotification(item: PlatformNotification): Notification {
   return {
+    id: item.id,
+    subject: item.title,
+    timecreated: Math.floor(new Date(item.createdAt).getTime() / 1000),
+    read: item.isRead,
+    message: item.message,
+    link: item.link ?? null,
+  };
+}
+
+export function applyPlatformNotifications(
+  dashboard: DashboardData,
+  platformNotifications: PlatformNotification[],
+): DashboardData {
+  const mapped = platformNotifications.map(mapPlatformNotification);
+  const existingIds = new Set(mapped.map((n) => n.id));
+  const filteredMoodle = dashboard.notifications.filter((n) => !existingIds.has(n.id));
+  const merged = [...mapped, ...filteredMoodle].sort((a, b) => b.timecreated - a.timecreated);
+  const unreadCount = merged.filter((n) => !n.read).length;
+
+  return {
+    ...dashboard,
+    notifications: merged,
+    unreadCount,
+  };
+}
+
+export function assembleDashboardData(
+  [
+    coursesRes,
+    gradesRes,
+    assignmentsRes,
+    eventsRes,
+    notificationsRes,
+    statsRes,
+  ]: MoodleApiResponseTuple,
+  platformNotificationsRes?: Awaited<ReturnType<typeof notificationsApi.getMyNotifications>> | null,
+): DashboardData {
+  const base: DashboardData = {
     courses: asList(coursesRes?.data),
     grades: resolveGradesResponse(gradesRes),
     assignments: asList(assignmentsRes?.data),
@@ -80,6 +112,14 @@ export function assembleDashboardData([
     unreadCount: notificationsRes?.data?.unreadcount || 0,
     statistics: statsRes?.data || null,
   };
+
+  const platformItems = platformNotificationsRes?.data;
+
+  if (platformItems && platformItems.length > 0) {
+    return applyPlatformNotifications(base, platformItems);
+  }
+
+  return base;
 }
 
 export type BuildAssignmentParamsOptions = {
@@ -296,6 +336,7 @@ export interface BuildFallbackDataOptions {
   hideCompleted: boolean;
   dateFrom: string;
   dateTo: string;
+  platformNotifications?: PlatformNotification[];
 }
 
 export function buildFallbackData({
@@ -304,6 +345,7 @@ export function buildFallbackData({
   hideCompleted,
   dateFrom,
   dateTo,
+  platformNotifications,
 }: BuildFallbackDataOptions): DashboardData {
   const fallbackAssignments = filterFallbackAssignments({
     assignments: cachedData.assignments ?? previousData.assignments,
@@ -312,11 +354,17 @@ export function buildFallbackData({
     dateTo,
   });
 
-  return {
+  const base: DashboardData = {
     ...previousData,
     ...cachedData,
     assignments: fallbackAssignments,
   };
+
+  if (platformNotifications && platformNotifications.length > 0) {
+    return applyPlatformNotifications(base, platformNotifications);
+  }
+
+  return base;
 }
 
 export interface DashboardQueryState {

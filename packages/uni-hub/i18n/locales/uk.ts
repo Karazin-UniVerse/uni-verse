@@ -79,6 +79,7 @@ export const uk = {
   'header.notifications': 'Сповіщення',
   'header.notifications.empty': 'Немає сповіщень',
   'header.notifications.unreadItem': 'Непрочитане:',
+  'header.notifications.markAllRead': 'Позначити всі як прочитані',
   'header.moodleConnected': 'Підключено',
   'header.moodleNotConnected': 'Не підключено',
   'header.moodleChange': 'Змінити акаунт',
@@ -592,6 +593,14 @@ export const uk = {
   'opportunities.applicantsModal.underReview': 'На розгляд',
   'opportunities.applicantsModal.reject': 'Відхилити',
   'opportunities.applicantsModal.close': 'Закрити',
+
+  // Platform Notifications
+  'notifications.opportunity.newApplication': 'Нова заявка від {applicantName} на «{title}»',
+  'notifications.opportunity.statusAccepted': 'Вашу заявку на «{title}» прийнято',
+  'notifications.opportunity.statusRejected': 'Вашу заявку на «{title}» відхилено',
+  'notifications.opportunity.statusInReview': 'Ваша заявка на «{title}» розглядається',
+  'notifications.opportunity.published': 'Вашу можливість «{title}» опубліковано',
+  'notifications.opportunity.rejected': 'Вашу можливість «{title}» відхилено: {reason}',
 };
 
 export type TranslationKey = keyof typeof uk;

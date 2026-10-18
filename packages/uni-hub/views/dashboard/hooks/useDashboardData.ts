@@ -4,9 +4,11 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useToast } from '@una';
 import type { StudentProfile } from '@core/types';
+import { isLoggedIn } from '@core/utils/auth';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { DashboardData } from '../types';
 import {
+  applyPlatformNotifications,
   buildFallbackData,
   deriveDashboardState,
   getInitialSyncTime,
@@ -16,7 +18,11 @@ import {
   loadCachedDashboardData,
   type DashboardState,
 } from './helpers';
-import { dashboardQueryOptions, profileQueryOptions } from './queries';
+import {
+  dashboardQueryOptions,
+  platformNotificationsQueryOptions,
+  profileQueryOptions,
+} from './queries';
 
 const EMPTY_DASHBOARD_DATA: DashboardData = {
   courses: [],
@@ -76,8 +82,21 @@ export function useDashboardData({
     initialData: () => getInitialUserProfile() ?? undefined,
     initialDataUpdatedAt: 0,
   });
+  const platformNotificationsQuery = useQuery({
+    ...platformNotificationsQueryOptions,
+    enabled: enabled && isLoggedIn(),
+    refetchOnWindowFocus: false,
+  });
 
   const { error, errorUpdatedAt, data: queryData, isError } = dashboardQuery;
+  const { error: platformError } = platformNotificationsQuery;
+
+  useEffect(() => {
+    if (platformError && isUnauthorizedError(platformError)) {
+      toast.error(formatMessage('dashboard.sessionExpired'));
+      onUnauthorized();
+    }
+  }, [platformError, toast, formatMessage, onUnauthorized]);
 
   const snapshot = useMemo(
     () => (isError && queryData === undefined ? readDashboardSnapshot() : undefined),
@@ -118,21 +137,29 @@ export function useDashboardData({
       hideCompleted,
       dateFrom,
       dateTo,
+      platformNotifications: platformNotificationsQuery.data,
     });
+  } else if (platformNotificationsQuery.data && platformNotificationsQuery.data.length > 0) {
+    data = applyPlatformNotifications(data, platformNotificationsQuery.data);
   }
 
   const { refetch } = dashboardQuery;
+  const { refetch: refetchNotifications } = platformNotificationsQuery;
+
   const refresh = useCallback(async (): Promise<void> => {
     if (!enabled) {
       return;
     }
 
-    const result = await refetch();
+    const [result] = await Promise.all([
+      refetch(),
+      isLoggedIn() ? refetchNotifications() : Promise.resolve(null),
+    ]);
 
-    if (!result.isError) {
+    if (!result?.isError) {
       toast.success(formatMessage('dashboard.syncSuccess'));
     }
-  }, [enabled, refetch, toast, formatMessage]);
+  }, [enabled, refetch, refetchNotifications, toast, formatMessage]);
 
   return {
     loading: state.loading,

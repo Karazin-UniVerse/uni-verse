@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   assembleDashboardData,
+  mapPlatformNotification,
+  applyPlatformNotifications,
   deriveDashboardState,
   parseDateFilterSeconds,
   resolveGradesResponse,
@@ -363,5 +365,72 @@ describe('deriveDashboardState', () => {
         dataUpdatedAt: 0,
       }).isOfflineData,
     ).toBe(false);
+  });
+});
+
+describe('mapPlatformNotification', () => {
+  it('maps PlatformNotification to Notification with link preserved', () => {
+    const platform = {
+      id: 'plat-1',
+      userId: 'user-1',
+      type: 'OPPORTUNITY_NEW_APPLICATION',
+      title: 'New application',
+      message: 'Someone applied',
+      link: '/opportunities/123',
+      isRead: false,
+      createdAt: '2026-04-18T12:00:00.000Z',
+    };
+
+    const mapped = mapPlatformNotification(platform);
+
+    expect(mapped).toEqual({
+      id: 'plat-1',
+      subject: 'New application',
+      timecreated: Math.floor(new Date('2026-04-18T12:00:00.000Z').getTime() / 1000),
+      read: false,
+      message: 'Someone applied',
+      link: '/opportunities/123',
+    });
+  });
+});
+
+describe('applyPlatformNotifications', () => {
+  it('merges platform notifications with existing moodle notifications and sorts desc', () => {
+    const baseDashboard = {
+      courses: [],
+      grades: [],
+      assignments: [],
+      events: [],
+      notifications: [
+        {
+          id: 1,
+          subject: 'Moodle note',
+          timecreated: 1000,
+          read: true,
+        },
+      ],
+      unreadCount: 0,
+      statistics: null,
+    };
+
+    const platformItems = [
+      {
+        id: 'plat-1',
+        userId: 'u1',
+        type: 'OPP',
+        title: 'Platform note',
+        message: 'Hello',
+        link: '/opportunities/1',
+        isRead: false,
+        createdAt: '1970-01-01T00:33:20.000Z', // 2000 sec
+      },
+    ];
+
+    const result = applyPlatformNotifications(baseDashboard, platformItems);
+
+    expect(result.notifications).toHaveLength(2);
+    expect(result.notifications[0].id).toBe('plat-1');
+    expect(result.notifications[1].id).toBe(1);
+    expect(result.unreadCount).toBe(1);
   });
 });

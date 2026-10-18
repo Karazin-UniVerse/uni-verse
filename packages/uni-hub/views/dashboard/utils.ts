@@ -79,22 +79,56 @@ function truncateText(text: string, maxLength: number): string {
   return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
 }
 
+const NOTIFICATION_I18N_PREFIX = 'notifications.';
+
+export function formatPlatformMessage(
+  rawMessage: string,
+  formatMessage?: (key: TranslationKey, params?: Record<string, string | number>) => string,
+): string {
+  if (!rawMessage.startsWith(NOTIFICATION_I18N_PREFIX) || !formatMessage) {
+    return rawMessage;
+  }
+
+  const separatorIndex = rawMessage.indexOf('|');
+  const key = (
+    separatorIndex === -1 ? rawMessage : rawMessage.slice(0, separatorIndex)
+  ) as TranslationKey;
+
+  if (separatorIndex === -1) {
+    return formatMessage(key);
+  }
+
+  try {
+    const params = JSON.parse(rawMessage.slice(separatorIndex + 1)) as Record<
+      string,
+      string | number
+    >;
+
+    return formatMessage(key, params);
+  } catch {
+    return formatMessage(key);
+  }
+}
+
 export function toNotificationListItem(
   notification: Notification,
   localeTag: string,
+  formatMessage?: (key: TranslationKey, params?: Record<string, string | number>) => string,
 ): NotificationListItem {
   const createdAt = new Date(notification.timecreated * 1000);
+  const rawMessage = notification.message ?? notification.fullmessage ?? '';
+  const message = notification.message
+    ? formatPlatformMessage(rawMessage, formatMessage)
+    : stripHtml(rawMessage);
 
   return {
     id: notification.id,
     title: notification.subject,
-    message: truncateText(
-      stripHtml(notification.fullmessage ?? ''),
-      NOTIFICATION_MESSAGE_MAX_LENGTH,
-    ),
+    message: truncateText(message, NOTIFICATION_MESSAGE_MAX_LENGTH),
     time: createdAt.toLocaleString(localeTag),
     dateTime: createdAt.toISOString(),
     isRead: notification.read,
+    link: notification.link ?? undefined,
   };
 }
 

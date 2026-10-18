@@ -81,6 +81,7 @@ export const en = {
   'header.notifications': 'Notifications',
   'header.notifications.empty': 'No notifications',
   'header.notifications.unreadItem': 'Unread:',
+  'header.notifications.markAllRead': 'Mark all as read',
   'header.moodleConnected': 'Connected',
   'header.moodleNotConnected': 'Not connected',
   'header.moodleChange': 'Change account',
@@ -589,4 +590,12 @@ export const en = {
   'opportunities.applicantsModal.underReview': 'Under Review',
   'opportunities.applicantsModal.reject': 'Reject',
   'opportunities.applicantsModal.close': 'Close',
+
+  // Platform Notifications
+  'notifications.opportunity.newApplication': 'New application from {applicantName} for "{title}"',
+  'notifications.opportunity.statusAccepted': 'Your application for "{title}" was accepted',
+  'notifications.opportunity.statusRejected': 'Your application for "{title}" was rejected',
+  'notifications.opportunity.statusInReview': 'Your application for "{title}" is now in review',
+  'notifications.opportunity.published': 'Your opportunity "{title}" was published',
+  'notifications.opportunity.rejected': 'Your opportunity "{title}" was rejected: {reason}',
 } as const satisfies Record<TranslationKey, string>;

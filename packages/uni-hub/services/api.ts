@@ -14,3 +14,5 @@ export { AuthApi, authApi } from './api.auth';
 export { MoodleApi, moodleApi } from './api.moodle';
 export type { GetAssignmentsParams } from './api.moodle';
 export { OpportunitiesApi, opportunitiesApi } from './api.opportunities';
+export { NotificationsApi, notificationsApi } from './api.notifications';
+export type { PlatformNotification, MarkAllAsReadResponse } from './api.notifications';

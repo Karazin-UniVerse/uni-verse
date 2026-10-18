@@ -2,6 +2,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import type { MoodleQueryOptions } from '@uni-hub/queries/moodle/queries';
 import { moodleApi } from '@uni-hub/services/api.moodle';
+import { notificationsApi, type PlatformNotification } from '@uni-hub/services/api';
 import { clearUserSessionStorage } from '@uni-hub/services/api.session';
 import type { DashboardData } from '../types';
 import {
@@ -60,4 +61,35 @@ export const profileQueryOptions = queryOptions({
 
     return response.data;
   },
+});
+
+export const notificationKeys = {
+  all: ['notifications'] as const,
+  platform: () => [...notificationKeys.all, 'platform'] as const,
+};
+
+export const markNotificationReadMutationKey = (
+  id: string,
+): readonly ['notifications', 'read', string] => ['notifications', 'read', id] as const;
+
+export const markAllNotificationsReadMutationKey = ['notifications', 'read-all'] as const;
+
+export async function loadPlatformNotifications(): Promise<PlatformNotification[]> {
+  try {
+    const res = await notificationsApi.getMyNotifications();
+
+    return res.data;
+  } catch (error) {
+    if (isUnauthorizedError(error)) {
+      clearUserSessionStorage();
+    }
+
+    throw error;
+  }
+}
+
+export const platformNotificationsQueryOptions = queryOptions({
+  queryKey: notificationKeys.platform(),
+  queryFn: loadPlatformNotifications,
+  staleTime: 60 * 1000,
 });

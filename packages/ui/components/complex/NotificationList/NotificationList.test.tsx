@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { NotificationList } from './NotificationList';
 import type { NotificationListItem } from './NotificationList.types';
 
@@ -11,6 +11,7 @@ const items: NotificationListItem[] = [
     time: '12 Sep 2026',
     dateTime: '2026-09-12T10:30:00.000Z',
     isRead: false,
+    link: '/opportunities/opp-1',
   },
   {
     id: 2,
@@ -84,5 +85,47 @@ describe('NotificationList Component', () => {
 
     expect(screen.getByText('Nothing here')).toBeInTheDocument();
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
+  });
+
+  it('should call onItemClick when a notification item is clicked', () => {
+    const onItemClick = vi.fn();
+
+    render(
+      <NotificationList
+        items={items}
+        heading="Notifications"
+        emptyLabel="Nothing here"
+        onItemClick={onItemClick}
+      />,
+    );
+
+    const firstItemButton = screen.getByRole('button', { name: /New assignment/i });
+
+    fireEvent.click(firstItemButton);
+
+    expect(onItemClick).toHaveBeenCalledTimes(1);
+    expect(onItemClick).toHaveBeenCalledWith(items[0]);
+  });
+
+  it('should render mark all read button and call onMarkAllRead on click', () => {
+    const onMarkAllRead = vi.fn();
+
+    render(
+      <NotificationList
+        items={items}
+        heading="Notifications"
+        emptyLabel="Nothing here"
+        markAllReadLabel="Mark all as read"
+        onMarkAllRead={onMarkAllRead}
+      />,
+    );
+
+    const markAllButton = screen.getByRole('button', { name: 'Mark all as read' });
+
+    expect(markAllButton).toBeInTheDocument();
+
+    fireEvent.click(markAllButton);
+
+    expect(onMarkAllRead).toHaveBeenCalledTimes(1);
   });
 });

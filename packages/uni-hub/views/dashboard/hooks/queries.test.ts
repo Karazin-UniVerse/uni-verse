@@ -10,8 +10,14 @@ vi.mock('@uni-hub/utils/browser', () => ({
 
 import { QueryClient } from '@tanstack/react-query';
 import { moodleApi } from '@uni-hub/services/api.moodle';
+import { notificationsApi } from '@uni-hub/services/api';
 import type { BuildAssignmentParamsOptions } from './helpers';
-import { dashboardQueryOptions, loadDashboardData } from './queries';
+import {
+  dashboardQueryOptions,
+  loadDashboardData,
+  loadPlatformNotifications,
+  notificationKeys,
+} from './queries';
 
 const filters: BuildAssignmentParamsOptions = {
   sortOrder: 'asc',
@@ -129,5 +135,44 @@ describe('dashboardQueryOptions', () => {
     expect(moodleApi.getAssignments).toHaveBeenCalledTimes(2);
 
     queryClient.clear();
+  });
+});
+
+describe('loadPlatformNotifications', () => {
+  it('loads platform notifications from notificationsApi', async () => {
+    const mockNotes = [
+      {
+        id: 'plat-1',
+        userId: 'u1',
+        type: 'OPP',
+        title: 'Title',
+        message: 'Message',
+        link: null,
+        isRead: false,
+        createdAt: '2026-04-18T00:00:00.000Z',
+      },
+    ];
+
+    vi.spyOn(notificationsApi, 'getMyNotifications').mockResolvedValue({ data: mockNotes });
+
+    const result = await loadPlatformNotifications();
+
+    expect(result).toEqual(mockNotes);
+  });
+
+  it('clears user session storage on 401 unauthorized', async () => {
+    vi.spyOn(notificationsApi, 'getMyNotifications').mockRejectedValue(
+      new Error('HTTP error 401: Unauthorized'),
+    );
+    storage.accessToken = 'token';
+
+    await expect(loadPlatformNotifications()).rejects.toThrow('401');
+    expect(storage.accessToken).toBeUndefined();
+  });
+});
+
+describe('notificationKeys', () => {
+  it('builds canonical notification keys', () => {
+    expect(notificationKeys.platform()).toEqual(['notifications', 'platform']);
   });
 });

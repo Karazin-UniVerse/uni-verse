@@ -10,6 +10,7 @@ import {
   getExamScoreDisplay,
   resolveNavKey,
   toNotificationListItem,
+  formatPlatformMessage,
   isStudyView,
   parseRouteId,
 } from './utils';
@@ -139,6 +140,58 @@ describe('dashboard utils', () => {
       );
 
       expect(item.message).toBe('a'.repeat(100));
+    });
+
+    it('passes through link and prefers message over fullmessage', () => {
+      const platformItem = toNotificationListItem(
+        {
+          id: 'plat-1',
+          subject: 'Opportunity update',
+          message: 'Simple text',
+          link: '/opportunities/123',
+          timecreated: 1_788_000_000,
+          read: true,
+        },
+        'en-US',
+      );
+
+      expect(platformItem.id).toBe('plat-1');
+      expect(platformItem.message).toBe('Simple text');
+      expect(platformItem.link).toBe('/opportunities/123');
+      expect(platformItem.isRead).toBe(true);
+    });
+  });
+
+  describe('formatPlatformMessage', () => {
+    const mockFormat = (key: string, params?: Record<string, string | number>) => {
+      if (key === 'notifications.opportunity.newApplication') {
+        return `New application from ${params?.applicantName ?? 'user'}`;
+      }
+
+      return key;
+    };
+
+    it('returns raw message if formatMessage is not provided or prefix missing', () => {
+      expect(formatPlatformMessage('raw message')).toBe('raw message');
+      expect(formatPlatformMessage('notifications.test')).toBe('notifications.test');
+    });
+
+    it('translates notification key without params', () => {
+      expect(
+        formatPlatformMessage('notifications.opportunity.newApplication', mockFormat as any),
+      ).toBe('New application from user');
+    });
+
+    it('translates notification key with json params', () => {
+      const payload = 'notifications.opportunity.newApplication|{"applicantName":"Alice"}';
+
+      expect(formatPlatformMessage(payload, mockFormat as any)).toBe('New application from Alice');
+    });
+
+    it('falls back to key if json parsing fails', () => {
+      const payload = 'notifications.opportunity.newApplication|invalid-json';
+
+      expect(formatPlatformMessage(payload, mockFormat as any)).toBe('New application from user');
     });
   });
 });
