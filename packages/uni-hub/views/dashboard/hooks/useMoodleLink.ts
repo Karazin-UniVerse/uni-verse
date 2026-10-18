@@ -63,6 +63,8 @@ export function useMoodleLink({
     setIsUnlinkModalOpen(false);
     setIsMoodleLinked(false);
     safeStorage.setItem('isMoodleLinked', 'false');
+    safeStorage.removeItem('universe_dashboard_data');
+    safeStorage.removeItem('universe_last_sync_time');
 
     onUnlinkSuccess?.();
   }, [onUnlinkSuccess]);

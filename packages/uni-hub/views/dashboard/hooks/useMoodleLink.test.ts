@@ -84,6 +84,9 @@ describe('useMoodleLink hook', () => {
   it('should execute handleUnlinkSuccess and trigger onUnlinkSuccess callback', () => {
     const onUnlinkSuccess = vi.fn();
 
+    mockStorage.universe_dashboard_data = '{"courses":[]}';
+    mockStorage.universe_last_sync_time = '1000';
+
     const { result } = renderHook(() =>
       useMoodleLink({
         onUnlinkSuccess,
@@ -95,6 +98,8 @@ describe('useMoodleLink hook', () => {
     });
 
     expect(mockStorage.isMoodleLinked).toBe('false');
+    expect(mockStorage.universe_dashboard_data).toBeUndefined();
+    expect(mockStorage.universe_last_sync_time).toBeUndefined();
     expect(onUnlinkSuccess).toHaveBeenCalledTimes(1);
   });
 });

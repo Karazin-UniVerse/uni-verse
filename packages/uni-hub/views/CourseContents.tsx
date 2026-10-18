@@ -29,7 +29,7 @@ import styles from './CourseContents.module.scss';
 
 const STUDY_SUBJECTS_HREF = `/?tab=${NAV_KEY.Study}&view=${STUDY_VIEW.Subjects}`;
 
-const getModuleIcon = (modname: CourseModuleName) => {
+const getModuleIcon = (modname: CourseModuleName): React.ReactNode => {
   switch (modname) {
     case COURSE_MODULE_NAMES.RESOURCE:
       return <File size={22} />;
