@@ -28,4 +28,21 @@ describe('useOpportunitiesStore', () => {
     expect(state.search).toBe('python');
     expect(state.paymentFilter).toBe('PAID');
   });
+
+  it('resets state back to catalog defaults via reset', () => {
+    const { setActiveSubTab, setSearch, setPaymentFilter, reset } =
+      useOpportunitiesStore.getState();
+
+    setActiveSubTab(OPPORTUNITY_SUB_TAB.MyApplications);
+    setSearch('python');
+    setPaymentFilter('PAID');
+
+    reset();
+
+    const state = useOpportunitiesStore.getState();
+
+    expect(state.activeSubTab).toBe(OPPORTUNITY_SUB_TAB.Catalog);
+    expect(state.search).toBe('');
+    expect(state.paymentFilter).toBe('');
+  });
 });

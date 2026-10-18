@@ -18,7 +18,9 @@ type MoodleState = {
   setDateTo: (dateTo: string) => void;
   setSortOrder: (sortOrder: SortOrder) => void;
   setHideCompleted: (hideCompleted: boolean) => void;
+  setLinked: (isLinked: boolean) => void;
   syncLinkedFromStorage: () => void;
+  resetSession: () => void;
   openLinkModal: (mode?: LinkMoodleMode) => void;
   closeLinkModal: () => void;
   openUnlinkModal: () => void;
@@ -27,7 +29,7 @@ type MoodleState = {
   completeUnlink: () => void;
 };
 
-const readLinkedFlag = (): boolean =>
+export const readLinkedFlag = (): boolean =>
   !isBrowser || safeStorage.getItem('isMoodleLinked') !== 'false';
 
 export const useMoodleStore = create<MoodleState>()((set) => ({
@@ -45,7 +47,24 @@ export const useMoodleStore = create<MoodleState>()((set) => ({
   setSortOrder: (sortOrder) => set({ sortOrder }),
   setHideCompleted: (hideCompleted) => set({ hideCompleted }),
 
+  setLinked: (isLinked) => {
+    safeStorage.setItem('isMoodleLinked', isLinked ? 'true' : 'false');
+    set({ isMoodleLinked: isLinked });
+  },
+
   syncLinkedFromStorage: () => set({ isMoodleLinked: readLinkedFlag() }),
+
+  resetSession: () =>
+    set({
+      dateFrom: '',
+      dateTo: '',
+      sortOrder: 'asc',
+      hideCompleted: false,
+      isMoodleLinked: readLinkedFlag(),
+      linkModalMode: LinkMoodleMode.CONNECT,
+      isLinkModalOpen: false,
+      isUnlinkModalOpen: false,
+    }),
 
   openLinkModal: (mode = LinkMoodleMode.CONNECT) =>
     set({ linkModalMode: mode, isLinkModalOpen: true }),

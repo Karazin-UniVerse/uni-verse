@@ -12,6 +12,7 @@ type OpportunitiesState = {
   setActiveSubTab: (activeSubTab: OpportunitySubTab) => void;
   setSearch: (search: string) => void;
   setPaymentFilter: (paymentFilter: OpportunityPaymentType | '') => void;
+  reset: () => void;
 };
 
 export const useOpportunitiesStore = create<OpportunitiesState>()((set) => ({
@@ -22,4 +23,10 @@ export const useOpportunitiesStore = create<OpportunitiesState>()((set) => ({
   setActiveSubTab: (activeSubTab) => set({ activeSubTab }),
   setSearch: (search) => set({ search }),
   setPaymentFilter: (paymentFilter) => set({ paymentFilter }),
+  reset: () =>
+    set({
+      activeSubTab: OPPORTUNITY_SUB_TAB.Catalog,
+      search: '',
+      paymentFilter: '',
+    }),
 }));

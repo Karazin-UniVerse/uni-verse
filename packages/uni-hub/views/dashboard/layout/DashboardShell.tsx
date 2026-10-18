@@ -22,7 +22,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { NAV_KEY, type NavKey } from '../constants';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useDashboardErrorHandling } from '../hooks/useDashboardErrorHandling';
-import { NAV_KEY_ROUTE, ROUTE, getNavKeyFromPathname } from '../routes';
+import { NAV_KEY_ROUTE, getNavKeyFromPathname } from '../routes';
 import { resolveNavKey } from '../utils';
 import { formatLastSync } from '../tabs/helpers';
 import { invalidateOpportunities } from '../tabs/opportunities/cache';
@@ -61,14 +61,19 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
   const completeLink = useMoodleStore((state) => state.completeLink);
   const completeUnlink = useMoodleStore((state) => state.completeUnlink);
 
-  useDashboardErrorHandling();
+  useDashboardErrorHandling({
+    error: dashboard.error,
+    errorUpdatedAt: dashboard.errorUpdatedAt,
+    isOfflineData: dashboard.isOfflineData,
+    platformError: dashboard.platformError,
+  });
 
   useEffect(() => {
     useMoodleStore.getState().syncLinkedFromStorage();
 
     return () => {
-      useMoodleStore.setState(useMoodleStore.getInitialState());
-      useOpportunitiesStore.setState(useOpportunitiesStore.getInitialState());
+      useMoodleStore.getState().resetSession();
+      useOpportunitiesStore.getState().reset();
     };
   }, []);
 
@@ -124,10 +129,6 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
   const handleLinkSuccess = (): void => {
     completeLink();
     void queryClient.invalidateQueries({ queryKey: moodleKeys.all });
-
-    if (pathname === ROUTE.ConnectMoodle) {
-      router.push(ROUTE.Wall);
-    }
   };
 
   const handleUnlinkSuccess = (): void => {

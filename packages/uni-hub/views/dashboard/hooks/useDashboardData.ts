@@ -16,6 +16,7 @@ import {
   deriveDashboardState,
   getInitialSyncTime,
   getInitialUserProfile,
+  isMoodleUnlinked,
   loadCachedDashboardData,
   type DashboardState,
 } from './helpers';
@@ -60,7 +61,8 @@ export function useDashboardData(): UseDashboardDataResult {
   const dateTo = useMoodleStore((state) => state.dateTo);
   const hideCompleted = useMoodleStore((state) => state.hideCompleted);
   const isMoodleLinked = useMoodleStore((state) => state.isMoodleLinked);
-  const enabled = features.isMoodleIntegrationEnabled && isMoodleLinked && isLoggedIn();
+  const enabled =
+    features.isMoodleIntegrationEnabled && isMoodleLinked && !isMoodleUnlinked() && isLoggedIn();
 
   const dashboardQuery = useQuery({
     ...dashboardQueryOptions({ sortOrder, dateFrom, dateTo, hideCompleted }),

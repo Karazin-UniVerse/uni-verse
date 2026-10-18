@@ -123,4 +123,39 @@ describe('useMoodleStore', () => {
 
     expect(useMoodleStore.getState().isMoodleLinked).toBe(true);
   });
+
+  it('updates storage and state via setLinked', () => {
+    useMoodleStore.getState().setLinked(false);
+
+    expect(useMoodleStore.getState().isMoodleLinked).toBe(false);
+    expect(mockStorage.isMoodleLinked).toBe('false');
+
+    useMoodleStore.getState().setLinked(true);
+
+    expect(useMoodleStore.getState().isMoodleLinked).toBe(true);
+    expect(mockStorage.isMoodleLinked).toBe('true');
+  });
+
+  it('resets ephemeral filters and re-reads linked flag from storage in resetSession', () => {
+    mockStorage.isMoodleLinked = 'false';
+    useMoodleStore.setState({
+      dateFrom: '2026-01-01',
+      dateTo: '2026-12-31',
+      sortOrder: 'desc',
+      hideCompleted: true,
+      isMoodleLinked: true,
+      isLinkModalOpen: true,
+    });
+
+    useMoodleStore.getState().resetSession();
+
+    const state = useMoodleStore.getState();
+
+    expect(state.dateFrom).toBe('');
+    expect(state.dateTo).toBe('');
+    expect(state.sortOrder).toBe('asc');
+    expect(state.hideCompleted).toBe(false);
+    expect(state.isLinkModalOpen).toBe(false);
+    expect(state.isMoodleLinked).toBe(false);
+  });
 });
