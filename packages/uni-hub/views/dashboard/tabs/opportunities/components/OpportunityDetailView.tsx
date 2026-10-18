@@ -3,7 +3,11 @@
 import React from 'react';
 import { OpportunityDetail } from '@ui';
 import type { Opportunity } from '@core/types/opportunities';
-import type { OpportunityLifecycle } from '@core/constants/opportunities';
+import {
+  OPPORTUNITY_LIFECYCLE,
+  OPPORTUNITY_STATUS,
+  type OpportunityLifecycle,
+} from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { OpportunityStatusBadge } from './OpportunityStatusBadge';
 
@@ -80,8 +84,9 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
 
   const canApply =
     !isOwner &&
-    opportunity.status === 'PUBLISHED' &&
-    opportunity.lifecycleState === 'ACTIVE' &&
+    opportunity.status === OPPORTUNITY_STATUS.PUBLISHED &&
+    (opportunity.lifecycleState === OPPORTUNITY_LIFECYCLE.ACTIVE ||
+      opportunity.lifecycleState === OPPORTUNITY_LIFECYCLE.START) &&
     opportunity.acceptsApplications !== false;
 
   return (

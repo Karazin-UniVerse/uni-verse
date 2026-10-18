@@ -10,8 +10,9 @@ vi.mock('@uni-hub/utils/browser', () => ({
 
 import { QueryClient } from '@tanstack/react-query';
 import { moodleApi } from '@uni-hub/services/api.moodle';
+import { notificationsApi } from '@uni-hub/services/api.notifications';
 import type { BuildAssignmentParamsOptions } from './helpers';
-import { dashboardQueryOptions, loadDashboardData } from './queries';
+import { dashboardQueryOptions, loadDashboardData, loadPlatformNotifications } from './queries';
 
 const filters: BuildAssignmentParamsOptions = {
   sortOrder: 'asc',
@@ -31,6 +32,7 @@ function mockMoodleResponses(): void {
     data: { notifications: [], unreadcount: 3 },
   });
   vi.spyOn(moodleApi, 'getStatistics').mockResolvedValue({ data: { total: 1 } });
+  vi.spyOn(notificationsApi, 'getMyNotifications').mockResolvedValue({ data: [] });
 }
 
 beforeEach(() => {
@@ -113,6 +115,72 @@ describe('loadDashboardData', () => {
 
     expect(storage.accessToken).toBe('token');
     expect(storage.universe_dashboard_data).toBe('{"courses":[]}');
+  });
+
+  it('combines Moodle notifications with platform notifications when available', async () => {
+    mockMoodleResponses();
+    vi.spyOn(notificationsApi, 'getMyNotifications').mockResolvedValue({
+      data: [
+        {
+          id: 'plat-1',
+          userId: 'user-1',
+          title: 'Opportunity Moderated',
+          message: 'Approved',
+          type: 'OPPORTUNITY_MODERATED',
+          isRead: false,
+          createdAt: new Date(1_788_000_000 * 1000).toISOString(),
+        },
+      ],
+    });
+
+    const dashboardData = await loadDashboardData(filters);
+
+    expect(dashboardData.notifications.some((n) => n.id === 'plat-1')).toBe(true);
+    expect(dashboardData.unreadCount).toBe(4);
+  });
+});
+
+describe('loadPlatformNotifications', () => {
+  it('returns platform notifications from the API', async () => {
+    vi.spyOn(notificationsApi, 'getMyNotifications').mockResolvedValue({
+      data: [
+        {
+          id: 'plat-1',
+          userId: 'user-1',
+          title: 'Notif',
+          message: 'Msg',
+          type: 'INFO',
+          isRead: false,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    });
+
+    const notifs = await loadPlatformNotifications();
+
+    expect(notifs).toHaveLength(1);
+    expect(notifs[0].id).toBe('plat-1');
+  });
+
+  it('logs error and returns empty array on non-401 failure', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.spyOn(notificationsApi, 'getMyNotifications').mockRejectedValue(new Error('Network error'));
+
+    const notifs = await loadPlatformNotifications();
+
+    expect(notifs).toEqual([]);
+    expect(consoleSpy).toHaveBeenCalled();
+  });
+
+  it('clears session storage and throws on 401 error', async () => {
+    storage.accessToken = 'token';
+    vi.spyOn(notificationsApi, 'getMyNotifications').mockRejectedValue(
+      new Error('HTTP error 401: Unauthorized'),
+    );
+
+    await expect(loadPlatformNotifications()).rejects.toThrow('401');
+    expect(storage.accessToken).toBeUndefined();
   });
 });
 
