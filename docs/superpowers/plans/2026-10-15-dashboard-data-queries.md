@@ -4,7 +4,7 @@
 
 **Goal:** Replace `useDashboardData` (seven parallel Moodle requests, a hand-written "latest request" guard, a `localStorage` snapshot and fallback) with TanStack Query, and drop the `useEffect` in `DashboardPage` that refetches on every filter change.
 
-**Architecture:** One query returns the assembled `DashboardData` (the same `Promise.all` of seven requests and the same `assembleDashboardData`), keyed by the assignment filters, with `keepPreviousData` so changing a filter does not blank the page. The existing snapshot keys in `localStorage` stay: the loader writes the snapshot after a successful load, and the query starts from it as `initialData` with `initialDataUpdatedAt` set to the stored sync time, so a failed load keeps showing the last good data (the offline state). The profile is a second query. A pure function derives `loading`, `isOfflineData`, `hasLoadedOnce` and `lastSyncTime` from the query state so it can be tested without a DOM.
+**Architecture:** One query returns the assembled `DashboardData` (the six Moodle requests assembled via `assembleDashboardData`), keyed by the assignment filters, with `keepPreviousData` so changing a filter does not blank the page. The profile is loaded as a separate query. The existing snapshot keys in `localStorage` stay: the loader writes the snapshot after a successful load, and the query starts from it as `initialData` with `initialDataUpdatedAt` set to the stored sync time, so a failed load keeps showing the last good data (the offline state). A pure function derives `loading`, `isOfflineData`, `hasLoadedOnce` and `lastSyncTime` from the query state so it can be tested without a DOM.
 
 **Tech Stack:** `@tanstack/react-query` v5 (`keepPreviousData`, `initialData`), React 19, Vitest (node env).
 
@@ -19,7 +19,7 @@
 - No `useEffect` that fetches or that exists only to refetch on dependency change; side effects of a failed load (toast, redirect) are driven by the query error state, once per failure.
 - No aliases or shims; delete `fetchRequestIdRef`, `setData`, `cancelPendingFetch` and every caller. One import per module path, explicit return types for new functions, empty line before `return`, i18n for every string.
 - Commit messages follow Conventional Commits and end with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`. Show the diff and wait for approval before each commit (user preference); do not push without being asked.
-- Commands run from `/Users/ReDL/Documents/Programming/Projects/uni-verse`. Final pipeline: `pnpm lint`, `pnpm lint:style`, `pnpm typecheck`, `pnpm test`, `pnpm build`, prettier on changed files.
+- Commands run from the repository root. Final pipeline: `pnpm lint`, `pnpm lint:style`, `pnpm typecheck`, `pnpm test`, `pnpm build`, prettier on changed files.
 
 ## Review Focus
 
@@ -206,8 +206,8 @@ import type { DashboardData } from '../types';
 
 Body outline (write it out in full when implementing, each piece below is the whole behavior):
 
-- `const snapshot = loadCachedDashboardData()` read once with `useState(() => ...)` (no window access during SSR: the helper already guards with try/catch and `typeof window`).
-- `const query = useQuery({ ...dashboardQueryOptions(filters), enabled, placeholderData: keepPreviousData, initialData: snapshot ? { ...EMPTY_DASHBOARD_DATA, ...snapshot } : undefined, initialDataUpdatedAt: getInitialSyncTime() ?? undefined })`.
+- `const snapshot = loadCachedDashboardData()` read once with `useState(() => isMoodleLinked ? loadCachedDashboardData() : null)` (no window access during SSR: the helper already guards with try/catch and `typeof window`), gating `initialData` on `isMoodleLinked && snapshot` so unlinking Moodle cannot reseed removed query cache from the in-memory snapshot.
+- `const query = useQuery({ ...dashboardQueryOptions(filters), enabled, placeholderData: keepPreviousData, initialData: isMoodleLinked && snapshot ? { ...EMPTY_DASHBOARD_DATA, ...snapshot } : undefined, initialDataUpdatedAt: getInitialSyncTime() ?? undefined })`.
 - `const profileQuery = useQuery({ ...profileQueryOptions, enabled })`; `studentProfile = profileQuery.data ?? null`.
 - `const state = deriveDashboardState(query)`; when `state.isOfflineData`, `data = buildFallbackData({ cachedData: query.data, previousData: EMPTY_DASHBOARD_DATA, hideCompleted, dateFrom, dateTo })`, otherwise `query.data ?? EMPTY_DASHBOARD_DATA`.
 - One `useEffect` keyed on `query.errorUpdatedAt` reacts to a failure once: skip when `isMoodleUnlinked()`; if `isUnauthorizedError(query.error)` show `dashboard.sessionExpired` and call `onUnauthorized()`; else if data exists show `dashboard.offlineNotice` (info) else show `dashboard.loadError`. The effect calls no `setState`.
@@ -230,7 +230,7 @@ Remove `fetchRequestIdRef`, `fetchData`, `cancelPendingFetch`, `setData`, `setSt
 
 - [ ] **Step 1: Use the new hook**
 
-Destructure `{ data, loading, hasLoadedOnce, lastSyncTime, isOfflineData, studentProfile, refresh }`. Delete the effect with the `eslint-disable-next-line react-hooks/exhaustive-deps` that calls `fetchData()` and `cancelPendingFetch()` on every filter change: the query key carries the filters now. Pass `enabled: features.isMoodleIntegrationEnabled && isMoodleLinked && isLoggedIn()` (move the `useMoodleLink` call above the data hook or lift `isMoodleLinked` so both are declared before use). Replace `setStudentProfile` use (initial profile seeding) with `placeholderData: getInitialUserProfile()` on the profile query, and `activeStudentProfile = studentProfile ?? getInitialUserProfile() ?? fallbackStudentProfile`.
+Destructure `{ data, loading, hasLoadedOnce, lastSyncTime, isOfflineData, studentProfile, refresh }`. Delete the effect with the `eslint-disable-next-line react-hooks/exhaustive-deps` that calls `fetchData()` and `cancelPendingFetch()` on every filter change: the query key carries the filters now. Pass `enabled: features.isMoodleIntegrationEnabled && isMoodleLinked && isLoggedIn()` (move the `useMoodleLink` call above the data hook or lift `isMoodleLinked` so both are declared before use). Configure `placeholderData: getInitialUserProfile()` where `profileQuery` is created inside `useDashboardData`, and set `activeStudentProfile = studentProfile ?? getInitialUserProfile() ?? fallbackStudentProfile` in `DashboardPage`.
 
 - [ ] **Step 2: Link and unlink**
 

@@ -24,7 +24,7 @@
 - Components stay in their current tier; no Storybook stories outside `packages/ui`.
 - Commit messages follow Conventional Commits and end with the trailer `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`.
 - Before every commit show the user `git diff --stat` and the diff, and wait for approval (user preference). Do not push or open the PR without being asked.
-- Every command runs from the repo root `/Users/ReDL/Documents/Programming/Projects/uni-verse`.
+- Every command runs from the repo root.
 - Verification pipeline before the PR: `pnpm lint`, `pnpm lint:style`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and prettier on changed files, all with zero errors and zero warnings.
 
 ## Review Focus

@@ -577,6 +577,8 @@ export const en = {
     'Briefly describe your experience, stack, and motivation...',
   'opportunities.applyModal.contactLabel': 'Your Telegram or phone number',
   'opportunities.applyModal.contactPlaceholder': '@username or +380...',
+  'opportunities.applyModal.invalidContact':
+    'Please provide a valid Telegram username (@username or link) or phone number',
   'opportunities.applyModal.defaultContact': 'Specified in profile',
   'opportunities.applyModal.defaultApplicantName': 'Student',
   'opportunities.applyModal.cancel': 'Cancel',
@@ -587,10 +589,32 @@ export const en = {
   'opportunities.applicantsModal.title': 'Applicants ({count})',
   'opportunities.applicantsModal.empty': 'No applicants yet for this opportunity',
   'opportunities.applicantsModal.defaultApplicant': 'Student',
+  'opportunities.applicantsModal.emailLabel': 'Email address',
+  'opportunities.applicantsModal.directContactLabel': 'Direct contact (Telegram / phone)',
   'opportunities.applicantsModal.motivationLabel': 'Cover letter:',
   'opportunities.applicantsModal.submittedOn': 'Submitted {date}',
   'opportunities.applicantsModal.accept': 'Accept',
   'opportunities.applicantsModal.underReview': 'Under Review',
   'opportunities.applicantsModal.reject': 'Reject',
   'opportunities.applicantsModal.close': 'Close',
+
+  // Platform Notifications
+  'notifications.opportunityApplicationStatus.title': 'Opportunity Application Status',
+  'notifications.opportunityApplicationStatus.message':
+    'Application status for "{opportunityTitle}" changed to: {status}.',
+  'notifications.opportunityApplicationStatus.messageWithComment':
+    'Application status for "{opportunityTitle}" changed to: {status}. Comment: {comment}',
+  'notifications.opportunityNewApplication.title': 'New Applicant for Opportunity',
+  'notifications.opportunityNewApplication.message':
+    'New application for "{opportunityTitle}" from {applicantName}.',
+  'notifications.opportunityModerated.title': 'Opportunity Moderation Result',
+  'notifications.opportunityModerated.message': 'Opportunity "{opportunityTitle}" {action}.',
+  'notifications.opportunityModerated.messageWithComment':
+    'Opportunity "{opportunityTitle}" {action}. Moderator comment: {comment}',
+  'notifications.status.ACCEPTED': 'accepted',
+  'notifications.status.REJECTED': 'rejected',
+  'notifications.status.UNDER_REVIEW': 'under review',
+  'notifications.action.APPROVE': 'approved and published',
+  'notifications.action.REJECT': 'rejected',
+  'notifications.action.REQUIRE_CHANGES': 'requires changes',
 } as const satisfies Record<TranslationKey, string>;
