@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Tag } from '../../una/Tag';
-import { OpportunityDetailModal } from './OpportunityDetailModal';
-import type { OpportunityDetailModalProps } from './OpportunityDetailModal.types';
+import { OpportunityDetail } from './OpportunityDetail';
+import type { OpportunityDetailProps } from './OpportunityDetail.types';
 
 const defaultLifecycleOptions = [
   { value: 'START', label: 'Початок' },
@@ -13,15 +13,15 @@ const defaultLifecycleOptions = [
 ];
 
 const meta = {
-  title: 'Complex/OpportunityDetailModal',
-  component: OpportunityDetailModal,
+  title: 'Complex/OpportunityDetail',
+  component: OpportunityDetail,
   tags: ['autodocs'],
   parameters: {
-    layout: 'centered',
+    layout: 'padded',
   },
   args: {
-    open: true,
-    onClose: () => {},
+    onBack: () => {},
+    backText: 'Назад до можливостей',
     title: 'Стажування у лабораторії біоінформатики',
     paymentTagText: 'Оплачувана • 15 000 грн/міс',
     paymentTone: 'success',
@@ -32,7 +32,6 @@ const meta = {
     descriptionText:
       'Запрошуємо студентів 3-4 курсів та магістрантів до участі у дослідницькому проєкті з моделювання геномних послідовностей.',
     contactValue: 'biolab@karazin.ua | +380501234567',
-    closeText: 'Закрити',
     applyText: 'Подати заявку',
     organizerLabel: 'Організатор:',
     descriptionTitle: 'Опис можливості',
@@ -44,7 +43,7 @@ const meta = {
     lifecycleOptions: defaultLifecycleOptions,
     lifecycleState: 'ACTIVE',
   },
-} satisfies Meta<typeof OpportunityDetailModal>;
+} satisfies Meta<typeof OpportunityDetail>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -53,11 +52,11 @@ export const Default: Story = {};
 
 export const AuthorView: Story = {
   render: (args) => {
-    const InteractiveWrapper = (props: OpportunityDetailModalProps) => {
+    const InteractiveWrapper = (props: OpportunityDetailProps) => {
       const [state, setState] = useState(props.lifecycleState ?? 'ACTIVE');
 
       return (
-        <OpportunityDetailModal
+        <OpportunityDetail
           {...props}
           isOwner={true}
           canApply={false}

@@ -12,13 +12,14 @@ import { useCountUp } from '@uni-hub/hooks/useCountUp';
 import { useNow } from '@uni-hub/hooks/useNow';
 import type { OverviewTabProps } from '../types';
 import { NAV_KEY, STUDY_VIEW, mockKarazinCurriculum } from '../constants';
+import { getCourseHref } from '../routes';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useFeatures } from '@uni-hub/features';
 import { isAssignmentCompleted } from '@uni-hub/utils/assignments';
 import { StudentCard } from './StudentCard';
 import { StatCardGrid } from './StatCardGrid';
 import { UpcomingEventsList } from './UpcomingEventsList';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export const OverviewTab: React.FC<OverviewTabProps> = ({
   courses,
@@ -109,7 +110,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     key={course.id}
                     type="button"
                     className={`${styles.listItem} ${styles.courseItemClickable}`}
-                    onClick={() => router.push(`/courses/${course.id}/contents`)}
+                    onClick={() => router.push(getCourseHref(course.id))}
                     style={{ animationDelay: `${index * 40}ms` }}
                     title={formatMessage('overview.viewCourseMaterials', {
                       name:

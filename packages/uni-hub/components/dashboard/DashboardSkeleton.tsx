@@ -1,6 +1,6 @@
 import React from 'react';
 import { Skeleton } from '@una';
-import pageStyles from '@uni-hub/views/DashboardPage.module.scss';
+import pageStyles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 import styles from './DashboardSkeleton.module.scss';
 
 const SKELETON_STUDENT_FIELDS = ['sf1', 'sf2', 'sf3', 'sf4', 'sf5', 'sf6', 'sf7', 'sf8'];

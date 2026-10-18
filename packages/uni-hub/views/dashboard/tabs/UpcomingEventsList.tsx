@@ -9,7 +9,7 @@ import type { NavigateHandler } from '../types';
 import { extractMeetingUrl } from './helpers';
 import { stripHtml } from '../utils';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export interface UpcomingEventsListProps {
   events: MoodleEvent[];

@@ -72,6 +72,7 @@ export interface Notification {
   read: boolean;
   message?: string;
   fullmessage?: string;
+  link?: string | null;
 }
 
 export interface NotificationsResponse {

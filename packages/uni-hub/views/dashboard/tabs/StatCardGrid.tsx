@@ -5,7 +5,7 @@ import { BookOpen, FileEdit, GraduationCap } from 'lucide-react';
 import { NAV_KEY, STUDY_VIEW } from '../constants';
 import type { NavigateHandler } from '../types';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export interface StatCardGridProps {
   coursesCount: number;

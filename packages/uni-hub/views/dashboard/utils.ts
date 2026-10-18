@@ -6,7 +6,7 @@ import type { TranslationKey } from '@uni-hub/i18n/translations';
 import type { Notification } from '@core/types/moodle';
 import { getGradeRawValue } from '@uni-hub/utils/grades';
 import type { FeatureFlagKey, FeatureFlags } from '@core/constants/features';
-import { NAV_KEY, NAV_KEYS, STUDY_VIEWS, type NavKey, type StudyView } from './constants';
+import { NAV_KEY, STUDY_VIEWS, type NavKey, type StudyView } from './constants';
 
 const NOTIFICATION_MESSAGE_MAX_LENGTH = 100;
 
@@ -206,6 +206,7 @@ export function toNotificationListItem(
     time: createdAt.toLocaleString(localeTag),
     dateTime: createdAt.toISOString(),
     isRead: notification.read,
+    link: notification.link ?? undefined,
   };
 }
 
@@ -251,10 +252,6 @@ export function getExamScoreDisplay(
   return String(examScore);
 }
 
-const NAV_KEYS_SET: ReadonlySet<string> = new Set(NAV_KEYS);
-
-export const isNavKey = (value: string): value is NavKey => NAV_KEYS_SET.has(value);
-
 export interface NavKeyContext {
   navItems: ReadonlyArray<{ key: NavKey; featureFlag?: FeatureFlagKey }>;
   features: FeatureFlags;
@@ -281,3 +278,13 @@ export function resolveNavKey(
 const STUDY_VIEWS_SET: ReadonlySet<string> = new Set(STUDY_VIEWS);
 
 export const isStudyView = (value: string): value is StudyView => STUDY_VIEWS_SET.has(value);
+
+export function parseRouteId(rawId: string | string[] | undefined): number | null {
+  if (typeof rawId !== 'string' || !/^\d+$/.test(rawId)) {
+    return null;
+  }
+
+  const id = Number.parseInt(rawId, 10);
+
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}

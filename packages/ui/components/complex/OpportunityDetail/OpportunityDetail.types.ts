@@ -5,11 +5,10 @@ export type OpportunityLifecycleOption = {
   label: string;
 };
 
-export type OpportunityDetailModalProps = {
-  open: boolean;
-  onClose: () => void;
+export type OpportunityDetailProps = {
+  onBack: () => void;
+  backText: string;
   title: string;
-  closeText: string;
   paymentTagText?: string;
   paymentTone?: 'success' | 'neutral';
   statusBadge?: ReactNode;

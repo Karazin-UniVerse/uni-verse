@@ -1,49 +1,49 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus, Briefcase, ShieldCheck, Users, FileText } from 'lucide-react';
 import { Button } from '@una';
 import { ConfirmModal, SegmentedControl, type SegmentedControlItem } from '@ui';
 import { ROLE } from '@core/constants/roles';
+import type { Opportunity } from '@core/types/opportunities';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { getOpportunityHref } from '../routes';
 import styles from './OpportunitiesTab.module.scss';
 import {
   CatalogTab,
   MyOpportunitiesTab,
   MyApplicationsTab,
   ModerationQueueTab,
-  OpportunityDetailModal,
   CreateOpportunityModal,
-  ApplyOpportunityModal,
   ApplicantsModal,
   ModerationRejectModal,
-  useApplicantActions,
   useApplicants,
   useCreateOpportunity,
   useModeration,
   useOpportunitiesData,
-  useOpportunityDetail,
+  useWithdrawApplication,
   OPPORTUNITY_SUB_TAB,
   type OpportunitySubTab,
 } from './opportunities';
 
 export const OpportunitiesTab: React.FC = () => {
+  const router = useRouter();
   const { formatMessage } = useLanguage();
   const currentUser = useCurrentUser();
   const isModerator = currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR);
   const data = useOpportunitiesData(isModerator);
   const { activeSubTab, setActiveSubTab } = data;
-  const detail = useOpportunityDetail();
   const create = useCreateOpportunity({
     onCreated: () => setActiveSubTab(OPPORTUNITY_SUB_TAB.MyOpportunities),
   });
   const applicants = useApplicants();
-  const applicantActions = useApplicantActions({
-    currentUser,
-    selectedOpportunity: detail.selectedOpportunity,
-  });
+  const withdrawal = useWithdrawApplication();
   const moderation = useModeration();
+
+  const openDetail = (opportunity: Opportunity): void =>
+    router.push(getOpportunityHref(opportunity.id));
 
   const segmentItems: SegmentedControlItem<OpportunitySubTab>[] = [
     {
@@ -105,7 +105,7 @@ export const OpportunitiesTab: React.FC = () => {
             onSearchChange={data.setSearch}
             paymentFilter={data.paymentFilter}
             onPaymentFilterChange={data.setPaymentFilter}
-            onOpenDetail={detail.open}
+            onOpenDetail={openDetail}
           />
         )}
 
@@ -116,7 +116,7 @@ export const OpportunitiesTab: React.FC = () => {
             onRetry={data.myOpportunities.refetch}
             myOpportunities={data.myOpportunities.items}
             onOpenApplicants={applicants.open}
-            onOpenDetail={detail.open}
+            onOpenDetail={openDetail}
           />
         )}
 
@@ -126,7 +126,7 @@ export const OpportunitiesTab: React.FC = () => {
             isError={data.myApplications.isError}
             onRetry={data.myApplications.refetch}
             myApplications={data.myApplications.items}
-            onWithdraw={applicantActions.setWithdrawApplicationId}
+            onWithdraw={withdrawal.setWithdrawApplicationId}
           />
         )}
 
@@ -143,23 +143,6 @@ export const OpportunitiesTab: React.FC = () => {
       </div>
 
       {/* Modals */}
-      <OpportunityDetailModal
-        open={detail.isOpen}
-        onClose={() => detail.setIsOpen(false)}
-        opportunity={detail.selectedOpportunity}
-        userId={currentUser.userId}
-        onSendToReview={detail.handleSendToReview}
-        onLifecycleChange={detail.handleLifecycleChange}
-        onEdit={(opportunity) => {
-          detail.setIsOpen(false);
-          create.openEdit(opportunity);
-        }}
-        onOpenApply={() => {
-          detail.setIsOpen(false);
-          applicantActions.setIsApplyOpen(true);
-        }}
-      />
-
       <CreateOpportunityModal
         open={create.isOpen}
         onClose={create.close}
@@ -168,18 +151,6 @@ export const OpportunitiesTab: React.FC = () => {
         onSubmit={create.handleSubmit}
         submitting={create.creating}
         isEdit={create.isEdit}
-      />
-
-      <ApplyOpportunityModal
-        open={applicantActions.isApplyOpen}
-        onClose={() => applicantActions.setIsApplyOpen(false)}
-        opportunityTitle={detail.selectedOpportunity?.title}
-        motivation={applicantActions.motivation}
-        onMotivationChange={applicantActions.setMotivation}
-        contactInfo={applicantActions.contactInfo}
-        onContactInfoChange={applicantActions.setContactInfo}
-        onSubmit={applicantActions.handleApplySubmit}
-        submitting={applicantActions.applying}
       />
 
       <ApplicantsModal
@@ -193,15 +164,15 @@ export const OpportunitiesTab: React.FC = () => {
       />
 
       <ConfirmModal
-        open={applicantActions.withdrawApplicationId !== null}
-        onClose={() => applicantActions.setWithdrawApplicationId(null)}
-        onConfirm={applicantActions.handleWithdraw}
+        open={withdrawal.withdrawApplicationId !== null}
+        onClose={() => withdrawal.setWithdrawApplicationId(null)}
+        onConfirm={withdrawal.handleWithdraw}
         title={formatMessage('opportunities.confirm.withdrawTitle')}
         message={formatMessage('opportunities.confirm.withdraw')}
         cancelLabel={formatMessage('common.cancel')}
         confirmLabel={formatMessage('opportunities.confirm.withdrawConfirm')}
         closeLabel={formatMessage('modal.close')}
-        loading={applicantActions.withdrawing}
+        loading={withdrawal.withdrawing}
         variant="danger"
       />
 

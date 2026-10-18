@@ -11,7 +11,7 @@ import {
 import { useNow } from '@uni-hub/hooks/useNow';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { AssignmentsTabProps } from '../types';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 function parseFilterDate(dateStr: string): Date | null {
   if (!dateStr) {

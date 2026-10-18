@@ -79,6 +79,7 @@ export function mapPlatformNotification(item: PlatformNotification): Notificatio
     message: item.message,
     timecreated: Math.floor(new Date(item.createdAt).getTime() / 1000),
     read: item.isRead,
+    link: item.link ?? null,
   };
 }
 

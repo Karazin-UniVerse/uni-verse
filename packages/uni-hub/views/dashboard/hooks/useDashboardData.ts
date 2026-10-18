@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useToast } from '@una';
 import type { StudentProfile } from '@core/types';
@@ -140,19 +140,21 @@ export function useDashboardData({
     data = applyPlatformNotifications(data, platformQuery.data);
   }
 
-  const refresh = async (): Promise<void> => {
+  const { refetch } = dashboardQuery;
+  const { refetch: refetchPlatform } = platformQuery;
+  const refresh = useCallback(async (): Promise<void> => {
     if (!enabled) {
-      await platformQuery.refetch();
+      await refetchPlatform();
 
       return;
     }
 
-    const [result] = await Promise.all([dashboardQuery.refetch(), platformQuery.refetch()]);
+    const [result] = await Promise.all([refetch(), refetchPlatform()]);
 
-    if (!result.isError) {
+    if (!result?.isError) {
       toast.success(formatMessage('dashboard.syncSuccess'));
     }
-  };
+  }, [enabled, refetch, refetchPlatform, toast, formatMessage]);
 
   return {
     loading: state.loading,

@@ -10,7 +10,7 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { LinkMoodleMode } from '@uni-hub/components/auth';
 import type { StudentProfile } from '@core/types';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export interface UserDropdownProps {
   activeStudentProfile: StudentProfile;

@@ -14,12 +14,12 @@ interface ApplicationSubmission {
   request: ApplyOpportunityRequest;
 }
 
-export interface UseApplicantActionsProps {
+export interface UseApplyToOpportunityProps {
   currentUser: CurrentUser;
-  selectedOpportunity: Opportunity | null;
+  opportunity: Opportunity;
 }
 
-interface UseApplicantActionsResult {
+interface UseApplyToOpportunityResult {
   isApplyOpen: boolean;
   setIsApplyOpen: (isOpen: boolean) => void;
   motivation: string;
@@ -28,16 +28,12 @@ interface UseApplicantActionsResult {
   setContactInfo: (contactInfo: string) => void;
   applying: boolean;
   handleApplySubmit: (event: React.SyntheticEvent<HTMLFormElement>) => Promise<void>;
-  withdrawApplicationId: string | null;
-  setWithdrawApplicationId: (applicationId: string | null) => void;
-  withdrawing: boolean;
-  handleWithdraw: () => Promise<void>;
 }
 
-export function useApplicantActions({
+export function useApplyToOpportunity({
   currentUser,
-  selectedOpportunity,
-}: UseApplicantActionsProps): UseApplicantActionsResult {
+  opportunity,
+}: UseApplyToOpportunityProps): UseApplyToOpportunityResult {
   const toast = useToast();
   const { formatMessage } = useLanguage();
   const queryClient = useQueryClient();
@@ -45,7 +41,6 @@ export function useApplicantActions({
   const [isApplyOpen, setIsApplyOpen] = useState(false);
   const [motivation, setMotivation] = useState('');
   const [contactInfo, setContactInfo] = useState('');
-  const [withdrawApplicationId, setWithdrawApplicationId] = useState<string | null>(null);
 
   const applyMutation = useMutation({
     mutationFn: ({ opportunityId, request }: ApplicationSubmission) =>
@@ -53,15 +48,8 @@ export function useApplicantActions({
     onSuccess: () => invalidateOpportunities(queryClient),
   });
 
-  const withdrawMutation = useMutation({
-    mutationFn: (applicationId: string) => opportunitiesApi.withdrawApplication(applicationId),
-    onSuccess: () => invalidateOpportunities(queryClient),
-  });
-
   const handleApplySubmit = async (event: React.SyntheticEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
-
-    if (!selectedOpportunity) return;
 
     if (!isValidContactInfo(contactInfo)) {
       toast.error(formatMessage('opportunities.applyModal.invalidContact'));
@@ -71,7 +59,7 @@ export function useApplicantActions({
 
     try {
       await applyMutation.mutateAsync({
-        opportunityId: selectedOpportunity.id,
+        opportunityId: opportunity.id,
         request: {
           applicantName:
             currentUser.name ||
@@ -91,19 +79,6 @@ export function useApplicantActions({
     }
   };
 
-  const handleWithdraw = async (): Promise<void> => {
-    if (!withdrawApplicationId) return;
-
-    try {
-      await withdrawMutation.mutateAsync(withdrawApplicationId);
-      toast.success(formatMessage('opportunities.toast.withdrawn'));
-    } catch (err: unknown) {
-      toast.error(getErrorMessage(err, formatMessage('opportunities.toast.genericError')));
-    } finally {
-      setWithdrawApplicationId(null);
-    }
-  };
-
   return {
     isApplyOpen,
     setIsApplyOpen,
@@ -113,9 +88,5 @@ export function useApplicantActions({
     setContactInfo,
     applying: applyMutation.isPending,
     handleApplySubmit,
-    withdrawApplicationId,
-    setWithdrawApplicationId,
-    withdrawing: withdrawMutation.isPending,
-    handleWithdraw,
   };
 }

@@ -15,7 +15,7 @@ import {
   parseGradeScore,
   getExamScoreDisplay,
 } from '../utils';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export type GradeDisplayItem = Grade & {
   credits?: number | null;

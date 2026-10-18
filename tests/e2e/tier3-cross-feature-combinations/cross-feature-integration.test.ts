@@ -101,7 +101,9 @@ describe('Tier 3 - Cross-Feature Combinations & Contracts Integration', () => {
     expect(varsContent.length).toBeGreaterThan(50);
 
     // UniHub dashboard imports SCSS
-    const dashboardScss = readWorkspaceFile('packages/uni-hub/views/DashboardPage.module.scss');
+    const dashboardScss = readWorkspaceFile(
+      'packages/uni-hub/views/dashboard/layout/DashboardShell.module.scss',
+    );
 
     expect(dashboardScss.length).toBeGreaterThan(100);
   });

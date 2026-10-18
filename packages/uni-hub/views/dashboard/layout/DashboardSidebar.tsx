@@ -22,7 +22,7 @@ import { playClick } from '@uni-hub/utils/soundEffects';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { NAV_KEY, type NavKey } from '../constants';
 import type { DashboardSidebarProps } from '../types';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export interface NavItemConfig {
   key: NavKey;

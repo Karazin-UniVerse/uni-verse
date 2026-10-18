@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { OpportunityDetailModal as OpportunityDetailModalUI } from '@ui';
+import { OpportunityDetail } from '@ui';
 import type { Opportunity } from '@core/types/opportunities';
 import {
   OPPORTUNITY_LIFECYCLE,
@@ -9,12 +9,11 @@ import {
   type OpportunityLifecycle,
 } from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { OpportunityStatusBadge } from '../components/OpportunityStatusBadge';
+import { OpportunityStatusBadge } from './OpportunityStatusBadge';
 
-export interface OpportunityDetailModalProps {
-  open: boolean;
-  onClose: () => void;
-  opportunity: Opportunity | null;
+export interface OpportunityDetailViewProps {
+  onBack: () => void;
+  opportunity: Opportunity;
   userId: string | null;
   onSendToReview: (id: string) => void;
   onLifecycleChange: (id: string, state: OpportunityLifecycle) => void;
@@ -30,9 +29,8 @@ const lifecycleLabelKey = {
   CANCELLED: 'opportunities.detailModal.phaseCancelled',
 } as const;
 
-export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
-  open,
-  onClose,
+export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
+  onBack,
   opportunity,
   userId,
   onSendToReview,
@@ -41,8 +39,6 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
   onEdit,
 }) => {
   const { formatMessage, language } = useLanguage();
-
-  if (!opportunity) return null;
 
   const isOwner = userId === opportunity.ownerId;
   const paymentTagText =
@@ -94,9 +90,9 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
     opportunity.acceptsApplications !== false;
 
   return (
-    <OpportunityDetailModalUI
-      open={open}
-      onClose={onClose}
+    <OpportunityDetail
+      onBack={onBack}
+      backText={formatMessage('opportunities.detail.back')}
       title={opportunity.title ?? formatMessage('opportunities.detailModal.defaultTitle')}
       paymentTagText={paymentTagText}
       paymentTone={opportunity.paymentType === 'PAID' ? 'success' : 'neutral'}
@@ -137,7 +133,6 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
       onLifecycleChange={(state) =>
         onLifecycleChange(opportunity.id, state as OpportunityLifecycle)
       }
-      closeText={formatMessage('opportunities.detailModal.close')}
       canApply={canApply}
       applyText={formatMessage('opportunities.detailModal.apply')}
       onOpenApply={onOpenApply}
