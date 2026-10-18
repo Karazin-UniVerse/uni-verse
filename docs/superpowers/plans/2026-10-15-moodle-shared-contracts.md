@@ -20,7 +20,7 @@
 - The core `types/index.ts` already exports `Course` (alias of `CurriculumItem`) and `GradeRecord`; the Moodle gateway course is therefore named `MoodleCourse`. Other names are kept (`Grade`, `Assignment`, `MoodleEvent`, `Notification`, `NotificationsResponse`, `CourseStatistics`, `CourseSection`, `CourseModule`, `CourseModuleFile`, `CourseModuleName`).
 - Where the frontend and the backend disagree, the backend response is the truth unless a UI feature clearly depends on the frontend shape; then the backend is changed to supply it. Every such decision is written in the PR description.
 - Commit messages follow Conventional Commits and end with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`. Before each commit show the diff and wait for approval (user preference); do not push without being asked.
-- Commands run from `/Users/ReDL/Documents/Programming/Projects/uni-verse`. Final pipeline: `pnpm lint`, `pnpm lint:style`, `pnpm typecheck`, `pnpm test`, `pnpm build`, prettier on changed files.
+- Commands run from the repository root. Final pipeline: `pnpm lint`, `pnpm lint:style`, `pnpm typecheck`, `pnpm test`, `pnpm build`, prettier on changed files.
 
 ## Review Focus
 

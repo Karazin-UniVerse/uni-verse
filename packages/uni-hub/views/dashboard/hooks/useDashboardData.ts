@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useToast } from '@una';
 import type { StudentProfile } from '@core/types';
-import { isLoggedIn } from '@core/utils/auth';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { DashboardData } from '../types';
 import {
@@ -82,21 +81,12 @@ export function useDashboardData({
     initialData: () => getInitialUserProfile() ?? undefined,
     initialDataUpdatedAt: 0,
   });
-  const platformNotificationsQuery = useQuery({
+  const platformQuery = useQuery({
     ...platformNotificationsQueryOptions,
-    enabled: enabled && isLoggedIn(),
-    refetchOnWindowFocus: false,
   });
 
   const { error, errorUpdatedAt, data: queryData, isError } = dashboardQuery;
-  const { error: platformError } = platformNotificationsQuery;
-
-  useEffect(() => {
-    if (platformError && isUnauthorizedError(platformError)) {
-      toast.error(formatMessage('dashboard.sessionExpired'));
-      onUnauthorized();
-    }
-  }, [platformError, toast, formatMessage, onUnauthorized]);
+  const platformError = platformQuery.error;
 
   const snapshot = useMemo(
     () => (isError && queryData === undefined ? readDashboardSnapshot() : undefined),
@@ -106,6 +96,13 @@ export function useDashboardData({
   const { cachedData } = state;
 
   useEffect(() => {
+    if (platformError && isUnauthorizedError(platformError)) {
+      toast.error(formatMessage('dashboard.sessionExpired'));
+      onUnauthorized();
+
+      return;
+    }
+
     if (!error || errorUpdatedAt === handledErrorAt.current || isMoodleUnlinked()) {
       return;
     }
@@ -126,7 +123,7 @@ export function useDashboardData({
     } else {
       toast.error(formatMessage('dashboard.loadError'));
     }
-  }, [error, errorUpdatedAt, cachedData, toast, formatMessage, onUnauthorized]);
+  }, [error, errorUpdatedAt, platformError, cachedData, toast, formatMessage, onUnauthorized]);
 
   let data = cachedData ?? EMPTY_DASHBOARD_DATA;
 
@@ -137,29 +134,27 @@ export function useDashboardData({
       hideCompleted,
       dateFrom,
       dateTo,
-      platformNotifications: platformNotificationsQuery.data,
+      platformNotifications: platformQuery.data,
     });
-  } else if (platformNotificationsQuery.data && platformNotificationsQuery.data.length > 0) {
-    data = applyPlatformNotifications(data, platformNotificationsQuery.data);
+  } else if (platformQuery.data) {
+    data = applyPlatformNotifications(data, platformQuery.data);
   }
 
   const { refetch } = dashboardQuery;
-  const { refetch: refetchNotifications } = platformNotificationsQuery;
-
+  const { refetch: refetchPlatform } = platformQuery;
   const refresh = useCallback(async (): Promise<void> => {
     if (!enabled) {
+      await refetchPlatform();
+
       return;
     }
 
-    const [result] = await Promise.all([
-      refetch(),
-      isLoggedIn() ? refetchNotifications() : Promise.resolve(null),
-    ]);
+    const [result] = await Promise.all([refetch(), refetchPlatform()]);
 
     if (!result?.isError) {
       toast.success(formatMessage('dashboard.syncSuccess'));
     }
-  }, [enabled, refetch, refetchNotifications, toast, formatMessage]);
+  }, [enabled, refetch, refetchPlatform, toast, formatMessage]);
 
   return {
     loading: state.loading,

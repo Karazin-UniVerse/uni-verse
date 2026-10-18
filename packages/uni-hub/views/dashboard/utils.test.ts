@@ -10,7 +10,6 @@ import {
   getExamScoreDisplay,
   resolveNavKey,
   toNotificationListItem,
-  formatPlatformMessage,
   isStudyView,
   parseRouteId,
 } from './utils';
@@ -142,12 +141,114 @@ describe('dashboard utils', () => {
       expect(item.message).toBe('a'.repeat(100));
     });
 
-    it('passes through link and prefers message over fullmessage', () => {
+    it('translates platform notification subject and JSON message using formatMessage', () => {
+      const platformNotif = {
+        id: 'plat-1',
+        subject: 'notifications.opportunityApplicationStatus.title',
+        message: JSON.stringify({
+          opportunityTitle: 'Frontend Intern',
+          status: 'ACCEPTED',
+          comment: 'Welcome!',
+        }),
+        timecreated: 1_788_000_000,
+        read: false,
+      };
+
+      const withFormatter = toNotificationListItem(
+        platformNotif,
+        'en-US',
+        (key, values): string => {
+          if (key === 'notifications.opportunityApplicationStatus.title') {
+            return 'Application Status';
+          }
+
+          if (key === 'notifications.status.ACCEPTED') {
+            return 'accepted';
+          }
+
+          if (key === 'notifications.opportunityApplicationStatus.messageWithComment') {
+            return `${values?.opportunityTitle}: ${values?.status} (${values?.comment})`;
+          }
+
+          return key;
+        },
+      );
+
+      expect(withFormatter.title).toBe('Application Status');
+      expect(withFormatter.message).toBe('Frontend Intern: accepted (Welcome!)');
+    });
+
+    it('translates new application and moderation platform notifications and handles invalid JSON', () => {
+      const formatter = (key: string, values?: Record<string, string | number>): string =>
+        `${key}:${JSON.stringify(values ?? {})}`;
+
+      const newAppItem = toNotificationListItem(
+        {
+          id: 'plat-2',
+          subject: 'notifications.opportunityNewApplication.title',
+          message: JSON.stringify({ opportunityTitle: 'AI Lab', applicantName: 'Oleh' }),
+          timecreated: 1_788_000_000,
+          read: false,
+        },
+        'en-US',
+        formatter,
+      );
+
+      expect(newAppItem.message).toContain('notifications.opportunityNewApplication.message');
+      expect(newAppItem.message).toContain('AI Lab');
+
+      const moderatedItem = toNotificationListItem(
+        {
+          id: 'plat-3',
+          subject: 'notifications.opportunityModerated.title',
+          message: JSON.stringify({ opportunityTitle: 'AI Lab', action: 'APPROVE' }),
+          timecreated: 1_788_000_000,
+          read: true,
+        },
+        'en-US',
+        formatter,
+      );
+
+      expect(moderatedItem.message).toContain('notifications.opportunityModerated.message');
+
+      const invalidJsonItem = toNotificationListItem(
+        {
+          id: 'plat-4',
+          subject: 'notifications.opportunityModerated.title',
+          message: '{bad-json}',
+          timecreated: 1_788_000_000,
+          read: true,
+        },
+        'en-US',
+        formatter,
+      );
+
+      expect(invalidJsonItem.message).toBe('{bad-json}');
+    });
+
+    it('does not format platform notification if notification ID is numeric (Moodle notification collision)', () => {
+      const moodleWithCollision = toNotificationListItem(
+        {
+          id: 42,
+          subject: 'notifications.opportunityModerated.title',
+          message: 'Original Moodle Message',
+          timecreated: 1_788_000_000,
+          read: false,
+        },
+        'en-US',
+        (): string => 'Translated Platform Title',
+      );
+
+      expect(moodleWithCollision.title).toBe('notifications.opportunityModerated.title');
+      expect(moodleWithCollision.message).toBe('Original Moodle Message');
+    });
+
+    it('passes through link property on platform notifications', () => {
       const platformItem = toNotificationListItem(
         {
           id: 'plat-1',
-          subject: 'Opportunity update',
-          message: 'Simple text',
+          subject: 'notifications.opportunityNewApplication.title',
+          message: JSON.stringify({ opportunityTitle: 'AI Lab', applicantName: 'Oleh' }),
           link: '/opportunities/123',
           timecreated: 1_788_000_000,
           read: true,
@@ -156,42 +257,8 @@ describe('dashboard utils', () => {
       );
 
       expect(platformItem.id).toBe('plat-1');
-      expect(platformItem.message).toBe('Simple text');
       expect(platformItem.link).toBe('/opportunities/123');
       expect(platformItem.isRead).toBe(true);
-    });
-  });
-
-  describe('formatPlatformMessage', () => {
-    const mockFormat = (key: string, params?: Record<string, string | number>) => {
-      if (key === 'notifications.opportunity.newApplication') {
-        return `New application from ${params?.applicantName ?? 'user'}`;
-      }
-
-      return key;
-    };
-
-    it('returns raw message if formatMessage is not provided or prefix missing', () => {
-      expect(formatPlatformMessage('raw message')).toBe('raw message');
-      expect(formatPlatformMessage('notifications.test')).toBe('notifications.test');
-    });
-
-    it('translates notification key without params', () => {
-      expect(
-        formatPlatformMessage('notifications.opportunity.newApplication', mockFormat as any),
-      ).toBe('New application from user');
-    });
-
-    it('translates notification key with json params', () => {
-      const payload = 'notifications.opportunity.newApplication|{"applicantName":"Alice"}';
-
-      expect(formatPlatformMessage(payload, mockFormat as any)).toBe('New application from Alice');
-    });
-
-    it('falls back to key if json parsing fails', () => {
-      const payload = 'notifications.opportunity.newApplication|invalid-json';
-
-      expect(formatPlatformMessage(payload, mockFormat as any)).toBe('New application from user');
     });
   });
 });

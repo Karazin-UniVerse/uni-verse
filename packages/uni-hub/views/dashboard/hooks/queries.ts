@@ -2,8 +2,8 @@ import { queryOptions } from '@tanstack/react-query';
 import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import type { MoodleQueryOptions } from '@uni-hub/queries/moodle/queries';
 import { moodleApi } from '@uni-hub/services/api.moodle';
-import { notificationsApi, type PlatformNotification } from '@uni-hub/services/api';
 import { clearUserSessionStorage } from '@uni-hub/services/api.session';
+import { notificationsApi, type PlatformNotification } from '@uni-hub/services/api.notifications';
 import type { DashboardData } from '../types';
 import {
   assembleDashboardData,
@@ -15,19 +15,49 @@ import {
   type BuildAssignmentParamsOptions,
 } from './helpers';
 
+export async function loadPlatformNotifications(): Promise<PlatformNotification[]> {
+  try {
+    const response = await notificationsApi.getMyNotifications();
+
+    return response.data;
+  } catch (error) {
+    if (isUnauthorizedError(error)) {
+      clearUserSessionStorage();
+      throw error;
+    }
+
+    console.error('Failed to load platform notifications', error);
+
+    return [];
+  }
+}
+
 export async function loadDashboardData(
   filters: BuildAssignmentParamsOptions,
 ): Promise<DashboardData> {
   try {
-    const responses = await Promise.all([
+    const [
+      coursesRes,
+      gradesRes,
+      assignmentsRes,
+      eventsRes,
+      notificationsRes,
+      statsRes,
+      platformNotifications,
+    ] = await Promise.all([
       moodleApi.getCourses(),
       moodleApi.getGrades(),
       moodleApi.getAssignments(buildAssignmentParams(filters)),
       moodleApi.getEvents(),
       moodleApi.getNotifications(),
       moodleApi.getStatistics(),
+      loadPlatformNotifications(),
     ]);
-    const freshData = assembleDashboardData(responses);
+
+    const freshData = assembleDashboardData(
+      [coursesRes, gradesRes, assignmentsRes, eventsRes, notificationsRes, statsRes],
+      platformNotifications,
+    );
 
     if (!isMoodleUnlinked()) {
       persistDashboardSnapshot(Date.now(), freshData);
@@ -73,20 +103,6 @@ export const markNotificationReadMutationKey = (
 ): readonly ['notifications', 'read', string] => ['notifications', 'read', id] as const;
 
 export const markAllNotificationsReadMutationKey = ['notifications', 'read-all'] as const;
-
-export async function loadPlatformNotifications(): Promise<PlatformNotification[]> {
-  try {
-    const res = await notificationsApi.getMyNotifications();
-
-    return res.data;
-  } catch (error) {
-    if (isUnauthorizedError(error)) {
-      clearUserSessionStorage();
-    }
-
-    throw error;
-  }
-}
 
 export const platformNotificationsQueryOptions = queryOptions({
   queryKey: notificationKeys.platform(),

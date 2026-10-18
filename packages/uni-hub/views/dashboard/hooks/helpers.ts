@@ -1,8 +1,16 @@
-import { moodleApi, notificationsApi } from '@uni-hub/services/api';
-import type { PlatformNotification } from '@uni-hub/services/api';
+import type { PlatformNotification } from '@uni-hub/services/api.notifications';
 import { asList } from '@uni-hub/utils/arrays';
 import { isBrowser } from '@uni-hub/utils/browser';
-import type { Grade, Assignment, Notification } from '@core/types/moodle';
+import type {
+  Grade,
+  Assignment,
+  Notification,
+  MoodleCourse,
+  MoodleEvent,
+  NotificationsResponse,
+  CourseStatistics,
+} from '@core/types/moodle';
+import { moodleApi } from '@uni-hub/services/api';
 import type { StudentProfile } from '@core/types';
 import type { DashboardData } from '../types';
 import { fallbackStudentProfile } from '../constants';
@@ -56,39 +64,43 @@ export function resolveGradesResponse(gradesResponse?: GradesApiResponse | null)
 }
 
 export type MoodleApiResponseTuple = [
-  Awaited<ReturnType<typeof moodleApi.getCourses>>,
-  Awaited<ReturnType<typeof moodleApi.getGrades>>,
-  Awaited<ReturnType<typeof moodleApi.getAssignments>>,
-  Awaited<ReturnType<typeof moodleApi.getEvents>>,
-  Awaited<ReturnType<typeof moodleApi.getNotifications>>,
-  Awaited<ReturnType<typeof moodleApi.getStatistics>>,
+  { data?: MoodleCourse[] | null },
+  GradesApiResponse,
+  { data?: Assignment[] | null },
+  { data?: MoodleEvent[] | null },
+  { data?: NotificationsResponse | null },
+  { data?: CourseStatistics | null },
 ];
 
 export function mapPlatformNotification(item: PlatformNotification): Notification {
   return {
     id: item.id,
     subject: item.title,
+    message: item.message,
     timecreated: Math.floor(new Date(item.createdAt).getTime() / 1000),
     read: item.isRead,
-    message: item.message,
     link: item.link ?? null,
   };
 }
 
 export function applyPlatformNotifications(
-  dashboard: DashboardData,
-  platformNotifications: PlatformNotification[],
+  previousData: DashboardData,
+  platformNotifications?: PlatformNotification[] | null,
 ): DashboardData {
-  const mapped = platformNotifications.map(mapPlatformNotification);
-  const existingIds = new Set(mapped.map((n) => n.id));
-  const filteredMoodle = dashboard.notifications.filter((n) => !existingIds.has(n.id));
-  const merged = [...mapped, ...filteredMoodle].sort((a, b) => b.timecreated - a.timecreated);
-  const unreadCount = merged.filter((n) => !n.read).length;
+  const platformItems = asList(platformNotifications);
+  const keptMoodle = isMoodleUnlinked()
+    ? []
+    : previousData.notifications.filter((item) => typeof item.id === 'number');
+  const mapped = platformItems.map(mapPlatformNotification);
 
   return {
-    ...dashboard,
-    notifications: merged,
-    unreadCount,
+    ...previousData,
+    notifications: [...keptMoodle, ...mapped].sort(
+      (first, second) => second.timecreated - first.timecreated,
+    ),
+    unreadCount:
+      keptMoodle.filter((item) => !item.read).length +
+      platformItems.filter((notification) => !notification.isRead).length,
   };
 }
 
@@ -101,25 +113,28 @@ export function assembleDashboardData(
     notificationsRes,
     statsRes,
   ]: MoodleApiResponseTuple,
-  platformNotificationsRes?: Awaited<ReturnType<typeof notificationsApi.getMyNotifications>> | null,
+  platformNotifications: PlatformNotification[] = [],
 ): DashboardData {
-  const base: DashboardData = {
+  const moodleList = asList(notificationsRes?.data?.notifications);
+  const platformList = platformNotifications.map(mapPlatformNotification);
+  const combinedNotifications = [...moodleList, ...platformList].sort(
+    (first, second) => second.timecreated - first.timecreated,
+  );
+  const moodleUnread =
+    notificationsRes?.data?.unreadcount ?? notificationsRes?.data?.unreadCount ?? 0;
+  const platformUnread = platformNotifications.filter(
+    (notification) => !notification.isRead,
+  ).length;
+
+  return {
     courses: asList(coursesRes?.data),
     grades: resolveGradesResponse(gradesRes),
     assignments: asList(assignmentsRes?.data),
     events: asList(eventsRes?.data),
-    notifications: asList(notificationsRes?.data?.notifications),
-    unreadCount: notificationsRes?.data?.unreadcount || 0,
+    notifications: combinedNotifications,
+    unreadCount: moodleUnread + platformUnread,
     statistics: statsRes?.data || null,
   };
-
-  const platformItems = platformNotificationsRes?.data;
-
-  if (platformItems && platformItems.length > 0) {
-    return applyPlatformNotifications(base, platformItems);
-  }
-
-  return base;
 }
 
 export type BuildAssignmentParamsOptions = {
@@ -336,7 +351,7 @@ export interface BuildFallbackDataOptions {
   hideCompleted: boolean;
   dateFrom: string;
   dateTo: string;
-  platformNotifications?: PlatformNotification[];
+  platformNotifications?: PlatformNotification[] | null;
 }
 
 export function buildFallbackData({
@@ -354,17 +369,13 @@ export function buildFallbackData({
     dateTo,
   });
 
-  const base: DashboardData = {
+  const merged: DashboardData = {
     ...previousData,
     ...cachedData,
     assignments: fallbackAssignments,
   };
 
-  if (platformNotifications && platformNotifications.length > 0) {
-    return applyPlatformNotifications(base, platformNotifications);
-  }
-
-  return base;
+  return platformNotifications ? applyPlatformNotifications(merged, platformNotifications) : merged;
 }
 
 export interface DashboardQueryState {

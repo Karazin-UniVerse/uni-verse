@@ -106,7 +106,7 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
             </button>
           </div>
 
-          {!loading && (
+          {!loading && !isError && (
             <span className={styles.resultCount}>
               {formatMessage('opportunities.catalog.foundPrefix')}{' '}
               <strong>{filteredOpportunities.length}</strong>

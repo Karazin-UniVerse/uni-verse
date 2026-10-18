@@ -3,12 +3,12 @@ import { request } from './api.request';
 export interface PlatformNotification {
   id: string;
   userId: string;
-  type: string;
   title: string;
   message: string;
-  link: string | null;
   isRead: boolean;
   createdAt: string;
+  type?: string | null;
+  link?: string | null;
 }
 
 export interface MarkAllAsReadResponse {
@@ -19,7 +19,6 @@ export class NotificationsApi {
   async getMyNotifications(): Promise<{ data: PlatformNotification[] }> {
     return request<PlatformNotification[]>('/notifications');
   }
-
   async markAsRead(id: string): Promise<{ data: PlatformNotification }> {
     return request<PlatformNotification>(`/notifications/${id}/read`, {
       method: 'POST',

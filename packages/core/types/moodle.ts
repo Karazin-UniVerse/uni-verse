@@ -70,14 +70,15 @@ export interface Notification {
   subject: string;
   timecreated: number;
   read: boolean;
-  fullmessage?: string;
   message?: string;
+  fullmessage?: string;
   link?: string | null;
 }
 
 export interface NotificationsResponse {
   notifications?: Notification[];
   unreadcount?: number;
+  unreadCount?: number;
 }
 
 export interface CourseStatistics {

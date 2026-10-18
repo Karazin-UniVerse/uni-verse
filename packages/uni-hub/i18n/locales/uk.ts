@@ -577,6 +577,8 @@ export const uk = {
     'Коротко опишіть ваш досвід, стек та чому ви хочете взяти участь...',
   'opportunities.applyModal.contactLabel': 'Ваш Telegram або номер телефону для звʼязку',
   'opportunities.applyModal.contactPlaceholder': '@username або +380...',
+  'opportunities.applyModal.invalidContact':
+    'Вкажіть коректний Telegram (@username або посилання) або номер телефону',
   'opportunities.applyModal.defaultContact': 'Вказано в профілі',
   'opportunities.applyModal.defaultApplicantName': 'Студент',
   'opportunities.applyModal.cancel': 'Скасувати',
@@ -587,6 +589,8 @@ export const uk = {
   'opportunities.applicantsModal.title': 'Кандидати на можливість ({count})',
   'opportunities.applicantsModal.empty': 'На цю можливість ще немає відгуків',
   'opportunities.applicantsModal.defaultApplicant': 'Студент',
+  'opportunities.applicantsModal.emailLabel': 'Електронна пошта',
+  'opportunities.applicantsModal.directContactLabel': 'Прямий контакт (Telegram / телефон)',
   'opportunities.applicantsModal.motivationLabel': 'Супровідне повідомлення:',
   'opportunities.applicantsModal.submittedOn': 'Подано {date}',
   'opportunities.applicantsModal.accept': 'Прийняти',
@@ -601,6 +605,24 @@ export const uk = {
   'notifications.opportunity.statusInReview': 'Ваша заявка на «{title}» розглядається',
   'notifications.opportunity.published': 'Вашу можливість «{title}» опубліковано',
   'notifications.opportunity.rejected': 'Вашу можливість «{title}» відхилено: {reason}',
+  'notifications.opportunityApplicationStatus.title': 'Статус заявки на можливість',
+  'notifications.opportunityApplicationStatus.message':
+    'Статус заявки на «{opportunityTitle}» змінено на: {status}.',
+  'notifications.opportunityApplicationStatus.messageWithComment':
+    'Статус заявки на «{opportunityTitle}» змінено на: {status}. Коментар: {comment}',
+  'notifications.opportunityNewApplication.title': 'Новий відгук на можливість',
+  'notifications.opportunityNewApplication.message':
+    'Новий відгук на можливість «{opportunityTitle}» від {applicantName}.',
+  'notifications.opportunityModerated.title': 'Результат модерації можливості',
+  'notifications.opportunityModerated.message': 'Можливість «{opportunityTitle}» {action}.',
+  'notifications.opportunityModerated.messageWithComment':
+    'Можливість «{opportunityTitle}» {action}. Коментар модератора: {comment}',
+  'notifications.status.ACCEPTED': 'прийнято',
+  'notifications.status.REJECTED': 'відхилено',
+  'notifications.status.UNDER_REVIEW': 'переведено на розгляд',
+  'notifications.action.APPROVE': 'схвалено та опубліковано',
+  'notifications.action.REJECT': 'відхилено',
+  'notifications.action.REQUIRE_CHANGES': 'потребує змін',
 };
 
 export type TranslationKey = keyof typeof uk;
