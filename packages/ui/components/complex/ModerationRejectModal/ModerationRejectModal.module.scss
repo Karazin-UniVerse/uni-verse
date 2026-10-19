@@ -71,6 +71,14 @@
     &:hover:not(:disabled) {
       filter: brightness(0.92);
     }
+
+    &:disabled {
+      background-color: var(--btn-primary-disabled, #374151);
+      border-color: var(--btn-primary-disabled, #374151);
+      color: var(--text-disabled, #9ca3af);
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
   }
 
   .rejectBtn {
@@ -80,6 +88,14 @@
 
     &:hover:not(:disabled) {
       filter: brightness(0.92);
+    }
+
+    &:disabled {
+      background-color: var(--btn-primary-disabled, #374151);
+      border-color: var(--btn-primary-disabled, #374151);
+      color: var(--text-disabled, #9ca3af);
+      cursor: not-allowed;
+      opacity: 0.5;
     }
   }
 }

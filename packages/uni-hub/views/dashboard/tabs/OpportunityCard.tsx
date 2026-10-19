@@ -44,7 +44,26 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   );
 
   return (
-    <article className={clsx(styles.card, isPaid ? styles.paidCard : styles.unpaidCard)}>
+    <article
+      className={clsx(
+        styles.card,
+        isPaid ? styles.paidCard : styles.unpaidCard,
+        variant === 'catalog' && styles.clickableCard,
+      )}
+      onClick={variant === 'catalog' ? () => onOpenDetail?.(opportunity) : undefined}
+      onKeyDown={
+        variant === 'catalog'
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onOpenDetail?.(opportunity);
+              }
+            }
+          : undefined
+      }
+      role={variant === 'catalog' ? 'button' : undefined}
+      tabIndex={variant === 'catalog' ? 0 : undefined}
+    >
       <div className={styles.cardTop}>
         <div className={styles.cardBadgeRow}>
           <div

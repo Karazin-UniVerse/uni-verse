@@ -18,6 +18,11 @@
     border-color 300ms cubic-bezier(0.16, 1, 0.3, 1),
     background-color 300ms ease;
   will-change: transform, box-shadow;
+  cursor: default;
+
+  &.clickableCard {
+    cursor: pointer; /* 👈 курсор-пальчик на всю картку */
+  }
 
   @include narrower-than('md') {
     padding: 20px;
@@ -247,13 +252,6 @@
   &:focus-visible {
     outline: 2px solid var(--accent-primary);
     outline-offset: 2px;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
   }
 }
 

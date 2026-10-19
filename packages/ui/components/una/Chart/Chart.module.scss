@@ -37,24 +37,17 @@
 
   :global(.recharts-wrapper),
   :global(.recharts-surface),
-  :global(.recharts-layer),
-  :global(.recharts-bar-rectangle),
-  :global(.recharts-rectangle),
-  :global(svg),
-  :global(rect),
-  :global(path) {
-    user-select: none;
-    -webkit-user-select: none;
+  :global(.recharts-surface *),
+  :global(.recharts-wrapper *) {
+    outline: none;
     -webkit-tap-highlight-color: transparent;
 
-    &:focus:not(:focus-visible) {
+    &:focus,
+    &:focus-visible,
+    &:active {
       outline: none;
+      box-shadow: none;
     }
-  }
-
-  :global(.recharts-wrapper:focus-visible) {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
   }
 }
 
