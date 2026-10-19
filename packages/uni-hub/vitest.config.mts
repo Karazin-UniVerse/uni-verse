@@ -23,7 +23,16 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     setupFiles: ['./vitest.setup.ts'],
-    dangerouslyIgnoreUnhandledErrors: true,
+    onUnhandledError(error: unknown) {
+      const err = error as { name?: string; message?: string } | undefined;
+
+      if (
+        err?.name === 'AbortError' ||
+        err?.message?.includes('animation was canceled')
+      ) {
+        return false;
+      }
+    },
   },
 });
 

@@ -51,28 +51,12 @@ export function createQueryClientWrapper(
   queryClient: QueryClient = createTestQueryClient(),
 ): React.FC<{ children: React.ReactNode }> {
   return ({ children }: { children: React.ReactNode }): React.ReactElement =>
-    React.createElement(QueryClientProvider, { client: queryClient }, children);
+    withQueryClient(React.createElement(React.Fragment, null, children), queryClient);
 }
 
 export function createAppProvidersWrapper(
   queryClient: QueryClient = createTestQueryClient(),
 ): React.FC<{ children: React.ReactNode }> {
   return ({ children }: { children: React.ReactNode }): React.ReactElement =>
-    React.createElement(
-      QueryClientProvider,
-      { client: queryClient },
-      React.createElement(
-        ToastProvider,
-        null,
-        React.createElement(
-          ThemeProvider,
-          null,
-          React.createElement(
-            LanguageProvider,
-            null,
-            React.createElement(FeatureToggleProvider, null, children),
-          ),
-        ),
-      ),
-    );
+    withAppProviders(React.createElement(React.Fragment, null, children), queryClient);
 }
