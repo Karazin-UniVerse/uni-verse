@@ -1,5 +1,6 @@
 import { RESPONSE_CODES } from '@core/constants/response-codes';
 import { safeStorage, API_BASE_URL } from './api.storage';
+import { clearUserSessionStorage } from './api.session';
 
 function isSecureOrLoopback(targetUrl: string): boolean {
   try {
@@ -48,11 +49,7 @@ const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 
 function clearUnauthorizedStorage(status: number): void {
   if (status === RESPONSE_CODES.UNAUTHORIZED) {
-    safeStorage.removeItem('isLoggedIn');
-    safeStorage.removeItem('accessToken');
-    safeStorage.removeItem('moodleToken');
-    safeStorage.removeItem('universe_dashboard_data');
-    safeStorage.removeItem('universe_last_sync_time');
+    clearUserSessionStorage();
   }
 }
 

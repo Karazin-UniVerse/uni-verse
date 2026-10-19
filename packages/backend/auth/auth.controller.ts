@@ -189,7 +189,7 @@ export class AuthController {
     return { access_token: tokens.access_token };
   }
 
-  private setRefreshTokenCookie(res: Response, refreshToken: string) {
+  private setRefreshTokenCookie(res: Response, refreshToken: string): void {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

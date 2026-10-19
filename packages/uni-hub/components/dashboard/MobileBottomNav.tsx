@@ -36,7 +36,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         <ul className={styles.nav}>
           {primaryItems.map((item) => {
             const label = formatMessage(item.labelKey);
-            const shortLabel = formatMessage(item.shortLabelKey);
+            const shortLabel = formatMessage(item.shortLabelKey ?? item.labelKey);
             const isActive = activeKey === item.key && !isMoreSheetOpen;
 
             return (

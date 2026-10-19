@@ -61,19 +61,11 @@ export const en = {
   'theme.karazinGold': 'Karazin Gold',
   'theme.select': 'Theme selection',
 
-  // Navigation (short & full)
-  'nav.overview': 'Overview',
-  'nav.overview.full': 'Student Card / Overview',
-  'nav.courses': 'Courses',
-  'nav.courses.full': 'Study Plan',
-  'nav.assignments': 'Assignments',
-  'nav.assignments.full': 'Assignments',
+  // Navigation
+  'nav.overview': 'Wall',
+  'nav.study': 'Study',
   'nav.schedule': 'Schedule',
-  'nav.schedule.full': 'Class Schedule',
-  'nav.grades': 'Grades',
-  'nav.grades.full': 'Gradebook & Scores',
   'nav.connectMoodle': 'Connect Moodle',
-  'nav.connectMoodle.full': 'Connect Moodle LMS Account',
   'nav.opportunities': 'Opportunities',
   'nav.opportunities.full': 'Opportunities Platform',
   'nav.more': 'More',
@@ -81,6 +73,11 @@ export const en = {
   'nav.more.sections': 'Sections',
   'nav.more.preferences': 'Preferences',
   'nav.more.close': 'Close menu',
+
+  // Study views
+  'study.views.subjects': 'Subjects',
+  'study.views.grades': 'Grades',
+  'study.views.assignments': 'Assignments',
 
   // Sidebar & Header
   'sidebar.logout': 'Log out',
@@ -90,6 +87,7 @@ export const en = {
   'header.notifications': 'Notifications',
   'header.notifications.empty': 'No notifications',
   'header.notifications.unreadItem': 'Unread:',
+  'header.notifications.markAllRead': 'Mark all as read',
   'header.moodleConnected': 'Connected',
   'header.moodleNotConnected': 'Not connected',
   'header.moodleChange': 'Change account',
@@ -175,7 +173,6 @@ export const en = {
 
   // Course Contents
   'courseContents.back': 'Back to courses',
-  'courseContents.breadcrumbs': 'Courses',
   'courseContents.title': 'Course Contents',
   'courseContents.loading': 'Loading contents...',
   'courseContents.empty': 'There are no materials available in this course yet.',
@@ -264,33 +261,34 @@ export const en = {
   'header.userMenu': 'User profile menu',
   'header.unreadCount': '{count} new',
 
-  // Assignment Modal
-  'assignmentModal.defaultTitle': 'Assignment',
-  'assignmentModal.loadingStatus': 'Loading status...',
-  'assignmentModal.openMoodle': 'Open original assignment on Moodle',
-  'assignmentModal.description': 'Description',
-  'assignmentModal.attachedFiles': 'Attached files',
-  'assignmentModal.download': 'Download',
-  'assignmentModal.submissionStatus': 'Submission status',
-  'assignmentModal.status': 'Status',
-  'assignmentModal.grade': 'Grade',
-  'assignmentModal.noStatusData': 'No status data available',
-  'assignmentModal.submitTitle': 'Submit assignment',
-  'assignmentModal.answerText': 'Answer text',
-  'assignmentModal.placeholder': 'Enter your submission here...',
-  'assignmentModal.attachFile': 'Attach file',
-  'assignmentModal.dragDrop': 'Drag and drop a file here or',
-  'assignmentModal.browse': 'browse',
-  'assignmentModal.cancel': 'Cancel',
-  'assignmentModal.submit': 'Submit',
-  'assignmentModal.uploading': 'Uploading file...',
-  'assignmentModal.submitSuccess': 'Submission sent successfully',
-  'assignmentModal.submitError': 'Error submitting assignment',
-  'assignmentModal.formRequired': 'Please enter text or attach a file',
-  'assignmentModal.statusSubmitted': 'Submitted for grading',
-  'assignmentModal.statusGraded': 'Graded',
-  'assignmentModal.statusNew': 'No attempt',
-  'assignmentModal.statusDraft': 'Draft',
+  // Assignment Detail
+  'assignmentPage.back': 'Back to assignments',
+  'assignmentDetail.defaultTitle': 'Assignment',
+  'assignmentDetail.loadingStatus': 'Loading status...',
+  'assignmentDetail.openMoodle': 'Open original assignment on Moodle',
+  'assignmentDetail.description': 'Description',
+  'assignmentDetail.attachedFiles': 'Attached files',
+  'assignmentDetail.download': 'Download',
+  'assignmentDetail.submissionStatus': 'Submission status',
+  'assignmentDetail.status': 'Status',
+  'assignmentDetail.grade': 'Grade',
+  'assignmentDetail.noStatusData': 'No status data available',
+  'assignmentDetail.submitTitle': 'Submit assignment',
+  'assignmentDetail.answerText': 'Answer text',
+  'assignmentDetail.placeholder': 'Enter your submission here...',
+  'assignmentDetail.attachFile': 'Attach file',
+  'assignmentDetail.dragDrop': 'Drag and drop a file here or',
+  'assignmentDetail.browse': 'browse',
+  'assignmentDetail.cancel': 'Cancel',
+  'assignmentDetail.submit': 'Submit',
+  'assignmentDetail.uploading': 'Uploading file...',
+  'assignmentDetail.submitSuccess': 'Submission sent successfully',
+  'assignmentDetail.submitError': 'Error submitting assignment',
+  'assignmentDetail.formRequired': 'Please enter text or attach a file',
+  'assignmentDetail.statusSubmitted': 'Submitted for grading',
+  'assignmentDetail.statusGraded': 'Graded',
+  'assignmentDetail.statusNew': 'No attempt',
+  'assignmentDetail.statusDraft': 'Draft',
 
   // Gamification
   'badge.unlocked': 'Achievement',
@@ -571,7 +569,7 @@ export const en = {
   'opportunities.detailModal.phasePaused': 'Paused',
   'opportunities.detailModal.phaseCompleted': 'Completed',
   'opportunities.detailModal.phaseCancelled': 'Cancelled',
-  'opportunities.detailModal.close': 'Close',
+  'opportunities.detail.back': 'Back to opportunities',
   'opportunities.detailModal.apply': 'Apply for Opportunity',
 
   // Modals - Apply
@@ -604,6 +602,7 @@ export const en = {
   'opportunities.applicantsModal.close': 'Close',
 
   // Platform Notifications
+  'notifications.error.markReadFailed': 'Failed to update notification status',
   'notifications.opportunityApplicationStatus.title': 'Opportunity Application Status',
   'notifications.opportunityApplicationStatus.message':
     'Application status for "{opportunityTitle}" changed to: {status}.',

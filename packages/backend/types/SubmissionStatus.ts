@@ -1,10 +1,10 @@
 export interface MoodleSubmission {
+  status: string;
   id?: number;
   userid?: number;
   attemptnumber?: number;
   timecreated?: number;
   timemodified?: number;
-  status: string;
   gradingstatus?: string;
   groupid?: number;
   assignment?: number;
@@ -13,6 +13,7 @@ export interface MoodleSubmission {
 }
 
 export interface MoodleLastAttempt {
+  gradingstatus: string;
   submission?: MoodleSubmission;
   teamsubmission?: unknown;
   submissiongroup?: unknown;
@@ -27,7 +28,6 @@ export interface MoodleLastAttempt {
   duedateelectronicformat?: boolean;
   extensionduedate?: number;
   blindmarking?: boolean;
-  gradingstatus: string;
   usergroups?: Array<unknown>;
 }
 

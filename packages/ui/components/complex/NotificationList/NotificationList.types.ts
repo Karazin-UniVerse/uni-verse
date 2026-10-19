@@ -5,6 +5,7 @@ export type NotificationListItem = {
   time: string;
   dateTime: string;
   isRead: boolean;
+  link?: string;
 };
 
 export type NotificationListProps = {
@@ -13,5 +14,9 @@ export type NotificationListProps = {
   emptyLabel: string;
   unreadItemLabel?: string;
   unreadLabel?: string;
+  markAllReadLabel?: string;
   className?: string;
+  isItemClickable?: (item: NotificationListItem) => boolean;
+  onItemClick?: (item: NotificationListItem) => void;
+  onMarkAllRead?: () => void;
 };

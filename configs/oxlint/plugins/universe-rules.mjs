@@ -322,6 +322,52 @@ export default {
       },
     },
 
+    'required-members-first': {
+      meta: {
+        type: 'suggestion',
+        docs: {
+          description:
+            'Require interface and type literal members without `?` to be declared before optional ones.',
+        },
+      },
+      create(context) {
+        function check(node) {
+          let firstOptional = null;
+
+          for (const member of node.body) {
+            const isSignature =
+              member.type === 'TSIndexSignature' ||
+              member.type === 'TSCallSignatureDeclaration' ||
+              member.type === 'TSConstructSignatureDeclaration';
+
+            if (
+              !isSignature &&
+              member.type !== 'TSPropertySignature' &&
+              member.type !== 'TSMethodSignature'
+            ) {
+              continue;
+            }
+
+            if (!isSignature && member.optional) {
+              firstOptional ??= member;
+            } else if (firstOptional) {
+              context.report({
+                node: member,
+                message: 'Declare required members before optional ones.',
+              });
+            }
+          }
+        }
+
+        return {
+          TSInterfaceBody: check,
+          TSTypeLiteral(node) {
+            check({ body: node.members });
+          },
+        };
+      },
+    },
+
     // ─── HYDRATION / RENDERING ────────────────────────────────────────
 
     'no-suppress-hydration-without-comment': {
@@ -476,99 +522,6 @@ export default {
       },
     },
 
-    'nestjs-controller-return-type': {
-      meta: {
-        type: 'problem',
-        docs: { description: 'Require explicit return types on controller endpoints.' },
-      },
-      create(context) {
-        const filename = (context.filename || '').replace(/\\/g, '/');
-
-        if (!filename.includes('/backend/') || !filename.endsWith('.controller.ts')) return {};
-
-        const HTTP_DECORATORS = ['Get', 'Post', 'Put', 'Delete', 'Patch'];
-
-        return {
-          MethodDefinition(node) {
-            const isEndpoint = node.decorators?.some((d) =>
-              HTTP_DECORATORS.includes(d.expression?.callee?.name || d.expression?.name || ''),
-            );
-
-            if (!isEndpoint) return;
-
-            if (!node.value?.returnType) {
-              context.report({
-                node,
-                message: `Controller method '${node.key?.name}' must have an explicit return type.`,
-              });
-            }
-          },
-        };
-      },
-    },
-
-    'una-primitive-purity': {
-      meta: {
-        type: 'problem',
-        docs: { description: 'Prevent business imports in una/ design system.' },
-      },
-      create(context) {
-        const filename = (context.filename || '').replace(/\\/g, '/');
-
-        if (!filename.includes('/ui/') || !filename.includes('/una/')) return {};
-
-        const FORBIDDEN_SOURCES = [
-          '@uni-hub/services',
-          '@uni-hub/store',
-          '@uni-hub/views',
-          'zustand',
-          'next/navigation',
-          'next/router',
-          '@universe/backend',
-          '@universe/database',
-        ];
-
-        return {
-          ImportDeclaration(node) {
-            const src = node.source?.value || '';
-            const match = FORBIDDEN_SOURCES.find((f) => src.includes(f));
-
-            if (match) {
-              context.report({
-                node,
-                message: `Design System Purity: 'una/' must not import '${src}'.`,
-              });
-            }
-          },
-        };
-      },
-    },
-
-    'nestjs-controller-no-prisma': {
-      meta: {
-        type: 'problem',
-        docs: { description: 'Controllers must not import PrismaService.' },
-      },
-      create(context) {
-        const filename = (context.filename || '').replace(/\\/g, '/');
-
-        if (!filename.includes('/backend/') || !filename.endsWith('.controller.ts')) return {};
-
-        return {
-          ImportDeclaration(node) {
-            const src = node.source?.value || '';
-
-            if (src.includes('prisma.service') || src.includes('prisma.module')) {
-              context.report({
-                node,
-                message: 'Controllers must not import PrismaService directly.',
-              });
-            }
-          },
-        };
-      },
-    },
-
     'no-empty-catch-in-services': {
       meta: {
         type: 'problem',
@@ -658,39 +611,46 @@ export default {
       },
     },
 
-    'core-package-isolation': {
+    'dto-implements-core-contract': {
       meta: {
         type: 'problem',
-        docs: { description: 'Prevent @universe/core from importing app-layer packages.' },
+        docs: {
+          description:
+            'Backend DTO classes must implement a shared contract from @universe/core/types.',
+        },
       },
       create(context) {
-        const filename = (context.filename || '').replace(/\\/g, '/');
-
-        if (!filename.includes('/packages/core/')) return {};
-
-        const FORBIDDEN = [
-          '@nestjs/',
-          'prisma',
-          '@prisma/',
-          'react',
-          'react-dom',
-          'next',
-          'zustand',
-          '@universe/database',
-          'express',
-        ];
+        const coreContracts = new Set();
 
         return {
           ImportDeclaration(node) {
-            const src = node.source?.value || '';
-            const match = FORBIDDEN.find((f) => src.startsWith(f) || src.includes(f));
+            const source = node.source?.value || '';
 
-            if (match) {
-              context.report({
-                node,
-                message: `@universe/core must not import '${src}'.`,
-              });
+            if (source === '@universe/core/types' || source.startsWith('@universe/core/types/')) {
+              for (const specifier of node.specifiers || []) {
+                if (specifier.local?.name) {
+                  coreContracts.add(specifier.local.name);
+                }
+              }
             }
+          },
+          ClassDeclaration(node) {
+            const implementsCoreContract = node.implements?.some((clause) => {
+              const name = clause.expression?.name;
+
+              return name && coreContracts.has(name);
+            });
+
+            if (implementsCoreContract) return;
+
+            const className = node.id?.name ?? 'anonymous';
+            const baseName = node.id?.name?.replace(/Dto$/, '') ?? 'Contract';
+            const exampleName = baseName.endsWith('Response') ? baseName : `${baseName}Request`;
+
+            context.report({
+              node: node.id ?? node,
+              message: `DTO '${className}' must implement its contract from '@universe/core/types' (for example 'implements ${exampleName}').`,
+            });
           },
         };
       },

@@ -1,10 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useToast } from '@una';
+import { isLoggedIn } from '@core/utils/auth';
 import type { StudentProfile } from '@core/types';
+import { useFeatures } from '@uni-hub/features';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
+import { fallbackStudentProfile } from '../constants';
 import type { DashboardData } from '../types';
 import {
   applyPlatformNotifications,
@@ -13,7 +17,6 @@ import {
   getInitialSyncTime,
   getInitialUserProfile,
   isMoodleUnlinked,
-  isUnauthorizedError,
   loadCachedDashboardData,
   type DashboardState,
 } from './helpers';
@@ -33,18 +36,13 @@ const EMPTY_DASHBOARD_DATA: DashboardData = {
   statistics: null,
 };
 
-export interface UseDashboardDataOptions {
-  sortOrder: 'asc' | 'desc';
-  dateFrom: string;
-  dateTo: string;
-  hideCompleted: boolean;
-  onUnauthorized: () => void;
-  enabled?: boolean;
-}
-
 export interface UseDashboardDataResult extends Omit<DashboardState, 'cachedData'> {
   data: DashboardData;
-  studentProfile: StudentProfile | null;
+  studentProfile: StudentProfile;
+  hasCachedData: boolean;
+  error: Error | null;
+  errorUpdatedAt: number;
+  platformError: Error | null;
   refresh: () => Promise<void>;
 }
 
@@ -54,18 +52,17 @@ function readDashboardSnapshot(): DashboardData | undefined {
   return cachedData ? { ...EMPTY_DASHBOARD_DATA, ...cachedData } : undefined;
 }
 
-export function useDashboardData({
-  sortOrder,
-  dateFrom,
-  dateTo,
-  hideCompleted,
-  onUnauthorized,
-  enabled = true,
-}: UseDashboardDataOptions): UseDashboardDataResult {
+export function useDashboardData(): UseDashboardDataResult {
   const toast = useToast();
   const { formatMessage } = useLanguage();
-
-  const handledErrorAt = useRef(0);
+  const features = useFeatures();
+  const sortOrder = useMoodleStore((state) => state.sortOrder);
+  const dateFrom = useMoodleStore((state) => state.dateFrom);
+  const dateTo = useMoodleStore((state) => state.dateTo);
+  const hideCompleted = useMoodleStore((state) => state.hideCompleted);
+  const isMoodleLinked = useMoodleStore((state) => state.isMoodleLinked);
+  const enabled =
+    features.isMoodleIntegrationEnabled && isMoodleLinked && !isMoodleUnlinked() && isLoggedIn();
 
   const dashboardQuery = useQuery({
     ...dashboardQueryOptions({ sortOrder, dateFrom, dateTo, hideCompleted }),
@@ -95,36 +92,6 @@ export function useDashboardData({
   const state = deriveDashboardState({ ...dashboardQuery, snapshot });
   const { cachedData } = state;
 
-  useEffect(() => {
-    if (platformError && isUnauthorizedError(platformError)) {
-      toast.error(formatMessage('dashboard.sessionExpired'));
-      onUnauthorized();
-
-      return;
-    }
-
-    if (!error || errorUpdatedAt === handledErrorAt.current || isMoodleUnlinked()) {
-      return;
-    }
-
-    handledErrorAt.current = errorUpdatedAt;
-
-    if (isUnauthorizedError(error)) {
-      toast.error(formatMessage('dashboard.sessionExpired'));
-      onUnauthorized();
-
-      return;
-    }
-
-    console.error(error);
-
-    if (cachedData) {
-      toast.info(formatMessage('dashboard.offlineNotice'));
-    } else {
-      toast.error(formatMessage('dashboard.loadError'));
-    }
-  }, [error, errorUpdatedAt, platformError, cachedData, toast, formatMessage, onUnauthorized]);
-
   let data = cachedData ?? EMPTY_DASHBOARD_DATA;
 
   if (state.isOfflineData && cachedData) {
@@ -140,19 +107,21 @@ export function useDashboardData({
     data = applyPlatformNotifications(data, platformQuery.data);
   }
 
-  const refresh = async (): Promise<void> => {
+  const { refetch } = dashboardQuery;
+  const { refetch: refetchPlatform } = platformQuery;
+  const refresh = useCallback(async (): Promise<void> => {
     if (!enabled) {
-      await platformQuery.refetch();
+      await refetchPlatform();
 
       return;
     }
 
-    const [result] = await Promise.all([dashboardQuery.refetch(), platformQuery.refetch()]);
+    const [result] = await Promise.all([refetch(), refetchPlatform()]);
 
-    if (!result.isError) {
+    if (!result?.isError) {
       toast.success(formatMessage('dashboard.syncSuccess'));
     }
-  };
+  }, [enabled, refetch, refetchPlatform, toast, formatMessage]);
 
   return {
     loading: state.loading,
@@ -160,7 +129,16 @@ export function useDashboardData({
     isOfflineData: state.isOfflineData,
     lastSyncTime: state.lastSyncTime ?? getInitialSyncTime(),
     data,
-    studentProfile: profileQuery.data ?? null,
+    studentProfile: profileQuery.data ?? fallbackStudentProfile,
+    hasCachedData:
+      data.courses.length > 0 ||
+      data.grades.length > 0 ||
+      data.assignments.length > 0 ||
+      data.events.length > 0 ||
+      state.hasLoadedOnce,
+    error,
+    errorUpdatedAt,
+    platformError: (platformError as Error) ?? null,
     refresh,
   };
 }

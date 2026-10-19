@@ -79,6 +79,7 @@ export function mapPlatformNotification(item: PlatformNotification): Notificatio
     message: item.message,
     timecreated: Math.floor(new Date(item.createdAt).getTime() / 1000),
     read: item.isRead,
+    link: item.link ?? null,
   };
 }
 
@@ -204,20 +205,6 @@ export function isUnauthorizedError(error: unknown): boolean {
   const message = error.message.toLowerCase();
 
   return message.includes('401') || message.includes('unauthorized');
-}
-
-export function clearUserSessionStorage(): void {
-  try {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('moodleToken');
-    localStorage.removeItem('username');
-    localStorage.removeItem('universe_student_profile');
-    localStorage.removeItem('universe_dashboard_data');
-    localStorage.removeItem('universe_last_sync_time');
-  } catch {
-    // Ignore storage errors
-  }
 }
 
 export type FilterFallbackAssignmentsOptions = {

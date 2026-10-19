@@ -21,6 +21,9 @@ export interface MoodleCalendarCourse {
 export interface MoodleCalendarEvent {
   id: number;
   name: string;
+  eventtype: string;
+  timestart: number;
+  timesort: number;
   description?: string;
   descriptionformat?: number;
   location?: string;
@@ -34,10 +37,7 @@ export interface MoodleCalendarEvent {
   activityname?: string | null;
   activitystr?: string | null;
   instance?: number | null;
-  eventtype: string;
-  timestart: number;
   timeduration?: number;
-  timesort: number;
   timeusermidnight?: number;
   visible?: number;
   timemodified?: number;

@@ -59,19 +59,11 @@ export const uk = {
   'theme.karazinGold': 'Karazin Gold',
   'theme.select': 'Вибір теми',
 
-  // Navigation (short & full)
-  'nav.overview': 'Огляд',
-  'nav.overview.full': 'Картка студента / Огляд',
-  'nav.courses': 'Курси',
-  'nav.courses.full': 'Індивідуальний план',
-  'nav.assignments': 'Завдання',
-  'nav.assignments.full': 'Завдання',
+  // Navigation
+  'nav.overview': 'Стіна',
+  'nav.study': 'Навчання',
   'nav.schedule': 'Розклад',
-  'nav.schedule.full': 'Розклад занять',
-  'nav.grades': 'Оцінки',
-  'nav.grades.full': 'Заліковка та бали',
   'nav.connectMoodle': 'Підключити Moodle',
-  'nav.connectMoodle.full': 'Підключити акаунт Moodle LMS',
   'nav.opportunities': 'Можливості',
   'nav.opportunities.full': 'Платформа можливостей',
   'nav.more': 'Ще',
@@ -79,6 +71,11 @@ export const uk = {
   'nav.more.sections': 'Розділи',
   'nav.more.preferences': 'Налаштування',
   'nav.more.close': 'Закрити меню',
+
+  // Study views
+  'study.views.subjects': 'Дисципліни',
+  'study.views.grades': 'Оцінки',
+  'study.views.assignments': 'Завдання',
 
   // Sidebar & Header
   'sidebar.logout': 'Вийти',
@@ -88,6 +85,7 @@ export const uk = {
   'header.notifications': 'Сповіщення',
   'header.notifications.empty': 'Немає сповіщень',
   'header.notifications.unreadItem': 'Непрочитане:',
+  'header.notifications.markAllRead': 'Позначити всі як прочитані',
   'header.moodleConnected': 'Підключено',
   'header.moodleNotConnected': 'Не підключено',
   'header.moodleChange': 'Змінити акаунт',
@@ -175,7 +173,6 @@ export const uk = {
 
   // Course Contents
   'courseContents.back': 'Назад до курсів',
-  'courseContents.breadcrumbs': 'Курси',
   'courseContents.title': 'Вміст курсу',
   'courseContents.loading': 'Завантаження вмісту...',
   'courseContents.empty': 'У цьому курсі поки що немає доступних матеріалів.',
@@ -263,33 +260,34 @@ export const uk = {
   'header.userMenu': 'Меню профілю користувача',
   'header.unreadCount': '{count} нових',
 
-  // Assignment Modal
-  'assignmentModal.defaultTitle': 'Завдання',
-  'assignmentModal.loadingStatus': 'Завантаження статусу...',
-  'assignmentModal.openMoodle': 'Відкрити оригінальне завдання на Moodle',
-  'assignmentModal.description': 'Опис',
-  'assignmentModal.attachedFiles': 'Прикріплені файли',
-  'assignmentModal.download': 'Завантажити',
-  'assignmentModal.submissionStatus': 'Статус здачі',
-  'assignmentModal.status': 'Статус',
-  'assignmentModal.grade': 'Оцінка',
-  'assignmentModal.noStatusData': 'Немає даних про статус',
-  'assignmentModal.submitTitle': 'Надіслати відповідь',
-  'assignmentModal.answerText': 'Текст відповіді',
-  'assignmentModal.placeholder': 'Введіть вашу відповідь тут...',
-  'assignmentModal.attachFile': 'Прикріпити файл',
-  'assignmentModal.dragDrop': 'Перетягніть файл сюди або',
-  'assignmentModal.browse': 'виберіть',
-  'assignmentModal.cancel': 'Скасувати',
-  'assignmentModal.submit': 'Надіслати',
-  'assignmentModal.uploading': 'Завантаження файлу...',
-  'assignmentModal.submitSuccess': 'Відповідь успішно надіслано',
-  'assignmentModal.submitError': 'Помилка під час надсилання відповіді',
-  'assignmentModal.formRequired': 'Будь ласка, введіть текст відповіді або прикріпіть файл',
-  'assignmentModal.statusSubmitted': 'Здано на перевірку',
-  'assignmentModal.statusGraded': 'Оцінено',
-  'assignmentModal.statusNew': 'Немає спроби',
-  'assignmentModal.statusDraft': 'Чернетка',
+  // Assignment Detail
+  'assignmentPage.back': 'Назад до завдань',
+  'assignmentDetail.defaultTitle': 'Завдання',
+  'assignmentDetail.loadingStatus': 'Завантаження статусу...',
+  'assignmentDetail.openMoodle': 'Відкрити оригінальне завдання на Moodle',
+  'assignmentDetail.description': 'Опис',
+  'assignmentDetail.attachedFiles': 'Прикріплені файли',
+  'assignmentDetail.download': 'Завантажити',
+  'assignmentDetail.submissionStatus': 'Статус здачі',
+  'assignmentDetail.status': 'Статус',
+  'assignmentDetail.grade': 'Оцінка',
+  'assignmentDetail.noStatusData': 'Немає даних про статус',
+  'assignmentDetail.submitTitle': 'Надіслати відповідь',
+  'assignmentDetail.answerText': 'Текст відповіді',
+  'assignmentDetail.placeholder': 'Введіть вашу відповідь тут...',
+  'assignmentDetail.attachFile': 'Прикріпити файл',
+  'assignmentDetail.dragDrop': 'Перетягніть файл сюди або',
+  'assignmentDetail.browse': 'виберіть',
+  'assignmentDetail.cancel': 'Скасувати',
+  'assignmentDetail.submit': 'Надіслати',
+  'assignmentDetail.uploading': 'Завантаження файлу...',
+  'assignmentDetail.submitSuccess': 'Відповідь успішно надіслано',
+  'assignmentDetail.submitError': 'Помилка під час надсилання відповіді',
+  'assignmentDetail.formRequired': 'Будь ласка, введіть текст відповіді або прикріпіть файл',
+  'assignmentDetail.statusSubmitted': 'Здано на перевірку',
+  'assignmentDetail.statusGraded': 'Оцінено',
+  'assignmentDetail.statusNew': 'Немає спроби',
+  'assignmentDetail.statusDraft': 'Чернетка',
 
   // Gamification
   'badge.unlocked': 'Досягнення',
@@ -574,7 +572,7 @@ export const uk = {
   'opportunities.detailModal.phasePaused': 'На паузі',
   'opportunities.detailModal.phaseCompleted': 'Завершено',
   'opportunities.detailModal.phaseCancelled': 'Скасовано',
-  'opportunities.detailModal.close': 'Закрити',
+  'opportunities.detail.back': 'Назад до можливостей',
   'opportunities.detailModal.apply': 'Відгукнутися на можливість',
 
   // Modals - Apply
@@ -607,6 +605,7 @@ export const uk = {
   'opportunities.applicantsModal.close': 'Закрити',
 
   // Platform Notifications
+  'notifications.error.markReadFailed': 'Не вдалося оновити статус сповіщення',
   'notifications.opportunityApplicationStatus.title': 'Статус заявки на можливість',
   'notifications.opportunityApplicationStatus.message':
     'Статус заявки на «{opportunityTitle}» змінено на: {status}.',

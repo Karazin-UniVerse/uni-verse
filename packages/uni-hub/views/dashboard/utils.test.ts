@@ -8,9 +8,10 @@ import {
   stripHtml,
   parseGradeScore,
   getExamScoreDisplay,
-  isNavKey,
   resolveNavKey,
   toNotificationListItem,
+  isStudyView,
+  parseRouteId,
 } from './utils';
 
 describe('dashboard utils', () => {
@@ -83,21 +84,17 @@ describe('dashboard utils', () => {
     });
   });
 
-  describe('isNavKey', () => {
-    it('returns true for canonical navigation keys', () => {
-      expect(isNavKey('overview')).toBe(true);
-      expect(isNavKey('courses')).toBe(true);
-      expect(isNavKey('grades')).toBe(true);
-      expect(isNavKey('schedule')).toBe(true);
-      expect(isNavKey('assignments')).toBe(true);
-      expect(isNavKey('connectMoodle')).toBe(true);
-      expect(isNavKey('opportunities')).toBe(true);
+  describe('isStudyView', () => {
+    it('returns true for canonical study views', () => {
+      expect(isStudyView('subjects')).toBe(true);
+      expect(isStudyView('grades')).toBe(true);
+      expect(isStudyView('assignments')).toBe(true);
     });
 
-    it('returns false for unknown or invalid keys', () => {
-      expect(isNavKey('unknown')).toBe(false);
-      expect(isNavKey('')).toBe(false);
-      expect(isNavKey('Overview')).toBe(false);
+    it('returns false for unknown or invalid views', () => {
+      expect(isStudyView('courses')).toBe(false);
+      expect(isStudyView('')).toBe(false);
+      expect(isStudyView('Grades')).toBe(false);
     });
   });
 
@@ -245,13 +242,31 @@ describe('dashboard utils', () => {
       expect(moodleWithCollision.title).toBe('notifications.opportunityModerated.title');
       expect(moodleWithCollision.message).toBe('Original Moodle Message');
     });
+
+    it('passes through link property on platform notifications', () => {
+      const platformItem = toNotificationListItem(
+        {
+          id: 'plat-1',
+          subject: 'notifications.opportunityNewApplication.title',
+          message: JSON.stringify({ opportunityTitle: 'AI Lab', applicantName: 'Oleh' }),
+          link: '/opportunities/123',
+          timecreated: 1_788_000_000,
+          read: true,
+        },
+        'en-US',
+      );
+
+      expect(platformItem.id).toBe('plat-1');
+      expect(platformItem.link).toBe('/opportunities/123');
+      expect(platformItem.isRead).toBe(true);
+    });
   });
 });
 
 describe('resolveNavKey', () => {
   const navItems = [
     { key: NAV_KEY.Overview },
-    { key: NAV_KEY.Courses, featureFlag: 'isMoodleIntegrationEnabled' as const },
+    { key: NAV_KEY.Study, featureFlag: 'isMoodleIntegrationEnabled' as const },
     { key: NAV_KEY.ConnectMoodle },
   ];
   const features: FeatureFlags = {
@@ -262,14 +277,14 @@ describe('resolveNavKey', () => {
   };
 
   it('keeps a key whose feature is enabled', () => {
-    expect(resolveNavKey(NAV_KEY.Courses, { navItems, features, isMoodleLinked: true })).toBe(
-      NAV_KEY.Courses,
+    expect(resolveNavKey(NAV_KEY.Study, { navItems, features, isMoodleLinked: true })).toBe(
+      NAV_KEY.Study,
     );
   });
 
   it('falls back to the overview when the feature of the key is off', () => {
     expect(
-      resolveNavKey(NAV_KEY.Courses, {
+      resolveNavKey(NAV_KEY.Study, {
         navItems,
         features: { ...features, isMoodleIntegrationEnabled: false },
         isMoodleLinked: true,
@@ -291,5 +306,23 @@ describe('resolveNavKey', () => {
         isMoodleLinked: false,
       }),
     ).toBe(NAV_KEY.Overview);
+  });
+
+  describe('parseRouteId', () => {
+    it('parses a positive integer segment', () => {
+      expect(parseRouteId('5')).toBe(5);
+    });
+
+    it('returns null for non-numeric, decimal, missing or repeated segments', () => {
+      expect(parseRouteId('abc')).toBeNull();
+      expect(parseRouteId('5.5')).toBeNull();
+      expect(parseRouteId(undefined)).toBeNull();
+      expect(parseRouteId(['5'])).toBeNull();
+    });
+
+    it('returns null for zero and unsafe large integers', () => {
+      expect(parseRouteId('0')).toBeNull();
+      expect(parseRouteId('999999999999999999999')).toBeNull();
+    });
   });
 });

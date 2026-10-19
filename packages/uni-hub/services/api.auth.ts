@@ -1,6 +1,7 @@
 import type { AuthResponse, GoogleAuthResponse } from '@core/types/auth';
 import { safeStorage } from './api.storage';
 import { request } from './api.request';
+import { clearUserSessionStorage } from './api.session';
 
 export class AuthApi {
   async login(email: string, password: string): Promise<{ data: AuthResponse }> {
@@ -85,14 +86,7 @@ export class AuthApi {
     try {
       await request('/auth/logout', { method: 'POST', retries: 0 });
     } finally {
-      safeStorage.removeItem('accessToken');
-      safeStorage.removeItem('isLoggedIn');
-      safeStorage.removeItem('isMoodleLinked');
-      safeStorage.removeItem('moodleToken');
-      safeStorage.removeItem('username');
-      safeStorage.removeItem('universe_student_profile');
-      safeStorage.removeItem('universe_dashboard_data');
-      safeStorage.removeItem('universe_last_sync_time');
+      clearUserSessionStorage();
     }
   }
 }

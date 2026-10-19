@@ -3,9 +3,8 @@ import type { NavItemConfig } from '@uni-hub/views/dashboard/layout/DashboardSid
 
 export const PRIMARY_NAV_KEYS: readonly NavKey[] = [
   NAV_KEY.Overview,
+  NAV_KEY.Study,
   NAV_KEY.Schedule,
-  NAV_KEY.Grades,
-  NAV_KEY.Assignments,
 ];
 
 export interface PartitionedNavItems {
@@ -30,7 +29,7 @@ export function partitionNavItems(visibleItems: NavItemConfig[]): PartitionedNav
   const secondaryItems: NavItemConfig[] = [];
 
   for (const item of otherCandidates) {
-    if (primaryItems.length < 4) {
+    if (primaryItems.length < 3) {
       primaryItems.push(item);
     } else {
       secondaryItems.push(item);

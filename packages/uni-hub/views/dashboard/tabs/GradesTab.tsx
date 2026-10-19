@@ -9,7 +9,7 @@ import type { Grade } from '@core/types/moodle';
 import type { GradesTabProps } from '../types';
 import { mockFallbackGrades } from '../constants';
 import { GradeTableRow, type GradeDisplayItem } from './GradeTableRow';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export const GradesTab: React.FC<GradesTabProps> = ({ grades, onOpenSimulator }) => {
   const { formatMessage } = useLanguage();

@@ -1,0 +1,75 @@
+@use '../../../breakpoints.scss' as *;
+
+.segmentedControl {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-4);
+  background: var(--bg-hover);
+  border: 1px solid var(--card-border);
+  border-radius: var(--border-radius-large);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @include narrower-than('sm') {
+    width: 100%;
+  }
+}
+
+.segmentItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-16);
+  border-radius: var(--border-radius-medium);
+  font: inherit;
+  font-size: var(--font-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+
+  &:hover {
+    color: var(--text-primary);
+  }
+
+  &:focus-visible {
+    outline: var(--focus-ring-width) solid var(--accent-primary);
+    outline-offset: var(--focus-ring-offset);
+  }
+}
+
+.activeSegment {
+  color: var(--accent-primary);
+  background: var(--bg-surface);
+  border-color: var(--card-border);
+  font-weight: var(--font-weight-bold);
+}
+
+.badgePill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-16);
+  height: var(--space-16);
+  padding: 0 var(--space-4);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  background: var(--error-color);
+  color: var(--accent-text-on-primary);
+}

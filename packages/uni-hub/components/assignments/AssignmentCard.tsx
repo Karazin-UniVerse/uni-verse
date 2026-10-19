@@ -22,15 +22,15 @@ import {
   getAssignmentStatusInfo,
   type AssignmentStatusInfo,
 } from '@uni-hub/views/dashboard/tabs/helpers';
-import styles from '@uni-hub/views/DashboardPage.module.scss';
+import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export type AssignmentCardProps = {
   assignment: Assignment;
-  status?: string;
-  grade?: string;
   nowSec: number;
   soundEnabled: boolean;
   onOpenAssignment: (assignment: Assignment) => void;
+  status?: string;
+  grade?: string;
 };
 
 function renderStatusIcon(tone: AssignmentStatusInfo['tone']) {
