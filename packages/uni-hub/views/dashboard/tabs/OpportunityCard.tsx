@@ -17,11 +17,7 @@ export interface OpportunityCardProps {
   onOpenApplicants?: (opp: Opportunity) => void;
 }
 
-// --- types ---
-
 type FormatMessage = (key: TranslationKey, values?: Record<string, string | number>) => string;
-
-// --- helpers (plain render functions, not React components) ---
 
 function resolveOwnerName(opportunity: Opportunity, fallback: string): string {
   return opportunity.owner?.name || opportunity.owner?.email || fallback;
@@ -118,7 +114,58 @@ function renderCatalogMetaRow({
   );
 }
 
-// --- component ---
+function renderCardTop({
+  opportunity,
+  isPaid,
+  isOwner,
+  formatMessage,
+  statusBadge,
+}: {
+  opportunity: Opportunity;
+  isPaid: boolean;
+  isOwner: boolean;
+  formatMessage: FormatMessage;
+  statusBadge?: React.ReactNode;
+}) {
+  return (
+    <div className={styles.cardTop}>
+      <div className={styles.cardBadgeRow}>
+        <div
+          className={clsx(
+            styles.categoryPill,
+            isPaid ? styles.paidCategory : styles.unpaidCategory,
+          )}
+        >
+          <Briefcase size={12} />
+          <span>
+            {isPaid
+              ? formatMessage('opportunities.card.vacancy')
+              : formatMessage('opportunities.card.practice')}
+          </span>
+        </div>
+
+        {isOwner
+          ? statusBadge
+          : renderPublicBadge({
+              isPaid,
+              paidLabel: formatMessage('opportunities.card.paidDefault'),
+              experienceLabel: formatMessage('opportunities.card.experience'),
+              paymentDetails: opportunity.paymentDetails,
+            })}
+      </div>
+
+      <h3 className={styles.cardTitle}>{opportunity.title}</h3>
+      <p className={styles.cardDescription}>{opportunity.description}</p>
+
+      {isOwner && opportunity.moderationComment && (
+        <div className={styles.warningBox}>
+          <strong>{formatMessage('opportunities.card.moderatorNote')}</strong>{' '}
+          {opportunity.moderationComment}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   opportunity,
@@ -130,71 +177,40 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   const { formatMessage, localeTag } = useLanguage();
   const isPaid = opportunity.paymentType === 'PAID';
   const isOwner = variant === 'owner';
-
   const ownerName = resolveOwnerName(opportunity, formatMessage('opportunities.card.defaultOwner'));
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onOpenDetail?.(opportunity);
-    }
-  }
+  const cardClassName = clsx(
+    styles.card,
+    isPaid ? styles.paidCard : styles.unpaidCard,
+    !isOwner && styles.clickableCard,
+  );
+
+  const interactiveProps = isOwner
+    ? {}
+    : {
+        onClick: () => onOpenDetail?.(opportunity),
+        onKeyDown: (e: React.KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onOpenDetail?.(opportunity);
+          }
+        },
+        role: 'button' as const,
+        tabIndex: 0,
+        'aria-label': formatMessage('opportunities.card.detailsAria', {
+          title: opportunity.title,
+        }),
+      };
 
   return (
-    <article
-      className={clsx(
-        styles.card,
-        isPaid ? styles.paidCard : styles.unpaidCard,
-        !isOwner && styles.clickableCard,
-      )}
-      onClick={!isOwner ? () => onOpenDetail?.(opportunity) : undefined}
-      onKeyDown={!isOwner ? handleKeyDown : undefined}
-      role={!isOwner ? 'button' : undefined}
-      tabIndex={!isOwner ? 0 : undefined}
-      aria-label={
-        !isOwner
-          ? formatMessage('opportunities.card.detailsAria', {
-              title: opportunity.title,
-            })
-          : undefined
-      }
-    >
-      <div className={styles.cardTop}>
-        <div className={styles.cardBadgeRow}>
-          <div
-            className={clsx(
-              styles.categoryPill,
-              isPaid ? styles.paidCategory : styles.unpaidCategory,
-            )}
-          >
-            <Briefcase size={12} />
-            <span>
-              {isPaid
-                ? formatMessage('opportunities.card.vacancy')
-                : formatMessage('opportunities.card.practice')}
-            </span>
-          </div>
-
-          {isOwner
-            ? statusBadge
-            : renderPublicBadge({
-                isPaid,
-                paidLabel: formatMessage('opportunities.card.paidDefault'),
-                experienceLabel: formatMessage('opportunities.card.experience'),
-                paymentDetails: opportunity.paymentDetails,
-              })}
-        </div>
-
-        <h3 className={styles.cardTitle}>{opportunity.title}</h3>
-        <p className={styles.cardDescription}>{opportunity.description}</p>
-
-        {isOwner && opportunity.moderationComment && (
-          <div className={styles.warningBox}>
-            <strong>{formatMessage('opportunities.card.moderatorNote')}</strong>{' '}
-            {opportunity.moderationComment}
-          </div>
-        )}
-      </div>
+    <article className={cardClassName} {...interactiveProps}>
+      {renderCardTop({
+        opportunity,
+        isPaid,
+        isOwner,
+        statusBadge,
+        formatMessage,
+      })}
 
       <div className={styles.cardMetaRow}>
         {isOwner
