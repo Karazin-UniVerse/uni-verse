@@ -1,39 +1,10 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { ApplicantsModal, type ApplicantsModalProps } from './ApplicantsModal';
-
-vi.mock('@una', async () => {
-  const actual = await vi.importActual<Record<string, unknown>>('@una');
-
-  return {
-    ...actual,
-    Modal: ({
-      open,
-      title,
-      children,
-      onClose,
-    }: {
-      open: boolean;
-      title?: string;
-      children?: React.ReactNode;
-      onClose?: () => void;
-    }) =>
-      open ? (
-        <dialog open aria-label={title}>
-          {title ? <h2>{title}</h2> : null}
-          {onClose ? (
-            <button type="button" aria-label="Close" onClick={onClose}>
-              Close
-            </button>
-          ) : null}
-          {children}
-        </dialog>
-      ) : null,
-  };
-});
 
 const mockApplications: OpportunityApplication[] = [
   {
@@ -100,7 +71,7 @@ describe('ApplicantsModal component', () => {
 
     expect(screen.getByRole('dialog', { name: 'Кандидати на можливість (2)' })).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Кандидати на можливість (2)' }),
+      screen.getByRole('heading', { level: 3, name: 'Кандидати на можливість (2)' }),
     ).toBeInTheDocument();
 
     expect(screen.getByText('Олена Коваль')).toBeInTheDocument();
@@ -121,7 +92,8 @@ describe('ApplicantsModal component', () => {
     expect(screen.getByRole('button', { name: 'Закрити' })).toBeInTheDocument();
   });
 
-  it("should call onUpdateStatus with 'ACCEPTED' when clicking Accept button", () => {
+  it("should call onUpdateStatus with 'ACCEPTED' when clicking Accept button", async () => {
+    const user = userEvent.setup();
     const onUpdateStatus = vi.fn();
 
     renderApplicantsModal({ onUpdateStatus });
@@ -130,13 +102,14 @@ describe('ApplicantsModal component', () => {
 
     expect(acceptButtons.length).toBeGreaterThan(0);
 
-    fireEvent.click(acceptButtons[0]);
+    await user.click(acceptButtons[0]);
 
     expect(onUpdateStatus).toHaveBeenCalledTimes(1);
     expect(onUpdateStatus).toHaveBeenCalledWith('app-1', 'ACCEPTED');
   });
 
-  it("should call onUpdateStatus with 'REJECTED' when clicking Reject button", () => {
+  it("should call onUpdateStatus with 'REJECTED' when clicking Reject button", async () => {
+    const user = userEvent.setup();
     const onUpdateStatus = vi.fn();
 
     renderApplicantsModal({ onUpdateStatus });
@@ -145,13 +118,14 @@ describe('ApplicantsModal component', () => {
 
     expect(rejectButtons.length).toBeGreaterThan(0);
 
-    fireEvent.click(rejectButtons[0]);
+    await user.click(rejectButtons[0]);
 
     expect(onUpdateStatus).toHaveBeenCalledTimes(1);
     expect(onUpdateStatus).toHaveBeenCalledWith('app-1', 'REJECTED');
   });
 
-  it("should call onUpdateStatus with 'UNDER_REVIEW' when clicking Under Review button", () => {
+  it("should call onUpdateStatus with 'UNDER_REVIEW' when clicking Under Review button", async () => {
+    const user = userEvent.setup();
     const onUpdateStatus = vi.fn();
 
     renderApplicantsModal({ onUpdateStatus });
@@ -160,7 +134,7 @@ describe('ApplicantsModal component', () => {
 
     expect(underReviewButtons.length).toBe(1);
 
-    fireEvent.click(underReviewButtons[0]);
+    await user.click(underReviewButtons[0]);
 
     expect(onUpdateStatus).toHaveBeenCalledTimes(1);
     expect(onUpdateStatus).toHaveBeenCalledWith('app-1', 'UNDER_REVIEW');
@@ -182,26 +156,32 @@ describe('ApplicantsModal component', () => {
     expect(screen.queryByText('На цю можливість ще немає відгуків')).not.toBeInTheDocument();
   });
 
-  it('should call onClose when closing the modal', () => {
+  it('should call onClose when closing the modal', async () => {
+    const user = userEvent.setup();
     const onClose = vi.fn();
 
     renderApplicantsModal({ onClose });
 
     const closeBtn = screen.getByRole('button', { name: 'Закрити' });
 
-    fireEvent.click(closeBtn);
+    await user.click(closeBtn);
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('should call onClose when clicking header close button', () => {
+  it('should call onClose when clicking header close button', async () => {
+    const user = userEvent.setup();
     const onClose = vi.fn();
 
-    renderApplicantsModal({ onClose });
+    const { container } = renderApplicantsModal({ onClose });
 
-    const headerCloseBtn = screen.getByRole('button', { name: 'Close' });
+    const headerCloseBtn = container.querySelector('button[class*="closeBtn"]');
 
-    fireEvent.click(headerCloseBtn);
+    expect(headerCloseBtn).not.toBeNull();
+
+    if (headerCloseBtn) {
+      await user.click(headerCloseBtn);
+    }
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });

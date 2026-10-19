@@ -50,7 +50,7 @@ This skill provides an orchestration framework for parallelizing test writing, m
 
 For each batch of files:
 1. **Batch Selection & Pre-Batch Git Renames**: Group remaining untested or unmigrated components into batches of up to 5 items. If any legacy `.test.ts` file in the batch requires JSX, the parent orchestrator runs `git mv path/to/File.test.ts path/to/File.test.tsx` before spawning subagents.
-2. **Launch Subagents**: Spawn the 5 subagents in parallel using the environment's subagent tool.
+2. **Launch Subagents**: Spawn one subagent per batch item (up to 5) in parallel using the environment's subagent tool.
 3. **Await Completion**: Subagents run asynchronously in the background. Wait for automatic completion notifications without polling in a loop.
 4. **Post-Batch Quality Verification**:
    - Run prettier formatting on touched files:

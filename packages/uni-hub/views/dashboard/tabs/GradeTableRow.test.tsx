@@ -87,62 +87,40 @@ describe('GradeTableRow component', () => {
     expect(cells[7]).toHaveTextContent('зараховано');
   });
 
-  it('should calculate ECTS and traditional grades based on total score', () => {
-    const testCases: Array<{
-      totalScore: number;
-      controlType: 'exam' | 'credit';
-      expectedEcts: string;
-      expectedTraditional: string;
-    }> = [
-      { totalScore: 95, controlType: 'exam', expectedEcts: 'A', expectedTraditional: 'відмінно' },
-      { totalScore: 85, controlType: 'exam', expectedEcts: 'B', expectedTraditional: 'добре' },
-      { totalScore: 75, controlType: 'exam', expectedEcts: 'C', expectedTraditional: 'добре' },
-      { totalScore: 65, controlType: 'exam', expectedEcts: 'D', expectedTraditional: 'задовільно' },
-      { totalScore: 61, controlType: 'exam', expectedEcts: 'E', expectedTraditional: 'задовільно' },
-      {
-        totalScore: 45,
-        controlType: 'exam',
-        expectedEcts: 'Fx',
-        expectedTraditional: 'незадовільно',
-      },
-      {
-        totalScore: 20,
-        controlType: 'exam',
-        expectedEcts: 'F',
-        expectedTraditional: 'незадовільно',
-      },
-      {
-        totalScore: 75,
-        controlType: 'credit',
-        expectedEcts: 'C',
-        expectedTraditional: 'зараховано',
-      },
-      {
-        totalScore: 45,
-        controlType: 'credit',
-        expectedEcts: 'Fx',
-        expectedTraditional: 'не зараховано',
-      },
-    ];
-
-    for (const testCase of testCases) {
+  it.each<{
+    totalScore: number;
+    controlType: 'exam' | 'credit';
+    expectedEcts: string;
+    expectedTraditional: string;
+  }>([
+    { totalScore: 95, controlType: 'exam', expectedEcts: 'A', expectedTraditional: 'відмінно' },
+    { totalScore: 85, controlType: 'exam', expectedEcts: 'B', expectedTraditional: 'добре' },
+    { totalScore: 75, controlType: 'exam', expectedEcts: 'C', expectedTraditional: 'добре' },
+    { totalScore: 65, controlType: 'exam', expectedEcts: 'D', expectedTraditional: 'задовільно' },
+    { totalScore: 61, controlType: 'exam', expectedEcts: 'E', expectedTraditional: 'задовільно' },
+    { totalScore: 45, controlType: 'exam', expectedEcts: 'Fx', expectedTraditional: 'незадовільно' },
+    { totalScore: 20, controlType: 'exam', expectedEcts: 'F', expectedTraditional: 'незадовільно' },
+    { totalScore: 75, controlType: 'credit', expectedEcts: 'C', expectedTraditional: 'зараховано' },
+    { totalScore: 45, controlType: 'credit', expectedEcts: 'Fx', expectedTraditional: 'не зараховано' },
+  ])(
+    'should calculate ECTS ($expectedEcts) and traditional grade ($expectedTraditional) for $controlType score $totalScore',
+    ({ totalScore, controlType, expectedEcts, expectedTraditional }) => {
       const grade: GradeDisplayItem = {
         courseName: 'Test Discipline',
-        controlType: testCase.controlType,
-        totalScore: testCase.totalScore,
-        rawGrade: testCase.totalScore,
-        grade: String(testCase.totalScore),
+        controlType,
+        totalScore,
+        rawGrade: totalScore,
+        grade: String(totalScore),
       };
 
-      const { unmount } = renderRow(grade);
+      renderRow(grade);
+
       const cells = screen.getAllByRole('cell');
 
-      expect(cells[6]).toHaveTextContent(testCase.expectedEcts);
-      expect(cells[7]).toHaveTextContent(testCase.expectedTraditional);
-
-      unmount();
-    }
-  });
+      expect(cells[6]).toHaveTextContent(expectedEcts);
+      expect(cells[7]).toHaveTextContent(expectedTraditional);
+    },
+  );
 
   it('should handle missing/null credits and scores gracefully', () => {
     const grade: GradeDisplayItem = {

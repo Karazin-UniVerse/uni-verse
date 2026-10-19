@@ -2,14 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ToastProvider } from '@una';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
-import { FeatureToggleProvider } from '@uni-hub/features';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { authApi } from '@uni-hub/services/api';
 import { LinkMoodleMode } from '@uni-hub/components/auth';
+import { createAppProvidersWrapper } from '@uni-hub/utils/with-query-client';
 import type { Notification } from '@core/types/moodle';
 import { fallbackStudentProfile } from '../constants';
 import type { DashboardHeaderProps } from '../types';
@@ -50,27 +46,9 @@ const defaultProps: DashboardHeaderProps = {
   isMoodleLinked: true,
 };
 
-const createWrapper = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  });
-
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <ThemeProvider>
-          <LanguageProvider>
-            <FeatureToggleProvider>{children}</FeatureToggleProvider>
-          </LanguageProvider>
-        </ThemeProvider>
-      </ToastProvider>
-    </QueryClientProvider>
-  );
-};
-
 const renderHeader = (props: Partial<DashboardHeaderProps> = {}) => {
   return render(<DashboardHeader {...defaultProps} {...props} />, {
-    wrapper: createWrapper(),
+    wrapper: createAppProvidersWrapper(),
   });
 };
 
