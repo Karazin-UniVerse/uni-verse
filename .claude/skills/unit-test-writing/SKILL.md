@@ -47,9 +47,11 @@ Before writing any test code, read the target file and its types to identify:
 ### Step 2: Configure Context Wrappers
 - **`@universe/ui` components** are language-agnostic and receive labels via props—render them directly (wrap in `<ToastProvider>` only when testing toast triggers).
 - **`@universe/uni-hub` components and hooks** must be wrapped in the providers they consume:
-  - `useLanguage()` ➡️ `<LanguageProvider>` from `@uni-hub/i18n/LanguageContext`. Set `localStorage.setItem('universe-lang', 'uk')` in `beforeEach` for deterministic localized text assertions.
-  - `useFeatures()` ➡️ `<FeatureToggleProvider>` from `@uni-hub/features`.
-  - `useTheme()` ➡️ `<ThemeProvider>` from `@uni-hub/theme/ThemeContext`.
+  - `useLanguage()` ➡️ `withLanguage(ui)` (or `<LanguageProvider>` from `@uni-hub/i18n/LanguageContext`). Set `localStorage.setItem('universe-lang', 'uk')` in `beforeEach` for deterministic localized text assertions.
+  - `useFeatures()` ➡️ `withFeatureToggles(ui)` (or `<FeatureToggleProvider>` from `@uni-hub/features`).
+  - `useTheme()` ➡️ `withTheme(ui)` (or `<ThemeProvider>` from `@uni-hub/theme/ThemeContext`).
+  - `useQuery()` / `useMutation()` / `useQueryClient()` ➡️ `withQueryClient(ui, queryClient)` from `@uni-hub/utils/with-query-client`.
+  - Multiple common providers ➡️ `withAppProviders(ui, queryClient)` from `@uni-hub/utils/with-query-client`.
 
 ### Step 3: Set Up Clean, Hoisted Mocks
 - Always use `vi.hoisted(() => ({ ... }))` for mock functions referenced inside `vi.mock(...)` factories.

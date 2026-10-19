@@ -2,8 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { withLanguage, withQueryClient } from '@uni-hub/utils/with-query-client';
 import type { Assignment } from '@core/types/moodle';
 import type { AssignmentsTabProps } from '../types';
 import { AssignmentsTab } from './AssignmentsTab';
@@ -53,24 +52,9 @@ const createDefaultProps = (overrides?: Partial<AssignmentsTabProps>): Assignmen
   };
 };
 
-const createWrapper = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
-
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
-      <LanguageProvider>{children}</LanguageProvider>
-    </QueryClientProvider>
-  );
-};
-
 const renderAssignmentsTab = (props: AssignmentsTabProps) => {
   return render(<AssignmentsTab {...props} />, {
-    wrapper: createWrapper(),
+    wrapper: ({ children }) => withQueryClient(withLanguage(children as React.ReactElement)),
   });
 };
 

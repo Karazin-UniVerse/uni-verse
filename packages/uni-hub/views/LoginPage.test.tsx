@@ -2,9 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { FeatureToggleProvider } from '@uni-hub/features';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { createAppProvidersWrapper } from '@uni-hub/utils/with-query-client';
 import LoginPage from './LoginPage';
 
 const mockPush = vi.fn();
@@ -118,22 +116,9 @@ vi.mock('@uni-hub/components/auth', async () => {
 });
 
 function renderLoginPage() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
+  return render(<LoginPage />, {
+    wrapper: createAppProvidersWrapper(),
   });
-
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
-        <FeatureToggleProvider>
-          <LoginPage />
-        </FeatureToggleProvider>
-      </LanguageProvider>
-    </QueryClientProvider>,
-  );
 }
 
 describe('LoginPage Google SSO Moodle integration bypass and authentication', () => {

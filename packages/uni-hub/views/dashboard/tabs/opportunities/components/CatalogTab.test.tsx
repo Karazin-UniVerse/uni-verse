@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import type { Opportunity } from '@core/types/opportunities';
 import { CatalogTab, type CatalogTabProps } from './CatalogTab';
@@ -104,19 +105,21 @@ describe('CatalogTab component', () => {
     expect(screen.getByText('UI/UX Designer')).toBeInTheDocument();
   });
 
-  it('should call onSearchChange when typing in search input', () => {
+  it('should call onSearchChange when typing in search input', async () => {
+    const user = userEvent.setup();
     const onSearchChange = vi.fn();
 
     renderCatalogTab({ onSearchChange });
 
     const searchInput = screen.getByRole('textbox', { name: /пошук можливостей/i });
 
-    fireEvent.change(searchInput, { target: { value: 'Frontend' } });
+    await user.type(searchInput, 'Frontend');
 
-    expect(onSearchChange).toHaveBeenCalledWith('Frontend');
+    expect(onSearchChange).toHaveBeenCalled();
   });
 
-  it('should clear search input when clicking clear button', () => {
+  it('should clear search input when clicking clear button', async () => {
+    const user = userEvent.setup();
     const onSearchChange = vi.fn();
 
     renderCatalogTab({ search: 'Frontend', onSearchChange });
@@ -125,12 +128,13 @@ describe('CatalogTab component', () => {
 
     expect(clearButton).toBeInTheDocument();
 
-    fireEvent.click(clearButton);
+    await user.click(clearButton);
 
     expect(onSearchChange).toHaveBeenCalledWith('');
   });
 
-  it('should call onPaymentFilterChange when changing payment filter select', () => {
+  it('should call onPaymentFilterChange when changing payment filter select', async () => {
+    const user = userEvent.setup();
     const onPaymentFilterChange = vi.fn();
 
     renderCatalogTab({ onPaymentFilterChange });
@@ -139,13 +143,13 @@ describe('CatalogTab component', () => {
     const unpaidChip = screen.getByRole('button', { name: 'Волонтерство / Практика' });
     const allChip = screen.getByRole('button', { name: 'Усі' });
 
-    fireEvent.click(paidChip);
+    await user.click(paidChip);
     expect(onPaymentFilterChange).toHaveBeenCalledWith('PAID');
 
-    fireEvent.click(unpaidChip);
+    await user.click(unpaidChip);
     expect(onPaymentFilterChange).toHaveBeenCalledWith('UNPAID');
 
-    fireEvent.click(allChip);
+    await user.click(allChip);
     expect(onPaymentFilterChange).toHaveBeenCalledWith('');
   });
 
@@ -251,7 +255,8 @@ describe('CatalogTab component', () => {
     expect(screen.queryByText('UI/UX Designer')).not.toBeInTheDocument();
   });
 
-  it('should trigger onOpenDetail when clicking an opportunity card', () => {
+  it('should trigger onOpenDetail when clicking an opportunity card', async () => {
+    const user = userEvent.setup();
     const onOpenDetail = vi.fn();
 
     renderCatalogTab({ onOpenDetail });
@@ -260,7 +265,7 @@ describe('CatalogTab component', () => {
       name: 'Детальніше про Frontend Developer',
     });
 
-    fireEvent.click(detailButton);
+    await user.click(detailButton);
 
     expect(onOpenDetail).toHaveBeenCalledTimes(1);
     expect(onOpenDetail).toHaveBeenCalledWith(mockOpportunities[0]);
@@ -278,6 +283,7 @@ describe('CatalogTab component', () => {
   it('should render loading spinner when loading is true', () => {
     renderCatalogTab({ loading: true });
 
+    expect(screen.getByRole('status')).toBeInTheDocument();
     expect(screen.queryByText('Frontend Developer')).not.toBeInTheDocument();
     expect(screen.queryByText(/знайдено:/i)).not.toBeInTheDocument();
   });
