@@ -35,10 +35,9 @@
   user-select: none;
   -webkit-user-select: none;
 
-  :global(.recharts-wrapper),
   :global(.recharts-surface),
   :global(.recharts-surface *),
-  :global(.recharts-wrapper *) {
+  :global(.recharts-wrapper *:not(.recharts-wrapper)) {
     outline: none;
     -webkit-tap-highlight-color: transparent;
 
@@ -47,6 +46,16 @@
     &:active {
       outline: none;
       box-shadow: none;
+    }
+  }
+
+  :global(.recharts-wrapper) {
+    -webkit-tap-highlight-color: transparent;
+    border-radius: var(--border-radius-small, 4px);
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-primary, #3b82f6);
+      outline-offset: 2px;
     }
   }
 }

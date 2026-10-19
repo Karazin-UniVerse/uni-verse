@@ -246,19 +246,21 @@ const LoginPage: React.FC = () => {
               <p>{formatMessage('login.subtitle')}</p>
             </div>
 
-            <>
-              <div className={styles.googleSection}>
-                <GoogleLoginButton
-                  onSuccess={handleGoogleSuccess}
-                  onError={(msg) => setError(msg)}
-                  disabled={loading}
-                />
-              </div>
+            {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
+              <>
+                <div className={styles.googleSection}>
+                  <GoogleLoginButton
+                    onSuccess={handleGoogleSuccess}
+                    onError={(msg) => setError(msg)}
+                    disabled={loading}
+                  />
+                </div>
 
-              <div className={styles.divider}>
-                <span>{formatMessage('login.orMoodle')}</span>
-              </div>
-            </>
+                <div className={styles.divider}>
+                  <span>{formatMessage('login.orMoodle')}</span>
+                </div>
+              </>
+            )}
 
             <AuthField
               id="login-username"

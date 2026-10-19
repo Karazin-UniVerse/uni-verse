@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import { Briefcase, Sparkles, Coins, ArrowUpRight } from 'lucide-react';
 import { Button } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import type { TranslationKey } from '@uni-hub/i18n/translations';
 import type { Opportunity } from '@core/types/opportunities';
 import styles from './OpportunityCard.module.scss';
 
@@ -16,6 +17,118 @@ export interface OpportunityCardProps {
   onOpenApplicants?: (opp: Opportunity) => void;
 }
 
+// --- types ---
+
+type FormatMessage = (key: TranslationKey, values?: Record<string, string | number>) => string;
+
+// --- helpers (plain render functions, not React components) ---
+
+function resolveOwnerName(opportunity: Opportunity, fallback: string): string {
+  return opportunity.owner?.name || opportunity.owner?.email || fallback;
+}
+
+function renderPublicBadge({
+  isPaid,
+  paidLabel,
+  experienceLabel,
+  paymentDetails,
+}: {
+  isPaid: boolean;
+  paidLabel: string;
+  experienceLabel: string;
+  paymentDetails?: string | null;
+}) {
+  if (isPaid) {
+    return (
+      <span className={styles.compensationPill}>
+        <Coins size={12} />
+        {paymentDetails || paidLabel}
+      </span>
+    );
+  }
+
+  return (
+    <span className={styles.experiencePill}>
+      <Sparkles size={12} />
+      {experienceLabel}
+    </span>
+  );
+}
+
+function renderOwnerMetaRow({
+  opportunity,
+  localeTag,
+  formatMessage,
+  onOpenApplicants,
+  onOpenDetail,
+}: {
+  opportunity: Opportunity;
+  localeTag: string;
+  formatMessage: FormatMessage;
+  onOpenApplicants?: (opp: Opportunity) => void;
+  onOpenDetail?: (opp: Opportunity) => void;
+}) {
+  return (
+    <>
+      <span className={styles.cardDate}>
+        {new Date(opportunity.createdAt).toLocaleDateString(localeTag)}
+      </span>
+      <div className={styles.cardActions}>
+        <Button variant="secondary" onClick={() => onOpenApplicants?.(opportunity)}>
+          {formatMessage('opportunities.card.applications')}
+        </Button>
+        <Button variant="primary" onClick={() => onOpenDetail?.(opportunity)}>
+          {formatMessage('opportunities.card.management')}
+        </Button>
+      </div>
+    </>
+  );
+}
+
+function renderCatalogMetaRow({
+  opportunity,
+  ownerName,
+  formatMessage,
+  onOpenDetail,
+}: {
+  opportunity: Opportunity;
+  ownerName: string;
+  formatMessage: FormatMessage;
+  onOpenDetail?: (opp: Opportunity) => void;
+}) {
+  const initial = ownerName.charAt(0).toUpperCase();
+  const contactInfo =
+    opportunity.ownerContactInfo ||
+    opportunity.owner?.email ||
+    formatMessage('opportunities.card.defaultOwner');
+
+  return (
+    <>
+      <div className={styles.ownerInfo} title={ownerName}>
+        <div className={styles.ownerAvatar}>{initial}</div>
+        <div className={styles.ownerMeta}>
+          <span className={styles.ownerName}>{ownerName}</span>
+          <span className={styles.ownerRole}>{contactInfo}</span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        className={styles.cardDetailsBtn}
+        onClick={() => onOpenDetail?.(opportunity)}
+        aria-label={formatMessage('opportunities.card.detailsAria', {
+          title: opportunity.title,
+        })}
+      >
+        <span>{formatMessage('opportunities.card.details')}</span>
+        <ArrowUpRight size={15} className={styles.cardArrow} />
+      </button>
+    </>
+  );
+}
+
+// --- component ---
+
 export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   opportunity,
   statusBadge,
@@ -25,44 +138,21 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
 }) => {
   const { formatMessage, localeTag } = useLanguage();
   const isPaid = opportunity.paymentType === 'PAID';
-  const ownerName =
-    opportunity.owner?.name ||
-    opportunity.owner?.email ||
-    formatMessage('opportunities.card.defaultOwner');
-  const initial = ownerName.charAt(0).toUpperCase();
+  const isOwner = variant === 'owner';
 
-  const publicBadge = isPaid ? (
-    <span className={styles.compensationPill}>
-      <Coins size={12} />
-      {opportunity.paymentDetails || formatMessage('opportunities.card.paidDefault')}
-    </span>
-  ) : (
-    <span className={styles.experiencePill}>
-      <Sparkles size={12} />
-      {formatMessage('opportunities.card.experience')}
-    </span>
-  );
+  const ownerName = resolveOwnerName(opportunity, formatMessage('opportunities.card.defaultOwner'));
 
   return (
+    // Keep the article non-interactive: the full-card click affordance is
+    // provided by the native <button> inside renderCatalogMetaRow whose ::after
+    // pseudo-element (position: absolute; inset: 0) covers the whole card.
+    // This avoids double-firing onOpenDetail when the button click bubbles up.
     <article
       className={clsx(
         styles.card,
         isPaid ? styles.paidCard : styles.unpaidCard,
-        variant === 'catalog' && styles.clickableCard,
+        !isOwner && styles.clickableCard,
       )}
-      onClick={variant === 'catalog' ? () => onOpenDetail?.(opportunity) : undefined}
-      onKeyDown={
-        variant === 'catalog'
-          ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onOpenDetail?.(opportunity);
-              }
-            }
-          : undefined
-      }
-      role={variant === 'catalog' ? 'button' : undefined}
-      tabIndex={variant === 'catalog' ? 0 : undefined}
     >
       <div className={styles.cardTop}>
         <div className={styles.cardBadgeRow}>
@@ -80,13 +170,20 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
             </span>
           </div>
 
-          {variant === 'owner' ? statusBadge : publicBadge}
+          {isOwner
+            ? statusBadge
+            : renderPublicBadge({
+                isPaid,
+                paidLabel: formatMessage('opportunities.card.paidDefault'),
+                experienceLabel: formatMessage('opportunities.card.experience'),
+                paymentDetails: opportunity.paymentDetails,
+              })}
         </div>
 
         <h3 className={styles.cardTitle}>{opportunity.title}</h3>
         <p className={styles.cardDescription}>{opportunity.description}</p>
 
-        {variant === 'owner' && opportunity.moderationComment && (
+        {isOwner && opportunity.moderationComment && (
           <div className={styles.warningBox}>
             <strong>{formatMessage('opportunities.card.moderatorNote')}</strong>{' '}
             {opportunity.moderationComment}
@@ -95,48 +192,23 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
       </div>
 
       <div className={styles.cardMetaRow}>
-        {variant === 'owner' ? (
-          <>
-            <span className={styles.cardDate}>
-              {new Date(opportunity.createdAt).toLocaleDateString(localeTag)}
-            </span>
-            <div className={styles.cardActions}>
-              <Button variant="secondary" onClick={() => onOpenApplicants?.(opportunity)}>
-                {formatMessage('opportunities.card.applications')}
-              </Button>
-              <Button variant="primary" onClick={() => onOpenDetail?.(opportunity)}>
-                {formatMessage('opportunities.card.management')}
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className={styles.ownerInfo} title={ownerName}>
-              <div className={styles.ownerAvatar}>{initial}</div>
-              <div className={styles.ownerMeta}>
-                <span className={styles.ownerName}>{ownerName}</span>
-                <span className={styles.ownerRole}>
-                  {opportunity.ownerContactInfo ||
-                    opportunity.owner?.email ||
-                    formatMessage('opportunities.card.defaultOwner')}
-                </span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              className={styles.cardDetailsBtn}
-              onClick={() => onOpenDetail?.(opportunity)}
-              aria-label={formatMessage('opportunities.card.detailsAria', {
-                title: opportunity.title,
-              })}
-            >
-              <span>{formatMessage('opportunities.card.details')}</span>
-              <ArrowUpRight size={15} className={styles.cardArrow} />
-            </button>
-          </>
-        )}
+        {isOwner
+          ? renderOwnerMetaRow({
+              opportunity,
+              localeTag,
+              formatMessage,
+              onOpenApplicants,
+              onOpenDetail,
+            })
+          : renderCatalogMetaRow({
+              opportunity,
+              ownerName,
+              formatMessage,
+              onOpenDetail,
+            })}
       </div>
     </article>
   );
 };
+
+export default OpportunityCard;
