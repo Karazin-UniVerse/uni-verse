@@ -17,11 +17,7 @@ export interface OpportunityCardProps {
   onOpenApplicants?: (opp: Opportunity) => void;
 }
 
-// --- types ---
-
 type FormatMessage = (key: TranslationKey, values?: Record<string, string | number>) => string;
-
-// --- helpers (plain render functions, not React components) ---
 
 function resolveOwnerName(opportunity: Opportunity, fallback: string): string {
   return opportunity.owner?.name || opportunity.owner?.email || fallback;
@@ -127,8 +123,6 @@ function renderCatalogMetaRow({
   );
 }
 
-// --- component ---
-
 export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   opportunity,
   statusBadge,
@@ -143,10 +137,6 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   const ownerName = resolveOwnerName(opportunity, formatMessage('opportunities.card.defaultOwner'));
 
   return (
-    // Keep the article non-interactive: the full-card click affordance is
-    // provided by the native <button> inside renderCatalogMetaRow whose ::after
-    // pseudo-element (position: absolute; inset: 0) covers the whole card.
-    // This avoids double-firing onOpenDetail when the button click bubbles up.
     <article
       className={clsx(
         styles.card,
