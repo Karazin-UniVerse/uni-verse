@@ -17,7 +17,11 @@ export interface OpportunityCardProps {
   onOpenApplicants?: (opp: Opportunity) => void;
 }
 
+// --- types ---
+
 type FormatMessage = (key: TranslationKey, values?: Record<string, string | number>) => string;
+
+// --- helpers (plain render functions, not React components) ---
 
 function resolveOwnerName(opportunity: Opportunity, fallback: string): string {
   return opportunity.owner?.name || opportunity.owner?.email || fallback;
@@ -85,12 +89,10 @@ function renderCatalogMetaRow({
   opportunity,
   ownerName,
   formatMessage,
-  onOpenDetail,
 }: {
   opportunity: Opportunity;
   ownerName: string;
   formatMessage: FormatMessage;
-  onOpenDetail?: (opp: Opportunity) => void;
 }) {
   const initial = ownerName.charAt(0).toUpperCase();
   const contactInfo =
@@ -108,20 +110,15 @@ function renderCatalogMetaRow({
         </div>
       </div>
 
-      <button
-        type="button"
-        className={styles.cardDetailsBtn}
-        onClick={() => onOpenDetail?.(opportunity)}
-        aria-label={formatMessage('opportunities.card.detailsAria', {
-          title: opportunity.title,
-        })}
-      >
+      <div className={styles.cardDetailsBtn} aria-hidden="true">
         <span>{formatMessage('opportunities.card.details')}</span>
         <ArrowUpRight size={15} className={styles.cardArrow} />
-      </button>
+      </div>
     </>
   );
 }
+
+// --- component ---
 
 export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   opportunity,
@@ -136,6 +133,13 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
 
   const ownerName = resolveOwnerName(opportunity, formatMessage('opportunities.card.defaultOwner'));
 
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onOpenDetail?.(opportunity);
+    }
+  }
+
   return (
     <article
       className={clsx(
@@ -143,6 +147,17 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
         isPaid ? styles.paidCard : styles.unpaidCard,
         !isOwner && styles.clickableCard,
       )}
+      onClick={!isOwner ? () => onOpenDetail?.(opportunity) : undefined}
+      onKeyDown={!isOwner ? handleKeyDown : undefined}
+      role={!isOwner ? 'button' : undefined}
+      tabIndex={!isOwner ? 0 : undefined}
+      aria-label={
+        !isOwner
+          ? formatMessage('opportunities.card.detailsAria', {
+              title: opportunity.title,
+            })
+          : undefined
+      }
     >
       <div className={styles.cardTop}>
         <div className={styles.cardBadgeRow}>
@@ -194,7 +209,6 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
               opportunity,
               ownerName,
               formatMessage,
-              onOpenDetail,
             })}
       </div>
     </article>

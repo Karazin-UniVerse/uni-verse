@@ -22,6 +22,11 @@
 
   &.clickableCard {
     cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
+    }
   }
 
   @include narrower-than('md') {
@@ -252,15 +257,6 @@
   &:focus-visible {
     outline: 2px solid var(--accent-primary);
     outline-offset: 2px;
-  }
-
-  /* Stretched-link pattern: the ::after covers the whole .card (position: relative)
-     so clicking anywhere on the catalog card activates this button. */
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
   }
 }
 
