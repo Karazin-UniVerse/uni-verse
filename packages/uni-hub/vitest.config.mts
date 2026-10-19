@@ -27,7 +27,7 @@ export default defineConfig({
       const err = error as { name?: string; message?: string } | undefined;
 
       if (
-        err?.name === 'AbortError' ||
+        err?.name === 'AbortError' &&
         err?.message?.includes('animation was canceled')
       ) {
         return false;
