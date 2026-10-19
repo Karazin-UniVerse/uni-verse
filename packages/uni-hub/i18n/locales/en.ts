@@ -76,6 +76,11 @@ export const en = {
   'nav.connectMoodle.full': 'Connect Moodle LMS Account',
   'nav.opportunities': 'Opportunities',
   'nav.opportunities.full': 'Opportunities Platform',
+  'nav.more': 'More',
+  'nav.more.sheetTitle': 'Services & Settings',
+  'nav.more.sections': 'Sections',
+  'nav.more.preferences': 'Preferences',
+  'nav.more.close': 'Close menu',
 
   // Sidebar & Header
   'sidebar.logout': 'Log out',

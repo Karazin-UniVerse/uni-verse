@@ -237,6 +237,9 @@ const DashboardPage: React.FC = () => {
         activeKey={activeKey}
         onSelectKey={setActiveKey}
         soundEnabled={soundEnabled}
+        isMoodleLinked={isMoodleLinked}
+        onLogout={handleLogout}
+        onToggleSound={() => setSoundEnabled(!soundEnabled)}
       />
 
       <div

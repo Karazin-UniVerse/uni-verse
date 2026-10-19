@@ -74,6 +74,11 @@ export const uk = {
   'nav.connectMoodle.full': 'Підключити акаунт Moodle LMS',
   'nav.opportunities': 'Можливості',
   'nav.opportunities.full': 'Платформа можливостей',
+  'nav.more': 'Ще',
+  'nav.more.sheetTitle': 'Сервіси та налаштування',
+  'nav.more.sections': 'Розділи',
+  'nav.more.preferences': 'Налаштування',
+  'nav.more.close': 'Закрити меню',
 
   // Sidebar & Header
   'sidebar.logout': 'Вийти',

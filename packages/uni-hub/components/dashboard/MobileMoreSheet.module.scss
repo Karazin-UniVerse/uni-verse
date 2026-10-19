@@ -1,0 +1,268 @@
+@use '@universe/ui/breakpoints.scss' as *;
+
+.overlay {
+  display: none;
+
+  @include narrower-than('md') {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 65%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.sheet {
+  position: relative;
+  z-index: 1051;
+  background: var(--bg-surface);
+  border: none;
+  border-top: 1px solid var(--border-color);
+  border-radius: 24px 24px 0 0;
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  padding: var(--space-12) var(--space-16) calc(var(--space-24) + env(safe-area-inset-bottom, 16px));
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  box-shadow: 0 -12px 40px rgb(0 0 0 / 35%);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+}
+
+.dragHandle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--text-secondary) 35%, transparent);
+  margin: 0 auto var(--space-4);
+  flex-shrink: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--space-8);
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: color-mix(in srgb, var(--text-secondary) 12%, transparent);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast) var(--ease-standard);
+
+  &:hover {
+    color: var(--text-primary);
+    background: color-mix(in srgb, var(--text-secondary) 20%, transparent);
+  }
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.servicesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-8);
+}
+
+.serviceCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--text-primary) 4%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+  border-radius: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition-fast) var(--ease-standard);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.25;
+  min-height: 46px;
+  box-sizing: border-box;
+
+  &:hover {
+    background: var(--bg-hover);
+    border-color: color-mix(in srgb, var(--accent-primary) 40%, var(--border-color));
+  }
+
+  &.active {
+    background: color-mix(in srgb, var(--accent-primary) 12%, var(--bg-surface));
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+  }
+}
+
+.serviceIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--accent-primary);
+  width: 18px;
+  height: 18px;
+}
+
+.serviceLabel {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: break-word;
+}
+
+.preferencesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-8);
+}
+
+.preferenceItem {
+  display: flex;
+  width: 100%;
+
+  > div {
+    width: 100%;
+  }
+
+  button {
+    width: 100%;
+    height: 100%;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--text-primary) 4%, var(--bg-surface));
+    border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: all var(--transition-fast) var(--ease-standard);
+
+    svg {
+      flex-shrink: 0;
+      color: var(--accent-primary);
+    }
+
+    svg:last-child {
+      margin-left: auto;
+      color: var(--text-secondary);
+      opacity: 0.7;
+    }
+
+    &:hover {
+      background: var(--bg-hover);
+      border-color: color-mix(in srgb, var(--accent-primary) 40%, var(--border-color));
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 1px;
+    }
+  }
+}
+
+.actionsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  padding-top: var(--space-2);
+}
+
+.actionButton {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  min-height: 46px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--text-primary) 4%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+  color: var(--text-primary);
+  box-sizing: border-box;
+  transition: all var(--transition-fast) var(--ease-standard);
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: var(--bg-hover);
+    border-color: color-mix(in srgb, var(--accent-primary) 40%, var(--border-color));
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 1px;
+  }
+
+  &.logout {
+    color: var(--accent-danger, #ef4444);
+    border-color: color-mix(in srgb, var(--accent-danger, #ef4444) 25%, transparent);
+    background: color-mix(in srgb, var(--accent-danger, #ef4444) 6%, var(--bg-surface));
+
+    svg {
+      color: var(--accent-danger, #ef4444);
+    }
+
+    &:hover {
+      background: color-mix(in srgb, var(--accent-danger, #ef4444) 14%, transparent);
+      border-color: var(--accent-danger, #ef4444);
+    }
+  }
+}

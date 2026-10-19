@@ -1174,7 +1174,7 @@ $sidebar-collapsed-width: 88px;
 
   .content {
     padding: var(--space-16);
-    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 16px));
     overflow: hidden auto;
     min-width: 0;
     max-width: 100%;
