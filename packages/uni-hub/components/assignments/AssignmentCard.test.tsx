@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Assignment } from '@core/types/moodle';
 import { AssignmentCard } from './AssignmentCard';
+import { noop } from '@core/utils/fn';
 
 describe('AssignmentCard component', () => {
   const mockAssignment: Assignment = {
@@ -19,7 +20,7 @@ describe('AssignmentCard component', () => {
         assignment={mockAssignment}
         nowSec={1700000000}
         soundEnabled={false}
-        onOpenAssignment={() => {}}
+        onOpenAssignment={noop}
       />,
     );
 
@@ -36,7 +37,7 @@ describe('AssignmentCard component', () => {
         grade="95"
         nowSec={1700000000}
         soundEnabled={false}
-        onOpenAssignment={() => {}}
+        onOpenAssignment={noop}
       />,
     );
 
@@ -54,7 +55,7 @@ describe('AssignmentCard component', () => {
         assignment={noDeadlineAssignment}
         nowSec={1700000000}
         soundEnabled={false}
-        onOpenAssignment={() => {}}
+        onOpenAssignment={noop}
       />,
     );
 
@@ -68,7 +69,7 @@ describe('AssignmentCard component', () => {
         status="submitted"
         nowSec={1700000000}
         soundEnabled={false}
-        onOpenAssignment={() => {}}
+        onOpenAssignment={noop}
       />,
     );
 
@@ -87,7 +88,7 @@ describe('AssignmentCard component', () => {
         status="submitted"
         nowSec={1700000000}
         soundEnabled={false}
-        onOpenAssignment={() => {}}
+        onOpenAssignment={noop}
       />,
     );
 
@@ -106,7 +107,7 @@ describe('AssignmentCard component', () => {
         status="new"
         nowSec={1750000000}
         soundEnabled={false}
-        onOpenAssignment={() => {}}
+        onOpenAssignment={noop}
       />,
     );
 
@@ -127,7 +128,7 @@ describe('AssignmentCard component', () => {
         status="new"
         nowSec={1750000000}
         soundEnabled={false}
-        onOpenAssignment={() => {}}
+        onOpenAssignment={noop}
       />,
     );
 
@@ -148,7 +149,7 @@ describe('AssignmentCard component', () => {
         status="submitted"
         nowSec={1750000000}
         soundEnabled={false}
-        onOpenAssignment={() => {}}
+        onOpenAssignment={noop}
       />,
     );
 
@@ -163,7 +164,7 @@ describe('AssignmentCard component', () => {
         status="new"
         nowSec={1700000000}
         soundEnabled={false}
-        onOpenAssignment={() => {}}
+        onOpenAssignment={noop}
       />,
     );
 
@@ -177,7 +178,7 @@ describe('AssignmentCard component', () => {
         status="new"
         nowSec={1700000000}
         soundEnabled={false}
-        onOpenAssignment={() => {}}
+        onOpenAssignment={noop}
       />,
     );
 

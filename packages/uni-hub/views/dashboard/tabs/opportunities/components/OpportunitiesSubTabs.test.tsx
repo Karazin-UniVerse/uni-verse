@@ -8,6 +8,7 @@ import { MyApplicationsTab } from './MyApplicationsTab';
 import { ModerationQueueTab } from './ModerationQueueTab';
 import { OpportunityStatusBadge } from './OpportunityStatusBadge';
 import { ApplicationStatusBadge } from './ApplicationStatusBadge';
+import { noop } from '@core/utils/fn';
 
 describe('Opportunities decomposed subtabs', () => {
   const mockOpportunity: Opportunity = {
@@ -41,8 +42,6 @@ describe('Opportunities decomposed subtabs', () => {
     updatedAt: '2026-10-01T11:00:00.000Z',
     opportunity: mockOpportunity,
   };
-
-  const noop = (): void => {};
 
   it('should render CatalogTab with search bar, filter chips, and card', () => {
     render(

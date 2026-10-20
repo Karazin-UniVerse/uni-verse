@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { noop } from '@core/utils/fn';
+
 import { ConfirmModal } from './ConfirmModal';
 
 const meta = {
@@ -33,8 +35,8 @@ export const Danger: Story = {
     cancelLabel: 'Скасувати',
     confirmLabel: "Від'єднати",
     variant: 'danger',
-    onClose: () => {},
-    onConfirm: () => {},
+    onClose: noop,
+    onConfirm: noop,
   },
 };
 

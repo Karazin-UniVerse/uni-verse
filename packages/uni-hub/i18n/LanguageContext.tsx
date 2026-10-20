@@ -9,6 +9,7 @@ import React, {
   useSyncExternalStore,
 } from 'react';
 import { TRANSLATIONS, type AppLanguage, type TranslationKey, getLocaleTag } from './translations';
+import { noop } from '@core/utils/fn';
 
 export { LOCALE_TAGS, getLocaleTag } from './translations';
 
@@ -25,7 +26,7 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 const subscribeToLanguage = (callback: () => void) => {
   if (typeof window === 'undefined') {
-    return () => {};
+    return noop;
   }
 
   window.addEventListener('storage', callback);
@@ -130,7 +131,7 @@ export const LanguageProvider: React.FC<Readonly<{ children: React.ReactNode }>>
 const DEFAULT_CONTEXT: LanguageContextValue = {
   language: 'uk',
   localeTag: 'uk-UA',
-  setLanguage: () => {},
+  setLanguage: noop,
   formatMessage: (key: TranslationKey, values?: Record<string, string | number>): string => {
     const template = TRANSLATIONS.uk[key] || key;
 

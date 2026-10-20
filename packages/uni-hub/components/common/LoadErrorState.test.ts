@@ -3,6 +3,7 @@ import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { LoadErrorState } from './LoadErrorState';
+import { noop } from '@core/utils/fn';
 
 describe('LoadErrorState', () => {
   it('shows the failure message and a retry button', () => {
@@ -10,7 +11,7 @@ describe('LoadErrorState', () => {
       React.createElement(
         LanguageProvider,
         null,
-        React.createElement(LoadErrorState, { onRetry: () => {} }),
+        React.createElement(LoadErrorState, { onRetry: noop }),
       ),
     );
 
