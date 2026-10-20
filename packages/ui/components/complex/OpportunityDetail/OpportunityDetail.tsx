@@ -48,6 +48,24 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
 }) => {
   const phaseSelectId = useId();
 
+  let footerButton: React.ReactNode = null;
+
+  if (!isOwner) {
+    if (canApply && onOpenApply) {
+      footerButton = (
+        <Button variant="primary" onClick={onOpenApply}>
+          {applyText}
+        </Button>
+      );
+    } else if (acceptsApplications === false && applicationsClosedText) {
+      footerButton = (
+        <Button variant="secondary" disabled>
+          {applicationsClosedText}
+        </Button>
+      );
+    }
+  }
+
   return (
     <div className={className}>
       <div className={styles.stack}>
@@ -151,19 +169,7 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
           </div>
         )}
 
-        {!isOwner && (
-          <div className={styles.footer}>
-            {canApply && onOpenApply ? (
-              <Button variant="primary" onClick={onOpenApply}>
-                {applyText}
-              </Button>
-            ) : acceptsApplications === false && applicationsClosedText ? (
-              <Button variant="secondary" disabled>
-                {applicationsClosedText}
-              </Button>
-            ) : null}
-          </div>
-        )}
+        {footerButton && <div className={styles.footer}>{footerButton}</div>}
       </div>
     </div>
   );
