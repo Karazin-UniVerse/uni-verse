@@ -8,6 +8,45 @@ import { CheckBox } from '../../una/inputs/CheckBox';
 import type { OpportunityDetailProps } from './OpportunityDetail.types';
 import styles from './OpportunityDetail.module.scss';
 
+function getCandidateFooterButton({
+  isOwner,
+  canApply,
+  onOpenApply,
+  applyText,
+  acceptsApplications,
+  applicationsClosedText,
+}: Pick<
+  OpportunityDetailProps,
+  | 'isOwner'
+  | 'canApply'
+  | 'onOpenApply'
+  | 'applyText'
+  | 'acceptsApplications'
+  | 'applicationsClosedText'
+>): React.ReactNode {
+  if (isOwner) {
+    return null;
+  }
+
+  if (canApply && onOpenApply) {
+    return (
+      <Button variant="primary" onClick={onOpenApply}>
+        {applyText}
+      </Button>
+    );
+  }
+
+  if (acceptsApplications === false && applicationsClosedText) {
+    return (
+      <Button variant="secondary" disabled>
+        {applicationsClosedText}
+      </Button>
+    );
+  }
+
+  return null;
+}
+
 export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   onBack,
   backText,
@@ -47,24 +86,14 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   canApply = false,
 }) => {
   const phaseSelectId = useId();
-
-  let footerButton: React.ReactNode = null;
-
-  if (!isOwner) {
-    if (canApply && onOpenApply) {
-      footerButton = (
-        <Button variant="primary" onClick={onOpenApply}>
-          {applyText}
-        </Button>
-      );
-    } else if (acceptsApplications === false && applicationsClosedText) {
-      footerButton = (
-        <Button variant="secondary" disabled>
-          {applicationsClosedText}
-        </Button>
-      );
-    }
-  }
+  const footerButton = getCandidateFooterButton({
+    isOwner,
+    canApply,
+    onOpenApply,
+    applyText,
+    acceptsApplications,
+    applicationsClosedText,
+  });
 
   return (
     <div className={className}>

@@ -133,16 +133,16 @@
 .acceptsApplicationsRow {
   display: flex;
   align-items: center;
-  gap: var(--space-8, 8px);
-  padding-top: var(--space-8, 8px);
-  border-top: 1px dashed color-mix(in srgb, var(--accent-primary, #3b82f6) 20%, transparent);
+  gap: var(--space-8);
+  padding-top: var(--space-8);
+  border-top: 1px dashed color-mix(in srgb, var(--accent-primary) 20%, transparent);
 }
 
 .checkboxLabel {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-8, 8px);
-  font-size: var(--font-sm, 14px);
+  gap: var(--space-8);
+  font-size: var(--font-sm);
   color: var(--text-primary);
   cursor: pointer;
   user-select: none;

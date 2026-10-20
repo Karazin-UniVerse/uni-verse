@@ -3,14 +3,11 @@ import { MutationObserver, QueryClient } from '@tanstack/react-query';
 import type { Opportunity } from '@core/types/opportunities';
 import {
   invalidateOpportunities,
-  isLastPendingAcceptanceToggle,
   isLastPendingModeration,
   removeFromModerationQueue,
   restoreModerationQueue,
-  restoreOpportunityAcceptance,
-  updateOpportunityAcceptance,
 } from './cache';
-import { moderateMutationKey, opportunityKeys, toggleAcceptanceMutationKey } from './queryKeys';
+import { moderateMutationKey, opportunityKeys } from './queryKeys';
 import { buildOpportunity } from './test-utils';
 
 describe('opportunities cache', () => {
@@ -132,112 +129,6 @@ describe('opportunities cache', () => {
       await first.finish();
 
       expect(isLastPendingModeration(queryClient)).toBe(true);
-
-      await second.finish();
-    });
-  });
-
-  describe('updateOpportunityAcceptance', () => {
-    it('optimistically updates detail, mine, and catalog queries and returns the previous state', async () => {
-      const opp = { ...buildOpportunity('opp-1'), acceptsApplications: true };
-
-      queryClient.setQueryData(opportunityKeys.detail('opp-1'), opp);
-      queryClient.setQueryData(opportunityKeys.mine(), [opp]);
-      queryClient.setQueryData(opportunityKeys.catalog(), [opp]);
-
-      const previous = await updateOpportunityAcceptance(queryClient, 'opp-1', false);
-
-      expect(previous.detail?.acceptsApplications).toBe(true);
-      expect(previous.mine?.[0]?.acceptsApplications).toBe(true);
-      expect(previous.catalog?.[0]?.acceptsApplications).toBe(true);
-
-      expect(
-        queryClient.getQueryData<Opportunity>(opportunityKeys.detail('opp-1'))?.acceptsApplications,
-      ).toBe(false);
-      expect(
-        queryClient.getQueryData<Opportunity[]>(opportunityKeys.mine())?.[0]?.acceptsApplications,
-      ).toBe(false);
-      expect(
-        queryClient.getQueryData<Opportunity[]>(opportunityKeys.catalog())?.[0]
-          ?.acceptsApplications,
-      ).toBe(false);
-    });
-  });
-
-  describe('restoreOpportunityAcceptance', () => {
-    it('restores previous opportunity states upon error', () => {
-      const previous = {
-        detail: { ...buildOpportunity('opp-1'), acceptsApplications: true },
-        mine: [{ ...buildOpportunity('opp-1'), acceptsApplications: true }],
-        catalog: [{ ...buildOpportunity('opp-1'), acceptsApplications: true }],
-      };
-
-      restoreOpportunityAcceptance(queryClient, 'opp-1', previous);
-
-      expect(
-        queryClient.getQueryData<Opportunity>(opportunityKeys.detail('opp-1'))?.acceptsApplications,
-      ).toBe(true);
-      expect(
-        queryClient.getQueryData<Opportunity[]>(opportunityKeys.mine())?.[0]?.acceptsApplications,
-      ).toBe(true);
-      expect(
-        queryClient.getQueryData<Opportunity[]>(opportunityKeys.catalog())?.[0]
-          ?.acceptsApplications,
-      ).toBe(true);
-    });
-
-    it('does nothing without previous state', () => {
-      restoreOpportunityAcceptance(queryClient, 'opp-1', undefined);
-
-      expect(queryClient.getQueryData(opportunityKeys.detail('opp-1'))).toBeUndefined();
-    });
-  });
-
-  describe('isLastPendingAcceptanceToggle', () => {
-    function startToggle(): { finish: () => Promise<void> } {
-      let resolveRequest: () => void = () => {};
-      const request = new Promise<void>((resolve) => {
-        resolveRequest = resolve;
-      });
-      const observer = new MutationObserver(queryClient, {
-        mutationKey: toggleAcceptanceMutationKey,
-        mutationFn: () => request,
-      });
-      const settled = observer.mutate();
-
-      return {
-        finish: async () => {
-          resolveRequest();
-          await settled;
-        },
-      };
-    }
-
-    function pendingToggles(): number {
-      return queryClient.isMutating({ mutationKey: toggleAcceptanceMutationKey });
-    }
-
-    it('is true when no other toggle is in flight', async () => {
-      const only = startToggle();
-
-      await vi.waitFor(() => expect(pendingToggles()).toBe(1));
-
-      expect(isLastPendingAcceptanceToggle(queryClient)).toBe(true);
-
-      await only.finish();
-    });
-
-    it('is false while another toggle is still in flight', async () => {
-      const first = startToggle();
-      const second = startToggle();
-
-      await vi.waitFor(() => expect(pendingToggles()).toBe(2));
-
-      expect(isLastPendingAcceptanceToggle(queryClient)).toBe(false);
-
-      await first.finish();
-
-      expect(isLastPendingAcceptanceToggle(queryClient)).toBe(true);
 
       await second.finish();
     });
