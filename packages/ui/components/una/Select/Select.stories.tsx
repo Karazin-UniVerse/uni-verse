@@ -4,6 +4,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { VariantRow } from '../../../storybook/VariantMatrix/VariantRow';
 import { Select } from './Select';
 import type { Option } from './Select.types';
+import { noop } from '@core/utils/fn';
 
 type MatrixOptions = 'short labels' | 'long labels';
 
@@ -58,7 +59,7 @@ export const Matrix: Story = {
   args: {
     options: [],
     value: '',
-    onChange: () => {},
+    onChange: noop,
   },
   parameters: {
     layout: 'padded',

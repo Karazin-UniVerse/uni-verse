@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { BREAKPOINTS } from '@universe/core/constants/breakpoints';
+import { noop } from '@core/utils/fn';
 
 import { SegmentedControl } from './SegmentedControl';
 
@@ -44,7 +45,7 @@ export const Default: Story = {
     selectedId: 'subjects',
     panelIdPrefix: 'story-panel',
     ariaLabel: 'Study sections',
-    onSelect: () => {},
+    onSelect: noop,
   },
 };
 
@@ -55,6 +56,6 @@ export const WithBadge: Story = {
     selectedId: 'assignments',
     panelIdPrefix: 'story-panel',
     ariaLabel: 'Study sections',
-    onSelect: () => {},
+    onSelect: noop,
   },
 };

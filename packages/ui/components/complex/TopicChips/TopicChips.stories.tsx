@@ -4,6 +4,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { VariantRow } from '../../../storybook/VariantMatrix/VariantRow';
 import { TopicChips } from './TopicChips';
 import type { TopicChipsProps } from './TopicChips.types';
+import { noop } from '@core/utils/fn';
 
 type MatrixLabel = 'with label' | 'without label';
 
@@ -53,7 +54,7 @@ type Story = StoryObj<typeof meta>;
 export const Matrix: Story = {
   args: {
     options: [],
-    onSelect: () => {},
+    onSelect: noop,
   },
   parameters: {
     layout: 'padded',

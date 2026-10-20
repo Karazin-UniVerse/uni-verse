@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { noop } from '@core/utils/fn';
 
 import { BackButton } from './BackButton';
 
@@ -11,7 +12,7 @@ const meta = {
   },
   args: {
     label: 'Назад до курсів',
-    onClick: () => {},
+    onClick: noop,
   },
 } satisfies Meta<typeof BackButton>;
 
