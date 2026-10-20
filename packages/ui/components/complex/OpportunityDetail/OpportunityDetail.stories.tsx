@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Tag } from '../../una/Tag';
 import { OpportunityDetail } from './OpportunityDetail';
 import type { OpportunityDetailProps } from './OpportunityDetail.types';
+import { noop } from '@core/utils/fn';
 
 const defaultLifecycleOptions = [
   { value: 'START', label: 'Початок' },
@@ -20,7 +21,7 @@ const meta = {
     layout: 'padded',
   },
   args: {
-    onBack: () => {},
+    onBack: noop,
     backText: 'Назад до можливостей',
     title: 'Стажування у лабораторії біоінформатики',
     paymentTagText: 'Оплачувана • 15 000 грн/міс',
@@ -95,7 +96,7 @@ export const DraftUnderReview: Story = {
     isOwner: true,
     canApply: false,
     canSendToReview: true,
-    onSendToReview: () => {},
+    onSendToReview: noop,
     lifecycleState: 'START',
   },
 };
@@ -109,9 +110,9 @@ export const AuthorDraftWithRevision: Story = {
     lifecycleTagText: 'Стан: Початок',
     isOwner: true,
     canEdit: true,
-    onEdit: () => {},
+    onEdit: noop,
     canSendToReview: true,
-    onSendToReview: () => {},
+    onSendToReview: noop,
     moderationCommentTitle: 'Зауваження модератора',
     moderationComment: 'Будь ласка, уточніть стек технологій та очікуване тижневе навантаження.',
     lifecycleState: 'START',

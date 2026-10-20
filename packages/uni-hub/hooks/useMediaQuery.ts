@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { BREAKPOINTS, type Breakpoint } from '@core/constants/breakpoints';
 import { isBrowser } from '@uni-hub/utils/browser';
+import { noop } from '@core/utils/fn';
 
 export type MediaComparison = 'less' | 'wider';
 
@@ -85,7 +86,7 @@ export function useMediaQuery(
 
   const subscribe = (callback: () => void) => {
     if (!isBrowser || !window.matchMedia) {
-      return () => {};
+      return noop;
     }
 
     const mediaQueryList = window.matchMedia(query);

@@ -5,6 +5,7 @@ import type {
   CreateOpportunityFormData,
   CreateOpportunityModalProps,
 } from './CreateOpportunityModal.types';
+import { noop } from '@core/utils/fn';
 
 const defaultFormData: CreateOpportunityFormData = {
   title: '',
@@ -23,10 +24,10 @@ const meta = {
   },
   args: {
     open: true,
-    onClose: () => {},
-    onSubmit: () => {},
+    onClose: noop,
+    onSubmit: noop,
     formData: defaultFormData,
-    setFormData: () => {},
+    setFormData: noop,
     submitting: false,
     title: 'Створити можливість',
     titleLabel: 'Назва можливості',

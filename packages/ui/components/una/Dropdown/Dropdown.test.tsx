@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { Dropdown } from './Dropdown';
 import { DropdownOption } from './DropdownOption';
 import type { DropdownTriggerProps } from './Dropdown.types';
+import { noop } from '@core/utils/fn';
 
 describe('UNA Dropdown Component', () => {
   it('should render only the trigger while closed', () => {
@@ -106,11 +107,7 @@ describe('UNA Dropdown Component', () => {
 describe('UNA DropdownOption Component', () => {
   it('should render a selected option with the check mark and icon', () => {
     render(
-      <DropdownOption
-        isSelected
-        icon={<span data-testid="option-icon">I</span>}
-        onSelect={() => {}}
-      >
+      <DropdownOption isSelected icon={<span data-testid="option-icon">I</span>} onSelect={noop}>
         English
       </DropdownOption>,
     );
@@ -124,7 +121,7 @@ describe('UNA DropdownOption Component', () => {
 
   it('should render an unselected option without the check mark', () => {
     render(
-      <DropdownOption isSelected={false} onSelect={() => {}}>
+      <DropdownOption isSelected={false} onSelect={noop}>
         Українська
       </DropdownOption>,
     );

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { createLimiter } from './concurrency';
+import { noop } from '@core/utils/fn';
 
 function deferred(): { promise: Promise<void>; resolve: () => void } {
-  let resolve: () => void = () => {};
+  let resolve: () => void = noop;
   const promise = new Promise<void>((done) => {
     resolve = done;
   });

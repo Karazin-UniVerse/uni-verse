@@ -4,6 +4,7 @@ import { VariantRow } from '../../../storybook/VariantMatrix/VariantRow';
 import { Popover } from './Popover';
 import { Button } from '../Button/Button';
 import type { PopoverProps } from './Popover.types';
+import { noop } from '@core/utils/fn';
 
 type MatrixPlacement = NonNullable<PopoverProps['placement']>;
 
@@ -52,7 +53,7 @@ type Story = StoryObj<typeof meta>;
 export const Matrix: Story = {
   args: {
     open: true,
-    onClose: () => {},
+    onClose: noop,
     children: null,
   },
   parameters: {
@@ -67,7 +68,7 @@ export const Matrix: Story = {
             <Button variant="secondary">Anchor</Button>
             <Popover
               open
-              onClose={() => {}}
+              onClose={noop}
               placement={placement}
               title="Settings"
               width={200}
