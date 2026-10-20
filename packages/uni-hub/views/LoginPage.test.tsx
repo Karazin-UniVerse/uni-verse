@@ -2,15 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { createAppProvidersWrapper } from '@uni-hub/utils/with-query-client';
+import { createAppProvidersWrapper } from '@uni-hub/utils/test-utils';
 import LoginPage from './LoginPage';
 
 const mockPush = vi.fn();
-const mockToast = {
-  success: vi.fn(),
-  error: vi.fn(),
-};
-const mockStorage = vi.hoisted(() => ({}) as Record<string, string>);
 const mockAuthApi = vi.hoisted(() => ({
   loginWithGoogle: vi.fn(),
   login: vi.fn(),
@@ -24,59 +19,9 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
-vi.mock('@una', async () => {
-  const actual = await vi.importActual<Record<string, unknown>>('@una');
-
-  return {
-    ...actual,
-    useToast: () => mockToast,
-    Modal: ({
-      open,
-      title,
-      children,
-    }: {
-      open: boolean;
-      title?: string;
-      children?: React.ReactNode;
-    }) =>
-      open ? (
-        <dialog open aria-label={title}>
-          {title ? <h2>{title}</h2> : null}
-          {children}
-        </dialog>
-      ) : null,
-  };
-});
-
-vi.mock('@uni-hub/theme/ThemeSwitcher', () => ({
-  ThemeSwitcher: () => null,
-}));
-
-vi.mock('@uni-hub/components/common/LanguageSwitcher', () => ({
-  LanguageSwitcher: () => null,
-}));
-
 vi.mock('@uni-hub/services/api.auth', () => ({
   authApi: mockAuthApi,
 }));
-
-vi.mock('@uni-hub/services/api', async () => {
-  const actual = await vi.importActual<Record<string, unknown>>('@uni-hub/services/api');
-
-  return {
-    ...actual,
-    safeStorage: {
-      getItem: vi.fn((key: string) => mockStorage[key] ?? null),
-      setItem: vi.fn((key: string, value: string) => {
-        mockStorage[key] = value;
-      }),
-      removeItem: vi.fn((key: string) => {
-        delete mockStorage[key];
-      }),
-    },
-    authApi: mockAuthApi,
-  };
-});
 
 vi.mock('@uni-hub/components/auth', async () => {
   const actual = await vi.importActual<Record<string, unknown>>('@uni-hub/components/auth');
@@ -124,11 +69,6 @@ function renderLoginPage() {
 describe('LoginPage Google SSO Moodle integration bypass and authentication', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    for (const key of Object.keys(mockStorage)) {
-      delete mockStorage[key];
-    }
-
     delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = 'test-client-id';
     window.localStorage.clear();
@@ -144,71 +84,61 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'false';
 
     const user = userEvent.setup();
-    const { authApi } = await import('@uni-hub/services/api');
 
-    vi.mocked(authApi.loginWithGoogle).mockResolvedValueOnce({
-      data: { isLinked: false, token: 'mock-token' },
-    } as any);
+    mockAuthApi.loginWithGoogle.mockResolvedValueOnce({
+      data: { isLinked: false, access_token: 'mock-token' },
+    });
 
     renderLoginPage();
 
-    const googleBtn = screen.getByTestId('google-btn');
-
-    await user.click(googleBtn);
+    await user.click(screen.getByTestId('google-btn'));
 
     await waitFor(() => {
-      expect(mockStorage.isLoggedIn).toBe('true');
+      expect(window.localStorage.getItem('isLoggedIn')).toBe('true');
     });
 
-    expect(mockStorage.isMoodleLinked).toBe('false');
-    expect(mockStorage.username).toBe('Test Student');
+    expect(window.localStorage.getItem('isMoodleLinked')).toBe('false');
+    expect(window.localStorage.getItem('username')).toBe('Test Student');
     expect(mockPush).toHaveBeenCalledWith('/');
-    expect(mockToast.success).toHaveBeenCalledWith('Вхід виконано успішно');
+    expect(screen.getByText('Вхід виконано успішно')).toBeInTheDocument();
   });
 
   it('should not set isLoggedIn and not redirect to / when isMoodleIntegrationEnabled is true and account is unlinked', async () => {
     process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
 
     const user = userEvent.setup();
-    const { authApi } = await import('@uni-hub/services/api');
 
-    vi.mocked(authApi.loginWithGoogle).mockResolvedValueOnce({
-      data: { isLinked: false, token: 'mock-token' },
-    } as any);
+    mockAuthApi.loginWithGoogle.mockResolvedValueOnce({
+      data: { isLinked: false, access_token: 'mock-token' },
+    });
 
     renderLoginPage();
 
-    const googleBtn = screen.getByTestId('google-btn');
-
-    await user.click(googleBtn);
+    await user.click(screen.getByTestId('google-btn'));
 
     await waitFor(() => {
-      expect(mockStorage.isMoodleLinked).toBe('false');
+      expect(window.localStorage.getItem('isMoodleLinked')).toBe('false');
     });
 
-    expect(mockStorage.isLoggedIn).toBeUndefined();
+    expect(window.localStorage.getItem('isLoggedIn')).toBeNull();
     expect(mockPush).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: /прив’язати moodle/i })).toBeInTheDocument();
   });
 
   it('should show error toast on Google login failure', async () => {
     const user = userEvent.setup();
-    const { authApi } = await import('@uni-hub/services/api');
 
-    vi.mocked(authApi.loginWithGoogle).mockRejectedValueOnce(new Error('Помилка сервера Google'));
+    mockAuthApi.loginWithGoogle.mockRejectedValueOnce(new Error('Помилка сервера Google'));
 
     renderLoginPage();
 
-    const googleBtn = screen.getByTestId('google-btn');
-
-    await user.click(googleBtn);
+    await user.click(screen.getByTestId('google-btn'));
 
     await waitFor(() => {
-      expect(mockToast.error).toHaveBeenCalledWith('Помилка сервера Google');
+      expect(screen.getAllByText('Помилка сервера Google').length).toBeGreaterThanOrEqual(1);
     });
 
-    expect(screen.getByText('Помилка сервера Google')).toBeInTheDocument();
-    expect(mockStorage.isLoggedIn).toBeUndefined();
+    expect(window.localStorage.getItem('isLoggedIn')).toBeNull();
     expect(mockPush).not.toHaveBeenCalled();
   });
 
@@ -216,44 +146,38 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
 
     const user = userEvent.setup();
-    const { authApi } = await import('@uni-hub/services/api');
 
-    vi.mocked(authApi.loginWithGoogle).mockResolvedValueOnce({
-      data: { isLinked: true, token: 'mock-token' },
-    } as any);
+    mockAuthApi.loginWithGoogle.mockResolvedValueOnce({
+      data: { isLinked: true, access_token: 'mock-token' },
+    });
 
     renderLoginPage();
 
-    const googleBtn = screen.getByTestId('google-btn');
-
-    await user.click(googleBtn);
+    await user.click(screen.getByTestId('google-btn'));
 
     await waitFor(() => {
-      expect(mockStorage.isLoggedIn).toBe('true');
+      expect(window.localStorage.getItem('isLoggedIn')).toBe('true');
     });
 
-    expect(mockStorage.isMoodleLinked).toBe('true');
-    expect(mockStorage.username).toBe('Test Student');
+    expect(window.localStorage.getItem('isMoodleLinked')).toBe('true');
+    expect(window.localStorage.getItem('username')).toBe('Test Student');
     expect(mockPush).toHaveBeenCalledWith('/');
-    expect(mockToast.success).toHaveBeenCalledWith('Вхід виконано успішно');
+    expect(screen.getByText('Вхід виконано успішно')).toBeInTheDocument();
   });
 
   it('should allow linking Moodle account when user enters credentials on link screen', async () => {
     process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
 
     const user = userEvent.setup();
-    const { authApi } = await import('@uni-hub/services/api');
 
-    vi.mocked(authApi.loginWithGoogle).mockResolvedValueOnce({
-      data: { isLinked: false, token: 'mock-token' },
-    } as any);
-    vi.mocked(authApi.linkMoodleAccount).mockResolvedValueOnce({} as any);
+    mockAuthApi.loginWithGoogle.mockResolvedValueOnce({
+      data: { isLinked: false, access_token: 'mock-token' },
+    });
+    mockAuthApi.linkMoodleAccount.mockResolvedValueOnce({});
 
     renderLoginPage();
 
-    const googleBtn = screen.getByTestId('google-btn');
-
-    await user.click(googleBtn);
+    await user.click(screen.getByTestId('google-btn'));
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('Логін у Moodle')).toBeInTheDocument();
@@ -262,16 +186,14 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     await user.type(screen.getByPlaceholderText('Логін у Moodle'), 'moodleuser');
     await user.type(screen.getByPlaceholderText('Пароль'), 'moodlepassword');
 
-    const submitBtn = screen.getByRole('button', { name: /прив’язати moodle/i });
-
-    await user.click(submitBtn);
+    await user.click(screen.getByRole('button', { name: /прив’язати moodle/i }));
 
     await waitFor(() => {
-      expect(mockStorage.isLoggedIn).toBe('true');
+      expect(window.localStorage.getItem('isLoggedIn')).toBe('true');
     });
 
-    expect(mockStorage.isMoodleLinked).toBe('true');
-    expect(mockStorage.username).toBe('moodleuser');
+    expect(window.localStorage.getItem('isMoodleLinked')).toBe('true');
+    expect(window.localStorage.getItem('username')).toBe('moodleuser');
     expect(mockPush).toHaveBeenCalledWith('/');
   });
 
@@ -279,56 +201,46 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
 
     const user = userEvent.setup();
-    const { authApi } = await import('@uni-hub/services/api');
 
-    vi.mocked(authApi.loginWithGoogle).mockResolvedValueOnce({
-      data: { isLinked: false, token: 'mock-token' },
-    } as any);
+    mockAuthApi.loginWithGoogle.mockResolvedValueOnce({
+      data: { isLinked: false, access_token: 'mock-token' },
+    });
 
     renderLoginPage();
 
-    const googleBtn = screen.getByTestId('google-btn');
-
-    await user.click(googleBtn);
+    await user.click(screen.getByTestId('google-btn'));
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /пропустити/i })).toBeInTheDocument();
     });
 
-    const skipBtn = screen.getByRole('button', { name: /пропустити/i });
+    await user.click(screen.getByRole('button', { name: /пропустити/i }));
 
-    await user.click(skipBtn);
-
-    expect(mockStorage.isLoggedIn).toBe('true');
-    expect(mockStorage.isMoodleLinked).toBe('false');
-    expect(mockStorage.username).toBe('Test Student');
+    expect(window.localStorage.getItem('isLoggedIn')).toBe('true');
+    expect(window.localStorage.getItem('isMoodleLinked')).toBe('false');
+    expect(window.localStorage.getItem('username')).toBe('Test Student');
     expect(mockPush).toHaveBeenCalledWith('/');
-    expect(mockToast.success).toHaveBeenCalledWith('Вхід виконано успішно');
+    expect(screen.getByText('Вхід виконано успішно')).toBeInTheDocument();
   });
 
   it('should cancel Moodle linking and return to login form', async () => {
     process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
 
     const user = userEvent.setup();
-    const { authApi } = await import('@uni-hub/services/api');
 
-    vi.mocked(authApi.loginWithGoogle).mockResolvedValueOnce({
-      data: { isLinked: false, token: 'mock-token' },
-    } as any);
+    mockAuthApi.loginWithGoogle.mockResolvedValueOnce({
+      data: { isLinked: false, access_token: 'mock-token' },
+    });
 
     renderLoginPage();
 
-    const googleBtn = screen.getByTestId('google-btn');
-
-    await user.click(googleBtn);
+    await user.click(screen.getByTestId('google-btn'));
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /повернутися до входу/i })).toBeInTheDocument();
     });
 
-    const backBtn = screen.getByRole('button', { name: /повернутися до входу/i });
-
-    await user.click(backBtn);
+    await user.click(screen.getByRole('button', { name: /повернутися до входу/i }));
 
     expect(screen.queryByPlaceholderText('Логін у Moodle')).not.toBeInTheDocument();
     expect(screen.getByPlaceholderText('Ім’я користувача або email')).toBeInTheDocument();
@@ -350,29 +262,26 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
 
   it('should perform standard Moodle credentials login successfully', async () => {
     const user = userEvent.setup();
-    const { authApi } = await import('@uni-hub/services/api');
 
-    vi.mocked(authApi.login).mockResolvedValueOnce({
-      data: { token: 'moodle-session-token' },
-    } as any);
+    mockAuthApi.login.mockResolvedValueOnce({
+      data: { access_token: 'moodle-session-token' },
+    });
 
     renderLoginPage();
 
     await user.type(screen.getByPlaceholderText('Ім’я користувача або email'), 'moodle_student');
     await user.type(screen.getByPlaceholderText('Пароль'), 'secretpass');
 
-    const submitBtn = screen.getByRole('button', { name: /^увійти$/i });
-
-    await user.click(submitBtn);
+    await user.click(screen.getByRole('button', { name: /^увійти$/i }));
 
     await waitFor(() => {
-      expect(mockStorage.isLoggedIn).toBe('true');
+      expect(window.localStorage.getItem('isLoggedIn')).toBe('true');
     });
 
-    expect(mockStorage.isMoodleLinked).toBe('true');
-    expect(mockStorage.username).toBe('moodle_student');
+    expect(window.localStorage.getItem('isMoodleLinked')).toBe('true');
+    expect(window.localStorage.getItem('username')).toBe('moodle_student');
     expect(mockPush).toHaveBeenCalledWith('/');
-    expect(mockToast.success).toHaveBeenCalledWith('Вхід виконано успішно');
+    expect(screen.getByText('Вхід виконано успішно')).toBeInTheDocument();
   });
 
   it('should show error when username is empty during credentials login', async () => {
@@ -380,9 +289,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
 
     renderLoginPage();
 
-    const submitBtn = screen.getByRole('button', { name: /^увійти$/i });
-
-    await user.click(submitBtn);
+    await user.click(screen.getByRole('button', { name: /^увійти$/i }));
 
     await waitFor(() => {
       expect(screen.getByText("Будь ласка, введіть ім'я користувача")).toBeInTheDocument();
@@ -397,9 +304,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
 
     await user.type(screen.getByPlaceholderText('Ім’я користувача або email'), 'moodle_student');
 
-    const submitBtn = screen.getByRole('button', { name: /^увійти$/i });
-
-    await user.click(submitBtn);
+    await user.click(screen.getByRole('button', { name: /^увійти$/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Будь ласка, введіть пароль')).toBeInTheDocument();
@@ -409,24 +314,19 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
 
   it('should show error toast when credentials login fails', async () => {
     const user = userEvent.setup();
-    const { authApi } = await import('@uni-hub/services/api');
 
-    vi.mocked(authApi.login).mockRejectedValueOnce(new Error('Невірний логін або пароль'));
+    mockAuthApi.login.mockRejectedValueOnce(new Error('Невірний логін або пароль'));
 
     renderLoginPage();
 
     await user.type(screen.getByPlaceholderText('Ім’я користувача або email'), 'moodle_student');
     await user.type(screen.getByPlaceholderText('Пароль'), 'wrongpass');
 
-    const submitBtn = screen.getByRole('button', { name: /^увійти$/i });
-
-    await user.click(submitBtn);
+    await user.click(screen.getByRole('button', { name: /^увійти$/i }));
 
     await waitFor(() => {
-      expect(mockToast.error).toHaveBeenCalledWith('Невірний логін або пароль');
+      expect(screen.getAllByText('Невірний логін або пароль').length).toBeGreaterThanOrEqual(1);
     });
-
-    expect(screen.getByText('Невірний логін або пароль')).toBeInTheDocument();
   });
 
   it('should toggle password visibility when show password button is clicked', async () => {
@@ -438,15 +338,11 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
 
     expect(passwordInput).toHaveAttribute('type', 'password');
 
-    const toggleButton = screen.getByLabelText(/показати пароль/i);
-
-    await user.click(toggleButton);
+    await user.click(screen.getByLabelText(/показати пароль/i));
 
     expect(passwordInput).toHaveAttribute('type', 'text');
 
-    const hideButton = screen.getByLabelText(/сховати пароль/i);
-
-    await user.click(hideButton);
+    await user.click(screen.getByLabelText(/сховати пароль/i));
 
     expect(passwordInput).toHaveAttribute('type', 'password');
   });

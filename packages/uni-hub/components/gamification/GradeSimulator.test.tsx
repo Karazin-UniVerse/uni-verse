@@ -5,34 +5,6 @@ import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import type { Assignment, Grade } from '@core/types/moodle';
 import { GradeSimulator } from './GradeSimulator';
 
-vi.mock('@una', async () => {
-  const actual = await vi.importActual<Record<string, unknown>>('@una');
-
-  return {
-    ...actual,
-    Modal: ({
-      open,
-      title,
-      children,
-      onClose,
-    }: {
-      open: boolean;
-      title?: string;
-      children?: React.ReactNode;
-      onClose?: () => void;
-    }) =>
-      open ? (
-        <dialog open aria-label={title}>
-          {title ? <h2>{title}</h2> : null}
-          <button type="button" aria-label="Close" onClick={onClose}>
-            Close
-          </button>
-          {children}
-        </dialog>
-      ) : null,
-  };
-});
-
 vi.mock('@uni-hub/hooks/useCountUp', () => ({
   useCountUp: (target: number) => target,
 }));
@@ -117,11 +89,15 @@ describe('GradeSimulator component', () => {
   it('should call onClose when modal close button is triggered', () => {
     const handleClose = vi.fn();
 
-    renderSimulator({ grades: [mockExamGrade], open: true, onClose: handleClose });
+    const { container } = renderSimulator({
+      grades: [mockExamGrade],
+      open: true,
+      onClose: handleClose,
+    });
 
-    const closeButton = screen.getByRole('button', { name: 'Close' });
+    const closeButton = container.querySelector('button[class*="closeBtn"]');
 
-    fireEvent.click(closeButton);
+    fireEvent.click(closeButton!);
 
     expect(handleClose).toHaveBeenCalledTimes(1);
   });

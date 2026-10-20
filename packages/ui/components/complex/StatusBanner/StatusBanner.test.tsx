@@ -17,31 +17,25 @@ describe('StatusBanner Component', () => {
     expect(banner).toHaveClass(styles.bannerInfo);
   });
 
-  it('should render appropriate variant styling and icons', () => {
-    const tones: Array<{ tone: StatusBannerTone; expectedClass: string }> = [
-      { tone: 'success', expectedClass: styles.bannerSuccess },
-      { tone: 'danger', expectedClass: styles.bannerDanger },
-      { tone: 'warning', expectedClass: styles.bannerWarning },
-      { tone: 'info', expectedClass: styles.bannerInfo },
-    ];
+  it.each<{ tone: StatusBannerTone; expectedClass: string }>([
+    { tone: 'success', expectedClass: styles.bannerSuccess },
+    { tone: 'danger', expectedClass: styles.bannerDanger },
+    { tone: 'warning', expectedClass: styles.bannerWarning },
+    { tone: 'info', expectedClass: styles.bannerInfo },
+  ])('should render $tone variant styling and icon', ({ tone, expectedClass }) => {
+    render(
+      <StatusBanner tone={tone} icon={<span data-testid={`icon-${tone}`}>{tone}</span>}>
+        Message for {tone}
+      </StatusBanner>,
+    );
 
-    for (const { tone, expectedClass } of tones) {
-      const { unmount } = render(
-        <StatusBanner tone={tone} icon={<span data-testid={`icon-${tone}`}>{tone}</span>}>
-          Message for {tone}
-        </StatusBanner>,
-      );
+    const banner = screen.getByRole('status');
+    const icon = screen.getByTestId(`icon-${tone}`);
 
-      const banner = screen.getByRole('status');
-      const icon = screen.getByTestId(`icon-${tone}`);
-
-      expect(banner).toHaveClass(expectedClass);
-      expect(icon).toBeInTheDocument();
-      expect(icon.parentElement).toHaveClass(styles.bannerIcon);
-      expect(screen.getByText(`Message for ${tone}`)).toBeInTheDocument();
-
-      unmount();
-    }
+    expect(banner).toHaveClass(expectedClass);
+    expect(icon).toBeInTheDocument();
+    expect(icon.parentElement).toHaveClass(styles.bannerIcon);
+    expect(screen.getByText(`Message for ${tone}`)).toBeInTheDocument();
   });
 
   it('should render without icon container when icon prop is omitted', () => {

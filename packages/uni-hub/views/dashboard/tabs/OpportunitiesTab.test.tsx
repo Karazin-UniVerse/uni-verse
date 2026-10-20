@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { ROLE } from '@core/constants/roles';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useOpportunitiesStore } from '@uni-hub/store/useOpportunitiesStore';
-import { createTestQueryClient, withAppProviders } from '@uni-hub/utils/with-query-client';
+import { createTestQueryClient, withAppProviders } from '@uni-hub/utils/test-utils';
 import { OPPORTUNITY_SUB_TAB } from './opportunities/constants';
 import { opportunityKeys } from './opportunities/queryKeys';
 import { buildOpportunity } from './opportunities/test-utils';

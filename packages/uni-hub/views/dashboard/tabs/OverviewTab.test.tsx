@@ -3,8 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { CurriculumItem, StudentProfile } from '@core/types';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import { FeatureToggleProvider } from '@uni-hub/features';
+import { createAppProvidersWrapper } from '@uni-hub/utils/test-utils';
 import type { Assignment, MoodleCourse as Course } from '@core/types/moodle';
 import type { OverviewTabProps } from '../types';
 import { OverviewTab } from './OverviewTab';
@@ -42,42 +41,6 @@ vi.mock('@uni-hub/hooks/useCountUp', () => ({
   useCountUp: (target: number, duration?: number, enabled?: boolean) =>
     mockUseCountUp(target, duration, enabled),
 }));
-
-vi.mock('@una', async () => {
-  const actual = await vi.importActual<Record<string, unknown>>('@una');
-
-  return {
-    ...actual,
-    useToast: () => ({
-      success: vi.fn(),
-      error: vi.fn(),
-      info: vi.fn(),
-      warning: vi.fn(),
-    }),
-    Modal: ({
-      open,
-      title,
-      children,
-      onClose,
-    }: {
-      open: boolean;
-      title?: string;
-      children?: React.ReactNode;
-      onClose?: () => void;
-    }) =>
-      open ? (
-        <dialog open aria-label={title}>
-          {title ? <h2>{title}</h2> : null}
-          {onClose ? (
-            <button type="button" aria-label="Close" onClick={onClose}>
-              Close
-            </button>
-          ) : null}
-          {children}
-        </dialog>
-      ) : null,
-  };
-});
 
 const mockStudentProfile: StudentProfile = {
   id: 'karazin-student-001',
@@ -118,11 +81,7 @@ const createDefaultProps = (overrides?: Partial<OverviewTabProps>): OverviewTabP
 };
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <LanguageProvider>
-      <FeatureToggleProvider>{ui}</FeatureToggleProvider>
-    </LanguageProvider>,
-  );
+  return render(ui, { wrapper: createAppProvidersWrapper() });
 };
 
 describe('OverviewTab component', () => {
@@ -255,13 +214,7 @@ describe('OverviewTab component', () => {
       assignments: [mockAssignment],
     });
 
-    rerender(
-      <LanguageProvider>
-        <FeatureToggleProvider>
-          <OverviewTab {...readyProps} />
-        </FeatureToggleProvider>
-      </LanguageProvider>,
-    );
+    rerender(<OverviewTab {...readyProps} />);
 
     expect(mockUseCountUp).toHaveBeenCalledWith(7, 800, true);
     expect(mockUseCountUp).toHaveBeenCalledWith(1, 800, true);

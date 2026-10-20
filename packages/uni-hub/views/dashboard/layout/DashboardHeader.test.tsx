@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { authApi } from '@uni-hub/services/api';
 import { LinkMoodleMode } from '@uni-hub/components/auth';
-import { createAppProvidersWrapper } from '@uni-hub/utils/with-query-client';
+import { createAppProvidersWrapper } from '@uni-hub/utils/test-utils';
 import type { Notification } from '@core/types/moodle';
 import { fallbackStudentProfile } from '../constants';
 import type { DashboardHeaderProps } from '../types';

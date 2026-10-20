@@ -29,65 +29,53 @@ describe('ContextualGreeting component', () => {
   });
 
   describe('Time of day greetings', () => {
-    it('should render morning greeting during morning hours (05:00 - 11:59)', () => {
-      const morningHours = [5, 8, 11];
-
-      for (const hour of morningHours) {
+    it.each([5, 8, 11])(
+      'should render morning greeting during morning hour %i (05:00 - 11:59)',
+      (hour) => {
         vi.setSystemTime(new Date(2026, 9, 16, hour, 30, 0));
 
-        const { unmount } = render(<ContextualGreeting assignments={[]} />);
+        render(<ContextualGreeting assignments={[]} />);
 
         expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
           'Доброго ранку, студент',
         );
+      },
+    );
 
-        unmount();
-      }
-    });
-
-    it('should render day greeting during day hours (12:00 - 17:59)', () => {
-      const dayHours = [12, 14, 17];
-
-      for (const hour of dayHours) {
+    it.each([12, 14, 17])(
+      'should render day greeting during day hour %i (12:00 - 17:59)',
+      (hour) => {
         vi.setSystemTime(new Date(2026, 9, 16, hour, 30, 0));
 
-        const { unmount } = render(<ContextualGreeting assignments={[]} />);
+        render(<ContextualGreeting assignments={[]} />);
 
         expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Доброго дня, студент');
+      },
+    );
 
-        unmount();
-      }
-    });
-
-    it('should render evening greeting during evening hours (18:00 - 21:59)', () => {
-      const eveningHours = [18, 20, 21];
-
-      for (const hour of eveningHours) {
+    it.each([18, 20, 21])(
+      'should render evening greeting during evening hour %i (18:00 - 21:59)',
+      (hour) => {
         vi.setSystemTime(new Date(2026, 9, 16, hour, 30, 0));
 
-        const { unmount } = render(<ContextualGreeting assignments={[]} />);
+        render(<ContextualGreeting assignments={[]} />);
 
         expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
           'Доброго вечора, студент',
         );
+      },
+    );
 
-        unmount();
-      }
-    });
-
-    it('should render night greeting during night hours (22:00 - 04:59)', () => {
-      const nightHours = [22, 23, 0, 2, 4];
-
-      for (const hour of nightHours) {
+    it.each([22, 23, 0, 2, 4])(
+      'should render night greeting during night hour %i (22:00 - 04:59)',
+      (hour) => {
         vi.setSystemTime(new Date(2026, 9, 16, hour, 30, 0));
 
-        const { unmount } = render(<ContextualGreeting assignments={[]} />);
+        render(<ContextualGreeting assignments={[]} />);
 
         expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Доброї ночі, студент');
-
-        unmount();
-      }
-    });
+      },
+    );
 
     it('should render greeting in English when language is set to English', () => {
       vi.setSystemTime(new Date(2026, 9, 16, 9, 0, 0));

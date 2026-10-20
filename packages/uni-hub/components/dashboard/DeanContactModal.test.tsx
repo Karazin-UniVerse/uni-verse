@@ -1,45 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DeanContactModal } from './DeanContactModal';
+import { withToast } from '@uni-hub/utils/test-utils';
+import { DeanContactModal, type DeanContactModalProps } from './DeanContactModal';
 
-const mockToast = {
-  success: vi.fn(),
-  error: vi.fn(),
-  info: vi.fn(),
-  warning: vi.fn(),
+const renderDeanContactModal = (props: Partial<DeanContactModalProps> = {}) => {
+  return render(withToast(<DeanContactModal open={true} onClose={vi.fn()} {...props} />));
 };
-
-vi.mock('@una', async () => {
-  const actual = await vi.importActual<Record<string, unknown>>('@una');
-
-  return {
-    ...actual,
-    Modal: ({
-      open,
-      title,
-      children,
-      onClose,
-      closeLabel = 'Закрити',
-    }: {
-      open: boolean;
-      title?: string;
-      children?: React.ReactNode;
-      onClose?: () => void;
-      closeLabel?: string;
-    }) =>
-      open ? (
-        <dialog open aria-label={title}>
-          {title ? <h2>{title}</h2> : null}
-          <button type="button" aria-label={closeLabel || 'Закрити'} onClick={onClose}>
-            {closeLabel || 'Закрити'}
-          </button>
-          {children}
-        </dialog>
-      ) : null,
-    useToast: () => mockToast,
-  };
-});
 
 describe('DeanContactModal component', () => {
   beforeEach(() => {
@@ -47,11 +14,11 @@ describe('DeanContactModal component', () => {
   });
 
   it('should render modal when open is true with accessible dialog title and contact form', () => {
-    render(<DeanContactModal open={true} onClose={vi.fn()} />);
+    renderDeanContactModal();
 
     expect(screen.getByRole('dialog', { name: "Зв'язок з деканатом" })).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { level: 2, name: "Зв'язок з деканатом" }),
+      screen.getByRole('heading', { level: 3, name: "Зв'язок з деканатом" }),
     ).toBeInTheDocument();
     expect(screen.getByText('ННІ Компʼютерних наук та штучного інтелекту')).toBeInTheDocument();
     expect(
@@ -78,13 +45,13 @@ describe('DeanContactModal component', () => {
   it('should render custom faculty name when provided', () => {
     const customFaculty = 'Факультет компʼютерних наук';
 
-    render(<DeanContactModal open={true} onClose={vi.fn()} facultyName={customFaculty} />);
+    renderDeanContactModal({ facultyName: customFaculty });
 
     expect(screen.getByText(customFaculty)).toBeInTheDocument();
   });
 
   it('should not render when open is false', () => {
-    render(<DeanContactModal open={false} onClose={vi.fn()} />);
+    renderDeanContactModal({ open: false });
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
@@ -93,7 +60,7 @@ describe('DeanContactModal component', () => {
     const handleClose = vi.fn();
     const user = userEvent.setup();
 
-    render(<DeanContactModal open={true} onClose={handleClose} />);
+    renderDeanContactModal({ onClose: handleClose });
 
     const cancelBtn = screen.getByRole('button', { name: 'Скасувати' });
 
@@ -106,7 +73,7 @@ describe('DeanContactModal component', () => {
     const handleClose = vi.fn();
     const user = userEvent.setup();
 
-    render(<DeanContactModal open={true} onClose={handleClose} />);
+    renderDeanContactModal({ onClose: handleClose });
 
     const closeBtn = screen.getByRole('button', { name: 'Закрити' });
 
@@ -119,7 +86,7 @@ describe('DeanContactModal component', () => {
     const handleClose = vi.fn();
     const user = userEvent.setup();
 
-    render(<DeanContactModal open={true} onClose={handleClose} />);
+    renderDeanContactModal({ onClose: handleClose });
 
     const transcriptChip = screen.getByRole('radio', {
       name: 'Академічна довідка / виписка оцінок',
@@ -141,19 +108,18 @@ describe('DeanContactModal component', () => {
 
     await user.click(submitBtn);
 
-    await waitFor(() => {
-      expect(mockToast.success).toHaveBeenCalledTimes(1);
-      expect(mockToast.success).toHaveBeenCalledWith(
-        expect.stringMatching(/^Звернення №КВ-\d+ успішно надіслано до деканату!/),
-      );
-      expect(handleClose).toHaveBeenCalledTimes(1);
-    });
+    expect(
+      await screen.findByText(/^Звернення №КВ-\d+ успішно надіслано до деканату!/, undefined, {
+        timeout: 3000,
+      }),
+    ).toBeInTheDocument();
+    expect(handleClose).toHaveBeenCalledTimes(1);
   });
 
   it('should disable submit button or show loading state when submitting', async () => {
     const user = userEvent.setup();
 
-    render(<DeanContactModal open={true} onClose={vi.fn()} />);
+    renderDeanContactModal();
 
     const messageInput = screen.getByLabelText('Текст повідомлення або коментар');
 
@@ -170,8 +136,13 @@ describe('DeanContactModal component', () => {
     expect(screen.getByRole('button', { name: 'Надсилання...' })).toBeDisabled();
     expect(cancelBtn).toBeDisabled();
 
-    await waitFor(() => {
-      expect(mockToast.success).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(
+          screen.getByText(/^Звернення №КВ-\d+ успішно надіслано до деканату!/),
+        ).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
   });
 });

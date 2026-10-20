@@ -50,12 +50,13 @@ Before writing any test code, read the target file and its types to identify:
   - `useLanguage()` ➡️ `withLanguage(ui)` (or `<LanguageProvider>` from `@uni-hub/i18n/LanguageContext`). Set `localStorage.setItem('universe-lang', 'uk')` in `beforeEach` for deterministic localized text assertions.
   - `useFeatures()` ➡️ `withFeatureToggles(ui)` (or `<FeatureToggleProvider>` from `@uni-hub/features`).
   - `useTheme()` ➡️ `withTheme(ui)` (or `<ThemeProvider>` from `@uni-hub/theme/ThemeContext`).
-  - `useQuery()` / `useMutation()` / `useQueryClient()` ➡️ `withQueryClient(ui, queryClient)` from `@uni-hub/utils/with-query-client`.
-  - Multiple common providers ➡️ `withAppProviders(ui, queryClient)` from `@uni-hub/utils/with-query-client`.
+  - `useQuery()` / `useMutation()` / `useQueryClient()` ➡️ `withQueryClient(ui, queryClient)` from `@uni-hub/utils/test-utils`.
+  - Multiple common providers ➡️ `withAppProviders(ui, queryClient)` from `@uni-hub/utils/test-utils`.
 
 ### Step 3: Set Up Clean, Hoisted Mocks
 - Always use `vi.hoisted(() => ({ ... }))` for mock functions referenced inside `vi.mock(...)` factories.
-- **Modal Mocking Rule (SonarCloud `S6819` / `S6847`)**: When mocking `Modal` from `@una` in parent view/tab tests, **NEVER** render `<div role="dialog">`. Always use a native `<dialog>` element:
+- **Prefer Real Design-System Primitives (`@una`)**: Do NOT mock `@una` components (`Modal`, `Tag`, `Chart`, `useToast`) when the real components and `<ToastProvider>` (via `withToast` / `withAppProviders`) work directly in Happy-DOM. Only mock external boundaries (`next/navigation`, `next/script`, API clients).
+- **Modal Mocking Rule (SonarCloud `S6819` / `S6847`)**: If `Modal` from `@una` must be mocked in a specialized test, **NEVER** render `<div role="dialog">`. Always use a native `<dialog>` element:
   ```tsx
   Modal: ({ open, title, children, footer, onClose }: {
     open: boolean;
@@ -74,6 +75,7 @@ Before writing any test code, read the target file and its types to identify:
       </dialog>
     ) : null,
   ```
+- **Parameterized Tests (`it.each`)**: Prefer `it.each(...)` over manual `for (... of ...)` loops with `unmount()` when testing multiple variants, tones, or inputs.
 
 ### Step 4: Design High-Value, Zero-Bloat Test Cases
 Every test description **MUST** start with `'should ...'`. Cover these core dimensions without redundant bloat:

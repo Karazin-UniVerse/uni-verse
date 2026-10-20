@@ -23,6 +23,8 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     setupFiles: ['./vitest.setup.ts'],
+    // happy-dom 21+ rejects Animation.finished with AbortError on Animation.cancel(),
+    // which framer-motion does not catch when unmounting WAAPI animations during cleanup().
     onUnhandledError(error: unknown) {
       const err = error as { name?: string; message?: string } | undefined;
 
@@ -35,4 +37,3 @@ export default defineConfig({
     },
   },
 });
-

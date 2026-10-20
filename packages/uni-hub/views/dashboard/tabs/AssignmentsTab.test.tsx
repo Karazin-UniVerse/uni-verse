@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { withLanguage, withQueryClient } from '@uni-hub/utils/with-query-client';
+import { withLanguage, withQueryClient } from '@uni-hub/utils/test-utils';
 import type { Assignment } from '@core/types/moodle';
 import type { AssignmentsTabProps } from '../types';
 import { AssignmentsTab } from './AssignmentsTab';
