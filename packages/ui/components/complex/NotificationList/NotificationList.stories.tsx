@@ -63,6 +63,18 @@ const meta = {
       control: 'text',
       description: 'Screen-reader-only text announced before each unread item',
     },
+    markAllReadLabel: {
+      control: 'text',
+      description: 'Label for marking all notifications as read',
+    },
+    onItemClick: {
+      action: 'itemClicked',
+      description: 'Callback when an item is clicked',
+    },
+    onMarkAllRead: {
+      action: 'markAllRead',
+      description: 'Callback when mark all as read is clicked',
+    },
   },
 } satisfies Meta<typeof NotificationList>;
 

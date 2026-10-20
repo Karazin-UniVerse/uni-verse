@@ -25,6 +25,7 @@ import {
   Role,
 } from '@universe/database';
 import { OPPORTUNITY_MODERATE_ACTION } from '@universe/core/constants/opportunities';
+import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 
 export type OpportunityWithOwner = Opportunity & {
   owner: { id: string; name: string | null; email: string };
@@ -83,7 +84,13 @@ export class OpportunitiesService {
       userRoles?.includes(Role.OPPORTUNITIES_MODERATOR),
     );
 
-    if (status && status !== OpportunityStatus.PUBLISHED && isModerator) {
+    if (status && status !== OpportunityStatus.PUBLISHED) {
+      if (!isModerator) {
+        throw new ForbiddenException(
+          'Only OPPORTUNITIES_MODERATOR can view opportunities with status other than PUBLISHED',
+        );
+      }
+
       where.status = status;
     } else {
       where.status = OpportunityStatus.PUBLISHED;
@@ -301,7 +308,7 @@ export class OpportunitiesService {
         status,
         comment: ownerComment || null,
       }),
-      link: '/my-applications',
+      link: `${OPPORTUNITIES_ROUTE}/${app.opportunityId}`,
     });
 
     return updated;
@@ -327,9 +334,14 @@ export class OpportunitiesService {
       throw new ForbiddenException('Cannot apply to your own opportunity');
     }
 
-    if (opportunity.lifecycleState !== OpportunityLifecycleState.ACTIVE) {
+    const allowedStates: OpportunityLifecycleState[] = [
+      OpportunityLifecycleState.START,
+      OpportunityLifecycleState.ACTIVE,
+    ];
+
+    if (!allowedStates.includes(opportunity.lifecycleState)) {
       throw new BadRequestException(
-        'Cannot apply to an opportunity that is not active',
+        'Cannot apply to an opportunity in this phase',
       );
     }
 
@@ -374,7 +386,7 @@ export class OpportunitiesService {
         opportunityTitle: opportunity.title,
         applicantName: dto.applicantName,
       }),
-      link: `/my-opportunities/${id}`,
+      link: `${OPPORTUNITIES_ROUTE}/${id}`,
     });
 
     return app;
@@ -493,7 +505,7 @@ export class OpportunitiesService {
         action: dto.action,
         comment: dto.comment || null,
       }),
-      link: '/my-opportunities',
+      link: `${OPPORTUNITIES_ROUTE}/${opp.id}`,
     });
 
     return opp;

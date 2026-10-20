@@ -41,6 +41,7 @@ describe('DashboardSidebar helpers', () => {
     const connectItem = items.find((item) => item.key === NAV_KEY.ConnectMoodle);
 
     expect(connectItem?.labelKey).toBe('nav.connectMoodle');
+    expect(connectItem?.shortLabelKey).toBe('nav.connectMoodle');
   });
 });
 

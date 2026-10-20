@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { GradeSimulator } from '@uni-hub/components/gamification';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
+import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
 import { STUDY_VIEW, type StudyView } from './constants';
-import { useDashboard } from './DashboardContext';
+import { useDashboardData } from './hooks/useDashboardData';
 import { getAssignmentHref } from './routes';
 import { AssignmentsTab } from './tabs/AssignmentsTab';
 import { CoursesTab } from './tabs/CoursesTab';
@@ -15,8 +16,15 @@ import { isStudyView } from './utils';
 
 export const StudyPage: React.FC = () => {
   const router = useRouter();
-  const dashboard = useDashboard();
-  const { data } = dashboard;
+  const { data } = useDashboardData();
+  const dateFrom = useMoodleStore((state) => state.dateFrom);
+  const dateTo = useMoodleStore((state) => state.dateTo);
+  const sortOrder = useMoodleStore((state) => state.sortOrder);
+  const hideCompleted = useMoodleStore((state) => state.hideCompleted);
+  const setDateFrom = useMoodleStore((state) => state.setDateFrom);
+  const setDateTo = useMoodleStore((state) => state.setDateTo);
+  const setSortOrder = useMoodleStore((state) => state.setSortOrder);
+  const setHideCompleted = useMoodleStore((state) => state.setHideCompleted);
   const soundEnabled = useGamificationStore((state) => state.soundEnabled);
   const requestedView = useSearchParams().get('view');
   const requestedStudyView =
@@ -41,14 +49,14 @@ export const StudyPage: React.FC = () => {
         return (
           <AssignmentsTab
             assignments={data.assignments}
-            dateFrom={dashboard.dateFrom}
-            dateTo={dashboard.dateTo}
-            onDateFromChange={dashboard.setDateFrom}
-            onDateToChange={dashboard.setDateTo}
-            sortOrder={dashboard.sortOrder}
-            onSortOrderChange={dashboard.setSortOrder}
-            hideCompleted={dashboard.hideCompleted}
-            onHideCompletedChange={dashboard.setHideCompleted}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            onDateFromChange={setDateFrom}
+            onDateToChange={setDateTo}
+            sortOrder={sortOrder}
+            onSortOrderChange={setSortOrder}
+            hideCompleted={hideCompleted}
+            onHideCompletedChange={setHideCompleted}
             soundEnabled={soundEnabled}
             onOpenAssignment={(assignment) => router.push(getAssignmentHref(assignment.id))}
           />

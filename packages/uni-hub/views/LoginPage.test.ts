@@ -9,7 +9,7 @@ const mockToast = {
   success: vi.fn(),
   error: vi.fn(),
 };
-const mockStorage: Record<string, string> = {};
+const mockStorage = vi.hoisted(() => ({}) as Record<string, string>);
 let mockMoodleIntegrationEnabled = false;
 let capturedGoogleSuccess: ((token: string) => Promise<void>) | null = null;
 

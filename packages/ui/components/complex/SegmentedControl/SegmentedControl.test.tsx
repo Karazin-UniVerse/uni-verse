@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { renderToString } from 'react-dom/server';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { SegmentedControl } from './SegmentedControl';
 import { noop } from '@core/utils/fn';
 
@@ -12,7 +12,7 @@ describe('SegmentedControl Component', () => {
   ];
 
   it('should render a tablist with an accessible label', () => {
-    const html = renderToString(
+    render(
       <SegmentedControl
         items={sampleItems}
         selectedId="first"
@@ -22,12 +22,13 @@ describe('SegmentedControl Component', () => {
       />,
     );
 
-    expect(html).toContain('role="tablist"');
-    expect(html).toContain('aria-label="Sections"');
+    const tablist = screen.getByRole('tablist', { name: 'Sections' });
+
+    expect(tablist).toBeInTheDocument();
   });
 
   it('should mark only the selected tab and give it the roving tabindex', () => {
-    const html = renderToString(
+    render(
       <SegmentedControl
         items={sampleItems}
         selectedId="second"
@@ -36,12 +37,18 @@ describe('SegmentedControl Component', () => {
       />,
     );
 
-    expect(html).toMatch(/role="tab"[^>]*aria-selected="true"[^>]*tabindex="0"[^>]*>Second/);
-    expect(html).toMatch(/role="tab"[^>]*aria-selected="false"[^>]*tabindex="-1"[^>]*>First/);
+    const selectedTab = screen.getByRole('tab', { name: /Second/ });
+    const inactiveTab = screen.getByRole('tab', { name: 'First' });
+
+    expect(selectedTab).toHaveAttribute('aria-selected', 'true');
+    expect(selectedTab).toHaveAttribute('tabindex', '0');
+
+    expect(inactiveTab).toHaveAttribute('aria-selected', 'false');
+    expect(inactiveTab).toHaveAttribute('tabindex', '-1');
   });
 
-  it('should link each tab to its panel through the prefix', () => {
-    const html = renderToString(
+  it('should place aria-controls only on the selected tab', () => {
+    render(
       <SegmentedControl
         items={sampleItems}
         selectedId="first"
@@ -50,12 +57,15 @@ describe('SegmentedControl Component', () => {
       />,
     );
 
-    expect(html).toContain('aria-controls="study-panel-first"');
-    expect(html).toContain('aria-controls="study-panel-third"');
+    const firstTab = screen.getByRole('tab', { name: 'First' });
+    const thirdTab = screen.getByRole('tab', { name: 'Third' });
+
+    expect(firstTab).toHaveAttribute('aria-controls', 'study-panel-first');
+    expect(thirdTab).not.toHaveAttribute('aria-controls');
   });
 
   it('should render a badge only when it is greater than zero', () => {
-    const html = renderToString(
+    render(
       <SegmentedControl
         items={sampleItems}
         selectedId="first"
@@ -64,7 +74,55 @@ describe('SegmentedControl Component', () => {
       />,
     );
 
-    expect(html).toContain('>4</span>');
-    expect(html).not.toContain('>0</span>');
+    expect(screen.getByText('4')).toBeInTheDocument();
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
+  });
+
+  it('should navigate between tabs with ArrowRight and ArrowLeft including edge wrap-around', () => {
+    const onSelect = vi.fn();
+
+    render(
+      <SegmentedControl
+        items={sampleItems}
+        selectedId="first"
+        panelIdPrefix="panel"
+        onSelect={onSelect}
+      />,
+    );
+
+    const tabs = screen.getAllByRole('tab');
+
+    // ArrowRight from first tab -> second tab
+    fireEvent.keyDown(tabs[0]!, { key: 'ArrowRight' });
+    expect(onSelect).toHaveBeenCalledWith('second');
+
+    // ArrowLeft from first tab -> wraps to third (last) tab
+    fireEvent.keyDown(tabs[0]!, { key: 'ArrowLeft' });
+    expect(onSelect).toHaveBeenCalledWith('third');
+
+    // ArrowRight from third tab -> wraps to first tab
+    fireEvent.keyDown(tabs[2]!, { key: 'ArrowRight' });
+    expect(onSelect).toHaveBeenCalledWith('first');
+  });
+
+  it('should navigate to first and last tabs with Home and End keys', () => {
+    const onSelect = vi.fn();
+
+    render(
+      <SegmentedControl
+        items={sampleItems}
+        selectedId="second"
+        panelIdPrefix="panel"
+        onSelect={onSelect}
+      />,
+    );
+
+    const tabs = screen.getAllByRole('tab');
+
+    fireEvent.keyDown(tabs[1]!, { key: 'Home' });
+    expect(onSelect).toHaveBeenCalledWith('first');
+
+    fireEvent.keyDown(tabs[1]!, { key: 'End' });
+    expect(onSelect).toHaveBeenCalledWith('third');
   });
 });

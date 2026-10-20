@@ -108,7 +108,7 @@ Native Oxlint `react` plugin rules:
 
 Covered by existing rules instead of custom ones:
 
-- `ts-eslint/explicit-function-return-type` (`@typescript-eslint/eslint-plugin` loaded through `jsPlugins`) on `*.controller.ts`: explicit return types.
+- `typescript/explicit-function-return-type` (built-in `typescript` plugin) on `*.controller.ts`: explicit return types.
 - `no-restricted-imports` overrides in `.oxlintrc.json`: controllers must not import `PrismaService`, `una/` components must not import application state or routing, and `@universe/core` must not import framework or database packages.
 
 ---

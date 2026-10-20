@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import React from 'react';
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { Assignment } from '@core/types/moodle';
+import { moodleApi } from '@uni-hub/services/api.moodle';
 import {
   getAssignmentsNeedingStatus,
   toLocalStatuses,
@@ -62,12 +63,34 @@ describe('toLocalStatuses', () => {
 });
 
 describe('useAssignmentStatuses hook', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('returns an empty record before any status has loaded', () => {
+    vi.spyOn(moodleApi, 'getAssignmentStatus').mockReturnValue(new Promise(() => {}));
+
     const { result } = renderHook(() => useAssignmentStatuses([buildAssignment(101)]), {
       wrapper: createWrapper(),
     });
 
     expect(result.current).toEqual({});
+  });
+
+  it('loads and returns the statuses for assignments needing them', async () => {
+    vi.spyOn(moodleApi, 'getAssignmentStatus').mockResolvedValue({
+      data: { status: 'submitted', grade: '95' },
+    });
+
+    const { result } = renderHook(() => useAssignmentStatuses([buildAssignment(101)]), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current).toEqual({
+        101: { status: 'submitted', grade: '95' },
+      });
+    });
   });
 
   it('returns an empty record when every assignment already has a status', () => {
