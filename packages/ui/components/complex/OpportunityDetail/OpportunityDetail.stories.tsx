@@ -43,6 +43,9 @@ const meta = {
     phaseLabel: 'Фаза:',
     lifecycleOptions: defaultLifecycleOptions,
     lifecycleState: 'ACTIVE',
+    acceptsApplications: true,
+    acceptsApplicationsLabel: 'Приймати нові відгуки',
+    applicationsClosedText: 'Прийом заявок призупинено автором',
   },
 } satisfies Meta<typeof OpportunityDetail>;
 
@@ -55,6 +58,7 @@ export const AuthorView: Story = {
   render: (args) => {
     const InteractiveWrapper = (props: OpportunityDetailProps) => {
       const [state, setState] = useState(props.lifecycleState ?? 'ACTIVE');
+      const [accepts, setAccepts] = useState(props.acceptsApplications ?? true);
 
       return (
         <OpportunityDetail
@@ -64,11 +68,21 @@ export const AuthorView: Story = {
           canSendToReview={false}
           lifecycleState={state}
           onLifecycleChange={setState}
+          acceptsApplications={accepts}
+          onToggleAcceptsApplications={setAccepts}
         />
       );
     };
 
     return <InteractiveWrapper {...args} />;
+  },
+};
+
+export const CandidateApplicationsClosed: Story = {
+  args: {
+    canApply: false,
+    acceptsApplications: false,
+    applicationsClosedText: 'Прийом заявок призупинено автором',
   },
 };
 

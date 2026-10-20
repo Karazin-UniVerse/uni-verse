@@ -8,6 +8,7 @@ This document contains the strict rules and instructions for using the **UniVers
 
 - Use **ONLY** variables from the design system.
 - **DO NOT** hardcode any HEX, RGB or HSL values (for example, `#FF0000`, `rgb(255, 0, 0)`).
+- **DO NOT** include fallback values inside `var(...)` calls (for example, write `var(--space-8)`, `var(--font-sm)`, `var(--accent-primary)` instead of `var(--space-8, 8px)` or `var(--accent-primary, #3b82f6)`). All design tokens are globally defined in `:root`; fallback literals duplicate values and mask missing token definitions.
 - If a required color is missing from the system:
   - Propose adding a new token to the design system (vars.scss).
   - Or change the design to match the existing palette.

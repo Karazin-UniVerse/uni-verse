@@ -4,8 +4,48 @@ import { BackButton } from '../BackButton';
 import { Button } from '../../una/Button';
 import { Tag } from '../../una/Tag';
 import { Select } from '../../una/Select';
+import { CheckBox } from '../../una/inputs/CheckBox';
 import type { OpportunityDetailProps } from './OpportunityDetail.types';
 import styles from './OpportunityDetail.module.scss';
+
+function getCandidateFooterButton({
+  isOwner,
+  canApply,
+  onOpenApply,
+  applyText,
+  acceptsApplications,
+  applicationsClosedText,
+}: Pick<
+  OpportunityDetailProps,
+  | 'isOwner'
+  | 'canApply'
+  | 'onOpenApply'
+  | 'applyText'
+  | 'acceptsApplications'
+  | 'applicationsClosedText'
+>): React.ReactNode {
+  if (isOwner) {
+    return null;
+  }
+
+  if (canApply && onOpenApply) {
+    return (
+      <Button variant="primary" onClick={onOpenApply}>
+        {applyText}
+      </Button>
+    );
+  }
+
+  if (acceptsApplications === false && applicationsClosedText) {
+    return (
+      <Button variant="secondary" disabled>
+        {applicationsClosedText}
+      </Button>
+    );
+  }
+
+  return null;
+}
 
 export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   onBack,
@@ -31,9 +71,13 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   phaseLabel,
   lifecycleState,
   onLifecycleChange,
+  onToggleAcceptsApplications,
+  acceptsApplicationsLabel,
+  applicationsClosedText,
   applyText,
   onOpenApply,
   className,
+  acceptsApplications = true,
   paymentTone = 'neutral',
   isOwner = false,
   canEdit = false,
@@ -42,6 +86,14 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   canApply = false,
 }) => {
   const phaseSelectId = useId();
+  const footerButton = getCandidateFooterButton({
+    isOwner,
+    canApply,
+    onOpenApply,
+    applyText,
+    acceptsApplications,
+    applicationsClosedText,
+  });
 
   return (
     <div className={className}>
@@ -130,16 +182,23 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
                 </div>
               )}
             </div>
+
+            {onToggleAcceptsApplications && acceptsApplicationsLabel && (
+              <div className={styles.acceptsApplicationsRow}>
+                <label className={styles.checkboxLabel}>
+                  <CheckBox
+                    variant="primary"
+                    checked={acceptsApplications}
+                    onChange={(e) => onToggleAcceptsApplications(e.target.checked)}
+                  />
+                  <span>{acceptsApplicationsLabel}</span>
+                </label>
+              </div>
+            )}
           </div>
         )}
 
-        {canApply && onOpenApply && (
-          <div className={styles.footer}>
-            <Button variant="primary" onClick={onOpenApply}>
-              {applyText}
-            </Button>
-          </div>
-        )}
+        {footerButton && <div className={styles.footer}>{footerButton}</div>}
       </div>
     </div>
   );
