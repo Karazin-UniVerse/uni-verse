@@ -4,7 +4,13 @@ import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { OPPORTUNITY_STATUS, type OpportunityLifecycle } from '@core/constants/opportunities';
-import { invalidateOpportunities } from '../cache';
+import {
+  invalidateOpportunities,
+  isLastPendingAcceptanceToggle,
+  restoreOpportunityAcceptance,
+  updateOpportunityAcceptance,
+} from '../cache';
+import { toggleAcceptanceMutationKey } from '../queryKeys';
 
 interface LifecycleChange {
   id: string;
@@ -39,9 +45,21 @@ export function useOpportunityActions(): UseOpportunityActionsResult {
   });
 
   const acceptsApplicationsMutation = useMutation({
+    mutationKey: toggleAcceptanceMutationKey,
     mutationFn: ({ id, acceptsApplications }: AcceptsApplicationsChange) =>
       opportunitiesApi.updateOpportunity(id, { acceptsApplications }),
-    onSuccess: () => invalidateOpportunities(queryClient),
+    onMutate: ({ id, acceptsApplications }) =>
+      updateOpportunityAcceptance(queryClient, id, acceptsApplications),
+    onError: (_error, { id }, previousState) => {
+      if (isLastPendingAcceptanceToggle(queryClient)) {
+        restoreOpportunityAcceptance(queryClient, id, previousState);
+      }
+    },
+    onSettled: () => {
+      if (isLastPendingAcceptanceToggle(queryClient)) {
+        return invalidateOpportunities(queryClient);
+      }
+    },
   });
 
   const handleSendToReview = async (id: string): Promise<void> => {
