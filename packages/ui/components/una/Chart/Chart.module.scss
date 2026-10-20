@@ -35,28 +35,27 @@
   user-select: none;
   -webkit-user-select: none;
 
+  :global(.recharts-wrapper),
   :global(.recharts-surface),
   :global(.recharts-surface *),
-  :global(.recharts-wrapper *:not(.recharts-wrapper)) {
-    outline: none;
+  :global(.recharts-bar-rectangle),
+  :global(.recharts-rectangle),
+  :global(.recharts-sector) {
     -webkit-tap-highlight-color: transparent;
 
-    &:focus,
-    &:focus-visible,
-    &:active {
+    &:focus:not(:focus-visible) {
       outline: none;
-      box-shadow: none;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: -2px;
     }
   }
 
-  :global(.recharts-wrapper) {
-    -webkit-tap-highlight-color: transparent;
-    border-radius: var(--border-radius-small, 4px);
-
-    &:focus-visible {
-      outline: 2px solid var(--accent-primary, #3b82f6);
-      outline-offset: 2px;
-    }
+  :global(.recharts-wrapper),
+  :global(.recharts-surface) {
+    border-radius: var(--border-radius-small);
   }
 }
 

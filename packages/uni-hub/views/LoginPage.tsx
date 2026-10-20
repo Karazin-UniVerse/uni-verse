@@ -246,7 +246,7 @@ const LoginPage: React.FC = () => {
               <p>{formatMessage('login.subtitle')}</p>
             </div>
 
-            {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
+            {Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) && (
               <>
                 <div className={styles.googleSection}>
                   <GoogleLoginButton
