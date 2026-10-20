@@ -11,9 +11,15 @@ interface LifecycleChange {
   state: OpportunityLifecycle;
 }
 
+interface AcceptsApplicationsChange {
+  id: string;
+  acceptsApplications: boolean;
+}
+
 interface UseOpportunityActionsResult {
   handleSendToReview: (id: string) => Promise<void>;
   handleLifecycleChange: (id: string, state: OpportunityLifecycle) => Promise<void>;
+  handleToggleAcceptsApplications: (id: string, acceptsApplications: boolean) => Promise<void>;
 }
 
 export function useOpportunityActions(): UseOpportunityActionsResult {
@@ -29,6 +35,12 @@ export function useOpportunityActions(): UseOpportunityActionsResult {
 
   const lifecycleMutation = useMutation({
     mutationFn: ({ id, state }: LifecycleChange) => opportunitiesApi.changeLifecycle(id, state),
+    onSuccess: () => invalidateOpportunities(queryClient),
+  });
+
+  const acceptsApplicationsMutation = useMutation({
+    mutationFn: ({ id, acceptsApplications }: AcceptsApplicationsChange) =>
+      opportunitiesApi.updateOpportunity(id, { acceptsApplications }),
     onSuccess: () => invalidateOpportunities(queryClient),
   });
 
@@ -50,8 +62,25 @@ export function useOpportunityActions(): UseOpportunityActionsResult {
     }
   };
 
+  const handleToggleAcceptsApplications = async (
+    id: string,
+    acceptsApplications: boolean,
+  ): Promise<void> => {
+    try {
+      await acceptsApplicationsMutation.mutateAsync({ id, acceptsApplications });
+      toast.success(
+        acceptsApplications
+          ? formatMessage('opportunities.toast.applicationsOpened')
+          : formatMessage('opportunities.toast.applicationsClosed'),
+      );
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, formatMessage('opportunities.toast.genericError')));
+    }
+  };
+
   return {
     handleSendToReview,
     handleLifecycleChange,
+    handleToggleAcceptsApplications,
   };
 }

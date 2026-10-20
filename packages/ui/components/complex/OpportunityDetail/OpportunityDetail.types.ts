@@ -35,6 +35,10 @@ export type OpportunityDetailProps = {
   lifecycleState?: string;
   lifecycleOptions?: OpportunityLifecycleOption[];
   onLifecycleChange?: (state: string) => void;
+  acceptsApplications?: boolean;
+  onToggleAcceptsApplications?: (accepts: boolean) => void;
+  acceptsApplicationsLabel?: string;
+  applicationsClosedText?: string;
   // Footer
   canApply?: boolean;
   applyText?: string;

@@ -19,6 +19,7 @@ const INITIAL_FORM_DATA: CreateOpportunityFormData = {
   ownerContactInfo: '',
   paymentType: OPPORTUNITY_PAYMENT_TYPE.UNPAID,
   paymentDetails: '',
+  acceptsApplications: true,
 };
 
 interface OpportunityUpdate {
@@ -78,6 +79,7 @@ export function useCreateOpportunity({
       ownerContactInfo: opportunity.ownerContactInfo || '',
       paymentType: opportunity.paymentType,
       paymentDetails: opportunity.paymentDetails || '',
+      acceptsApplications: opportunity.acceptsApplications !== false,
     });
     setIsOpen(true);
   };
@@ -104,6 +106,7 @@ export function useCreateOpportunity({
               (formData.paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID &&
                 formData.paymentDetails.trim()) ||
               null,
+            acceptsApplications: formData.acceptsApplications,
           },
         });
 
@@ -116,6 +119,7 @@ export function useCreateOpportunity({
           ownerContactInfo: formData.ownerContactInfo.trim(),
           paymentType: formData.paymentType,
           paymentDetails: formData.paymentDetails.trim() || undefined,
+          acceptsApplications: formData.acceptsApplications ?? true,
         });
 
         toast.success(formatMessage('opportunities.toast.createdDraft'));

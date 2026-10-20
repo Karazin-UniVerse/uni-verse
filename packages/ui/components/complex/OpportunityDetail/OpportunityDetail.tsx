@@ -4,6 +4,7 @@ import { BackButton } from '../BackButton';
 import { Button } from '../../una/Button';
 import { Tag } from '../../una/Tag';
 import { Select } from '../../una/Select';
+import { CheckBox } from '../../una/inputs/CheckBox';
 import type { OpportunityDetailProps } from './OpportunityDetail.types';
 import styles from './OpportunityDetail.module.scss';
 
@@ -31,9 +32,13 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   phaseLabel,
   lifecycleState,
   onLifecycleChange,
+  onToggleAcceptsApplications,
+  acceptsApplicationsLabel,
+  applicationsClosedText,
   applyText,
   onOpenApply,
   className,
+  acceptsApplications = true,
   paymentTone = 'neutral',
   isOwner = false,
   canEdit = false,
@@ -130,14 +135,33 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
                 </div>
               )}
             </div>
+
+            {onToggleAcceptsApplications && acceptsApplicationsLabel && (
+              <div className={styles.acceptsApplicationsRow}>
+                <label className={styles.checkboxLabel}>
+                  <CheckBox
+                    variant="primary"
+                    checked={acceptsApplications}
+                    onChange={(e) => onToggleAcceptsApplications(e.target.checked)}
+                  />
+                  <span>{acceptsApplicationsLabel}</span>
+                </label>
+              </div>
+            )}
           </div>
         )}
 
-        {canApply && onOpenApply && (
+        {!isOwner && (
           <div className={styles.footer}>
-            <Button variant="primary" onClick={onOpenApply}>
-              {applyText}
-            </Button>
+            {canApply && onOpenApply ? (
+              <Button variant="primary" onClick={onOpenApply}>
+                {applyText}
+              </Button>
+            ) : acceptsApplications === false && applicationsClosedText ? (
+              <Button variant="secondary" disabled>
+                {applicationsClosedText}
+              </Button>
+            ) : null}
           </div>
         )}
       </div>

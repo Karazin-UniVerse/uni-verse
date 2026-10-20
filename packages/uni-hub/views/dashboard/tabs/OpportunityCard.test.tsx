@@ -60,4 +60,15 @@ describe('OpportunityCard component', () => {
     expect(screen.getByRole('button', { name: /відгуки/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /управління/i })).toBeInTheDocument();
   });
+
+  it('should render applications closed badge when acceptsApplications is false', () => {
+    const closedOpp: Opportunity = {
+      ...mockOpportunity,
+      acceptsApplications: false,
+    };
+
+    render(<OpportunityCard opportunity={closedOpp} />);
+
+    expect(screen.getByText('Набір закрито')).toBeInTheDocument();
+  });
 });
