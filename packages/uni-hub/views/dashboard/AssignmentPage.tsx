@@ -5,14 +5,14 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { Empty } from '@una';
 import { AssignmentDetail } from '@uni-hub/components/assignments';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { useDashboard } from './DashboardContext';
+import { useDashboardData } from './hooks/useDashboardData';
 import { parseRouteId } from './utils';
 
 export const AssignmentPage: React.FC = () => {
   const params = useParams<{ assignmentId: string }>();
   const courseParam = useSearchParams().get('course') ?? undefined;
   const { formatMessage } = useLanguage();
-  const { data } = useDashboard();
+  const { data } = useDashboardData();
   const assignmentId = parseRouteId(params.assignmentId);
 
   if (assignmentId === null) {

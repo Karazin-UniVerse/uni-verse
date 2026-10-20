@@ -335,11 +335,20 @@ export default {
           let firstOptional = null;
 
           for (const member of node.body) {
-            if (member.type !== 'TSPropertySignature' && member.type !== 'TSMethodSignature') {
+            const isSignature =
+              member.type === 'TSIndexSignature' ||
+              member.type === 'TSCallSignatureDeclaration' ||
+              member.type === 'TSConstructSignatureDeclaration';
+
+            if (
+              !isSignature &&
+              member.type !== 'TSPropertySignature' &&
+              member.type !== 'TSMethodSignature'
+            ) {
               continue;
             }
 
-            if (member.optional) {
+            if (!isSignature && member.optional) {
               firstOptional ??= member;
             } else if (firstOptional) {
               context.report({
@@ -611,13 +620,36 @@ export default {
         },
       },
       create(context) {
+        const coreContracts = new Set();
+
         return {
+          ImportDeclaration(node) {
+            const source = node.source?.value || '';
+
+            if (source === '@universe/core/types' || source.startsWith('@universe/core/types/')) {
+              for (const specifier of node.specifiers || []) {
+                if (specifier.local?.name) {
+                  coreContracts.add(specifier.local.name);
+                }
+              }
+            }
+          },
           ClassDeclaration(node) {
-            if (node.implements?.length) return;
+            const implementsCoreContract = node.implements?.some((clause) => {
+              const name = clause.expression?.name;
+
+              return name && coreContracts.has(name);
+            });
+
+            if (implementsCoreContract) return;
+
+            const className = node.id?.name ?? 'anonymous';
+            const baseName = node.id?.name?.replace(/Dto$/, '') ?? 'Contract';
+            const exampleName = baseName.endsWith('Response') ? baseName : `${baseName}Request`;
 
             context.report({
               node: node.id ?? node,
-              message: `DTO '${node.id?.name ?? 'anonymous'}' must implement its contract from '@universe/core/types' (for example 'implements ${node.id?.name?.replace(/Dto$/, '')}Request').`,
+              message: `DTO '${className}' must implement its contract from '@universe/core/types' (for example 'implements ${exampleName}').`,
             });
           },
         };

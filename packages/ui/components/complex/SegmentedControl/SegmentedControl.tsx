@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useRef } from 'react';
 import clsx from 'clsx';
 import type { SegmentedControlProps } from './SegmentedControl.types';
@@ -10,7 +12,7 @@ export function SegmentedControl<TId extends string>({
   onSelect,
   ariaLabel,
   className,
-}: SegmentedControlProps<TId>): React.ReactElement {
+}: Readonly<SegmentedControlProps<TId>>): React.ReactElement {
   const listRef = useRef<HTMLDivElement>(null);
 
   const handleKeyDown = (
@@ -54,7 +56,7 @@ export function SegmentedControl<TId extends string>({
             type="button"
             role="tab"
             aria-selected={isActive}
-            aria-controls={`${panelIdPrefix}-${item.id}`}
+            aria-controls={isActive ? `${panelIdPrefix}-${item.id}` : undefined}
             tabIndex={isActive ? 0 : -1}
             className={clsx(styles.segmentItem, isActive && styles.activeSegment)}
             onClick={() => onSelect(item.id)}

@@ -13,6 +13,7 @@ import { endSession } from '@uni-hub/services/api.session';
 import { useGoogleLogin, useLinkMoodle, useLogin } from '@uni-hub/hooks/useAuthMutations';
 import { GoogleLoginButton, AuthField, parseGoogleClaims } from '@uni-hub/components/auth';
 import { useFeatures } from '@uni-hub/features';
+import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
 import { motion } from 'framer-motion';
 import styles from './LoginPage.module.scss';
 
@@ -50,7 +51,7 @@ const LoginPage: React.FC = () => {
 
       if (res.data?.isLinked || !isMoodleIntegrationEnabled) {
         safeStorage.setItem('isLoggedIn', 'true');
-        safeStorage.setItem('isMoodleLinked', res.data?.isLinked ? 'true' : 'false');
+        useMoodleStore.getState().setLinked(Boolean(res.data?.isLinked));
 
         if (displayName) {
           safeStorage.setItem('username', displayName);
@@ -59,7 +60,7 @@ const LoginPage: React.FC = () => {
         toast.success(formatMessage('login.success'));
         router.push('/');
       } else {
-        safeStorage.setItem('isMoodleLinked', 'false');
+        useMoodleStore.getState().setLinked(false);
         setIsLinkingMoodle(true);
       }
     } catch (err: unknown) {
@@ -92,7 +93,7 @@ const LoginPage: React.FC = () => {
 
       toast.success(formatMessage('login.success'));
       safeStorage.setItem('isLoggedIn', 'true');
-      safeStorage.setItem('isMoodleLinked', 'true');
+      useMoodleStore.getState().setLinked(true);
       safeStorage.setItem('username', username.trim());
 
       router.push('/');
@@ -125,7 +126,7 @@ const LoginPage: React.FC = () => {
       toast.success(formatMessage('login.linkMoodleSuccess'));
       toast.success(formatMessage('login.success'));
       safeStorage.setItem('isLoggedIn', 'true');
-      safeStorage.setItem('isMoodleLinked', 'true');
+      useMoodleStore.getState().setLinked(true);
       safeStorage.setItem('username', linkUsername.trim());
       router.push('/');
     } catch (err: unknown) {
@@ -138,7 +139,7 @@ const LoginPage: React.FC = () => {
 
   const handleSkipLinkMoodle = () => {
     safeStorage.setItem('isLoggedIn', 'true');
-    safeStorage.setItem('isMoodleLinked', 'false');
+    useMoodleStore.getState().setLinked(false);
 
     if (googleUserName) {
       safeStorage.setItem('username', googleUserName);

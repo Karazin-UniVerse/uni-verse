@@ -28,6 +28,7 @@ export interface NavItemConfig {
   key: NavKey;
   icon: React.ReactNode;
   labelKey: TranslationKey;
+  shortLabelKey?: TranslationKey;
   featureFlag?: FeatureFlagKey;
 }
 
@@ -36,23 +37,27 @@ export const NAV_ITEMS: NavItemConfig[] = [
     key: NAV_KEY.Overview,
     icon: <LayoutDashboard size={18} />,
     labelKey: 'nav.overview',
+    shortLabelKey: 'nav.overview',
   },
   {
     key: NAV_KEY.Study,
     icon: <BookOpen size={18} />,
     labelKey: 'nav.study',
+    shortLabelKey: 'nav.study',
     featureFlag: 'isMoodleIntegrationEnabled',
   },
   {
     key: NAV_KEY.Schedule,
     icon: <CalendarDays size={18} />,
     labelKey: 'nav.schedule',
+    shortLabelKey: 'nav.schedule',
     featureFlag: 'isEDeanEnabled',
   },
   {
     key: NAV_KEY.Opportunities,
     icon: <Sparkles size={18} />,
     labelKey: 'nav.opportunities',
+    shortLabelKey: 'nav.opportunities',
     featureFlag: 'isOpportunitiesPlatformEnabled',
   },
 ];
@@ -70,6 +75,7 @@ export const getVisibleNavItems = (
         key: NAV_KEY.ConnectMoodle,
         icon: <Link2 size={18} />,
         labelKey: 'nav.connectMoodle',
+        shortLabelKey: 'nav.connectMoodle',
       },
     ];
   }

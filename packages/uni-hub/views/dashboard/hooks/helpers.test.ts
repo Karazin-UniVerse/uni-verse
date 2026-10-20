@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   assembleDashboardData,
+  mapPlatformNotification,
+  applyPlatformNotifications,
   deriveDashboardState,
   parseDateFilterSeconds,
   resolveGradesResponse,
@@ -14,8 +16,10 @@ import {
   isMoodleUnlinked,
   syncStudentProfile,
   getInitialUserProfile,
+  type MoodleApiResponseTuple,
 } from './helpers';
 import { fallbackStudentProfile } from '../constants';
+import type { DashboardData } from '../types';
 
 vi.mock('@uni-hub/utils/browser', () => ({
   isBrowser: true,
@@ -274,6 +278,237 @@ describe('buildFallbackData', () => {
     expect(result.assignments.length).toBe(1);
     expect(result.assignments[0].id).toBe(20);
   });
+
+  it('applies fresh platformNotifications onto cached Moodle fallback data', () => {
+    localStorage.setItem('isMoodleLinked', 'true');
+
+    const cachedData: Partial<DashboardData> = {
+      notifications: [
+        {
+          id: 7,
+          subject: 'Cached Moodle Alert',
+          message: 'Cached Moodle body',
+          timecreated: 1000,
+          read: false,
+        },
+      ],
+      unreadCount: 1,
+    };
+
+    const previousData: DashboardData = {
+      courses: [],
+      grades: [],
+      assignments: [],
+      events: [],
+      notifications: [],
+      unreadCount: 0,
+      statistics: null,
+    };
+
+    const result = buildFallbackData({
+      cachedData,
+      previousData,
+      hideCompleted: false,
+      dateFrom: '',
+      dateTo: '',
+      platformNotifications: [
+        {
+          id: 'plat-fresh',
+          userId: 'user-1',
+          title: 'Platform Alert',
+          message: 'Platform body',
+          isRead: false,
+          createdAt: new Date(2000 * 1000).toISOString(),
+        },
+      ],
+    });
+
+    expect(result.notifications).toHaveLength(2);
+    expect(result.notifications[0].id).toBe('plat-fresh');
+    expect(result.notifications[1].id).toBe(7);
+    expect(result.unreadCount).toBe(2);
+  });
+});
+
+describe('mapPlatformNotification', () => {
+  it('maps platform notification fields and converts ISO timestamp to seconds', () => {
+    const raw = {
+      id: 'plat-1',
+      userId: 'user-1',
+      title: 'notifications.opportunityApplicationStatus.title',
+      message: JSON.stringify({
+        opportunityTitle: 'Frontend Intern',
+        status: 'ACCEPTED',
+        comment: 'Welcome to the team!',
+      }),
+      type: 'OPPORTUNITY_APPLICATION_STATUS',
+      isRead: false,
+      createdAt: '2025-01-01T12:00:00Z',
+    };
+
+    const mapped = mapPlatformNotification(raw);
+
+    expect(mapped.id).toBe('plat-1');
+    expect(mapped.subject).toBe('notifications.opportunityApplicationStatus.title');
+    expect(mapped.message).toBe(raw.message);
+    expect(mapped.read).toBe(false);
+    expect(mapped.timecreated).toBe(Math.floor(new Date('2025-01-01T12:00:00Z').getTime() / 1000));
+  });
+});
+
+describe('assembleDashboardData', () => {
+  it('combines and sorts moodle and platform notifications by timecreated desc and calculates total unread count', () => {
+    const moodleResponses: MoodleApiResponseTuple = [
+      { data: [] },
+      { data: { grades: [] } },
+      { data: [] },
+      { data: [] },
+      {
+        data: {
+          notifications: [
+            {
+              id: 1,
+              subject: 'Moodle Notif',
+              message: 'Old moodle message',
+              timecreated: 1000,
+              read: true,
+            },
+          ],
+          unreadCount: 0,
+        },
+      },
+      { data: null },
+    ];
+
+    const platformNotifications = [
+      {
+        id: 'plat-1',
+        userId: 'user-1',
+        title: 'Platform Notif',
+        message: 'New platform message',
+        type: 'CUSTOM',
+        isRead: false,
+        createdAt: new Date(2000 * 1000).toISOString(),
+      },
+    ];
+
+    const result = assembleDashboardData(moodleResponses, platformNotifications);
+
+    expect(result.notifications.length).toBe(2);
+    expect(result.notifications[0].id).toBe('plat-1');
+    expect(result.notifications[1].id).toBe(1);
+    expect(result.unreadCount).toBe(1);
+  });
+});
+
+describe('applyPlatformNotifications', () => {
+  it('updates notifications and unreadCount on existing dashboard state', () => {
+    const previousData: DashboardData = {
+      courses: [],
+      grades: [],
+      assignments: [],
+      events: [],
+      notifications: [],
+      unreadCount: 0,
+      statistics: null,
+    };
+
+    const result = applyPlatformNotifications(previousData, [
+      {
+        id: 'plat-1',
+        userId: 'user-1',
+        title: 'Title 1',
+        message: 'Message 1',
+        isRead: false,
+        createdAt: '2025-01-01T12:00:00Z',
+      },
+      {
+        id: 'plat-2',
+        userId: 'user-1',
+        title: 'Title 2',
+        message: 'Message 2',
+        isRead: true,
+        createdAt: '2025-01-02T12:00:00Z',
+      },
+    ]);
+
+    expect(result.notifications).toHaveLength(2);
+    expect(result.notifications[0].id).toBe('plat-2');
+    expect(result.unreadCount).toBe(1);
+  });
+
+  it('preserves existing Moodle notifications and combines unread count', () => {
+    const previousData: DashboardData = {
+      courses: [],
+      grades: [],
+      assignments: [],
+      events: [],
+      notifications: [
+        {
+          id: 101,
+          subject: 'Moodle Notification',
+          message: 'Moodle content',
+          timecreated: 1000,
+          read: false,
+        },
+      ],
+      unreadCount: 1,
+      statistics: null,
+    };
+
+    const result = applyPlatformNotifications(previousData, [
+      {
+        id: 'plat-1',
+        userId: 'user-1',
+        title: 'Platform Title',
+        message: 'Platform Message',
+        isRead: false,
+        createdAt: new Date(2000 * 1000).toISOString(),
+      },
+    ]);
+
+    expect(result.notifications).toHaveLength(2);
+    expect(result.notifications[0].id).toBe('plat-1');
+    expect(result.notifications[1].id).toBe(101);
+    expect(result.unreadCount).toBe(2);
+  });
+
+  it('clears retained Moodle notifications when isMoodleUnlinked is true', () => {
+    localStorage.setItem('isMoodleLinked', 'false');
+
+    const previousData: DashboardData = {
+      courses: [],
+      grades: [],
+      assignments: [],
+      events: [],
+      notifications: [
+        {
+          id: 101,
+          subject: 'Moodle Notification',
+          message: 'Moodle content',
+          timecreated: 1000,
+          read: false,
+        },
+      ],
+      unreadCount: 1,
+      statistics: null,
+    };
+
+    const result = applyPlatformNotifications(previousData, [
+      {
+        id: 'plat-1',
+        userId: 'user-1',
+        title: 'Platform Title',
+        message: 'Platform Message',
+        isRead: false,
+        createdAt: new Date(2000 * 1000).toISOString(),
+      },
+    ]);
+
+    expect(result.notifications).toHaveLength(1);
+    expect(result.notifications[0].id).toBe('plat-1');
+    expect(result.unreadCount).toBe(1);
+  });
 });
 
 describe('deriveDashboardState', () => {
@@ -363,5 +598,72 @@ describe('deriveDashboardState', () => {
         dataUpdatedAt: 0,
       }).isOfflineData,
     ).toBe(false);
+  });
+});
+
+describe('mapPlatformNotification', () => {
+  it('maps PlatformNotification to Notification with link preserved', () => {
+    const platform = {
+      id: 'plat-1',
+      userId: 'user-1',
+      type: 'OPPORTUNITY_NEW_APPLICATION',
+      title: 'New application',
+      message: 'Someone applied',
+      link: '/opportunities/123',
+      isRead: false,
+      createdAt: '2026-04-18T12:00:00.000Z',
+    };
+
+    const mapped = mapPlatformNotification(platform);
+
+    expect(mapped).toEqual({
+      id: 'plat-1',
+      subject: 'New application',
+      timecreated: Math.floor(new Date('2026-04-18T12:00:00.000Z').getTime() / 1000),
+      read: false,
+      message: 'Someone applied',
+      link: '/opportunities/123',
+    });
+  });
+});
+
+describe('applyPlatformNotifications', () => {
+  it('merges platform notifications with existing moodle notifications and sorts desc', () => {
+    const baseDashboard = {
+      courses: [],
+      grades: [],
+      assignments: [],
+      events: [],
+      notifications: [
+        {
+          id: 1,
+          subject: 'Moodle note',
+          timecreated: 1000,
+          read: true,
+        },
+      ],
+      unreadCount: 0,
+      statistics: null,
+    };
+
+    const platformItems = [
+      {
+        id: 'plat-1',
+        userId: 'u1',
+        type: 'OPP',
+        title: 'Platform note',
+        message: 'Hello',
+        link: '/opportunities/1',
+        isRead: false,
+        createdAt: '1970-01-01T00:33:20.000Z', // 2000 sec
+      },
+    ];
+
+    const result = applyPlatformNotifications(baseDashboard, platformItems);
+
+    expect(result.notifications).toHaveLength(2);
+    expect(result.notifications[0].id).toBe('plat-1');
+    expect(result.notifications[1].id).toBe(1);
+    expect(result.unreadCount).toBe(1);
   });
 });

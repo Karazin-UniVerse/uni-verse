@@ -66,16 +66,19 @@ export interface MoodleEvent {
 }
 
 export interface Notification {
-  id: number;
+  id: number | string;
   subject: string;
   timecreated: number;
   read: boolean;
+  message?: string;
   fullmessage?: string;
+  link?: string | null;
 }
 
 export interface NotificationsResponse {
-  notifications: Notification[];
-  unreadcount: number;
+  notifications?: Notification[];
+  unreadcount?: number;
+  unreadCount?: number;
 }
 
 export interface CourseStatistics {

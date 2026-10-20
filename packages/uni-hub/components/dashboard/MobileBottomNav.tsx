@@ -28,7 +28,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     <nav className={styles.container} aria-label="Мобільна навігація">
       <ul className={styles.nav}>
         {visibleNavItems.map((item) => {
-          const label = formatMessage(item.labelKey);
+          const label = formatMessage(item.shortLabelKey ?? item.labelKey);
 
           return (
             <li key={item.key} className={styles.navItemWrapper}>
