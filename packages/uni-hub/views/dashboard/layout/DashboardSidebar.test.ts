@@ -8,6 +8,7 @@ import { NAV_KEY } from '../constants';
 import { NAV_KEY_ROUTE } from '../routes';
 import type { FeatureFlags } from '@core/constants/features';
 import { NAV_ITEMS, getVisibleNavItems, DashboardSidebar } from './DashboardSidebar';
+import { noop } from '@core/utils/fn';
 
 const allEnabledFlags: FeatureFlags = {
   isMoodleIntegrationEnabled: true,
@@ -104,13 +105,13 @@ describe('DashboardSidebar navigation & feature gating', () => {
               null,
               React.createElement(DashboardSidebar, {
                 collapsed: false,
-                onToggleCollapsed: () => {},
+                onToggleCollapsed: noop,
                 mobileMenuOpen: false,
-                onCloseMobileMenu: () => {},
+                onCloseMobileMenu: noop,
                 activeKey: 'overview',
-                onSelectKey: () => {},
+                onSelectKey: noop,
                 soundEnabled: false,
-                onLogout: () => {},
+                onLogout: noop,
               }),
             ),
           ),
