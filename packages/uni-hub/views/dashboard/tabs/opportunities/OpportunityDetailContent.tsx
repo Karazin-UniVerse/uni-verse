@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { Opportunity } from '@core/types/opportunities';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
@@ -28,11 +28,17 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
   const create = useCreateOpportunity({});
   const apply = useApplyToOpportunity({ currentUser, opportunity });
   const applicants = useApplicants();
+  const hasHandledViewParam = useRef(false);
 
   const { open: openApplicants } = applicants;
 
   useEffect(() => {
-    if (searchParams.get('view') === 'applicants' && currentUser.userId === opportunity.ownerId) {
+    if (
+      !hasHandledViewParam.current &&
+      searchParams.get('view') === 'applicants' &&
+      currentUser.userId === opportunity.ownerId
+    ) {
+      hasHandledViewParam.current = true;
       openApplicants(opportunity);
     }
   }, [searchParams, currentUser.userId, opportunity, openApplicants]);

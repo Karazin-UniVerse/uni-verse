@@ -66,7 +66,7 @@ export class OpportunitiesService {
         select: { id: true },
       });
 
-      await Promise.all(
+      await Promise.allSettled(
         moderators.map((moderator) =>
           this.notificationsService.createNotification({
             userId: moderator.id,
