@@ -64,27 +64,15 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
     return <article className={cardClassName}>{content}</article>;
   }
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>): void => {
-    if (event.target !== event.currentTarget) {
-      return;
-    }
-
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onOpenDetail?.(opportunity);
-    }
-  };
-
   return (
-    <article
-      className={cardClassName}
-      role="button"
-      tabIndex={0}
-      aria-label={formatMessage('opportunities.card.detailsAria', { title: opportunity.title })}
-      onClick={() => onOpenDetail?.(opportunity)}
-      onKeyDown={handleKeyDown}
-    >
+    <article className={cardClassName}>
       {content}
+      <button
+        type="button"
+        className={styles.cardLink}
+        aria-label={formatMessage('opportunities.card.detailsAria', { title: opportunity.title })}
+        onClick={() => onOpenDetail?.(opportunity)}
+      />
     </article>
   );
 };

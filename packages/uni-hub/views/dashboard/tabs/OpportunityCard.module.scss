@@ -28,6 +28,28 @@
     padding: 20px;
   }
 
+  .cardLink {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: -2px;
+    }
+  }
+
+  @include narrower-than('md') {
+    padding: 20px;
+  }
+
   @include narrower-than('sm') {
     padding: 18px 16px;
   }
@@ -260,9 +282,4 @@
 .cardDate {
   font-size: var(--font-xs);
   color: var(--text-secondary);
-}
-
-.clickableCard:focus-visible {
-  outline: 2px solid var(--accent-primary);
-  outline-offset: 2px;
 }
