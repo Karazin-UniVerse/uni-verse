@@ -385,7 +385,7 @@ export class OpportunitiesService {
 
     let app;
 
-    if (existing && existing.status === ApplicationStatus.WITHDRAWN) {
+    if (existing?.status === ApplicationStatus.WITHDRAWN) {
       app = await this.prisma.opportunityApplication.update({
         where: { id: existing.id },
         data: {
