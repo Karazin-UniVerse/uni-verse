@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   BadRequestException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -48,10 +49,43 @@ export type UpdateApplicationStatusParams = {
 
 @Injectable()
 export class OpportunitiesService {
+  private readonly logger = new Logger(OpportunitiesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  private async notifyModerators(
+    opportunityId: string,
+    opportunityTitle: string,
+  ): Promise<void> {
+    try {
+      const moderators = await this.prisma.user.findMany({
+        where: { roles: { has: Role.OPPORTUNITIES_MODERATOR } },
+        select: { id: true },
+      });
+
+      await Promise.all(
+        moderators.map((moderator) =>
+          this.notificationsService.createNotification({
+            userId: moderator.id,
+            type: 'OPPORTUNITY_READY_FOR_REVIEW',
+            title: 'notifications.opportunityReadyForReview.title',
+            message: JSON.stringify({
+              opportunityTitle,
+            }),
+            link: `${OPPORTUNITIES_ROUTE}/${opportunityId}`,
+          }),
+        ),
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to deliver moderation notifications for opportunity ${opportunityId}`,
+        error instanceof Error ? error.stack : error,
+      );
+    }
+  }
 
   /**
    * Create a new opportunity as a draft
@@ -180,12 +214,22 @@ export class OpportunitiesService {
       hasContentChanges
     ) {
       data.status = OpportunityStatus.READY_FOR_REVIEW;
+      data.moderationComment = null;
     }
 
-    return this.prisma.opportunity.update({
+    const updated = await this.prisma.opportunity.update({
       where: { id },
       data,
     });
+
+    if (
+      opportunity.status === OpportunityStatus.PUBLISHED &&
+      hasContentChanges
+    ) {
+      await this.notifyModerators(id, updated.title);
+    }
+
+    return updated;
   }
 
   /**
@@ -224,24 +268,7 @@ export class OpportunitiesService {
       },
     });
 
-    const moderators = await this.prisma.user.findMany({
-      where: { roles: { has: Role.OPPORTUNITIES_MODERATOR } },
-      select: { id: true },
-    });
-
-    await Promise.all(
-      moderators.map((moderator) =>
-        this.notificationsService.createNotification({
-          userId: moderator.id,
-          type: 'OPPORTUNITY_READY_FOR_REVIEW',
-          title: 'notifications.opportunityReadyForReview.title',
-          message: JSON.stringify({
-            opportunityTitle: updatedOpportunity.title,
-          }),
-          link: `${OPPORTUNITIES_ROUTE}/${id}`,
-        }),
-      ),
-    );
+    await this.notifyModerators(id, updatedOpportunity.title);
 
     return updatedOpportunity;
   }
@@ -389,7 +416,11 @@ export class OpportunitiesService {
       app = await this.prisma.opportunityApplication.update({
         where: { id: existing.id },
         data: {
-          ...dto,
+          applicantName: dto.applicantName,
+          contactInfo: dto.contactInfo,
+          briefDescription: dto.briefDescription ?? null,
+          motivation: dto.motivation ?? null,
+          answers: dto.answers ?? null,
           status: ApplicationStatus.SUBMITTED,
           ownerComment: null,
         },

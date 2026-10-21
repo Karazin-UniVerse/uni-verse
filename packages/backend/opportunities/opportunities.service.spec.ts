@@ -143,18 +143,39 @@ describe('OpportunitiesService', () => {
   });
 
   describe('update', () => {
-    it('resets status to READY_FOR_REVIEW if it was published', async () => {
+    it('resets status to READY_FOR_REVIEW, clears moderationComment, and notifies moderators if it was published', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
+        title: 'old',
         status: 'PUBLISHED',
         ownerId: 'user1',
       } as any);
-      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({} as any);
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        id: '1',
+        title: 'new',
+        status: 'READY_FOR_REVIEW',
+      } as any);
+      jest
+        .spyOn(prisma.user, 'findMany')
+        .mockResolvedValue([{ id: 'mod-1' }] as any);
+
       await service.update('user1', '1', { title: 'new' } as any);
+
       expect(prisma.opportunity.update).toHaveBeenCalledWith({
         where: { id: '1' },
-        data: { title: 'new', status: 'READY_FOR_REVIEW' },
+        data: {
+          title: 'new',
+          status: 'READY_FOR_REVIEW',
+          moderationComment: null,
+        },
       });
+      expect(notificationsService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'mod-1',
+          type: 'OPPORTUNITY_READY_FOR_REVIEW',
+          link: '/opportunities/1',
+        }),
+      );
     });
 
     it('does not reset status if only acceptsApplications changed on published opportunity', async () => {
@@ -943,8 +964,8 @@ describe('OpportunitiesService', () => {
           applicantName: 'Іван Оновлений',
           contactInfo: '+380501234567',
           motivation: 'Хочу спробувати ще раз',
-          briefDescription: undefined,
-          answers: undefined,
+          briefDescription: null,
+          answers: null,
           status: 'SUBMITTED',
           ownerComment: null,
         },
