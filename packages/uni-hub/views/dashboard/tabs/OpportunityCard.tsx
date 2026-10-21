@@ -34,34 +34,8 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
     !isOwner && styles.clickableCard,
   );
 
-  const handleCardClick = isOwner ? undefined : () => onOpenDetail?.(opportunity);
-
-  const handleCardKeyDown = isOwner
-    ? undefined
-    : (event: React.KeyboardEvent<HTMLElement>): void => {
-        if (event.target !== event.currentTarget) {
-          return;
-        }
-
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onOpenDetail?.(opportunity);
-        }
-      };
-
-  return (
-    <article
-      className={cardClassName}
-      onClick={handleCardClick}
-      onKeyDown={handleCardKeyDown}
-      role={isOwner ? undefined : 'button'}
-      tabIndex={isOwner ? undefined : 0}
-      aria-label={
-        isOwner
-          ? undefined
-          : formatMessage('opportunities.card.detailsAria', { title: opportunity.title })
-      }
-    >
+  const content = (
+    <>
       <OpportunityCardTop
         opportunity={opportunity}
         isPaid={isPaid}
@@ -83,6 +57,34 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
           <OpportunityCatalogMetaRow opportunity={opportunity} formatMessage={formatMessage} />
         )}
       </div>
+    </>
+  );
+
+  if (isOwner) {
+    return <article className={cardClassName}>{content}</article>;
+  }
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>): void => {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onOpenDetail?.(opportunity);
+    }
+  };
+
+  return (
+    <article
+      className={cardClassName}
+      role="button"
+      tabIndex={0}
+      aria-label={formatMessage('opportunities.card.detailsAria', { title: opportunity.title })}
+      onClick={() => onOpenDetail?.(opportunity)}
+      onKeyDown={handleKeyDown}
+    >
+      {content}
     </article>
   );
 };
