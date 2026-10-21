@@ -42,6 +42,8 @@ jobs:
       - name: Build Storybook
         run: pnpm --filter @universe/ui build-storybook
       - run: pnpm build
+      - name: Run Lighthouse CI (Web Vitals)
+        run: pnpm lhci
       - name: SonarCloud Scan
         if: github.actor != 'dependabot[bot]' && env.HAS_SONAR_TOKEN == 'true'
         uses: SonarSource/sonarcloud-github-action@v5
