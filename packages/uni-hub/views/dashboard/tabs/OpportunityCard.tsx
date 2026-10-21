@@ -36,8 +36,31 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
 
   const handleCardClick = isOwner ? undefined : () => onOpenDetail?.(opportunity);
 
+  const handleCardKeyDown = isOwner
+    ? undefined
+    : (event: React.KeyboardEvent<HTMLElement>): void => {
+        if (event.target !== event.currentTarget) {
+          return;
+        }
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onOpenDetail?.(opportunity);
+        }
+      };
+
   return (
-    <article className={cardClassName} onClick={handleCardClick}>
+    <article
+      className={cardClassName}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+      role={isOwner ? undefined : 'button'}
+      tabIndex={isOwner ? undefined : 0}
+      aria-label={
+        isOwner
+          ? undefined
+          : formatMessage('opportunities.card.detailsAria', { title: opportunity.title })
+      }
+    >
       <OpportunityCardTop
         opportunity={opportunity}
         isPaid={isPaid}
@@ -56,11 +79,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
             onOpenDetail={onOpenDetail}
           />
         ) : (
-          <OpportunityCatalogMetaRow
-            opportunity={opportunity}
-            formatMessage={formatMessage}
-            onOpenDetail={onOpenDetail}
-          />
+          <OpportunityCatalogMetaRow opportunity={opportunity} formatMessage={formatMessage} />
         )}
       </div>
     </article>

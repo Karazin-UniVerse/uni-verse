@@ -64,18 +64,6 @@
     .cardTitle {
       color: var(--accent-primary);
     }
-
-    .cardArrow {
-      transform: translate(3px, -3px);
-      color: var(--accent-primary);
-    }
-
-    .cardDetailsBtn {
-      background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
-      border-color: color-mix(in srgb, var(--accent-primary) 35%, transparent);
-      color: var(--accent-primary);
-      transform: translateY(-1px);
-    }
   }
 
   &:active {
@@ -232,40 +220,6 @@
   color: var(--text-secondary);
 }
 
-.cardDetailsBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--card-border);
-  font-size: var(--font-xs);
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
-  border-color: color-mix(in srgb, var(--accent-primary) 35%, transparent);
-  color: var(--accent-primary);
-  transition:
-    background-color 280ms ease,
-    border-color 280ms ease,
-    color 280ms ease;
-  flex-shrink: 0;
-
-  &:focus-visible {
-    outline: 2px solid var(--accent-primary);
-    outline-offset: 2px;
-  }
-}
-
-.cardArrow {
-  color: var(--text-secondary);
-  flex-shrink: 0;
-  transition:
-    transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
-    color 280ms ease;
-}
-
 .cardActions {
   display: flex;
   align-items: center;
@@ -286,4 +240,9 @@
 .cardDate {
   font-size: var(--font-xs);
   color: var(--text-secondary);
+}
+
+.clickableCard:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }

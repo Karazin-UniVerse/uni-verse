@@ -459,7 +459,6 @@ export const en = {
   'opportunities.card.moderatorNote': 'Moderator note:',
   'opportunities.card.applications': 'Applications',
   'opportunities.card.management': 'Management',
-  'opportunities.card.details': 'Details',
   'opportunities.card.detailsAria': 'More details about {title}',
   'opportunities.catalog.searchPlaceholder': 'Search by title or keywords...',
   'opportunities.catalog.searchAria': 'Search opportunities',
