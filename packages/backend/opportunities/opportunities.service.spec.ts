@@ -39,6 +39,7 @@ describe('OpportunitiesService', () => {
             },
             user: {
               findUnique: jest.fn(),
+              findMany: jest.fn(),
             },
           },
         },
@@ -256,7 +257,10 @@ describe('OpportunitiesService', () => {
       await service.moderate('user1', 'opp1', { action: 'APPROVE' } as any);
       expect(prisma.opportunity.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ status: 'PUBLISHED' }),
+          data: expect.objectContaining({
+            status: 'PUBLISHED',
+            moderationComment: null,
+          }),
         }),
       );
       expect(notificationsService.createNotification).toHaveBeenCalledWith(
@@ -542,16 +546,21 @@ describe('OpportunitiesService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('updates status to READY_FOR_REVIEW when valid', async () => {
+    it('updates status to READY_FOR_REVIEW and resets moderationComment when valid', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
+        title: 'Title 1',
         status: 'DRAFT',
         ownerId: 'user-1',
       } as any);
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         id: '1',
+        title: 'Title 1',
         status: 'READY_FOR_REVIEW',
       } as any);
+      jest
+        .spyOn(prisma.user, 'findMany')
+        .mockResolvedValue([{ id: 'mod-1' }, { id: 'mod-2' }] as any);
 
       const result = await service.changeStatus(
         'user-1',
@@ -561,7 +570,19 @@ describe('OpportunitiesService', () => {
 
       expect(prisma.opportunity.update).toHaveBeenCalledWith({
         where: { id: '1' },
-        data: { status: 'READY_FOR_REVIEW' },
+        data: { status: 'READY_FOR_REVIEW', moderationComment: null },
+      });
+      expect(prisma.user.findMany).toHaveBeenCalledWith({
+        where: { roles: { has: Role.OPPORTUNITIES_MODERATOR } },
+        select: { id: true },
+      });
+      expect(notificationsService.createNotification).toHaveBeenCalledTimes(2);
+      expect(notificationsService.createNotification).toHaveBeenCalledWith({
+        userId: 'mod-1',
+        type: 'OPPORTUNITY_READY_FOR_REVIEW',
+        title: 'notifications.opportunityReadyForReview.title',
+        message: JSON.stringify({ opportunityTitle: 'Title 1' }),
+        link: '/opportunities/1',
       });
       expect(result.status).toBe('READY_FOR_REVIEW');
     });
@@ -886,6 +907,56 @@ describe('OpportunitiesService', () => {
           contactInfo: 'ivan@karazin.ua',
         }),
       ).rejects.toThrow(ConflictException);
+    });
+
+    it('updates existing WITHDRAWN application to SUBMITTED when user re-applies', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        lifecycleState: 'ACTIVE',
+        acceptsApplications: true,
+        title: 'Junior QA',
+        ownerId: 'owner-1',
+      } as any);
+      jest.spyOn(prisma.opportunityApplication, 'findFirst').mockResolvedValue({
+        id: 'app-withdrawn-1',
+        status: 'WITHDRAWN',
+        applicantId: 'user-1',
+        opportunityId: '1',
+      } as any);
+      jest.spyOn(prisma.opportunityApplication, 'update').mockResolvedValue({
+        id: 'app-withdrawn-1',
+        status: 'SUBMITTED',
+        opportunityId: '1',
+        applicantId: 'user-1',
+      } as any);
+
+      const result = await service.apply('user-1', '1', {
+        applicantName: 'Іван Оновлений',
+        contactInfo: '+380501234567',
+        motivation: 'Хочу спробувати ще раз',
+      });
+
+      expect(prisma.opportunityApplication.update).toHaveBeenCalledWith({
+        where: { id: 'app-withdrawn-1' },
+        data: {
+          applicantName: 'Іван Оновлений',
+          contactInfo: '+380501234567',
+          motivation: 'Хочу спробувати ще раз',
+          briefDescription: undefined,
+          answers: undefined,
+          status: 'SUBMITTED',
+          ownerComment: null,
+        },
+      });
+      expect(prisma.opportunityApplication.create).not.toHaveBeenCalled();
+      expect(result.id).toBe('app-withdrawn-1');
+      expect(notificationsService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'owner-1',
+          link: '/opportunities/1',
+        }),
+      );
     });
 
     it('creates application and sends notification to owner', async () => {

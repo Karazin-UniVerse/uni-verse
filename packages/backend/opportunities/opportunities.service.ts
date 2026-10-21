@@ -216,10 +216,34 @@ export class OpportunitiesService {
       );
     }
 
-    return this.prisma.opportunity.update({
+    const updatedOpportunity = await this.prisma.opportunity.update({
       where: { id },
-      data: { status },
+      data: {
+        status,
+        moderationComment: null,
+      },
     });
+
+    const moderators = await this.prisma.user.findMany({
+      where: { roles: { has: Role.OPPORTUNITIES_MODERATOR } },
+      select: { id: true },
+    });
+
+    await Promise.all(
+      moderators.map((moderator) =>
+        this.notificationsService.createNotification({
+          userId: moderator.id,
+          type: 'OPPORTUNITY_READY_FOR_REVIEW',
+          title: 'notifications.opportunityReadyForReview.title',
+          message: JSON.stringify({
+            opportunityTitle: updatedOpportunity.title,
+          }),
+          link: `${OPPORTUNITIES_ROUTE}/${id}`,
+        }),
+      ),
+    );
+
+    return updatedOpportunity;
   }
 
   /**
@@ -355,27 +379,38 @@ export class OpportunitiesService {
       where: { applicantId: userId, opportunityId: id },
     });
 
-    if (existing) {
+    if (existing && existing.status !== ApplicationStatus.WITHDRAWN) {
       throw new ConflictException('Already applied to this opportunity');
     }
 
     let app;
 
-    try {
-      app = await this.prisma.opportunityApplication.create({
+    if (existing && existing.status === ApplicationStatus.WITHDRAWN) {
+      app = await this.prisma.opportunityApplication.update({
+        where: { id: existing.id },
         data: {
           ...dto,
-          applicantId: userId,
-          opportunityId: id,
           status: ApplicationStatus.SUBMITTED,
+          ownerComment: null,
         },
       });
-    } catch (error) {
-      if (getPrismaErrorCode(error) === 'P2002') {
-        throw new ConflictException('Already applied to this opportunity');
-      }
+    } else {
+      try {
+        app = await this.prisma.opportunityApplication.create({
+          data: {
+            ...dto,
+            applicantId: userId,
+            opportunityId: id,
+            status: ApplicationStatus.SUBMITTED,
+          },
+        });
+      } catch (error) {
+        if (getPrismaErrorCode(error) === 'P2002') {
+          throw new ConflictException('Already applied to this opportunity');
+        }
 
-      throw error;
+        throw error;
+      }
     }
 
     await this.notificationsService.createNotification({
@@ -492,7 +527,10 @@ export class OpportunitiesService {
       where: { id },
       data: {
         status: newStatus,
-        moderationComment: dto.comment,
+        moderationComment:
+          dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE
+            ? null
+            : dto.comment,
       },
     });
 

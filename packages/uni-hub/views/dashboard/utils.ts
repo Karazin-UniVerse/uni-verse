@@ -96,6 +96,7 @@ const PLATFORM_TITLE_KEYS: Record<string, TranslationKey> = {
   'notifications.opportunityApplicationStatus.title':
     'notifications.opportunityApplicationStatus.title',
   'notifications.opportunityNewApplication.title': 'notifications.opportunityNewApplication.title',
+  'notifications.opportunityReadyForReview.title': 'notifications.opportunityReadyForReview.title',
   'notifications.opportunityModerated.title': 'notifications.opportunityModerated.title',
 };
 
@@ -165,6 +166,12 @@ function formatPlatformMessage(
     return formatMessage('notifications.opportunityNewApplication.message', {
       opportunityTitle,
       applicantName: parsed.applicantName ?? '',
+    });
+  }
+
+  if (subject === 'notifications.opportunityReadyForReview.title') {
+    return formatMessage('notifications.opportunityReadyForReview.message', {
+      opportunityTitle,
     });
   }
 
