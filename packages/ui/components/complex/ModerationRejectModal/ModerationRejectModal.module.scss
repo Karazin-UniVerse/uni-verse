@@ -73,9 +73,9 @@
     }
 
     &:disabled {
-      background-color: var(--btn-primary-disabled, #374151);
-      border-color: var(--btn-primary-disabled, #374151);
-      color: var(--text-disabled, #9ca3af);
+      background-color: var(--btn-primary-disabled);
+      border-color: var(--btn-primary-disabled);
+      color: var(--text-disabled);
       cursor: not-allowed;
       opacity: 0.5;
     }
@@ -91,9 +91,9 @@
     }
 
     &:disabled {
-      background-color: var(--btn-primary-disabled, #374151);
-      border-color: var(--btn-primary-disabled, #374151);
-      color: var(--text-disabled, #9ca3af);
+      background-color: var(--btn-primary-disabled);
+      border-color: var(--btn-primary-disabled);
+      color: var(--text-disabled);
       cursor: not-allowed;
       opacity: 0.5;
     }
