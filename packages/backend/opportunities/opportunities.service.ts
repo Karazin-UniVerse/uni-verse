@@ -423,8 +423,8 @@ export class OpportunitiesService {
 
     let app;
 
-    if (existing?.status === ApplicationStatus.WITHDRAWN) {
-      try {
+    try {
+      if (existing) {
         app = await this.prisma.opportunityApplication.update({
           where: { id: existing.id, status: ApplicationStatus.WITHDRAWN },
           data: {
@@ -437,15 +437,7 @@ export class OpportunitiesService {
             ownerComment: null,
           },
         });
-      } catch (error) {
-        if (getPrismaErrorCode(error) === 'P2025') {
-          throw new ConflictException('Application is no longer withdrawn');
-        }
-
-        throw error;
-      }
-    } else {
-      try {
+      } else {
         app = await this.prisma.opportunityApplication.create({
           data: {
             ...dto,
@@ -454,13 +446,19 @@ export class OpportunitiesService {
             status: ApplicationStatus.SUBMITTED,
           },
         });
-      } catch (error) {
-        if (getPrismaErrorCode(error) === 'P2002') {
-          throw new ConflictException('Already applied to this opportunity');
-        }
-
-        throw error;
       }
+    } catch (error) {
+      const errorCode = getPrismaErrorCode(error);
+
+      if (existing && errorCode === 'P2025') {
+        throw new ConflictException('Application is no longer withdrawn');
+      }
+
+      if (!existing && errorCode === 'P2002') {
+        throw new ConflictException('Already applied to this opportunity');
+      }
+
+      throw error;
     }
 
     await this.notificationsService.createNotification({
