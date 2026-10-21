@@ -47,6 +47,8 @@ describe('contacts utils', () => {
       assert.strictEqual(isValidContactInfo('+380500000000'), false);
       assert.strictEqual(isValidContactInfo('0500000000'), false);
       assert.strictEqual(isValidContactInfo('+380+501234567'), false);
+      assert.strictEqual(isValidContactInfo('+3705555555555'), false);
+      assert.strictEqual(isValidContactInfo('+487777777777'), false);
     });
 
     test('rejects empty or invalid formats', () => {
