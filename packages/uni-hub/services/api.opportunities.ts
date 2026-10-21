@@ -1,43 +1,17 @@
 import type {
+  ApplyOpportunityRequest,
+  CreateOpportunityRequest,
+  GetOpportunitiesParams,
   Opportunity,
   OpportunityApplication,
-  OpportunityStatus,
-  OpportunityLifecycle,
-  OpportunityPaymentType,
+  UpdateOpportunityRequest,
+} from '@core/types/opportunities';
+import type {
   OpportunityAppStatus,
-} from '@uni-hub/types';
+  OpportunityLifecycle,
+  OpportunityModerateAction,
+} from '@core/constants/opportunities';
 import { request, buildQueryString } from './api.request';
-
-export interface CreateOpportunityDto {
-  title: string;
-  description: string;
-  ownerContactInfo: string;
-  paymentType: OpportunityPaymentType;
-  paymentDetails?: string;
-}
-
-export interface UpdateOpportunityDto {
-  title?: string;
-  description?: string;
-  ownerContactInfo?: string;
-  paymentType?: OpportunityPaymentType;
-  paymentDetails?: string;
-}
-
-export interface ApplyOpportunityDto {
-  applicantName: string;
-  contactInfo: string;
-  motivation?: string;
-  briefDescription?: string;
-  answers?: string;
-}
-
-export interface GetOpportunitiesParams {
-  status?: OpportunityStatus;
-  paymentType?: OpportunityPaymentType | '';
-  ownerId?: string;
-  search?: string;
-}
 
 export class OpportunitiesApi {
   async getOpportunities(params?: GetOpportunitiesParams): Promise<{ data: Opportunity[] }> {
@@ -50,14 +24,17 @@ export class OpportunitiesApi {
     return request<Opportunity>(`/opportunities/${id}`);
   }
 
-  async createOpportunity(dto: CreateOpportunityDto): Promise<{ data: Opportunity }> {
+  async createOpportunity(dto: CreateOpportunityRequest): Promise<{ data: Opportunity }> {
     return request<Opportunity>('/opportunities', {
       method: 'POST',
       body: JSON.stringify(dto),
     });
   }
 
-  async updateOpportunity(id: string, dto: UpdateOpportunityDto): Promise<{ data: Opportunity }> {
+  async updateOpportunity(
+    id: string,
+    dto: UpdateOpportunityRequest,
+  ): Promise<{ data: Opportunity }> {
     return request<Opportunity>(`/opportunities/${id}`, {
       method: 'PUT',
       body: JSON.stringify(dto),
@@ -100,7 +77,7 @@ export class OpportunitiesApi {
     });
   }
 
-  async apply(id: string, dto: ApplyOpportunityDto): Promise<{ data: OpportunityApplication }> {
+  async apply(id: string, dto: ApplyOpportunityRequest): Promise<{ data: OpportunityApplication }> {
     return request<OpportunityApplication>(`/opportunities/${id}/apply`, {
       method: 'POST',
       body: JSON.stringify(dto),
@@ -119,7 +96,7 @@ export class OpportunitiesApi {
 
   async moderate(
     id: string,
-    action: 'APPROVE' | 'REJECT' | 'REQUIRE_CHANGES',
+    action: OpportunityModerateAction,
     comment?: string,
   ): Promise<{ data: Opportunity }> {
     return request<Opportunity>(`/opportunities/${id}/moderate`, {

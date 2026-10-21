@@ -5,13 +5,14 @@
  * Sub-modules:
  *   api.storage.ts  — safeStorage, API_BASE_URL
  *   api.request.ts  — request, buildQueryString, getErrorMessage
- *   api.auth.ts     — AuthApi, authApi, GoogleAuthResponse
+ *   api.auth.ts     — AuthApi, authApi
  *   api.moodle.ts   — MoodleApi, moodleApi, GetAssignmentsParams
  */
 export { safeStorage, API_BASE_URL } from './api.storage';
 export { request, buildQueryString, getErrorMessage } from './api.request';
 export { AuthApi, authApi } from './api.auth';
-export type { GoogleAuthResponse } from './api.auth';
 export { MoodleApi, moodleApi } from './api.moodle';
 export type { GetAssignmentsParams } from './api.moodle';
 export { OpportunitiesApi, opportunitiesApi } from './api.opportunities';
+export { NotificationsApi, notificationsApi } from './api.notifications';
+export type { PlatformNotification, MarkAllAsReadResponse } from './api.notifications';

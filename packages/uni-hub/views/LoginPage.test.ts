@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { withQueryClient } from '@uni-hub/utils/with-query-client';
 import LoginPage from './LoginPage';
 
 const mockPush = vi.fn();
@@ -8,7 +9,7 @@ const mockToast = {
   success: vi.fn(),
   error: vi.fn(),
 };
-const mockStorage: Record<string, string> = {};
+const mockStorage = vi.hoisted(() => ({}) as Record<string, string>);
 let mockMoodleIntegrationEnabled = false;
 let capturedGoogleSuccess: ((token: string) => Promise<void>) | null = null;
 
@@ -49,6 +50,12 @@ vi.mock('@uni-hub/i18n/LanguageContext', () => ({
   }),
 }));
 
+vi.mock('@uni-hub/services/api.auth', () => ({
+  authApi: {
+    loginWithGoogle: vi.fn(),
+  },
+}));
+
 vi.mock('@uni-hub/services/api', () => ({
   safeStorage: {
     getItem: vi.fn((key: string) => mockStorage[key] ?? null),
@@ -58,9 +65,6 @@ vi.mock('@uni-hub/services/api', () => ({
     removeItem: vi.fn((key: string) => {
       delete mockStorage[key];
     }),
-  },
-  authApi: {
-    loginWithGoogle: vi.fn(),
   },
   getErrorMessage: vi.fn((_error, fallback) => fallback),
 }));
@@ -91,13 +95,13 @@ describe('LoginPage Google SSO Moodle integration bypass', () => {
 
   it('sets isLoggedIn = true and redirects to / without requiring Moodle link when isMoodleIntegrationEnabled is false', async () => {
     mockMoodleIntegrationEnabled = false;
-    const { authApi } = await import('@uni-hub/services/api');
+    const { authApi } = await import('@uni-hub/services/api.auth');
 
     vi.mocked(authApi.loginWithGoogle).mockResolvedValueOnce({
       data: { isLinked: false, token: 'mock-token' },
     } as any);
 
-    renderToStaticMarkup(React.createElement(LoginPage));
+    renderToStaticMarkup(withQueryClient(React.createElement(LoginPage)));
     expect(capturedGoogleSuccess).toBeDefined();
 
     const payload = btoa(JSON.stringify({ name: 'Test Student', email: 'test@karazin.ua' }));
@@ -113,13 +117,13 @@ describe('LoginPage Google SSO Moodle integration bypass', () => {
 
   it('does not set isLoggedIn and does not redirect to / when isMoodleIntegrationEnabled is true and account is unlinked', async () => {
     mockMoodleIntegrationEnabled = true;
-    const { authApi } = await import('@uni-hub/services/api');
+    const { authApi } = await import('@uni-hub/services/api.auth');
 
     vi.mocked(authApi.loginWithGoogle).mockResolvedValueOnce({
       data: { isLinked: false, token: 'mock-token' },
     } as any);
 
-    renderToStaticMarkup(React.createElement(LoginPage));
+    renderToStaticMarkup(withQueryClient(React.createElement(LoginPage)));
     expect(capturedGoogleSuccess).toBeDefined();
 
     const payload = btoa(JSON.stringify({ name: 'Test Student', email: 'test@karazin.ua' }));

@@ -2,12 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import {
-  RegisterDto,
-  LoginDto,
-  GoogleAuthDto,
-  LinkMoodleDto,
-} from './dto/auth.dto';
+import { RegisterDto, LoginDto, GoogleAuthDto, LinkMoodleDto } from './dto';
 import type { Response } from 'express';
 
 describe('AuthController', () => {

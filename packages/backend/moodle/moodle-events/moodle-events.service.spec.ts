@@ -65,6 +65,25 @@ describe('MoodleEventsService', () => {
       expect(result[0].courseName).toBe('C');
     });
 
+    it('should forward the event url and formatted time', async () => {
+      mockMoodleClientService.client.mockResolvedValue({
+        events: [
+          {
+            id: 2,
+            name: 'Lecture',
+            timestart: 200,
+            eventtype: 'course',
+            url: 'https://moodle.example/event/2',
+            formattedtime: '<span>10:00</span>',
+          },
+        ],
+      });
+      const result = await service.getUpcomingEvents('token', 'id');
+
+      expect(result[0].url).toBe('https://moodle.example/event/2');
+      expect(result[0].formattedtime).toBe('<span>10:00</span>');
+    });
+
     it('should catch errors, log them, and return empty list', async () => {
       mockMoodleClientService.client.mockRejectedValue(
         new Error('Network failure'),

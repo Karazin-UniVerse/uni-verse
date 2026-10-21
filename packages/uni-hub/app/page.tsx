@@ -1,13 +1,6 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { ROUTE } from '@uni-hub/views/dashboard/routes';
 
-import React, { Suspense } from 'react';
-import DashboardPage from '@uni-hub/views/DashboardPage';
-import { DashboardSkeleton } from '@uni-hub/components/dashboard';
-
-export default function Page() {
-  return (
-    <Suspense fallback={<DashboardSkeleton />}>
-      <DashboardPage />
-    </Suspense>
-  );
+export default function Page(): never {
+  redirect(ROUTE.Wall);
 }

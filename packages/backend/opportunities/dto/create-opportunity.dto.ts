@@ -1,8 +1,15 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaymentType } from '@universe/database';
+import type { CreateOpportunityRequest } from '@universe/core/types/opportunities';
 
-export class CreateOpportunityDto {
+export class CreateOpportunityDto implements CreateOpportunityRequest {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
@@ -22,8 +29,13 @@ export class CreateOpportunityDto {
   @IsEnum(PaymentType)
   paymentType: PaymentType;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ nullable: true })
   @IsString()
   @IsOptional()
-  paymentDetails?: string;
+  paymentDetails?: string | null;
+
+  @ApiPropertyOptional({ default: true })
+  @IsBoolean()
+  @IsOptional()
+  acceptsApplications?: boolean;
 }

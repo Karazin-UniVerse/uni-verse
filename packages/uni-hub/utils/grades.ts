@@ -1,12 +1,9 @@
 import { GRADES_THRESHOLD } from '@core/constants/grades';
 import { asList } from './arrays';
-import type { Grade, GradeValue } from '../types';
+import type { Grade, GradeValue } from '@core/types/moodle';
 
 export function getGradeCourseName(grade: Grade): string {
-  const courseName = grade.courseName?.trim();
-  const fallbackCourseName = grade.course_name?.trim();
-
-  return courseName || fallbackCourseName || '';
+  return grade.courseName?.trim() ?? '';
 }
 
 function parseCandidateValue(candidate: GradeValue | undefined): number | null {
@@ -30,7 +27,7 @@ function parseCandidateValue(candidate: GradeValue | undefined): number | null {
 }
 
 export function getGradeRawValue(grade: Grade): number | null {
-  const candidateValues = [grade.rawGrade, grade.rawgrade, grade.grade];
+  const candidateValues = [grade.rawGrade, grade.grade];
 
   for (const candidate of candidateValues) {
     const parsed = parseCandidateValue(candidate);

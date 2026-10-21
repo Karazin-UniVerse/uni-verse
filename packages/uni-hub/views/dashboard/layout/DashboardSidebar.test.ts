@@ -5,8 +5,10 @@ import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
 import { FeatureToggleProvider } from '@uni-hub/features';
 import { NAV_KEY } from '../constants';
+import { NAV_KEY_ROUTE } from '../routes';
 import type { FeatureFlags } from '@core/constants/features';
 import { NAV_ITEMS, getVisibleNavItems, DashboardSidebar } from './DashboardSidebar';
+import { noop } from '@core/utils/fn';
 
 const allEnabledFlags: FeatureFlags = {
   isMoodleIntegrationEnabled: true,
@@ -14,6 +16,14 @@ const allEnabledFlags: FeatureFlags = {
   isOpportunitiesPlatformEnabled: true,
   isFeaturePanelEnabled: true,
 };
+
+describe('DashboardSidebar routes', () => {
+  it('has a route for every navigation item', () => {
+    for (const item of getVisibleNavItems(allEnabledFlags, false)) {
+      expect(NAV_KEY_ROUTE[item.key]).toMatch(/^\//);
+    }
+  });
+});
 
 describe('DashboardSidebar helpers', () => {
   it('returns standard NAV_ITEMS when isMoodleLinked is true', () => {
@@ -31,23 +41,21 @@ describe('DashboardSidebar helpers', () => {
 
     const connectItem = items.find((item) => item.key === NAV_KEY.ConnectMoodle);
 
-    expect(connectItem?.labelKey).toBe('nav.connectMoodle.full');
+    expect(connectItem?.labelKey).toBe('nav.connectMoodle');
     expect(connectItem?.shortLabelKey).toBe('nav.connectMoodle');
   });
 });
 
 describe('DashboardSidebar navigation & feature gating', () => {
   it('includes all navigation items when all feature flags are enabled', () => {
-    expect(NAV_ITEMS).toHaveLength(6);
+    expect(NAV_ITEMS).toHaveLength(4);
 
     const visible = getVisibleNavItems(allEnabledFlags, true);
 
     expect(visible.map((item) => item.key)).toEqual([
       NAV_KEY.Overview,
-      NAV_KEY.Courses,
-      NAV_KEY.Grades,
+      NAV_KEY.Study,
       NAV_KEY.Schedule,
-      NAV_KEY.Assignments,
       NAV_KEY.Opportunities,
     ]);
   });
@@ -98,13 +106,13 @@ describe('DashboardSidebar navigation & feature gating', () => {
               null,
               React.createElement(DashboardSidebar, {
                 collapsed: false,
-                onToggleCollapsed: () => {},
+                onToggleCollapsed: noop,
                 mobileMenuOpen: false,
-                onCloseMobileMenu: () => {},
+                onCloseMobileMenu: noop,
                 activeKey: 'overview',
-                onSelectKey: () => {},
+                onSelectKey: noop,
                 soundEnabled: false,
-                onLogout: () => {},
+                onLogout: noop,
               }),
             ),
           ),
@@ -114,7 +122,7 @@ describe('DashboardSidebar navigation & feature gating', () => {
       // Moodle links should not be present
       expect(html).not.toContain('moodle.universemvp.tech');
       // Overview and Schedule should be rendered
-      expect(html).toContain('Картка студента');
+      expect(html).toContain('Стіна');
       expect(html).toContain('Розклад');
     } finally {
       if (originalEdean !== undefined) {

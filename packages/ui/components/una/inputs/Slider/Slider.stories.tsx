@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { VariantMatrix } from '../../../../storybook/VariantMatrix/VariantMatrix';
 import { Slider } from './Slider';
 import type { SliderProps } from './Slider.types';
+import { noop } from '@core/utils/fn';
 
 type MatrixState = 'enabled' | 'disabled';
 
@@ -43,7 +44,7 @@ type Story = StoryObj<typeof Slider>;
 export const Matrix: Story = {
   args: {
     value: 0,
-    onChange: () => {},
+    onChange: noop,
   },
   parameters: {
     layout: 'padded',
@@ -56,7 +57,7 @@ export const Matrix: Story = {
         <div style={{ width: '160px' }}>
           <Slider
             value={MATRIX_VALUES[value]}
-            onChange={() => {}}
+            onChange={noop}
             aria-label={`${value} ${state}`}
             {...MATRIX_STATES[state]}
           />

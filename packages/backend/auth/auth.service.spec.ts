@@ -15,12 +15,7 @@ import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { GetCreds } from '../utils/get-creds';
-import {
-  RegisterDto,
-  LoginDto,
-  GoogleAuthDto,
-  LinkMoodleDto,
-} from './dto/auth.dto';
+import { RegisterDto, LoginDto, GoogleAuthDto, LinkMoodleDto } from './dto';
 import { User, Role } from '@universe/database';
 import {
   BadRequestException,

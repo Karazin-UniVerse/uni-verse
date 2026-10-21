@@ -1,0 +1,13 @@
+import type { Assignment } from '@core/types/moodle';
+
+export function isAssignmentCompleted(
+  assignment: Pick<Assignment, 'submissionStatus' | 'graded' | 'grade' | 'submittedAt'>,
+): boolean {
+  return (
+    assignment.submissionStatus === 'submitted' ||
+    assignment.submissionStatus === 'graded' ||
+    Boolean(assignment.graded) ||
+    Boolean(assignment.grade) ||
+    Boolean(assignment.submittedAt)
+  );
+}

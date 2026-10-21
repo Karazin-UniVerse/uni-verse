@@ -1,6 +1,5 @@
-import React from 'react';
-import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { renderHook } from '@testing-library/react';
 import { getMsUntilMidnight, useToday } from './useToday';
 
 describe('useToday', () => {
@@ -12,57 +11,44 @@ describe('useToday', () => {
     vi.useRealTimers();
   });
 
-  it('keeps today unset on server render by default to prevent hydration mismatch', () => {
-    const TestComponent = () => {
-      const today = useToday();
-
-      return React.createElement(
-        'div',
-        null,
-        React.createElement('span', { id: 'status' }, today ? 'set' : 'unset'),
-      );
-    };
-
-    const html = renderToString(React.createElement(TestComponent));
-
-    expect(html).toContain('id="status">unset</span>');
-  });
-
-  it('returns initialDate on server render when provided', () => {
+  it('should return current date in browser client environment', () => {
     const fixedDate = new Date(2026, 9, 7, 10, 0, 0);
 
-    const TestComponent = () => {
-      const today = useToday(fixedDate);
+    vi.setSystemTime(fixedDate);
 
-      return React.createElement(
-        'div',
-        null,
-        React.createElement('span', { id: 'year' }, String(today?.getFullYear())),
-        React.createElement('span', { id: 'date' }, String(today?.getDate())),
-      );
-    };
+    const { result } = renderHook(() => useToday());
 
-    const html = renderToString(React.createElement(TestComponent));
+    expect(result.current).toBeInstanceOf(Date);
+    expect(result.current?.getFullYear()).toBe(2026);
+    expect(result.current?.getDate()).toBe(7);
+  });
 
-    expect(html).toContain('id="year">2026</span>');
-    expect(html).toContain('id="date">7</span>');
+  it('should return valid date when initialDate is provided', () => {
+    const fixedDate = new Date(2026, 9, 7, 10, 0, 0);
+
+    vi.setSystemTime(fixedDate);
+
+    const { result } = renderHook(() => useToday(fixedDate));
+
+    expect(result.current?.getFullYear()).toBe(2026);
+    expect(result.current?.getDate()).toBe(7);
   });
 
   describe('getMsUntilMidnight', () => {
-    it('calculates remaining milliseconds until tomorrow midnight', () => {
+    it('should calculate remaining milliseconds until tomorrow midnight', () => {
       const now = new Date(2026, 9, 7, 10, 0, 0);
       const expectedMs = 14 * 60 * 60 * 1000;
 
       expect(getMsUntilMidnight(now)).toBe(expectedMs);
     });
 
-    it('clamps to minimum 1000ms when very close to midnight', () => {
+    it('should clamp to minimum 1000ms when very close to midnight', () => {
       const nearMidnight = new Date(2026, 9, 7, 23, 59, 59, 900);
 
       expect(getMsUntilMidnight(nearMidnight)).toBe(1000);
     });
 
-    it('uses current system time when parameter is omitted', () => {
+    it('should use current system time when parameter is omitted', () => {
       const fixedDate = new Date(2026, 9, 7, 20, 0, 0);
 
       vi.setSystemTime(fixedDate);

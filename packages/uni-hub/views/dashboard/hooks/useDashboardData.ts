@@ -1,207 +1,144 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { moodleApi } from '@uni-hub/services/api';
-import type { StudentProfile } from '@core/types';
+import { useCallback, useMemo } from 'react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useToast } from '@una';
+import { isLoggedIn } from '@core/utils/auth';
+import type { StudentProfile } from '@core/types';
+import { useFeatures } from '@uni-hub/features';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
+import { fallbackStudentProfile } from '../constants';
 import type { DashboardData } from '../types';
 import {
-  assembleDashboardData,
-  buildAssignmentParams,
+  applyPlatformNotifications,
   buildFallbackData,
-  clearUserSessionStorage,
+  deriveDashboardState,
   getInitialSyncTime,
+  getInitialUserProfile,
   isMoodleUnlinked,
-  isUnauthorizedError,
   loadCachedDashboardData,
-  persistDashboardSnapshot,
-  syncStudentProfile,
+  type DashboardState,
 } from './helpers';
+import {
+  dashboardQueryOptions,
+  platformNotificationsQueryOptions,
+  profileQueryOptions,
+} from './queries';
 
-export { clearUserSessionStorage } from './helpers';
+const EMPTY_DASHBOARD_DATA: DashboardData = {
+  courses: [],
+  grades: [],
+  assignments: [],
+  events: [],
+  notifications: [],
+  unreadCount: 0,
+  statistics: null,
+};
 
-export interface UseDashboardDataOptions {
-  sortOrder: 'asc' | 'desc';
-  dateFrom: string;
-  dateTo: string;
-  hideCompleted: boolean;
-  onUnauthorized: () => void;
-  enabled?: boolean;
+export interface UseDashboardDataResult extends Omit<DashboardState, 'cachedData'> {
+  data: DashboardData;
+  studentProfile: StudentProfile;
+  hasCachedData: boolean;
+  error: Error | null;
+  errorUpdatedAt: number;
+  platformError: Error | null;
+  refresh: () => Promise<void>;
 }
 
-function getInitialDashboardData(): DashboardData {
-  const initial: DashboardData = {
-    courses: [],
-    grades: [],
-    assignments: [],
-    events: [],
-    notifications: [],
-    unreadCount: 0,
-    statistics: null,
-  };
+function readDashboardSnapshot(): DashboardData | undefined {
+  const cachedData = loadCachedDashboardData();
 
-  if (typeof window === 'undefined') {
-    return initial;
-  }
-
-  try {
-    const cachedData = loadCachedDashboardData();
-
-    return cachedData ? { ...initial, ...cachedData } : initial;
-  } catch {
-    return initial;
-  }
+  return cachedData ? { ...EMPTY_DASHBOARD_DATA, ...cachedData } : undefined;
 }
 
-function getInitialHasLoadedOnce(): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  try {
-    return Boolean(loadCachedDashboardData());
-  } catch {
-    return false;
-  }
-}
-
-export function useDashboardData({
-  sortOrder,
-  dateFrom,
-  dateTo,
-  hideCompleted,
-  onUnauthorized,
-  enabled = true,
-}: UseDashboardDataOptions) {
+export function useDashboardData(): UseDashboardDataResult {
   const toast = useToast();
   const { formatMessage } = useLanguage();
+  const features = useFeatures();
+  const sortOrder = useMoodleStore((state) => state.sortOrder);
+  const dateFrom = useMoodleStore((state) => state.dateFrom);
+  const dateTo = useMoodleStore((state) => state.dateTo);
+  const hideCompleted = useMoodleStore((state) => state.hideCompleted);
+  const isMoodleLinked = useMoodleStore((state) => state.isMoodleLinked);
+  const enabled =
+    features.isMoodleIntegrationEnabled && isMoodleLinked && !isMoodleUnlinked() && isLoggedIn();
 
-  const [loading, setLoading] = useState(enabled);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(getInitialHasLoadedOnce);
-  const [lastSyncTime, setLastSyncTime] = useState<number | null>(getInitialSyncTime);
-  const [isOfflineData, setIsOfflineData] = useState(false);
-  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
-  const [data, setData] = useState<DashboardData>(getInitialDashboardData);
+  const dashboardQuery = useQuery({
+    ...dashboardQueryOptions({ sortOrder, dateFrom, dateTo, hideCompleted }),
+    enabled,
+    placeholderData: keepPreviousData,
+    initialData: readDashboardSnapshot,
+    initialDataUpdatedAt: 0,
+    refetchOnWindowFocus: false,
+  });
+  const profileQuery = useQuery({
+    ...profileQueryOptions,
+    enabled,
+    initialData: () => getInitialUserProfile() ?? undefined,
+    initialDataUpdatedAt: 0,
+  });
+  const platformQuery = useQuery({
+    ...platformNotificationsQueryOptions,
+  });
 
-  const fetchRequestIdRef = useRef(0);
+  const { error, errorUpdatedAt, data: queryData, isError } = dashboardQuery;
+  const platformError = platformQuery.error;
 
-  const fetchData = async (isManual = false) => {
+  const snapshot = useMemo(
+    () => (isError && queryData === undefined ? readDashboardSnapshot() : undefined),
+    [isError, queryData],
+  );
+  const state = deriveDashboardState({ ...dashboardQuery, snapshot });
+  const { cachedData } = state;
+
+  let data = cachedData ?? EMPTY_DASHBOARD_DATA;
+
+  if (state.isOfflineData && cachedData) {
+    data = buildFallbackData({
+      cachedData,
+      previousData: EMPTY_DASHBOARD_DATA,
+      hideCompleted,
+      dateFrom,
+      dateTo,
+      platformNotifications: platformQuery.data,
+    });
+  } else if (platformQuery.data) {
+    data = applyPlatformNotifications(data, platformQuery.data);
+  }
+
+  const { refetch } = dashboardQuery;
+  const { refetch: refetchPlatform } = platformQuery;
+  const refresh = useCallback(async (): Promise<void> => {
     if (!enabled) {
-      setLoading(false);
+      await refetchPlatform();
 
       return;
     }
 
-    const requestId = ++fetchRequestIdRef.current;
+    const [result] = await Promise.all([refetch(), refetchPlatform()]);
 
-    setLoading(true);
-
-    try {
-      const params = buildAssignmentParams({ sortOrder, dateFrom, dateTo, hideCompleted });
-      const [
-        coursesRes,
-        gradesRes,
-        assignmentsRes,
-        eventsRes,
-        notificationsRes,
-        statsRes,
-        profileRes,
-      ] = await Promise.all([
-        moodleApi.getCourses(),
-        moodleApi.getGrades(),
-        moodleApi.getAssignments(params),
-        moodleApi.getEvents(),
-        moodleApi.getNotifications(),
-        moodleApi.getStatistics(),
-        moodleApi.getProfile().catch(() => null),
-      ]);
-
-      if (requestId !== fetchRequestIdRef.current || isMoodleUnlinked()) {
-        return;
-      }
-
-      const freshData = assembleDashboardData([
-        coursesRes,
-        gradesRes,
-        assignmentsRes,
-        eventsRes,
-        notificationsRes,
-        statsRes,
-      ]);
-
-      setData(freshData);
-      setHasLoadedOnce(true);
-      setIsOfflineData(false);
-      syncStudentProfile(profileRes?.data, setStudentProfile);
-
-      const nowTimestamp = Date.now();
-
-      setLastSyncTime(nowTimestamp);
-      persistDashboardSnapshot(nowTimestamp, freshData);
-
-      if (isManual) {
-        toast.success(formatMessage('dashboard.syncSuccess'));
-      }
-    } catch (error) {
-      if (requestId !== fetchRequestIdRef.current || isMoodleUnlinked()) {
-        return;
-      }
-
-      if (isUnauthorizedError(error)) {
-        clearUserSessionStorage();
-        toast.error(formatMessage('dashboard.sessionExpired'));
-        onUnauthorized();
-
-        return;
-      }
-
-      console.error(error);
-
-      const cachedData = loadCachedDashboardData();
-
-      if (cachedData && !isMoodleUnlinked()) {
-        setData((previous) =>
-          buildFallbackData({
-            cachedData,
-            previousData: previous,
-            hideCompleted,
-            dateFrom,
-            dateTo,
-          }),
-        );
-        setIsOfflineData(true);
-        setHasLoadedOnce(true);
-        toast.info(formatMessage('dashboard.offlineNotice'));
-
-        return;
-      }
-
-      if (!isMoodleUnlinked()) {
-        toast.error(formatMessage('dashboard.loadError'));
-      }
-    } finally {
-      if (requestId === fetchRequestIdRef.current) {
-        setLoading(false);
-      }
+    if (!result?.isError) {
+      toast.success(formatMessage('dashboard.syncSuccess'));
     }
-  };
-
-  const cancelPendingFetch = () => {
-    fetchRequestIdRef.current += 1;
-    setLoading(false);
-  };
+  }, [enabled, refetch, refetchPlatform, toast, formatMessage]);
 
   return {
+    loading: state.loading,
+    hasLoadedOnce: state.hasLoadedOnce,
+    isOfflineData: state.isOfflineData,
+    lastSyncTime: state.lastSyncTime ?? getInitialSyncTime(),
     data,
-    setData,
-    loading,
-    hasLoadedOnce,
-    lastSyncTime,
-    isOfflineData,
-    studentProfile,
-    setStudentProfile,
-    fetchData,
-    cancelPendingFetch,
+    studentProfile: profileQuery.data ?? fallbackStudentProfile,
+    hasCachedData:
+      data.courses.length > 0 ||
+      data.grades.length > 0 ||
+      data.assignments.length > 0 ||
+      data.events.length > 0 ||
+      state.hasLoadedOnce,
+    error,
+    errorUpdatedAt,
+    platformError: (platformError as Error) ?? null,
+    refresh,
   };
 }

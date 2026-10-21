@@ -59,21 +59,17 @@ export const uk = {
   'theme.karazinGold': 'Karazin Gold',
   'theme.select': 'Вибір теми',
 
-  // Navigation (short & full)
-  'nav.overview': 'Огляд',
-  'nav.overview.full': 'Картка студента / Огляд',
-  'nav.courses': 'Курси',
-  'nav.courses.full': 'Індивідуальний план',
-  'nav.assignments': 'Завдання',
-  'nav.assignments.full': 'Завдання',
+  // Navigation
+  'nav.overview': 'Стіна',
+  'nav.study': 'Навчання',
   'nav.schedule': 'Розклад',
-  'nav.schedule.full': 'Розклад занять',
-  'nav.grades': 'Оцінки',
-  'nav.grades.full': 'Заліковка та бали',
   'nav.connectMoodle': 'Підключити Moodle',
-  'nav.connectMoodle.full': 'Підключити акаунт Moodle LMS',
   'nav.opportunities': 'Можливості',
-  'nav.opportunities.full': 'Платформа можливостей',
+
+  // Study views
+  'study.views.subjects': 'Дисципліни',
+  'study.views.grades': 'Оцінки',
+  'study.views.assignments': 'Завдання',
 
   // Sidebar & Header
   'sidebar.logout': 'Вийти',
@@ -83,6 +79,7 @@ export const uk = {
   'header.notifications': 'Сповіщення',
   'header.notifications.empty': 'Немає сповіщень',
   'header.notifications.unreadItem': 'Непрочитане:',
+  'header.notifications.markAllRead': 'Позначити всі як прочитані',
   'header.moodleConnected': 'Підключено',
   'header.moodleNotConnected': 'Не підключено',
   'header.moodleChange': 'Змінити акаунт',
@@ -170,10 +167,8 @@ export const uk = {
 
   // Course Contents
   'courseContents.back': 'Назад до курсів',
-  'courseContents.breadcrumbs': 'Курси',
   'courseContents.title': 'Вміст курсу',
   'courseContents.loading': 'Завантаження вмісту...',
-  'courseContents.loadError': 'Не вдалося завантажити вміст курсу',
   'courseContents.empty': 'У цьому курсі поки що немає доступних матеріалів.',
   'courseContents.moduleType': 'Тип',
 
@@ -249,6 +244,8 @@ export const uk = {
   'schedule.typePractice': 'Практичне заняття',
   'schedule.typeExam': 'Іспит',
   'schedule.typeOther': 'Консультація',
+  'schedule.prevDay': 'Попередній день',
+  'schedule.nextDay': 'Наступний день',
 
   // Header & Audio
   'header.soundMute': 'Вимкнути звук',
@@ -257,34 +254,34 @@ export const uk = {
   'header.userMenu': 'Меню профілю користувача',
   'header.unreadCount': '{count} нових',
 
-  // Assignment Modal
-  'assignmentModal.defaultTitle': 'Завдання',
-  'assignmentModal.loadingStatus': 'Завантаження статусу...',
-  'assignmentModal.loadStatusError': 'Не вдалося завантажити статус завдання',
-  'assignmentModal.openMoodle': 'Відкрити оригінальне завдання на Moodle',
-  'assignmentModal.description': 'Опис',
-  'assignmentModal.attachedFiles': 'Прикріплені файли',
-  'assignmentModal.download': 'Завантажити',
-  'assignmentModal.submissionStatus': 'Статус здачі',
-  'assignmentModal.status': 'Статус',
-  'assignmentModal.grade': 'Оцінка',
-  'assignmentModal.noStatusData': 'Немає даних про статус',
-  'assignmentModal.submitTitle': 'Надіслати відповідь',
-  'assignmentModal.answerText': 'Текст відповіді',
-  'assignmentModal.placeholder': 'Введіть вашу відповідь тут...',
-  'assignmentModal.attachFile': 'Прикріпити файл',
-  'assignmentModal.dragDrop': 'Перетягніть файл сюди або',
-  'assignmentModal.browse': 'виберіть',
-  'assignmentModal.cancel': 'Скасувати',
-  'assignmentModal.submit': 'Надіслати',
-  'assignmentModal.uploading': 'Завантаження файлу...',
-  'assignmentModal.submitSuccess': 'Відповідь успішно надіслано',
-  'assignmentModal.submitError': 'Помилка під час надсилання відповіді',
-  'assignmentModal.formRequired': 'Будь ласка, введіть текст відповіді або прикріпіть файл',
-  'assignmentModal.statusSubmitted': 'Здано на перевірку',
-  'assignmentModal.statusGraded': 'Оцінено',
-  'assignmentModal.statusNew': 'Немає спроби',
-  'assignmentModal.statusDraft': 'Чернетка',
+  // Assignment Detail
+  'assignmentPage.back': 'Назад до завдань',
+  'assignmentDetail.defaultTitle': 'Завдання',
+  'assignmentDetail.loadingStatus': 'Завантаження статусу...',
+  'assignmentDetail.openMoodle': 'Відкрити оригінальне завдання на Moodle',
+  'assignmentDetail.description': 'Опис',
+  'assignmentDetail.attachedFiles': 'Прикріплені файли',
+  'assignmentDetail.download': 'Завантажити',
+  'assignmentDetail.submissionStatus': 'Статус здачі',
+  'assignmentDetail.status': 'Статус',
+  'assignmentDetail.grade': 'Оцінка',
+  'assignmentDetail.noStatusData': 'Немає даних про статус',
+  'assignmentDetail.submitTitle': 'Надіслати відповідь',
+  'assignmentDetail.answerText': 'Текст відповіді',
+  'assignmentDetail.placeholder': 'Введіть вашу відповідь тут...',
+  'assignmentDetail.attachFile': 'Прикріпити файл',
+  'assignmentDetail.dragDrop': 'Перетягніть файл сюди або',
+  'assignmentDetail.browse': 'виберіть',
+  'assignmentDetail.cancel': 'Скасувати',
+  'assignmentDetail.submit': 'Надіслати',
+  'assignmentDetail.uploading': 'Завантаження файлу...',
+  'assignmentDetail.submitSuccess': 'Відповідь успішно надіслано',
+  'assignmentDetail.submitError': 'Помилка під час надсилання відповіді',
+  'assignmentDetail.formRequired': 'Будь ласка, введіть текст відповіді або прикріпіть файл',
+  'assignmentDetail.statusSubmitted': 'Здано на перевірку',
+  'assignmentDetail.statusGraded': 'Оцінено',
+  'assignmentDetail.statusNew': 'Немає спроби',
+  'assignmentDetail.statusDraft': 'Чернетка',
 
   // Gamification
   'badge.unlocked': 'Досягнення',
@@ -442,6 +439,10 @@ export const uk = {
   'opportunities.toast.sentToReview': 'Можливість надіслана на модерацію!',
   'opportunities.toast.genericError': 'Помилка',
   'opportunities.toast.stateUpdated': 'Стан проекту оновлено',
+  'opportunities.toast.updated': 'Зміни успішно збережено!',
+  'opportunities.toast.updateError': 'Помилка оновлення можливості',
+  'opportunities.toast.applicationsOpened': 'Прийом відгуків відкрито',
+  'opportunities.toast.applicationsClosed': 'Прийом відгуків закрито',
   'opportunities.toast.statusUpdateError': 'Помилка оновлення статусу',
   'opportunities.confirm.withdraw': 'Ви впевнені, що бажаєте відкликати свій відгук?',
   'opportunities.confirm.withdrawTitle': 'Відкликання відгуку',
@@ -451,6 +452,8 @@ export const uk = {
   'opportunities.toast.rejected': 'Можливість відхилено',
   'opportunities.toast.requiresChanges': 'Можливість повернуто на доопрацювання автору',
   'opportunities.toast.moderateError': 'Помилка модерації',
+  'common.error.load': 'Не вдалося завантажити дані',
+  'common.error.retry': 'Спробувати знову',
   'opportunities.card.defaultOwner': 'Каразінський університет',
   'opportunities.card.vacancy': 'Вакансія',
   'opportunities.card.practice': 'Практика',
@@ -461,6 +464,7 @@ export const uk = {
   'opportunities.card.management': 'Управління',
   'opportunities.card.details': 'Деталі',
   'opportunities.card.detailsAria': 'Детальніше про {title}',
+  'opportunities.card.applicationsClosedBadge': 'Набір закрито',
   'opportunities.catalog.searchPlaceholder': 'Пошук за назвою або ключовими словами...',
   'opportunities.catalog.searchAria': 'Пошук можливостей',
   'opportunities.catalog.clearSearchAria': 'Очистити поле пошуку',
@@ -515,6 +519,7 @@ export const uk = {
 
   // Modals - Create
   'opportunities.createModal.title': 'Створити нову можливість',
+  'opportunities.createModal.editTitle': 'Редагувати можливість',
   'opportunities.createModal.titleLabel': 'Назва можливості *',
   'opportunities.createModal.titlePlaceholder': 'Наприклад: React-розробник у студентський стартап',
   'opportunities.createModal.descLabel': 'Опис, завдання та вимоги до кандидата *',
@@ -528,9 +533,11 @@ export const uk = {
   'opportunities.createModal.paymentDetailsLabel': 'Деталі та розмір оплати',
   'opportunities.createModal.paymentDetailsPlaceholder':
     'Наприклад: $400/місяць або 5000 грн за етап',
+  'opportunities.createModal.acceptsApplications': 'Приймати нові відгуки на можливість',
   'opportunities.createModal.cancel': 'Скасувати',
   'opportunities.createModal.saving': 'Збереження...',
   'opportunities.createModal.submit': 'Створити чернетку',
+  'opportunities.createModal.saveChanges': 'Зберегти зміни',
 
   // Modals - Reject / Revise
   'opportunities.rejectModal.title': 'Зауваження або повернення на доопрацювання',
@@ -555,13 +562,17 @@ export const uk = {
   'opportunities.detailModal.contacts': 'Контакти для звʼязку:',
   'opportunities.detailModal.manageTitle': 'Керування вашою можливістю',
   'opportunities.detailModal.sendToReview': 'Надіслати на модерацію',
+  'opportunities.detailModal.edit': 'Редагувати',
+  'opportunities.detailModal.moderationFeedback': 'Зауваження модератора',
   'opportunities.detailModal.phaseLabel': 'Фаза:',
   'opportunities.detailModal.phaseStart': 'Старт',
   'opportunities.detailModal.phaseActive': 'Активна фаза',
   'opportunities.detailModal.phasePaused': 'На паузі',
   'opportunities.detailModal.phaseCompleted': 'Завершено',
   'opportunities.detailModal.phaseCancelled': 'Скасовано',
-  'opportunities.detailModal.close': 'Закрити',
+  'opportunities.detailModal.acceptsApplications': 'Приймати нові відгуки на можливість',
+  'opportunities.detailModal.applicationsClosed': 'Прийом заявок призупинено автором',
+  'opportunities.detail.back': 'Назад до можливостей',
   'opportunities.detailModal.apply': 'Відгукнутися на можливість',
 
   // Modals - Apply
@@ -572,6 +583,8 @@ export const uk = {
     'Коротко опишіть ваш досвід, стек та чому ви хочете взяти участь...',
   'opportunities.applyModal.contactLabel': 'Ваш Telegram або номер телефону для звʼязку',
   'opportunities.applyModal.contactPlaceholder': '@username або +380...',
+  'opportunities.applyModal.invalidContact':
+    'Вкажіть коректний Telegram (@username або посилання) або номер телефону',
   'opportunities.applyModal.defaultContact': 'Вказано в профілі',
   'opportunities.applyModal.defaultApplicantName': 'Студент',
   'opportunities.applyModal.cancel': 'Скасувати',
@@ -582,12 +595,35 @@ export const uk = {
   'opportunities.applicantsModal.title': 'Кандидати на можливість ({count})',
   'opportunities.applicantsModal.empty': 'На цю можливість ще немає відгуків',
   'opportunities.applicantsModal.defaultApplicant': 'Студент',
+  'opportunities.applicantsModal.emailLabel': 'Електронна пошта',
+  'opportunities.applicantsModal.directContactLabel': 'Прямий контакт (Telegram / телефон)',
   'opportunities.applicantsModal.motivationLabel': 'Супровідне повідомлення:',
   'opportunities.applicantsModal.submittedOn': 'Подано {date}',
   'opportunities.applicantsModal.accept': 'Прийняти',
   'opportunities.applicantsModal.underReview': 'На розгляд',
   'opportunities.applicantsModal.reject': 'Відхилити',
   'opportunities.applicantsModal.close': 'Закрити',
+
+  // Platform Notifications
+  'notifications.error.markReadFailed': 'Не вдалося оновити статус сповіщення',
+  'notifications.opportunityApplicationStatus.title': 'Статус заявки на можливість',
+  'notifications.opportunityApplicationStatus.message':
+    'Статус заявки на «{opportunityTitle}» змінено на: {status}.',
+  'notifications.opportunityApplicationStatus.messageWithComment':
+    'Статус заявки на «{opportunityTitle}» змінено на: {status}. Коментар: {comment}',
+  'notifications.opportunityNewApplication.title': 'Новий відгук на можливість',
+  'notifications.opportunityNewApplication.message':
+    'Новий відгук на можливість «{opportunityTitle}» від {applicantName}.',
+  'notifications.opportunityModerated.title': 'Результат модерації можливості',
+  'notifications.opportunityModerated.message': 'Можливість «{opportunityTitle}» {action}.',
+  'notifications.opportunityModerated.messageWithComment':
+    'Можливість «{opportunityTitle}» {action}. Коментар модератора: {comment}',
+  'notifications.status.ACCEPTED': 'прийнято',
+  'notifications.status.REJECTED': 'відхилено',
+  'notifications.status.UNDER_REVIEW': 'переведено на розгляд',
+  'notifications.action.APPROVE': 'схвалено та опубліковано',
+  'notifications.action.REJECT': 'відхилено',
+  'notifications.action.REQUIRE_CHANGES': 'потребує змін',
 };
 
 export type TranslationKey = keyof typeof uk;

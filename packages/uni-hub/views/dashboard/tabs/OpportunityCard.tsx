@@ -5,7 +5,7 @@ import clsx from 'clsx';
 import { Briefcase, Sparkles, Coins, ArrowUpRight } from 'lucide-react';
 import { Button } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import type { Opportunity } from '@uni-hub/types';
+import type { Opportunity } from '@core/types/opportunities';
 import styles from './OpportunityCard.module.scss';
 
 export interface OpportunityCardProps {
@@ -47,18 +47,26 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
     <article className={clsx(styles.card, isPaid ? styles.paidCard : styles.unpaidCard)}>
       <div className={styles.cardTop}>
         <div className={styles.cardBadgeRow}>
-          <div
-            className={clsx(
-              styles.categoryPill,
-              isPaid ? styles.paidCategory : styles.unpaidCategory,
+          <div className={styles.categoryBadgeGroup}>
+            <div
+              className={clsx(
+                styles.categoryPill,
+                isPaid ? styles.paidCategory : styles.unpaidCategory,
+              )}
+            >
+              <Briefcase size={12} />
+              <span>
+                {isPaid
+                  ? formatMessage('opportunities.card.vacancy')
+                  : formatMessage('opportunities.card.practice')}
+              </span>
+            </div>
+
+            {opportunity.acceptsApplications === false && (
+              <span className={styles.closedPill}>
+                {formatMessage('opportunities.card.applicationsClosedBadge')}
+              </span>
             )}
-          >
-            <Briefcase size={12} />
-            <span>
-              {isPaid
-                ? formatMessage('opportunities.card.vacancy')
-                : formatMessage('opportunities.card.practice')}
-            </span>
           </div>
 
           {variant === 'owner' ? statusBadge : publicBadge}

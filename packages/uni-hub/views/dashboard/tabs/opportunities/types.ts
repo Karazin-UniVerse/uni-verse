@@ -1,4 +1,4 @@
-import type { OpportunityPaymentType } from '@uni-hub/types';
+import type { OpportunityPaymentType } from '@core/constants/opportunities';
 import type { OpportunitySubTab } from './constants';
 
 export type SubTabKey = OpportunitySubTab;
@@ -9,6 +9,7 @@ export interface CreateOpportunityFormData {
   ownerContactInfo: string;
   paymentType: OpportunityPaymentType;
   paymentDetails: string;
+  acceptsApplications?: boolean;
 }
 
 export interface RejectModalState {
@@ -16,5 +17,3 @@ export interface RejectModalState {
   id: string | null;
   comment: string;
 }
-
-export type ModerationAction = 'APPROVE' | 'REJECT' | 'REQUIRE_CHANGES';

@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import type { ValidationArguments } from 'class-validator';
 import { OpportunitiesService } from './opportunities.service';
+import { IsContactInfoConstraint } from './opportunities.helpers';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
@@ -154,6 +156,22 @@ describe('OpportunitiesService', () => {
       });
     });
 
+    it('does not reset status if only acceptsApplications changed on published opportunity', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        ownerId: 'user1',
+      } as any);
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({} as any);
+
+      await service.update('user1', '1', { acceptsApplications: false });
+
+      expect(prisma.opportunity.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: { acceptsApplications: false },
+      });
+    });
+
     it('does not reset status if it was DRAFT', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
@@ -239,6 +257,12 @@ describe('OpportunitiesService', () => {
       expect(prisma.opportunity.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ status: 'PUBLISHED' }),
+        }),
+      );
+      expect(notificationsService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'owner1',
+          link: '/opportunities/opp1',
         }),
       );
     });
@@ -331,6 +355,26 @@ describe('OpportunitiesService', () => {
           }),
         }),
       );
+    });
+
+    it('throws BadRequestException if REQUIRE_CHANGES has no comment or empty comment', async () => {
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        id: 'user1',
+        roles: ['OPPORTUNITIES_MODERATOR'],
+      } as any);
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: 'opp1',
+        title: 'test',
+        ownerId: 'owner1',
+        status: 'READY_FOR_REVIEW',
+      } as any);
+
+      await expect(
+        service.moderate('user1', 'opp1', {
+          action: 'REQUIRE_CHANGES',
+          comment: '   ',
+        } as any),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('throws BadRequestException for unknown moderation action', async () => {
@@ -426,10 +470,20 @@ describe('OpportunitiesService', () => {
       );
     });
 
-    it('forces PUBLISHED status when user is ADMIN or regular user', async () => {
+    it('throws ForbiddenException when non-moderator queries unpublished status', async () => {
+      await expect(
+        service.findAll({ status: 'DRAFT' as any }, ['ADMIN']),
+      ).rejects.toThrow(ForbiddenException);
+
+      await expect(
+        service.findAll({ status: 'READY_FOR_REVIEW' as any }, []),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('defaults to PUBLISHED when status is omitted', async () => {
       jest.spyOn(prisma.opportunity, 'findMany').mockResolvedValue([] as any);
 
-      await service.findAll({ status: 'DRAFT' as any }, ['ADMIN']);
+      await service.findAll({});
 
       expect(prisma.opportunity.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -698,6 +752,7 @@ describe('OpportunitiesService', () => {
         .mockResolvedValue({
           id: 'app-1',
           applicantId: 'applicant-1',
+          opportunityId: 'opp-1',
           opportunity: { ownerId: 'owner-1', title: 'Opp' },
         } as any);
       const mockUpdated = { id: 'app-1', status: 'REJECTED' };
@@ -713,11 +768,33 @@ describe('OpportunitiesService', () => {
       });
 
       expect(result).toBe(mockUpdated);
-      expect(notificationsService.createNotification).toHaveBeenCalled();
+      expect(notificationsService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'applicant-1',
+          link: '/opportunities/opp-1',
+        }),
+      );
     });
   });
 
   describe('apply', () => {
+    it('throws ForbiddenException if owner tries to apply to own opportunity', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        lifecycleState: 'ACTIVE',
+        acceptsApplications: true,
+        ownerId: 'user-1',
+      } as any);
+
+      await expect(
+        service.apply('user-1', '1', {
+          applicantName: 'Іван',
+          contactInfo: 'ivan@karazin.ua',
+        }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
     it('throws BadRequestException if opportunity is unpublished', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
@@ -737,8 +814,50 @@ describe('OpportunitiesService', () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
         status: 'PUBLISHED',
-        lifecycleState: 'CLOSED',
-        ownerId: 'user-1',
+        lifecycleState: 'PAUSED',
+        acceptsApplications: true,
+        ownerId: 'owner-1',
+      } as any);
+
+      await expect(
+        service.apply('user-1', '1', {
+          applicantName: 'Іван',
+          contactInfo: 'ivan@karazin.ua',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('allows applying if opportunity is on START phase and accepting applications', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        lifecycleState: 'START',
+        acceptsApplications: true,
+        ownerId: 'owner-1',
+        title: 'Тест',
+      } as any);
+      jest
+        .spyOn(prisma.opportunityApplication, 'findFirst')
+        .mockResolvedValue(null);
+      jest
+        .spyOn(prisma.opportunityApplication, 'create')
+        .mockResolvedValue({ id: 'app-1' } as any);
+
+      const res = await service.apply('user-1', '1', {
+        applicantName: 'Іван',
+        contactInfo: '@ivan_tg',
+      });
+
+      expect(res).toEqual({ id: 'app-1' });
+    });
+
+    it('throws BadRequestException if opportunity is not accepting applications', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        lifecycleState: 'ACTIVE',
+        acceptsApplications: false,
+        ownerId: 'owner-1',
       } as any);
 
       await expect(
@@ -754,6 +873,8 @@ describe('OpportunitiesService', () => {
         id: '1',
         status: 'PUBLISHED',
         lifecycleState: 'ACTIVE',
+        acceptsApplications: true,
+        ownerId: 'owner-1',
       } as any);
       jest.spyOn(prisma.opportunityApplication, 'findFirst').mockResolvedValue({
         id: 'app-1',
@@ -772,6 +893,7 @@ describe('OpportunitiesService', () => {
         id: '1',
         status: 'PUBLISHED',
         lifecycleState: 'ACTIVE',
+        acceptsApplications: true,
         title: 'Junior QA',
         ownerId: 'owner-1',
       } as any);
@@ -791,6 +913,12 @@ describe('OpportunitiesService', () => {
 
       expect(prisma.opportunityApplication.create).toHaveBeenCalled();
       expect(result.id).toBe('app-new');
+      expect(notificationsService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'owner-1',
+          link: '/opportunities/1',
+        }),
+      );
     });
 
     it('throws ConflictException on Prisma unique constraint error P2002', async () => {
@@ -799,6 +927,7 @@ describe('OpportunitiesService', () => {
         title: 'Title',
         status: 'PUBLISHED',
         lifecycleState: 'ACTIVE',
+        acceptsApplications: true,
         ownerId: 'owner-1',
       } as any);
       jest
@@ -824,6 +953,7 @@ describe('OpportunitiesService', () => {
         title: 'Title',
         status: 'PUBLISHED',
         lifecycleState: 'ACTIVE',
+        acceptsApplications: true,
         ownerId: 'owner-1',
       } as any);
       jest
@@ -920,6 +1050,26 @@ describe('OpportunitiesService', () => {
       const res = await service.getMyOpportunities('user-1');
 
       expect(res).toHaveLength(1);
+    });
+  });
+
+  describe('IsContactInfoConstraint', () => {
+    const constraint = new IsContactInfoConstraint();
+
+    it('validates contact strings and rejects invalid values', () => {
+      expect(constraint.validate('@valid_user')).toBe(true);
+      expect(constraint.validate('+380501234567')).toBe(true);
+      expect(constraint.validate('invalid-contact')).toBe(false);
+      expect(constraint.validate(12345)).toBe(false);
+      expect(constraint.validate(null)).toBe(false);
+    });
+
+    it('returns default error message for property', () => {
+      const message = constraint.defaultMessage({
+        property: 'contactInfo',
+      } as ValidationArguments);
+
+      expect(message).toContain('contactInfo must be a valid Telegram');
     });
   });
 });

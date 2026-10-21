@@ -1,44 +1,59 @@
-import { describe, it, expect } from 'vitest';
-import React from 'react';
-import { renderToString } from 'react-dom/server';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Button } from './Button';
 
 describe('UNA Button Component', () => {
   it('should render standard button element with default type="button"', () => {
-    const html = renderToString(<Button>Click me</Button>);
+    render(<Button>Click me</Button>);
 
-    expect(html).toContain('<button');
-    expect(html).toContain('type="button"');
-    expect(html).toContain('Click me');
+    const button = screen.getByRole('button', { name: /click me/i });
+
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveAttribute('type', 'button');
   });
 
   it('should render an anchor element when isLink is true', () => {
-    const html = renderToString(
+    render(
       <Button isLink href="/dashboard">
         Dashboard Link
       </Button>,
     );
 
-    expect(html).toContain('<a');
-    expect(html).toContain('href="/dashboard"');
-    expect(html).toContain('Dashboard Link');
-    expect(html).not.toContain('<button');
+    const link = screen.getByRole('link', { name: /dashboard link/i });
+
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', '/dashboard');
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('should apply custom className and variant styles', () => {
-    const html = renderToString(
+    render(
       <Button variant="secondary" size="large" className="custom-test-class">
         Action
       </Button>,
     );
 
-    expect(html).toContain('custom-test-class');
-    expect(html).toContain('Action');
+    const button = screen.getByRole('button', { name: /action/i });
+
+    expect(button).toHaveClass('custom-test-class');
   });
 
   it('should pass through native button attributes like disabled', () => {
-    const html = renderToString(<Button disabled>Disabled Action</Button>);
+    render(<Button disabled>Disabled Action</Button>);
 
-    expect(html).toContain('disabled');
+    const button = screen.getByRole('button', { name: /disabled action/i });
+
+    expect(button).toBeDisabled();
+  });
+
+  it('should trigger onClick handler when clicked', async () => {
+    const handleClick = vi.fn();
+    const user = userEvent.setup();
+
+    render(<Button onClick={handleClick}>Click me</Button>);
+
+    await user.click(screen.getByRole('button', { name: /click me/i }));
+    expect(handleClick).toHaveBeenCalledTimes(1);
   });
 });

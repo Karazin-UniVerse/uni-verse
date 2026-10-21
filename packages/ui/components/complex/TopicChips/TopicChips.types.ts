@@ -4,10 +4,10 @@ export type TopicChipOption = {
 };
 
 export type TopicChipsProps = {
+  options: TopicChipOption[];
+  onSelect: (id: string) => void;
   label?: string;
   ariaLabel?: string;
-  options: TopicChipOption[];
   selectedId?: string;
-  onSelect: (id: string) => void;
   className?: string;
 };

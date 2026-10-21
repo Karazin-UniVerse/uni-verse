@@ -7,12 +7,12 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { getPrismaErrorCode } from '../utils/prisma-error';
 import {
   CreateOpportunityDto,
   UpdateOpportunityDto,
   ApplyOpportunityDto,
   ModerateOpportunityDto,
-  ModerateAction,
   FindOpportunitiesDto,
 } from './dto';
 import {
@@ -24,6 +24,8 @@ import {
   Prisma,
   Role,
 } from '@universe/database';
+import { OPPORTUNITY_MODERATE_ACTION } from '@universe/core/constants/opportunities';
+import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 
 export type OpportunityWithOwner = Opportunity & {
   owner: { id: string; name: string | null; email: string };
@@ -82,7 +84,13 @@ export class OpportunitiesService {
       userRoles?.includes(Role.OPPORTUNITIES_MODERATOR),
     );
 
-    if (status && status !== OpportunityStatus.PUBLISHED && isModerator) {
+    if (status && status !== OpportunityStatus.PUBLISHED) {
+      if (!isModerator) {
+        throw new ForbiddenException(
+          'Only OPPORTUNITIES_MODERATOR can view opportunities with status other than PUBLISHED',
+        );
+      }
+
       where.status = status;
     } else {
       where.status = OpportunityStatus.PUBLISHED;
@@ -158,10 +166,21 @@ export class OpportunitiesService {
       );
     }
 
-    const data: Prisma.OpportunityUpdateInput =
-      opportunity.status === OpportunityStatus.PUBLISHED
-        ? { ...dto, status: OpportunityStatus.READY_FOR_REVIEW }
-        : dto;
+    const hasContentChanges =
+      dto.title !== undefined ||
+      dto.description !== undefined ||
+      dto.ownerContactInfo !== undefined ||
+      dto.paymentType !== undefined ||
+      dto.paymentDetails !== undefined;
+
+    const data: Prisma.OpportunityUpdateInput = { ...dto };
+
+    if (
+      opportunity.status === OpportunityStatus.PUBLISHED &&
+      hasContentChanges
+    ) {
+      data.status = OpportunityStatus.READY_FOR_REVIEW;
+    }
 
     return this.prisma.opportunity.update({
       where: { id },
@@ -289,7 +308,7 @@ export class OpportunitiesService {
         status,
         comment: ownerComment || null,
       }),
-      link: '/my-applications',
+      link: `${OPPORTUNITIES_ROUTE}/${app.opportunityId}`,
     });
 
     return updated;
@@ -311,9 +330,24 @@ export class OpportunitiesService {
       );
     }
 
-    if (opportunity.lifecycleState !== OpportunityLifecycleState.ACTIVE) {
+    if (opportunity.ownerId === userId) {
+      throw new ForbiddenException('Cannot apply to your own opportunity');
+    }
+
+    const allowedStates: OpportunityLifecycleState[] = [
+      OpportunityLifecycleState.START,
+      OpportunityLifecycleState.ACTIVE,
+    ];
+
+    if (!allowedStates.includes(opportunity.lifecycleState)) {
       throw new BadRequestException(
-        'Cannot apply to an opportunity that is not active',
+        'Cannot apply to an opportunity in this phase',
+      );
+    }
+
+    if (!opportunity.acceptsApplications) {
+      throw new BadRequestException(
+        'This opportunity is not currently accepting applications',
       );
     }
 
@@ -337,12 +371,7 @@ export class OpportunitiesService {
         },
       });
     } catch (error) {
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'code' in error &&
-        (error as Record<string, unknown>).code === 'P2002'
-      ) {
+      if (getPrismaErrorCode(error) === 'P2002') {
         throw new ConflictException('Already applied to this opportunity');
       }
 
@@ -357,7 +386,7 @@ export class OpportunitiesService {
         opportunityTitle: opportunity.title,
         applicantName: dto.applicantName,
       }),
-      link: `/my-opportunities/${id}`,
+      link: `${OPPORTUNITIES_ROUTE}/${id}`,
     });
 
     return app;
@@ -443,11 +472,17 @@ export class OpportunitiesService {
 
     let newStatus: OpportunityStatus;
 
-    if (dto.action === ModerateAction.APPROVE) {
+    if (dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE) {
       newStatus = OpportunityStatus.PUBLISHED;
-    } else if (dto.action === ModerateAction.REJECT) {
+    } else if (dto.action === OPPORTUNITY_MODERATE_ACTION.REJECT) {
       newStatus = OpportunityStatus.REJECTED;
-    } else if (dto.action === ModerateAction.REQUIRE_CHANGES) {
+    } else if (dto.action === OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES) {
+      if (!dto.comment?.trim()) {
+        throw new BadRequestException(
+          'Comment is required when requesting changes',
+        );
+      }
+
       newStatus = OpportunityStatus.REQUIRES_CHANGES;
     } else {
       throw new BadRequestException('Unknown moderation action');
@@ -470,7 +505,7 @@ export class OpportunitiesService {
         action: dto.action,
         comment: dto.comment || null,
       }),
-      link: '/my-opportunities',
+      link: `${OPPORTUNITIES_ROUTE}/${opp.id}`,
     });
 
     return opp;

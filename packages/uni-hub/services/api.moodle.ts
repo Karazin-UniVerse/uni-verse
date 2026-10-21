@@ -1,13 +1,15 @@
 import type { StudentProfile } from '@core/types';
 import type {
-  Course,
+  MoodleCourse,
   Grade,
   Assignment,
   MoodleEvent,
   NotificationsResponse,
   CourseStatistics,
   CourseSection,
-} from '@uni-hub/types';
+  SubmissionStatus,
+  UploadedFile,
+} from '@core/types/moodle';
 import { request, buildQueryString } from './api.request';
 
 export interface GetAssignmentsParams {
@@ -21,8 +23,8 @@ export interface GetAssignmentsParams {
 }
 
 export class MoodleApi {
-  getCourses(): Promise<{ data: Course[] }> {
-    return request<Course[]>('/moodle/courses');
+  getCourses(): Promise<{ data: MoodleCourse[] }> {
+    return request<MoodleCourse[]>('/moodle/courses');
   }
 
   getGrades(): Promise<{ data: { grades: Grade[] } }> {
@@ -55,8 +57,8 @@ export class MoodleApi {
     return request<CourseSection[]>(`/moodle/courses/${courseId}/contents`);
   }
 
-  getAssignmentStatus(assignId: number): Promise<{ data: unknown }> {
-    return request<unknown>(`/moodle/assignments/${assignId}/status`);
+  getAssignmentStatus(assignId: number): Promise<{ data: SubmissionStatus }> {
+    return request<SubmissionStatus>(`/moodle/assignments/${assignId}/status`);
   }
 
   submitAssignment(
@@ -70,8 +72,8 @@ export class MoodleApi {
     });
   }
 
-  uploadFile(filename: string, filebase64: string): Promise<{ data: unknown }> {
-    return request<unknown>('/moodle/files/upload', {
+  uploadFile(filename: string, filebase64: string): Promise<{ data: UploadedFile[] }> {
+    return request<UploadedFile[]>('/moodle/files/upload', {
       method: 'POST',
       body: JSON.stringify({ filename, filebase64 }),
     });

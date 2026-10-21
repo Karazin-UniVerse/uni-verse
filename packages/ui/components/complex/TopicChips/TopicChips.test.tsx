@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import React from 'react';
-import { renderToString } from 'react-dom/server';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { TopicChips } from './TopicChips';
+import { noop } from '@core/utils/fn';
 
 describe('TopicChips Component', () => {
   const sampleOptions = [
@@ -11,56 +12,78 @@ describe('TopicChips Component', () => {
   ];
 
   it('should render radiogroup container with role="radiogroup" and accessible label', () => {
-    const html = renderToString(
+    render(
       <TopicChips
         label="Select Option"
         options={sampleOptions}
         selectedId="opt1"
-        onSelect={() => {}}
+        onSelect={noop}
       />,
     );
 
-    expect(html).toContain('role="radiogroup"');
-    expect(html).toContain('aria-label="Select Option"');
-    expect(html).toContain('Select Option');
+    const group = screen.getByRole('radiogroup', { name: 'Select Option' });
+
+    expect(group).toBeInTheDocument();
   });
 
   it('should render fallback ariaLabel when label is omitted', () => {
-    const html = renderToString(
+    render(
       <TopicChips
         ariaLabel="Inquiry topics"
         options={sampleOptions}
         selectedId="opt1"
-        onSelect={() => {}}
+        onSelect={noop}
       />,
     );
 
-    expect(html).toContain('aria-label="Inquiry topics"');
+    const group = screen.getByRole('radiogroup', { name: 'Inquiry topics' });
+
+    expect(group).toBeInTheDocument();
   });
 
   it('should set aria-checked and roving tabindex correctly when an item is selected', () => {
-    const html = renderToString(
-      <TopicChips options={sampleOptions} selectedId="opt2" onSelect={() => {}} />,
-    );
+    render(<TopicChips options={sampleOptions} selectedId="opt2" onSelect={noop} />);
 
-    expect(html).toContain('role="radio"');
-    // opt2 should be checked with tabIndex=0
-    expect(html).toMatch(/role="radio"[^>]*aria-checked="true"[^>]*tabindex="0"[^>]*>Option 2/);
-    // opt1 should be unchecked with tabIndex=-1
-    expect(html).toMatch(/role="radio"[^>]*aria-checked="false"[^>]*tabindex="-1"[^>]*>Option 1/);
-    // opt3 should be unchecked with tabIndex=-1
-    expect(html).toMatch(/role="radio"[^>]*aria-checked="false"[^>]*tabindex="-1"[^>]*>Option 3/);
+    const opt1 = screen.getByRole('radio', { name: 'Option 1' });
+    const opt2 = screen.getByRole('radio', { name: 'Option 2' });
+    const opt3 = screen.getByRole('radio', { name: 'Option 3' });
+
+    expect(opt2).toHaveAttribute('aria-checked', 'true');
+    expect(opt2).toHaveAttribute('tabindex', '0');
+
+    expect(opt1).toHaveAttribute('aria-checked', 'false');
+    expect(opt1).toHaveAttribute('tabindex', '-1');
+
+    expect(opt3).toHaveAttribute('aria-checked', 'false');
+    expect(opt3).toHaveAttribute('tabindex', '-1');
   });
 
   it('should give the first option tabIndex="0" when no item is selected', () => {
-    const html = renderToString(
-      <TopicChips options={sampleOptions} selectedId="" onSelect={() => {}} />,
-    );
+    render(<TopicChips options={sampleOptions} selectedId="" onSelect={noop} />);
 
-    // opt1 should have tabIndex=0
-    expect(html).toMatch(/role="radio"[^>]*aria-checked="false"[^>]*tabindex="0"[^>]*>Option 1/);
-    // opt2 and opt3 should have tabIndex=-1
-    expect(html).toMatch(/role="radio"[^>]*aria-checked="false"[^>]*tabindex="-1"[^>]*>Option 2/);
-    expect(html).toMatch(/role="radio"[^>]*aria-checked="false"[^>]*tabindex="-1"[^>]*>Option 3/);
+    const opt1 = screen.getByRole('radio', { name: 'Option 1' });
+    const opt2 = screen.getByRole('radio', { name: 'Option 2' });
+    const opt3 = screen.getByRole('radio', { name: 'Option 3' });
+
+    expect(opt1).toHaveAttribute('aria-checked', 'false');
+    expect(opt1).toHaveAttribute('tabindex', '0');
+
+    expect(opt2).toHaveAttribute('aria-checked', 'false');
+    expect(opt2).toHaveAttribute('tabindex', '-1');
+
+    expect(opt3).toHaveAttribute('aria-checked', 'false');
+    expect(opt3).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('should trigger onSelect when a radio option is clicked', async () => {
+    const handleSelect = vi.fn();
+    const user = userEvent.setup();
+
+    render(<TopicChips options={sampleOptions} selectedId="opt1" onSelect={handleSelect} />);
+
+    const opt2 = screen.getByRole('radio', { name: 'Option 2' });
+
+    await user.click(opt2);
+    expect(handleSelect).toHaveBeenCalledWith('opt2');
   });
 });

@@ -8,7 +8,7 @@ Evaluate the change strictly against these failure modes:
 2. **DRY VIOLATIONS & DUPLICATION:** the author must reuse existing core utilities, local helpers and the shared UI library (`packages/ui`) instead of creating duplicate implementations. Flag a function with the same behavior as an existing one under another name, and shared logic left at a lower level (component, package) when it belongs one level up (`@universe/core` for cross-package). Rule: [code-style](code-style.md#reuse-before-writing-dry).
 3. **TASK INTENT & ARCHITECTURAL MATCH:** the code must match the architectural requirements and the task intent. Flag hallucinated extra features, out-of-scope functionality and drift from the requirements. Placement rules: [architecture](architecture.md).
 4. **AI SLOP & VERBOSITY:** flag excessive defensive checks, comments that restate what the code does, dead code and unnecessary helper utilities. Lint and Sonar rules: [quality](quality.md).
-5. **REGRESSION PREVENTION:** check critically whether the change breaks existing logic elsewhere in the system.
+5. **REGRESSION PREVENTION & BUSINESS LOGIC PRESERVATION:** check critically whether the change breaks existing logic elsewhere in the system. Flag any unauthorized, silent or accidental modifications to domain business logic, access control, status lifecycles or grading criteria during refactorings or fixes. Suggestions modifying business logic must be explicitly approved before application. Rule: [code-style](code-style.md#preservation-of-business-logic).
 6. **SECURITY:** flag potential vulnerabilities: injections, insecure data handling, missing authorization.
 7. **ACCESSIBILITY (a11y):** check ARIA roles, keyboard navigation and contrast. Rules: [quality](quality.md).
 8. **LEGACY SHIMS & RETROACTIVE RE-EXPORTS (Backtracking):** flag backwards-compatibility aliases, proxy re-exports and transitional wrappers introduced during refactoring. Require direct updates of consumer imports and removal of obsolete files. Rule: [code-style](code-style.md).
@@ -18,6 +18,8 @@ Evaluate the change strictly against these failure modes:
 12. **MAGIC VALUES:** bare numbers or domain strings in logic instead of core constants. Rule: [api-and-config](api-and-config.md#no-magic-values).
 13. **MISSING OPERATIONAL CHANGES:** a new env variable absent from `.env.example`, a new script or service without docs, UI changes without screenshots. Rules: [config](api-and-config.md#config-and-environment), [PR screenshots](workflow.md#branches-commits-pull-requests).
 14. **API ACCESS OUTSIDE CLIENT CLASSES:** direct `fetch` or raw `request` calls in components, hooks or backend services other than the client class itself. Flag the existing `request()` function only when the PR touches it. Rule: [api-and-config](api-and-config.md#api-clients).
+15. **SERVER STATE OUTSIDE TANSTACK QUERY:** API data copied into `useState`, fetched in `useEffect`, or wrapped in a hand-rolled `loading` / `refetch` helper; a failed load turned into an empty list; a mutation that refetches lists by hand instead of invalidating the feature's key. Rule: [data and contracts](data-and-contracts.md#server-state-tanstack-query).
+16. **CONTRACT DRIFT:** an API shape declared again in `packages/uni-hub` or in a backend DTO instead of imported from `@universe/core`; a DTO that does not `implements` the core type; a status union repeated in several packages. Rule: [data and contracts](data-and-contracts.md#shared-api-contracts).
 
 ## Output requirements
 

@@ -36,6 +36,7 @@
 }
 
 .panel h3,
+.dayNav h3,
 .weekNav h3,
 .monthNav h3 {
   margin: 0;
@@ -81,6 +82,7 @@
   gap: var(--space-16);
 }
 
+.dayNav,
 .weekNav,
 .monthNav {
   display: flex;

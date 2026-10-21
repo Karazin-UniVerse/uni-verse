@@ -93,6 +93,13 @@
   margin-bottom: 2px;
 }
 
+.categoryBadgeGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
 .categoryPill {
   display: inline-flex;
   align-items: center;
@@ -140,6 +147,19 @@
   padding: 5px 12px;
   border-radius: 12px;
   border: 1px solid var(--card-border);
+}
+
+.closedPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
+  padding: 4px 8px;
+  border-radius: 12px;
 }
 
 .cardTitle {
@@ -272,7 +292,7 @@
 }
 
 .warningBox {
-  margin-top: var(--space-12);
+  margin-top: var(--space-4);
   padding: var(--space-12) var(--space-16);
   background: color-mix(in srgb, var(--warning-color, #f59e0b) 10%, var(--bg-surface));
   border-left: 3px solid var(--warning-color, #f59e0b);

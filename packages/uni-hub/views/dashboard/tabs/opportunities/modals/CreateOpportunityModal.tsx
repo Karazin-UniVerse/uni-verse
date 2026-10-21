@@ -12,6 +12,7 @@ export interface CreateOpportunityModalProps {
   setFormData: React.Dispatch<React.SetStateAction<CreateOpportunityFormData>>;
   onSubmit: (e: React.SyntheticEvent<HTMLFormElement>) => void;
   submitting: boolean;
+  isEdit?: boolean;
 }
 
 export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
@@ -21,6 +22,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   setFormData,
   onSubmit,
   submitting,
+  isEdit = false,
 }) => {
   const { formatMessage } = useLanguage();
 
@@ -28,7 +30,11 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
     <CreateOpportunityModalUI
       open={open}
       onClose={onClose}
-      title={formatMessage('opportunities.createModal.title')}
+      title={
+        isEdit
+          ? formatMessage('opportunities.createModal.editTitle')
+          : formatMessage('opportunities.createModal.title')
+      }
       formData={formData}
       setFormData={setFormData}
       onSubmit={onSubmit}
@@ -46,8 +52,13 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
       )}
       unpaidOptionLabel={formatMessage('opportunities.createModal.unpaidOption')}
       paidOptionLabel={formatMessage('opportunities.createModal.paidOption')}
+      acceptsApplicationsLabel={formatMessage('opportunities.createModal.acceptsApplications')}
       cancelText={formatMessage('opportunities.createModal.cancel')}
-      submitText={formatMessage('opportunities.createModal.submit')}
+      submitText={
+        isEdit
+          ? formatMessage('opportunities.createModal.saveChanges')
+          : formatMessage('opportunities.createModal.submit')
+      }
       savingText={formatMessage('opportunities.createModal.saving')}
     />
   );

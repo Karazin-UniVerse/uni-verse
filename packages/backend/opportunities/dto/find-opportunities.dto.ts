@@ -1,8 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { OpportunityStatus, PaymentType } from '@universe/database';
+import type { GetOpportunitiesParams } from '@universe/core/types/opportunities';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 
-export class FindOpportunitiesDto {
+export class FindOpportunitiesDto implements GetOpportunitiesParams {
   @ApiPropertyOptional({ enum: OpportunityStatus })
   @IsEnum(OpportunityStatus)
   @IsOptional()
