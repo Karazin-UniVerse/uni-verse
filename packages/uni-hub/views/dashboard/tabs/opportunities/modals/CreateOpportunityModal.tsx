@@ -52,6 +52,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
       )}
       unpaidOptionLabel={formatMessage('opportunities.createModal.unpaidOption')}
       paidOptionLabel={formatMessage('opportunities.createModal.paidOption')}
+      acceptsApplicationsLabel={formatMessage('opportunities.createModal.acceptsApplications')}
       cancelText={formatMessage('opportunities.createModal.cancel')}
       submitText={
         isEdit

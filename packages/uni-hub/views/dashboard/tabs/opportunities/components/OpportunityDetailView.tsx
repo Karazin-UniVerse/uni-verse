@@ -19,6 +19,7 @@ export interface OpportunityDetailViewProps {
   onLifecycleChange: (id: string, state: OpportunityLifecycle) => void;
   onOpenApply: () => void;
   onEdit?: (opportunity: Opportunity) => void;
+  onToggleAcceptsApplications?: (accepts: boolean) => void;
 }
 
 const lifecycleLabelKey = {
@@ -37,6 +38,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   onLifecycleChange,
   onOpenApply,
   onEdit,
+  onToggleAcceptsApplications,
 }) => {
   const { formatMessage, language } = useLanguage();
 
@@ -133,6 +135,10 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       onLifecycleChange={(state) =>
         onLifecycleChange(opportunity.id, state as OpportunityLifecycle)
       }
+      acceptsApplications={opportunity.acceptsApplications !== false}
+      onToggleAcceptsApplications={onToggleAcceptsApplications}
+      acceptsApplicationsLabel={formatMessage('opportunities.detailModal.acceptsApplications')}
+      applicationsClosedText={formatMessage('opportunities.detailModal.applicationsClosed')}
       canApply={canApply}
       applyText={formatMessage('opportunities.detailModal.apply')}
       onOpenApply={onOpenApply}

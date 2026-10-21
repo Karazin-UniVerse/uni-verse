@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ModerationRejectModal } from './ModerationRejectModal';
 import type { ModerationRejectModalProps } from './ModerationRejectModal.types';
+import { noop } from '@core/utils/fn';
 
 const meta = {
   title: 'Complex/ModerationRejectModal',
@@ -12,11 +13,11 @@ const meta = {
   },
   args: {
     open: true,
-    onClose: () => {},
-    onRevise: () => {},
-    onReject: () => {},
+    onClose: noop,
+    onRevise: noop,
+    onReject: noop,
     comment: '',
-    onCommentChange: () => {},
+    onCommentChange: noop,
     isSubmitting: false,
     title: 'Модерація можливості',
     commentLabel: 'Причина відхилення або коментар для доопрацювання',

@@ -4,6 +4,7 @@ import { FixedCell } from '../../../storybook/FixedCell/FixedCell';
 import { VariantMatrix } from '../../../storybook/VariantMatrix/VariantMatrix';
 import { Modal } from './Modal';
 import type { ModalProps } from './Modal.types';
+import { noop } from '@core/utils/fn';
 
 type MatrixTitle = 'with title' | 'without title';
 type MatrixClose = 'with close button' | 'without close button';
@@ -54,7 +55,7 @@ type Story = StoryObj<typeof meta>;
 export const Matrix: Story = {
   args: {
     open: true,
-    onClose: () => {},
+    onClose: noop,
     children: null,
   },
   parameters: {
@@ -68,7 +69,7 @@ export const Matrix: Story = {
         <FixedCell width={380} height={220}>
           <Modal
             open
-            onClose={() => {}}
+            onClose={noop}
             closeLabel="Close"
             closeOnClickOutside={false}
             closeOnEscape={false}

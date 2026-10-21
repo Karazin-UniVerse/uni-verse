@@ -10,6 +10,7 @@ export interface CreateOpportunityFormData {
   ownerContactInfo: string;
   paymentType: OpportunityPaymentType;
   paymentDetails: string;
+  acceptsApplications?: boolean;
 }
 
 export interface RejectModalState {

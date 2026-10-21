@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SegmentedControl } from './SegmentedControl';
+import { noop } from '@core/utils/fn';
 
 describe('SegmentedControl Component', () => {
   const sampleItems = [
@@ -17,7 +18,7 @@ describe('SegmentedControl Component', () => {
         selectedId="first"
         panelIdPrefix="panel"
         ariaLabel="Sections"
-        onSelect={() => {}}
+        onSelect={noop}
       />,
     );
 
@@ -32,7 +33,7 @@ describe('SegmentedControl Component', () => {
         items={sampleItems}
         selectedId="second"
         panelIdPrefix="panel"
-        onSelect={() => {}}
+        onSelect={noop}
       />,
     );
 
@@ -52,7 +53,7 @@ describe('SegmentedControl Component', () => {
         items={sampleItems}
         selectedId="first"
         panelIdPrefix="study-panel"
-        onSelect={() => {}}
+        onSelect={noop}
       />,
     );
 
@@ -69,7 +70,7 @@ describe('SegmentedControl Component', () => {
         items={sampleItems}
         selectedId="first"
         panelIdPrefix="panel"
-        onSelect={() => {}}
+        onSelect={noop}
       />,
     );
 

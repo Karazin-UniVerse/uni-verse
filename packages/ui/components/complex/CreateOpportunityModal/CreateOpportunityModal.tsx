@@ -2,6 +2,7 @@ import React, { useId } from 'react';
 import { Modal } from '../../una/Modal';
 import { Button } from '../../una/Button';
 import { TextInput } from '../../una/inputs/TextInput';
+import { CheckBox } from '../../una/inputs/CheckBox';
 import { Select } from '../../una/Select';
 import type {
   CreateOpportunityModalProps,
@@ -31,6 +32,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   cancelText,
   submitText,
   savingText,
+  acceptsApplicationsLabel,
   submitting = false,
 }) => {
   const titleId = useId();
@@ -121,6 +123,24 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
               value={formData.paymentDetails}
               onChange={(e) => setFormData((prev) => ({ ...prev, paymentDetails: e.target.value }))}
             />
+          </div>
+        )}
+
+        {acceptsApplicationsLabel && (
+          <div className={styles.fieldGroup}>
+            <label className={styles.checkboxLabel}>
+              <CheckBox
+                variant="primary"
+                checked={formData.acceptsApplications ?? true}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    acceptsApplications: e.target.checked,
+                  }))
+                }
+              />
+              <span>{acceptsApplicationsLabel}</span>
+            </label>
           </div>
         )}
 

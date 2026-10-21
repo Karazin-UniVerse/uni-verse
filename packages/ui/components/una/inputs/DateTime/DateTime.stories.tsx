@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { VariantMatrix } from '../../../../storybook/VariantMatrix/VariantMatrix';
 import { DateTime } from './DateTime';
 import type { DateTimeProps } from './DateTime.types';
+import { noop } from '@core/utils/fn';
 
 type MatrixRow =
   'primary' | 'secondary' | 'transparent' | 'primary disabled' | 'secondary disabled';
@@ -53,7 +54,7 @@ type Story = StoryObj<typeof DateTime>;
 export const Matrix: Story = {
   args: {
     selected: null,
-    onChange: () => {},
+    onChange: noop,
   },
   parameters: {
     layout: 'padded',

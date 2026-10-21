@@ -6,6 +6,7 @@ import { VariantRow } from '../../../storybook/VariantMatrix/VariantRow';
 import { Dropdown } from './Dropdown';
 import { DropdownOption } from './DropdownOption';
 import type { DropdownProps } from './Dropdown.types';
+import { noop } from '@core/utils/fn';
 
 type MatrixPlacement = NonNullable<DropdownProps['placement']>;
 
@@ -80,7 +81,7 @@ export const Matrix: Story = {
                   key={language.code}
                   icon={language.flag}
                   isSelected={index === 0}
-                  onSelect={() => {}}
+                  onSelect={noop}
                 >
                   {language.label}
                 </DropdownOption>
