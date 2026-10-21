@@ -47,8 +47,18 @@ describe('contacts utils', () => {
       assert.strictEqual(isValidContactInfo('+380500000000'), false);
       assert.strictEqual(isValidContactInfo('0500000000'), false);
       assert.strictEqual(isValidContactInfo('+380+501234567'), false);
-      assert.strictEqual(isValidContactInfo('+3705555555555'), false);
-      assert.strictEqual(isValidContactInfo('+487777777777'), false);
+    });
+
+    test('accepts international formats with repeated subscriber digits', () => {
+      for (const phone of [
+        '+12026666666',
+        '+1 (202) 666-6666',
+        '+442011111111',
+        '+37061234567',
+        '+48501234567',
+      ]) {
+        assert.strictEqual(isValidContactInfo(phone), true, phone);
+      }
     });
 
     test('rejects empty or invalid formats', () => {

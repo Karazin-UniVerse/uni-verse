@@ -20,11 +20,6 @@ function isValidPhoneNumber(trimmed: string): boolean {
     return false;
   }
 
-  // Reject numbers where the subscriber portion is all identical digits (e.g. +3705555555555, +380000000000)
-  if (/^\d{1,4}(\d)\1{5,}$/.test(digitsOnly)) {
-    return false;
-  }
-
   if (trimmed.startsWith('+')) {
     // Country code cannot start with 0; total digits between 8 and 15
     if (digitsOnly.length < 8 || digitsOnly.length > 15 || digitsOnly.startsWith('0')) {

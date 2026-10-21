@@ -66,7 +66,7 @@ export class OpportunitiesService {
         select: { id: true },
       });
 
-      await Promise.allSettled(
+      const deliveries = await Promise.allSettled(
         moderators.map((moderator) =>
           this.notificationsService.createNotification({
             userId: moderator.id,
@@ -79,6 +79,17 @@ export class OpportunitiesService {
           }),
         ),
       );
+
+      for (const [index, delivery] of deliveries.entries()) {
+        if (delivery.status === 'rejected') {
+          this.logger.error(
+            `Failed to deliver moderation notification for opportunity ${opportunityId} to moderator ${moderators[index].id}`,
+            delivery.reason instanceof Error
+              ? delivery.reason.stack
+              : delivery.reason,
+          );
+        }
+      }
     } catch (error) {
       this.logger.error(
         `Failed to deliver moderation notifications for opportunity ${opportunityId}`,
@@ -413,18 +424,26 @@ export class OpportunitiesService {
     let app;
 
     if (existing?.status === ApplicationStatus.WITHDRAWN) {
-      app = await this.prisma.opportunityApplication.update({
-        where: { id: existing.id },
-        data: {
-          applicantName: dto.applicantName,
-          contactInfo: dto.contactInfo,
-          briefDescription: dto.briefDescription ?? null,
-          motivation: dto.motivation ?? null,
-          answers: dto.answers ?? null,
-          status: ApplicationStatus.SUBMITTED,
-          ownerComment: null,
-        },
-      });
+      try {
+        app = await this.prisma.opportunityApplication.update({
+          where: { id: existing.id, status: ApplicationStatus.WITHDRAWN },
+          data: {
+            applicantName: dto.applicantName,
+            contactInfo: dto.contactInfo,
+            briefDescription: dto.briefDescription ?? null,
+            motivation: dto.motivation ?? null,
+            answers: dto.answers ?? null,
+            status: ApplicationStatus.SUBMITTED,
+            ownerComment: null,
+          },
+        });
+      } catch (error) {
+        if (getPrismaErrorCode(error) === 'P2025') {
+          throw new ConflictException('Application is no longer withdrawn');
+        }
+
+        throw error;
+      }
     } else {
       try {
         app = await this.prisma.opportunityApplication.create({

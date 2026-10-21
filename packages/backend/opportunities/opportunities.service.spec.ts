@@ -9,8 +9,47 @@ import {
   BadRequestException,
   NotFoundException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
-import { Role } from '@universe/database';
+import {
+  Role,
+  type Prisma,
+  type Opportunity,
+  type OpportunityApplication,
+} from '@universe/database';
+
+const publishedOpportunity: Opportunity = {
+  id: 'race-opportunity',
+  title: 'Research assistant',
+  description: 'Research project',
+  ownerContactInfo: '@research_lab',
+  partnerInfo: null,
+  status: 'PUBLISHED',
+  lifecycleState: 'ACTIVE',
+  acceptsApplications: true,
+  paymentType: 'UNPAID',
+  paymentDetails: null,
+  details: null,
+  moderationComment: null,
+  ownerId: 'owner',
+  createdAt: new Date('2026-10-01T10:00:00Z'),
+  updatedAt: new Date('2026-10-01T10:00:00Z'),
+};
+
+const withdrawnApplication: OpportunityApplication = {
+  id: 'withdrawn-application',
+  opportunityId: publishedOpportunity.id,
+  applicantId: 'candidate',
+  applicantName: 'Candidate',
+  contactInfo: '@candidate',
+  briefDescription: null,
+  motivation: null,
+  answers: null,
+  ownerComment: null,
+  status: 'WITHDRAWN',
+  createdAt: new Date('2026-10-01T10:00:00Z'),
+  updatedAt: new Date('2026-10-01T10:00:00Z'),
+};
 
 describe('OpportunitiesService', () => {
   let service: OpportunitiesService;
@@ -56,6 +95,10 @@ describe('OpportunitiesService', () => {
     prisma = module.get<PrismaService>(PrismaService);
     notificationsService =
       module.get<NotificationsService>(NotificationsService);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('should be defined', () => {
@@ -519,6 +562,87 @@ describe('OpportunitiesService', () => {
   });
 
   describe('changeStatus', () => {
+    it('logs failed moderator deliveries without failing submission or skipping other moderators', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
+        status: 'DRAFT',
+      });
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        ...publishedOpportunity,
+        status: 'READY_FOR_REVIEW',
+      });
+      jest
+        .spyOn(prisma.user, 'findMany')
+        .mockResolvedValue([
+          { id: 'moderator-one' },
+          { id: 'moderator-two' },
+        ] as Awaited<ReturnType<typeof prisma.user.findMany>>);
+      const deliveryError = new Error('Notification write failed');
+      const deliveries = jest
+        .spyOn(notificationsService, 'createNotification')
+        .mockRejectedValueOnce(deliveryError)
+        .mockResolvedValueOnce({
+          id: 'notification-two',
+          userId: 'moderator-two',
+          title: 'notifications.opportunityReadyForReview.title',
+          message: '{}',
+          type: 'OPPORTUNITY_READY_FOR_REVIEW',
+          link: '/opportunities/race-opportunity',
+          isRead: false,
+          createdAt: new Date(),
+        });
+      const logError = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation(() => undefined);
+
+      await expect(
+        service.changeStatus(
+          'owner',
+          publishedOpportunity.id,
+          'READY_FOR_REVIEW',
+        ),
+      ).resolves.toMatchObject({ status: 'READY_FOR_REVIEW' });
+
+      expect(deliveries).toHaveBeenCalledTimes(2);
+      expect(deliveries).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'moderator-two' }),
+      );
+      expect(logError).toHaveBeenCalledWith(
+        expect.stringContaining('moderator-one'),
+        deliveryError.stack,
+      );
+    });
+
+    it('logs moderator lookup failures without failing the committed submission', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
+        status: 'DRAFT',
+      });
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        ...publishedOpportunity,
+        status: 'READY_FOR_REVIEW',
+      });
+      const lookupError = new Error('Moderator lookup failed');
+
+      jest.spyOn(prisma.user, 'findMany').mockRejectedValue(lookupError);
+      const logError = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation(() => undefined);
+
+      await expect(
+        service.changeStatus(
+          'owner',
+          publishedOpportunity.id,
+          'READY_FOR_REVIEW',
+        ),
+      ).resolves.toMatchObject({ status: 'READY_FOR_REVIEW' });
+
+      expect(logError).toHaveBeenCalledWith(
+        expect.stringContaining(publishedOpportunity.id),
+        lookupError.stack,
+      );
+      expect(notificationsService.createNotification).not.toHaveBeenCalled();
+    });
     it('throws NotFoundException if not owner and opportunity is unpublished', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
@@ -820,6 +944,133 @@ describe('OpportunitiesService', () => {
   });
 
   describe('apply', () => {
+    it.each(['SUBMITTED', 'UNDER_REVIEW', 'ACCEPTED', 'REJECTED'] as const)(
+      'rejects resubmission of an application in %s status',
+      async (status) => {
+        jest
+          .spyOn(prisma.opportunity, 'findUnique')
+          .mockResolvedValue(publishedOpportunity);
+        jest
+          .spyOn(prisma.opportunityApplication, 'findFirst')
+          .mockResolvedValue({
+            ...withdrawnApplication,
+            status,
+          });
+
+        await expect(
+          service.apply('candidate', publishedOpportunity.id, {
+            applicantName: 'Candidate',
+            contactInfo: '@candidate',
+          }),
+        ).rejects.toThrow(ConflictException);
+
+        expect(prisma.opportunityApplication.update).not.toHaveBeenCalled();
+        expect(notificationsService.createNotification).not.toHaveBeenCalled();
+      },
+    );
+
+    it('preserves database errors other than a lost resubmission race', async () => {
+      jest
+        .spyOn(prisma.opportunity, 'findUnique')
+        .mockResolvedValue(publishedOpportunity);
+      jest
+        .spyOn(prisma.opportunityApplication, 'findFirst')
+        .mockResolvedValue(withdrawnApplication);
+      const databaseError = new Error('Connection lost');
+
+      jest
+        .spyOn(prisma.opportunityApplication, 'update')
+        .mockRejectedValue(databaseError);
+
+      await expect(
+        service.apply('candidate', publishedOpportunity.id, {
+          applicantName: 'Candidate',
+          contactInfo: '@candidate',
+        }),
+      ).rejects.toBe(databaseError);
+
+      expect(notificationsService.createNotification).not.toHaveBeenCalled();
+    });
+
+    it('allows only one concurrent resubmission and notifies the owner once', async () => {
+      jest
+        .spyOn(prisma.opportunity, 'findUnique')
+        .mockResolvedValue(publishedOpportunity);
+      // Both requests see the withdrawn snapshot before either performs its write.
+      jest
+        .spyOn(prisma.opportunityApplication, 'findFirst')
+        .mockResolvedValue(withdrawnApplication);
+      let storedApplication = { ...withdrawnApplication };
+      const applicationWrites: {
+        update: (
+          args: Prisma.OpportunityApplicationUpdateArgs,
+        ) => Promise<OpportunityApplication>;
+      } = prisma.opportunityApplication;
+
+      jest
+        .spyOn(applicationWrites, 'update')
+        .mockImplementation(async ({ where }) => {
+          if (where.status && where.status !== storedApplication.status) {
+            throw { code: 'P2025' };
+          }
+
+          storedApplication = { ...storedApplication, status: 'SUBMITTED' };
+
+          return storedApplication;
+        });
+
+      const request = { applicantName: 'Candidate', contactInfo: '@candidate' };
+      const results = await Promise.allSettled([
+        service.apply('candidate', publishedOpportunity.id, request),
+        service.apply('candidate', publishedOpportunity.id, request),
+      ]);
+
+      expect(
+        results.filter((result) => result.status === 'fulfilled'),
+      ).toHaveLength(1);
+      const rejected = results.find((result) => result.status === 'rejected');
+
+      expect(rejected).toMatchObject({ reason: expect.any(ConflictException) });
+      expect(notificationsService.createNotification).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not overwrite a completed application when its status changes before resubmission', async () => {
+      jest
+        .spyOn(prisma.opportunity, 'findUnique')
+        .mockResolvedValue(publishedOpportunity);
+      jest
+        .spyOn(prisma.opportunityApplication, 'findFirst')
+        .mockResolvedValue(withdrawnApplication);
+      const storedApplication = {
+        ...withdrawnApplication,
+        status: 'ACCEPTED' as const,
+      };
+      const applicationWrites: {
+        update: (
+          args: Prisma.OpportunityApplicationUpdateArgs,
+        ) => Promise<OpportunityApplication>;
+      } = prisma.opportunityApplication;
+
+      jest
+        .spyOn(applicationWrites, 'update')
+        .mockImplementation(async ({ where }) => {
+          if (where.status && where.status !== storedApplication.status) {
+            throw { code: 'P2025' };
+          }
+
+          return { ...storedApplication, status: 'SUBMITTED' };
+        });
+
+      await expect(
+        service.apply('candidate', publishedOpportunity.id, {
+          applicantName: 'Candidate',
+          contactInfo: '@candidate',
+        }),
+      ).rejects.toThrow(ConflictException);
+
+      expect(notificationsService.createNotification).not.toHaveBeenCalled();
+    });
+
     it('throws ForbiddenException if owner tries to apply to own opportunity', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
@@ -959,7 +1210,7 @@ describe('OpportunitiesService', () => {
       });
 
       expect(prisma.opportunityApplication.update).toHaveBeenCalledWith({
-        where: { id: 'app-withdrawn-1' },
+        where: { id: 'app-withdrawn-1', status: 'WITHDRAWN' },
         data: {
           applicantName: 'Іван Оновлений',
           contactInfo: '+380501234567',

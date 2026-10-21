@@ -28,20 +28,29 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
   const create = useCreateOpportunity({});
   const apply = useApplyToOpportunity({ currentUser, opportunity });
   const applicants = useApplicants();
-  const hasHandledViewParam = useRef(false);
+  const handledApplicantsRequest = useRef<string | null>(null);
+  const applicantsRequest =
+    searchParams.get('view') === 'applicants'
+      ? `${opportunity.id}?${searchParams.toString()}`
+      : null;
 
   const { open: openApplicants } = applicants;
 
   useEffect(() => {
+    if (applicantsRequest === null) {
+      handledApplicantsRequest.current = null;
+
+      return;
+    }
+
     if (
-      !hasHandledViewParam.current &&
-      searchParams.get('view') === 'applicants' &&
+      handledApplicantsRequest.current !== applicantsRequest &&
       currentUser.userId === opportunity.ownerId
     ) {
-      hasHandledViewParam.current = true;
+      handledApplicantsRequest.current = applicantsRequest;
       openApplicants(opportunity);
     }
-  }, [searchParams, currentUser.userId, opportunity, openApplicants]);
+  }, [applicantsRequest, currentUser.userId, opportunity, openApplicants]);
 
   return (
     <>
