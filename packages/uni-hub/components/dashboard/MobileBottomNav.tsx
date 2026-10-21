@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { LayoutGrid } from 'lucide-react';
+import { BREAKPOINTS } from '@core/constants/breakpoints';
+import { useMediaQuery } from '@uni-hub/hooks/useMediaQuery';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useFeatures } from '@uni-hub/features';
 import { playClick } from '@uni-hub/utils/soundEffects';
@@ -21,6 +23,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   isMoodleLinked = true,
 }) => {
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
+  const isDesktop = useMediaQuery('wider', BREAKPOINTS.md);
   const { formatMessage } = useLanguage();
   const flags = useFeatures();
 
@@ -69,6 +73,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
           <li className={styles.navItemWrapper}>
             <button
+              ref={moreButtonRef}
               type="button"
               className={`${styles.navItem} ${isMoreActive ? styles.active : ''}`}
               onClick={() => {
@@ -78,6 +83,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               title={formatMessage('nav.more')}
               aria-label={formatMessage('nav.more')}
               aria-expanded={isMoreSheetOpen}
+              aria-controls={isMoreSheetOpen ? 'mobile-more-sheet' : undefined}
               aria-haspopup="dialog"
             >
               {isMoreActive && (
@@ -97,16 +103,19 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         </ul>
       </nav>
 
-      <MobileMoreSheet
-        open={isMoreSheetOpen}
-        onClose={() => setIsMoreSheetOpen(false)}
-        activeKey={activeKey}
-        onSelectKey={onSelectKey}
-        secondaryItems={secondaryItems}
-        soundEnabled={soundEnabled}
-        onLogout={onLogout}
-        onToggleSound={onToggleSound}
-      />
+      {!isDesktop && (
+        <MobileMoreSheet
+          returnFocusRef={moreButtonRef}
+          open={isMoreSheetOpen}
+          onClose={() => setIsMoreSheetOpen(false)}
+          activeKey={activeKey}
+          onSelectKey={onSelectKey}
+          secondaryItems={secondaryItems}
+          soundEnabled={soundEnabled}
+          onLogout={onLogout}
+          onToggleSound={onToggleSound}
+        />
+      )}
     </>
   );
 };

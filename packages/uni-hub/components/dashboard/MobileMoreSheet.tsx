@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Volume2, VolumeX, LogOut } from 'lucide-react';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -15,6 +15,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
   onClose,
   onSelectKey,
   open,
+  returnFocusRef,
   secondaryItems,
   soundEnabled,
   onLogout,
@@ -22,48 +23,55 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
 }) => {
   const { formatMessage } = useLanguage();
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const previousOverflow = document.body.style.overflow;
-
-    document.body.style.overflow = 'hidden';
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
+  const dialogRef = useCallback(
+    (dialog: HTMLDialogElement | null) => {
+      if (!dialog) {
+        return;
       }
-    };
 
-    window.addEventListener('keydown', handleKeyDown);
+      const previousOverflow = document.body.style.overflow;
 
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [open, onClose]);
+      dialog.showModal();
+      document.body.style.overflow = 'hidden';
+
+      return () => {
+        dialog.close();
+        document.body.style.overflow = previousOverflow;
+        returnFocusRef.current?.focus();
+      };
+    },
+    [returnFocusRef],
+  );
 
   return (
     <AnimatePresence>
       {open && (
-        <div className={styles.overlay}>
+        <dialog
+          ref={dialogRef}
+          id="mobile-more-sheet"
+          className={styles.overlay}
+          aria-labelledby="more-sheet-title"
+          onCancel={(event) => {
+            event.preventDefault();
+            onClose();
+          }}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              onClose();
+            }
+          }}
+        >
           <motion.div
             className={styles.backdrop}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            onClick={onClose}
             aria-hidden="true"
           />
 
           <motion.div
-            role="dialog"
-            aria-modal="true"
             className={styles.sheet}
-            aria-labelledby="more-sheet-title"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -163,7 +171,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
               </div>
             </section>
           </motion.div>
-        </div>
+        </dialog>
       )}
     </AnimatePresence>
   );

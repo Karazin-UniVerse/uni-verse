@@ -1,11 +1,42 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Dropdown } from './Dropdown';
 import { DropdownOption } from './DropdownOption';
 import type { DropdownTriggerProps } from './Dropdown.types';
 
 describe('UNA Dropdown Component', () => {
+  it('consumes Escape so closing a dropdown does not dismiss its parent native dialog', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <Dropdown
+        renderTrigger={(triggerProps) => (
+          <button type="button" {...triggerProps}>
+            Open
+          </button>
+        )}
+      >
+        <div>Panel Content</div>
+      </Dropdown>,
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Open' });
+
+    await user.click(trigger);
+
+    const escape = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    });
+
+    fireEvent(trigger, escape);
+    expect(screen.queryByText('Panel Content')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+    expect(escape.defaultPrevented).toBe(true);
+  });
+
   it('should render only the trigger while closed', () => {
     render(
       <Dropdown

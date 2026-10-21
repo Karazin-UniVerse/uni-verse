@@ -46,7 +46,13 @@ export const Dropdown: React.FC<DropdownProps> = ({
   };
 
   useClickOutside(containerRef, () => setIsOpen(false), { enabled: isOpen });
-  useEscapeKey(close, { enabled: isOpen });
+  useEscapeKey(
+    (event) => {
+      event.preventDefault();
+      close();
+    },
+    { enabled: isOpen },
+  );
 
   const triggerProps: DropdownTriggerProps = {
     onClick: (event) => {
