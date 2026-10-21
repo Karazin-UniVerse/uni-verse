@@ -975,7 +975,7 @@ describe('OpportunitiesService', () => {
       expect(notificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'owner-1',
-          link: '/opportunities/1',
+          link: '/opportunities/1?view=applicants',
         }),
       );
     });
@@ -1008,7 +1008,7 @@ describe('OpportunitiesService', () => {
       expect(notificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'owner-1',
-          link: '/opportunities/1',
+          link: '/opportunities/1?view=applicants',
         }),
       );
     });

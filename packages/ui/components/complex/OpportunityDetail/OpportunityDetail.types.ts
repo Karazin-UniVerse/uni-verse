@@ -28,6 +28,8 @@ export type OpportunityDetailProps = {
   canSendToReview?: boolean;
   onSendToReview?: () => void;
   sendToReviewText?: string;
+  onOpenApplicants?: () => void;
+  viewApplicantsText?: string;
   moderationComment?: string | null;
   moderationCommentTitle?: string;
   manageTitle?: string;

@@ -18,6 +18,7 @@ export interface OpportunityDetailViewProps {
   onSendToReview: (id: string) => void;
   onLifecycleChange: (id: string, state: OpportunityLifecycle) => void;
   onOpenApply: () => void;
+  onOpenApplicants?: () => void;
   onEdit?: (opportunity: Opportunity) => void;
   onToggleAcceptsApplications?: (accepts: boolean) => void;
 }
@@ -37,6 +38,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   onSendToReview,
   onLifecycleChange,
   onOpenApply,
+  onOpenApplicants,
   onEdit,
   onToggleAcceptsApplications,
 }) => {
@@ -126,6 +128,8 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       }
       onSendToReview={() => onSendToReview(opportunity.id)}
       sendToReviewText={formatMessage('opportunities.detailModal.sendToReview')}
+      onOpenApplicants={onOpenApplicants}
+      viewApplicantsText={formatMessage('opportunities.card.applications')}
       moderationComment={isOwner ? opportunity.moderationComment : undefined}
       moderationCommentTitle={formatMessage('opportunities.detailModal.moderationFeedback')}
       manageTitle={formatMessage('opportunities.detailModal.manageTitle')}

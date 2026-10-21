@@ -452,7 +452,7 @@ export class OpportunitiesService {
         opportunityTitle: opportunity.title,
         applicantName: dto.applicantName,
       }),
-      link: `${OPPORTUNITIES_ROUTE}/${id}`,
+      link: `${OPPORTUNITIES_ROUTE}/${id}?view=applicants`,
     });
 
     return app;
