@@ -23,15 +23,26 @@ export const OpportunityCardTop: React.FC<Props> = ({
 }) => (
   <div className={styles.cardTop}>
     <div className={styles.cardBadgeRow}>
-      <div
-        className={clsx(styles.categoryPill, isPaid ? styles.paidCategory : styles.unpaidCategory)}
-      >
-        <Briefcase size={12} />
-        <span>
-          {isPaid
-            ? formatMessage('opportunities.card.vacancy')
-            : formatMessage('opportunities.card.practice')}
-        </span>
+      <div className={styles.categoryBadgeGroup}>
+        <div
+          className={clsx(
+            styles.categoryPill,
+            isPaid ? styles.paidCategory : styles.unpaidCategory,
+          )}
+        >
+          <Briefcase size={12} />
+          <span>
+            {isPaid
+              ? formatMessage('opportunities.card.vacancy')
+              : formatMessage('opportunities.card.practice')}
+          </span>
+        </div>
+
+        {opportunity.acceptsApplications === false && (
+          <span className={styles.closedPill}>
+            {formatMessage('opportunities.card.applicationsClosedBadge')}
+          </span>
+        )}
       </div>
 
       {isOwner ? (
