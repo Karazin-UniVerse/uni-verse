@@ -19,34 +19,29 @@ describe('ModerationRejectModal Component', () => {
     rejectText: 'Відхилити',
   };
 
-  it('disables "На доопрацювання" and enables "Відхилити" when comment is empty', async () => {
-    const onReject = vi.fn();
-    const user = userEvent.setup();
-
-    render(<ModerationRejectModal {...baseProps} comment="" onReject={onReject} />);
+  it('disables both "На доопрацювання" and "Відхилити" when comment is empty', () => {
+    render(<ModerationRejectModal {...baseProps} comment="" />);
 
     const reviseBtn = screen.getByRole('button', { name: 'На доопрацювання' });
     const rejectBtn = screen.getByRole('button', { name: 'Відхилити' });
 
     expect(reviseBtn).toBeDisabled();
-    expect(rejectBtn).toBeEnabled();
-
-    await user.click(rejectBtn);
-    expect(onReject).toHaveBeenCalledTimes(1);
+    expect(rejectBtn).toBeDisabled();
   });
 
-  it('disables "На доопрацювання" when comment has only whitespace', () => {
+  it('disables both buttons when comment has only whitespace', () => {
     render(<ModerationRejectModal {...baseProps} comment="    " />);
 
     const reviseBtn = screen.getByRole('button', { name: 'На доопрацювання' });
     const rejectBtn = screen.getByRole('button', { name: 'Відхилити' });
 
     expect(reviseBtn).toBeDisabled();
-    expect(rejectBtn).toBeEnabled();
+    expect(rejectBtn).toBeDisabled();
   });
 
-  it('enables both "На доопрацювання" and "Відхилити" when comment is provided', async () => {
+  it('enables both buttons and calls handlers when comment is provided', async () => {
     const onRevise = vi.fn();
+    const onReject = vi.fn();
     const user = userEvent.setup();
 
     render(
@@ -54,6 +49,7 @@ describe('ModerationRejectModal Component', () => {
         {...baseProps}
         comment="Потрібно виправити опис"
         onRevise={onRevise}
+        onReject={onReject}
       />,
     );
 
@@ -65,6 +61,9 @@ describe('ModerationRejectModal Component', () => {
 
     await user.click(reviseBtn);
     expect(onRevise).toHaveBeenCalledTimes(1);
+
+    await user.click(rejectBtn);
+    expect(onReject).toHaveBeenCalledTimes(1);
   });
 
   it('disables all controls when isSubmitting is true', () => {
