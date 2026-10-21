@@ -384,6 +384,7 @@ export const uk = {
   'opportunities.subtitle':
     'Кар’єрні пропозиції, стажування, наукові гранти та студентські ініціативи Каразінського',
   'opportunities.badge': 'Попередній перегляд',
+  'opportunities.card.details': 'Деталі',
   'opportunities.filterAll': 'Всі пропозиції',
   'opportunities.filterInternships': 'Стажування та IT',
   'opportunities.filterGrants': 'Гранти та стипендії',
