@@ -2,7 +2,8 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import type { Assignment } from '@core/types/moodle';
 import { moodleApi } from '@uni-hub/services/api.moodle';
-import { createQueryClientWrapper } from '@uni-hub/utils/test-utils';
+import { assignmentStatusQueryOptions } from '@uni-hub/queries/moodle/queries';
+import { createQueryClientWrapper, createTestQueryClient } from '@uni-hub/utils/test-utils';
 import {
   getAssignmentsNeedingStatus,
   toLocalStatuses,
@@ -80,18 +81,20 @@ describe('useAssignmentStatuses hook', () => {
   });
 
   it('tolerates an API rejection and leaves the assignment absent from the map', async () => {
-    const spy = vi.spyOn(moodleApi, 'getAssignmentStatus').mockRejectedValue(new Error('500'));
+    const queryClient = createTestQueryClient();
+
+    vi.spyOn(moodleApi, 'getAssignmentStatus').mockRejectedValue(new Error('500'));
 
     const { result } = renderHook(() => useAssignmentStatuses([buildAssignment(101)]), {
-      wrapper: createQueryClientWrapper(),
+      wrapper: createQueryClientWrapper(queryClient),
     });
 
     await waitFor(() => {
-      expect(spy).toHaveBeenCalled();
+      expect(
+        queryClient.getQueryState(assignmentStatusQueryOptions(101).queryKey)?.status,
+      ).toBe('error');
     });
 
-    await waitFor(() => {
-      expect(result.current).toEqual({});
-    });
+    expect(result.current).toEqual({});
   });
 });
