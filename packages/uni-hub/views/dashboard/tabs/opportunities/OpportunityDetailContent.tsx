@@ -33,6 +33,7 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
     opportunity,
     userId: currentUser.userId,
     openApplicants: applicants.open,
+    closeApplicants: applicants.close,
   });
 
   return (

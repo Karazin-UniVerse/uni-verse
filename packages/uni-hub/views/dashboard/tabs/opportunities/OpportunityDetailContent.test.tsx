@@ -10,7 +10,7 @@ import { OpportunityDetailContent } from './OpportunityDetailContent';
 import { buildOpportunity } from './test-utils';
 
 let query = new URLSearchParams('view=applicants');
-let userId = 'owner-1';
+let userId: string | null = 'owner-1';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -100,12 +100,9 @@ describe('OpportunityDetailContent applicants deep-link', () => {
   });
 
   it('loads applicants for a different opportunity without remounting', async () => {
-    const user = userEvent.setup();
     const { rerender } = renderDetail();
 
     expect(await screen.findByText('Candidate One')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'opportunities.applicantsModal.close' }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     vi.mocked(opportunitiesApi.getOpportunityApplications).mockResolvedValue({
       data: [
         {
@@ -121,6 +118,7 @@ describe('OpportunityDetailContent applicants deep-link', () => {
 
     expect(await screen.findByText('Candidate Two')).toBeInTheDocument();
     expect(opportunitiesApi.getOpportunityApplications).toHaveBeenCalledWith('opportunity-2');
+    expect(screen.queryByText('Candidate One')).not.toBeInTheDocument();
   });
 
   it('handles a changed query on the same opportunity', async () => {
@@ -134,6 +132,62 @@ describe('OpportunityDetailContent applicants deep-link', () => {
     rerender(<OpportunityDetailContent opportunity={buildOpportunity('opportunity-1')} />);
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('closes applicants when navigating to another opportunity without a deep-link', async () => {
+    const { rerender } = renderDetail();
+
+    expect(await screen.findByText('Candidate One')).toBeInTheDocument();
+    query = new URLSearchParams();
+    rerender(<OpportunityDetailContent opportunity={buildOpportunity('opportunity-2')} />);
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(opportunitiesApi.getOpportunityApplications).not.toHaveBeenCalledWith('opportunity-2');
+  });
+
+  it('closes applicants when the next deep-linked opportunity belongs to another owner', async () => {
+    const { rerender } = renderDetail();
+
+    expect(await screen.findByText('Candidate One')).toBeInTheDocument();
+    rerender(
+      <OpportunityDetailContent
+        opportunity={{ ...buildOpportunity('opportunity-2'), ownerId: 'owner-2' }}
+      />,
+    );
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(opportunitiesApi.getOpportunityApplications).not.toHaveBeenCalledWith('opportunity-2');
+  });
+
+  it.each(['candidate-1', null])(
+    'closes applicants when the user changes to %s',
+    async (nextUserId) => {
+      const { rerender } = renderDetail();
+
+      expect(await screen.findByText('Candidate One')).toBeInTheDocument();
+      userId = nextUserId;
+      rerender(<OpportunityDetailContent opportunity={buildOpportunity('opportunity-1')} />);
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+      userId = 'owner-1';
+      rerender(<OpportunityDetailContent opportunity={buildOpportunity('opportunity-1')} />);
+
+      expect(await screen.findByText('Candidate One')).toBeInTheDocument();
+    },
+  );
+
+  it('closes applicants when ownership changes on the displayed opportunity', async () => {
+    const { rerender } = renderDetail();
+
+    expect(await screen.findByText('Candidate One')).toBeInTheDocument();
+    rerender(
+      <OpportunityDetailContent
+        opportunity={{ ...buildOpportunity('opportunity-1'), ownerId: 'owner-2' }}
+      />,
+    );
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
   it('does not open or request applicants for a non-owner', () => {

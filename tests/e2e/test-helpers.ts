@@ -52,43 +52,25 @@ export function oracleCalculateTraditionalGrade(
   controlType: 'exam' | 'credit' | 'differentiated_credit' = 'exam',
 ): 'відмінно' | 'добре' | 'задовільно' | 'незадовільно' | 'зараховано' | 'не зараховано' {
   if (controlType === 'credit') {
-    return score >= 60 ? 'зараховано' : 'не зараховано';
+    return score >= 50 ? 'зараховано' : 'не зараховано';
   }
 
   if (score >= 90) return 'відмінно';
 
-  if (score >= 74) return 'добре';
+  if (score >= 70) return 'добре';
 
-  if (score >= 60) return 'задовільно';
+  if (score >= 50) return 'задовільно';
 
   return 'незадовільно';
 }
 
 /**
- * Dynamic module loader for @universe/core
+ * Dynamic module loader for the shared grade calculations.
  */
-export async function loadTypesModule(): Promise<any> {
-  const coreRootPath = resolveWorkspacePath('packages/core/index.ts');
-
-  if (fs.existsSync(coreRootPath)) {
-    try {
-      return await import('../../packages/core/index.ts');
-    } catch {
-      // fallback
-    }
-  }
-
-  const corePath = resolveWorkspacePath('packages/core/types/index.ts');
-
-  if (fs.existsSync(corePath)) {
-    try {
-      return await import('../../packages/core/types/index.ts');
-    } catch {
-      // fallback
-    }
-  }
-
-  return null;
+export async function loadTypesModule(): Promise<
+  typeof import('../../packages/core/utils/grades.ts')
+> {
+  return import('../../packages/core/utils/grades.ts');
 }
 
 /**

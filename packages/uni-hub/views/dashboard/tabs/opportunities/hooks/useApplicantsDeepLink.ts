@@ -6,12 +6,14 @@ interface ApplicantsDeepLinkOptions {
   opportunity: Opportunity;
   userId: string | null;
   openApplicants: (opportunity: Opportunity) => void;
+  closeApplicants: () => void;
 }
 
 export function useApplicantsDeepLink({
   opportunity,
   userId,
   openApplicants,
+  closeApplicants,
 }: ApplicantsDeepLinkOptions): void {
   const searchParams = useSearchParams();
   const handledRequest = useRef<string | null>(null);
@@ -19,6 +21,14 @@ export function useApplicantsDeepLink({
     searchParams.get('view') === 'applicants'
       ? `${opportunity.id}?${searchParams.toString()}`
       : null;
+
+  useEffect(
+    () => () => {
+      handledRequest.current = null;
+      closeApplicants();
+    },
+    [opportunity.id, opportunity.ownerId, userId, closeApplicants],
+  );
 
   useEffect(() => {
     if (request === null) {

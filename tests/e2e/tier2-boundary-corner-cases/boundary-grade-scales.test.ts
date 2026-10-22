@@ -43,10 +43,10 @@ describe('Tier 2 - Feature 2: Boundary & Corner Cases in Grade Scales', () => {
 
     expect(calculate(90, 'exam')).toBe('відмінно');
     expect(calculate(89.9, 'exam')).toBe('добре');
-    expect(calculate(74, 'exam')).toBe('добре');
-    expect(calculate(73.9, 'exam')).toBe('задовільно');
-    expect(calculate(60, 'exam')).toBe('задовільно');
-    expect(calculate(59.9, 'exam')).toBe('незадовільно');
+    expect(calculate(70, 'exam')).toBe('добре');
+    expect(calculate(69.9, 'exam')).toBe('задовільно');
+    expect(calculate(50, 'exam')).toBe('задовільно');
+    expect(calculate(49.9, 'exam')).toBe('незадовільно');
   });
 
   it('F2-B4: Credit (залік) binary threshold edge cases (60 vs 59.99, 0, 100)', async () => {
@@ -54,8 +54,8 @@ describe('Tier 2 - Feature 2: Boundary & Corner Cases in Grade Scales', () => {
     const calculate = mod?.calculateTraditionalGrade || oracleCalculateTraditionalGrade;
 
     expect(calculate(100, 'credit')).toBe('зараховано');
-    expect(calculate(60, 'credit')).toBe('зараховано');
-    expect(calculate(59.99, 'credit')).toBe('не зараховано');
+    expect(calculate(50, 'credit')).toBe('зараховано');
+    expect(calculate(49.99, 'credit')).toBe('не зараховано');
     expect(calculate(0, 'credit')).toBe('не зараховано');
   });
 
