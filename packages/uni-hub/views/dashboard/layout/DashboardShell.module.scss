@@ -48,7 +48,7 @@ $sidebar-collapsed-width: 88px;
   background: var(--sidebar-bg);
   min-width: 0;
   position: relative;
-  z-index: 1;
+  z-index: 10;
 }
 
 .edgeToggle {
@@ -1099,6 +1099,25 @@ $sidebar-collapsed-width: 88px;
 @include narrower-than('lg') {
   .layout {
     grid-template-columns: $sidebar-collapsed-width 1fr;
+  }
+
+  .layout:not(.mobileOpen) .logoutBtn span {
+    display: none;
+  }
+
+  .layout:not(.mobileOpen) [data-lang-label='full'],
+  .layout:not(.mobileOpen) [data-lang-chevron] {
+    display: none;
+  }
+
+  .layout:not(.mobileOpen) [data-lang-label='short'] {
+    display: inline;
+  }
+
+  .layout:not(.mobileOpen) [data-lang-trigger] {
+    justify-content: center;
+    gap: var(--space-4);
+    padding-inline: var(--space-4);
   }
 
   .split,

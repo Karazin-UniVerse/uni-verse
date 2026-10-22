@@ -223,13 +223,15 @@
 .resultCount {
   display: inline-flex;
   align-items: center;
-  font-size: var(--font-xs);
+  box-sizing: border-box;
+  min-height: 44px;
+  font-size: var(--font-sm);
   color: var(--text-secondary);
   font-weight: 500;
   white-space: nowrap;
-  padding: 7px 12px;
+  padding: 0 16px;
   background: var(--bg-hover);
-  border-radius: 10px;
+  border-radius: 14px;
   border: 1px solid var(--card-border);
 
   strong {
