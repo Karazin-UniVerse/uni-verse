@@ -22,13 +22,7 @@ declare global {
               locale?: string;
             },
           ) => void;
-          prompt: (
-            callback?: (notification: {
-              isNotDisplayed: () => boolean;
-              isSkippedMoment: () => boolean;
-              isDismissedMoment: () => boolean;
-            }) => void,
-          ) => void;
+          prompt: () => void;
         };
       };
     };
