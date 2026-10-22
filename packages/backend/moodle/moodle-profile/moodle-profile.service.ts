@@ -233,71 +233,99 @@ export class MoodleProfileService {
     moodleUser,
     courses = [],
   }: ResolveGroupParams): Promise<string> {
-    if (moodleUser?.groups && moodleUser.groups.length > 0) {
-      const groupName = moodleUser.groups[0]?.name?.trim();
+    const directGroup =
+      this.resolveGroupFromUserGroups(moodleUser) ||
+      this.resolveGroupFromCustomFields(moodleUser) ||
+      this.resolveGroupFromDepartment(moodleUser);
+
+    if (directGroup) {
+      return directGroup;
+    }
+
+    const courseGroup = await this.resolveGroupFromCourses(
+      token,
+      moodleId,
+      courses,
+    );
+
+    return courseGroup || '';
+  }
+
+  private resolveGroupFromUserGroups(
+    moodleUser?: MoodleUserItem,
+  ): string | undefined {
+    return moodleUser?.groups?.[0]?.name?.trim() || undefined;
+  }
+
+  private resolveGroupFromCustomFields(
+    moodleUser?: MoodleUserItem,
+  ): string | undefined {
+    const groupField = moodleUser?.customfields?.find((field) => {
+      const shortname = field.shortname?.toLowerCase() || '';
+      const name = field.name?.toLowerCase() || '';
+
+      return shortname.includes('group') || name.includes('груп');
+    });
+
+    return groupField?.value?.trim() || undefined;
+  }
+
+  private resolveGroupFromDepartment(
+    moodleUser?: MoodleUserItem,
+  ): string | undefined {
+    const dept = moodleUser?.department?.trim();
+
+    if (
+      dept &&
+      /^[А-ЯІЇЄа-яіїєA-Za-z]{1,5}[- ]?\d{1,3}[А-ЯІЇЄа-яіїєA-Za-z]?$/.test(dept)
+    ) {
+      return dept;
+    }
+
+    return undefined;
+  }
+
+  private async resolveGroupFromCourses(
+    token: string,
+    moodleId: string,
+    courses: Array<{ id?: number; fullname?: string }>,
+  ): Promise<string | undefined> {
+    for (const course of courses.slice(0, 5)) {
+      if (!course.id) {
+        continue;
+      }
+
+      const groupName = await this.fetchCourseGroup(token, moodleId, course.id);
 
       if (groupName) {
         return groupName;
       }
     }
 
-    if (moodleUser?.customfields && moodleUser.customfields.length > 0) {
-      const groupField = moodleUser.customfields.find((field) => {
-        const shortname = field.shortname?.toLowerCase() || '';
-        const name = field.name?.toLowerCase() || '';
+    return undefined;
+  }
 
-        return shortname.includes('group') || name.includes('груп');
+  private async fetchCourseGroup(
+    token: string,
+    moodleId: string,
+    courseId: number,
+  ): Promise<string | undefined> {
+    try {
+      const res = await this.moodleClient.client<{
+        groups?: Array<{ id: number; name: string }>;
+      }>({
+        wsfunction: 'core_group_get_course_user_groups',
+        moodleToken: token,
+        params: {
+          courseid: courseId,
+          userid: moodleId,
+        },
       });
 
-      if (groupField?.value?.trim()) {
-        return groupField.value.trim();
-      }
+      return res?.groups?.[0]?.name?.trim() || undefined;
+    } catch {
+      return undefined;
     }
-
-    if (moodleUser?.department) {
-      const dept = moodleUser.department.trim();
-
-      if (
-        /^[А-ЯІЇЄа-яіїєA-Za-z]{1,5}[- ]?\d{1,3}[А-ЯІЇЄа-яіїєA-Za-z]?$/.test(
-          dept,
-        )
-      ) {
-        return dept;
-      }
-    }
-
-    if (courses.length > 0) {
-      for (const course of courses.slice(0, 5)) {
-        if (!course.id) {
-          continue;
-        }
-
-        try {
-          const res = await this.moodleClient.client<{
-            groups?: Array<{ id: number; name: string }>;
-          }>({
-            wsfunction: 'core_group_get_course_user_groups',
-            moodleToken: token,
-            params: {
-              courseid: course.id,
-              userid: moodleId,
-            },
-          });
-
-          if (res?.groups && res.groups.length > 0) {
-            const foundGroup = res.groups[0]?.name?.trim();
-
-            if (foundGroup) {
-              return foundGroup;
-            }
-          }
-        } catch {
-          // Ignore and continue checking next course
-        }
-      }
-    }
-
-    return '';
   }
 
   private calculateGpaFromGrades(

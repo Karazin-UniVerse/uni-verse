@@ -341,4 +341,47 @@ describe('MoodleProfileService', () => {
 
     expect(profile.group).toBe('');
   });
+
+  it('should skip courses without id and handle course group fetch failure gracefully', async () => {
+    mockCoursesService.getCourses.mockResolvedValue([
+      { fullname: 'Course without id' },
+      { id: 101, fullname: 'Valid Course' },
+    ]);
+    mockMoodleClient.client.mockImplementation(
+      async ({ wsfunction }: MoodleClientParams) => {
+        if (wsfunction === 'core_group_get_course_user_groups') {
+          throw new Error('Course group error');
+        }
+
+        return {};
+      },
+    );
+
+    const profile = await service.getProfile('token', '4021');
+
+    expect(profile.group).toBe('');
+  });
+
+  it('should ignore non-matching customfields and non-matching department', async () => {
+    mockMoodleClient.client.mockImplementation(
+      async ({ wsfunction }: MoodleClientParams) => {
+        if (wsfunction === 'core_user_get_users_by_field') {
+          return [
+            {
+              id: 4021,
+              fullname: 'Тест Студент',
+              customfields: [{ shortname: 'hobby', value: 'chess' }],
+              department: 'Факультет компʼютерних наук та кібернетики',
+            },
+          ];
+        }
+
+        return {};
+      },
+    );
+
+    const profile = await service.getProfile('token', '4021');
+
+    expect(profile.group).toBe('');
+  });
 });
