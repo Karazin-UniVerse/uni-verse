@@ -117,8 +117,8 @@ describe('GradeTableRow component', () => {
 
       const cells = screen.getAllByRole('cell');
 
-      expect(cells[6]).toHaveTextContent(expectedEcts);
-      expect(cells[7]).toHaveTextContent(expectedTraditional);
+      expect(cells[6]?.textContent?.trim()).toBe(expectedEcts);
+      expect(cells[7]?.textContent?.trim()).toBe(expectedTraditional);
     },
   );
 

@@ -153,7 +153,71 @@ Every test description **MUST** start with `'should ...'`. Cover these core dime
 
 ## 3. Canonical Test Templates
 
-### Template A: React Component Test (`.test.tsx`)
+### Template A1: UI Primitive Component Test (`@universe/ui`)
+> [!IMPORTANT]
+> **Package Isolation**: `@universe/ui` components are language-agnostic primitives. **NEVER** import `@uni-hub/utils/test-utils` or wrap components in `withLanguage` inside `packages/ui`. Render directly and supply localized text through props.
+
+```tsx
+import React from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { ExampleButton, type ExampleButtonProps } from './ExampleButton';
+
+const defaultProps: ExampleButtonProps = {
+  label: 'Save Changes',
+  variant: 'primary',
+  disabled: false,
+  onClick: vi.fn(),
+};
+
+const renderExampleButton = (overrides: Partial<ExampleButtonProps> = {}) => {
+  const props = { ...defaultProps, ...overrides };
+
+  return render(<ExampleButton {...props} />);
+};
+
+describe('ExampleButton', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should render button with accessible accessible label', () => {
+    renderExampleButton();
+
+    expect(screen.getByRole('button', { name: 'Save Changes' })).toBeInTheDocument();
+  });
+
+  it.each([
+    { variant: 'primary' as const, expectedClass: 'btnPrimary' },
+    { variant: 'secondary' as const, expectedClass: 'btnSecondary' },
+    { variant: 'danger' as const, expectedClass: 'btnDanger' },
+  ])('should apply $expectedClass class for $variant variant', ({ variant, expectedClass }) => {
+    renderExampleButton({ variant });
+
+    expect(screen.getByRole('button')).toHaveClass(expectedClass);
+  });
+
+  it('should invoke onClick handler when clicked', async () => {
+    const user = userEvent.setup();
+    const handleClick = vi.fn();
+
+    renderExampleButton({ onClick: handleClick });
+
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('should disable button when disabled prop is true', () => {
+    renderExampleButton({ disabled: true });
+
+    expect(screen.getByRole('button', { name: 'Save Changes' })).toBeDisabled();
+  });
+});
+```
+
+### Template A2: Uni Hub Component Test (`@universe/uni-hub`)
 
 ```tsx
 import React from 'react';

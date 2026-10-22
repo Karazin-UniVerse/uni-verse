@@ -60,17 +60,22 @@ It supports processing:
   - **NEVER** import or hand-nest `<LanguageProvider>`, `<FeatureToggleProvider>`, `<ThemeProvider>`, or `<ToastProvider>` JSX in migrated test suites.
   - Import provider HOCs directly from `@uni-hub/utils/test-utils`:
     ```ts
-    import { withLanguage, withFeatureToggles, withTheme, withToast, withAppProviders, createLanguageWrapper, setTestFeatureFlags, ALL_FEATURES_ENABLED } from '@uni-hub/utils/test-utils';
+    import { withLanguage, withFeatureToggles, withTheme, withToast, withAppProviders, createLanguageWrapper, createAppProvidersWrapper, setTestFeatureFlags, ALL_FEATURES_ENABLED } from '@uni-hub/utils/test-utils';
     ```
   - Wrap rendered JSX: `render(withLanguage(<MyComponent {...props} />))` or `render(withFeatureToggles(withLanguage(<MyComponent {...props} />)))`.
   - For hook suites, pass `{ wrapper: createLanguageWrapper() }` or `{ wrapper: createAppProvidersWrapper() }`.
   - **NEVER** manually assign or delete `process.env.NEXT_PUBLIC_FEATURE_*`. Always use `setTestFeatureFlags({ ... })` (reset automatically in global `vitest.setup.ts`).
 
 ### Step 4: Component Rendering & Queries
-- Replace `renderToString(<Component ... />)` or `renderToStaticMarkup(React.createElement(Component, props))` with:
-  ```tsx
-  render(withLanguage(<Component {...props} />));
-  ```
+- Replace `renderToString(<Component ... />)` or `renderToStaticMarkup(React.createElement(Component, props))` with package-isolated rendering:
+  - **For `@universe/ui` (Design System Primitives)**: UI components must remain language-agnostic and isolated—never import from `@universe/uni-hub`. Render directly:
+    ```tsx
+    render(<Button {...props} />);
+    ```
+  - **For `@universe/uni-hub` (Application Components)**: Wrap in canonical provider HOCs as needed:
+    ```tsx
+    render(withLanguage(<Component {...props} />));
+    ```
 - **Query Priority (Accessibility First)**:
   1. `screen.getByRole('button', { name: /save/i })` (accessible role + name)
   2. `screen.getByLabelText(/username/i)` (form fields)
@@ -90,7 +95,11 @@ Replace fragile string comparisons with semantic DOM assertions:
 When testing clicks, typing, or keyboard navigation:
 ```tsx
 const user = userEvent.setup();
-render(withLanguage(<Button onClick={handleClick}>Click</Button>));
+
+// @universe/ui (direct render):
+render(<Button onClick={handleClick}>Click</Button>);
+// or @universe/uni-hub (with provider HOC):
+// render(withLanguage(<ActionCard onClick={handleClick} />));
 
 await user.click(screen.getByRole('button', { name: /click/i }));
 expect(handleClick).toHaveBeenCalledTimes(1);

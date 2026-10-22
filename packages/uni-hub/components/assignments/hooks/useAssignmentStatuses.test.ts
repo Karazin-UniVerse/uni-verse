@@ -80,10 +80,14 @@ describe('useAssignmentStatuses hook', () => {
   });
 
   it('tolerates an API rejection and leaves the assignment absent from the map', async () => {
-    vi.spyOn(moodleApi, 'getAssignmentStatus').mockRejectedValue(new Error('500'));
+    const spy = vi.spyOn(moodleApi, 'getAssignmentStatus').mockRejectedValue(new Error('500'));
 
     const { result } = renderHook(() => useAssignmentStatuses([buildAssignment(101)]), {
       wrapper: createQueryClientWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalled();
     });
 
     await waitFor(() => {

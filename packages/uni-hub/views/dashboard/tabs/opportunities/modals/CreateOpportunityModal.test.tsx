@@ -164,18 +164,21 @@ describe('CreateOpportunityModal', () => {
     await user.type(titleInput, '!');
 
     expect(handleSetFormData).toHaveBeenCalled();
+    handleSetFormData.mockClear();
 
     const descInput = screen.getByLabelText('Опис, завдання та вимоги до кандидата *');
 
     await user.type(descInput, '!');
 
     expect(handleSetFormData).toHaveBeenCalled();
+    handleSetFormData.mockClear();
 
     const contactInput = screen.getByLabelText('Контактні дані організатора *');
 
     await user.type(contactInput, '!');
 
     expect(handleSetFormData).toHaveBeenCalled();
+    handleSetFormData.mockClear();
 
     const paymentTypeSelect = screen.getByLabelText('Тип винагороди');
 
