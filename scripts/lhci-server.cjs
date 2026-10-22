@@ -1,43 +1,107 @@
-const { spawn } = require('node:child_process');
+const childProcess = require('node:child_process');
 const path = require('node:path');
 const { once } = require('node:events');
+const http = require('node:http');
 const { createMockApiServer } = require('./lhci-api.cjs');
 
-function startServers() {
+function startServers(controller) {
   const apiServer = createMockApiServer();
-
-  apiServer.listen(3001, '127.0.0.1');
-  const apiReady = once(apiServer, 'listening');
-  const nextBin = path.resolve(__dirname, '../packages/uni-hub/node_modules/next/dist/bin/next');
-  const nextProcess = spawn(process.execPath, [nextBin, 'start', '-p', '3000'], {
-    cwd: path.resolve(__dirname, '../packages/uni-hub'),
-    stdio: ['ignore', 'pipe', 'inherit'],
-    env: { ...process.env, NODE_ENV: 'production' },
-  });
+  let nextProcess;
+  let exited;
   let readyTimeout;
-  const nextReady = new Promise((resolve, reject) => {
-    readyTimeout = setTimeout(
-      () => reject(new Error('Next.js did not start within 60 seconds')),
-      60000,
-    );
-    nextProcess.once('error', reject);
-    nextProcess.once('exit', (code) =>
-      reject(new Error(`Next.js exited before the audit completed (${code})`)),
-    );
-    nextProcess.stdout.on('data', (chunk) => {
-      process.stdout.write(chunk);
+  let closing = false;
+  let closePromise;
 
-      if (/Ready/i.test(chunk.toString())) resolve();
+  const ready = (async () => {
+    try {
+      apiServer.listen(3001, '127.0.0.1');
+      await once(apiServer, 'listening');
+    } catch (error) {
+      throw new Error(
+        `Mock API port 3001 is unavailable (${error.code}); stop the process already in use before auditing`,
+        { cause: error },
+      );
+    }
+
+    if (closing) return;
+
+    const probe = http.createServer();
+
+    try {
+      probe.listen(3000, '127.0.0.1');
+      await once(probe, 'listening');
+    } catch (error) {
+      throw new Error(
+        `Frontend port 3000 is unavailable (${error.code}); stop the process already in use before auditing`,
+        { cause: error },
+      );
+    } finally {
+      if (probe.listening) await new Promise((resolve) => probe.close(resolve));
+    }
+
+    if (closing) return;
+
+    controller.signal.throwIfAborted();
+    const nextBin = path.resolve(__dirname, '../packages/uni-hub/node_modules/next/dist/bin/next');
+
+    nextProcess = childProcess.spawn(
+      process.execPath,
+      [nextBin, 'start', '-p', '3000', '-H', '127.0.0.1'],
+      {
+        cwd: path.resolve(__dirname, '../packages/uni-hub'),
+        stdio: ['ignore', 'pipe', 'inherit'],
+        env: { ...process.env, NODE_ENV: 'production' },
+      },
+    );
+    exited = new Promise((resolve) => nextProcess.once('close', resolve));
+
+    await new Promise((resolve, reject) => {
+      readyTimeout = setTimeout(
+        () => reject(new Error('Next.js did not start within 60 seconds')),
+        60000,
+      );
+      nextProcess.once('error', reject);
+      nextProcess.once('exit', (code, signal) => {
+        const error = new Error(`Next.js exited during the audit (${code ?? signal})`);
+
+        if (!closing) {
+          controller.abort(error);
+        }
+
+        reject(error);
+      });
+      nextProcess.stdout.on('data', (chunk) => {
+        process.stdout.write(chunk);
+
+        if (/Ready/i.test(chunk.toString())) resolve();
+      });
     });
-  });
-  const ready = Promise.all([apiReady, nextReady]).finally(() => clearTimeout(readyTimeout));
+  })().finally(() => clearTimeout(readyTimeout));
 
   return {
     ready,
-    close: async () => {
-      clearTimeout(readyTimeout);
-      nextProcess.kill();
-      await new Promise((resolve) => apiServer.close(resolve));
+    close: () => {
+      closePromise ??= (async () => {
+        closing = true;
+        clearTimeout(readyTimeout);
+
+        if (nextProcess && nextProcess.exitCode === null && nextProcess.signalCode === null) {
+          nextProcess.kill();
+          const forceKill = setTimeout(() => nextProcess.kill('SIGKILL'), 5000);
+
+          try {
+            await exited;
+          } finally {
+            clearTimeout(forceKill);
+          }
+        }
+
+        await ready.catch(() => undefined);
+        apiServer.closeAllConnections();
+        await new Promise((resolve) => apiServer.close(resolve));
+      })();
+
+      return closePromise;
     },
   };
 }
