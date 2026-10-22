@@ -49,8 +49,13 @@ function runLhci(args, signal) {
       clearTimeout(forceKill);
       signal.removeEventListener('abort', abort);
 
-      if (code === 0 && !signal.aborted) resolve();
-      else reject(new Error(`LHCI ${args[0]} failed (${code})`));
+      if (code === 0 && !signal.aborted) {
+        resolve();
+      } else if (signal.aborted) {
+        reject(new Error(`LHCI ${args[0]} aborted`, { cause: signal.reason }));
+      } else {
+        reject(new Error(`LHCI ${args[0]} failed (${code})`));
+      }
     });
   });
 }

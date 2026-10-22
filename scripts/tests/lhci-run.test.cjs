@@ -16,10 +16,14 @@ test('POSIX cancellation gives Puppeteer SIGTERM before waiting for child cleanu
   Object.defineProperty(process, 'platform', { value: 'linux' });
 
   try {
+    const reason = new Error('Next.js exited during the audit (1)');
     const result = runLhci(['collect'], controller.signal);
-    const rejected = assert.rejects(result, /LHCI collect failed/);
+    const rejected = assert.rejects(
+      result,
+      (error) => error.message.includes('LHCI collect aborted') && error.cause === reason,
+    );
 
-    controller.abort();
+    controller.abort(reason);
     assert.deepEqual(
       kill.mock.calls.map((call) => call.arguments),
       [[-12345, 'SIGTERM']],
@@ -47,7 +51,7 @@ test('POSIX cancellation escalates only if the child has not closed after five s
 
   try {
     const result = runLhci(['collect'], controller.signal);
-    const rejected = assert.rejects(result, /LHCI collect failed/);
+    const rejected = assert.rejects(result, /LHCI collect aborted/);
 
     controller.abort();
     context.mock.timers.tick(4999);
@@ -84,7 +88,7 @@ test('Windows cancellation terminates only the owned LHCI process tree', async (
 
   try {
     const result = runLhci(['collect'], controller.signal);
-    const rejected = assert.rejects(result, /LHCI collect failed/);
+    const rejected = assert.rejects(result, /LHCI collect aborted/);
 
     controller.abort();
     assert.deepEqual(spawn.mock.calls[1].arguments.slice(0, 2), [
