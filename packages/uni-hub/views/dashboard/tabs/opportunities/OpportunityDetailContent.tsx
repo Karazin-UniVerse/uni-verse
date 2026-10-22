@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React from 'react';
+import { useRouter } from 'next/navigation';
 import type { Opportunity } from '@core/types/opportunities';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { ROUTE } from '../../routes';
 import { OpportunityDetailView } from './components/OpportunityDetailView';
 import { useApplicants } from './hooks/useApplicants';
+import { useApplicantsDeepLink } from './hooks/useApplicantsDeepLink';
 import { useApplyToOpportunity } from './hooks/useApplyToOpportunity';
 import { useCreateOpportunity } from './hooks/useCreateOpportunity';
 import { useOpportunityActions } from './hooks/useOpportunityActions';
@@ -22,35 +23,17 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
   opportunity,
 }) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const currentUser = useCurrentUser();
   const actions = useOpportunityActions();
   const create = useCreateOpportunity({});
   const apply = useApplyToOpportunity({ currentUser, opportunity });
   const applicants = useApplicants();
-  const handledApplicantsRequest = useRef<string | null>(null);
-  const applicantsRequest =
-    searchParams.get('view') === 'applicants'
-      ? `${opportunity.id}?${searchParams.toString()}`
-      : null;
 
-  const { open: openApplicants } = applicants;
-
-  useEffect(() => {
-    if (applicantsRequest === null) {
-      handledApplicantsRequest.current = null;
-
-      return;
-    }
-
-    if (
-      handledApplicantsRequest.current !== applicantsRequest &&
-      currentUser.userId === opportunity.ownerId
-    ) {
-      handledApplicantsRequest.current = applicantsRequest;
-      openApplicants(opportunity);
-    }
-  }, [applicantsRequest, currentUser.userId, opportunity, openApplicants]);
+  useApplicantsDeepLink({
+    opportunity,
+    userId: currentUser.userId,
+    openApplicants: applicants.open,
+  });
 
   return (
     <>

@@ -27,6 +27,7 @@ import {
 } from '@universe/database';
 import { OPPORTUNITY_MODERATE_ACTION } from '@universe/core/constants/opportunities';
 import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
+import { OPPORTUNITY_NOTIFICATION_KEY } from '@universe/core/constants/notifications';
 
 export type OpportunityWithOwner = Opportunity & {
   owner: { id: string; name: string | null; email: string };
@@ -71,7 +72,7 @@ export class OpportunitiesService {
           this.notificationsService.createNotification({
             userId: moderator.id,
             type: 'OPPORTUNITY_READY_FOR_REVIEW',
-            title: 'notifications.opportunityReadyForReview.title',
+            title: OPPORTUNITY_NOTIFICATION_KEY.READY_FOR_REVIEW_TITLE,
             message: JSON.stringify({
               opportunityTitle,
             }),
@@ -364,7 +365,7 @@ export class OpportunitiesService {
     await this.notificationsService.createNotification({
       userId: app.applicantId,
       type: 'OPPORTUNITY_APPLICATION_STATUS',
-      title: 'notifications.opportunityApplicationStatus.title',
+      title: OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE,
       message: JSON.stringify({
         opportunityTitle: app.opportunity.title,
         status,
@@ -464,7 +465,7 @@ export class OpportunitiesService {
     await this.notificationsService.createNotification({
       userId: opportunity.ownerId,
       type: 'OPPORTUNITY_NEW_APPLICATION',
-      title: 'notifications.opportunityNewApplication.title',
+      title: OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_TITLE,
       message: JSON.stringify({
         opportunityTitle: opportunity.title,
         applicantName: dto.applicantName,
@@ -585,7 +586,7 @@ export class OpportunitiesService {
     await this.notificationsService.createNotification({
       userId: opp.ownerId,
       type: 'OPPORTUNITY_MODERATED',
-      title: 'notifications.opportunityModerated.title',
+      title: OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE,
       message: JSON.stringify({
         opportunityTitle: opp.title,
         action: dto.action,

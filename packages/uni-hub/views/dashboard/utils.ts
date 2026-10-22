@@ -1,4 +1,5 @@
 import { CONTROL_TYPES, TRADITIONAL_GRADES } from '@core/constants/grades';
+import { OPPORTUNITY_NOTIFICATION_KEY } from '@core/constants/notifications';
 import { OPPORTUNITY_APP_STATUS, OPPORTUNITY_MODERATE_ACTION } from '@core/constants/opportunities';
 import type { ControlType } from '@core/utils/grades';
 import type { NotificationListItem } from '@ui';
@@ -93,11 +94,13 @@ const PLATFORM_ACTION_KEYS: Record<string, TranslationKey> = {
 };
 
 const PLATFORM_TITLE_KEYS: Record<string, TranslationKey> = {
-  'notifications.opportunityApplicationStatus.title':
-    'notifications.opportunityApplicationStatus.title',
-  'notifications.opportunityNewApplication.title': 'notifications.opportunityNewApplication.title',
-  'notifications.opportunityReadyForReview.title': 'notifications.opportunityReadyForReview.title',
-  'notifications.opportunityModerated.title': 'notifications.opportunityModerated.title',
+  [OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE]:
+    OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE,
+  [OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_TITLE]:
+    OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_TITLE,
+  [OPPORTUNITY_NOTIFICATION_KEY.READY_FOR_REVIEW_TITLE]:
+    OPPORTUNITY_NOTIFICATION_KEY.READY_FOR_REVIEW_TITLE,
+  [OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE]: OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE,
 };
 
 type MessageFormatter = (key: TranslationKey, values?: Record<string, string | number>) => string;
@@ -149,11 +152,11 @@ function formatPlatformMessage(
 
   const opportunityTitle = parsed.opportunityTitle ?? '';
 
-  if (subject === 'notifications.opportunityApplicationStatus.title') {
+  if (subject === OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE) {
     const status = translateCode(parsed.status, PLATFORM_STATUS_KEYS, formatMessage);
     const messageKey = parsed.comment
-      ? 'notifications.opportunityApplicationStatus.messageWithComment'
-      : 'notifications.opportunityApplicationStatus.message';
+      ? OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_MESSAGE_WITH_COMMENT
+      : OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_MESSAGE;
 
     return formatMessage(messageKey, {
       opportunityTitle,
@@ -162,24 +165,24 @@ function formatPlatformMessage(
     });
   }
 
-  if (subject === 'notifications.opportunityNewApplication.title') {
-    return formatMessage('notifications.opportunityNewApplication.message', {
+  if (subject === OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_TITLE) {
+    return formatMessage(OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_MESSAGE, {
       opportunityTitle,
       applicantName: parsed.applicantName ?? '',
     });
   }
 
-  if (subject === 'notifications.opportunityReadyForReview.title') {
-    return formatMessage('notifications.opportunityReadyForReview.message', {
+  if (subject === OPPORTUNITY_NOTIFICATION_KEY.READY_FOR_REVIEW_TITLE) {
+    return formatMessage(OPPORTUNITY_NOTIFICATION_KEY.READY_FOR_REVIEW_MESSAGE, {
       opportunityTitle,
     });
   }
 
-  if (subject === 'notifications.opportunityModerated.title') {
+  if (subject === OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE) {
     const action = translateCode(parsed.action, PLATFORM_ACTION_KEYS, formatMessage);
     const messageKey = parsed.comment
-      ? 'notifications.opportunityModerated.messageWithComment'
-      : 'notifications.opportunityModerated.message';
+      ? OPPORTUNITY_NOTIFICATION_KEY.MODERATED_MESSAGE_WITH_COMMENT
+      : OPPORTUNITY_NOTIFICATION_KEY.MODERATED_MESSAGE;
 
     return formatMessage(messageKey, {
       opportunityTitle,
