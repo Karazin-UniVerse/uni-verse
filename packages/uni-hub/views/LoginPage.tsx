@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User, Lock } from 'lucide-react';
+import { User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button, Form, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
@@ -14,7 +14,7 @@ import { useGoogleLogin, useLinkMoodle, useLogin } from '@uni-hub/hooks/useAuthM
 import {
   GoogleLoginButton,
   AuthField,
-  PasswordToggle,
+  PasswordAuthField,
   parseGoogleClaims,
 } from '@uni-hub/components/auth';
 import { useFeatures } from '@uni-hub/features';
@@ -27,10 +27,8 @@ const LoginPage: React.FC = () => {
   const { isMoodleIntegrationEnabled } = useFeatures();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [linkUsername, setLinkUsername] = useState('');
   const [linkPassword, setLinkPassword] = useState('');
-  const [showLinkPassword, setShowLinkPassword] = useState(false);
   const [googleUserName, setGoogleUserName] = useState('');
   const [error, setError] = useState('');
   const [isLinkingMoodle, setIsLinkingMoodle] = useState(false);
@@ -197,25 +195,13 @@ const LoginPage: React.FC = () => {
               icon={<User size={16} />}
             />
 
-            <AuthField
+            <PasswordAuthField
               id="link-moodle-password"
               name="moodlePassword"
-              type={showLinkPassword ? 'text' : 'password'}
               label={formatMessage('login.linkMoodlePassword')}
               placeholder={formatMessage('login.linkMoodlePasswordPlaceholder')}
               value={linkPassword}
               onChange={(event) => setLinkPassword(event.target.value)}
-              autoComplete="current-password"
-              icon={<Lock size={16} />}
-              rightElement={
-                <PasswordToggle
-                  show={showLinkPassword}
-                  onToggle={() => setShowLinkPassword((prev) => !prev)}
-                  label={formatMessage(
-                    showLinkPassword ? 'login.hidePassword' : 'login.showPassword',
-                  )}
-                />
-              }
             />
 
             {error && <p className={styles.error}>{error}</p>}
@@ -293,23 +279,13 @@ const LoginPage: React.FC = () => {
               icon={<User size={16} />}
             />
 
-            <AuthField
+            <PasswordAuthField
               id="login-password"
               name="password"
-              type={showPassword ? 'text' : 'password'}
               label={formatMessage('login.password')}
               placeholder={formatMessage('login.password')}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
-              icon={<Lock size={16} />}
-              rightElement={
-                <PasswordToggle
-                  show={showPassword}
-                  onToggle={() => setShowPassword((prev) => !prev)}
-                  label={formatMessage(showPassword ? 'login.hidePassword' : 'login.showPassword')}
-                />
-              }
             />
 
             {error && <p className={styles.error}>{error}</p>}

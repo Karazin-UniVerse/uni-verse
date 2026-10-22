@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User, Lock } from 'lucide-react';
+import { User } from 'lucide-react';
 import { Modal, Button, Form, useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { getErrorMessage } from '@uni-hub/services/api';
 import { useLinkMoodle } from '@uni-hub/hooks/useAuthMutations';
 import { AuthField } from './AuthField';
-import { PasswordToggle } from './PasswordToggle';
+import { PasswordAuthField } from './PasswordAuthField';
 import { LinkMoodleMode, getLinkMoodleContentKeys } from './helpers';
 import styles from './LinkMoodleModal.module.scss';
 
@@ -27,7 +27,6 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
   const { formatMessage } = useLanguage();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [prevOpen, setPrevOpen] = useState(open);
 
@@ -35,7 +34,6 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
     setPrevOpen(open);
 
     if (!open) {
-      setShowPassword(false);
       setError('');
     }
   }
@@ -45,7 +43,6 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
   const toast = useToast();
 
   const handleClose = (): void => {
-    setShowPassword(false);
     setError('');
     onClose();
   };
@@ -74,7 +71,6 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
       await linkMoodle.mutateAsync({ username: username.trim(), password });
 
       toast.success(formatMessage(contentKeys.successKey));
-      setShowPassword(false);
       setError('');
       onSuccess();
     } catch (err: unknown) {
@@ -107,23 +103,14 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
           icon={<User size={16} />}
         />
 
-        <AuthField
+        <PasswordAuthField
+          key={open ? 'open' : 'closed'}
           id="modal-link-moodle-password"
           name="moodlePassword"
-          type={showPassword ? 'text' : 'password'}
           label={formatMessage('login.linkMoodlePassword')}
           placeholder={formatMessage('login.linkMoodlePasswordPlaceholder')}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          autoComplete="current-password"
-          icon={<Lock size={16} />}
-          rightElement={
-            <PasswordToggle
-              show={showPassword}
-              onToggle={() => setShowPassword((prev) => !prev)}
-              label={formatMessage(showPassword ? 'login.hidePassword' : 'login.showPassword')}
-            />
-          }
         />
 
         {error && <p className={styles.error}>{error}</p>}
