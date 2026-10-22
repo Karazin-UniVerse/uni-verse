@@ -26,7 +26,8 @@
     "db:migrate": "pnpm --filter @universe/backend db:push",
     "db:migrate:force": "pnpm --filter @universe/backend db:push:force",
     "db:studio": "pnpm --filter @universe/backend db:studio",
-    "lhci": "lhci autorun"
+    "lhci": "node scripts/lhci-run.cjs",
+    "test:lhci": "node --test scripts/tests/lhci.test.cjs"
   },
   "devDependencies": {
     "@lhci/cli": "^0.15.1",

@@ -41,9 +41,27 @@ jobs:
           pnpm --filter @universe/uni-hub test
       - name: Build Storybook
         run: pnpm --filter @universe/ui build-storybook
-      - run: pnpm build
+      - name: Test Lighthouse support scripts
+        run: pnpm test:lhci
+      - name: Build with the Lighthouse mock API
+        run: pnpm build --force
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001
+          NEXT_PUBLIC_FEATURE_OPPORTUNITIES: 'true'
+          NEXT_PUBLIC_FEATURE_MOODLE: 'false'
+          NEXT_PUBLIC_FEATURE_EDEAN: 'false'
+          NEXT_PUBLIC_FEATURE_PANEL: 'false'
       - name: Run Lighthouse CI (Web Vitals)
         run: pnpm lhci
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 14
       - name: SonarCloud Scan
         if: github.actor != 'dependabot[bot]' && env.HAS_SONAR_TOKEN == 'true'
         uses: SonarSource/sonarcloud-github-action@v5

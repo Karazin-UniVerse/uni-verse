@@ -1,9 +1,6 @@
 module.exports = {
   ci: {
     collect: {
-      startServerCommand: 'node scripts/lhci-server.cjs',
-      startServerReadyPattern: 'Ready',
-      startServerReadyTimeout: 60000,
       url: [
         'http://localhost:3000/opportunities',
         'http://localhost:3000/opportunities/lhci-demo-1',
