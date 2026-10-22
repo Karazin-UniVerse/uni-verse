@@ -297,7 +297,7 @@ export class MoodleProfileService {
       }
     }
 
-    return 'КС12';
+    return '';
   }
 
   private calculateGpaFromGrades(

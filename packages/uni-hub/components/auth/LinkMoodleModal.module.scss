@@ -28,25 +28,3 @@
     flex: 1;
   }
 }
-
-.passwordToggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: color var(--transition-fast) var(--ease-standard);
-
-  &:hover {
-    color: var(--text-primary);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--accent-primary);
-    outline-offset: 2px;
-    border-radius: var(--border-radius-small, 4px);
-  }
-}

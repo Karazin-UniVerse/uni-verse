@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Lock } from 'lucide-react';
 import { Modal, Button, Form, useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { getErrorMessage } from '@uni-hub/services/api';
 import { useLinkMoodle } from '@uni-hub/hooks/useAuthMutations';
 import { AuthField } from './AuthField';
+import { PasswordToggle } from './PasswordToggle';
 import { LinkMoodleMode, getLinkMoodleContentKeys } from './helpers';
 import styles from './LinkMoodleModal.module.scss';
 
@@ -27,10 +28,27 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+
+    if (!open) {
+      setShowPassword(false);
+      setError('');
+    }
+  }
+
   const linkMoodle = useLinkMoodle();
   const loading = linkMoodle.isPending;
-  const [error, setError] = useState('');
   const toast = useToast();
+
+  const handleClose = (): void => {
+    setShowPassword(false);
+    setError('');
+    onClose();
+  };
 
   const contentKeys = getLinkMoodleContentKeys(mode);
   const title = formatMessage(contentKeys.titleKey);
@@ -56,6 +74,8 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
       await linkMoodle.mutateAsync({ username: username.trim(), password });
 
       toast.success(formatMessage(contentKeys.successKey));
+      setShowPassword(false);
+      setError('');
       onSuccess();
     } catch (err: unknown) {
       const message = getErrorMessage(err, formatMessage('login.linkMoodleError'));
@@ -68,7 +88,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       title={title}
       closeLabel={formatMessage('modal.close')}
       width={400}
@@ -98,30 +118,18 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
           autoComplete="current-password"
           icon={<Lock size={16} />}
           rightElement={
-            <button
-              type="button"
-              className={styles.passwordToggle}
-              onClick={() => setShowPassword((prev) => !prev)}
-              aria-label={
-                showPassword
-                  ? formatMessage('login.hidePassword')
-                  : formatMessage('login.showPassword')
-              }
-              title={
-                showPassword
-                  ? formatMessage('login.hidePassword')
-                  : formatMessage('login.showPassword')
-              }
-            >
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
+            <PasswordToggle
+              show={showPassword}
+              onToggle={() => setShowPassword((prev) => !prev)}
+              label={formatMessage(showPassword ? 'login.hidePassword' : 'login.showPassword')}
+            />
           }
         />
 
         {error && <p className={styles.error}>{error}</p>}
 
         <div className={styles.actions}>
-          <Button variant="secondary" onClick={onClose} disabled={loading}>
+          <Button variant="secondary" onClick={handleClose} disabled={loading}>
             {formatMessage('common.cancel')}
           </Button>
           <Button type="submit" variant="primary" disabled={loading}>

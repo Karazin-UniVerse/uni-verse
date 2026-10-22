@@ -336,10 +336,7 @@ export function getInitialUserProfile(): StudentProfile | null {
     ...fallbackStudentProfile,
     fullName,
     email: resolvedEmail,
-    group:
-      savedUser && savedUser !== fallbackStudentProfile.fullName
-        ? ''
-        : fallbackStudentProfile.group,
+    group: '',
   };
 }
 

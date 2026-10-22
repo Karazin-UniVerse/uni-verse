@@ -96,4 +96,49 @@ describe('LinkMoodleModal component', () => {
     fireEvent.click(toggleButton);
     expect(passwordInput).toHaveAttribute('type', 'password');
   });
+
+  it('should reset password visibility when modal is closed and reopened', () => {
+    const { rerender } = render(
+      withQueryClient(
+        <LinkMoodleModal
+          open={true}
+          mode={LinkMoodleMode.CHANGE}
+          onClose={vi.fn()}
+          onSuccess={vi.fn()}
+        />,
+      ),
+    );
+
+    const toggleButton = screen.getByRole('button', { name: /показати пароль/i });
+    const passwordInput = screen.getByLabelText(/пароль у moodle/i, { selector: 'input' });
+
+    fireEvent.click(toggleButton);
+    expect(passwordInput).toHaveAttribute('type', 'text');
+
+    rerender(
+      withQueryClient(
+        <LinkMoodleModal
+          open={false}
+          mode={LinkMoodleMode.CHANGE}
+          onClose={vi.fn()}
+          onSuccess={vi.fn()}
+        />,
+      ),
+    );
+
+    rerender(
+      withQueryClient(
+        <LinkMoodleModal
+          open={true}
+          mode={LinkMoodleMode.CHANGE}
+          onClose={vi.fn()}
+          onSuccess={vi.fn()}
+        />,
+      ),
+    );
+
+    const reopenedInput = screen.getByLabelText(/пароль у moodle/i, { selector: 'input' });
+
+    expect(reopenedInput).toHaveAttribute('type', 'password');
+  });
 });

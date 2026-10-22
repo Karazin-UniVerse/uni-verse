@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button, Form, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
@@ -11,7 +11,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getErrorMessage, safeStorage } from '@uni-hub/services/api';
 import { endSession } from '@uni-hub/services/api.session';
 import { useGoogleLogin, useLinkMoodle, useLogin } from '@uni-hub/hooks/useAuthMutations';
-import { GoogleLoginButton, AuthField, parseGoogleClaims } from '@uni-hub/components/auth';
+import {
+  GoogleLoginButton,
+  AuthField,
+  PasswordToggle,
+  parseGoogleClaims,
+} from '@uni-hub/components/auth';
 import { useFeatures } from '@uni-hub/features';
 import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
 import { motion } from 'framer-motion';
@@ -203,23 +208,13 @@ const LoginPage: React.FC = () => {
               autoComplete="current-password"
               icon={<Lock size={16} />}
               rightElement={
-                <button
-                  type="button"
-                  className={styles.passwordToggle}
-                  onClick={() => setShowLinkPassword((prev) => !prev)}
-                  aria-label={
-                    showLinkPassword
-                      ? formatMessage('login.hidePassword')
-                      : formatMessage('login.showPassword')
-                  }
-                  title={
-                    showLinkPassword
-                      ? formatMessage('login.hidePassword')
-                      : formatMessage('login.showPassword')
-                  }
-                >
-                  {showLinkPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+                <PasswordToggle
+                  show={showLinkPassword}
+                  onToggle={() => setShowLinkPassword((prev) => !prev)}
+                  label={formatMessage(
+                    showLinkPassword ? 'login.hidePassword' : 'login.showPassword',
+                  )}
+                />
               }
             />
 
@@ -309,23 +304,11 @@ const LoginPage: React.FC = () => {
               autoComplete="current-password"
               icon={<Lock size={16} />}
               rightElement={
-                <button
-                  type="button"
-                  className={styles.passwordToggle}
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  aria-label={
-                    showPassword
-                      ? formatMessage('login.hidePassword')
-                      : formatMessage('login.showPassword')
-                  }
-                  title={
-                    showPassword
-                      ? formatMessage('login.hidePassword')
-                      : formatMessage('login.showPassword')
-                  }
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+                <PasswordToggle
+                  show={showPassword}
+                  onToggle={() => setShowPassword((prev) => !prev)}
+                  label={formatMessage(showPassword ? 'login.hidePassword' : 'login.showPassword')}
+                />
               }
             />
 

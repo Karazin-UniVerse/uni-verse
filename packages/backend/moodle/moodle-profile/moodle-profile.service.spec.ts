@@ -333,4 +333,12 @@ describe('MoodleProfileService', () => {
 
     expect(profile.group).toBe('УБ-12');
   });
+
+  it('should fall back to empty string when no group can be resolved', async () => {
+    mockMoodleClient.client.mockResolvedValue({});
+
+    const profile = await service.getProfile('token', '4021');
+
+    expect(profile.group).toBe('');
+  });
 });
