@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { CurriculumItem, StudentProfile } from '@core/types';
-import { createAppProvidersWrapper } from '@uni-hub/utils/test-utils';
+import {
+  createAppProvidersWrapper,
+  setTestFeatureFlags,
+  ALL_FEATURES_ENABLED,
+} from '@uni-hub/utils/test-utils';
 import type { Assignment, MoodleCourse as Course } from '@core/types/moodle';
 import type { OverviewTabProps } from '../types';
 import { OverviewTab } from './OverviewTab';
@@ -88,10 +92,7 @@ describe('OverviewTab component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     state.mockCurriculum = null;
-    process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
-    process.env.NEXT_PUBLIC_FEATURE_EDEAN = 'true';
-    process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES = 'true';
-    process.env.NEXT_PUBLIC_FEATURE_PANEL = 'true';
+    setTestFeatureFlags(ALL_FEATURES_ENABLED);
   });
 
   it('should render student card, stat card grid, and quick actions', async () => {

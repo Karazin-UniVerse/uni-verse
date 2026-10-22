@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { TabStateWrapper } from './TabStateWrapper';
 
 describe('TabStateWrapper', () => {
@@ -52,8 +52,7 @@ describe('TabStateWrapper', () => {
     const emptyDescription = 'No opportunities available';
 
     render(
-      <LanguageProvider>
-        <TabStateWrapper
+      withLanguage(<TabStateWrapper
           loading={false}
           isError={true}
           onRetry={onRetry}
@@ -61,8 +60,7 @@ describe('TabStateWrapper', () => {
           emptyDescription={emptyDescription}
         >
           <div data-testid="tab-content">Opportunities List</div>
-        </TabStateWrapper>
-      </LanguageProvider>,
+        </TabStateWrapper>),
     );
 
     const retryButton = screen.getByRole('button');

@@ -1,15 +1,13 @@
 import React from 'react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import type { OpportunityAppStatus } from '@core/constants/opportunities';
 import { ApplicationStatusBadge } from './ApplicationStatusBadge';
 
 const renderBadge = (status: OpportunityAppStatus | string) => {
   return render(
-    <LanguageProvider>
-      <ApplicationStatusBadge status={status as OpportunityAppStatus} />
-    </LanguageProvider>,
+    withLanguage(<ApplicationStatusBadge status={status as OpportunityAppStatus} />),
   );
 };
 

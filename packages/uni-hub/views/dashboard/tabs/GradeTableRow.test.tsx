@@ -1,18 +1,18 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { GradeTableRow, type GradeDisplayItem } from './GradeTableRow';
 
 const renderRow = (grade: GradeDisplayItem, index = 0) => {
   return render(
-    <LanguageProvider>
+    withLanguage(
       <table>
         <tbody>
           <GradeTableRow grade={grade} index={index} />
         </tbody>
-      </table>
-    </LanguageProvider>,
+      </table>,
+    ),
   );
 };
 

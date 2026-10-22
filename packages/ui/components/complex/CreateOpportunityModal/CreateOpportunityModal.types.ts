@@ -8,6 +8,7 @@ export type CreateOpportunityFormData = {
   ownerContactInfo: string;
   paymentType: OpportunityPaymentType;
   paymentDetails: string;
+  acceptsApplications?: boolean;
 };
 
 export type CreateOpportunityModalProps = {
@@ -31,6 +32,7 @@ export type CreateOpportunityModalProps = {
   cancelText: string;
   submitText: string;
   savingText: string;
+  acceptsApplicationsLabel?: string;
   submitting?: boolean;
   className?: string;
 };

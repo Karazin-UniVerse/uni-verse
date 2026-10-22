@@ -1,38 +1,46 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import { FeatureToggleProvider } from '@uni-hub/features';
+import {
+  withFeatureToggles,
+  withLanguage,
+  setTestFeatureFlags,
+} from '@uni-hub/utils/test-utils';
 import { NAV_KEY } from '@uni-hub/views/dashboard/constants';
 import * as soundEffects from '@uni-hub/utils/soundEffects';
 import styles from './MobileBottomNav.module.scss';
 import { MobileBottomNav } from './MobileBottomNav';
 
+const renderMobileBottomNav = (
+  props: Partial<React.ComponentProps<typeof MobileBottomNav>> = {},
+) => {
+  const defaultProps: React.ComponentProps<typeof MobileBottomNav> = {
+    activeKey: NAV_KEY.Overview,
+    onSelectKey: vi.fn(),
+    soundEnabled: true,
+  };
+
+  return render(
+    withFeatureToggles(withLanguage(<MobileBottomNav {...defaultProps} {...props} />)),
+  );
+};
+
 describe('MobileBottomNav component', () => {
   const playClickSpy = vi.spyOn(soundEffects, 'playClick');
 
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
-    process.env.NEXT_PUBLIC_FEATURE_EDEAN = 'true';
-    process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES = 'true';
+    setTestFeatureFlags({
+      isMoodleIntegrationEnabled: true,
+      isEDeanEnabled: true,
+      isOpportunitiesPlatformEnabled: true,
+    });
     localStorage.clear();
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
-    delete process.env.NEXT_PUBLIC_FEATURE_EDEAN;
-    delete process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES;
-  });
-
   it('should render mobile bottom nav with accessible navigation role and visible items', () => {
-    render(
-      <FeatureToggleProvider>
-        <LanguageProvider>
-          <MobileBottomNav activeKey={NAV_KEY.Overview} onSelectKey={vi.fn()} soundEnabled />
-        </LanguageProvider>
-      </FeatureToggleProvider>,
-    );
+    renderMobileBottomNav();
 
     const nav = screen.getByRole('navigation', { name: 'Мобільна навігація' });
     const buttons = screen.getAllByRole('button');
@@ -43,13 +51,7 @@ describe('MobileBottomNav component', () => {
   });
 
   it('should apply active class to the currently selected item', () => {
-    render(
-      <FeatureToggleProvider>
-        <LanguageProvider>
-          <MobileBottomNav activeKey={NAV_KEY.Study} onSelectKey={vi.fn()} soundEnabled />
-        </LanguageProvider>
-      </FeatureToggleProvider>,
-    );
+    renderMobileBottomNav({ activeKey: NAV_KEY.Study });
 
     const activeItem = screen.getByRole('button', { name: /навчання/i });
     const inactiveItem = screen.getByRole('button', { name: /стіна/i });
@@ -62,17 +64,7 @@ describe('MobileBottomNav component', () => {
     const user = userEvent.setup();
     const handleSelectKey = vi.fn();
 
-    render(
-      <FeatureToggleProvider>
-        <LanguageProvider>
-          <MobileBottomNav
-            activeKey={NAV_KEY.Overview}
-            onSelectKey={handleSelectKey}
-            soundEnabled
-          />
-        </LanguageProvider>
-      </FeatureToggleProvider>,
-    );
+    renderMobileBottomNav({ onSelectKey: handleSelectKey, soundEnabled: true });
 
     const studyButton = screen.getByRole('button', { name: /навчання/i });
 
@@ -87,17 +79,7 @@ describe('MobileBottomNav component', () => {
     const user = userEvent.setup();
     const handleSelectKey = vi.fn();
 
-    render(
-      <FeatureToggleProvider>
-        <LanguageProvider>
-          <MobileBottomNav
-            activeKey={NAV_KEY.Overview}
-            onSelectKey={handleSelectKey}
-            soundEnabled={false}
-          />
-        </LanguageProvider>
-      </FeatureToggleProvider>,
-    );
+    renderMobileBottomNav({ onSelectKey: handleSelectKey, soundEnabled: false });
 
     const scheduleButton = screen.getByRole('button', { name: /розклад/i });
 
@@ -118,13 +100,7 @@ describe('MobileBottomNav component', () => {
       }),
     );
 
-    render(
-      <FeatureToggleProvider>
-        <LanguageProvider>
-          <MobileBottomNav activeKey={NAV_KEY.Overview} onSelectKey={vi.fn()} soundEnabled />
-        </LanguageProvider>
-      </FeatureToggleProvider>,
-    );
+    renderMobileBottomNav();
 
     expect(screen.getByRole('button', { name: /стіна/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /можливості/i })).not.toBeInTheDocument();

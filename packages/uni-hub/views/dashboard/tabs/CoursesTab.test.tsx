@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import type { MoodleCourse as Course } from '@core/types/moodle';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import { CoursesTab } from './CoursesTab';
@@ -19,9 +19,7 @@ vi.mock('@uni-hub/utils/soundEffects', () => ({
   playClick: vi.fn(),
 }));
 
-const renderWithProviders = (ui: React.ReactElement) => {
-  return render(<LanguageProvider>{ui}</LanguageProvider>);
-};
+const renderWithProviders = (ui: React.ReactElement) => render(withLanguage(ui));
 
 describe('CoursesTab component', () => {
   beforeEach(() => {

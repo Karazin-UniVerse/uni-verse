@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { addDays, startOfWeek } from './helpers';
 import { ScheduleMonthView } from './ScheduleMonthView';
 import type { ScheduleEvent, ScheduleMonthViewProps } from './ScheduleView.types';
@@ -34,9 +34,7 @@ describe('ScheduleMonthView', () => {
 
   const renderComponent = (props: ScheduleMonthViewProps) => {
     return render(
-      <LanguageProvider>
-        <ScheduleMonthView {...props} />
-      </LanguageProvider>,
+      withLanguage(<ScheduleMonthView {...props} />),
     );
   };
 

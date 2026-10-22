@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Assignment } from '@core/types/moodle';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { RecentGradesFeed } from './RecentGradesFeed';
 
 const mockAssignments: Assignment[] = [
@@ -69,6 +69,10 @@ const mockAssignments: Assignment[] = [
   },
 ];
 
+const renderRecentGradesFeed = (
+  props: React.ComponentProps<typeof RecentGradesFeed>,
+) => render(withLanguage(<RecentGradesFeed {...props} />));
+
 describe('RecentGradesFeed component', () => {
   beforeEach(() => {
     localStorage.setItem('universe-lang', 'en');
@@ -81,14 +85,10 @@ describe('RecentGradesFeed component', () => {
   it('should render recent grades feed with accessible heading and grade items', () => {
     const handleNavigate = vi.fn();
 
-    render(
-      <LanguageProvider>
-        <RecentGradesFeed
-          assignments={[mockAssignments[0], mockAssignments[1]]}
-          onNavigate={handleNavigate}
-        />
-      </LanguageProvider>,
-    );
+    renderRecentGradesFeed({
+      assignments: [mockAssignments[0], mockAssignments[1]],
+      onNavigate: handleNavigate,
+    });
 
     const section = screen.getByRole('region', { name: 'Recent Grades' });
     const heading = screen.getByRole('heading', { level: 3, name: 'Recent Grades' });
@@ -119,11 +119,10 @@ describe('RecentGradesFeed component', () => {
       },
     ];
 
-    render(
-      <LanguageProvider>
-        <RecentGradesFeed assignments={ungradedAssignments} onNavigate={handleNavigate} />
-      </LanguageProvider>,
-    );
+    renderRecentGradesFeed({
+      assignments: ungradedAssignments,
+      onNavigate: handleNavigate,
+    });
 
     expect(screen.getByText('No graded assignments yet')).toBeInTheDocument();
     expect(screen.queryByText('Неоцінене завдання')).not.toBeInTheDocument();
@@ -133,11 +132,10 @@ describe('RecentGradesFeed component', () => {
     const user = userEvent.setup();
     const handleNavigate = vi.fn();
 
-    render(
-      <LanguageProvider>
-        <RecentGradesFeed assignments={[mockAssignments[0]]} onNavigate={handleNavigate} />
-      </LanguageProvider>,
-    );
+    renderRecentGradesFeed({
+      assignments: [mockAssignments[0]],
+      onNavigate: handleNavigate,
+    });
 
     const allGradesButton = screen.getByRole('button', { name: 'All grades' });
 
@@ -151,11 +149,10 @@ describe('RecentGradesFeed component', () => {
     const user = userEvent.setup();
     const handleNavigate = vi.fn();
 
-    render(
-      <LanguageProvider>
-        <RecentGradesFeed assignments={[mockAssignments[0]]} onNavigate={handleNavigate} />
-      </LanguageProvider>,
-    );
+    renderRecentGradesFeed({
+      assignments: [mockAssignments[0]],
+      onNavigate: handleNavigate,
+    });
 
     const feedItem = screen.getByRole('button', {
       name: /Алгоритми та структури даних: Лабораторна 1/i,
@@ -170,11 +167,11 @@ describe('RecentGradesFeed component', () => {
   it('should respect maxItems limit', () => {
     const handleNavigate = vi.fn();
 
-    render(
-      <LanguageProvider>
-        <RecentGradesFeed assignments={mockAssignments} onNavigate={handleNavigate} maxItems={3} />
-      </LanguageProvider>,
-    );
+    renderRecentGradesFeed({
+      assignments: mockAssignments,
+      onNavigate: handleNavigate,
+      maxItems: 3,
+    });
 
     expect(screen.getByText('Дискретна математика: Модуль 1')).toBeInTheDocument();
     expect(screen.getByText('Операційні системи: Лабораторна 3')).toBeInTheDocument();
@@ -201,11 +198,10 @@ describe('RecentGradesFeed component', () => {
       },
     ];
 
-    render(
-      <LanguageProvider>
-        <RecentGradesFeed assignments={passedAssignment} onNavigate={handleNavigate} />
-      </LanguageProvider>,
-    );
+    renderRecentGradesFeed({
+      assignments: passedAssignment,
+      onNavigate: handleNavigate,
+    });
 
     expect(screen.getByText('Passed')).toBeInTheDocument();
   });
@@ -235,11 +231,10 @@ describe('RecentGradesFeed component', () => {
       },
     ];
 
-    render(
-      <LanguageProvider>
-        <RecentGradesFeed assignments={items} onNavigate={handleNavigate} />
-      </LanguageProvider>,
-    );
+    renderRecentGradesFeed({
+      assignments: items,
+      onNavigate: handleNavigate,
+    });
 
     const renderedItems = screen.getAllByRole('button');
 

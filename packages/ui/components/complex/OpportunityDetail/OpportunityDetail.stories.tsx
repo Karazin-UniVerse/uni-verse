@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Tag } from '../../una/Tag';
 import { OpportunityDetail } from './OpportunityDetail';
 import type { OpportunityDetailProps } from './OpportunityDetail.types';
+import { noop } from '@core/utils/fn';
 
 const defaultLifecycleOptions = [
   { value: 'START', label: 'Початок' },
@@ -20,7 +21,7 @@ const meta = {
     layout: 'padded',
   },
   args: {
-    onBack: () => {},
+    onBack: noop,
     backText: 'Назад до можливостей',
     title: 'Стажування у лабораторії біоінформатики',
     paymentTagText: 'Оплачувана • 15 000 грн/міс',
@@ -42,6 +43,9 @@ const meta = {
     phaseLabel: 'Фаза:',
     lifecycleOptions: defaultLifecycleOptions,
     lifecycleState: 'ACTIVE',
+    acceptsApplications: true,
+    acceptsApplicationsLabel: 'Приймати нові відгуки',
+    applicationsClosedText: 'Прийом заявок призупинено автором',
   },
 } satisfies Meta<typeof OpportunityDetail>;
 
@@ -54,6 +58,7 @@ export const AuthorView: Story = {
   render: (args) => {
     const InteractiveWrapper = (props: OpportunityDetailProps) => {
       const [state, setState] = useState(props.lifecycleState ?? 'ACTIVE');
+      const [accepts, setAccepts] = useState(props.acceptsApplications ?? true);
 
       return (
         <OpportunityDetail
@@ -63,11 +68,21 @@ export const AuthorView: Story = {
           canSendToReview={false}
           lifecycleState={state}
           onLifecycleChange={setState}
+          acceptsApplications={accepts}
+          onToggleAcceptsApplications={setAccepts}
         />
       );
     };
 
     return <InteractiveWrapper {...args} />;
+  },
+};
+
+export const CandidateApplicationsClosed: Story = {
+  args: {
+    canApply: false,
+    acceptsApplications: false,
+    applicationsClosedText: 'Прийом заявок призупинено автором',
   },
 };
 
@@ -81,7 +96,7 @@ export const DraftUnderReview: Story = {
     isOwner: true,
     canApply: false,
     canSendToReview: true,
-    onSendToReview: () => {},
+    onSendToReview: noop,
     lifecycleState: 'START',
   },
 };
@@ -95,9 +110,9 @@ export const AuthorDraftWithRevision: Story = {
     lifecycleTagText: 'Стан: Початок',
     isOwner: true,
     canEdit: true,
-    onEdit: () => {},
+    onEdit: noop,
     canSendToReview: true,
-    onSendToReview: () => {},
+    onSendToReview: noop,
     moderationCommentTitle: 'Зауваження модератора',
     moderationComment: 'Будь ласка, уточніть стек технологій та очікуване тижневе навантаження.',
     lifecycleState: 'START',

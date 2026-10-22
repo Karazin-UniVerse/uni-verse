@@ -1,26 +1,15 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Assignment } from '@core/types/moodle';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import { FeatureToggleProvider } from '@uni-hub/features';
+import {
+  withFeatureToggles,
+  withLanguage,
+  withToast,
+  setTestFeatureFlags,
+} from '@uni-hub/utils/test-utils';
 import { QuickActions } from './QuickActions';
-
-vi.mock('./DeanContactModal', () => ({
-  DeanContactModal: ({ open, onClose }: { open: boolean; onClose: () => void }) => {
-    const title = "Зв'язок з деканатом";
-
-    return open ? (
-      <dialog open aria-label={title}>
-        <h2>{title}</h2>
-        <button type="button" aria-label="Закрити" onClick={onClose}>
-          Закрити
-        </button>
-      </dialog>
-    ) : null;
-  },
-}));
 
 const mockPendingAssignments: Assignment[] = [
   {
@@ -76,28 +65,19 @@ const renderQuickActions = (props: Partial<React.ComponentProps<typeof QuickActi
   const mergedProps = { ...defaultProps, ...props };
 
   return render(
-    <FeatureToggleProvider>
-      <LanguageProvider>
-        <QuickActions {...mergedProps} />
-      </LanguageProvider>
-    </FeatureToggleProvider>,
+    withToast(withFeatureToggles(withLanguage(<QuickActions {...mergedProps} />))),
   );
 };
 
 describe('QuickActions component', () => {
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
-    process.env.NEXT_PUBLIC_FEATURE_EDEAN = 'true';
-    process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES = 'true';
+    setTestFeatureFlags({
+      isMoodleIntegrationEnabled: true,
+      isEDeanEnabled: true,
+      isOpportunitiesPlatformEnabled: true,
+    });
     window.localStorage.clear();
     vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
-    delete process.env.NEXT_PUBLIC_FEATURE_EDEAN;
-    delete process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES;
-    window.localStorage.clear();
   });
 
   it('should render quick actions container with accessible heading and action cards', () => {
@@ -198,11 +178,13 @@ describe('QuickActions component', () => {
     expect(pendingDescription).toBeInTheDocument();
 
     rerender(
-      <FeatureToggleProvider>
-        <LanguageProvider>
-          <QuickActions assignments={mockCompletedAssignments} onNavigate={vi.fn()} />
-        </LanguageProvider>
-      </FeatureToggleProvider>,
+      withToast(
+        withFeatureToggles(
+          withLanguage(
+            <QuickActions assignments={mockCompletedAssignments} onNavigate={vi.fn()} />,
+          ),
+        ),
+      ),
     );
 
     expect(screen.queryByText('2')).not.toBeInTheDocument();

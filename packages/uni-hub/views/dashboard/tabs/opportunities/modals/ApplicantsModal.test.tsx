@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { ApplicantsModal, type ApplicantsModalProps } from './ApplicantsModal';
 
@@ -53,9 +53,7 @@ const renderApplicantsModal = (props?: Partial<ApplicantsModalProps>) => {
 
   return {
     ...render(
-      <LanguageProvider>
-        <ApplicantsModal {...defaultProps} />
-      </LanguageProvider>,
+      withLanguage(<ApplicantsModal {...defaultProps} />),
     ),
     props: defaultProps,
   };

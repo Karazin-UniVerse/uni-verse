@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { ApplyOpportunityModal, type ApplyOpportunityModalProps } from './ApplyOpportunityModal';
 
 describe('ApplyOpportunityModal component', () => {
@@ -25,9 +25,7 @@ describe('ApplyOpportunityModal component', () => {
 
   const renderModal = (props: Partial<ApplyOpportunityModalProps> = {}) => {
     return render(
-      <LanguageProvider>
-        <ApplyOpportunityModal {...defaultProps} {...props} />
-      </LanguageProvider>,
+      withLanguage(<ApplyOpportunityModal {...defaultProps} {...props} />),
     );
   };
 

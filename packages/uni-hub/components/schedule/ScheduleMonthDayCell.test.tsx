@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ScheduleMonthDayCell } from './ScheduleMonthDayCell';
 import type { ScheduleEvent } from './ScheduleView.types';
+import { noop } from '@core/utils/fn';
 
 describe('ScheduleMonthDayCell', () => {
   const dummyDate = new Date(2026, 4, 15); // May 15, 2026
@@ -25,7 +26,7 @@ describe('ScheduleMonthDayCell', () => {
         events={events}
         inMonth={true}
         isToday={false}
-        onSelect={() => {}}
+        onSelect={noop}
       />,
     );
 
@@ -45,7 +46,7 @@ describe('ScheduleMonthDayCell', () => {
         events={events}
         inMonth={true}
         isToday={false}
-        onSelect={() => {}}
+        onSelect={noop}
       />,
     );
 
@@ -62,7 +63,7 @@ describe('ScheduleMonthDayCell', () => {
         events={[]}
         inMonth={false}
         isToday={false}
-        onSelect={() => {}}
+        onSelect={noop}
       />,
     );
 
@@ -76,7 +77,7 @@ describe('ScheduleMonthDayCell', () => {
         events={[]}
         inMonth={true}
         isToday={true}
-        onSelect={() => {}}
+        onSelect={noop}
       />,
     );
 

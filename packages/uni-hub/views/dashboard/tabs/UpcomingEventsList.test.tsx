@@ -2,15 +2,13 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import type { Assignment, MoodleEvent } from '@core/types/moodle';
 import { UpcomingEventsList, type UpcomingEventsListProps } from './UpcomingEventsList';
 
 const renderUpcomingEventsList = (props: UpcomingEventsListProps) => {
   return render(
-    <LanguageProvider>
-      <UpcomingEventsList {...props} />
-    </LanguageProvider>,
+    withLanguage(<UpcomingEventsList {...props} />),
   );
 };
 

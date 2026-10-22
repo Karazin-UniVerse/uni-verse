@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Spinner } from './Spinner';
 import styles from './Spinner.module.scss';
-import type { SpinnerProps } from './Spinner.types';
 
 describe('UNA Spinner Component', () => {
   it('should render spinner with accessible status role and aria-label', () => {
@@ -39,8 +38,8 @@ describe('UNA Spinner Component', () => {
     expect(tipParagraph).toHaveClass(styles.tip);
   });
 
-  it('should apply size variant styles', () => {
-    const { rerender } = render(<Spinner />);
+  it('should apply default medium size variant style', () => {
+    render(<Spinner />);
 
     const defaultStatus = screen.getByRole('status');
     const defaultIndicator = defaultStatus.querySelector(`.${styles.spinner}`);
@@ -48,18 +47,19 @@ describe('UNA Spinner Component', () => {
     expect(defaultIndicator).toBeInTheDocument();
     expect(defaultIndicator).toHaveClass(styles.spinner);
     expect(defaultIndicator).toHaveClass(styles.medium);
+  });
 
-    const sizes: Array<NonNullable<SpinnerProps['size']>> = ['small', 'medium', 'large'];
-
-    for (const size of sizes) {
-      rerender(<Spinner size={size} />);
+  it.each(['small', 'medium', 'large'] as const)(
+    'should apply %s size variant style',
+    (size) => {
+      render(<Spinner size={size} />);
 
       const statusEl = screen.getByRole('status');
       const indicator = statusEl.querySelector(`.${styles.spinner}`);
 
       expect(indicator).toHaveClass(styles[size]);
-    }
-  });
+    },
+  );
 
   it('should apply color or custom className', () => {
     render(<Spinner className="custom-color-class custom-theme" />);

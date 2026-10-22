@@ -53,6 +53,16 @@
   }
 }
 
+.checkboxLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--font-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  user-select: none;
+}
+
 .modalFooter {
   display: flex;
   align-items: center;

@@ -1,8 +1,7 @@
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ToastProvider } from '@una';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage, withToast } from '@uni-hub/utils/test-utils';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { BADGES } from '@uni-hub/constants/gamification';
 import { fireConfetti } from '@uni-hub/utils/confetti';
@@ -18,14 +17,7 @@ vi.mock('@uni-hub/utils/soundEffects', () => ({
   playSuccess: vi.fn(),
 }));
 
-const renderWithProviders = (ui: React.ReactElement, options?: Parameters<typeof render>[1]) => {
-  return render(
-    <LanguageProvider>
-      <ToastProvider>{ui}</ToastProvider>
-    </LanguageProvider>,
-    options,
-  );
-};
+const renderWithProviders = (ui: React.ReactElement) => render(withLanguage(withToast(ui)));
 
 describe('BadgeSystem component', () => {
   beforeEach(() => {
@@ -87,12 +79,8 @@ describe('BadgeSystem component', () => {
   it('should not toast duplicate badges on rerender after unlocking', async () => {
     const triggerCelebrationSpy = vi.spyOn(useGamificationStore.getState(), 'triggerCelebration');
 
-    const { rerender } = render(
-      <LanguageProvider>
-        <ToastProvider>
-          <BadgeSystem grades={[]} submittedBeforeDeadline={true} />
-        </ToastProvider>
-      </LanguageProvider>,
+    const { rerender } = renderWithProviders(
+      <BadgeSystem grades={[]} submittedBeforeDeadline={true} />,
     );
 
     expect(triggerCelebrationSpy).toHaveBeenCalledTimes(1);
@@ -103,11 +91,7 @@ describe('BadgeSystem component', () => {
     ).toBeInTheDocument();
 
     rerender(
-      <LanguageProvider>
-        <ToastProvider>
-          <BadgeSystem grades={[]} submittedBeforeDeadline={true} />
-        </ToastProvider>
-      </LanguageProvider>,
+      withLanguage(withToast(<BadgeSystem grades={[]} submittedBeforeDeadline={true} />)),
     );
 
     expect(triggerCelebrationSpy).toHaveBeenCalledTimes(1);

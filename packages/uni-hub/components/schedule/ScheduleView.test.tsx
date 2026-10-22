@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BREAKPOINTS } from '@core/constants/breakpoints';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { DUMMY_EVENTS, exportToICS } from './helpers';
 import { ScheduleView } from './ScheduleView';
@@ -32,9 +32,7 @@ describe('ScheduleView component', () => {
 
   const renderScheduleView = () =>
     render(
-      <LanguageProvider>
-        <ScheduleView />
-      </LanguageProvider>,
+      withLanguage(<ScheduleView />),
     );
 
   it('should render schedule view in default month mode on desktop', () => {

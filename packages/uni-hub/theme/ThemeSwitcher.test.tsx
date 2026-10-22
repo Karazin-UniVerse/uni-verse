@@ -2,16 +2,12 @@ import React from 'react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import { ThemeProvider } from './ThemeContext';
+
+import { withTheme, withLanguage } from '@uni-hub/utils/test-utils';
 import { ThemeSwitcher } from './ThemeSwitcher';
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <ThemeProvider>
-      <LanguageProvider>{ui}</LanguageProvider>
-    </ThemeProvider>,
-  );
+  return render(withTheme(withLanguage(ui)));
 };
 
 describe('ThemeSwitcher component', () => {

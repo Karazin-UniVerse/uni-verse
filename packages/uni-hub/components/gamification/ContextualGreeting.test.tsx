@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import type { Assignment } from '@core/types/moodle';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { ContextualGreeting } from './ContextualGreeting';
 
 function createAssignment(overrides: Partial<Assignment> = {}): Assignment {
@@ -81,11 +81,7 @@ describe('ContextualGreeting component', () => {
       vi.setSystemTime(new Date(2026, 9, 16, 9, 0, 0));
       window.localStorage.setItem('universe-lang', 'en');
 
-      render(
-        <LanguageProvider>
-          <ContextualGreeting assignments={[]} />
-        </LanguageProvider>,
-      );
+      render(withLanguage(<ContextualGreeting assignments={[]} />));
 
       expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Good morning, student');
     });
@@ -145,11 +141,7 @@ describe('ContextualGreeting component', () => {
       vi.setSystemTime(new Date(2026, 9, 16, 12, 0, 0));
       window.localStorage.setItem('universe-lang', 'en');
 
-      render(
-        <LanguageProvider>
-          <ContextualGreeting assignments={[]} />
-        </LanguageProvider>,
-      );
+      render(withLanguage(<ContextualGreeting assignments={[]} />));
 
       expect(
         screen.getByText('No upcoming deadlines — time to relax or review courses.'),
@@ -298,9 +290,7 @@ describe('ContextualGreeting component', () => {
 
       const nowSec = Math.floor(fixedDate.getTime() / 1000);
 
-      render(
-        <LanguageProvider>
-          <ContextualGreeting
+      render(withLanguage(<ContextualGreeting
             assignments={[
               createAssignment({
                 id: 1,
@@ -308,9 +298,7 @@ describe('ContextualGreeting component', () => {
                 duedate: nowSec + 3600 * 3,
               }),
             ]}
-          />
-        </LanguageProvider>,
-      );
+          />));
 
       expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Good morning, student');
       expect(screen.getByText(/«Physics Homework».*3/)).toBeInTheDocument();

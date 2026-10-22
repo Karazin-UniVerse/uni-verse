@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, renderHook, screen } from '@testing-library/react';
 import { ToastProvider, useToast } from './Toast';
 import styles from './Toast.module.scss';
-import type { ToastApi, ToastKind } from './Toast.types';
+import type { ToastApi } from './Toast.types';
 
 const ToastTrigger = ({ onReady }: { onReady?: (api: ToastApi) => void }) => {
   const toast = useToast();
@@ -56,7 +56,11 @@ describe('Toast Component', () => {
     expect(screen.getByText('Hello world notification')).toBeInTheDocument();
   });
 
-  it('should render appropriate variant styles for all toast kinds', () => {
+  it.each([
+    { kind: 'success' as const, message: 'Operation succeeded' },
+    { kind: 'error' as const, message: 'Operation failed' },
+    { kind: 'info' as const, message: 'System note' },
+  ])('should render appropriate variant style for $kind toast', ({ kind, message }) => {
     let api!: ToastApi;
 
     render(
@@ -69,26 +73,18 @@ describe('Toast Component', () => {
       </ToastProvider>,
     );
 
-    const variants: Array<{ kind: ToastKind; message: string }> = [
-      { kind: 'success', message: 'Operation succeeded' },
-      { kind: 'error', message: 'Operation failed' },
-      { kind: 'info', message: 'System note' },
-    ];
+    act(() => {
+      api[kind](message);
+    });
 
-    for (const { kind, message } of variants) {
-      act(() => {
-        api[kind](message);
-      });
+    const messageElement = screen.getByText(message);
 
-      const messageElement = screen.getByText(message);
+    expect(messageElement).toBeInTheDocument();
 
-      expect(messageElement).toBeInTheDocument();
+    const toastContainer = messageElement.closest(`.${styles.toast}`);
 
-      const toastContainer = messageElement.closest(`.${styles.toast}`);
-
-      expect(toastContainer).toBeInTheDocument();
-      expect(toastContainer).toHaveClass(styles[kind]);
-    }
+    expect(toastContainer).toBeInTheDocument();
+    expect(toastContainer).toHaveClass(styles[kind]);
   });
 
   it('should auto-dismiss after timeout', () => {

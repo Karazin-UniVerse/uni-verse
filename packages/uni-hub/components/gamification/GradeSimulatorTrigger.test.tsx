@@ -2,7 +2,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { GradeSimulatorTrigger } from './GradeSimulatorTrigger';
 
 describe('GradeSimulatorTrigger component', () => {
@@ -20,9 +20,7 @@ describe('GradeSimulatorTrigger component', () => {
     const handleOpen = vi.fn();
 
     render(
-      <LanguageProvider>
-        <GradeSimulatorTrigger onOpen={handleOpen} />
-      </LanguageProvider>,
+      withLanguage(<GradeSimulatorTrigger onOpen={handleOpen} />),
     );
 
     const button = screen.getByRole('button', { name: 'Симулятор балів (Що, якщо?)' });
@@ -38,9 +36,7 @@ describe('GradeSimulatorTrigger component', () => {
     const handleOpen = vi.fn();
 
     render(
-      <LanguageProvider>
-        <GradeSimulatorTrigger onOpen={handleOpen} />
-      </LanguageProvider>,
+      withLanguage(<GradeSimulatorTrigger onOpen={handleOpen} />),
     );
 
     const button = screen.getByRole('button', { name: 'Grade Simulator (What if?)' });
@@ -65,9 +61,7 @@ describe('GradeSimulatorTrigger component', () => {
     const user = userEvent.setup();
 
     render(
-      <LanguageProvider>
-        <GradeSimulatorTrigger onOpen={handleOpen} />
-      </LanguageProvider>,
+      withLanguage(<GradeSimulatorTrigger onOpen={handleOpen} />),
     );
 
     const button = screen.getByRole('button', { name: 'Симулятор балів (Що, якщо?)' });
@@ -87,9 +81,7 @@ describe('GradeSimulatorTrigger component', () => {
     const handleOpen = vi.fn();
 
     render(
-      <LanguageProvider>
-        <GradeSimulatorTrigger onOpen={handleOpen} />
-      </LanguageProvider>,
+      withLanguage(<GradeSimulatorTrigger onOpen={handleOpen} />),
     );
 
     const button = screen.getByRole('button', { name: 'Симулятор балів (Що, якщо?)' });
@@ -108,14 +100,16 @@ describe('GradeSimulatorTrigger component', () => {
       const [isOpen, setIsOpen] = React.useState(false);
 
       return (
-        <LanguageProvider>
+        withLanguage(
+        <>
           <GradeSimulatorTrigger onOpen={() => setIsOpen(true)} />
           {isOpen && (
             <dialog open aria-label="Grade Simulator Modal">
               <p>Simulator Content</p>
             </dialog>
           )}
-        </LanguageProvider>
+        </>
+      )
       );
     };
 

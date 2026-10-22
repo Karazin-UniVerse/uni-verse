@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { createAppProvidersWrapper } from '@uni-hub/utils/test-utils';
+import { createAppProvidersWrapper, setTestFeatureFlags } from '@uni-hub/utils/test-utils';
 import LoginPage from './LoginPage';
 
 const mockPush = vi.fn();
@@ -13,52 +13,49 @@ const mockAuthApi = vi.hoisted(() => ({
   logout: vi.fn(),
 }));
 
-let capturedGoogleError: ((msg: string) => void) | null = null;
+const MOCK_GOOGLE_TOKEN = `header.${btoa(
+  JSON.stringify({ name: 'Test Student', email: 'test@karazin.ua' }),
+)}.signature`;
+
+let googleCallback: ((response: { credential?: string }) => void) | undefined;
+
+function setupGoogleIdentityStub() {
+  googleCallback = undefined;
+
+  window.google = {
+    accounts: {
+      id: {
+        initialize: vi.fn(
+          ({ callback }: { callback: (res: { credential?: string }) => void }) => {
+            googleCallback = callback;
+          },
+        ),
+        renderButton: vi.fn((container: HTMLElement) => {
+          const btn = document.createElement('button');
+
+          btn.type = 'button';
+          btn.setAttribute('data-testid', 'google-btn');
+          btn.addEventListener('click', () => {
+            googleCallback?.({ credential: MOCK_GOOGLE_TOKEN });
+          });
+          container.appendChild(btn);
+        }),
+      },
+    },
+  } as unknown as typeof window.google;
+}
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
+vi.mock('next/script', () => ({
+  default: () => null,
+}));
+
 vi.mock('@uni-hub/services/api.auth', () => ({
   authApi: mockAuthApi,
 }));
-
-vi.mock('@uni-hub/components/auth', async () => {
-  const actual = await vi.importActual<Record<string, unknown>>('@uni-hub/components/auth');
-
-  return {
-    ...actual,
-    GoogleLoginButton: ({
-      onSuccess,
-      onError,
-      disabled,
-    }: {
-      onSuccess: (token: string) => Promise<void>;
-      onError?: (msg: string) => void;
-      disabled?: boolean;
-    }) => {
-      capturedGoogleError = onError ?? null;
-
-      return (
-        <button
-          type="button"
-          data-testid="google-btn"
-          disabled={disabled}
-          onClick={() => {
-            const payload = btoa(
-              JSON.stringify({ name: 'Test Student', email: 'test@karazin.ua' }),
-            );
-            const mockToken = `header.${payload}.signature`;
-
-            void onSuccess(mockToken);
-          }}
-        >
-          Google
-        </button>
-      );
-    },
-  };
-});
 
 function renderLoginPage() {
   return render(<LoginPage />, {
@@ -69,19 +66,19 @@ function renderLoginPage() {
 describe('LoginPage Google SSO Moodle integration bypass and authentication', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
+    setupGoogleIdentityStub();
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = 'test-client-id';
     window.localStorage.clear();
   });
 
   afterEach(() => {
-    delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
     delete process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    delete (window as unknown as { google?: unknown }).google;
     window.localStorage.clear();
   });
 
   it('should set isLoggedIn = true and redirect to / without requiring Moodle link when isMoodleIntegrationEnabled is false', async () => {
-    process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'false';
+    setTestFeatureFlags({ isMoodleIntegrationEnabled: false });
 
     const user = userEvent.setup();
 
@@ -104,7 +101,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
   });
 
   it('should not set isLoggedIn and not redirect to / when isMoodleIntegrationEnabled is true and account is unlinked', async () => {
-    process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
+    setTestFeatureFlags({ isMoodleIntegrationEnabled: true });
 
     const user = userEvent.setup();
 
@@ -143,7 +140,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
   });
 
   it('should set isLoggedIn = true and redirect to / when isMoodleIntegrationEnabled is true and account is already linked', async () => {
-    process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
+    setTestFeatureFlags({ isMoodleIntegrationEnabled: true });
 
     const user = userEvent.setup();
 
@@ -166,7 +163,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
   });
 
   it('should allow linking Moodle account when user enters credentials on link screen', async () => {
-    process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
+    setTestFeatureFlags({ isMoodleIntegrationEnabled: true });
 
     const user = userEvent.setup();
 
@@ -198,7 +195,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
   });
 
   it('should allow skipping Moodle link and redirect to /', async () => {
-    process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
+    setTestFeatureFlags({ isMoodleIntegrationEnabled: true });
 
     const user = userEvent.setup();
 
@@ -224,7 +221,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
   });
 
   it('should cancel Moodle linking and return to login form', async () => {
-    process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
+    setTestFeatureFlags({ isMoodleIntegrationEnabled: true });
 
     const user = userEvent.setup();
 
@@ -249,14 +246,14 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
   it('should show error message when GoogleLoginButton triggers onError', async () => {
     renderLoginPage();
 
-    expect(capturedGoogleError).not.toBeNull();
+    expect(googleCallback).toBeDefined();
 
     act(() => {
-      capturedGoogleError?.('Помилка авторизації через Google');
+      googleCallback?.({});
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Помилка авторизації через Google')).toBeInTheDocument();
+      expect(screen.getByText('Не вдалося отримати токен від Google')).toBeInTheDocument();
     });
   });
 
@@ -352,6 +349,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
 
     renderLoginPage();
 
+    expect(screen.queryByRole('button', { name: /продовжити з google/i })).not.toBeInTheDocument();
     expect(screen.queryByTestId('google-btn')).not.toBeInTheDocument();
   });
 });

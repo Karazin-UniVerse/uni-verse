@@ -1,9 +1,12 @@
 import React from 'react';
-import { beforeEach, afterEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import type { StudentProfile } from '@core/types';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import { FeatureToggleProvider } from '@uni-hub/features';
+import {
+  withFeatureToggles,
+  withLanguage,
+  setTestFeatureFlags,
+} from '@uni-hub/utils/test-utils';
 import { StudentCard, type StudentCardProps } from './StudentCard';
 
 const mockStudentProfile: StudentProfile = {
@@ -35,24 +38,12 @@ const renderStudentCard = (props: Partial<StudentCardProps> = {}) => {
   };
 
   return render(
-    <LanguageProvider>
-      <FeatureToggleProvider>
-        <StudentCard {...mergedProps} />
-      </FeatureToggleProvider>
-    </LanguageProvider>,
+    withLanguage(withFeatureToggles(<StudentCard {...mergedProps} />)),
   );
 };
 
 describe('StudentCard component', () => {
   beforeEach(() => {
-    delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
-    delete process.env.NEXT_PUBLIC_FEATURE_EDEAN;
-    window.localStorage.clear();
-  });
-
-  afterEach(() => {
-    delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
-    delete process.env.NEXT_PUBLIC_FEATURE_EDEAN;
     window.localStorage.clear();
   });
 
@@ -87,7 +78,7 @@ describe('StudentCard component', () => {
   });
 
   it('should render eDean specialty, program, tags, and academic info when isEDeanEnabled is true', () => {
-    process.env.NEXT_PUBLIC_FEATURE_EDEAN = 'true';
+    setTestFeatureFlags({ isEDeanEnabled: true });
 
     renderStudentCard();
 
@@ -123,7 +114,7 @@ describe('StudentCard component', () => {
   });
 
   it('should render unlinked Moodle warning banner when isMoodleLinked is false and Moodle is enabled', () => {
-    process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
+    setTestFeatureFlags({ isMoodleIntegrationEnabled: true });
 
     renderStudentCard({ isMoodleLinked: false });
 
@@ -133,7 +124,7 @@ describe('StudentCard component', () => {
   });
 
   it('should not render unlinked banner when isMoodleLinked is true', () => {
-    process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
+    setTestFeatureFlags({ isMoodleIntegrationEnabled: true });
 
     renderStudentCard({ isMoodleLinked: true });
 

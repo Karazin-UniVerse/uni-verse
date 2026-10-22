@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { ScheduleDayView } from './ScheduleDayView';
 import type { ScheduleDayViewProps, ScheduleEvent } from './ScheduleView.types';
 
@@ -53,9 +53,7 @@ describe('ScheduleDayView', () => {
     };
 
     return render(
-      <LanguageProvider>
-        <ScheduleDayView {...defaultProps} />
-      </LanguageProvider>,
+      withLanguage(<ScheduleDayView {...defaultProps} />),
     );
   };
 

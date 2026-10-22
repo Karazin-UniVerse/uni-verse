@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import type { Opportunity } from '@core/types/opportunities';
 import { MyOpportunitiesTab, type MyOpportunitiesTabProps } from './MyOpportunitiesTab';
 
@@ -58,9 +58,7 @@ const renderMyOpportunitiesTab = (props?: Partial<MyOpportunitiesTabProps>) => {
 
   return {
     ...render(
-      <LanguageProvider>
-        <MyOpportunitiesTab {...defaultProps} />
-      </LanguageProvider>,
+      withLanguage(<MyOpportunitiesTab {...defaultProps} />),
     ),
     props: defaultProps,
   };

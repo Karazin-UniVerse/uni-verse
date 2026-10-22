@@ -1,7 +1,11 @@
+import React from 'react';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { AdmissionBanner } from './AdmissionBanner';
+
+const renderAdmissionBanner = (isAdmitted: boolean, semesterScore: number) =>
+  render(withLanguage(<AdmissionBanner isAdmitted={isAdmitted} semesterScore={semesterScore} />));
 
 describe('AdmissionBanner component', () => {
   beforeEach(() => {
@@ -14,116 +18,46 @@ describe('AdmissionBanner component', () => {
     window.dispatchEvent(new Event('language-change'));
   });
 
-  it('should render admitted state with success tone and score', () => {
-    render(
-      <LanguageProvider>
-        <AdmissionBanner isAdmitted={true} semesterScore={45} />
-      </LanguageProvider>,
-    );
+  it.each([45, 30, 60])(
+    'should render admitted state with success tone at semester score %i',
+    (score) => {
+      renderAdmissionBanner(true, score);
 
-    const banner = screen.getByRole('status');
+      const banner = screen.getByRole('status');
 
-    expect(banner).toBeInTheDocument();
-    expect(banner.className).toMatch(/bannerSuccess/);
-    expect(banner.className).not.toMatch(/bannerDanger/);
-    expect(screen.getByText('🟢')).toBeInTheDocument();
-    expect(banner).toHaveTextContent(
-      'Допущено до іспиту (45 / 60 б. — поріг допуску 30 б. досягнуто)',
-    );
-  });
+      expect(banner).toBeInTheDocument();
+      expect(banner.className).toMatch(/bannerSuccess/);
+      expect(banner.className).not.toMatch(/bannerDanger/);
+      expect(screen.getByText('🟢')).toBeInTheDocument();
+      expect(banner).toHaveTextContent(
+        `Допущено до іспиту (${score} / 60 б. — поріг допуску 30 б. досягнуто)`,
+      );
+    },
+  );
 
-  it('should render admitted state at threshold boundary score of 30', () => {
-    render(
-      <LanguageProvider>
-        <AdmissionBanner isAdmitted={true} semesterScore={30} />
-      </LanguageProvider>,
-    );
+  it.each([
+    { score: 18, remaining: 12 },
+    { score: 0, remaining: 30 },
+    { score: 29, remaining: 1 },
+  ])(
+    'should render not admitted state with danger tone at score $score requiring $remaining pts',
+    ({ score, remaining }) => {
+      renderAdmissionBanner(false, score);
 
-    const banner = screen.getByRole('status');
+      const banner = screen.getByRole('status');
 
-    expect(banner).toBeInTheDocument();
-    expect(banner.className).toMatch(/bannerSuccess/);
-    expect(screen.getByText('🟢')).toBeInTheDocument();
-    expect(banner).toHaveTextContent(
-      'Допущено до іспиту (30 / 60 б. — поріг допуску 30 б. досягнуто)',
-    );
-  });
-
-  it('should render admitted state at maximum semester score of 60', () => {
-    render(
-      <LanguageProvider>
-        <AdmissionBanner isAdmitted={true} semesterScore={60} />
-      </LanguageProvider>,
-    );
-
-    const banner = screen.getByRole('status');
-
-    expect(banner).toBeInTheDocument();
-    expect(banner.className).toMatch(/bannerSuccess/);
-    expect(screen.getByText('🟢')).toBeInTheDocument();
-    expect(banner).toHaveTextContent(
-      'Допущено до іспиту (60 / 60 б. — поріг допуску 30 б. досягнуто)',
-    );
-  });
-
-  it('should render not admitted state with warning/danger tone, current score and remaining points', () => {
-    render(
-      <LanguageProvider>
-        <AdmissionBanner isAdmitted={false} semesterScore={18} />
-      </LanguageProvider>,
-    );
-
-    const banner = screen.getByRole('status');
-
-    expect(banner).toBeInTheDocument();
-    expect(banner.className).toMatch(/bannerDanger/);
-    expect(banner.className).not.toMatch(/bannerSuccess/);
-    expect(screen.getByText('🔴')).toBeInTheDocument();
-    expect(banner).toHaveTextContent(
-      'Не допущено до іспиту (18 / 60 б. — бракує 12 б. для допуску)',
-    );
-  });
-
-  it('should render not admitted state when semester score is 0 with full 30 remaining points', () => {
-    render(
-      <LanguageProvider>
-        <AdmissionBanner isAdmitted={false} semesterScore={0} />
-      </LanguageProvider>,
-    );
-
-    const banner = screen.getByRole('status');
-
-    expect(banner).toBeInTheDocument();
-    expect(banner.className).toMatch(/bannerDanger/);
-    expect(screen.getByText('🔴')).toBeInTheDocument();
-    expect(banner).toHaveTextContent(
-      'Не допущено до іспиту (0 / 60 б. — бракує 30 б. для допуску)',
-    );
-  });
-
-  it('should render not admitted state just below threshold at 29 points', () => {
-    render(
-      <LanguageProvider>
-        <AdmissionBanner isAdmitted={false} semesterScore={29} />
-      </LanguageProvider>,
-    );
-
-    const banner = screen.getByRole('status');
-
-    expect(banner).toBeInTheDocument();
-    expect(banner.className).toMatch(/bannerDanger/);
-    expect(screen.getByText('🔴')).toBeInTheDocument();
-    expect(banner).toHaveTextContent(
-      'Не допущено до іспиту (29 / 60 б. — бракує 1 б. для допуску)',
-    );
-  });
+      expect(banner).toBeInTheDocument();
+      expect(banner.className).toMatch(/bannerDanger/);
+      expect(banner.className).not.toMatch(/bannerSuccess/);
+      expect(screen.getByText('🔴')).toBeInTheDocument();
+      expect(banner).toHaveTextContent(
+        `Не допущено до іспиту (${score} / 60 б. — бракує ${remaining} б. для допуску)`,
+      );
+    },
+  );
 
   it('should localize messages correctly in ukrainian and english', () => {
-    const { unmount } = render(
-      <LanguageProvider>
-        <AdmissionBanner isAdmitted={true} semesterScore={35} />
-      </LanguageProvider>,
-    );
+    const { unmount } = renderAdmissionBanner(true, 35);
 
     const ukBanner = screen.getByRole('status');
 
@@ -136,11 +70,7 @@ describe('AdmissionBanner component', () => {
     localStorage.setItem('universe-lang', 'en');
     window.dispatchEvent(new Event('language-change'));
 
-    render(
-      <LanguageProvider>
-        <AdmissionBanner isAdmitted={true} semesterScore={35} />
-      </LanguageProvider>,
-    );
+    renderAdmissionBanner(true, 35);
 
     const enBanner = screen.getByRole('status');
 
@@ -153,11 +83,7 @@ describe('AdmissionBanner component', () => {
     localStorage.setItem('universe-lang', 'en');
     window.dispatchEvent(new Event('language-change'));
 
-    render(
-      <LanguageProvider>
-        <AdmissionBanner isAdmitted={false} semesterScore={22} />
-      </LanguageProvider>,
-    );
+    renderAdmissionBanner(false, 22);
 
     const banner = screen.getByRole('status');
 
@@ -170,11 +96,7 @@ describe('AdmissionBanner component', () => {
   });
 
   it('should update localized text reactively when language changes', () => {
-    render(
-      <LanguageProvider>
-        <AdmissionBanner isAdmitted={false} semesterScore={25} />
-      </LanguageProvider>,
-    );
+    renderAdmissionBanner(false, 25);
 
     const banner = screen.getByRole('status');
 

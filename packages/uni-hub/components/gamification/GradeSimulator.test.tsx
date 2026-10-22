@@ -1,7 +1,7 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import type { Assignment, Grade } from '@core/types/moodle';
 import { GradeSimulator } from './GradeSimulator';
 
@@ -33,9 +33,7 @@ const renderSimulator = (props: Partial<React.ComponentProps<typeof GradeSimulat
   };
 
   return render(
-    <LanguageProvider>
-      <GradeSimulator {...defaultProps} />
-    </LanguageProvider>,
+    withLanguage(<GradeSimulator {...defaultProps} />),
   );
 };
 

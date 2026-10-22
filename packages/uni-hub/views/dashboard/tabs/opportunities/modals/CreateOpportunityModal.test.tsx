@@ -2,7 +2,7 @@ import type { SyntheticEvent } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { CreateOpportunityModal } from './CreateOpportunityModal';
 import type { CreateOpportunityFormData } from '../types';
 
@@ -27,9 +27,7 @@ describe('CreateOpportunityModal', () => {
 
   const renderComponent = (props = {}) => {
     return render(
-      <LanguageProvider>
-        <CreateOpportunityModal {...defaultProps} {...props} />
-      </LanguageProvider>,
+      withLanguage(<CreateOpportunityModal {...defaultProps} {...props} />),
     );
   };
 

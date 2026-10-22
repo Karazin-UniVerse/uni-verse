@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
 describe('LanguageSwitcher component', () => {
@@ -11,9 +11,7 @@ describe('LanguageSwitcher component', () => {
 
   it('should render language switcher with accessible role and current language', () => {
     render(
-      <LanguageProvider>
-        <LanguageSwitcher />
-      </LanguageProvider>,
+      withLanguage(<LanguageSwitcher />),
     );
 
     const trigger = screen.getByRole('button', { name: 'Мова інтерфейсу: Українська' });
@@ -28,9 +26,7 @@ describe('LanguageSwitcher component', () => {
     const user = userEvent.setup();
 
     render(
-      <LanguageProvider>
-        <LanguageSwitcher />
-      </LanguageProvider>,
+      withLanguage(<LanguageSwitcher />),
     );
 
     const trigger = screen.getByRole('button', { name: 'Мова інтерфейсу: Українська' });
@@ -54,9 +50,7 @@ describe('LanguageSwitcher component', () => {
     const user = userEvent.setup();
 
     render(
-      <LanguageProvider>
-        <LanguageSwitcher />
-      </LanguageProvider>,
+      withLanguage(<LanguageSwitcher />),
     );
 
     const trigger = screen.getByRole('button', { name: 'Мова інтерфейсу: Українська' });
@@ -84,9 +78,7 @@ describe('LanguageSwitcher component', () => {
 
   it('should support custom className', () => {
     const { container } = render(
-      <LanguageProvider>
-        <LanguageSwitcher className="custom-language-switcher" />
-      </LanguageProvider>,
+      withLanguage(<LanguageSwitcher className="custom-language-switcher" />),
     );
 
     const customElement = container.querySelector('.custom-language-switcher');
@@ -96,9 +88,7 @@ describe('LanguageSwitcher component', () => {
 
   it('should not render text label when showLabel is false', () => {
     render(
-      <LanguageProvider>
-        <LanguageSwitcher showLabel={false} />
-      </LanguageProvider>,
+      withLanguage(<LanguageSwitcher showLabel={false} />),
     );
 
     const trigger = screen.getByRole('button', { name: 'Мова інтерфейсу: Українська' });

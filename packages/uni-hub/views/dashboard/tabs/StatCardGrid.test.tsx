@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { StatCardGrid, type StatCardGridProps } from './StatCardGrid';
 
 const renderStatCardGrid = (props: Partial<StatCardGridProps> = {}) => {
@@ -15,9 +15,7 @@ const renderStatCardGrid = (props: Partial<StatCardGridProps> = {}) => {
   const mergedProps = { ...defaultProps, ...props };
 
   return render(
-    <LanguageProvider>
-      <StatCardGrid {...mergedProps} />
-    </LanguageProvider>,
+    withLanguage(<StatCardGrid {...mergedProps} />),
   );
 };
 
@@ -118,25 +116,19 @@ describe('StatCardGrid component', () => {
     expect(within(getGradesCard()).getByText('4.85')).toBeInTheDocument();
 
     rerender(
-      <LanguageProvider>
-        <StatCardGrid coursesCount={5} assignmentsCount={2} gpa="N/A" onNavigate={vi.fn()} />
-      </LanguageProvider>,
+      withLanguage(<StatCardGrid coursesCount={5} assignmentsCount={2} gpa="N/A" onNavigate={vi.fn()} />),
     );
 
     expect(within(getGradesCard()).getByText('N/A')).toBeInTheDocument();
 
     rerender(
-      <LanguageProvider>
-        <StatCardGrid coursesCount={5} assignmentsCount={2} gpa="—" onNavigate={vi.fn()} />
-      </LanguageProvider>,
+      withLanguage(<StatCardGrid coursesCount={5} assignmentsCount={2} gpa="—" onNavigate={vi.fn()} />),
     );
 
     expect(within(getGradesCard()).getByText('—')).toBeInTheDocument();
 
     rerender(
-      <LanguageProvider>
-        <StatCardGrid coursesCount={5} assignmentsCount={2} gpa={0} onNavigate={vi.fn()} />
-      </LanguageProvider>,
+      withLanguage(<StatCardGrid coursesCount={5} assignmentsCount={2} gpa={0} onNavigate={vi.fn()} />),
     );
 
     expect(within(getGradesCard()).getByText('0')).toBeInTheDocument();

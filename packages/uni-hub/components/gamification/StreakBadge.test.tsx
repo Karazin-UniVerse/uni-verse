@@ -1,7 +1,8 @@
 import React from 'react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
-import { LanguageProvider, useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { StreakBadge } from './StreakBadge';
 
@@ -28,9 +29,7 @@ describe('StreakBadge', () => {
     useGamificationStore.setState({ currentStreak: 5 });
 
     const { container } = render(
-      <LanguageProvider>
-        <StreakBadge />
-      </LanguageProvider>,
+      withLanguage(<StreakBadge />),
     );
 
     expect(screen.getByText('5')).toBeInTheDocument();
@@ -41,9 +40,7 @@ describe('StreakBadge', () => {
     // 1 день
     useGamificationStore.setState({ currentStreak: 1 });
     const { rerender } = render(
-      <LanguageProvider>
-        <LanguageSetter lang="uk" />
-      </LanguageProvider>,
+      withLanguage(<LanguageSetter lang="uk" />),
     );
 
     expect(screen.getByText('день')).toBeInTheDocument();
@@ -53,9 +50,7 @@ describe('StreakBadge', () => {
       useGamificationStore.setState({ currentStreak: 3 });
     });
     rerender(
-      <LanguageProvider>
-        <LanguageSetter lang="uk" />
-      </LanguageProvider>,
+      withLanguage(<LanguageSetter lang="uk" />),
     );
     expect(screen.getByText('дні')).toBeInTheDocument();
 
@@ -64,9 +59,7 @@ describe('StreakBadge', () => {
       useGamificationStore.setState({ currentStreak: 5 });
     });
     rerender(
-      <LanguageProvider>
-        <LanguageSetter lang="uk" />
-      </LanguageProvider>,
+      withLanguage(<LanguageSetter lang="uk" />),
     );
     expect(screen.getByText('днів')).toBeInTheDocument();
 
@@ -75,9 +68,7 @@ describe('StreakBadge', () => {
       useGamificationStore.setState({ currentStreak: 12 });
     });
     rerender(
-      <LanguageProvider>
-        <LanguageSetter lang="uk" />
-      </LanguageProvider>,
+      withLanguage(<LanguageSetter lang="uk" />),
     );
     expect(screen.getByText('днів')).toBeInTheDocument();
 
@@ -86,9 +77,7 @@ describe('StreakBadge', () => {
       useGamificationStore.setState({ currentStreak: 21 });
     });
     rerender(
-      <LanguageProvider>
-        <LanguageSetter lang="uk" />
-      </LanguageProvider>,
+      withLanguage(<LanguageSetter lang="uk" />),
     );
     expect(screen.getByText('день')).toBeInTheDocument();
   });
@@ -96,9 +85,7 @@ describe('StreakBadge', () => {
   it('should display correct English plural forms (day, days)', () => {
     useGamificationStore.setState({ currentStreak: 1 });
     const { rerender } = render(
-      <LanguageProvider>
-        <LanguageSetter lang="en" />
-      </LanguageProvider>,
+      withLanguage(<LanguageSetter lang="en" />),
     );
 
     expect(screen.getByText('day')).toBeInTheDocument();
@@ -107,9 +94,7 @@ describe('StreakBadge', () => {
       useGamificationStore.setState({ currentStreak: 7 });
     });
     rerender(
-      <LanguageProvider>
-        <LanguageSetter lang="en" />
-      </LanguageProvider>,
+      withLanguage(<LanguageSetter lang="en" />),
     );
     expect(screen.getByText('days')).toBeInTheDocument();
   });
@@ -117,9 +102,7 @@ describe('StreakBadge', () => {
   it('should update rendered count when streak in store changes', () => {
     useGamificationStore.setState({ currentStreak: 3 });
     render(
-      <LanguageProvider>
-        <StreakBadge />
-      </LanguageProvider>,
+      withLanguage(<StreakBadge />),
     );
 
     expect(screen.getByText('3')).toBeInTheDocument();
@@ -134,9 +117,7 @@ describe('StreakBadge', () => {
   it('should set accessible title attribute with streak count and plural label', () => {
     useGamificationStore.setState({ currentStreak: 4 });
     const { container } = render(
-      <LanguageProvider>
-        <LanguageSetter lang="uk" />
-      </LanguageProvider>,
+      withLanguage(<LanguageSetter lang="uk" />),
     );
 
     const badge = container.querySelector('[title]');

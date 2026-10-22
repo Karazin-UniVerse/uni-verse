@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import type { Opportunity } from '@core/types/opportunities';
 import { CatalogTab, type CatalogTabProps } from './CatalogTab';
 
@@ -79,9 +79,7 @@ const renderCatalogTab = (props?: Partial<CatalogTabProps>) => {
 
   return {
     ...render(
-      <LanguageProvider>
-        <CatalogTab {...defaultProps} />
-      </LanguageProvider>,
+      withLanguage(<CatalogTab {...defaultProps} />),
     ),
     props: defaultProps,
   };
@@ -155,8 +153,7 @@ describe('CatalogTab component', () => {
 
   it('should filter opportunities in memory by search term', () => {
     const { rerender } = render(
-      <LanguageProvider>
-        <CatalogTab
+      withLanguage(<CatalogTab
           loading={false}
           isError={false}
           onRetry={vi.fn()}
@@ -166,8 +163,7 @@ describe('CatalogTab component', () => {
           paymentFilter=""
           onPaymentFilterChange={vi.fn()}
           onOpenDetail={vi.fn()}
-        />
-      </LanguageProvider>,
+        />),
     );
 
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
@@ -175,8 +171,7 @@ describe('CatalogTab component', () => {
     expect(screen.queryByText('UI/UX Designer')).not.toBeInTheDocument();
 
     rerender(
-      <LanguageProvider>
-        <CatalogTab
+      withLanguage(<CatalogTab
           loading={false}
           isError={false}
           onRetry={vi.fn()}
@@ -186,16 +181,14 @@ describe('CatalogTab component', () => {
           paymentFilter=""
           onPaymentFilterChange={vi.fn()}
           onOpenDetail={vi.fn()}
-        />
-      </LanguageProvider>,
+        />),
     );
 
     expect(screen.getByText('Backend Engineer')).toBeInTheDocument();
     expect(screen.queryByText('Frontend Developer')).not.toBeInTheDocument();
 
     rerender(
-      <LanguageProvider>
-        <CatalogTab
+      withLanguage(<CatalogTab
           loading={false}
           isError={false}
           onRetry={vi.fn()}
@@ -205,8 +198,7 @@ describe('CatalogTab component', () => {
           paymentFilter=""
           onPaymentFilterChange={vi.fn()}
           onOpenDetail={vi.fn()}
-        />
-      </LanguageProvider>,
+        />),
     );
 
     expect(screen.getByText('UI/UX Designer')).toBeInTheDocument();
@@ -215,8 +207,7 @@ describe('CatalogTab component', () => {
 
   it('should filter opportunities in memory by payment filter', () => {
     const { rerender } = render(
-      <LanguageProvider>
-        <CatalogTab
+      withLanguage(<CatalogTab
           loading={false}
           isError={false}
           onRetry={vi.fn()}
@@ -226,8 +217,7 @@ describe('CatalogTab component', () => {
           paymentFilter="PAID"
           onPaymentFilterChange={vi.fn()}
           onOpenDetail={vi.fn()}
-        />
-      </LanguageProvider>,
+        />),
     );
 
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
@@ -235,8 +225,7 @@ describe('CatalogTab component', () => {
     expect(screen.queryByText('Backend Engineer')).not.toBeInTheDocument();
 
     rerender(
-      <LanguageProvider>
-        <CatalogTab
+      withLanguage(<CatalogTab
           loading={false}
           isError={false}
           onRetry={vi.fn()}
@@ -246,8 +235,7 @@ describe('CatalogTab component', () => {
           paymentFilter="UNPAID"
           onPaymentFilterChange={vi.fn()}
           onOpenDetail={vi.fn()}
-        />
-      </LanguageProvider>,
+        />),
     );
 
     expect(screen.getByText('Backend Engineer')).toBeInTheDocument();

@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { authApi } from '@uni-hub/services/api';
 import { LinkMoodleMode } from '@uni-hub/components/auth';
-import { createAppProvidersWrapper } from '@uni-hub/utils/test-utils';
+import { createAppProvidersWrapper, setTestFeatureFlags } from '@uni-hub/utils/test-utils';
 import type { Notification } from '@core/types/moodle';
 import { fallbackStudentProfile } from '../constants';
 import type { DashboardHeaderProps } from '../types';
@@ -55,8 +55,6 @@ const renderHeader = (props: Partial<DashboardHeaderProps> = {}) => {
 describe('DashboardHeader', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    delete process.env.NEXT_PUBLIC_FEATURE_PANEL;
-    delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
     window.location.href = 'http://localhost/';
     window.localStorage.clear();
 
@@ -65,12 +63,6 @@ describe('DashboardHeader', () => {
       lastActiveDate: null,
       unlockedBadges: [],
     });
-  });
-
-  afterEach(() => {
-    delete process.env.NEXT_PUBLIC_FEATURE_PANEL;
-    delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
-    window.localStorage.clear();
   });
 
   it('should render header with mobile menu button, notifications, and user dropdown', () => {
@@ -152,7 +144,7 @@ describe('DashboardHeader', () => {
   });
 
   it('should render streak badge and dev feature panel when feature panel is enabled', () => {
-    process.env.NEXT_PUBLIC_FEATURE_PANEL = 'true';
+    setTestFeatureFlags({ isFeaturePanelEnabled: true });
     useGamificationStore.setState({ currentStreak: 5 });
 
     renderHeader();
@@ -164,7 +156,7 @@ describe('DashboardHeader', () => {
   });
 
   it('should not render dev feature panel when feature panel is disabled', () => {
-    delete process.env.NEXT_PUBLIC_FEATURE_PANEL;
+    setTestFeatureFlags({ isFeaturePanelEnabled: false });
     useGamificationStore.setState({ currentStreak: 3 });
 
     renderHeader();
@@ -231,7 +223,7 @@ describe('DashboardHeader', () => {
   });
 
   it('should pass moodle link and unlink callbacks to user dropdown', async () => {
-    process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
+    setTestFeatureFlags({ isMoodleIntegrationEnabled: true });
 
     const user = userEvent.setup();
     const onOpenLinkMoodle = vi.fn();

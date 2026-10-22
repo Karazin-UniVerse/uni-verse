@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { DeanContactInfo } from './DeanContactInfo';
 
 describe('DeanContactInfo component', () => {
@@ -14,9 +14,7 @@ describe('DeanContactInfo component', () => {
 
   it('should render dean contact info with contact channels (phone, email, hours, telegram)', () => {
     render(
-      <LanguageProvider>
-        <DeanContactInfo />
-      </LanguageProvider>,
+      withLanguage(<DeanContactInfo />),
     );
 
     expect(screen.getByText('dean.cs@karazin.ua')).toBeInTheDocument();
@@ -34,9 +32,7 @@ describe('DeanContactInfo component', () => {
     localStorage.setItem('universe-lang', 'en');
 
     render(
-      <LanguageProvider>
-        <DeanContactInfo />
-      </LanguageProvider>,
+      withLanguage(<DeanContactInfo />),
     );
 
     expect(screen.getByText('Email:')).toBeInTheDocument();

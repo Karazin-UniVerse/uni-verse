@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { ModerationRejectModal, type ModerationRejectModalProps } from './ModerationRejectModal';
 
 describe('ModerationRejectModal component', () => {
@@ -25,9 +25,7 @@ describe('ModerationRejectModal component', () => {
 
   const renderModal = (props: Partial<ModerationRejectModalProps> = {}) => {
     return render(
-      <LanguageProvider>
-        <ModerationRejectModal {...defaultProps} {...props} />
-      </LanguageProvider>,
+      withLanguage(<ModerationRejectModal {...defaultProps} {...props} />),
     );
   };
 

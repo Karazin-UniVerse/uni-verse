@@ -2,34 +2,21 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FEATURE_STORAGE_KEYS } from '@core/constants/features';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import { FeatureToggleProvider } from './FeatureToggleContext';
+import { withLanguage, withFeatureToggles, resetTestFeatureFlags } from '@uni-hub/utils/test-utils';
 import { DevFeaturePanel } from './DevFeaturePanel';
 
 const renderDevFeaturePanel = () => {
-  return render(
-    <LanguageProvider>
-      <FeatureToggleProvider>
-        <DevFeaturePanel />
-      </FeatureToggleProvider>
-    </LanguageProvider>,
-  );
+  return render(withLanguage(withFeatureToggles(<DevFeaturePanel />)));
 };
 
 describe('DevFeaturePanel', () => {
   beforeEach(() => {
-    delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
-    delete process.env.NEXT_PUBLIC_FEATURE_EDEAN;
-    delete process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES;
-    delete process.env.NEXT_PUBLIC_FEATURE_PANEL;
+    resetTestFeatureFlags();
     window.localStorage.clear();
   });
 
   afterEach(() => {
-    delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
-    delete process.env.NEXT_PUBLIC_FEATURE_EDEAN;
-    delete process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES;
-    delete process.env.NEXT_PUBLIC_FEATURE_PANEL;
+    resetTestFeatureFlags();
     window.localStorage.clear();
   });
 

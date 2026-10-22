@@ -2,43 +2,12 @@ import React, { useEffect } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import type { Grade } from '@core/types/moodle';
-import { LanguageProvider, useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import * as una from '@una';
 import { GradesChart } from './GradesChart';
 
-vi.mock('recharts', async (importOriginal) => {
-  const original = await importOriginal<typeof import('recharts')>();
 
-  return {
-    ...original,
-    ResponsiveContainer: ({
-      children,
-      width = 500,
-      height = 300,
-    }: {
-      children: React.ReactNode;
-      width?: number | string;
-      height?: number | string;
-    }) => {
-      const resolvedWidth = typeof width === 'number' ? width : 500;
-      const resolvedHeight = typeof height === 'number' ? height : 300;
-
-      return (
-        <div
-          data-testid="responsive-container"
-          style={{ width: resolvedWidth, height: resolvedHeight }}
-        >
-          {React.isValidElement(children)
-            ? React.cloneElement(children, {
-                width: resolvedWidth,
-                height: resolvedHeight,
-              } as Record<string, unknown>)
-            : children}
-        </div>
-      );
-    },
-  };
-});
 
 const LanguageSetter: React.FC<{ language: 'uk' | 'en' }> = ({ language }) => {
   const { setLanguage } = useLanguage();
@@ -57,6 +26,7 @@ describe('GradesChart', () => {
   });
 
   it('should render chart container with data when valid grades are provided', () => {
+    const chartSpy = vi.spyOn(una, 'Chart');
     const grades: Grade[] = [
       {
         courseName: 'Вища математика',
@@ -70,19 +40,26 @@ describe('GradesChart', () => {
       },
     ];
 
-    render(<GradesChart grades={grades} />);
+    render(withLanguage(<GradesChart grades={grades} />));
 
-    expect(screen.getByTestId('responsive-container')).toBeInTheDocument();
-    expect(screen.getByText('Вища математика')).toBeInTheDocument();
-    expect(screen.getByText('Програмування')).toBeInTheDocument();
+    expect(document.querySelector('.recharts-responsive-container')).toBeInTheDocument();
+    expect(chartSpy.mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({
+        type: 'bar',
+        data: expect.arrayContaining([
+          expect.objectContaining({ name: 'Вища математика', value: 95 }),
+          expect.objectContaining({ name: 'Програмування', value: 80 }),
+        ]),
+      }),
+    );
     expect(screen.queryByText('Оцінки не знайдено')).not.toBeInTheDocument();
   });
 
   it('should render empty chart description when grades array is empty', () => {
-    const { rerender } = render(<GradesChart grades={[]} />);
+    const { rerender } = render(withLanguage(<GradesChart grades={[]} />));
 
     expect(screen.getByText('Оцінки не знайдено')).toBeInTheDocument();
-    expect(screen.queryByTestId('responsive-container')).not.toBeInTheDocument();
+    expect(document.querySelector('.recharts-responsive-container')).not.toBeInTheDocument();
 
     const invalidGrades: Grade[] = [
       {
@@ -100,10 +77,10 @@ describe('GradesChart', () => {
       },
     ];
 
-    rerender(<GradesChart grades={invalidGrades} />);
+    rerender(withLanguage(<GradesChart grades={invalidGrades} />));
 
     expect(screen.getByText('Оцінки не знайдено')).toBeInTheDocument();
-    expect(screen.queryByTestId('responsive-container')).not.toBeInTheDocument();
+    expect(document.querySelector('.recharts-responsive-container')).not.toBeInTheDocument();
   });
 
   it('should compute bar colors and map grade values correctly', () => {
@@ -132,7 +109,7 @@ describe('GradesChart', () => {
       },
     ];
 
-    render(<GradesChart grades={grades} />);
+    render(withLanguage(<GradesChart grades={grades} />));
 
     const passedProps = chartSpy.mock.lastCall?.[0];
 
@@ -183,10 +160,7 @@ describe('GradesChart', () => {
     ];
 
     const { rerender } = render(
-      <LanguageProvider>
-        <LanguageSetter language="en" />
-        <GradesChart grades={grades} />
-      </LanguageProvider>,
+      withLanguage(<><LanguageSetter language="en" /><GradesChart grades={grades} /></>),
     );
 
     const passedProps = chartSpy.mock.lastCall?.[0];
@@ -206,10 +180,7 @@ describe('GradesChart', () => {
     );
 
     rerender(
-      <LanguageProvider>
-        <LanguageSetter language="en" />
-        <GradesChart grades={[]} />
-      </LanguageProvider>,
+      withLanguage(<><LanguageSetter language="en" /><GradesChart grades={[]} /></>),
     );
 
     expect(screen.getByText('No grades found')).toBeInTheDocument();

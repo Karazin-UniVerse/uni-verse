@@ -441,6 +441,8 @@ export const uk = {
   'opportunities.toast.stateUpdated': 'Стан проекту оновлено',
   'opportunities.toast.updated': 'Зміни успішно збережено!',
   'opportunities.toast.updateError': 'Помилка оновлення можливості',
+  'opportunities.toast.applicationsOpened': 'Прийом відгуків відкрито',
+  'opportunities.toast.applicationsClosed': 'Прийом відгуків закрито',
   'opportunities.toast.statusUpdateError': 'Помилка оновлення статусу',
   'opportunities.confirm.withdraw': 'Ви впевнені, що бажаєте відкликати свій відгук?',
   'opportunities.confirm.withdrawTitle': 'Відкликання відгуку',
@@ -462,6 +464,7 @@ export const uk = {
   'opportunities.card.management': 'Управління',
   'opportunities.card.details': 'Деталі',
   'opportunities.card.detailsAria': 'Детальніше про {title}',
+  'opportunities.card.applicationsClosedBadge': 'Набір закрито',
   'opportunities.catalog.searchPlaceholder': 'Пошук за назвою або ключовими словами...',
   'opportunities.catalog.searchAria': 'Пошук можливостей',
   'opportunities.catalog.clearSearchAria': 'Очистити поле пошуку',
@@ -530,6 +533,7 @@ export const uk = {
   'opportunities.createModal.paymentDetailsLabel': 'Деталі та розмір оплати',
   'opportunities.createModal.paymentDetailsPlaceholder':
     'Наприклад: $400/місяць або 5000 грн за етап',
+  'opportunities.createModal.acceptsApplications': 'Приймати нові відгуки на можливість',
   'opportunities.createModal.cancel': 'Скасувати',
   'opportunities.createModal.saving': 'Збереження...',
   'opportunities.createModal.submit': 'Створити чернетку',
@@ -566,6 +570,8 @@ export const uk = {
   'opportunities.detailModal.phasePaused': 'На паузі',
   'opportunities.detailModal.phaseCompleted': 'Завершено',
   'opportunities.detailModal.phaseCancelled': 'Скасовано',
+  'opportunities.detailModal.acceptsApplications': 'Приймати нові відгуки на можливість',
+  'opportunities.detailModal.applicationsClosed': 'Прийом заявок призупинено автором',
   'opportunities.detail.back': 'Назад до можливостей',
   'opportunities.detailModal.apply': 'Відгукнутися на можливість',
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { ScheduleToolbar } from './ScheduleToolbar';
 import type { ScheduleToolbarProps } from './ScheduleView.types';
 
@@ -14,9 +14,7 @@ describe('ScheduleToolbar', () => {
 
   const renderToolbar = (props: Partial<ScheduleToolbarProps> = {}) => {
     return render(
-      <LanguageProvider>
-        <ScheduleToolbar {...defaultProps} {...props} />
-      </LanguageProvider>,
+      withLanguage(<ScheduleToolbar {...defaultProps} {...props} />),
     );
   };
 
@@ -60,9 +58,7 @@ describe('ScheduleToolbar', () => {
     expect(dayRadio).not.toBeChecked();
 
     rerender(
-      <LanguageProvider>
-        <ScheduleToolbar {...defaultProps} viewMode="month" />
-      </LanguageProvider>,
+      withLanguage(<ScheduleToolbar {...defaultProps} viewMode="month" />),
     );
 
     expect(screen.getByRole('radio', { name: 'Місяць' })).toBeChecked();
@@ -70,9 +66,7 @@ describe('ScheduleToolbar', () => {
     expect(screen.getByRole('radio', { name: 'День' })).not.toBeChecked();
 
     rerender(
-      <LanguageProvider>
-        <ScheduleToolbar {...defaultProps} viewMode="day" />
-      </LanguageProvider>,
+      withLanguage(<ScheduleToolbar {...defaultProps} viewMode="day" />),
     );
 
     expect(screen.getByRole('radio', { name: 'День' })).toBeChecked();

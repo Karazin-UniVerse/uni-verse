@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useToday } from '@uni-hub/hooks/useToday';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { ScheduleWeekView } from './ScheduleWeekView';
 import type { ScheduleEvent, ScheduleWeekViewProps } from './ScheduleView.types';
 
@@ -48,9 +48,7 @@ describe('ScheduleWeekView', () => {
 
   const renderComponent = (props: ScheduleWeekViewProps) => {
     return render(
-      <LanguageProvider>
-        <ScheduleWeekView {...props} />
-      </LanguageProvider>,
+      withLanguage(<ScheduleWeekView {...props} />),
     );
   };
 

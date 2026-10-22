@@ -31,7 +31,7 @@ It supports:
 
 ### File Extension Rule (`.test.tsx` vs `.test.ts`)
 - **`.test.tsx`**: Mandatory whenever the file contains JSX (`<Component />`), including `renderHook` tests whose `wrapper` uses JSX.
-- **`.test.ts`**: Use for pure utilities, helpers, services, and `renderHook` tests that either need no wrapper or use `React.createElement(LanguageProvider, null, children)`.
+- **`.test.ts`**: Use for pure utilities, helpers, services, and `renderHook` tests that either need no wrapper or use functional wrappers like `createLanguageWrapper()`.
 
 ---
 
@@ -44,40 +44,88 @@ Before writing any test code, read the target file and its types to identify:
 3. **Interactive Contracts**: Buttons, form inputs, modals, dropdowns, tabs, and keyboard shortcuts (`Escape`, `Enter`, `Space`, `Ctrl+Shift+F`).
 4. **Context & External Dependencies**: Whether the unit consumes `useLanguage`, `useFeatures`, `useTheme`, `useToast`, `next/navigation`, or API service clients.
 
-### Step 2: Configure Context Wrappers
-- **`@universe/ui` components** are language-agnostic and receive labels via props—render them directly (wrap in `<ToastProvider>` only when testing toast triggers).
-- **`@universe/uni-hub` components and hooks** must be wrapped in the providers they consume:
-  - `useLanguage()` ➡️ `withLanguage(ui)` (or `<LanguageProvider>` from `@uni-hub/i18n/LanguageContext`). Set `localStorage.setItem('universe-lang', 'uk')` in `beforeEach` for deterministic localized text assertions.
-  - `useFeatures()` ➡️ `withFeatureToggles(ui)` (or `<FeatureToggleProvider>` from `@uni-hub/features`).
-  - `useTheme()` ➡️ `withTheme(ui)` (or `<ThemeProvider>` from `@uni-hub/theme/ThemeContext`).
-  - `useQuery()` / `useMutation()` / `useQueryClient()` ➡️ `withQueryClient(ui, queryClient)` from `@uni-hub/utils/test-utils`.
-  - Multiple common providers ➡️ `withAppProviders(ui, queryClient)` from `@uni-hub/utils/test-utils`.
+### Step 2: Configure Context Wrappers & Feature Flags via `@uni-hub/utils/test-utils`
+- **`@universe/ui` components** are language-agnostic design system primitives and receive labels via props—render them directly (wrap in `<ToastProvider>` only when testing toast triggers).
+- **`@universe/uni-hub` components and hooks** must be wrapped using the canonical test helpers from `@uni-hub/utils/test-utils`:
 
-### Step 3: Set Up Clean, Hoisted Mocks
-- Always use `vi.hoisted(() => ({ ... }))` for mock functions referenced inside `vi.mock(...)` factories.
-- **Prefer Real Design-System Primitives (`@una`)**: Do NOT mock `@una` components (`Modal`, `Tag`, `Chart`, `useToast`) when the real components and `<ToastProvider>` (via `withToast` / `withAppProviders`) work directly in Happy-DOM. Only mock external boundaries (`next/navigation`, `next/script`, API clients).
-- **Modal Mocking Rule (SonarCloud `S6819` / `S6847`)**: If `Modal` from `@una` must be mocked in a specialized test, **NEVER** render `<div role="dialog">`. Always use a native `<dialog>` element:
-  ```tsx
-  Modal: ({ open, title, children, footer, onClose }: {
-    open: boolean;
-    title?: string;
-    children: React.ReactNode;
-    footer?: React.ReactNode;
-    onClose?: () => void;
-  }) =>
-    open ? (
-      <dialog open aria-label={title || 'Dialog'}>
-        <div>{children}</div>
-        {footer && <div>{footer}</div>}
-        <button type="button" onClick={onClose}>
-          Close
-        </button>
-      </dialog>
-    ) : null,
-  ```
-- **Parameterized Tests (`it.each`)**: Prefer `it.each(...)` over manual `for (... of ...)` loops with `unmount()` when testing multiple variants, tones, or inputs.
+| Helper in `@uni-hub/utils/test-utils` | When to Use | Example |
+| :--- | :--- | :--- |
+| `withLanguage(ui)` | Component consumes `useLanguage()` (`formatMessage`, `language`, `setLanguage`) | `render(withLanguage(<RecentGradesFeed {...props} />))` |
+| `withTheme(ui)` | Component consumes `useTheme()` (`theme`, `toggleTheme`) | `render(withTheme(<ThemeAwareWidget />))` |
+| `withToast(ui)` | Component triggers toasts via `useToast()` | `render(withToast(<DeanContactModal {...props} />))` |
+| `withFeatureToggles(ui, flags?)` | Component reads `useFeatures()` or `useFeatureControls()` | `render(withFeatureToggles(withLanguage(<QuickActions {...props} />)))` |
+| `withQueryClient(ui, client?)` | Component consumes TanStack Query (`useQuery`, `useMutation`) | `render(withQueryClient(<MyDataView />, queryClient))` |
+| `withAppProviders(ui, client?)` | Full page/tab needing `QueryClient + Toast + Theme + Language + Features` | `render(withAppProviders(<AssignmentsTab />))` |
+| `createLanguageWrapper()` | Hook test needing `LanguageProvider` | `renderHook(() => useMyHook(), { wrapper: createLanguageWrapper() })` |
+| `createQueryClientWrapper(client?)` | Hook test needing `QueryClientProvider` | `renderHook(() => useMyQuery(), { wrapper: createQueryClientWrapper() })` |
+| `createAppProvidersWrapper(client?)` | Hook or page test needing all application providers | `renderHook(() => useComplexHook(), { wrapper: createAppProvidersWrapper() })` |
+| `setTestFeatureFlags(flags)` | Enabling/disabling typed feature toggles in tests | `setTestFeatureFlags({ isMoodleIntegrationEnabled: true })` |
+| `resetTestFeatureFlags()` | Resetting flags to defaults (called automatically in `vitest.setup.ts` afterEach) | `resetTestFeatureFlags()` |
+| `ALL_FEATURES_ENABLED` | Readonly object with all features enabled | `setTestFeatureFlags(ALL_FEATURES_ENABLED)` |
 
-### Step 4: Design High-Value, Zero-Bloat Test Cases
+> [!IMPORTANT]
+> **Strict Rule**: **NEVER** manually hand-nest `<LanguageProvider>`, `<FeatureToggleProvider>`, `<ThemeProvider>`, or `<ToastProvider>` JSX inside individual test suites, and **NEVER** manually mutate `process.env.NEXT_PUBLIC_FEATURE_*`. Always use `withLanguage`, `withFeatureToggles`, or `withAppProviders` and `setTestFeatureFlags(...)`.
+
+### Step 3: Set Up Clean Mocks — Avoid Redundant Mock Complexity
+Mocks must be surgical and minimal. **Redundant mock complexity is strictly forbidden** because:
+1. **Test Dishonesty (False Positives)**: Mocking internal UI primitives (`@una`, `@ui`), child modals (`DeanContactModal`), or auth buttons (`GoogleLoginButton`) allows unit tests to pass even when real prop contracts, imports, rendering, or accessibility attributes are broken.
+2. **Broken Isolation & State Leaks**: Module-level mutable state captured inside `vi.mock` closures (e.g. `let capturedOnError = ...`, `let mockStorage = ...`) leaks state across tests and causes order-dependent failures.
+3. **High Maintenance & Poor Readability**: 30-line `vi.mock(..., async (importActual) => { ... })` blocks bloat test files and obscure the actual component contract under test.
+
+#### What to ALWAYS Use Real vs. What to Mock
+- **ALWAYS USE REAL**:
+  - Design-system primitives from `@una` (`Button`, `Modal`, `Select`, `Tag`, `Chart`, `ToastProvider`).
+  - Child components and modals (`DeanContactModal`, `GoogleLoginButton`).
+  - Context providers via `@uni-hub/utils/test-utils` HOCs.
+  - Browser storage (`window.localStorage` and `sessionStorage` are fully supported natively by Happy-DOM).
+- **ONLY MOCK TRUE EXTERNAL BOUNDARIES**:
+  - Network and API client modules (`@uni-hub/services/api`, `opportunitiesApi`, `authApi`).
+  - Next.js framework boundaries (`next/navigation`, `next/script`).
+  - External browser SDKs not provided by Happy-DOM (e.g., `window.google.accounts.id`, Web Audio API sound effects, `canvas-confetti`).
+
+When a mock factory references a variable, always use `vi.hoisted(() => ({ ... }))`.
+
+### Step 4: Parameterized Tests with `it.each` vs. Loops
+
+When testing 2+ variants, tones, status badges, boundary scores, or input mappings that share the same Act/Assert structure, **ALWAYS use `it.each`**.
+
+#### Anti-Patterns (Forbidden)
+- ❌ **Manual `for...of + unmount()` loops**: Running loops inside a single `it(...)` block and calling `unmount()` hides test failures, stops on the first failing case, and prevents isolated reporting.
+- ❌ **Manual `for (const size of sizes) { rerender(...) }` loops**: Mutating rendered state across multiple loop iterations inside one test.
+- ❌ **Copy-pasted tests**: Duplicating 3–5 identical 10-line test blocks where only an input number or status string changes.
+
+#### Legitimate Exception
+- ✅ A `for...of` loop inside a single `it(...)` test is ONLY acceptable when asserting that a **single** `render()` output contains all items from a fixture array (e.g., asserting that `<Select options={defaultOptions} />` rendered all 3 `<option>` elements in the DOM).
+
+#### Bad vs. Good Example
+
+❌ **Bad: Manual loop with unmount inside single test**
+```tsx
+it('should render correct tone classes', () => {
+  const cases = [
+    { tone: 'success', expectedClass: '_success_abc' },
+    { tone: 'danger', expectedClass: '_danger_abc' },
+  ];
+  for (const { tone, expectedClass } of cases) {
+    const { unmount } = render(withLanguage(<StatusBanner tone={tone} />));
+    expect(screen.getByRole('status')).toHaveClass(expectedClass);
+    unmount();
+  }
+});
+```
+
+✅ **Good: Parameterized with `it.each`**
+```tsx
+it.each<{ tone: StatusBannerTone; expectedClass: string }>([
+  { tone: 'success', expectedClass: '_success_abc' },
+  { tone: 'danger', expectedClass: '_danger_abc' },
+])('should render $tone tone with $expectedClass class', ({ tone, expectedClass }) => {
+  render(withLanguage(<StatusBanner tone={tone} />));
+  expect(screen.getByRole('status')).toHaveClass(expectedClass);
+});
+```
+
+### Step 5: Design High-Value, Zero-Bloat Test Cases
 Every test description **MUST** start with `'should ...'`. Cover these core dimensions without redundant bloat:
 
 1. **Default & Conditional Rendering**:
@@ -85,7 +133,7 @@ Every test description **MUST** start with `'should ...'`. Cover these core dime
    - Handles empty arrays, `null`/`undefined` optional fields, and loading states cleanly.
 2. **User Interactions (`userEvent`)**:
    - Initialize `const user = userEvent.setup()` before rendering or interacting.
-   - Verify click handlers, text input typing (`user.type`), option selection (`user.selectOptions` / dropdown clicks), and form submission.
+   - Verify click handlers, text input typing (`await user.type`), option selection, and form submission.
 3. **Accessibility (a11y)**:
    - **Query Priority**:
      1. `screen.getByRole('button', { name: /.../i })`
@@ -112,12 +160,13 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { ExampleCard, type ExampleCardProps } from './ExampleCard';
 
 const defaultProps: ExampleCardProps = {
   title: 'Algorithms & Data Structures',
   externalUrl: 'https://moodle.universemvp.tech/course/view.php?id=42',
+  status: 'active',
   disabled: false,
   onAction: vi.fn(),
 };
@@ -125,11 +174,7 @@ const defaultProps: ExampleCardProps = {
 const renderExampleCard = (overrides: Partial<ExampleCardProps> = {}) => {
   const props = { ...defaultProps, ...overrides };
 
-  return render(
-    <LanguageProvider>
-      <ExampleCard {...props} />
-    </LanguageProvider>,
-  );
+  return render(withLanguage(<ExampleCard {...props} />));
 };
 
 describe('ExampleCard', () => {
@@ -151,13 +196,23 @@ describe('ExampleCard', () => {
     expect(link).toHaveAttribute('rel', expect.stringContaining('noreferrer'));
   });
 
+  it.each([
+    { status: 'active' as const, expectedLabel: 'Активний' },
+    { status: 'completed' as const, expectedLabel: 'Завершено' },
+    { status: 'archived' as const, expectedLabel: 'В архіві' },
+  ])('should render $status status badge with $expectedLabel label', ({ status, expectedLabel }) => {
+    renderExampleCard({ status });
+
+    expect(screen.getByText(expectedLabel)).toBeInTheDocument();
+  });
+
   it('should call onAction when action button is clicked', async () => {
     const user = userEvent.setup();
     const onAction = vi.fn();
 
     renderExampleCard({ onAction });
 
-    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('button', { name: /виконати/i }));
 
     expect(onAction).toHaveBeenCalledTimes(1);
   });
@@ -165,7 +220,7 @@ describe('ExampleCard', () => {
   it('should disable action button when disabled prop is true', () => {
     renderExampleCard({ disabled: true });
 
-    expect(screen.getByRole('button')).toBeDisabled();
+    expect(screen.getByRole('button', { name: /виконати/i })).toBeDisabled();
   });
 
   it('should safely escape untrusted HTML strings in title without XSS execution', () => {
@@ -185,7 +240,7 @@ describe('ExampleCard', () => {
 import React from 'react';
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { createLanguageWrapper } from '@uni-hub/utils/test-utils';
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { useExampleHook } from './useExampleHook';
 
@@ -222,7 +277,7 @@ describe('useExampleHook', () => {
 
   const renderTargetHook = () =>
     renderHook(() => useExampleHook({ setItems: mockSetItems }), {
-      wrapper: ({ children }) => React.createElement(LanguageProvider, null, children),
+      wrapper: createLanguageWrapper(),
     });
 
   it('should initialize with default state', () => {

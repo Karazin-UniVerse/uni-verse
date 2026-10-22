@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import type { Grade } from '@core/types/moodle';
 import { mockFallbackGrades } from '../constants';
 import { GradesTab } from './GradesTab';
@@ -81,9 +81,7 @@ describe('GradesTab component', () => {
     const handleOpenSimulator = vi.fn();
 
     render(
-      <LanguageProvider>
-        <GradesTab grades={mockGrades} onOpenSimulator={handleOpenSimulator} />
-      </LanguageProvider>,
+      withLanguage(<GradesTab grades={mockGrades} onOpenSimulator={handleOpenSimulator} />),
     );
 
     const subtitle = screen.getByText('Електронна залікова книжка та симулятор оцінок');
@@ -122,9 +120,7 @@ describe('GradesTab component', () => {
     ];
 
     render(
-      <LanguageProvider>
-        <GradesTab grades={mixedGrades} onOpenSimulator={vi.fn()} />
-      </LanguageProvider>,
+      withLanguage(<GradesTab grades={mixedGrades} onOpenSimulator={vi.fn()} />),
     );
 
     const table = screen.getByRole('table');
@@ -159,9 +155,7 @@ describe('GradesTab component', () => {
 
   it('should fall back to mock fallback grades when grades array is empty', () => {
     const { rerender } = render(
-      <LanguageProvider>
-        <GradesTab grades={[]} onOpenSimulator={vi.fn()} />
-      </LanguageProvider>,
+      withLanguage(<GradesTab grades={[]} onOpenSimulator={vi.fn()} />),
     );
     const table = screen.getByRole('table');
 
@@ -174,8 +168,7 @@ describe('GradesTab component', () => {
     expect(fallbackRows).toHaveLength(mockFallbackGrades.length + 1);
 
     rerender(
-      <LanguageProvider>
-        <GradesTab
+      withLanguage(<GradesTab
           grades={[
             {
               courseName: 'Недійсний курс 1',
@@ -188,8 +181,7 @@ describe('GradesTab component', () => {
             },
           ]}
           onOpenSimulator={vi.fn()}
-        />
-      </LanguageProvider>,
+        />),
     );
 
     const updatedTable = screen.getByRole('table');
@@ -206,9 +198,7 @@ describe('GradesTab component', () => {
     const user = userEvent.setup();
 
     render(
-      <LanguageProvider>
-        <GradesTab grades={mockGrades} onOpenSimulator={handleOpenSimulator} />
-      </LanguageProvider>,
+      withLanguage(<GradesTab grades={mockGrades} onOpenSimulator={handleOpenSimulator} />),
     );
 
     const triggerBtn = screen.getByRole('button', { name: 'Симулятор балів (Що, якщо?)' });
@@ -235,9 +225,7 @@ describe('GradesTab component', () => {
     ];
 
     render(
-      <LanguageProvider>
-        <GradesTab grades={gradesWithoutName} onOpenSimulator={vi.fn()} />
-      </LanguageProvider>,
+      withLanguage(<GradesTab grades={gradesWithoutName} onOpenSimulator={vi.fn()} />),
     );
 
     const table = screen.getByRole('table');
@@ -250,9 +238,7 @@ describe('GradesTab component', () => {
     window.dispatchEvent(new Event('language-change'));
 
     render(
-      <LanguageProvider>
-        <GradesTab grades={mockGrades} onOpenSimulator={vi.fn()} />
-      </LanguageProvider>,
+      withLanguage(<GradesTab grades={mockGrades} onOpenSimulator={vi.fn()} />),
     );
 
     const table = screen.getByRole('table');

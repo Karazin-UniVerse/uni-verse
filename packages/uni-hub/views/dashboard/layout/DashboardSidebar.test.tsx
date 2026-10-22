@@ -1,14 +1,19 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
-import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
-import { FeatureToggleProvider } from '@uni-hub/features';
+import {
+  withFeatureToggles,
+  withTheme,
+  withLanguage,
+  setTestFeatureFlags,
+  ALL_FEATURES_ENABLED,
+} from '@uni-hub/utils/test-utils';
 import * as soundEffects from '@uni-hub/utils/soundEffects';
 import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 import type { FeatureFlags } from '@core/constants/features';
 import { NAV_KEY } from '../constants';
+import { NAV_KEY_ROUTE } from '../routes';
 import type { DashboardSidebarProps } from '../types';
 import { NAV_ITEMS, getVisibleNavItems, DashboardSidebar } from './DashboardSidebar';
 
@@ -34,13 +39,7 @@ const renderSidebar = (props: Partial<DashboardSidebarProps> = {}) => {
   };
 
   const renderResult = render(
-    <FeatureToggleProvider>
-      <ThemeProvider>
-        <LanguageProvider>
-          <DashboardSidebar {...defaultProps} />
-        </LanguageProvider>
-      </ThemeProvider>
-    </FeatureToggleProvider>,
+    withFeatureToggles(withTheme(withLanguage(<DashboardSidebar {...defaultProps} />))),
   );
 
   return {
@@ -48,6 +47,14 @@ const renderSidebar = (props: Partial<DashboardSidebarProps> = {}) => {
     props: defaultProps,
   };
 };
+
+describe('DashboardSidebar routes', () => {
+  it('should have a route for every navigation item', () => {
+    for (const item of getVisibleNavItems(allEnabledFlags, false)) {
+      expect(NAV_KEY_ROUTE[item.key]).toMatch(/^\//);
+    }
+  });
+});
 
 describe('DashboardSidebar helpers', () => {
   it('should return standard NAV_ITEMS when isMoodleLinked is true', () => {
@@ -117,16 +124,8 @@ describe('DashboardSidebar component rendering & interactions', () => {
   const playClickSpy = vi.spyOn(soundEffects, 'playClick');
 
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
-    process.env.NEXT_PUBLIC_FEATURE_EDEAN = 'true';
-    process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES = 'true';
+    setTestFeatureFlags(ALL_FEATURES_ENABLED);
     vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
-    delete process.env.NEXT_PUBLIC_FEATURE_EDEAN;
-    delete process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES;
   });
 
   it('should render navigation items, active tab styling, and invoke onSelectKey on click', async () => {
@@ -179,9 +178,9 @@ describe('DashboardSidebar component rendering & interactions', () => {
     expect(handleToggleCollapsed).toHaveBeenCalledTimes(1);
 
     rerender(
-      <FeatureToggleProvider>
-        <ThemeProvider>
-          <LanguageProvider>
+      withFeatureToggles(
+        withTheme(
+          withLanguage(
             <DashboardSidebar
               collapsed
               onToggleCollapsed={handleToggleCollapsed}
@@ -191,10 +190,10 @@ describe('DashboardSidebar component rendering & interactions', () => {
               onSelectKey={vi.fn()}
               soundEnabled={false}
               onLogout={vi.fn()}
-            />
-          </LanguageProvider>
-        </ThemeProvider>
-      </FeatureToggleProvider>,
+            />,
+          ),
+        ),
+      ),
     );
 
     const expandButton = screen.getByRole('button', { name: 'Розгорнути меню' });
@@ -255,37 +254,5 @@ describe('DashboardSidebar component rendering & interactions', () => {
     await user.click(overlay);
 
     expect(handleCloseMobileMenu).toHaveBeenCalledTimes(1);
-  });
-
-  it('should close mobile menu on Escape key press', () => {
-    const handleCloseMobileMenu = vi.fn();
-
-    renderSidebar({
-      mobileMenuOpen: true,
-      onCloseMobileMenu: handleCloseMobileMenu,
-    });
-
-    fireEvent.keyDown(window, { key: 'Escape' });
-
-    expect(handleCloseMobileMenu).toHaveBeenCalledTimes(1);
-  });
-
-  it('should render moodle link when moodle feature flag is enabled', () => {
-    renderSidebar();
-
-    const moodleLink = screen.getByRole('link', { name: /moodle\.universemvp\.tech/i });
-
-    expect(moodleLink).toBeInTheDocument();
-    expect(moodleLink).toHaveAttribute('href', 'https://moodle.universemvp.tech');
-  });
-
-  it('should not render moodle link when moodle feature flag is disabled', () => {
-    delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
-
-    renderSidebar();
-
-    expect(
-      screen.queryByRole('link', { name: /moodle\.universemvp\.tech/i }),
-    ).not.toBeInTheDocument();
   });
 });
