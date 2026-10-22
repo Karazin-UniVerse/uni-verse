@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useToast } from '@una';
 import { isLoggedIn } from '@core/utils/auth';
@@ -78,8 +78,12 @@ export function useDashboardData(): UseDashboardDataResult {
     initialData: () => getInitialUserProfile() ?? undefined,
     initialDataUpdatedAt: 0,
   });
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [manualSyncTime, setManualSyncTime] = useState<number | null>(null);
+
   const platformQuery = useQuery({
     ...platformNotificationsQueryOptions,
+    enabled: isLoggedIn(),
   });
 
   const { error, errorUpdatedAt, data: queryData, isError } = dashboardQuery;
@@ -110,24 +114,57 @@ export function useDashboardData(): UseDashboardDataResult {
   const { refetch } = dashboardQuery;
   const { refetch: refetchPlatform } = platformQuery;
   const refresh = useCallback(async (): Promise<void> => {
-    if (!enabled) {
-      await refetchPlatform();
+    setIsRefreshing(true);
 
-      return;
-    }
+    try {
+      if (!enabled) {
+        const platformResult = await refetchPlatform();
 
-    const [result] = await Promise.all([refetch(), refetchPlatform()]);
+        if (!platformResult?.isError) {
+          const nowTimestamp = Date.now();
 
-    if (!result?.isError) {
-      toast.success(formatMessage('dashboard.syncSuccess'));
+          setManualSyncTime(nowTimestamp);
+
+          try {
+            localStorage.setItem('universe_last_sync_time', String(nowTimestamp));
+          } catch {
+            // ignore storage failure in private mode
+          }
+
+          toast.success(formatMessage('dashboard.syncSuccess'));
+        } else {
+          toast.error(formatMessage('dashboard.loadError'));
+        }
+
+        return;
+      }
+
+      const [result, platformResult] = await Promise.all([refetch(), refetchPlatform()]);
+
+      if (!result?.isError && !platformResult?.isError) {
+        const nowTimestamp = Date.now();
+
+        setManualSyncTime(nowTimestamp);
+        toast.success(formatMessage('dashboard.syncSuccess'));
+      } else {
+        toast.error(formatMessage('dashboard.loadError'));
+      }
+    } finally {
+      setIsRefreshing(false);
     }
   }, [enabled, refetch, refetchPlatform, toast, formatMessage]);
 
+  const hasLoadedOnce = !enabled ? Boolean(platformQuery.data) : state.hasLoadedOnce;
+
   return {
-    loading: state.loading,
-    hasLoadedOnce: state.hasLoadedOnce,
+    loading: state.loading || isRefreshing,
+    hasLoadedOnce,
     isOfflineData: state.isOfflineData,
-    lastSyncTime: state.lastSyncTime ?? getInitialSyncTime(),
+    lastSyncTime:
+      manualSyncTime ??
+      state.lastSyncTime ??
+      (platformQuery.dataUpdatedAt > 0 ? platformQuery.dataUpdatedAt : null) ??
+      getInitialSyncTime(),
     data,
     studentProfile: profileQuery.data ?? fallbackStudentProfile,
     hasCachedData:
@@ -135,7 +172,7 @@ export function useDashboardData(): UseDashboardDataResult {
       data.grades.length > 0 ||
       data.assignments.length > 0 ||
       data.events.length > 0 ||
-      state.hasLoadedOnce,
+      hasLoadedOnce,
     error,
     errorUpdatedAt,
     platformError: (platformError as Error) ?? null,

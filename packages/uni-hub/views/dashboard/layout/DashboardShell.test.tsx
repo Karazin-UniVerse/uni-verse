@@ -28,6 +28,14 @@ import { useOpportunitiesStore } from '@uni-hub/store/useOpportunitiesStore';
 import { OPPORTUNITY_SUB_TAB } from '../tabs/opportunities/constants';
 import { DashboardShell } from './DashboardShell';
 
+vi.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+      <div {...props}>{children}</div>
+    ),
+  },
+}));
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
@@ -70,6 +78,8 @@ vi.mock('@uni-hub/store/useGamificationStore', () => ({
   useGamificationStore: () => vi.fn(),
 }));
 
+const mockRefresh = vi.fn().mockResolvedValue(undefined);
+
 vi.mock('../hooks/useDashboardData', () => ({
   useDashboardData: () => ({
     data: {
@@ -86,7 +96,7 @@ vi.mock('../hooks/useDashboardData', () => ({
     error: null,
     errorUpdatedAt: 0,
     platformError: null,
-    refresh: vi.fn(),
+    refresh: mockRefresh,
   }),
 }));
 
@@ -240,5 +250,25 @@ describe('DashboardShell', () => {
 
     expect(mockRemoveQueries).toHaveBeenCalledWith({ queryKey: ['moodle'] });
     expect(useMoodleStore.getState().isMoodleLinked).toBe(false);
+  });
+
+  it('triggers opportunities invalidation and dashboard refresh on clicking refresh button', async () => {
+    mockStorage.isMoodleLinked = 'false';
+    currentPathname = '/opportunities';
+
+    render(
+      <DashboardShell>
+        <div>Opportunities Content</div>
+      </DashboardShell>,
+    );
+
+    const refreshButton = screen.getByRole('button', { name: 'dashboard.refreshData' });
+
+    await act(async () => {
+      refreshButton.click();
+    });
+
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['opportunities'] });
+    expect(mockRefresh).toHaveBeenCalled();
   });
 });

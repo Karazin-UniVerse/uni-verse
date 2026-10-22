@@ -17,6 +17,7 @@ import {
   loadDashboardData,
   loadPlatformNotifications,
   notificationKeys,
+  platformNotificationsQueryOptions,
 } from './queries';
 
 const filters: BuildAssignmentParamsOptions = {
@@ -241,5 +242,12 @@ describe('loadPlatformNotifications', () => {
 describe('notificationKeys', () => {
   it('builds canonical notification keys', () => {
     expect(notificationKeys.platform()).toEqual(['notifications', 'platform']);
+  });
+});
+
+describe('platformNotificationsQueryOptions', () => {
+  it('configures canonical query key and polling refetchInterval', () => {
+    expect(platformNotificationsQueryOptions.queryKey).toEqual(['notifications', 'platform']);
+    expect(platformNotificationsQueryOptions.refetchInterval).toBe(30_000);
   });
 });

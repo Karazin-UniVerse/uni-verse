@@ -120,10 +120,22 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const selectKey = (key: NavKey): void => router.push(NAV_KEY_ROUTE[key]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleRefresh = (): void => {
-    void invalidateOpportunities(queryClient);
-    void dashboard.refresh();
+  const handleRefresh = async (): Promise<void> => {
+    if (isRefreshing || dashboard.loading) {
+      return;
+    }
+
+    setIsRefreshing(true);
+
+    try {
+      await Promise.all([invalidateOpportunities(queryClient), dashboard.refresh()]);
+    } catch {
+      // errors handled in dashboard.refresh
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleLinkSuccess = (): void => {
@@ -137,6 +149,7 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const content = activeKey === pathNavKey ? children : null;
+  const isSyncing = dashboard.loading || isRefreshing;
 
   return (
     <div
@@ -177,7 +190,7 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
         <main className={styles.content}>
           <div className={styles.pageTitleRow}>
             <h2 className={styles.pageTitle}>{formatMessage(PAGE_TITLE_KEYS[activeKey])}</h2>
-            {dashboard.loading && dashboard.hasCachedData && (
+            {isSyncing && dashboard.hasCachedData && (
               <div className={styles.pageUpdatingIndicator} role="status" aria-live="polite">
                 <Spinner size="small" tip={formatMessage('dashboard.updating')} />
               </div>
@@ -193,13 +206,13 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
                 variant="secondary"
                 size="small"
                 onClick={handleRefresh}
-                disabled={dashboard.loading}
+                disabled={isSyncing}
                 aria-label={formatMessage('dashboard.refreshData')}
                 className={styles.refreshBtn}
               >
                 <RotateCw
                   size={14}
-                  className={clsx(styles.refreshIcon, dashboard.loading && styles.spin)}
+                  className={clsx(styles.refreshIcon, isSyncing && styles.spin)}
                 />
                 <span>{formatMessage('dashboard.refresh')}</span>
               </Button>

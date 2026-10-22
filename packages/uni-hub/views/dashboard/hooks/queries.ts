@@ -3,6 +3,7 @@ import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import type { MoodleQueryOptions } from '@uni-hub/queries/moodle/queries';
 import { moodleApi } from '@uni-hub/services/api.moodle';
 import { clearUserSessionStorage } from '@uni-hub/services/api.session';
+import { NOTIFICATIONS_POLL_INTERVAL_MS } from '@uni-hub/constants/query';
 import { notificationsApi, type PlatformNotification } from '@uni-hub/services/api.notifications';
 import type { DashboardData } from '../types';
 import {
@@ -105,4 +106,5 @@ export const markAllNotificationsReadMutationKey = ['notifications', 'read-all']
 export const platformNotificationsQueryOptions = queryOptions({
   queryKey: notificationKeys.platform(),
   queryFn: loadPlatformNotifications,
+  refetchInterval: NOTIFICATIONS_POLL_INTERVAL_MS,
 });
