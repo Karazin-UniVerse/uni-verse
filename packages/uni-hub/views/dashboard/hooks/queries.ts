@@ -24,12 +24,9 @@ export async function loadPlatformNotifications(): Promise<PlatformNotification[
   } catch (error) {
     if (isUnauthorizedError(error)) {
       clearUserSessionStorage();
-      throw error;
     }
 
-    console.error('Failed to load platform notifications', error);
-
-    return [];
+    throw error;
   }
 }
 

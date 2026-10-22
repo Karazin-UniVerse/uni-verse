@@ -11,6 +11,21 @@ let currentPathname = '/study';
 let capturedLinkModalProps: { onSuccess?: () => void; open?: boolean } | null = null;
 let capturedUnlinkModalProps: { onSuccess?: () => void; open?: boolean } | null = null;
 
+const mockToastError = vi.fn();
+
+vi.mock('@una', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@una')>();
+
+  return {
+    ...actual,
+    useToast: () => ({
+      success: vi.fn(),
+      error: mockToastError,
+      info: vi.fn(),
+    }),
+  };
+});
+
 vi.mock('@uni-hub/services/api', () => ({
   safeStorage: {
     getItem: (key: string) => mockStorage[key] ?? null,
@@ -268,7 +283,31 @@ describe('DashboardShell', () => {
       refreshButton.click();
     });
 
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['opportunities'] });
+    expect(mockInvalidateQueries).toHaveBeenCalledWith(
+      { queryKey: ['opportunities'] },
+      { throwOnError: true },
+    );
     expect(mockRefresh).toHaveBeenCalled();
+  });
+
+  it('shows error toast when opportunities invalidation fails during refresh', async () => {
+    mockStorage.isMoodleLinked = 'false';
+    currentPathname = '/opportunities';
+    mockInvalidateQueries.mockRejectedValueOnce(new Error('Failed invalidation'));
+
+    render(
+      <DashboardShell>
+        <div>Opportunities Content</div>
+      </DashboardShell>,
+    );
+
+    const refreshButton = screen.getByRole('button', { name: 'dashboard.refreshData' });
+
+    await act(async () => {
+      refreshButton.click();
+    });
+
+    expect(mockRefresh).not.toHaveBeenCalled();
+    expect(mockToastError).toHaveBeenCalledWith('dashboard.loadError');
   });
 });

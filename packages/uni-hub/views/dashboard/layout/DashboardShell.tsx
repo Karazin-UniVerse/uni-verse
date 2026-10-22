@@ -5,7 +5,7 @@ import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
 import { RotateCw, AlertCircle, Link2 } from 'lucide-react';
-import { Button, Spinner } from '@una';
+import { Button, Spinner, useToast } from '@una';
 import { isLoggedIn } from '@core/utils/auth';
 import { LinkMoodleModal, UnlinkMoodleModal, LinkMoodleMode } from '@uni-hub/components/auth';
 import { DashboardSkeleton, MobileBottomNav } from '@uni-hub/components/dashboard';
@@ -48,6 +48,7 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
   const soundEnabled = useGamificationStore((state) => state.soundEnabled);
   const setSoundEnabled = useGamificationStore((state) => state.setSoundEnabled);
   const { formatMessage } = useLanguage();
+  const toast = useToast();
 
   const dashboard = useDashboardData();
   const isMoodleLinked = useMoodleStore((state) => state.isMoodleLinked);
@@ -130,9 +131,10 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
     setIsRefreshing(true);
 
     try {
-      await Promise.all([invalidateOpportunities(queryClient), dashboard.refresh()]);
+      await invalidateOpportunities(queryClient, { throwOnError: true });
+      await dashboard.refresh();
     } catch {
-      // errors handled in dashboard.refresh
+      toast.error(formatMessage('dashboard.loadError'));
     } finally {
       setIsRefreshing(false);
     }
