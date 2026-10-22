@@ -189,12 +189,14 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
 
         <main className={styles.content}>
           <div className={styles.pageTitleRow}>
-            <h2 className={styles.pageTitle}>{formatMessage(PAGE_TITLE_KEYS[activeKey])}</h2>
-            {isSyncing && dashboard.hasCachedData && (
-              <div className={styles.pageUpdatingIndicator} role="status" aria-live="polite">
-                <Spinner size="small" tip={formatMessage('dashboard.updating')} />
-              </div>
-            )}
+            <div className={styles.pageTitleGroup}>
+              <h2 className={styles.pageTitle}>{formatMessage(PAGE_TITLE_KEYS[activeKey])}</h2>
+              {isSyncing && dashboard.hasCachedData && (
+                <div className={styles.pageUpdatingIndicator} role="status" aria-live="polite">
+                  <Spinner size="small" tip={formatMessage('dashboard.updating')} />
+                </div>
+              )}
+            </div>
             <div className={styles.syncActions}>
               {dashboard.lastSyncTime && (
                 <span className={styles.lastSyncText}>
