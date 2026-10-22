@@ -9,6 +9,7 @@ import {
 } from './cache';
 import { moderateMutationKey, opportunityKeys } from './queryKeys';
 import { buildOpportunity } from './test-utils';
+import { noop } from '@core/utils/fn';
 
 describe('opportunities cache', () => {
   let queryClient: QueryClient;
@@ -86,7 +87,7 @@ describe('opportunities cache', () => {
 
   describe('isLastPendingModeration', () => {
     function startModeration(): { finish: () => Promise<void> } {
-      let resolveRequest: () => void = () => {};
+      let resolveRequest: () => void = noop;
       const request = new Promise<void>((resolve) => {
         resolveRequest = resolve;
       });

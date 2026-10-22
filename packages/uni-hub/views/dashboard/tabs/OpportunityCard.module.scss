@@ -1,5 +1,23 @@
 @use '@universe/ui/breakpoints.scss' as *;
 
+.cardLink {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: -2px;
+  }
+}
+
 .card {
   background: var(--bg-surface);
   border: 1px solid var(--card-border);
@@ -18,6 +36,11 @@
     border-color 300ms cubic-bezier(0.16, 1, 0.3, 1),
     background-color 300ms ease;
   will-change: transform, box-shadow;
+  cursor: default;
+
+  &.clickableCard {
+    cursor: pointer;
+  }
 
   @include narrower-than('md') {
     padding: 20px;
@@ -37,14 +60,15 @@
     background: transparent;
     z-index: 2;
     transition: background-color 200ms ease;
+    pointer-events: none;
   }
 
   &.paidCard::before {
-    background: var(--success-color, #10b981);
+    background: var(--success-color);
   }
 
   &.unpaidCard::before {
-    background: var(--accent-primary, #3b82f6);
+    background: var(--accent-primary);
   }
 
   &:hover {
@@ -57,18 +81,6 @@
 
     .cardTitle {
       color: var(--accent-primary);
-    }
-
-    .cardArrow {
-      transform: translate(3px, -3px);
-      color: var(--accent-primary);
-    }
-
-    .cardDetailsBtn {
-      background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
-      border-color: color-mix(in srgb, var(--accent-primary) 35%, transparent);
-      color: var(--accent-primary);
-      transform: translateY(-1px);
     }
   }
 
@@ -93,6 +105,13 @@
   margin-bottom: 2px;
 }
 
+.categoryBadgeGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
 .categoryPill {
   display: inline-flex;
   align-items: center;
@@ -104,9 +123,9 @@
   border: 1px solid transparent;
 
   &.paidCategory {
-    color: var(--success-color, #10b981);
-    background: color-mix(in srgb, var(--success-color, #10b981) 12%, transparent);
-    border-color: color-mix(in srgb, var(--success-color, #10b981) 25%, transparent);
+    color: var(--success-color);
+    background: color-mix(in srgb, var(--success-color) 12%, transparent);
+    border-color: color-mix(in srgb, var(--success-color) 25%, transparent);
   }
 
   &.unpaidCategory {
@@ -122,11 +141,11 @@
   gap: 6px;
   font-size: var(--font-xs);
   font-weight: 600;
-  color: var(--success-color, #10b981);
-  background: color-mix(in srgb, var(--success-color, #10b981) 10%, transparent);
+  color: var(--success-color);
+  background: color-mix(in srgb, var(--success-color) 10%, transparent);
   padding: 5px 12px;
   border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--success-color, #10b981) 25%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success-color) 25%, transparent);
 }
 
 .experiencePill {
@@ -140,6 +159,19 @@
   padding: 5px 12px;
   border-radius: 12px;
   border: 1px solid var(--card-border);
+}
+
+.closedPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
+  padding: 4px 8px;
+  border-radius: 12px;
 }
 
 .cardTitle {
@@ -192,8 +224,8 @@
   border-radius: 50%;
   background: linear-gradient(
     135deg,
-    var(--blue-600, #2563eb),
-    color-mix(in srgb, var(--blue-600, #2563eb) 50%, var(--purple-700, #7e22ce))
+    var(--blue-600),
+    color-mix(in srgb, var(--blue-600) 50%, var(--purple-700))
   );
   color: #fff;
   display: flex;
@@ -226,45 +258,6 @@
   color: var(--text-secondary);
 }
 
-.cardDetailsBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 12px;
-  background: var(--bg-hover);
-  border: 1px solid var(--card-border);
-  font-size: var(--font-xs);
-  font-weight: 600;
-  color: var(--text-primary);
-  transition:
-    background-color 280ms ease,
-    border-color 280ms ease,
-    color 280ms ease,
-    transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
-  flex-shrink: 0;
-
-  &:focus-visible {
-    outline: 2px solid var(--accent-primary);
-    outline-offset: 2px;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-  }
-}
-
-.cardArrow {
-  color: var(--text-secondary);
-  flex-shrink: 0;
-  transition:
-    transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
-    color 280ms ease;
-}
-
 .cardActions {
   display: flex;
   align-items: center;
@@ -274,8 +267,8 @@
 .warningBox {
   margin-top: var(--space-4);
   padding: var(--space-12) var(--space-16);
-  background: color-mix(in srgb, var(--warning-color, #f59e0b) 10%, var(--bg-surface));
-  border-left: 3px solid var(--warning-color, #f59e0b);
+  background: color-mix(in srgb, var(--warning-color) 10%, var(--bg-surface));
+  border-left: 3px solid var(--warning-color);
   border-radius: 0 10px 10px 0;
   font-size: var(--font-xs);
   line-height: 1.45;

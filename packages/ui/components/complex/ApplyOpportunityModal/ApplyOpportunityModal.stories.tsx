@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ApplyOpportunityModal } from './ApplyOpportunityModal';
 import type { ApplyOpportunityModalProps } from './ApplyOpportunityModal.types';
+import { noop } from '@core/utils/fn';
 
 const meta = {
   title: 'Complex/ApplyOpportunityModal',
@@ -12,13 +13,13 @@ const meta = {
   },
   args: {
     open: true,
-    onClose: () => {},
-    onSubmit: () => {},
+    onClose: noop,
+    onSubmit: noop,
     title: 'Подати заявку: Front-end Intern (React)',
     motivation: '',
-    onMotivationChange: () => {},
+    onMotivationChange: noop,
     contactInfo: '',
-    onContactInfoChange: () => {},
+    onContactInfoChange: noop,
     submitting: false,
     motivationLabel: 'Мотиваційний лист / коментар',
     motivationPlaceholder: 'Опишіть, чому вас зацікавила ця можливість та ваш досвід...',

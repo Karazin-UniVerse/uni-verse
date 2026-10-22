@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TopicChips } from './TopicChips';
+import { noop } from '@core/utils/fn';
 
 describe('TopicChips Component', () => {
   const sampleOptions = [
@@ -16,7 +17,7 @@ describe('TopicChips Component', () => {
         label="Select Option"
         options={sampleOptions}
         selectedId="opt1"
-        onSelect={() => {}}
+        onSelect={noop}
       />,
     );
 
@@ -31,7 +32,7 @@ describe('TopicChips Component', () => {
         ariaLabel="Inquiry topics"
         options={sampleOptions}
         selectedId="opt1"
-        onSelect={() => {}}
+        onSelect={noop}
       />,
     );
 
@@ -41,7 +42,7 @@ describe('TopicChips Component', () => {
   });
 
   it('should set aria-checked and roving tabindex correctly when an item is selected', () => {
-    render(<TopicChips options={sampleOptions} selectedId="opt2" onSelect={() => {}} />);
+    render(<TopicChips options={sampleOptions} selectedId="opt2" onSelect={noop} />);
 
     const opt1 = screen.getByRole('radio', { name: 'Option 1' });
     const opt2 = screen.getByRole('radio', { name: 'Option 2' });
@@ -58,7 +59,7 @@ describe('TopicChips Component', () => {
   });
 
   it('should give the first option tabIndex="0" when no item is selected', () => {
-    render(<TopicChips options={sampleOptions} selectedId="" onSelect={() => {}} />);
+    render(<TopicChips options={sampleOptions} selectedId="" onSelect={noop} />);
 
     const opt1 = screen.getByRole('radio', { name: 'Option 1' });
     const opt2 = screen.getByRole('radio', { name: 'Option 2' });

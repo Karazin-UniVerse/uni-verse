@@ -385,6 +385,7 @@ export const en = {
   'opportunities.subtitle':
     'Career opportunities, internships, research grants, and Karazin student initiatives',
   'opportunities.badge': 'Beta Preview',
+
   'opportunities.filterAll': 'All Opportunities',
   'opportunities.filterInternships': 'Internships & Tech',
   'opportunities.filterGrants': 'Grants & Scholarships',
@@ -440,6 +441,8 @@ export const en = {
   'opportunities.toast.stateUpdated': 'Project state updated',
   'opportunities.toast.updated': 'Changes saved successfully!',
   'opportunities.toast.updateError': 'Failed to update opportunity',
+  'opportunities.toast.applicationsOpened': 'Applications acceptance opened',
+  'opportunities.toast.applicationsClosed': 'Applications acceptance closed',
   'opportunities.toast.statusUpdateError': 'Error updating status',
   'opportunities.confirm.withdraw': 'Are you sure you want to withdraw your application?',
   'opportunities.confirm.withdrawTitle': 'Withdraw application',
@@ -459,8 +462,8 @@ export const en = {
   'opportunities.card.moderatorNote': 'Moderator note:',
   'opportunities.card.applications': 'Applications',
   'opportunities.card.management': 'Management',
-  'opportunities.card.details': 'Details',
   'opportunities.card.detailsAria': 'More details about {title}',
+  'opportunities.card.applicationsClosedBadge': 'Applications closed',
   'opportunities.catalog.searchPlaceholder': 'Search by title or keywords...',
   'opportunities.catalog.searchAria': 'Search opportunities',
   'opportunities.catalog.clearSearchAria': 'Clear search field',
@@ -529,6 +532,7 @@ export const en = {
   'opportunities.createModal.paymentDetailsLabel': 'Payment Details',
   'opportunities.createModal.paymentDetailsPlaceholder':
     'E.g.: $400/month or 5000 UAH per milestone',
+  'opportunities.createModal.acceptsApplications': 'Accept new applications',
   'opportunities.createModal.cancel': 'Cancel',
   'opportunities.createModal.saving': 'Saving...',
   'opportunities.createModal.submit': 'Create Draft',
@@ -563,6 +567,8 @@ export const en = {
   'opportunities.detailModal.phasePaused': 'Paused',
   'opportunities.detailModal.phaseCompleted': 'Completed',
   'opportunities.detailModal.phaseCancelled': 'Cancelled',
+  'opportunities.detailModal.acceptsApplications': 'Accept new applications',
+  'opportunities.detailModal.applicationsClosed': 'Applications closed by author',
   'opportunities.detail.back': 'Back to opportunities',
   'opportunities.detailModal.apply': 'Apply for Opportunity',
 

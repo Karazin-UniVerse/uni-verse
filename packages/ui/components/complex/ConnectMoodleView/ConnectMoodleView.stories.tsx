@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Award, CalendarDays, BookOpen } from 'lucide-react';
+import { noop } from '@core/utils/fn';
 
 import { VariantRow } from '../../../storybook/VariantMatrix/VariantRow';
 import { ConnectMoodleView } from './ConnectMoodleView';
@@ -57,7 +58,7 @@ export const Matrix: Story = {
     subtitle: 'Subtitle',
     connectCtaLabel: 'Connect',
     openMoodleLabel: 'Open',
-    onConnect: () => {},
+    onConnect: noop,
   },
   parameters: {
     layout: 'padded',
@@ -72,7 +73,7 @@ export const Matrix: Story = {
             subtitle="Отримайте повну синхронізацію навчального процесу в один клік."
             connectCtaLabel="Підключити Moodle зараз"
             openMoodleLabel="Відкрити Moodle LMS"
-            onConnect={() => {}}
+            onConnect={noop}
             features={MATRIX_FEATURES[features]}
           />
         </div>

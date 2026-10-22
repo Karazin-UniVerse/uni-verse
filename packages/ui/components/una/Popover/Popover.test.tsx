@@ -2,11 +2,12 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Popover } from './Popover';
+import { noop } from '@core/utils/fn';
 
 describe('UNA Popover Component', () => {
   it('should return null when open is false', () => {
     render(
-      <Popover open={false} onClose={() => {}}>
+      <Popover open={false} onClose={noop}>
         <div>Content</div>
       </Popover>,
     );
@@ -16,7 +17,7 @@ describe('UNA Popover Component', () => {
 
   it('should render dialog with content and title when open is true', () => {
     render(
-      <Popover open={true} onClose={() => {}} title="Test Title">
+      <Popover open={true} onClose={noop} title="Test Title">
         <div>Popover Body Content</div>
       </Popover>,
     );
@@ -30,7 +31,7 @@ describe('UNA Popover Component', () => {
 
   it('should omit close button when closeButton is false', () => {
     render(
-      <Popover open={true} onClose={() => {}} title="Test Title" closeButton={false}>
+      <Popover open={true} onClose={noop} title="Test Title" closeButton={false}>
         <div>Body</div>
       </Popover>,
     );
@@ -58,7 +59,7 @@ describe('UNA Popover Component', () => {
     render(
       <Popover
         open={true}
-        onClose={() => {}}
+        onClose={noop}
         placement="top-start"
         width={400}
         ariaLabel="Custom Dialog"
