@@ -36,6 +36,18 @@ interface MoodleSiteInfo {
   userpictureurl?: string;
 }
 
+interface MoodleUserGroup {
+  id?: number;
+  name?: string;
+}
+
+interface MoodleCustomField {
+  type?: string;
+  value?: string;
+  name?: string;
+  shortname?: string;
+}
+
 interface MoodleUserItem {
   id?: number;
   username?: string;
@@ -47,6 +59,15 @@ interface MoodleUserItem {
   institution?: string;
   idnumber?: string;
   profileimageurl?: string;
+  groups?: MoodleUserGroup[];
+  customfields?: MoodleCustomField[];
+}
+
+interface ResolveGroupParams {
+  token: string;
+  moodleId: string;
+  moodleUser?: MoodleUserItem;
+  courses?: Array<{ id?: number; fullname?: string }>;
 }
 
 @Injectable()
@@ -69,7 +90,7 @@ export class MoodleProfileService {
   ): Promise<StudentProfileDto> {
     const siteInfo = await this.fetchSiteInfo(moodleToken);
     const moodleUser = await this.fetchMoodleUser(moodleToken, moodleId);
-    const { gpa, totalCredits } = await this.computeAcademicMetrics(
+    const { gpa, totalCredits, courses } = await this.computeAcademicMetrics(
       moodleToken,
       moodleId,
     );
@@ -82,6 +103,12 @@ export class MoodleProfileService {
       moodleId,
     );
     const { faculty, department } = this.resolveAffiliation(moodleUser);
+    const group = await this.resolveGroup({
+      token: moodleToken,
+      moodleId,
+      moodleUser,
+      courses,
+    });
 
     const safeMoodleId = moodleId || '4021';
     const parsedId = Number.parseInt(safeMoodleId, 10);
@@ -101,7 +128,7 @@ export class MoodleProfileService {
       educationalProgram: 'Компʼютерні науки та інтелектуальні системи',
       degree: 'bachelor',
       course: 3,
-      group: 'КС12',
+      group,
       studyForm: 'full-time',
       financing: 'budget',
       status: 'active',
@@ -158,9 +185,14 @@ export class MoodleProfileService {
   private async computeAcademicMetrics(
     token: string,
     moodleId: string,
-  ): Promise<{ gpa: number; totalCredits: number }> {
+  ): Promise<{
+    gpa: number;
+    totalCredits: number;
+    courses: Array<{ id?: number; fullname?: string }>;
+  }> {
     let gpa = 92.4;
     let totalCredits = 120;
+    let coursesList: Array<{ id?: number; fullname?: string }> = [];
 
     try {
       const [courses, gradesRes] = await Promise.allSettled([
@@ -169,7 +201,8 @@ export class MoodleProfileService {
       ]);
 
       if (courses.status === 'fulfilled' && courses.value.length > 0) {
-        totalCredits = courses.value.length * 5;
+        coursesList = courses.value;
+        totalCredits = coursesList.length * 5;
       }
 
       if (
@@ -191,7 +224,80 @@ export class MoodleProfileService {
       );
     }
 
-    return { gpa, totalCredits };
+    return { gpa, totalCredits, courses: coursesList };
+  }
+
+  private async resolveGroup({
+    token,
+    moodleId,
+    moodleUser,
+    courses = [],
+  }: ResolveGroupParams): Promise<string> {
+    if (moodleUser?.groups && moodleUser.groups.length > 0) {
+      const groupName = moodleUser.groups[0]?.name?.trim();
+
+      if (groupName) {
+        return groupName;
+      }
+    }
+
+    if (moodleUser?.customfields && moodleUser.customfields.length > 0) {
+      const groupField = moodleUser.customfields.find((field) => {
+        const shortname = field.shortname?.toLowerCase() || '';
+        const name = field.name?.toLowerCase() || '';
+
+        return shortname.includes('group') || name.includes('груп');
+      });
+
+      if (groupField?.value?.trim()) {
+        return groupField.value.trim();
+      }
+    }
+
+    if (moodleUser?.department) {
+      const dept = moodleUser.department.trim();
+
+      if (
+        /^[А-ЯІЇЄа-яіїєA-Za-z]{1,5}[- ]?\d{1,3}[А-ЯІЇЄа-яіїєA-Za-z]?$/.test(
+          dept,
+        )
+      ) {
+        return dept;
+      }
+    }
+
+    if (courses.length > 0) {
+      for (const course of courses.slice(0, 5)) {
+        if (!course.id) {
+          continue;
+        }
+
+        try {
+          const res = await this.moodleClient.client<{
+            groups?: Array<{ id: number; name: string }>;
+          }>({
+            wsfunction: 'core_group_get_course_user_groups',
+            moodleToken: token,
+            params: {
+              courseid: course.id,
+              userid: moodleId,
+            },
+          });
+
+          if (res?.groups && res.groups.length > 0) {
+            const foundGroup = res.groups[0]?.name?.trim();
+
+            if (foundGroup) {
+              return foundGroup;
+            }
+          }
+        } catch {
+          // Ignore and continue checking next course
+        }
+      }
+    }
+
+    return 'КС12';
   }
 
   private calculateGpaFromGrades(

@@ -249,4 +249,88 @@ describe('MoodleProfileService', () => {
     expect(profile.gpa).toBe(92.4);
     expect(profile.totalCreditsEarned).toBe(120);
   });
+
+  it('should resolve student group from moodleUser.groups when present', async () => {
+    mockMoodleClient.client.mockImplementation(
+      async ({ wsfunction }: MoodleClientParams) => {
+        if (wsfunction === 'core_user_get_users_by_field') {
+          return [
+            {
+              id: 4021,
+              fullname: 'Тест Студент',
+              groups: [{ id: 10, name: 'КН-21' }],
+            },
+          ];
+        }
+
+        return {};
+      },
+    );
+
+    const profile = await service.getProfile('token', '4021');
+
+    expect(profile.group).toBe('КН-21');
+  });
+
+  it('should resolve student group from customfields when group shortname is present', async () => {
+    mockMoodleClient.client.mockImplementation(
+      async ({ wsfunction }: MoodleClientParams) => {
+        if (wsfunction === 'core_user_get_users_by_field') {
+          return [
+            {
+              id: 4021,
+              fullname: 'Тест Студент',
+              customfields: [{ shortname: 'group', value: 'ШІ-11' }],
+            },
+          ];
+        }
+
+        return {};
+      },
+    );
+
+    const profile = await service.getProfile('token', '4021');
+
+    expect(profile.group).toBe('ШІ-11');
+  });
+
+  it('should resolve student group from department when matching group code pattern', async () => {
+    mockMoodleClient.client.mockImplementation(
+      async ({ wsfunction }: MoodleClientParams) => {
+        if (wsfunction === 'core_user_get_users_by_field') {
+          return [
+            {
+              id: 4021,
+              fullname: 'Тест Студент',
+              department: 'ПП-31',
+            },
+          ];
+        }
+
+        return {};
+      },
+    );
+
+    const profile = await service.getProfile('token', '4021');
+
+    expect(profile.group).toBe('ПП-31');
+  });
+
+  it('should resolve student group from core_group_get_course_user_groups when enrolled in courses', async () => {
+    mockMoodleClient.client.mockImplementation(
+      async ({ wsfunction }: MoodleClientParams) => {
+        if (wsfunction === 'core_group_get_course_user_groups') {
+          return {
+            groups: [{ id: 99, name: 'УБ-12' }],
+          };
+        }
+
+        return {};
+      },
+    );
+
+    const profile = await service.getProfile('token', '4021');
+
+    expect(profile.group).toBe('УБ-12');
+  });
 });

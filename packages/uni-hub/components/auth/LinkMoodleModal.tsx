@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User, Lock } from 'lucide-react';
+import { User, Lock, Eye, EyeOff } from 'lucide-react';
 import { Modal, Button, Form, useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { getErrorMessage } from '@uni-hub/services/api';
@@ -26,6 +26,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
   const { formatMessage } = useLanguage();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const linkMoodle = useLinkMoodle();
   const loading = linkMoodle.isPending;
   const [error, setError] = useState('');
@@ -89,13 +90,32 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
         <AuthField
           id="modal-link-moodle-password"
           name="moodlePassword"
-          type="password"
+          type={showPassword ? 'text' : 'password'}
           label={formatMessage('login.linkMoodlePassword')}
           placeholder={formatMessage('login.linkMoodlePasswordPlaceholder')}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           autoComplete="current-password"
           icon={<Lock size={16} />}
+          rightElement={
+            <button
+              type="button"
+              className={styles.passwordToggle}
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={
+                showPassword
+                  ? formatMessage('login.hidePassword')
+                  : formatMessage('login.showPassword')
+              }
+              title={
+                showPassword
+                  ? formatMessage('login.hidePassword')
+                  : formatMessage('login.showPassword')
+              }
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          }
         />
 
         {error && <p className={styles.error}>{error}</p>}

@@ -59,7 +59,11 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
           {...triggerProps}
           type="button"
           className={styles.user}
-          title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
+          title={
+            activeStudentProfile.group
+              ? `${activeStudentProfile.fullName} (${activeStudentProfile.group})`
+              : activeStudentProfile.fullName
+          }
           aria-label={formatMessage('header.userMenu')}
         >
           <span className={styles.avatar}>
@@ -73,7 +77,9 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
         <>
           <div className={styles.userDropdownHeader}>
             <strong>{activeStudentProfile.fullName}</strong>
-            <div className={styles.muted}>{activeStudentProfile.group}</div>
+            {activeStudentProfile.group ? (
+              <div className={styles.muted}>{activeStudentProfile.group}</div>
+            ) : null}
           </div>
 
           {isMoodleIntegrationEnabled && (

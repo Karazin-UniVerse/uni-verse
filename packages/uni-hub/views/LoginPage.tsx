@@ -25,6 +25,7 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [linkUsername, setLinkUsername] = useState('');
   const [linkPassword, setLinkPassword] = useState('');
+  const [showLinkPassword, setShowLinkPassword] = useState(false);
   const [googleUserName, setGoogleUserName] = useState('');
   const [error, setError] = useState('');
   const [isLinkingMoodle, setIsLinkingMoodle] = useState(false);
@@ -47,6 +48,10 @@ const LoginPage: React.FC = () => {
         setGoogleUserName(displayName);
       }
 
+      if (claims.email) {
+        safeStorage.setItem('userEmail', claims.email);
+      }
+
       const res = await googleLogin.mutateAsync(idToken);
 
       if (res.data?.isLinked || !isMoodleIntegrationEnabled) {
@@ -66,6 +71,7 @@ const LoginPage: React.FC = () => {
     } catch (err: unknown) {
       setGoogleUserName('');
       safeStorage.removeItem('username');
+      safeStorage.removeItem('userEmail');
       const message = getErrorMessage(err, formatMessage('login.googleError'));
 
       setError(message);
@@ -189,13 +195,32 @@ const LoginPage: React.FC = () => {
             <AuthField
               id="link-moodle-password"
               name="moodlePassword"
-              type="password"
+              type={showLinkPassword ? 'text' : 'password'}
               label={formatMessage('login.linkMoodlePassword')}
               placeholder={formatMessage('login.linkMoodlePasswordPlaceholder')}
               value={linkPassword}
               onChange={(event) => setLinkPassword(event.target.value)}
               autoComplete="current-password"
               icon={<Lock size={16} />}
+              rightElement={
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => setShowLinkPassword((prev) => !prev)}
+                  aria-label={
+                    showLinkPassword
+                      ? formatMessage('login.hidePassword')
+                      : formatMessage('login.showPassword')
+                  }
+                  title={
+                    showLinkPassword
+                      ? formatMessage('login.hidePassword')
+                      : formatMessage('login.showPassword')
+                  }
+                >
+                  {showLinkPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
             />
 
             {error && <p className={styles.error}>{error}</p>}
