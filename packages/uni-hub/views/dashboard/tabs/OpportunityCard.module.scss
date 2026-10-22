@@ -46,30 +46,6 @@
     padding: 20px;
   }
 
-  .cardDetailsLabel {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 12px;
-    border: 1px solid color-mix(in srgb, var(--accent-primary) 35%, transparent);
-    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
-    color: var(--accent-primary);
-    font-size: var(--font-xs);
-    font-weight: 600;
-    flex-shrink: 0;
-    transition: transform 280ms ease;
-  }
-
-  .cardArrow {
-    flex-shrink: 0;
-    transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  @include narrower-than('md') {
-    padding: 20px;
-  }
-
   @include narrower-than('sm') {
     padding: 18px 16px;
   }
@@ -105,14 +81,6 @@
 
     .cardTitle {
       color: var(--accent-primary);
-    }
-
-    .cardArrow {
-      transform: translate(3px, -3px);
-    }
-
-    .cardDetailsLabel {
-      transform: translateY(-1px);
     }
   }
 

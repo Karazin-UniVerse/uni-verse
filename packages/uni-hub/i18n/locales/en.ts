@@ -385,7 +385,7 @@ export const en = {
   'opportunities.subtitle':
     'Career opportunities, internships, research grants, and Karazin student initiatives',
   'opportunities.badge': 'Beta Preview',
-  'opportunities.card.details': 'Details',
+
   'opportunities.filterAll': 'All Opportunities',
   'opportunities.filterInternships': 'Internships & Tech',
   'opportunities.filterGrants': 'Grants & Scholarships',
