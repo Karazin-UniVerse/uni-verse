@@ -54,6 +54,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   const handleClick = (): void => {
     if (!window.google?.accounts?.id) {
       onErrorRef.current?.('Сервіс Google ще завантажується, спробуйте ще раз');
+
       return;
     }
 
