@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@una';
 import type { Opportunity } from '@core/types/opportunities';
 import styles from '../../OpportunityCard.module.scss';
-import type { FormatMessage } from '../types';
+import type { FormatMessage } from '@uni-hub/i18n/LanguageContext';
 
 interface Props {
   opportunity: Opportunity;
