@@ -100,8 +100,6 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     if (!isLoggedIn()) {
       router.replace('/login');
-
-      return;
     }
   }, [router]);
 
