@@ -17,10 +17,6 @@
   }
 }
 
-.customButtonWrapper {
-  width: 100%;
-}
-
 .customButton {
   width: 100%;
   height: 48px;
@@ -40,30 +36,4 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.buttonContainer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.01;
-  z-index: 10;
-  overflow: hidden;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-
-  iframe {
-    margin: 0 auto;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-  }
-}
-
-.disabled {
-  pointer-events: none;
-  opacity: 0;
 }

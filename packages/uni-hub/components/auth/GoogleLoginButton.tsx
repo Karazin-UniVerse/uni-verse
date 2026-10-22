@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Script from 'next/script';
 import styles from './GoogleLoginButton.module.scss';
-import { useTheme } from '@uni-hub/theme/ThemeContext';
 import { Button } from '@una';
 import { FaGoogle } from 'react-icons/fa';
 
@@ -18,12 +17,10 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   disabled,
   onError,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [scriptLoaded, setScriptLoaded] = useState(
     () => typeof window !== 'undefined' && Boolean(window.google?.accounts?.id),
   );
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-  const { theme } = useTheme();
 
   const onSuccessRef = useRef(onSuccess);
   const onErrorRef = useRef(onError);
@@ -34,7 +31,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   });
 
   useEffect(() => {
-    if (!clientId || !scriptLoaded || !window.google || !containerRef.current) {
+    if (!clientId || !scriptLoaded || !window.google) {
       return;
     }
 
@@ -49,23 +46,25 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
           }
         },
       });
-
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
-
-        window.google.accounts.id.renderButton(containerRef.current, {
-          theme: theme === 'light' ? 'outline' : 'filled_black',
-          size: 'large',
-          text: 'continue_with',
-          shape: 'rectangular',
-          width: 336,
-          locale: 'uk',
-        });
-      }
     } catch (err: unknown) {
       onErrorRef.current?.((err as Error).message);
     }
-  }, [scriptLoaded, clientId, theme]);
+  }, [scriptLoaded, clientId]);
+
+  const handleClick = (): void => {
+    if (!window.google?.accounts?.id) {
+      onErrorRef.current?.('Сервіс Google ще завантажується, спробуйте ще раз');
+      return;
+    }
+
+    window.google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed()) {
+        onErrorRef.current?.(
+          'Не вдалося відкрити вхід через Google. Перевірте блокування cookie або спробуйте ще раз',
+        );
+      }
+    });
+  };
 
   return (
     <div className={styles.wrapper}>
@@ -74,23 +73,18 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         strategy="afterInteractive"
         onReady={() => setScriptLoaded(true)}
       />
-      <div className={styles.customButtonWrapper}>
-        <Button
-          variant="secondary"
-          size="large"
-          className={styles.customButton}
-          disabled={disabled}
-        >
-          <span className={styles.iconWrapper}>
-            <FaGoogle size={18} />
-          </span>
-          <span>Продовжити з Google</span>
-        </Button>
-      </div>
-      <div
-        ref={containerRef}
-        className={`${styles.buttonContainer} ${disabled ? styles.disabled : ''}`}
-      />
+      <Button
+        variant="secondary"
+        size="large"
+        className={styles.customButton}
+        disabled={disabled || !scriptLoaded}
+        onClick={handleClick}
+      >
+        <span className={styles.iconWrapper}>
+          <FaGoogle size={18} />
+        </span>
+        <span>Продовжити з Google</span>
+      </Button>
     </div>
   );
 };
