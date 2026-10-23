@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User } from 'lucide-react';
+import { Lock, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button, Form, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
@@ -11,12 +11,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getErrorMessage, safeStorage } from '@uni-hub/services/api';
 import { endSession } from '@uni-hub/services/api.session';
 import { useGoogleLogin, useLinkMoodle, useLogin } from '@uni-hub/hooks/useAuthMutations';
-import {
-  GoogleLoginButton,
-  AuthField,
-  PasswordAuthField,
-  parseGoogleClaims,
-} from '@uni-hub/components/auth';
+import { GoogleLoginButton, AuthField, parseGoogleClaims } from '@uni-hub/components/auth';
 import { useFeatures } from '@uni-hub/features';
 import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
 import { motion } from 'framer-motion';
@@ -195,13 +190,15 @@ const LoginPage: React.FC = () => {
               icon={<User size={16} />}
             />
 
-            <PasswordAuthField
+            <AuthField
               id="link-moodle-password"
               name="moodlePassword"
+              type="password"
               label={formatMessage('login.linkMoodlePassword')}
               placeholder={formatMessage('login.linkMoodlePasswordPlaceholder')}
               value={linkPassword}
               onChange={(event) => setLinkPassword(event.target.value)}
+              icon={<Lock size={16} />}
             />
 
             {error && <p className={styles.error}>{error}</p>}
@@ -279,13 +276,15 @@ const LoginPage: React.FC = () => {
               icon={<User size={16} />}
             />
 
-            <PasswordAuthField
+            <AuthField
               id="login-password"
               name="password"
+              type="password"
               label={formatMessage('login.password')}
               placeholder={formatMessage('login.password')}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
+              icon={<Lock size={16} />}
             />
 
             {error && <p className={styles.error}>{error}</p>}

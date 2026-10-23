@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { TextInput } from '@una';
+import { PasswordInput, TextInput } from '@una';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import styles from './AuthField.module.scss';
 
 export interface AuthFieldProps {
@@ -13,25 +14,55 @@ export interface AuthFieldProps {
   placeholder: string;
   value: string;
   autoComplete?: string;
+  hidePasswordLabel?: string;
   rightElement?: React.ReactNode;
+  showPasswordLabel?: string;
   type?: string;
 }
 
 export const AuthField: React.FC<AuthFieldProps> = ({
-  autoComplete,
   icon,
   id,
   label,
   name,
   onChange,
   placeholder,
-  rightElement,
   value,
+  autoComplete,
+  hidePasswordLabel,
+  rightElement,
+  showPasswordLabel,
   type = 'text',
 }) => {
+  const { formatMessage } = useLanguage();
+
+  if (type === 'password') {
+    return (
+      <div className={styles.field}>
+        <label htmlFor={id} className={styles.label}>
+          {label}
+        </label>
+        <PasswordInput
+          id={id}
+          name={name}
+          size="large"
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          autoComplete={autoComplete}
+          leftIcon={icon}
+          showPasswordLabel={showPasswordLabel ?? formatMessage('login.showPassword')}
+          hidePasswordLabel={hidePasswordLabel ?? formatMessage('login.hidePassword')}
+        />
+      </div>
+    );
+  }
+
   return (
-    <label htmlFor={id} className={styles.field}>
-      <span className={styles.label}>{label}</span>
+    <div className={styles.field}>
+      <label htmlFor={id} className={styles.label}>
+        {label}
+      </label>
       <div className={`${styles.inputWrap} ${rightElement ? styles.hasRightElement : ''}`}>
         <span className={styles.icon}>{icon}</span>
         <TextInput
@@ -46,7 +77,7 @@ export const AuthField: React.FC<AuthFieldProps> = ({
         />
         {rightElement ? <div className={styles.rightElement}>{rightElement}</div> : null}
       </div>
-    </label>
+    </div>
   );
 };
 

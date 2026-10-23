@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User } from 'lucide-react';
+import { Lock, User } from 'lucide-react';
 import { Modal, Button, Form, useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { getErrorMessage } from '@uni-hub/services/api';
 import { useLinkMoodle } from '@uni-hub/hooks/useAuthMutations';
 import { AuthField } from './AuthField';
-import { PasswordAuthField } from './PasswordAuthField';
 import { LinkMoodleMode, getLinkMoodleContentKeys } from './helpers';
 import styles from './LinkMoodleModal.module.scss';
 
@@ -103,14 +102,16 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
           icon={<User size={16} />}
         />
 
-        <PasswordAuthField
+        <AuthField
           key={open ? 'open' : 'closed'}
           id="modal-link-moodle-password"
           name="moodlePassword"
+          type="password"
           label={formatMessage('login.linkMoodlePassword')}
           placeholder={formatMessage('login.linkMoodlePasswordPlaceholder')}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
+          icon={<Lock size={16} />}
         />
 
         {error && <p className={styles.error}>{error}</p>}

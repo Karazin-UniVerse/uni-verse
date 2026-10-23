@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { fallbackStudentProfile } from '../constants';
-import { UserDropdown, getMoodleStatusDetails } from './UserDropdown';
+import { UserDropdown, getMoodleStatusDetails, getUserProfileTitle } from './UserDropdown';
 
 describe('UserDropdown helpers', () => {
   it('should return linked status details when isMoodleLinked is true', () => {
@@ -18,6 +18,26 @@ describe('UserDropdown helpers', () => {
     expect(details.isLinked).toBe(false);
     expect(details.statusKey).toBe('header.moodleNotConnected');
     expect(details.dotColor).toContain('var(--text-secondary');
+  });
+
+  it('should format profile title with group when group exists', () => {
+    expect(
+      getUserProfileTitle({
+        ...fallbackStudentProfile,
+        fullName: 'Іван Петренко',
+        group: 'CS-21',
+      }),
+    ).toBe('Іван Петренко (CS-21)');
+  });
+
+  it('should format profile title without group when group is empty', () => {
+    expect(
+      getUserProfileTitle({
+        ...fallbackStudentProfile,
+        fullName: 'Іван Петренко',
+        group: '',
+      }),
+    ).toBe('Іван Петренко');
   });
 });
 
