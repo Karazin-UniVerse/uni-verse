@@ -767,10 +767,12 @@ textarea {
 }
 
 /* Custom scrollbars matching the active theme */
-:root,
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+@supports not selector(::-webkit-scrollbar) {
+  :root,
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
 }
 
 ::-webkit-scrollbar {

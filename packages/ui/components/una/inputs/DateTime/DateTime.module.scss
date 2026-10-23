@@ -143,8 +143,10 @@
   flex-direction: column;
 
   /* Custom scrollbar for better UX */
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  @supports not selector(::-webkit-scrollbar) {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
 
   &::-webkit-scrollbar {
     width: 6px;
