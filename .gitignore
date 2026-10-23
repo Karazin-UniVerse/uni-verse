@@ -18,3 +18,5 @@ ux_ui_audit.md
 .playwright-cli/
 .lighthouseci/
 /screenshots/
+graphify-out/
+.venv/
