@@ -15,11 +15,16 @@ export { LOCALE_TAGS, getLocaleTag } from './translations';
 
 const STORAGE_KEY = 'universe-lang';
 
+export type FormatMessage = (
+  key: TranslationKey,
+  values?: Record<string, string | number>,
+) => string;
+
 type LanguageContextValue = {
   language: AppLanguage;
   localeTag: string;
   setLanguage: (lang: AppLanguage) => void;
-  formatMessage: (key: TranslationKey, values?: Record<string, string | number>) => string;
+  formatMessage: FormatMessage;
 };
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);

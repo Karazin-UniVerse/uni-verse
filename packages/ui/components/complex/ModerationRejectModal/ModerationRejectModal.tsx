@@ -37,7 +37,6 @@ export const ModerationRejectModal: React.FC<ModerationRejectModalProps> = ({
             value={comment}
             onChange={(e) => onCommentChange(e.target.value)}
             disabled={isSubmitting}
-            required
           />
         </div>
 
