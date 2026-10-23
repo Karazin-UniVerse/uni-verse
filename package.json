@@ -30,6 +30,7 @@
     "test:lhci": "node --test scripts/tests/lhci*.test.cjs",
     "graphify:extract": "node scripts/graphify.cjs extract",
     "graphify:query": "node scripts/graphify.cjs query",
+    "test:graphify": "node --test scripts/tests/graphify.test.cjs",
     "graphify": "node scripts/graphify.cjs"
   },
   "devDependencies": {

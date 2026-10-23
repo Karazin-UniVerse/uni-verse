@@ -8,13 +8,6 @@ const graphifyOut = path.join(projectRoot, 'graphify-out');
 const graphJson = path.join(graphifyOut, 'graph.json');
 
 function findGraphifyExecutable() {
-  const tempVenvWin =
-    'C:\\Users\\Rodion Barsukov\\AppData\\Local\\Temp\\opencode\\graphify-rs205\\Scripts\\graphify.exe';
-
-  if (fs.existsSync(tempVenvWin)) {
-    return tempVenvWin;
-  }
-
   const localVenvWin = path.join(projectRoot, '.venv', 'Scripts', 'graphify.exe');
 
   if (fs.existsSync(localVenvWin)) {

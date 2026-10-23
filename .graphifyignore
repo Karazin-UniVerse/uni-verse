@@ -1,5 +1,6 @@
 # Build outputs and dependencies
 node_modules/
+.venv/
 .next/
 dist/
 coverage/

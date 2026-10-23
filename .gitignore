@@ -19,3 +19,4 @@ ux_ui_audit.md
 .lighthouseci/
 /screenshots/
 graphify-out/
+.venv/
