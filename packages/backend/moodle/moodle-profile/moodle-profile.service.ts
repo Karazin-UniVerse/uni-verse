@@ -64,10 +64,10 @@ interface MoodleUserItem {
 }
 
 interface ResolveGroupParams {
-  token: string;
+  courses: Array<{ id?: number; fullname?: string }>;
   moodleId: string;
+  token: string;
   moodleUser?: MoodleUserItem;
-  courses?: Array<{ id?: number; fullname?: string }>;
 }
 
 @Injectable()
@@ -228,10 +228,10 @@ export class MoodleProfileService {
   }
 
   private async resolveGroup({
-    token,
+    courses,
     moodleId,
+    token,
     moodleUser,
-    courses = [],
   }: ResolveGroupParams): Promise<string> {
     const directGroup =
       this.resolveGroupFromUserGroups(moodleUser) ||

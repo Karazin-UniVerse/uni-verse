@@ -5,6 +5,12 @@ import { TextInput } from '../TextInput/TextInput';
 import type { PasswordInputProps } from './PasswordInput.types';
 import css from './PasswordInput.module.scss';
 
+const ICON_SIZES: Record<NonNullable<PasswordInputProps['size']>, number> = {
+  small: 14,
+  medium: 16,
+  large: 18,
+};
+
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   (
     {
@@ -36,7 +42,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
     };
 
     const toggleLabel = show ? hidePasswordLabel : showPasswordLabel;
-    const iconSize = size === 'small' ? 14 : size === 'large' ? 18 : 16;
+    const iconSize = ICON_SIZES[size];
 
     return (
       <div className={clsx(css.wrapper, className)}>
