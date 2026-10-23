@@ -25,15 +25,19 @@
     "db:generate": "pnpm --filter @universe/backend db:generate",
     "db:migrate": "pnpm --filter @universe/backend db:push",
     "db:migrate:force": "pnpm --filter @universe/backend db:push:force",
-    "db:studio": "pnpm --filter @universe/backend db:studio"
+    "db:studio": "pnpm --filter @universe/backend db:studio",
+    "lhci": "node scripts/lhci-run.cjs",
+    "test:lhci": "node --test scripts/tests/lhci*.test.cjs"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.15.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
     "oxlint": "^1.88.0",
     "prettier": "^3.9.10",
+    "puppeteer-core": "^25.15.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "sass-embedded": "^1.105.2",

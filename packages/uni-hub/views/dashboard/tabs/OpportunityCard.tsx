@@ -8,7 +8,8 @@ import styles from './OpportunityCard.module.scss';
 import { OpportunityCardTop } from './opportunities/components/OpportunityCardTop';
 import { OpportunityOwnerMetaRow } from './opportunities/components/OpportunityOwnerMetaRow';
 import { OpportunityCatalogMetaRow } from './opportunities/components/OpportunityCatalogMetaRow';
-
+import { OPPORTUNITY_PAYMENT_TYPE } from '@core/constants/opportunities';
+import { OPPORTUNITY_CARD_VARIANT } from './opportunities/constants';
 export interface OpportunityCardProps {
   opportunity: Opportunity;
   variant?: 'catalog' | 'owner';
@@ -22,11 +23,11 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   statusBadge,
   onOpenDetail,
   onOpenApplicants,
-  variant = 'catalog',
+  variant = OPPORTUNITY_CARD_VARIANT.CATALOG,
 }) => {
   const { formatMessage, localeTag } = useLanguage();
-  const isPaid = opportunity.paymentType === 'PAID';
-  const isOwner = variant === 'owner';
+  const isPaid = opportunity.paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID;
+  const isOwner = variant === OPPORTUNITY_CARD_VARIANT.OWNER;
 
   const cardClassName = clsx(
     styles.card,
