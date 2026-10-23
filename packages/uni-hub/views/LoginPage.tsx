@@ -198,6 +198,7 @@ const LoginPage: React.FC = () => {
               placeholder={formatMessage('login.linkMoodlePasswordPlaceholder')}
               value={linkPassword}
               onChange={(event) => setLinkPassword(event.target.value)}
+              autoComplete="current-password"
               icon={<Lock size={16} />}
             />
 
@@ -284,6 +285,7 @@ const LoginPage: React.FC = () => {
               placeholder={formatMessage('login.password')}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
               icon={<Lock size={16} />}
             />
 

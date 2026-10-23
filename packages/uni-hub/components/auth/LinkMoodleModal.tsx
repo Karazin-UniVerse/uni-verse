@@ -111,6 +111,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
           placeholder={formatMessage('login.linkMoodlePasswordPlaceholder')}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
+          autoComplete="current-password"
           icon={<Lock size={16} />}
         />
 

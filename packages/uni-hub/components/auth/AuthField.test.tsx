@@ -62,6 +62,7 @@ describe('AuthField component', () => {
     const toggle = screen.getByRole('button', { name: /показати пароль/i });
 
     expect(input).toHaveAttribute('type', 'password');
+    expect(input).toHaveAttribute('autoComplete', 'current-password');
     expect(input).toHaveValue('secret123');
     expect(screen.getByTestId('lock-icon')).toBeInTheDocument();
 
