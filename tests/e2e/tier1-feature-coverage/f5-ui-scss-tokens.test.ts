@@ -36,4 +36,14 @@ describe('Tier 1 - Feature 5: SCSS Design Tokens Public Exports (@universe/ui)',
 
     expect(content).toMatch(/primary|color|space|radius|font/i);
   });
+
+  it('F5-6: SCSS tokens should define custom scrollbar tokens for all themes', () => {
+    const content = readWorkspaceFile('packages/ui/vars.scss');
+
+    expect(content).toContain('--scrollbar-track');
+    expect(content).toContain('--scrollbar-thumb');
+    expect(content).toContain('--scrollbar-thumb-hover');
+    expect(content).toContain('--scrollbar-radius');
+    expect(content).toMatch(/scrollbar-color|scrollbar-width/);
+  });
 });
