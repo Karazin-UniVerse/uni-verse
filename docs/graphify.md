@@ -4,7 +4,7 @@ Graphify turns the UniVerse codebase into a deterministic, locally queryable kno
 
 ## Core principles
 
-- **Zero token cost (code-only)**: The AST extractor runs 100% locally with `GRAPHIFY_BACKEND=none` and `--code-only`. No embeddings, no vector databases, no remote API calls.
+- **Zero token cost (code-only)**: The AST extractor and community clustering run 100% locally with `--code-only` and `--no-label`. No embeddings, no vector databases, no remote API calls.
 - **Local artifacts**: Extracted graphs (`graphify-out/`) are purely local and ignored by Git (`.gitignore` + `.graphifyignore`).
 - **No CI overhead**: Graph generation is an on-demand developer tool, not a mandatory blocking CI step.
 
@@ -28,7 +28,7 @@ We provide convenient wrapper scripts in `package.json` that automatically enfor
 
 ### 1. Extract / Build the graph
 
-Parses TypeScript, TSX, SCSS, JSON, and schema files across the monorepo:
+Parses TypeScript, TSX, JavaScript, and JSON files across the monorepo:
 
 ```bash
 pnpm graphify:extract
