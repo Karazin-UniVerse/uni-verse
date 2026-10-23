@@ -263,8 +263,10 @@ export class MoodleProfileService {
     const groupField = moodleUser?.customfields?.find((field) => {
       const shortname = field.shortname?.toLowerCase() || '';
       const name = field.name?.toLowerCase() || '';
+      const hasGroupKeyword =
+        shortname.includes('group') || name.includes('груп');
 
-      return shortname.includes('group') || name.includes('груп');
+      return hasGroupKeyword && Boolean(field.value?.trim());
     });
 
     return groupField?.value?.trim() || undefined;

@@ -316,6 +316,31 @@ describe('MoodleProfileService', () => {
     expect(profile.group).toBe('ШІ-12');
   });
 
+  it('should skip blank matching customfield values and select next valid matching customfield', async () => {
+    mockMoodleClient.client.mockImplementation(
+      async ({ wsfunction }: MoodleClientParams) => {
+        if (wsfunction === 'core_user_get_users_by_field') {
+          return [
+            {
+              id: 4021,
+              fullname: 'Тест Студент',
+              customfields: [
+                { shortname: 'group', value: '   ' },
+                { name: 'Група студента', value: 'ШІ-15' },
+              ],
+            },
+          ];
+        }
+
+        return {};
+      },
+    );
+
+    const profile = await service.getProfile('token', '4021');
+
+    expect(profile.group).toBe('ШІ-15');
+  });
+
   it('should resolve student group from department when matching group code pattern', async () => {
     mockMoodleClient.client.mockImplementation(
       async ({ wsfunction }: MoodleClientParams) => {

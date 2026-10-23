@@ -14,13 +14,14 @@ const ICON_SIZES: Record<NonNullable<PasswordInputProps['size']>, number> = {
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   (
     {
+      hidePasswordLabel,
+      showPasswordLabel,
       className,
       disabled,
       leftIcon,
       onTogglePassword,
       showPassword: controlledShowPassword,
-      hidePasswordLabel = 'Hide password',
-      showPasswordLabel = 'Show password',
+      wrapperClassName,
       size = 'medium',
       ...props
     },
@@ -45,7 +46,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
     const iconSize = ICON_SIZES[size];
 
     return (
-      <div className={clsx(css.wrapper, className)}>
+      <div className={clsx(css.wrapper, wrapperClassName)}>
         {leftIcon && <span className={css.leftIcon}>{leftIcon}</span>}
         <TextInput
           {...props}
@@ -53,7 +54,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           type={show ? 'text' : 'password'}
           size={size}
           disabled={disabled}
-          className={clsx(css.input, leftIcon && css.hasLeftIcon, css.hasToggle)}
+          className={clsx(css.input, leftIcon && css.hasLeftIcon, css.hasToggle, className)}
         />
         <button
           type="button"

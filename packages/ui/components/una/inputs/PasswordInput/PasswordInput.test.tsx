@@ -5,8 +5,13 @@ import userEvent from '@testing-library/user-event';
 import { PasswordInput } from './PasswordInput';
 
 describe('UNA PasswordInput Component', () => {
-  it('should render input with type="password" and default toggle button', () => {
-    render(<PasswordInput placeholder="Enter password" />);
+  const defaultLabels = {
+    showPasswordLabel: 'Show password',
+    hidePasswordLabel: 'Hide password',
+  };
+
+  it('should render input with type="password" and toggle button', () => {
+    render(<PasswordInput {...defaultLabels} placeholder="Enter password" />);
 
     const input = screen.getByPlaceholderText('Enter password');
     const toggle = screen.getByRole('button', { name: 'Show password' });
@@ -20,7 +25,13 @@ describe('UNA PasswordInput Component', () => {
     const user = userEvent.setup();
     const handleToggle = vi.fn();
 
-    render(<PasswordInput placeholder="Enter password" onTogglePassword={handleToggle} />);
+    render(
+      <PasswordInput
+        {...defaultLabels}
+        placeholder="Enter password"
+        onTogglePassword={handleToggle}
+      />,
+    );
 
     const input = screen.getByPlaceholderText('Enter password');
     const toggle = screen.getByRole('button', { name: 'Show password' });
@@ -63,21 +74,25 @@ describe('UNA PasswordInput Component', () => {
   });
 
   it('should respect controlled showPassword prop', () => {
-    const { rerender } = render(<PasswordInput placeholder="Enter password" showPassword={true} />);
+    const { rerender } = render(
+      <PasswordInput {...defaultLabels} placeholder="Enter password" showPassword={true} />,
+    );
 
     const input = screen.getByPlaceholderText('Enter password');
 
     expect(input).toHaveAttribute('type', 'text');
     expect(screen.getByRole('button', { name: 'Hide password' })).toBeInTheDocument();
 
-    rerender(<PasswordInput placeholder="Enter password" showPassword={false} />);
+    rerender(
+      <PasswordInput {...defaultLabels} placeholder="Enter password" showPassword={false} />,
+    );
 
     expect(input).toHaveAttribute('type', 'password');
     expect(screen.getByRole('button', { name: 'Show password' })).toBeInTheDocument();
   });
 
   it('should disable both input and toggle button when disabled', () => {
-    render(<PasswordInput placeholder="Enter password" disabled />);
+    render(<PasswordInput {...defaultLabels} placeholder="Enter password" disabled />);
 
     expect(screen.getByPlaceholderText('Enter password')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Show password' })).toBeDisabled();
@@ -86,6 +101,7 @@ describe('UNA PasswordInput Component', () => {
   it('should render leftIcon when provided', () => {
     render(
       <PasswordInput
+        {...defaultLabels}
         placeholder="Enter password"
         leftIcon={<span data-testid="left-icon">🔒</span>}
       />,
@@ -94,10 +110,27 @@ describe('UNA PasswordInput Component', () => {
     expect(screen.getByTestId('left-icon')).toBeInTheDocument();
   });
 
+  it('should forward className to the input element and wrapperClassName to the wrapper', () => {
+    const { container } = render(
+      <PasswordInput
+        {...defaultLabels}
+        placeholder="Enter password"
+        className="custom-input-class"
+        wrapperClassName="custom-wrapper-class"
+      />,
+    );
+
+    const input = screen.getByPlaceholderText('Enter password');
+    const wrapper = container.firstChild as HTMLElement;
+
+    expect(input).toHaveClass('custom-input-class');
+    expect(wrapper).toHaveClass('custom-wrapper-class');
+  });
+
   it('should support forwarding ref to the input element', () => {
     const ref = createRef<HTMLInputElement>();
 
-    render(<PasswordInput ref={ref} placeholder="Enter password" />);
+    render(<PasswordInput {...defaultLabels} ref={ref} placeholder="Enter password" />);
 
     expect(ref.current).toBeInstanceOf(HTMLInputElement);
     expect(ref.current?.placeholder).toBe('Enter password');
