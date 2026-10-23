@@ -1,5 +1,10 @@
 {
   "context": {
     "fileName": ["AGENTS.md", "GEMINI.md"]
+  },
+  "mcpServers": {
+    "context7": {
+      "httpUrl": "https://mcp.context7.com/mcp/oauth"
+    }
   }
 }
