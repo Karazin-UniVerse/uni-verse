@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { GRADES_THRESHOLD } from '../../packages/core/constants/grades';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,14 +53,14 @@ export function oracleCalculateTraditionalGrade(
   controlType: 'exam' | 'credit' | 'differentiated_credit' = 'exam',
 ): 'відмінно' | 'добре' | 'задовільно' | 'незадовільно' | 'зараховано' | 'не зараховано' {
   if (controlType === 'credit') {
-    return score >= 50 ? 'зараховано' : 'не зараховано';
+    return score >= GRADES_THRESHOLD.SATISFACTORY ? 'зараховано' : 'не зараховано';
   }
 
-  if (score >= 90) return 'відмінно';
+  if (score >= GRADES_THRESHOLD.EXCELLENT) return 'відмінно';
 
-  if (score >= 70) return 'добре';
+  if (score >= GRADES_THRESHOLD.GOOD) return 'добре';
 
-  if (score >= 50) return 'задовільно';
+  if (score >= GRADES_THRESHOLD.SATISFACTORY) return 'задовільно';
 
   return 'незадовільно';
 }
