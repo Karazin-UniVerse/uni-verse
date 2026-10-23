@@ -1,0 +1,27 @@
+# Build outputs and dependencies
+node_modules/
+.venv/
+.next/
+dist/
+coverage/
+.turbo/
+storybook-static/
+packages/ui/storybook-static/
+packages/database/client/
+*.tsbuildinfo
+
+# Local artifacts and caches
+graphify-out/
+.lighthouseci/
+tests/e2e/
+
+# Media and assets
+public/
+assets/
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.webp
+*.ico
+*.pdf

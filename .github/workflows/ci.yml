@@ -43,6 +43,8 @@ jobs:
         run: pnpm --filter @universe/ui build-storybook
       - name: Test Lighthouse support scripts
         run: pnpm test:lhci
+      - name: Test Graphify wrapper
+        run: pnpm test:graphify
       - name: Build with the Lighthouse mock API
         # Audit-only output: do not deploy/reuse this .next build for real-backend E2E tests.
         # Deployments build independently through .github/workflows/deploy.yml and the host.
