@@ -338,7 +338,7 @@
   box-shadow: var(--card-shadow);
   display: flex;
   flex-direction: column;
-  gap: var(--space-20, 20px);
+  gap: var(--space-20);
   position: relative;
   overflow: hidden;
   transition:
@@ -671,7 +671,7 @@
   box-shadow: var(--card-shadow);
   display: flex;
   flex-direction: column;
-  gap: var(--space-20, 20px);
+  gap: var(--space-20);
   position: relative;
   overflow: hidden;
   transition:
