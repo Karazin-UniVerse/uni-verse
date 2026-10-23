@@ -1,12 +1,10 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useToast } from '@una';
 import { isLoggedIn } from '@core/utils/auth';
 import type { StudentProfile } from '@core/types';
 import { useFeatures } from '@uni-hub/features';
-import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
 import { fallbackStudentProfile } from '../constants';
 import type { DashboardData } from '../types';
@@ -25,6 +23,8 @@ import {
   platformNotificationsQueryOptions,
   profileQueryOptions,
 } from './queries';
+
+import { useDashboardRefresh } from './useDashboardRefresh';
 
 const EMPTY_DASHBOARD_DATA: DashboardData = {
   courses: [],
@@ -53,8 +53,6 @@ function readDashboardSnapshot(): DashboardData | undefined {
 }
 
 export function useDashboardData(): UseDashboardDataResult {
-  const toast = useToast();
-  const { formatMessage } = useLanguage();
   const features = useFeatures();
   const sortOrder = useMoodleStore((state) => state.sortOrder);
   const dateFrom = useMoodleStore((state) => state.dateFrom);
@@ -78,12 +76,16 @@ export function useDashboardData(): UseDashboardDataResult {
     initialData: () => getInitialUserProfile() ?? undefined,
     initialDataUpdatedAt: 0,
   });
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [manualSyncTime, setManualSyncTime] = useState<number | null>(null);
 
   const platformQuery = useQuery({
     ...platformNotificationsQueryOptions,
     enabled: isLoggedIn(),
+  });
+
+  const { isRefreshing, manualSyncTime, refresh } = useDashboardRefresh({
+    enabled,
+    refetchDashboard: dashboardQuery.refetch,
+    refetchPlatform: platformQuery.refetch,
   });
 
   const { error, errorUpdatedAt, data: queryData, isError } = dashboardQuery;
@@ -110,49 +112,6 @@ export function useDashboardData(): UseDashboardDataResult {
   } else if (platformQuery.data) {
     data = applyPlatformNotifications(data, platformQuery.data);
   }
-
-  const { refetch } = dashboardQuery;
-  const { refetch: refetchPlatform } = platformQuery;
-  const refresh = useCallback(async (): Promise<void> => {
-    setIsRefreshing(true);
-
-    try {
-      if (!enabled) {
-        const platformResult = await refetchPlatform();
-
-        if (!platformResult?.isError) {
-          const nowTimestamp = Date.now();
-
-          setManualSyncTime(nowTimestamp);
-
-          try {
-            localStorage.setItem('universe_last_sync_time', String(nowTimestamp));
-          } catch {
-            // ignore storage failure in private mode
-          }
-
-          toast.success(formatMessage('dashboard.syncSuccess'));
-        } else {
-          toast.error(formatMessage('dashboard.loadError'));
-        }
-
-        return;
-      }
-
-      const [result, platformResult] = await Promise.all([refetch(), refetchPlatform()]);
-
-      if (!result?.isError && !platformResult?.isError) {
-        const nowTimestamp = Date.now();
-
-        setManualSyncTime(nowTimestamp);
-        toast.success(formatMessage('dashboard.syncSuccess'));
-      } else {
-        toast.error(formatMessage('dashboard.loadError'));
-      }
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [enabled, refetch, refetchPlatform, toast, formatMessage]);
 
   const hasLoadedOnce = !enabled ? Boolean(platformQuery.data) : state.hasLoadedOnce;
 
