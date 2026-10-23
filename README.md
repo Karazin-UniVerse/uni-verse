@@ -186,6 +186,8 @@ UniVerse enforces strict institutional security policies:
 
 ## Scripts & Quality Checks
 
+AI coding agents can use the shared [Context7 MCP configuration](docs/context7.md) for library documentation. Each developer signs in with their own account; no shared credentials or application dependencies are required.
+
 Run linters, style checks, type checks, and automated tests across all monorepo packages:
 
 ```bash
