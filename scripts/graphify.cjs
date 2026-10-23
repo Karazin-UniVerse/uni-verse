@@ -32,6 +32,7 @@ function buildSafeEnv() {
   delete safeEnv.GOOGLE_API_KEY;
   delete safeEnv.DEEPSEEK_API_KEY;
   delete safeEnv.MOONSHOT_API_KEY;
+  delete safeEnv.GRAPHIFY_OUT;
 
   return safeEnv;
 }
@@ -142,6 +143,12 @@ async function runGraphify(subcommand, extraArgs = []) {
 const args = process.argv.slice(2);
 const action = args[0] || 'extract';
 
-runGraphify(action, args.slice(1)).catch(() => {
+const extraArgs = args
+  .slice(1)
+  .flatMap((arg) =>
+    arg.startsWith('--graph=') ? ['--graph', arg.slice('--graph='.length)] : [arg],
+  );
+
+runGraphify(action, extraArgs).catch(() => {
   process.exit(1);
 });

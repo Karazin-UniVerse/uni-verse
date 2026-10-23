@@ -53,7 +53,7 @@ test('uses the project virtual environment or PATH even in a graphify-rs205 chec
   }
 });
 
-function runWrapper(args) {
+function runWrapper(args, env = {}) {
   const calls = [];
   const exits = [];
 
@@ -62,7 +62,7 @@ function runWrapper(args) {
     console: { error: () => undefined },
     process: {
       argv: ['node', script, ...args],
-      env: {},
+      env,
       exit: (code) => {
         exits.push(code);
       },
@@ -106,7 +106,19 @@ test('passes explicit graph paths to Graphify without requiring the default grap
 
       assert.equal(exits.length, 0);
       assert.equal(calls.length, 1);
-      assert.deepEqual(Array.from(calls[0][1]), args);
+      assert.deepEqual(Array.from(calls[0][1]), [
+        command,
+        'OpportunitiesService',
+        '--graph',
+        'other/graph.json',
+      ]);
     }
   }
+});
+
+test('does not inherit an output override that conflicts with the default graph checks', () => {
+  const { calls } = runWrapper(['extract'], { GRAPHIFY_OUT: 'alternate-out' });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][2].env.GRAPHIFY_OUT, undefined);
 });

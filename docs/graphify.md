@@ -68,7 +68,7 @@ Outputs are saved to `graphify-out/`:
 
 The command performs code extraction and `cluster-only . --no-label`. Large graphs may be displayed as an aggregated community view. Inspect extraction warnings: unsupported files, missing optional grammars and files yielding no symbols mean the graph is incomplete, not that all source has been indexed. SCSS, Prisma schemas and document/media semantics are not guaranteed by this baseline; SQL needs an optional grammar that is not installed here.
 
-The wrapper keeps extraction output at the repository root and rejects `--out` / `--output` before starting extraction, so clustering cannot accidentally read an older graph. Use the upstream CLI directly for custom-output workflows. Query commands can pass `--graph <path>` (or `--graph=<path>`); Graphify validates that explicit path rather than the wrapper requiring the default graph.
+The wrapper keeps extraction output at the repository root: it clears inherited `GRAPHIFY_OUT` and rejects `--out` / `--output` before starting extraction, so clustering cannot accidentally read an older graph. Use the upstream CLI directly for custom-output workflows. Query commands can pass `--graph <path>` (or `--graph=<path>`, normalized to separate arguments for Graphify 0.9.94); Graphify validates that explicit path rather than the wrapper requiring the default graph.
 
 ### Refresh after changes
 
@@ -112,7 +112,7 @@ The project root `.graphifyignore` excludes:
 
 ## Verification and sources
 
-Run `pnpm test:graphify` for portable executable-selection coverage, then build the graph and verify a query/path against real source. Tests do not install Graphify or validate Antigravity UI discovery. No hooks, MCP server or CI job are added by this integration.
+Run `pnpm test:graphify` for portable executable-selection, graph-argument and output-environment coverage, then build the graph and verify a query/path against real source. CI runs these wrapper tests without installing Python/Graphify or generating a graph. Tests do not validate Antigravity UI discovery. No hooks, MCP server or CI graph generation are added by this integration.
 
 - [Graphify source, current v8 branch](https://github.com/Graphify-Labs/graphify/tree/v8)
 - [Extraction](https://docs.graphify.com/reference/extract)
