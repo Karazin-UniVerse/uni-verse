@@ -119,11 +119,7 @@ export function useDashboardData(): UseDashboardDataResult {
     loading: state.loading || isRefreshing,
     hasLoadedOnce,
     isOfflineData: state.isOfflineData,
-    lastSyncTime:
-      manualSyncTime ??
-      state.lastSyncTime ??
-      (platformQuery.dataUpdatedAt > 0 ? platformQuery.dataUpdatedAt : null) ??
-      getInitialSyncTime(),
+    lastSyncTime: manualSyncTime ?? state.lastSyncTime ?? getInitialSyncTime(),
     data,
     studentProfile: profileQuery.data ?? fallbackStudentProfile,
     hasCachedData:
