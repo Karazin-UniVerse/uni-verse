@@ -108,6 +108,7 @@ describe('Opportunities decomposed subtabs', () => {
     render(
       <LanguageProvider>
         <ModerationQueueTab
+          currentUserId="other-moderator"
           loading={false}
           isError={false}
           onRetry={noop}
@@ -122,6 +123,28 @@ describe('Opportunities decomposed subtabs', () => {
     expect(screen.getByRole('button', { name: /схвалити/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /на доопрацювання/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /відхилити/i })).toBeInTheDocument();
+  });
+
+  it('keeps own opportunities visible but disables every moderation action', () => {
+    render(
+      <LanguageProvider>
+        <ModerationQueueTab
+          currentUserId="user-1"
+          loading={false}
+          isError={false}
+          onRetry={noop}
+          moderationQueue={[mockOpportunity]}
+          onModerate={noop}
+          onOpenRejectModal={noop}
+        />
+      </LanguageProvider>,
+    );
+
+    expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /схвалити/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /на доопрацювання/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /відхилити/i })).toBeDisabled();
+    expect(screen.getByText('Ви не можете модерувати власну можливість.')).toBeInTheDocument();
   });
 
   it('should render badges correctly', () => {
