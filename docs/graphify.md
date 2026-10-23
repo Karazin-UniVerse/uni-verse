@@ -68,6 +68,8 @@ Outputs are saved to `graphify-out/`:
 
 The command performs code extraction and `cluster-only . --no-label`. Large graphs may be displayed as an aggregated community view. Inspect extraction warnings: unsupported files, missing optional grammars and files yielding no symbols mean the graph is incomplete, not that all source has been indexed. SCSS, Prisma schemas and document/media semantics are not guaranteed by this baseline; SQL needs an optional grammar that is not installed here.
 
+The wrapper keeps extraction output at the repository root and rejects `--out` / `--output` before starting extraction, so clustering cannot accidentally read an older graph. Use the upstream CLI directly for custom-output workflows. Query commands can pass `--graph <path>` (or `--graph=<path>`); Graphify validates that explicit path rather than the wrapper requiring the default graph.
+
 ### Refresh after changes
 
 Run `pnpm graphify:extract` again after changing source, switching branches or pulling updates. Graphify uses its manifest/cache to avoid re-extracting unchanged files. Confirm the summary and file timestamps before querying. Do not add `--force` merely to silence a smaller-graph warning; inspect whether deleted or newly excluded files explain it.

@@ -78,6 +78,15 @@ async function runGraphify(subcommand, extraArgs = []) {
   const safeEnv = buildSafeEnv();
 
   if (subcommand === 'extract') {
+    if (extraArgs.some((arg) => /^(--out|--output)(=|$)/.test(arg))) {
+      console.error(
+        'Custom extraction output is not supported by this wrapper; use graphify directly.',
+      );
+      process.exit(1);
+
+      return;
+    }
+
     const extractCode = await spawnGraphifyStep(
       bin,
       ['extract', '.', '--code-only', ...extraArgs],
@@ -104,7 +113,7 @@ async function runGraphify(subcommand, extraArgs = []) {
   let finalArgs = [];
 
   if (subcommand === 'query') {
-    if (!fs.existsSync(graphJson)) {
+    if (!extraArgs.some((arg) => /^--graph(=|$)/.test(arg)) && !fs.existsSync(graphJson)) {
       console.error(
         'Error: graphify-out/graph.json does not exist. Run "pnpm graphify:extract" first.',
       );
@@ -113,7 +122,7 @@ async function runGraphify(subcommand, extraArgs = []) {
 
     finalArgs = ['query', ...extraArgs];
   } else if (subcommand === 'explain' || subcommand === 'path' || subcommand === 'god-nodes') {
-    if (!fs.existsSync(graphJson)) {
+    if (!extraArgs.some((arg) => /^--graph(=|$)/.test(arg)) && !fs.existsSync(graphJson)) {
       console.error(
         'Error: graphify-out/graph.json does not exist. Run "pnpm graphify:extract" first.',
       );
