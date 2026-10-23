@@ -229,9 +229,9 @@
   color: var(--text-secondary);
   font-weight: 500;
   white-space: nowrap;
-  padding: 0 16px;
+  padding: 0 var(--space-16);
   background: var(--bg-hover);
-  border-radius: 14px;
+  border-radius: var(--border-radius-large);
   border: 1px solid var(--card-border);
 
   strong {

@@ -48,7 +48,7 @@ $sidebar-collapsed-width: 88px;
   background: var(--sidebar-bg);
   min-width: 0;
   position: relative;
-  z-index: 10;
+  z-index: var(--z-sidebar);
 }
 
 .edgeToggle {
