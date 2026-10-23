@@ -317,6 +317,12 @@ $space-64: 64px;
   --bg-mesh-soft: #{mesh-gradient(0.08)};
   --bg-mesh: #{mesh-gradient(0.15)};
   --bg-mesh-strong: #{mesh-gradient(0.34)};
+
+  /* Scrollbar */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgb(15 23 42 / 20%);
+  --scrollbar-thumb-hover: rgb(15 23 42 / 38%);
+  --scrollbar-radius: var(--border-radius-full);
 }
 
 /* -----------------------------------------
@@ -347,6 +353,12 @@ $space-64: 64px;
   --bg-content: transparent;
   --header-bg: var(--white-10);
   --sidebar-item-active-accent: var(--accent-primary);
+
+  /* Scrollbar: crisp cool slate thumb */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgb(15 23 42 / 20%);
+  --scrollbar-thumb-hover: rgb(15 23 42 / 38%);
+  --scrollbar-radius: var(--border-radius-full);
 }
 
 /* -----------------------------------------
@@ -422,6 +434,12 @@ $space-64: 64px;
   --chart-bg: var(--bg-surface);
   --chart-border: var(--card-border);
   --chart-glow: var(--card-shadow);
+
+  /* Scrollbar: sleek night slate thumb */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgb(255 255 255 / 20%);
+  --scrollbar-thumb-hover: rgb(255 255 255 / 35%);
+  --scrollbar-radius: var(--border-radius-full);
 }
 
 /* -----------------------------------------
@@ -446,6 +464,12 @@ $space-64: 64px;
     rgb(var(--secondary-rgb), 0.22)
   );
   --sidebar-item-active-accent: var(--accent-primary);
+
+  /* Scrollbar: cosmic indigo/violet thumb with glowing hover */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgb(150 165 255 / 28%);
+  --scrollbar-thumb-hover: rgb(168 85 247 / 55%);
+  --scrollbar-radius: var(--border-radius-full);
 }
 
 /* -----------------------------------------
@@ -555,6 +579,12 @@ $space-64: 64px;
   --chart-bg: var(--bg-surface);
   --chart-border: color-mix(in srgb, var(--accent-primary) 35%, transparent);
   --chart-glow: 0 0 10px rgb(0 240 255 / 20%);
+
+  /* Scrollbar: high-tech neon cyan HUD bar with pink glow hover */
+  --scrollbar-track: rgb(18 18 23 / 75%);
+  --scrollbar-thumb: rgb(0 240 255 / 45%);
+  --scrollbar-thumb-hover: var(--cyberpunk-pink);
+  --scrollbar-radius: 0px;
 }
 
 /* -----------------------------------------
@@ -616,6 +646,12 @@ $space-64: 64px;
   --chart-series-3: var(--green-400);
   --chart-series-4: var(--red-400);
   --chart-series-5: var(--purple-400);
+
+  /* Scrollbar: warm amber gold thumb with luminous gold hover */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgb(224 176 74 / 30%);
+  --scrollbar-thumb-hover: rgb(224 176 74 / 65%);
+  --scrollbar-radius: var(--border-radius-full);
 }
 
 /* -----------------------------------------
@@ -681,6 +717,12 @@ $space-64: 64px;
   /* Serif headings: Source Serif 4 from next/font, Georgia when it is not loaded */
   --font-family-heading: var(--font-source-serif, georgia), 'Times New Roman', serif;
   --font-mono: ui-monospace, 'SF Mono', menlo, consolas, monospace;
+
+  /* Scrollbar: academic navy thumb with deep classic hover */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgb(32 57 121 / 25%);
+  --scrollbar-thumb-hover: rgb(20 37 69 / 50%);
+  --scrollbar-radius: var(--border-radius-full);
 }
 
 /* ==========================================================================
@@ -722,4 +764,37 @@ input,
 select,
 textarea {
   font-family: inherit;
+}
+
+/* Custom scrollbars matching the active theme */
+@supports not selector(::-webkit-scrollbar) {
+  :root,
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: var(--scrollbar-radius);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
