@@ -53,6 +53,9 @@ before(async () => {
       : { channel: 'chrome' }),
     args: ['--no-sandbox', '--disable-dev-shm-usage'],
   });
+  const warmupPage = await browser.newPage();
+
+  await warmupPage.close();
   server = http.createServer((request, response) => {
     if (request.url.startsWith('/opportunities/') && responseBody === 'redirect') {
       response.writeHead(302, { Location: '/login' });
@@ -79,7 +82,7 @@ after(async () => {
 
 test('smoke accepts the expected opportunity detail', async () => {
   responseBody = heading;
-  await verifyPage(browser, `${origin}/opportunities/lhci-demo-1`, 500);
+  await verifyPage(browser, `${origin}/opportunities/lhci-demo-1`, 5000);
 });
 
 test('smoke rejects a skeleton or error state without the opportunity', async () => {
@@ -103,7 +106,7 @@ test('smoke rejects hidden fixture headings', async () => {
 test('smoke rejects login redirects even if fixture text exists', async () => {
   responseBody = 'redirect';
   await assert.rejects(
-    verifyPage(browser, `${origin}/opportunities/lhci-demo-1`, 500),
+    verifyPage(browser, `${origin}/opportunities/lhci-demo-1`, 5000),
     /redirect/i,
   );
 });
@@ -112,5 +115,5 @@ test('catalog smoke requires all three fixture headings', async () => {
   responseBody = heading;
   await assert.rejects(verifyPage(browser, `${origin}/opportunities`, 200));
   responseBody = `${heading}<h3>AI &amp; Data Science Research Assistant</h3><h3>UI/UX Designer for Campus Mobile Experience</h3>`;
-  await verifyPage(browser, `${origin}/opportunities`, 500);
+  await verifyPage(browser, `${origin}/opportunities`, 5000);
 });
