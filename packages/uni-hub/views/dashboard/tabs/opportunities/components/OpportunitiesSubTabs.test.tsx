@@ -120,9 +120,9 @@ describe('Opportunities decomposed subtabs', () => {
     );
 
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /схвалити/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /на доопрацювання/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /відхилити/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /схвалити/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /на доопрацювання/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /відхилити/i })).toBeEnabled();
   });
 
   it('keeps own opportunities visible but disables every moderation action', () => {
