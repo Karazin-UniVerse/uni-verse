@@ -119,4 +119,25 @@ describe('OpportunityDetail Component', () => {
 
     expect(onToggle).toHaveBeenCalledWith(true);
   });
+
+  it('should render view applicants button in author panel when onOpenApplicants is provided', () => {
+    const onOpenApplicants = vi.fn();
+
+    render(
+      <OpportunityDetail
+        {...defaultProps}
+        isOwner={true}
+        onOpenApplicants={onOpenApplicants}
+        viewApplicantsText="View applicants"
+      />,
+    );
+
+    const applicantsBtn = screen.getByRole('button', { name: 'View applicants' });
+
+    expect(applicantsBtn).toBeInTheDocument();
+
+    fireEvent.click(applicantsBtn);
+
+    expect(onOpenApplicants).toHaveBeenCalledTimes(1);
+  });
 });

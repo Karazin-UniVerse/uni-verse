@@ -613,6 +613,9 @@ export const uk = {
   'notifications.opportunityNewApplication.title': 'Новий відгук на можливість',
   'notifications.opportunityNewApplication.message':
     'Новий відгук на можливість «{opportunityTitle}» від {applicantName}.',
+  'notifications.opportunityReadyForReview.title': 'Нова можливість на модерацію',
+  'notifications.opportunityReadyForReview.message':
+    'Можливість «{opportunityTitle}» надіслано на перевірку.',
   'notifications.opportunityModerated.title': 'Результат модерації можливості',
   'notifications.opportunityModerated.message': 'Можливість «{opportunityTitle}» {action}.',
   'notifications.opportunityModerated.messageWithComment':
