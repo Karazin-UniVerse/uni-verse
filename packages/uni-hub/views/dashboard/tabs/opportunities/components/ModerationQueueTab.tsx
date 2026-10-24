@@ -135,7 +135,9 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
             )}
 
             {item.ownerId === currentUserId && (
-              <p>{formatMessage('opportunities.moderation.selfModerationForbidden')}</p>
+              <p className={styles.selfModerationNotice}>
+                {formatMessage('opportunities.moderation.selfModerationForbidden')}
+              </p>
             )}
 
             <div className={styles.moderationFooter}>
