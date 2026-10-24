@@ -32,6 +32,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
   width,
   isFullWidth = false,
   isPadded = false,
+  isOverflowVisible = false,
   placement = 'bottom-end',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -82,7 +83,12 @@ export const Dropdown: React.FC<DropdownProps> = ({
       {isOpen && (
         <div
           id={panelId}
-          className={clsx(styles.panel, styles[resolvedPlacement], isPadded && styles.padded)}
+          className={clsx(
+            styles.panel,
+            styles[resolvedPlacement],
+            isPadded && styles.padded,
+            isOverflowVisible && styles.overflowVisible,
+          )}
           style={
             width
               ? ({
