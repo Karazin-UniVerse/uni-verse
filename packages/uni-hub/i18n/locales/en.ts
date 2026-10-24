@@ -512,6 +512,7 @@ export const en = {
   'opportunities.moderation.practice': 'Practice',
   'opportunities.moderation.descLabel': 'Opportunity description',
   'opportunities.moderation.prevCommentLabel': 'Previous moderation comment:',
+  'opportunities.moderation.selfModerationForbidden': 'You cannot moderate your own opportunity.',
   'opportunities.moderation.approve': 'Approve',
   'opportunities.moderation.revise': 'Request Changes',
   'opportunities.moderation.reject': 'Reject',

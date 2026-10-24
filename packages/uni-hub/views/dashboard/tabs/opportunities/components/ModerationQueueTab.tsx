@@ -20,6 +20,7 @@ import { TabStateWrapper } from './TabStateWrapper';
 import styles from '../../OpportunitiesTab.module.scss';
 
 export interface ModerationQueueTabProps {
+  currentUserId: string | null;
   loading: boolean;
   isError: boolean;
   onRetry: () => void;
@@ -29,6 +30,7 @@ export interface ModerationQueueTabProps {
 }
 
 export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
+  currentUserId,
   loading,
   isError,
   onRetry,
@@ -132,6 +134,12 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
               </div>
             )}
 
+            {item.ownerId === currentUserId && (
+              <p className={styles.selfModerationNotice}>
+                {formatMessage('opportunities.moderation.selfModerationForbidden')}
+              </p>
+            )}
+
             <div className={styles.moderationFooter}>
               <span className={styles.idBadge}>
                 <Hash size={12} />
@@ -142,6 +150,7 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                 <Button
                   variant="primary"
                   className={styles.approveBtn}
+                  disabled={item.ownerId === currentUserId}
                   onClick={() => onModerate(item.id, 'APPROVE')}
                 >
                   <CheckCircle2 size={14} className={styles.btnIcon} />
@@ -150,6 +159,7 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                 <Button
                   variant="secondary"
                   className={styles.reviseBtn}
+                  disabled={item.ownerId === currentUserId}
                   onClick={() => onOpenRejectModal(item.id)}
                 >
                   <AlertCircle size={14} className={styles.btnIcon} />
@@ -158,6 +168,7 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                 <Button
                   variant="secondary"
                   className={styles.rejectBtn}
+                  disabled={item.ownerId === currentUserId}
                   onClick={() => onOpenRejectModal(item.id)}
                 >
                   <XCircle size={14} className={styles.btnIcon} />

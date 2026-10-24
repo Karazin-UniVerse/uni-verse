@@ -202,6 +202,34 @@ describe('OpportunitiesService', () => {
   });
 
   describe('moderate', () => {
+    it.each(['APPROVE', 'REJECT', 'REQUIRE_CHANGES'] as const)(
+      'forbids %s on the moderator own opportunity without writes or notifications',
+      async (action) => {
+        jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+          id: 'moderator-1',
+          roles: [Role.OPPORTUNITIES_MODERATOR],
+        } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+        jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+          id: 'own-opportunity',
+          ownerId: 'moderator-1',
+          status: 'READY_FOR_REVIEW',
+        } as Awaited<ReturnType<typeof prisma.opportunity.findUnique>>);
+        jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+          id: 'own-opportunity',
+          ownerId: 'moderator-1',
+        } as Awaited<ReturnType<typeof prisma.opportunity.update>>);
+
+        await expect(
+          service.moderate('moderator-1', 'own-opportunity', {
+            action,
+            comment: 'Review feedback',
+          }),
+        ).rejects.toThrow(ForbiddenException);
+        expect(prisma.opportunity.update).not.toHaveBeenCalled();
+        expect(notificationsService.createNotification).not.toHaveBeenCalled();
+      },
+    );
+
     it('throws Forbidden if user is not OPPORTUNITIES_MODERATOR', async () => {
       jest
         .spyOn(prisma.user, 'findUnique')
