@@ -16,4 +16,7 @@ coverage
 ux_ui_audit.md
 .playwright/
 .playwright-cli/
+.lighthouseci/
 /screenshots/
+graphify-out/
+.venv/

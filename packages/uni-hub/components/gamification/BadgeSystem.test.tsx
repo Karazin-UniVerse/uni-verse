@@ -1,6 +1,6 @@
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { withLanguage, withToast } from '@uni-hub/utils/test-utils';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { BADGES } from '@uni-hub/constants/gamification';
@@ -25,9 +25,8 @@ describe('BadgeSystem component', () => {
     localStorage.clear();
 
     useGamificationStore.setState({
-      currentStreak: 0,
-      lastActiveDate: null,
-      unlockedBadges: [],
+      ...useGamificationStore.getInitialState(),
+      activeUserId: 'test-user',
       soundEnabled: true,
       lastCheckInWasNight: false,
     });
@@ -172,5 +171,19 @@ describe('BadgeSystem component', () => {
         `Досягнення: ${BADGES.SEMESTER_MASTER.title} — ${BADGES.SEMESTER_MASTER.description}`,
       ),
     ).toBeInTheDocument();
+  });
+
+  it('should re-evaluate existing eligible input after account activation', () => {
+    useGamificationStore.setState({ activeUserId: null });
+
+    renderWithProviders(<BadgeSystem grades={[]} submittedBeforeDeadline={true} />);
+
+    expect(useGamificationStore.getState().unlockedBadges).toEqual([]);
+
+    act(() => {
+      useGamificationStore.getState().setActiveUser('alice');
+    });
+
+    expect(useGamificationStore.getState().unlockedBadges).toContain('DEADLINE_SNIPER');
   });
 });

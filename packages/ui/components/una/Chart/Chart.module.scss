@@ -37,24 +37,25 @@
 
   :global(.recharts-wrapper),
   :global(.recharts-surface),
-  :global(.recharts-layer),
+  :global(.recharts-surface *),
   :global(.recharts-bar-rectangle),
   :global(.recharts-rectangle),
-  :global(svg),
-  :global(rect),
-  :global(path) {
-    user-select: none;
-    -webkit-user-select: none;
+  :global(.recharts-sector) {
     -webkit-tap-highlight-color: transparent;
 
     &:focus:not(:focus-visible) {
       outline: none;
     }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: -2px;
+    }
   }
 
-  :global(.recharts-wrapper:focus-visible) {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
+  :global(.recharts-wrapper),
+  :global(.recharts-surface) {
+    border-radius: var(--border-radius-small);
   }
 }
 

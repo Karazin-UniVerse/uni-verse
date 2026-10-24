@@ -385,6 +385,7 @@ export const en = {
   'opportunities.subtitle':
     'Career opportunities, internships, research grants, and Karazin student initiatives',
   'opportunities.badge': 'Beta Preview',
+
   'opportunities.filterAll': 'All Opportunities',
   'opportunities.filterInternships': 'Internships & Tech',
   'opportunities.filterGrants': 'Grants & Scholarships',
@@ -461,7 +462,6 @@ export const en = {
   'opportunities.card.moderatorNote': 'Moderator note:',
   'opportunities.card.applications': 'Applications',
   'opportunities.card.management': 'Management',
-  'opportunities.card.details': 'Details',
   'opportunities.card.detailsAria': 'More details about {title}',
   'opportunities.card.applicationsClosedBadge': 'Applications closed',
   'opportunities.catalog.searchPlaceholder': 'Search by title or keywords...',
@@ -611,6 +611,9 @@ export const en = {
   'notifications.opportunityNewApplication.title': 'New Applicant for Opportunity',
   'notifications.opportunityNewApplication.message':
     'New application for "{opportunityTitle}" from {applicantName}.',
+  'notifications.opportunityReadyForReview.title': 'Opportunity Ready for Review',
+  'notifications.opportunityReadyForReview.message':
+    'Opportunity "{opportunityTitle}" has been submitted for moderation.',
   'notifications.opportunityModerated.title': 'Opportunity Moderation Result',
   'notifications.opportunityModerated.message': 'Opportunity "{opportunityTitle}" {action}.',
   'notifications.opportunityModerated.messageWithComment':

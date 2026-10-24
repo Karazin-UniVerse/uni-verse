@@ -5,12 +5,25 @@ import { shiftDateKey, toLocalDateKey } from '@uni-hub/utils/gamification';
 import { fireConfetti } from '@uni-hub/utils/confetti';
 import { playSuccess } from '@uni-hub/utils/soundEffects';
 
-type GamificationState = {
+type UserProgress = {
   currentStreak: number;
   lastActiveDate: string | null;
   unlockedBadges: BadgeId[];
-  soundEnabled: boolean;
   lastCheckInWasNight: boolean;
+};
+
+const EMPTY_PROGRESS: UserProgress = {
+  currentStreak: 0,
+  lastActiveDate: null,
+  unlockedBadges: [],
+  lastCheckInWasNight: false,
+};
+
+type GamificationState = UserProgress & {
+  activeUserId: string | null;
+  progressByUser: Record<string, UserProgress>;
+  soundEnabled: boolean;
+  setActiveUser: (userId: string | null) => void;
   checkIn: () => void;
   unlockBadge: (id: BadgeId) => boolean;
   setSoundEnabled: (enabled: boolean) => void;
@@ -20,17 +33,28 @@ type GamificationState = {
 export const useGamificationStore = create<GamificationState>()(
   persist(
     (set, get) => ({
-      currentStreak: 0,
-      lastActiveDate: null,
-      unlockedBadges: [],
+      ...EMPTY_PROGRESS,
+      activeUserId: null,
+      progressByUser: {},
       soundEnabled: true,
-      lastCheckInWasNight: false,
+
+      setActiveUser: (userId) => {
+        void useGamificationStore.persist.rehydrate();
+
+        if (get().activeUserId === userId) return;
+
+        set({
+          ...((userId && get().progressByUser[userId]) || EMPTY_PROGRESS),
+          activeUserId: userId,
+        });
+      },
 
       checkIn: () => {
+        void useGamificationStore.persist.rehydrate();
         const today = toLocalDateKey();
-        const { lastActiveDate, currentStreak } = get();
+        const { lastActiveDate, currentStreak, activeUserId, unlockedBadges } = get();
 
-        if (lastActiveDate === today) {
+        if (!activeUserId || lastActiveDate === today) {
           return;
         }
 
@@ -39,26 +63,41 @@ export const useGamificationStore = create<GamificationState>()(
         const hour = new Date().getHours();
         const atNight = hour >= 22 || hour < 5;
 
-        set({
+        const progress: UserProgress = {
           currentStreak: nextStreak,
           lastActiveDate: today,
           lastCheckInWasNight: atNight,
-        });
+          unlockedBadges,
+        };
+
+        set({ ...progress, progressByUser: { ...get().progressByUser, [activeUserId]: progress } });
       },
 
       unlockBadge: (id) => {
-        const { unlockedBadges } = get();
+        void useGamificationStore.persist.rehydrate();
+        const { unlockedBadges, activeUserId, currentStreak, lastActiveDate, lastCheckInWasNight } =
+          get();
 
-        if (unlockedBadges.includes(id)) {
+        if (!activeUserId || unlockedBadges.includes(id)) {
           return false;
         }
 
-        set({ unlockedBadges: [...unlockedBadges, id] });
+        const progress: UserProgress = {
+          currentStreak,
+          lastActiveDate,
+          lastCheckInWasNight,
+          unlockedBadges: [...unlockedBadges, id],
+        };
+
+        set({ ...progress, progressByUser: { ...get().progressByUser, [activeUserId]: progress } });
 
         return true;
       },
 
-      setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
+      setSoundEnabled: (enabled) => {
+        void useGamificationStore.persist.rehydrate();
+        set({ soundEnabled: enabled });
+      },
 
       triggerCelebration: () => {
         fireConfetti();
@@ -67,12 +106,26 @@ export const useGamificationStore = create<GamificationState>()(
     }),
     {
       name: 'universe-gamification',
+      version: 1,
+      merge: (persisted, current) => {
+        const saved = persisted as
+          Pick<GamificationState, 'progressByUser' | 'soundEnabled'> | undefined;
+        const progressByUser = saved?.progressByUser ?? {};
+
+        return {
+          ...current,
+          progressByUser,
+          soundEnabled: saved?.soundEnabled ?? current.soundEnabled,
+          ...((current.activeUserId && progressByUser[current.activeUserId]) || EMPTY_PROGRESS),
+        };
+      },
+      migrate: (persisted) => ({
+        progressByUser: {},
+        soundEnabled: (persisted as { soundEnabled?: boolean }).soundEnabled ?? true,
+      }),
       partialize: (state) => ({
-        currentStreak: state.currentStreak,
-        lastActiveDate: state.lastActiveDate,
-        unlockedBadges: state.unlockedBadges,
+        progressByUser: state.progressByUser,
         soundEnabled: state.soundEnabled,
-        lastCheckInWasNight: state.lastCheckInWasNight,
       }),
     },
   ),

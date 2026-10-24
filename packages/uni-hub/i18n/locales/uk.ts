@@ -462,7 +462,6 @@ export const uk = {
   'opportunities.card.moderatorNote': 'Зауваження модератора:',
   'opportunities.card.applications': 'Відгуки',
   'opportunities.card.management': 'Управління',
-  'opportunities.card.details': 'Деталі',
   'opportunities.card.detailsAria': 'Детальніше про {title}',
   'opportunities.card.applicationsClosedBadge': 'Набір закрито',
   'opportunities.catalog.searchPlaceholder': 'Пошук за назвою або ключовими словами...',
@@ -614,6 +613,9 @@ export const uk = {
   'notifications.opportunityNewApplication.title': 'Новий відгук на можливість',
   'notifications.opportunityNewApplication.message':
     'Новий відгук на можливість «{opportunityTitle}» від {applicantName}.',
+  'notifications.opportunityReadyForReview.title': 'Нова можливість на модерацію',
+  'notifications.opportunityReadyForReview.message':
+    'Можливість «{opportunityTitle}» надіслано на перевірку.',
   'notifications.opportunityModerated.title': 'Результат модерації можливості',
   'notifications.opportunityModerated.message': 'Можливість «{opportunityTitle}» {action}.',
   'notifications.opportunityModerated.messageWithComment':

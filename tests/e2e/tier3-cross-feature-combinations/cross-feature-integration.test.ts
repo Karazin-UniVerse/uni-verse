@@ -55,12 +55,13 @@ describe('Tier 3 - Cross-Feature Combinations & Contracts Integration', () => {
     expect(mockStudentProfile.fullName).toContain('Барсуков');
     expect(mockStudentProfile.gpa).toBeGreaterThan(90);
 
-    // Verify DashboardPage imports UI components (F4)
-    const dashboardContent = readWorkspaceFile('packages/uni-hub/views/DashboardPage.tsx');
+    // Verify the overview card composes shared UI components (F4)
+    const dashboardContent = readWorkspaceFile(
+      'packages/uni-hub/views/dashboard/tabs/StudentCard.tsx',
+    );
 
-    expect(dashboardContent).toMatch(/Tag|ProgressBar|Spinner|Empty/);
-    // Tab exists
-    expect(dashboardContent).toContain('Картка студента / Огляд');
+    expect(dashboardContent).toContain("import { Tag } from '@una'");
+    expect(dashboardContent).toContain('activeStudentProfile.fullName');
   });
 
   it('Combination 3 (F6 + F11 + F13): Unified LMS Host Consistency Across Monorepo', () => {
@@ -71,20 +72,22 @@ describe('Tier 3 - Cross-Feature Combinations & Contracts Integration', () => {
 
     expect(envConfig).toContain(`MOODLE_BASEURL="${canonicalHost}"`);
 
-    // 2. Sider footer link
-    const siderPage = readWorkspaceFile('packages/uni-hub/views/DashboardPage.tsx');
+    // 2. Sidebar footer link
+    const siderPage = readWorkspaceFile(
+      'packages/uni-hub/views/dashboard/layout/DashboardSidebar.tsx',
+    );
 
     expect(siderPage).toContain(canonicalHost);
 
     // 3. AssignmentModal link
-    const modal = readWorkspaceFile('packages/uni-hub/components/assignments/AssignmentModal.tsx');
+    const modal = readWorkspaceFile('packages/uni-hub/components/assignments/AssignmentDetail.tsx');
 
     expect(modal).toContain(canonicalHost);
     expect(modal).not.toContain('moodle.karazin.ua');
   });
 
   it('Combination 4 (F1 + F7 + F9): UniHub API Service Deserialization to Shared Contracts', () => {
-    const apiContent = readWorkspaceFile('packages/uni-hub/services/api.ts');
+    const apiContent = readWorkspaceFile('packages/uni-hub/services/api.moodle.ts');
 
     // Verifies endpoints and typed methods exist
     expect(apiContent).toContain('getCourses');
@@ -100,7 +103,7 @@ describe('Tier 3 - Cross-Feature Combinations & Contracts Integration', () => {
     expect(bpContent.length).toBeGreaterThan(50);
     expect(varsContent.length).toBeGreaterThan(50);
 
-    // UniHub dashboard imports SCSS
+    // UniHub dashboard layout uses SCSS
     const dashboardScss = readWorkspaceFile(
       'packages/uni-hub/views/dashboard/layout/DashboardShell.module.scss',
     );
