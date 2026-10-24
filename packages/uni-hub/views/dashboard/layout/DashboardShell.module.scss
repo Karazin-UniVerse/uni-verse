@@ -461,6 +461,14 @@ $sidebar-collapsed-width: 88px;
   }
 }
 
+.userName {
+  min-width: 0;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .avatar {
   width: 32px;
   height: 32px;
@@ -1390,10 +1398,18 @@ $sidebar-collapsed-width: 88px;
 .userDropdownHeader {
   padding: var(--space-12) var(--space-16);
   border-bottom: 1px solid var(--border-color);
+  min-width: 0;
 
   strong {
     display: block;
     font-size: var(--font-sm);
+  }
+
+  strong,
+  .muted {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 

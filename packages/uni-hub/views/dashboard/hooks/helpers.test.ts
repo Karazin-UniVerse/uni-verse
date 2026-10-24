@@ -16,9 +16,10 @@ import {
   isMoodleUnlinked,
   syncStudentProfile,
   getInitialUserProfile,
+  getDisplayNameFromUsername,
   type MoodleApiResponseTuple,
 } from './helpers';
-import { fallbackStudentProfile } from '../constants';
+import { fallbackStudentProfile, STUDENT_PROFILE_STORAGE_KEY } from '../constants';
 import type { DashboardData } from '../types';
 
 vi.mock('@uni-hub/utils/browser', () => ({
@@ -172,14 +173,24 @@ describe('syncStudentProfile', () => {
 
     syncStudentProfile(profile);
 
-    expect(localStorage.getItem('universe_student_profile')).toBe(JSON.stringify(profile));
+    expect(localStorage.getItem(STUDENT_PROFILE_STORAGE_KEY)).toBe(JSON.stringify(profile));
   });
 
   it('does nothing when profile is null or undefined', () => {
     syncStudentProfile(null);
     syncStudentProfile(undefined);
 
-    expect(localStorage.getItem('universe_student_profile')).toBeNull();
+    expect(localStorage.getItem(STUDENT_PROFILE_STORAGE_KEY)).toBeNull();
+  });
+});
+
+describe('getDisplayNameFromUsername', () => {
+  it.each([
+    ['melnyk.bogdan@student.karazin.ua', 'melnyk.bogdan'],
+    ['Тестовий акаунт3', 'Тестовий акаунт3'],
+    ['@weird', '@weird'],
+  ])('maps %s to %s', (username: string, expected: string) => {
+    expect(getDisplayNameFromUsername(username)).toBe(expected);
   });
 });
 
@@ -187,7 +198,7 @@ describe('getInitialUserProfile', () => {
   it('prefers the cached profile over the saved username', () => {
     const profile = { ...fallbackStudentProfile, fullName: 'Cached Student' };
 
-    localStorage.setItem('universe_student_profile', JSON.stringify(profile));
+    localStorage.setItem(STUDENT_PROFILE_STORAGE_KEY, JSON.stringify(profile));
     localStorage.setItem('username', 'saved.user');
 
     expect(getInitialUserProfile()).toEqual(profile);
@@ -199,7 +210,7 @@ describe('getInitialUserProfile', () => {
     ['a partial profile', JSON.stringify({ fullName: 'Partial Student' })],
     ['invalid JSON', '{not json'],
   ])('ignores a cached profile that is %s', (_label: string, cached: string) => {
-    localStorage.setItem('universe_student_profile', cached);
+    localStorage.setItem(STUDENT_PROFILE_STORAGE_KEY, cached);
     localStorage.setItem('username', 'saved.user');
 
     expect(getInitialUserProfile()?.fullName).toBe('saved.user');
@@ -215,10 +226,37 @@ describe('getInitialUserProfile', () => {
     });
   });
 
-  it('keeps an email username as the email', () => {
+  it('keeps an email username as the email and sets local part as fullName', () => {
     localStorage.setItem('username', 'student@karazin.ua');
 
-    expect(getInitialUserProfile()?.email).toBe('student@karazin.ua');
+    const profile = getInitialUserProfile();
+
+    expect(profile?.email).toBe('student@karazin.ua');
+    expect(profile?.fullName).toBe('student');
+  });
+
+  it('ignores the legacy universe_student_profile cache', () => {
+    localStorage.setItem(
+      'universe_student_profile',
+      JSON.stringify({ ...fallbackStudentProfile, group: 'КС12' }),
+    );
+    localStorage.setItem('username', 'saved.user');
+
+    expect(getInitialUserProfile()?.group).toBeUndefined();
+  });
+
+  it('accepts a cached real profile without group and course', () => {
+    const profile = { ...fallbackStudentProfile, fullName: 'Богдан Мельник' };
+
+    localStorage.setItem(STUDENT_PROFILE_STORAGE_KEY, JSON.stringify(profile));
+
+    expect(getInitialUserProfile()).toEqual(profile);
+  });
+
+  it('never adds a group to a username-based profile', () => {
+    localStorage.setItem('username', 'melnyk.bogdan@student.karazin.ua');
+
+    expect(getInitialUserProfile()).not.toHaveProperty('group');
   });
 
   it('returns null when there is no cache and no usable username', () => {

@@ -31,14 +31,16 @@ export interface StudentProfile {
   specialty: string;
   educationalProgram: string;
   degree: 'bachelor' | 'master' | 'phd';
-  course: number;
-  group: string;
   studyForm: 'full-time' | 'part-time';
   financing: 'budget' | 'contract';
   status: StudentAcademicStatus;
   gpa: number;
   totalCreditsEarned: number;
   academicStanding: 'honors' | 'good' | 'warning' | 'probation';
+  /** Year of study. Absent until a real academic data source exists. */
+  course?: number;
+  /** Academic group (e.g. «КС12»). Absent until a real academic data source exists. */
+  group?: string;
   avatarUrl?: string;
 }
 

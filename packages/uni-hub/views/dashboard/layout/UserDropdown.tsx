@@ -50,6 +50,8 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   const { formatMessage } = useLanguage();
   const statusDetails = getMoodleStatusDetails(Boolean(isMoodleLinked));
   const moodleUrl = process.env.NEXT_PUBLIC_MOODLE_URL;
+  const { fullName, email, group } = activeStudentProfile;
+  const triggerTitle = group ? `${fullName} (${group})` : fullName;
 
   return (
     <Dropdown
@@ -59,21 +61,24 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
           {...triggerProps}
           type="button"
           className={styles.user}
-          title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
+          title={triggerTitle}
           aria-label={formatMessage('header.userMenu')}
         >
           <span className={styles.avatar}>
             <User size={16} />
           </span>
-          <span>{activeStudentProfile.fullName}</span>
+          <span className={styles.userName}>{fullName}</span>
         </button>
       )}
     >
       {(close) => (
         <>
           <div className={styles.userDropdownHeader}>
-            <strong>{activeStudentProfile.fullName}</strong>
-            <div className={styles.muted}>{activeStudentProfile.group}</div>
+            <strong title={fullName}>{fullName}</strong>
+            <div className={styles.muted} title={email}>
+              {email}
+            </div>
+            {group && <div className={styles.muted}>{group}</div>}
           </div>
 
           {isMoodleIntegrationEnabled && (

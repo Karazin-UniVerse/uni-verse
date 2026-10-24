@@ -8,6 +8,7 @@ export const USER_SESSION_STORAGE_KEYS = [
   'moodleToken',
   'username',
   'universe_student_profile',
+  'universe_student_profile_v2',
   'universe_dashboard_data',
   'universe_last_sync_time',
 ] as const;
