@@ -45,11 +45,11 @@ export class StudentProfileDto implements StudentProfile {
   @ApiProperty({ example: 'bachelor', enum: ['bachelor', 'master', 'phd'] })
   degree: 'bachelor' | 'master' | 'phd';
 
-  @ApiProperty({ example: 3 })
-  course: number;
+  @ApiPropertyOptional({ example: 3 })
+  course?: number;
 
-  @ApiProperty({ example: 'КС12' })
-  group: string;
+  @ApiPropertyOptional({ example: 'КС12' })
+  group?: string;
 
   @ApiProperty({ example: 'full-time', enum: ['full-time', 'part-time'] })
   studyForm: 'full-time' | 'part-time';
