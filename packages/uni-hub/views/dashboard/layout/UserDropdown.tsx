@@ -37,6 +37,10 @@ export function getMoodleStatusDetails(isMoodleLinked: boolean): MoodleStatusDet
   };
 }
 
+export function getUserProfileTitle(profile: StudentProfile): string {
+  return profile.group ? `${profile.fullName} (${profile.group})` : profile.fullName;
+}
+
 export const UserDropdown: React.FC<UserDropdownProps> = ({
   activeStudentProfile,
   soundEnabled,
@@ -59,7 +63,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
           {...triggerProps}
           type="button"
           className={styles.user}
-          title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
+          title={getUserProfileTitle(activeStudentProfile)}
           aria-label={formatMessage('header.userMenu')}
         >
           <span className={styles.avatar}>
@@ -73,7 +77,9 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
         <>
           <div className={styles.userDropdownHeader}>
             <strong>{activeStudentProfile.fullName}</strong>
-            <div className={styles.muted}>{activeStudentProfile.group}</div>
+            {activeStudentProfile.group ? (
+              <div className={styles.muted}>{activeStudentProfile.group}</div>
+            ) : null}
           </div>
 
           {isMoodleIntegrationEnabled && (

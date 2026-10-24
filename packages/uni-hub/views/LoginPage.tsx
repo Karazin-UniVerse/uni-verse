@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User, Lock, Eye, EyeOff } from 'lucide-react';
+import { Lock, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button, Form, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
@@ -22,7 +22,6 @@ const LoginPage: React.FC = () => {
   const { isMoodleIntegrationEnabled } = useFeatures();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [linkUsername, setLinkUsername] = useState('');
   const [linkPassword, setLinkPassword] = useState('');
   const [googleUserName, setGoogleUserName] = useState('');
@@ -47,6 +46,10 @@ const LoginPage: React.FC = () => {
         setGoogleUserName(displayName);
       }
 
+      if (claims.email) {
+        safeStorage.setItem('userEmail', claims.email);
+      }
+
       const res = await googleLogin.mutateAsync(idToken);
 
       if (res.data?.isLinked || !isMoodleIntegrationEnabled) {
@@ -66,6 +69,7 @@ const LoginPage: React.FC = () => {
     } catch (err: unknown) {
       setGoogleUserName('');
       safeStorage.removeItem('username');
+      safeStorage.removeItem('userEmail');
       const message = getErrorMessage(err, formatMessage('login.googleError'));
 
       setError(message);
@@ -276,32 +280,13 @@ const LoginPage: React.FC = () => {
             <AuthField
               id="login-password"
               name="password"
-              type={showPassword ? 'text' : 'password'}
+              type="password"
               label={formatMessage('login.password')}
               placeholder={formatMessage('login.password')}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="current-password"
               icon={<Lock size={16} />}
-              rightElement={
-                <button
-                  type="button"
-                  className={styles.passwordToggle}
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  aria-label={
-                    showPassword
-                      ? formatMessage('login.hidePassword')
-                      : formatMessage('login.showPassword')
-                  }
-                  title={
-                    showPassword
-                      ? formatMessage('login.hidePassword')
-                      : formatMessage('login.showPassword')
-                  }
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              }
             />
 
             {error && <p className={styles.error}>{error}</p>}

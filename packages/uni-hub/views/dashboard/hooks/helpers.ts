@@ -1,6 +1,7 @@
 import type { PlatformNotification } from '@uni-hub/services/api.notifications';
 import { asList } from '@uni-hub/utils/arrays';
 import { isBrowser } from '@uni-hub/utils/browser';
+import { parseJwt } from '@uni-hub/utils/jwt';
 import type {
   Grade,
   Assignment,
@@ -313,15 +314,29 @@ export function getInitialUserProfile(): StudentProfile | null {
   }
 
   const savedUser = localStorage.getItem('username');
+  const savedEmail = localStorage.getItem('userEmail');
+  const token = localStorage.getItem('accessToken');
+  const jwt = token ? parseJwt(token) : null;
+  const tokenEmail = jwt?.email;
+  const email = savedEmail || tokenEmail || (savedUser?.includes('@') ? savedUser : '');
 
-  if (!savedUser || savedUser === fallbackStudentProfile.fullName) {
+  if (!savedUser && !email) {
     return null;
   }
 
+  if (savedUser === fallbackStudentProfile.fullName && !savedEmail && !tokenEmail) {
+    return null;
+  }
+
+  const fullName = savedUser || jwt?.name || email || fallbackStudentProfile.fullName;
+  const isNameHandle = savedUser && /^[a-zA-Z0-9._-]+$/.test(savedUser);
+  const resolvedEmail = email || (isNameHandle ? `${savedUser}@karazin.ua` : '');
+
   return {
     ...fallbackStudentProfile,
-    fullName: savedUser,
-    email: savedUser.includes('@') ? savedUser : `${savedUser}@karazin.ua`,
+    fullName,
+    email: resolvedEmail,
+    group: '',
   };
 }
 

@@ -212,6 +212,7 @@ describe('getInitialUserProfile', () => {
       ...fallbackStudentProfile,
       fullName: 'saved.user',
       email: 'saved.user@karazin.ua',
+      group: '',
     });
   });
 
@@ -219,6 +220,26 @@ describe('getInitialUserProfile', () => {
     localStorage.setItem('username', 'student@karazin.ua');
 
     expect(getInitialUserProfile()?.email).toBe('student@karazin.ua');
+  });
+
+  it('prefers saved userEmail over username handle', () => {
+    localStorage.setItem('username', 'Артем Новіков');
+    localStorage.setItem('userEmail', 'artem.novikov@student.karazin.ua');
+
+    const profile = getInitialUserProfile();
+
+    expect(profile?.fullName).toBe('Артем Новіков');
+    expect(profile?.email).toBe('artem.novikov@student.karazin.ua');
+    expect(profile?.group).toBe('');
+  });
+
+  it('does not construct invalid email with spaces when only non-ascii full name is saved', () => {
+    localStorage.setItem('username', 'Артем Новіков');
+
+    const profile = getInitialUserProfile();
+
+    expect(profile?.fullName).toBe('Артем Новіков');
+    expect(profile?.email).toBe('');
   });
 
   it('returns null when there is no cache and no usable username', () => {
