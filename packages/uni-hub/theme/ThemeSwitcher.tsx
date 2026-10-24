@@ -31,6 +31,7 @@ const THEME_KEYS: Record<AppTheme, TranslationKey> = {
 type ThemeSwitcherProps = {
   compact?: boolean;
   showLabel?: boolean;
+  isFullWidth?: boolean;
   placement?: PopoverPlacement;
   className?: string;
 };
@@ -39,6 +40,7 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
   className,
   compact = false,
   showLabel = true,
+  isFullWidth = false,
   placement = 'bottom-end',
 }) => {
   const { theme, setTheme } = useTheme();
@@ -49,12 +51,13 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
     return (
       <Dropdown
         isPadded
+        isFullWidth={isFullWidth}
         placement={placement}
         renderTrigger={(triggerProps, isOpen) => (
           <button
             {...triggerProps}
             type="button"
-            className={clsx(styles.compactBtn, className)}
+            className={clsx(styles.compactBtn, isFullWidth && styles.fullWidthBtn, className)}
             aria-label={`${formatMessage('theme.select')}: ${currentThemeLabel}`}
             title={currentThemeLabel}
             // intentional: suppressHydrationWarning – currentThemeLabel resolved client-side from stored preference; server renders default theme
@@ -77,21 +80,23 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
           </button>
         )}
       >
-        {(close) =>
-          APP_THEMES.map((themeOption) => (
-            <DropdownOption
-              key={themeOption}
-              icon={THEME_ICONS[themeOption]}
-              isSelected={theme === themeOption}
-              onSelect={() => {
-                setTheme(themeOption);
-                close();
-              }}
-            >
-              {formatMessage(THEME_KEYS[themeOption])}
-            </DropdownOption>
-          ))
-        }
+        {(close) => (
+          <div className={styles.menuScroll}>
+            {APP_THEMES.map((themeOption) => (
+              <DropdownOption
+                key={themeOption}
+                icon={THEME_ICONS[themeOption]}
+                isSelected={theme === themeOption}
+                onSelect={() => {
+                  setTheme(themeOption);
+                  close();
+                }}
+              >
+                {formatMessage(THEME_KEYS[themeOption])}
+              </DropdownOption>
+            ))}
+          </div>
+        )}
       </Dropdown>
     );
   }
