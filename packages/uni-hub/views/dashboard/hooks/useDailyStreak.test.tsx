@@ -33,14 +33,15 @@ describe('daily streak lifecycle', () => {
     vi.restoreAllMocks();
   });
 
-  it('counts midnight once and removes listeners and timers on unmount', () => {
+  it('counts a dashboard visit without awarding a day at midnight', () => {
     const { unmount } = renderHook(() => useDailyStreak('alice'));
 
     expect(useGamificationStore.getState().currentStreak).toBe(1);
     act(() => {
       vi.advanceTimersByTime(1000);
     });
-    expect(useGamificationStore.getState().currentStreak).toBe(2);
+    expect(useGamificationStore.getState().currentStreak).toBe(1);
+    expect(vi.getTimerCount()).toBe(0);
     unmount();
     expect(vi.getTimerCount()).toBe(0);
     vi.setSystemTime(new Date(2026, 9, 23, 12));
@@ -48,36 +49,42 @@ describe('daily streak lifecycle', () => {
       window.dispatchEvent(new Event('focus'));
     });
     expect(useGamificationStore.getState().currentStreak).toBe(0);
-    expect(useGamificationStore.getState().progressByUser.alice.currentStreak).toBe(2);
+    expect(useGamificationStore.getState().progressByUser.alice.currentStreak).toBe(1);
   });
 
-  it('rechecks on focus and visible-tab return after missing a day', () => {
-    renderHook(() => useDailyStreak('alice'));
+  it('does not count focus, visibility, or storage events as dashboard visits', () => {
+    const { unmount } = renderHook(() => useDailyStreak('alice'));
+
     vi.setSystemTime(new Date(2026, 9, 21, 12));
     act(() => {
       window.dispatchEvent(new Event('focus'));
     });
-    expect(useGamificationStore.getState().currentStreak).toBe(2);
-    vi.setSystemTime(new Date(2026, 9, 23, 12));
     vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
     act(() => {
       document.dispatchEvent(new Event('visibilitychange'));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'unrelated' }));
     });
     expect(useGamificationStore.getState().currentStreak).toBe(1);
+    expect(useGamificationStore.getState().lastActiveDate).toBe('2026-10-20');
+    unmount();
   });
 
-  it('does not count hidden-tab midnight until the user returns', () => {
-    renderHook(() => useDailyStreak('alice'));
-    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
-    act(() => {
-      vi.advanceTimersByTime(1000);
-    });
+  it('counts consecutive dashboard entries once per day and resets after a missed day', () => {
+    const firstVisit = renderHook(() => useDailyStreak('alice'));
+
+    firstVisit.unmount();
+    const sameDayVisit = renderHook(() => useDailyStreak('alice'));
+
     expect(useGamificationStore.getState().currentStreak).toBe(1);
-    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
-    act(() => {
-      document.dispatchEvent(new Event('visibilitychange'));
-    });
+    sameDayVisit.unmount();
+    vi.setSystemTime(new Date(2026, 9, 21, 12));
+    const nextDayVisit = renderHook(() => useDailyStreak('alice'));
+
     expect(useGamificationStore.getState().currentStreak).toBe(2);
+    nextDayVisit.unmount();
+    vi.setSystemTime(new Date(2026, 9, 23, 12));
+    renderHook(() => useDailyStreak('alice'));
+    expect(useGamificationStore.getState().currentStreak).toBe(1);
   });
 
   it('switches accounts without inheriting progress and clears active state on logout', () => {
@@ -115,9 +122,20 @@ describe('daily streak lifecycle', () => {
     renderHook(() => useDailyStreak('alice'));
     loggedIn = false;
     act(() => {
-      vi.advanceTimersByTime(1000);
+      window.dispatchEvent(new StorageEvent('storage', { key: 'accessToken' }));
     });
     expect(useGamificationStore.getState().currentStreak).toBe(0);
     expect(useGamificationStore.getState().progressByUser.alice.currentStreak).toBe(1);
+  });
+
+  it('does not award progress for an already mismatched session', () => {
+    vi.mocked(safeStorage.getItem).mockReturnValue(
+      `header.${btoa(JSON.stringify({ sub: 'bob' }))}.signature`,
+    );
+    renderHook(() => useDailyStreak('alice'));
+
+    expect(useGamificationStore.getState().activeUserId).toBeNull();
+    expect(useGamificationStore.getState().progressByUser.alice).toBeUndefined();
+    expect(replace).toHaveBeenCalledWith('/login');
   });
 });

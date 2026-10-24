@@ -15,37 +15,29 @@ export function useDailyStreak(userId: string | null): void {
 
     if (!userId) return;
 
-    let timer: ReturnType<typeof setTimeout>;
-    const refresh = (): void => {
-      clearTimeout(timer);
-
+    const verifySession = (): boolean => {
       const token = safeStorage.getItem('accessToken');
 
       if (!isLoggedIn() || !token || parseJwt(token)?.sub !== userId) {
         store.setActiveUser(null);
         router.replace('/login');
 
-        return;
+        return false;
       }
 
-      if (document.visibilityState !== 'hidden') store.checkIn();
-
-      const now = new Date();
-      const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-
-      timer = setTimeout(refresh, midnight.getTime() - now.getTime());
+      return true;
     };
 
-    refresh();
-    window.addEventListener('focus', refresh);
-    document.addEventListener('visibilitychange', refresh);
-    window.addEventListener('storage', refresh);
+    if (verifySession()) store.checkIn();
+
+    const onStorage = (): void => {
+      verifySession();
+    };
+
+    window.addEventListener('storage', onStorage);
 
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener('focus', refresh);
-      document.removeEventListener('visibilitychange', refresh);
-      window.removeEventListener('storage', refresh);
+      window.removeEventListener('storage', onStorage);
       store.setActiveUser(null);
     };
   }, [userId, router]);
