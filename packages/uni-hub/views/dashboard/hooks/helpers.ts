@@ -13,7 +13,7 @@ import type {
 import { moodleApi } from '@uni-hub/services/api';
 import type { StudentProfile } from '@core/types';
 import type { DashboardData } from '../types';
-import { fallbackStudentProfile } from '../constants';
+import { fallbackStudentProfile, STUDENT_PROFILE_STORAGE_KEY } from '../constants';
 
 export type GradesApiResponse = Awaited<ReturnType<typeof moodleApi.getGrades>>;
 
@@ -285,7 +285,7 @@ function isStudentProfile(value: unknown): value is StudentProfile {
 
 function getCachedUserProfile(): StudentProfile | null {
   try {
-    const cachedProfile = localStorage.getItem('universe_student_profile');
+    const cachedProfile = localStorage.getItem(STUDENT_PROFILE_STORAGE_KEY);
 
     if (!cachedProfile) return null;
 
@@ -299,6 +299,16 @@ function getCachedUserProfile(): StudentProfile | null {
   }
 
   return null;
+}
+
+/**
+ * Turns the saved login username into a display name.
+ * An e-mail login becomes its local part (melnyk.bogdan@student.karazin.ua → melnyk.bogdan).
+ */
+export function getDisplayNameFromUsername(username: string): string {
+  const [localPart] = username.split('@');
+
+  return localPart || username;
 }
 
 export function getInitialUserProfile(): StudentProfile | null {
@@ -320,7 +330,7 @@ export function getInitialUserProfile(): StudentProfile | null {
 
   return {
     ...fallbackStudentProfile,
-    fullName: savedUser,
+    fullName: getDisplayNameFromUsername(savedUser),
     email: savedUser.includes('@') ? savedUser : `${savedUser}@karazin.ua`,
   };
 }
@@ -331,7 +341,7 @@ export function syncStudentProfile(profileData?: StudentProfile | null): void {
   }
 
   try {
-    localStorage.setItem('universe_student_profile', JSON.stringify(profileData));
+    localStorage.setItem(STUDENT_PROFILE_STORAGE_KEY, JSON.stringify(profileData));
   } catch {
     // Ignore storage quota errors
   }
