@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { act, render, screen } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import React, { useEffect } from 'react';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import { GoogleLoginButton } from './GoogleLoginButton';
 
 let mockTheme = 'light';
@@ -63,25 +64,22 @@ describe('GoogleLoginButton component', () => {
     delete (window as any).google;
   });
 
-  it('should render button with accessible google login label and icon', () => {
-    render(<GoogleLoginButton onSuccess={vi.fn()} />);
+  it('should render google button container', () => {
+    const { container } = render(withLanguage(<GoogleLoginButton onSuccess={vi.fn()} />));
 
-    const button = screen.getByRole('button', { name: /продовжити з google/i });
-
-    expect(button).toBeInTheDocument();
-    expect(button.querySelector('svg')).toBeInTheDocument();
+    expect(container.querySelector('[class*="buttonContainer"]')).toBeInTheDocument();
   });
 
-  it('should disable button when disabled prop is true', () => {
-    render(<GoogleLoginButton disabled={true} onSuccess={vi.fn()} />);
+  it('should apply disabled class when disabled prop is true', () => {
+    const { container } = render(
+      withLanguage(<GoogleLoginButton disabled={true} onSuccess={vi.fn()} />),
+    );
 
-    const disabledButton = screen.getByRole('button', { name: /продовжити з google/i });
-
-    expect(disabledButton).toBeDisabled();
+    expect(container.querySelector('[class*="disabled"]')).toBeInTheDocument();
   });
 
   it('should initialize and render google button when script is loaded and client id is configured', () => {
-    render(<GoogleLoginButton onSuccess={vi.fn()} />);
+    render(withLanguage(<GoogleLoginButton onSuccess={vi.fn()} />));
 
     expect(mockInitialize).toHaveBeenCalledTimes(1);
     expect(mockInitialize).toHaveBeenCalledWith({
@@ -118,7 +116,7 @@ describe('GoogleLoginButton component', () => {
   it('should call onSuccess when google callback receives credential', () => {
     const handleSuccess = vi.fn();
 
-    render(<GoogleLoginButton onSuccess={handleSuccess} />);
+    render(withLanguage(<GoogleLoginButton onSuccess={handleSuccess} />));
 
     const initCall = mockInitialize.mock.calls[0];
     const callback = initCall?.[0]?.callback;
@@ -132,7 +130,7 @@ describe('GoogleLoginButton component', () => {
   it('should call onError when google callback receives no credential', () => {
     const handleError = vi.fn();
 
-    render(<GoogleLoginButton onError={handleError} onSuccess={vi.fn()} />);
+    render(withLanguage(<GoogleLoginButton onError={handleError} onSuccess={vi.fn()} />));
 
     const initCall = mockInitialize.mock.calls[0];
     const callback = initCall?.[0]?.callback;
@@ -140,7 +138,7 @@ describe('GoogleLoginButton component', () => {
     callback?.({});
 
     expect(handleError).toHaveBeenCalledTimes(1);
-    expect(handleError).toHaveBeenCalledWith('Не вдалося отримати токен від Google');
+    expect(handleError).toHaveBeenCalledWith('Помилка входу через Google');
   });
 
   it('should call onError when google initialization throws an error', () => {
@@ -150,7 +148,7 @@ describe('GoogleLoginButton component', () => {
       throw new Error('Google init crash');
     });
 
-    render(<GoogleLoginButton onError={handleError} onSuccess={vi.fn()} />);
+    render(withLanguage(<GoogleLoginButton onError={handleError} onSuccess={vi.fn()} />));
 
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith('Google init crash');

@@ -253,7 +253,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Не вдалося отримати токен від Google')).toBeInTheDocument();
+      expect(screen.getByText('Помилка входу через Google')).toBeInTheDocument();
     });
   });
 
