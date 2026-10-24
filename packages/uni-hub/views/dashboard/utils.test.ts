@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import type { FeatureFlags } from '@core/constants/features';
 import { TRANSLATIONS } from '@uni-hub/i18n/translations';
 import { NAV_KEY } from './constants';
@@ -259,6 +259,37 @@ describe('dashboard utils', () => {
       expect(platformItem.id).toBe('plat-1');
       expect(platformItem.link).toBe('/opportunities/123');
       expect(platformItem.isRead).toBe(true);
+    });
+
+    it('formats opportunityReadyForReview notification correctly', () => {
+      const formatMessage = vi.fn((key: string, values?: Record<string, string | number>) => {
+        if (key === 'notifications.opportunityReadyForReview.title') {
+          return 'Ready for Review';
+        }
+
+        if (key === 'notifications.opportunityReadyForReview.message') {
+          return `Opportunity "${values?.opportunityTitle}" has been submitted for moderation.`;
+        }
+
+        return key;
+      });
+
+      const item = toNotificationListItem(
+        {
+          id: 'plat-2',
+          subject: 'notifications.opportunityReadyForReview.title',
+          message: JSON.stringify({ opportunityTitle: 'Fullstack Lab' }),
+          link: '/opportunities/456',
+          timecreated: 1_788_000_000,
+          read: false,
+        },
+        'en-US',
+        formatMessage as any,
+      );
+
+      expect(item.title).toBe('Ready for Review');
+      expect(item.message).toBe('Opportunity "Fullstack Lab" has been submitted for moderation.');
+      expect(item.link).toBe('/opportunities/456');
     });
   });
 });

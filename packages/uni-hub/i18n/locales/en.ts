@@ -611,6 +611,9 @@ export const en = {
   'notifications.opportunityNewApplication.title': 'New Applicant for Opportunity',
   'notifications.opportunityNewApplication.message':
     'New application for "{opportunityTitle}" from {applicantName}.',
+  'notifications.opportunityReadyForReview.title': 'Opportunity Ready for Review',
+  'notifications.opportunityReadyForReview.message':
+    'Opportunity "{opportunityTitle}" has been submitted for moderation.',
   'notifications.opportunityModerated.title': 'Opportunity Moderation Result',
   'notifications.opportunityModerated.message': 'Opportunity "{opportunityTitle}" {action}.',
   'notifications.opportunityModerated.messageWithComment':

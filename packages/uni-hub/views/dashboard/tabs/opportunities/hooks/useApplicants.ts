@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@una';
 import { getErrorMessage } from '@uni-hub/services/api';
@@ -45,9 +45,12 @@ export function useApplicants(): UseApplicantsResult {
     onSuccess: () => invalidateOpportunities(queryClient),
   });
 
-  const open = (opportunity: Opportunity): void => setOpportunityId(opportunity.id);
+  const open = useCallback(
+    (opportunity: Opportunity): void => setOpportunityId(opportunity.id),
+    [],
+  );
 
-  const close = (): void => setOpportunityId(null);
+  const close = useCallback((): void => setOpportunityId(null), []);
 
   const handleUpdateStatus = async (
     applicationId: string,
