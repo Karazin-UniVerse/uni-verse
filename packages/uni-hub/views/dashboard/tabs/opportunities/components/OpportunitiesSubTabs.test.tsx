@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
+import { withLanguage } from '@uni-hub/utils/test-utils';
 import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import { CatalogTab } from './CatalogTab';
 import { MyOpportunitiesTab } from './MyOpportunitiesTab';
@@ -45,8 +45,7 @@ describe('Opportunities decomposed subtabs', () => {
 
   it('should render CatalogTab with search bar, filter chips, and card', () => {
     render(
-      <LanguageProvider>
-        <CatalogTab
+      withLanguage(<CatalogTab
           loading={false}
           isError={false}
           onRetry={noop}
@@ -56,8 +55,7 @@ describe('Opportunities decomposed subtabs', () => {
           paymentFilter=""
           onPaymentFilterChange={noop}
           onOpenDetail={noop}
-        />
-      </LanguageProvider>,
+        />),
     );
 
     expect(
@@ -70,16 +68,14 @@ describe('Opportunities decomposed subtabs', () => {
 
   it('should render MyOpportunitiesTab with owner cards', () => {
     render(
-      <LanguageProvider>
-        <MyOpportunitiesTab
+      withLanguage(<MyOpportunitiesTab
           loading={false}
           isError={false}
           onRetry={noop}
           myOpportunities={[mockOpportunity]}
           onOpenApplicants={noop}
           onOpenDetail={noop}
-        />
-      </LanguageProvider>,
+        />),
     );
 
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
@@ -88,15 +84,13 @@ describe('Opportunities decomposed subtabs', () => {
 
   it('should render MyApplicationsTab with application details and withdraw button', () => {
     render(
-      <LanguageProvider>
-        <MyApplicationsTab
+      withLanguage(<MyApplicationsTab
           loading={false}
           isError={false}
           onRetry={noop}
           myApplications={[mockApplication]}
           onWithdraw={noop}
-        />
-      </LanguageProvider>,
+        />),
     );
 
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
@@ -106,16 +100,14 @@ describe('Opportunities decomposed subtabs', () => {
 
   it('should render ModerationQueueTab with moderation actions', () => {
     render(
-      <LanguageProvider>
-        <ModerationQueueTab
+      withLanguage(<ModerationQueueTab
           loading={false}
           isError={false}
           onRetry={noop}
           moderationQueue={[mockOpportunity]}
           onModerate={noop}
           onOpenRejectModal={noop}
-        />
-      </LanguageProvider>,
+        />),
     );
 
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
@@ -126,17 +118,13 @@ describe('Opportunities decomposed subtabs', () => {
 
   it('should render badges correctly', () => {
     const { rerender } = render(
-      <LanguageProvider>
-        <OpportunityStatusBadge status="DRAFT" />
-      </LanguageProvider>,
+      withLanguage(<OpportunityStatusBadge status="DRAFT" />),
     );
 
     expect(screen.getByText('Чернетка')).toBeInTheDocument();
 
     rerender(
-      <LanguageProvider>
-        <ApplicationStatusBadge status="ACCEPTED" />
-      </LanguageProvider>,
+      withLanguage(<ApplicationStatusBadge status="ACCEPTED" />),
     );
     expect(screen.getByText('Прийнято')).toBeInTheDocument();
   });
