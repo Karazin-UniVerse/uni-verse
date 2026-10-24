@@ -67,12 +67,13 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
             {showLabel && (
               <>
                 {/* intentional: suppressHydrationWarning – label text derived from client-side theme state */}
-                <span className={styles.compactLabel} suppressHydrationWarning>
+                <span className={styles.compactLabel} data-theme-label suppressHydrationWarning>
                   {currentThemeLabel}
                 </span>
                 <ChevronDown
                   size={14}
                   className={clsx(styles.chevron, isOpen && styles.chevronOpen)}
+                  data-theme-chevron
                   aria-hidden
                 />
               </>
