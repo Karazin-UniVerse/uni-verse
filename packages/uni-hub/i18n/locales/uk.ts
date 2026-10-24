@@ -252,6 +252,7 @@ export const uk = {
   'header.soundUnmute': 'Увімкнути звук',
   'header.openMenu': 'Відкрити меню',
   'header.userMenu': 'Меню профілю користувача',
+  'header.userMenuTitleWithGroup': '{fullName} ({group})',
   'header.unreadCount': '{count} нових',
 
   // Assignment Detail

@@ -9,7 +9,7 @@ import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { LinkMoodleMode } from '@uni-hub/components/auth';
-import type { StudentProfile } from '@core/types';
+import type { StudentProfile } from '@core/types/student';
 import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export interface UserDropdownProps {
@@ -51,7 +51,9 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   const statusDetails = getMoodleStatusDetails(Boolean(isMoodleLinked));
   const moodleUrl = process.env.NEXT_PUBLIC_MOODLE_URL;
   const { fullName, email, group } = activeStudentProfile;
-  const triggerTitle = group ? `${fullName} (${group})` : fullName;
+  const triggerTitle = group
+    ? formatMessage('header.userMenuTitleWithGroup', { fullName, group })
+    : fullName;
 
   return (
     <Dropdown
