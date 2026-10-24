@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { OPPORTUNITY_VIEW, OPPORTUNITY_VIEW_PARAM } from '@core/constants/opportunities';
 import type { Opportunity } from '@core/types/opportunities';
 
 interface ApplicantsDeepLinkOptions {
@@ -18,7 +19,7 @@ export function useApplicantsDeepLink({
   const searchParams = useSearchParams();
   const handledRequest = useRef<string | null>(null);
   const request =
-    searchParams.get('view') === 'applicants'
+    searchParams.get(OPPORTUNITY_VIEW_PARAM) === OPPORTUNITY_VIEW.APPLICANTS
       ? `${opportunity.id}?${searchParams.toString()}`
       : null;
 

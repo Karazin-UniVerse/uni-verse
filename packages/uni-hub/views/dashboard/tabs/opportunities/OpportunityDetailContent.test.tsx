@@ -5,11 +5,12 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '@una';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
+import { OPPORTUNITY_VIEW, OPPORTUNITY_VIEW_PARAM } from '@core/constants/opportunities';
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { OpportunityDetailContent } from './OpportunityDetailContent';
 import { buildOpportunity } from './test-utils';
 
-let query = new URLSearchParams('view=applicants');
+let query = new URLSearchParams(`${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`);
 let userId: string | null = 'owner-1';
 
 vi.mock('next/navigation', () => ({
@@ -57,7 +58,7 @@ function renderDetail(): ReturnType<typeof render> {
 
 describe('OpportunityDetailContent applicants deep-link', () => {
   beforeEach(() => {
-    query = new URLSearchParams('view=applicants');
+    query = new URLSearchParams(`${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`);
     userId = 'owner-1';
     vi.spyOn(opportunitiesApi, 'getOpportunityApplications').mockResolvedValue({
       data: [application],
@@ -93,7 +94,7 @@ describe('OpportunityDetailContent applicants deep-link', () => {
 
     query = new URLSearchParams();
     rerender(<OpportunityDetailContent opportunity={buildOpportunity('opportunity-1')} />);
-    query = new URLSearchParams('view=applicants');
+    query = new URLSearchParams(`${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`);
     rerender(<OpportunityDetailContent opportunity={buildOpportunity('opportunity-1')} />);
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
@@ -128,7 +129,9 @@ describe('OpportunityDetailContent applicants deep-link', () => {
     expect(await screen.findByText('Candidate One')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'opportunities.applicantsModal.close' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    query = new URLSearchParams('view=applicants&source=notification');
+    query = new URLSearchParams(
+      `${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}&source=notification`,
+    );
     rerender(<OpportunityDetailContent opportunity={buildOpportunity('opportunity-1')} />);
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument();

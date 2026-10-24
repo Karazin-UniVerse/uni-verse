@@ -70,6 +70,7 @@ vi.mock('@uni-hub/store/useGamificationStore', () => ({
   useGamificationStore: () => vi.fn(),
 }));
 
+vi.mock('../hooks/useAuthProtection', () => ({ useAuthProtection: vi.fn() }));
 vi.mock('../hooks/useDailyStreak', () => ({ useDailyStreak: vi.fn() }));
 
 vi.mock('../hooks/useDashboardData', () => ({

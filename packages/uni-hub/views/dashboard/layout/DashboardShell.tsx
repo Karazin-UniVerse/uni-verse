@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
 import { RotateCw, AlertCircle, Link2 } from 'lucide-react';
 import { Button, Spinner } from '@una';
-import { isLoggedIn } from '@core/utils/auth';
+import { useAuthProtection } from '../hooks/useAuthProtection';
 import { LinkMoodleModal, UnlinkMoodleModal, LinkMoodleMode } from '@uni-hub/components/auth';
 import { DashboardSkeleton, MobileBottomNav } from '@uni-hub/components/dashboard';
 import { BadgeSystem } from '@uni-hub/components/gamification';
@@ -48,6 +48,7 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
   const logout = useLogout();
   const { userId } = useCurrentUser();
 
+  useAuthProtection(userId);
   useDailyStreak(userId);
   const soundEnabled = useGamificationStore((state) => state.soundEnabled);
   const setSoundEnabled = useGamificationStore((state) => state.setSoundEnabled);
@@ -96,12 +97,6 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
       router.replace(NAV_KEY_ROUTE[activeKey]);
     }
   }, [activeKey, pathNavKey, router]);
-
-  useEffect(() => {
-    if (!isLoggedIn()) {
-      router.replace('/login');
-    }
-  }, [router]);
 
   const closeMobileMenu = useCallback((): void => {
     setMobileMenuOpen(false);

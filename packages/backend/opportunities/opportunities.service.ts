@@ -25,7 +25,11 @@ import {
   Prisma,
   Role,
 } from '@universe/database';
-import { OPPORTUNITY_MODERATE_ACTION } from '@universe/core/constants/opportunities';
+import {
+  OPPORTUNITY_MODERATE_ACTION,
+  OPPORTUNITY_VIEW,
+  OPPORTUNITY_VIEW_PARAM,
+} from '@universe/core/constants/opportunities';
 import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 import { OPPORTUNITY_NOTIFICATION_KEY } from '@universe/core/constants/notifications';
 
@@ -470,7 +474,7 @@ export class OpportunitiesService {
         opportunityTitle: opportunity.title,
         applicantName: dto.applicantName,
       }),
-      link: `${OPPORTUNITIES_ROUTE}/${id}?view=applicants`,
+      link: `${OPPORTUNITIES_ROUTE}/${id}?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
     });
 
     return app;

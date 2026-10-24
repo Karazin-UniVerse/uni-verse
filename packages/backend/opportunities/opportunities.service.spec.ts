@@ -17,6 +17,10 @@ import {
   type Opportunity,
   type OpportunityApplication,
 } from '@universe/database';
+import {
+  OPPORTUNITY_VIEW,
+  OPPORTUNITY_VIEW_PARAM,
+} from '@universe/core/constants/opportunities';
 
 const publishedOpportunity: Opportunity = {
   id: 'race-opportunity',
@@ -1226,7 +1230,7 @@ describe('OpportunitiesService', () => {
       expect(notificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'owner-1',
-          link: '/opportunities/1?view=applicants',
+          link: `/opportunities/1?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
         }),
       );
     });
@@ -1259,7 +1263,7 @@ describe('OpportunitiesService', () => {
       expect(notificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'owner-1',
-          link: '/opportunities/1?view=applicants',
+          link: `/opportunities/1?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
         }),
       );
     });
