@@ -57,3 +57,13 @@ export const parseGoogleClaims = (token: string): GoogleJwtClaims => {
     return {};
   }
 };
+
+export function extractGoogleDisplayName(claims: GoogleJwtClaims): string {
+  const directName = claims.name?.trim();
+
+  if (directName) {
+    return directName;
+  }
+
+  return [claims.given_name?.trim(), claims.family_name?.trim()].filter(Boolean).join(' ');
+}

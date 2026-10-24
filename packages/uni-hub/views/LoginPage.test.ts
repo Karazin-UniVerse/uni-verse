@@ -112,7 +112,34 @@ describe('LoginPage Google SSO Moodle integration bypass', () => {
     expect(mockStorage.isLoggedIn).toBe('true');
     expect(mockStorage.isMoodleLinked).toBe('false');
     expect(mockStorage.username).toBe('Test Student');
+    expect(mockStorage.userEmail).toBe('test@karazin.ua');
     expect(mockPush).toHaveBeenCalledWith('/');
+  });
+
+  it('resolves corporate full name from given_name and family_name when name claim is missing', async () => {
+    mockMoodleIntegrationEnabled = false;
+    const { authApi } = await import('@uni-hub/services/api.auth');
+
+    vi.mocked(authApi.loginWithGoogle).mockResolvedValueOnce({
+      data: { isLinked: false, token: 'mock-token' },
+    } as any);
+
+    renderToStaticMarkup(withQueryClient(React.createElement(LoginPage)));
+    expect(capturedGoogleSuccess).toBeDefined();
+
+    const payload = Buffer.from(
+      JSON.stringify({
+        given_name: 'Богдан',
+        family_name: 'Мельник',
+        email: 'melnyk.bogdan@student.karazin.ua',
+      }),
+    ).toString('base64');
+    const mockToken = `header.${payload}.signature`;
+
+    await capturedGoogleSuccess!(mockToken);
+
+    expect(mockStorage.username).toBe('Богдан Мельник');
+    expect(mockStorage.userEmail).toBe('melnyk.bogdan@student.karazin.ua');
   });
 
   it('does not set isLoggedIn and does not redirect to / when isMoodleIntegrationEnabled is true and account is unlinked', async () => {

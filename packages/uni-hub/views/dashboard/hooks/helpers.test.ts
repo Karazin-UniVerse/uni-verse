@@ -16,7 +16,6 @@ import {
   isMoodleUnlinked,
   syncStudentProfile,
   getInitialUserProfile,
-  getDisplayNameFromUsername,
   type MoodleApiResponseTuple,
 } from './helpers';
 import { fallbackStudentProfile, STUDENT_PROFILE_STORAGE_KEY } from '../constants';
@@ -184,16 +183,6 @@ describe('syncStudentProfile', () => {
   });
 });
 
-describe('getDisplayNameFromUsername', () => {
-  it.each([
-    ['melnyk.bogdan@student.karazin.ua', 'melnyk.bogdan'],
-    ['Тестовий акаунт3', 'Тестовий акаунт3'],
-    ['@weird', '@weird'],
-  ])('maps %s to %s', (username: string, expected: string) => {
-    expect(getDisplayNameFromUsername(username)).toBe(expected);
-  });
-});
-
 describe('getInitialUserProfile', () => {
   it('prefers the cached profile over the saved username', () => {
     const profile = { ...fallbackStudentProfile, fullName: 'Cached Student' };
@@ -226,13 +215,23 @@ describe('getInitialUserProfile', () => {
     });
   });
 
-  it('keeps an email username as the email and sets local part as fullName', () => {
+  it('uses username as fullName directly and keeps email when username is email', () => {
     localStorage.setItem('username', 'student@karazin.ua');
 
     const profile = getInitialUserProfile();
 
     expect(profile?.email).toBe('student@karazin.ua');
-    expect(profile?.fullName).toBe('student');
+    expect(profile?.fullName).toBe('student@karazin.ua');
+  });
+
+  it('uses userEmail from storage when username is real name and userEmail is set', () => {
+    localStorage.setItem('username', 'Богдан Мельник');
+    localStorage.setItem('userEmail', 'melnyk.bogdan@student.karazin.ua');
+
+    const profile = getInitialUserProfile();
+
+    expect(profile?.fullName).toBe('Богдан Мельник');
+    expect(profile?.email).toBe('melnyk.bogdan@student.karazin.ua');
   });
 
   it('ignores the legacy universe_student_profile cache', () => {

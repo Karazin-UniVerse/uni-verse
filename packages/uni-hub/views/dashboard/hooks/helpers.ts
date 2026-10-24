@@ -11,7 +11,7 @@ import type {
   CourseStatistics,
 } from '@core/types/moodle';
 import { moodleApi } from '@uni-hub/services/api';
-import type { StudentProfile } from '@core/types';
+import type { StudentProfile } from '@core/types/student';
 import type { DashboardData } from '../types';
 import { fallbackStudentProfile, STUDENT_PROFILE_STORAGE_KEY } from '../constants';
 
@@ -301,16 +301,6 @@ function getCachedUserProfile(): StudentProfile | null {
   return null;
 }
 
-/**
- * Turns the saved login username into a display name.
- * An e-mail login becomes its local part (melnyk.bogdan@student.karazin.ua → melnyk.bogdan).
- */
-export function getDisplayNameFromUsername(username: string): string {
-  const [localPart] = username.split('@');
-
-  return localPart || username;
-}
-
 export function getInitialUserProfile(): StudentProfile | null {
   const cachedProfile = getCachedUserProfile();
 
@@ -328,10 +318,13 @@ export function getInitialUserProfile(): StudentProfile | null {
     return null;
   }
 
+  const savedEmail = localStorage.getItem('userEmail');
+  const email = savedEmail || (savedUser.includes('@') ? savedUser : `${savedUser}@karazin.ua`);
+
   return {
     ...fallbackStudentProfile,
-    fullName: getDisplayNameFromUsername(savedUser),
-    email: savedUser.includes('@') ? savedUser : `${savedUser}@karazin.ua`,
+    fullName: savedUser,
+    email,
   };
 }
 
