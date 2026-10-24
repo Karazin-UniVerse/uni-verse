@@ -18,6 +18,7 @@ $space-4: 4px;
 $space-8: 8px;
 $space-12: 12px;
 $space-16: 16px;
+$space-20: 20px;
 $space-24: 24px;
 $space-32: 32px;
 $space-40: 40px;
@@ -31,6 +32,7 @@ $space-64: 64px;
   --space-8: 8px;
   --space-12: 12px;
   --space-16: 16px;
+  --space-20: 20px;
   --space-24: 24px;
   --space-32: 32px;
   --space-40: 40px;
@@ -193,7 +195,9 @@ $space-64: 64px;
   /* Feedback Colors (Static) */
   --success-color: var(--green-500);
   --error-color: var(--red-500);
-  --warning-color: #f59e0b; /* Consider adding a yellow palette */
+  --warning-color: #f59e0b;
+
+  /* Consider adding a yellow palette */
   --warning-light: #fbbf24;
   --info-color: var(--blue-500);
 }
