@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { StudentProfile } from '@core/types';
+import type { StudentProfile } from '@core/types/student';
 import type { LinkMoodleMode } from '@uni-hub/components/auth';
 import type {
   MoodleCourse,

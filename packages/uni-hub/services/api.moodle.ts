@@ -1,4 +1,4 @@
-import type { StudentProfile } from '@core/types';
+import type { StudentProfile } from '@core/types/student';
 import type {
   MoodleCourse,
   Grade,

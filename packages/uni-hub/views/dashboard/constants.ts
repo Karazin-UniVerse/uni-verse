@@ -1,4 +1,5 @@
-import type { StudentProfile, CurriculumItem } from '@core/types';
+import type { CurriculumItem } from '@core/types';
+import type { StudentProfile } from '@core/types/student';
 
 export const NAV_KEY = {
   Overview: 'overview',

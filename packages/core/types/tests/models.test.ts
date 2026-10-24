@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test, { describe } from 'node:test';
 import { BREAKPOINTS } from '../../constants/breakpoints.ts';
 import { CONTROL_TYPES, GRADES_THRESHOLD, TRADITIONAL_GRADES } from '../../constants/grades.ts';
+import type { StudentProfile } from '../student.ts';
 import type {
   AssignmentItem,
   Course,
@@ -9,7 +10,6 @@ import type {
   GradeRecord,
   LmsConnectionStatus,
   ScheduleItem,
-  StudentProfile,
   StudentRecordBookItem,
 } from '../index.ts';
 

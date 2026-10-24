@@ -3,7 +3,7 @@
 import React from 'react';
 import { GraduationCap, Award } from 'lucide-react';
 import { Tag } from '@una';
-import type { StudentProfile } from '@core/types';
+import type { StudentProfile } from '@core/types/student';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useFeatures } from '@uni-hub/features';
 import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
