@@ -11,6 +11,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { Role } from '@universe/database';
+import { OPPORTUNITY_MODERATE_ACTION } from '@universe/core/constants/opportunities';
 
 describe('OpportunitiesService', () => {
   let service: OpportunitiesService;
@@ -202,7 +203,7 @@ describe('OpportunitiesService', () => {
   });
 
   describe('moderate', () => {
-    it.each(['APPROVE', 'REJECT', 'REQUIRE_CHANGES'] as const)(
+    it.each(Object.values(OPPORTUNITY_MODERATE_ACTION))(
       'forbids %s on the moderator own opportunity without writes or notifications',
       async (action) => {
         jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
