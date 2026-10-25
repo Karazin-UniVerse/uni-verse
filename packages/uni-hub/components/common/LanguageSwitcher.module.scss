@@ -58,6 +58,17 @@
 .collapsedTrigger {
   justify-content: center;
   padding: var(--space-12) 0;
+
+  .labelFull {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .labelShort {
+    display: inline;
+  }
 }
 
 .chevron {
@@ -68,4 +79,11 @@
 
 .chevronOpen {
   transform: rotate(180deg);
+}
+
+.labelShort {
+  display: none;
+  font-size: var(--font-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }

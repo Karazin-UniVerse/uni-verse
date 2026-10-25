@@ -68,3 +68,22 @@
 .chevronOpen {
   transform: rotate(180deg);
 }
+
+.fullWidthBtn {
+  width: 100%;
+  justify-content: flex-start;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--border-radius-medium);
+  border-color: var(--neutral-border);
+  font-size: var(--font-sm);
+
+  .chevron {
+    margin-left: auto;
+  }
+}
+
+.menuScroll {
+  max-height: 220px;
+  overflow-y: auto;
+}

@@ -8,9 +8,9 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { AppLanguage } from '@uni-hub/i18n/translations';
 import styles from './LanguageSwitcher.module.scss';
 
-const LANGUAGES: Array<{ code: AppLanguage; label: string; flag: string }> = [
-  { code: 'uk', label: 'Українська', flag: '🇺🇦' },
-  { code: 'en', label: 'English', flag: '🇬🇧' },
+const LANGUAGES: Array<{ code: AppLanguage; label: string; shortLabel: string; flag: string }> = [
+  { code: 'uk', label: 'Українська', shortLabel: 'УКР', flag: '🇺🇦' },
+  { code: 'en', label: 'English', shortLabel: 'EN', flag: '🇬🇧' },
 ];
 
 export type LanguageSwitcherProps = {
@@ -44,6 +44,7 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
         <button
           {...triggerProps}
           type="button"
+          data-lang-trigger
           className={clsx(
             styles.trigger,
             variant === 'glass' && styles.glassTrigger,
@@ -59,10 +60,21 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
           {showLabel && (
             <>
               {/* intentional: suppressHydrationWarning – label text derived from client-side language state */}
-              <span suppressHydrationWarning>{activeLanguage.label}</span>
+              <span suppressHydrationWarning className={styles.labelFull} data-lang-label="full">
+                {activeLanguage.label}
+              </span>
+              <span
+                suppressHydrationWarning
+                className={styles.labelShort}
+                data-lang-label="short"
+                aria-hidden
+              >
+                {activeLanguage.shortLabel}
+              </span>
               <ChevronDown
                 size={14}
                 className={clsx(styles.chevron, isOpen && styles.chevronOpen)}
+                data-lang-chevron
                 aria-hidden
               />
             </>

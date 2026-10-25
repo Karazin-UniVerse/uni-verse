@@ -76,6 +76,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
       />
       <div
         ref={containerRef}
+        inert={disabled}
         className={`${styles.buttonContainer} ${disabled ? styles.disabled : ''}`}
       />
     </div>
