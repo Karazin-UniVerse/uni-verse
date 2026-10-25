@@ -1,12 +1,10 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useToast } from '@una';
 import { isLoggedIn } from '@core/utils/auth';
 import type { StudentProfile } from '@core/types';
 import { useFeatures } from '@uni-hub/features';
-import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
 import { fallbackStudentProfile } from '../constants';
 import type { DashboardData } from '../types';
@@ -25,6 +23,8 @@ import {
   platformNotificationsQueryOptions,
   profileQueryOptions,
 } from './queries';
+
+import { useDashboardRefresh } from './useDashboardRefresh';
 
 const EMPTY_DASHBOARD_DATA: DashboardData = {
   courses: [],
@@ -53,8 +53,6 @@ function readDashboardSnapshot(): DashboardData | undefined {
 }
 
 export function useDashboardData(): UseDashboardDataResult {
-  const toast = useToast();
-  const { formatMessage } = useLanguage();
   const features = useFeatures();
   const sortOrder = useMoodleStore((state) => state.sortOrder);
   const dateFrom = useMoodleStore((state) => state.dateFrom);
@@ -78,8 +76,16 @@ export function useDashboardData(): UseDashboardDataResult {
     initialData: () => getInitialUserProfile() ?? undefined,
     initialDataUpdatedAt: 0,
   });
+
   const platformQuery = useQuery({
     ...platformNotificationsQueryOptions,
+    enabled: isLoggedIn(),
+  });
+
+  const { isRefreshing, manualSyncTime, refresh } = useDashboardRefresh({
+    enabled,
+    refetchDashboard: dashboardQuery.refetch,
+    refetchPlatform: platformQuery.refetch,
   });
 
   const { error, errorUpdatedAt, data: queryData, isError } = dashboardQuery;
@@ -107,27 +113,13 @@ export function useDashboardData(): UseDashboardDataResult {
     data = applyPlatformNotifications(data, platformQuery.data);
   }
 
-  const { refetch } = dashboardQuery;
-  const { refetch: refetchPlatform } = platformQuery;
-  const refresh = useCallback(async (): Promise<void> => {
-    if (!enabled) {
-      await refetchPlatform();
-
-      return;
-    }
-
-    const [result] = await Promise.all([refetch(), refetchPlatform()]);
-
-    if (!result?.isError) {
-      toast.success(formatMessage('dashboard.syncSuccess'));
-    }
-  }, [enabled, refetch, refetchPlatform, toast, formatMessage]);
+  const hasLoadedOnce = !enabled ? Boolean(platformQuery.data) : state.hasLoadedOnce;
 
   return {
-    loading: state.loading,
-    hasLoadedOnce: state.hasLoadedOnce,
+    loading: state.loading || isRefreshing,
+    hasLoadedOnce,
     isOfflineData: state.isOfflineData,
-    lastSyncTime: state.lastSyncTime ?? getInitialSyncTime(),
+    lastSyncTime: manualSyncTime ?? state.lastSyncTime ?? getInitialSyncTime(),
     data,
     studentProfile: profileQuery.data ?? fallbackStudentProfile,
     hasCachedData:
@@ -135,7 +127,7 @@ export function useDashboardData(): UseDashboardDataResult {
       data.grades.length > 0 ||
       data.assignments.length > 0 ||
       data.events.length > 0 ||
-      state.hasLoadedOnce,
+      hasLoadedOnce,
     error,
     errorUpdatedAt,
     platformError: (platformError as Error) ?? null,
