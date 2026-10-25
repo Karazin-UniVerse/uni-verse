@@ -552,6 +552,10 @@ export class OpportunitiesService {
       Role.OPPORTUNITIES_MODERATOR,
     ]);
 
+    if (opportunityToModerate.ownerId === userId) {
+      throw new ForbiddenException('You cannot moderate your own opportunity');
+    }
+
     if (opportunityToModerate.status !== OpportunityStatus.READY_FOR_REVIEW) {
       throw new BadRequestException(
         'Only opportunities in READY_FOR_REVIEW can be moderated',
