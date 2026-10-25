@@ -3,6 +3,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import { opportunityKeys } from '@uni-hub/views/dashboard/tabs/opportunities/queryKeys';
 import { USER_SESSION_STORAGE_KEYS, clearUserSessionStorage, endSession } from './api.session';
+import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 
 const storage: Record<string, string> = {};
 
@@ -58,6 +59,21 @@ describe('clearUserSessionStorage', () => {
 });
 
 describe('endSession', () => {
+  it('clears visible gamification progress but preserves the account history', () => {
+    const store = useGamificationStore.getState();
+
+    store.setActiveUser('logout-user');
+    store.checkIn();
+    store.unlockBadge('NIGHT_OWL');
+    endSession(new QueryClient());
+    expect(useGamificationStore.getState().activeUserId).toBeNull();
+    expect(useGamificationStore.getState().currentStreak).toBe(0);
+    expect(useGamificationStore.getState().unlockedBadges).toEqual([]);
+    store.setActiveUser('logout-user');
+    expect(useGamificationStore.getState().currentStreak).toBe(1);
+    expect(useGamificationStore.getState().unlockedBadges).toContain('NIGHT_OWL');
+    store.setActiveUser(null);
+  });
   it('clears the session storage and the whole query cache', () => {
     seedSession();
 

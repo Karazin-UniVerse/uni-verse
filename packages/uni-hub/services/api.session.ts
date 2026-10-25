@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { safeStorage } from './api.storage';
+import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 
 export const USER_SESSION_STORAGE_KEYS = [
   'isLoggedIn',
@@ -13,6 +14,8 @@ export const USER_SESSION_STORAGE_KEYS = [
 ] as const;
 
 export function clearUserSessionStorage(): void {
+  useGamificationStore.getState().setActiveUser(null);
+
   for (const key of USER_SESSION_STORAGE_KEYS) {
     safeStorage.removeItem(key);
   }
