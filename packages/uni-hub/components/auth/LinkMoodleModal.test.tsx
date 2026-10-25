@@ -1,42 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { withQueryClient } from '@uni-hub/utils/with-query-client';
+import { withAppProviders } from '@uni-hub/utils/test-utils';
 import { LinkMoodleModal } from './LinkMoodleModal';
 import { LinkMoodleMode } from './helpers';
-
-vi.mock('@una', async () => {
-  const actual = await vi.importActual<Record<string, unknown>>('@una');
-
-  return {
-    ...actual,
-    Modal: ({
-      open,
-      title,
-      children,
-    }: {
-      open: boolean;
-      title?: string;
-      children?: React.ReactNode;
-    }) =>
-      open ? (
-        <dialog open aria-label={title}>
-          {title ? <h2>{title}</h2> : null}
-          {children}
-        </dialog>
-      ) : null,
-    useToast: () => ({
-      success: vi.fn(),
-      error: vi.fn(),
-      info: vi.fn(),
-      warning: vi.fn(),
-    }),
-  };
-});
 
 describe('LinkMoodleModal component', () => {
   it('should render default connect mode correctly when open', () => {
     render(
-      withQueryClient(
+      withAppProviders(
         <LinkMoodleModal
           open={true}
           mode={LinkMoodleMode.CONNECT}
@@ -52,7 +23,7 @@ describe('LinkMoodleModal component', () => {
 
   it('should render change mode correctly when open with mode="change"', () => {
     render(
-      withQueryClient(
+      withAppProviders(
         <LinkMoodleModal
           open={true}
           mode={LinkMoodleMode.CHANGE}
@@ -69,7 +40,7 @@ describe('LinkMoodleModal component', () => {
 
   it('should render nothing visible when closed', () => {
     render(
-      withQueryClient(<LinkMoodleModal open={false} onClose={vi.fn()} onSuccess={vi.fn()} />),
+      withAppProviders(<LinkMoodleModal open={false} onClose={vi.fn()} onSuccess={vi.fn()} />),
     );
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
