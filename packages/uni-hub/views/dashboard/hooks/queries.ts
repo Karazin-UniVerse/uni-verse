@@ -1,3 +1,4 @@
+import { isBrowser } from '@uni-hub/utils/browser';
 import { queryOptions } from '@tanstack/react-query';
 import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import type { MoodleQueryOptions } from '@uni-hub/queries/moodle/queries';
@@ -12,6 +13,7 @@ import {
   isMoodleUnlinked,
   isUnauthorizedError,
   applyStoredIdentityToProfile,
+  type StoredSessionIdentity,
   persistDashboardSnapshot,
   syncStudentProfile,
   type BuildAssignmentParamsOptions,
@@ -86,9 +88,36 @@ export function dashboardQueryOptions(
  */
 export const profileQueryOptions = queryOptions({
   queryKey: moodleKeys.profile(),
-  queryFn: async () => {
-    const response = await moodleApi.getProfile();
-    const resolvedProfile = applyStoredIdentityToProfile(response.data);
+  queryFn: async ({ signal }) => {
+    const sessionSnapshot: StoredSessionIdentity | null = isBrowser
+      ? {
+          token: localStorage.getItem('accessToken'),
+          username: localStorage.getItem('username'),
+          userEmail: localStorage.getItem('userEmail'),
+        }
+      : null;
+
+    const response = await moodleApi.getProfile({ signal });
+
+    if (signal?.aborted) {
+      return response.data;
+    }
+
+    if (isBrowser && sessionSnapshot) {
+      const currentToken = localStorage.getItem('accessToken');
+      const currentEmail = localStorage.getItem('userEmail');
+      const currentUsername = localStorage.getItem('username');
+
+      if (
+        currentToken !== sessionSnapshot.token ||
+        currentEmail !== sessionSnapshot.userEmail ||
+        currentUsername !== sessionSnapshot.username
+      ) {
+        return response.data;
+      }
+    }
+
+    const resolvedProfile = applyStoredIdentityToProfile(response.data, sessionSnapshot);
 
     syncStudentProfile(resolvedProfile);
 

@@ -1,6 +1,7 @@
 import type { PlatformNotification } from '@uni-hub/services/api.notifications';
 import { asList } from '@uni-hub/utils/arrays';
 import { isBrowser } from '@uni-hub/utils/browser';
+import { parseJwt } from '@uni-hub/utils/jwt';
 import type {
   Grade,
   Assignment,
@@ -304,6 +305,38 @@ function getCachedUserProfile(): StudentProfile | null {
 /**
  * Resolves the initial student profile from storage or builds a fallback from the saved username.
  */
+export interface StoredSessionIdentity {
+  username?: string | null;
+  userEmail?: string | null;
+  token?: string | null;
+}
+
+/**
+ * Extracts corporate email from the session JWT stored in localStorage.
+ */
+export function getSessionEmail(): string | null {
+  if (!isBrowser) {
+    return null;
+  }
+
+  try {
+    const token = localStorage.getItem('accessToken');
+
+    if (!token) {
+      return null;
+    }
+
+    const payload = parseJwt(token);
+
+    return payload?.email ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resolves the initial student profile from storage or builds a fallback from the saved username.
+ */
 export function getInitialUserProfile(): StudentProfile | null {
   const cachedProfile = getCachedUserProfile();
 
@@ -321,8 +354,33 @@ export function getInitialUserProfile(): StudentProfile | null {
     return null;
   }
 
-  const savedEmail = localStorage.getItem('userEmail');
-  const email = savedEmail || (savedUser.includes('@') ? savedUser : `${savedUser}@karazin.ua`);
+  let savedEmail = localStorage.getItem('userEmail');
+
+  if (!savedEmail) {
+    const sessionEmail = getSessionEmail();
+
+    if (sessionEmail) {
+      savedEmail = sessionEmail;
+
+      try {
+        localStorage.setItem('userEmail', sessionEmail);
+      } catch {
+        // Ignore quota errors
+      }
+    }
+  }
+
+  let email: string;
+
+  if (savedEmail) {
+    email = savedEmail;
+  } else if (savedUser.includes('@')) {
+    email = savedUser;
+  } else if (!savedUser.includes(' ')) {
+    email = `${savedUser}@karazin.ua`;
+  } else {
+    email = fallbackStudentProfile.email;
+  }
 
   return {
     ...fallbackStudentProfile,
@@ -350,19 +408,23 @@ export function syncStudentProfile(profileData?: StudentProfile | null): void {
  * Overlays the stored corporate Google identity (fullName and email) onto a fetched
  * Moodle profile while retaining all Moodle academic fields.
  */
-export function applyStoredIdentityToProfile(profileData: StudentProfile): StudentProfile {
+export function applyStoredIdentityToProfile(
+  profileData: StudentProfile,
+  sessionSnapshot?: StoredSessionIdentity | null,
+): StudentProfile {
   if (!isBrowser) {
     return profileData;
   }
 
   try {
-    const savedEmail = localStorage.getItem('userEmail');
+    const savedEmail =
+      sessionSnapshot?.userEmail ?? localStorage.getItem('userEmail') ?? getSessionEmail();
 
     if (!savedEmail) {
       return profileData;
     }
 
-    const savedUser = localStorage.getItem('username');
+    const savedUser = sessionSnapshot?.username ?? localStorage.getItem('username');
     const fullName =
       savedUser && savedUser !== fallbackStudentProfile.fullName ? savedUser : profileData.fullName;
 

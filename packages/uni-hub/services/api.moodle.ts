@@ -10,7 +10,7 @@ import type {
   SubmissionStatus,
   UploadedFile,
 } from '@core/types/moodle';
-import { ApiClient, buildQueryString } from './api.request';
+import { ApiClient, buildQueryString, type RequestOptions } from './api.request';
 
 export interface GetAssignmentsParams {
   dateFrom?: number;
@@ -49,8 +49,8 @@ export class MoodleApi extends ApiClient {
     return this.request<CourseStatistics>('/moodle/statistics');
   }
 
-  getProfile(): Promise<{ data: StudentProfile }> {
-    return this.request<StudentProfile>('/moodle/profile');
+  getProfile(options?: RequestOptions): Promise<{ data: StudentProfile }> {
+    return this.request<StudentProfile>('/moodle/profile', options);
   }
 
   getCourseContents(courseId: number): Promise<{ data: CourseSection[] }> {

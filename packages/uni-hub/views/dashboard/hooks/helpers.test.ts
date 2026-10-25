@@ -316,8 +316,8 @@ describe('applyStoredIdentityToProfile', () => {
     expect(resolved).toEqual(moodleProfile);
   });
 
-  it('should return profile untouched when localStorage access throws', () => {
-    const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+  it('should return profile untouched when localStorage.getItem throws on email read', () => {
+    const getItemSpy = vi.mocked(localStorage.getItem).mockImplementationOnce(() => {
       throw new Error('SecurityError: Access denied');
     });
 
@@ -328,9 +328,49 @@ describe('applyStoredIdentityToProfile', () => {
 
     const resolved = applyStoredIdentityToProfile(moodleProfile);
 
+    expect(getItemSpy).toHaveBeenCalledWith('userEmail');
     expect(resolved).toEqual(moodleProfile);
+  });
 
-    getItemSpy.mockRestore();
+  it('should return profile untouched when localStorage.getItem throws on username read', () => {
+    mockStorage.userEmail = 'melnyk.bogdan@student.karazin.ua';
+
+    const getItemSpy = vi.mocked(localStorage.getItem).mockImplementation((key: string) => {
+      if (key === 'username') {
+        throw new Error('QuotaExceededError');
+      }
+
+      return mockStorage[key] ?? null;
+    });
+
+    const moodleProfile = {
+      ...fallbackStudentProfile,
+      fullName: 'Оригінальне Ім’я',
+    };
+
+    const resolved = applyStoredIdentityToProfile(moodleProfile);
+
+    expect(getItemSpy).toHaveBeenCalledWith('username');
+    expect(resolved).toEqual(moodleProfile);
+  });
+
+  it('should resolve email from session JWT in applyStoredIdentityToProfile when userEmail is absent', () => {
+    const token = `header.${Buffer.from(
+      JSON.stringify({ email: 'melnyk.bogdan@student.karazin.ua' }),
+    ).toString('base64')}.signature`;
+
+    mockStorage.username = 'Богдан Мельник';
+    mockStorage.accessToken = token;
+
+    const moodleProfile = {
+      ...fallbackStudentProfile,
+      fullName: 'Moodle Student',
+    };
+
+    const resolved = applyStoredIdentityToProfile(moodleProfile);
+
+    expect(resolved.fullName).toBe('Богдан Мельник');
+    expect(resolved.email).toBe('melnyk.bogdan@student.karazin.ua');
   });
 });
 

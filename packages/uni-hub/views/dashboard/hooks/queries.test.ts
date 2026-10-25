@@ -244,4 +244,80 @@ describe('profileQueryOptions', () => {
 
     queryClient.clear();
   });
+
+  it('does not overlay or sync stale profile response if session changed while request was in-flight', async () => {
+    storage.accessToken = 'token-A';
+    storage.username = 'Account A';
+    storage.userEmail = 'a@student.karazin.ua';
+
+    let resolveDeferred: (val: unknown) => void = () => {};
+    const deferredPromise = new Promise((resolve) => {
+      resolveDeferred = resolve;
+    });
+
+    vi.spyOn(moodleApi, 'getProfile').mockImplementation(() => deferredPromise as any);
+
+    const queryClient = new QueryClient();
+    const queryPromise = queryClient.fetchQuery(profileQueryOptions);
+
+    // Switch session to Account B before response arrives
+    storage.accessToken = 'token-B';
+    storage.username = 'Account B';
+    storage.userEmail = 'b@student.karazin.ua';
+    delete storage[STUDENT_PROFILE_STORAGE_KEY];
+
+    // Resolve delayed response from Account A
+    resolveDeferred({
+      data: {
+        ...fallbackStudentProfile,
+        id: 'moodle-A',
+        fullName: 'Account A Moodle',
+        email: 'moodle-a@karazin.ua',
+        gpa: 99,
+      },
+    });
+
+    const result = await queryPromise;
+
+    // Must not write Account A's data to Account B's cache
+    expect(storage[STUDENT_PROFILE_STORAGE_KEY]).toBeUndefined();
+
+    // Must not mix Account A's academic data with Account B's name/email
+    expect(result.fullName).toBe('Account A Moodle');
+    expect(result.email).toBe('moodle-a@karazin.ua');
+
+    queryClient.clear();
+  });
+
+  it('does not sync profile to cache when query signal is aborted', async () => {
+    storage.accessToken = 'token-A';
+    storage.username = 'Account A';
+    storage.userEmail = 'a@student.karazin.ua';
+
+    const abortController = new AbortController();
+
+    vi.spyOn(moodleApi, 'getProfile').mockImplementation(async () => {
+      abortController.abort();
+
+      return {
+        data: {
+          ...fallbackStudentProfile,
+          fullName: 'Account A Moodle',
+        },
+      };
+    });
+
+    const queryClient = new QueryClient();
+
+    await queryClient.fetchQuery({
+      ...profileQueryOptions,
+      queryFn: (ctx) => {
+        return profileQueryOptions.queryFn!({ ...ctx, signal: abortController.signal });
+      },
+    });
+
+    expect(storage[STUDENT_PROFILE_STORAGE_KEY]).toBeUndefined();
+
+    queryClient.clear();
+  });
 });
