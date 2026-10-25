@@ -1,5 +1,5 @@
 import React, { useId } from 'react';
-import { Mail, Send, Pencil } from 'lucide-react';
+import { Mail, Send, Pencil, Users } from 'lucide-react';
 import { BackButton } from '../BackButton';
 import { Button } from '../../una/Button';
 import { Tag } from '../../una/Tag';
@@ -76,6 +76,8 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   applicationsClosedText,
   applyText,
   onOpenApply,
+  onOpenApplicants,
+  viewApplicantsText,
   className,
   acceptsApplications = true,
   paymentTone = 'neutral',
@@ -152,6 +154,13 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
 
             <div className={styles.controlsRow}>
               <div className={styles.actionButtons}>
+                {onOpenApplicants && viewApplicantsText && (
+                  <Button variant="secondary" onClick={onOpenApplicants}>
+                    <Users size={14} className={styles.btnIcon} />
+                    {viewApplicantsText}
+                  </Button>
+                )}
+
                 {canEdit && onEdit && (
                   <Button variant="secondary" onClick={onEdit}>
                     <Pencil size={14} className={styles.btnIcon} />

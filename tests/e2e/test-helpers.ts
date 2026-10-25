@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { GRADES_THRESHOLD } from '@core/constants/grades';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,43 +53,25 @@ export function oracleCalculateTraditionalGrade(
   controlType: 'exam' | 'credit' | 'differentiated_credit' = 'exam',
 ): 'відмінно' | 'добре' | 'задовільно' | 'незадовільно' | 'зараховано' | 'не зараховано' {
   if (controlType === 'credit') {
-    return score >= 60 ? 'зараховано' : 'не зараховано';
+    return score >= GRADES_THRESHOLD.SATISFACTORY ? 'зараховано' : 'не зараховано';
   }
 
-  if (score >= 90) return 'відмінно';
+  if (score >= GRADES_THRESHOLD.EXCELLENT) return 'відмінно';
 
-  if (score >= 74) return 'добре';
+  if (score >= GRADES_THRESHOLD.GOOD) return 'добре';
 
-  if (score >= 60) return 'задовільно';
+  if (score >= GRADES_THRESHOLD.SATISFACTORY) return 'задовільно';
 
   return 'незадовільно';
 }
 
 /**
- * Dynamic module loader for @universe/core
+ * Dynamic module loader for the shared grade calculations.
  */
-export async function loadTypesModule(): Promise<any> {
-  const coreRootPath = resolveWorkspacePath('packages/core/index.ts');
-
-  if (fs.existsSync(coreRootPath)) {
-    try {
-      return await import('../../packages/core/index.ts');
-    } catch {
-      // fallback
-    }
-  }
-
-  const corePath = resolveWorkspacePath('packages/core/types/index.ts');
-
-  if (fs.existsSync(corePath)) {
-    try {
-      return await import('../../packages/core/types/index.ts');
-    } catch {
-      // fallback
-    }
-  }
-
-  return null;
+export async function loadTypesModule(): Promise<
+  typeof import('../../packages/core/utils/grades.ts')
+> {
+  return import('../../packages/core/utils/grades.ts');
 }
 
 /**

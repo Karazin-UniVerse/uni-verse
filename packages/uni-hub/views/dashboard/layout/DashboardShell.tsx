@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
 import { RotateCw, AlertCircle, Link2 } from 'lucide-react';
 import { Button, Spinner, useToast } from '@una';
-import { isLoggedIn } from '@core/utils/auth';
+import { useAuthProtection } from '../hooks/useAuthProtection';
 import { LinkMoodleModal, UnlinkMoodleModal, LinkMoodleMode } from '@uni-hub/components/auth';
 import { DashboardSkeleton, MobileBottomNav } from '@uni-hub/components/dashboard';
 import { BadgeSystem } from '@uni-hub/components/gamification';
@@ -14,6 +14,8 @@ import { useFeatures } from '@uni-hub/features';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { useLogout } from '@uni-hub/hooks/useAuthMutations';
+import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
+import { useDailyStreak } from '../hooks/useDailyStreak';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
 import { useOpportunitiesStore } from '@uni-hub/store/useOpportunitiesStore';
@@ -44,7 +46,10 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
   const queryClient = useQueryClient();
   const features = useFeatures();
   const logout = useLogout();
-  const checkIn = useGamificationStore((state) => state.checkIn);
+  const { userId } = useCurrentUser();
+
+  useAuthProtection(userId);
+  useDailyStreak(userId);
   const soundEnabled = useGamificationStore((state) => state.soundEnabled);
   const setSoundEnabled = useGamificationStore((state) => state.setSoundEnabled);
   const { formatMessage } = useLanguage();
@@ -93,16 +98,6 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
       router.replace(NAV_KEY_ROUTE[activeKey]);
     }
   }, [activeKey, pathNavKey, router]);
-
-  useEffect(() => {
-    if (!isLoggedIn()) {
-      router.replace('/login');
-
-      return;
-    }
-
-    checkIn();
-  }, [checkIn, router]);
 
   const closeMobileMenu = useCallback((): void => {
     setMobileMenuOpen(false);

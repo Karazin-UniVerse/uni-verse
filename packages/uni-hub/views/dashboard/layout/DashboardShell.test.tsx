@@ -95,6 +95,9 @@ vi.mock('@uni-hub/store/useGamificationStore', () => ({
 
 const mockRefresh = vi.fn().mockResolvedValue(undefined);
 
+vi.mock('../hooks/useAuthProtection', () => ({ useAuthProtection: vi.fn() }));
+vi.mock('../hooks/useDailyStreak', () => ({ useDailyStreak: vi.fn() }));
+
 vi.mock('../hooks/useDashboardData', () => ({
   useDashboardData: () => ({
     data: {
