@@ -20,8 +20,6 @@ describe('MoodleProfileController', () => {
     specialty: '122 Компʼютерні науки',
     educationalProgram: 'Компʼютерні науки та інтелектуальні системи',
     degree: 'bachelor',
-    course: 3,
-    group: 'КС12',
     studyForm: 'full-time',
     financing: 'budget',
     status: 'active',
