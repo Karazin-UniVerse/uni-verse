@@ -1,14 +1,36 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Lock } from 'lucide-react';
-import { PasswordInput } from './PasswordInput';
 
-const meta = {
+import { VariantMatrix } from '../../../../storybook/VariantMatrix/VariantMatrix';
+import { PasswordInput } from './PasswordInput';
+import type { PasswordInputProps } from './PasswordInput.types';
+
+type MatrixRow =
+  | 'primary'
+  | 'secondary'
+  | 'transparent'
+  | 'primary disabled'
+  | 'secondary disabled'
+  | 'with left icon';
+type MatrixSize = NonNullable<PasswordInputProps['size']>;
+
+const MATRIX_ROWS: Record<
+  MatrixRow,
+  Pick<PasswordInputProps, 'variant' | 'isTransparent' | 'disabled' | 'leftIcon'>
+> = {
+  primary: { variant: 'primary' },
+  secondary: { variant: 'secondary' },
+  transparent: { isTransparent: true },
+  'primary disabled': { variant: 'primary', disabled: true },
+  'secondary disabled': { variant: 'secondary', disabled: true },
+  'with left icon': { variant: 'primary', leftIcon: <Lock size={16} /> },
+};
+const MATRIX_SIZES: readonly MatrixSize[] = ['small', 'medium', 'large'];
+
+const meta: Meta<typeof PasswordInput> = {
   title: 'Una/Inputs/PasswordInput',
   component: PasswordInput,
   tags: ['autodocs'],
-  parameters: {
-    layout: 'centered',
-  },
   args: {
     'aria-label': 'Password',
     hidePasswordLabel: 'Hide password',
@@ -38,68 +60,30 @@ const meta = {
       description: 'Controlled visibility of the password',
     },
   },
-} satisfies Meta<typeof PasswordInput>;
+};
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<typeof PasswordInput>;
 
-export const Default: Story = {
-  args: {
-    'aria-label': 'Password',
-    placeholder: 'Enter password',
-    defaultValue: 'super-secret-password',
+export const Matrix: Story = {
+  parameters: {
+    layout: 'padded',
   },
-};
-
-export const WithLeftIcon: Story = {
-  args: {
-    'aria-label': 'Password',
-    placeholder: 'Enter password',
-    leftIcon: <Lock size={16} />,
-    defaultValue: 'super-secret-password',
-  },
-};
-
-export const Disabled: Story = {
-  args: {
-    'aria-label': 'Password',
-    placeholder: 'Enter password',
-    defaultValue: 'super-secret-password',
-    disabled: true,
-  },
-};
-
-export const Sizes: Story = {
   render: () => (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-        width: '320px',
-      }}
-    >
-      <PasswordInput
-        size="small"
-        aria-label="Small password input"
-        placeholder="Small password input"
-        showPasswordLabel="Show password"
-        hidePasswordLabel="Hide password"
-      />
-      <PasswordInput
-        size="medium"
-        aria-label="Medium password input"
-        placeholder="Medium password input"
-        showPasswordLabel="Show password"
-        hidePasswordLabel="Hide password"
-      />
-      <PasswordInput
-        size="large"
-        aria-label="Large password input"
-        placeholder="Large password input"
-        showPasswordLabel="Show password"
-        hidePasswordLabel="Hide password"
-      />
-    </div>
+    <VariantMatrix
+      rows={Object.keys(MATRIX_ROWS) as MatrixRow[]}
+      columns={MATRIX_SIZES}
+      renderCell={(row: MatrixRow, size: MatrixSize) => (
+        <PasswordInput
+          size={size}
+          placeholder="Password"
+          aria-label={`${row} ${size}`}
+          defaultValue="super-secret-password"
+          hidePasswordLabel="Hide password"
+          showPasswordLabel="Show password"
+          {...MATRIX_ROWS[row]}
+        />
+      )}
+    />
   ),
 };
