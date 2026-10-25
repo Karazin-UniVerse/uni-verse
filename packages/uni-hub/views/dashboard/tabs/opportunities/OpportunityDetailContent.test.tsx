@@ -279,4 +279,115 @@ describe('OpportunityDetailContent delete', () => {
       screen.queryByRole('button', { name: 'opportunities.detailModal.delete' }),
     ).not.toBeInTheDocument();
   });
+
+  it('does not navigate and shows error toast when delete fails', async () => {
+    const user = userEvent.setup();
+
+    vi.spyOn(opportunitiesApi, 'deleteOpportunity').mockRejectedValue(new Error('Deletion failed'));
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    render(
+      <OpportunityDetailContent
+        opportunity={{ ...buildOpportunity('opp-draft'), status: 'DRAFT' }}
+      />,
+      {
+        wrapper: ({ children }) => (
+          <QueryClientProvider client={queryClient}>
+            <ToastProvider>{children}</ToastProvider>
+          </QueryClientProvider>
+        ),
+      },
+    );
+
+    const deleteBtn = screen.getByRole('button', { name: 'opportunities.detailModal.delete' });
+
+    await user.click(deleteBtn);
+
+    const confirmBtn = screen.getByRole('button', {
+      name: 'opportunities.confirm.deleteConfirm',
+    });
+
+    await user.click(confirmBtn);
+
+    expect(opportunitiesApi.deleteOpportunity).toHaveBeenCalledWith('opp-draft');
+    await waitFor(() => {
+      expect(screen.getByText('Deletion failed')).toBeInTheDocument();
+    });
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('OpportunityDetailContent published opportunity controls', () => {
+  beforeEach(() => {
+    query = new URLSearchParams();
+    userId = 'owner-1';
+    pushMock.mockClear();
+    vi.spyOn(opportunitiesApi, 'changeLifecycle').mockResolvedValue({} as never);
+    vi.spyOn(opportunitiesApi, 'updateOpportunity').mockResolvedValue({} as never);
+    vi.spyOn(opportunitiesApi, 'changeStatus').mockResolvedValue({} as never);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('allows owner to manage lifecycle and accepts applications on published opportunity without changing moderation status', async () => {
+    const user = userEvent.setup();
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    render(
+      <OpportunityDetailContent
+        opportunity={{
+          ...buildOpportunity('opp-published'),
+          status: 'PUBLISHED',
+          lifecycleState: 'ACTIVE',
+          acceptsApplications: true,
+        }}
+      />,
+      {
+        wrapper: ({ children }) => (
+          <QueryClientProvider client={queryClient}>
+            <ToastProvider>{children}</ToastProvider>
+          </QueryClientProvider>
+        ),
+      },
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'opportunities.detailModal.edit' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'opportunities.detailModal.delete' }),
+    ).not.toBeInTheDocument();
+
+    const phaseSelect = screen.getByRole('combobox', {
+      name: 'opportunities.detailModal.phaseLabel',
+    });
+
+    expect(phaseSelect).toBeInTheDocument();
+    expect(phaseSelect).toHaveValue('ACTIVE');
+
+    await user.selectOptions(phaseSelect, 'PAUSED');
+
+    expect(opportunitiesApi.changeLifecycle).toHaveBeenCalledWith('opp-published', 'PAUSED');
+
+    const checkbox = screen.getByRole('checkbox', {
+      name: 'opportunities.detailModal.acceptsApplications',
+    });
+
+    expect(checkbox).toBeInTheDocument();
+    expect(checkbox).toBeChecked();
+
+    await user.click(checkbox);
+
+    expect(opportunitiesApi.updateOpportunity).toHaveBeenCalledWith('opp-published', {
+      acceptsApplications: false,
+    });
+    expect(opportunitiesApi.changeStatus).not.toHaveBeenCalled();
+  });
 });

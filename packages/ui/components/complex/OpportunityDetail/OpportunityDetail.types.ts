@@ -1,5 +1,10 @@
 import type { ReactNode } from 'react';
 
+export type OpportunityLifecycleOption = {
+  label: string;
+  value: string;
+};
+
 export type OpportunityDetailProps = {
   onBack: () => void;
   backText: string;
@@ -31,6 +36,12 @@ export type OpportunityDetailProps = {
   moderationComment?: string | null;
   moderationCommentTitle?: string;
   manageTitle?: string;
+  phaseLabel?: string;
+  lifecycleState?: string;
+  lifecycleOptions?: OpportunityLifecycleOption[];
+  onLifecycleChange?: (state: string) => void;
+  acceptsApplicationsLabel?: string;
+  onToggleAcceptsApplications?: (accepts: boolean) => void;
   // Footer
   acceptsApplications?: boolean;
   applicationsClosedText?: string;

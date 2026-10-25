@@ -107,4 +107,55 @@ describe('OpportunityDetail Component', () => {
 
     expect(onOpenApplicants).toHaveBeenCalledTimes(1);
   });
+
+  it('should render phase select and trigger onLifecycleChange', () => {
+    const onLifecycleChange = vi.fn();
+    const lifecycleOptions = [
+      { label: 'Active', value: 'ACTIVE' },
+      { label: 'Completed', value: 'COMPLETED' },
+    ];
+
+    render(
+      <OpportunityDetail
+        {...defaultProps}
+        isOwner={true}
+        phaseLabel="Phase:"
+        lifecycleState="ACTIVE"
+        lifecycleOptions={lifecycleOptions}
+        onLifecycleChange={onLifecycleChange}
+      />,
+    );
+
+    const select = screen.getByRole('combobox', { name: 'Phase:' });
+
+    expect(select).toBeInTheDocument();
+    expect(select).toHaveValue('ACTIVE');
+
+    fireEvent.change(select, { target: { value: 'COMPLETED' } });
+
+    expect(onLifecycleChange).toHaveBeenCalledWith('COMPLETED');
+  });
+
+  it('should render accepts applications checkbox and trigger onToggleAcceptsApplications', () => {
+    const onToggleAcceptsApplications = vi.fn();
+
+    render(
+      <OpportunityDetail
+        {...defaultProps}
+        isOwner={true}
+        acceptsApplications={true}
+        acceptsApplicationsLabel="Accept applications"
+        onToggleAcceptsApplications={onToggleAcceptsApplications}
+      />,
+    );
+
+    const checkbox = screen.getByRole('checkbox', { name: 'Accept applications' });
+
+    expect(checkbox).toBeInTheDocument();
+    expect(checkbox).toBeChecked();
+
+    fireEvent.click(checkbox);
+
+    expect(onToggleAcceptsApplications).toHaveBeenCalledWith(false);
+  });
 });

@@ -276,13 +276,31 @@ export class OpportunitiesService {
       );
     }
 
-    await this.prisma.opportunityApplication.deleteMany({
-      where: { opportunityId: id },
-    });
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        await tx.opportunityApplication.deleteMany({
+          where: { opportunityId: id },
+        });
 
-    return this.prisma.opportunity.delete({
-      where: { id },
-    });
+        return await tx.opportunity.delete({
+          where: {
+            id,
+            ownerId: userId,
+            status: {
+              in: [OpportunityStatus.DRAFT, OpportunityStatus.REQUIRES_CHANGES],
+            },
+          },
+        });
+      });
+    } catch (error) {
+      if (getPrismaErrorCode(error) === 'P2025') {
+        throw new BadRequestException(
+          'Only draft or rejected opportunities can be deleted',
+        );
+      }
+
+      throw error;
+    }
   }
 
   /**

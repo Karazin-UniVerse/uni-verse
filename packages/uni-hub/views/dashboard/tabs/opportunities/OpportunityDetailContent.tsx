@@ -39,8 +39,11 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
     setDeleting(true);
 
     try {
-      await actions.handleDeleteOpportunity(opportunity.id);
-      router.push(ROUTE.Opportunities);
+      const deleted = await actions.handleDeleteOpportunity(opportunity.id);
+
+      if (deleted) {
+        router.push(ROUTE.Opportunities);
+      }
     } finally {
       setDeleting(false);
       setDeleteConfirmOpen(false);
@@ -61,6 +64,10 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
         opportunity={opportunity}
         userId={currentUser.userId}
         onSendToReview={actions.handleSendToReview}
+        onLifecycleChange={actions.handleLifecycleChange}
+        onToggleAcceptsApplications={(accepts) =>
+          actions.handleToggleAcceptsApplications(opportunity.id, accepts)
+        }
         onEdit={create.openEdit}
         onDelete={() => setDeleteConfirmOpen(true)}
         onOpenApply={() => apply.setIsApplyOpen(true)}

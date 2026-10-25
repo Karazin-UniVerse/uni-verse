@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, render } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { ToastProvider } from '@una';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
@@ -33,13 +33,17 @@ describe('badge account readiness', () => {
   it('triggers toast with localized title and description on unlock', () => {
     useGamificationStore.getState().setActiveUser('bob');
 
-    const { container } = render(
+    render(
       <ToastProvider>
         <BadgeSystem grades={[]} submittedBeforeDeadline />
       </ToastProvider>,
     );
 
     expect(useGamificationStore.getState().unlockedBadges).toContain('DEADLINE_SNIPER');
-    expect(container).toBeDefined();
+    expect(
+      screen.getByText(
+        'badge.unlocked: gamification.badges.deadlineSniper.title — gamification.badges.deadlineSniper.description',
+      ),
+    ).toBeInTheDocument();
   });
 });

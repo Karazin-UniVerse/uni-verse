@@ -17,7 +17,7 @@ interface AcceptsApplicationsChange {
 }
 
 interface UseOpportunityActionsResult {
-  handleDeleteOpportunity: (id: string) => Promise<void>;
+  handleDeleteOpportunity: (id: string) => Promise<boolean>;
   handleLifecycleChange: (id: string, state: OpportunityLifecycle) => Promise<void>;
   handleSendToReview: (id: string) => Promise<void>;
   handleToggleAcceptsApplications: (id: string, acceptsApplications: boolean) => Promise<void>;
@@ -84,12 +84,16 @@ export function useOpportunityActions(): UseOpportunityActionsResult {
     }
   };
 
-  const handleDeleteOpportunity = async (id: string): Promise<void> => {
+  const handleDeleteOpportunity = async (id: string): Promise<boolean> => {
     try {
       await deleteMutation.mutateAsync(id);
       toast.success(formatMessage('opportunities.toast.deleted'));
+
+      return true;
     } catch (err: unknown) {
       toast.error(getErrorMessage(err, formatMessage('opportunities.toast.deleteError')));
+
+      return false;
     }
   };
 

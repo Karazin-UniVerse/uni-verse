@@ -1,10 +1,6 @@
 import type { SyntheticEvent, Dispatch, SetStateAction } from 'react';
 import type { OpportunityLifecycle, OpportunityPaymentType } from '@core/constants/opportunities';
-
-export type OpportunityLifecycleOption = {
-  label: string;
-  value: OpportunityLifecycle;
-};
+import type { OpportunityLifecycleOption } from '../OpportunityDetail/OpportunityDetail.types';
 
 export type CreateOpportunityFormData = {
   title: string;

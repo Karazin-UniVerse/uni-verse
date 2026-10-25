@@ -52,6 +52,18 @@ export const AuthorView: Story = {
     onSendToReview: noop,
     canDelete: true,
     onDelete: noop,
+    phaseLabel: 'Етап:',
+    lifecycleState: 'ACTIVE',
+    lifecycleOptions: [
+      { label: 'Початок', value: 'START' },
+      { label: 'Активна', value: 'ACTIVE' },
+      { label: 'Призупинена', value: 'PAUSED' },
+      { label: 'Завершена', value: 'COMPLETED' },
+      { label: 'Скасована', value: 'CANCELLED' },
+    ],
+    onLifecycleChange: noop,
+    acceptsApplicationsLabel: 'Приймати заявки',
+    onToggleAcceptsApplications: noop,
   },
 };
 

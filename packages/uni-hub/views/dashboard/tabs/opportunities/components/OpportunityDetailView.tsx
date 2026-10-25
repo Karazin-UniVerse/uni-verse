@@ -3,7 +3,11 @@
 import React from 'react';
 import { OpportunityDetail } from '@ui';
 import type { Opportunity } from '@core/types/opportunities';
-import { OPPORTUNITY_LIFECYCLE, OPPORTUNITY_STATUS } from '@core/constants/opportunities';
+import {
+  OPPORTUNITY_LIFECYCLE,
+  OPPORTUNITY_STATUS,
+  type OpportunityLifecycle,
+} from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { OpportunityStatusBadge } from './OpportunityStatusBadge';
 
@@ -13,6 +17,8 @@ export interface OpportunityDetailViewProps {
   userId: string | null;
   onSendToReview: (id: string) => void;
   onOpenApply: () => void;
+  onLifecycleChange?: (id: string, state: OpportunityLifecycle) => void;
+  onToggleAcceptsApplications?: (accepts: boolean) => void;
   onOpenApplicants?: () => void;
   onEdit?: (opportunity: Opportunity) => void;
   onDelete?: () => void;
@@ -32,6 +38,8 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   userId,
   onSendToReview,
   onOpenApply,
+  onLifecycleChange,
+  onToggleAcceptsApplications,
   onOpenApplicants,
   onEdit,
   onDelete,
@@ -56,6 +64,29 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   const lifecycleTagText = lifecycleLabel
     ? `${formatMessage('opportunities.detailModal.phaseLabel')} ${lifecycleLabel}`
     : undefined;
+
+  const lifecycleOptions = [
+    {
+      value: 'START',
+      label: formatMessage('opportunities.detailModal.phaseStart'),
+    },
+    {
+      value: 'ACTIVE',
+      label: formatMessage('opportunities.detailModal.phaseActive'),
+    },
+    {
+      value: 'PAUSED',
+      label: formatMessage('opportunities.detailModal.phasePaused'),
+    },
+    {
+      value: 'COMPLETED',
+      label: formatMessage('opportunities.detailModal.phaseCompleted'),
+    },
+    {
+      value: 'CANCELLED',
+      label: formatMessage('opportunities.detailModal.phaseCancelled'),
+    },
+  ];
 
   const canApply =
     !isOwner &&
@@ -109,7 +140,17 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       moderationComment={isOwner ? opportunity.moderationComment : undefined}
       moderationCommentTitle={formatMessage('opportunities.detailModal.moderationFeedback')}
       manageTitle={formatMessage('opportunities.detailModal.manageTitle')}
+      phaseLabel={formatMessage('opportunities.detailModal.phaseLabel')}
+      lifecycleState={opportunity.lifecycleState}
+      lifecycleOptions={lifecycleOptions}
+      onLifecycleChange={
+        onLifecycleChange
+          ? (state) => onLifecycleChange(opportunity.id, state as OpportunityLifecycle)
+          : undefined
+      }
       acceptsApplications={opportunity.acceptsApplications !== false}
+      onToggleAcceptsApplications={onToggleAcceptsApplications}
+      acceptsApplicationsLabel={formatMessage('opportunities.detailModal.acceptsApplications')}
       applicationsClosedText={formatMessage('opportunities.detailModal.applicationsClosed')}
       canApply={canApply}
       applyText={formatMessage('opportunities.detailModal.apply')}
