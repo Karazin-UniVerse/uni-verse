@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   BadRequestException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -24,8 +25,13 @@ import {
   Prisma,
   Role,
 } from '@universe/database';
-import { OPPORTUNITY_MODERATE_ACTION } from '@universe/core/constants/opportunities';
+import {
+  OPPORTUNITY_MODERATE_ACTION,
+  OPPORTUNITY_VIEW,
+  OPPORTUNITY_VIEW_PARAM,
+} from '@universe/core/constants/opportunities';
 import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
+import { OPPORTUNITY_NOTIFICATION_KEY } from '@universe/core/constants/notifications';
 
 export type OpportunityWithOwner = Opportunity & {
   owner: { id: string; name: string | null; email: string };
@@ -48,10 +54,54 @@ export type UpdateApplicationStatusParams = {
 
 @Injectable()
 export class OpportunitiesService {
+  private readonly logger = new Logger(OpportunitiesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  private async notifyModerators(
+    opportunityId: string,
+    opportunityTitle: string,
+  ): Promise<void> {
+    try {
+      const moderators = await this.prisma.user.findMany({
+        where: { roles: { has: Role.OPPORTUNITIES_MODERATOR } },
+        select: { id: true },
+      });
+
+      const deliveries = await Promise.allSettled(
+        moderators.map((moderator) =>
+          this.notificationsService.createNotification({
+            userId: moderator.id,
+            type: 'OPPORTUNITY_READY_FOR_REVIEW',
+            title: OPPORTUNITY_NOTIFICATION_KEY.READY_FOR_REVIEW_TITLE,
+            message: JSON.stringify({
+              opportunityTitle,
+            }),
+            link: `${OPPORTUNITIES_ROUTE}/${opportunityId}`,
+          }),
+        ),
+      );
+
+      for (const [index, delivery] of deliveries.entries()) {
+        if (delivery.status === 'rejected') {
+          this.logger.error(
+            `Failed to deliver moderation notification for opportunity ${opportunityId} to moderator ${moderators[index].id}`,
+            delivery.reason instanceof Error
+              ? delivery.reason.stack
+              : delivery.reason,
+          );
+        }
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to deliver moderation notifications for opportunity ${opportunityId}`,
+        error instanceof Error ? error.stack : error,
+      );
+    }
+  }
 
   /**
    * Create a new opportunity as a draft
@@ -180,12 +230,22 @@ export class OpportunitiesService {
       hasContentChanges
     ) {
       data.status = OpportunityStatus.READY_FOR_REVIEW;
+      data.moderationComment = null;
     }
 
-    return this.prisma.opportunity.update({
+    const updated = await this.prisma.opportunity.update({
       where: { id },
       data,
     });
+
+    if (
+      opportunity.status === OpportunityStatus.PUBLISHED &&
+      hasContentChanges
+    ) {
+      await this.notifyModerators(id, updated.title);
+    }
+
+    return updated;
   }
 
   /**
@@ -216,10 +276,17 @@ export class OpportunitiesService {
       );
     }
 
-    return this.prisma.opportunity.update({
+    const updatedOpportunity = await this.prisma.opportunity.update({
       where: { id },
-      data: { status },
+      data: {
+        status,
+        moderationComment: null,
+      },
     });
+
+    await this.notifyModerators(id, updatedOpportunity.title);
+
+    return updatedOpportunity;
   }
 
   /**
@@ -302,7 +369,7 @@ export class OpportunitiesService {
     await this.notificationsService.createNotification({
       userId: app.applicantId,
       type: 'OPPORTUNITY_APPLICATION_STATUS',
-      title: 'notifications.opportunityApplicationStatus.title',
+      title: OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE,
       message: JSON.stringify({
         opportunityTitle: app.opportunity.title,
         status,
@@ -355,23 +422,44 @@ export class OpportunitiesService {
       where: { applicantId: userId, opportunityId: id },
     });
 
-    if (existing) {
+    if (existing && existing.status !== ApplicationStatus.WITHDRAWN) {
       throw new ConflictException('Already applied to this opportunity');
     }
 
     let app;
 
     try {
-      app = await this.prisma.opportunityApplication.create({
-        data: {
-          ...dto,
-          applicantId: userId,
-          opportunityId: id,
-          status: ApplicationStatus.SUBMITTED,
-        },
-      });
+      if (existing) {
+        app = await this.prisma.opportunityApplication.update({
+          where: { id: existing.id, status: ApplicationStatus.WITHDRAWN },
+          data: {
+            applicantName: dto.applicantName,
+            contactInfo: dto.contactInfo,
+            briefDescription: dto.briefDescription ?? null,
+            motivation: dto.motivation ?? null,
+            answers: dto.answers ?? null,
+            status: ApplicationStatus.SUBMITTED,
+            ownerComment: null,
+          },
+        });
+      } else {
+        app = await this.prisma.opportunityApplication.create({
+          data: {
+            ...dto,
+            applicantId: userId,
+            opportunityId: id,
+            status: ApplicationStatus.SUBMITTED,
+          },
+        });
+      }
     } catch (error) {
-      if (getPrismaErrorCode(error) === 'P2002') {
+      const errorCode = getPrismaErrorCode(error);
+
+      if (existing && errorCode === 'P2025') {
+        throw new ConflictException('Application is no longer withdrawn');
+      }
+
+      if (!existing && errorCode === 'P2002') {
         throw new ConflictException('Already applied to this opportunity');
       }
 
@@ -381,12 +469,12 @@ export class OpportunitiesService {
     await this.notificationsService.createNotification({
       userId: opportunity.ownerId,
       type: 'OPPORTUNITY_NEW_APPLICATION',
-      title: 'notifications.opportunityNewApplication.title',
+      title: OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_TITLE,
       message: JSON.stringify({
         opportunityTitle: opportunity.title,
         applicantName: dto.applicantName,
       }),
-      link: `${OPPORTUNITIES_ROUTE}/${id}`,
+      link: `${OPPORTUNITIES_ROUTE}/${id}?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
     });
 
     return app;
@@ -464,6 +552,10 @@ export class OpportunitiesService {
       Role.OPPORTUNITIES_MODERATOR,
     ]);
 
+    if (opportunityToModerate.ownerId === userId) {
+      throw new ForbiddenException('You cannot moderate your own opportunity');
+    }
+
     if (opportunityToModerate.status !== OpportunityStatus.READY_FOR_REVIEW) {
       throw new BadRequestException(
         'Only opportunities in READY_FOR_REVIEW can be moderated',
@@ -492,14 +584,17 @@ export class OpportunitiesService {
       where: { id },
       data: {
         status: newStatus,
-        moderationComment: dto.comment,
+        moderationComment:
+          dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE
+            ? null
+            : dto.comment,
       },
     });
 
     await this.notificationsService.createNotification({
       userId: opp.ownerId,
       type: 'OPPORTUNITY_MODERATED',
-      title: 'notifications.opportunityModerated.title',
+      title: OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE,
       message: JSON.stringify({
         opportunityTitle: opp.title,
         action: dto.action,

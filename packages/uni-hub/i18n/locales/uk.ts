@@ -512,6 +512,7 @@ export const uk = {
   'opportunities.moderation.practice': 'Практика',
   'opportunities.moderation.descLabel': 'Опис пропозиції',
   'opportunities.moderation.prevCommentLabel': 'Попередній коментар модерації:',
+  'opportunities.moderation.selfModerationForbidden': 'Ви не можете модерувати власну можливість.',
   'opportunities.moderation.approve': 'Схвалити',
   'opportunities.moderation.revise': 'На доопрацювання',
   'opportunities.moderation.reject': 'Відхилити',
@@ -613,6 +614,9 @@ export const uk = {
   'notifications.opportunityNewApplication.title': 'Новий відгук на можливість',
   'notifications.opportunityNewApplication.message':
     'Новий відгук на можливість «{opportunityTitle}» від {applicantName}.',
+  'notifications.opportunityReadyForReview.title': 'Нова можливість на модерацію',
+  'notifications.opportunityReadyForReview.message':
+    'Можливість «{opportunityTitle}» надіслано на перевірку.',
   'notifications.opportunityModerated.title': 'Результат модерації можливості',
   'notifications.opportunityModerated.message': 'Можливість «{opportunityTitle}» {action}.',
   'notifications.opportunityModerated.messageWithComment':

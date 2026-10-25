@@ -46,3 +46,11 @@ export const OPPORTUNITY_MODERATE_ACTION = {
 
 export type OpportunityModerateAction =
   (typeof OPPORTUNITY_MODERATE_ACTION)[keyof typeof OPPORTUNITY_MODERATE_ACTION];
+
+export const OPPORTUNITY_VIEW_PARAM = 'view' as const;
+
+export const OPPORTUNITY_VIEW = {
+  APPLICANTS: 'applicants',
+} as const;
+
+export type OpportunityView = (typeof OPPORTUNITY_VIEW)[keyof typeof OPPORTUNITY_VIEW];

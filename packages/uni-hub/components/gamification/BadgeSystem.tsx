@@ -18,9 +18,12 @@ export const BadgeSystem: React.FC<BadgeSystemProps> = ({ grades, submittedBefor
   const unlockBadge = useGamificationStore((state) => state.unlockBadge);
   const triggerCelebration = useGamificationStore((state) => state.triggerCelebration);
   const lastCheckInWasNight = useGamificationStore((state) => state.lastCheckInWasNight);
+  const activeUserId = useGamificationStore((state) => state.activeUserId);
   const notifiedRef = useRef<Set<string>>(new Set(unlockedBadges));
 
   useEffect(() => {
+    if (!activeUserId) return;
+
     const toUnlock = evaluateBadgeUnlocks({
       unlocked: unlockedBadges,
       grades,
@@ -31,8 +34,10 @@ export const BadgeSystem: React.FC<BadgeSystemProps> = ({ grades, submittedBefor
     for (const id of toUnlock) {
       const newly = unlockBadge(id);
 
-      if (newly && !notifiedRef.current.has(id)) {
-        notifiedRef.current.add(id);
+      const notificationKey = `${activeUserId}:${id}`;
+
+      if (newly && !notifiedRef.current.has(notificationKey)) {
+        notifiedRef.current.add(notificationKey);
         const badge = BADGES[id];
 
         toast.success(`${formatMessage('badge.unlocked')}: ${badge.title} — ${badge.description}`);
@@ -40,6 +45,7 @@ export const BadgeSystem: React.FC<BadgeSystemProps> = ({ grades, submittedBefor
       }
     }
   }, [
+    activeUserId,
     grades,
     unlockedBadges,
     lastCheckInWasNight,
