@@ -526,7 +526,7 @@ export const en = {
   'opportunities.createModal.descPlaceholder':
     'Describe the project, tasks, workload, and required skills...',
   'opportunities.createModal.contactLabel': 'Organizer Contact Info *',
-  'opportunities.createModal.contactPlaceholder': 'Telegram (@username) or Email',
+  'opportunities.createModal.contactPlaceholder': 'Telegram (@username), Email or phone number',
   'opportunities.createModal.paymentTypeLabel': 'Reward Type',
   'opportunities.createModal.unpaidOption': 'Unpaid (Practice, experience)',
   'opportunities.createModal.paidOption': 'Paid',
