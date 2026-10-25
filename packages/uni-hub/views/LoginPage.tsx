@@ -47,7 +47,7 @@ const LoginPage: React.FC = () => {
 
     try {
       const claims = parseGoogleClaims(idToken);
-      const displayName = extractGoogleDisplayName(claims) || claims.email || '';
+      const displayName = extractGoogleDisplayName(claims) || claims.email?.split('@')[0] || '';
 
       if (displayName) {
         setGoogleUserName(displayName);

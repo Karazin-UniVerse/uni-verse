@@ -4,6 +4,9 @@ import type {
 } from '@universe/core/types/student';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+/**
+ * Data transfer object representing a student's profile for the E-Dean's office.
+ */
 export class StudentProfileDto implements StudentProfile {
   @ApiProperty({ example: 'karazin-student-001' })
   id: string | number;

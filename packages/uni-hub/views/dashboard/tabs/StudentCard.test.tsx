@@ -1,12 +1,8 @@
 import React from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import type { StudentProfile } from '@core/types';
-import {
-  withFeatureToggles,
-  withLanguage,
-  setTestFeatureFlags,
-} from '@uni-hub/utils/test-utils';
+import type { StudentProfile } from '@core/types/student';
+import { withFeatureToggles, withLanguage, setTestFeatureFlags } from '@uni-hub/utils/test-utils';
 import { StudentCard, type StudentCardProps } from './StudentCard';
 
 const mockStudentProfile: StudentProfile = {
@@ -37,9 +33,7 @@ const renderStudentCard = (props: Partial<StudentCardProps> = {}) => {
     ...props,
   };
 
-  return render(
-    withLanguage(withFeatureToggles(<StudentCard {...mergedProps} />)),
-  );
+  return render(withLanguage(withFeatureToggles(<StudentCard {...mergedProps} />)));
 };
 
 describe('StudentCard component', () => {

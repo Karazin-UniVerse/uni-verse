@@ -269,7 +269,7 @@ describe('getInitialUserProfile', () => {
 });
 
 describe('applyStoredIdentityToProfile', () => {
-  it('overlays stored corporate username and userEmail when userEmail is set', () => {
+  it('should overlay stored corporate username and userEmail when userEmail is set', () => {
     localStorage.setItem('username', 'Богдан Мельник');
     localStorage.setItem('userEmail', 'melnyk.bogdan@student.karazin.ua');
 
@@ -287,7 +287,7 @@ describe('applyStoredIdentityToProfile', () => {
     expect(resolved.gpa).toBe(95.5);
   });
 
-  it('keeps moodle fullName if saved username is empty or fallback, but applies userEmail', () => {
+  it('should keep moodle fullName if saved username is empty or fallback, but apply userEmail', () => {
     localStorage.setItem('userEmail', 'melnyk.bogdan@student.karazin.ua');
     localStorage.setItem('username', fallbackStudentProfile.fullName);
 
@@ -302,7 +302,7 @@ describe('applyStoredIdentityToProfile', () => {
     expect(resolved.email).toBe('melnyk.bogdan@student.karazin.ua');
   });
 
-  it('returns profile untouched when userEmail is not in localStorage', () => {
+  it('should return profile untouched when userEmail is not in localStorage', () => {
     localStorage.setItem('username', 'moodle.user');
 
     const moodleProfile = {
@@ -314,6 +314,23 @@ describe('applyStoredIdentityToProfile', () => {
     const resolved = applyStoredIdentityToProfile(moodleProfile);
 
     expect(resolved).toEqual(moodleProfile);
+  });
+
+  it('should return profile untouched when localStorage access throws', () => {
+    const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('SecurityError: Access denied');
+    });
+
+    const moodleProfile = {
+      ...fallbackStudentProfile,
+      fullName: 'Оригінальне Ім’я',
+    };
+
+    const resolved = applyStoredIdentityToProfile(moodleProfile);
+
+    expect(resolved).toEqual(moodleProfile);
+
+    getItemSpy.mockRestore();
   });
 });
 

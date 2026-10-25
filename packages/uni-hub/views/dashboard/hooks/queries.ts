@@ -81,6 +81,9 @@ export function dashboardQueryOptions(
   });
 }
 
+/**
+ * Query options for fetching, overlaying corporate identity, and synchronizing the student profile.
+ */
 export const profileQueryOptions = queryOptions({
   queryKey: moodleKeys.profile(),
   queryFn: async () => {

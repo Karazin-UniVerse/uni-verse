@@ -355,21 +355,25 @@ export function applyStoredIdentityToProfile(profileData: StudentProfile): Stude
     return profileData;
   }
 
-  const savedEmail = localStorage.getItem('userEmail');
+  try {
+    const savedEmail = localStorage.getItem('userEmail');
 
-  if (!savedEmail) {
+    if (!savedEmail) {
+      return profileData;
+    }
+
+    const savedUser = localStorage.getItem('username');
+    const fullName =
+      savedUser && savedUser !== fallbackStudentProfile.fullName ? savedUser : profileData.fullName;
+
+    return {
+      ...profileData,
+      fullName,
+      email: savedEmail,
+    };
+  } catch {
     return profileData;
   }
-
-  const savedUser = localStorage.getItem('username');
-  const fullName =
-    savedUser && savedUser !== fallbackStudentProfile.fullName ? savedUser : profileData.fullName;
-
-  return {
-    ...profileData,
-    fullName,
-    email: savedEmail,
-  };
 }
 
 export function isMoodleUnlinked(): boolean {
