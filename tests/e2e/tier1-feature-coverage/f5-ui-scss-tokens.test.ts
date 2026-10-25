@@ -46,4 +46,14 @@ describe('Tier 1 - Feature 5: SCSS Design Tokens Public Exports (@universe/ui)',
     expect(content).toContain('--scrollbar-radius');
     expect(content).toMatch(/scrollbar-color|scrollbar-width/);
   });
+
+  it('F5-7: SCSS tokens should define yellow palette and bind warning tokens', () => {
+    const content = readWorkspaceFile('packages/ui/vars.scss');
+
+    expect(content).toContain('--yellow-50:');
+    expect(content).toContain('--yellow-500:');
+    expect(content).toContain('--yellow-900:');
+    expect(content).toContain('--warning-color: var(--yellow-500);');
+    expect(content).toContain('--warning-light: var(--yellow-400);');
+  });
 });
