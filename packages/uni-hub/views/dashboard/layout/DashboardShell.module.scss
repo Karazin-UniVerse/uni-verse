@@ -48,7 +48,7 @@ $sidebar-collapsed-width: 88px;
   background: var(--sidebar-bg);
   min-width: 0;
   position: relative;
-  z-index: 1;
+  z-index: var(--z-sidebar);
 }
 
 .edgeToggle {
@@ -1113,6 +1113,21 @@ $sidebar-collapsed-width: 88px;
 @include narrower-than('lg') {
   .layout {
     grid-template-columns: $sidebar-collapsed-width 1fr;
+  }
+
+  .layout:not(.mobileOpen) .sider [data-theme-label],
+  .layout:not(.mobileOpen) .sider [data-theme-chevron] {
+    display: none;
+  }
+
+  .layout:not(.mobileOpen) .sider [data-lang-label='short'] {
+    display: inline;
+  }
+
+  .layout:not(.mobileOpen) .sider [data-lang-trigger] {
+    justify-content: center;
+    gap: var(--space-4);
+    padding-inline: var(--space-4);
   }
 
   .split,

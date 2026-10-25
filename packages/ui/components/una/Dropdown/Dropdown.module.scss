@@ -26,6 +26,10 @@
   animation: dropdown-in var(--transition-fast);
 }
 
+.overflowVisible {
+  overflow: visible;
+}
+
 .padded {
   gap: var(--space-2);
   padding: var(--space-4);
