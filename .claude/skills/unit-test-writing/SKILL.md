@@ -303,25 +303,15 @@ describe('ExampleCard', () => {
 ```ts
 import React from 'react';
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import { act, renderHook } from '@testing-library/react';
-import { createLanguageWrapper } from '@uni-hub/utils/test-utils';
+import { act, renderHook, screen } from '@testing-library/react';
+import { createAppProvidersWrapper } from '@uni-hub/utils/test-utils';
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { useExampleHook } from './useExampleHook';
 
-const { mockToast, mockApi } = vi.hoisted(() => ({
-  mockToast: {
-    success: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-    warning: vi.fn(),
-  },
+const { mockApi } = vi.hoisted(() => ({
   mockApi: {
     submitItem: vi.fn(),
   },
-}));
-
-vi.mock('@una', () => ({
-  useToast: () => mockToast,
 }));
 
 vi.mock('@uni-hub/services/api.opportunities', () => ({
@@ -341,7 +331,7 @@ describe('useExampleHook', () => {
 
   const renderTargetHook = () =>
     renderHook(() => useExampleHook({ setItems: mockSetItems }), {
-      wrapper: createLanguageWrapper(),
+      wrapper: createAppProvidersWrapper(),
     });
 
   it('should initialize with default state', () => {
@@ -359,7 +349,7 @@ describe('useExampleHook', () => {
     });
 
     expect(mockApi.submitItem).toHaveBeenCalledTimes(1);
-    expect(mockToast.success).toHaveBeenCalledTimes(1);
+    expect(await screen.findByText('Заявку успішно надіслано')).toBeInTheDocument();
     expect(result.current.submitting).toBe(false);
   });
 
@@ -371,7 +361,7 @@ describe('useExampleHook', () => {
       await result.current.handleSubmit();
     });
 
-    expect(mockToast.error).toHaveBeenCalledTimes(1);
+    expect(await screen.findByText('Не вдалося надіслати заявку')).toBeInTheDocument();
     expect(result.current.submitting).toBe(false);
   });
 });

@@ -61,7 +61,7 @@ describe('CreateOpportunityModal', () => {
 
     expect(contactInput).toBeInTheDocument();
     expect(contactInput).toHaveValue(initialFormData.ownerContactInfo);
-    expect(contactInput).toHaveAttribute('placeholder', 'Telegram (@username) або Email');
+    expect(contactInput).toHaveAttribute('placeholder', 'Telegram (@username), Email або номер телефону');
 
     const paymentTypeSelect = screen.getByLabelText('Тип винагороди');
 

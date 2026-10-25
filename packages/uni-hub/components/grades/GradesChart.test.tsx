@@ -23,6 +23,7 @@ describe('GradesChart', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     localStorage.clear();
+    localStorage.setItem('universe-lang', 'uk');
   });
 
   it('should render chart container with data when valid grades are provided', () => {
