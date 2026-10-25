@@ -3,21 +3,16 @@ import { render, screen } from '@testing-library/react';
 import { FEATURE_STORAGE_KEYS } from '@core/constants/features';
 import { createOverrideStore } from '@core/utils/features';
 import { FeatureToggleProvider, useFeatures, useFeatureControls, DevFeaturePanel } from './index';
+import { setTestFeatureFlags, resetTestFeatureFlags } from '@uni-hub/utils/test-utils';
 
 describe('FeatureToggleContext and Components', () => {
   beforeEach(() => {
-    delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
-    delete process.env.NEXT_PUBLIC_FEATURE_EDEAN;
-    delete process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES;
-    delete process.env.NEXT_PUBLIC_FEATURE_PANEL;
+    resetTestFeatureFlags();
     window.localStorage.clear();
   });
 
   afterEach(() => {
-    delete process.env.NEXT_PUBLIC_FEATURE_MOODLE;
-    delete process.env.NEXT_PUBLIC_FEATURE_EDEAN;
-    delete process.env.NEXT_PUBLIC_FEATURE_OPPORTUNITIES;
-    delete process.env.NEXT_PUBLIC_FEATURE_PANEL;
+    resetTestFeatureFlags();
     window.localStorage.clear();
   });
 
@@ -53,8 +48,7 @@ describe('FeatureToggleContext and Components', () => {
   });
 
   it('should resolve environment variables in FeatureToggleProvider correctly', () => {
-    process.env.NEXT_PUBLIC_FEATURE_MOODLE = 'true';
-    process.env.NEXT_PUBLIC_FEATURE_EDEAN = 'true';
+    setTestFeatureFlags({ isMoodleIntegrationEnabled: true, isEDeanEnabled: true });
 
     const TestConsumer = () => {
       const { isMoodleIntegrationEnabled, isEDeanEnabled } = useFeatures();
