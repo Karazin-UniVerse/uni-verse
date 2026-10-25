@@ -18,7 +18,7 @@ import { AuthService } from './auth.service';
 import { Public } from './decorators/public.decorator';
 import { RtGuard } from './guards/rt.guard';
 import { GetUser } from './decorators/get-user.decorator';
-import type { Response } from 'express';
+import type { CookieOptions, Response } from 'express';
 import {
   RegisterDto,
   LoginDto,
@@ -161,7 +161,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<LogoutResponseDto> {
     await this.authService.logout(userId);
-    res.clearCookie('refreshToken');
+    res.clearCookie('refreshToken', this.getClearRefreshTokenCookieOptions());
 
     return { message: 'Logged out successfully' };
   }
@@ -190,11 +190,31 @@ export class AuthController {
   }
 
   private setRefreshTokenCookie(res: Response, refreshToken: string): void {
-    res.cookie('refreshToken', refreshToken, {
+    res.cookie(
+      'refreshToken',
+      refreshToken,
+      this.getRefreshTokenCookieOptions(),
+    );
+  }
+
+  private getRefreshTokenCookieOptions(): CookieOptions {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    return {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    };
+  }
+
+  private getClearRefreshTokenCookieOptions(): CookieOptions {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    return {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+    };
   }
 }

@@ -2,6 +2,10 @@ import { RESPONSE_CODES } from '@core/constants/response-codes';
 import { safeStorage, API_BASE_URL } from './api.storage';
 import { clearUserSessionStorage } from './api.session';
 
+const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
+const DEFAULT_RETRIES = 2;
+const RETRY_DELAY_FACTOR_MS = 500;
+
 function isSecureOrLoopback(targetUrl: string): boolean {
   try {
     const isBrowserEnv = typeof window !== 'undefined';
@@ -20,7 +24,7 @@ function isSecureOrLoopback(targetUrl: string): boolean {
 }
 
 /**
- * Builds a query string from a parameters dictionary, omitting undefined or null fields.
+ * Builds a query string from a parameters dictionary, omitting undefined, null, or empty string fields.
  */
 export function buildQueryString(params?: Record<string, unknown>): string {
   if (!params) {
@@ -43,14 +47,6 @@ export function buildQueryString(params?: Record<string, unknown>): string {
   const queryString = searchParams.toString();
 
   return queryString ? `?${queryString}` : '';
-}
-
-const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
-
-function clearUnauthorizedStorage(status: number): void {
-  if (status === RESPONSE_CODES.UNAUTHORIZED) {
-    clearUserSessionStorage();
-  }
 }
 
 async function extractServerErrorMessage(response: Response): Promise<string | undefined> {
@@ -93,12 +89,12 @@ type ExecuteAttemptParams = {
   timeoutMs: number;
 };
 
-async function executeAttempt<T>({
+async function executeAttempt({
   url,
   options,
   headers,
   timeoutMs,
-}: ExecuteAttemptParams): Promise<{ data: T }> {
+}: ExecuteAttemptParams): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -113,24 +109,12 @@ async function executeAttempt<T>({
   }
 
   try {
-    const response = await fetch(url, {
+    return await fetch(url, {
       ...options,
       headers,
       credentials: 'include',
       signal: controller.signal,
     });
-
-    if (!response.ok) {
-      clearUnauthorizedStorage(response.status);
-
-      const errorDetail = await buildHttpErrorMessage(response);
-
-      throw new Error(errorDetail);
-    }
-
-    const data = (await response.json()) as T;
-
-    return { data };
   } finally {
     clearTimeout(timeoutId);
 
@@ -140,13 +124,160 @@ async function executeAttempt<T>({
   }
 }
 
-export type RequestOptions = RequestInit & { retries?: number; timeoutMs?: number };
+let refreshPromise: Promise<string> | null = null;
 
-export async function request<T>(
+export function resetRefreshPromiseForTests(): void {
+  refreshPromise = null;
+}
+
+async function refreshAccessToken(): Promise<string> {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  refreshPromise = (async () => {
+    try {
+      const url = `${API_BASE_URL}/auth/refresh`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        if (
+          response.status === RESPONSE_CODES.UNAUTHORIZED ||
+          response.status === RESPONSE_CODES.FORBIDDEN
+        ) {
+          clearUserSessionStorage();
+        }
+
+        const errorDetail = await buildHttpErrorMessage(response);
+
+        throw new Error(errorDetail);
+      }
+
+      const data = (await response.json()) as { access_token?: string };
+
+      if (!data.access_token) {
+        clearUserSessionStorage();
+
+        throw new Error('Refresh response missing access token');
+      }
+
+      safeStorage.setItem('accessToken', data.access_token);
+
+      return data.access_token;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
+
+function isRefreshCandidate(endpoint: string, options: RequestOptions): boolean {
+  if (options.skipAuthRefresh) {
+    return false;
+  }
+
+  const isAuthEndpoint =
+    endpoint.startsWith('/auth/refresh') ||
+    endpoint.startsWith('/auth/login') ||
+    endpoint.startsWith('/auth/register') ||
+    endpoint.startsWith('/auth/google') ||
+    endpoint.startsWith('/auth/logout');
+
+  if (isAuthEndpoint) {
+    return false;
+  }
+
+  return Boolean(safeStorage.getItem('accessToken'));
+}
+
+export type RequestOptions = RequestInit & {
+  retries?: number;
+  timeoutMs?: number;
+  skipAuthRefresh?: boolean;
+};
+
+type ExecuteRequestParams = {
+  endpoint: string;
+  url: string;
+  options: RequestInit;
+  headers: Record<string, string>;
+  timeoutMs: number;
+  requestOptions: RequestOptions;
+};
+
+async function executeRequestWithRefresh<T>({
+  endpoint,
+  url,
+  options,
+  headers,
+  timeoutMs,
+  requestOptions,
+}: ExecuteRequestParams): Promise<{ data: T }> {
+  const initialResponse = await executeAttempt({ url, options, headers, timeoutMs });
+
+  if (initialResponse.ok) {
+    const data = (await initialResponse.json()) as T;
+
+    return { data };
+  }
+
+  if (
+    initialResponse.status === RESPONSE_CODES.UNAUTHORIZED &&
+    isRefreshCandidate(endpoint, requestOptions)
+  ) {
+    const newToken = await refreshAccessToken();
+    const retryHeaders: Record<string, string> = {
+      ...headers,
+      Authorization: `Bearer ${newToken}`,
+    };
+
+    const retryResponse = await executeAttempt({
+      url,
+      options,
+      headers: retryHeaders,
+      timeoutMs,
+    });
+
+    if (!retryResponse.ok) {
+      if (retryResponse.status === RESPONSE_CODES.UNAUTHORIZED) {
+        clearUserSessionStorage();
+      }
+
+      const retryErrorDetail = await buildHttpErrorMessage(retryResponse);
+
+      throw new Error(retryErrorDetail);
+    }
+
+    const retryData = (await retryResponse.json()) as T;
+
+    return { data: retryData };
+  }
+
+  if (initialResponse.status === RESPONSE_CODES.UNAUTHORIZED) {
+    clearUserSessionStorage();
+  }
+
+  const errorDetail = await buildHttpErrorMessage(initialResponse);
+
+  throw new Error(errorDetail);
+}
+
+async function executeRequest<T>(
   endpoint: string,
   requestOptions: RequestOptions = {},
 ): Promise<{ data: T }> {
-  const { retries = 2, timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS, ...options } = requestOptions;
+  const {
+    retries = DEFAULT_RETRIES,
+    timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
+    ...options
+  } = requestOptions;
   const url = `${API_BASE_URL}${endpoint}`;
   const token = safeStorage.getItem('accessToken');
 
@@ -161,14 +292,26 @@ export async function request<T>(
 
   const attemptRequest = async (currentAttempt: number): Promise<{ data: T }> => {
     try {
-      return await executeAttempt<T>({ url, options, headers, timeoutMs });
-    } catch (err) {
-      if (options.signal?.aborted || currentAttempt >= retries) {
-        throw err;
+      return await executeRequestWithRefresh<T>({
+        endpoint,
+        url,
+        options,
+        headers,
+        timeoutMs,
+        requestOptions,
+      });
+    } catch (error) {
+      const isUnauthorized =
+        error instanceof Error &&
+        (error.message.includes(`HTTP ${RESPONSE_CODES.UNAUTHORIZED}`) ||
+          error.message.includes(`${RESPONSE_CODES.UNAUTHORIZED}`));
+
+      if (isUnauthorized || options.signal?.aborted || currentAttempt >= retries) {
+        throw error;
       }
 
       const nextAttempt = currentAttempt + 1;
-      const delay = nextAttempt * 500;
+      const delay = nextAttempt * RETRY_DELAY_FACTOR_MS;
 
       await new Promise((resolve) => setTimeout(resolve, delay));
 
@@ -177,6 +320,22 @@ export async function request<T>(
   };
 
   return attemptRequest(0);
+}
+
+export abstract class ApiClient {
+  protected request<T>(
+    endpoint: string,
+    requestOptions: RequestOptions = {},
+  ): Promise<{ data: T }> {
+    return executeRequest<T>(endpoint, requestOptions);
+  }
+}
+
+export async function request<T>(
+  endpoint: string,
+  requestOptions: RequestOptions = {},
+): Promise<{ data: T }> {
+  return executeRequest<T>(endpoint, requestOptions);
 }
 
 export function getErrorMessage(err: unknown, fallback: string): string {

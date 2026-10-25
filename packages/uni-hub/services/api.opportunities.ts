@@ -11,21 +11,21 @@ import type {
   OpportunityLifecycle,
   OpportunityModerateAction,
 } from '@core/constants/opportunities';
-import { request, buildQueryString } from './api.request';
+import { ApiClient, buildQueryString } from './api.request';
 
-export class OpportunitiesApi {
+export class OpportunitiesApi extends ApiClient {
   async getOpportunities(params?: GetOpportunitiesParams): Promise<{ data: Opportunity[] }> {
     const query = buildQueryString(params as Record<string, unknown>);
 
-    return request<Opportunity[]>(`/opportunities${query}`);
+    return this.request<Opportunity[]>(`/opportunities${query}`);
   }
 
   async getOpportunity(id: string): Promise<{ data: Opportunity }> {
-    return request<Opportunity>(`/opportunities/${id}`);
+    return this.request<Opportunity>(`/opportunities/${id}`);
   }
 
   async createOpportunity(dto: CreateOpportunityRequest): Promise<{ data: Opportunity }> {
-    return request<Opportunity>('/opportunities', {
+    return this.request<Opportunity>('/opportunities', {
       method: 'POST',
       body: JSON.stringify(dto),
     });
@@ -35,14 +35,14 @@ export class OpportunitiesApi {
     id: string,
     dto: UpdateOpportunityRequest,
   ): Promise<{ data: Opportunity }> {
-    return request<Opportunity>(`/opportunities/${id}`, {
+    return this.request<Opportunity>(`/opportunities/${id}`, {
       method: 'PUT',
       body: JSON.stringify(dto),
     });
   }
 
   async changeStatus(id: string, status: 'READY_FOR_REVIEW'): Promise<{ data: Opportunity }> {
-    return request<Opportunity>(`/opportunities/${id}/status`, {
+    return this.request<Opportunity>(`/opportunities/${id}/status`, {
       method: 'POST',
       body: JSON.stringify({ status }),
     });
@@ -52,18 +52,18 @@ export class OpportunitiesApi {
     id: string,
     lifecycleState: OpportunityLifecycle,
   ): Promise<{ data: Opportunity }> {
-    return request<Opportunity>(`/opportunities/${id}/lifecycle`, {
+    return this.request<Opportunity>(`/opportunities/${id}/lifecycle`, {
       method: 'PUT',
       body: JSON.stringify({ lifecycleState }),
     });
   }
 
   async getMyOpportunities(): Promise<{ data: Opportunity[] }> {
-    return request<Opportunity[]>('/opportunities/my');
+    return this.request<Opportunity[]>('/opportunities/my');
   }
 
   async getOpportunityApplications(id: string): Promise<{ data: OpportunityApplication[] }> {
-    return request<OpportunityApplication[]>(`/opportunities/${id}/applications`);
+    return this.request<OpportunityApplication[]>(`/opportunities/${id}/applications`);
   }
 
   async updateApplicationStatus(
@@ -71,27 +71,30 @@ export class OpportunitiesApi {
     status: OpportunityAppStatus,
     comment?: string,
   ): Promise<{ data: OpportunityApplication }> {
-    return request<OpportunityApplication>(`/opportunities/applications/${appId}/status`, {
+    return this.request<OpportunityApplication>(`/opportunities/applications/${appId}/status`, {
       method: 'PUT',
       body: JSON.stringify({ status, comment }),
     });
   }
 
   async apply(id: string, dto: ApplyOpportunityRequest): Promise<{ data: OpportunityApplication }> {
-    return request<OpportunityApplication>(`/opportunities/${id}/apply`, {
+    return this.request<OpportunityApplication>(`/opportunities/${id}/apply`, {
       method: 'POST',
       body: JSON.stringify(dto),
     });
   }
 
   async getMyApplications(): Promise<{ data: OpportunityApplication[] }> {
-    return request<OpportunityApplication[]>('/opportunities/my/applications');
+    return this.request<OpportunityApplication[]>('/opportunities/my/applications');
   }
 
   async withdrawApplication(appId: string): Promise<{ data: OpportunityApplication }> {
-    return request<OpportunityApplication>(`/opportunities/my/applications/${appId}/withdraw`, {
-      method: 'PUT',
-    });
+    return this.request<OpportunityApplication>(
+      `/opportunities/my/applications/${appId}/withdraw`,
+      {
+        method: 'PUT',
+      },
+    );
   }
 
   async moderate(
@@ -99,7 +102,7 @@ export class OpportunitiesApi {
     action: OpportunityModerateAction,
     comment?: string,
   ): Promise<{ data: Opportunity }> {
-    return request<Opportunity>(`/opportunities/${id}/moderate`, {
+    return this.request<Opportunity>(`/opportunities/${id}/moderate`, {
       method: 'POST',
       body: JSON.stringify({ action, comment }),
     });

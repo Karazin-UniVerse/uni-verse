@@ -80,7 +80,7 @@ describe('AuthController', () => {
         mockTokens.refresh_token,
         expect.objectContaining({
           httpOnly: true,
-          sameSite: 'strict',
+          sameSite: 'lax',
           maxAge: 7 * 24 * 60 * 60 * 1000,
         }),
       );
@@ -106,7 +106,7 @@ describe('AuthController', () => {
         mockTokens.refresh_token,
         expect.objectContaining({
           httpOnly: true,
-          sameSite: 'strict',
+          sameSite: 'lax',
         }),
       );
       expect(result).toEqual({ access_token: mockTokens.access_token });
@@ -123,7 +123,13 @@ describe('AuthController', () => {
       const result = await controller.logout(userId, response);
 
       expect(authService.logout).toHaveBeenCalledWith(userId);
-      expect(response.clearCookie).toHaveBeenCalledWith('refreshToken');
+      expect(response.clearCookie).toHaveBeenCalledWith(
+        'refreshToken',
+        expect.objectContaining({
+          httpOnly: true,
+          sameSite: 'lax',
+        }),
+      );
       expect(result).toEqual({ message: 'Logged out successfully' });
     });
   });
@@ -156,7 +162,7 @@ describe('AuthController', () => {
         newTokens.refresh_token,
         expect.objectContaining({
           httpOnly: true,
-          sameSite: 'strict',
+          sameSite: 'lax',
         }),
       );
       expect(result).toEqual({ access_token: newTokens.access_token });
@@ -184,7 +190,7 @@ describe('AuthController', () => {
         'google-rt',
         expect.objectContaining({
           httpOnly: true,
-          sameSite: 'strict',
+          sameSite: 'lax',
         }),
       );
       expect(result).toEqual({
@@ -234,7 +240,7 @@ describe('AuthController', () => {
         'new-linked-rt',
         expect.objectContaining({
           httpOnly: true,
-          sameSite: 'strict',
+          sameSite: 'lax',
         }),
       );
       expect(result).toEqual({
@@ -263,7 +269,7 @@ describe('AuthController', () => {
         'new-unlinked-rt',
         expect.objectContaining({
           httpOnly: true,
-          sameSite: 'strict',
+          sameSite: 'lax',
         }),
       );
       expect(result).toEqual({
@@ -274,7 +280,7 @@ describe('AuthController', () => {
   });
 
   describe('setRefreshTokenCookie environment branch', () => {
-    it('should set secure=true when NODE_ENV is production', async () => {
+    it('should set secure=true and sameSite=none when NODE_ENV is production', async () => {
       const originalEnv = process.env.NODE_ENV;
 
       process.env.NODE_ENV = 'production';
@@ -295,6 +301,31 @@ describe('AuthController', () => {
           mockTokens.refresh_token,
           expect.objectContaining({
             secure: true,
+            sameSite: 'none',
+          }),
+        );
+      } finally {
+        process.env.NODE_ENV = originalEnv;
+      }
+    });
+
+    it('should clear cookie with secure=true and sameSite=none when NODE_ENV is production', async () => {
+      const originalEnv = process.env.NODE_ENV;
+
+      process.env.NODE_ENV = 'production';
+
+      try {
+        const response = createMockResponse();
+
+        authService.logout.mockResolvedValue(undefined as any);
+
+        await controller.logout('user-123', response);
+
+        expect(response.clearCookie).toHaveBeenCalledWith(
+          'refreshToken',
+          expect.objectContaining({
+            secure: true,
+            sameSite: 'none',
           }),
         );
       } finally {

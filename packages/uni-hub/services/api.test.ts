@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { buildQueryString, authApi, moodleApi } from './api';
+import { resetRefreshPromiseForTests } from './api.request';
 
 describe('UniHub API Service', () => {
   const originalFetch = global.fetch;
@@ -7,6 +8,7 @@ describe('UniHub API Service', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    resetRefreshPromiseForTests();
 
     for (const key of Object.keys(mockStorage)) {
       delete mockStorage[key];
@@ -334,6 +336,172 @@ describe('UniHub API Service', () => {
       } as Response);
 
       await expect(moodleApi.getCourses()).rejects.toThrow('HTTP error 500');
+    });
+  });
+
+  describe('Token Refresh and Session Handling', () => {
+    it('automatically refreshes token on 401 and retries original request with new access token', async () => {
+      mockStorage.accessToken = 'expired-token';
+
+      const mockCourses = [{ id: 101, fullname: 'Основи програмування' }];
+
+      global.fetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+        if (url.includes('/auth/refresh')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({ access_token: 'fresh-token' }),
+          } as Response);
+        }
+
+        if (url.includes('/moodle/courses')) {
+          const authHeader = (init?.headers as Record<string, string>)?.Authorization;
+
+          if (authHeader === 'Bearer fresh-token') {
+            return Promise.resolve({
+              ok: true,
+              status: 200,
+              json: async () => mockCourses,
+            } as Response);
+          }
+
+          return Promise.resolve({
+            ok: false,
+            status: 401,
+            statusText: 'Unauthorized',
+            json: async () => ({ statusCode: 401, message: 'Unauthorized' }),
+          } as Response);
+        }
+
+        return Promise.reject(new Error(`Unexpected call to ${url}`));
+      });
+
+      const response = await moodleApi.getCourses();
+
+      expect(response.data).toEqual(mockCourses);
+      expect(mockStorage.accessToken).toBe('fresh-token');
+
+      const fetchCalls = vi.mocked(global.fetch).mock.calls;
+
+      expect(fetchCalls).toHaveLength(3);
+      expect(fetchCalls[0][0]).toContain('/moodle/courses');
+      expect(fetchCalls[1][0]).toContain('/auth/refresh');
+      expect(fetchCalls[2][0]).toContain('/moodle/courses');
+      expect((fetchCalls[2][1]?.headers as Record<string, string>)?.Authorization).toBe(
+        'Bearer fresh-token',
+      );
+    });
+
+    it('deduplicates concurrent 401 requests to a single /auth/refresh call', async () => {
+      mockStorage.accessToken = 'expired-token';
+
+      let refreshCallCount = 0;
+
+      global.fetch = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+        if (url.includes('/auth/refresh')) {
+          refreshCallCount += 1;
+          await new Promise((resolve) => setTimeout(resolve, 20));
+
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ access_token: 'concurrent-fresh-token' }),
+          } as Response;
+        }
+
+        const authHeader = (init?.headers as Record<string, string>)?.Authorization;
+
+        if (authHeader === 'Bearer concurrent-fresh-token') {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => [],
+          } as Response;
+        }
+
+        return {
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized',
+          json: async () => ({ statusCode: 401, message: 'Unauthorized' }),
+        } as Response;
+      });
+
+      const [coursesRes, gradesRes] = await Promise.all([
+        moodleApi.getCourses(),
+        moodleApi.getGrades(),
+      ]);
+
+      expect(coursesRes.data).toEqual([]);
+      expect(gradesRes.data).toEqual([]);
+      expect(refreshCallCount).toBe(1);
+      expect(mockStorage.accessToken).toBe('concurrent-fresh-token');
+    });
+
+    it('clears session storage and throws 401 when /auth/refresh returns 401', async () => {
+      mockStorage.accessToken = 'expired-token';
+      mockStorage.isLoggedIn = 'true';
+
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url.includes('/auth/refresh')) {
+          return Promise.resolve({
+            ok: false,
+            status: 401,
+            statusText: 'Unauthorized',
+            json: async () => ({ statusCode: 401, message: 'Refresh token expired' }),
+          } as Response);
+        }
+
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized',
+          json: async () => ({ statusCode: 401, message: 'Unauthorized' }),
+        } as Response);
+      });
+
+      await expect(moodleApi.getCourses()).rejects.toThrow('Refresh token expired (HTTP 401)');
+      expect(mockStorage.accessToken).toBeUndefined();
+      expect(mockStorage.isLoggedIn).toBeUndefined();
+    });
+
+    it('does not clear session storage when /auth/refresh fails due to network error', async () => {
+      mockStorage.accessToken = 'valid-token-before-offline';
+      mockStorage.isLoggedIn = 'true';
+
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url.includes('/auth/refresh')) {
+          return Promise.reject(new Error('Network offline'));
+        }
+
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized',
+          json: async () => ({ statusCode: 401, message: 'Unauthorized' }),
+        } as Response);
+      });
+
+      await expect(moodleApi.getCourses()).rejects.toThrow('Network offline');
+      expect(mockStorage.accessToken).toBe('valid-token-before-offline');
+      expect(mockStorage.isLoggedIn).toBe('true');
+    });
+
+    it('does not attempt token refresh when public login endpoint returns 401', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        json: async () => ({ statusCode: 401, message: 'Invalid credentials' }),
+      } as Response);
+
+      await expect(authApi.login('wrong@student.karazin.ua', 'wrong-pass')).rejects.toThrow(
+        'Invalid credentials (HTTP 401)',
+      );
+
+      const calledUrls = vi.mocked(global.fetch).mock.calls.map((call) => call[0]);
+
+      expect(calledUrls.some((url) => String(url).includes('/auth/refresh'))).toBe(false);
     });
   });
 });

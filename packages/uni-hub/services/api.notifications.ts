@@ -1,4 +1,4 @@
-import { request } from './api.request';
+import { ApiClient } from './api.request';
 
 export interface PlatformNotification {
   id: string;
@@ -15,19 +15,19 @@ export interface MarkAllAsReadResponse {
   count: number;
 }
 
-export class NotificationsApi {
+export class NotificationsApi extends ApiClient {
   async getMyNotifications(): Promise<{ data: PlatformNotification[] }> {
-    return request<PlatformNotification[]>('/notifications');
+    return this.request<PlatformNotification[]>('/notifications');
   }
 
   async markAsRead(id: string): Promise<{ data: PlatformNotification }> {
-    return request<PlatformNotification>(`/notifications/${id}/read`, {
+    return this.request<PlatformNotification>(`/notifications/${id}/read`, {
       method: 'POST',
     });
   }
 
   async markAllAsRead(): Promise<{ data: MarkAllAsReadResponse }> {
-    return request<MarkAllAsReadResponse>('/notifications/read-all', {
+    return this.request<MarkAllAsReadResponse>('/notifications/read-all', {
       method: 'POST',
     });
   }
