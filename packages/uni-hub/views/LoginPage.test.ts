@@ -116,6 +116,31 @@ describe('LoginPage Google SSO Moodle integration bypass', () => {
     expect(mockPush).toHaveBeenCalledWith('/');
   });
 
+  it.each([undefined, 'existing@karazin.ua'])(
+    'preserves the stored email (%s) when Google login is rejected',
+    async (existingEmail) => {
+      mockMoodleIntegrationEnabled = false;
+      const { authApi } = await import('@uni-hub/services/api.auth');
+
+      if (existingEmail) {
+        mockStorage.userEmail = existingEmail;
+      }
+
+      vi.mocked(authApi.loginWithGoogle).mockRejectedValueOnce(new Error('Login rejected'));
+
+      renderToStaticMarkup(withQueryClient(React.createElement(LoginPage)));
+
+      const payload = btoa(JSON.stringify({ name: 'Test Student', email: 'test@karazin.ua' }));
+
+      await capturedGoogleSuccess!(`header.${payload}.signature`);
+
+      expect(mockStorage.userEmail).toBe(existingEmail);
+      expect(mockStorage.isLoggedIn).toBeUndefined();
+      expect(mockPush).not.toHaveBeenCalled();
+      expect(mockToast.error).toHaveBeenCalledWith('login.googleError');
+    },
+  );
+
   it('resolves corporate full name from given_name and family_name when name claim is missing', async () => {
     mockMoodleIntegrationEnabled = false;
     const { authApi } = await import('@uni-hub/services/api.auth');

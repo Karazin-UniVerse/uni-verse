@@ -52,11 +52,11 @@ const LoginPage: React.FC = () => {
         setGoogleUserName(displayName);
       }
 
+      const res = await googleLogin.mutateAsync(idToken);
+
       if (claims.email) {
         safeStorage.setItem('userEmail', claims.email);
       }
-
-      const res = await googleLogin.mutateAsync(idToken);
 
       if (res.data?.isLinked || !isMoodleIntegrationEnabled) {
         safeStorage.setItem('isLoggedIn', 'true');
