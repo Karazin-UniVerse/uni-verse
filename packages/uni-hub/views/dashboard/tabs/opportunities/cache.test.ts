@@ -42,6 +42,17 @@ describe('opportunities cache', () => {
       );
       expect(queryClient.getQueryState(['courses'])?.isInvalidated).toBe(false);
     });
+
+    it('passes options such as throwOnError to queryClient.invalidateQueries', async () => {
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      await invalidateOpportunities(queryClient, { throwOnError: true });
+
+      expect(invalidateSpy).toHaveBeenCalledWith(
+        { queryKey: opportunityKeys.all },
+        { throwOnError: true },
+      );
+    });
   });
 
   describe('removeFromModerationQueue', () => {
