@@ -527,7 +527,7 @@ export const uk = {
   'opportunities.createModal.descPlaceholder':
     'Детально розкажіть про проект, задачі, очікувану зайнятість та необхідні навички...',
   'opportunities.createModal.contactLabel': 'Контактні дані організатора *',
-  'opportunities.createModal.contactPlaceholder': 'Telegram (@username) або Email',
+  'opportunities.createModal.contactPlaceholder': 'Telegram (@username), Email або номер телефону',
   'opportunities.createModal.paymentTypeLabel': 'Тип винагороди',
   'opportunities.createModal.unpaidOption': 'Неоплачувана (Практика, досвід)',
   'opportunities.createModal.paidOption': 'Оплачувана',

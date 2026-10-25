@@ -58,6 +58,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   return (
     <Dropdown
       width={240}
+      isOverflowVisible
       renderTrigger={(triggerProps) => (
         <button
           {...triggerProps}
@@ -149,18 +150,18 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
 
           <div className={styles.userDropdownBody}>
             <div className={styles.mobileOnlyItem} style={{ marginBottom: 6 }}>
-              <LanguageSwitcher compact={false} placement="bottom-start" />
+              <LanguageSwitcher variant="sider" placement="bottom-start" />
             </div>
 
-            <div className={styles.mobileOnlyItem}>
-              <ThemeSwitcher compact={false} showLabel={true} />
+            <div className={styles.mobileOnlyItem} style={{ marginBottom: 6 }}>
+              <ThemeSwitcher compact isFullWidth showLabel placement="bottom-start" />
             </div>
 
             <div className={styles.mobileOnlyItem}>
               <Button
                 type="button"
                 variant="secondary"
-                size="small"
+                size="medium"
                 onClick={onToggleSound}
                 style={{ width: '100%', justifyContent: 'flex-start' }}
               >
@@ -193,7 +194,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
               <Button
                 type="button"
                 variant="secondary"
-                size="small"
+                size="medium"
                 onClick={onLogout}
                 style={{
                   width: '100%',

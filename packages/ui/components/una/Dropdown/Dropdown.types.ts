@@ -12,6 +12,7 @@ export type DropdownProps = {
   renderTrigger: (triggerProps: DropdownTriggerProps, isOpen: boolean) => ReactNode;
   className?: string;
   isFullWidth?: boolean;
+  isOverflowVisible?: boolean;
   isPadded?: boolean;
   placement?: PopoverPlacement;
   width?: number | string;

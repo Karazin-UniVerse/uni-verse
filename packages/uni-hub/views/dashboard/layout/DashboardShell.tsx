@@ -5,7 +5,7 @@ import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
 import { RotateCw, AlertCircle, Link2 } from 'lucide-react';
-import { Button, Spinner } from '@una';
+import { Button, Spinner, useToast } from '@una';
 import { useAuthProtection } from '../hooks/useAuthProtection';
 import { LinkMoodleModal, UnlinkMoodleModal, LinkMoodleMode } from '@uni-hub/components/auth';
 import { DashboardSkeleton, MobileBottomNav } from '@uni-hub/components/dashboard';
@@ -53,6 +53,7 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
   const soundEnabled = useGamificationStore((state) => state.soundEnabled);
   const setSoundEnabled = useGamificationStore((state) => state.setSoundEnabled);
   const { formatMessage } = useLanguage();
+  const toast = useToast();
 
   const dashboard = useDashboardData();
   const isMoodleLinked = useMoodleStore((state) => state.isMoodleLinked);
@@ -115,10 +116,23 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const selectKey = (key: NavKey): void => router.push(NAV_KEY_ROUTE[key]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleRefresh = (): void => {
-    void invalidateOpportunities(queryClient);
-    void dashboard.refresh();
+  const handleRefresh = async (): Promise<void> => {
+    if (isRefreshing || dashboard.loading) {
+      return;
+    }
+
+    setIsRefreshing(true);
+
+    try {
+      await invalidateOpportunities(queryClient, { throwOnError: true });
+      await dashboard.refresh();
+    } catch {
+      toast.error(formatMessage('dashboard.loadError'));
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleLinkSuccess = (): void => {
@@ -132,6 +146,7 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const content = activeKey === pathNavKey ? children : null;
+  const isSyncing = dashboard.loading || isRefreshing;
 
   return (
     <div
@@ -171,12 +186,14 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
 
         <main className={styles.content}>
           <div className={styles.pageTitleRow}>
-            <h2 className={styles.pageTitle}>{formatMessage(PAGE_TITLE_KEYS[activeKey])}</h2>
-            {dashboard.loading && dashboard.hasCachedData && (
-              <div className={styles.pageUpdatingIndicator} role="status" aria-live="polite">
-                <Spinner size="small" tip={formatMessage('dashboard.updating')} />
-              </div>
-            )}
+            <div className={styles.pageTitleGroup}>
+              <h2 className={styles.pageTitle}>{formatMessage(PAGE_TITLE_KEYS[activeKey])}</h2>
+              {isSyncing && dashboard.hasCachedData && (
+                <div className={styles.pageUpdatingIndicator} role="status" aria-live="polite">
+                  <Spinner size="small" tip={formatMessage('dashboard.updating')} />
+                </div>
+              )}
+            </div>
             <div className={styles.syncActions}>
               {dashboard.lastSyncTime && (
                 <span className={styles.lastSyncText}>
@@ -188,13 +205,13 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
                 variant="secondary"
                 size="small"
                 onClick={handleRefresh}
-                disabled={dashboard.loading}
+                disabled={isSyncing}
                 aria-label={formatMessage('dashboard.refreshData')}
                 className={styles.refreshBtn}
               >
                 <RotateCw
                   size={14}
-                  className={clsx(styles.refreshIcon, dashboard.loading && styles.spin)}
+                  className={clsx(styles.refreshIcon, isSyncing && styles.spin)}
                 />
                 <span>{formatMessage('dashboard.refresh')}</span>
               </Button>
