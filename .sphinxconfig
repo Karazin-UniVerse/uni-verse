@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "events": ["pre-push"],
+  "branches": ["*"],
+  "remotes": ["*"],
+  "level": "standard",
+  "distance": "mixed",
+  "backgroundPreparation": false,
+  "github": {
+    "status": false,
+    "comment": false,
+    "answers": false
+  }
+}

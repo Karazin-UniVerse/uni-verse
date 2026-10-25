@@ -188,6 +188,11 @@ UniVerse enforces strict institutional security policies:
 
 AI coding agents can use the shared [Context7 MCP configuration](docs/context7.md) for library documentation. Each developer signs in with their own account; no shared credentials or application dependencies are required. Local codebase structural knowledge graphs can be generated with zero token spend via [Graphify](docs/graphify.md).
 
+Developers can opt into [Sphinx browser checks before pushing](docs/sphinx.md).
+The Git-only workflow needs no agent plugin or MCP server and never quizzes on
+commit. Installation and reviewer credentials are personal; native Windows
+support depends on the separate compatibility patch.
+
 Run linters, style checks, type checks, and automated tests across all monorepo packages:
 
 ```bash
