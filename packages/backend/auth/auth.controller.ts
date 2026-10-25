@@ -209,12 +209,9 @@ export class AuthController {
   }
 
   private getClearRefreshTokenCookieOptions(): CookieOptions {
-    const isProduction = process.env.NODE_ENV === 'production';
+    const { maxAge: _unused, ...clearOptions } =
+      this.getRefreshTokenCookieOptions();
 
-    return {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-    };
+    return clearOptions;
   }
 }

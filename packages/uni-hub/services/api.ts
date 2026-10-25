@@ -4,12 +4,12 @@
  *
  * Sub-modules:
  *   api.storage.ts  — safeStorage, API_BASE_URL
- *   api.request.ts  — ApiClient, request, buildQueryString, getErrorMessage
+ *   api.request.ts  — ApiClient, buildQueryString, getErrorMessage
  *   api.auth.ts     — AuthApi, authApi
  *   api.moodle.ts   — MoodleApi, moodleApi, GetAssignmentsParams
  */
 export { safeStorage, API_BASE_URL } from './api.storage';
-export { ApiClient, request, buildQueryString, getErrorMessage } from './api.request';
+export { ApiClient, buildQueryString, getErrorMessage } from './api.request';
 export type { RequestOptions } from './api.request';
 export { AuthApi, authApi } from './api.auth';
 export { MoodleApi, moodleApi } from './api.moodle';

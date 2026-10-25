@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { buildQueryString, authApi, moodleApi } from './api';
+import { buildQueryString, authApi, moodleApi, ApiClient } from './api';
 import { resetRefreshPromiseForTests } from './api.request';
 
 describe('UniHub API Service', () => {
@@ -463,6 +463,107 @@ describe('UniHub API Service', () => {
       await expect(moodleApi.getCourses()).rejects.toThrow('Refresh token expired (HTTP 401)');
       expect(mockStorage.accessToken).toBeUndefined();
       expect(mockStorage.isLoggedIn).toBeUndefined();
+    });
+
+    it('clears session storage and throws 403 when /auth/refresh returns 403 Forbidden', async () => {
+      mockStorage.accessToken = 'invalidated-token';
+      mockStorage.isLoggedIn = 'true';
+
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url.includes('/auth/refresh')) {
+          return Promise.resolve({
+            ok: false,
+            status: 403,
+            statusText: 'Forbidden',
+            json: async () => ({ statusCode: 403, message: 'Refresh token revoked' }),
+          } as Response);
+        }
+
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized',
+          json: async () => ({ statusCode: 401, message: 'Unauthorized' }),
+        } as Response);
+      });
+
+      await expect(moodleApi.getCourses()).rejects.toThrow('Refresh token revoked (HTTP 403)');
+      expect(mockStorage.accessToken).toBeUndefined();
+      expect(mockStorage.isLoggedIn).toBeUndefined();
+    });
+
+    it('reuses refreshed token from storage when a trailing 401 request completes after refresh', async () => {
+      mockStorage.accessToken = 'expired-token';
+
+      let refreshCallCount = 0;
+
+      global.fetch = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+        if (url.includes('/auth/refresh')) {
+          refreshCallCount += 1;
+
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ access_token: 'trailing-fresh-token' }),
+          } as Response;
+        }
+
+        const authHeader = (init?.headers as Record<string, string>)?.Authorization;
+
+        if (authHeader === 'Bearer trailing-fresh-token') {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => [],
+          } as Response;
+        }
+
+        return {
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized',
+          json: async () => ({ statusCode: 401, message: 'Unauthorized' }),
+        } as Response;
+      });
+
+      // First request refreshes the token to 'trailing-fresh-token'
+      await moodleApi.getCourses();
+      expect(refreshCallCount).toBe(1);
+      expect(mockStorage.accessToken).toBe('trailing-fresh-token');
+
+      // Now a trailing in-flight request arrives whose initial attempt carried 'expired-token'
+      const trailingResult = await moodleApi.getGrades();
+
+      expect(trailingResult.data).toEqual([]);
+      // Should NOT have triggered a second refresh call
+      expect(refreshCallCount).toBe(1);
+    });
+
+    it('does not refresh token when skipAuthRefresh option is passed', async () => {
+      mockStorage.accessToken = 'expired-token';
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        json: async () => ({ statusCode: 401, message: 'Unauthorized' }),
+      } as Response);
+
+      class CustomClient extends ApiClient {
+        fetchNoRefresh() {
+          return this.request('/moodle/profile', { skipAuthRefresh: true });
+        }
+      }
+
+      const custom = new CustomClient();
+
+      await expect(custom.fetchNoRefresh()).rejects.toThrow('Unauthorized (HTTP 401)');
+
+      const refreshCalls = vi
+        .mocked(global.fetch)
+        .mock.calls.filter((call) => String(call[0]).includes('/auth/refresh'));
+
+      expect(refreshCalls).toHaveLength(0);
     });
 
     it('does not clear session storage when /auth/refresh fails due to network error', async () => {

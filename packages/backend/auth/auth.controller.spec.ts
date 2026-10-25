@@ -317,7 +317,7 @@ describe('AuthController', () => {
       try {
         const response = createMockResponse();
 
-        authService.logout.mockResolvedValue(undefined as any);
+        authService.logout.mockResolvedValue(undefined);
 
         await controller.logout('user-123', response);
 

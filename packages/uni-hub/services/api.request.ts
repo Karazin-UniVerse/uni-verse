@@ -1,4 +1,5 @@
 import { RESPONSE_CODES } from '@core/constants/response-codes';
+import { AUTH_ROUTES } from '@core/constants/routes';
 import { safeStorage, API_BASE_URL } from './api.storage';
 import { clearUserSessionStorage } from './api.session';
 
@@ -136,14 +137,18 @@ async function refreshAccessToken(): Promise<string> {
   }
 
   refreshPromise = (async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), DEFAULT_REQUEST_TIMEOUT_MS);
+
     try {
-      const url = `${API_BASE_URL}/auth/refresh`;
+      const url = `${API_BASE_URL}/auth/${AUTH_ROUTES.REFRESH}`;
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -171,6 +176,7 @@ async function refreshAccessToken(): Promise<string> {
 
       return data.access_token;
     } finally {
+      clearTimeout(timeoutId);
       refreshPromise = null;
     }
   })();
@@ -184,11 +190,11 @@ function isRefreshCandidate(endpoint: string, options: RequestOptions): boolean 
   }
 
   const isAuthEndpoint =
-    endpoint.startsWith('/auth/refresh') ||
-    endpoint.startsWith('/auth/login') ||
-    endpoint.startsWith('/auth/register') ||
-    endpoint.startsWith('/auth/google') ||
-    endpoint.startsWith('/auth/logout');
+    endpoint.startsWith(`/auth/${AUTH_ROUTES.REFRESH}`) ||
+    endpoint.startsWith(`/auth/${AUTH_ROUTES.LOGIN}`) ||
+    endpoint.startsWith(`/auth/${AUTH_ROUTES.REGISTER}`) ||
+    endpoint.startsWith(`/auth/${AUTH_ROUTES.GOOGLE}`) ||
+    endpoint.startsWith(`/auth/${AUTH_ROUTES.LOGOUT}`);
 
   if (isAuthEndpoint) {
     return false;
@@ -232,11 +238,19 @@ async function executeRequestWithRefresh<T>({
     initialResponse.status === RESPONSE_CODES.UNAUTHORIZED &&
     isRefreshCandidate(endpoint, requestOptions)
   ) {
-    const newToken = await refreshAccessToken();
+    const storedToken = safeStorage.getItem('accessToken');
+    const sentToken = headers.Authorization?.replace('Bearer ', '');
+
+    const newToken =
+      storedToken && storedToken !== sentToken ? storedToken : await refreshAccessToken();
+
     const retryHeaders: Record<string, string> = {
       ...headers,
-      Authorization: `Bearer ${newToken}`,
     };
+
+    if (isSecureOrLoopback(url)) {
+      retryHeaders.Authorization = `Bearer ${newToken}`;
+    }
 
     const retryResponse = await executeAttempt({
       url,
@@ -279,19 +293,25 @@ async function executeRequest<T>(
     ...options
   } = requestOptions;
   const url = `${API_BASE_URL}${endpoint}`;
-  const token = safeStorage.getItem('accessToken');
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string>),
+  const buildAttemptHeaders = (): Record<string, string> => {
+    const token = safeStorage.getItem('accessToken');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string>),
+    };
+
+    if (token && isSecureOrLoopback(url)) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    return headers;
   };
-
-  if (token && isSecureOrLoopback(url)) {
-    headers.Authorization = `Bearer ${token}`;
-  }
 
   const attemptRequest = async (currentAttempt: number): Promise<{ data: T }> => {
     try {
+      const headers = buildAttemptHeaders();
+
       return await executeRequestWithRefresh<T>({
         endpoint,
         url,
@@ -303,8 +323,10 @@ async function executeRequest<T>(
     } catch (error) {
       const isUnauthorized =
         error instanceof Error &&
-        (error.message.includes(`HTTP ${RESPONSE_CODES.UNAUTHORIZED}`) ||
-          error.message.includes(`${RESPONSE_CODES.UNAUTHORIZED}`));
+        (error.message.includes(`HTTP error ${RESPONSE_CODES.UNAUTHORIZED}`) ||
+          error.message.includes(`(HTTP ${RESPONSE_CODES.UNAUTHORIZED})`) ||
+          error.message.includes(`HTTP error ${RESPONSE_CODES.FORBIDDEN}`) ||
+          error.message.includes(`(HTTP ${RESPONSE_CODES.FORBIDDEN})`));
 
       if (isUnauthorized || options.signal?.aborted || currentAttempt >= retries) {
         throw error;
@@ -329,13 +351,6 @@ export abstract class ApiClient {
   ): Promise<{ data: T }> {
     return executeRequest<T>(endpoint, requestOptions);
   }
-}
-
-export async function request<T>(
-  endpoint: string,
-  requestOptions: RequestOptions = {},
-): Promise<{ data: T }> {
-  return executeRequest<T>(endpoint, requestOptions);
 }
 
 export function getErrorMessage(err: unknown, fallback: string): string {
