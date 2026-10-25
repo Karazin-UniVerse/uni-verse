@@ -23,6 +23,15 @@ describe('CreateOpportunityDto', () => {
     },
   );
 
+  it('accepts paymentDetails: null', () => {
+    const dto = plainToInstance(CreateOpportunityDto, {
+      ...validPayload,
+      paymentDetails: null,
+    });
+
+    expect(validateSync(dto)).toEqual([]);
+  });
+
   it.each([null, 'INVALID'])('rejects lifecycleState %s', (lifecycleState) => {
     const dto = plainToInstance(CreateOpportunityDto, {
       ...validPayload,

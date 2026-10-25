@@ -3,5 +3,5 @@ import type { UpdateOpportunityRequest } from '@universe/core/types/opportunitie
 import { CreateOpportunityDto } from './create-opportunity.dto';
 
 export class UpdateOpportunityDto
-  extends PartialType(CreateOpportunityDto)
+  extends PartialType(CreateOpportunityDto, { skipNullProperties: false })
   implements UpdateOpportunityRequest {}
