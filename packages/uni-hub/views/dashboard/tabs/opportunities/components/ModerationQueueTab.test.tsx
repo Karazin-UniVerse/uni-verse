@@ -28,6 +28,7 @@ const mockOpportunity: Opportunity = {
 
 const renderModerationQueueTab = (props: Partial<ModerationQueueTabProps> = {}) => {
   const defaultProps: ModerationQueueTabProps = {
+    currentUserId: 'moderator-99',
     loading: false,
     isError: false,
     onRetry: vi.fn(),
