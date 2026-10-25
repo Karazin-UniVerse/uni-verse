@@ -47,7 +47,7 @@ describe('Tier 1 - Feature 5: SCSS Design Tokens Public Exports (@universe/ui)',
     expect(content).toMatch(/scrollbar-color|scrollbar-width/);
   });
 
-  it('F5-7: SCSS tokens should define yellow palette and bind warning tokens', () => {
+  it('F5-7: SCSS tokens should define yellow palette and bind warning tokens', (): void => {
     const content = readWorkspaceFile('packages/ui/vars.scss');
 
     expect(content).toContain('--yellow-50:');
