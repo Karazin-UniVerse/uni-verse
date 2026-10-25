@@ -6,7 +6,16 @@ import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { BadgeSystem } from './BadgeSystem';
 
 vi.mock('@uni-hub/i18n/LanguageContext', () => ({
-  useLanguage: () => ({ formatMessage: (key: string) => key }),
+  useLanguage: () => ({
+    formatMessage: (key: string, values?: Record<string, string | number>) => {
+      if (!values) return key;
+
+      const template =
+        key === 'badge.unlockToast' ? 'badge.unlocked: {title} — {description}' : key;
+
+      return template.replace(/\{(\w+)\}/g, (_, k) => (k in values ? String(values[k]) : `{${k}}`));
+    },
+  }),
 }));
 vi.mock('@uni-hub/utils/confetti', () => ({ fireConfetti: vi.fn() }));
 vi.mock('@uni-hub/utils/soundEffects', () => ({ playSuccess: vi.fn() }));

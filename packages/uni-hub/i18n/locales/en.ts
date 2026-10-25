@@ -286,6 +286,7 @@ export const en = {
 
   // Gamification
   'badge.unlocked': 'Achievement',
+  'badge.unlockToast': 'Achievement: {title} — {description}',
   'gamification.badges.deadlineSniper.title': 'Deadline Sniper',
   'gamification.badges.deadlineSniper.description': 'Submitted assignment before deadline',
   'gamification.badges.nightOwl.title': 'Night Owl',

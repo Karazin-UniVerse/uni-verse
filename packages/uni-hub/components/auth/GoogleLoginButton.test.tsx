@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
+import { LanguageProvider, useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { GoogleLoginButton } from './GoogleLoginButton';
 
 vi.mock('next/script', () => ({
@@ -32,7 +33,7 @@ describe('GoogleLoginButton component', () => {
     expect(buttonContainer?.className).toContain('disabled');
   });
 
-  it('renders Google button with language locale', () => {
+  it('renders Google button with language locale and updates on language change', () => {
     const renderButton = vi.fn();
     const initialize = vi.fn();
 
@@ -47,12 +48,41 @@ describe('GoogleLoginButton component', () => {
 
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = 'test-client-id';
 
-    renderWithTheme(<GoogleLoginButton onSuccess={vi.fn()} />);
+    function TestConsumer() {
+      const { setLanguage } = useLanguage();
+
+      return (
+        <>
+          <button type="button" onClick={() => setLanguage('en')}>
+            Switch
+          </button>
+          <GoogleLoginButton onSuccess={vi.fn()} />
+        </>
+      );
+    }
+
+    render(
+      <LanguageProvider>
+        <ThemeProvider>
+          <TestConsumer />
+        </ThemeProvider>
+      </LanguageProvider>,
+    );
 
     expect(renderButton).toHaveBeenCalledWith(
       expect.any(HTMLDivElement),
       expect.objectContaining({
         locale: 'uk',
+        text: 'continue_with',
+      }),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Switch' }));
+
+    expect(renderButton).toHaveBeenLastCalledWith(
+      expect.any(HTMLDivElement),
+      expect.objectContaining({
+        locale: 'en',
         text: 'continue_with',
       }),
     );

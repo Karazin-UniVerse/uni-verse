@@ -285,6 +285,7 @@ export const uk = {
 
   // Gamification
   'badge.unlocked': 'Досягнення',
+  'badge.unlockToast': 'Досягнення: {title} — {description}',
   'gamification.badges.deadlineSniper.title': 'Снайпер дедлайнів',
   'gamification.badges.deadlineSniper.description': 'Здали завдання до дедлайну',
   'gamification.badges.nightOwl.title': 'Нічна сова',

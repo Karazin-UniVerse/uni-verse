@@ -140,7 +140,9 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
           const badgeTitle = formatMessage(BADGES.DEADLINE_SNIPER.titleKey);
           const badgeDesc = formatMessage(BADGES.DEADLINE_SNIPER.descriptionKey);
 
-          toast.success(`${formatMessage('badge.unlocked')}: ${badgeTitle} — ${badgeDesc}`);
+          toast.success(
+            formatMessage('badge.unlockToast', { title: badgeTitle, description: badgeDesc }),
+          );
         }
       }
 

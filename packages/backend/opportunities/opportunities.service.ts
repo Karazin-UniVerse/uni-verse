@@ -257,7 +257,7 @@ export class OpportunitiesService {
       where: { id },
     });
 
-    if (!opportunity || opportunity.ownerId !== userId) {
+    if (opportunity?.ownerId !== userId) {
       throw new NotFoundException('Opportunity not found');
     }
 

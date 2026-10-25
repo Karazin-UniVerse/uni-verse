@@ -42,7 +42,7 @@ export const BadgeSystem: React.FC<BadgeSystemProps> = ({ grades, submittedBefor
         const title = formatMessage(badge.titleKey);
         const description = formatMessage(badge.descriptionKey);
 
-        toast.success(`${formatMessage('badge.unlocked')}: ${title} — ${description}`);
+        toast.success(formatMessage('badge.unlockToast', { title, description }));
         triggerCelebration();
       }
     }
