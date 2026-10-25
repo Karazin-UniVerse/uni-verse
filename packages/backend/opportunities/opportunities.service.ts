@@ -249,6 +249,43 @@ export class OpportunitiesService {
   }
 
   /**
+   * Delete a draft opportunity.
+   * Only the owner can delete, and only if the opportunity is in DRAFT or REQUIRES_CHANGES status.
+   */
+  async delete(userId: string, id: string): Promise<Opportunity> {
+    const opportunity = await this.prisma.opportunity.findUnique({
+      where: { id },
+    });
+
+    if (!opportunity) {
+      throw new NotFoundException('Opportunity not found');
+    }
+
+    if (opportunity.ownerId !== userId) {
+      throw new ForbiddenException(
+        'You can only delete your own opportunities',
+      );
+    }
+
+    if (
+      opportunity.status !== OpportunityStatus.DRAFT &&
+      opportunity.status !== OpportunityStatus.REQUIRES_CHANGES
+    ) {
+      throw new BadRequestException(
+        'Only draft or rejected opportunities can be deleted',
+      );
+    }
+
+    await this.prisma.opportunityApplication.deleteMany({
+      where: { opportunityId: id },
+    });
+
+    return this.prisma.opportunity.delete({
+      where: { id },
+    });
+  }
+
+  /**
    * Submit an opportunity for moderation.
    */
   async changeStatus(

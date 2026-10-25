@@ -6,7 +6,7 @@ import {
   IsString,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PaymentType } from '@universe/database';
+import { PaymentType, OpportunityLifecycleState } from '@universe/database';
 import type { CreateOpportunityRequest } from '@universe/core/types/opportunities';
 
 export class CreateOpportunityDto implements CreateOpportunityRequest {
@@ -38,4 +38,12 @@ export class CreateOpportunityDto implements CreateOpportunityRequest {
   @IsBoolean()
   @IsOptional()
   acceptsApplications?: boolean;
+
+  @ApiPropertyOptional({
+    enum: OpportunityLifecycleState,
+    default: OpportunityLifecycleState.START,
+  })
+  @IsEnum(OpportunityLifecycleState)
+  @IsOptional()
+  lifecycleState?: OpportunityLifecycleState;
 }

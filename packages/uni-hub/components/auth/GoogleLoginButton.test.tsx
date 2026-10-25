@@ -31,4 +31,33 @@ describe('GoogleLoginButton component', () => {
     expect(buttonContainer).toHaveAttribute('inert');
     expect(buttonContainer?.className).toContain('disabled');
   });
+
+  it('renders Google button with language locale', () => {
+    const renderButton = vi.fn();
+    const initialize = vi.fn();
+
+    vi.stubGlobal('google', {
+      accounts: {
+        id: {
+          initialize,
+          renderButton,
+        },
+      },
+    });
+
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = 'test-client-id';
+
+    renderWithTheme(<GoogleLoginButton onSuccess={vi.fn()} />);
+
+    expect(renderButton).toHaveBeenCalledWith(
+      expect.any(HTMLDivElement),
+      expect.objectContaining({
+        locale: 'uk',
+        text: 'continue_with',
+      }),
+    );
+
+    vi.unstubAllGlobals();
+    delete process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  });
 });

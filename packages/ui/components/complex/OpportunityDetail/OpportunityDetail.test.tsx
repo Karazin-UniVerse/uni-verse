@@ -15,14 +15,8 @@ describe('OpportunityDetail Component', () => {
     contactValue: 'hr@example.com',
     applyText: 'Apply now',
     applicationsClosedText: 'Applications closed by author',
-    acceptsApplicationsLabel: 'Accept new applications',
     manageTitle: 'Manage Opportunity',
-    phaseLabel: 'Phase:',
-    lifecycleState: 'ACTIVE',
-    lifecycleOptions: [
-      { value: 'START', label: 'Start' },
-      { value: 'ACTIVE', label: 'Active' },
-    ],
+    deleteText: 'Delete draft',
   };
 
   it('should render details content with title, description, and contact info', () => {
@@ -75,49 +69,22 @@ describe('OpportunityDetail Component', () => {
     expect(screen.queryByRole('button', { name: 'Apply now' })).not.toBeInTheDocument();
   });
 
-  it('should render author management panel with acceptsApplications checkbox when isOwner is true', () => {
-    const onToggle = vi.fn();
+  it('should render author management panel with delete button when isOwner and canDelete are true', () => {
+    const onDelete = vi.fn();
 
     render(
-      <OpportunityDetail
-        {...defaultProps}
-        isOwner={true}
-        acceptsApplications={true}
-        onToggleAcceptsApplications={onToggle}
-      />,
+      <OpportunityDetail {...defaultProps} isOwner={true} canDelete={true} onDelete={onDelete} />,
     );
 
     expect(screen.getByText('Manage Opportunity')).toBeInTheDocument();
 
-    const checkbox = screen.getByRole('checkbox');
+    const deleteBtn = screen.getByRole('button', { name: 'Delete draft' });
 
-    expect(checkbox).toBeInTheDocument();
-    expect(checkbox).toBeChecked();
+    expect(deleteBtn).toBeInTheDocument();
 
-    fireEvent.click(checkbox);
+    fireEvent.click(deleteBtn);
 
-    expect(onToggle).toHaveBeenCalledWith(false);
-  });
-
-  it('should reflect unchecked state when acceptsApplications is false for author', () => {
-    const onToggle = vi.fn();
-
-    render(
-      <OpportunityDetail
-        {...defaultProps}
-        isOwner={true}
-        acceptsApplications={false}
-        onToggleAcceptsApplications={onToggle}
-      />,
-    );
-
-    const checkbox = screen.getByRole('checkbox');
-
-    expect(checkbox).not.toBeChecked();
-
-    fireEvent.click(checkbox);
-
-    expect(onToggle).toHaveBeenCalledWith(true);
+    expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
   it('should render view applicants button in author panel when onOpenApplicants is provided', () => {

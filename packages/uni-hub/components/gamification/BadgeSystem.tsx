@@ -39,8 +39,10 @@ export const BadgeSystem: React.FC<BadgeSystemProps> = ({ grades, submittedBefor
       if (newly && !notifiedRef.current.has(notificationKey)) {
         notifiedRef.current.add(notificationKey);
         const badge = BADGES[id];
+        const title = formatMessage(badge.titleKey);
+        const description = formatMessage(badge.descriptionKey);
 
-        toast.success(`${formatMessage('badge.unlocked')}: ${badge.title} — ${badge.description}`);
+        toast.success(`${formatMessage('badge.unlocked')}: ${title} — ${description}`);
         triggerCelebration();
       }
     }

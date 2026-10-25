@@ -58,6 +58,12 @@ export class OpportunitiesApi {
     });
   }
 
+  async deleteOpportunity(id: string): Promise<{ data: Opportunity }> {
+    return request<Opportunity>(`/opportunities/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   async getMyOpportunities(): Promise<{ data: Opportunity[] }> {
     return request<Opportunity[]>('/opportunities/my');
   }

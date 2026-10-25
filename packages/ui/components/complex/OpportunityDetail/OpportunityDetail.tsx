@@ -1,10 +1,8 @@
-import React, { useId } from 'react';
-import { Mail, Send, Pencil, Users } from 'lucide-react';
+import React from 'react';
+import { Mail, Send, Pencil, Users, Trash2 } from 'lucide-react';
 import { BackButton } from '../BackButton';
 import { Button } from '../../una/Button';
 import { Tag } from '../../una/Tag';
-import { Select } from '../../una/Select';
-import { CheckBox } from '../../una/inputs/CheckBox';
 import type { OpportunityDetailProps } from './OpportunityDetail.types';
 import styles from './OpportunityDetail.module.scss';
 
@@ -68,26 +66,22 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   moderationComment,
   moderationCommentTitle,
   manageTitle,
-  phaseLabel,
-  lifecycleState,
-  onLifecycleChange,
-  onToggleAcceptsApplications,
-  acceptsApplicationsLabel,
   applicationsClosedText,
   applyText,
   onOpenApply,
   onOpenApplicants,
   viewApplicantsText,
+  onDelete,
+  deleteText,
   className,
+  canDelete = false,
   acceptsApplications = true,
   paymentTone = 'neutral',
   isOwner = false,
   canEdit = false,
   canSendToReview = false,
-  lifecycleOptions = [],
   canApply = false,
 }) => {
-  const phaseSelectId = useId();
   const footerButton = getCandidateFooterButton({
     isOwner,
     canApply,
@@ -174,36 +168,15 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
                     {sendToReviewText}
                   </Button>
                 )}
-              </div>
 
-              {onLifecycleChange && lifecycleOptions.length > 0 && (
-                <div className={styles.phaseWrapper}>
-                  <label htmlFor={phaseSelectId} className={styles.phaseLabel}>
-                    {phaseLabel}
-                  </label>
-                  <Select
-                    id={phaseSelectId}
-                    aria-label={phaseLabel}
-                    value={lifecycleState ?? ''}
-                    onChange={(val) => onLifecycleChange(val)}
-                    options={lifecycleOptions}
-                  />
-                </div>
-              )}
+                {canDelete && onDelete && (
+                  <Button variant="secondary" onClick={onDelete}>
+                    <Trash2 size={14} className={styles.btnIcon} />
+                    {deleteText}
+                  </Button>
+                )}
+              </div>
             </div>
-
-            {onToggleAcceptsApplications && acceptsApplicationsLabel && (
-              <div className={styles.acceptsApplicationsRow}>
-                <label className={styles.checkboxLabel}>
-                  <CheckBox
-                    variant="primary"
-                    checked={acceptsApplications}
-                    onChange={(e) => onToggleAcceptsApplications(e.target.checked)}
-                  />
-                  <span>{acceptsApplicationsLabel}</span>
-                </label>
-              </div>
-            )}
           </div>
         )}
 

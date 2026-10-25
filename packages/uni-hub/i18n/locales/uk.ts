@@ -285,6 +285,12 @@ export const uk = {
 
   // Gamification
   'badge.unlocked': 'Досягнення',
+  'gamification.badges.deadlineSniper.title': 'Снайпер дедлайнів',
+  'gamification.badges.deadlineSniper.description': 'Здали завдання до дедлайну',
+  'gamification.badges.nightOwl.title': 'Нічна сова',
+  'gamification.badges.nightOwl.description': 'Зайшли в дашборд між 22:00 та 05:00',
+  'gamification.badges.semesterMaster.title': 'Майстер семестру',
+  'gamification.badges.semesterMaster.description': 'Усі курси з оцінкою ≥ 80',
   'admission.admitted': 'Допущено до іспиту ({score} / 60 б. — поріг допуску 30 б. досягнуто)',
   'admission.notAdmitted':
     'Не допущено до іспиту ({score} / 60 б. — бракує {remaining} б. для допуску)',
@@ -441,12 +447,18 @@ export const uk = {
   'opportunities.toast.stateUpdated': 'Стан проекту оновлено',
   'opportunities.toast.updated': 'Зміни успішно збережено!',
   'opportunities.toast.updateError': 'Помилка оновлення можливості',
+  'opportunities.toast.deleted': 'Чернетку можливості видалено',
+  'opportunities.toast.deleteError': 'Помилка видалення чернетки',
   'opportunities.toast.applicationsOpened': 'Прийом відгуків відкрито',
   'opportunities.toast.applicationsClosed': 'Прийом відгуків закрито',
   'opportunities.toast.statusUpdateError': 'Помилка оновлення статусу',
   'opportunities.confirm.withdraw': 'Ви впевнені, що бажаєте відкликати свій відгук?',
   'opportunities.confirm.withdrawTitle': 'Відкликання відгуку',
   'opportunities.confirm.withdrawConfirm': 'Відкликати',
+  'opportunities.confirm.delete':
+    'Ви впевнені, що бажаєте видалити цю чернетку можливості? Цю дію неможливо скасувати.',
+  'opportunities.confirm.deleteTitle': 'Видалення чернетки',
+  'opportunities.confirm.deleteConfirm': 'Видалити',
   'opportunities.toast.withdrawn': 'Відгук відкликано',
   'opportunities.toast.approved': 'Можливість схвалено та опубліковано в каталозі!',
   'opportunities.toast.rejected': 'Можливість відхилено',
@@ -533,6 +545,7 @@ export const uk = {
   'opportunities.createModal.paymentDetailsLabel': 'Деталі та розмір оплати',
   'opportunities.createModal.paymentDetailsPlaceholder':
     'Наприклад: $400/місяць або 5000 грн за етап',
+  'opportunities.createModal.phaseLabel': 'Фаза',
   'opportunities.createModal.acceptsApplications': 'Приймати нові відгуки на можливість',
   'opportunities.createModal.cancel': 'Скасувати',
   'opportunities.createModal.saving': 'Збереження...',
@@ -563,6 +576,7 @@ export const uk = {
   'opportunities.detailModal.manageTitle': 'Керування вашою можливістю',
   'opportunities.detailModal.sendToReview': 'Надіслати на модерацію',
   'opportunities.detailModal.edit': 'Редагувати',
+  'opportunities.detailModal.delete': 'Видалити',
   'opportunities.detailModal.moderationFeedback': 'Зауваження модератора',
   'opportunities.detailModal.phaseLabel': 'Фаза:',
   'opportunities.detailModal.phaseStart': 'Старт',

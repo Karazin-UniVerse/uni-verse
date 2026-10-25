@@ -13,8 +13,10 @@ import { buildOpportunity } from './test-utils';
 let query = new URLSearchParams(`${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`);
 let userId: string | null = 'owner-1';
 
+const pushMock = vi.fn();
+
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: pushMock }),
   useSearchParams: () => query,
 }));
 
@@ -202,5 +204,79 @@ describe('OpportunityDetailContent applicants deep-link', () => {
       screen.queryByRole('button', { name: 'opportunities.card.applications' }),
     ).not.toBeInTheDocument();
     expect(opportunitiesApi.getOpportunityApplications).not.toHaveBeenCalled();
+  });
+});
+
+describe('OpportunityDetailContent delete', () => {
+  beforeEach(() => {
+    query = new URLSearchParams();
+    userId = 'owner-1';
+    pushMock.mockClear();
+    vi.spyOn(opportunitiesApi, 'deleteOpportunity').mockResolvedValue(undefined as never);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('allows owner to delete a draft opportunity with confirmation', async () => {
+    const user = userEvent.setup();
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    render(
+      <OpportunityDetailContent
+        opportunity={{ ...buildOpportunity('opp-draft'), status: 'DRAFT' }}
+      />,
+      {
+        wrapper: ({ children }) => (
+          <QueryClientProvider client={queryClient}>
+            <ToastProvider>{children}</ToastProvider>
+          </QueryClientProvider>
+        ),
+      },
+    );
+
+    const deleteBtn = screen.getByRole('button', { name: 'opportunities.detailModal.delete' });
+
+    expect(deleteBtn).toBeInTheDocument();
+
+    await user.click(deleteBtn);
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('opportunities.confirm.deleteTitle')).toBeInTheDocument();
+
+    const confirmBtn = screen.getByRole('button', {
+      name: 'opportunities.confirm.deleteConfirm',
+    });
+
+    await user.click(confirmBtn);
+
+    expect(opportunitiesApi.deleteOpportunity).toHaveBeenCalledWith('opp-draft');
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith('/opportunities'));
+  });
+
+  it('does not display delete button for non-draft opportunities', () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    render(
+      <OpportunityDetailContent
+        opportunity={{ ...buildOpportunity('opp-published'), status: 'PUBLISHED' }}
+      />,
+      {
+        wrapper: ({ children }) => (
+          <QueryClientProvider client={queryClient}>
+            <ToastProvider>{children}</ToastProvider>
+          </QueryClientProvider>
+        ),
+      },
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'opportunities.detailModal.delete' }),
+    ).not.toBeInTheDocument();
   });
 });

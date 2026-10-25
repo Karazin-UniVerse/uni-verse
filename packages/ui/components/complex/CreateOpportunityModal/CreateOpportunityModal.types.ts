@@ -1,6 +1,10 @@
 import type { SyntheticEvent, Dispatch, SetStateAction } from 'react';
+import type { OpportunityLifecycle, OpportunityPaymentType } from '@core/constants/opportunities';
 
-export type OpportunityPaymentType = 'PAID' | 'UNPAID';
+export type OpportunityLifecycleOption = {
+  label: string;
+  value: OpportunityLifecycle;
+};
 
 export type CreateOpportunityFormData = {
   title: string;
@@ -9,6 +13,7 @@ export type CreateOpportunityFormData = {
   paymentType: OpportunityPaymentType;
   paymentDetails: string;
   acceptsApplications?: boolean;
+  lifecycleState?: OpportunityLifecycle;
 };
 
 export type CreateOpportunityModalProps = {
@@ -33,6 +38,8 @@ export type CreateOpportunityModalProps = {
   submitText: string;
   savingText: string;
   acceptsApplicationsLabel?: string;
+  phaseLabel?: string;
+  lifecycleOptions?: OpportunityLifecycleOption[];
   submitting?: boolean;
   className?: string;
 };

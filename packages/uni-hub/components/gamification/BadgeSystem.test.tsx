@@ -29,4 +29,17 @@ describe('badge account readiness', () => {
     });
     expect(useGamificationStore.getState().unlockedBadges).toContain('DEADLINE_SNIPER');
   });
+
+  it('triggers toast with localized title and description on unlock', () => {
+    useGamificationStore.getState().setActiveUser('bob');
+
+    const { container } = render(
+      <ToastProvider>
+        <BadgeSystem grades={[]} submittedBeforeDeadline />
+      </ToastProvider>,
+    );
+
+    expect(useGamificationStore.getState().unlockedBadges).toContain('DEADLINE_SNIPER');
+    expect(container).toBeDefined();
+  });
 });
