@@ -68,14 +68,14 @@ describe('assembleDashboardData', () => {
 });
 
 describe('parseDateFilterSeconds', () => {
-  it('returns null for empty or invalid date strings', () => {
+  it('should return null for empty or invalid date strings', () => {
     expect(parseDateFilterSeconds('')).toBeNull();
     expect(parseDateFilterSeconds(undefined)).toBeNull();
     expect(parseDateFilterSeconds('invalid')).toBeNull();
     expect(parseDateFilterSeconds('2025-13-45')).toBeNull();
   });
 
-  it('parses valid YYYY-MM-DD date to timestamp', () => {
+  it('should parse valid YYYY-MM-DD date to timestamp', () => {
     const parsed = parseDateFilterSeconds('2025-01-01');
 
     expect(typeof parsed).toBe('number');
@@ -84,12 +84,12 @@ describe('parseDateFilterSeconds', () => {
 });
 
 describe('resolveGradesResponse', () => {
-  it('returns empty array if response is missing or empty', () => {
+  it('should return empty array if response is missing or empty', () => {
     expect(resolveGradesResponse(null)).toEqual([]);
     expect(resolveGradesResponse(undefined)).toEqual([]);
   });
 
-  it('returns grades array from response', () => {
+  it('should return grades array from response', () => {
     const mockGrades = [{ courseId: 1, grade: '95' }] as any;
 
     expect(resolveGradesResponse({ data: { grades: mockGrades } } as any)).toEqual(mockGrades);
@@ -97,7 +97,7 @@ describe('resolveGradesResponse', () => {
 });
 
 describe('buildAssignmentParams', () => {
-  it('builds assignment query parameters with object argument', () => {
+  it('should build assignment query parameters with object argument', () => {
     const params = buildAssignmentParams({
       sortOrder: 'asc',
       dateFrom: '2025-01-01',
@@ -114,7 +114,7 @@ describe('buildAssignmentParams', () => {
 });
 
 describe('filterFallbackAssignments', () => {
-  it('filters assignments based on object parameters when hideCompleted is true', () => {
+  it('should filter assignments based on object parameters when hideCompleted is true', () => {
     const assignments = [
       { id: 1, submissionStatus: 'graded', duedate: 1000 },
       { id: 2, submissionStatus: 'new', duedate: 2000 },
@@ -130,7 +130,7 @@ describe('filterFallbackAssignments', () => {
     expect(filtered[0].id).toBe(2);
   });
 
-  it('preserves completed and late assignments when hideCompleted is false', () => {
+  it('should preserve completed and late assignments when hideCompleted is false', () => {
     const assignments = [
       { id: 1, submissionStatus: 'graded', duedate: 1000 },
       { id: 2, submissionStatus: 'new', duedate: 2000 },
@@ -147,7 +147,7 @@ describe('filterFallbackAssignments', () => {
 });
 
 describe('isUnauthorizedError', () => {
-  it('detects 401 in error messages', () => {
+  it('should detect 401 in error messages', () => {
     expect(isUnauthorizedError(new Error('Request failed with status code 401'))).toBe(true);
     expect(isUnauthorizedError(new Error('Server error 500'))).toBe(false);
     expect(isUnauthorizedError('not an error')).toBe(false);
@@ -155,7 +155,7 @@ describe('isUnauthorizedError', () => {
 });
 
 describe('storage helpers', () => {
-  it('persists and loads cached dashboard data', () => {
+  it('should persist and load cached dashboard data', () => {
     const snapshot: any = { courses: [{ id: 1 }] };
 
     persistDashboardSnapshot(12345678, snapshot);
@@ -168,7 +168,7 @@ describe('storage helpers', () => {
 });
 
 describe('syncStudentProfile', () => {
-  it('saves the student profile to storage', () => {
+  it('should save the student profile to storage', () => {
     const profile: any = { id: '1', fullName: 'John Doe' };
 
     syncStudentProfile(profile);
@@ -176,7 +176,7 @@ describe('syncStudentProfile', () => {
     expect(localStorage.getItem(STUDENT_PROFILE_STORAGE_KEY)).toBe(JSON.stringify(profile));
   });
 
-  it('does nothing when profile is null or undefined', () => {
+  it('should do nothing when profile is null or undefined', () => {
     syncStudentProfile(null);
     syncStudentProfile(undefined);
 
@@ -185,7 +185,7 @@ describe('syncStudentProfile', () => {
 });
 
 describe('getInitialUserProfile', () => {
-  it('prefers the cached profile over the saved username', () => {
+  it('should prefer the cached profile over the saved username', () => {
     const profile = { ...fallbackStudentProfile, fullName: 'Cached Student' };
 
     localStorage.setItem(STUDENT_PROFILE_STORAGE_KEY, JSON.stringify(profile));
@@ -199,14 +199,14 @@ describe('getInitialUserProfile', () => {
     ['an empty object', '{}'],
     ['a partial profile', JSON.stringify({ fullName: 'Partial Student' })],
     ['invalid JSON', '{not json'],
-  ])('ignores a cached profile that is %s', (_label: string, cached: string) => {
+  ])('should ignore a cached profile that is %s', (_label: string, cached: string) => {
     localStorage.setItem(STUDENT_PROFILE_STORAGE_KEY, cached);
     localStorage.setItem('username', 'saved.user');
 
     expect(getInitialUserProfile()?.fullName).toBe('saved.user');
   });
 
-  it('builds a profile from the saved username when nothing is cached', () => {
+  it('should build a profile from the saved username when nothing is cached', () => {
     localStorage.setItem('username', 'saved.user');
 
     expect(getInitialUserProfile()).toEqual({
@@ -216,7 +216,7 @@ describe('getInitialUserProfile', () => {
     });
   });
 
-  it('uses username as fullName directly and keeps email when username is email', () => {
+  it('should use username as fullName directly and keep email when username is email', () => {
     localStorage.setItem('username', 'student@karazin.ua');
 
     const profile = getInitialUserProfile();
@@ -259,7 +259,7 @@ describe('getInitialUserProfile', () => {
     expect(getInitialUserProfile()).not.toHaveProperty('group');
   });
 
-  it('returns null when there is no cache and no usable username', () => {
+  it('should return null when there is no cache and no usable username', () => {
     expect(getInitialUserProfile()).toBeNull();
 
     localStorage.setItem('username', fallbackStudentProfile.fullName);
@@ -318,13 +318,13 @@ describe('applyStoredIdentityToProfile', () => {
 });
 
 describe('isMoodleUnlinked', () => {
-  it('returns true when isMoodleLinked is explicitly false', () => {
+  it('should return true when isMoodleLinked is explicitly false', () => {
     localStorage.setItem('isMoodleLinked', 'false');
 
     expect(isMoodleUnlinked()).toBe(true);
   });
 
-  it('returns false when isMoodleLinked is true or missing', () => {
+  it('should return false when isMoodleLinked is true or missing', () => {
     localStorage.setItem('isMoodleLinked', 'true');
     expect(isMoodleUnlinked()).toBe(false);
 
@@ -334,7 +334,7 @@ describe('isMoodleUnlinked', () => {
 });
 
 describe('buildFallbackData', () => {
-  it('constructs fallback dashboard data with filtered assignments', () => {
+  it('should construct fallback dashboard data with filtered assignments', () => {
     const cachedData: any = {
       courses: [{ id: 1 }],
       assignments: [
