@@ -11,6 +11,21 @@ let currentPathname = '/study';
 let capturedLinkModalProps: { onSuccess?: () => void; open?: boolean } | null = null;
 let capturedUnlinkModalProps: { onSuccess?: () => void; open?: boolean } | null = null;
 
+const mockToastError = vi.fn();
+
+vi.mock('@una', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@una')>();
+
+  return {
+    ...actual,
+    useToast: () => ({
+      success: vi.fn(),
+      error: mockToastError,
+      info: vi.fn(),
+    }),
+  };
+});
+
 vi.mock('@uni-hub/services/api', () => ({
   safeStorage: {
     getItem: (key: string) => mockStorage[key] ?? null,
@@ -27,6 +42,14 @@ import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
 import { useOpportunitiesStore } from '@uni-hub/store/useOpportunitiesStore';
 import { OPPORTUNITY_SUB_TAB } from '../tabs/opportunities/constants';
 import { DashboardShell } from './DashboardShell';
+
+vi.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+      <div {...props}>{children}</div>
+    ),
+  },
+}));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -70,6 +93,11 @@ vi.mock('@uni-hub/store/useGamificationStore', () => ({
   useGamificationStore: () => vi.fn(),
 }));
 
+const mockRefresh = vi.fn().mockResolvedValue(undefined);
+
+vi.mock('../hooks/useAuthProtection', () => ({ useAuthProtection: vi.fn() }));
+vi.mock('../hooks/useDailyStreak', () => ({ useDailyStreak: vi.fn() }));
+
 vi.mock('../hooks/useDashboardData', () => ({
   useDashboardData: () => ({
     data: {
@@ -86,7 +114,7 @@ vi.mock('../hooks/useDashboardData', () => ({
     error: null,
     errorUpdatedAt: 0,
     platformError: null,
-    refresh: vi.fn(),
+    refresh: mockRefresh,
   }),
 }));
 
@@ -240,5 +268,49 @@ describe('DashboardShell', () => {
 
     expect(mockRemoveQueries).toHaveBeenCalledWith({ queryKey: ['moodle'] });
     expect(useMoodleStore.getState().isMoodleLinked).toBe(false);
+  });
+
+  it('triggers opportunities invalidation and dashboard refresh on clicking refresh button', async () => {
+    mockStorage.isMoodleLinked = 'false';
+    currentPathname = '/opportunities';
+
+    render(
+      <DashboardShell>
+        <div>Opportunities Content</div>
+      </DashboardShell>,
+    );
+
+    const refreshButton = screen.getByRole('button', { name: 'dashboard.refreshData' });
+
+    await act(async () => {
+      refreshButton.click();
+    });
+
+    expect(mockInvalidateQueries).toHaveBeenCalledWith(
+      { queryKey: ['opportunities'] },
+      { throwOnError: true },
+    );
+    expect(mockRefresh).toHaveBeenCalled();
+  });
+
+  it('shows error toast when opportunities invalidation fails during refresh', async () => {
+    mockStorage.isMoodleLinked = 'false';
+    currentPathname = '/opportunities';
+    mockInvalidateQueries.mockRejectedValueOnce(new Error('Failed invalidation'));
+
+    render(
+      <DashboardShell>
+        <div>Opportunities Content</div>
+      </DashboardShell>,
+    );
+
+    const refreshButton = screen.getByRole('button', { name: 'dashboard.refreshData' });
+
+    await act(async () => {
+      refreshButton.click();
+    });
+
+    expect(mockRefresh).not.toHaveBeenCalled();
+    expect(mockToastError).toHaveBeenCalledWith('dashboard.loadError');
   });
 });
