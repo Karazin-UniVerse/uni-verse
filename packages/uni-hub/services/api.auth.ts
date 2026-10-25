@@ -1,11 +1,11 @@
 import type { AuthResponse, GoogleAuthResponse } from '@core/types/auth';
 import { safeStorage } from './api.storage';
-import { request } from './api.request';
+import { ApiClient } from './api.request';
 import { clearUserSessionStorage } from './api.session';
 
-export class AuthApi {
+export class AuthApi extends ApiClient {
   async login(email: string, password: string): Promise<{ data: AuthResponse }> {
-    const response = await request<AuthResponse>('/auth/login', {
+    const response = await this.request<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
       retries: 0,
@@ -21,7 +21,7 @@ export class AuthApi {
   }
 
   async loginWithGoogle(idToken: string): Promise<{ data: GoogleAuthResponse }> {
-    const response = await request<GoogleAuthResponse>('/auth/google', {
+    const response = await this.request<GoogleAuthResponse>('/auth/google', {
       method: 'POST',
       body: JSON.stringify({ idToken }),
       retries: 0,
@@ -45,7 +45,7 @@ export class AuthApi {
     username: string,
     password: string,
   ): Promise<{ data: GoogleAuthResponse }> {
-    const response = await request<GoogleAuthResponse>('/auth/moodle/link', {
+    const response = await this.request<GoogleAuthResponse>('/auth/moodle/link', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
       retries: 0,
@@ -66,7 +66,7 @@ export class AuthApi {
   }
 
   async unlinkMoodleAccount(): Promise<{ data: GoogleAuthResponse }> {
-    const response = await request<GoogleAuthResponse>('/auth/moodle/unlink', {
+    const response = await this.request<GoogleAuthResponse>('/auth/moodle/unlink', {
       method: 'POST',
       retries: 0,
     });
@@ -84,7 +84,7 @@ export class AuthApi {
 
   async logout(): Promise<void> {
     try {
-      await request('/auth/logout', { method: 'POST', retries: 0 });
+      await this.request('/auth/logout', { method: 'POST', retries: 0 });
     } finally {
       clearUserSessionStorage();
     }
