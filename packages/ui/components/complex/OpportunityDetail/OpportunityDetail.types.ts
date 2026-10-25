@@ -46,4 +46,11 @@ export type OpportunityDetailProps = {
   applyText?: string;
   onOpenApply?: () => void;
   className?: string;
+
+  // Subscription
+  isSubscribed?: boolean;
+  onToggleSubscribe?: () => void;
+  subscribeText?: string;
+  unsubscribeText?: string;
+  isSubscribeLoading?: boolean;
 };

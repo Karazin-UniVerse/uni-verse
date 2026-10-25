@@ -21,6 +21,8 @@ export interface OpportunityDetailViewProps {
   onOpenApplicants?: () => void;
   onEdit?: (opportunity: Opportunity) => void;
   onToggleAcceptsApplications?: (accepts: boolean) => void;
+  onToggleSubscribe?: () => void;
+  isSubscribeLoading?: boolean;
 }
 
 const lifecycleLabelKey = {
@@ -41,6 +43,8 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   onOpenApplicants,
   onEdit,
   onToggleAcceptsApplications,
+  onToggleSubscribe,
+  isSubscribeLoading,
 }) => {
   const { formatMessage, language } = useLanguage();
 
@@ -146,6 +150,15 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       canApply={canApply}
       applyText={formatMessage('opportunities.detailModal.apply')}
       onOpenApply={onOpenApply}
+      isSubscribed={opportunity.isSubscribed}
+      onToggleSubscribe={
+        userId && opportunity.status === OPPORTUNITY_STATUS.PUBLISHED
+          ? onToggleSubscribe
+          : undefined
+      }
+      isSubscribeLoading={isSubscribeLoading}
+      subscribeText={formatMessage('opportunities.actions.subscribe')}
+      unsubscribeText={formatMessage('opportunities.actions.unsubscribe')}
     />
   );
 };

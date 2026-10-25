@@ -1,5 +1,5 @@
 import React, { useId } from 'react';
-import { Mail, Send, Pencil, Users } from 'lucide-react';
+import { Mail, Send, Pencil, Users, Bell, BellOff } from 'lucide-react';
 import { BackButton } from '../BackButton';
 import { Button } from '../../una/Button';
 import { Tag } from '../../una/Tag';
@@ -79,6 +79,9 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   onOpenApplicants,
   viewApplicantsText,
   className,
+  onToggleSubscribe,
+  subscribeText,
+  unsubscribeText,
   acceptsApplications = true,
   paymentTone = 'neutral',
   isOwner = false,
@@ -86,6 +89,9 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   canSendToReview = false,
   lifecycleOptions = [],
   canApply = false,
+  isSubscribed = false,
+
+  isSubscribeLoading = false,
 }) => {
   const phaseSelectId = useId();
   const footerButton = getCandidateFooterButton({
@@ -96,6 +102,18 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
     acceptsApplications,
     applicationsClosedText,
   });
+
+  const subscribeButton =
+    !isOwner && onToggleSubscribe && subscribeText && unsubscribeText ? (
+      <Button variant="secondary" onClick={onToggleSubscribe} disabled={isSubscribeLoading}>
+        {isSubscribed ? (
+          <BellOff size={14} className={styles.btnIcon} />
+        ) : (
+          <Bell size={14} className={styles.btnIcon} />
+        )}
+        {isSubscribed ? unsubscribeText : subscribeText}
+      </Button>
+    ) : null;
 
   return (
     <div className={className}>
@@ -207,7 +225,12 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
           </div>
         )}
 
-        {footerButton && <div className={styles.footer}>{footerButton}</div>}
+        {(footerButton || subscribeButton) && (
+          <div className={styles.footer}>
+            {subscribeButton}
+            {footerButton}
+          </div>
+        )}
       </div>
     </div>
   );

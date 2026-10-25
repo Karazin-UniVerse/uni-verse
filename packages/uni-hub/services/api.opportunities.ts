@@ -107,6 +107,18 @@ export class OpportunitiesApi extends ApiClient {
       body: JSON.stringify({ action, comment }),
     });
   }
+
+  async subscribe(id: string): Promise<{ data: { isSubscribed: boolean } }> {
+    return this.request<{ isSubscribed: boolean }>(`/opportunities/${id}/subscribe`, {
+      method: 'POST',
+    });
+  }
+
+  async unsubscribe(id: string): Promise<{ data: { isSubscribed: boolean } }> {
+    return this.request<{ isSubscribed: boolean }>(`/opportunities/${id}/subscribe`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const opportunitiesApi = new OpportunitiesApi();
