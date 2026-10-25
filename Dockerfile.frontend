@@ -9,7 +9,7 @@ RUN corepack enable && corepack prepare pnpm@10.0.0 --activate
 FROM base AS builder
 WORKDIR /app
 COPY . .
-ARG NEXT_PUBLIC_API_URL=https://p01--backend--jm9qjnmpm4m2.code.run
+ARG NEXT_PUBLIC_API_URL=https://api.universemvp.tech
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
