@@ -6,9 +6,12 @@ import type { Opportunity } from '@core/types/opportunities';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { ROUTE } from '../../routes';
 import { OpportunityDetailView } from './components/OpportunityDetailView';
+import { useApplicants } from './hooks/useApplicants';
+import { useApplicantsDeepLink } from './hooks/useApplicantsDeepLink';
 import { useApplyToOpportunity } from './hooks/useApplyToOpportunity';
 import { useCreateOpportunity } from './hooks/useCreateOpportunity';
 import { useOpportunityActions } from './hooks/useOpportunityActions';
+import { ApplicantsModal } from './modals/ApplicantsModal';
 import { ApplyOpportunityModal } from './modals/ApplyOpportunityModal';
 import { CreateOpportunityModal } from './modals/CreateOpportunityModal';
 
@@ -24,6 +27,14 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
   const actions = useOpportunityActions();
   const create = useCreateOpportunity({});
   const apply = useApplyToOpportunity({ currentUser, opportunity });
+  const applicants = useApplicants();
+
+  useApplicantsDeepLink({
+    opportunity,
+    userId: currentUser.userId,
+    openApplicants: applicants.open,
+    closeApplicants: applicants.close,
+  });
 
   return (
     <>
@@ -38,6 +49,7 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
         }
         onEdit={create.openEdit}
         onOpenApply={() => apply.setIsApplyOpen(true)}
+        onOpenApplicants={() => applicants.open(opportunity)}
       />
 
       <CreateOpportunityModal
@@ -60,6 +72,16 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
         onContactInfoChange={apply.setContactInfo}
         onSubmit={apply.handleApplySubmit}
         submitting={apply.applying}
+      />
+
+      <ApplicantsModal
+        open={applicants.isOpen}
+        onClose={applicants.close}
+        applications={applicants.applications}
+        loading={applicants.loading}
+        isError={applicants.isError}
+        onRetry={applicants.refetch}
+        onUpdateStatus={applicants.handleUpdateStatus}
       />
     </>
   );

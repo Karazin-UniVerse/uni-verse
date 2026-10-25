@@ -85,8 +85,10 @@ describe('Tier 4 - Real-World Scenarios: End-to-End User Journeys', () => {
 
     expect(moodleJumpUrl).toBe('https://moodle.universemvp.tech/mod/assign/view.php?a=88');
 
-    // 3. Check DashboardPage contains status indicator
-    const dashboard = readWorkspaceFile('packages/uni-hub/views/DashboardPage.tsx');
+    // 3. Check sidebar contains the Moodle status indicator
+    const dashboard = readWorkspaceFile(
+      'packages/uni-hub/views/dashboard/layout/DashboardSidebar.tsx',
+    );
 
     expect(dashboard).toContain('moodle.universemvp.tech');
   });
@@ -121,10 +123,11 @@ describe('Tier 4 - Real-World Scenarios: End-to-End User Journeys', () => {
 
     const calculateTrad = mod.calculateTraditionalGrade;
 
-    // Exam grade: 73.8 -> 73.8 rounded / boundary -> 'задовільно'
-    expect(calculateTrad(73, 'exam')).toBe('задовільно');
+    // Exam grade: 73 -> 'добре' and 69 -> 'задовільно' on the Karazin scale
+    expect(calculateTrad(73, 'exam')).toBe('добре');
     expect(calculateTrad(73, 'exam')).toBe(oracleCalculateTraditionalGrade(73, 'exam'));
-    // Credit grade: 61 -> 'зараховано'
+    expect(calculateTrad(69, 'exam')).toBe('задовільно');
+    expect(calculateTrad(69, 'exam')).toBe(oracleCalculateTraditionalGrade(69, 'exam'));
     expect(calculateTrad(61, 'credit')).toBe('зараховано');
     expect(calculateTrad(61, 'credit')).toBe(oracleCalculateTraditionalGrade(61, 'credit'));
     // Academic failure: 45 -> 'незадовільно' (exam) & 'не зараховано' (credit)
@@ -136,14 +139,16 @@ describe('Tier 4 - Real-World Scenarios: End-to-End User Journeys', () => {
 
   it('Scenario 5: LMS Gateway Degradation & Fault-Tolerant Feedback', () => {
     // When backend returns error or is unreachable
-    const apiCode = readWorkspaceFile('packages/uni-hub/services/api.ts');
+    const apiCode = readWorkspaceFile('packages/uni-hub/services/api.request.ts');
 
     expect(apiCode).toMatch(/try\s*\{[\s\S]*catch/);
     expect(apiCode).toMatch(/timeout/i);
 
     // Dashboard catches errors and triggers toast notification
-    const dashboardCode = readWorkspaceFile('packages/uni-hub/views/DashboardPage.tsx');
+    const dashboardCode = readWorkspaceFile(
+      'packages/uni-hub/views/dashboard/hooks/useDashboardErrorHandling.ts',
+    );
 
-    expect(dashboardCode).toMatch(/toast\.error/);
+    expect(dashboardCode).toMatch(/toast\.error\(formatMessage\('dashboard\.loadError'\)\)/);
   });
 });
