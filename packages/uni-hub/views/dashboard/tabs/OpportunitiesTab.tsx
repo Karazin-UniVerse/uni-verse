@@ -132,6 +132,7 @@ export const OpportunitiesTab: React.FC = () => {
 
         {activeSubTab === OPPORTUNITY_SUB_TAB.Moderation && isModerator && (
           <ModerationQueueTab
+            currentUserId={currentUser.userId}
             loading={data.moderationQueue.loading}
             isError={data.moderationQueue.isError}
             onRetry={data.moderationQueue.refetch}

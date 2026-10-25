@@ -512,6 +512,7 @@ export const uk = {
   'opportunities.moderation.practice': 'Практика',
   'opportunities.moderation.descLabel': 'Опис пропозиції',
   'opportunities.moderation.prevCommentLabel': 'Попередній коментар модерації:',
+  'opportunities.moderation.selfModerationForbidden': 'Ви не можете модерувати власну можливість.',
   'opportunities.moderation.approve': 'Схвалити',
   'opportunities.moderation.revise': 'На доопрацювання',
   'opportunities.moderation.reject': 'Відхилити',
