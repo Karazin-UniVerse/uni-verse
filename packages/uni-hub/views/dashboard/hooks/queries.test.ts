@@ -18,7 +18,9 @@ import {
   loadPlatformNotifications,
   notificationKeys,
   platformNotificationsQueryOptions,
+  profileQueryOptions,
 } from './queries';
+import { fallbackStudentProfile, STUDENT_PROFILE_STORAGE_KEY } from '../constants';
 
 const filters: BuildAssignmentParamsOptions = {
   sortOrder: 'asc',
@@ -211,5 +213,35 @@ describe('platformNotificationsQueryOptions', () => {
   it('configures canonical query key and polling refetchInterval', () => {
     expect(platformNotificationsQueryOptions.queryKey).toEqual(['notifications', 'platform']);
     expect(platformNotificationsQueryOptions.refetchInterval).toBe(30_000);
+  });
+});
+
+describe('profileQueryOptions', () => {
+  it('fetches Moodle profile, applies stored corporate identity, and syncs profile', async () => {
+    storage.username = 'Богдан Мельник';
+    storage.userEmail = 'melnyk.bogdan@student.karazin.ua';
+
+    vi.spyOn(moodleApi, 'getProfile').mockResolvedValue({
+      data: {
+        ...fallbackStudentProfile,
+        fullName: 'Тестовий акаунт3',
+        email: 'test@student.karazin.ua',
+        gpa: 98,
+      },
+    });
+
+    const queryClient = new QueryClient();
+    const result = await queryClient.fetchQuery(profileQueryOptions);
+
+    expect(result.fullName).toBe('Богдан Мельник');
+    expect(result.email).toBe('melnyk.bogdan@student.karazin.ua');
+    expect(result.gpa).toBe(98);
+
+    const cached = JSON.parse(storage[STUDENT_PROFILE_STORAGE_KEY]);
+
+    expect(cached.fullName).toBe('Богдан Мельник');
+    expect(cached.email).toBe('melnyk.bogdan@student.karazin.ua');
+
+    queryClient.clear();
   });
 });

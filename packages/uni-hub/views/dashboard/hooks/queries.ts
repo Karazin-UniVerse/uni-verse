@@ -11,6 +11,7 @@ import {
   buildAssignmentParams,
   isMoodleUnlinked,
   isUnauthorizedError,
+  applyStoredIdentityToProfile,
   persistDashboardSnapshot,
   syncStudentProfile,
   type BuildAssignmentParamsOptions,
@@ -84,10 +85,11 @@ export const profileQueryOptions = queryOptions({
   queryKey: moodleKeys.profile(),
   queryFn: async () => {
     const response = await moodleApi.getProfile();
+    const resolvedProfile = applyStoredIdentityToProfile(response.data);
 
-    syncStudentProfile(response.data);
+    syncStudentProfile(resolvedProfile);
 
-    return response.data;
+    return resolvedProfile;
   },
 });
 

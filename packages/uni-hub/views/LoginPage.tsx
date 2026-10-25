@@ -20,6 +20,7 @@ import {
 import { useFeatures } from '@uni-hub/features';
 import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
 import { motion } from 'framer-motion';
+import { STUDENT_PROFILE_STORAGE_KEY } from './dashboard/constants';
 import styles from './LoginPage.module.scss';
 
 const LoginPage: React.FC = () => {
@@ -54,8 +55,12 @@ const LoginPage: React.FC = () => {
 
       const res = await googleLogin.mutateAsync(idToken);
 
+      safeStorage.removeItem(STUDENT_PROFILE_STORAGE_KEY);
+
       if (claims.email) {
         safeStorage.setItem('userEmail', claims.email);
+      } else {
+        safeStorage.removeItem('userEmail');
       }
 
       if (res.data?.isLinked || !isMoodleIntegrationEnabled) {
@@ -99,6 +104,8 @@ const LoginPage: React.FC = () => {
 
     try {
       await login.mutateAsync({ username, password });
+      safeStorage.removeItem(STUDENT_PROFILE_STORAGE_KEY);
+      safeStorage.removeItem('userEmail');
 
       toast.success(formatMessage('login.success'));
       safeStorage.setItem('isLoggedIn', 'true');

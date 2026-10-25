@@ -15,6 +15,7 @@ import {
   buildFallbackData,
   isMoodleUnlinked,
   syncStudentProfile,
+  applyStoredIdentityToProfile,
   getInitialUserProfile,
   type MoodleApiResponseTuple,
 } from './helpers';
@@ -264,6 +265,55 @@ describe('getInitialUserProfile', () => {
     localStorage.setItem('username', fallbackStudentProfile.fullName);
 
     expect(getInitialUserProfile()).toBeNull();
+  });
+});
+
+describe('applyStoredIdentityToProfile', () => {
+  it('overlays stored corporate username and userEmail when userEmail is set', () => {
+    localStorage.setItem('username', 'Богдан Мельник');
+    localStorage.setItem('userEmail', 'melnyk.bogdan@student.karazin.ua');
+
+    const moodleProfile = {
+      ...fallbackStudentProfile,
+      fullName: 'Тестовий акаунт3',
+      email: 'csai_test3@student.karazin.ua',
+      gpa: 95.5,
+    };
+
+    const resolved = applyStoredIdentityToProfile(moodleProfile);
+
+    expect(resolved.fullName).toBe('Богдан Мельник');
+    expect(resolved.email).toBe('melnyk.bogdan@student.karazin.ua');
+    expect(resolved.gpa).toBe(95.5);
+  });
+
+  it('keeps moodle fullName if saved username is empty or fallback, but applies userEmail', () => {
+    localStorage.setItem('userEmail', 'melnyk.bogdan@student.karazin.ua');
+    localStorage.setItem('username', fallbackStudentProfile.fullName);
+
+    const moodleProfile = {
+      ...fallbackStudentProfile,
+      fullName: 'Оригінальне Ім’я',
+    };
+
+    const resolved = applyStoredIdentityToProfile(moodleProfile);
+
+    expect(resolved.fullName).toBe('Оригінальне Ім’я');
+    expect(resolved.email).toBe('melnyk.bogdan@student.karazin.ua');
+  });
+
+  it('returns profile untouched when userEmail is not in localStorage', () => {
+    localStorage.setItem('username', 'moodle.user');
+
+    const moodleProfile = {
+      ...fallbackStudentProfile,
+      fullName: 'Moodle Student',
+      email: 'moodle@karazin.ua',
+    };
+
+    const resolved = applyStoredIdentityToProfile(moodleProfile);
+
+    expect(resolved).toEqual(moodleProfile);
   });
 });
 

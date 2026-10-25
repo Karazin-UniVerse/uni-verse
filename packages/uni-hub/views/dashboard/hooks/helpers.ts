@@ -301,6 +301,9 @@ function getCachedUserProfile(): StudentProfile | null {
   return null;
 }
 
+/**
+ * Resolves the initial student profile from storage or builds a fallback from the saved username.
+ */
 export function getInitialUserProfile(): StudentProfile | null {
   const cachedProfile = getCachedUserProfile();
 
@@ -328,6 +331,9 @@ export function getInitialUserProfile(): StudentProfile | null {
   };
 }
 
+/**
+ * Persists the current student profile to storage.
+ */
 export function syncStudentProfile(profileData?: StudentProfile | null): void {
   if (!profileData) {
     return;
@@ -338,6 +344,32 @@ export function syncStudentProfile(profileData?: StudentProfile | null): void {
   } catch {
     // Ignore storage quota errors
   }
+}
+
+/**
+ * Overlays the stored corporate Google identity (fullName and email) onto a fetched
+ * Moodle profile while retaining all Moodle academic fields.
+ */
+export function applyStoredIdentityToProfile(profileData: StudentProfile): StudentProfile {
+  if (!isBrowser) {
+    return profileData;
+  }
+
+  const savedEmail = localStorage.getItem('userEmail');
+
+  if (!savedEmail) {
+    return profileData;
+  }
+
+  const savedUser = localStorage.getItem('username');
+  const fullName =
+    savedUser && savedUser !== fallbackStudentProfile.fullName ? savedUser : profileData.fullName;
+
+  return {
+    ...profileData,
+    fullName,
+    email: savedEmail,
+  };
 }
 
 export function isMoodleUnlinked(): boolean {

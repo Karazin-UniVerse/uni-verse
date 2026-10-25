@@ -29,6 +29,9 @@ export interface MoodleStatusDetails {
   statusKey: TranslationKey;
 }
 
+/**
+ * Resolves the visual badge and translation key for the Moodle connection status.
+ */
 export function getMoodleStatusDetails(isMoodleLinked: boolean): MoodleStatusDetails {
   return {
     isLinked: isMoodleLinked,
