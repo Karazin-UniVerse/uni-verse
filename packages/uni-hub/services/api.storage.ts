@@ -61,5 +61,5 @@ export const safeStorage = {
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   (isBrowser && window.location.hostname !== 'localhost'
-    ? 'https://p01--backend--jm9qjnmpm4m2.code.run'
+    ? 'https://api.universemvp.tech'
     : 'http://localhost:3001');

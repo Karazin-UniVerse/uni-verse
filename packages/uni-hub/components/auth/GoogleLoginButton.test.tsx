@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { act, render } from '@testing-library/react';
 import React, { useEffect } from 'react';
+import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
+import { act, render } from '@testing-library/react';
 import { withLanguage } from '@uni-hub/utils/test-utils';
 import { GoogleLoginButton } from './GoogleLoginButton';
 
@@ -64,18 +64,26 @@ describe('GoogleLoginButton component', () => {
     delete (window as any).google;
   });
 
-  it('should render google button container', () => {
+  it('should render button container without inert when not disabled', () => {
     const { container } = render(withLanguage(<GoogleLoginButton onSuccess={vi.fn()} />));
 
-    expect(container.querySelector('[class*="buttonContainer"]')).toBeInTheDocument();
+    const buttonContainer = container.querySelector('[class*="buttonContainer"]');
+
+    expect(buttonContainer).toBeInTheDocument();
+    expect(buttonContainer).not.toHaveAttribute('inert');
+    expect(buttonContainer?.className).not.toContain('disabled');
   });
 
-  it('should apply disabled class when disabled prop is true', () => {
+  it('should set inert attribute and disabled class when disabled is true', () => {
     const { container } = render(
       withLanguage(<GoogleLoginButton disabled={true} onSuccess={vi.fn()} />),
     );
 
-    expect(container.querySelector('[class*="disabled"]')).toBeInTheDocument();
+    const buttonContainer = container.querySelector('[class*="buttonContainer"]');
+
+    expect(buttonContainer).toBeInTheDocument();
+    expect(buttonContainer).toHaveAttribute('inert');
+    expect(buttonContainer?.className).toContain('disabled');
   });
 
   it('should initialize and render google button when script is loaded and client id is configured', () => {
@@ -103,7 +111,7 @@ describe('GoogleLoginButton component', () => {
   it('should render google button with dark theme style when theme is dark', () => {
     mockTheme = 'dark';
 
-    render(<GoogleLoginButton onSuccess={vi.fn()} />);
+    render(withLanguage(<GoogleLoginButton onSuccess={vi.fn()} />));
 
     expect(mockRenderButton).toHaveBeenCalledWith(
       expect.any(HTMLDivElement),
@@ -157,7 +165,7 @@ describe('GoogleLoginButton component', () => {
   it('should not initialize google accounts when client id is missing', () => {
     delete process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
-    render(<GoogleLoginButton onSuccess={vi.fn()} />);
+    render(withLanguage(<GoogleLoginButton onSuccess={vi.fn()} />));
 
     expect(mockInitialize).not.toHaveBeenCalled();
     expect(mockRenderButton).not.toHaveBeenCalled();
@@ -167,7 +175,7 @@ describe('GoogleLoginButton component', () => {
     delete (window as any).google;
     autoScriptReady = false;
 
-    render(<GoogleLoginButton onSuccess={vi.fn()} />);
+    render(withLanguage(<GoogleLoginButton onSuccess={vi.fn()} />));
 
     expect(mockInitialize).not.toHaveBeenCalled();
 

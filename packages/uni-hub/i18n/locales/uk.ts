@@ -512,6 +512,7 @@ export const uk = {
   'opportunities.moderation.practice': 'Практика',
   'opportunities.moderation.descLabel': 'Опис пропозиції',
   'opportunities.moderation.prevCommentLabel': 'Попередній коментар модерації:',
+  'opportunities.moderation.selfModerationForbidden': 'Ви не можете модерувати власну можливість.',
   'opportunities.moderation.approve': 'Схвалити',
   'opportunities.moderation.revise': 'На доопрацювання',
   'opportunities.moderation.reject': 'Відхилити',
@@ -525,7 +526,7 @@ export const uk = {
   'opportunities.createModal.descPlaceholder':
     'Детально розкажіть про проект, задачі, очікувану зайнятість та необхідні навички...',
   'opportunities.createModal.contactLabel': 'Контактні дані організатора *',
-  'opportunities.createModal.contactPlaceholder': 'Telegram (@username) або Email',
+  'opportunities.createModal.contactPlaceholder': 'Telegram (@username), Email або номер телефону',
   'opportunities.createModal.paymentTypeLabel': 'Тип винагороди',
   'opportunities.createModal.unpaidOption': 'Неоплачувана (Практика, досвід)',
   'opportunities.createModal.paidOption': 'Оплачувана',

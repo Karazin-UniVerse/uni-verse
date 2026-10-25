@@ -2,13 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { withLanguage } from '@uni-hub/utils/test-utils';
 import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
+import { noop } from '@core/utils/fn';
 import { CatalogTab } from './CatalogTab';
 import { MyOpportunitiesTab } from './MyOpportunitiesTab';
 import { MyApplicationsTab } from './MyApplicationsTab';
 import { ModerationQueueTab } from './ModerationQueueTab';
 import { OpportunityStatusBadge } from './OpportunityStatusBadge';
 import { ApplicationStatusBadge } from './ApplicationStatusBadge';
-import { noop } from '@core/utils/fn';
 
 describe('Opportunities decomposed subtabs', () => {
   const mockOpportunity: Opportunity = {
@@ -45,7 +45,8 @@ describe('Opportunities decomposed subtabs', () => {
 
   it('should render CatalogTab with search bar, filter chips, and card', () => {
     render(
-      withLanguage(<CatalogTab
+      withLanguage(
+        <CatalogTab
           loading={false}
           isError={false}
           onRetry={noop}
@@ -55,7 +56,8 @@ describe('Opportunities decomposed subtabs', () => {
           paymentFilter=""
           onPaymentFilterChange={noop}
           onOpenDetail={noop}
-        />),
+        />,
+      ),
     );
 
     expect(
@@ -68,14 +70,16 @@ describe('Opportunities decomposed subtabs', () => {
 
   it('should render MyOpportunitiesTab with owner cards', () => {
     render(
-      withLanguage(<MyOpportunitiesTab
+      withLanguage(
+        <MyOpportunitiesTab
           loading={false}
           isError={false}
           onRetry={noop}
           myOpportunities={[mockOpportunity]}
           onOpenApplicants={noop}
           onOpenDetail={noop}
-        />),
+        />,
+      ),
     );
 
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
@@ -84,13 +88,15 @@ describe('Opportunities decomposed subtabs', () => {
 
   it('should render MyApplicationsTab with application details and withdraw button', () => {
     render(
-      withLanguage(<MyApplicationsTab
+      withLanguage(
+        <MyApplicationsTab
           loading={false}
           isError={false}
           onRetry={noop}
           myApplications={[mockApplication]}
           onWithdraw={noop}
-        />),
+        />,
+      ),
     );
 
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
@@ -100,32 +106,53 @@ describe('Opportunities decomposed subtabs', () => {
 
   it('should render ModerationQueueTab with moderation actions', () => {
     render(
-      withLanguage(<ModerationQueueTab
+      withLanguage(
+        <ModerationQueueTab
+          currentUserId="other-moderator"
           loading={false}
           isError={false}
           onRetry={noop}
           moderationQueue={[mockOpportunity]}
           onModerate={noop}
           onOpenRejectModal={noop}
-        />),
+        />,
+      ),
     );
 
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /схвалити/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /на доопрацювання/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /відхилити/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /схвалити/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /на доопрацювання/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /відхилити/i })).toBeEnabled();
+  });
+
+  it('should keep own opportunities visible but disable every moderation action', () => {
+    render(
+      withLanguage(
+        <ModerationQueueTab
+          currentUserId="user-1"
+          loading={false}
+          isError={false}
+          onRetry={noop}
+          moderationQueue={[mockOpportunity]}
+          onModerate={noop}
+          onOpenRejectModal={noop}
+        />,
+      ),
+    );
+
+    expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /схвалити/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /на доопрацювання/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /відхилити/i })).toBeDisabled();
+    expect(screen.getByText('Ви не можете модерувати власну можливість.')).toBeInTheDocument();
   });
 
   it('should render badges correctly', () => {
-    const { rerender } = render(
-      withLanguage(<OpportunityStatusBadge status="DRAFT" />),
-    );
+    const { rerender } = render(withLanguage(<OpportunityStatusBadge status="DRAFT" />));
 
     expect(screen.getByText('Чернетка')).toBeInTheDocument();
 
-    rerender(
-      withLanguage(<ApplicationStatusBadge status="ACCEPTED" />),
-    );
+    rerender(withLanguage(<ApplicationStatusBadge status="ACCEPTED" />));
     expect(screen.getByText('Прийнято')).toBeInTheDocument();
   });
 });
