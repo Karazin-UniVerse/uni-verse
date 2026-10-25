@@ -56,6 +56,7 @@ const LoginPage: React.FC = () => {
       const res = await googleLogin.mutateAsync(idToken);
 
       safeStorage.removeItem(STUDENT_PROFILE_STORAGE_KEY);
+      safeStorage.setItem('authProvider', 'google');
 
       if (claims.email) {
         safeStorage.setItem('userEmail', claims.email);
@@ -106,6 +107,7 @@ const LoginPage: React.FC = () => {
       await login.mutateAsync({ username, password });
       safeStorage.removeItem(STUDENT_PROFILE_STORAGE_KEY);
       safeStorage.removeItem('userEmail');
+      safeStorage.setItem('authProvider', 'credentials');
 
       toast.success(formatMessage('login.success'));
       safeStorage.setItem('isLoggedIn', 'true');

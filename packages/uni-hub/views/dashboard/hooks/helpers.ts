@@ -1,6 +1,7 @@
 import type { PlatformNotification } from '@uni-hub/services/api.notifications';
 import { asList } from '@uni-hub/utils/arrays';
 import { isBrowser } from '@uni-hub/utils/browser';
+import { safeStorage } from '@uni-hub/services/api.storage';
 import { parseJwt } from '@uni-hub/utils/jwt';
 import type {
   Grade,
@@ -309,6 +310,7 @@ export interface StoredSessionIdentity {
   username?: string | null;
   userEmail?: string | null;
   token?: string | null;
+  authProvider?: string | null;
 }
 
 /**
@@ -320,7 +322,7 @@ export function getSessionEmail(): string | null {
   }
 
   try {
-    const token = localStorage.getItem('accessToken');
+    const token = safeStorage.getItem('accessToken');
 
     if (!token) {
       return null;
@@ -348,24 +350,24 @@ export function getInitialUserProfile(): StudentProfile | null {
     return null;
   }
 
-  const savedUser = localStorage.getItem('username');
+  const savedUser = safeStorage.getItem('username');
 
   if (!savedUser || savedUser === fallbackStudentProfile.fullName) {
     return null;
   }
 
-  let savedEmail = localStorage.getItem('userEmail');
+  let savedEmail = safeStorage.getItem('userEmail');
 
   if (!savedEmail) {
-    const sessionEmail = getSessionEmail();
+    const authProvider = safeStorage.getItem('authProvider');
 
-    if (sessionEmail) {
-      savedEmail = sessionEmail;
+    if (authProvider !== 'credentials') {
+      const sessionEmail = getSessionEmail();
 
-      try {
-        localStorage.setItem('userEmail', sessionEmail);
-      } catch {
-        // Ignore quota errors
+      if (sessionEmail && (savedUser.includes(' ') || authProvider === 'google')) {
+        savedEmail = sessionEmail;
+
+        safeStorage.setItem('userEmail', sessionEmail);
       }
     }
   }
@@ -417,14 +419,20 @@ export function applyStoredIdentityToProfile(
   }
 
   try {
+    const authProvider = sessionSnapshot?.authProvider ?? safeStorage.getItem('authProvider');
+
+    if (authProvider === 'credentials') {
+      return profileData;
+    }
+
     const savedEmail =
-      sessionSnapshot?.userEmail ?? localStorage.getItem('userEmail') ?? getSessionEmail();
+      sessionSnapshot?.userEmail ?? safeStorage.getItem('userEmail') ?? getSessionEmail();
 
     if (!savedEmail) {
       return profileData;
     }
 
-    const savedUser = sessionSnapshot?.username ?? localStorage.getItem('username');
+    const savedUser = sessionSnapshot?.username ?? safeStorage.getItem('username');
     const fullName =
       savedUser && savedUser !== fallbackStudentProfile.fullName ? savedUser : profileData.fullName;
 

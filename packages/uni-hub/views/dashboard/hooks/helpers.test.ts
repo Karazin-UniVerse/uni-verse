@@ -332,7 +332,7 @@ describe('applyStoredIdentityToProfile', () => {
     expect(resolved).toEqual(moodleProfile);
   });
 
-  it('should return profile untouched when localStorage.getItem throws on username read', () => {
+  it('should safely fall back to profileData.fullName when username storage read throws', () => {
     mockStorage.userEmail = 'melnyk.bogdan@student.karazin.ua';
 
     const getItemSpy = vi.mocked(localStorage.getItem).mockImplementation((key: string) => {
@@ -351,6 +351,23 @@ describe('applyStoredIdentityToProfile', () => {
     const resolved = applyStoredIdentityToProfile(moodleProfile);
 
     expect(getItemSpy).toHaveBeenCalledWith('username');
+    expect(resolved.fullName).toBe('Оригінальне Ім’я');
+    expect(resolved.email).toBe('melnyk.bogdan@student.karazin.ua');
+  });
+
+  it('should return profile untouched when storage access throws an unhandled exception', () => {
+    const getItemSpy = vi.mocked(localStorage.getItem).mockImplementation(() => {
+      throw new Error('SecurityError: Access denied');
+    });
+
+    const moodleProfile = {
+      ...fallbackStudentProfile,
+      fullName: 'Оригінальне Ім’я',
+    };
+
+    const resolved = applyStoredIdentityToProfile(moodleProfile);
+
+    expect(getItemSpy).toHaveBeenCalled();
     expect(resolved).toEqual(moodleProfile);
   });
 
@@ -371,6 +388,27 @@ describe('applyStoredIdentityToProfile', () => {
 
     expect(resolved.fullName).toBe('Богдан Мельник');
     expect(resolved.email).toBe('melnyk.bogdan@student.karazin.ua');
+  });
+
+  it('should preserve moodle fullName and profile for credential sessions even if session token contains email', () => {
+    const token = `header.${Buffer.from(
+      JSON.stringify({ email: 'moodle.student@karazin.ua' }),
+    ).toString('base64')}.signature`;
+
+    mockStorage.username = 'moodle.student';
+    mockStorage.accessToken = token;
+    mockStorage.authProvider = 'credentials';
+
+    const moodleProfile = {
+      ...fallbackStudentProfile,
+      fullName: 'Барсуков Родіон Сергійович',
+      email: 'moodle.student@karazin.ua',
+    };
+
+    const resolved = applyStoredIdentityToProfile(moodleProfile);
+
+    expect(resolved.fullName).toBe('Барсуков Родіон Сергійович');
+    expect(resolved).toEqual(moodleProfile);
   });
 });
 

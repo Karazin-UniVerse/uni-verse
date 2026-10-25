@@ -5,6 +5,7 @@ import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 export const USER_SESSION_STORAGE_KEYS = [
   'isLoggedIn',
   'accessToken',
+  'authProvider',
   'isMoodleLinked',
   'moodleToken',
   'username',

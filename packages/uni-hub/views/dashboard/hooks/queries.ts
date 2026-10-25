@@ -1,4 +1,5 @@
 import { isBrowser } from '@uni-hub/utils/browser';
+import { safeStorage } from '@uni-hub/services/api.storage';
 import { queryOptions } from '@tanstack/react-query';
 import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import type { MoodleQueryOptions } from '@uni-hub/queries/moodle/queries';
@@ -86,32 +87,37 @@ export function dashboardQueryOptions(
 /**
  * Query options for fetching, overlaying corporate identity, and synchronizing the student profile.
  */
+function readSessionIdentity(): StoredSessionIdentity | null {
+  if (!isBrowser) {
+    return null;
+  }
+
+  return {
+    token: safeStorage.getItem('accessToken'),
+    username: safeStorage.getItem('username'),
+    userEmail: safeStorage.getItem('userEmail'),
+    authProvider: safeStorage.getItem('authProvider'),
+  };
+}
+
 export const profileQueryOptions = queryOptions({
   queryKey: moodleKeys.profile(),
   queryFn: async ({ signal }) => {
-    const sessionSnapshot: StoredSessionIdentity | null = isBrowser
-      ? {
-          token: localStorage.getItem('accessToken'),
-          username: localStorage.getItem('username'),
-          userEmail: localStorage.getItem('userEmail'),
-        }
-      : null;
-
+    const sessionSnapshot = readSessionIdentity();
     const response = await moodleApi.getProfile({ signal });
 
     if (signal?.aborted) {
       return response.data;
     }
 
-    if (isBrowser && sessionSnapshot) {
-      const currentToken = localStorage.getItem('accessToken');
-      const currentEmail = localStorage.getItem('userEmail');
-      const currentUsername = localStorage.getItem('username');
+    if (sessionSnapshot) {
+      const currentSession = readSessionIdentity();
 
       if (
-        currentToken !== sessionSnapshot.token ||
-        currentEmail !== sessionSnapshot.userEmail ||
-        currentUsername !== sessionSnapshot.username
+        currentSession?.token !== sessionSnapshot.token ||
+        currentSession?.userEmail !== sessionSnapshot.userEmail ||
+        currentSession?.username !== sessionSnapshot.username ||
+        currentSession?.authProvider !== sessionSnapshot.authProvider
       ) {
         return response.data;
       }
