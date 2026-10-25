@@ -649,7 +649,7 @@ describe('OpportunitiesService', () => {
       );
     });
 
-    it('throws ForbiddenException when user is not the owner', async () => {
+    it('throws NotFoundException when user is not the owner', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         ...publishedOpportunity,
         id: 'opp-1',
@@ -658,11 +658,12 @@ describe('OpportunitiesService', () => {
       });
 
       await expect(service.delete('owner-1', 'opp-1')).rejects.toThrow(
-        ForbiddenException,
+        NotFoundException,
       );
+      expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
-    it('throws BadRequestException when opportunity is not draft or rejected', async () => {
+    it('throws BadRequestException when opportunity is not in DRAFT or REQUIRES_CHANGES statuses', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         ...publishedOpportunity,
         id: 'opp-1',
@@ -671,7 +672,9 @@ describe('OpportunitiesService', () => {
       });
 
       await expect(service.delete('owner-1', 'opp-1')).rejects.toThrow(
-        BadRequestException,
+        new BadRequestException(
+          'Only opportunities in DRAFT or REQUIRES_CHANGES statuses can be deleted',
+        ),
       );
     });
 
@@ -709,7 +712,9 @@ describe('OpportunitiesService', () => {
         .mockRejectedValue({ code: 'P2025' });
 
       await expect(service.delete('owner-1', 'opp-1')).rejects.toThrow(
-        BadRequestException,
+        new BadRequestException(
+          'Only opportunities in DRAFT or REQUIRES_CHANGES statuses can be deleted',
+        ),
       );
     });
   });

@@ -257,14 +257,8 @@ export class OpportunitiesService {
       where: { id },
     });
 
-    if (!opportunity) {
+    if (!opportunity || opportunity.ownerId !== userId) {
       throw new NotFoundException('Opportunity not found');
-    }
-
-    if (opportunity.ownerId !== userId) {
-      throw new ForbiddenException(
-        'You can only delete your own opportunities',
-      );
     }
 
     if (
@@ -272,7 +266,7 @@ export class OpportunitiesService {
       opportunity.status !== OpportunityStatus.REQUIRES_CHANGES
     ) {
       throw new BadRequestException(
-        'Only draft or rejected opportunities can be deleted',
+        'Only opportunities in DRAFT or REQUIRES_CHANGES statuses can be deleted',
       );
     }
 
@@ -295,7 +289,7 @@ export class OpportunitiesService {
     } catch (error) {
       if (getPrismaErrorCode(error) === 'P2025') {
         throw new BadRequestException(
-          'Only draft or rejected opportunities can be deleted',
+          'Only opportunities in DRAFT or REQUIRES_CHANGES statuses can be deleted',
         );
       }
 

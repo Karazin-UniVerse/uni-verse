@@ -4,6 +4,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  ValidateIf,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaymentType, OpportunityLifecycleState } from '@universe/database';
@@ -44,6 +45,8 @@ export class CreateOpportunityDto implements CreateOpportunityRequest {
     default: OpportunityLifecycleState.START,
   })
   @IsEnum(OpportunityLifecycleState)
-  @IsOptional()
+  @ValidateIf(
+    (dto: CreateOpportunityDto): boolean => dto.lifecycleState !== undefined,
+  )
   lifecycleState?: OpportunityLifecycleState;
 }
