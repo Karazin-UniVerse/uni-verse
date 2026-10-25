@@ -9,31 +9,6 @@ import type {
   CreateOpportunityModalProps,
 } from './CreateOpportunityModal.types';
 
-vi.mock('../../una/Modal', () => ({
-  Modal: ({
-    open,
-    onClose,
-    title,
-    children,
-    className,
-  }: {
-    open: boolean;
-    onClose?: () => void;
-    title?: string;
-    children?: React.ReactNode;
-    className?: string;
-  }) =>
-    open ? (
-      <dialog open aria-label={title} className={className}>
-        {title ? <h2>{title}</h2> : null}
-        <button type="button" onClick={onClose} aria-label="Close dialog">
-          Close
-        </button>
-        {children}
-      </dialog>
-    ) : null,
-}));
-
 describe('CreateOpportunityModal Component', () => {
   const initialFormData: CreateOpportunityFormData = {
     title: 'Frontend Internship Opportunity',
@@ -113,7 +88,7 @@ describe('CreateOpportunityModal Component', () => {
     expect(screen.queryByRole('button', { name: defaultProps.submitText })).not.toBeInTheDocument();
   });
 
-  it('should call onClose when close button is clicked', async () => {
+  it('should call onClose when cancel button is clicked or Escape key is pressed', async () => {
     const handleClose = vi.fn();
     const user = userEvent.setup();
 
@@ -124,9 +99,7 @@ describe('CreateOpportunityModal Component', () => {
     await user.click(cancelBtn);
     expect(handleClose).toHaveBeenCalledTimes(1);
 
-    const closeDialogBtn = screen.getByRole('button', { name: 'Close dialog' });
-
-    await user.click(closeDialogBtn);
+    await user.keyboard('{Escape}');
     expect(handleClose).toHaveBeenCalledTimes(2);
   });
 
