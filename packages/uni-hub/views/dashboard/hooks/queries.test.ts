@@ -17,6 +17,7 @@ import {
   loadDashboardData,
   loadPlatformNotifications,
   notificationKeys,
+  platformNotificationsQueryOptions,
 } from './queries';
 
 const filters: BuildAssignmentParamsOptions = {
@@ -147,35 +148,30 @@ describe('loadDashboardData', () => {
 
 describe('loadPlatformNotifications', () => {
   it('returns platform notifications from the API', async () => {
-    vi.spyOn(notificationsApi, 'getMyNotifications').mockResolvedValue({
-      data: [
-        {
-          id: 'plat-1',
-          userId: 'user-1',
-          title: 'Notif',
-          message: 'Msg',
-          type: 'INFO',
-          isRead: false,
-          createdAt: new Date().toISOString(),
-        },
-      ],
-    });
+    const mockNotes = [
+      {
+        id: 'plat-1',
+        userId: 'u1',
+        type: 'OPP',
+        title: 'Title',
+        message: 'Message',
+        link: null,
+        isRead: false,
+        createdAt: '2026-04-18T00:00:00.000Z',
+      },
+    ];
 
-    const notifs = await loadPlatformNotifications();
+    vi.spyOn(notificationsApi, 'getMyNotifications').mockResolvedValue({ data: mockNotes });
 
-    expect(notifs).toHaveLength(1);
-    expect(notifs[0].id).toBe('plat-1');
+    const result = await loadPlatformNotifications();
+
+    expect(result).toEqual(mockNotes);
   });
 
-  it('logs error and returns empty array on non-401 failure', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
+  it('rethrows non-401 failure so query error states are detected', async () => {
     vi.spyOn(notificationsApi, 'getMyNotifications').mockRejectedValue(new Error('Network error'));
 
-    const notifs = await loadPlatformNotifications();
-
-    expect(notifs).toEqual([]);
-    expect(consoleSpy).toHaveBeenCalled();
+    await expect(loadPlatformNotifications()).rejects.toThrow('Network error');
   });
 
   it('clears session storage and throws on 401 error', async () => {
@@ -205,41 +201,15 @@ describe('dashboardQueryOptions', () => {
   });
 });
 
-describe('loadPlatformNotifications', () => {
-  it('loads platform notifications from notificationsApi', async () => {
-    const mockNotes = [
-      {
-        id: 'plat-1',
-        userId: 'u1',
-        type: 'OPP',
-        title: 'Title',
-        message: 'Message',
-        link: null,
-        isRead: false,
-        createdAt: '2026-04-18T00:00:00.000Z',
-      },
-    ];
-
-    vi.spyOn(notificationsApi, 'getMyNotifications').mockResolvedValue({ data: mockNotes });
-
-    const result = await loadPlatformNotifications();
-
-    expect(result).toEqual(mockNotes);
-  });
-
-  it('clears user session storage on 401 unauthorized', async () => {
-    vi.spyOn(notificationsApi, 'getMyNotifications').mockRejectedValue(
-      new Error('HTTP error 401: Unauthorized'),
-    );
-    storage.accessToken = 'token';
-
-    await expect(loadPlatformNotifications()).rejects.toThrow('401');
-    expect(storage.accessToken).toBeUndefined();
-  });
-});
-
 describe('notificationKeys', () => {
   it('builds canonical notification keys', () => {
     expect(notificationKeys.platform()).toEqual(['notifications', 'platform']);
+  });
+});
+
+describe('platformNotificationsQueryOptions', () => {
+  it('configures canonical query key and polling refetchInterval', () => {
+    expect(platformNotificationsQueryOptions.queryKey).toEqual(['notifications', 'platform']);
+    expect(platformNotificationsQueryOptions.refetchInterval).toBe(30_000);
   });
 });

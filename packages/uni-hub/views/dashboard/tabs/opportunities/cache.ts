@@ -2,8 +2,11 @@ import type { QueryClient } from '@tanstack/react-query';
 import type { Opportunity } from '@core/types/opportunities';
 import { moderateMutationKey, opportunityKeys } from './queryKeys';
 
-export function invalidateOpportunities(queryClient: QueryClient): Promise<void> {
-  return queryClient.invalidateQueries({ queryKey: opportunityKeys.all });
+export function invalidateOpportunities(
+  queryClient: QueryClient,
+  options?: { throwOnError?: boolean },
+): Promise<void> {
+  return queryClient.invalidateQueries({ queryKey: opportunityKeys.all }, options);
 }
 
 export function isLastPendingModeration(queryClient: QueryClient): boolean {

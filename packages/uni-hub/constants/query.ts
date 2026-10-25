@@ -1,1 +1,2 @@
 export const QUERY_STALE_TIME_MS = 30_000;
+export const NOTIFICATIONS_POLL_INTERVAL_MS = 30_000;

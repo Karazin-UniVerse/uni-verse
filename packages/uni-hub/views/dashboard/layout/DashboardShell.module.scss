@@ -306,6 +306,13 @@ $sidebar-collapsed-width: 88px;
   flex-wrap: wrap;
 }
 
+.pageTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  min-width: 0;
+}
+
 .pageTitle {
   margin: 0;
   font: var(--font-heading);
@@ -314,7 +321,7 @@ $sidebar-collapsed-width: 88px;
 .pageUpdatingIndicator {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-6);
+  gap: var(--space-8);
   font-size: var(--font-xs);
   color: var(--text-secondary);
   animation: fadeUp 0.2s var(--ease-standard);
@@ -322,7 +329,14 @@ $sidebar-collapsed-width: 88px;
   > div {
     padding: 0;
     flex-direction: row;
-    gap: var(--space-6);
+    gap: var(--space-8);
+    align-items: center;
+  }
+
+  p {
+    margin: 0;
+    font-size: var(--font-xs);
+    color: var(--text-secondary);
   }
 }
 
