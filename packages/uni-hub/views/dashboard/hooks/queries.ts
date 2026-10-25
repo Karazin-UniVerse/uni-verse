@@ -1,5 +1,3 @@
-import { isBrowser } from '@uni-hub/utils/browser';
-import { safeStorage } from '@uni-hub/services/api.storage';
 import { queryOptions } from '@tanstack/react-query';
 import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import type { MoodleQueryOptions } from '@uni-hub/queries/moodle/queries';
@@ -11,10 +9,11 @@ import type { DashboardData } from '../types';
 import {
   assembleDashboardData,
   buildAssignmentParams,
+  hasSessionChanged,
   isMoodleUnlinked,
   isUnauthorizedError,
   applyStoredIdentityToProfile,
-  type StoredSessionIdentity,
+  readSessionIdentity,
   persistDashboardSnapshot,
   syncStudentProfile,
   type BuildAssignmentParamsOptions,
@@ -87,19 +86,6 @@ export function dashboardQueryOptions(
 /**
  * Query options for fetching, overlaying corporate identity, and synchronizing the student profile.
  */
-function readSessionIdentity(): StoredSessionIdentity | null {
-  if (!isBrowser) {
-    return null;
-  }
-
-  return {
-    token: safeStorage.getItem('accessToken'),
-    username: safeStorage.getItem('username'),
-    userEmail: safeStorage.getItem('userEmail'),
-    authProvider: safeStorage.getItem('authProvider'),
-  };
-}
-
 export const profileQueryOptions = queryOptions({
   queryKey: moodleKeys.profile(),
   queryFn: async ({ signal }) => {
@@ -113,12 +99,7 @@ export const profileQueryOptions = queryOptions({
     if (sessionSnapshot) {
       const currentSession = readSessionIdentity();
 
-      if (
-        currentSession?.token !== sessionSnapshot.token ||
-        currentSession?.userEmail !== sessionSnapshot.userEmail ||
-        currentSession?.username !== sessionSnapshot.username ||
-        currentSession?.authProvider !== sessionSnapshot.authProvider
-      ) {
+      if (hasSessionChanged(sessionSnapshot, currentSession)) {
         return response.data;
       }
     }

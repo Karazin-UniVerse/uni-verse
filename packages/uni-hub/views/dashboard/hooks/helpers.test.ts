@@ -17,6 +17,9 @@ import {
   syncStudentProfile,
   applyStoredIdentityToProfile,
   getInitialUserProfile,
+  readSessionIdentity,
+  hasSessionChanged,
+  type StoredSessionIdentity,
   type MoodleApiResponseTuple,
 } from './helpers';
 import { fallbackStudentProfile, STUDENT_PROFILE_STORAGE_KEY } from '../constants';
@@ -847,5 +850,190 @@ describe('applyPlatformNotifications', () => {
     expect(result.notifications[0].id).toBe('plat-1');
     expect(result.notifications[1].id).toBe(1);
     expect(result.unreadCount).toBe(1);
+  });
+});
+
+function createMockJwt(payload: Record<string, unknown>): string {
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+
+  return `${header}.${body}.mockSignature`;
+}
+
+describe('readSessionIdentity', () => {
+  it('reads session identity from storage and extracts userId from JWT accessToken', () => {
+    const token = createMockJwt({ sub: 'user-456', email: 'test@karazin.ua' });
+
+    mockStorage.accessToken = token;
+    mockStorage.username = 'Test User';
+    mockStorage.userEmail = 'test@karazin.ua';
+    mockStorage.authProvider = 'google';
+
+    const identity = readSessionIdentity();
+
+    expect(identity).toEqual({
+      userId: 'user-456',
+      token,
+      username: 'Test User',
+      userEmail: 'test@karazin.ua',
+      authProvider: 'google',
+    });
+  });
+
+  it('handles missing or malformed token gracefully without throwing', () => {
+    mockStorage.accessToken = 'not-a-jwt';
+    mockStorage.username = 'Opaque User';
+
+    const identity = readSessionIdentity();
+
+    expect(identity).toEqual({
+      userId: null,
+      token: 'not-a-jwt',
+      username: 'Opaque User',
+      userEmail: null,
+      authProvider: null,
+    });
+  });
+});
+
+describe('hasSessionChanged', () => {
+  it('returns false when both snapshot and current are identical', () => {
+    const identity: StoredSessionIdentity = {
+      userId: 'u1',
+      token: 'tok-1',
+      username: 'User 1',
+      userEmail: 'u1@karazin.ua',
+      authProvider: 'google',
+    };
+
+    expect(hasSessionChanged(identity, identity)).toBe(false);
+  });
+
+  it('returns false when token rotates but userId and account identity remain unchanged', () => {
+    const snapshot: StoredSessionIdentity = {
+      userId: 'u1',
+      token: 'initial-token',
+      username: 'User 1',
+      userEmail: 'u1@karazin.ua',
+      authProvider: 'google',
+    };
+    const current: StoredSessionIdentity = {
+      userId: 'u1',
+      token: 'refreshed-token',
+      username: 'User 1',
+      userEmail: 'u1@karazin.ua',
+      authProvider: 'google',
+    };
+
+    expect(hasSessionChanged(snapshot, current)).toBe(false);
+  });
+
+  it('returns true when userId changes (different account login)', () => {
+    const snapshot: StoredSessionIdentity = {
+      userId: 'u1',
+      token: 'token-u1',
+      username: 'User 1',
+      userEmail: 'u1@karazin.ua',
+      authProvider: 'google',
+    };
+    const current: StoredSessionIdentity = {
+      userId: 'u2',
+      token: 'token-u2',
+      username: 'User 2',
+      userEmail: 'u2@karazin.ua',
+      authProvider: 'google',
+    };
+
+    expect(hasSessionChanged(snapshot, current)).toBe(true);
+  });
+
+  it('returns true when user logs out while request was in-flight', () => {
+    const snapshot: StoredSessionIdentity = {
+      userId: 'u1',
+      token: 'token-u1',
+      username: 'User 1',
+      userEmail: 'u1@karazin.ua',
+      authProvider: 'google',
+    };
+    const current: StoredSessionIdentity = {
+      userId: null,
+      token: null,
+      username: null,
+      userEmail: null,
+      authProvider: null,
+    };
+
+    expect(hasSessionChanged(snapshot, current)).toBe(true);
+  });
+
+  it('returns true when authProvider changes', () => {
+    const snapshot: StoredSessionIdentity = {
+      userId: 'u1',
+      token: 'tok',
+      username: 'User',
+      userEmail: 'u@karazin.ua',
+      authProvider: 'google',
+    };
+    const current: StoredSessionIdentity = {
+      ...snapshot,
+      authProvider: 'credentials',
+    };
+
+    expect(hasSessionChanged(snapshot, current)).toBe(true);
+  });
+
+  it('returns true when userEmail or username changes', () => {
+    const snapshot: StoredSessionIdentity = {
+      userId: 'u1',
+      token: 'tok',
+      username: 'User A',
+      userEmail: 'a@karazin.ua',
+      authProvider: 'google',
+    };
+    const currentEmailChanged: StoredSessionIdentity = {
+      ...snapshot,
+      userEmail: 'b@karazin.ua',
+    };
+    const currentNameChanged: StoredSessionIdentity = {
+      ...snapshot,
+      username: 'User B',
+    };
+
+    expect(hasSessionChanged(snapshot, currentEmailChanged)).toBe(true);
+    expect(hasSessionChanged(snapshot, currentNameChanged)).toBe(true);
+  });
+
+  it('returns true when either snapshot or current is null', () => {
+    const snapshot: StoredSessionIdentity = { token: 'tok' };
+
+    expect(hasSessionChanged(snapshot, null)).toBe(true);
+    expect(hasSessionChanged(null, snapshot)).toBe(true);
+    expect(hasSessionChanged(null, null)).toBe(false);
+  });
+
+  it('handles opaque non-JWT tokens by allowing rotation if user identity matches', () => {
+    const snapshot: StoredSessionIdentity = {
+      token: 'opaque-1',
+      username: 'User A',
+      userEmail: 'a@karazin.ua',
+    };
+    const current: StoredSessionIdentity = {
+      token: 'opaque-2',
+      username: 'User A',
+      userEmail: 'a@karazin.ua',
+    };
+
+    expect(hasSessionChanged(snapshot, current)).toBe(false);
+  });
+
+  it('treats opaque token change as session change if no username or email is available', () => {
+    const snapshot: StoredSessionIdentity = {
+      token: 'opaque-1',
+    };
+    const current: StoredSessionIdentity = {
+      token: 'opaque-2',
+    };
+
+    expect(hasSessionChanged(snapshot, current)).toBe(true);
   });
 });

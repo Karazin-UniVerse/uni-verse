@@ -304,13 +304,78 @@ function getCachedUserProfile(): StudentProfile | null {
 }
 
 /**
- * Resolves the initial student profile from storage or builds a fallback from the saved username.
+ * Represents the current session identity retrieved from persistent storage and tokens.
  */
 export interface StoredSessionIdentity {
+  userId?: string | null;
   username?: string | null;
   userEmail?: string | null;
   token?: string | null;
   authProvider?: string | null;
+}
+
+/**
+ * Reads the current session identity from client storage and extracts the user ID from the access token.
+ */
+export function readSessionIdentity(): StoredSessionIdentity | null {
+  if (!isBrowser) {
+    return null;
+  }
+
+  const token = safeStorage.getItem('accessToken');
+  const payload = token ? parseJwt(token) : null;
+  const userId = typeof payload?.sub === 'string' ? payload.sub : null;
+
+  return {
+    userId,
+    token,
+    username: safeStorage.getItem('username'),
+    userEmail: safeStorage.getItem('userEmail'),
+    authProvider: safeStorage.getItem('authProvider'),
+  };
+}
+
+/**
+ * Determines whether a session change occurred between a pre-request snapshot and current storage.
+ * Distinguishes normal access-token rotation from genuine account switches or logouts.
+ */
+export function hasSessionChanged(
+  snapshot: StoredSessionIdentity | null,
+  current: StoredSessionIdentity | null,
+): boolean {
+  if (!snapshot || !current) {
+    return snapshot !== current;
+  }
+
+  if (Boolean(snapshot.token) !== Boolean(current.token)) {
+    return true;
+  }
+
+  if (snapshot.authProvider !== current.authProvider) {
+    return true;
+  }
+
+  if (snapshot.userEmail !== current.userEmail) {
+    return true;
+  }
+
+  if (snapshot.username !== current.username) {
+    return true;
+  }
+
+  if (snapshot.userId || current.userId) {
+    return snapshot.userId !== current.userId;
+  }
+
+  if (snapshot.token === current.token) {
+    return false;
+  }
+
+  if (snapshot.userEmail || snapshot.username) {
+    return false;
+  }
+
+  return snapshot.token !== current.token;
 }
 
 /**
