@@ -498,6 +498,7 @@ export const en = {
   'opportunities.myApplications.paid': 'Paid',
   'opportunities.myApplications.unpaid': 'Practice',
   'opportunities.myApplications.motivationLabel': 'Your cover letter / motivation:',
+  'opportunities.myApplications.contactInfoLabel': 'Your contact details for communication:',
   'opportunities.myApplications.ownerFeedbackLabel': 'Author’s response:',
   'opportunities.myApplications.withdrawBtn': 'Withdraw application',
   'opportunities.myApplications.statusAccepted': 'Your application was approved by the organizer',

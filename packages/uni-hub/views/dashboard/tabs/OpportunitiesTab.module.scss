@@ -457,8 +457,14 @@
   border: 1px solid var(--card-border);
   border-radius: 8px;
   font-size: 11px;
+  line-height: 1;
   font-weight: 500;
   color: var(--text-secondary);
+
+  svg {
+    display: block;
+    flex-shrink: 0;
+  }
 }
 
 .moderationTypeCol {

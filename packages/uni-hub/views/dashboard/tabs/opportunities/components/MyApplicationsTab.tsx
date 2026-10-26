@@ -18,6 +18,7 @@ import { Button } from '@una';
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { ApplicationStatusBadge } from './ApplicationStatusBadge';
+import { ContactIcon } from './ContactIcon';
 import { TabStateWrapper } from './TabStateWrapper';
 import styles from '../../OpportunitiesTab.module.scss';
 
@@ -134,6 +135,16 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
                   {formatMessage('opportunities.myApplications.motivationLabel')}
                 </div>
                 <p className={styles.motivationText}>{app.motivation}</p>
+              </div>
+            )}
+
+            {app.contactInfo && (
+              <div className={styles.motivationBox}>
+                <div className={styles.motivationLabel}>
+                  <ContactIcon value={app.contactInfo} size={13} />
+                  {formatMessage('opportunities.myApplications.contactInfoLabel')}
+                </div>
+                <p className={styles.motivationText}>{app.contactInfo}</p>
               </div>
             )}
 

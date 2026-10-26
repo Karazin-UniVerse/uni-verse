@@ -430,6 +430,18 @@ export class OpportunitiesService {
 
     try {
       if (existing) {
+        await this.prisma.notification.deleteMany({
+          where: {
+            userId: opportunity.ownerId,
+            type: 'OPPORTUNITY_NEW_APPLICATION',
+            link: { contains: id },
+            OR: [
+              { message: { contains: existing.applicantName } },
+              { message: { contains: dto.applicantName } },
+            ],
+          },
+        });
+
         app = await this.prisma.opportunityApplication.update({
           where: { id: existing.id, status: ApplicationStatus.WITHDRAWN },
           data: {
@@ -489,6 +501,7 @@ export class OpportunitiesService {
   ): Promise<OpportunityApplication> {
     const app = await this.prisma.opportunityApplication.findUnique({
       where: { id: applicationId },
+      include: { opportunity: true },
     });
 
     if (!app) throw new NotFoundException('Application not found');
@@ -502,10 +515,21 @@ export class OpportunitiesService {
     )
       throw new BadRequestException('Cannot withdraw completed application');
 
-    return this.prisma.opportunityApplication.update({
+    const updated = await this.prisma.opportunityApplication.update({
       where: { id: applicationId },
       data: { status: ApplicationStatus.WITHDRAWN },
     });
+
+    await this.prisma.notification.deleteMany({
+      where: {
+        userId: app.opportunity.ownerId,
+        type: 'OPPORTUNITY_NEW_APPLICATION',
+        link: { contains: app.opportunityId },
+        message: { contains: app.applicantName },
+      },
+    });
+
+    return updated;
   }
 
   /**

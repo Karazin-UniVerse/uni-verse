@@ -85,6 +85,9 @@ describe('OpportunitiesService', () => {
               findUnique: jest.fn(),
               findMany: jest.fn(),
             },
+            notification: {
+              deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+            },
           },
         },
         {
@@ -1388,22 +1391,34 @@ describe('OpportunitiesService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('withdraws application successfully', async () => {
+    it('withdraws application successfully and cleans up owner notification', async () => {
       jest
         .spyOn(prisma.opportunityApplication, 'findUnique')
         .mockResolvedValue({
           id: 'app-1',
           applicantId: 'user-1',
+          applicantName: 'Applicant One',
+          opportunityId: 'opp-1',
+          opportunity: { ownerId: 'owner-1' },
           status: 'SUBMITTED',
         } as any);
       jest.spyOn(prisma.opportunityApplication, 'update').mockResolvedValue({
         id: 'app-1',
         status: 'WITHDRAWN',
       } as any);
+      const deleteSpy = jest.spyOn(prisma.notification, 'deleteMany');
 
       const result = await service.withdrawApplication('user-1', 'app-1');
 
       expect(result.status).toBe('WITHDRAWN');
+      expect(deleteSpy).toHaveBeenCalledWith({
+        where: {
+          userId: 'owner-1',
+          type: 'OPPORTUNITY_NEW_APPLICATION',
+          link: { contains: 'opp-1' },
+          message: { contains: 'Applicant One' },
+        },
+      });
     });
   });
 

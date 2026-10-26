@@ -79,9 +79,7 @@ const renderMyApplicationsTab = (props: Partial<MyApplicationsTabProps> = {}) =>
   };
 
   return {
-    ...render(
-      withLanguage(<MyApplicationsTab {...defaultProps} {...props} />),
-    ),
+    ...render(withLanguage(<MyApplicationsTab {...defaultProps} {...props} />)),
     props: { ...defaultProps, ...props },
   };
 };
@@ -114,6 +112,8 @@ describe('MyApplicationsTab component', () => {
     expect(screen.getByText('Оплачувана (300$ / month)')).toBeInTheDocument();
     expect(screen.getByText('Ваш супровідний лист / мотивація:')).toBeInTheDocument();
     expect(screen.getByText('I am passionate about open source and React.')).toBeInTheDocument();
+    expect(screen.getAllByText('Ваші контактні дані для звʼязку:')).toHaveLength(2);
+    expect(screen.getAllByText('applicant@example.com')).toHaveLength(2);
 
     expect(screen.getByText('B')).toBeInTheDocument();
     expect(screen.getByText('bob@example.com')).toBeInTheDocument();

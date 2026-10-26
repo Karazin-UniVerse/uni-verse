@@ -497,6 +497,7 @@ export const uk = {
   'opportunities.myApplications.paid': 'Оплачувана',
   'opportunities.myApplications.unpaid': 'Практика',
   'opportunities.myApplications.motivationLabel': 'Ваш супровідний лист / мотивація:',
+  'opportunities.myApplications.contactInfoLabel': 'Ваші контактні дані для звʼязку:',
   'opportunities.myApplications.ownerFeedbackLabel': 'Відповідь автора пропозиції:',
   'opportunities.myApplications.withdrawBtn': 'Відкликати відгук',
   'opportunities.myApplications.statusAccepted': 'Вашу кандидатуру схвалено організатором',
