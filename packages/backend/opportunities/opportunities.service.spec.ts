@@ -12,6 +12,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import {
+  ApplicationStatus,
   OpportunityStatus,
   Role,
   type Prisma,
@@ -1589,6 +1590,15 @@ describe('OpportunitiesService', () => {
 
       const result = await service.withdrawApplication('user-1', 'app-1');
 
+      expect(prisma.opportunityApplication.update).toHaveBeenCalledWith({
+        where: {
+          id: 'app-1',
+          status: {
+            in: [ApplicationStatus.SUBMITTED, ApplicationStatus.UNDER_REVIEW],
+          },
+        },
+        data: { status: 'WITHDRAWN' },
+      });
       expect(result.status).toBe('WITHDRAWN');
       expect(deleteSpy).toHaveBeenCalledWith({
         where: {
@@ -1598,6 +1608,26 @@ describe('OpportunitiesService', () => {
           message: { contains: '"applicationId":"app-1"' },
         },
       });
+    });
+
+    it('throws BadRequestException if application was completed concurrently before withdrawal update', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue({
+          id: 'app-1',
+          applicantId: 'user-1',
+          applicantName: 'Applicant One',
+          opportunityId: 'opp-1',
+          opportunity: { ownerId: 'owner-1' },
+          status: 'SUBMITTED',
+        } as any);
+      jest.spyOn(prisma.opportunityApplication, 'update').mockRejectedValue({
+        code: 'P2025',
+      });
+
+      await expect(
+        service.withdrawApplication('user-1', 'app-1'),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

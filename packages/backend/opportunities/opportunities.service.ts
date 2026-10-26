@@ -575,25 +575,38 @@ export class OpportunitiesService {
     )
       throw new BadRequestException('Cannot withdraw completed application');
 
-    const updated = await this.prisma.$transaction(async (tx) => {
-      const withdrawn = await tx.opportunityApplication.update({
-        where: { id: applicationId },
-        data: { status: ApplicationStatus.WITHDRAWN },
+    try {
+      const updated = await this.prisma.$transaction(async (tx) => {
+        const withdrawn = await tx.opportunityApplication.update({
+          where: {
+            id: applicationId,
+            status: {
+              in: [ApplicationStatus.SUBMITTED, ApplicationStatus.UNDER_REVIEW],
+            },
+          },
+          data: { status: ApplicationStatus.WITHDRAWN },
+        });
+
+        await tx.notification.deleteMany({
+          where: {
+            userId: app.opportunity.ownerId,
+            type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
+            link: { contains: app.opportunityId },
+            message: { contains: `"applicationId":"${applicationId}"` },
+          },
+        });
+
+        return withdrawn;
       });
 
-      await tx.notification.deleteMany({
-        where: {
-          userId: app.opportunity.ownerId,
-          type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
-          link: { contains: app.opportunityId },
-          message: { contains: `"applicationId":"${applicationId}"` },
-        },
-      });
+      return updated;
+    } catch (error) {
+      if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
+        throw new BadRequestException('Cannot withdraw completed application');
+      }
 
-      return withdrawn;
-    });
-
-    return updated;
+      throw error;
+    }
   }
 
   /**
