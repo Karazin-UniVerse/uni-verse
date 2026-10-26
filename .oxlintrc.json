@@ -91,7 +91,8 @@
         "packages/backend/grip/github-client.service.ts",
         "packages/backend/grip/gemini-client.service.ts",
         "packages/uni-hub/services/api.request.ts",
-        ".github/scripts/**"
+        ".github/scripts/**",
+        "scripts/**"
       ],
       "rules": {
         "no-restricted-globals": "off",
