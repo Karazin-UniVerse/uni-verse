@@ -583,6 +583,7 @@ export const uk = {
   'opportunities.detailModal.defaultOrganizer': 'Каразінський університет',
   'opportunities.detailModal.publishedOn': 'Опубліковано: {date}',
   'opportunities.detailModal.descTitle': 'Опис проекту та вимоги',
+  'opportunities.detailModal.email': 'Електронна пошта:',
   'opportunities.detailModal.contacts': 'Альтернативний контакт:',
   'opportunities.detailModal.manageTitle': 'Керування вашою можливістю',
   'opportunities.detailModal.sendToReview': 'Надіслати на модерацію',

@@ -19,7 +19,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 export const ProfileEmailOnly: Story = {
-  args: { alternativeContact: '' },
+  args: { alternativeContact: undefined },
 };
 
 export const Phone: Story = {

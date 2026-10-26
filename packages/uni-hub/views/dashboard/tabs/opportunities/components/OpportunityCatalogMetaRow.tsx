@@ -19,7 +19,7 @@ export const OpportunityCatalogMetaRow: React.FC<Props> = ({ opportunity, format
       <div className={styles.ownerAvatar}>{initial}</div>
       <div className={styles.ownerMeta}>
         <span className={styles.ownerName}>{ownerName}</span>
-        {opportunity.owner?.email && (
+        {opportunity.owner?.email && opportunity.owner?.email !== ownerName && (
           <span className={styles.ownerRole}>{opportunity.owner.email}</span>
         )}
         {alternativeContact && (

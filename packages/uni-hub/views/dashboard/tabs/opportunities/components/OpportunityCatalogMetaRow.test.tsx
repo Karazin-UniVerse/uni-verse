@@ -37,4 +37,20 @@ describe('OpportunityCatalogMetaRow contacts', () => {
       }
     },
   );
+
+  it('should not duplicate the email when the owner name is not set', () => {
+    render(
+      withLanguage(
+        <CatalogContacts
+          opportunity={{
+            ...buildOpportunity('contact-2'),
+            owner: { id: 'owner-2', name: null, email: 'only-email@example.com' },
+            ownerContactInfo: '',
+          }}
+        />,
+      ),
+    );
+
+    expect(screen.getAllByText('only-email@example.com')).toHaveLength(1);
+  });
 });

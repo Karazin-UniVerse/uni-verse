@@ -581,6 +581,7 @@ export const en = {
   'opportunities.detailModal.defaultOrganizer': 'Karazin University',
   'opportunities.detailModal.publishedOn': 'Published: {date}',
   'opportunities.detailModal.descTitle': 'Project Description and Requirements',
+  'opportunities.detailModal.email': 'Email address:',
   'opportunities.detailModal.contacts': 'Alternative contact:',
   'opportunities.detailModal.manageTitle': 'Manage Your Opportunity',
   'opportunities.detailModal.sendToReview': 'Submit for Review',

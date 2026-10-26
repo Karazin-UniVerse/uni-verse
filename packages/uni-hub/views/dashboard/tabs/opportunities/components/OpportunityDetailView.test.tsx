@@ -29,6 +29,7 @@ describe('OpportunityDetailView resubmission', () => {
       );
 
       expect(screen.getByText('profile@example.com')).toBeInTheDocument();
+      expect(screen.getByText('Електронна пошта:')).toBeInTheDocument();
 
       if (ownerContactInfo.trim()) {
         expect(screen.getByText('@organizer')).toBeInTheDocument();

@@ -3,19 +3,22 @@ import { describe, expect, it } from 'vitest';
 import { ContactTags } from './ContactTags';
 
 describe('ContactTags', () => {
-  it.each(['', '   '])('should omit an empty alternative contact %j', (alternativeContact) => {
-    render(
-      <ContactTags
-        email="profile@example.com"
-        alternativeContact={alternativeContact}
-        emailLabel="Email"
-        alternativeContactLabel="Alternative contact"
-      />,
-    );
+  it.each([undefined, '', '   '])(
+    'should omit an empty or undefined alternative contact %j',
+    (alternativeContact) => {
+      render(
+        <ContactTags
+          email="profile@example.com"
+          alternativeContact={alternativeContact}
+          emailLabel="Email"
+          alternativeContactLabel="Alternative contact"
+        />,
+      );
 
-    expect(screen.getByTitle('Email')).toHaveTextContent('profile@example.com');
-    expect(screen.queryByTitle('Alternative contact')).not.toBeInTheDocument();
-  });
+      expect(screen.getByTitle('Email')).toHaveTextContent('profile@example.com');
+      expect(screen.queryByTitle('Alternative contact')).not.toBeInTheDocument();
+    },
+  );
 
   it('should show both contacts with localized labels', () => {
     render(

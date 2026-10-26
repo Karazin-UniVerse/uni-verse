@@ -4,12 +4,12 @@ import type { ContactTagsProps } from './ContactTags.types';
 import styles from './ContactTags.module.scss';
 
 export function ContactTags({
-  alternativeContact,
   emailLabel,
   alternativeContactLabel,
   email,
+  alternativeContact,
 }: Readonly<ContactTagsProps>): React.ReactElement {
-  const contact = alternativeContact.trim();
+  const contact = alternativeContact?.trim();
 
   return (
     <>
