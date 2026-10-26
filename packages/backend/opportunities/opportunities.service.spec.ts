@@ -1427,6 +1427,14 @@ describe('OpportunitiesService', () => {
         },
       });
       expect(prisma.opportunityApplication.create).not.toHaveBeenCalled();
+      expect(prisma.notification.deleteMany).toHaveBeenCalledWith({
+        where: {
+          userId: 'owner-1',
+          type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
+          link: { contains: '1' },
+          message: { contains: '"applicationId":"app-withdrawn-1"' },
+        },
+      });
       expect(result.id).toBe('app-withdrawn-1');
       expect(notificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1587,10 +1595,7 @@ describe('OpportunitiesService', () => {
           userId: 'owner-1',
           type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
           link: { contains: 'opp-1' },
-          OR: [
-            { message: { contains: '"applicationId":"app-1"' } },
-            { message: { contains: 'Applicant One' } },
-          ],
+          message: { contains: '"applicationId":"app-1"' },
         },
       });
     });

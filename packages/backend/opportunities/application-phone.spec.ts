@@ -71,6 +71,9 @@ describe('application phone ownership', () => {
           return { phoneNumber: create.phoneNumber };
         }),
       },
+      notification: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
       $transaction: jest.fn(),
     };
 

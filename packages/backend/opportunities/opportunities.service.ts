@@ -534,6 +534,7 @@ export class OpportunitiesService {
       userId,
       opportunityId: id,
       request: dto,
+      ownerId: opportunity.ownerId,
     });
 
     await this.notificationsService.createNotification({
@@ -585,10 +586,7 @@ export class OpportunitiesService {
           userId: app.opportunity.ownerId,
           type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
           link: { contains: app.opportunityId },
-          OR: [
-            { message: { contains: `"applicationId":"${applicationId}"` } },
-            { message: { contains: app.applicantName } },
-          ],
+          message: { contains: `"applicationId":"${applicationId}"` },
         },
       });
 
