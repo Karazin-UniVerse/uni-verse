@@ -89,10 +89,10 @@
 
 **Interfaces:** `GeminiClientService.complete(request: GripCompletionRequest, signal: AbortSignal): Promise<GripCompletionResponse>`; `GripService.complete({ principal, request, signal }): Promise<GripCompletionResponse>` uses a named parameter type in `grip.types.ts`.
 
-- [ ] Write RED tests using a loopback HTTP fixture or mocked transport at the actual HTTP boundary: exact fixed host/model, Authorization substitution (no gateway/GitHub token upstream), 8192 output cap, redirects rejected, 60-second deadline, 2 MiB streaming read cap, malformed choices/content/usage rejected. Assert 429/504/502/503 mapping and absence of secret/provider body text in thrown messages.
-- [ ] Implement the Gemini HTTP client against the configured OpenAI-compatible URL, forcing the model and max output tokens rather than forwarding arbitrary request fields. Return one bounded textual completion and nonnegative safe-integer usage fields only; never echo other upstream properties. Avoid logging prompts or raw exceptions. No retries or alternate model on quota/transport failure.
-- [ ] Implement the coordinator: acquire a per-user/global reservation and lease before Gemini; always release in finally, including abort/provider errors; fail closed on DB/GitHub outage. Confirm session exchange and quota failures never call Gemini. Ensure disconnect cancellation is passed through, not replaced by a timeout-only signal.
-- [ ] Run tests GREEN, backend lint/typecheck and changed-file format; commit `feat: proxy quota-limited Grip requests to Gemini`.
+- [x] Write RED tests using a loopback HTTP fixture or mocked transport at the actual HTTP boundary: exact fixed host/model, Authorization substitution (no gateway/GitHub token upstream), 8192 output cap, redirects rejected, 60-second deadline, 2 MiB streaming read cap, malformed choices/content/usage rejected. Assert 429/504/502/503 mapping and absence of secret/provider body text in thrown messages.
+- [x] Implement the Gemini HTTP client against the configured OpenAI-compatible URL, forcing the model and max output tokens rather than forwarding arbitrary request fields. Return one bounded textual completion and nonnegative safe-integer usage fields only; never echo other upstream properties. Avoid logging prompts or raw exceptions. No retries or alternate model on quota/transport failure.
+- [x] Implement the coordinator: acquire a per-user/global reservation and lease before Gemini; always release in finally, including abort/provider errors; fail closed on DB/GitHub outage. Confirm session exchange and quota failures never call Gemini. Ensure disconnect cancellation is passed through, not replaced by a timeout-only signal.
+- [x] Run tests GREEN, backend lint/typecheck and changed-file format; commit `feat: proxy quota-limited Grip requests to Gemini`.
 
 ### Task 5: Expose protected routes with production parser behavior
 
