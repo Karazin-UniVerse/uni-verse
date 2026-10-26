@@ -38,16 +38,10 @@ export type OpportunityDetailProps = {
   moderationComment?: string | null;
   moderationCommentTitle?: string;
   manageTitle?: string;
-  phaseLabel?: string;
-  lifecycleState?: string;
-  lifecycleOptions?: OpportunityLifecycleOption[];
-  onLifecycleChange?: (state: string) => void;
-  acceptsApplicationsLabel?: string;
-  onToggleAcceptsApplications?: (accepts: boolean) => void;
-  // Footer
+  // Candidate application status
   acceptsApplications?: boolean;
   applicationsClosedText?: string;
-  // Footer
+  // Candidate actions
   canApply?: boolean;
   applyText?: string;
   onOpenApply?: () => void;

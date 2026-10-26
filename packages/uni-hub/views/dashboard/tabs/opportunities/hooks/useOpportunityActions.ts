@@ -3,25 +3,13 @@ import { useToast } from '@una';
 import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { OPPORTUNITY_STATUS, type OpportunityLifecycle } from '@core/constants/opportunities';
+import { OPPORTUNITY_STATUS } from '@core/constants/opportunities';
 import { invalidateOpportunities } from '../cache';
 import { getOpportunityErrorMessage } from '../helpers';
 
-interface LifecycleChange {
-  id: string;
-  state: OpportunityLifecycle;
-}
-
-interface AcceptsApplicationsChange {
-  id: string;
-  acceptsApplications: boolean;
-}
-
 interface UseOpportunityActionsResult {
   handleDeleteOpportunity: (id: string) => Promise<boolean>;
-  handleLifecycleChange: (id: string, state: OpportunityLifecycle) => Promise<void>;
   handleSendToReview: (id: string) => Promise<void>;
-  handleToggleAcceptsApplications: (id: string, acceptsApplications: boolean) => Promise<void>;
 }
 
 export function useOpportunityActions(): UseOpportunityActionsResult {
@@ -32,17 +20,6 @@ export function useOpportunityActions(): UseOpportunityActionsResult {
   const sendToReviewMutation = useMutation({
     mutationFn: (id: string) =>
       opportunitiesApi.changeStatus(id, OPPORTUNITY_STATUS.READY_FOR_REVIEW),
-    onSuccess: () => invalidateOpportunities(queryClient),
-  });
-
-  const lifecycleMutation = useMutation({
-    mutationFn: ({ id, state }: LifecycleChange) => opportunitiesApi.changeLifecycle(id, state),
-    onSuccess: () => invalidateOpportunities(queryClient),
-  });
-
-  const acceptsApplicationsMutation = useMutation({
-    mutationFn: ({ id, acceptsApplications }: AcceptsApplicationsChange) =>
-      opportunitiesApi.updateOpportunity(id, { acceptsApplications }),
     onSuccess: () => invalidateOpportunities(queryClient),
   });
 
@@ -66,31 +43,6 @@ export function useOpportunityActions(): UseOpportunityActionsResult {
     }
   };
 
-  const handleLifecycleChange = async (id: string, state: OpportunityLifecycle): Promise<void> => {
-    try {
-      await lifecycleMutation.mutateAsync({ id, state });
-      toast.success(formatMessage('opportunities.toast.stateUpdated'));
-    } catch (err: unknown) {
-      toast.error(getErrorMessage(err, formatMessage('opportunities.toast.genericError')));
-    }
-  };
-
-  const handleToggleAcceptsApplications = async (
-    id: string,
-    acceptsApplications: boolean,
-  ): Promise<void> => {
-    try {
-      await acceptsApplicationsMutation.mutateAsync({ id, acceptsApplications });
-      toast.success(
-        acceptsApplications
-          ? formatMessage('opportunities.toast.applicationsOpened')
-          : formatMessage('opportunities.toast.applicationsClosed'),
-      );
-    } catch (err: unknown) {
-      toast.error(getErrorMessage(err, formatMessage('opportunities.toast.genericError')));
-    }
-  };
-
   const handleDeleteOpportunity = async (id: string): Promise<boolean> => {
     try {
       await deleteMutation.mutateAsync(id);
@@ -106,8 +58,6 @@ export function useOpportunityActions(): UseOpportunityActionsResult {
 
   return {
     handleSendToReview,
-    handleLifecycleChange,
-    handleToggleAcceptsApplications,
     handleDeleteOpportunity,
   };
 }

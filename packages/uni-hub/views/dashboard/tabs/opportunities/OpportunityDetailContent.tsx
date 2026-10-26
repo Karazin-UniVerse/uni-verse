@@ -64,10 +64,6 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
         opportunity={opportunity}
         userId={currentUser.userId}
         onSendToReview={actions.handleSendToReview}
-        onLifecycleChange={actions.handleLifecycleChange}
-        onToggleAcceptsApplications={(accepts) =>
-          actions.handleToggleAcceptsApplications(opportunity.id, accepts)
-        }
         onEdit={create.openEdit}
         onDelete={() => setDeleteConfirmOpen(true)}
         onOpenApply={() => apply.setIsApplyOpen(true)}

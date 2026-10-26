@@ -325,17 +325,13 @@ describe('OpportunityDetailContent published opportunity controls', () => {
     query = new URLSearchParams();
     userId = 'owner-1';
     pushMock.mockClear();
-    vi.spyOn(opportunitiesApi, 'changeLifecycle').mockResolvedValue({} as never);
-    vi.spyOn(opportunitiesApi, 'updateOpportunity').mockResolvedValue({} as never);
-    vi.spyOn(opportunitiesApi, 'changeStatus').mockResolvedValue({} as never);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('allows owner to manage lifecycle and accepts applications on published opportunity without changing moderation status', async () => {
-    const user = userEvent.setup();
+  it('does not render phase select or accepts applications checkbox directly on detail page', () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
     });
@@ -364,30 +360,15 @@ describe('OpportunityDetailContent published opportunity controls', () => {
     expect(
       screen.queryByRole('button', { name: 'opportunities.detailModal.delete' }),
     ).not.toBeInTheDocument();
-
-    const phaseSelect = screen.getByRole('combobox', {
-      name: 'opportunities.detailModal.phaseLabel',
-    });
-
-    expect(phaseSelect).toBeInTheDocument();
-    expect(phaseSelect).toHaveValue('ACTIVE');
-
-    await user.selectOptions(phaseSelect, 'PAUSED');
-
-    expect(opportunitiesApi.changeLifecycle).toHaveBeenCalledWith('opp-published', 'PAUSED');
-
-    const checkbox = screen.getByRole('checkbox', {
-      name: 'opportunities.detailModal.acceptsApplications',
-    });
-
-    expect(checkbox).toBeInTheDocument();
-    expect(checkbox).toBeChecked();
-
-    await user.click(checkbox);
-
-    expect(opportunitiesApi.updateOpportunity).toHaveBeenCalledWith('opp-published', {
-      acceptsApplications: false,
-    });
-    expect(opportunitiesApi.changeStatus).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole('combobox', {
+        name: 'opportunities.detailModal.phaseLabel',
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('checkbox', {
+        name: 'opportunities.detailModal.acceptsApplications',
+      }),
+    ).not.toBeInTheDocument();
   });
 });
