@@ -89,7 +89,7 @@ describe('OpportunitiesTab component', () => {
     expect(screen.getByText('1')).toBeInTheDocument();
   });
 
-  it('should render Create Opportunity button for moderator only on My Opportunities tab', async (): Promise<void> => {
+  it('should render Create Opportunity button only on My Opportunities tab when logged in as moderator', async (): Promise<void> => {
     const user = userEvent.setup();
 
     mockCurrentUser = {
