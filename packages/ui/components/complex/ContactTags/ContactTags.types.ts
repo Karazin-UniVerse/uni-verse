@@ -1,6 +1,6 @@
 export interface ContactTagsProps {
-  alternativeContact: string;
-  emailLabel: string;
-  alternativeContactLabel: string;
-  email?: string;
+  readonly alternativeContact: string;
+  readonly emailLabel: string;
+  readonly alternativeContactLabel: string;
+  readonly email?: string;
 }

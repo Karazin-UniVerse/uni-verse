@@ -8,7 +8,7 @@ export function ContactTags({
   emailLabel,
   alternativeContactLabel,
   email,
-}: ContactTagsProps): React.ReactElement {
+}: Readonly<ContactTagsProps>): React.ReactElement {
   const contact = alternativeContact.trim();
 
   return (
