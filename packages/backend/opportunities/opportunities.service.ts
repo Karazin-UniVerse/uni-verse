@@ -477,7 +477,7 @@ export class OpportunitiesService {
       );
     }
 
-    const app = await persistOpportunityApplication({
+    const opportunityApplication = await persistOpportunityApplication({
       prisma: this.prisma,
       userId,
       opportunityId: id,
@@ -495,7 +495,7 @@ export class OpportunitiesService {
       link: `${OPPORTUNITIES_ROUTE}/${id}?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
     });
 
-    return app;
+    return opportunityApplication;
   }
 
   /**
