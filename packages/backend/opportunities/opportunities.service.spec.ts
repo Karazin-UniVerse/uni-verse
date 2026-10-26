@@ -522,6 +522,16 @@ describe('OpportunitiesService', () => {
       await expect(
         service.moderate('user1', 'opp1', { action: 'APPROVE' } as any),
       ).rejects.toThrow(ConflictException);
+      expect(prisma.opportunity.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            id: 'opp1',
+            status: 'READY_FOR_REVIEW',
+            updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+          },
+        }),
+      );
+      expect(notificationsService.createNotification).not.toHaveBeenCalled();
     });
   });
 
