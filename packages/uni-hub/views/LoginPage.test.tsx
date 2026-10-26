@@ -19,24 +19,22 @@ const MOCK_GOOGLE_TOKEN = `header.${btoa(
 
 let googleCallback: ((response: { credential?: string }) => void) | undefined;
 
-function setupGoogleIdentityStub() {
+function setupGoogleIdentityStub(token: string = MOCK_GOOGLE_TOKEN) {
   googleCallback = undefined;
 
   window.google = {
     accounts: {
       id: {
-        initialize: vi.fn(
-          ({ callback }: { callback: (res: { credential?: string }) => void }) => {
-            googleCallback = callback;
-          },
-        ),
+        initialize: vi.fn(({ callback }: { callback: (res: { credential?: string }) => void }) => {
+          googleCallback = callback;
+        }),
         renderButton: vi.fn((container: HTMLElement) => {
           const btn = document.createElement('button');
 
           btn.type = 'button';
           btn.setAttribute('data-testid', 'google-btn');
           btn.addEventListener('click', () => {
-            googleCallback?.({ credential: MOCK_GOOGLE_TOKEN });
+            googleCallback?.({ credential: token });
           });
           container.appendChild(btn);
         }),
@@ -98,6 +96,33 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     expect(window.localStorage.getItem('username')).toBe('Test Student');
     expect(mockPush).toHaveBeenCalledWith('/');
     expect(screen.getByText('Вхід виконано успішно')).toBeInTheDocument();
+  });
+
+  it('should fall back to email username when Google claims omit name fields', async () => {
+    setTestFeatureFlags({ isMoodleIntegrationEnabled: false });
+
+    const tokenWithoutName = `header.${btoa(
+      JSON.stringify({ email: 'nameless.student@karazin.ua' }),
+    )}.signature`;
+
+    setupGoogleIdentityStub(tokenWithoutName);
+
+    const user = userEvent.setup();
+
+    mockAuthApi.loginWithGoogle.mockResolvedValueOnce({
+      data: { isLinked: false, access_token: 'mock-token' },
+    });
+
+    renderLoginPage();
+
+    await user.click(screen.getByTestId('google-btn'));
+
+    await waitFor(() => {
+      expect(window.localStorage.getItem('isLoggedIn')).toBe('true');
+    });
+
+    expect(window.localStorage.getItem('username')).toBe('nameless.student');
+    expect(window.localStorage.getItem('userEmail')).toBe('nameless.student@karazin.ua');
   });
 
   it('should not set isLoggedIn and not redirect to / when isMoodleIntegrationEnabled is true and account is unlinked', async () => {
@@ -190,7 +215,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     });
 
     expect(window.localStorage.getItem('isMoodleLinked')).toBe('true');
-    expect(window.localStorage.getItem('username')).toBe('moodleuser');
+    expect(window.localStorage.getItem('username')).toBe('Test Student');
     expect(mockPush).toHaveBeenCalledWith('/');
   });
 

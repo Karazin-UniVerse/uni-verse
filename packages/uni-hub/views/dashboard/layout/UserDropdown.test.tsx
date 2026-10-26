@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
 import { fallbackStudentProfile } from '../constants';
 import { UserDropdown, getMoodleStatusDetails } from './UserDropdown';
 
@@ -50,5 +51,51 @@ describe('UserDropdown', () => {
     );
 
     expect(screen.queryByText('Moodle LMS')).not.toBeInTheDocument();
+  });
+
+  it('should render trigger title without group when group is absent and hide group in dropdown', () => {
+    render(
+      <ThemeProvider>
+        <UserDropdown
+          activeStudentProfile={fallbackStudentProfile}
+          soundEnabled={true}
+          onToggleSound={vi.fn()}
+          onLogout={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
+
+    const trigger = screen.getByRole('button', { name: /меню профілю користувача/i });
+
+    expect(trigger).toHaveAttribute('title', fallbackStudentProfile.fullName);
+
+    fireEvent.click(trigger);
+
+    expect(screen.getByText(fallbackStudentProfile.email)).toBeInTheDocument();
+    expect(screen.queryByText('КС12')).not.toBeInTheDocument();
+  });
+
+  it('should render trigger title with group and display group in dropdown when group is present', () => {
+    const profileWithGroup = { ...fallbackStudentProfile, group: 'КС-31' };
+
+    render(
+      <ThemeProvider>
+        <UserDropdown
+          activeStudentProfile={profileWithGroup}
+          soundEnabled={true}
+          onToggleSound={vi.fn()}
+          onLogout={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
+
+    const trigger = screen.getByRole('button', { name: /меню профілю користувача/i });
+
+    expect(trigger).toHaveAttribute('title', `${fallbackStudentProfile.fullName} (КС-31)`);
+
+    fireEvent.click(trigger);
+
+    expect(screen.getByText('КС-31')).toBeInTheDocument();
+    expect(screen.getByText(fallbackStudentProfile.email)).toBeInTheDocument();
   });
 });

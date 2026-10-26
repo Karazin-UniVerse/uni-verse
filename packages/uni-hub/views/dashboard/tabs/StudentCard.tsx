@@ -3,7 +3,7 @@
 import React from 'react';
 import { GraduationCap, Award } from 'lucide-react';
 import { Tag } from '@una';
-import type { StudentProfile } from '@core/types';
+import type { StudentProfile } from '@core/types/student';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useFeatures } from '@uni-hub/features';
 import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
@@ -19,6 +19,8 @@ export const StudentCard: React.FC<StudentCardProps> = ({
 }) => {
   const { formatMessage } = useLanguage();
   const { isEDeanEnabled, isMoodleIntegrationEnabled } = useFeatures();
+  const { course, group } = activeStudentProfile;
+  const hasCourseAndGroup = course !== undefined && Boolean(group);
 
   return (
     <section className={styles.studentCard}>
@@ -82,15 +84,19 @@ export const StudentCard: React.FC<StudentCardProps> = ({
                 <span className={styles.fieldLabel}>{formatMessage('student.department')}</span>
                 <span className={styles.fieldValue}>{activeStudentProfile.department}</span>
               </div>
-              <div className={styles.studentField}>
-                <span className={styles.fieldLabel}>{formatMessage('student.courseAndGroup')}</span>
-                <span className={styles.fieldValue}>
-                  {formatMessage('student.courseGroupFormat', {
-                    course: activeStudentProfile.course,
-                    group: activeStudentProfile.group,
-                  })}
-                </span>
-              </div>
+              {hasCourseAndGroup && (
+                <div className={styles.studentField}>
+                  <span className={styles.fieldLabel}>
+                    {formatMessage('student.courseAndGroup')}
+                  </span>
+                  <span className={styles.fieldValue}>
+                    {formatMessage('student.courseGroupFormat', {
+                      course: course ?? '',
+                      group: group ?? '',
+                    })}
+                  </span>
+                </div>
+              )}
               <div className={styles.studentField}>
                 <span className={styles.fieldLabel}>{formatMessage('student.card')}</span>
                 <span className={styles.fieldValue}>{activeStudentProfile.studentCardNumber}</span>

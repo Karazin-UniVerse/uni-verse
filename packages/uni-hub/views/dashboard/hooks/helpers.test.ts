@@ -15,10 +15,14 @@ import {
   buildFallbackData,
   isMoodleUnlinked,
   syncStudentProfile,
+  applyStoredIdentityToProfile,
   getInitialUserProfile,
+  readSessionIdentity,
+  hasSessionChanged,
+  type StoredSessionIdentity,
   type MoodleApiResponseTuple,
 } from './helpers';
-import { fallbackStudentProfile } from '../constants';
+import { fallbackStudentProfile, STUDENT_PROFILE_STORAGE_KEY } from '../constants';
 import type { DashboardData } from '../types';
 
 vi.mock('@uni-hub/utils/browser', () => ({
@@ -172,14 +176,14 @@ describe('syncStudentProfile', () => {
 
     syncStudentProfile(profile);
 
-    expect(localStorage.getItem('universe_student_profile')).toBe(JSON.stringify(profile));
+    expect(localStorage.getItem(STUDENT_PROFILE_STORAGE_KEY)).toBe(JSON.stringify(profile));
   });
 
   it('should do nothing when profile is null or undefined', () => {
     syncStudentProfile(null);
     syncStudentProfile(undefined);
 
-    expect(localStorage.getItem('universe_student_profile')).toBeNull();
+    expect(localStorage.getItem(STUDENT_PROFILE_STORAGE_KEY)).toBeNull();
   });
 });
 
@@ -187,7 +191,7 @@ describe('getInitialUserProfile', () => {
   it('should prefer the cached profile over the saved username', () => {
     const profile = { ...fallbackStudentProfile, fullName: 'Cached Student' };
 
-    localStorage.setItem('universe_student_profile', JSON.stringify(profile));
+    localStorage.setItem(STUDENT_PROFILE_STORAGE_KEY, JSON.stringify(profile));
     localStorage.setItem('username', 'saved.user');
 
     expect(getInitialUserProfile()).toEqual(profile);
@@ -199,7 +203,7 @@ describe('getInitialUserProfile', () => {
     ['a partial profile', JSON.stringify({ fullName: 'Partial Student' })],
     ['invalid JSON', '{not json'],
   ])('should ignore a cached profile that is %s', (_label: string, cached: string) => {
-    localStorage.setItem('universe_student_profile', cached);
+    localStorage.setItem(STUDENT_PROFILE_STORAGE_KEY, cached);
     localStorage.setItem('username', 'saved.user');
 
     expect(getInitialUserProfile()?.fullName).toBe('saved.user');
@@ -215,10 +219,47 @@ describe('getInitialUserProfile', () => {
     });
   });
 
-  it('should keep an email username as the email', () => {
+  it('should use username as fullName directly and keep email when username is email', () => {
     localStorage.setItem('username', 'student@karazin.ua');
 
-    expect(getInitialUserProfile()?.email).toBe('student@karazin.ua');
+    const profile = getInitialUserProfile();
+
+    expect(profile?.email).toBe('student@karazin.ua');
+    expect(profile?.fullName).toBe('student@karazin.ua');
+  });
+
+  it('uses userEmail from storage when username is real name and userEmail is set', () => {
+    localStorage.setItem('username', 'Богдан Мельник');
+    localStorage.setItem('userEmail', 'melnyk.bogdan@student.karazin.ua');
+
+    const profile = getInitialUserProfile();
+
+    expect(profile?.fullName).toBe('Богдан Мельник');
+    expect(profile?.email).toBe('melnyk.bogdan@student.karazin.ua');
+  });
+
+  it('ignores the legacy universe_student_profile cache', () => {
+    localStorage.setItem(
+      'universe_student_profile',
+      JSON.stringify({ ...fallbackStudentProfile, group: 'КС12' }),
+    );
+    localStorage.setItem('username', 'saved.user');
+
+    expect(getInitialUserProfile()?.group).toBeUndefined();
+  });
+
+  it('accepts a cached real profile without group and course', () => {
+    const profile = { ...fallbackStudentProfile, fullName: 'Богдан Мельник' };
+
+    localStorage.setItem(STUDENT_PROFILE_STORAGE_KEY, JSON.stringify(profile));
+
+    expect(getInitialUserProfile()).toEqual(profile);
+  });
+
+  it('never adds a group to a username-based profile', () => {
+    localStorage.setItem('username', 'melnyk.bogdan@student.karazin.ua');
+
+    expect(getInitialUserProfile()).not.toHaveProperty('group');
   });
 
   it('should return null when there is no cache and no usable username', () => {
@@ -227,6 +268,150 @@ describe('getInitialUserProfile', () => {
     localStorage.setItem('username', fallbackStudentProfile.fullName);
 
     expect(getInitialUserProfile()).toBeNull();
+  });
+});
+
+describe('applyStoredIdentityToProfile', () => {
+  it('should overlay stored corporate username and userEmail when userEmail is set', () => {
+    localStorage.setItem('username', 'Богдан Мельник');
+    localStorage.setItem('userEmail', 'melnyk.bogdan@student.karazin.ua');
+
+    const moodleProfile = {
+      ...fallbackStudentProfile,
+      fullName: 'Тестовий акаунт3',
+      email: 'csai_test3@student.karazin.ua',
+      gpa: 95.5,
+    };
+
+    const resolved = applyStoredIdentityToProfile(moodleProfile);
+
+    expect(resolved.fullName).toBe('Богдан Мельник');
+    expect(resolved.email).toBe('melnyk.bogdan@student.karazin.ua');
+    expect(resolved.gpa).toBe(95.5);
+  });
+
+  it('should keep moodle fullName if saved username is empty or fallback, but apply userEmail', () => {
+    localStorage.setItem('userEmail', 'melnyk.bogdan@student.karazin.ua');
+    localStorage.setItem('username', fallbackStudentProfile.fullName);
+
+    const moodleProfile = {
+      ...fallbackStudentProfile,
+      fullName: 'Оригінальне Ім’я',
+    };
+
+    const resolved = applyStoredIdentityToProfile(moodleProfile);
+
+    expect(resolved.fullName).toBe('Оригінальне Ім’я');
+    expect(resolved.email).toBe('melnyk.bogdan@student.karazin.ua');
+  });
+
+  it('should return profile untouched when userEmail is not in localStorage', () => {
+    localStorage.setItem('username', 'moodle.user');
+
+    const moodleProfile = {
+      ...fallbackStudentProfile,
+      fullName: 'Moodle Student',
+      email: 'moodle@karazin.ua',
+    };
+
+    const resolved = applyStoredIdentityToProfile(moodleProfile);
+
+    expect(resolved).toEqual(moodleProfile);
+  });
+
+  it('should return profile untouched when localStorage.getItem throws on email read', () => {
+    const getItemSpy = vi.mocked(localStorage.getItem).mockImplementationOnce(() => {
+      throw new Error('SecurityError: Access denied');
+    });
+
+    const moodleProfile = {
+      ...fallbackStudentProfile,
+      fullName: 'Оригінальне Ім’я',
+    };
+
+    const resolved = applyStoredIdentityToProfile(moodleProfile);
+
+    expect(getItemSpy).toHaveBeenCalledWith('userEmail');
+    expect(resolved).toEqual(moodleProfile);
+  });
+
+  it('should safely fall back to profileData.fullName when username storage read throws', () => {
+    mockStorage.userEmail = 'melnyk.bogdan@student.karazin.ua';
+
+    const getItemSpy = vi.mocked(localStorage.getItem).mockImplementation((key: string) => {
+      if (key === 'username') {
+        throw new Error('QuotaExceededError');
+      }
+
+      return mockStorage[key] ?? null;
+    });
+
+    const moodleProfile = {
+      ...fallbackStudentProfile,
+      fullName: 'Оригінальне Ім’я',
+    };
+
+    const resolved = applyStoredIdentityToProfile(moodleProfile);
+
+    expect(getItemSpy).toHaveBeenCalledWith('username');
+    expect(resolved.fullName).toBe('Оригінальне Ім’я');
+    expect(resolved.email).toBe('melnyk.bogdan@student.karazin.ua');
+  });
+
+  it('should return profile untouched when storage access throws an unhandled exception', () => {
+    const getItemSpy = vi.mocked(localStorage.getItem).mockImplementation(() => {
+      throw new Error('SecurityError: Access denied');
+    });
+
+    const moodleProfile = {
+      ...fallbackStudentProfile,
+      fullName: 'Оригінальне Ім’я',
+    };
+
+    const resolved = applyStoredIdentityToProfile(moodleProfile);
+
+    expect(getItemSpy).toHaveBeenCalled();
+    expect(resolved).toEqual(moodleProfile);
+  });
+
+  it('should resolve email from session JWT in applyStoredIdentityToProfile when userEmail is absent', () => {
+    const token = `header.${Buffer.from(
+      JSON.stringify({ email: 'melnyk.bogdan@student.karazin.ua' }),
+    ).toString('base64')}.signature`;
+
+    mockStorage.username = 'Богдан Мельник';
+    mockStorage.accessToken = token;
+
+    const moodleProfile = {
+      ...fallbackStudentProfile,
+      fullName: 'Moodle Student',
+    };
+
+    const resolved = applyStoredIdentityToProfile(moodleProfile);
+
+    expect(resolved.fullName).toBe('Богдан Мельник');
+    expect(resolved.email).toBe('melnyk.bogdan@student.karazin.ua');
+  });
+
+  it('should preserve moodle fullName and profile for credential sessions even if session token contains email', () => {
+    const token = `header.${Buffer.from(
+      JSON.stringify({ email: 'moodle.student@karazin.ua' }),
+    ).toString('base64')}.signature`;
+
+    mockStorage.username = 'moodle.student';
+    mockStorage.accessToken = token;
+    mockStorage.authProvider = 'credentials';
+
+    const moodleProfile = {
+      ...fallbackStudentProfile,
+      fullName: 'Барсуков Родіон Сергійович',
+      email: 'moodle.student@karazin.ua',
+    };
+
+    const resolved = applyStoredIdentityToProfile(moodleProfile);
+
+    expect(resolved.fullName).toBe('Барсуков Родіон Сергійович');
+    expect(resolved).toEqual(moodleProfile);
   });
 });
 
@@ -665,5 +850,190 @@ describe('applyPlatformNotifications', () => {
     expect(result.notifications[0].id).toBe('plat-1');
     expect(result.notifications[1].id).toBe(1);
     expect(result.unreadCount).toBe(1);
+  });
+});
+
+function createMockJwt(payload: Record<string, unknown>): string {
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+
+  return `${header}.${body}.mockSignature`;
+}
+
+describe('readSessionIdentity', () => {
+  it('reads session identity from storage and extracts userId from JWT accessToken', () => {
+    const token = createMockJwt({ sub: 'user-456', email: 'test@karazin.ua' });
+
+    mockStorage.accessToken = token;
+    mockStorage.username = 'Test User';
+    mockStorage.userEmail = 'test@karazin.ua';
+    mockStorage.authProvider = 'google';
+
+    const identity = readSessionIdentity();
+
+    expect(identity).toEqual({
+      userId: 'user-456',
+      token,
+      username: 'Test User',
+      userEmail: 'test@karazin.ua',
+      authProvider: 'google',
+    });
+  });
+
+  it('handles missing or malformed token gracefully without throwing', () => {
+    mockStorage.accessToken = 'not-a-jwt';
+    mockStorage.username = 'Opaque User';
+
+    const identity = readSessionIdentity();
+
+    expect(identity).toEqual({
+      userId: null,
+      token: 'not-a-jwt',
+      username: 'Opaque User',
+      userEmail: null,
+      authProvider: null,
+    });
+  });
+});
+
+describe('hasSessionChanged', () => {
+  it('returns false when both snapshot and current are identical', () => {
+    const identity: StoredSessionIdentity = {
+      userId: 'u1',
+      token: 'tok-1',
+      username: 'User 1',
+      userEmail: 'u1@karazin.ua',
+      authProvider: 'google',
+    };
+
+    expect(hasSessionChanged(identity, identity)).toBe(false);
+  });
+
+  it('returns false when token rotates but userId and account identity remain unchanged', () => {
+    const snapshot: StoredSessionIdentity = {
+      userId: 'u1',
+      token: 'initial-token',
+      username: 'User 1',
+      userEmail: 'u1@karazin.ua',
+      authProvider: 'google',
+    };
+    const current: StoredSessionIdentity = {
+      userId: 'u1',
+      token: 'refreshed-token',
+      username: 'User 1',
+      userEmail: 'u1@karazin.ua',
+      authProvider: 'google',
+    };
+
+    expect(hasSessionChanged(snapshot, current)).toBe(false);
+  });
+
+  it('returns true when userId changes (different account login)', () => {
+    const snapshot: StoredSessionIdentity = {
+      userId: 'u1',
+      token: 'token-u1',
+      username: 'User 1',
+      userEmail: 'u1@karazin.ua',
+      authProvider: 'google',
+    };
+    const current: StoredSessionIdentity = {
+      userId: 'u2',
+      token: 'token-u2',
+      username: 'User 2',
+      userEmail: 'u2@karazin.ua',
+      authProvider: 'google',
+    };
+
+    expect(hasSessionChanged(snapshot, current)).toBe(true);
+  });
+
+  it('returns true when user logs out while request was in-flight', () => {
+    const snapshot: StoredSessionIdentity = {
+      userId: 'u1',
+      token: 'token-u1',
+      username: 'User 1',
+      userEmail: 'u1@karazin.ua',
+      authProvider: 'google',
+    };
+    const current: StoredSessionIdentity = {
+      userId: null,
+      token: null,
+      username: null,
+      userEmail: null,
+      authProvider: null,
+    };
+
+    expect(hasSessionChanged(snapshot, current)).toBe(true);
+  });
+
+  it('returns true when authProvider changes', () => {
+    const snapshot: StoredSessionIdentity = {
+      userId: 'u1',
+      token: 'tok',
+      username: 'User',
+      userEmail: 'u@karazin.ua',
+      authProvider: 'google',
+    };
+    const current: StoredSessionIdentity = {
+      ...snapshot,
+      authProvider: 'credentials',
+    };
+
+    expect(hasSessionChanged(snapshot, current)).toBe(true);
+  });
+
+  it('returns true when userEmail or username changes', () => {
+    const snapshot: StoredSessionIdentity = {
+      userId: 'u1',
+      token: 'tok',
+      username: 'User A',
+      userEmail: 'a@karazin.ua',
+      authProvider: 'google',
+    };
+    const currentEmailChanged: StoredSessionIdentity = {
+      ...snapshot,
+      userEmail: 'b@karazin.ua',
+    };
+    const currentNameChanged: StoredSessionIdentity = {
+      ...snapshot,
+      username: 'User B',
+    };
+
+    expect(hasSessionChanged(snapshot, currentEmailChanged)).toBe(true);
+    expect(hasSessionChanged(snapshot, currentNameChanged)).toBe(true);
+  });
+
+  it('returns true when either snapshot or current is null', () => {
+    const snapshot: StoredSessionIdentity = { token: 'tok' };
+
+    expect(hasSessionChanged(snapshot, null)).toBe(true);
+    expect(hasSessionChanged(null, snapshot)).toBe(true);
+    expect(hasSessionChanged(null, null)).toBe(false);
+  });
+
+  it('handles opaque non-JWT tokens by allowing rotation if user identity matches', () => {
+    const snapshot: StoredSessionIdentity = {
+      token: 'opaque-1',
+      username: 'User A',
+      userEmail: 'a@karazin.ua',
+    };
+    const current: StoredSessionIdentity = {
+      token: 'opaque-2',
+      username: 'User A',
+      userEmail: 'a@karazin.ua',
+    };
+
+    expect(hasSessionChanged(snapshot, current)).toBe(false);
+  });
+
+  it('treats opaque token change as session change if no username or email is available', () => {
+    const snapshot: StoredSessionIdentity = {
+      token: 'opaque-1',
+    };
+    const current: StoredSessionIdentity = {
+      token: 'opaque-2',
+    };
+
+    expect(hasSessionChanged(snapshot, current)).toBe(true);
   });
 });
