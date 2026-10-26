@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@una';
 import { isValidContactInfo } from '@core/utils/contacts';
-import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { ApplyOpportunityRequest, Opportunity } from '@core/types/opportunities';
 import type { CurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { invalidateOpportunities } from '../cache';
+import { getOpportunityErrorMessage } from '../helpers';
 
 interface ApplicationSubmission {
   opportunityId: string;
@@ -75,7 +75,13 @@ export function useApplyToOpportunity({
       setContactInfo('');
       toast.success(formatMessage('opportunities.toast.applySuccess'));
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, formatMessage('opportunities.toast.applyError')));
+      toast.error(
+        getOpportunityErrorMessage(
+          err,
+          formatMessage,
+          formatMessage('opportunities.toast.applyError'),
+        ),
+      );
     }
   };
 

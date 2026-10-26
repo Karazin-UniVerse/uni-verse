@@ -5,6 +5,7 @@ import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { OPPORTUNITY_STATUS, type OpportunityLifecycle } from '@core/constants/opportunities';
 import { invalidateOpportunities } from '../cache';
+import { getOpportunityErrorMessage } from '../helpers';
 
 interface LifecycleChange {
   id: string;
@@ -49,7 +50,13 @@ export function useOpportunityActions(): UseOpportunityActionsResult {
       await sendToReviewMutation.mutateAsync(id);
       toast.success(formatMessage('opportunities.toast.sentToReview'));
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, formatMessage('opportunities.toast.genericError')));
+      toast.error(
+        getOpportunityErrorMessage(
+          err,
+          formatMessage,
+          formatMessage('opportunities.toast.genericError'),
+        ),
+      );
     }
   };
 
