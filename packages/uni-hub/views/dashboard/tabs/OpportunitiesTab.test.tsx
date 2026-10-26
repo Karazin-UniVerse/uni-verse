@@ -66,7 +66,7 @@ describe('OpportunitiesTab component', () => {
     expect(myApplicationsTab).toBeInTheDocument();
     expect(myApplicationsTab).toHaveAttribute('aria-selected', 'false');
     expect(screen.queryByRole('tab', { name: /модерація/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /створити можливість/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /створити можливість/i })).not.toBeInTheDocument();
     expect(screen.getByRole('tabpanel')).toHaveAttribute('id', 'panel-catalog');
   });
 
@@ -89,6 +89,25 @@ describe('OpportunitiesTab component', () => {
     expect(screen.getByText('1')).toBeInTheDocument();
   });
 
+  it('should render Create Opportunity button for moderator only on My Opportunities tab', async () => {
+    const user = userEvent.setup();
+
+    mockCurrentUser = {
+      ...mockCurrentUser,
+      roles: [ROLE.OPPORTUNITIES_USER, ROLE.OPPORTUNITIES_MODERATOR],
+    };
+
+    renderOpportunitiesTab();
+
+    expect(screen.queryByRole('button', { name: /створити можливість/i })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: /мої можливості/i }));
+    expect(screen.getByRole('button', { name: /створити можливість/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: /модерація/i }));
+    expect(screen.queryByRole('button', { name: /створити можливість/i })).not.toBeInTheDocument();
+  });
+
   it('should switch active sub-tab when clicking a tab button', async () => {
     const user = userEvent.setup();
 
@@ -99,12 +118,11 @@ describe('OpportunitiesTab component', () => {
 
     await user.click(myOpportunitiesTab);
 
-    expect(useOpportunitiesStore.getState().activeSubTab).toBe(
-      OPPORTUNITY_SUB_TAB.MyOpportunities,
-    );
+    expect(useOpportunitiesStore.getState().activeSubTab).toBe(OPPORTUNITY_SUB_TAB.MyOpportunities);
     expect(myOpportunitiesTab).toHaveAttribute('aria-selected', 'true');
     expect(catalogTab).toHaveAttribute('aria-selected', 'false');
     expect(screen.getByRole('tabpanel')).toHaveAttribute('id', 'panel-my-opportunities');
+    expect(screen.getByRole('button', { name: /створити можливість/i })).toBeInTheDocument();
 
     const myApplicationsTab = screen.getByRole('tab', { name: /мої відгуки/i });
 
@@ -114,6 +132,7 @@ describe('OpportunitiesTab component', () => {
     expect(myApplicationsTab).toHaveAttribute('aria-selected', 'true');
     expect(myOpportunitiesTab).toHaveAttribute('aria-selected', 'false');
     expect(screen.getByRole('tabpanel')).toHaveAttribute('id', 'panel-my-applications');
+    expect(screen.queryByRole('button', { name: /створити можливість/i })).not.toBeInTheDocument();
   });
 
   it('should trigger create opportunity modal when clicking Post Opportunity button', async () => {
@@ -122,6 +141,8 @@ describe('OpportunitiesTab component', () => {
     renderOpportunitiesTab();
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: /мої можливості/i }));
 
     const createButton = screen.getByRole('button', { name: /створити можливість/i });
 

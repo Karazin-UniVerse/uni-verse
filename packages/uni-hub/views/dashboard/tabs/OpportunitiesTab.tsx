@@ -85,12 +85,14 @@ export const OpportunitiesTab: React.FC = () => {
           onSelect={setActiveSubTab}
         />
 
-        <div className={styles.createBtnWrapper}>
-          <Button variant="primary" onClick={create.openCreate} className={styles.createBtn}>
-            <Plus size={16} />
-            {formatMessage('opportunities.actions.create')}
-          </Button>
-        </div>
+        {activeSubTab === OPPORTUNITY_SUB_TAB.MyOpportunities && (
+          <div className={styles.createBtnWrapper}>
+            <Button variant="primary" onClick={create.openCreate} className={styles.createBtn}>
+              <Plus size={16} />
+              {formatMessage('opportunities.actions.create')}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* SubTab Views */}
