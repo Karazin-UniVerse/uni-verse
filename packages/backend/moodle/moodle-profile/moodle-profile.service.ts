@@ -36,6 +36,18 @@ interface MoodleSiteInfo {
   userpictureurl?: string;
 }
 
+interface MoodleUserGroup {
+  id?: number;
+  name?: string;
+}
+
+interface MoodleCustomField {
+  type?: string;
+  value?: string;
+  name?: string;
+  shortname?: string;
+}
+
 interface MoodleUserItem {
   id?: number;
   username?: string;
@@ -47,6 +59,15 @@ interface MoodleUserItem {
   institution?: string;
   idnumber?: string;
   profileimageurl?: string;
+  groups?: MoodleUserGroup[];
+  customfields?: MoodleCustomField[];
+}
+
+interface ResolveGroupParams {
+  courses: Array<{ id?: number; fullname?: string }>;
+  moodleId: string;
+  token: string;
+  moodleUser?: MoodleUserItem;
 }
 
 @Injectable()
@@ -69,7 +90,7 @@ export class MoodleProfileService {
   ): Promise<StudentProfileDto> {
     const siteInfo = await this.fetchSiteInfo(moodleToken);
     const moodleUser = await this.fetchMoodleUser(moodleToken, moodleId);
-    const { gpa, totalCredits } = await this.computeAcademicMetrics(
+    const { gpa, totalCredits, courses } = await this.computeAcademicMetrics(
       moodleToken,
       moodleId,
     );
@@ -82,6 +103,12 @@ export class MoodleProfileService {
       moodleId,
     );
     const { faculty, department } = this.resolveAffiliation(moodleUser);
+    const group = await this.resolveGroup({
+      token: moodleToken,
+      moodleId,
+      moodleUser,
+      courses,
+    });
 
     const safeMoodleId = moodleId || '4021';
     const parsedId = Number.parseInt(safeMoodleId, 10);
@@ -100,6 +127,7 @@ export class MoodleProfileService {
       specialty: '122 Компʼютерні науки',
       educationalProgram: 'Компʼютерні науки та інтелектуальні системи',
       degree: 'bachelor',
+      group,
       studyForm: 'full-time',
       financing: 'budget',
       status: 'active',
@@ -156,9 +184,14 @@ export class MoodleProfileService {
   private async computeAcademicMetrics(
     token: string,
     moodleId: string,
-  ): Promise<{ gpa: number; totalCredits: number }> {
+  ): Promise<{
+    gpa: number;
+    totalCredits: number;
+    courses: Array<{ id?: number; fullname?: string }>;
+  }> {
     let gpa = 92.4;
     let totalCredits = 120;
+    let coursesList: Array<{ id?: number; fullname?: string }> = [];
 
     try {
       const [courses, gradesRes] = await Promise.allSettled([
@@ -167,7 +200,8 @@ export class MoodleProfileService {
       ]);
 
       if (courses.status === 'fulfilled' && courses.value.length > 0) {
-        totalCredits = courses.value.length * 5;
+        coursesList = courses.value;
+        totalCredits = coursesList.length * 5;
       }
 
       if (
@@ -189,7 +223,110 @@ export class MoodleProfileService {
       );
     }
 
-    return { gpa, totalCredits };
+    return { gpa, totalCredits, courses: coursesList };
+  }
+
+  private async resolveGroup({
+    courses,
+    moodleId,
+    token,
+    moodleUser,
+  }: ResolveGroupParams): Promise<string> {
+    const directGroup =
+      this.resolveGroupFromUserGroups(moodleUser) ||
+      this.resolveGroupFromCustomFields(moodleUser) ||
+      this.resolveGroupFromDepartment(moodleUser);
+
+    if (directGroup) {
+      return directGroup;
+    }
+
+    const courseGroup = await this.resolveGroupFromCourses(
+      token,
+      moodleId,
+      courses,
+    );
+
+    return courseGroup || '';
+  }
+
+  private resolveGroupFromUserGroups(
+    moodleUser?: MoodleUserItem,
+  ): string | undefined {
+    return moodleUser?.groups?.[0]?.name?.trim() || undefined;
+  }
+
+  private resolveGroupFromCustomFields(
+    moodleUser?: MoodleUserItem,
+  ): string | undefined {
+    const groupField = moodleUser?.customfields?.find((field) => {
+      const shortname = field.shortname?.toLowerCase() || '';
+      const name = field.name?.toLowerCase() || '';
+      const hasGroupKeyword =
+        shortname.includes('group') || name.includes('груп');
+
+      return hasGroupKeyword && Boolean(field.value?.trim());
+    });
+
+    return groupField?.value?.trim() || undefined;
+  }
+
+  private resolveGroupFromDepartment(
+    moodleUser?: MoodleUserItem,
+  ): string | undefined {
+    const dept = moodleUser?.department?.trim();
+
+    if (
+      dept &&
+      /^[А-ЯІЇЄа-яіїєA-Za-z]{1,5}[- ]?\d{1,3}[А-ЯІЇЄа-яіїєA-Za-z]?$/.test(dept)
+    ) {
+      return dept;
+    }
+
+    return undefined;
+  }
+
+  private async resolveGroupFromCourses(
+    token: string,
+    moodleId: string,
+    courses: Array<{ id?: number; fullname?: string }>,
+  ): Promise<string | undefined> {
+    for (const course of courses.slice(0, 5)) {
+      if (!course.id) {
+        continue;
+      }
+
+      const groupName = await this.fetchCourseGroup(token, moodleId, course.id);
+
+      if (groupName) {
+        return groupName;
+      }
+    }
+
+    return undefined;
+  }
+
+  private async fetchCourseGroup(
+    token: string,
+    moodleId: string,
+    courseId: number,
+  ): Promise<string | undefined> {
+    try {
+      const res = await this.moodleClient.client<{
+        groups?: Array<{ id: number; name: string }>;
+      }>({
+        wsfunction: 'core_group_get_course_user_groups',
+        moodleToken: token,
+        params: {
+          courseid: courseId,
+          userid: moodleId,
+        },
+      });
+
+      return res?.groups?.[0]?.name?.trim() || undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   private calculateGpaFromGrades(

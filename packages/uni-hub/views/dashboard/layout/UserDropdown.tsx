@@ -40,6 +40,10 @@ export function getMoodleStatusDetails(isMoodleLinked: boolean): MoodleStatusDet
   };
 }
 
+export function getUserProfileTitle(profile: StudentProfile): string {
+  return profile.group ? `${profile.fullName} (${profile.group})` : profile.fullName;
+}
+
 export const UserDropdown: React.FC<UserDropdownProps> = ({
   activeStudentProfile,
   soundEnabled,
@@ -54,9 +58,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   const statusDetails = getMoodleStatusDetails(Boolean(isMoodleLinked));
   const moodleUrl = process.env.NEXT_PUBLIC_MOODLE_URL;
   const { fullName, email, group } = activeStudentProfile;
-  const triggerTitle = group
-    ? formatMessage('header.userMenuTitleWithGroup', { fullName, group })
-    : fullName;
+  const triggerTitle = getUserProfileTitle(activeStudentProfile);
 
   return (
     <Dropdown
@@ -84,7 +86,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
             <div className={styles.muted} title={email}>
               {email}
             </div>
-            {group && <div className={styles.muted}>{group}</div>}
+            {group ? <div className={styles.muted}>{group}</div> : null}
           </div>
 
           {isMoodleIntegrationEnabled && (
