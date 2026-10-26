@@ -89,6 +89,34 @@ describe('MyApplicationsTab component', () => {
     localStorage.setItem('universe-lang', 'uk');
   });
 
+  it.each(['', '   ', '@candidate'])(
+    'should show profile emails and only a supplied alternative contact %j',
+    (contactInfo) => {
+      renderMyApplicationsTab({
+        myApplications: [
+          {
+            ...mockApplications[0],
+            applicant: { name: 'Test Applicant', email: 'candidate-profile@example.com' },
+            contactInfo,
+          },
+        ],
+      });
+
+      expect(screen.getByText('candidate-profile@example.com')).toBeInTheDocument();
+      expect(screen.getByText('alice@example.com')).toBeInTheDocument();
+      expect(screen.getByText('mentor@example.com')).toBeInTheDocument();
+
+      if (contactInfo.trim()) {
+        expect(screen.getByText('@candidate')).toBeInTheDocument();
+      } else {
+        const contacts = screen.getAllByTitle('Альтернативний контакт');
+
+        expect(contacts).toHaveLength(1);
+        expect(contacts[0]).toHaveTextContent('mentor@example.com');
+      }
+    },
+  );
+
   it('should render list of user applications with opportunity title and status badge', () => {
     renderMyApplicationsTab();
 
@@ -116,7 +144,7 @@ describe('MyApplicationsTab component', () => {
     expect(screen.getAllByText('applicant@example.com')).toHaveLength(2);
 
     expect(screen.getByText('B')).toBeInTheDocument();
-    expect(screen.getByText('bob@example.com')).toBeInTheDocument();
+    expect(screen.getAllByText('bob@example.com')).toHaveLength(2);
     expect(screen.getByText('lead@example.com')).toBeInTheDocument();
     expect(screen.getByText('Практика')).toBeInTheDocument();
     expect(screen.getByText(/Відповідь автора пропозиції:/i)).toBeInTheDocument();

@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsOptional, IsString, Validate } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Validate,
+  ValidateIf,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { ApplyOpportunityRequest } from '@universe/core/types/opportunities';
 import { IsContactInfoConstraint } from '../opportunities.helpers';
@@ -9,11 +15,14 @@ export class ApplyOpportunityDto implements ApplyOpportunityRequest {
   @IsNotEmpty()
   applicantName: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  @IsNotEmpty()
+  @ValidateIf(
+    (dto: ApplyOpportunityDto): boolean =>
+      dto.contactInfo !== undefined && dto.contactInfo !== '',
+  )
   @Validate(IsContactInfoConstraint)
-  contactInfo: string;
+  contactInfo?: string;
 
   @ApiPropertyOptional()
   @IsString()

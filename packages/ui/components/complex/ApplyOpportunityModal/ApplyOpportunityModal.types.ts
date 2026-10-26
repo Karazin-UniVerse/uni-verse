@@ -16,6 +16,7 @@ export type ApplyOpportunityModalProps = {
   cancelText: string;
   submitText: string;
   submittingText: string;
+  contactHint?: string;
   submitting?: boolean;
   className?: string;
 };

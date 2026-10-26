@@ -30,6 +30,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   cancelText,
   submitText,
   savingText,
+  contactHint,
   acceptsApplicationsLabel,
   phaseLabel,
   lifecycleOptions = [],
@@ -38,6 +39,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   const titleId = useId();
   const descId = useId();
   const contactId = useId();
+  const contactHintId = useId();
   const paymentTypeId = useId();
   const paymentDetailsId = useId();
   const phaseSelectId = useId();
@@ -79,11 +81,16 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
           </label>
           <TextInput
             id={contactId}
+            aria-describedby={contactHint ? contactHintId : undefined}
             placeholder={contactPlaceholder}
             value={formData.ownerContactInfo}
             onChange={(e) => setFormData((prev) => ({ ...prev, ownerContactInfo: e.target.value }))}
-            required
           />
+          {contactHint && (
+            <small id={contactHintId} className={styles.fieldHint}>
+              {contactHint}
+            </small>
+          )}
         </div>
 
         <div className={styles.fieldGroup}>

@@ -34,7 +34,9 @@ export function getOpportunityContentHash(
 @ValidatorConstraint({ name: 'isContactInfo', async: false })
 export class IsContactInfoConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
-    return typeof value === 'string' && isValidContactInfo(value);
+    return (
+      typeof value === 'string' && (!value.trim() || isValidContactInfo(value))
+    );
   }
 
   defaultMessage(args: ValidationArguments): string {

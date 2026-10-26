@@ -12,14 +12,24 @@ export const OpportunityCatalogMetaRow: React.FC<Props> = ({ opportunity, format
   const defaultOwner = formatMessage('opportunities.card.defaultOwner');
   const ownerName = opportunity.owner?.name || opportunity.owner?.email || defaultOwner;
   const initial = ownerName.charAt(0).toUpperCase();
-  const contactInfo = opportunity.ownerContactInfo || opportunity.owner?.email || defaultOwner;
+  const alternativeContact = opportunity.ownerContactInfo.trim();
 
   return (
     <div className={styles.ownerInfo} title={ownerName}>
       <div className={styles.ownerAvatar}>{initial}</div>
       <div className={styles.ownerMeta}>
         <span className={styles.ownerName}>{ownerName}</span>
-        <span className={styles.ownerRole}>{contactInfo}</span>
+        {opportunity.owner?.email && opportunity.owner?.email !== ownerName && (
+          <span className={styles.ownerRole}>{opportunity.owner.email}</span>
+        )}
+        {alternativeContact && (
+          <span
+            className={styles.ownerRole}
+            title={formatMessage('opportunities.alternativeContact')}
+          >
+            {alternativeContact}
+          </span>
+        )}
       </div>
     </div>
   );

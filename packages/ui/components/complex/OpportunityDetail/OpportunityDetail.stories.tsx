@@ -23,11 +23,13 @@ const meta = {
     publishedDateText: '09.10.2026',
     descriptionText:
       'Запрошуємо студентів 3-4 курсів та магістрантів до участі у дослідницькому проєкті з моделювання геномних послідовностей.',
-    contactValue: 'biolab@karazin.ua | +380501234567',
+    emailValue: 'biolab@karazin.ua',
+    emailLabel: 'Електронна пошта:',
+    contactValue: '+380501234567',
     applyText: 'Подати заявку',
     organizerLabel: 'Організатор:',
     descriptionTitle: 'Опис можливості',
-    contactLabel: 'Контакти:',
+    contactLabel: 'Альтернативний контакт:',
     sendToReviewText: 'Відправити на модерацію',
     editText: 'Редагувати',
     deleteText: 'Видалити',
@@ -41,6 +43,10 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
+
+export const ProfileEmailOnly: Story = {
+  args: { contactValue: '' },
+};
 
 export const AuthorView: Story = {
   args: {

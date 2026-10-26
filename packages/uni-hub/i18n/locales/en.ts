@@ -436,6 +436,9 @@ export const en = {
   'devPanel.opportunitiesLabel': 'Opportunities',
   'devPanel.opportunitiesDesc': 'Project and internship board',
   // Opportunities
+  'opportunities.alternativeContact': 'Alternative contact',
+  'opportunities.emailLabel': 'Email address',
+  'opportunities.contactHint': 'Your profile email will be shown automatically.',
   'opportunities.errors.changesRequired':
     'Before resubmitting, change the opportunity title, description, contacts or payment terms.',
   'opportunities.errors.alreadyApplied': 'You have already applied to this opportunity.',
@@ -547,7 +550,6 @@ export const en = {
   'opportunities.createModal.descLabel': 'Description, tasks, and requirements *',
   'opportunities.createModal.descPlaceholder':
     'Describe the project, tasks, workload, and required skills...',
-  'opportunities.createModal.contactLabel': 'Organizer Contact Info *',
   'opportunities.createModal.contactPlaceholder': 'Telegram (@username), Email or phone number',
   'opportunities.createModal.paymentTypeLabel': 'Reward Type',
   'opportunities.createModal.unpaidOption': 'Unpaid (Practice, experience)',
@@ -580,7 +582,8 @@ export const en = {
   'opportunities.detailModal.defaultOrganizer': 'Karazin University',
   'opportunities.detailModal.publishedOn': 'Published: {date}',
   'opportunities.detailModal.descTitle': 'Project Description and Requirements',
-  'opportunities.detailModal.contacts': 'Contacts:',
+  'opportunities.detailModal.email': 'Email address:',
+  'opportunities.detailModal.contacts': 'Alternative contact:',
   'opportunities.detailModal.manageTitle': 'Manage Your Opportunity',
   'opportunities.detailModal.sendToReview': 'Submit for Review',
   'opportunities.detailModal.edit': 'Edit',
@@ -602,11 +605,9 @@ export const en = {
     'Cover letter (why you are interested in this project) *',
   'opportunities.applyModal.motivationPlaceholder':
     'Briefly describe your experience, stack, and motivation...',
-  'opportunities.applyModal.contactLabel': 'Your Telegram or phone number',
   'opportunities.applyModal.contactPlaceholder': '@username or +380...',
   'opportunities.applyModal.invalidContact':
     'Please provide a valid Telegram username (@username or link) or phone number',
-  'opportunities.applyModal.defaultContact': 'Specified in profile',
   'opportunities.applyModal.defaultApplicantName': 'Student',
   'opportunities.applyModal.cancel': 'Cancel',
   'opportunities.applyModal.submitting': 'Submitting...',
@@ -616,8 +617,6 @@ export const en = {
   'opportunities.applicantsModal.title': 'Applicants ({count})',
   'opportunities.applicantsModal.empty': 'No applicants yet for this opportunity',
   'opportunities.applicantsModal.defaultApplicant': 'Student',
-  'opportunities.applicantsModal.emailLabel': 'Email address',
-  'opportunities.applicantsModal.directContactLabel': 'Direct contact (Telegram / phone)',
   'opportunities.applicantsModal.motivationLabel': 'Cover letter:',
   'opportunities.applicantsModal.submittedOn': 'Submitted {date}',
   'opportunities.applicantsModal.accept': 'Accept',
