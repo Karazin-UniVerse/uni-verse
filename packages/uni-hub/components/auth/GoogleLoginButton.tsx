@@ -60,7 +60,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         text: 'continue_with',
         shape: 'rectangular',
         width: 336,
-        locale: language === 'uk' ? 'uk' : 'en',
+        locale: language,
       });
     } catch (err: unknown) {
       onErrorRef.current?.((err as Error).message || errorTextRef.current);

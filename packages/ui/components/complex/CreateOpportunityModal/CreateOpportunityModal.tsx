@@ -40,7 +40,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   const contactId = useId();
   const paymentTypeId = useId();
   const paymentDetailsId = useId();
-  const phaseId = useId();
+  const phaseSelectId = useId();
 
   return (
     <Modal open={open} onClose={onClose} title={title} width={560} className={className}>
@@ -129,11 +129,11 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
 
         {phaseLabel && lifecycleOptions.length > 0 && (
           <div className={styles.fieldGroup}>
-            <label htmlFor={phaseId} className={styles.fieldLabel}>
+            <label htmlFor={phaseSelectId} className={styles.fieldLabel}>
               {phaseLabel}
             </label>
             <Select
-              id={phaseId}
+              id={phaseSelectId}
               aria-label={phaseLabel}
               value={formData.lifecycleState ?? ''}
               onChange={(val) =>

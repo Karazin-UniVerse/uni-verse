@@ -33,10 +33,10 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
   const applicants = useApplicants();
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async (): Promise<void> => {
-    setDeleting(true);
+    setIsDeleting(true);
 
     try {
       const deleted = await actions.handleDeleteOpportunity(opportunity.id);
@@ -45,7 +45,7 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
         router.push(ROUTE.Opportunities);
       }
     } finally {
-      setDeleting(false);
+      setIsDeleting(false);
       setDeleteConfirmOpen(false);
     }
   };
@@ -83,7 +83,7 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
         cancelLabel={formatMessage('common.cancel')}
         confirmLabel={formatMessage('opportunities.confirm.deleteConfirm')}
         closeLabel={formatMessage('modal.close')}
-        loading={deleting}
+        loading={isDeleting}
         variant="danger"
       />
 
