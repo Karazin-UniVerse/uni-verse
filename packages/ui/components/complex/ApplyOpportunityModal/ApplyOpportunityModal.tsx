@@ -21,11 +21,13 @@ export const ApplyOpportunityModal: React.FC<ApplyOpportunityModalProps> = ({
   cancelText,
   submitText,
   submittingText,
+  contactHint,
   className,
   submitting = false,
 }) => {
   const motivationId = useId();
   const contactId = useId();
+  const contactHintId = useId();
 
   return (
     <Modal open={open} onClose={onClose} title={title} width={560} className={className}>
@@ -51,22 +53,23 @@ export const ApplyOpportunityModal: React.FC<ApplyOpportunityModalProps> = ({
           </label>
           <TextInput
             id={contactId}
+            aria-describedby={contactHint ? contactHintId : undefined}
             placeholder={contactPlaceholder}
             value={contactInfo}
             onChange={(e) => onContactInfoChange(e.target.value)}
-            required
           />
+          {contactHint && (
+            <small id={contactHintId} className={styles.fieldHint}>
+              {contactHint}
+            </small>
+          )}
         </div>
 
         <div className={styles.modalFooter}>
           <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
             {cancelText}
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={submitting || !motivation.trim() || !contactInfo.trim()}
-          >
+          <Button type="submit" variant="primary" disabled={submitting || !motivation.trim()}>
             {submitting ? submittingText : submitText}
           </Button>
         </div>

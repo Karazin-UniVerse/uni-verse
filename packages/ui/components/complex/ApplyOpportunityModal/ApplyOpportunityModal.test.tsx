@@ -19,6 +19,7 @@ describe('ApplyOpportunityModal Component', () => {
     motivationPlaceholder: 'Tell us why you are a great fit...',
     contactLabel: 'Contact Information',
     contactPlaceholder: 'Enter your email or phone number',
+    contactHint: 'Your profile email will be shown automatically.',
     cancelText: 'Cancel',
     submitText: 'Submit Application',
     submittingText: 'Submitting...',
@@ -43,6 +44,7 @@ describe('ApplyOpportunityModal Component', () => {
     expect(contactInput).toBeInTheDocument();
     expect(contactInput).toHaveValue(defaultProps.contactInfo);
     expect(contactInput).toHaveAttribute('placeholder', defaultProps.contactPlaceholder);
+    expect(contactInput).toHaveAccessibleDescription(defaultProps.contactHint);
 
     expect(screen.getByRole('button', { name: defaultProps.cancelText })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: defaultProps.submitText })).toBeInTheDocument();
@@ -116,43 +118,29 @@ describe('ApplyOpportunityModal Component', () => {
     expect(screen.queryByRole('button', { name: defaultProps.submitText })).not.toBeInTheDocument();
   });
 
-  it('should disable submit button when motivation or contact info is empty or whitespace', () => {
-    const { rerender } = render(
-      <ApplyOpportunityModal {...defaultProps} motivation="" contactInfo="contact@example.com" />,
-    );
+  it.each(['', '   '])('should keep motivation required when it is %j', (motivation) => {
+    render(<ApplyOpportunityModal {...defaultProps} motivation={motivation} />);
 
-    const getSubmitBtn = () => screen.getByRole('button', { name: defaultProps.submitText });
-
-    expect(getSubmitBtn()).toBeDisabled();
-
-    rerender(
-      <ApplyOpportunityModal
-        {...defaultProps}
-        motivation="   "
-        contactInfo="contact@example.com"
-      />,
-    );
-    expect(getSubmitBtn()).toBeDisabled();
-
-    rerender(
-      <ApplyOpportunityModal {...defaultProps} motivation="Valid motivation" contactInfo="" />,
-    );
-    expect(getSubmitBtn()).toBeDisabled();
-
-    rerender(
-      <ApplyOpportunityModal {...defaultProps} motivation="Valid motivation" contactInfo="   " />,
-    );
-    expect(getSubmitBtn()).toBeDisabled();
-
-    rerender(
-      <ApplyOpportunityModal
-        {...defaultProps}
-        motivation="Valid motivation"
-        contactInfo="contact@example.com"
-      />,
-    );
-    expect(getSubmitBtn()).toBeEnabled();
+    expect(screen.getByRole('button', { name: defaultProps.submitText })).toBeDisabled();
   });
+
+  it.each(['', '   '])(
+    'should allow submitting without an alternative contact %j',
+    async (contactInfo) => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn((event: SyntheticEvent<HTMLFormElement>): void =>
+        event.preventDefault(),
+      );
+
+      render(
+        <ApplyOpportunityModal {...defaultProps} contactInfo={contactInfo} onSubmit={onSubmit} />,
+      );
+
+      expect(screen.getByLabelText(defaultProps.contactLabel)).not.toBeRequired();
+      await user.click(screen.getByRole('button', { name: defaultProps.submitText }));
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it('should apply custom className when provided', () => {
     render(<ApplyOpportunityModal {...defaultProps} className="custom-modal-dialog" />);

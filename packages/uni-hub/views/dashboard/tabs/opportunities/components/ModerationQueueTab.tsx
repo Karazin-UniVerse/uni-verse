@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
+import { ContactTags } from '@ui';
 import {
   Clock,
   Calendar,
-  Mail,
   Coins,
   Briefcase,
   AlertCircle,
@@ -86,12 +86,14 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                             item.owner?.email ||
                             formatMessage('opportunities.moderation.unknownOwner')}
                         </span>
-                        {item.ownerContactInfo && (
-                          <span className={styles.authorContactTag}>
-                            <Mail size={12} />
-                            {item.ownerContactInfo}
-                          </span>
-                        )}
+                        <ContactTags
+                          emailLabel={formatMessage('opportunities.emailLabel')}
+                          alternativeContactLabel={formatMessage(
+                            'opportunities.alternativeContact',
+                          )}
+                          email={item.owner?.email}
+                          alternativeContact={item.ownerContactInfo}
+                        />
                       </div>
                     </div>
                   </div>

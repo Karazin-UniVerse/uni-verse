@@ -4,6 +4,23 @@ import { OpportunityLifecycleState } from '@universe/database';
 import { UpdateOpportunityDto } from './update-opportunity.dto';
 
 describe('UpdateOpportunityDto', () => {
+  it.each([null, 123, {}])(
+    'should reject a non-string organizer contact %j',
+    (ownerContactInfo) => {
+      const dto = plainToInstance(UpdateOpportunityDto, { ownerContactInfo });
+
+      expect(validateSync(dto)).toEqual([
+        expect.objectContaining({ property: 'ownerContactInfo' }),
+      ]);
+    },
+  );
+
+  it('should accept clearing the organizer contact', () => {
+    const dto = plainToInstance(UpdateOpportunityDto, { ownerContactInfo: '' });
+
+    expect(validateSync(dto)).toEqual([]);
+  });
+
   it('accepts an empty payload', () => {
     const dto = plainToInstance(UpdateOpportunityDto, {});
 

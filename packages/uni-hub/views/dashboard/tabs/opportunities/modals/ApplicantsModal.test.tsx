@@ -52,9 +52,7 @@ const renderApplicantsModal = (props?: Partial<ApplicantsModalProps>) => {
   };
 
   return {
-    ...render(
-      withLanguage(<ApplicantsModal {...defaultProps} />),
-    ),
+    ...render(withLanguage(<ApplicantsModal {...defaultProps} />)),
     props: defaultProps,
   };
 };
@@ -63,6 +61,16 @@ describe('ApplicantsModal component', () => {
   beforeEach(() => {
     localStorage.setItem('universe-lang', 'uk');
   });
+
+  it.each(['', '   '])(
+    'should show only profile email when the alternative contact is %j',
+    (contactInfo) => {
+      renderApplicantsModal({ applications: [{ ...mockApplications[0], contactInfo }] });
+
+      expect(screen.getByText('olena@karazin.ua')).toBeInTheDocument();
+      expect(screen.queryByTitle('Альтернативний контакт')).not.toBeInTheDocument();
+    },
+  );
 
   it('should render applicants modal when open with applicant details and status', () => {
     renderApplicantsModal();

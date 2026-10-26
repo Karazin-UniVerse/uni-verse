@@ -435,6 +435,9 @@ export const uk = {
   'devPanel.opportunitiesDesc': 'Дошка проєктів та стажувань',
 
   // Opportunities
+  'opportunities.alternativeContact': 'Альтернативний контакт',
+  'opportunities.emailLabel': 'Електронна пошта',
+  'opportunities.contactHint': 'Пошту з вашого профілю буде показано автоматично.',
   'opportunities.errors.changesRequired':
     'Перед повторним надсиланням змініть назву, опис, контакти або умови оплати можливості.',
   'opportunities.errors.alreadyApplied': 'Ви вже подали заявку на цю можливість.',
@@ -546,7 +549,6 @@ export const uk = {
   'opportunities.createModal.descLabel': 'Опис, завдання та вимоги до кандидата *',
   'opportunities.createModal.descPlaceholder':
     'Детально розкажіть про проект, задачі, очікувану зайнятість та необхідні навички...',
-  'opportunities.createModal.contactLabel': 'Контактні дані організатора *',
   'opportunities.createModal.contactPlaceholder': 'Telegram (@username), Email або номер телефону',
   'opportunities.createModal.paymentTypeLabel': 'Тип винагороди',
   'opportunities.createModal.unpaidOption': 'Неоплачувана (Практика, досвід)',
@@ -581,7 +583,8 @@ export const uk = {
   'opportunities.detailModal.defaultOrganizer': 'Каразінський університет',
   'opportunities.detailModal.publishedOn': 'Опубліковано: {date}',
   'opportunities.detailModal.descTitle': 'Опис проекту та вимоги',
-  'opportunities.detailModal.contacts': 'Контакти для звʼязку:',
+  'opportunities.detailModal.email': 'Електронна пошта:',
+  'opportunities.detailModal.contacts': 'Альтернативний контакт:',
   'opportunities.detailModal.manageTitle': 'Керування вашою можливістю',
   'opportunities.detailModal.sendToReview': 'Надіслати на модерацію',
   'opportunities.detailModal.edit': 'Редагувати',
@@ -604,11 +607,9 @@ export const uk = {
     'Супровідне повідомлення (чому вам цікавий цей проект) *',
   'opportunities.applyModal.motivationPlaceholder':
     'Коротко опишіть ваш досвід, стек та чому ви хочете взяти участь...',
-  'opportunities.applyModal.contactLabel': 'Ваш Telegram або номер телефону для звʼязку',
   'opportunities.applyModal.contactPlaceholder': '@username або +380...',
   'opportunities.applyModal.invalidContact':
     'Вкажіть коректний Telegram (@username або посилання) або номер телефону',
-  'opportunities.applyModal.defaultContact': 'Вказано в профілі',
   'opportunities.applyModal.defaultApplicantName': 'Студент',
   'opportunities.applyModal.cancel': 'Скасувати',
   'opportunities.applyModal.submitting': 'Відправка...',
@@ -618,8 +619,6 @@ export const uk = {
   'opportunities.applicantsModal.title': 'Кандидати на можливість ({count})',
   'opportunities.applicantsModal.empty': 'На цю можливість ще немає відгуків',
   'opportunities.applicantsModal.defaultApplicant': 'Студент',
-  'opportunities.applicantsModal.emailLabel': 'Електронна пошта',
-  'opportunities.applicantsModal.directContactLabel': 'Прямий контакт (Telegram / телефон)',
   'opportunities.applicantsModal.motivationLabel': 'Супровідне повідомлення:',
   'opportunities.applicantsModal.submittedOn': 'Подано {date}',
   'opportunities.applicantsModal.accept': 'Прийняти',

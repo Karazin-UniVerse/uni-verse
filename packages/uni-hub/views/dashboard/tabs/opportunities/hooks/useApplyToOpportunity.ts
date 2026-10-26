@@ -51,7 +51,7 @@ export function useApplyToOpportunity({
   const handleApplySubmit = async (event: React.SyntheticEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
 
-    if (!isValidContactInfo(contactInfo)) {
+    if (contactInfo.trim() && !isValidContactInfo(contactInfo)) {
       toast.error(formatMessage('opportunities.applyModal.invalidContact'));
 
       return;
