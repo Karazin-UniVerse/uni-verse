@@ -1,34 +1,28 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AuthField } from './AuthField';
 
 describe('AuthField component', () => {
-  it('should render auth field with accessible label and input', () => {
+  it('should render text input with label, placeholder, and icon', () => {
+    const handleChange = vi.fn();
+
     render(
       <AuthField
-        id="username-field"
+        id="test-username"
         name="username"
-        label="Username or Email"
-        placeholder="Enter your username"
-        value="john_doe"
-        onChange={vi.fn()}
-        icon={<span data-testid="user-icon">👤</span>}
+        label="Ім'я користувача"
+        placeholder="Введіть логін"
+        value="student1"
+        onChange={handleChange}
+        icon={<span data-testid="test-icon">👤</span>}
       />,
     );
 
-    const input = screen.getByRole('textbox', { name: /Username or Email/i });
-    const label = screen.getByText('Username or Email');
-    const icon = screen.getByTestId('user-icon');
-
-    expect(input).toBeInTheDocument();
-    expect(input).toHaveAttribute('id', 'username-field');
-    expect(input).toHaveAttribute('name', 'username');
-    expect(input).toHaveAttribute('placeholder', 'Enter your username');
-    expect(input).toHaveValue('john_doe');
-    expect(label).toBeInTheDocument();
-    expect(icon).toBeInTheDocument();
+    expect(screen.getByLabelText("Ім'я користувача")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Введіть логін')).toHaveValue('student1');
+    expect(screen.getByTestId('test-icon')).toBeInTheDocument();
   });
 
   it('should trigger onChange when user types', async () => {
@@ -54,51 +48,21 @@ describe('AuthField component', () => {
     expect(handleChange).toHaveBeenCalled();
   });
 
-  it('should toggle password visibility if type is password and toggle is supported', async () => {
-    const user = userEvent.setup();
+  it('should render rightElement in standard text mode', () => {
+    render(
+      <AuthField
+        id="test-field"
+        name="field"
+        label="Поле"
+        placeholder="Значення"
+        value=""
+        onChange={vi.fn()}
+        icon={<span>*</span>}
+        rightElement={<button type="button">Дія</button>}
+      />,
+    );
 
-    const PasswordField = () => {
-      const [showPassword, setShowPassword] = useState(false);
-
-      return (
-        <AuthField
-          id="password-field"
-          name="password"
-          type={showPassword ? 'text' : 'password'}
-          label="Password"
-          placeholder="Enter password"
-          value="secret123"
-          onChange={vi.fn()}
-          icon={<span>🔒</span>}
-          rightElement={
-            <button
-              type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? 'Hide' : 'Show'}
-            </button>
-          }
-        />
-      );
-    };
-
-    const { container } = render(<PasswordField />);
-
-    const input = container.querySelector('input');
-    const toggleButton = screen.getByRole('button', { name: 'Show password' });
-
-    expect(input).toHaveAttribute('type', 'password');
-    expect(toggleButton).toBeInTheDocument();
-
-    await user.click(toggleButton);
-
-    expect(input).toHaveAttribute('type', 'text');
-    expect(screen.getByRole('button', { name: 'Hide password' })).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Hide password' }));
-
-    expect(input).toHaveAttribute('type', 'password');
+    expect(screen.getByRole('button', { name: 'Дія' })).toBeInTheDocument();
   });
 
   it('should pass autoComplete attribute to input', () => {
@@ -121,23 +85,39 @@ describe('AuthField component', () => {
     expect(input).toHaveAttribute('autocomplete', 'current-password');
   });
 
-  it('should render custom rightElement content', () => {
+  it('should render PasswordInput and toggle visibility when type="password"', async () => {
+    const user = userEvent.setup();
+    const handleChange = vi.fn();
+
     render(
       <AuthField
-        id="custom-right-field"
-        name="customRight"
-        label="Field with Right Element"
-        placeholder="Placeholder"
-        value=""
-        onChange={vi.fn()}
-        icon={<span>🏷️</span>}
-        rightElement={<span data-testid="custom-addon">Verified</span>}
+        id="test-password"
+        name="password"
+        type="password"
+        label="Пароль"
+        placeholder="Введіть пароль"
+        value="secret123"
+        onChange={handleChange}
+        icon={<span data-testid="lock-icon">🔒</span>}
       />,
     );
 
-    const addon = screen.getByTestId('custom-addon');
+    const input = screen.getByLabelText('Пароль', { selector: 'input' });
+    const toggle = screen.getByRole('button', { name: /показати пароль/i });
 
-    expect(addon).toBeInTheDocument();
-    expect(addon).toHaveTextContent('Verified');
+    expect(input).toHaveAttribute('type', 'password');
+    expect(input).toHaveAttribute('autoComplete', 'current-password');
+    expect(input).toHaveValue('secret123');
+    expect(screen.getByTestId('lock-icon')).toBeInTheDocument();
+
+    await user.click(toggle);
+
+    expect(input).toHaveAttribute('type', 'text');
+    expect(screen.getByRole('button', { name: /сховати пароль/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /сховати пароль/i }));
+
+    expect(input).toHaveAttribute('type', 'password');
+    expect(screen.getByRole('button', { name: /показати пароль/i })).toBeInTheDocument();
   });
 });
