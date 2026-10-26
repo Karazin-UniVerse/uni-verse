@@ -22,6 +22,7 @@ import {
   OPPORTUNITY_VIEW,
   OPPORTUNITY_VIEW_PARAM,
 } from '@universe/core/constants/opportunities';
+import { NOTIFICATION_TYPE } from '@universe/core/constants/notifications';
 
 const publishedOpportunity: Opportunity = {
   id: 'race-opportunity',
@@ -88,6 +89,9 @@ describe('OpportunitiesService', () => {
             notification: {
               deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
             },
+            $transaction: jest.fn(async (callback) =>
+              typeof callback === 'function' ? callback(prisma) : callback,
+            ),
           },
         },
         {
@@ -103,6 +107,12 @@ describe('OpportunitiesService', () => {
     prisma = module.get<PrismaService>(PrismaService);
     notificationsService =
       module.get<NotificationsService>(NotificationsService);
+
+    jest
+      .spyOn(prisma, '$transaction')
+      .mockImplementation(async (callback: any) =>
+        typeof callback === 'function' ? callback(prisma) : callback,
+      );
   });
 
   afterEach(() => {
@@ -1414,9 +1424,12 @@ describe('OpportunitiesService', () => {
       expect(deleteSpy).toHaveBeenCalledWith({
         where: {
           userId: 'owner-1',
-          type: 'OPPORTUNITY_NEW_APPLICATION',
+          type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
           link: { contains: 'opp-1' },
-          message: { contains: 'Applicant One' },
+          OR: [
+            { message: { contains: '"applicationId":"app-1"' } },
+            { message: { contains: 'Applicant One' } },
+          ],
         },
       });
     });

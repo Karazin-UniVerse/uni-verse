@@ -31,7 +31,10 @@ import {
   OPPORTUNITY_VIEW_PARAM,
 } from '@universe/core/constants/opportunities';
 import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
-import { OPPORTUNITY_NOTIFICATION_KEY } from '@universe/core/constants/notifications';
+import {
+  NOTIFICATION_TYPE,
+  OPPORTUNITY_NOTIFICATION_KEY,
+} from '@universe/core/constants/notifications';
 
 export type OpportunityWithOwner = Opportunity & {
   owner: { id: string; name: string | null; email: string };
@@ -75,7 +78,7 @@ export class OpportunitiesService {
         moderators.map((moderator) =>
           this.notificationsService.createNotification({
             userId: moderator.id,
-            type: 'OPPORTUNITY_READY_FOR_REVIEW',
+            type: NOTIFICATION_TYPE.OPPORTUNITY_READY_FOR_REVIEW,
             title: OPPORTUNITY_NOTIFICATION_KEY.READY_FOR_REVIEW_TITLE,
             message: JSON.stringify({
               opportunityTitle,
@@ -368,7 +371,7 @@ export class OpportunitiesService {
 
     await this.notificationsService.createNotification({
       userId: app.applicantId,
-      type: 'OPPORTUNITY_APPLICATION_STATUS',
+      type: NOTIFICATION_TYPE.OPPORTUNITY_APPLICATION_STATUS,
       title: OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE,
       message: JSON.stringify({
         opportunityTitle: app.opportunity.title,
@@ -430,29 +433,34 @@ export class OpportunitiesService {
 
     try {
       if (existing) {
-        await this.prisma.notification.deleteMany({
-          where: {
-            userId: opportunity.ownerId,
-            type: 'OPPORTUNITY_NEW_APPLICATION',
-            link: { contains: id },
-            OR: [
-              { message: { contains: existing.applicantName } },
-              { message: { contains: dto.applicantName } },
-            ],
-          },
-        });
+        app = await this.prisma.$transaction(async (tx) => {
+          const updatedApp = await tx.opportunityApplication.update({
+            where: { id: existing.id, status: ApplicationStatus.WITHDRAWN },
+            data: {
+              applicantName: dto.applicantName,
+              contactInfo: dto.contactInfo,
+              briefDescription: dto.briefDescription ?? null,
+              motivation: dto.motivation ?? null,
+              answers: dto.answers ?? null,
+              status: ApplicationStatus.SUBMITTED,
+              ownerComment: null,
+            },
+          });
 
-        app = await this.prisma.opportunityApplication.update({
-          where: { id: existing.id, status: ApplicationStatus.WITHDRAWN },
-          data: {
-            applicantName: dto.applicantName,
-            contactInfo: dto.contactInfo,
-            briefDescription: dto.briefDescription ?? null,
-            motivation: dto.motivation ?? null,
-            answers: dto.answers ?? null,
-            status: ApplicationStatus.SUBMITTED,
-            ownerComment: null,
-          },
+          await tx.notification.deleteMany({
+            where: {
+              userId: opportunity.ownerId,
+              type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
+              link: { contains: id },
+              OR: [
+                { message: { contains: `"applicationId":"${existing.id}"` } },
+                { message: { contains: existing.applicantName } },
+                { message: { contains: dto.applicantName } },
+              ],
+            },
+          });
+
+          return updatedApp;
         });
       } else {
         app = await this.prisma.opportunityApplication.create({
@@ -480,11 +488,12 @@ export class OpportunitiesService {
 
     await this.notificationsService.createNotification({
       userId: opportunity.ownerId,
-      type: 'OPPORTUNITY_NEW_APPLICATION',
+      type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
       title: OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_TITLE,
       message: JSON.stringify({
         opportunityTitle: opportunity.title,
         applicantName: dto.applicantName,
+        applicationId: app.id,
       }),
       link: `${OPPORTUNITIES_ROUTE}/${id}?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
     });
@@ -515,18 +524,25 @@ export class OpportunitiesService {
     )
       throw new BadRequestException('Cannot withdraw completed application');
 
-    const updated = await this.prisma.opportunityApplication.update({
-      where: { id: applicationId },
-      data: { status: ApplicationStatus.WITHDRAWN },
-    });
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const withdrawn = await tx.opportunityApplication.update({
+        where: { id: applicationId },
+        data: { status: ApplicationStatus.WITHDRAWN },
+      });
 
-    await this.prisma.notification.deleteMany({
-      where: {
-        userId: app.opportunity.ownerId,
-        type: 'OPPORTUNITY_NEW_APPLICATION',
-        link: { contains: app.opportunityId },
-        message: { contains: app.applicantName },
-      },
+      await tx.notification.deleteMany({
+        where: {
+          userId: app.opportunity.ownerId,
+          type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
+          link: { contains: app.opportunityId },
+          OR: [
+            { message: { contains: `"applicationId":"${applicationId}"` } },
+            { message: { contains: app.applicantName } },
+          ],
+        },
+      });
+
+      return withdrawn;
     });
 
     return updated;
@@ -617,7 +633,7 @@ export class OpportunitiesService {
 
     await this.notificationsService.createNotification({
       userId: opp.ownerId,
-      type: 'OPPORTUNITY_MODERATED',
+      type: NOTIFICATION_TYPE.OPPORTUNITY_MODERATED,
       title: OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE,
       message: JSON.stringify({
         opportunityTitle: opp.title,
