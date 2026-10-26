@@ -1,4 +1,5 @@
-import type { StudentProfile, CurriculumItem } from '@core/types';
+import type { CurriculumItem } from '@core/types';
+import type { StudentProfile } from '@core/types/student';
 
 export const NAV_KEY = {
   Overview: 'overview',
@@ -20,6 +21,9 @@ export type StudyView = (typeof STUDY_VIEW)[keyof typeof STUDY_VIEW];
 
 export const STUDY_VIEWS = Object.values(STUDY_VIEW);
 
+/** localStorage key for the cached real student profile. v2 drops the old cache that held a fake group. */
+export const STUDENT_PROFILE_STORAGE_KEY = 'universe_student_profile_v2';
+
 export const fallbackStudentProfile: StudentProfile = {
   id: 'karazin-student-001',
   moodleId: 4021,
@@ -33,8 +37,6 @@ export const fallbackStudentProfile: StudentProfile = {
   specialty: '122 Компʼютерні науки',
   educationalProgram: 'Компʼютерні науки та інтелектуальні системи',
   degree: 'bachelor',
-  course: 3,
-  group: 'КС12',
   studyForm: 'full-time',
   financing: 'budget',
   status: 'active',

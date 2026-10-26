@@ -253,6 +253,7 @@ export const en = {
   'header.soundUnmute': 'Unmute sound',
   'header.openMenu': 'Open menu',
   'header.userMenu': 'User profile menu',
+  'header.userMenuTitleWithGroup': '{fullName} ({group})',
   'header.unreadCount': '{count} new',
 
   // Assignment Detail

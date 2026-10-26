@@ -102,6 +102,8 @@ describe('MoodleProfileService', () => {
     expect(profile.totalCreditsEarned).toBe(10);
     expect(profile.academicStanding).toBe('honors');
     expect(profile.moodleId).toBe(5001);
+    expect(profile).not.toHaveProperty('group');
+    expect(profile).not.toHaveProperty('course');
   });
 
   it('should calculate GPA < 90 and set standing to good', async () => {

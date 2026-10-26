@@ -2,7 +2,8 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { CurriculumItem, StudentProfile } from '@core/types';
+import type { CurriculumItem } from '@core/types';
+import type { StudentProfile } from '@core/types/student';
 import {
   createAppProvidersWrapper,
   setTestFeatureFlags,
