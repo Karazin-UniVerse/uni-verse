@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -24,6 +25,29 @@ describe('AuthField component', () => {
     expect(screen.getByTestId('test-icon')).toBeInTheDocument();
   });
 
+  it('should trigger onChange when user types', async () => {
+    const handleChange = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <AuthField
+        id="email-field"
+        name="email"
+        label="Email"
+        placeholder="Enter your email"
+        value=""
+        onChange={handleChange}
+        icon={<span>✉️</span>}
+      />,
+    );
+
+    const input = screen.getByRole('textbox', { name: /Email/i });
+
+    await user.type(input, 'student@karazin.ua');
+
+    expect(handleChange).toHaveBeenCalled();
+  });
+
   it('should render rightElement in standard text mode', () => {
     render(
       <AuthField
@@ -39,6 +63,26 @@ describe('AuthField component', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Дія' })).toBeInTheDocument();
+  });
+
+  it('should pass autoComplete attribute to input', () => {
+    const { container } = render(
+      <AuthField
+        id="autocomplete-field"
+        name="currentPassword"
+        type="password"
+        label="Current Password"
+        placeholder="Password"
+        value=""
+        autoComplete="current-password"
+        onChange={vi.fn()}
+        icon={<span>🔑</span>}
+      />,
+    );
+
+    const input = container.querySelector('input');
+
+    expect(input).toHaveAttribute('autocomplete', 'current-password');
   });
 
   it('should render PasswordInput and toggle visibility when type="password"', async () => {

@@ -18,7 +18,9 @@ import {
   loadPlatformNotifications,
   notificationKeys,
   platformNotificationsQueryOptions,
+  profileQueryOptions,
 } from './queries';
+import { fallbackStudentProfile, STUDENT_PROFILE_STORAGE_KEY } from '../constants';
 
 const filters: BuildAssignmentParamsOptions = {
   sortOrder: 'asc',
@@ -211,5 +213,157 @@ describe('platformNotificationsQueryOptions', () => {
   it('configures canonical query key and polling refetchInterval', () => {
     expect(platformNotificationsQueryOptions.queryKey).toEqual(['notifications', 'platform']);
     expect(platformNotificationsQueryOptions.refetchInterval).toBe(30_000);
+  });
+});
+
+describe('profileQueryOptions', () => {
+  it('fetches Moodle profile, applies stored corporate identity, and syncs profile', async () => {
+    storage.username = 'Богдан Мельник';
+    storage.userEmail = 'melnyk.bogdan@student.karazin.ua';
+
+    vi.spyOn(moodleApi, 'getProfile').mockResolvedValue({
+      data: {
+        ...fallbackStudentProfile,
+        fullName: 'Тестовий акаунт3',
+        email: 'test@student.karazin.ua',
+        gpa: 98,
+      },
+    });
+
+    const queryClient = new QueryClient();
+    const result = await queryClient.fetchQuery(profileQueryOptions);
+
+    expect(result.fullName).toBe('Богдан Мельник');
+    expect(result.email).toBe('melnyk.bogdan@student.karazin.ua');
+    expect(result.gpa).toBe(98);
+
+    const cached = JSON.parse(storage[STUDENT_PROFILE_STORAGE_KEY]);
+
+    expect(cached.fullName).toBe('Богдан Мельник');
+    expect(cached.email).toBe('melnyk.bogdan@student.karazin.ua');
+
+    queryClient.clear();
+  });
+
+  it('does not overlay or sync stale profile response if session changed while request was in-flight', async () => {
+    storage.accessToken = 'token-A';
+    storage.username = 'Account A';
+    storage.userEmail = 'a@student.karazin.ua';
+
+    let resolveDeferred: (val: unknown) => void = () => {};
+    const deferredPromise = new Promise((resolve) => {
+      resolveDeferred = resolve;
+    });
+
+    vi.spyOn(moodleApi, 'getProfile').mockImplementation(() => deferredPromise as any);
+
+    const queryClient = new QueryClient();
+    const queryPromise = queryClient.fetchQuery(profileQueryOptions);
+
+    // Switch session to Account B before response arrives
+    storage.accessToken = 'token-B';
+    storage.username = 'Account B';
+    storage.userEmail = 'b@student.karazin.ua';
+    delete storage[STUDENT_PROFILE_STORAGE_KEY];
+
+    // Resolve delayed response from Account A
+    resolveDeferred({
+      data: {
+        ...fallbackStudentProfile,
+        id: 'moodle-A',
+        fullName: 'Account A Moodle',
+        email: 'moodle-a@karazin.ua',
+        gpa: 99,
+      },
+    });
+
+    const result = await queryPromise;
+
+    // Must not write Account A's data to Account B's cache
+    expect(storage[STUDENT_PROFILE_STORAGE_KEY]).toBeUndefined();
+
+    // Must not mix Account A's academic data with Account B's name/email
+    expect(result.fullName).toBe('Account A Moodle');
+    expect(result.email).toBe('moodle-a@karazin.ua');
+
+    queryClient.clear();
+  });
+
+  it('does not sync profile to cache when query signal is aborted', async () => {
+    storage.accessToken = 'token-A';
+    storage.username = 'Account A';
+    storage.userEmail = 'a@student.karazin.ua';
+
+    const abortController = new AbortController();
+
+    vi.spyOn(moodleApi, 'getProfile').mockImplementation(async () => {
+      abortController.abort();
+
+      return {
+        data: {
+          ...fallbackStudentProfile,
+          fullName: 'Account A Moodle',
+        },
+      };
+    });
+
+    const queryClient = new QueryClient();
+
+    await queryClient.fetchQuery({
+      ...profileQueryOptions,
+      queryFn: (ctx) => {
+        return profileQueryOptions.queryFn!({ ...ctx, signal: abortController.signal });
+      },
+    });
+
+    expect(storage[STUDENT_PROFILE_STORAGE_KEY]).toBeUndefined();
+
+    queryClient.clear();
+  });
+
+  it('applies corporate overlay and syncs cache when access token rotates for the same user', async () => {
+    const createMockJwt = (payload: Record<string, unknown>): string => {
+      const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString(
+        'base64url',
+      );
+      const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+
+      return `${header}.${body}.mockSignature`;
+    };
+
+    const token1 = createMockJwt({ sub: 'user-123', email: 'melnyk.bogdan@student.karazin.ua' });
+    const token2 = createMockJwt({ sub: 'user-123', email: 'melnyk.bogdan@student.karazin.ua' });
+
+    storage.accessToken = token1;
+    storage.username = 'Богдан Мельник';
+    storage.userEmail = 'melnyk.bogdan@student.karazin.ua';
+    storage.authProvider = 'google';
+
+    vi.spyOn(moodleApi, 'getProfile').mockImplementation(async () => {
+      storage.accessToken = token2;
+
+      return {
+        data: {
+          ...fallbackStudentProfile,
+          fullName: 'Moodle Test Account',
+          email: 'test@student.karazin.ua',
+          gpa: 98,
+        },
+      };
+    });
+
+    const queryClient = new QueryClient();
+    const result = await queryClient.fetchQuery(profileQueryOptions);
+
+    expect(result.fullName).toBe('Богдан Мельник');
+    expect(result.email).toBe('melnyk.bogdan@student.karazin.ua');
+    expect(result.gpa).toBe(98);
+
+    const cached = JSON.parse(storage[STUDENT_PROFILE_STORAGE_KEY]);
+
+    expect(cached.fullName).toBe('Богдан Мельник');
+    expect(cached.email).toBe('melnyk.bogdan@student.karazin.ua');
+
+    queryClient.clear();
   });
 });

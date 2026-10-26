@@ -1,6 +1,7 @@
 import type { PlatformNotification } from '@uni-hub/services/api.notifications';
 import { asList } from '@uni-hub/utils/arrays';
 import { isBrowser } from '@uni-hub/utils/browser';
+import { safeStorage } from '@uni-hub/services/api.storage';
 import { parseJwt } from '@uni-hub/utils/jwt';
 import type {
   Grade,
@@ -12,9 +13,9 @@ import type {
   CourseStatistics,
 } from '@core/types/moodle';
 import { moodleApi } from '@uni-hub/services/api';
-import type { StudentProfile } from '@core/types';
+import type { StudentProfile } from '@core/types/student';
 import type { DashboardData } from '../types';
-import { fallbackStudentProfile } from '../constants';
+import { fallbackStudentProfile, STUDENT_PROFILE_STORAGE_KEY } from '../constants';
 
 export type GradesApiResponse = Awaited<ReturnType<typeof moodleApi.getGrades>>;
 
@@ -286,7 +287,7 @@ function isStudentProfile(value: unknown): value is StudentProfile {
 
 function getCachedUserProfile(): StudentProfile | null {
   try {
-    const cachedProfile = localStorage.getItem('universe_student_profile');
+    const cachedProfile = localStorage.getItem(STUDENT_PROFILE_STORAGE_KEY);
 
     if (!cachedProfile) return null;
 
@@ -302,6 +303,107 @@ function getCachedUserProfile(): StudentProfile | null {
   return null;
 }
 
+/**
+ * Represents the current session identity retrieved from persistent storage and tokens.
+ */
+export interface StoredSessionIdentity {
+  userId?: string | null;
+  username?: string | null;
+  userEmail?: string | null;
+  token?: string | null;
+  authProvider?: string | null;
+}
+
+/**
+ * Reads the current session identity from client storage and extracts the user ID from the access token.
+ */
+export function readSessionIdentity(): StoredSessionIdentity | null {
+  if (!isBrowser) {
+    return null;
+  }
+
+  const token = safeStorage.getItem('accessToken');
+  const payload = token ? parseJwt(token) : null;
+  const userId = typeof payload?.sub === 'string' ? payload.sub : null;
+
+  return {
+    userId,
+    token,
+    username: safeStorage.getItem('username'),
+    userEmail: safeStorage.getItem('userEmail'),
+    authProvider: safeStorage.getItem('authProvider'),
+  };
+}
+
+/**
+ * Determines whether a session change occurred between a pre-request snapshot and current storage.
+ * Distinguishes normal access-token rotation from genuine account switches or logouts.
+ */
+export function hasSessionChanged(
+  snapshot: StoredSessionIdentity | null,
+  current: StoredSessionIdentity | null,
+): boolean {
+  if (!snapshot || !current) {
+    return snapshot !== current;
+  }
+
+  if (Boolean(snapshot.token) !== Boolean(current.token)) {
+    return true;
+  }
+
+  if (snapshot.authProvider !== current.authProvider) {
+    return true;
+  }
+
+  if (snapshot.userEmail !== current.userEmail) {
+    return true;
+  }
+
+  if (snapshot.username !== current.username) {
+    return true;
+  }
+
+  if (snapshot.userId || current.userId) {
+    return snapshot.userId !== current.userId;
+  }
+
+  if (snapshot.token === current.token) {
+    return false;
+  }
+
+  if (snapshot.userEmail || snapshot.username) {
+    return false;
+  }
+
+  return snapshot.token !== current.token;
+}
+
+/**
+ * Extracts corporate email from the session JWT stored in localStorage.
+ */
+export function getSessionEmail(): string | null {
+  if (!isBrowser) {
+    return null;
+  }
+
+  try {
+    const token = safeStorage.getItem('accessToken');
+
+    if (!token) {
+      return null;
+    }
+
+    const payload = parseJwt(token);
+
+    return payload?.email ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resolves the initial student profile from storage or builds a fallback from the saved username.
+ */
 export function getInitialUserProfile(): StudentProfile | null {
   const cachedProfile = getCachedUserProfile();
 
@@ -313,42 +415,99 @@ export function getInitialUserProfile(): StudentProfile | null {
     return null;
   }
 
-  const savedUser = localStorage.getItem('username');
-  const savedEmail = localStorage.getItem('userEmail');
-  const token = localStorage.getItem('accessToken');
-  const jwt = token ? parseJwt(token) : null;
-  const tokenEmail = jwt?.email;
-  const email = savedEmail || tokenEmail || (savedUser?.includes('@') ? savedUser : '');
+  const savedUser = safeStorage.getItem('username');
 
-  if (!savedUser && !email) {
+  if (!savedUser || savedUser === fallbackStudentProfile.fullName) {
     return null;
   }
 
-  if (savedUser === fallbackStudentProfile.fullName && !savedEmail && !tokenEmail) {
-    return null;
+  let savedEmail = safeStorage.getItem('userEmail');
+
+  if (!savedEmail) {
+    const authProvider = safeStorage.getItem('authProvider');
+
+    if (authProvider !== 'credentials') {
+      const sessionEmail = getSessionEmail();
+
+      if (sessionEmail && (savedUser.includes(' ') || authProvider === 'google')) {
+        savedEmail = sessionEmail;
+
+        safeStorage.setItem('userEmail', sessionEmail);
+      }
+    }
   }
 
-  const fullName = savedUser || jwt?.name || email || fallbackStudentProfile.fullName;
-  const isNameHandle = savedUser && /^[a-zA-Z0-9._-]+$/.test(savedUser);
-  const resolvedEmail = email || (isNameHandle ? `${savedUser}@karazin.ua` : '');
+  let email: string;
+
+  if (savedEmail) {
+    email = savedEmail;
+  } else if (savedUser.includes('@')) {
+    email = savedUser;
+  } else if (!savedUser.includes(' ')) {
+    email = `${savedUser}@karazin.ua`;
+  } else {
+    email = fallbackStudentProfile.email;
+  }
 
   return {
     ...fallbackStudentProfile,
-    fullName,
-    email: resolvedEmail,
-    group: '',
+    fullName: savedUser,
+    email,
   };
 }
 
+/**
+ * Persists the current student profile to storage.
+ */
 export function syncStudentProfile(profileData?: StudentProfile | null): void {
   if (!profileData) {
     return;
   }
 
   try {
-    localStorage.setItem('universe_student_profile', JSON.stringify(profileData));
+    localStorage.setItem(STUDENT_PROFILE_STORAGE_KEY, JSON.stringify(profileData));
   } catch {
     // Ignore storage quota errors
+  }
+}
+
+/**
+ * Overlays the stored corporate Google identity (fullName and email) onto a fetched
+ * Moodle profile while retaining all Moodle academic fields.
+ */
+export function applyStoredIdentityToProfile(
+  profileData: StudentProfile,
+  sessionSnapshot?: StoredSessionIdentity | null,
+): StudentProfile {
+  if (!isBrowser) {
+    return profileData;
+  }
+
+  try {
+    const authProvider = sessionSnapshot?.authProvider ?? safeStorage.getItem('authProvider');
+
+    if (authProvider === 'credentials') {
+      return profileData;
+    }
+
+    const savedEmail =
+      sessionSnapshot?.userEmail ?? safeStorage.getItem('userEmail') ?? getSessionEmail();
+
+    if (!savedEmail) {
+      return profileData;
+    }
+
+    const savedUser = sessionSnapshot?.username ?? safeStorage.getItem('username');
+    const fullName =
+      savedUser && savedUser !== fallbackStudentProfile.fullName ? savedUser : profileData.fullName;
+
+    return {
+      ...profileData,
+      fullName,
+      email: savedEmail,
+    };
+  } catch {
+    return profileData;
   }
 }
 

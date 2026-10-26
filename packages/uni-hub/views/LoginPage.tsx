@@ -11,10 +11,16 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getErrorMessage, safeStorage } from '@uni-hub/services/api';
 import { endSession } from '@uni-hub/services/api.session';
 import { useGoogleLogin, useLinkMoodle, useLogin } from '@uni-hub/hooks/useAuthMutations';
-import { GoogleLoginButton, AuthField, parseGoogleClaims } from '@uni-hub/components/auth';
+import {
+  GoogleLoginButton,
+  AuthField,
+  parseGoogleClaims,
+  extractGoogleDisplayName,
+} from '@uni-hub/components/auth';
 import { useFeatures } from '@uni-hub/features';
 import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
 import { motion } from 'framer-motion';
+import { STUDENT_PROFILE_STORAGE_KEY } from './dashboard/constants';
 import styles from './LoginPage.module.scss';
 
 const LoginPage: React.FC = () => {
@@ -40,7 +46,7 @@ const LoginPage: React.FC = () => {
 
     try {
       const claims = parseGoogleClaims(idToken);
-      const displayName = claims.name || claims.email || '';
+      const displayName = extractGoogleDisplayName(claims) || claims.email?.split('@')[0] || '';
 
       if (displayName) {
         setGoogleUserName(displayName);
@@ -51,6 +57,15 @@ const LoginPage: React.FC = () => {
       }
 
       const res = await googleLogin.mutateAsync(idToken);
+
+      safeStorage.removeItem(STUDENT_PROFILE_STORAGE_KEY);
+      safeStorage.setItem('authProvider', 'google');
+
+      if (claims.email) {
+        safeStorage.setItem('userEmail', claims.email);
+      } else {
+        safeStorage.removeItem('userEmail');
+      }
 
       if (res.data?.isLinked || !isMoodleIntegrationEnabled) {
         safeStorage.setItem('isLoggedIn', 'true');
@@ -94,6 +109,9 @@ const LoginPage: React.FC = () => {
 
     try {
       await login.mutateAsync({ username, password });
+      safeStorage.removeItem(STUDENT_PROFILE_STORAGE_KEY);
+      safeStorage.removeItem('userEmail');
+      safeStorage.setItem('authProvider', 'credentials');
 
       toast.success(formatMessage('login.success'));
       safeStorage.setItem('isLoggedIn', 'true');
@@ -131,7 +149,10 @@ const LoginPage: React.FC = () => {
       toast.success(formatMessage('login.success'));
       safeStorage.setItem('isLoggedIn', 'true');
       useMoodleStore.getState().setLinked(true);
-      safeStorage.setItem('username', linkUsername.trim());
+
+      const resolvedUserName = googleUserName || linkUsername.trim();
+
+      safeStorage.setItem('username', resolvedUserName);
       router.push('/');
     } catch (err: unknown) {
       const message = getErrorMessage(err, formatMessage('login.linkMoodleError'));

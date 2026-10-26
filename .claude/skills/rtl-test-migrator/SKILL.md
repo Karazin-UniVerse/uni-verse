@@ -6,17 +6,21 @@ description: Migrates legacy React test files (renderToString, shallow HTML stri
 # RTL Test Migrator Skill
 
 ## Overview
-This skill migrates legacy React component and hook test suites from static string matching (`renderToString` from `react-dom/server` executed under Node.js) to modern **React Testing Library (RTL)** with **Happy-DOM** and **@testing-library/jest-dom**.
+This skill migrates legacy React component and hook test suites from static string matching (`renderToString` / `renderToStaticMarkup` from `react-dom/server` executed under Node.js) to modern **React Testing Library (RTL)** with **Happy-DOM** and **@testing-library/jest-dom**.
 
 It supports processing:
 1. **A single file path**: e.g., `packages/ui/components/una/Button/Button.test.tsx`
 2. **A list of file paths**: e.g., multiple space- or comma-separated test file paths.
 3. **A directory path**: e.g., `packages/ui/components/una` (recursively identifies and migrates all `*.test.ts*` files).
 
+> **Related Skills**:
+> - For writing new unit tests from scratch or expanding test coverage on untested components/hooks, use [`unit-test-writing`](../unit-test-writing/SKILL.md).
+> - For migrating or generating 5+ test files in parallel via subagents, use [`parallel-test-orchestrator`](../parallel-test-orchestrator/SKILL.md).
+
 ---
 
 ## When to Use
-- Migrating existing test suites from `renderToString` or `React.createElement` to RTL.
+- Migrating existing test suites from `renderToString` / `renderToStaticMarkup` or `React.createElement` to RTL.
 - Upgrading component tests from substring assertions (`expect(html).toContain(...)`) to semantic DOM assertions (`expect(element).toBeInTheDocument()`).
 - Refactoring hook tests to use `renderHook` and dispatch real DOM events in Happy-DOM.
 
@@ -26,24 +30,24 @@ It supports processing:
 
 ### Step 1: Input Resolution & Target Discovery
 - If input is a directory: find all `*.test.ts` and `*.test.tsx` files within it.
-- If input is a list of files: process each sequentially.
+- If input is a list of files: process each sequentially (or batch via `parallel-test-orchestrator`).
 - If input is a single file: process that file.
-- Inspect the file content to confirm whether it contains legacy patterns (`renderToString`, `react-dom/server`, string assertions).
+- Inspect the file content to confirm whether it contains legacy patterns (`renderToString`, `renderToStaticMarkup`, `react-dom/server`, string assertions).
 
 ### Step 2: File Extension Check (TSX vs TS)
 - If the test renders React components using JSX syntax (`<Component ... />`), the file extension **MUST** be `.test.tsx`.
-- If the legacy file is named `.test.ts`, rename it using git:
+- If the legacy file is named `.test.ts`, rename it using git (when orchestrating in parallel via `parallel-test-orchestrator`, the parent orchestrator performs all `git mv` renames before spawning subagents):
   ```bash
   git mv path/to/MyComponent.test.ts path/to/MyComponent.test.tsx
   ```
 - Pure utility or non-JSX hook tests may remain `.test.ts`.
 
-### Step 3: Imports Refactoring
+### Step 3: Imports Refactoring & Provider HOC Adoption
 - **Remove**:
   ```ts
-  import { renderToString } from 'react-dom/server';
+  import { renderToString, renderToStaticMarkup } from 'react-dom/server';
   ```
-- **Add**:
+- **Add RTL imports**:
   ```ts
   import { render, screen, within } from '@testing-library/react';
   import userEvent from '@testing-library/user-event';
@@ -52,13 +56,26 @@ It supports processing:
   ```ts
   import { renderHook, act } from '@testing-library/react';
   ```
-- Note: `@testing-library/jest-dom/vitest` matchers (`toBeInTheDocument`, `toBeDisabled`, etc.) are globally registered via `vitest.setup.ts`, so no per-file matcher import is necessary.
+- **Provider HOCs & Feature Flags (`@universe/uni-hub`)**:
+  - **NEVER** import or hand-nest `<LanguageProvider>`, `<FeatureToggleProvider>`, `<ThemeProvider>`, or `<ToastProvider>` JSX in migrated test suites.
+  - Import provider HOCs directly from `@uni-hub/utils/test-utils`:
+    ```ts
+    import { withLanguage, withFeatureToggles, withTheme, withToast, withAppProviders, createLanguageWrapper, createAppProvidersWrapper, setTestFeatureFlags, ALL_FEATURES_ENABLED } from '@uni-hub/utils/test-utils';
+    ```
+  - Wrap rendered JSX: `render(withLanguage(<MyComponent {...props} />))` or `render(withFeatureToggles(withLanguage(<MyComponent {...props} />)))`.
+  - For hook suites, pass `{ wrapper: createLanguageWrapper() }` or `{ wrapper: createAppProvidersWrapper() }`.
+  - **NEVER** manually assign or delete `process.env.NEXT_PUBLIC_FEATURE_*`. Always use `setTestFeatureFlags({ ... })` (reset automatically in global `vitest.setup.ts`).
 
 ### Step 4: Component Rendering & Queries
-- Replace `renderToString(<Component ... />)` or `renderToString(React.createElement(Component, props))` with:
-  ```tsx
-  render(<Component {...props} />);
-  ```
+- Replace `renderToString(<Component ... />)` or `renderToStaticMarkup(React.createElement(Component, props))` with package-isolated rendering:
+  - **For `@universe/ui` (Design System Primitives)**: UI components must remain language-agnostic and isolated—never import from `@universe/uni-hub`. Render directly:
+    ```tsx
+    render(<Button {...props} />);
+    ```
+  - **For `@universe/uni-hub` (Application Components)**: Wrap in canonical provider HOCs as needed:
+    ```tsx
+    render(withLanguage(<Component {...props} />));
+    ```
 - **Query Priority (Accessibility First)**:
   1. `screen.getByRole('button', { name: /save/i })` (accessible role + name)
   2. `screen.getByLabelText(/username/i)` (form fields)
@@ -78,7 +95,11 @@ Replace fragile string comparisons with semantic DOM assertions:
 When testing clicks, typing, or keyboard navigation:
 ```tsx
 const user = userEvent.setup();
+
+// @universe/ui (direct render):
 render(<Button onClick={handleClick}>Click</Button>);
+// or @universe/uni-hub (with provider HOC):
+// render(withLanguage(<ActionCard onClick={handleClick} />));
 
 await user.click(screen.getByRole('button', { name: /click/i }));
 expect(handleClick).toHaveBeenCalledTimes(1);
@@ -87,7 +108,9 @@ expect(handleClick).toHaveBeenCalledTimes(1);
 ### Step 7: Hook Migration
 Replace manual helper tests with `renderHook`:
 ```tsx
-const { result } = renderHook(() => useMyHook());
+const { result } = renderHook(() => useMyHook(), {
+  wrapper: createLanguageWrapper(),
+});
 expect(result.current.value).toBe(expected);
 
 act(() => {
@@ -98,22 +121,37 @@ expect(result.current.value).toBe('updated');
 
 ---
 
-## Strict Conventions & Quality Guidelines
+## Strict Conventions & Quality Guardrails
 
 1. **Test Naming Convention**:
-   - Every test case description MUST start with `'should ...'`:
+   - Every single `it(...)` or `test(...)` description **MUST** start with `'should ...'`:
      ```tsx
      it('should render standard button element with accessible label', () => { ... });
      ```
 
-2. **No Test Bloat**:
+2. **Parameterized Tests with `it.each` vs. Loops**:
+   - When migrating suites that test 2+ variants, tones, or boundary conditions, **ALWAYS use `it.each`**.
+   - **Forbidden**: Manual `for...of + unmount()` loops inside a single `it(...)` block and `for (const size of sizes) { rerender(...) }` loops.
+   - **Exception**: A single `for...of` loop inside `it(...)` is ONLY allowed when verifying that a single `render()` output contains all items from a fixture array.
+
+3. **Avoid Redundant Mock Complexity**:
+   - Do NOT mock design system primitives (`@una` `Modal`, `Button`, `Select`, `Tag`, `Chart`, `ToastProvider`) or child modals (`DeanContactModal`, `GoogleLoginButton`). Exercise real components whenever possible.
+   - Only mock true external boundaries (network/API services, `next/navigation`, browser globals like `window.google.accounts.id`).
+   - Eliminate captured module variables in mock closures (`let capturedError = ...`) that create state leaks.
+
+4. **No Test Bloat**:
    - Do not test trivial implementation details (internal variables, class names that don't affect behavior).
    - Test user-visible outcomes and accessibility states.
 
-3. **Accessibility (a11y) & Security**:
+5. **Accessibility (a11y) & Security**:
    - Verify ARIA attributes (`aria-expanded`, `aria-label`, `aria-hidden`, `role`).
    - Check keyboard navigation (`Enter`, `Escape`, `Tab`) where interactive components are involved.
    - For user inputs, ensure strings are rendered safely without XSS vulnerability.
+
+6. **SonarCloud & Oxlint Guardrails (`docs/ai/quality.md`)**:
+   - In mocks for modal dialogs, **NEVER** use `<div role="dialog">`. Always use `<dialog open aria-label={title}>` (Sonar rule `S6819`/`S6847`).
+   - **NEVER** call `.sort()` without a comparator; always pass `(a, b) => a.localeCompare(b)` or `(a, b) => a - b` (Sonar rule `S2871`).
+   - **NEVER** use `Math.random()` in test data or mocks (Sonar rule `S2245`).
 
 ---
 
@@ -121,7 +159,7 @@ expect(result.current.value).toBe('updated');
 After migrating each file or batch:
 ```bash
 # Run Vitest on the modified test file
-pnpm test path/to/file.test.tsx
+pnpm --filter <pkg> test <TestFileName> --run
 
 # Verify formatting and linter
 pnpm exec oxlint path/to/file.test.tsx

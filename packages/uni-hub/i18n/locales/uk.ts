@@ -252,6 +252,7 @@ export const uk = {
   'header.soundUnmute': 'Увімкнути звук',
   'header.openMenu': 'Відкрити меню',
   'header.userMenu': 'Меню профілю користувача',
+  'header.userMenuTitleWithGroup': '{fullName} ({group})',
   'header.unreadCount': '{count} нових',
 
   // Assignment Detail
@@ -526,7 +527,7 @@ export const uk = {
   'opportunities.createModal.descPlaceholder':
     'Детально розкажіть про проект, задачі, очікувану зайнятість та необхідні навички...',
   'opportunities.createModal.contactLabel': 'Контактні дані організатора *',
-  'opportunities.createModal.contactPlaceholder': 'Telegram (@username) або Email',
+  'opportunities.createModal.contactPlaceholder': 'Telegram (@username), Email або номер телефону',
   'opportunities.createModal.paymentTypeLabel': 'Тип винагороди',
   'opportunities.createModal.unpaidOption': 'Неоплачувана (Практика, досвід)',
   'opportunities.createModal.paidOption': 'Оплачувана',

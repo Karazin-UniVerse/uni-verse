@@ -253,6 +253,7 @@ export const en = {
   'header.soundUnmute': 'Unmute sound',
   'header.openMenu': 'Open menu',
   'header.userMenu': 'User profile menu',
+  'header.userMenuTitleWithGroup': '{fullName} ({group})',
   'header.unreadCount': '{count} new',
 
   // Assignment Detail
@@ -526,7 +527,7 @@ export const en = {
   'opportunities.createModal.descPlaceholder':
     'Describe the project, tasks, workload, and required skills...',
   'opportunities.createModal.contactLabel': 'Organizer Contact Info *',
-  'opportunities.createModal.contactPlaceholder': 'Telegram (@username) or Email',
+  'opportunities.createModal.contactPlaceholder': 'Telegram (@username), Email or phone number',
   'opportunities.createModal.paymentTypeLabel': 'Reward Type',
   'opportunities.createModal.unpaidOption': 'Unpaid (Practice, experience)',
   'opportunities.createModal.paidOption': 'Paid',

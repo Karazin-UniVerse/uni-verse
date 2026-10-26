@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { isLoggedIn } from '@core/utils/auth';
-import type { StudentProfile } from '@core/types';
+import type { StudentProfile } from '@core/types/student';
 import { useFeatures } from '@uni-hub/features';
 import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
 import { fallbackStudentProfile } from '../constants';
