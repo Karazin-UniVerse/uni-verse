@@ -127,6 +127,16 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
         isOwner && (opportunity.status === 'DRAFT' || opportunity.status === 'REQUIRES_CHANGES')
       }
       onSendToReview={() => onSendToReview(opportunity.id)}
+      sendToReviewDisabled={
+        opportunity.status === OPPORTUNITY_STATUS.REQUIRES_CHANGES &&
+        opportunity.canResubmit !== true
+      }
+      sendToReviewHint={
+        opportunity.status === OPPORTUNITY_STATUS.REQUIRES_CHANGES &&
+        opportunity.canResubmit !== true
+          ? formatMessage('opportunities.errors.changesRequired')
+          : undefined
+      }
       sendToReviewText={formatMessage('opportunities.detailModal.sendToReview')}
       onOpenApplicants={onOpenApplicants}
       viewApplicantsText={formatMessage('opportunities.card.applications')}

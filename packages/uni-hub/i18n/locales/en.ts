@@ -1,6 +1,11 @@
 import type { TranslationKey } from './uk';
 
 export const en = {
+  'opportunities.errors.changesRequired':
+    'Before resubmitting, change the opportunity title, description, contacts or payment terms.',
+  'opportunities.errors.phoneUnavailable': 'This phone number is unavailable for this account.',
+  'opportunities.errors.phoneAlreadySet':
+    'Use the phone number already registered to your account, or Telegram.',
   // Common / Lang
   'lang.uk': 'Ukrainian',
   'lang.en': 'English',

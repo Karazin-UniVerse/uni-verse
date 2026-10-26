@@ -36,6 +36,7 @@ const publishedOpportunity: Opportunity = {
   paymentDetails: null,
   details: null,
   moderationComment: null,
+  moderationContentHash: null,
   ownerId: 'owner',
   createdAt: new Date('2026-10-01T10:00:00Z'),
   updatedAt: new Date('2026-10-01T10:00:00Z'),
@@ -85,6 +86,12 @@ describe('OpportunitiesService', () => {
               findUnique: jest.fn(),
               findMany: jest.fn(),
             },
+            userPhone: {
+              upsert: jest
+                .fn()
+                .mockResolvedValue({ phoneNumber: '+380501234567' }),
+            },
+            $transaction: jest.fn(async (callback) => callback(prisma)),
           },
         },
         {
@@ -432,6 +439,7 @@ describe('OpportunitiesService', () => {
         roles: ['OPPORTUNITIES_MODERATOR'],
       } as any);
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
         id: 'opp1',
         title: 'test',
         ownerId: 'owner1',

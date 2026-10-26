@@ -26,6 +26,8 @@ export type OpportunityDetailProps = {
   onEdit?: () => void;
   editText?: string;
   canSendToReview?: boolean;
+  sendToReviewDisabled?: boolean;
+  sendToReviewHint?: string;
   onSendToReview?: () => void;
   sendToReviewText?: string;
   onOpenApplicants?: () => void;

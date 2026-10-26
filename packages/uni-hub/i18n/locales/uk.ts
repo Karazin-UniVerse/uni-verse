@@ -1,4 +1,10 @@
 export const uk = {
+  'opportunities.errors.changesRequired':
+    'Перед повторним надсиланням змініть назву, опис, контакти або умови оплати можливості.',
+  'opportunities.errors.phoneUnavailable':
+    'Цей номер недоступний для використання цим обліковим записом.',
+  'opportunities.errors.phoneAlreadySet':
+    'Використайте номер, уже закріплений за вашим обліковим записом, або Telegram.',
   // Common / Lang
   'lang.uk': 'Українська',
   'lang.en': 'English',

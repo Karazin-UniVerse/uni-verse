@@ -9,6 +9,8 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { getPrismaErrorCode } from '../utils/prisma-error';
+import { getOpportunityContentHash } from './opportunities.helpers';
+import { normalizeContactPhone } from '@universe/core/utils/contacts';
 import {
   CreateOpportunityDto,
   UpdateOpportunityDto,
@@ -29,12 +31,14 @@ import {
   OPPORTUNITY_MODERATE_ACTION,
   OPPORTUNITY_VIEW,
   OPPORTUNITY_VIEW_PARAM,
+  OPPORTUNITY_ERROR,
 } from '@universe/core/constants/opportunities';
 import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 import { OPPORTUNITY_NOTIFICATION_KEY } from '@universe/core/constants/notifications';
 
 export type OpportunityWithOwner = Opportunity & {
   owner: { id: string; name: string | null; email: string };
+  canResubmit?: boolean;
 };
 
 export type ApplicationWithApplicant = OpportunityApplication & {
@@ -196,6 +200,16 @@ export class OpportunitiesService {
       throw new NotFoundException('Opportunity not found');
     }
 
+    if (opportunity.status === OpportunityStatus.REQUIRES_CHANGES) {
+      return {
+        ...opportunity,
+        canResubmit:
+          Boolean(opportunity.moderationContentHash) &&
+          opportunity.moderationContentHash !==
+            getOpportunityContentHash(opportunity),
+      };
+    }
+
     return opportunity;
   }
 
@@ -226,6 +240,13 @@ export class OpportunitiesService {
     const data: Prisma.OpportunityUpdateInput = { ...dto };
 
     if (
+      opportunity.status === OpportunityStatus.REQUIRES_CHANGES &&
+      !opportunity.moderationContentHash
+    ) {
+      data.moderationContentHash = getOpportunityContentHash(opportunity);
+    }
+
+    if (
       opportunity.status === OpportunityStatus.PUBLISHED &&
       hasContentChanges
     ) {
@@ -233,10 +254,25 @@ export class OpportunitiesService {
       data.moderationComment = null;
     }
 
-    const updated = await this.prisma.opportunity.update({
-      where: { id },
-      data,
-    });
+    let updated;
+
+    try {
+      updated = await this.prisma.opportunity.update({
+        where: {
+          id,
+          ...(opportunity.status === OpportunityStatus.REQUIRES_CHANGES
+            ? { status: opportunity.status, updatedAt: opportunity.updatedAt }
+            : {}),
+        },
+        data,
+      });
+    } catch (error) {
+      if (getPrismaErrorCode(error) === 'P2025') {
+        throw new ConflictException(OPPORTUNITY_ERROR.CHANGES_REQUIRED);
+      }
+
+      throw error;
+    }
 
     if (
       opportunity.status === OpportunityStatus.PUBLISHED &&
@@ -276,13 +312,35 @@ export class OpportunitiesService {
       );
     }
 
-    const updatedOpportunity = await this.prisma.opportunity.update({
-      where: { id },
-      data: {
-        status,
-        moderationComment: null,
-      },
-    });
+    if (
+      opportunity.status === OpportunityStatus.REQUIRES_CHANGES &&
+      !opportunity.canResubmit
+    ) {
+      throw new BadRequestException(OPPORTUNITY_ERROR.CHANGES_REQUIRED);
+    }
+
+    let updatedOpportunity;
+
+    try {
+      updatedOpportunity = await this.prisma.opportunity.update({
+        where: {
+          id,
+          ...(opportunity.status === OpportunityStatus.REQUIRES_CHANGES
+            ? { status: opportunity.status, updatedAt: opportunity.updatedAt }
+            : {}),
+        },
+        data: {
+          status,
+          moderationComment: null,
+        },
+      });
+    } catch (error) {
+      if (getPrismaErrorCode(error) === 'P2025') {
+        throw new ConflictException(OPPORTUNITY_ERROR.CHANGES_REQUIRED);
+      }
+
+      throw error;
+    }
 
     await this.notifyModerators(id, updatedOpportunity.title);
 
@@ -427,10 +485,12 @@ export class OpportunitiesService {
     }
 
     let app;
-
-    try {
+    const phoneNumber = normalizeContactPhone(dto.contactInfo);
+    const writeApplication = async (
+      tx: Prisma.TransactionClient,
+    ): Promise<OpportunityApplication> => {
       if (existing) {
-        app = await this.prisma.opportunityApplication.update({
+        return tx.opportunityApplication.update({
           where: { id: existing.id, status: ApplicationStatus.WITHDRAWN },
           data: {
             applicantName: dto.applicantName,
@@ -442,15 +502,46 @@ export class OpportunitiesService {
             ownerComment: null,
           },
         });
-      } else {
-        app = await this.prisma.opportunityApplication.create({
-          data: {
-            ...dto,
-            applicantId: userId,
-            opportunityId: id,
-            status: ApplicationStatus.SUBMITTED,
-          },
+      }
+
+      return tx.opportunityApplication.create({
+        data: {
+          ...dto,
+          applicantId: userId,
+          opportunityId: id,
+          status: ApplicationStatus.SUBMITTED,
+        },
+      });
+    };
+
+    try {
+      if (phoneNumber) {
+        app = await this.prisma.$transaction(async (tx) => {
+          let claimed;
+
+          try {
+            claimed = await tx.userPhone.upsert({
+              where: { userId },
+              create: { userId, phoneNumber },
+              update: {},
+              select: { phoneNumber: true },
+            });
+          } catch (error) {
+            if (getPrismaErrorCode(error) === 'P2002') {
+              throw new ConflictException(OPPORTUNITY_ERROR.PHONE_UNAVAILABLE);
+            }
+
+            throw error;
+          }
+
+          if (claimed.phoneNumber !== phoneNumber) {
+            throw new ConflictException(OPPORTUNITY_ERROR.PHONE_ALREADY_SET);
+          }
+
+          return writeApplication(tx);
         });
+      } else {
+        app = await writeApplication(this.prisma);
       }
     } catch (error) {
       const errorCode = getPrismaErrorCode(error);
@@ -584,6 +675,10 @@ export class OpportunitiesService {
       where: { id },
       data: {
         status: newStatus,
+        moderationContentHash:
+          dto.action === OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES
+            ? getOpportunityContentHash(opportunityToModerate)
+            : null,
         moderationComment:
           dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE
             ? null
