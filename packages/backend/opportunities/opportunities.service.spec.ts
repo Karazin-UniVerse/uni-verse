@@ -15,6 +15,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import {
+  ApplicationStatus,
   OpportunityStatus,
   Role,
   type Prisma,
@@ -27,6 +28,7 @@ import {
   OPPORTUNITY_VIEW_PARAM,
   OPPORTUNITY_ERROR,
 } from '@universe/core/constants/opportunities';
+import { NOTIFICATION_TYPE } from '@universe/core/constants/notifications';
 
 const publishedOpportunity: Opportunity = {
   id: 'race-opportunity',
@@ -98,7 +100,12 @@ describe('OpportunitiesService', () => {
                 .fn()
                 .mockResolvedValue({ phoneNumber: '+380501234567' }),
             },
-            $transaction: jest.fn(async (callback) => callback(prisma)),
+            notification: {
+              deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+            },
+            $transaction: jest.fn(async (callback) =>
+              typeof callback === 'function' ? callback(prisma) : callback,
+            ),
           },
         },
         {
@@ -1580,6 +1587,14 @@ describe('OpportunitiesService', () => {
         },
       });
       expect(prisma.opportunityApplication.create).not.toHaveBeenCalled();
+      expect(prisma.notification.deleteMany).toHaveBeenCalledWith({
+        where: {
+          userId: 'owner-1',
+          type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
+          link: { contains: '1' },
+          message: { contains: '"applicationId":"app-withdrawn-1"' },
+        },
+      });
       expect(result.id).toBe('app-withdrawn-1');
       expect(notificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1715,22 +1730,63 @@ describe('OpportunitiesService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('withdraws application successfully', async () => {
+    it('withdraws application successfully and cleans up owner notification', async () => {
       jest
         .spyOn(prisma.opportunityApplication, 'findUnique')
         .mockResolvedValue({
           id: 'app-1',
           applicantId: 'user-1',
+          applicantName: 'Applicant One',
+          opportunityId: 'opp-1',
+          opportunity: { ownerId: 'owner-1' },
           status: 'SUBMITTED',
         } as any);
       jest.spyOn(prisma.opportunityApplication, 'update').mockResolvedValue({
         id: 'app-1',
         status: 'WITHDRAWN',
       } as any);
+      const deleteSpy = jest.spyOn(prisma.notification, 'deleteMany');
 
       const result = await service.withdrawApplication('user-1', 'app-1');
 
+      expect(prisma.opportunityApplication.update).toHaveBeenCalledWith({
+        where: {
+          id: 'app-1',
+          status: {
+            in: [ApplicationStatus.SUBMITTED, ApplicationStatus.UNDER_REVIEW],
+          },
+        },
+        data: { status: 'WITHDRAWN' },
+      });
       expect(result.status).toBe('WITHDRAWN');
+      expect(deleteSpy).toHaveBeenCalledWith({
+        where: {
+          userId: 'owner-1',
+          type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
+          link: { contains: 'opp-1' },
+          message: { contains: '"applicationId":"app-1"' },
+        },
+      });
+    });
+
+    it('throws BadRequestException if application was completed concurrently before withdrawal update', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue({
+          id: 'app-1',
+          applicantId: 'user-1',
+          applicantName: 'Applicant One',
+          opportunityId: 'opp-1',
+          opportunity: { ownerId: 'owner-1' },
+          status: 'SUBMITTED',
+        } as any);
+      jest.spyOn(prisma.opportunityApplication, 'update').mockRejectedValue({
+        code: 'P2025',
+      });
+
+      await expect(
+        service.withdrawApplication('user-1', 'app-1'),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

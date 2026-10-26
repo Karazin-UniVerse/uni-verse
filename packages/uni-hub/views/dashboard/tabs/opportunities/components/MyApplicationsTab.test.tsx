@@ -140,6 +140,7 @@ describe('MyApplicationsTab component', () => {
     expect(screen.getByText('Оплачувана (300$ / month)')).toBeInTheDocument();
     expect(screen.getByText('Ваш супровідний лист / мотивація:')).toBeInTheDocument();
     expect(screen.getByText('I am passionate about open source and React.')).toBeInTheDocument();
+    expect(screen.getAllByText('applicant@example.com')).toHaveLength(2);
 
     expect(screen.getByText('B')).toBeInTheDocument();
     expect(screen.getAllByText('bob@example.com')).toHaveLength(2);

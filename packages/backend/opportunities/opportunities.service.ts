@@ -35,7 +35,10 @@ import {
   OPPORTUNITY_ERROR,
 } from '@universe/core/constants/opportunities';
 import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
-import { OPPORTUNITY_NOTIFICATION_KEY } from '@universe/core/constants/notifications';
+import {
+  NOTIFICATION_TYPE,
+  OPPORTUNITY_NOTIFICATION_KEY,
+} from '@universe/core/constants/notifications';
 
 export type OpportunityWithOwner = Opportunity & {
   owner: { id: string; name: string | null; email: string };
@@ -81,7 +84,7 @@ export class OpportunitiesService {
         moderators.map((moderator) =>
           this.notificationsService.createNotification({
             userId: moderator.id,
-            type: 'OPPORTUNITY_READY_FOR_REVIEW',
+            type: NOTIFICATION_TYPE.OPPORTUNITY_READY_FOR_REVIEW,
             title: OPPORTUNITY_NOTIFICATION_KEY.READY_FOR_REVIEW_TITLE,
             message: JSON.stringify({
               opportunityTitle,
@@ -482,7 +485,7 @@ export class OpportunitiesService {
 
     await this.notificationsService.createNotification({
       userId: app.applicantId,
-      type: 'OPPORTUNITY_APPLICATION_STATUS',
+      type: NOTIFICATION_TYPE.OPPORTUNITY_APPLICATION_STATUS,
       title: OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE,
       message: JSON.stringify({
         opportunityTitle: app.opportunity.title,
@@ -537,15 +540,17 @@ export class OpportunitiesService {
       userId,
       opportunityId: id,
       request: dto,
+      ownerId: opportunity.ownerId,
     });
 
     await this.notificationsService.createNotification({
       userId: opportunity.ownerId,
-      type: 'OPPORTUNITY_NEW_APPLICATION',
+      type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
       title: OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_TITLE,
       message: JSON.stringify({
         opportunityTitle: opportunity.title,
         applicantName: dto.applicantName,
+        applicationId: opportunityApplication.id,
       }),
       link: `${OPPORTUNITIES_ROUTE}/${id}?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
     });
@@ -562,6 +567,7 @@ export class OpportunitiesService {
   ): Promise<OpportunityApplication> {
     const app = await this.prisma.opportunityApplication.findUnique({
       where: { id: applicationId },
+      include: { opportunity: true },
     });
 
     if (!app) throw new NotFoundException('Application not found');
@@ -575,10 +581,38 @@ export class OpportunitiesService {
     )
       throw new BadRequestException('Cannot withdraw completed application');
 
-    return this.prisma.opportunityApplication.update({
-      where: { id: applicationId },
-      data: { status: ApplicationStatus.WITHDRAWN },
-    });
+    try {
+      const updated = await this.prisma.$transaction(async (tx) => {
+        const withdrawn = await tx.opportunityApplication.update({
+          where: {
+            id: applicationId,
+            status: {
+              in: [ApplicationStatus.SUBMITTED, ApplicationStatus.UNDER_REVIEW],
+            },
+          },
+          data: { status: ApplicationStatus.WITHDRAWN },
+        });
+
+        await tx.notification.deleteMany({
+          where: {
+            userId: app.opportunity.ownerId,
+            type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
+            link: { contains: app.opportunityId },
+            message: { contains: `"applicationId":"${applicationId}"` },
+          },
+        });
+
+        return withdrawn;
+      });
+
+      return updated;
+    } catch (error) {
+      if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
+        throw new BadRequestException('Cannot withdraw completed application');
+      }
+
+      throw error;
+    }
   }
 
   /**
@@ -692,7 +726,7 @@ export class OpportunitiesService {
 
     await this.notificationsService.createNotification({
       userId: opp.ownerId,
-      type: 'OPPORTUNITY_MODERATED',
+      type: NOTIFICATION_TYPE.OPPORTUNITY_MODERATED,
       title: OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE,
       message: JSON.stringify({
         opportunityTitle: opp.title,

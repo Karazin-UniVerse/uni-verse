@@ -5,6 +5,7 @@ import {
   type Prisma,
 } from '@universe/database';
 import { OPPORTUNITY_ERROR } from '@universe/core/constants/opportunities';
+import { NOTIFICATION_TYPE } from '@universe/core/constants/notifications';
 import { normalizeContactPhone } from '@universe/core/utils/contacts';
 import type { ApplyOpportunityDto } from './dto/apply-opportunity.dto';
 import type { PrismaService } from '../prisma/prisma.service';
@@ -16,6 +17,7 @@ interface ApplicationWrite {
   userId: string;
   opportunityId: string;
   request: ApplyOpportunityDto;
+  ownerId?: string;
 }
 
 async function claimPhone(
@@ -50,6 +52,7 @@ export async function persistOpportunityApplication({
   userId,
   opportunityId,
   request,
+  ownerId,
 }: ApplicationWrite): Promise<OpportunityApplication> {
   const existing = await prisma.opportunityApplication.findFirst({
     where: { applicantId: userId, opportunityId },
@@ -61,11 +64,11 @@ export async function persistOpportunityApplication({
 
   const contactInfo = request.contactInfo?.trim() ?? '';
 
-  const writeApplication = (
+  const writeApplication = async (
     tx: Prisma.TransactionClient,
   ): Promise<OpportunityApplication> => {
     if (existing) {
-      return tx.opportunityApplication.update({
+      const updated = await tx.opportunityApplication.update({
         where: { id: existing.id, status: ApplicationStatus.WITHDRAWN },
         data: {
           applicantName: request.applicantName,
@@ -77,6 +80,17 @@ export async function persistOpportunityApplication({
           ownerComment: null,
         },
       });
+
+      await tx.notification.deleteMany({
+        where: {
+          ...(ownerId ? { userId: ownerId } : {}),
+          type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
+          link: { contains: opportunityId },
+          message: { contains: `"applicationId":"${existing.id}"` },
+        },
+      });
+
+      return updated;
     }
 
     return tx.opportunityApplication.create({
@@ -92,9 +106,11 @@ export async function persistOpportunityApplication({
   const phoneNumber = normalizeContactPhone(contactInfo);
 
   try {
-    if (phoneNumber) {
+    if (phoneNumber || existing) {
       return await prisma.$transaction(async (tx) => {
-        await claimPhone(tx, userId, phoneNumber);
+        if (phoneNumber) {
+          await claimPhone(tx, userId, phoneNumber);
+        }
 
         return writeApplication(tx);
       });

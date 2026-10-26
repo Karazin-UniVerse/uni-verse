@@ -8,11 +8,13 @@
   border: 1px solid var(--card-border);
   border-radius: var(--border-radius-medium);
   font-size: var(--font-xs);
+  line-height: 1;
   font-weight: 500;
   color: var(--text-secondary);
   overflow-wrap: anywhere;
 
   svg {
+    display: block;
     flex-shrink: 0;
   }
 }

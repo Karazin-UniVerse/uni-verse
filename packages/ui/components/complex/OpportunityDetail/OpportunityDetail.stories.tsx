@@ -58,18 +58,6 @@ export const AuthorView: Story = {
     onSendToReview: noop,
     canDelete: true,
     onDelete: noop,
-    phaseLabel: 'Етап:',
-    lifecycleState: 'ACTIVE',
-    lifecycleOptions: [
-      { label: 'Початок', value: 'START' },
-      { label: 'Активна', value: 'ACTIVE' },
-      { label: 'Призупинена', value: 'PAUSED' },
-      { label: 'Завершена', value: 'COMPLETED' },
-      { label: 'Скасована', value: 'CANCELLED' },
-    ],
-    onLifecycleChange: noop,
-    acceptsApplicationsLabel: 'Приймати заявки',
-    onToggleAcceptsApplications: noop,
   },
 };
 
@@ -107,9 +95,8 @@ export const AuthorDraftWithRevision: Story = {
     onEdit: noop,
     canSendToReview: true,
     sendToReviewDisabled: true,
-    sendToReviewHint: 'Змініть назву, опис, контакти або умови оплати перед повторним надсиланням.',
+    sendToReviewHint:
+      'Перед повторним надсиланням змініть назву, опис, контакти або умови оплати можливості.',
     onSendToReview: noop,
-    moderationCommentTitle: 'Зауваження модератора',
-    moderationComment: 'Будь ласка, уточніть стек технологій та очікуване тижневе навантаження.',
   },
 };

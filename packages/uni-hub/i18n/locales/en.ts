@@ -594,7 +594,6 @@ export const en = {
   'opportunities.detailModal.phasePaused': 'Paused',
   'opportunities.detailModal.phaseCompleted': 'Completed',
   'opportunities.detailModal.phaseCancelled': 'Cancelled',
-  'opportunities.detailModal.acceptsApplications': 'Accept new applications',
   'opportunities.detailModal.applicationsClosed': 'Applications closed by author',
   'opportunities.detail.back': 'Back to opportunities',
   'opportunities.detailModal.apply': 'Apply for Opportunity',

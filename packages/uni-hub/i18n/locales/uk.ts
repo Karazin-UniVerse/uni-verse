@@ -596,7 +596,6 @@ export const uk = {
   'opportunities.detailModal.phasePaused': 'На паузі',
   'opportunities.detailModal.phaseCompleted': 'Завершено',
   'opportunities.detailModal.phaseCancelled': 'Скасовано',
-  'opportunities.detailModal.acceptsApplications': 'Приймати нові відгуки на можливість',
   'opportunities.detailModal.applicationsClosed': 'Прийом заявок призупинено автором',
   'opportunities.detail.back': 'Назад до можливостей',
   'opportunities.detailModal.apply': 'Відгукнутися на можливість',

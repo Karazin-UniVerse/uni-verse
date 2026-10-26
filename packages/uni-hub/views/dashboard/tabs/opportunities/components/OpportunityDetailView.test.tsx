@@ -22,7 +22,6 @@ describe('OpportunityDetailView resubmission', () => {
             userId="candidate"
             onBack={vi.fn()}
             onSendToReview={vi.fn()}
-            onLifecycleChange={vi.fn()}
             onOpenApply={vi.fn()}
           />,
         ),
@@ -52,7 +51,6 @@ describe('OpportunityDetailView resubmission', () => {
           userId="owner-1"
           onBack={vi.fn()}
           onSendToReview={onSendToReview}
-          onLifecycleChange={vi.fn()}
           onOpenApply={vi.fn()}
         />,
       ),
@@ -82,7 +80,6 @@ describe('OpportunityDetailView resubmission', () => {
             userId="owner-1"
             onBack={vi.fn()}
             onSendToReview={onSendToReview}
-            onLifecycleChange={vi.fn()}
             onOpenApply={vi.fn()}
           />,
         ),
