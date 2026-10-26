@@ -59,6 +59,16 @@ separate historical backfill. Until then, ownership starts with the first
 successful phone-based application after deployment, not with historical usage.
 
 Tests cover the service policy with isolated Prisma doubles, canonicalization,
-UI gating and localized errors. A real PostgreSQL concurrency/rollback smoke test
-is still required before broad rollout; unit transaction doubles are not proof of
-database isolation behavior.
+UI gating and localized errors. Real PostgreSQL smoke tests also passed using
+the generated Prisma schema and actual service methods in an isolated temporary
+schema containing synthetic data only. They covered equivalent phone formats,
+concurrent claims by different accounts, concurrent different numbers for one
+account, rollback after an application-write failure, withdrawal/reapplication,
+Telegram contacts, moderation baselines and both stale-edit/resubmission orderings.
+The temporary schema was dropped after testing and its absence was verified.
+The shared application schema and its data were not changed by these tests.
+
+These checks do not perform a historical backfill, verify phone possession, or
+certify production browser authentication/cookie behavior. Unit transaction
+doubles alone are not proof of database isolation behavior; repeat the database
+smoke tests if the phone-claim or transaction implementation changes.
