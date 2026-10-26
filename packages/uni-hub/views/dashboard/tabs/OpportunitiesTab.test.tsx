@@ -89,7 +89,7 @@ describe('OpportunitiesTab component', () => {
     expect(screen.getByText('1')).toBeInTheDocument();
   });
 
-  it('should render Create Opportunity button for moderator only on My Opportunities tab', async () => {
+  it('should render Create Opportunity button for moderator only on My Opportunities tab', async (): Promise<void> => {
     const user = userEvent.setup();
 
     mockCurrentUser = {
@@ -108,7 +108,7 @@ describe('OpportunitiesTab component', () => {
     expect(screen.queryByRole('button', { name: /створити можливість/i })).not.toBeInTheDocument();
   });
 
-  it('should switch active sub-tab when clicking a tab button', async () => {
+  it('should switch active sub-tab when clicking a tab button', async (): Promise<void> => {
     const user = userEvent.setup();
 
     renderOpportunitiesTab();
@@ -135,7 +135,7 @@ describe('OpportunitiesTab component', () => {
     expect(screen.queryByRole('button', { name: /створити можливість/i })).not.toBeInTheDocument();
   });
 
-  it('should trigger create opportunity modal when clicking Post Opportunity button', async () => {
+  it('should trigger create opportunity modal when clicking Post Opportunity button', async (): Promise<void> => {
     const user = userEvent.setup();
 
     renderOpportunitiesTab();
