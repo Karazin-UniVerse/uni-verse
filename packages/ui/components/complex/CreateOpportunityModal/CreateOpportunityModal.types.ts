@@ -33,6 +33,7 @@ export type CreateOpportunityModalProps = {
   cancelText: string;
   submitText: string;
   savingText: string;
+  contactHint?: string;
   acceptsApplicationsLabel?: string;
   phaseLabel?: string;
   lifecycleOptions?: OpportunityLifecycleOption[];

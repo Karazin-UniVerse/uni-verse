@@ -59,6 +59,8 @@ export async function persistOpportunityApplication({
     throw new ConflictException(OPPORTUNITY_ERROR.ALREADY_APPLIED);
   }
 
+  const contactInfo = request.contactInfo?.trim() ?? '';
+
   const writeApplication = (
     tx: Prisma.TransactionClient,
   ): Promise<OpportunityApplication> => {
@@ -67,7 +69,7 @@ export async function persistOpportunityApplication({
         where: { id: existing.id, status: ApplicationStatus.WITHDRAWN },
         data: {
           applicantName: request.applicantName,
-          contactInfo: request.contactInfo,
+          contactInfo,
           briefDescription: request.briefDescription ?? null,
           motivation: request.motivation ?? null,
           answers: request.answers ?? null,
@@ -80,13 +82,14 @@ export async function persistOpportunityApplication({
     return tx.opportunityApplication.create({
       data: {
         ...request,
+        contactInfo,
         applicantId: userId,
         opportunityId,
         status: ApplicationStatus.SUBMITTED,
       },
     });
   };
-  const phoneNumber = normalizeContactPhone(request.contactInfo);
+  const phoneNumber = normalizeContactPhone(contactInfo);
 
   try {
     if (phoneNumber) {

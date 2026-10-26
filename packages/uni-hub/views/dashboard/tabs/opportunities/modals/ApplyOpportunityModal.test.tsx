@@ -24,9 +24,7 @@ describe('ApplyOpportunityModal component', () => {
   };
 
   const renderModal = (props: Partial<ApplyOpportunityModalProps> = {}) => {
-    return render(
-      withLanguage(<ApplyOpportunityModal {...defaultProps} {...props} />),
-    );
+    return render(withLanguage(<ApplyOpportunityModal {...defaultProps} {...props} />));
   };
 
   it('should render modal with formatted title containing opportunity name when open', () => {
@@ -40,7 +38,7 @@ describe('ApplyOpportunityModal component', () => {
     const motivationInput = screen.getByLabelText(
       'Супровідне повідомлення (чому вам цікавий цей проект) *',
     );
-    const contactInput = screen.getByLabelText('Ваш Telegram або номер телефону для звʼязку');
+    const contactInput = screen.getByLabelText('Альтернативний контакт');
 
     expect(motivationInput).toBeInTheDocument();
     expect(motivationInput).toHaveValue(defaultProps.motivation);
@@ -91,7 +89,7 @@ describe('ApplyOpportunityModal component', () => {
 
     renderModal({ onContactInfoChange: handleContactInfoChange });
 
-    const contactInput = screen.getByLabelText('Ваш Telegram або номер телефону для звʼязку');
+    const contactInput = screen.getByLabelText('Альтернативний контакт');
 
     await user.type(contactInput, '123');
 

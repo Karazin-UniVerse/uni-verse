@@ -149,7 +149,9 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       descriptionTitle={formatMessage('opportunities.detailModal.descTitle')}
       descriptionText={opportunity.description}
       contactLabel={formatMessage('opportunities.detailModal.contacts')}
-      contactValue={opportunity.ownerContactInfo}
+      contactValue={opportunity.ownerContactInfo.trim()}
+      emailLabel={formatMessage('opportunities.emailLabel')}
+      emailValue={opportunity.owner?.email}
       isOwner={isOwner}
       canEdit={canManageDraft}
       onEdit={onEdit ? () => onEdit(opportunity) : undefined}

@@ -11,6 +11,41 @@ describe('CreateOpportunityDto', () => {
     paymentType: PaymentType.UNPAID,
   };
 
+  it.each([null, 123, {}])(
+    'should reject a non-string organizer contact %j',
+    (ownerContactInfo) => {
+      const dto = plainToInstance(CreateOpportunityDto, {
+        ...validPayload,
+        ownerContactInfo,
+      });
+
+      expect(validateSync(dto)).toEqual([
+        expect.objectContaining({ property: 'ownerContactInfo' }),
+      ]);
+    },
+  );
+
+  it('should retain unrestricted organizer contact text', () => {
+    const dto = plainToInstance(CreateOpportunityDto, {
+      ...validPayload,
+      ownerContactInfo: 'Contact our department reception',
+    });
+
+    expect(validateSync(dto)).toEqual([]);
+  });
+
+  it.each([undefined, '', '   '])(
+    'should accept an optional organizer contact %s',
+    (ownerContactInfo) => {
+      const dto = plainToInstance(CreateOpportunityDto, {
+        ...validPayload,
+        ownerContactInfo,
+      });
+
+      expect(validateSync(dto)).toEqual([]);
+    },
+  );
+
   it.each([undefined, ...Object.values(OpportunityLifecycleState)])(
     'accepts lifecycleState %s',
     (lifecycleState) => {

@@ -5,6 +5,7 @@ export * from './ActionCard';
 export * from './GradeFeedItem';
 export * from './TopicChips';
 export * from './ContactInfoGrid';
+export { ContactTags } from './ContactTags/ContactTags';
 export * from './StatusBanner';
 export * from './NotificationList';
 export * from './ApplyOpportunityModal';

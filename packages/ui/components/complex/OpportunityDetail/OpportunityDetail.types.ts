@@ -20,6 +20,8 @@ export type OpportunityDetailProps = {
   descriptionText?: string;
   contactLabel?: string;
   contactValue?: string;
+  emailLabel?: string;
+  emailValue?: string;
   // Author controls
   isOwner?: boolean;
   canEdit?: boolean;

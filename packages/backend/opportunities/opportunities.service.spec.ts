@@ -1,4 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { plainToInstance } from 'class-transformer';
+import { CreateOpportunityDto } from './dto/create-opportunity.dto';
+import { ApplyOpportunityDto } from './dto/apply-opportunity.dto';
 import type { ValidationArguments } from 'class-validator';
 import { OpportunitiesService } from './opportunities.service';
 import { IsContactInfoConstraint } from './opportunities.helpers';
@@ -125,6 +128,162 @@ describe('OpportunitiesService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('optional alternative contacts', () => {
+    it.each([undefined, '', '   ', '  @organizer  '])(
+      'should normalize organizer contact %s on creation',
+      async (ownerContactInfo) => {
+        await service.create(
+          'owner',
+          plainToInstance(CreateOpportunityDto, {
+            title: 'Research',
+            description: 'Research project',
+            paymentType: 'UNPAID',
+            ownerContactInfo,
+          }),
+        );
+
+        expect(prisma.opportunity.create).toHaveBeenCalledWith({
+          data: {
+            title: 'Research',
+            description: 'Research project',
+            paymentType: 'UNPAID',
+            ownerId: 'owner',
+            status: 'DRAFT',
+            ownerContactInfo:
+              ownerContactInfo === '  @organizer  ' ? '@organizer' : '',
+          },
+        });
+      },
+    );
+
+    it.each([
+      { request: {}, expected: {} },
+      { request: { ownerContactInfo: '' }, expected: { ownerContactInfo: '' } },
+      {
+        request: { ownerContactInfo: '   ' },
+        expected: { ownerContactInfo: '' },
+      },
+      {
+        request: { ownerContactInfo: '  @organizer  ' },
+        expected: { ownerContactInfo: '@organizer' },
+      },
+    ])(
+      'should preserve or normalize contact on update: $request',
+      async ({ request, expected }) => {
+        jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+          ...publishedOpportunity,
+          status: 'DRAFT',
+        });
+
+        await service.update('owner', publishedOpportunity.id, request);
+
+        expect(prisma.opportunity.update).toHaveBeenCalledWith({
+          where: { id: publishedOpportunity.id },
+          data: expected,
+        });
+      },
+    );
+
+    it.each([
+      { contactInfo: undefined, expected: '' },
+      { contactInfo: '   ', expected: '' },
+      { contactInfo: '  @candidate  ', expected: '@candidate' },
+    ])(
+      'should persist normalized application contact $contactInfo',
+      async ({ contactInfo, expected }) => {
+        jest
+          .spyOn(prisma.opportunity, 'findUnique')
+          .mockResolvedValue(publishedOpportunity);
+        jest.spyOn(prisma.opportunityApplication, 'create').mockResolvedValue({
+          ...withdrawnApplication,
+          status: 'SUBMITTED',
+        });
+
+        await service.apply(
+          'candidate',
+          publishedOpportunity.id,
+          plainToInstance(ApplyOpportunityDto, {
+            applicantName: 'Candidate',
+            contactInfo,
+          }),
+        );
+
+        expect(prisma.opportunityApplication.create).toHaveBeenCalledWith({
+          data: {
+            applicantName: 'Candidate',
+            contactInfo: expected,
+            applicantId: 'candidate',
+            opportunityId: publishedOpportunity.id,
+            status: 'SUBMITTED',
+          },
+        });
+        expect(prisma.userPhone.upsert).not.toHaveBeenCalled();
+      },
+    );
+
+    it('should clear the previous contact when reapplying without one', async () => {
+      jest
+        .spyOn(prisma.opportunity, 'findUnique')
+        .mockResolvedValue(publishedOpportunity);
+      jest
+        .spyOn(prisma.opportunityApplication, 'findFirst')
+        .mockResolvedValue(withdrawnApplication);
+      jest.spyOn(prisma.opportunityApplication, 'update').mockResolvedValue({
+        ...withdrawnApplication,
+        status: 'SUBMITTED',
+        contactInfo: '',
+      });
+
+      await service.apply(
+        'candidate',
+        publishedOpportunity.id,
+        plainToInstance(ApplyOpportunityDto, {
+          applicantName: 'Candidate',
+        }),
+      );
+
+      expect(prisma.opportunityApplication.update).toHaveBeenCalledWith({
+        where: { id: withdrawnApplication.id, status: 'WITHDRAWN' },
+        data: {
+          applicantName: 'Candidate',
+          contactInfo: '',
+          briefDescription: null,
+          motivation: null,
+          answers: null,
+          status: 'SUBMITTED',
+          ownerComment: null,
+        },
+      });
+    });
+
+    it('should load profile emails for both parties in my applications without private user fields', async () => {
+      await service.getMyApplications('candidate');
+
+      expect(prisma.opportunityApplication.findMany).toHaveBeenCalledWith({
+        where: { applicantId: 'candidate' },
+        include: {
+          applicant: { select: { name: true, email: true } },
+          opportunity: {
+            include: {
+              owner: { select: { id: true, name: true, email: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    });
+
+    it('should load the organizer profile email in my opportunities', async () => {
+      await service.getMyOpportunities('owner');
+
+      expect(prisma.opportunity.findMany).toHaveBeenCalledWith({
+        where: { ownerId: 'owner' },
+        include: { owner: { select: { id: true, name: true, email: true } } },
+        orderBy: { createdAt: 'desc' },
+      });
+    });
   });
 
   describe('findOne', () => {

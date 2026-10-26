@@ -21,10 +21,12 @@ export class CreateOpportunityDto implements CreateOpportunityRequest {
   @IsNotEmpty()
   description: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  @IsNotEmpty()
-  ownerContactInfo: string;
+  @ValidateIf(
+    (dto: CreateOpportunityDto): boolean => dto.ownerContactInfo !== undefined,
+  )
+  ownerContactInfo?: string;
 
   @ApiProperty({ enum: PaymentType, default: PaymentType.UNPAID })
   @IsEnum(PaymentType)

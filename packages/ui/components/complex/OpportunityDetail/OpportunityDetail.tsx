@@ -1,5 +1,5 @@
 import React, { useId } from 'react';
-import { Mail, Send, Pencil, Users, Trash2 } from 'lucide-react';
+import { Mail, MessageSquare, Send, Pencil, Users, Trash2 } from 'lucide-react';
 import { BackButton } from '../BackButton';
 import { Button } from '../../una/Button';
 import { Tag } from '../../una/Tag';
@@ -61,6 +61,8 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   descriptionText,
   contactLabel,
   contactValue,
+  emailLabel,
+  emailValue,
   onSendToReview,
   sendToReviewText,
   sendToReviewHint,
@@ -144,9 +146,18 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
           </div>
         )}
 
-        {contactValue && (
+        {emailValue && (
           <div className={styles.contactRow}>
             <Mail size={16} className={styles.contactIcon} />
+            <span>
+              {emailLabel} <strong>{emailValue}</strong>
+            </span>
+          </div>
+        )}
+
+        {contactValue && (
+          <div className={styles.contactRow}>
+            <MessageSquare size={16} className={styles.contactIcon} />
             <span>
               {contactLabel} <strong>{contactValue}</strong>
             </span>

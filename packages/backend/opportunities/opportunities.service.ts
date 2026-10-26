@@ -47,7 +47,8 @@ export type ApplicationWithApplicant = OpportunityApplication & {
 };
 
 export type ApplicationWithOpportunity = OpportunityApplication & {
-  opportunity: Opportunity;
+  opportunity: OpportunityWithOwner;
+  applicant: ApplicationWithApplicant['applicant'];
 };
 
 export type UpdateApplicationStatusParams = {
@@ -118,6 +119,7 @@ export class OpportunitiesService {
     return this.prisma.opportunity.create({
       data: {
         ...dto,
+        ownerContactInfo: dto.ownerContactInfo?.trim() ?? '',
         ownerId: userId,
         status: OpportunityStatus.DRAFT, // initial status
       },
@@ -239,6 +241,10 @@ export class OpportunitiesService {
       dto.paymentDetails !== undefined;
 
     const data: Prisma.OpportunityUpdateInput = { ...dto };
+
+    if (dto.ownerContactInfo !== undefined) {
+      data.ownerContactInfo = dto.ownerContactInfo.trim();
+    }
 
     if (
       opportunity.status === OpportunityStatus.REQUIRES_CHANGES &&
@@ -583,7 +589,12 @@ export class OpportunitiesService {
   ): Promise<ApplicationWithOpportunity[]> {
     return this.prisma.opportunityApplication.findMany({
       where: { applicantId: userId },
-      include: { opportunity: true },
+      include: {
+        applicant: { select: { name: true, email: true } },
+        opportunity: {
+          include: { owner: { select: { id: true, name: true, email: true } } },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -591,9 +602,10 @@ export class OpportunitiesService {
   /**
    * Retrieve all opportunities owned by a user.
    */
-  async getMyOpportunities(userId: string): Promise<Opportunity[]> {
+  async getMyOpportunities(userId: string): Promise<OpportunityWithOwner[]> {
     return this.prisma.opportunity.findMany({
       where: { ownerId: userId },
+      include: { owner: { select: { id: true, name: true, email: true } } },
       orderBy: { createdAt: 'desc' },
     });
   }

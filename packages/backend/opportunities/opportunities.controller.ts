@@ -70,7 +70,9 @@ export class OpportunitiesController {
    * Get current user opportunities
    */
   @ApiOperation({ summary: 'Get current user opportunities' })
-  getMyOpportunities(@GetUser('sub') userId: string): Promise<Opportunity[]> {
+  getMyOpportunities(
+    @GetUser('sub') userId: string,
+  ): Promise<OpportunityWithOwner[]> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.getMyOpportunities(userId);
