@@ -14,6 +14,7 @@ import { useOpportunityActions } from './hooks/useOpportunityActions';
 import { ApplicantsModal } from './modals/ApplicantsModal';
 import { ApplyOpportunityModal } from './modals/ApplyOpportunityModal';
 import { CreateOpportunityModal } from './modals/CreateOpportunityModal';
+import { useSubscribeOpportunity } from './hooks/useSubscribeOpportunity';
 
 export interface OpportunityDetailContentProps {
   opportunity: Opportunity;
@@ -28,6 +29,7 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
   const create = useCreateOpportunity({});
   const apply = useApplyToOpportunity({ currentUser, opportunity });
   const applicants = useApplicants();
+  const subscribe = useSubscribeOpportunity(opportunity.id, opportunity.isSubscribed ?? false);
 
   useApplicantsDeepLink({
     opportunity,
@@ -50,6 +52,8 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
         onEdit={create.openEdit}
         onOpenApply={() => apply.setIsApplyOpen(true)}
         onOpenApplicants={() => applicants.open(opportunity)}
+        onToggleSubscribe={subscribe.handleToggleSubscribe}
+        isSubscribeLoading={subscribe.isSubscribeLoading}
       />
 
       <CreateOpportunityModal

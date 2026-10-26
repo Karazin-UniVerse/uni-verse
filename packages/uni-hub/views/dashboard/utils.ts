@@ -101,6 +101,16 @@ const PLATFORM_TITLE_KEYS: Record<string, TranslationKey> = {
   [OPPORTUNITY_NOTIFICATION_KEY.READY_FOR_REVIEW_TITLE]:
     OPPORTUNITY_NOTIFICATION_KEY.READY_FOR_REVIEW_TITLE,
   [OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE]: OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE,
+  [OPPORTUNITY_NOTIFICATION_KEY.LIFECYCLE_CHANGED_TITLE]:
+    OPPORTUNITY_NOTIFICATION_KEY.LIFECYCLE_CHANGED_TITLE,
+};
+
+const PLATFORM_LIFECYCLE_KEYS: Record<string, TranslationKey> = {
+  START: 'notifications.opportunityLifecycle.START',
+  ACTIVE: 'notifications.opportunityLifecycle.ACTIVE',
+  PAUSED: 'notifications.opportunityLifecycle.PAUSED',
+  COMPLETED: 'notifications.opportunityLifecycle.COMPLETED',
+  CANCELLED: 'notifications.opportunityLifecycle.CANCELLED',
 };
 
 type MessageFormatter = (key: TranslationKey, values?: Record<string, string | number>) => string;
@@ -111,6 +121,7 @@ type PlatformNotificationPayload = {
   status?: string;
   action?: string;
   comment?: string | null;
+  lifecycleState?: string;
 };
 
 function parsePlatformPayload(rawMessage: string): PlatformNotificationPayload | null {
@@ -189,6 +200,14 @@ function formatPlatformMessage(
       action,
       comment: parsed.comment ?? '',
     });
+  }
+
+  if (subject === OPPORTUNITY_NOTIFICATION_KEY.LIFECYCLE_CHANGED_TITLE) {
+    const messageKey =
+      PLATFORM_LIFECYCLE_KEYS[parsed.lifecycleState ?? ''] ??
+      'notifications.opportunityLifecycle.default';
+
+    return formatMessage(messageKey, { opportunityTitle });
   }
 
   return rawMessage;

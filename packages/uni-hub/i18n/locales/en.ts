@@ -82,6 +82,18 @@ export const en = {
   'header.notifications.empty': 'No notifications',
   'header.notifications.unreadItem': 'Unread:',
   'header.notifications.markAllRead': 'Mark all as read',
+  // Notifications
+  'notifications.opportunityLifecycle.title': 'Opportunity update',
+  'notifications.opportunityLifecycle.START': 'Opportunity "{opportunityTitle}" has started',
+  'notifications.opportunityLifecycle.ACTIVE': 'Opportunity "{opportunityTitle}" is now active',
+  'notifications.opportunityLifecycle.PAUSED': 'Opportunity "{opportunityTitle}" has been paused',
+  'notifications.opportunityLifecycle.COMPLETED':
+    'Opportunity "{opportunityTitle}" has been completed',
+  'notifications.opportunityLifecycle.CANCELLED':
+    'Opportunity "{opportunityTitle}" has been cancelled',
+  'notifications.opportunityLifecycle.default':
+    'The status of opportunity "{opportunityTitle}" has changed',
+  'header.notifications.action.view': 'View opportunity',
   'header.moodleConnected': 'Connected',
   'header.moodleNotConnected': 'Not connected',
   'header.moodleChange': 'Change account',
@@ -433,6 +445,8 @@ export const en = {
   'opportunities.tabs.myApplications': 'My Applications',
   'opportunities.tabs.moderation': 'Moderation',
   'opportunities.actions.create': 'Create Opportunity',
+  'opportunities.actions.subscribe': 'Subscribe',
+  'opportunities.actions.unsubscribe': 'Unsubscribe',
   'opportunities.toast.createdDraft': 'Opportunity successfully created as a draft!',
   'opportunities.toast.createError': 'Error creating opportunity',
   'opportunities.toast.applySuccess': 'Your application was successfully sent to the organizer!',
@@ -453,6 +467,8 @@ export const en = {
   'opportunities.toast.rejected': 'Opportunity rejected',
   'opportunities.toast.requiresChanges': 'Opportunity returned to the author for revision',
   'opportunities.toast.moderateError': 'Moderation error',
+  'opportunities.toast.subscribed': 'You will be notified about updates to this opportunity',
+  'opportunities.toast.unsubscribed': 'You have unsubscribed from updates',
   'common.error.load': 'Failed to load data',
   'common.error.retry': 'Try again',
   'opportunities.card.defaultOwner': 'Karazin University',

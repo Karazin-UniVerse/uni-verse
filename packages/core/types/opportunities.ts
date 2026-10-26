@@ -28,6 +28,7 @@ export interface Opportunity {
   moderationComment?: string | null;
   owner?: OpportunityOwner;
   applications?: OpportunityApplication[];
+  isSubscribed?: boolean;
 }
 
 export interface OpportunityApplication {

@@ -34,6 +34,8 @@ model User {
   opportunityApplications OpportunityApplication[] @relation("Applicant")
   notifications           Notification[]           @relation("UserNotifications")
   comments                Comment[]
+
+  opportunitySubscriptions OpportunitySubscription[] @relation("UserSubscriptions")
 }
 
 model Course {
@@ -105,6 +107,8 @@ model Opportunity {
 
   applications OpportunityApplication[] @relation("OpportunityToApplication")
   comments     Comment[]
+  
+  subscriptions OpportunitySubscription[] @relation("OpportunitySubscriptions")
 }
 
 enum ApplicationStatus {
@@ -165,4 +169,16 @@ model Comment {
 
   applicationId String?
   application   OpportunityApplication? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model OpportunitySubscription {
+  id            String      @id @default(uuid())
+  userId        String
+  opportunityId String
+  createdAt     DateTime    @default(now())
+
+  user          User        @relation("UserSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
+  opportunity   Opportunity @relation("OpportunitySubscriptions", fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, opportunityId])
 }

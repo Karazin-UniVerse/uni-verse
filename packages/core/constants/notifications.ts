@@ -10,4 +10,5 @@ export const OPPORTUNITY_NOTIFICATION_KEY = {
   MODERATED_TITLE: 'notifications.opportunityModerated.title',
   MODERATED_MESSAGE: 'notifications.opportunityModerated.message',
   MODERATED_MESSAGE_WITH_COMMENT: 'notifications.opportunityModerated.messageWithComment',
+  LIFECYCLE_CHANGED_TITLE: 'notifications.opportunityLifecycle.title',
 } as const;
