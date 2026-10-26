@@ -22,7 +22,6 @@ describe('OpportunityDetailView resubmission', () => {
             userId="candidate"
             onBack={vi.fn()}
             onSendToReview={vi.fn()}
-            onLifecycleChange={vi.fn()}
             onOpenApply={vi.fn()}
           />,
         ),
