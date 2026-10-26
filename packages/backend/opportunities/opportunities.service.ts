@@ -10,7 +10,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { getPrismaErrorCode } from '../utils/prisma-error';
 import { getOpportunityContentHash } from './opportunities.helpers';
-import { normalizeContactPhone } from '@universe/core/utils/contacts';
+import { PRISMA_ERROR_CODE } from '../constants/prisma';
+import { persistOpportunityApplication } from './opportunity-application.persistence';
 import {
   CreateOpportunityDto,
   UpdateOpportunityDto,
@@ -267,7 +268,7 @@ export class OpportunitiesService {
         data,
       });
     } catch (error) {
-      if (getPrismaErrorCode(error) === 'P2025') {
+      if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
         throw new ConflictException(OPPORTUNITY_ERROR.CHANGES_REQUIRED);
       }
 
@@ -335,7 +336,7 @@ export class OpportunitiesService {
         },
       });
     } catch (error) {
-      if (getPrismaErrorCode(error) === 'P2025') {
+      if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
         throw new ConflictException(OPPORTUNITY_ERROR.CHANGES_REQUIRED);
       }
 
@@ -476,86 +477,12 @@ export class OpportunitiesService {
       );
     }
 
-    const existing = await this.prisma.opportunityApplication.findFirst({
-      where: { applicantId: userId, opportunityId: id },
+    const app = await persistOpportunityApplication({
+      prisma: this.prisma,
+      userId,
+      opportunityId: id,
+      request: dto,
     });
-
-    if (existing && existing.status !== ApplicationStatus.WITHDRAWN) {
-      throw new ConflictException('Already applied to this opportunity');
-    }
-
-    let app;
-    const phoneNumber = normalizeContactPhone(dto.contactInfo);
-    const writeApplication = async (
-      tx: Prisma.TransactionClient,
-    ): Promise<OpportunityApplication> => {
-      if (existing) {
-        return tx.opportunityApplication.update({
-          where: { id: existing.id, status: ApplicationStatus.WITHDRAWN },
-          data: {
-            applicantName: dto.applicantName,
-            contactInfo: dto.contactInfo,
-            briefDescription: dto.briefDescription ?? null,
-            motivation: dto.motivation ?? null,
-            answers: dto.answers ?? null,
-            status: ApplicationStatus.SUBMITTED,
-            ownerComment: null,
-          },
-        });
-      }
-
-      return tx.opportunityApplication.create({
-        data: {
-          ...dto,
-          applicantId: userId,
-          opportunityId: id,
-          status: ApplicationStatus.SUBMITTED,
-        },
-      });
-    };
-
-    try {
-      if (phoneNumber) {
-        app = await this.prisma.$transaction(async (tx) => {
-          let claimed;
-
-          try {
-            claimed = await tx.userPhone.upsert({
-              where: { userId },
-              create: { userId, phoneNumber },
-              update: {},
-              select: { phoneNumber: true },
-            });
-          } catch (error) {
-            if (getPrismaErrorCode(error) === 'P2002') {
-              throw new ConflictException(OPPORTUNITY_ERROR.PHONE_UNAVAILABLE);
-            }
-
-            throw error;
-          }
-
-          if (claimed.phoneNumber !== phoneNumber) {
-            throw new ConflictException(OPPORTUNITY_ERROR.PHONE_ALREADY_SET);
-          }
-
-          return writeApplication(tx);
-        });
-      } else {
-        app = await writeApplication(this.prisma);
-      }
-    } catch (error) {
-      const errorCode = getPrismaErrorCode(error);
-
-      if (existing && errorCode === 'P2025') {
-        throw new ConflictException('Application is no longer withdrawn');
-      }
-
-      if (!existing && errorCode === 'P2002') {
-        throw new ConflictException('Already applied to this opportunity');
-      }
-
-      throw error;
-    }
 
     await this.notificationsService.createNotification({
       userId: opportunity.ownerId,
@@ -693,7 +620,7 @@ export class OpportunitiesService {
         },
       });
     } catch (error) {
-      if (getPrismaErrorCode(error) === 'P2025') {
+      if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
         throw new ConflictException(
           'Opportunity was modified during moderation. Retry the moderation.',
         );

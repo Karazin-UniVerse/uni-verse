@@ -1,11 +1,6 @@
 import type { TranslationKey } from './uk';
 
 export const en = {
-  'opportunities.errors.changesRequired':
-    'Before resubmitting, change the opportunity title, description, contacts or payment terms.',
-  'opportunities.errors.phoneUnavailable': 'This phone number is unavailable for this account.',
-  'opportunities.errors.phoneAlreadySet':
-    'Use the phone number already registered to your account, or Telegram.',
   // Common / Lang
   'lang.uk': 'Ukrainian',
   'lang.en': 'English',
@@ -433,6 +428,13 @@ export const en = {
   'devPanel.eDeanDesc': 'Class schedule, student card',
   'devPanel.opportunitiesLabel': 'Opportunities',
   'devPanel.opportunitiesDesc': 'Project and internship board',
+  // Opportunities
+  'opportunities.errors.changesRequired':
+    'Before resubmitting, change the opportunity title, description, contacts or payment terms.',
+  'opportunities.errors.alreadyApplied': 'You have already applied to this opportunity.',
+  'opportunities.errors.phoneUnavailable': 'This phone number is unavailable for this account.',
+  'opportunities.errors.phoneAlreadySet':
+    'Use the phone number already registered to your account, or Telegram.',
   'opportunities.tabs.catalog': 'Catalog',
   'opportunities.tabs.myOpportunities': 'My Opportunities',
   'opportunities.tabs.myApplications': 'My Applications',

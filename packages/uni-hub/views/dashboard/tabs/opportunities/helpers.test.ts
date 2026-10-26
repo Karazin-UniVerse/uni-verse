@@ -4,6 +4,10 @@ import { getOpportunityErrorMessage } from './helpers';
 describe('getOpportunityErrorMessage', () => {
   it.each([
     [
+      'opportunities.errors.alreadyApplied (HTTP 409)',
+      'translated:opportunities.errors.alreadyApplied',
+    ],
+    [
       'opportunities.errors.phoneUnavailable (HTTP 409)',
       'translated:opportunities.errors.phoneUnavailable',
     ],

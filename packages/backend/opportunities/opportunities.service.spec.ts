@@ -21,6 +21,7 @@ import {
   OPPORTUNITY_MODERATE_ACTION,
   OPPORTUNITY_VIEW,
   OPPORTUNITY_VIEW_PARAM,
+  OPPORTUNITY_ERROR,
 } from '@universe/core/constants/opportunities';
 
 const publishedOpportunity: Opportunity = {
@@ -1250,7 +1251,9 @@ describe('OpportunitiesService', () => {
           applicantName: 'Іван',
           contactInfo: 'ivan@karazin.ua',
         }),
-      ).rejects.toThrow(ConflictException);
+      ).rejects.toThrow(
+        new ConflictException(OPPORTUNITY_ERROR.ALREADY_APPLIED),
+      );
     });
 
     it('updates existing WITHDRAWN application to SUBMITTED when user re-applies', async () => {
@@ -1359,7 +1362,9 @@ describe('OpportunitiesService', () => {
           applicantName: 'Student',
           contactInfo: 'student@example.com',
         } as any),
-      ).rejects.toThrow(ConflictException);
+      ).rejects.toThrow(
+        new ConflictException(OPPORTUNITY_ERROR.ALREADY_APPLIED),
+      );
     });
 
     it('rethrows other database errors', async () => {

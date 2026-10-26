@@ -1,10 +1,4 @@
 export const uk = {
-  'opportunities.errors.changesRequired':
-    'Перед повторним надсиланням змініть назву, опис, контакти або умови оплати можливості.',
-  'opportunities.errors.phoneUnavailable':
-    'Цей номер недоступний для використання цим обліковим записом.',
-  'opportunities.errors.phoneAlreadySet':
-    'Використайте номер, уже закріплений за вашим обліковим записом, або Telegram.',
   // Common / Lang
   'lang.uk': 'Українська',
   'lang.en': 'English',
@@ -434,6 +428,13 @@ export const uk = {
   'devPanel.opportunitiesDesc': 'Дошка проєктів та стажувань',
 
   // Opportunities
+  'opportunities.errors.changesRequired':
+    'Перед повторним надсиланням змініть назву, опис, контакти або умови оплати можливості.',
+  'opportunities.errors.alreadyApplied': 'Ви вже подали заявку на цю можливість.',
+  'opportunities.errors.phoneUnavailable':
+    'Цей номер недоступний для використання цим обліковим записом.',
+  'opportunities.errors.phoneAlreadySet':
+    'Використайте номер, уже закріплений за вашим обліковим записом, або Telegram.',
   'opportunities.tabs.catalog': 'Каталог',
   'opportunities.tabs.myOpportunities': 'Мої можливості',
   'opportunities.tabs.myApplications': 'Мої відгуки',

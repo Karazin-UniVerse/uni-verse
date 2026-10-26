@@ -45,6 +45,15 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   const { formatMessage, language } = useLanguage();
 
   const isOwner = userId === opportunity.ownerId;
+  const canManageDraft =
+    isOwner &&
+    (opportunity.status === OPPORTUNITY_STATUS.DRAFT ||
+      opportunity.status === OPPORTUNITY_STATUS.REQUIRES_CHANGES);
+  const sendToReviewDisabled =
+    opportunity.status === OPPORTUNITY_STATUS.REQUIRES_CHANGES && opportunity.canResubmit !== true;
+  const sendToReviewHint = sendToReviewDisabled
+    ? formatMessage('opportunities.errors.changesRequired')
+    : undefined;
   const paymentTagText =
     opportunity.paymentType === 'PAID'
       ? formatMessage('opportunities.detailModal.paidWithDetails', {
@@ -118,25 +127,13 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       contactLabel={formatMessage('opportunities.detailModal.contacts')}
       contactValue={opportunity.ownerContactInfo}
       isOwner={isOwner}
-      canEdit={
-        isOwner && (opportunity.status === 'DRAFT' || opportunity.status === 'REQUIRES_CHANGES')
-      }
+      canEdit={canManageDraft}
       onEdit={onEdit ? () => onEdit(opportunity) : undefined}
       editText={formatMessage('opportunities.detailModal.edit')}
-      canSendToReview={
-        isOwner && (opportunity.status === 'DRAFT' || opportunity.status === 'REQUIRES_CHANGES')
-      }
+      canSendToReview={canManageDraft}
       onSendToReview={() => onSendToReview(opportunity.id)}
-      sendToReviewDisabled={
-        opportunity.status === OPPORTUNITY_STATUS.REQUIRES_CHANGES &&
-        opportunity.canResubmit !== true
-      }
-      sendToReviewHint={
-        opportunity.status === OPPORTUNITY_STATUS.REQUIRES_CHANGES &&
-        opportunity.canResubmit !== true
-          ? formatMessage('opportunities.errors.changesRequired')
-          : undefined
-      }
+      sendToReviewDisabled={sendToReviewDisabled}
+      sendToReviewHint={sendToReviewHint}
       sendToReviewText={formatMessage('opportunities.detailModal.sendToReview')}
       onOpenApplicants={onOpenApplicants}
       viewApplicantsText={formatMessage('opportunities.card.applications')}
