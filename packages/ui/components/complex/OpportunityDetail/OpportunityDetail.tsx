@@ -1,5 +1,5 @@
 import React, { useId } from 'react';
-import { Mail, Send, Pencil, Users } from 'lucide-react';
+import { Mail, Send, Pencil, Users, Trash2 } from 'lucide-react';
 import { BackButton } from '../BackButton';
 import { Button } from '../../una/Button';
 import { Tag } from '../../una/Tag';
@@ -79,7 +79,10 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   onOpenApply,
   onOpenApplicants,
   viewApplicantsText,
+  onDelete,
+  deleteText,
   className,
+  canDelete = false,
   sendToReviewDisabled = false,
   acceptsApplications = true,
   paymentTone = 'neutral',
@@ -180,6 +183,13 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
                   >
                     <Send size={14} className={styles.btnIcon} />
                     {sendToReviewText}
+                  </Button>
+                )}
+
+                {canDelete && onDelete && (
+                  <Button variant="secondary" onClick={onDelete}>
+                    <Trash2 size={14} className={styles.btnIcon} />
+                    {deleteText}
                   </Button>
                 )}
               </div>

@@ -18,8 +18,9 @@ interface AcceptsApplicationsChange {
 }
 
 interface UseOpportunityActionsResult {
-  handleSendToReview: (id: string) => Promise<void>;
+  handleDeleteOpportunity: (id: string) => Promise<boolean>;
   handleLifecycleChange: (id: string, state: OpportunityLifecycle) => Promise<void>;
+  handleSendToReview: (id: string) => Promise<void>;
   handleToggleAcceptsApplications: (id: string, acceptsApplications: boolean) => Promise<void>;
 }
 
@@ -42,6 +43,11 @@ export function useOpportunityActions(): UseOpportunityActionsResult {
   const acceptsApplicationsMutation = useMutation({
     mutationFn: ({ id, acceptsApplications }: AcceptsApplicationsChange) =>
       opportunitiesApi.updateOpportunity(id, { acceptsApplications }),
+    onSuccess: () => invalidateOpportunities(queryClient),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => opportunitiesApi.deleteOpportunity(id),
     onSuccess: () => invalidateOpportunities(queryClient),
   });
 
@@ -85,9 +91,23 @@ export function useOpportunityActions(): UseOpportunityActionsResult {
     }
   };
 
+  const handleDeleteOpportunity = async (id: string): Promise<boolean> => {
+    try {
+      await deleteMutation.mutateAsync(id);
+      toast.success(formatMessage('opportunities.toast.deleted'));
+
+      return true;
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, formatMessage('opportunities.toast.deleteError')));
+
+      return false;
+    }
+  };
+
   return {
     handleSendToReview,
     handleLifecycleChange,
     handleToggleAcceptsApplications,
+    handleDeleteOpportunity,
   };
 }

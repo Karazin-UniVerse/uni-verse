@@ -5,6 +5,7 @@ import {
   Body,
   Param,
   Put,
+  Delete,
   Query,
   ForbiddenException,
 } from '@nestjs/common';
@@ -133,6 +134,21 @@ export class OpportunitiesController {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.update(userId, id, dto);
+  }
+
+  @ApiBearerAuth()
+  @Delete(':id')
+  /**
+   * Owner deletes draft opportunity
+   */
+  @ApiOperation({ summary: 'Owner deletes a draft opportunity' })
+  delete(
+    @GetUser('sub') userId: string,
+    @Param('id') id: string,
+  ): Promise<Opportunity> {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+
+    return this.opportunitiesService.delete(userId, id);
   }
 
   @ApiBearerAuth()

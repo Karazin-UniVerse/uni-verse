@@ -55,6 +55,7 @@ export interface CreateOpportunityRequest {
   paymentType: OpportunityPaymentType;
   paymentDetails?: string | null;
   acceptsApplications?: boolean;
+  lifecycleState?: OpportunityLifecycle;
 }
 
 export type UpdateOpportunityRequest = Partial<CreateOpportunityRequest>;

@@ -286,6 +286,55 @@ export class OpportunitiesService {
   }
 
   /**
+   * Delete a draft opportunity.
+   * Only the owner can delete, and only if the opportunity is in DRAFT or REQUIRES_CHANGES status.
+   */
+  async delete(userId: string, id: string): Promise<Opportunity> {
+    const opportunity = await this.prisma.opportunity.findUnique({
+      where: { id },
+    });
+
+    if (opportunity?.ownerId !== userId) {
+      throw new NotFoundException('Opportunity not found');
+    }
+
+    if (
+      opportunity.status !== OpportunityStatus.DRAFT &&
+      opportunity.status !== OpportunityStatus.REQUIRES_CHANGES
+    ) {
+      throw new BadRequestException(
+        'Only opportunities in DRAFT or REQUIRES_CHANGES statuses can be deleted',
+      );
+    }
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        await tx.opportunityApplication.deleteMany({
+          where: { opportunityId: id },
+        });
+
+        return await tx.opportunity.delete({
+          where: {
+            id,
+            ownerId: userId,
+            status: {
+              in: [OpportunityStatus.DRAFT, OpportunityStatus.REQUIRES_CHANGES],
+            },
+          },
+        });
+      });
+    } catch (error) {
+      if (getPrismaErrorCode(error) === 'P2025') {
+        throw new BadRequestException(
+          'Only opportunities in DRAFT or REQUIRES_CHANGES statuses can be deleted',
+        );
+      }
+
+      throw error;
+    }
+  }
+
+  /**
    * Submit an opportunity for moderation.
    */
   async changeStatus(
