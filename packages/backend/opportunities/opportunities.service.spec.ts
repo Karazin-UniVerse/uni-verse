@@ -502,6 +502,27 @@ describe('OpportunitiesService', () => {
         service.moderate('user1', 'opp1', { action: 'INVALID' } as any),
       ).rejects.toThrow(BadRequestException);
     });
+
+    it('throws ConflictException if opportunity was modified during moderation', async () => {
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        id: 'user1',
+        roles: ['OPPORTUNITIES_MODERATOR'],
+      } as any);
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: 'opp1',
+        title: 'test',
+        ownerId: 'owner1',
+        status: 'READY_FOR_REVIEW',
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      } as any);
+      jest.spyOn(prisma.opportunity, 'update').mockRejectedValue({
+        code: 'P2025',
+      });
+
+      await expect(
+        service.moderate('user1', 'opp1', { action: 'APPROVE' } as any),
+      ).rejects.toThrow(ConflictException);
+    });
   });
 
   describe('create', () => {

@@ -671,20 +671,36 @@ export class OpportunitiesService {
       throw new BadRequestException('Unknown moderation action');
     }
 
-    const opp = await this.prisma.opportunity.update({
-      where: { id },
-      data: {
-        status: newStatus,
-        moderationContentHash:
-          dto.action === OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES
-            ? getOpportunityContentHash(opportunityToModerate)
-            : null,
-        moderationComment:
-          dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE
-            ? null
-            : dto.comment,
-      },
-    });
+    let opp: Opportunity;
+
+    try {
+      opp = await this.prisma.opportunity.update({
+        where: {
+          id,
+          status: opportunityToModerate.status,
+          updatedAt: opportunityToModerate.updatedAt,
+        },
+        data: {
+          status: newStatus,
+          moderationContentHash:
+            dto.action === OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES
+              ? getOpportunityContentHash(opportunityToModerate)
+              : null,
+          moderationComment:
+            dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE
+              ? null
+              : dto.comment,
+        },
+      });
+    } catch (error) {
+      if (getPrismaErrorCode(error) === 'P2025') {
+        throw new ConflictException(
+          'Opportunity was modified during moderation. Retry the moderation.',
+        );
+      }
+
+      throw error;
+    }
 
     await this.notificationsService.createNotification({
       userId: opp.ownerId,
