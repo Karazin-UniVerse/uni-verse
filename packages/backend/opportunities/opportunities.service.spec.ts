@@ -12,6 +12,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import {
+  OpportunityStatus,
   Role,
   type Prisma,
   type Opportunity,
@@ -75,6 +76,7 @@ describe('OpportunitiesService', () => {
               findMany: jest.fn(),
               findUnique: jest.fn(),
               update: jest.fn(),
+              delete: jest.fn(),
             },
             opportunityApplication: {
               findMany: jest.fn(),
@@ -82,6 +84,7 @@ describe('OpportunitiesService', () => {
               findFirst: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
+              deleteMany: jest.fn(),
             },
             user: {
               findUnique: jest.fn(),
@@ -108,6 +111,12 @@ describe('OpportunitiesService', () => {
     prisma = module.get<PrismaService>(PrismaService);
     notificationsService =
       module.get<NotificationsService>(NotificationsService);
+
+    jest
+      .spyOn(prisma, '$transaction')
+      .mockImplementation(async (callback: any) =>
+        typeof callback === 'function' ? callback(prisma) : callback,
+      );
   });
 
   afterEach(() => {
@@ -630,6 +639,121 @@ describe('OpportunitiesService', () => {
         expect.objectContaining({
           where: expect.objectContaining({ status: 'PUBLISHED' }),
         }),
+      );
+    });
+  });
+
+  describe('delete', () => {
+    it('deletes draft opportunity and applications atomically within a transaction', async () => {
+      const draftOpportunity: Opportunity = {
+        ...publishedOpportunity,
+        id: 'draft-1',
+        ownerId: 'owner-1',
+        status: OpportunityStatus.DRAFT,
+      };
+
+      jest
+        .spyOn(prisma.opportunity, 'findUnique')
+        .mockResolvedValue(draftOpportunity);
+      jest
+        .spyOn(prisma.opportunityApplication, 'deleteMany')
+        .mockResolvedValue({ count: 2 });
+      jest
+        .spyOn(prisma.opportunity, 'delete')
+        .mockResolvedValue(draftOpportunity);
+
+      const result = await service.delete('owner-1', 'draft-1');
+
+      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(prisma.opportunityApplication.deleteMany).toHaveBeenCalledWith({
+        where: { opportunityId: 'draft-1' },
+      });
+      expect(prisma.opportunity.delete).toHaveBeenCalledWith({
+        where: {
+          id: 'draft-1',
+          ownerId: 'owner-1',
+          status: {
+            in: [OpportunityStatus.DRAFT, OpportunityStatus.REQUIRES_CHANGES],
+          },
+        },
+      });
+      expect(result).toEqual(draftOpportunity);
+    });
+
+    it('throws NotFoundException when opportunity does not exist', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue(null);
+
+      await expect(service.delete('owner-1', 'nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws NotFoundException when user is not the owner', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
+        id: 'opp-1',
+        ownerId: 'other-user',
+        status: OpportunityStatus.DRAFT,
+      });
+
+      await expect(service.delete('owner-1', 'opp-1')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when opportunity is not in DRAFT or REQUIRES_CHANGES statuses', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
+        id: 'opp-1',
+        ownerId: 'owner-1',
+        status: OpportunityStatus.PUBLISHED,
+      });
+
+      await expect(service.delete('owner-1', 'opp-1')).rejects.toThrow(
+        new BadRequestException(
+          'Only opportunities in DRAFT or REQUIRES_CHANGES statuses can be deleted',
+        ),
+      );
+    });
+
+    it('rolls back transaction if opportunity deletion fails after deleteMany', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
+        id: 'opp-1',
+        ownerId: 'owner-1',
+        status: OpportunityStatus.DRAFT,
+      });
+      jest
+        .spyOn(prisma.opportunityApplication, 'deleteMany')
+        .mockResolvedValue({ count: 1 });
+      jest
+        .spyOn(prisma.opportunity, 'delete')
+        .mockRejectedValue(new Error('Parent delete failed'));
+
+      await expect(service.delete('owner-1', 'opp-1')).rejects.toThrow(
+        'Parent delete failed',
+      );
+    });
+
+    it('translates P2025 predicate mismatch into BadRequestException if status changes before delete', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
+        id: 'opp-1',
+        ownerId: 'owner-1',
+        status: OpportunityStatus.DRAFT,
+      });
+      jest
+        .spyOn(prisma.opportunityApplication, 'deleteMany')
+        .mockResolvedValue({ count: 0 });
+      jest
+        .spyOn(prisma.opportunity, 'delete')
+        .mockRejectedValue({ code: 'P2025' });
+
+      await expect(service.delete('owner-1', 'opp-1')).rejects.toThrow(
+        new BadRequestException(
+          'Only opportunities in DRAFT or REQUIRES_CHANGES statuses can be deleted',
+        ),
       );
     });
   });

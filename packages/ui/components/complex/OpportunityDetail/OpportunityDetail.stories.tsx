@@ -1,17 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Tag } from '../../una/Tag';
 import { OpportunityDetail } from './OpportunityDetail';
-import type { OpportunityDetailProps } from './OpportunityDetail.types';
 import { noop } from '@core/utils/fn';
-
-const defaultLifecycleOptions = [
-  { value: 'START', label: 'Початок' },
-  { value: 'ACTIVE', label: 'Активна' },
-  { value: 'PAUSED', label: 'Призупинена' },
-  { value: 'COMPLETED', label: 'Завершена' },
-  { value: 'CANCELLED', label: 'Скасована' },
-];
 
 const meta = {
   title: 'Complex/OpportunityDetail',
@@ -39,12 +30,9 @@ const meta = {
     contactLabel: 'Контакти:',
     sendToReviewText: 'Відправити на модерацію',
     editText: 'Редагувати',
-    manageTitle: 'Керування можливістю (автор)',
-    phaseLabel: 'Фаза:',
-    lifecycleOptions: defaultLifecycleOptions,
-    lifecycleState: 'ACTIVE',
+    deleteText: 'Видалити',
+    manageTitle: 'Керування можливостю (автор)',
     acceptsApplications: true,
-    acceptsApplicationsLabel: 'Приймати нові відгуки',
     applicationsClosedText: 'Прийом заявок призупинено автором',
   },
 } satisfies Meta<typeof OpportunityDetail>;
@@ -55,26 +43,27 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 export const AuthorView: Story = {
-  render: (args) => {
-    const InteractiveWrapper = (props: OpportunityDetailProps) => {
-      const [state, setState] = useState(props.lifecycleState ?? 'ACTIVE');
-      const [accepts, setAccepts] = useState(props.acceptsApplications ?? true);
-
-      return (
-        <OpportunityDetail
-          {...props}
-          isOwner={true}
-          canApply={false}
-          canSendToReview={false}
-          lifecycleState={state}
-          onLifecycleChange={setState}
-          acceptsApplications={accepts}
-          onToggleAcceptsApplications={setAccepts}
-        />
-      );
-    };
-
-    return <InteractiveWrapper {...args} />;
+  args: {
+    isOwner: true,
+    canApply: false,
+    canEdit: true,
+    onEdit: noop,
+    canSendToReview: true,
+    onSendToReview: noop,
+    canDelete: true,
+    onDelete: noop,
+    phaseLabel: 'Етап:',
+    lifecycleState: 'ACTIVE',
+    lifecycleOptions: [
+      { label: 'Початок', value: 'START' },
+      { label: 'Активна', value: 'ACTIVE' },
+      { label: 'Призупинена', value: 'PAUSED' },
+      { label: 'Завершена', value: 'COMPLETED' },
+      { label: 'Скасована', value: 'CANCELLED' },
+    ],
+    onLifecycleChange: noop,
+    acceptsApplicationsLabel: 'Приймати заявки',
+    onToggleAcceptsApplications: noop,
   },
 };
 
@@ -97,7 +86,6 @@ export const DraftUnderReview: Story = {
     canApply: false,
     canSendToReview: true,
     onSendToReview: noop,
-    lifecycleState: 'START',
   },
 };
 
@@ -117,6 +105,5 @@ export const AuthorDraftWithRevision: Story = {
     onSendToReview: noop,
     moderationCommentTitle: 'Зауваження модератора',
     moderationComment: 'Будь ласка, уточніть стек технологій та очікуване тижневе навантаження.',
-    lifecycleState: 'START',
   },
 };

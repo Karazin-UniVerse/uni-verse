@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
-import { act, render } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { withLanguage } from '@uni-hub/utils/test-utils';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { GoogleLoginButton } from './GoogleLoginButton';
 
 let mockTheme = 'light';
@@ -106,6 +107,46 @@ describe('GoogleLoginButton component', () => {
         locale: 'uk',
       }),
     );
+  });
+
+  it('renders Google button with language locale and updates on language change', () => {
+    function TestConsumer() {
+      const { setLanguage } = useLanguage();
+
+      return (
+        <>
+          <button type="button" onClick={() => setLanguage('en')}>
+            Switch
+          </button>
+          <button type="button" onClick={() => setLanguage('uk')}>
+            Reset
+          </button>
+          <GoogleLoginButton onSuccess={vi.fn()} />
+        </>
+      );
+    }
+
+    render(withLanguage(<TestConsumer />));
+
+    expect(mockRenderButton).toHaveBeenCalledWith(
+      expect.any(HTMLDivElement),
+      expect.objectContaining({
+        locale: 'uk',
+        text: 'continue_with',
+      }),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Switch' }));
+
+    expect(mockRenderButton).toHaveBeenLastCalledWith(
+      expect.any(HTMLDivElement),
+      expect.objectContaining({
+        locale: 'en',
+        text: 'continue_with',
+      }),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
   });
 
   it('should render google button with dark theme style when theme is dark', () => {

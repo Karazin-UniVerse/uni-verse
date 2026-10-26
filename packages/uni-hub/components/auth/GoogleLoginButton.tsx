@@ -23,7 +23,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   );
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   const { theme } = useTheme();
-  const { formatMessage } = useLanguage();
+  const { formatMessage, language } = useLanguage();
 
   const onSuccessRef = useRef(onSuccess);
   const onErrorRef = useRef(onError);
@@ -60,12 +60,12 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         text: 'continue_with',
         shape: 'rectangular',
         width: 336,
-        locale: 'uk',
+        locale: language,
       });
     } catch (err: unknown) {
       onErrorRef.current?.((err as Error).message || errorTextRef.current);
     }
-  }, [scriptLoaded, clientId, theme]);
+  }, [scriptLoaded, clientId, theme, language]);
 
   return (
     <div className={styles.wrapper}>

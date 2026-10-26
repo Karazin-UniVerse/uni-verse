@@ -8,7 +8,7 @@ import {
   OPPORTUNITY_STATUS,
   type OpportunityLifecycle,
 } from '@core/constants/opportunities';
-import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { useLanguage, type FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import { OpportunityStatusBadge } from './OpportunityStatusBadge';
 
 export interface OpportunityDetailViewProps {
@@ -16,11 +16,12 @@ export interface OpportunityDetailViewProps {
   opportunity: Opportunity;
   userId: string | null;
   onSendToReview: (id: string) => void;
-  onLifecycleChange: (id: string, state: OpportunityLifecycle) => void;
   onOpenApply: () => void;
+  onLifecycleChange?: (id: string, state: OpportunityLifecycle) => void;
+  onToggleAcceptsApplications?: (accepts: boolean) => void;
   onOpenApplicants?: () => void;
   onEdit?: (opportunity: Opportunity) => void;
-  onToggleAcceptsApplications?: (accepts: boolean) => void;
+  onDelete?: () => void;
 }
 
 const lifecycleLabelKey = {
@@ -31,16 +32,63 @@ const lifecycleLabelKey = {
   CANCELLED: 'opportunities.detailModal.phaseCancelled',
 } as const;
 
+function getPaymentTagText(opportunity: Opportunity, formatMessage: FormatMessage): string {
+  if (opportunity.paymentType !== 'PAID') {
+    return formatMessage('opportunities.detailModal.unpaid');
+  }
+
+  const details =
+    opportunity.paymentDetails || formatMessage('opportunities.detailModal.paidProvided');
+
+  return formatMessage('opportunities.detailModal.paidWithDetails', { details });
+}
+
+function getLifecycleTagText(
+  opportunity: Opportunity,
+  formatMessage: FormatMessage,
+): string | undefined {
+  if (!opportunity.lifecycleState) {
+    return undefined;
+  }
+
+  const key =
+    lifecycleLabelKey[opportunity.lifecycleState] ?? 'opportunities.detailModal.phaseActive';
+  const label = formatMessage(key);
+
+  return `${formatMessage('opportunities.detailModal.phaseLabel')} ${label}`;
+}
+
+function canApplyOpportunity(opportunity: Opportunity, isOwner: boolean): boolean {
+  if (isOwner || opportunity.status !== OPPORTUNITY_STATUS.PUBLISHED) {
+    return false;
+  }
+
+  const isLifecycleOpen =
+    opportunity.lifecycleState === OPPORTUNITY_LIFECYCLE.ACTIVE ||
+    opportunity.lifecycleState === OPPORTUNITY_LIFECYCLE.START;
+
+  return isLifecycleOpen && opportunity.acceptsApplications !== false;
+}
+
+function getOrganizerName(opportunity: Opportunity, formatMessage: FormatMessage): string {
+  return (
+    opportunity.owner?.name ||
+    opportunity.owner?.email ||
+    formatMessage('opportunities.detailModal.defaultOrganizer')
+  );
+}
+
 export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   onBack,
   opportunity,
   userId,
   onSendToReview,
-  onLifecycleChange,
   onOpenApply,
+  onLifecycleChange,
+  onToggleAcceptsApplications,
   onOpenApplicants,
   onEdit,
-  onToggleAcceptsApplications,
+  onDelete,
 }) => {
   const { formatMessage, language } = useLanguage();
 
@@ -54,23 +102,10 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   const sendToReviewHint = sendToReviewDisabled
     ? formatMessage('opportunities.errors.changesRequired')
     : undefined;
-  const paymentTagText =
-    opportunity.paymentType === 'PAID'
-      ? formatMessage('opportunities.detailModal.paidWithDetails', {
-          details:
-            opportunity.paymentDetails || formatMessage('opportunities.detailModal.paidProvided'),
-        })
-      : formatMessage('opportunities.detailModal.unpaid');
-
-  const lifecycleLabel = opportunity.lifecycleState
-    ? formatMessage(
-        lifecycleLabelKey[opportunity.lifecycleState] ?? 'opportunities.detailModal.phaseActive',
-      )
-    : '';
-
-  const lifecycleTagText = lifecycleLabel
-    ? `${formatMessage('opportunities.detailModal.phaseLabel')} ${lifecycleLabel}`
-    : undefined;
+  const paymentTagText = getPaymentTagText(opportunity, formatMessage);
+  const lifecycleTagText = getLifecycleTagText(opportunity, formatMessage);
+  const organizerName = getOrganizerName(opportunity, formatMessage);
+  const canApply = canApplyOpportunity(opportunity, isOwner);
 
   const lifecycleOptions = [
     {
@@ -95,13 +130,6 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
     },
   ];
 
-  const canApply =
-    !isOwner &&
-    opportunity.status === OPPORTUNITY_STATUS.PUBLISHED &&
-    (opportunity.lifecycleState === OPPORTUNITY_LIFECYCLE.ACTIVE ||
-      opportunity.lifecycleState === OPPORTUNITY_LIFECYCLE.START) &&
-    opportunity.acceptsApplications !== false;
-
   return (
     <OpportunityDetail
       onBack={onBack}
@@ -112,11 +140,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       statusBadge={<OpportunityStatusBadge status={opportunity.status} />}
       lifecycleTagText={lifecycleTagText}
       organizerLabel={formatMessage('opportunities.detailModal.organizer')}
-      organizerName={
-        opportunity.owner?.name ||
-        opportunity.owner?.email ||
-        formatMessage('opportunities.detailModal.defaultOrganizer')
-      }
+      organizerName={organizerName}
       publishedDateText={formatMessage('opportunities.detailModal.publishedOn', {
         date: new Date(opportunity.createdAt).toLocaleDateString(
           language === 'uk' ? 'uk-UA' : 'en-US',
@@ -135,6 +159,9 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       sendToReviewDisabled={sendToReviewDisabled}
       sendToReviewHint={sendToReviewHint}
       sendToReviewText={formatMessage('opportunities.detailModal.sendToReview')}
+      canDelete={canManageDraft}
+      onDelete={onDelete}
+      deleteText={formatMessage('opportunities.detailModal.delete')}
       onOpenApplicants={onOpenApplicants}
       viewApplicantsText={formatMessage('opportunities.card.applications')}
       moderationComment={isOwner ? opportunity.moderationComment : undefined}
@@ -143,8 +170,10 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       phaseLabel={formatMessage('opportunities.detailModal.phaseLabel')}
       lifecycleState={opportunity.lifecycleState}
       lifecycleOptions={lifecycleOptions}
-      onLifecycleChange={(state) =>
-        onLifecycleChange(opportunity.id, state as OpportunityLifecycle)
+      onLifecycleChange={
+        onLifecycleChange
+          ? (state) => onLifecycleChange(opportunity.id, state as OpportunityLifecycle)
+          : undefined
       }
       acceptsApplications={opportunity.acceptsApplications !== false}
       onToggleAcceptsApplications={onToggleAcceptsApplications}
