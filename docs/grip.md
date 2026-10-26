@@ -126,3 +126,42 @@ pnpm grip:remove -- --force
 - **`Access denied (403)`**: Only GitHub users with write/admin permissions on `Karazin-UniVerse/uni-verse` are permitted.
 - **`Enrollment has expired`**: Gateway sessions expire after 30 days. Run `pnpm grip:setup` to refresh.
 - **`SSH / Headless environment`**: Grip whiteboard requires an interactive browser session. For headless or automated pushes, set `CI=true` or run `grip skip` if installed.
+
+---
+
+## Verification & Deployment Runbook
+
+### Automated Verification
+
+Run the complete automated validation suite locally:
+
+```sh
+pnpm lint            # Oxlint (0 warnings)
+pnpm lint:style      # Stylelint
+pnpm typecheck       # Turbo TypeScript typecheck
+pnpm test            # Monorepo unit & integration tests
+pnpm test:grip       # Local Grip settings, login, launcher, and hook tests
+pnpm build           # Turbo production build
+```
+
+Dedicated concurrency verification against disposable PostgreSQL:
+
+```sh
+GRIP_TEST_DATABASE_URL="postgresql://user:pass@localhost:5432/disposable_db" pnpm --filter @universe/backend test:grip:postgres
+```
+
+### Production Deployment Prerequisites (Human Operations)
+
+1. **GitHub OAuth Application**: Create an OAuth application under the organization with Device Flow enabled; note the Client ID.
+2. **Permission Token**: Provision a fine-grained personal access token or GitHub App installation token with `Administration: Read` on `Karazin-UniVerse/uni-verse`.
+3. **Gemini API Key**: Obtain a Google Gemini API key with access to `gemini-3.5-flash-lite`.
+4. **Environment Variables**: Configure the backend environment:
+   ```env
+   GRIP_GATEWAY_ENABLED=true
+   GEMINI_API_KEY=<gemini-api-key>
+   GRIP_GITHUB_OAUTH_CLIENT_ID=<oauth-client-id>
+   GRIP_GITHUB_PERMISSION_TOKEN=<github-permission-token>
+   GRIP_TRUSTED_PROXY_ADDRESSES="127.0.0.1,::1" # adjust for load balancer / ingress
+   ```
+5. **Database Migration**: Run `pnpm db:migrate` to push `GripSession`, `GripQuotaBucket`, and `GripLease` tables to PostgreSQL.
+6. **Rollout Policy**: Merging the PR to `develop` keeps the gateway disabled by default (`GRIP_GATEWAY_ENABLED=false`). Teammates only enroll when they choose to run `pnpm grip:setup`.
