@@ -25,11 +25,13 @@ export interface GripCompletionRequest {
   response_format: GripResponseFormat;
 }
 
+export interface GripCompletionChoiceMessage {
+  role: 'assistant';
+  content: string;
+}
+
 export interface GripCompletionChoice {
-  message: {
-    role: 'assistant';
-    content: string;
-  };
+  message: GripCompletionChoiceMessage;
   index?: number;
   finish_reason?: string;
 }

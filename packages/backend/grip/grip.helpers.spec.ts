@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { validateGripCompletion } from './grip.helpers';
+import { validateGripCompletion, resolveClientIp } from './grip.helpers';
 
 describe('grip.helpers', () => {
   const boardSchema = {
@@ -200,5 +200,36 @@ describe('grip.helpers', () => {
         },
       }),
     ).toThrow(BadRequestException);
+  });
+
+  describe('resolveClientIp', () => {
+    it('returns remoteAddress directly when no trusted proxies are set', () => {
+      const req = {
+        socket: { remoteAddress: '203.0.113.195' },
+        headers: { 'x-forwarded-for': '198.51.100.1' },
+      };
+
+      expect(resolveClientIp(req, [])).toBe('203.0.113.195');
+    });
+
+    it('trusts X-Forwarded-For when peer is in trustedProxies', () => {
+      const req = {
+        socket: { remoteAddress: '127.0.0.1' },
+        headers: { 'x-forwarded-for': '198.51.100.1' },
+      };
+
+      expect(resolveClientIp(req, ['127.0.0.1'])).toBe('198.51.100.1');
+    });
+
+    it('ignores spoofed X-Forwarded-For from untrusted peer', () => {
+      const req = {
+        socket: { remoteAddress: '198.51.100.5' },
+        headers: { 'x-forwarded-for': '8.8.8.8' },
+      };
+
+      expect(resolveClientIp(req, ['127.0.0.1', '10.0.0.1'])).toBe(
+        '198.51.100.5',
+      );
+    });
   });
 });

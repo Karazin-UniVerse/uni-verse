@@ -1,3 +1,4 @@
+import proxyAddr from 'proxy-addr';
 import { BadRequestException } from '@nestjs/common';
 import type {
   GripCompletionRequest,
@@ -172,4 +173,26 @@ export function validateGripCompletion(value: unknown): GripCompletionRequest {
     messages,
     response_format: responseFormat,
   };
+}
+
+export function resolveClientIp(
+  request: {
+    headers: Record<string, string | string[] | undefined>;
+    socket?: { remoteAddress?: string };
+  },
+  trustedProxies: string[],
+): string {
+  const remoteAddress = request.socket?.remoteAddress || '127.0.0.1';
+
+  if (!trustedProxies || trustedProxies.length === 0) {
+    return remoteAddress;
+  }
+
+  const isTrusted = proxyAddr.compile(trustedProxies);
+  const ip = proxyAddr(
+    request as unknown as Parameters<typeof proxyAddr>[0],
+    isTrusted,
+  );
+
+  return ip || remoteAddress;
 }
