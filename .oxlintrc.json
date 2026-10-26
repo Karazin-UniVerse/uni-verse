@@ -27,7 +27,12 @@
     "react/exhaustive-deps": "error",
     "typescript/no-explicit-any": "warn",
     "react/no-multi-comp": "error",
-    "max-params": ["error", { "max": 3 }],
+    "max-params": [
+      "error",
+      {
+        "max": 3
+      }
+    ],
     "no-restricted-globals": [
       "error",
       {
@@ -83,6 +88,8 @@
     {
       "files": [
         "packages/backend/moodle/moodle-client/moodle.client.service.ts",
+        "packages/backend/grip/github-client.service.ts",
+        "packages/backend/grip/gemini-client.service.ts",
         "packages/uni-hub/services/api.request.ts",
         ".github/scripts/**"
       ],
@@ -256,7 +263,12 @@
     {
       "files": ["packages/core/**/*.{ts}"],
       "rules": {
-        "oxc/no-barrel-file": ["error", { "threshold": 0 }],
+        "oxc/no-barrel-file": [
+          "error",
+          {
+            "threshold": 0
+          }
+        ],
         "no-restricted-imports": [
           "error",
           {
