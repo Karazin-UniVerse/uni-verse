@@ -26,6 +26,7 @@ export interface Opportunity {
   acceptsApplications?: boolean;
   paymentDetails?: string | null;
   moderationComment?: string | null;
+  canResubmit?: boolean;
   owner?: OpportunityOwner;
   applications?: OpportunityApplication[];
 }
@@ -54,6 +55,7 @@ export interface CreateOpportunityRequest {
   paymentType: OpportunityPaymentType;
   paymentDetails?: string | null;
   acceptsApplications?: boolean;
+  lifecycleState?: OpportunityLifecycle;
 }
 
 export type UpdateOpportunityRequest = Partial<CreateOpportunityRequest>;

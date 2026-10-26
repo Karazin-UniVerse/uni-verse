@@ -1,5 +1,5 @@
 import React, { useId } from 'react';
-import { Mail, Send, Pencil, Users } from 'lucide-react';
+import { Mail, Send, Pencil, Users, Trash2 } from 'lucide-react';
 import { BackButton } from '../BackButton';
 import { Button } from '../../una/Button';
 import { Tag } from '../../una/Tag';
@@ -63,6 +63,7 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   contactValue,
   onSendToReview,
   sendToReviewText,
+  sendToReviewHint,
   onEdit,
   editText,
   moderationComment,
@@ -78,7 +79,11 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   onOpenApply,
   onOpenApplicants,
   viewApplicantsText,
+  onDelete,
+  deleteText,
   className,
+  canDelete = false,
+  sendToReviewDisabled = false,
   acceptsApplications = true,
   paymentTone = 'neutral',
   isOwner = false,
@@ -88,6 +93,7 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   canApply = false,
 }) => {
   const phaseSelectId = useId();
+  const reviewHintId = useId();
   const footerButton = getCandidateFooterButton({
     isOwner,
     canApply,
@@ -169,9 +175,21 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
                 )}
 
                 {canSendToReview && onSendToReview && (
-                  <Button variant="primary" onClick={onSendToReview}>
+                  <Button
+                    variant="primary"
+                    onClick={onSendToReview}
+                    disabled={sendToReviewDisabled}
+                    aria-describedby={sendToReviewHint ? reviewHintId : undefined}
+                  >
                     <Send size={14} className={styles.btnIcon} />
                     {sendToReviewText}
+                  </Button>
+                )}
+
+                {canDelete && onDelete && (
+                  <Button variant="secondary" onClick={onDelete}>
+                    <Trash2 size={14} className={styles.btnIcon} />
+                    {deleteText}
                   </Button>
                 )}
               </div>
@@ -191,6 +209,12 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
                 </div>
               )}
             </div>
+
+            {sendToReviewHint && (
+              <p id={reviewHintId} className={styles.phaseLabel}>
+                {sendToReviewHint}
+              </p>
+            )}
 
             {onToggleAcceptsApplications && acceptsApplicationsLabel && (
               <div className={styles.acceptsApplicationsRow}>

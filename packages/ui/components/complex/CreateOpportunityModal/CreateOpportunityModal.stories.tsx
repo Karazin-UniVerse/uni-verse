@@ -41,6 +41,12 @@ const meta = {
     paymentDetailsPlaceholder: 'Наприклад: 15 000 грн/міс або стипендіальна програма',
     unpaidOptionLabel: 'Без оплати / волонтерство',
     paidOptionLabel: 'Оплачувана',
+    phaseLabel: 'Фаза',
+    lifecycleOptions: [
+      { value: 'START', label: 'Старт' },
+      { value: 'ACTIVE', label: 'Активна фаза' },
+      { value: 'COMPLETED', label: 'Завершено' },
+    ],
     acceptsApplicationsLabel: 'Приймати нові відгуки',
     cancelText: 'Скасувати',
     submitText: 'Створити чернетку',

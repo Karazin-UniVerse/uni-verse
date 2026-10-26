@@ -121,12 +121,12 @@
 .phaseWrapper {
   display: flex;
   align-items: center;
-  gap: var(--space-8, 8px);
+  gap: var(--space-8);
   margin-left: auto;
 }
 
 .phaseLabel {
-  font-size: var(--font-xs, 12px);
+  font-size: var(--font-xs);
   color: var(--text-secondary);
 }
 

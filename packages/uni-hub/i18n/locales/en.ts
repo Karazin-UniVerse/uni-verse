@@ -287,6 +287,13 @@ export const en = {
 
   // Gamification
   'badge.unlocked': 'Achievement',
+  'badge.unlockToast': 'Achievement: {title} — {description}',
+  'gamification.badges.deadlineSniper.title': 'Deadline Sniper',
+  'gamification.badges.deadlineSniper.description': 'Submitted assignment before deadline',
+  'gamification.badges.nightOwl.title': 'Night Owl',
+  'gamification.badges.nightOwl.description': 'Logged into dashboard between 22:00 and 05:00',
+  'gamification.badges.semesterMaster.title': 'Semester Master',
+  'gamification.badges.semesterMaster.description': 'All courses with grade ≥ 80',
   'admission.admitted': 'Admitted to the exam ({score} / 60 pts — threshold of 30 pts reached)',
   'admission.notAdmitted':
     'Not admitted to the exam ({score} / 60 pts — {remaining} pts needed to qualify)',
@@ -428,6 +435,13 @@ export const en = {
   'devPanel.eDeanDesc': 'Class schedule, student card',
   'devPanel.opportunitiesLabel': 'Opportunities',
   'devPanel.opportunitiesDesc': 'Project and internship board',
+  // Opportunities
+  'opportunities.errors.changesRequired':
+    'Before resubmitting, change the opportunity title, description, contacts or payment terms.',
+  'opportunities.errors.alreadyApplied': 'You have already applied to this opportunity.',
+  'opportunities.errors.phoneUnavailable': 'This phone number is unavailable for this account.',
+  'opportunities.errors.phoneAlreadySet':
+    'Use the phone number already registered to your account, or Telegram.',
   'opportunities.tabs.catalog': 'Catalog',
   'opportunities.tabs.myOpportunities': 'My Opportunities',
   'opportunities.tabs.myApplications': 'My Applications',
@@ -442,12 +456,18 @@ export const en = {
   'opportunities.toast.stateUpdated': 'Project state updated',
   'opportunities.toast.updated': 'Changes saved successfully!',
   'opportunities.toast.updateError': 'Failed to update opportunity',
+  'opportunities.toast.deleted': 'Opportunity draft deleted',
+  'opportunities.toast.deleteError': 'Error deleting draft',
   'opportunities.toast.applicationsOpened': 'Applications acceptance opened',
   'opportunities.toast.applicationsClosed': 'Applications acceptance closed',
   'opportunities.toast.statusUpdateError': 'Error updating status',
   'opportunities.confirm.withdraw': 'Are you sure you want to withdraw your application?',
   'opportunities.confirm.withdrawTitle': 'Withdraw application',
   'opportunities.confirm.withdrawConfirm': 'Withdraw',
+  'opportunities.confirm.delete':
+    'Are you sure you want to delete this opportunity draft? This action cannot be undone.',
+  'opportunities.confirm.deleteTitle': 'Delete draft',
+  'opportunities.confirm.deleteConfirm': 'Delete',
   'opportunities.toast.withdrawn': 'Application withdrawn',
   'opportunities.toast.approved': 'Opportunity approved and published in the catalog!',
   'opportunities.toast.rejected': 'Opportunity rejected',
@@ -535,6 +555,7 @@ export const en = {
   'opportunities.createModal.paymentDetailsLabel': 'Payment Details',
   'opportunities.createModal.paymentDetailsPlaceholder':
     'E.g.: $400/month or 5000 UAH per milestone',
+  'opportunities.createModal.phaseLabel': 'Phase',
   'opportunities.createModal.acceptsApplications': 'Accept new applications',
   'opportunities.createModal.cancel': 'Cancel',
   'opportunities.createModal.saving': 'Saving...',
@@ -563,6 +584,7 @@ export const en = {
   'opportunities.detailModal.manageTitle': 'Manage Your Opportunity',
   'opportunities.detailModal.sendToReview': 'Submit for Review',
   'opportunities.detailModal.edit': 'Edit',
+  'opportunities.detailModal.delete': 'Delete',
   'opportunities.detailModal.moderationFeedback': 'Moderator comments',
   'opportunities.detailModal.phaseLabel': 'Phase:',
   'opportunities.detailModal.phaseStart': 'Start',
