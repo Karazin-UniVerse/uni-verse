@@ -11,13 +11,13 @@
     "test": "vitest run --config vitest.config.mts"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.104.3",
+    "@tanstack/react-query": "^5.104.5",
     "@universe/core": "workspace:*",
     "@universe/ui": "workspace:*",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
-    "framer-motion": "^14.1.0",
-    "lucide-react": "^1.57.0",
+    "framer-motion": "^14.6.0",
+    "lucide-react": "^1.61.0",
     "next": "16.4.2",
     "playwright": "^1.64.1",
     "react": "^19.3.1",
@@ -25,8 +25,8 @@
     "react-dom": "^19.3.1",
     "react-icons": "^5.7.0",
     "recharts": "^3.10.1",
-    "sass": "^1.105.2",
-    "zustand": "^5.0.15"
+    "sass": "^1.106.1",
+    "zustand": "^5.0.16"
   },
   "devDependencies": {
     "@playwright/cli": "^0.1.22",
