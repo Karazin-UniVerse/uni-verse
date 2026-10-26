@@ -36,9 +36,12 @@ export async function runGripHook({ settings, signal, args = [], spawnFn = spawn
   childEnv.GRIP_API_KEY_ENV = 'GRIP_GATEWAY_TOKEN';
   childEnv.GRIP_GATEWAY_TOKEN = String(settings.token || '');
 
+  const isWindows = process.platform === 'win32';
+  const isBatOrCmd = isWindows && /\.(cmd|bat)$/i.test(settings.executable);
+
   return new Promise((resolve, reject) => {
     const child = spawnFn(settings.executable, args, {
-      shell: false,
+      shell: isBatOrCmd,
       stdio: 'inherit',
       env: childEnv,
       signal,

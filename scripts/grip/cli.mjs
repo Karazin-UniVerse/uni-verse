@@ -26,8 +26,8 @@ function resolveExecutable(candidatePath) {
     }
 
     verifyExecutable(resolved);
-    
-return resolved;
+
+    return resolved;
   }
 
   // 1. Check system path via where.exe (Windows) or which (POSIX)
@@ -57,8 +57,8 @@ return resolved;
 
       try {
         verifyExecutable(exeCandidate);
-        
-return exeCandidate;
+
+        return exeCandidate;
       } catch {
         // Continue searching
       }
@@ -83,8 +83,8 @@ return exeCandidate;
       if (fs.existsSync(gripExe)) {
         try {
           verifyExecutable(gripExe);
-          
-return gripExe;
+
+          return gripExe;
         } catch {
           // Continue
         }
@@ -180,8 +180,8 @@ async function handleSetup(args) {
 
   if (!sessionRes.ok) {
     const errorBody = await sessionRes.text().catch(() => '');
-    
-throw new Error(`Gateway session exchange failed (HTTP ${sessionRes.status}): ${errorBody}`);
+
+    throw new Error(`Gateway session exchange failed (HTTP ${sessionRes.status}): ${errorBody}`);
   }
 
   const sessionData = await sessionRes.json();
@@ -215,8 +215,8 @@ async function handleRemove(args) {
 
   if (!settings) {
     console.info('No active Grip enrollment found for this repository.');
-    
-return;
+
+    return;
   }
 
   console.info('Revoking session on gateway...');
@@ -257,8 +257,8 @@ async function handleStatus() {
   if (!settings) {
     console.info('Grip gateway is NOT enrolled in this repository.');
     console.info('Run "pnpm grip:setup --gateway <url> --client-id <id>" to enroll.');
-    
-return;
+
+    return;
   }
 
   const remainingMs = new Date(settings.expiresAt).getTime() - Date.now();
@@ -299,7 +299,7 @@ async function handleHook(args) {
   try {
     const exitCode = await runGripHook({
       settings,
-      args: hookArgs,
+      args: ['hook', hookType, ...hookArgs],
     });
 
     process.exit(exitCode);
