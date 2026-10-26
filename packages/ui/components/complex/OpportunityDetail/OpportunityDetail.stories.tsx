@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Tag } from '../../una/Tag';
 import { OpportunityDetail } from './OpportunityDetail';
 import { noop } from '@core/utils/fn';
@@ -100,6 +100,8 @@ export const AuthorDraftWithRevision: Story = {
     canEdit: true,
     onEdit: noop,
     canSendToReview: true,
+    sendToReviewDisabled: true,
+    sendToReviewHint: 'Змініть назву, опис, контакти або умови оплати перед повторним надсиланням.',
     onSendToReview: noop,
     moderationCommentTitle: 'Зауваження модератора',
     moderationComment: 'Будь ласка, уточніть стек технологій та очікуване тижневе навантаження.',

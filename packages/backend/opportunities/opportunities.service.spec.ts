@@ -22,6 +22,7 @@ import {
   OPPORTUNITY_MODERATE_ACTION,
   OPPORTUNITY_VIEW,
   OPPORTUNITY_VIEW_PARAM,
+  OPPORTUNITY_ERROR,
 } from '@universe/core/constants/opportunities';
 
 const publishedOpportunity: Opportunity = {
@@ -37,6 +38,7 @@ const publishedOpportunity: Opportunity = {
   paymentDetails: null,
   details: null,
   moderationComment: null,
+  moderationContentHash: null,
   ownerId: 'owner',
   createdAt: new Date('2026-10-01T10:00:00Z'),
   updatedAt: new Date('2026-10-01T10:00:00Z'),
@@ -88,7 +90,12 @@ describe('OpportunitiesService', () => {
               findUnique: jest.fn(),
               findMany: jest.fn(),
             },
-            $transaction: jest.fn(),
+            userPhone: {
+              upsert: jest
+                .fn()
+                .mockResolvedValue({ phoneNumber: '+380501234567' }),
+            },
+            $transaction: jest.fn(async (callback) => callback(prisma)),
           },
         },
         {
@@ -442,6 +449,7 @@ describe('OpportunitiesService', () => {
         roles: ['OPPORTUNITIES_MODERATOR'],
       } as any);
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
         id: 'opp1',
         title: 'test',
         ownerId: 'owner1',
@@ -503,6 +511,37 @@ describe('OpportunitiesService', () => {
       await expect(
         service.moderate('user1', 'opp1', { action: 'INVALID' } as any),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws ConflictException if opportunity was modified during moderation', async () => {
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        id: 'user1',
+        roles: ['OPPORTUNITIES_MODERATOR'],
+      } as any);
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: 'opp1',
+        title: 'test',
+        ownerId: 'owner1',
+        status: 'READY_FOR_REVIEW',
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      } as any);
+      jest.spyOn(prisma.opportunity, 'update').mockRejectedValue({
+        code: 'P2025',
+      });
+
+      await expect(
+        service.moderate('user1', 'opp1', { action: 'APPROVE' } as any),
+      ).rejects.toThrow(ConflictException);
+      expect(prisma.opportunity.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            id: 'opp1',
+            status: 'READY_FOR_REVIEW',
+            updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+          },
+        }),
+      );
+      expect(notificationsService.createNotification).not.toHaveBeenCalled();
     });
   });
 
@@ -1336,7 +1375,9 @@ describe('OpportunitiesService', () => {
           applicantName: 'Іван',
           contactInfo: 'ivan@karazin.ua',
         }),
-      ).rejects.toThrow(ConflictException);
+      ).rejects.toThrow(
+        new ConflictException(OPPORTUNITY_ERROR.ALREADY_APPLIED),
+      );
     });
 
     it('updates existing WITHDRAWN application to SUBMITTED when user re-applies', async () => {
@@ -1445,7 +1486,9 @@ describe('OpportunitiesService', () => {
           applicantName: 'Student',
           contactInfo: 'student@example.com',
         } as any),
-      ).rejects.toThrow(ConflictException);
+      ).rejects.toThrow(
+        new ConflictException(OPPORTUNITY_ERROR.ALREADY_APPLIED),
+      );
     });
 
     it('rethrows other database errors', async () => {

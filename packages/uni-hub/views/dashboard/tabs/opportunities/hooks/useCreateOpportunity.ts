@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@una';
-import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type {
@@ -12,6 +11,7 @@ import type {
 import { OPPORTUNITY_LIFECYCLE, OPPORTUNITY_PAYMENT_TYPE } from '@core/constants/opportunities';
 import { invalidateOpportunities } from '../cache';
 import type { CreateOpportunityFormData } from '../types';
+import { getOpportunityErrorMessage } from '../helpers';
 
 const INITIAL_FORM_DATA: CreateOpportunityFormData = {
   title: '',
@@ -135,7 +135,7 @@ export function useCreateOpportunity({
         ? 'opportunities.toast.updateError'
         : 'opportunities.toast.createError';
 
-      toast.error(getErrorMessage(err, formatMessage(errorKey)));
+      toast.error(getOpportunityErrorMessage(err, formatMessage, formatMessage(errorKey)));
     }
   };
 

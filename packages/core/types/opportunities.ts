@@ -26,6 +26,7 @@ export interface Opportunity {
   acceptsApplications?: boolean;
   paymentDetails?: string | null;
   moderationComment?: string | null;
+  canResubmit?: boolean;
   owner?: OpportunityOwner;
   applications?: OpportunityApplication[];
 }
