@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 const cliPath = path.resolve(__dirname, '../grip/cli.mjs');
 
 test('cli hook pre-push fails with code 1 when not enrolled', () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-test-'));
+  const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-test-')));
 
   try {
     const result = spawnSync(
@@ -41,7 +41,7 @@ test('cli hook pre-push fails with code 1 when not enrolled', () => {
 });
 
 test('cli hook pre-push exits 0 when CI environment is set', () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-test-'));
+  const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-test-')));
 
   try {
     const result = spawnSync(
@@ -67,7 +67,7 @@ test('cli hook pre-push exits 0 when CI environment is set', () => {
 });
 
 test('cli hook pre-push does not skip when CI is false and enrollment has expired', async () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-ci-false-'));
+  const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-ci-false-')));
   const configDir = path.join(tmpDir, 'universe-grip');
 
   try {
@@ -107,7 +107,7 @@ test('cli hook pre-push does not skip when CI is false and enrollment has expire
 });
 
 test('cli hook pre-push fails with code 1 when repoRoot does not match checkout', async () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-mismatch-'));
+  const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-mismatch-')));
   const configDir = path.join(tmpDir, 'universe-grip');
 
   try {
@@ -142,7 +142,7 @@ test('cli hook pre-push fails with code 1 when repoRoot does not match checkout'
 });
 
 test('cli hook pre-push fails with code 1 when settings file is corrupt', async () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-corrupt-'));
+  const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-corrupt-')));
   const configDir = path.join(tmpDir, 'universe-grip');
 
   try {
@@ -174,7 +174,7 @@ test('cli hook pre-push fails with code 1 when settings file is corrupt', async 
 });
 
 test('cli hook pre-push fails with code 1 when enrollment has expired', async () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-expired-'));
+  const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-expired-')));
   const configDir = path.join(tmpDir, 'universe-grip');
 
   try {
@@ -214,7 +214,7 @@ test('cli hook pre-push fails with code 1 when enrollment has expired', async ()
 });
 
 test('cli hook pre-push forwards args and exit code to grip executable when enrolled', async () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-test-'));
+  const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-test-')));
   const configDir = path.join(tmpDir, 'universe-grip');
 
   try {
@@ -266,7 +266,7 @@ test('cli hook pre-push forwards args and exit code to grip executable when enro
 });
 
 test('git push fails through Husky when unenrolled', () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-git-test-'));
+  const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-git-test-')));
 
   try {
     const remoteDir = path.join(tmpDir, 'remote.git');

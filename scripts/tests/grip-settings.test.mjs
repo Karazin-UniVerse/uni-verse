@@ -35,7 +35,7 @@ test('validateTokenFormat validates exact ugr_ prefix and 43 base64url character
 });
 
 test('saveSettings, loadSettings and removeSettings work in isolated directory', async () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-settings-test-'));
+  const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-settings-test-')));
 
   try {
     const validSettings = {

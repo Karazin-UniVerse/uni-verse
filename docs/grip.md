@@ -176,4 +176,4 @@ The live authentication and pre-push loop was verified end-to-end:
    GRIP_TRUSTED_PROXY_ADDRESSES="127.0.0.1,::1" # adjust for load balancer / ingress
    ```
 5. **Database Migration**: Run `pnpm db:migrate` to push `GripSession`, `GripQuotaBucket`, and `GripLease` tables to PostgreSQL.
-6. **Rollout Policy**: Merging the PR to `develop` keeps the gateway disabled by default (`GRIP_GATEWAY_ENABLED=false`). Teammates only enroll when they choose to run `pnpm grip:setup`.
+6. **Rollout Policy**: The production gateway must be enabled (`GRIP_GATEWAY_ENABLED=true`) alongside deployment. Because the pre-push check is mandatory across the repository, all contributors must enroll via `pnpm grip:setup --gateway <production-url> --client-id <client-id>` before pushing new code.

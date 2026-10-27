@@ -109,6 +109,12 @@ function verifyExecutable(executablePath) {
       `Executable at ${executablePath} failed verification (exit code ${result.status}): ${result.stderr || result.error}`,
     );
   }
+
+  if (!/\b0\.5\.0\b/.test(result.stdout ?? '')) {
+    throw new Error(
+      `Executable at ${executablePath} is not Grip 0.5.0 (got: ${(result.stdout ?? '').trim()}). Please install grip-hook 0.5.0 ("pip install grip-hook==0.5.0").`,
+    );
+  }
 }
 
 /**
