@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import type { GripSessionResponse } from '@universe/core/types/grip';
 import { GithubClientService } from './github-client.service';

@@ -47,33 +47,27 @@ function getUtcDayWindow(date: Date): {
 export class GripQuotaService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async executeWithRetry<T>(operation: () => Promise<T>): Promise<T> {
-    let attempt = 0;
+  private async executeWithRetry<T>(
+    operation: () => Promise<T>,
+    attempt = 0,
+  ): Promise<T> {
+    try {
+      return await operation();
+    } catch (error: unknown) {
+      const isSerializationConflict =
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as { code?: string }).code === 'P2034';
 
-    while (attempt < MAX_SERIALIZATION_RETRIES) {
-      try {
-        return await operation();
-      } catch (error: unknown) {
-        const isSerializationConflict =
-          typeof error === 'object' &&
-          error !== null &&
-          'code' in error &&
-          (error as { code?: string }).code === 'P2034';
+      if (isSerializationConflict && attempt < MAX_SERIALIZATION_RETRIES - 1) {
+        await new Promise((resolve) => setTimeout(resolve, (attempt + 1) * 50));
 
-        if (
-          isSerializationConflict &&
-          attempt < MAX_SERIALIZATION_RETRIES - 1
-        ) {
-          attempt++;
-          await new Promise((resolve) => setTimeout(resolve, attempt * 50));
-          continue;
-        }
-
-        throw error;
+        return this.executeWithRetry(operation, attempt + 1);
       }
-    }
 
-    return operation();
+      throw error;
+    }
   }
 
   async reserveSessionExchange(ip: string): Promise<void> {

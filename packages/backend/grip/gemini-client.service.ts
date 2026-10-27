@@ -22,6 +22,98 @@ import {
 import { resolveGripConfig } from './grip.helpers';
 import type { GripConfig } from './grip.types';
 
+function stripTrailingSlashes(url: string): string {
+  let trimmed = url;
+
+  while (trimmed.endsWith('/')) {
+    trimmed = trimmed.slice(0, -1);
+  }
+
+  return trimmed;
+}
+
+function parseUsage(usageRecord: unknown): GripCompletionUsage | undefined {
+  if (!usageRecord || typeof usageRecord !== 'object') {
+    return undefined;
+  }
+
+  const record = usageRecord as Record<string, unknown>;
+
+  const promptTokens =
+    Number.isSafeInteger(record.prompt_tokens) &&
+    (record.prompt_tokens as number) >= 0
+      ? (record.prompt_tokens as number)
+      : undefined;
+
+  const completionTokens =
+    Number.isSafeInteger(record.completion_tokens) &&
+    (record.completion_tokens as number) >= 0
+      ? (record.completion_tokens as number)
+      : undefined;
+
+  const totalTokens =
+    Number.isSafeInteger(record.total_tokens) &&
+    (record.total_tokens as number) >= 0
+      ? (record.total_tokens as number)
+      : undefined;
+
+  if (
+    promptTokens === undefined &&
+    completionTokens === undefined &&
+    totalTokens === undefined
+  ) {
+    return undefined;
+  }
+
+  return {
+    ...(promptTokens !== undefined ? { prompt_tokens: promptTokens } : {}),
+    ...(completionTokens !== undefined
+      ? { completion_tokens: completionTokens }
+      : {}),
+    ...(totalTokens !== undefined ? { total_tokens: totalTokens } : {}),
+  };
+}
+
+function parseChoices(data: unknown): GripCompletionResponse['choices'] {
+  const dataRecord = data as {
+    choices?: Array<{
+      message?: { role?: string; content?: unknown };
+      index?: unknown;
+      finish_reason?: unknown;
+    }>;
+  };
+
+  if (!Array.isArray(dataRecord?.choices) || dataRecord.choices.length === 0) {
+    throw new BadGatewayException('Missing choices in upstream model response');
+  }
+
+  const firstChoice = dataRecord.choices[0];
+
+  if (
+    !firstChoice?.message ||
+    typeof firstChoice.message.content !== 'string'
+  ) {
+    throw new BadGatewayException(
+      'Malformed choice message in upstream model response',
+    );
+  }
+
+  return [
+    {
+      message: {
+        role: 'assistant',
+        content: firstChoice.message.content,
+      },
+      ...(typeof firstChoice.index === 'number'
+        ? { index: firstChoice.index }
+        : {}),
+      ...(typeof firstChoice.finish_reason === 'string'
+        ? { finish_reason: firstChoice.finish_reason }
+        : {}),
+    },
+  ];
+}
+
 @Injectable()
 export class GeminiClientService {
   constructor(
@@ -34,12 +126,92 @@ export class GeminiClientService {
     return resolveGripConfig(this.injectedConfig);
   }
 
+  private handleHttpStatus(status: number): void {
+    if (status === 429) {
+      throw new HttpException(
+        'Upstream quota exceeded',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    if (status === 401 || status === 403) {
+      throw new ServiceUnavailableException(
+        'Upstream model service unavailable',
+      );
+    }
+  }
+
+  private async readResponseBody(
+    body: ReadableStream<Uint8Array> | null,
+    signal?: AbortSignal,
+    timeoutSignal?: AbortSignal,
+  ): Promise<string> {
+    if (!body) {
+      throw new BadGatewayException('Empty upstream model response');
+    }
+
+    const reader = body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let responseText = '';
+    let totalBytes = 0;
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        if (value) {
+          totalBytes += value.byteLength;
+
+          if (totalBytes > GRIP_MAX_UPSTREAM_BYTES) {
+            void reader
+              .cancel('Upstream response exceeded size limit')
+              .catch(() => {});
+
+            throw new BadGatewayException(
+              'Upstream response exceeded size limit',
+            );
+          }
+
+          responseText += decoder.decode(value, { stream: true });
+        }
+      }
+
+      responseText += decoder.decode();
+
+      return responseText;
+    } catch (error: unknown) {
+      if (
+        error instanceof GatewayTimeoutException ||
+        error instanceof BadGatewayException
+      ) {
+        throw error;
+      }
+
+      if (
+        (error instanceof Error && error.name === 'TimeoutError') ||
+        (timeoutSignal?.aborted && !signal?.aborted)
+      ) {
+        throw new GatewayTimeoutException('Upstream deadline exceeded');
+      }
+
+      if (signal?.aborted) {
+        throw error;
+      }
+
+      throw new BadGatewayException('Failed to read upstream model response');
+    }
+  }
+
   async complete(
     request: GripCompletionRequest,
     signal?: AbortSignal,
   ): Promise<GripCompletionResponse> {
     const config = this.requireConfig();
-    const baseUrl = config.geminiBaseUrl.replace(/\/+$/, '');
+    const baseUrl = stripTrailingSlashes(config.geminiBaseUrl);
     const url = `${baseUrl}/chat/completions`;
 
     const timeoutSignal = AbortSignal.timeout(GRIP_UPSTREAM_TIMEOUT_MS);
@@ -83,74 +255,13 @@ export class GeminiClientService {
       throw new BadGatewayException('Failed to reach upstream model service');
     }
 
-    if (response.status === 429) {
-      throw new HttpException(
-        'Upstream quota exceeded',
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
-    }
+    this.handleHttpStatus(response.status);
 
-    if (response.status === 401 || response.status === 403) {
-      throw new ServiceUnavailableException(
-        'Upstream model service unavailable',
-      );
-    }
-
-    let responseText = '';
-    let totalBytes = 0;
-
-    if (!response.body) {
-      throw new BadGatewayException('Empty upstream model response');
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-
-        if (done) {
-          break;
-        }
-
-        if (value) {
-          totalBytes += value.byteLength;
-
-          if (totalBytes > GRIP_MAX_UPSTREAM_BYTES) {
-            await reader.cancel('Upstream response exceeded size limit');
-
-            throw new BadGatewayException(
-              'Upstream response exceeded size limit',
-            );
-          }
-
-          responseText += decoder.decode(value, { stream: true });
-        }
-      }
-
-      responseText += decoder.decode();
-    } catch (error: unknown) {
-      if (
-        error instanceof GatewayTimeoutException ||
-        error instanceof BadGatewayException
-      ) {
-        throw error;
-      }
-
-      if (
-        (error instanceof Error && error.name === 'TimeoutError') ||
-        (timeoutSignal.aborted && !signal?.aborted)
-      ) {
-        throw new GatewayTimeoutException('Upstream deadline exceeded');
-      }
-
-      if (signal?.aborted) {
-        throw error;
-      }
-
-      throw new BadGatewayException('Failed to read upstream model response');
-    }
+    const responseText = await this.readResponseBody(
+      response.body,
+      signal,
+      timeoutSignal,
+    );
 
     if (!response.ok) {
       throw new BadGatewayException('Upstream model error');
@@ -164,92 +275,11 @@ export class GeminiClientService {
       throw new BadGatewayException('Invalid JSON from upstream model service');
     }
 
-    const dataRecord = data as {
-      choices?: Array<{
-        message?: { role?: string; content?: unknown };
-        index?: unknown;
-        finish_reason?: unknown;
-      }>;
-      usage?: {
-        prompt_tokens?: unknown;
-        completion_tokens?: unknown;
-        total_tokens?: unknown;
-      };
-    };
-
-    if (
-      !Array.isArray(dataRecord?.choices) ||
-      dataRecord.choices.length === 0
-    ) {
-      throw new BadGatewayException(
-        'Missing choices in upstream model response',
-      );
-    }
-
-    const firstChoice = dataRecord.choices[0];
-
-    if (
-      !firstChoice?.message ||
-      typeof firstChoice.message.content !== 'string'
-    ) {
-      throw new BadGatewayException(
-        'Malformed choice message in upstream model response',
-      );
-    }
-
-    let usage: GripCompletionUsage | undefined;
-
-    if (dataRecord.usage && typeof dataRecord.usage === 'object') {
-      const promptTokens =
-        Number.isSafeInteger(dataRecord.usage.prompt_tokens) &&
-        (dataRecord.usage.prompt_tokens as number) >= 0
-          ? (dataRecord.usage.prompt_tokens as number)
-          : undefined;
-
-      const completionTokens =
-        Number.isSafeInteger(dataRecord.usage.completion_tokens) &&
-        (dataRecord.usage.completion_tokens as number) >= 0
-          ? (dataRecord.usage.completion_tokens as number)
-          : undefined;
-
-      const totalTokens =
-        Number.isSafeInteger(dataRecord.usage.total_tokens) &&
-        (dataRecord.usage.total_tokens as number) >= 0
-          ? (dataRecord.usage.total_tokens as number)
-          : undefined;
-
-      if (
-        promptTokens !== undefined ||
-        completionTokens !== undefined ||
-        totalTokens !== undefined
-      ) {
-        usage = {
-          ...(promptTokens !== undefined
-            ? { prompt_tokens: promptTokens }
-            : {}),
-          ...(completionTokens !== undefined
-            ? { completion_tokens: completionTokens }
-            : {}),
-          ...(totalTokens !== undefined ? { total_tokens: totalTokens } : {}),
-        };
-      }
-    }
+    const choices = parseChoices(data);
+    const usage = parseUsage((data as { usage?: unknown })?.usage);
 
     return {
-      choices: [
-        {
-          message: {
-            role: 'assistant',
-            content: firstChoice.message.content,
-          },
-          ...(typeof firstChoice.index === 'number'
-            ? { index: firstChoice.index }
-            : {}),
-          ...(typeof firstChoice.finish_reason === 'string'
-            ? { finish_reason: firstChoice.finish_reason }
-            : {}),
-        },
-      ],
+      choices,
       ...(usage ? { usage } : {}),
     };
   }
