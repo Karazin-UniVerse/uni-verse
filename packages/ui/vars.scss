@@ -15,6 +15,7 @@
 /* SCSS Token Variables ($ tokens) */
 $space-2: 2px;
 $space-4: 4px;
+$space-6: 6px;
 $space-8: 8px;
 $space-12: 12px;
 $space-16: 16px;
@@ -28,6 +29,7 @@ $space-64: 64px;
   /* Spacing & Sizing (The 8pt Grid) */
   --space-2: 2px;
   --space-4: 4px;
+  --space-6: 6px;
   --space-8: 8px;
   --space-12: 12px;
   --space-16: 16px;
@@ -82,6 +84,7 @@ $space-64: 64px;
   /* Z-Index */
   --z-sidebar: 10;
   --z-dropdown: 100;
+  --z-modal: 1100;
 
   /* Transitions */
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);

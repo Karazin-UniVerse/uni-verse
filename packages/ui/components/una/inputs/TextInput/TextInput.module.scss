@@ -19,6 +19,16 @@
     color: var(--text-disabled);
   }
 
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus,
+  &:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-surface) inset;
+    -webkit-text-fill-color: var(--text-primary);
+    caret-color: var(--text-primary);
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
   &:disabled {
     background-color: var(--neutral-surface);
     color: var(--text-disabled);

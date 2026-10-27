@@ -115,7 +115,7 @@
 .categoryPill {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-6);
+  gap: var(--space-6, 6px);
   font-size: var(--font-xs);
   font-weight: 500;
   padding: 4px 10px;
@@ -208,6 +208,7 @@
   padding-top: 16px;
   margin-top: 18px;
   border-top: 1px solid var(--card-border);
+  flex-wrap: wrap;
 }
 
 .ownerInfo {
@@ -262,10 +263,13 @@
   display: flex;
   align-items: center;
   gap: var(--space-12);
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .warningBox {
-  margin-top: var(--space-4);
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-16);
   padding: var(--space-12) var(--space-16);
   background: color-mix(in srgb, var(--warning-color) 10%, var(--bg-surface));
   border-left: 3px solid var(--warning-color);

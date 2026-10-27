@@ -6,7 +6,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 900;
+  z-index: var(--z-modal, 1100);
   padding: var(--space-24);
 }
 
@@ -128,6 +128,7 @@
     max-height: 90vh;
     animation: slide-up var(--transition-medium) var(--ease-standard);
     margin-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0);
   }
 }
 
