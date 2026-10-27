@@ -96,7 +96,7 @@ export function getSettingsPath(options = {}) {
  * @returns {Promise<void>}
  */
 export async function saveSettings(settings, options = {}) {
-  const targetRoot = path.resolve(settings.repoRoot || process.cwd());
+  const targetRoot = path.resolve(options.repoRoot || settings.repoRoot || process.cwd());
   const filePath = getSettingsPath({ configDir: options.configDir, repoRoot: targetRoot });
   const dir = path.dirname(filePath);
 
@@ -143,11 +143,39 @@ export async function loadSettings(options = {}) {
     );
   }
 
-  if (parsed.repoRoot && path.resolve(parsed.repoRoot) !== targetRoot) {
-    return null;
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('Grip enrollment file is invalid or empty. Run pnpm grip:setup to re-enroll');
   }
 
-  if (parsed.expiresAt && new Date(parsed.expiresAt).getTime() <= Date.now()) {
+  if (parsed.version !== 1) {
+    throw new Error(
+      `Unsupported Grip enrollment version: ${parsed.version}. Run pnpm grip:setup to re-enroll`,
+    );
+  }
+
+  if (!parsed.repoRoot || path.resolve(parsed.repoRoot) !== targetRoot) {
+    throw new Error(
+      'Grip enrollment does not match this checkout. Run pnpm grip:setup to re-enroll',
+    );
+  }
+
+  try {
+    validateGatewayUrl(parsed.gatewayOrigin);
+  } catch {
+    throw new Error('Grip enrollment gateway URL is invalid. Run pnpm grip:setup to re-enroll');
+  }
+
+  if (!validateTokenFormat(parsed.token)) {
+    throw new Error('Grip enrollment token is invalid. Run pnpm grip:setup to re-enroll');
+  }
+
+  const expiresTime = parsed.expiresAt ? new Date(parsed.expiresAt).getTime() : NaN;
+
+  if (Number.isNaN(expiresTime)) {
+    throw new Error('Grip enrollment expiration date is invalid. Run pnpm grip:setup to re-enroll');
+  }
+
+  if (expiresTime <= Date.now()) {
     throw new Error('Grip gateway enrollment has expired. Run pnpm grip:setup to re-enroll');
   }
 

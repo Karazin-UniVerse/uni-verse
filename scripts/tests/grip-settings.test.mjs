@@ -56,8 +56,68 @@ test('saveSettings, loadSettings and removeSettings work in isolated directory',
 
     assert.deepEqual(loaded, validSettings);
 
-    // Foreign repo returns null
+    // Non-existent repo file returns null
     assert.equal(await loadSettings({ configDir: tmpDir, repoRoot: '/another/repo' }), null);
+
+    // Mismatched repoRoot in existing file throws error
+    const mismatchedSettings = {
+      ...validSettings,
+      repoRoot: '/different/repo/root',
+    };
+
+    await saveSettings(mismatchedSettings, { configDir: tmpDir, repoRoot: '/fake/repo' });
+    await assert.rejects(
+      loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }),
+      /does not match this checkout/i,
+    );
+
+    // Invalid version throws error
+    const invalidVersion = {
+      ...validSettings,
+      version: 99,
+    };
+
+    await saveSettings(invalidVersion, { configDir: tmpDir, repoRoot: '/fake/repo' });
+    await assert.rejects(
+      loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }),
+      /unsupported grip enrollment version/i,
+    );
+
+    // Invalid gateway URL throws error
+    const invalidUrl = {
+      ...validSettings,
+      gatewayOrigin: 'http://insecure-remote.example.com',
+    };
+
+    await saveSettings(invalidUrl, { configDir: tmpDir, repoRoot: '/fake/repo' });
+    await assert.rejects(
+      loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }),
+      /gateway url is invalid/i,
+    );
+
+    // Invalid token throws error
+    const invalidToken = {
+      ...validSettings,
+      token: 'bad-token-format',
+    };
+
+    await saveSettings(invalidToken, { configDir: tmpDir, repoRoot: '/fake/repo' });
+    await assert.rejects(
+      loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }),
+      /token is invalid/i,
+    );
+
+    // Invalid expiration date throws error
+    const invalidDate = {
+      ...validSettings,
+      expiresAt: 'not-a-date',
+    };
+
+    await saveSettings(invalidDate, { configDir: tmpDir, repoRoot: '/fake/repo' });
+    await assert.rejects(
+      loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }),
+      /expiration date is invalid/i,
+    );
 
     // Expired settings throw an error instead of silently disabling
     const expiredSettings = {

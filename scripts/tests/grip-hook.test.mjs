@@ -63,6 +63,81 @@ test('cli hook pre-push exits 0 when CI environment is set', () => {
   }
 });
 
+test('cli hook pre-push does not skip when CI is false and enrollment has expired', async () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-ci-false-'));
+  const configDir = path.join(tmpDir, 'universe-grip');
+
+  try {
+    await saveSettings(
+      {
+        version: 1,
+        repoRoot: tmpDir,
+        gatewayOrigin: 'https://gateway.example.com',
+        clientId: 'mock-client',
+        token: 'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
+        expiresAt: new Date(Date.now() - 5000).toISOString(),
+        executable: process.execPath,
+      },
+      { configDir },
+    );
+
+    const result = spawnSync(
+      process.execPath,
+      [cliPath, 'hook', 'pre-push', 'origin', 'https://github.com/repo'],
+      {
+        cwd: tmpDir,
+        env: {
+          ...process.env,
+          CI: 'false',
+          APPDATA: tmpDir,
+          XDG_CONFIG_HOME: tmpDir,
+        },
+        encoding: 'utf8',
+      },
+    );
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /enrollment has expired/i);
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+test('cli hook pre-push fails with code 1 when repoRoot does not match checkout', async () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-mismatch-'));
+  const configDir = path.join(tmpDir, 'universe-grip');
+
+  try {
+    await saveSettings(
+      {
+        version: 1,
+        repoRoot: '/completely/different/checkout/path',
+      },
+      { configDir, repoRoot: tmpDir },
+    );
+
+    const result = spawnSync(
+      process.execPath,
+      [cliPath, 'hook', 'pre-push', 'origin', 'https://github.com/repo'],
+      {
+        cwd: tmpDir,
+        env: {
+          ...process.env,
+          CI: '',
+          APPDATA: tmpDir,
+          XDG_CONFIG_HOME: tmpDir,
+        },
+        encoding: 'utf8',
+      },
+    );
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /does not match this checkout/i);
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
 test('cli hook pre-push fails with code 1 when settings file is corrupt', async () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-corrupt-'));
   const configDir = path.join(tmpDir, 'universe-grip');

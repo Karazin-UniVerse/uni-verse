@@ -305,7 +305,9 @@ async function handleHook(args) {
     process.exit(1);
   }
 
-  if (process.env.CI) {
+  const isCi = ['true', '1'].includes((process.env.CI ?? '').toLowerCase());
+
+  if (isCi) {
     console.info('[grip] CI environment detected. Skipping Grip pre-push check.');
     process.exit(0);
   }

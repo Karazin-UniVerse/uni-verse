@@ -145,6 +145,59 @@ describe('Grip HTTP Gateway (real Nest/Express parsing & guards)', () => {
     await app.listen(0);
   });
 
+  beforeEach(() => {
+    mockStorage.createSession.mockReset().mockResolvedValue({
+      id: 'sess-1',
+      tokenHash: 'hash',
+      githubId: '1001',
+      githubLogin: 'dev',
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 86400000),
+      revokedAt: null,
+    });
+    mockStorage.findSession
+      .mockReset()
+      .mockImplementation(async (hash: string) => {
+        if (hash === 'revoked' || hash === 'expired') {
+          return null;
+        }
+
+        return {
+          id: 'sess-1',
+          tokenHash: hash,
+          githubId: '1001',
+          githubLogin: 'dev',
+          createdAt: new Date(),
+          expiresAt: new Date(Date.now() + 86400000),
+          revokedAt: null,
+        };
+      });
+    mockStorage.revokeSession.mockReset().mockResolvedValue(undefined);
+
+    mockQuota.reserveSessionExchange.mockReset().mockResolvedValue(undefined);
+    mockQuota.reserveCompletion
+      .mockReset()
+      .mockResolvedValue({ leaseId: 'lease-1' });
+    mockQuota.releaseCompletion.mockReset().mockResolvedValue(undefined);
+
+    mockGithub.identify
+      .mockReset()
+      .mockResolvedValue({ githubId: '1001', login: 'dev' });
+    mockGithub.assertWriter.mockReset().mockResolvedValue(undefined);
+
+    mockGemini.complete.mockReset().mockResolvedValue({
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content: '{"nodes": []}',
+          },
+        },
+      ],
+      usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
+    });
+  });
+
   afterAll(async () => {
     await app.close();
   });
@@ -317,8 +370,24 @@ describe('Grip HTTP Gateway (real Nest/Express parsing & guards)', () => {
   });
 
   it('aborts model generation when client socket disconnects', async () => {
+    let onEnteredGeneration!: () => void;
+    const enteredGeneration = new Promise<void>((resolve) => {
+      onEnteredGeneration = resolve;
+    });
+
+    let onLeaseReleased!: () => void;
+    const leaseReleased = new Promise<void>((resolve) => {
+      onLeaseReleased = resolve;
+    });
+
+    mockQuota.releaseCompletion.mockImplementationOnce(async () => {
+      onLeaseReleased();
+    });
+
     mockGemini.complete.mockImplementationOnce(
       async (_req: any, signal: AbortSignal) => {
+        onEnteredGeneration();
+
         return new Promise((_resolve, reject) => {
           signal?.addEventListener('abort', () => {
             const err = new Error('Client disconnected');
@@ -345,11 +414,13 @@ describe('Grip HTTP Gateway (real Nest/Express parsing & guards)', () => {
         },
       });
 
-    setTimeout(() => {
-      reqPromise.abort();
-    }, 50);
+    const inFlight = reqPromise.catch(() => {});
 
-    await reqPromise.catch(() => {});
+    await enteredGeneration;
+    reqPromise.abort();
+    await inFlight;
+    await leaseReleased;
+
     expect(mockQuota.releaseCompletion).toHaveBeenCalledWith('lease-1');
   });
 
