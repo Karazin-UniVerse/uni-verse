@@ -36,12 +36,15 @@ export async function runGripHook({ settings, signal, args = [], spawnFn = spawn
   childEnv.GRIP_API_KEY_ENV = 'GRIP_GATEWAY_TOKEN';
   childEnv.GRIP_GATEWAY_TOKEN = String(settings.token || '');
 
-  const isWindows = process.platform === 'win32';
-  const isBatOrCmd = isWindows && /\.(cmd|bat)$/i.test(settings.executable);
+  if (process.platform === 'win32' && /\.(cmd|bat)$/i.test(settings.executable)) {
+    throw new Error(
+      `Only native binary executables (.exe) are supported for Grip on Windows. Got: ${settings.executable}`,
+    );
+  }
 
   return new Promise((resolve, reject) => {
     const child = spawnFn(settings.executable, args, {
-      shell: isBatOrCmd,
+      shell: false,
       stdio: 'inherit',
       env: childEnv,
       signal,

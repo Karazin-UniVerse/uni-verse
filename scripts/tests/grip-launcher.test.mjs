@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { test } from 'node:test';
 import { runGripHook } from '../grip/launcher.mjs';
 
@@ -42,6 +45,36 @@ test('runGripHook throws if executable does not exist', async () => {
     }),
     /executable not found/i,
   );
+});
+
+test('runGripHook rejects .bat and .cmd shims on Windows', async () => {
+  if (process.platform !== 'win32') {
+    return;
+  }
+
+  const settings = {
+    executable: 'C:\\Windows\\System32\\cmd.exe', // will be overridden to bat below
+    gatewayOrigin: 'https://gateway.example.com',
+    token: 'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
+    expiresAt: new Date(Date.now() + 86400000).toISOString(),
+  };
+
+  // Point to an existing bat file
+  const tmpBat = path.join(os.tmpdir(), 'test-shim.bat');
+
+  fs.writeFileSync(tmpBat, '@echo off\n');
+
+  try {
+    await assert.rejects(
+      runGripHook({
+        settings: { ...settings, executable: tmpBat },
+        args: [],
+      }),
+      /Only native binary executables/i,
+    );
+  } finally {
+    fs.rmSync(tmpBat, { force: true });
+  }
 });
 
 test('runGripHook populates child environment and never sets GEMINI_API_KEY', async () => {

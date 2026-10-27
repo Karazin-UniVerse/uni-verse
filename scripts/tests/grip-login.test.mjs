@@ -9,8 +9,8 @@ function startFakeGithubServer() {
 
   const server = http.createServer((req, res) => {
     let body = '';
-    
-req.on('data', (chunk) => {
+
+    req.on('data', (chunk) => {
       body += chunk;
     });
 
@@ -26,8 +26,8 @@ req.on('data', (chunk) => {
             interval: 1,
           }),
         );
-        
-return;
+
+        return;
       }
 
       if (req.url === '/login/oauth/access_token') {
@@ -37,28 +37,28 @@ return;
           slowDownTriggered = true;
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'slow_down', error_description: 'Slow down' }));
-          
-return;
+
+          return;
         }
 
         if (body.includes('simulate_denial')) {
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'access_denied', error_description: 'Denied' }));
-          
-return;
+
+          return;
         }
 
         if (pollCount === 1) {
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'authorization_pending', error_description: 'Pending' }));
-          
-return;
+
+          return;
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ access_token: 'gho_mock_access_token_12345' }));
-        
-return;
+
+        return;
       }
 
       res.writeHead(404);
@@ -69,8 +69,8 @@ return;
   return new Promise((resolve) => {
     server.listen(0, '127.0.0.1', () => {
       const { port } = server.address();
-      
-resolve({
+
+      resolve({
         server,
         url: `http://127.0.0.1:${port}`,
         close: () => new Promise((cb) => server.close(cb)),
@@ -95,6 +95,22 @@ test('loginDevice polls, handles pending, and returns access_token', async () =>
     assert.equal(token, 'gho_mock_access_token_12345');
     assert.ok(logs.some((l) => l.includes('WDJB-MJHT')));
     assert.ok(!logs.some((l) => l.includes('gho_mock_access_token_12345')));
+  } finally {
+    await fakeGithub.close();
+  }
+});
+
+test('loginDevice handles slow_down response and recovers', async () => {
+  const fakeGithub = await startFakeGithubServer();
+
+  try {
+    const token = await loginDevice({
+      clientId: 'simulate_slowdown',
+      githubBaseUrl: fakeGithub.url,
+      logger: () => {},
+    });
+
+    assert.equal(token, 'gho_mock_access_token_12345');
   } finally {
     await fakeGithub.close();
   }

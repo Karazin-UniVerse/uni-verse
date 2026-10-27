@@ -26,7 +26,9 @@ Grip pre-push checks are **strictly optional** for contributors. If you do not e
 1. **Python 3.11+** installed and available on `PATH`.
 2. **Grip 0.5.0**:
    ```sh
-   pip install --no-deps grip-hook==0.5.0
+   pipx install grip-hook==0.5.0
+   # Or using pip in your Python environment:
+   pip install grip-hook==0.5.0
    ```
    Verify installation:
    ```sh

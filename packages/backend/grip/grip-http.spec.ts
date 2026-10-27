@@ -142,6 +142,7 @@ describe('Grip HTTP Gateway (real Nest/Express parsing & guards)', () => {
     );
 
     await app.init();
+    await app.listen(0);
   });
 
   afterAll(async () => {
@@ -282,6 +283,74 @@ describe('Grip HTTP Gateway (real Nest/Express parsing & guards)', () => {
       .expect(204);
 
     expect(mockStorage.revokeSession).toHaveBeenCalled();
+  });
+
+  it('revokes current session with 204 even if user lost repo write permission', async () => {
+    mockGithub.assertWriter.mockRejectedValueOnce(
+      new ForbiddenException('Write access lost'),
+    );
+
+    await request(app.getHttpServer())
+      .delete('/dev-tools/grip/sessions/current')
+      .set('Authorization', `Bearer ${validToken}`)
+      .expect(204);
+
+    expect(mockStorage.revokeSession).toHaveBeenCalled();
+  });
+
+  it('rejects chunked transfer-encoding oversized body (> 256 KiB) with 413', async () => {
+    const req = request(app.getHttpServer())
+      .post('/dev-tools/grip/v1/chat/completions')
+      .set('Authorization', `Bearer ${validToken}`)
+      .set('Content-Type', 'application/json')
+      .set('Transfer-Encoding', 'chunked');
+
+    req.write(
+      '{"model":"gemini-3.5-flash-lite","messages":[{"role":"user","content":"',
+    );
+    req.write('a'.repeat(260 * 1024));
+    req.write('"}]}');
+
+    const res = await req;
+
+    expect(res.status).toBe(413);
+  });
+
+  it('aborts model generation when client socket disconnects', async () => {
+    mockGemini.complete.mockImplementationOnce(
+      async (_req: any, signal: AbortSignal) => {
+        return new Promise((_resolve, reject) => {
+          signal?.addEventListener('abort', () => {
+            const err = new Error('Client disconnected');
+
+            err.name = 'AbortError';
+            reject(err);
+          });
+        });
+      },
+    );
+
+    const reqPromise = request(app.getHttpServer())
+      .post('/dev-tools/grip/v1/chat/completions')
+      .set('Authorization', `Bearer ${validToken}`)
+      .send({
+        model: 'gemini-3.5-flash-lite',
+        messages: [
+          { role: 'system', content: 'sys' },
+          { role: 'user', content: 'usr' },
+        ],
+        response_format: {
+          type: 'json_schema',
+          json_schema: { name: 'Board', schema: {} },
+        },
+      });
+
+    setTimeout(() => {
+      reqPromise.abort();
+    }, 50);
+
+    await reqPromise.catch(() => {});
+    expect(mockQuota.releaseCompletion).toHaveBeenCalledWith('lease-1');
   });
 
   it('returns 404 when gateway is disabled', async () => {

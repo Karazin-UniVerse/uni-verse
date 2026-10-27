@@ -65,15 +65,25 @@ export class GripEnabledGuard implements CanActivate {
 @UseGuards(GripEnabledGuard)
 @Controller('dev-tools/grip')
 export class GripController {
-  private readonly config: GripConfig | null;
-
   constructor(
     private readonly sessionService: GripSessionService,
     private readonly gripService: GripService,
     private readonly quotaService: GripQuotaService,
-    @Optional() @Inject('GRIP_CONFIG') config?: GripConfig | null,
-  ) {
-    this.config = config ?? getGripConfig(process.env);
+    @Optional()
+    @Inject('GRIP_CONFIG')
+    private readonly injectedConfig?: GripConfig | null,
+  ) {}
+
+  private getConfig(): GripConfig | null {
+    if (this.injectedConfig !== undefined) {
+      return this.injectedConfig;
+    }
+
+    try {
+      return getGripConfig(process.env);
+    } catch {
+      return null;
+    }
   }
 
   @Public()
@@ -116,7 +126,7 @@ export class GripController {
 
     const clientIp = resolveClientIp(
       req,
-      this.config?.trustedProxyAddresses ?? [],
+      this.getConfig()?.trustedProxyAddresses ?? [],
     );
 
     await this.quotaService.reserveSessionExchange(clientIp);
@@ -129,20 +139,35 @@ export class GripController {
   }
 
   @Public()
-  @UseGuards(GripGuard)
   @Delete('sessions/current')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Revoke current Grip gateway session' })
   @ApiResponse({ status: 204, description: 'Session revoked successfully' })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid Authorization header',
+  })
   async revokeSession(
     @Headers('authorization') authHeader: string | undefined,
   ): Promise<void> {
-    const token = authHeader?.slice(7).trim();
-
-    if (token) {
-      await this.sessionService.revoke(token);
+    if (
+      !authHeader ||
+      typeof authHeader !== 'string' ||
+      !authHeader.startsWith('Bearer ')
+    ) {
+      throw new UnauthorizedException(
+        'Missing or invalid Authorization header',
+      );
     }
+
+    const token = authHeader.slice(7).trim();
+
+    if (!token) {
+      throw new UnauthorizedException('Empty session token');
+    }
+
+    await this.sessionService.revoke(token);
   }
 
   @Public()

@@ -68,13 +68,20 @@ export async function loginDevice({
   }
 
   const codeData = await codeRes.json();
-  const { device_code: deviceCode, user_code: userCode, verification_uri: verificationUri, interval } = codeData;
+  const {
+    device_code: deviceCode,
+    user_code: userCode,
+    verification_uri: verificationUri,
+    interval,
+  } = codeData;
 
   if (!deviceCode || !userCode || !verificationUri) {
     throw new Error('Unexpected response format from GitHub device authorization endpoint');
   }
 
-  logger(`\nTo authenticate Grip with GitHub, visit:\n  ${verificationUri}\nEnter one-time code: ${userCode}\n`);
+  logger(
+    `\nTo authenticate Grip with GitHub, visit:\n  ${verificationUri}\nEnter one-time code: ${userCode}\n`,
+  );
 
   let pollIntervalMs = Math.max(1, interval || 5) * 1000;
   const pollEndpoint = `${baseUrl}/login/oauth/access_token`;

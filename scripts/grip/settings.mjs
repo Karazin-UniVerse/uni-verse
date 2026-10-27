@@ -138,7 +138,9 @@ export async function loadSettings(options = {}) {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return null;
+    throw new Error(
+      'Grip enrollment file is corrupt or unreadable. Run pnpm grip:setup to re-enroll',
+    );
   }
 
   if (parsed.repoRoot && path.resolve(parsed.repoRoot) !== targetRoot) {
@@ -146,7 +148,7 @@ export async function loadSettings(options = {}) {
   }
 
   if (parsed.expiresAt && new Date(parsed.expiresAt).getTime() <= Date.now()) {
-    return null;
+    throw new Error('Grip gateway enrollment has expired. Run pnpm grip:setup to re-enroll');
   }
 
   return parsed;

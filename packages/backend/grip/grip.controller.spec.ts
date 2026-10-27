@@ -100,6 +100,15 @@ describe('GripController', () => {
   });
 
   describe('revokeSession', () => {
+    it('throws UnauthorizedException when Authorization header is missing or invalid', async () => {
+      await expect(controller.revokeSession(undefined)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      await expect(
+        controller.revokeSession('Basic dXNlcjpwYXNz'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
     it('revokes session for provided bearer token', async () => {
       await controller.revokeSession('Bearer ugr_token_to_revoke');
 

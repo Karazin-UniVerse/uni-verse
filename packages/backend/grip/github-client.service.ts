@@ -11,20 +11,38 @@ import type { GripConfig, GripIdentity } from './grip.types';
 
 @Injectable()
 export class GithubClientService {
-  private readonly config: GripConfig | null;
-
-  constructor(@Optional() @Inject('GRIP_CONFIG') config?: GripConfig | null) {
-    this.config = config ?? getGripConfig(process.env);
-  }
+  constructor(
+    @Optional()
+    @Inject('GRIP_CONFIG')
+    private readonly injectedConfig?: GripConfig | null,
+  ) {}
 
   private requireConfig(): GripConfig {
-    if (!this.config) {
-      throw new ServiceUnavailableException(
-        'Grip gateway is disabled or unconfigured',
-      );
+    if (this.injectedConfig) {
+      return this.injectedConfig;
     }
 
-    return this.config;
+    try {
+      const config = getGripConfig(process.env);
+
+      if (!config) {
+        throw new ServiceUnavailableException(
+          'Grip gateway is disabled or unconfigured',
+        );
+      }
+
+      return config;
+    } catch (error: unknown) {
+      if (
+        error instanceof ServiceUnavailableException ||
+        error instanceof UnauthorizedException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      }
+
+      throw new ServiceUnavailableException('Grip gateway is misconfigured');
+    }
   }
 
   async identify(accessToken: string): Promise<GripIdentity> {

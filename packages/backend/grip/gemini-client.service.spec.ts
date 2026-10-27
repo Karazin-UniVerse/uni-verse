@@ -73,12 +73,10 @@ describe('GeminiClientService', () => {
       capturedUrl = String(url);
       capturedOptions = init;
 
-      return {
-        ok: true,
+      return new Response(JSON.stringify(mockResponsePayload), {
         status: 200,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        text: async () => JSON.stringify(mockResponsePayload),
-      } as unknown as Response;
+        headers: { 'content-type': 'application/json' },
+      });
     });
 
     const result = await service.complete(validRequest);
@@ -106,11 +104,12 @@ describe('GeminiClientService', () => {
   });
 
   it('maps 429 quota errors to 429 HttpException without exposing upstream body', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValueOnce({
-      ok: false,
-      status: 429,
-      text: async () => 'RESOURCE_EXHAUSTED: quota exceeded',
-    } as unknown as Response);
+    jest.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response('RESOURCE_EXHAUSTED: quota exceeded', {
+        status: 429,
+        headers: { 'content-type': 'text/plain' },
+      }),
+    );
 
     await expect(service.complete(validRequest)).rejects.toThrow(
       new HttpException(
@@ -121,11 +120,12 @@ describe('GeminiClientService', () => {
   });
 
   it('maps 401/403 to sanitized 503 without leaking api key or provider message', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValueOnce({
-      ok: false,
-      status: 401,
-      text: async () => 'API key invalid: secret-gemini-key',
-    } as unknown as Response);
+    jest.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response('API key invalid: secret-gemini-key', {
+        status: 401,
+        headers: { 'content-type': 'text/plain' },
+      }),
+    );
 
     try {
       await service.complete(validRequest);
@@ -140,52 +140,92 @@ describe('GeminiClientService', () => {
   });
 
   it('maps 500/502/503 and malformed choices/JSON to BadGatewayException (502)', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValueOnce({
-      ok: false,
-      status: 500,
-      text: async () => 'Internal server error',
-    } as unknown as Response);
+    jest.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response('Internal server error', {
+        status: 500,
+        headers: { 'content-type': 'text/plain' },
+      }),
+    );
 
     await expect(service.complete(validRequest)).rejects.toThrow(
       BadGatewayException,
     );
 
-    jest.spyOn(global, 'fetch').mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      text: async () => 'not a json',
-    } as unknown as Response);
+    jest.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response('not a json', {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
 
     await expect(service.complete(validRequest)).rejects.toThrow(
       BadGatewayException,
     );
 
-    jest.spyOn(global, 'fetch').mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      text: async () => JSON.stringify({ choices: [] }),
-    } as unknown as Response);
-
-    await expect(service.complete(validRequest)).rejects.toThrow(
-      BadGatewayException,
+    jest.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify({ choices: [] }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
     );
-  });
-
-  it('rejects upstream responses exceeding 2 MiB', async () => {
-    const hugeBody = 'a'.repeat(2 * 1024 * 1024 + 10);
-
-    jest.spyOn(global, 'fetch').mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      text: async () => hugeBody,
-    } as unknown as Response);
 
     await expect(service.complete(validRequest)).rejects.toThrow(
       BadGatewayException,
     );
   });
 
-  it('maps timeout / deadline abort to GatewayTimeoutException (504)', async () => {
+  it('aborts streaming and rejects when upstream responses exceed 2 MiB', async () => {
+    let cancelledWithReason: string | undefined;
+    const chunk = new Uint8Array(1024 * 1024); // 1 MiB chunk
+
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(chunk);
+        controller.enqueue(chunk);
+        controller.enqueue(chunk); // 3 MiB total
+      },
+      cancel(reason) {
+        cancelledWithReason = String(reason);
+      },
+    });
+
+    jest.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(stream, {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    await expect(service.complete(validRequest)).rejects.toThrow(
+      new BadGatewayException('Upstream response exceeded size limit'),
+    );
+
+    expect(cancelledWithReason).toBe('Upstream response exceeded size limit');
+  });
+
+  it('maps timeout during stream read to GatewayTimeoutException (504)', async () => {
+    const stream = new ReadableStream({
+      pull() {
+        const timeoutErr = new Error('The operation was aborted');
+
+        timeoutErr.name = 'TimeoutError';
+        throw timeoutErr;
+      },
+    });
+
+    jest.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(stream, {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    await expect(service.complete(validRequest)).rejects.toThrow(
+      GatewayTimeoutException,
+    );
+  });
+
+  it('maps connection timeout / deadline abort to GatewayTimeoutException (504)', async () => {
     const timeoutError = new Error('The operation was aborted');
 
     timeoutError.name = 'TimeoutError';

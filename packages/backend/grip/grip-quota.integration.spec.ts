@@ -43,19 +43,28 @@ describe('GripQuotaService (PostgreSQL integration)', () => {
     await client1.gripQuotaBucket.deleteMany();
   });
 
-  it('allows at most two live concurrent leases across two client instances', async () => {
-    const lease1 = await service1.reserveCompletion('1001');
-    const lease2 = await service2.reserveCompletion('1002');
+  it('allows at most two live concurrent leases across competing clients under parallel admission', async () => {
+    const results = await Promise.allSettled([
+      service1.reserveCompletion('1001'),
+      service2.reserveCompletion('1002'),
+      service1.reserveCompletion('1003'),
+    ]);
 
-    expect(lease1.leaseId).toBeDefined();
-    expect(lease2.leaseId).toBeDefined();
+    const fulfilled = results.filter((r) => r.status === 'fulfilled');
+    const rejected = results.filter((r) => r.status === 'rejected');
 
-    await expect(service1.reserveCompletion('1003')).rejects.toThrow();
+    expect(fulfilled).toHaveLength(2);
+    expect(rejected).toHaveLength(1);
 
-    await service1.releaseCompletion(lease1.leaseId);
-    const lease3 = await service2.reserveCompletion('1003');
+    const succeededLease = (
+      fulfilled[0] as PromiseFulfilledResult<{ leaseId: string }>
+    ).value;
 
-    expect(lease3.leaseId).toBeDefined();
+    await service1.releaseCompletion(succeededLease.leaseId);
+
+    const newLease = await service2.reserveCompletion('1004');
+
+    expect(newLease.leaseId).toBeDefined();
   });
 
   it('reclaims expired leases automatically upon next admission', async () => {
@@ -77,19 +86,35 @@ describe('GripQuotaService (PostgreSQL integration)', () => {
     expect(lease2.leaseId).toBeDefined();
   });
 
-  it('shares rate limits for one user identity across different clients/sessions', async () => {
-    for (let i = 0; i < 5; i++) {
+  it('enforces rate limits under parallel requests for the same user identity across clients', async () => {
+    for (let i = 0; i < 9; i++) {
       const lease = await service1.reserveCompletion('user-shared');
 
       await service1.releaseCompletion(lease.leaseId);
     }
 
-    for (let i = 0; i < 5; i++) {
-      const lease = await service2.reserveCompletion('user-shared');
+    const parallelResults = await Promise.allSettled([
+      service1.reserveCompletion('user-shared').then(async (l) => {
+        await service1.releaseCompletion(l.leaseId);
 
-      await service2.releaseCompletion(lease.leaseId);
-    }
+        return l;
+      }),
+      service2.reserveCompletion('user-shared').then(async (l) => {
+        await service2.releaseCompletion(l.leaseId);
 
-    await expect(service1.reserveCompletion('user-shared')).rejects.toThrow();
+        return l;
+      }),
+      service1.reserveCompletion('user-shared').then(async (l) => {
+        await service1.releaseCompletion(l.leaseId);
+
+        return l;
+      }),
+    ]);
+
+    const fulfilled = parallelResults.filter((r) => r.status === 'fulfilled');
+    const rejected = parallelResults.filter((r) => r.status === 'rejected');
+
+    expect(fulfilled).toHaveLength(1);
+    expect(rejected).toHaveLength(2);
   });
 });

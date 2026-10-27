@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import {
+  getSettingsPath,
   loadSettings,
   removeSettings,
   saveSettings,
@@ -26,9 +27,8 @@ test('validateGatewayUrl enforces HTTPS or loopback and rejects userinfo/query/h
 
 test('validateTokenFormat validates exact ugr_ prefix and 43 base64url characters', () => {
   const validToken = 'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG';
-  
-assert.equal(validateTokenFormat(validToken), true);
 
+  assert.equal(validateTokenFormat(validToken), true);
   assert.equal(validateTokenFormat('gho_notagriptoken'), false);
   assert.equal(validateTokenFormat('ugr_short'), false);
   assert.equal(validateTokenFormat('ugr_with!invalid@chars!!!!!!!!!!!!!!!!!!!!!!!'), false);
@@ -53,23 +53,28 @@ test('saveSettings, loadSettings and removeSettings work in isolated directory',
     await saveSettings(validSettings, { configDir: tmpDir });
 
     const loaded = await loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' });
-    
-assert.deepEqual(loaded, validSettings);
+
+    assert.deepEqual(loaded, validSettings);
 
     // Foreign repo returns null
     assert.equal(await loadSettings({ configDir: tmpDir, repoRoot: '/another/repo' }), null);
 
-    // Expired settings return null
+    // Expired settings throw an error instead of silently disabling
     const expiredSettings = {
       ...validSettings,
       expiresAt: new Date(Date.now() - 1000).toISOString(),
     };
-    
-await saveSettings(expiredSettings, { configDir: tmpDir });
-    assert.equal(await loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }), null);
+
+    await saveSettings(expiredSettings, { configDir: tmpDir });
+    await assert.rejects(loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }), /expired/i);
+
+    // Corrupt file throws an error instead of silently disabling
+    const settingsPath = getSettingsPath({ configDir: tmpDir, repoRoot: '/fake/repo' });
+
+    await fs.promises.writeFile(settingsPath, '{ invalid json');
+    await assert.rejects(loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }), /corrupt/i);
 
     // Remove settings
-    await saveSettings(validSettings, { configDir: tmpDir });
     await removeSettings({ configDir: tmpDir, repoRoot: '/fake/repo' });
     assert.equal(await loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }), null);
   } finally {

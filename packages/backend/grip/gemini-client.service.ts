@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  ForbiddenException,
   GatewayTimeoutException,
   HttpException,
   HttpStatus,
@@ -7,6 +8,7 @@ import {
   Injectable,
   Optional,
   ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import type {
   GripCompletionRequest,
@@ -24,20 +26,38 @@ import type { GripConfig } from './grip.types';
 
 @Injectable()
 export class GeminiClientService {
-  private readonly config: GripConfig | null;
-
-  constructor(@Optional() @Inject('GRIP_CONFIG') config?: GripConfig | null) {
-    this.config = config ?? getGripConfig(process.env);
-  }
+  constructor(
+    @Optional()
+    @Inject('GRIP_CONFIG')
+    private readonly injectedConfig?: GripConfig | null,
+  ) {}
 
   private requireConfig(): GripConfig {
-    if (!this.config) {
-      throw new ServiceUnavailableException(
-        'Grip gateway is disabled or unconfigured',
-      );
+    if (this.injectedConfig) {
+      return this.injectedConfig;
     }
 
-    return this.config;
+    try {
+      const config = getGripConfig(process.env);
+
+      if (!config) {
+        throw new ServiceUnavailableException(
+          'Grip gateway is disabled or unconfigured',
+        );
+      }
+
+      return config;
+    } catch (error: unknown) {
+      if (
+        error instanceof ServiceUnavailableException ||
+        error instanceof UnauthorizedException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      }
+
+      throw new ServiceUnavailableException('Grip gateway is misconfigured');
+    }
   }
 
   async complete(
@@ -102,16 +122,60 @@ export class GeminiClientService {
       );
     }
 
-    let responseText: string;
+    let responseText = '';
+    let totalBytes = 0;
 
-    try {
-      responseText = await response.text();
-    } catch {
-      throw new BadGatewayException('Failed to read upstream model response');
+    if (!response.body) {
+      throw new BadGatewayException('Empty upstream model response');
     }
 
-    if (Buffer.byteLength(responseText, 'utf8') > GRIP_MAX_UPSTREAM_BYTES) {
-      throw new BadGatewayException('Upstream response exceeded size limit');
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        if (value) {
+          totalBytes += value.byteLength;
+
+          if (totalBytes > GRIP_MAX_UPSTREAM_BYTES) {
+            await reader.cancel('Upstream response exceeded size limit');
+
+            throw new BadGatewayException(
+              'Upstream response exceeded size limit',
+            );
+          }
+
+          responseText += decoder.decode(value, { stream: true });
+        }
+      }
+
+      responseText += decoder.decode();
+    } catch (error: unknown) {
+      if (
+        error instanceof GatewayTimeoutException ||
+        error instanceof BadGatewayException
+      ) {
+        throw error;
+      }
+
+      if (
+        (error instanceof Error && error.name === 'TimeoutError') ||
+        (timeoutSignal.aborted && !signal?.aborted)
+      ) {
+        throw new GatewayTimeoutException('Upstream deadline exceeded');
+      }
+
+      if (signal?.aborted) {
+        throw error;
+      }
+
+      throw new BadGatewayException('Failed to read upstream model response');
     }
 
     if (!response.ok) {

@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { saveSettings } from '../grip/settings.mjs';
+import { getSettingsPath, saveSettings } from '../grip/settings.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,15 +63,90 @@ test('cli hook pre-push exits 0 when CI environment is set', () => {
   }
 });
 
+test('cli hook pre-push fails with code 1 when settings file is corrupt', async () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-corrupt-'));
+  const configDir = path.join(tmpDir, 'universe-grip');
+
+  try {
+    fs.mkdirSync(configDir, { recursive: true });
+    const settingsPath = getSettingsPath({ configDir, repoRoot: tmpDir });
+
+    fs.writeFileSync(settingsPath, '{ corrupt json');
+
+    const result = spawnSync(
+      process.execPath,
+      [cliPath, 'hook', 'pre-push', 'origin', 'https://github.com/repo'],
+      {
+        cwd: tmpDir,
+        env: {
+          ...process.env,
+          CI: '',
+          APPDATA: tmpDir,
+          XDG_CONFIG_HOME: tmpDir,
+        },
+        encoding: 'utf8',
+      },
+    );
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /corrupt or unreadable/i);
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+test('cli hook pre-push fails with code 1 when enrollment has expired', async () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-expired-'));
+  const configDir = path.join(tmpDir, 'universe-grip');
+
+  try {
+    await saveSettings(
+      {
+        version: 1,
+        repoRoot: tmpDir,
+        gatewayOrigin: 'https://gateway.example.com',
+        clientId: 'mock-client',
+        token: 'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
+        expiresAt: new Date(Date.now() - 5000).toISOString(),
+        executable: process.execPath,
+      },
+      { configDir },
+    );
+
+    const result = spawnSync(
+      process.execPath,
+      [cliPath, 'hook', 'pre-push', 'origin', 'https://github.com/repo'],
+      {
+        cwd: tmpDir,
+        env: {
+          ...process.env,
+          CI: '',
+          APPDATA: tmpDir,
+          XDG_CONFIG_HOME: tmpDir,
+        },
+        encoding: 'utf8',
+      },
+    );
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /enrollment has expired/i);
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
 test('cli hook pre-push forwards args and exit code to grip executable when enrolled', async () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-test-'));
   const configDir = path.join(tmpDir, 'universe-grip');
 
   try {
-    // Create a mock executable script
-    const mockExe = path.join(tmpDir, 'mock-grip.bat');
-    
-fs.writeFileSync(mockExe, '@echo off\r\necho MOCK GRIP RUN with args: %*\r\nexit /b 42\r\n');
+    // Cross-platform mock: node executes a local hook script matching the first argument
+    const mockHookScript = path.join(tmpDir, 'hook');
+
+    fs.writeFileSync(
+      mockHookScript,
+      'console.log("MOCK GRIP RUN with args: " + process.argv.slice(1).join(" ")); process.exit(42);\n',
+    );
 
     await saveSettings(
       {
@@ -81,7 +156,7 @@ fs.writeFileSync(mockExe, '@echo off\r\necho MOCK GRIP RUN with args: %*\r\nexit
         clientId: 'mock-client',
         token: 'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
         expiresAt: new Date(Date.now() + 86400000).toISOString(),
-        executable: mockExe,
+        executable: process.execPath,
       },
       { configDir },
     );
@@ -105,7 +180,7 @@ fs.writeFileSync(mockExe, '@echo off\r\necho MOCK GRIP RUN with args: %*\r\nexit
     assert.equal(result.status, 42);
     assert.match(
       result.stdout,
-      /MOCK GRIP RUN with args: hook pre-push origin https:\/\/github\.com\/repo/,
+      /MOCK GRIP RUN with args: .*hook pre-push origin https:\/\/github\.com\/repo/,
     );
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -131,15 +206,15 @@ test('git push succeeds through Husky when unenrolled', () => {
 
     // Setup .husky/pre-push pointing to cli.mjs
     const huskyDir = path.join(localDir, '.husky');
-    
-fs.mkdirSync(huskyDir, { recursive: true });
+
+    fs.mkdirSync(huskyDir, { recursive: true });
     // Copy the husky runner helper
     fs.cpSync('.husky/_', path.join(huskyDir, '_'), { recursive: true });
 
     const prePushHook = path.join(huskyDir, 'pre-push');
     const cliPosixPath = cliPath.replace(/\\/g, '/');
-    
-fs.writeFileSync(prePushHook, `node "${cliPosixPath}" hook pre-push "$@"\n`);
+
+    fs.writeFileSync(prePushHook, `node "${cliPosixPath}" hook pre-push "$@"\n`);
 
     // Configure core.hooksPath
     spawnSync('git', ['-C', localDir, 'config', 'core.hooksPath', '.husky/_'], {

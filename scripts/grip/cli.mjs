@@ -93,7 +93,7 @@ function resolveExecutable(candidatePath) {
   }
 
   throw new Error(
-    'Could not locate a working grip executable.\nPlease install grip (e.g. "pip install --no-deps grip-hook==0.5.0") or supply --executable <path>.',
+    'Could not locate a working grip executable.\nPlease install grip (e.g. "pipx install grip-hook==0.5.0" or "pip install grip-hook==0.5.0") or supply --executable <path>.',
   );
 }
 
@@ -211,7 +211,22 @@ async function handleSetup(args) {
 async function handleRemove(args) {
   const { options } = parseArgs(args);
   const force = Boolean(options.force);
-  const settings = await loadSettings();
+  let settings;
+
+  try {
+    settings = await loadSettings();
+  } catch (error) {
+    if (force) {
+      await removeSettings();
+      console.info('✓ Removed corrupt/expired local Grip settings (--force).');
+
+      return;
+    }
+
+    console.error(`[grip] Cannot read settings: ${error.message}`);
+    console.error('Run "pnpm grip:remove -- --force" to delete the invalid local settings.');
+    process.exit(1);
+  }
 
   if (!settings) {
     console.info('No active Grip enrollment found for this repository.');
@@ -252,7 +267,16 @@ async function handleRemove(args) {
 }
 
 async function handleStatus() {
-  const settings = await loadSettings();
+  let settings;
+
+  try {
+    settings = await loadSettings();
+  } catch (error) {
+    console.error(`[grip] Status check failed: ${error.message}`);
+    console.info('Run "pnpm grip:setup --gateway <url> --client-id <id>" to re-enroll.');
+
+    return;
+  }
 
   if (!settings) {
     console.info('Grip gateway is NOT enrolled in this repository.');
@@ -286,7 +310,14 @@ async function handleHook(args) {
     process.exit(0);
   }
 
-  const settings = await loadSettings();
+  let settings;
+
+  try {
+    settings = await loadSettings();
+  } catch (error) {
+    console.error(`[grip] Error: ${error.message}`);
+    process.exit(1);
+  }
 
   if (!settings) {
     console.info(
