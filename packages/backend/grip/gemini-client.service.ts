@@ -114,6 +114,53 @@ function parseChoices(data: unknown): GripCompletionResponse['choices'] {
   ];
 }
 
+function handleFetchError(
+  error: unknown,
+  signal?: AbortSignal,
+  timeoutSignal?: AbortSignal,
+): never {
+  const isTimeout =
+    (error instanceof Error && error.name === 'TimeoutError') ||
+    Boolean(timeoutSignal?.aborted && !signal?.aborted);
+
+  if (isTimeout) {
+    throw new GatewayTimeoutException('Upstream deadline exceeded');
+  }
+
+  if (signal?.aborted) {
+    throw error;
+  }
+
+  throw new BadGatewayException('Failed to reach upstream model service');
+}
+
+function handleStreamReadError(
+  error: unknown,
+  signal?: AbortSignal,
+  timeoutSignal?: AbortSignal,
+): never {
+  if (
+    error instanceof GatewayTimeoutException ||
+    error instanceof BadGatewayException
+  ) {
+    throw error;
+  }
+
+  const isTimeout =
+    (error instanceof Error && error.name === 'TimeoutError') ||
+    Boolean(timeoutSignal?.aborted && !signal?.aborted);
+
+  if (isTimeout) {
+    throw new GatewayTimeoutException('Upstream deadline exceeded');
+  }
+
+  if (signal?.aborted) {
+    throw error;
+  }
+
+  throw new BadGatewayException('Failed to read upstream model response');
+}
+
 @Injectable()
 export class GeminiClientService {
   constructor(
@@ -163,46 +210,26 @@ export class GeminiClientService {
           break;
         }
 
-        if (value) {
-          totalBytes += value.byteLength;
+        totalBytes += value.byteLength;
 
-          if (totalBytes > GRIP_MAX_UPSTREAM_BYTES) {
-            void reader
-              .cancel('Upstream response exceeded size limit')
-              .catch(() => {});
+        if (totalBytes > GRIP_MAX_UPSTREAM_BYTES) {
+          void reader
+            .cancel('Upstream response exceeded size limit')
+            .catch(() => {});
 
-            throw new BadGatewayException(
-              'Upstream response exceeded size limit',
-            );
-          }
-
-          responseText += decoder.decode(value, { stream: true });
+          throw new BadGatewayException(
+            'Upstream response exceeded size limit',
+          );
         }
+
+        responseText += decoder.decode(value, { stream: true });
       }
 
       responseText += decoder.decode();
 
       return responseText;
     } catch (error: unknown) {
-      if (
-        error instanceof GatewayTimeoutException ||
-        error instanceof BadGatewayException
-      ) {
-        throw error;
-      }
-
-      if (
-        (error instanceof Error && error.name === 'TimeoutError') ||
-        (timeoutSignal?.aborted && !signal?.aborted)
-      ) {
-        throw new GatewayTimeoutException('Upstream deadline exceeded');
-      }
-
-      if (signal?.aborted) {
-        throw error;
-      }
-
-      throw new BadGatewayException('Failed to read upstream model response');
+      handleStreamReadError(error, signal, timeoutSignal);
     }
   }
 
@@ -241,18 +268,7 @@ export class GeminiClientService {
         signal: combinedSignal,
       });
     } catch (error: unknown) {
-      if (
-        (error instanceof Error && error.name === 'TimeoutError') ||
-        (timeoutSignal.aborted && !signal?.aborted)
-      ) {
-        throw new GatewayTimeoutException('Upstream deadline exceeded');
-      }
-
-      if (signal?.aborted) {
-        throw error;
-      }
-
-      throw new BadGatewayException('Failed to reach upstream model service');
+      handleFetchError(error, signal, timeoutSignal);
     }
 
     this.handleHttpStatus(response.status);
