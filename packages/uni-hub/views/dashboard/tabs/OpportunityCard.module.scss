@@ -268,11 +268,12 @@
 }
 
 .warningBox {
-  margin-top: var(--space-4);
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-16);
   padding: var(--space-12) var(--space-16);
   background: color-mix(in srgb, var(--warning-color) 10%, var(--bg-surface));
   border-left: 3px solid var(--warning-color);
-  border-radius: 0 10px 10px 0;
+  border-radius: 0 var(--border-radius-medium) var(--border-radius-medium) 0;
   font-size: var(--font-xs);
   line-height: 1.45;
   color: var(--text-primary);
