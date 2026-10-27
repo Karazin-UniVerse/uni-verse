@@ -16,6 +16,8 @@
 
 husky runs lint-staged on commit: oxlint and prettier for source files, stylelint and prettier for styles, prettier for `json`, `md`, `yml`. A single shared oxlint config lives in `configs/oxlint`.
 
+Grip is a mandatory [interactive browser push check](../grip.md) backed by an authenticated team Gemini gateway (.husky/pre-push), not a commit hook or agent plugin. When the hook reports "not enrolled", ask the human to run `pnpm grip:setup`. When the whiteboard blocks Git, keep the original operation waiting; never start a duplicate push, bypass the hook, automate the questionnaire, or answer for the human. After Stop or a timeout, retry only when the human asks and the previous Git process has exited.
+
 ## Verification pipeline
 
 Run before committing or opening a PR. CI runs `pnpm lint`, `pnpm lint:style`, `pnpm typecheck`, the backend coverage tests (`pnpm --filter @universe/backend test:cov`) and `pnpm build`; the rest are local checks. Everything you run must pass with zero errors and zero warnings.

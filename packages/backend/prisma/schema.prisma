@@ -174,3 +174,33 @@ model Comment {
   applicationId String?
   application   OpportunityApplication? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
+
+
+model GripSession {
+  id          String    @id @default(uuid())
+  tokenHash   String    @unique
+  githubId    String
+  githubLogin String
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+  revokedAt   DateTime?
+
+  @@index([expiresAt])
+  @@index([githubId])
+}
+
+model GripQuotaBucket {
+  key          String   @id
+  windowEndsAt DateTime
+  count        Int
+
+  @@index([windowEndsAt])
+}
+
+model GripLease {
+  id        String   @id @default(uuid())
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
