@@ -10,7 +10,7 @@ import {
   saveSettings,
   validateGatewayUrl,
   validateTokenFormat,
-} from '../grip/settings.mjs';
+} from '../settings.mjs';
 
 test('validateGatewayUrl enforces HTTPS or loopback and rejects userinfo/query/hash', () => {
   assert.equal(validateGatewayUrl('https://gateway.example.com'), 'https://gateway.example.com');

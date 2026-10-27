@@ -5,11 +5,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { getSettingsPath, saveSettings } from '../grip/settings.mjs';
+import { getSettingsPath, saveSettings } from '../settings.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const cliPath = path.resolve(__dirname, '../grip/cli.mjs');
+const cliPath = path.resolve(__dirname, '../cli.mjs');
 
 test('cli hook pre-push fails with code 1 when not enrolled', () => {
   const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-test-')));

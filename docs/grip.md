@@ -156,6 +156,8 @@ pnpm build           # Turbo production build
 
 Dedicated concurrency verification against disposable PostgreSQL:
 
+Keep local CLI tests in `scripts/grip/tests/` and backend unit, HTTP, and PostgreSQL integration specs in `packages/backend/grip/tests/`. Other backend modules retain their existing test layout. The default backend suite excludes the PostgreSQL integration spec; the dedicated command below selects it explicitly.
+
 ```sh
 GRIP_TEST_DATABASE_URL="postgresql://user:pass@localhost:5432/disposable_db" pnpm --filter @universe/backend test:grip:postgres
 ```

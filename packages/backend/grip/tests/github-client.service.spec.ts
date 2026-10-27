@@ -3,8 +3,8 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { GithubClientService } from './github-client.service';
-import type { GripConfig } from './grip.types';
+import { GithubClientService } from '../github-client.service';
+import type { GripConfig } from '../grip.types';
 
 describe('GithubClientService', () => {
   let service: GithubClientService;

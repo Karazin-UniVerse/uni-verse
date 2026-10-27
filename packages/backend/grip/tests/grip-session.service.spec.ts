@@ -3,10 +3,10 @@ import {
   HttpStatus,
   UnauthorizedException,
 } from '@nestjs/common';
-import { GripSessionService } from './grip-session.service';
-import type { GithubClientService } from './github-client.service';
-import type { GripQuotaService } from './grip-quota.service';
-import type { GripStorageService } from './grip-storage.service';
+import { GripSessionService } from '../grip-session.service';
+import type { GithubClientService } from '../github-client.service';
+import type { GripQuotaService } from '../grip-quota.service';
+import type { GripStorageService } from '../grip-storage.service';
 
 describe('GripSessionService', () => {
   const validToken = 'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG';

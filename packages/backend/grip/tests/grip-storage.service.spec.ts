@@ -1,5 +1,5 @@
-import { GripStorageService } from './grip-storage.service';
-import type { PrismaService } from '../prisma/prisma.service';
+import { GripStorageService } from '../grip-storage.service';
+import type { PrismaService } from '../../prisma/prisma.service';
 
 describe('GripStorageService', () => {
   let service: GripStorageService;
