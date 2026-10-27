@@ -8,7 +8,8 @@ Grip pre-push checks are **mandatory** for all contributors pushing to this repo
 
 ## Architecture & Privacy
 
-- **Local interactive whiteboard**: Grip opens a browser tab on your computer where you review your diff and answer questions.
+- **Local interactive whiteboard**: Grip opens a browser tab on your computer where you review your diff and answer questions ($\ge 70$ required to pass).
+- **Resilience & Fail-Open**: If the AI model or network fails (`fail_open = true`), Grip logs a warning and permits the push rather than hard-blocking developers. On whiteboard generation errors, the CLI wrapper automatically retries once with `--fresh` before falling back.
 - **Team Gateway**: A restricted endpoint in `@universe/backend` proxies structured questions and answers to Google Gemini (`gemini-3.5-flash-lite`).
 - **No shared API keys**: Collaborators never receive or handle Gemini API keys. Authentication is handled through a one-time GitHub OAuth Device Flow exchange.
 - **Repository permission check**: Only GitHub users with **write** or **admin** permissions to `Karazin-UniVerse/uni-verse` qualify for gateway tokens.

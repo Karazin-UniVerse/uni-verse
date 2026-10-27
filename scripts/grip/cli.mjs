@@ -365,10 +365,20 @@ async function handleHook(args) {
   }
 
   try {
-    const exitCode = await runGripHook({
+    let exitCode = await runGripHook({
       settings,
       args: ['hook', hookType, ...hookArgs],
     });
+
+    if (exitCode === 2) {
+      console.warn(
+        '[grip] Whiteboard generation encountered an error. Retrying once with fresh questions...',
+      );
+      exitCode = await runGripHook({
+        settings,
+        args: ['hook', '--fresh', hookType, ...hookArgs],
+      });
+    }
 
     process.exit(exitCode);
   } catch (error) {
