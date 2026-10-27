@@ -2,6 +2,26 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+export const GRIP_REPOSITORY = 'Karazin-UniVerse/uni-verse';
+
+export function validateRepository({ remoteUrl, repoRoot = process.cwd() } = {}) {
+  const result = spawnSync('git', ['remote', 'get-url', 'origin'], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+  });
+  const allowedRemote =
+    /^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)Karazin-UniVerse\/uni-verse(?:\.git)?\/?$/i;
+
+  if (
+    result.status !== 0 ||
+    !allowedRemote.test(result.stdout.trim()) ||
+    (remoteUrl !== undefined && !allowedRemote.test(remoteUrl))
+  ) {
+    throw new Error(`Grip enrollment is restricted to the ${GRIP_REPOSITORY} repository.`);
+  }
+}
 
 /**
  * Validates gateway URL ensuring HTTPS or loopback, without userinfo, query, or hash.
@@ -81,27 +101,30 @@ export function getSettingsDir(options = {}) {
 }
 
 /**
- * Resolves the path to the settings file for a specific repository root.
- * @param {{ configDir?: string; repoRoot?: string }} [options]
+ * Resolves the current user's shared UniVerse gateway profile.
+ * @param {{ configDir?: string }} [options]
  * @returns {string}
  */
 export function getSettingsPath(options = {}) {
   const dir = getSettingsDir(options);
-  const targetRoot = path.resolve(options.repoRoot || process.cwd());
-  const hash = crypto.createHash('sha256').update(targetRoot).digest('hex');
 
-  return path.join(dir, `${hash}.json`);
+  return path.join(dir, 'gateway.json');
 }
 
 /**
- * Atomically saves Grip settings for a repository.
+ * Atomically saves the shared gateway profile after validating repository identity.
  * @param {Record<string, unknown>} settings
- * @param {{ configDir?: string }} [options]
+ * @param {{ configDir?: string; repoRoot?: string }} [options]
  * @returns {Promise<void>}
  */
 export async function saveSettings(settings, options = {}) {
-  const targetRoot = path.resolve(options.repoRoot || settings.repoRoot || process.cwd());
-  const filePath = getSettingsPath({ configDir: options.configDir, repoRoot: targetRoot });
+  await publishSettings(settings, options, false);
+}
+
+async function publishSettings(settings, options, exclusive) {
+  validateRepository(options);
+
+  const filePath = getSettingsPath(options);
   const dir = path.dirname(filePath);
 
   await fs.promises.mkdir(dir, { recursive: true, mode: 0o700 });
@@ -113,22 +136,38 @@ export async function saveSettings(settings, options = {}) {
   const content = JSON.stringify(settings, null, 2);
 
   await fs.promises.writeFile(tempPath, content, { mode: 0o600 });
-  await fs.promises.rename(tempPath, filePath);
+
+  try {
+    if (exclusive) {
+      await fs.promises.link(tempPath, filePath);
+    } else {
+      await fs.promises.rename(tempPath, filePath);
+    }
+  } finally {
+    await fs.promises.rm(tempPath, { force: true });
+  }
 }
 
 /**
- * Loads Grip settings for a repository. Only an absent file returns null.
- * @param {{ configDir?: string; repoRoot?: string }} [options]
+ * Loads shared settings. Only an absent profile returns null; invalid profiles fail closed.
+ * @param {{ configDir?: string; repoRoot?: string; remoteUrl?: string }} [options]
  * @returns {Promise<Record<string, unknown> | null>}
  */
 export async function loadSettings(options = {}) {
-  const targetRoot = path.resolve(options.repoRoot || process.cwd());
-  const filePath = getSettingsPath({ configDir: options.configDir, repoRoot: targetRoot });
+  const raw = await readSettingsFile(getSettingsPath(options));
 
-  let raw;
+  if (raw === null) {
+    return null;
+  }
 
+  validateRepository(options);
+
+  return parseSettings(raw);
+}
+
+async function readSettingsFile(filePath) {
   try {
-    raw = await fs.promises.readFile(filePath, 'utf8');
+    return await fs.promises.readFile(filePath, 'utf8');
   } catch (error) {
     if (error.code === 'ENOENT') {
       return null;
@@ -136,7 +175,9 @@ export async function loadSettings(options = {}) {
 
     throw error;
   }
+}
 
+function parseSettings(raw, legacyRoot) {
   let parsed;
 
   try {
@@ -151,16 +192,20 @@ export async function loadSettings(options = {}) {
     throw new Error('Grip enrollment file is invalid or empty. Run pnpm grip:setup to re-enroll');
   }
 
-  if (parsed.version !== 1) {
+  if (parsed.version !== (legacyRoot ? 1 : 2)) {
     throw new Error(
       `Unsupported Grip enrollment version: ${parsed.version}. Run pnpm grip:setup to re-enroll`,
     );
   }
 
-  if (!parsed.repoRoot || path.resolve(parsed.repoRoot) !== targetRoot) {
+  if (legacyRoot && (!parsed.repoRoot || path.resolve(parsed.repoRoot) !== legacyRoot)) {
     throw new Error(
       'Grip enrollment does not match this checkout. Run pnpm grip:setup to re-enroll',
     );
+  }
+
+  if (!legacyRoot && parsed.repository !== GRIP_REPOSITORY) {
+    throw new Error('Grip enrollment repository is invalid. Run pnpm grip:setup to re-enroll');
   }
 
   try {
@@ -171,6 +216,10 @@ export async function loadSettings(options = {}) {
 
   if (!validateTokenFormat(parsed.token)) {
     throw new Error('Grip enrollment token is invalid. Run pnpm grip:setup to re-enroll');
+  }
+
+  if (typeof parsed.clientId !== 'string' || !parsed.clientId.trim()) {
+    throw new Error('Grip enrollment OAuth client is invalid. Run pnpm grip:setup to re-enroll');
   }
 
   const expiresTime = parsed.expiresAt ? new Date(parsed.expiresAt).getTime() : NaN;
@@ -186,14 +235,85 @@ export async function loadSettings(options = {}) {
   return parsed;
 }
 
+export async function migrateSettings({
+  gatewayOrigin,
+  clientId,
+  configDir,
+  repoRoot = process.cwd(),
+}) {
+  const targetRoot = path.resolve(repoRoot);
+  const normalizedGateway = validateGatewayUrl(gatewayOrigin);
+
+  validateRepository({ repoRoot: targetRoot });
+
+  const shared = await loadSettings({ configDir, repoRoot: targetRoot });
+
+  if (shared) {
+    throw new Error(
+      'A shared Grip enrollment already exists. Use grip:status or explicitly re-enroll.',
+    );
+  }
+
+  const hash = crypto.createHash('sha256').update(targetRoot).digest('hex');
+  const legacyPath = path.join(getSettingsDir({ configDir }), `${hash}.json`);
+  const raw = await readSettingsFile(legacyPath);
+
+  if (raw === null) {
+    throw new Error('No checkout enrollment to migrate. Run grip:setup without --migrate.');
+  }
+
+  const legacy = parseSettings(raw, targetRoot);
+
+  if (
+    validateGatewayUrl(legacy.gatewayOrigin) !== normalizedGateway ||
+    legacy.clientId !== clientId
+  ) {
+    throw new Error('Migration gateway and OAuth client must match the existing enrollment.');
+  }
+
+  const settings = {
+    version: 2,
+    repository: GRIP_REPOSITORY,
+    gatewayOrigin: normalizedGateway,
+    clientId,
+    token: legacy.token,
+    expiresAt: legacy.expiresAt,
+    executable: legacy.executable,
+  };
+
+  try {
+    await publishSettings(settings, { configDir, repoRoot: targetRoot }, true);
+  } catch (error) {
+    if (error.code === 'EEXIST') {
+      throw new Error(
+        'A shared Grip enrollment was created concurrently; the old enrollment was kept.',
+      );
+    }
+
+    throw error;
+  }
+
+  try {
+    await fs.promises.unlink(legacyPath);
+  } catch (error) {
+    console.warn(
+      `Shared enrollment is active, but the old checkout file could not be removed (${error.code}). ` +
+        `Delete only the old file at ${legacyPath}; do not run grip:remove, which revokes the migrated token.`,
+    );
+  }
+
+  return settings;
+}
+
 /**
- * Removes Grip settings for a repository.
+ * Removes shared settings for all UniVerse worktrees of the current OS user.
  * @param {{ configDir?: string; repoRoot?: string }} [options]
  * @returns {Promise<void>}
  */
 export async function removeSettings(options = {}) {
-  const targetRoot = path.resolve(options.repoRoot || process.cwd());
-  const filePath = getSettingsPath({ configDir: options.configDir, repoRoot: targetRoot });
+  validateRepository(options);
+
+  const filePath = getSettingsPath(options);
 
   try {
     await fs.promises.unlink(filePath);

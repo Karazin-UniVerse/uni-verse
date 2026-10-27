@@ -12,7 +12,7 @@ Grip pre-push checks are **mandatory** for all contributors pushing to this repo
 - **Team Gateway**: A restricted endpoint in `@universe/backend` proxies structured questions and answers to Google Gemini (`gemini-3.5-flash-lite`).
 - **No shared API keys**: Collaborators never receive or handle Gemini API keys. Authentication is handled through a one-time GitHub OAuth Device Flow exchange.
 - **Repository permission check**: Only GitHub users with **write** or **admin** permissions to `Karazin-UniVerse/uni-verse` qualify for gateway tokens.
-- **Token storage**: Gateway tokens (`ugr_<43-chars>`) are stored locally in your OS app-data directory (`APPDATA` on Windows, `XDG_CONFIG_HOME` on POSIX) hashed by repository root. The gateway stores only SHA-256 digests.
+- **Token storage**: One gateway profile (`gateway.json`) is stored privately for your OS user in `%APPDATA%\universe-grip` on Windows or `${XDG_CONFIG_HOME:-~/.config}/universe-grip` on POSIX. Its token is shared across local UniVerse clones, branches, and linked worktrees, not across OS users or machines. The profile records the gateway, OAuth client, and repository identity; only the `Karazin-UniVerse/uni-verse` GitHub origin and push destination are accepted. The gateway stores only SHA-256 token digests.
 - **Gateway privacy**: The gateway does not persist prompts, rubrics, diffs, answers or upstream keys in its database. Local Grip keeps quiz reports, answers and cached boards under `.git/grip/`; do not publish those files or have a coding agent read them. Google receives the permitted diff and answers under your project's Gemini API terms. For Gemini API requests made under an unpaid service, Google uses submitted content and generated responses to improve its products, and human reviewers may read, annotate and process the API input and output. Do not submit sensitive, confidential or personal information through an unpaid service. In the European Economic Area, Switzerland and the United Kingdom, Google states that its paid-service data terms apply even to unpaid Gemini API quota.
 - **Quotas**:
   - Per user: 10 requests / minute, 100 requests / UTC day.
@@ -46,11 +46,27 @@ Grip pre-push checks are **mandatory** for all contributors pushing to this repo
 
 ## Quick Setup (Local Enrollment)
 
-Enroll this repository checkout in the Grip gateway:
+Enroll once per OS user on this computer for the UniVerse gateway. Run from the root of any UniVerse checkout or worktree with its GitHub `origin` configured:
 
 ```sh
 pnpm grip:setup --gateway <gateway-url> --client-id <github-oauth-client-id>
 ```
+
+Replace both placeholders with the team's actual values; `GATEWAY_URL` is not a literal address. Use the gateway origin only, without `/dev-tools/grip` or any other path. Your OAuth Client ID is not a Client Secret, GitHub PAT, or Gemini API key.
+
+Switching branches, creating worktrees, and cloning UniVerse elsewhere on the same computer no longer require another login once those checkouts contain this version of the scripts. One active gateway/account profile is supported per OS user; running setup again replaces it. Re-enroll after token expiry, revocation, or switching gateway/account. Changing the remote to a different repository does not grant it access to the shared profile.
+
+### Migrate an existing checkout enrollment
+
+If you already completed GitHub authorization with the previous checkout-scoped setup, run this explicitly **from that enrolled checkout**, using the same gateway and OAuth Client ID:
+
+```sh
+pnpm grip:setup --migrate --gateway <gateway-url> --client-id <github-oauth-client-id>
+```
+
+Migration validates the existing profile, preserves its token, executable and original expiry, writes the shared profile, and removes only that checkout's old settings file. It does not contact GitHub or silently search other checkouts for credentials. Invalid/expired profiles and a different gateway/client are rejected; an existing shared profile is never overwritten by migration. If no eligible old profile exists, use normal setup instead. Other old branches keep using their old scripts until updated; they cannot discover the new shared profile automatically. Old checkout profiles elsewhere are not migrated or revoked; retire them from those checkouts with their original removal command if needed.
+
+Migration publishes the shared profile without replacing a concurrently created profile; a losing migration keeps its old enrollment. If publication succeeds but old-file cleanup fails, setup reports success with a warning identifying the old file. Remove **only that old JSON file** manually when possible. Do not run `grip:remove` from the old checkout to clean up a migrated profile: it holds the same token and would revoke the active shared session. No repeated login is required for a cleanup-only warning.
 
 For local backend development:
 
@@ -64,7 +80,7 @@ pnpm grip:setup --gateway http://localhost:3001 --client-id <your-dev-client-id>
 2. Prompts you with a GitHub one-time code and link (GitHub Device Flow).
 3. Authorizes your GitHub account without requesting any repository write permissions.
 4. Exchanges the GitHub token with the gateway for a 30-day revocable token.
-5. Saves local configuration in a private file keyed to this repository checkout.
+5. Saves one private user-local configuration for all UniVerse checkouts and worktrees on this computer.
 
 Check your enrollment status at any time:
 
@@ -97,7 +113,7 @@ When you run `git push origin <branch>`:
 
 ## Disenrollment / Removal
 
-To remove your local enrollment and revoke your gateway session:
+To revoke your gateway session and remove the shared enrollment **for all local UniVerse checkouts and worktrees**:
 
 ```sh
 pnpm grip:remove

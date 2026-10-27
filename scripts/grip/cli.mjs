@@ -10,6 +10,9 @@ import {
   saveSettings,
   validateGatewayUrl,
   validateTokenFormat,
+  validateRepository,
+  migrateSettings,
+  GRIP_REPOSITORY,
 } from './settings.mjs';
 
 /**
@@ -153,11 +156,32 @@ async function handleSetup(args) {
   const executablePath = options.executable;
 
   if (!gatewayRaw || !clientId) {
-    console.error('Usage: pnpm grip:setup --gateway <url> --client-id <id> [--executable <path>]');
+    console.error(
+      'Usage: pnpm grip:setup --gateway <url> --client-id <id> [--executable <path> | --migrate]',
+    );
     process.exit(1);
   }
 
   const gatewayOrigin = validateGatewayUrl(gatewayRaw);
+
+  validateRepository();
+
+  if (options.migrate) {
+    if (executablePath) {
+      throw new Error(
+        '--migrate retains the existing executable; do not combine it with --executable.',
+      );
+    }
+
+    const settings = await migrateSettings({ gatewayOrigin, clientId });
+
+    console.info('✓ Migrated Grip enrollment for all local UniVerse checkouts and worktrees.');
+    console.info(`Gateway: ${gatewayOrigin}`);
+    console.info(`Expires: ${settings.expiresAt}`);
+
+    return;
+  }
+
   const executable = resolveExecutable(executablePath);
 
   console.info(`Using Grip executable: ${executable}`);
@@ -198,8 +222,8 @@ async function handleSetup(args) {
   }
 
   await saveSettings({
-    version: 1,
-    repoRoot: process.cwd(),
+    version: 2,
+    repository: GRIP_REPOSITORY,
     gatewayOrigin,
     clientId,
     token,
@@ -208,7 +232,7 @@ async function handleSetup(args) {
   });
 
   console.info('\n✓ Grip gateway enrollment successful!');
-  console.info(`Repository: ${process.cwd()}`);
+  console.info(`Repository: ${GRIP_REPOSITORY} (all local checkouts and worktrees)`);
   console.info(`Gateway:    ${gatewayOrigin}`);
   console.info(`Executable: ${executable}`);
   console.info(`Expires:    ${expiresAt}`);
@@ -235,7 +259,7 @@ async function handleRemove(args) {
   }
 
   if (!settings) {
-    console.info('No active Grip enrollment found for this repository.');
+    console.info('No shared Grip enrollment found for this OS user.');
 
     return;
   }
@@ -263,7 +287,7 @@ async function handleRemove(args) {
 
   if (revoked || force) {
     await removeSettings();
-    console.info('✓ Grip enrollment successfully removed.');
+    console.info('✓ Grip enrollment removed for all local UniVerse checkouts and worktrees.');
   } else {
     console.error(
       'Remote session could not be revoked. Local settings were kept to prevent orphaned credentials.\nUse "pnpm grip:remove -- --force" to remove local settings anyway.',
@@ -285,9 +309,12 @@ async function handleStatus() {
   }
 
   if (!settings) {
-    console.info('Grip gateway is NOT enrolled in this repository.');
+    console.info('Grip gateway is NOT enrolled for this OS user.');
     console.info(
       'Enrollment is mandatory to push code. Run "pnpm grip:setup --gateway <url> --client-id <id>" to enroll.',
+    );
+    console.info(
+      'For a previous checkout enrollment, run setup with --migrate from that checkout.',
     );
 
     return;
@@ -297,7 +324,7 @@ async function handleStatus() {
   const remainingDays = Math.max(0, Math.ceil(remainingMs / (1000 * 60 * 60 * 24)));
 
   console.info('Grip Gateway Status: Enrolled');
-  console.info(`Repository:     ${settings.repoRoot}`);
+  console.info(`Repository:     ${settings.repository} (all local checkouts and worktrees)`);
   console.info(`Gateway Origin: ${settings.gatewayOrigin}`);
   console.info(`Client ID:      ${settings.clientId}`);
   console.info(`Executable:     ${settings.executable}`);
@@ -323,7 +350,7 @@ async function handleHook(args) {
   let settings;
 
   try {
-    settings = await loadSettings();
+    settings = await loadSettings({ remoteUrl: hookArgs[1] });
   } catch (error) {
     console.error(`[grip] Error: ${error.message}`);
     process.exit(1);

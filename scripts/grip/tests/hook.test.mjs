@@ -6,6 +6,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { getSettingsPath, saveSettings } from '../settings.mjs';
+import { initializeRepository } from './helpers.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -70,23 +71,25 @@ test('cli hook pre-push does not skip when CI is false and enrollment has expire
   const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-ci-false-')));
   const configDir = path.join(tmpDir, 'universe-grip');
 
+  initializeRepository(tmpDir);
+
   try {
     await saveSettings(
       {
-        version: 1,
-        repoRoot: tmpDir,
+        version: 2,
+        repository: 'Karazin-UniVerse/uni-verse',
         gatewayOrigin: 'https://gateway.example.com',
         clientId: 'mock-client',
         token: 'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
         expiresAt: new Date(Date.now() - 5000).toISOString(),
         executable: process.execPath,
       },
-      { configDir },
+      { configDir, repoRoot: tmpDir },
     );
 
     const result = spawnSync(
       process.execPath,
-      [cliPath, 'hook', 'pre-push', 'origin', 'https://github.com/repo'],
+      [cliPath, 'hook', 'pre-push', 'origin', 'https://github.com/Karazin-UniVerse/uni-verse.git'],
       {
         cwd: tmpDir,
         env: {
@@ -106,15 +109,17 @@ test('cli hook pre-push does not skip when CI is false and enrollment has expire
   }
 });
 
-test('cli hook pre-push fails with code 1 when repoRoot does not match checkout', async () => {
+test('cli hook pre-push fails with code 1 when shared profile repository does not match', async () => {
   const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-mismatch-')));
   const configDir = path.join(tmpDir, 'universe-grip');
+
+  initializeRepository(tmpDir);
 
   try {
     await saveSettings(
       {
-        version: 1,
-        repoRoot: '/completely/different/checkout/path',
+        version: 2,
+        repository: 'another/project',
       },
       { configDir, repoRoot: tmpDir },
     );
@@ -135,7 +140,7 @@ test('cli hook pre-push fails with code 1 when repoRoot does not match checkout'
     );
 
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /does not match this checkout/i);
+    assert.match(result.stderr, /repository/i);
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
@@ -145,6 +150,8 @@ test('cli hook pre-push fails with code 1 when settings file is corrupt', async 
   const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-corrupt-')));
   const configDir = path.join(tmpDir, 'universe-grip');
 
+  initializeRepository(tmpDir);
+
   try {
     fs.mkdirSync(configDir, { recursive: true });
     const settingsPath = getSettingsPath({ configDir, repoRoot: tmpDir });
@@ -153,7 +160,7 @@ test('cli hook pre-push fails with code 1 when settings file is corrupt', async 
 
     const result = spawnSync(
       process.execPath,
-      [cliPath, 'hook', 'pre-push', 'origin', 'https://github.com/repo'],
+      [cliPath, 'hook', 'pre-push', 'origin', 'https://github.com/Karazin-UniVerse/uni-verse.git'],
       {
         cwd: tmpDir,
         env: {
@@ -177,23 +184,25 @@ test('cli hook pre-push fails with code 1 when enrollment has expired', async ()
   const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-expired-')));
   const configDir = path.join(tmpDir, 'universe-grip');
 
+  initializeRepository(tmpDir);
+
   try {
     await saveSettings(
       {
-        version: 1,
-        repoRoot: tmpDir,
+        version: 2,
+        repository: 'Karazin-UniVerse/uni-verse',
         gatewayOrigin: 'https://gateway.example.com',
         clientId: 'mock-client',
         token: 'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
         expiresAt: new Date(Date.now() - 5000).toISOString(),
         executable: process.execPath,
       },
-      { configDir },
+      { configDir, repoRoot: tmpDir },
     );
 
     const result = spawnSync(
       process.execPath,
-      [cliPath, 'hook', 'pre-push', 'origin', 'https://github.com/repo'],
+      [cliPath, 'hook', 'pre-push', 'origin', 'https://github.com/Karazin-UniVerse/uni-verse.git'],
       {
         cwd: tmpDir,
         env: {
@@ -217,6 +226,8 @@ test('cli hook pre-push forwards args and exit code to grip executable when enro
   const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-test-')));
   const configDir = path.join(tmpDir, 'universe-grip');
 
+  initializeRepository(tmpDir);
+
   try {
     // Cross-platform mock: node executes a local hook script matching the first argument
     const mockHookScript = path.join(tmpDir, 'hook');
@@ -228,20 +239,20 @@ test('cli hook pre-push forwards args and exit code to grip executable when enro
 
     await saveSettings(
       {
-        version: 1,
-        repoRoot: tmpDir,
+        version: 2,
+        repository: 'Karazin-UniVerse/uni-verse',
         gatewayOrigin: 'https://gateway.example.com',
         clientId: 'mock-client',
         token: 'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
         expiresAt: new Date(Date.now() + 86400000).toISOString(),
         executable: process.execPath,
       },
-      { configDir },
+      { configDir, repoRoot: tmpDir },
     );
 
     const result = spawnSync(
       process.execPath,
-      [cliPath, 'hook', 'pre-push', 'origin', 'https://github.com/repo'],
+      [cliPath, 'hook', 'pre-push', 'origin', 'https://github.com/Karazin-UniVerse/uni-verse.git'],
       {
         cwd: tmpDir,
         env: {
@@ -258,7 +269,7 @@ test('cli hook pre-push forwards args and exit code to grip executable when enro
     assert.equal(result.status, 42);
     assert.match(
       result.stdout,
-      /MOCK GRIP RUN with args: .*hook pre-push origin https:\/\/github\.com\/repo/,
+      /MOCK GRIP RUN with args: .*hook pre-push origin https:\/\/github\.com\/Karazin-UniVerse\/uni-verse\.git/,
     );
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });

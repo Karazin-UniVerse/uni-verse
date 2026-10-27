@@ -11,6 +11,7 @@ import {
   validateGatewayUrl,
   validateTokenFormat,
 } from '../settings.mjs';
+import { initializeRepository } from './helpers.mjs';
 
 test('validateGatewayUrl enforces HTTPS or loopback and rejects userinfo/query/hash', () => {
   assert.equal(validateGatewayUrl('https://gateway.example.com'), 'https://gateway.example.com');
@@ -18,144 +19,62 @@ test('validateGatewayUrl enforces HTTPS or loopback and rejects userinfo/query/h
   assert.equal(validateGatewayUrl('http://localhost:3001'), 'http://localhost:3001');
   assert.equal(validateGatewayUrl('http://127.0.0.1:3001'), 'http://127.0.0.1:3001');
 
-  assert.throws(() => validateGatewayUrl('http://insecure.example.com'));
-  assert.throws(() => validateGatewayUrl('https://user:pass@gateway.example.com'));
-  assert.throws(() => validateGatewayUrl('https://gateway.example.com?foo=bar'));
-  assert.throws(() => validateGatewayUrl('https://gateway.example.com#fragment'));
-  assert.throws(() => validateGatewayUrl('not-a-url'));
-  assert.throws(() => validateGatewayUrl('https://gateway.example.com/foreign-path'));
-});
-
-test('loadSettings rejects a stored gateway path instead of forwarding a token to it', async (t) => {
-  const repoRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-gateway-path-')));
-
-  t.after(() => fs.rmSync(repoRoot, { recursive: true, force: true }));
-  const settings = {
-    version: 1,
-    repoRoot,
-    gatewayOrigin: 'https://gateway.example.com/foreign-path',
-    token: 'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
-    expiresAt: new Date(Date.now() + 86400000).toISOString(),
-    executable: process.execPath,
-  };
-
-  await saveSettings(settings, { configDir: repoRoot });
-  await assert.rejects(loadSettings({ configDir: repoRoot, repoRoot }), /gateway URL is invalid/i);
+  for (const value of [
+    'http://insecure.example.com',
+    'https://user:pass@gateway.example.com',
+    'https://gateway.example.com?foo=bar',
+    'https://gateway.example.com#fragment',
+    'not-a-url',
+    'https://gateway.example.com/foreign-path',
+  ]) {
+    assert.throws(() => validateGatewayUrl(value));
+  }
 });
 
 test('validateTokenFormat validates exact ugr_ prefix and 43 base64url characters', () => {
-  const validToken = 'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG';
-
-  assert.equal(validateTokenFormat(validToken), true);
+  assert.equal(validateTokenFormat('ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG'), true);
   assert.equal(validateTokenFormat('gho_notagriptoken'), false);
   assert.equal(validateTokenFormat('ugr_short'), false);
   assert.equal(validateTokenFormat('ugr_with!invalid@chars!!!!!!!!!!!!!!!!!!!!!!!'), false);
 });
 
-test('saveSettings, loadSettings and removeSettings work in isolated directory', async () => {
-  const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-settings-test-')));
+test('shared settings round-trip, fail closed on invalid profiles and can be removed', async (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-settings-test-')));
 
-  try {
-    const validSettings = {
-      version: 1,
-      repoRoot: '/fake/repo',
-      gatewayOrigin: 'https://gateway.example.com',
-      clientId: 'client-123',
-      token: 'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
-      expiresAt: new Date(Date.now() + 86400000).toISOString(),
-      executable: process.execPath,
-    };
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  initializeRepository(root);
 
-    assert.equal(await loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }), null);
+  const options = { configDir: path.join(root, 'config'), repoRoot: root };
+  const settings = {
+    version: 2,
+    repository: 'Karazin-UniVerse/uni-verse',
+    gatewayOrigin: 'https://gateway.example.com',
+    clientId: 'client-123',
+    token: 'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
+    expiresAt: new Date(Date.now() + 86400000).toISOString(),
+    executable: process.execPath,
+  };
 
-    await saveSettings(validSettings, { configDir: tmpDir });
+  assert.equal(await loadSettings(options), null);
+  await saveSettings(settings, options);
+  assert.deepEqual(await loadSettings(options), settings);
 
-    const loaded = await loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' });
-
-    assert.deepEqual(loaded, validSettings);
-
-    // Non-existent repo file returns null
-    assert.equal(await loadSettings({ configDir: tmpDir, repoRoot: '/another/repo' }), null);
-
-    // Mismatched repoRoot in existing file throws error
-    const mismatchedSettings = {
-      ...validSettings,
-      repoRoot: '/different/repo/root',
-    };
-
-    await saveSettings(mismatchedSettings, { configDir: tmpDir, repoRoot: '/fake/repo' });
-    await assert.rejects(
-      loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }),
-      /does not match this checkout/i,
-    );
-
-    // Invalid version throws error
-    const invalidVersion = {
-      ...validSettings,
-      version: 99,
-    };
-
-    await saveSettings(invalidVersion, { configDir: tmpDir, repoRoot: '/fake/repo' });
-    await assert.rejects(
-      loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }),
-      /unsupported grip enrollment version/i,
-    );
-
-    // Invalid gateway URL throws error
-    const invalidUrl = {
-      ...validSettings,
-      gatewayOrigin: 'http://insecure-remote.example.com',
-    };
-
-    await saveSettings(invalidUrl, { configDir: tmpDir, repoRoot: '/fake/repo' });
-    await assert.rejects(
-      loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }),
-      /gateway url is invalid/i,
-    );
-
-    // Invalid token throws error
-    const invalidToken = {
-      ...validSettings,
-      token: 'bad-token-format',
-    };
-
-    await saveSettings(invalidToken, { configDir: tmpDir, repoRoot: '/fake/repo' });
-    await assert.rejects(
-      loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }),
-      /token is invalid/i,
-    );
-
-    // Invalid expiration date throws error
-    const invalidDate = {
-      ...validSettings,
-      expiresAt: 'not-a-date',
-    };
-
-    await saveSettings(invalidDate, { configDir: tmpDir, repoRoot: '/fake/repo' });
-    await assert.rejects(
-      loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }),
-      /expiration date is invalid/i,
-    );
-
-    // Expired settings throw an error instead of silently disabling
-    const expiredSettings = {
-      ...validSettings,
-      expiresAt: new Date(Date.now() - 1000).toISOString(),
-    };
-
-    await saveSettings(expiredSettings, { configDir: tmpDir });
-    await assert.rejects(loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }), /expired/i);
-
-    // Corrupt file throws an error instead of silently disabling
-    const settingsPath = getSettingsPath({ configDir: tmpDir, repoRoot: '/fake/repo' });
-
-    await fs.promises.writeFile(settingsPath, '{ invalid json');
-    await assert.rejects(loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }), /corrupt/i);
-
-    // Remove settings
-    await removeSettings({ configDir: tmpDir, repoRoot: '/fake/repo' });
-    assert.equal(await loadSettings({ configDir: tmpDir, repoRoot: '/fake/repo' }), null);
-  } finally {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+  for (const [override, message] of [
+    [{ version: 99 }, /unsupported grip enrollment version/i],
+    [{ repository: 'another/project' }, /repository is invalid/i],
+    [{ gatewayOrigin: 'https://gateway.example.com/foreign-path' }, /gateway URL is invalid/i],
+    [{ gatewayOrigin: 'http://insecure-remote.example.com' }, /gateway URL is invalid/i],
+    [{ token: 'bad-token-format' }, /token is invalid/i],
+    [{ clientId: '' }, /OAuth client is invalid/i],
+    [{ expiresAt: 'not-a-date' }, /expiration date is invalid/i],
+    [{ expiresAt: new Date(Date.now() - 1000).toISOString() }, /expired/i],
+  ]) {
+    await saveSettings({ ...settings, ...override }, options);
+    await assert.rejects(loadSettings(options), message);
   }
+
+  await fs.promises.writeFile(getSettingsPath(options), '{ invalid json');
+  await assert.rejects(loadSettings(options), /corrupt/i);
+  await removeSettings(options);
+  assert.equal(await loadSettings(options), null);
 });
