@@ -152,6 +152,15 @@ Dedicated concurrency verification against disposable PostgreSQL:
 GRIP_TEST_DATABASE_URL="postgresql://user:pass@localhost:5432/disposable_db" pnpm --filter @universe/backend test:grip:postgres
 ```
 
+### Manual E2E Verification Completed
+
+The live authentication and pre-push loop was verified end-to-end:
+
+- Device Flow authentication against the local NestJS gateway.
+- Repository permissions check via GitHub API (`admin` role verified).
+- Bounded model completion forwarded to Gemini 3.5 Flash Lite via OpenAI-compatible endpoint.
+- Interactive Grip whiteboard check launched on push.
+
 ### Production Deployment Prerequisites (Human Operations)
 
 1. **GitHub OAuth Application**: Create an OAuth application under the organization with Device Flow enabled; note the Client ID.
