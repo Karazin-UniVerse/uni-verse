@@ -188,6 +188,9 @@ UniVerse enforces strict institutional security policies:
 
 AI coding agents can use the shared [Context7 MCP configuration](docs/context7.md) for library documentation. Each developer signs in with their own account; no shared credentials or application dependencies are required. Local codebase structural knowledge graphs can be generated with zero token spend via [Graphify](docs/graphify.md).
 
+UniVerse enforces mandatory [Grip browser push checks](docs/grip.md) backed by an authenticated, quota-limited team Gemini gateway.
+The pre-push check runs Grip in whiteboard mode before code is sent upstream. All contributors must enroll their checkout before pushing (`pnpm grip:setup`).
+
 Run linters, style checks, type checks, and automated tests across all monorepo packages:
 
 ```bash

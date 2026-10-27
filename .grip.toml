@@ -1,0 +1,56 @@
+# Grip configuration for UniVerse repository
+# Docs: https://guilyx.github.io/grip/configuration/
+
+hook_mode = "whiteboard"
+passing_score = 70
+fail_open = false
+require_tty = true
+remember_passes_hours = 24.0
+# Leave room for instructions, five answers and Python's non-ASCII JSON escaping.
+max_diff_bytes = 30000
+
+exclude = [
+  "*.lock",
+  "*.lockb",
+  "*.min.js",
+  "*.min.css",
+  "*.map",
+  "*.snap",
+  "*.svg",
+  "*.pb.go",
+  "*_pb2.py",
+  "*.generated.*",
+  "package-lock.json",
+  "yarn.lock",
+  "pnpm-lock.yaml",
+  "Cargo.lock",
+  "poetry.lock",
+  "uv.lock",
+  "go.sum",
+  "Pipfile.lock",
+  "composer.lock",
+  "Gemfile.lock",
+  ".env",
+  ".env.*",
+  "*.env",
+  "*.pem",
+  "*.key",
+  "*.crt",
+  "screenshots/*",
+  "graphify-out/*",
+  ".lighthouseci/*",
+  ".playwright/*",
+  ".playwright-cli/*",
+  ".venv/*",
+  "node_modules/*",
+  ".next/*",
+  "dist/*",
+  "coverage/*",
+  ".turbo/*",
+  "*.tsbuildinfo",
+  "packages/ui/storybook-static/*",
+  "packages/database/client/*",
+  "packages/uni-hub/repomix-output.xml",
+  ".claude/skills/*",
+  "GEMINI.md",
+]
