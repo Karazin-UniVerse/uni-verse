@@ -6,7 +6,7 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { getGripConfig } from './grip.config';
+import { resolveGripConfig } from './grip.helpers';
 import type { GripConfig, GripIdentity } from './grip.types';
 
 @Injectable()
@@ -18,31 +18,7 @@ export class GithubClientService {
   ) {}
 
   private requireConfig(): GripConfig {
-    if (this.injectedConfig) {
-      return this.injectedConfig;
-    }
-
-    try {
-      const config = getGripConfig(process.env);
-
-      if (!config) {
-        throw new ServiceUnavailableException(
-          'Grip gateway is disabled or unconfigured',
-        );
-      }
-
-      return config;
-    } catch (error: unknown) {
-      if (
-        error instanceof ServiceUnavailableException ||
-        error instanceof UnauthorizedException ||
-        error instanceof ForbiddenException
-      ) {
-        throw error;
-      }
-
-      throw new ServiceUnavailableException('Grip gateway is misconfigured');
-    }
+    return resolveGripConfig(this.injectedConfig);
   }
 
   async identify(accessToken: string): Promise<GripIdentity> {

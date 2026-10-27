@@ -1,16 +1,23 @@
 import proxyAddr from 'proxy-addr';
-import { BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type {
   GripCompletionRequest,
   GripMessage,
   GripResponseFormat,
 } from '@universe/core/types/grip';
+import { getGripConfig } from './grip.config';
 import {
   GRIP_ALLOWED_MODEL,
   GRIP_MAX_MESSAGES_COMBINED_BYTES,
   GRIP_MAX_SCHEMA_BYTES,
   GRIP_MAX_SCHEMA_NAME_LENGTH,
 } from './grip.constants';
+import type { GripConfig } from './grip.types';
 
 const ALLOWED_TOP_LEVEL_KEYS = new Set([
   'model',
@@ -195,4 +202,34 @@ export function resolveClientIp(
   );
 
   return ip || remoteAddress;
+}
+
+export function resolveGripConfig(
+  injectedConfig?: GripConfig | null,
+): GripConfig {
+  if (injectedConfig) {
+    return injectedConfig;
+  }
+
+  try {
+    const config = getGripConfig(process.env);
+
+    if (!config) {
+      throw new ServiceUnavailableException(
+        'Grip gateway is disabled or unconfigured',
+      );
+    }
+
+    return config;
+  } catch (error: unknown) {
+    if (
+      error instanceof ServiceUnavailableException ||
+      error instanceof UnauthorizedException ||
+      error instanceof ForbiddenException
+    ) {
+      throw error;
+    }
+
+    throw new ServiceUnavailableException('Grip gateway is misconfigured');
+  }
 }

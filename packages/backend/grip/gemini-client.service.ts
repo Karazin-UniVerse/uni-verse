@@ -1,6 +1,5 @@
 import {
   BadGatewayException,
-  ForbiddenException,
   GatewayTimeoutException,
   HttpException,
   HttpStatus,
@@ -8,20 +7,19 @@ import {
   Injectable,
   Optional,
   ServiceUnavailableException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import type {
   GripCompletionRequest,
   GripCompletionResponse,
   GripCompletionUsage,
 } from '@universe/core/types/grip';
-import { getGripConfig } from './grip.config';
 import {
   GRIP_ALLOWED_MODEL,
   GRIP_MAX_OUTPUT_TOKENS,
   GRIP_MAX_UPSTREAM_BYTES,
   GRIP_UPSTREAM_TIMEOUT_MS,
 } from './grip.constants';
+import { resolveGripConfig } from './grip.helpers';
 import type { GripConfig } from './grip.types';
 
 @Injectable()
@@ -33,31 +31,7 @@ export class GeminiClientService {
   ) {}
 
   private requireConfig(): GripConfig {
-    if (this.injectedConfig) {
-      return this.injectedConfig;
-    }
-
-    try {
-      const config = getGripConfig(process.env);
-
-      if (!config) {
-        throw new ServiceUnavailableException(
-          'Grip gateway is disabled or unconfigured',
-        );
-      }
-
-      return config;
-    } catch (error: unknown) {
-      if (
-        error instanceof ServiceUnavailableException ||
-        error instanceof UnauthorizedException ||
-        error instanceof ForbiddenException
-      ) {
-        throw error;
-      }
-
-      throw new ServiceUnavailableException('Grip gateway is misconfigured');
-    }
+    return resolveGripConfig(this.injectedConfig);
   }
 
   async complete(
