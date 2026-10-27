@@ -280,7 +280,9 @@ async function handleStatus() {
 
   if (!settings) {
     console.info('Grip gateway is NOT enrolled in this repository.');
-    console.info('Run "pnpm grip:setup --gateway <url> --client-id <id>" to enroll.');
+    console.info(
+      'Enrollment is mandatory to push code. Run "pnpm grip:setup --gateway <url> --client-id <id>" to enroll.',
+    );
 
     return;
   }
@@ -322,11 +324,11 @@ async function handleHook(args) {
   }
 
   if (!settings) {
-    console.info(
-      '[grip] Notice: Grip pre-push check is optional and not enrolled in this repository. Skipping.',
+    console.error(
+      '[grip] Error: Grip pre-push check is mandatory for this repository, but you are not enrolled.',
     );
-    console.info('[grip] To enroll, run: pnpm grip:setup --gateway <url> --client-id <id>\n');
-    process.exit(0);
+    console.error('[grip] To enroll, run: pnpm grip:setup --gateway <url> --client-id <id>\n');
+    process.exit(1);
   }
 
   try {

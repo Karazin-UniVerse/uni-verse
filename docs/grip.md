@@ -2,7 +2,7 @@
 
 [Grip](https://github.com/guilyx/grip) quizzes the **human developer** on their committed changes before allowing a local `git push` to complete. UniVerse uses Grip in **whiteboard mode** (`.grip.toml`) backed by an authenticated, quota-limited **team Gemini gateway** in NestJS (`/dev-tools/grip`).
 
-Grip pre-push checks are **strictly optional** for contributors. If you do not enroll, your `git push` runs normally with a one-line notice. Once enrolled, passing the whiteboard releases the push immediately.
+Grip pre-push checks are **mandatory** for all contributors pushing to this repository. Pushes are blocked until you enroll via `pnpm grip:setup` and defend your changes on the whiteboard (scoring $\ge 70$).
 
 ---
 
@@ -79,9 +79,10 @@ pnpm grip:status
 When you run `git push origin <branch>`:
 
 1. **Unenrolled checkout**:
-   Prints a brief notice and continues pushing immediately:
+   Fails closed with exit code 1, requiring enrollment before pushing:
    ```
-   [grip] Notice: Grip pre-push check is optional and not enrolled in this repository. Skipping.
+   [grip] Error: Grip pre-push check is mandatory for this repository, but you are not enrolled.
+   [grip] To enroll, run: pnpm grip:setup --gateway <url> --client-id <id>
    ```
 2. **CI Environment (`CI=true`)**:
    Automatically skips interactive checks.

@@ -11,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const cliPath = path.resolve(__dirname, '../grip/cli.mjs');
 
-test('cli hook pre-push exits 0 with notice when not enrolled', () => {
+test('cli hook pre-push fails with code 1 when not enrolled', () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-test-'));
 
   try {
@@ -30,8 +30,11 @@ test('cli hook pre-push exits 0 with notice when not enrolled', () => {
       },
     );
 
-    assert.equal(result.status, 0);
-    assert.match(result.stdout, /Notice: Grip pre-push check is optional and not enrolled/);
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stderr,
+      /Grip pre-push check is mandatory for this repository, but you are not enrolled/,
+    );
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
@@ -262,7 +265,7 @@ test('cli hook pre-push forwards args and exit code to grip executable when enro
   }
 });
 
-test('git push succeeds through Husky when unenrolled', () => {
+test('git push fails through Husky when unenrolled', () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grip-git-test-'));
 
   try {
@@ -306,7 +309,7 @@ test('git push succeeds through Husky when unenrolled', () => {
     // Add remote
     spawnSync('git', ['-C', localDir, 'remote', 'add', 'origin', remoteDir], { encoding: 'utf8' });
 
-    // Push
+    // Push fails closed with exit code 1 because unenrolled
     const pushResult = spawnSync('git', ['-C', localDir, 'push', 'origin', 'main'], {
       env: {
         ...process.env,
@@ -317,7 +320,8 @@ test('git push succeeds through Husky when unenrolled', () => {
       encoding: 'utf8',
     });
 
-    assert.equal(pushResult.status, 0);
+    assert.equal(pushResult.status, 1);
+    assert.match(pushResult.stderr, /Grip pre-push check is mandatory/);
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
