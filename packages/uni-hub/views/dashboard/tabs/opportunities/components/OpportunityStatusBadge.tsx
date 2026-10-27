@@ -7,23 +7,51 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 
 export interface OpportunityStatusBadgeProps {
   status: OpportunityStatus;
+  size?: 'small' | 'medium';
 }
 
-export const OpportunityStatusBadge: React.FC<OpportunityStatusBadgeProps> = ({ status }) => {
+export const OpportunityStatusBadge: React.FC<OpportunityStatusBadgeProps> = ({
+  status,
+  size = 'small',
+}) => {
   const { formatMessage } = useLanguage();
 
   switch (status) {
     case 'DRAFT':
-      return <Tag tone="neutral">{formatMessage('opportunities.status.draft')}</Tag>;
+      return (
+        <Tag tone="neutral" size={size}>
+          {formatMessage('opportunities.status.draft')}
+        </Tag>
+      );
     case 'READY_FOR_REVIEW':
-      return <Tag tone="info">{formatMessage('opportunities.status.readyForReview')}</Tag>;
+      return (
+        <Tag tone="info" size={size}>
+          {formatMessage('opportunities.status.readyForReview')}
+        </Tag>
+      );
     case 'REQUIRES_CHANGES':
-      return <Tag tone="warning">{formatMessage('opportunities.status.requiresChanges')}</Tag>;
+      return (
+        <Tag tone="warning" size={size}>
+          {formatMessage('opportunities.status.requiresChanges')}
+        </Tag>
+      );
     case 'PUBLISHED':
-      return <Tag tone="success">{formatMessage('opportunities.status.published')}</Tag>;
+      return (
+        <Tag tone="success" size={size}>
+          {formatMessage('opportunities.status.published')}
+        </Tag>
+      );
     case 'REJECTED':
-      return <Tag tone="danger">{formatMessage('opportunities.status.rejected')}</Tag>;
+      return (
+        <Tag tone="danger" size={size}>
+          {formatMessage('opportunities.status.rejected')}
+        </Tag>
+      );
     default:
-      return <Tag tone="neutral">{status}</Tag>;
+      return (
+        <Tag tone="neutral" size={size}>
+          {status}
+        </Tag>
+      );
   }
 };

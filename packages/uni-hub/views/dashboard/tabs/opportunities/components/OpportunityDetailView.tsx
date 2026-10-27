@@ -106,7 +106,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       title={opportunity.title ?? formatMessage('opportunities.detailModal.defaultTitle')}
       paymentTagText={paymentTagText}
       paymentTone={opportunity.paymentType === 'PAID' ? 'success' : 'neutral'}
-      statusBadge={<OpportunityStatusBadge status={opportunity.status} />}
+      statusBadge={<OpportunityStatusBadge status={opportunity.status} size="medium" />}
       lifecycleTagText={lifecycleTagText}
       organizerLabel={formatMessage('opportunities.detailModal.organizer')}
       organizerName={organizerName}
