@@ -17,6 +17,11 @@
   letter-spacing: 0.02em;
 }
 
+.fieldHint {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+
 .textarea {
   width: 100%;
   padding: var(--space-12, 12px) var(--space-16, 16px);

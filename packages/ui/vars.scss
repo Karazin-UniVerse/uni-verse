@@ -18,6 +18,7 @@ $space-4: 4px;
 $space-8: 8px;
 $space-12: 12px;
 $space-16: 16px;
+$space-20: 20px;
 $space-24: 24px;
 $space-32: 32px;
 $space-40: 40px;
@@ -31,6 +32,7 @@ $space-64: 64px;
   --space-8: 8px;
   --space-12: 12px;
   --space-16: 16px;
+  --space-20: 20px;
   --space-24: 24px;
   --space-32: 32px;
   --space-40: 40px;
@@ -80,6 +82,7 @@ $space-64: 64px;
   --box-shadow-large: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -2px rgb(0 0 0 / 5%);
 
   /* Z-Index */
+  --z-sidebar: 10;
   --z-dropdown: 100;
 
   /* Transitions */
@@ -190,11 +193,24 @@ $space-64: 64px;
   --purple-800: #6b21a8;
   --purple-900: #581c87;
 
+  /* Yellow Palette */
+  --yellow-50: #fffbeb;
+  --yellow-100: #fef3c7;
+  --yellow-200: #fde68a;
+  --yellow-300: #fcd34d;
+  --yellow-400: #fbbf24;
+  --yellow-500: #f59e0b;
+  --yellow-600: #d97706;
+  --yellow-700: #b45309;
+  --yellow-800: #92400e;
+  --yellow-900: #78350f;
+
   /* Feedback Colors (Static) */
   --success-color: var(--green-500);
   --error-color: var(--red-500);
-  --warning-color: #f59e0b; /* Consider adding a yellow palette */
-  --warning-light: #fbbf24;
+  --warning-color: var(--yellow-500);
+  --warning-light: var(--yellow-400);
+  --warning-text: var(--yellow-800);
   --info-color: var(--blue-500);
 }
 
@@ -243,7 +259,7 @@ $space-64: 64px;
   --chart-empty: var(--neutral-text-secondary);
   --chart-title: var(--neutral-text-primary);
   --chart-success: var(--green-500);
-  --chart-warning: #f59e0b;
+  --chart-warning: var(--yellow-500);
   --chart-danger: var(--red-500);
   --chart-info: var(--blue-500);
   --chart-series-1: var(--accent-primary);
@@ -422,7 +438,7 @@ $space-64: 64px;
   --chart-empty: var(--neutral-text-secondary);
   --chart-title: var(--neutral-text-primary);
   --chart-success: var(--green-400);
-  --chart-warning: #fbbf24;
+  --chart-warning: var(--yellow-400);
   --chart-danger: var(--red-400);
   --chart-info: var(--blue-400);
   --chart-series-1: var(--blue-400);

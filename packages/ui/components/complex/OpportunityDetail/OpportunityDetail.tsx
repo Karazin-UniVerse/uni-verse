@@ -1,10 +1,8 @@
 import React, { useId } from 'react';
-import { Mail, Send, Pencil, Users } from 'lucide-react';
+import { Mail, MessageSquare, Send, Pencil, Users, Trash2 } from 'lucide-react';
 import { BackButton } from '../BackButton';
 import { Button } from '../../una/Button';
 import { Tag } from '../../una/Tag';
-import { Select } from '../../una/Select';
-import { CheckBox } from '../../una/inputs/CheckBox';
 import type { OpportunityDetailProps } from './OpportunityDetail.types';
 import styles from './OpportunityDetail.module.scss';
 
@@ -61,33 +59,34 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   descriptionText,
   contactLabel,
   contactValue,
+  emailLabel,
+  emailValue,
   onSendToReview,
   sendToReviewText,
+  sendToReviewHint,
   onEdit,
   editText,
   moderationComment,
   moderationCommentTitle,
   manageTitle,
-  phaseLabel,
-  lifecycleState,
-  onLifecycleChange,
-  onToggleAcceptsApplications,
-  acceptsApplicationsLabel,
   applicationsClosedText,
   applyText,
   onOpenApply,
   onOpenApplicants,
   viewApplicantsText,
+  onDelete,
+  deleteText,
   className,
+  canDelete = false,
+  sendToReviewDisabled = false,
   acceptsApplications = true,
   paymentTone = 'neutral',
   isOwner = false,
   canEdit = false,
   canSendToReview = false,
-  lifecycleOptions = [],
   canApply = false,
 }) => {
-  const phaseSelectId = useId();
+  const reviewHintId = useId();
   const footerButton = getCandidateFooterButton({
     isOwner,
     canApply,
@@ -138,9 +137,18 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
           </div>
         )}
 
-        {contactValue && (
+        {emailValue && (
           <div className={styles.contactRow}>
             <Mail size={16} className={styles.contactIcon} />
+            <span>
+              {emailLabel} <strong>{emailValue}</strong>
+            </span>
+          </div>
+        )}
+
+        {contactValue && (
+          <div className={styles.contactRow}>
+            <MessageSquare size={16} className={styles.contactIcon} />
             <span>
               {contactLabel} <strong>{contactValue}</strong>
             </span>
@@ -169,40 +177,30 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
                 )}
 
                 {canSendToReview && onSendToReview && (
-                  <Button variant="primary" onClick={onSendToReview}>
+                  <Button
+                    variant="primary"
+                    onClick={onSendToReview}
+                    disabled={sendToReviewDisabled}
+                    aria-describedby={sendToReviewHint ? reviewHintId : undefined}
+                  >
                     <Send size={14} className={styles.btnIcon} />
                     {sendToReviewText}
                   </Button>
                 )}
-              </div>
 
-              {onLifecycleChange && lifecycleOptions.length > 0 && (
-                <div className={styles.phaseWrapper}>
-                  <label htmlFor={phaseSelectId} className={styles.phaseLabel}>
-                    {phaseLabel}
-                  </label>
-                  <Select
-                    id={phaseSelectId}
-                    aria-label={phaseLabel}
-                    value={lifecycleState ?? ''}
-                    onChange={(val) => onLifecycleChange(val)}
-                    options={lifecycleOptions}
-                  />
-                </div>
-              )}
+                {canDelete && onDelete && (
+                  <Button variant="secondary" onClick={onDelete}>
+                    <Trash2 size={14} className={styles.btnIcon} />
+                    {deleteText}
+                  </Button>
+                )}
+              </div>
             </div>
 
-            {onToggleAcceptsApplications && acceptsApplicationsLabel && (
-              <div className={styles.acceptsApplicationsRow}>
-                <label className={styles.checkboxLabel}>
-                  <CheckBox
-                    variant="primary"
-                    checked={acceptsApplications}
-                    onChange={(e) => onToggleAcceptsApplications(e.target.checked)}
-                  />
-                  <span>{acceptsApplicationsLabel}</span>
-                </label>
-              </div>
+            {sendToReviewHint && (
+              <p id={reviewHintId} className={styles.reviewHint}>
+                {sendToReviewHint}
+              </p>
             )}
           </div>
         )}

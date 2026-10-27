@@ -3,13 +3,17 @@ import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import type { MoodleQueryOptions } from '@uni-hub/queries/moodle/queries';
 import { moodleApi } from '@uni-hub/services/api.moodle';
 import { clearUserSessionStorage } from '@uni-hub/services/api.session';
+import { NOTIFICATIONS_POLL_INTERVAL_MS } from '@uni-hub/constants/query';
 import { notificationsApi, type PlatformNotification } from '@uni-hub/services/api.notifications';
 import type { DashboardData } from '../types';
 import {
   assembleDashboardData,
   buildAssignmentParams,
+  hasSessionChanged,
   isMoodleUnlinked,
   isUnauthorizedError,
+  applyStoredIdentityToProfile,
+  readSessionIdentity,
   persistDashboardSnapshot,
   syncStudentProfile,
   type BuildAssignmentParamsOptions,
@@ -23,12 +27,9 @@ export async function loadPlatformNotifications(): Promise<PlatformNotification[
   } catch (error) {
     if (isUnauthorizedError(error)) {
       clearUserSessionStorage();
-      throw error;
     }
 
-    console.error('Failed to load platform notifications', error);
-
-    return [];
+    throw error;
   }
 }
 
@@ -82,14 +83,32 @@ export function dashboardQueryOptions(
   });
 }
 
+/**
+ * Query options for fetching, overlaying corporate identity, and synchronizing the student profile.
+ */
 export const profileQueryOptions = queryOptions({
   queryKey: moodleKeys.profile(),
-  queryFn: async () => {
-    const response = await moodleApi.getProfile();
+  queryFn: async ({ signal }) => {
+    const sessionSnapshot = readSessionIdentity();
+    const response = await moodleApi.getProfile({ signal });
 
-    syncStudentProfile(response.data);
+    if (signal?.aborted) {
+      return response.data;
+    }
 
-    return response.data;
+    if (sessionSnapshot) {
+      const currentSession = readSessionIdentity();
+
+      if (hasSessionChanged(sessionSnapshot, currentSession)) {
+        return response.data;
+      }
+    }
+
+    const resolvedProfile = applyStoredIdentityToProfile(response.data, sessionSnapshot);
+
+    syncStudentProfile(resolvedProfile);
+
+    return resolvedProfile;
   },
 });
 
@@ -105,4 +124,5 @@ export const markAllNotificationsReadMutationKey = ['notifications', 'read-all']
 export const platformNotificationsQueryOptions = queryOptions({
   queryKey: notificationKeys.platform(),
   queryFn: loadPlatformNotifications,
+  refetchInterval: NOTIFICATIONS_POLL_INTERVAL_MS,
 });

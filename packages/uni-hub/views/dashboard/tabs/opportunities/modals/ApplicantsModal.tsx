@@ -2,14 +2,14 @@
 
 import React from 'react';
 import { Button, Spinner, Empty, Modal } from '@una';
-import { Mail, MessageSquare, Calendar, CheckCircle2, Clock, XCircle, Send } from 'lucide-react';
+import { MessageSquare, Calendar, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { OPPORTUNITY_APP_STATUS, type OpportunityAppStatus } from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { ApplicationStatusBadge } from '../components/ApplicationStatusBadge';
 import { LoadErrorState } from '@uni-hub/components/common/LoadErrorState';
 import styles from '../../OpportunitiesTab.module.scss';
-
+import { ContactTags } from '@ui';
 export interface ApplicantsModalProps {
   open: boolean;
   onClose: () => void;
@@ -60,24 +60,12 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                         app.applicantName ||
                         formatMessage('opportunities.applicantsModal.defaultApplicant')}
                     </span>
-                    {app.applicant?.email && (
-                      <span
-                        className={styles.authorContactTag}
-                        title={formatMessage('opportunities.applicantsModal.emailLabel')}
-                      >
-                        <Mail size={12} />
-                        {app.applicant.email}
-                      </span>
-                    )}
-                    {app.contactInfo && (
-                      <span
-                        className={styles.authorContactTag}
-                        title={formatMessage('opportunities.applicantsModal.directContactLabel')}
-                      >
-                        <Send size={12} />
-                        {app.contactInfo}
-                      </span>
-                    )}
+                    <ContactTags
+                      emailLabel={formatMessage('opportunities.emailLabel')}
+                      alternativeContactLabel={formatMessage('opportunities.alternativeContact')}
+                      email={app.applicant?.email}
+                      alternativeContact={app.contactInfo}
+                    />
                   </div>
                 </div>
               </div>

@@ -9,7 +9,7 @@ import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { LinkMoodleMode } from '@uni-hub/components/auth';
-import type { StudentProfile } from '@core/types';
+import type { StudentProfile } from '@core/types/student';
 import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export interface UserDropdownProps {
@@ -29,12 +29,19 @@ export interface MoodleStatusDetails {
   statusKey: TranslationKey;
 }
 
+/**
+ * Resolves the visual badge and translation key for the Moodle connection status.
+ */
 export function getMoodleStatusDetails(isMoodleLinked: boolean): MoodleStatusDetails {
   return {
     isLinked: isMoodleLinked,
     dotColor: isMoodleLinked ? 'var(--success-color, #22c55e)' : 'var(--text-secondary, #94a3b8)',
     statusKey: isMoodleLinked ? 'header.moodleConnected' : 'header.moodleNotConnected',
   };
+}
+
+export function getUserProfileTitle(profile: StudentProfile): string {
+  return profile.group ? `${profile.fullName} (${profile.group})` : profile.fullName;
 }
 
 export const UserDropdown: React.FC<UserDropdownProps> = ({
@@ -50,30 +57,36 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   const { formatMessage } = useLanguage();
   const statusDetails = getMoodleStatusDetails(Boolean(isMoodleLinked));
   const moodleUrl = process.env.NEXT_PUBLIC_MOODLE_URL;
+  const { fullName, email, group } = activeStudentProfile;
+  const triggerTitle = getUserProfileTitle(activeStudentProfile);
 
   return (
     <Dropdown
       width={240}
+      isOverflowVisible
       renderTrigger={(triggerProps) => (
         <button
           {...triggerProps}
           type="button"
           className={styles.user}
-          title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
+          title={triggerTitle}
           aria-label={formatMessage('header.userMenu')}
         >
           <span className={styles.avatar}>
             <User size={16} />
           </span>
-          <span>{activeStudentProfile.fullName}</span>
+          <span className={styles.userName}>{fullName}</span>
         </button>
       )}
     >
       {(close) => (
         <>
           <div className={styles.userDropdownHeader}>
-            <strong>{activeStudentProfile.fullName}</strong>
-            <div className={styles.muted}>{activeStudentProfile.group}</div>
+            <strong title={fullName}>{fullName}</strong>
+            <div className={styles.muted} title={email}>
+              {email}
+            </div>
+            {group ? <div className={styles.muted}>{group}</div> : null}
           </div>
 
           {isMoodleIntegrationEnabled && (
@@ -142,18 +155,18 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
 
           <div className={styles.userDropdownBody}>
             <div className={styles.mobileOnlyItem} style={{ marginBottom: 6 }}>
-              <LanguageSwitcher compact={false} placement="bottom-start" />
+              <LanguageSwitcher variant="sider" placement="bottom-start" />
             </div>
 
-            <div className={styles.mobileOnlyItem}>
-              <ThemeSwitcher compact={false} showLabel={true} />
+            <div className={styles.mobileOnlyItem} style={{ marginBottom: 6 }}>
+              <ThemeSwitcher compact isFullWidth showLabel placement="bottom-start" />
             </div>
 
             <div className={styles.mobileOnlyItem}>
               <Button
                 type="button"
                 variant="secondary"
-                size="small"
+                size="medium"
                 onClick={onToggleSound}
                 style={{ width: '100%', justifyContent: 'flex-start' }}
               >
@@ -186,7 +199,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
               <Button
                 type="button"
                 variant="secondary"
-                size="small"
+                size="medium"
                 onClick={onLogout}
                 style={{
                   width: '100%',

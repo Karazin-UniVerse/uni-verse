@@ -1,17 +1,8 @@
-import React, { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import React from 'react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Tag } from '../../una/Tag';
 import { OpportunityDetail } from './OpportunityDetail';
-import type { OpportunityDetailProps } from './OpportunityDetail.types';
 import { noop } from '@core/utils/fn';
-
-const defaultLifecycleOptions = [
-  { value: 'START', label: 'Початок' },
-  { value: 'ACTIVE', label: 'Активна' },
-  { value: 'PAUSED', label: 'Призупинена' },
-  { value: 'COMPLETED', label: 'Завершена' },
-  { value: 'CANCELLED', label: 'Скасована' },
-];
 
 const meta = {
   title: 'Complex/OpportunityDetail',
@@ -32,19 +23,18 @@ const meta = {
     publishedDateText: '09.10.2026',
     descriptionText:
       'Запрошуємо студентів 3-4 курсів та магістрантів до участі у дослідницькому проєкті з моделювання геномних послідовностей.',
-    contactValue: 'biolab@karazin.ua | +380501234567',
+    emailValue: 'biolab@karazin.ua',
+    emailLabel: 'Електронна пошта:',
+    contactValue: '+380501234567',
     applyText: 'Подати заявку',
     organizerLabel: 'Організатор:',
     descriptionTitle: 'Опис можливості',
-    contactLabel: 'Контакти:',
+    contactLabel: 'Альтернативний контакт:',
     sendToReviewText: 'Відправити на модерацію',
     editText: 'Редагувати',
-    manageTitle: 'Керування можливістю (автор)',
-    phaseLabel: 'Фаза:',
-    lifecycleOptions: defaultLifecycleOptions,
-    lifecycleState: 'ACTIVE',
+    deleteText: 'Видалити',
+    manageTitle: 'Керування можливостю (автор)',
     acceptsApplications: true,
-    acceptsApplicationsLabel: 'Приймати нові відгуки',
     applicationsClosedText: 'Прийом заявок призупинено автором',
   },
 } satisfies Meta<typeof OpportunityDetail>;
@@ -54,27 +44,20 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
+export const ProfileEmailOnly: Story = {
+  args: { contactValue: '' },
+};
+
 export const AuthorView: Story = {
-  render: (args) => {
-    const InteractiveWrapper = (props: OpportunityDetailProps) => {
-      const [state, setState] = useState(props.lifecycleState ?? 'ACTIVE');
-      const [accepts, setAccepts] = useState(props.acceptsApplications ?? true);
-
-      return (
-        <OpportunityDetail
-          {...props}
-          isOwner={true}
-          canApply={false}
-          canSendToReview={false}
-          lifecycleState={state}
-          onLifecycleChange={setState}
-          acceptsApplications={accepts}
-          onToggleAcceptsApplications={setAccepts}
-        />
-      );
-    };
-
-    return <InteractiveWrapper {...args} />;
+  args: {
+    isOwner: true,
+    canApply: false,
+    canEdit: true,
+    onEdit: noop,
+    canSendToReview: true,
+    onSendToReview: noop,
+    canDelete: true,
+    onDelete: noop,
   },
 };
 
@@ -97,7 +80,6 @@ export const DraftUnderReview: Story = {
     canApply: false,
     canSendToReview: true,
     onSendToReview: noop,
-    lifecycleState: 'START',
   },
 };
 
@@ -112,9 +94,9 @@ export const AuthorDraftWithRevision: Story = {
     canEdit: true,
     onEdit: noop,
     canSendToReview: true,
+    sendToReviewDisabled: true,
+    sendToReviewHint:
+      'Перед повторним надсиланням змініть назву, опис, контакти або умови оплати можливості.',
     onSendToReview: noop,
-    moderationCommentTitle: 'Зауваження модератора',
-    moderationComment: 'Будь ласка, уточніть стек технологій та очікуване тижневе навантаження.',
-    lifecycleState: 'START',
   },
 };
