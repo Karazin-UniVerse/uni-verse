@@ -29,6 +29,10 @@ export function validateGatewayUrl(urlString) {
     throw new Error('Gateway URL must not contain a URL fragment');
   }
 
+  if (parsed.pathname !== '/') {
+    throw new Error('Gateway URL must be an origin without a path');
+  }
+
   const isLoopback = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
 
   if (parsed.protocol === 'http:') {
@@ -113,7 +117,7 @@ export async function saveSettings(settings, options = {}) {
 }
 
 /**
- * Loads Grip settings for a repository. Returns null if not found, expired, or for a foreign repository.
+ * Loads Grip settings for a repository. Only an absent file returns null.
  * @param {{ configDir?: string; repoRoot?: string }} [options]
  * @returns {Promise<Record<string, unknown> | null>}
  */

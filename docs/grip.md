@@ -13,7 +13,7 @@ Grip pre-push checks are **mandatory** for all contributors pushing to this repo
 - **No shared API keys**: Collaborators never receive or handle Gemini API keys. Authentication is handled through a one-time GitHub OAuth Device Flow exchange.
 - **Repository permission check**: Only GitHub users with **write** or **admin** permissions to `Karazin-UniVerse/uni-verse` qualify for gateway tokens.
 - **Token storage**: Gateway tokens (`ugr_<43-chars>`) are stored locally in your OS app-data directory (`APPDATA` on Windows, `XDG_CONFIG_HOME` on POSIX) hashed by repository root. The gateway stores only SHA-256 digests.
-- **Zero data persistence**: Prompts, rubrics, diffs, answers, and keys are never logged or stored in the database.
+- **Gateway privacy**: The gateway does not persist prompts, rubrics, diffs, answers or upstream keys in its database. Local Grip keeps quiz reports, answers and cached boards under `.git/grip/`; do not publish those files or have a coding agent read them. Google receives the permitted diff and answers under your project's Gemini API terms; free-tier content may be used to improve Google's products.
 - **Quotas**:
   - Per user: 10 requests / minute, 100 requests / UTC day.
   - Global: 500 requests / UTC day, max 2 concurrent calls.
@@ -91,7 +91,7 @@ When you run `git push origin <branch>`:
    - Your default browser opens the local whiteboard interface.
    - You answer the conceptual questions regarding your changes.
    - Upon scoring $\ge 70$, Grip passes, and the original `git push` **immediately completes**.
-   - Passed checks are remembered for **24 hours** (`remember_passes_hours = 24.0`), so pushing additional commits or amending shortly after does not re-prompt unnecessarily.
+   - A pass for the **same diff** is remembered for **24 hours** (`remember_passes_hours = 24.0`). Additional commits or amendments that change the diff require a new check.
 
 ---
 
@@ -112,6 +112,13 @@ pnpm grip:remove -- --force
 ---
 
 ## Exclusions & Ignored Files
+
+The visible diff is capped at **30,000 UTF-8 bytes** so instructions, questions,
+rubrics and answers have room within the gateway's 200,000-byte message and
+256 KiB HTTP limits, including Grip's JSON escaping of Ukrainian text. Grip
+marks truncated diffs; the quiz covers only the visible portion. Unusually long
+file lists, rubrics or answers can still exceed the limits; split large pushes
+or shorten answers rather than bypassing the check.
 
 `.grip.toml` configures automatic exclusions so private keys, dependencies, build artifacts, lockfiles, and generated documentation are not included in diffs sent to the gateway:
 

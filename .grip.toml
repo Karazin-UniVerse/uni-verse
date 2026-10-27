@@ -6,6 +6,8 @@ passing_score = 70
 fail_open = false
 require_tty = true
 remember_passes_hours = 24.0
+# Leave room for instructions, five answers and Python's non-ASCII JSON escaping.
+max_diff_bytes = 30000
 
 exclude = [
   "*.lock",

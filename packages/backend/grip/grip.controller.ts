@@ -1,5 +1,6 @@
 import {
   Body,
+  BadRequestException,
   Controller,
   Delete,
   Headers,
@@ -204,6 +205,10 @@ export class GripController {
     res.on('close', onAbort);
 
     try {
+      if (req.aborted || res.destroyed) {
+        throw new BadRequestException('Grip client disconnected');
+      }
+
       const response = await this.gripService.complete({
         principal,
         request: validatedRequest,

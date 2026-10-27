@@ -16,11 +16,14 @@ export class GripService {
     request,
     signal,
   }: CompleteParams): Promise<GripCompletionResponse> {
+    signal?.throwIfAborted();
     const { leaseId } = await this.quotaService.reserveCompletion(
       principal.githubId,
     );
 
     try {
+      signal?.throwIfAborted();
+
       return await this.geminiClient.complete(request, signal);
     } finally {
       await this.quotaService.releaseCompletion(leaseId);

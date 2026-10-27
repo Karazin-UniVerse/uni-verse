@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Get,
   HttpStatus,
+  Logger,
   Post,
   ValidationPipe,
 } from '@nestjs/common';
@@ -236,6 +237,28 @@ describe('Grip HTTP Gateway (real Nest/Express parsing & guards)', () => {
       .expect(401);
   });
 
+  it('rejects malformed JSON without logging or returning the submitted body', async () => {
+    const sentinel = 'PRIVATE_DIFF_SENTINEL_DO_NOT_LOG';
+    const errorLog = jest
+      .spyOn(Logger.prototype, 'error')
+      .mockImplementation(() => {});
+
+    try {
+      const response = await request(app.getHttpServer())
+        .post('/dev-tools/grip/v1/chat/completions')
+        .set('Content-Type', 'application/json')
+        .send(sentinel);
+
+      expect(response.status).toBe(400);
+      expect(JSON.stringify(response.body)).not.toContain(sentinel);
+      expect(JSON.stringify(errorLog.mock.calls)).not.toContain(sentinel);
+      expect(mockGithub.assertWriter).not.toHaveBeenCalled();
+      expect(mockGemini.complete).not.toHaveBeenCalled();
+    } finally {
+      errorLog.mockRestore();
+    }
+  });
+
   it('rejects completions request with non-existent or expired session with 401', async () => {
     mockStorage.findSession.mockResolvedValueOnce(null);
 
@@ -422,6 +445,55 @@ describe('Grip HTTP Gateway (real Nest/Express parsing & guards)', () => {
     await leaseReleased;
 
     expect(mockQuota.releaseCompletion).toHaveBeenCalledWith('lease-1');
+  });
+
+  it('does not reserve model quota when the client disconnects during GitHub authorization', async () => {
+    let enteredAuthorization!: () => void;
+    let finishAuthorization!: () => void;
+    const entered = new Promise<void>((resolve) => {
+      enteredAuthorization = resolve;
+    });
+    const authorization = new Promise<void>((resolve) => {
+      finishAuthorization = resolve;
+    });
+
+    mockGithub.assertWriter.mockImplementationOnce(async () => {
+      enteredAuthorization();
+      await authorization;
+    });
+    const errorLog = jest
+      .spyOn(Logger.prototype, 'error')
+      .mockImplementation(() => {});
+
+    try {
+      const pending = request(app.getHttpServer())
+        .post('/dev-tools/grip/v1/chat/completions')
+        .set('Authorization', `Bearer ${validToken}`)
+        .send({
+          model: 'gemini-3.5-flash-lite',
+          messages: [
+            { role: 'system', content: 'sys' },
+            { role: 'user', content: 'usr' },
+          ],
+          response_format: {
+            type: 'json_schema',
+            json_schema: { name: 'Board', schema: {} },
+          },
+        });
+      const inFlight = pending.catch(() => {});
+
+      await entered;
+      pending.abort();
+      await inFlight;
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      finishAuthorization();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(mockQuota.reserveCompletion).not.toHaveBeenCalled();
+      expect(mockGemini.complete).not.toHaveBeenCalled();
+    } finally {
+      finishAuthorization();
+      errorLog.mockRestore();
+    }
   });
 
   it('returns 404 when gateway is disabled', async () => {

@@ -100,4 +100,34 @@ describe('GripService', () => {
       controller.signal,
     );
   });
+
+  it('does not reserve quota for an already cancelled request', async () => {
+    const controller = new AbortController();
+
+    controller.abort();
+
+    await expect(
+      service.complete({ principal, request, signal: controller.signal }),
+    ).rejects.toThrow();
+    expect(mockQuotaService.reserveCompletion).not.toHaveBeenCalled();
+    expect(mockGeminiClient.complete).not.toHaveBeenCalled();
+  });
+
+  it('releases the lease without calling Gemini if cancellation arrives during reservation', async () => {
+    const controller = new AbortController();
+
+    mockQuotaService.reserveCompletion.mockImplementationOnce(async () => {
+      controller.abort();
+
+      return { leaseId: 'lease-cancelled' };
+    });
+
+    await expect(
+      service.complete({ principal, request, signal: controller.signal }),
+    ).rejects.toThrow();
+    expect(mockGeminiClient.complete).not.toHaveBeenCalled();
+    expect(mockQuotaService.releaseCompletion).toHaveBeenCalledWith(
+      'lease-cancelled',
+    );
+  });
 });

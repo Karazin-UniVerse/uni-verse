@@ -23,6 +23,24 @@ test('validateGatewayUrl enforces HTTPS or loopback and rejects userinfo/query/h
   assert.throws(() => validateGatewayUrl('https://gateway.example.com?foo=bar'));
   assert.throws(() => validateGatewayUrl('https://gateway.example.com#fragment'));
   assert.throws(() => validateGatewayUrl('not-a-url'));
+  assert.throws(() => validateGatewayUrl('https://gateway.example.com/foreign-path'));
+});
+
+test('loadSettings rejects a stored gateway path instead of forwarding a token to it', async (t) => {
+  const repoRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-gateway-path-')));
+
+  t.after(() => fs.rmSync(repoRoot, { recursive: true, force: true }));
+  const settings = {
+    version: 1,
+    repoRoot,
+    gatewayOrigin: 'https://gateway.example.com/foreign-path',
+    token: 'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
+    expiresAt: new Date(Date.now() + 86400000).toISOString(),
+    executable: process.execPath,
+  };
+
+  await saveSettings(settings, { configDir: repoRoot });
+  await assert.rejects(loadSettings({ configDir: repoRoot, repoRoot }), /gateway URL is invalid/i);
 });
 
 test('validateTokenFormat validates exact ugr_ prefix and 43 base64url characters', () => {

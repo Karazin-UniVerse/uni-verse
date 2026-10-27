@@ -235,4 +235,25 @@ describe('GeminiClientService', () => {
       GatewayTimeoutException,
     );
   });
+
+  it.each([401, 403, 429])(
+    'cancels an unread upstream error body for HTTP %s',
+    async (status) => {
+      let cancelled = false;
+      const stream = new ReadableStream<Uint8Array>({
+        cancel() {
+          cancelled = true;
+        },
+      });
+
+      jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValueOnce(new Response(stream, { status }));
+
+      await expect(service.complete(validRequest)).rejects.toThrow(
+        HttpException,
+      );
+      expect(cancelled).toBe(true);
+    },
+  );
 });

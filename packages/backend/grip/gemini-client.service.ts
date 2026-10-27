@@ -271,7 +271,13 @@ export class GeminiClientService {
       handleFetchError(error, signal, timeoutSignal);
     }
 
-    this.handleHttpStatus(response.status);
+    try {
+      this.handleHttpStatus(response.status);
+    } catch (error: unknown) {
+      void response.body?.cancel().catch(() => {});
+
+      throw error;
+    }
 
     const responseText = await this.readResponseBody(
       response.body,
