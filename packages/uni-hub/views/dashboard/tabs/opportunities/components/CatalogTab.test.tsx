@@ -95,7 +95,7 @@ describe('CatalogTab component', () => {
     expect(screen.getByRole('button', { name: /оплачувані/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /волонтерство \/ практика/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /очистити поле пошуку/i })).not.toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText('(3)')).toBeInTheDocument();
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
     expect(screen.getByText('Backend Engineer')).toBeInTheDocument();
     expect(screen.getByText('UI/UX Designer')).toBeInTheDocument();

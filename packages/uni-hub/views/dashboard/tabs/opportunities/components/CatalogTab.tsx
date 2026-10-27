@@ -113,7 +113,7 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
               aria-label={`${formatMessage('opportunities.catalog.filterAll')} (${counts.all})`}
             >
               <span>{formatMessage('opportunities.catalog.filterAll')}</span>
-              <span className={styles.chipCount}>{counts.all}</span>
+              <span className={styles.chipCount}>({counts.all})</span>
             </button>
             <button
               type="button"
@@ -122,7 +122,7 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
               aria-label={`${formatMessage('opportunities.catalog.filterPaid')} (${counts.paid})`}
             >
               <span>{formatMessage('opportunities.catalog.filterPaid')}</span>
-              <span className={styles.chipCount}>{counts.paid}</span>
+              <span className={styles.chipCount}>({counts.paid})</span>
             </button>
             <button
               type="button"
@@ -131,7 +131,7 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
               aria-label={`${formatMessage('opportunities.catalog.filterUnpaid')} (${counts.unpaid})`}
             >
               <span>{formatMessage('opportunities.catalog.filterUnpaid')}</span>
-              <span className={styles.chipCount}>{counts.unpaid}</span>
+              <span className={styles.chipCount}>({counts.unpaid})</span>
             </button>
           </div>
         </div>

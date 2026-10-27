@@ -196,9 +196,9 @@
 .filterChip {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-12);
-  height: 36px;
-  padding: 0 var(--space-16);
+  gap: var(--space-4);
+  height: 34px;
+  padding: 0 var(--space-12);
   border-radius: var(--border-radius-medium);
   border: 1px solid transparent;
   background: transparent;
@@ -228,41 +228,29 @@
   @include narrower-than('sm') {
     flex: 1;
     justify-content: center;
-    padding: 0 var(--space-8);
+    padding: 0 var(--space-6);
     font-size: var(--font-xs);
-    gap: var(--space-6);
-    height: 34px;
+    gap: var(--space-4);
   }
 }
 
 .chipCount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 var(--space-6);
-  border-radius: var(--border-radius-full);
   font-size: var(--font-xs);
-  font-weight: var(--font-weight-bold);
-  line-height: 1;
-  background: color-mix(in srgb, var(--text-secondary) 14%, var(--bg-hover));
   color: var(--text-secondary);
-  border: 1px solid var(--card-border);
-  flex-shrink: 0;
-  transition: all var(--transition-fast) var(--ease-standard);
+  font-weight: var(--font-weight-medium);
+  opacity: 0.8;
+  transition: color var(--transition-fast) var(--ease-standard);
 }
 
 .filterChip:hover .chipCount {
   color: var(--text-primary);
-  border-color: color-mix(in srgb, var(--text-secondary) 30%, transparent);
+  opacity: 1;
 }
 
 .activeChip .chipCount {
-  background: var(--accent-primary);
-  color: var(--accent-text-on-primary);
-  border-color: var(--accent-primary);
+  color: var(--accent-primary);
   font-weight: var(--font-weight-bold);
+  opacity: 1;
 }
 
 /* ──────────────────────────────────────────────
