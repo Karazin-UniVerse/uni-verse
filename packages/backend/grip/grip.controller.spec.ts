@@ -1,7 +1,6 @@
 import { UnauthorizedException } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { GripController } from './grip.controller';
-import type { GripQuotaService } from './grip-quota.service';
 import type { GripService } from './grip.service';
 import type { GripSessionService } from './grip-session.service';
 import type { GripConfig, GripPrincipal } from './grip.types';
@@ -14,9 +13,6 @@ describe('GripController', () => {
   };
   let mockGripService: {
     complete: jest.Mock;
-  };
-  let mockQuotaService: {
-    reserveSessionExchange: jest.Mock;
   };
 
   const mockConfig: GripConfig = {
@@ -40,14 +36,10 @@ describe('GripController', () => {
     mockGripService = {
       complete: jest.fn(),
     };
-    mockQuotaService = {
-      reserveSessionExchange: jest.fn(),
-    };
 
     controller = new GripController(
       mockSessionService as unknown as GripSessionService,
       mockGripService as unknown as GripService,
-      mockQuotaService as unknown as GripQuotaService,
       mockConfig,
     );
   });
@@ -68,14 +60,13 @@ describe('GripController', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('reserves exchange rate, exchanges token and sets Cache-Control: no-store', async () => {
+    it('exchanges token with resolved client IP and sets Cache-Control: no-store', async () => {
       const mockReq = {
         socket: { remoteAddress: '127.0.0.1' },
         headers: {},
       } as Request;
       const mockRes = { setHeader: jest.fn() } as unknown as Response;
 
-      mockQuotaService.reserveSessionExchange.mockResolvedValue(undefined);
       mockSessionService.exchange.mockResolvedValue({
         token: 'ugr_testtoken',
         expiresAt: '2026-11-26T00:00:00.000Z',
@@ -88,10 +79,10 @@ describe('GripController', () => {
       );
 
       expect(response.token).toBe('ugr_testtoken');
-      expect(mockQuotaService.reserveSessionExchange).toHaveBeenCalledWith(
-        '127.0.0.1',
-      );
-      expect(mockSessionService.exchange).toHaveBeenCalledWith('gho_test123');
+      expect(mockSessionService.exchange).toHaveBeenCalledWith({
+        githubToken: 'gho_test123',
+        clientIp: '127.0.0.1',
+      });
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         'Cache-Control',
         'no-store',

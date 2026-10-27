@@ -3,8 +3,9 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import type { GripSessionResponse } from '@universe/core/types/grip';
 import { GithubClientService } from './github-client.service';
 import { GRIP_SESSION_TTL_MS, GRIP_TOKEN_PREFIX } from './grip.constants';
+import { GripQuotaService } from './grip-quota.service';
 import { GripStorageService } from './grip-storage.service';
-import type { GripPrincipal } from './grip.types';
+import type { ExchangeSessionParams, GripPrincipal } from './grip.types';
 
 const TOKEN_REGEX = /^ugr_[A-Za-z0-9_-]{43}$/;
 
@@ -17,9 +18,15 @@ export class GripSessionService {
   constructor(
     private readonly storage: GripStorageService,
     private readonly githubClient: GithubClientService,
+    private readonly quotaService: GripQuotaService,
   ) {}
 
-  async exchange(githubToken: string): Promise<GripSessionResponse> {
+  async exchange({
+    githubToken,
+    clientIp,
+  }: ExchangeSessionParams): Promise<GripSessionResponse> {
+    await this.quotaService.reserveSessionExchange(clientIp);
+
     const identity = await this.githubClient.identify(githubToken);
 
     await this.githubClient.assertWriter(identity);

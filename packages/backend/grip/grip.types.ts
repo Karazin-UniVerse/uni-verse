@@ -39,3 +39,8 @@ export interface CompleteParams {
   request: GripCompletionRequest;
   signal?: AbortSignal;
 }
+
+export interface ExchangeSessionParams {
+  githubToken: string;
+  clientIp: string;
+}

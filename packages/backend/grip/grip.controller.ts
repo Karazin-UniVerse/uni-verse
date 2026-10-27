@@ -13,7 +13,6 @@ import {
   Post,
   Req,
   Res,
-  ServiceUnavailableException,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
@@ -34,9 +33,11 @@ import { GripSessionResponseDto } from './dto/session-response.dto';
 import { GripCompletionResponseDto } from './dto/completion-response.dto';
 import { CurrentGripPrincipal } from './grip.decorators';
 import { GripGuard } from './grip.guard';
-import { resolveClientIp, validateGripCompletion } from './grip.helpers';
-import { getGripConfig, GripConfigException } from './grip.config';
-import { GripQuotaService } from './grip-quota.service';
+import {
+  resolveClientIp,
+  resolveGripConfig,
+  validateGripCompletion,
+} from './grip.helpers';
 import { GripService } from './grip.service';
 import { GripSessionService } from './grip-session.service';
 import type { GripConfig, GripPrincipal } from './grip.types';
@@ -48,15 +49,7 @@ export class GripEnabledGuard implements CanActivate {
       throw new NotFoundException('Grip gateway is disabled');
     }
 
-    try {
-      getGripConfig(process.env);
-    } catch (error: unknown) {
-      if (error instanceof GripConfigException) {
-        throw error;
-      }
-
-      throw new ServiceUnavailableException('Grip gateway is misconfigured');
-    }
+    resolveGripConfig();
 
     return true;
   }
@@ -69,22 +62,13 @@ export class GripController {
   constructor(
     private readonly sessionService: GripSessionService,
     private readonly gripService: GripService,
-    private readonly quotaService: GripQuotaService,
     @Optional()
     @Inject('GRIP_CONFIG')
     private readonly injectedConfig?: GripConfig | null,
   ) {}
 
-  private getConfig(): GripConfig | null {
-    if (this.injectedConfig !== undefined) {
-      return this.injectedConfig;
-    }
-
-    try {
-      return getGripConfig(process.env);
-    } catch {
-      return null;
-    }
+  private getConfig(): GripConfig {
+    return resolveGripConfig(this.injectedConfig);
   }
 
   @Public()
@@ -127,12 +111,13 @@ export class GripController {
 
     const clientIp = resolveClientIp(
       req,
-      this.getConfig()?.trustedProxyAddresses ?? [],
+      this.getConfig().trustedProxyAddresses,
     );
 
-    await this.quotaService.reserveSessionExchange(clientIp);
-
-    const session = await this.sessionService.exchange(githubToken);
+    const session = await this.sessionService.exchange({
+      githubToken,
+      clientIp,
+    });
 
     res.setHeader('Cache-Control', 'no-store');
 

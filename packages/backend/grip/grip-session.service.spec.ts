@@ -1,6 +1,11 @@
-import { UnauthorizedException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { GripSessionService } from './grip-session.service';
 import type { GithubClientService } from './github-client.service';
+import type { GripQuotaService } from './grip-quota.service';
 import type { GripStorageService } from './grip-storage.service';
 
 describe('GripSessionService', () => {
@@ -15,6 +20,9 @@ describe('GripSessionService', () => {
     identify: jest.Mock;
     assertWriter: jest.Mock;
   };
+  let mockQuota: {
+    reserveSessionExchange: jest.Mock;
+  };
 
   beforeEach(() => {
     mockStorage = {
@@ -26,9 +34,13 @@ describe('GripSessionService', () => {
       identify: jest.fn(),
       assertWriter: jest.fn(),
     };
+    mockQuota = {
+      reserveSessionExchange: jest.fn().mockResolvedValue(undefined),
+    };
     service = new GripSessionService(
       mockStorage as unknown as GripStorageService,
       mockGithub as unknown as GithubClientService,
+      mockQuota as unknown as GripQuotaService,
     );
   });
 
@@ -49,10 +61,16 @@ describe('GripSessionService', () => {
         revokedAt: null,
       });
 
-      const response = await service.exchange('gho_access_token');
+      const response = await service.exchange({
+        githubToken: 'gho_access_token',
+        clientIp: '127.0.0.1',
+      });
 
       expect(response.token).toMatch(/^ugr_[A-Za-z0-9_-]{43}$/);
       expect(response.expiresAt).toBeDefined();
+      expect(mockQuota.reserveSessionExchange).toHaveBeenCalledWith(
+        '127.0.0.1',
+      );
       expect(mockGithub.identify).toHaveBeenCalledWith('gho_access_token');
       expect(mockGithub.assertWriter).toHaveBeenCalledWith({
         githubId: '12345',
@@ -69,6 +87,20 @@ describe('GripSessionService', () => {
         mockStorage.createSession.mock.calls[0][0].tokenHash;
 
       expect(storedTokenHash).not.toEqual(response.token);
+    });
+
+    it('reserves session exchange quota before calling GitHub', async () => {
+      mockQuota.reserveSessionExchange.mockRejectedValueOnce(
+        new HttpException('Rate limit exceeded', HttpStatus.TOO_MANY_REQUESTS),
+      );
+
+      await expect(
+        service.exchange({
+          githubToken: 'gho_access_token',
+          clientIp: '127.0.0.1',
+        }),
+      ).rejects.toThrow(HttpException);
+      expect(mockGithub.identify).not.toHaveBeenCalled();
     });
   });
 

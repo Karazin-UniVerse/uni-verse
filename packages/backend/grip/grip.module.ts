@@ -22,6 +22,5 @@ import { GripStorageService } from './grip-storage.service';
     GripGuard,
     GripEnabledGuard,
   ],
-  exports: [GripService, GripStorageService],
 })
 export class GripModule {}
