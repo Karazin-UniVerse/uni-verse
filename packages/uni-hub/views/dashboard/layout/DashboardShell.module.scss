@@ -511,6 +511,13 @@ $sidebar-collapsed-width: 88px;
   animation: pulse 1.6s var(--ease-standard) infinite;
 }
 
+.notificationsPanel {
+  @include narrower-than('md') {
+    right: calc(-1 * (var(--space-8) + 40px));
+    max-width: calc(100vw - var(--space-24));
+  }
+}
+
 .content {
   flex: 1;
   overflow: hidden auto;

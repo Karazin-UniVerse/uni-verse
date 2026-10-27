@@ -446,9 +446,13 @@ export const uk = {
   'opportunities.errors.phoneAlreadySet':
     'Використайте номер, уже закріплений за вашим обліковим записом, або Telegram.',
   'opportunities.tabs.catalog': 'Каталог',
+  'opportunities.tabs.catalogShort': 'Каталог',
   'opportunities.tabs.myOpportunities': 'Мої можливості',
+  'opportunities.tabs.myOpportunitiesShort': 'Мої',
   'opportunities.tabs.myApplications': 'Мої відгуки',
+  'opportunities.tabs.myApplicationsShort': 'Відгуки',
   'opportunities.tabs.moderation': 'Модерація',
+  'opportunities.tabs.moderationShort': 'Модерація',
   'opportunities.actions.create': 'Створити можливість',
   'opportunities.toast.createdDraft': 'Можливість успішно створена як чернетка!',
   'opportunities.toast.createError': 'Помилка створення можливості',

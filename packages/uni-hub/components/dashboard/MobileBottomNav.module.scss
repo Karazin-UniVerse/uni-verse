@@ -10,7 +10,7 @@
     left: var(--space-16);
     right: var(--space-16);
     height: 64px;
-    z-index: 1000;
+    z-index: 100;
     box-shadow: var(--box-shadow-large);
     background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
     backdrop-filter: blur(24px) saturate(150%);

@@ -33,28 +33,51 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
   onOpenDetail,
 }) => {
   const { formatMessage } = useLanguage();
-  // Filter catalog opportunities in memory without cascading re-renders or spinner flashes
-  const filteredOpportunities = useMemo(() => {
-    return opportunities.filter((opp) => {
-      if (paymentFilter && opp.paymentType !== paymentFilter) {
-        return false;
-      }
 
-      if (search.trim()) {
-        const q = search.trim().toLowerCase();
-        const titleMatch = opp.title.toLowerCase().includes(q);
-        const descMatch = opp.description.toLowerCase().includes(q);
-        const ownerMatch =
-          Boolean(opp.owner?.name?.toLowerCase().includes(q)) ||
-          Boolean(opp.owner?.email.toLowerCase().includes(q)) ||
-          opp.ownerContactInfo.toLowerCase().includes(q);
+  const searchedOpportunities = useMemo(() => {
+    if (!search.trim()) {
+      return opportunities;
+    }
 
-        return titleMatch || descMatch || ownerMatch;
-      }
+    const query = search.trim().toLowerCase();
 
-      return true;
+    return opportunities.filter((opportunity) => {
+      const titleMatch = opportunity.title.toLowerCase().includes(query);
+      const descMatch = opportunity.description.toLowerCase().includes(query);
+      const ownerMatch =
+        Boolean(opportunity.owner?.name?.toLowerCase().includes(query)) ||
+        Boolean(opportunity.owner?.email.toLowerCase().includes(query)) ||
+        opportunity.ownerContactInfo.toLowerCase().includes(query);
+
+      return titleMatch || descMatch || ownerMatch;
     });
-  }, [opportunities, paymentFilter, search]);
+  }, [opportunities, search]);
+
+  const counts = useMemo(() => {
+    let all = 0;
+    let paid = 0;
+    let unpaid = 0;
+
+    for (const opportunity of searchedOpportunities) {
+      all += 1;
+
+      if (opportunity.paymentType === 'PAID') {
+        paid += 1;
+      } else if (opportunity.paymentType === 'UNPAID') {
+        unpaid += 1;
+      }
+    }
+
+    return { all, paid, unpaid };
+  }, [searchedOpportunities]);
+
+  const filteredOpportunities = useMemo(() => {
+    if (!paymentFilter) {
+      return searchedOpportunities;
+    }
+
+    return searchedOpportunities.filter((opportunity) => opportunity.paymentType === paymentFilter);
+  }, [searchedOpportunities, paymentFilter]);
 
   return (
     <>
@@ -87,31 +110,30 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
               type="button"
               className={`${styles.filterChip} ${paymentFilter === '' ? styles.activeChip : ''}`}
               onClick={() => onPaymentFilterChange('')}
+              aria-label={`${formatMessage('opportunities.catalog.filterAll')} (${counts.all})`}
             >
-              {formatMessage('opportunities.catalog.filterAll')}
+              <span>{formatMessage('opportunities.catalog.filterAll')}</span>
+              <span className={styles.chipCount}>{counts.all}</span>
             </button>
             <button
               type="button"
               className={`${styles.filterChip} ${paymentFilter === 'PAID' ? styles.activeChip : ''}`}
               onClick={() => onPaymentFilterChange('PAID')}
+              aria-label={`${formatMessage('opportunities.catalog.filterPaid')} (${counts.paid})`}
             >
-              {formatMessage('opportunities.catalog.filterPaid')}
+              <span>{formatMessage('opportunities.catalog.filterPaid')}</span>
+              <span className={styles.chipCount}>{counts.paid}</span>
             </button>
             <button
               type="button"
               className={`${styles.filterChip} ${paymentFilter === 'UNPAID' ? styles.activeChip : ''}`}
               onClick={() => onPaymentFilterChange('UNPAID')}
+              aria-label={`${formatMessage('opportunities.catalog.filterUnpaid')} (${counts.unpaid})`}
             >
-              {formatMessage('opportunities.catalog.filterUnpaid')}
+              <span>{formatMessage('opportunities.catalog.filterUnpaid')}</span>
+              <span className={styles.chipCount}>{counts.unpaid}</span>
             </button>
           </div>
-
-          {!loading && !isError && (
-            <span className={styles.resultCount}>
-              {formatMessage('opportunities.catalog.foundPrefix')}{' '}
-              <strong>{filteredOpportunities.length}</strong>
-            </span>
-          )}
         </div>
       </div>
 

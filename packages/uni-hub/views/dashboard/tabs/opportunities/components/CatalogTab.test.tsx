@@ -78,9 +78,7 @@ const renderCatalogTab = (props?: Partial<CatalogTabProps>) => {
   };
 
   return {
-    ...render(
-      withLanguage(<CatalogTab {...defaultProps} />),
-    ),
+    ...render(withLanguage(<CatalogTab {...defaultProps} />)),
     props: defaultProps,
   };
 };
@@ -93,9 +91,9 @@ describe('CatalogTab component', () => {
 
     expect(searchInput).toBeInTheDocument();
     expect(searchInput).toHaveValue('');
-    expect(screen.getByRole('button', { name: 'Усі' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Оплачувані' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Волонтерство / Практика' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /усі/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /оплачувані/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /волонтерство \/ практика/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /очистити поле пошуку/i })).not.toBeInTheDocument();
     expect(screen.getByText('3')).toBeInTheDocument();
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
@@ -137,9 +135,9 @@ describe('CatalogTab component', () => {
 
     renderCatalogTab({ onPaymentFilterChange });
 
-    const paidChip = screen.getByRole('button', { name: 'Оплачувані' });
-    const unpaidChip = screen.getByRole('button', { name: 'Волонтерство / Практика' });
-    const allChip = screen.getByRole('button', { name: 'Усі' });
+    const paidChip = screen.getByRole('button', { name: /оплачувані/i });
+    const unpaidChip = screen.getByRole('button', { name: /волонтерство \/ практика/i });
+    const allChip = screen.getByRole('button', { name: /усі/i });
 
     await user.click(paidChip);
     expect(onPaymentFilterChange).toHaveBeenCalledWith('PAID');
@@ -153,7 +151,8 @@ describe('CatalogTab component', () => {
 
   it('should filter opportunities in memory by search term', () => {
     const { rerender } = render(
-      withLanguage(<CatalogTab
+      withLanguage(
+        <CatalogTab
           loading={false}
           isError={false}
           onRetry={vi.fn()}
@@ -163,7 +162,8 @@ describe('CatalogTab component', () => {
           paymentFilter=""
           onPaymentFilterChange={vi.fn()}
           onOpenDetail={vi.fn()}
-        />),
+        />,
+      ),
     );
 
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
@@ -171,7 +171,8 @@ describe('CatalogTab component', () => {
     expect(screen.queryByText('UI/UX Designer')).not.toBeInTheDocument();
 
     rerender(
-      withLanguage(<CatalogTab
+      withLanguage(
+        <CatalogTab
           loading={false}
           isError={false}
           onRetry={vi.fn()}
@@ -181,14 +182,16 @@ describe('CatalogTab component', () => {
           paymentFilter=""
           onPaymentFilterChange={vi.fn()}
           onOpenDetail={vi.fn()}
-        />),
+        />,
+      ),
     );
 
     expect(screen.getByText('Backend Engineer')).toBeInTheDocument();
     expect(screen.queryByText('Frontend Developer')).not.toBeInTheDocument();
 
     rerender(
-      withLanguage(<CatalogTab
+      withLanguage(
+        <CatalogTab
           loading={false}
           isError={false}
           onRetry={vi.fn()}
@@ -198,7 +201,8 @@ describe('CatalogTab component', () => {
           paymentFilter=""
           onPaymentFilterChange={vi.fn()}
           onOpenDetail={vi.fn()}
-        />),
+        />,
+      ),
     );
 
     expect(screen.getByText('UI/UX Designer')).toBeInTheDocument();
@@ -207,7 +211,8 @@ describe('CatalogTab component', () => {
 
   it('should filter opportunities in memory by payment filter', () => {
     const { rerender } = render(
-      withLanguage(<CatalogTab
+      withLanguage(
+        <CatalogTab
           loading={false}
           isError={false}
           onRetry={vi.fn()}
@@ -217,7 +222,8 @@ describe('CatalogTab component', () => {
           paymentFilter="PAID"
           onPaymentFilterChange={vi.fn()}
           onOpenDetail={vi.fn()}
-        />),
+        />,
+      ),
     );
 
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
@@ -225,7 +231,8 @@ describe('CatalogTab component', () => {
     expect(screen.queryByText('Backend Engineer')).not.toBeInTheDocument();
 
     rerender(
-      withLanguage(<CatalogTab
+      withLanguage(
+        <CatalogTab
           loading={false}
           isError={false}
           onRetry={vi.fn()}
@@ -235,7 +242,8 @@ describe('CatalogTab component', () => {
           paymentFilter="UNPAID"
           onPaymentFilterChange={vi.fn()}
           onOpenDetail={vi.fn()}
-        />),
+        />,
+      ),
     );
 
     expect(screen.getByText('Backend Engineer')).toBeInTheDocument();
