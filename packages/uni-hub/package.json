@@ -40,7 +40,7 @@
     "@types/react-dom": "^19",
     "eslint": "^10.13.0",
     "eslint-config-next": "16.4.3",
-    "happy-dom": "^21.0.1",
+    "happy-dom": "^21.0.4",
     "typescript": "^6.0.3"
   }
 }
