@@ -6,6 +6,11 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { TabStateWrapper } from './TabStateWrapper';
 import type { Opportunity } from '@core/types/opportunities';
 import type { OpportunityPaymentType } from '@core/constants/opportunities';
+import {
+  calculatePaymentCounts,
+  filterOpportunitiesByPayment,
+  filterOpportunitiesBySearch,
+} from '../helpers';
 import { OpportunityCard } from '../../OpportunityCard';
 import styles from '../../OpportunitiesTab.module.scss';
 
@@ -19,60 +24,6 @@ export interface CatalogTabProps {
   paymentFilter: OpportunityPaymentType | '';
   onPaymentFilterChange: (val: OpportunityPaymentType | '') => void;
   onOpenDetail: (opp: Opportunity) => void;
-}
-
-interface PaymentCounts {
-  all: number;
-  paid: number;
-  unpaid: number;
-}
-
-function filterOpportunitiesBySearch(opportunities: Opportunity[], search: string): Opportunity[] {
-  if (!search.trim()) {
-    return opportunities;
-  }
-
-  const query = search.trim().toLowerCase();
-
-  return opportunities.filter((opportunity) => {
-    const titleMatch = opportunity.title.toLowerCase().includes(query);
-    const descMatch = opportunity.description.toLowerCase().includes(query);
-    const ownerMatch =
-      Boolean(opportunity.owner?.name?.toLowerCase().includes(query)) ||
-      Boolean(opportunity.owner?.email.toLowerCase().includes(query)) ||
-      opportunity.ownerContactInfo.toLowerCase().includes(query);
-
-    return titleMatch || descMatch || ownerMatch;
-  });
-}
-
-function calculatePaymentCounts(opportunities: Opportunity[]): PaymentCounts {
-  let all = 0;
-  let paid = 0;
-  let unpaid = 0;
-
-  for (const opportunity of opportunities) {
-    all += 1;
-
-    if (opportunity.paymentType === 'PAID') {
-      paid += 1;
-    } else if (opportunity.paymentType === 'UNPAID') {
-      unpaid += 1;
-    }
-  }
-
-  return { all, paid, unpaid };
-}
-
-function filterOpportunitiesByPayment(
-  opportunities: Opportunity[],
-  paymentFilter: OpportunityPaymentType | '',
-): Opportunity[] {
-  if (!paymentFilter) {
-    return opportunities;
-  }
-
-  return opportunities.filter((opportunity) => opportunity.paymentType === paymentFilter);
 }
 
 export const CatalogTab: React.FC<CatalogTabProps> = ({
