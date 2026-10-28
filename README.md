@@ -187,6 +187,7 @@ UniVerse enforces strict institutional security policies:
 ## Scripts & Quality Checks
 
 AI coding agents can use the shared [Context7 MCP configuration](docs/context7.md) for library documentation. Each developer signs in with their own account; no shared credentials or application dependencies are required. Local codebase structural knowledge graphs can be generated with zero token spend via [Graphify](docs/graphify.md).
+UniVerse provides manual unused-code and dependency auditing via [Knip](docs/knip.md).
 
 UniVerse enforces mandatory [Grip browser push checks](docs/grip.md) backed by an authenticated, quota-limited team Gemini gateway.
 The pre-push check runs Grip in whiteboard mode before code is sent upstream. All contributors must enroll their checkout before pushing (`pnpm grip:setup`).
@@ -200,6 +201,9 @@ pnpm lint
 # Automatically fix linting and formatting issues
 pnpm lint:fix
 pnpm format
+
+# Advisory unused-code and dependency auditing
+pnpm knip
 
 # Strict TypeScript type check across all packages
 pnpm typecheck
