@@ -10,7 +10,7 @@ interface ContactIconProps {
   readonly size?: number;
 }
 
-export const ContactIcon: React.FC<Readonly<ContactIconProps>> = ({ value, size = 12 }) =>
+export const ContactIcon: React.FC<ContactIconProps> = ({ value, size = 12 }) =>
   isPhoneContact(value) ? (
     <Phone size={size} aria-hidden="true" />
   ) : (
