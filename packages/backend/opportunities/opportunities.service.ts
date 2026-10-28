@@ -312,7 +312,16 @@ export class OpportunitiesService {
       data: { lifecycleState },
     });
 
-    await this.notifySubscribers(id, updatedOpportunity.title, lifecycleState);
+    if (
+      updatedOpportunity.status === OpportunityStatus.PUBLISHED &&
+      opportunity.lifecycleState !== lifecycleState
+    ) {
+      await this.notifySubscribers(
+        id,
+        updatedOpportunity.title,
+        lifecycleState,
+      );
+    }
 
     return updatedOpportunity;
   }
@@ -622,25 +631,46 @@ export class OpportunitiesService {
     opportunityId: string,
     opportunityTitle: string,
     lifecycleState: OpportunityLifecycleState,
-  ) {
-    const subscribers = await this.prisma.opportunitySubscription.findMany({
-      where: { opportunityId },
-      select: { userId: true },
-    });
+  ): Promise<void> {
+    try {
+      const subscribers = await this.prisma.opportunitySubscription.findMany({
+        where: { opportunityId },
+        select: { userId: true },
+      });
 
-    await Promise.all(
-      subscribers.map((sub) =>
-        this.notificationsService.createNotification({
-          userId: sub.userId,
-          type: 'OPPORTUNITY_LIFECYCLE_CHANGED',
-          title: OPPORTUNITY_NOTIFICATION_KEY.LIFECYCLE_CHANGED_TITLE,
-          message: JSON.stringify({ opportunityTitle, lifecycleState }),
-          link: `${OPPORTUNITIES_ROUTE}/${opportunityId}`,
-        }),
-      ),
-    );
+      const deliveries = await Promise.allSettled(
+        subscribers.map((sub) =>
+          this.notificationsService.createNotification({
+            userId: sub.userId,
+            type: 'OPPORTUNITY_LIFECYCLE_CHANGED',
+            title: OPPORTUNITY_NOTIFICATION_KEY.LIFECYCLE_CHANGED_TITLE,
+            message: JSON.stringify({ opportunityTitle, lifecycleState }),
+            link: `${OPPORTUNITIES_ROUTE}/${opportunityId}`,
+          }),
+        ),
+      );
+
+      for (const [index, delivery] of deliveries.entries()) {
+        if (delivery.status === 'rejected') {
+          this.logger.error(
+            `Failed to deliver lifecycle notification for opportunity ${opportunityId} to subscriber ${subscribers[index].userId}`,
+            delivery.reason instanceof Error
+              ? delivery.reason.stack
+              : delivery.reason,
+          );
+        }
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to deliver lifecycle notifications for opportunity ${opportunityId}`,
+        error instanceof Error ? error.stack : error,
+      );
+    }
   }
 
+  /**
+   * Subscribe a user to lifecycle updates of an opportunity.
+   */
   async subscribe(userId: string, id: string): Promise<{ isSubscribed: true }> {
     const opportunity = await this.findOne(id, userId);
 
@@ -663,6 +693,9 @@ export class OpportunitiesService {
     return { isSubscribed: true };
   }
 
+  /**
+   * Unsubscribe a user from lifecycle updates of an opportunity.
+   */
   async unsubscribe(
     userId: string,
     id: string,
@@ -674,6 +707,9 @@ export class OpportunitiesService {
     return { isSubscribed: false };
   }
 
+  /**
+   * Find opportunity by ID and include whether the requesting user is subscribed.
+   */
   async findOneWithSubscription(
     id: string,
     userId?: string,
@@ -681,7 +717,9 @@ export class OpportunitiesService {
   ): Promise<OpportunityWithSubscription> {
     const opportunity = await this.findOne(id, userId, userRoles);
 
-    if (!userId) return { ...opportunity, isSubscribed: false };
+    if (!userId) {
+      return { ...opportunity, isSubscribed: false };
+    }
 
     const subscription = await this.prisma.opportunitySubscription.findFirst({
       where: { userId, opportunityId: id },

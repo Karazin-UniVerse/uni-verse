@@ -18,6 +18,9 @@ describe('OpportunitiesController', () => {
             create: jest.fn(),
             findAll: jest.fn(),
             findOne: jest.fn(),
+            findOneWithSubscription: jest.fn(),
+            subscribe: jest.fn(),
+            unsubscribe: jest.fn(),
             update: jest.fn(),
             changeStatus: jest.fn(),
             changeLifecycleState: jest.fn(),
@@ -101,11 +104,66 @@ describe('OpportunitiesController', () => {
   });
 
   describe('findOne', () => {
-    it('delegates to service.findOne', async () => {
-      await controller.findOne('opp1', 'user1', ['MOODLE_STUDENT']);
-      expect(service.findOne).toHaveBeenCalledWith('opp1', 'user1', [
+    it('delegates to service.findOneWithSubscription and returns subscription state', async () => {
+      const mockResult = {
+        id: 'opp1',
+        title: 'Opportunity',
+        isSubscribed: true,
+      };
+
+      (service.findOneWithSubscription as jest.Mock).mockResolvedValue(
+        mockResult,
+      );
+
+      const result = await controller.findOne('opp1', 'user1', [
         'MOODLE_STUDENT',
       ]);
+
+      expect(service.findOneWithSubscription).toHaveBeenCalledWith(
+        'opp1',
+        'user1',
+        ['MOODLE_STUDENT'],
+      );
+      expect(result).toEqual(mockResult);
+      expect(result.isSubscribed).toBe(true);
+    });
+  });
+
+  describe('subscribe', () => {
+    it('throws ForbiddenException when userId is empty', () => {
+      expect(() => controller.subscribe('', 'opp1')).toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('delegates to service.subscribe', async () => {
+      (service.subscribe as jest.Mock).mockResolvedValue({
+        isSubscribed: true,
+      });
+
+      const result = await controller.subscribe('user1', 'opp1');
+
+      expect(service.subscribe).toHaveBeenCalledWith('user1', 'opp1');
+      expect(result).toEqual({ isSubscribed: true });
+    });
+  });
+
+  describe('unsubscribe', () => {
+    it('throws ForbiddenException when userId is empty', () => {
+      expect(() => controller.unsubscribe('', 'opp1')).toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('delegates to service.unsubscribe', async () => {
+      (service.unsubscribe as jest.Mock).mockResolvedValue({
+        isSubscribed: false,
+      });
+
+      const result = await controller.unsubscribe('user1', 'opp1');
+
+      expect(service.unsubscribe).toHaveBeenCalledWith('user1', 'opp1');
+      expect(result).toEqual({ isSubscribed: false });
     });
   });
 

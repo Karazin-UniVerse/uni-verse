@@ -107,7 +107,7 @@ model Opportunity {
 
   applications OpportunityApplication[] @relation("OpportunityToApplication")
   comments     Comment[]
-  
+
   subscriptions OpportunitySubscription[] @relation("OpportunitySubscriptions")
 }
 
@@ -172,13 +172,14 @@ model Comment {
 }
 
 model OpportunitySubscription {
-  id            String      @id @default(uuid())
+  id            String   @id @default(uuid())
   userId        String
   opportunityId String
-  createdAt     DateTime    @default(now())
+  createdAt     DateTime @default(now())
 
-  user          User        @relation("UserSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
-  opportunity   Opportunity @relation("OpportunitySubscriptions", fields: [opportunityId], references: [id], onDelete: Cascade)
+  user        User        @relation("UserSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
+  opportunity Opportunity @relation("OpportunitySubscriptions", fields: [opportunityId], references: [id], onDelete: Cascade)
 
   @@unique([userId, opportunityId])
+  @@index([opportunityId])
 }
