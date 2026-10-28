@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { test } from 'node:test';
-import { loginDevice } from '../grip/device-login.mjs';
+import { loginDevice } from '../device-login.mjs';
 
 function startFakeGithubServer() {
   let pollCount = 0;

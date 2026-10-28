@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { validateGripCompletion, resolveClientIp } from './grip.helpers';
+import { validateGripCompletion, resolveClientIp } from '../grip.helpers';
 
 describe('grip.helpers', () => {
   const boardSchema = {

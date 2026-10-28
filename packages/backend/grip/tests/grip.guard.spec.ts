@@ -1,7 +1,7 @@
 import { UnauthorizedException } from '@nestjs/common';
 import type { ExecutionContext } from '@nestjs/common';
-import { GripGuard } from './grip.guard';
-import type { GripSessionService } from './grip-session.service';
+import { GripGuard } from '../grip.guard';
+import type { GripSessionService } from '../grip-session.service';
 
 describe('GripGuard', () => {
   let guard: GripGuard;

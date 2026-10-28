@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { GripQuotaService } from './grip-quota.service';
-import type { PrismaService } from '../prisma/prisma.service';
+import { GripQuotaService } from '../grip-quota.service';
+import type { PrismaService } from '../../prisma/prisma.service';
 
 describe('GripQuotaService (unit)', () => {
   let service: GripQuotaService;

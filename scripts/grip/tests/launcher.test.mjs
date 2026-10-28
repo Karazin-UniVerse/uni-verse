@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
-import { runGripHook } from '../grip/launcher.mjs';
+import { runGripHook } from '../launcher.mjs';
 
 test('runGripHook throws if settings are missing or expired', async () => {
   await assert.rejects(

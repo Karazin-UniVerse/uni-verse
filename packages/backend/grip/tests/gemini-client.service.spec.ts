@@ -6,8 +6,8 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import type { GripCompletionRequest } from '@universe/core/types/grip';
-import { GeminiClientService } from './gemini-client.service';
-import type { GripConfig } from './grip.types';
+import { GeminiClientService } from '../gemini-client.service';
+import type { GripConfig } from '../grip.types';
 
 describe('GeminiClientService', () => {
   let service: GeminiClientService;

@@ -1,4 +1,4 @@
-import { getGripConfig, GripConfigException } from './grip.config';
+import { getGripConfig, GripConfigException } from '../grip.config';
 
 describe('grip.config', () => {
   const validBaseEnv: NodeJS.ProcessEnv = {

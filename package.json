@@ -25,7 +25,7 @@
     "grip:setup": "node scripts/grip/cli.mjs setup",
     "grip:remove": "node scripts/grip/cli.mjs remove",
     "grip:status": "node scripts/grip/cli.mjs status",
-    "test:grip": "node --test scripts/tests/grip*.test.mjs",
+    "test:grip": "node --test scripts/grip/tests/*.test.mjs",
     "db:generate": "pnpm --filter @universe/backend db:generate",
     "db:migrate": "pnpm --filter @universe/backend db:push",
     "db:migrate:force": "pnpm --filter @universe/backend db:push:force",
@@ -43,7 +43,7 @@
     "@types/react-dom": "^19.3.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
-    "oxlint": "^1.88.0",
+    "oxlint": "^1.89.0",
     "prettier": "^3.9.10",
     "puppeteer-core": "^25.15.0",
     "react": "^19.3.1",
@@ -52,7 +52,7 @@
     "stylelint": "^17.16.0",
     "stylelint-config-standard": "^40.0.0",
     "stylelint-config-standard-scss": "^17.0.0",
-    "turbo": "^2.11.8",
+    "turbo": "^2.11.10",
     "typescript": "^6.0.3",
     "vitest": "^5.0.5"
   }
