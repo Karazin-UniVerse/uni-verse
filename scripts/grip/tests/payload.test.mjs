@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
-const config = readFileSync(new URL('../../.grip.toml', import.meta.url), 'utf8');
+const config = readFileSync(new URL('../../../.grip.toml', import.meta.url), 'utf8');
 const diffBudget = Number(config.match(/^max_diff_bytes\s*=\s*(\d+)/m)?.[1] ?? 200_000);
 
 // Grip 0.5.0 serializes requests with Python json.dumps (ensure_ascii=True).

@@ -1,9 +1,9 @@
 import { UnauthorizedException } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { GripController } from './grip.controller';
-import type { GripService } from './grip.service';
-import type { GripSessionService } from './grip-session.service';
-import type { GripConfig, GripPrincipal } from './grip.types';
+import { GripController } from '../grip.controller';
+import type { GripService } from '../grip.service';
+import type { GripSessionService } from '../grip-session.service';
+import type { GripConfig, GripPrincipal } from '../grip.types';
 
 describe('GripController', () => {
   let controller: GripController;

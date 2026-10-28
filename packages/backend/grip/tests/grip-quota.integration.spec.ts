@@ -1,7 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@universe/database';
-import { GripQuotaService } from './grip-quota.service';
-import type { PrismaService } from '../prisma/prisma.service';
+import { GripQuotaService } from '../grip-quota.service';
+import type { PrismaService } from '../../prisma/prisma.service';
 
 describe('GripQuotaService (PostgreSQL integration)', () => {
   const testDbUrl = process.env.GRIP_TEST_DATABASE_URL;

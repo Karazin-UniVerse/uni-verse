@@ -1,9 +1,9 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import type { GripCompletionRequest } from '@universe/core/types/grip';
-import { GripService } from './grip.service';
-import type { GeminiClientService } from './gemini-client.service';
-import type { GripQuotaService } from './grip-quota.service';
-import type { GripPrincipal } from './grip.types';
+import { GripService } from '../grip.service';
+import type { GeminiClientService } from '../gemini-client.service';
+import type { GripQuotaService } from '../grip-quota.service';
+import type { GripPrincipal } from '../grip.types';
 
 describe('GripService', () => {
   let service: GripService;

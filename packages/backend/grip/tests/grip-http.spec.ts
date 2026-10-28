@@ -1,4 +1,4 @@
-import { Public } from '../auth/decorators/public.decorator';
+import { Public } from '../../auth/decorators/public.decorator';
 import {
   Controller,
   ForbiddenException,
@@ -14,15 +14,15 @@ import { PassportModule } from '@nestjs/passport';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { AtGuard } from '../auth/guards/at.guard';
-import { AtStrategy } from '../auth/strategies/at.strategy';
-import { configureBodyParsers } from '../utils/body-parsers';
-import { PrismaService } from '../prisma/prisma.service';
-import { GripModule } from './grip.module';
-import { GithubClientService } from './github-client.service';
-import { GeminiClientService } from './gemini-client.service';
-import { GripStorageService } from './grip-storage.service';
-import { GripQuotaService } from './grip-quota.service';
+import { AtGuard } from '../../auth/guards/at.guard';
+import { AtStrategy } from '../../auth/strategies/at.strategy';
+import { configureBodyParsers } from '../../utils/body-parsers';
+import { PrismaService } from '../../prisma/prisma.service';
+import { GripModule } from '../grip.module';
+import { GithubClientService } from '../github-client.service';
+import { GeminiClientService } from '../gemini-client.service';
+import { GripStorageService } from '../grip-storage.service';
+import { GripQuotaService } from '../grip-quota.service';
 
 @Controller('portal-fixture')
 class PortalFixtureController {
