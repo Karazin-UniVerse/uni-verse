@@ -1219,7 +1219,7 @@ $sidebar-collapsed-width: 88px;
     gap: var(--space-8);
   }
 
-  .user span:last-child {
+  .user .userName {
     display: none;
   }
 
