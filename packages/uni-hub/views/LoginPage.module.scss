@@ -60,11 +60,7 @@
     font-weight: 800;
 
     /* Gradient Text */
-    background: linear-gradient(
-      135deg,
-      var(--accent-primary, #0070f3),
-      var(--accent-primary-active, #7928ca)
-    );
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-primary-active));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -77,16 +73,50 @@
   }
 }
 
+.noticeBox {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8);
+  background: rgb(var(--text-primary-rgb, 0, 0, 0), 0.04);
+  border: 1px solid rgb(var(--text-primary-rgb, 0, 0, 0), 0.08);
+  border-radius: var(--border-radius-large);
+  padding: var(--space-12) var(--space-16);
+  margin-bottom: var(--space-20);
+
+  p {
+    margin: 0;
+    font-size: var(--font-xs);
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+}
+
+.noticeIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--accent-primary);
+}
+
+.configWarning {
+  text-align: center;
+  padding: var(--space-12);
+  border-radius: var(--border-radius-medium);
+  background: rgb(var(--text-primary-rgb, 0, 0, 0), 0.04);
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+}
+
 .error {
-  margin: 0;
+  margin: var(--space-12) 0 0;
   color: var(--error-color);
   font-size: var(--font-sm);
+  text-align: center;
 }
 
 .hintBox {
   background: rgb(var(--text-primary-rgb, 0, 0, 0), 0.04);
   border: 1px solid rgb(var(--text-primary-rgb, 0, 0, 0), 0.08);
-  border-radius: var(--border-radius-large, 16px);
+  border-radius: var(--border-radius-large);
   padding: var(--space-16);
   margin-bottom: var(--space-8);
 
@@ -119,25 +149,4 @@
   display: flex;
   justify-content: center;
   width: 100%;
-  margin-bottom: var(--space-8);
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  margin: var(--space-16) 0;
-  color: var(--text-secondary);
-  font-size: var(--font-xs);
-
-  &::before,
-  &::after {
-    content: '';
-    flex: 1;
-    border-bottom: 1px solid rgb(var(--text-primary-rgb, 0, 0, 0), 0.1);
-  }
-
-  span {
-    padding: 0 var(--space-12);
-  }
 }
