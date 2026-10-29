@@ -9,21 +9,31 @@ import type {
   GeminiKeyState,
 } from './grip.types';
 
-const IMF_DATE_PATTERN = /^\w{3}, \d{2} \w{3} \d{4} \d{2}:\d{2}:\d{2} GMT$/;
+const IMF_DATE_PATTERN = /^\w{3}, (\d{2}) \w{3} \d{4} \d{2}:\d{2}:\d{2} GMT$/;
 const RFC850_DATE_PATTERN =
   /^\w+, (\d{2}-\w{3}-)(\d{2})( \d{2}:\d{2}:\d{2} GMT)$/;
 const ASCTIME_DATE_PATTERN =
-  /^\w{3} \w{3} (?:\d{2}| \d) \d{2}:\d{2}:\d{2} \d{4}$/;
+  /^\w{3} \w{3} (\d{2}| \d) \d{2}:\d{2}:\d{2} \d{4}$/;
 const RFC850_FUTURE_YEARS = 50;
 const YEARS_PER_CENTURY = 100;
 
+function validatedDateTimestamp(value: string, day: number): number {
+  const date = new Date(value);
+
+  return date.getUTCDate() === day ? date.getTime() : Number.NaN;
+}
+
 function httpDateTimestamp(value: string, now: number): number {
-  if (IMF_DATE_PATTERN.test(value)) {
-    return Date.parse(value);
+  const imfDate = IMF_DATE_PATTERN.exec(value);
+
+  if (imfDate) {
+    return validatedDateTimestamp(value, Number(imfDate[1]));
   }
 
-  if (ASCTIME_DATE_PATTERN.test(value)) {
-    return Date.parse(`${value} GMT`);
+  const asctimeDate = ASCTIME_DATE_PATTERN.exec(value);
+
+  if (asctimeDate) {
+    return validatedDateTimestamp(`${value} GMT`, Number(asctimeDate[1]));
   }
 
   const rfc850 = RFC850_DATE_PATTERN.exec(value);
@@ -42,10 +52,18 @@ function httpDateTimestamp(value: string, now: number): number {
     Math.floor(futureLimit.getUTCFullYear() / YEARS_PER_CENTURY) *
     YEARS_PER_CENTURY;
   const year = century + Number(rfc850[2]);
-  const date = new Date(`${rfc850[1]}${year}${rfc850[3]}`);
+  const day = Number(rfc850[1].slice(0, 2));
+  const timestamp = validatedDateTimestamp(
+    `${rfc850[1]}${year}${rfc850[3]}`,
+    day,
+  );
+  const date = new Date(timestamp);
 
   if (date.getTime() > futureLimit.getTime()) {
-    date.setUTCFullYear(year - YEARS_PER_CENTURY);
+    return validatedDateTimestamp(
+      `${rfc850[1]}${year - YEARS_PER_CENTURY}${rfc850[3]}`,
+      day,
+    );
   }
 
   return date.getTime();

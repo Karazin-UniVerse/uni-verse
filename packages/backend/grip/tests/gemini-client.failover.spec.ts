@@ -160,6 +160,8 @@ describe('GeminiClientService key balancing and failover', () => {
       const fallbackBody = JSON.parse(String(fetchSpy.mock.calls[1][1]?.body));
 
       expect(firstBody.model).toBe('gemini-3.5-flash-lite');
+      expect(firstBody.messages).toEqual(request.messages);
+      expect(firstBody.response_format).toEqual(request.response_format);
       expect(fallbackBody.model).toBe('gemini-3.1-flash-lite');
       expect(fallbackBody.messages).toEqual(firstBody.messages);
       expect(fallbackBody.response_format).toEqual(firstBody.response_format);

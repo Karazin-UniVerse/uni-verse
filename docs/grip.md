@@ -227,8 +227,12 @@ concurrent logical completions are unchanged; two simultaneous checks normally
 use different keys in one process. A busy key remains eligible for failover.
 
 Network/response-read failures and upstream HTTP `429`, `500`, `502`, `503`, and
-`504` allow one retry with a different eligible key after a 250 ms delay. Both
-attempts and reads share a single 60-second deadline. Cancellation stops retries.
+`504` allow one retry with a different eligible key after a 250 ms delay. The
+attempts use server-selected models: the first uses `gemini-3.5-flash-lite`,
+and the fallback uses `gemini-3.1-flash-lite`. The local Grip request still names
+the primary model; callers cannot choose arbitrary upstream models. This fallback
+was explicitly approved as an extension to the original single-model design.
+Both attempts and reads share a single 60-second deadline. Cancellation stops retries.
 One-key pools do not retry. Invalid/oversized responses and non-retryable HTTP
 statuses do not retry; invalid whiteboards are still handled by Grip itself.
 Provider attempts can consume additional quota or cost even when the first call
@@ -244,3 +248,7 @@ Exhausted failover returns the last attempt's sanitized error.
 available, elapsed milliseconds, outcome category, and failover decision. Success
 is debug-level; failures are warning-level. Keys, prompts, diffs, answers, raw
 provider bodies, and raw exception messages are never included in these logs.
+Successful-attempt debug logs additionally identify the selected model. Failed
+attempts do not currently include a model field. Model fallback does not enable
+billing or guarantee availability/free quota; both models must be available to the
+configured projects. No live model-compatibility verification has been performed.

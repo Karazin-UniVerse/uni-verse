@@ -1,5 +1,16 @@
 # Grip Gemini API key pool
 
+## Approved model-fallback amendment
+
+The user subsequently approved a bounded extension in chat: keep the primary
+`gemini-3.5-flash-lite` for the first attempt and use `gemini-3.1-flash-lite` for
+the existing single retry with a different eligible key. This supersedes the
+single-model/no-new-model restriction below and in the original RS-213 design
+and key-pool plan; all other retry eligibility, deadline, quota and cancellation
+constraints remain unchanged. No jitter or daily-quota circuit breaker was
+approved for this extension. The client-facing model validation remains primary
+only. Live provider compatibility and project-specific free quota remain unverified.
+
 ## Intent and approval boundary
 
 Reduce failed team Grip checks by distributing model requests across server-only

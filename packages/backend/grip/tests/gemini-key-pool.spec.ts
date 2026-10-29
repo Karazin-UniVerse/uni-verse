@@ -107,6 +107,40 @@ describe('GeminiKeyPool', () => {
   });
 
   it.each([
+    'Tue, 31 Feb 2027 00:02:00 GMT',
+    'Tuesday, 31-Feb-27 00:02:00 GMT',
+    'Tue Feb 31 00:02:00 2027',
+    'Mon, 29 Feb 2027 00:02:00 GMT',
+    'Wed, 31 Apr 2027 00:02:00 GMT',
+  ])(
+    'uses minimum cooldown for impossible calendar dates: %s',
+    (retryAfter) => {
+      const pool = new GeminiKeyPool(['first']);
+
+      pool.coolDown({ slot: 0, status: 429, retryAfter });
+      now += 59_999;
+      expect(pool.hasAvailable(excluded)).toBe(false);
+      now += 1;
+      expect(pool.hasAvailable(excluded)).toBe(true);
+    },
+  );
+
+  it.each([
+    'Tue, 29 Feb 2028 00:02:00 GMT',
+    'Tuesday, 29-Feb-28 00:02:00 GMT',
+    'Tue Feb 29 00:02:00 2028',
+  ])('preserves valid leap days: %s', (retryAfter) => {
+    now = Date.UTC(2028, 1, 29);
+    const pool = new GeminiKeyPool(['first']);
+
+    pool.coolDown({ slot: 0, status: 429, retryAfter });
+    now += 119_999;
+    expect(pool.hasAvailable(excluded)).toBe(false);
+    now += 1;
+    expect(pool.hasAvailable(excluded)).toBe(true);
+  });
+
+  it.each([
     ['Thursday, 29-Oct-76 00:00:00 GMT', Date.UTC(2076, 9, 29)],
     ['Thursday, 29-Oct-76 00:00:01 GMT', Date.UTC(2026, 9, 29, 0, 1)],
     ['Thursday, 29-Oct-75 00:00:00 GMT', Date.UTC(2075, 9, 29)],
