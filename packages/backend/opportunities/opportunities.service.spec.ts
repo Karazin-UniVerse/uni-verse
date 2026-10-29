@@ -261,6 +261,7 @@ describe('OpportunitiesService', () => {
           answers: null,
           status: 'SUBMITTED',
           ownerComment: null,
+          createdAt: expect.any(Date),
         },
       });
     });
@@ -1584,6 +1585,7 @@ describe('OpportunitiesService', () => {
           answers: null,
           status: 'SUBMITTED',
           ownerComment: null,
+          createdAt: expect.any(Date),
         },
       });
       expect(prisma.opportunityApplication.create).not.toHaveBeenCalled();

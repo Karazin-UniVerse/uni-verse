@@ -923,6 +923,14 @@
   flex-wrap: wrap;
 }
 
+.applicantMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
 .applicantName {
   font-size: var(--font-sm);
   font-weight: 600;

@@ -211,6 +211,14 @@
   border-top: 1px solid var(--card-border);
 }
 
+.ownerContactBlock {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  margin-top: auto;
+  padding-top: var(--space-16);
+}
+
 .ownerInfo {
   display: flex;
   align-items: center;

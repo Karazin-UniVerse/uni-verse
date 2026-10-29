@@ -78,6 +78,7 @@ export async function persistOpportunityApplication({
           answers: request.answers ?? null,
           status: ApplicationStatus.SUBMITTED,
           ownerComment: null,
+          createdAt: new Date(),
         },
       });
 
