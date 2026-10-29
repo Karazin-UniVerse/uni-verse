@@ -127,7 +127,7 @@ This question is mandatory in every interactive doubt cycle — even on artifact
 
 1. Check the tool is in PATH (`which gemini`, `which codex`).
 2. Test it works (`gemini --version` or equivalent) before passing the full prompt — a stale or broken binary may pass `which` but fail on real input.
-3. Confirm the exact invocation with the user, including required flags, auth, and env vars (e.g., API keys). Implementations vary; never assume.
+3. Confirm the exact invocation with the user, including required flags, auth, and env vars (e.g., API keys). Implementations vary; never assume. Confirm that ARTIFACT and CONTRACT contain no credentials, secrets, personal data, or confidential code. Do not send such content through an unpaid Gemini service.
 4. Pass ARTIFACT + CONTRACT + the adversarial prompt **only**. No session context, no CLAIM.
 5. Mind shell escaping. If the artifact contains quotes, `$(...)`, or backticks, prefer stdin (`echo … | gemini`) or a heredoc over inline `-p "…"`. When in doubt, ask the user to confirm the invocation before running it.
 6. Take the output into Step 4 (RECONCILE).
@@ -224,7 +224,7 @@ If 3 cycles is "obviously insufficient" because the artifact is large: the artif
 
 - **`code-review-and-quality` / `/review`**: complementary. `/review` is post-hoc PR verdict; doubt-driven is in-flight per-decision. Use both.
 - **`source-driven-development`**: SDD verifies *facts about frameworks* against official docs. Doubt-driven verifies *your reasoning about the artifact*. SDD checks the API exists; doubt-driven checks you used it correctly under the contract.
-- **`test-driven-development`**: TDD's RED step is doubt made concrete — a failing test is a disproof attempt. When TDD applies, that failing test *is* the doubt step for behavioral claims.
+- **`test-driven-development`**: TDD's RED step is doubt made concrete — a failing test is a disproof attempt. It checks the behavior the author wrote, not the contract. Fresh-context review still applies to behavioral claims.
 - **`debugging-and-error-recovery`**: when the reviewer surfaces a real failure mode, drop into the debugging skill to localize and fix.
 - **Repo orchestration rules** (`../../references/orchestration-patterns.md`): this skill orchestrates from the main session. A persona calling another persona is anti-pattern B — see Loading Constraints above.
 
@@ -233,7 +233,7 @@ If 3 cycles is "obviously insufficient" because the artifact is large: the artif
 After applying doubt-driven development:
 
 - [ ] Every non-trivial decision (per the definition above) was named explicitly as a CLAIM before standing
-- [ ] At least one fresh-context review per non-trivial artifact (a failing test produced by TDD's RED step satisfies this for behavioral claims, per Interaction with Other Skills)
+- [ ] At least one fresh-context review per non-trivial artifact (a failing test from TDD's RED step does not satisfy this; it complements the review)
 - [ ] The reviewer received ARTIFACT + CONTRACT — NOT the CLAIM, NOT your reasoning
 - [ ] The reviewer's prompt was adversarial ("find issues"), not validating ("is it good")
 - [ ] Findings were classified against the artifact text (not rubber-stamped) using the precedence: contract misread / actionable / trade-off / noise
