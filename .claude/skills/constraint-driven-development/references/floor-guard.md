@@ -168,7 +168,7 @@ for (const r of removedRules) {
       }
     });
   }
-  if (verdict) flag(verdict, r.file, `[key: ${r.key}]`);
+  if (verdict) flag(verdict, r.file, `[key: ${ruleKey(r.text)}]`);
 }
 
 if (findings.length === 0) { console.log('floor-guard: clean'); process.exit(0); }
