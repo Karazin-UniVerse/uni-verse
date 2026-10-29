@@ -19,6 +19,7 @@ $space-6: 6px;
 $space-8: 8px;
 $space-12: 12px;
 $space-16: 16px;
+$space-20: 20px;
 $space-24: 24px;
 $space-32: 32px;
 $space-40: 40px;
@@ -33,6 +34,7 @@ $space-64: 64px;
   --space-8: 8px;
   --space-12: 12px;
   --space-16: 16px;
+  --space-20: 20px;
   --space-24: 24px;
   --space-32: 32px;
   --space-40: 40px;
@@ -85,6 +87,7 @@ $space-64: 64px;
   --z-sidebar: 10;
   --z-dropdown: 100;
   --z-modal: 1100;
+  --z-toast: 1200;
 
   /* Transitions */
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);

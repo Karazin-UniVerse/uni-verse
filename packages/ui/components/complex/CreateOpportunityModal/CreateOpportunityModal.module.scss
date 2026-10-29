@@ -1,17 +1,17 @@
 .modalStack {
   display: flex;
   flex-direction: column;
-  gap: var(--space-20, 20px);
+  gap: var(--space-20);
 }
 
 .fieldGroup {
   display: flex;
   flex-direction: column;
-  gap: var(--space-8, 8px);
+  gap: var(--space-8);
 }
 
 .fieldLabel {
-  font-size: var(--font-xs, 12px);
+  font-size: var(--font-xs);
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: 0.02em;
@@ -19,32 +19,28 @@
 
 .textarea {
   width: 100%;
-  padding: var(--space-12, 12px) var(--space-16, 16px);
-  border: 1px solid var(--border-color, #d1d5db);
-  border-radius: var(--border-radius-medium, 8px);
-  background: var(--bg-surface, #fff);
+  padding: var(--space-12) var(--space-16);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-medium);
+  background: var(--bg-surface);
   color: var(--text-primary);
   font-family: inherit;
-  font-size: var(--font-sm, 14px);
+  font-size: var(--font-sm);
   line-height: 1.6;
   resize: vertical;
   box-sizing: border-box;
   transition:
-    border-color var(--transition-fast, 150ms) ease,
-    box-shadow var(--transition-fast, 150ms) ease;
+    border-color var(--transition-fast) ease,
+    box-shadow var(--transition-fast) ease;
 
   &:hover {
-    border-color: color-mix(
-      in srgb,
-      var(--accent-primary, #3b82f6) 35%,
-      var(--border-color, #d1d5db)
-    );
+    border-color: color-mix(in srgb, var(--accent-primary) 35%, var(--border-color));
   }
 
   &:focus {
     outline: none;
-    border-color: var(--accent-primary, #3b82f6);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary, #3b82f6) 18%, transparent);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 18%, transparent);
   }
 
   &::placeholder {
@@ -67,8 +63,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--space-12, 12px);
-  padding-top: var(--space-16, 16px);
-  border-top: 1px solid var(--card-border, #e5e7eb);
+  gap: var(--space-12);
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--card-border);
   flex-wrap: wrap;
 }

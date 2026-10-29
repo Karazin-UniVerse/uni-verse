@@ -3,12 +3,12 @@
 .stack {
   display: flex;
   flex-direction: column;
-  gap: var(--space-20, 20px);
+  gap: var(--space-20);
 }
 
 .tagsRow {
   display: flex;
-  gap: var(--space-8, 8px);
+  gap: var(--space-8);
   flex-wrap: wrap;
   align-items: center;
 }
@@ -16,16 +16,16 @@
 .metaRow {
   display: flex;
   align-items: center;
-  gap: var(--space-16, 16px);
-  font-size: var(--font-xs, 12px);
+  gap: var(--space-16);
+  font-size: var(--font-xs);
   color: var(--text-secondary);
-  padding: var(--space-8, 8px) 0;
-  border-bottom: 1px solid var(--card-border, #e5e7eb);
+  padding: var(--space-8) 0;
+  border-bottom: 1px solid var(--card-border);
 
   @include narrower-than('sm') {
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--space-4, 4px);
+    gap: var(--space-4);
   }
 }
 
@@ -38,15 +38,15 @@
 }
 
 .detailSection {
-  padding: var(--space-16, 16px);
-  background: var(--bg-hover, #f3f4f6);
-  border-radius: var(--border-radius-medium, 12px);
-  border: 1px solid var(--card-border, #e5e7eb);
+  padding: var(--space-16);
+  background: var(--bg-hover);
+  border-radius: var(--border-radius-medium);
+  border: 1px solid var(--card-border);
 }
 
 .detailSectionTitle {
-  margin: 0 0 var(--space-8, 8px) 0;
-  font-size: var(--font-xs, 12px);
+  margin: 0 0 var(--space-8) 0;
+  font-size: var(--font-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -55,7 +55,7 @@
 
 .detailSectionText {
   margin: 0;
-  font-size: var(--font-sm, 14px);
+  font-size: var(--font-sm);
   line-height: 1.6;
   color: var(--text-primary);
   white-space: pre-wrap;
@@ -64,69 +64,69 @@
 .contactRow {
   display: flex;
   align-items: center;
-  gap: var(--space-8, 8px);
-  font-size: var(--font-sm, 14px);
+  gap: var(--space-8);
+  font-size: var(--font-sm);
   color: var(--text-primary);
 }
 
 .contactIcon {
-  color: var(--accent-primary, #3b82f6);
+  color: var(--accent-primary);
   flex-shrink: 0;
 }
 
 .authorControlPanel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-12, 12px);
-  padding: var(--space-16, 16px);
-  background: color-mix(in srgb, var(--accent-primary, #3b82f6) 6%, var(--bg-surface, #fff));
-  border: 1px solid color-mix(in srgb, var(--accent-primary, #3b82f6) 20%, transparent);
-  border-radius: var(--border-radius-medium, 12px);
+  gap: var(--space-12);
+  padding: var(--space-16);
+  background: color-mix(in srgb, var(--accent-primary) 6%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--accent-primary) 20%, transparent);
+  border-radius: var(--border-radius-medium);
 }
 
 .manageTitle {
-  font-size: var(--font-xs, 12px);
+  font-size: var(--font-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--accent-primary, #3b82f6);
+  color: var(--accent-primary);
 }
 
 .controlsRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-12, 12px);
+  gap: var(--space-12);
   flex-wrap: wrap;
 }
 
 .actionButtons {
   display: flex;
   align-items: center;
-  gap: var(--space-8, 8px);
+  gap: var(--space-8);
   flex-wrap: wrap;
 }
 
 .moderationFeedbackBox {
-  padding: var(--space-12, 12px) var(--space-16, 16px);
-  background: color-mix(in srgb, var(--warning-color, #f59e0b) 10%, var(--bg-surface, #fff));
-  border: 1px solid color-mix(in srgb, var(--warning-color, #f59e0b) 30%, transparent);
-  border-left: 4px solid var(--warning-color, #f59e0b);
-  border-radius: var(--border-radius-medium, 10px);
+  padding: var(--space-12) var(--space-16);
+  background: color-mix(in srgb, var(--warning-color) 10%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--warning-color) 30%, transparent);
+  border-left: 4px solid var(--warning-color);
+  border-radius: var(--border-radius-medium);
 }
 
 .moderationFeedbackTitle {
-  font-size: var(--font-xs, 12px);
+  font-size: var(--font-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--warning-color, #f59e0b);
-  margin-bottom: var(--space-6, 6px);
+  color: var(--warning-color);
+  margin-bottom: var(--space-6);
 }
 
 .moderationFeedbackText {
   margin: 0;
-  font-size: var(--font-sm, 14px);
+  font-size: var(--font-sm);
   line-height: 1.5;
   color: var(--text-primary);
 }
@@ -134,12 +134,12 @@
 .phaseWrapper {
   display: flex;
   align-items: center;
-  gap: var(--space-8, 8px);
+  gap: var(--space-8);
   margin-left: auto;
 }
 
 .phaseLabel {
-  font-size: var(--font-xs, 12px);
+  font-size: var(--font-xs);
   color: var(--text-secondary);
 }
 
@@ -165,13 +165,13 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--space-12, 12px);
-  padding-top: var(--space-16, 16px);
-  border-top: 1px solid var(--card-border, #e5e7eb);
+  gap: var(--space-12);
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--card-border);
 }
 
 .btnIcon {
-  margin-right: var(--space-8, 8px);
+  margin-right: var(--space-8);
 }
 
 .title {

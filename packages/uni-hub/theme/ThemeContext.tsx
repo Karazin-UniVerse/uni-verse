@@ -28,22 +28,14 @@ function applyTheme(theme: AppTheme) {
     root.dataset.theme = theme;
   }
 }
-const DARK_SCHEME_QUERY = '(prefers-color-scheme: dark)';
-
-const getSystemTheme = (): AppTheme =>
-  window.matchMedia(DARK_SCHEME_QUERY).matches ? 'karazinGold' : 'karazinClassic';
 
 const subscribeToTheme = (callback: () => void) => {
-  const media = window.matchMedia(DARK_SCHEME_QUERY);
-
   window.addEventListener('storage', callback);
   window.addEventListener('theme-change', callback);
-  media.addEventListener('change', callback);
 
   return () => {
     window.removeEventListener('storage', callback);
     window.removeEventListener('theme-change', callback);
-    media.removeEventListener('change', callback);
   };
 };
 
@@ -56,7 +48,7 @@ const getThemeSnapshot = (): AppTheme => {
     return storedTheme;
   }
 
-  return getSystemTheme();
+  return 'light';
 };
 
 const getThemeServerSnapshot = (): AppTheme => 'light';
