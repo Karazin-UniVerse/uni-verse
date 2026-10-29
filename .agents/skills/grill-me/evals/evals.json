@@ -1,0 +1,33 @@
+{
+  "skill_name": "grill-me",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Stress-test this draft UniVerse PRD before we agree to it. Students want a CSV of their grades for scholarship applications. Proposal: add a grade-export endpoint in packages/backend with an optional studentId; default to the logged-in student, but accept a supplied ID so staff can help students too. Reuse the existing login and grade retrieval flow. Cache downloads by request URL for 15 minutes. First release is enabled for all logged-in users; rollback means disabling the endpoint. Proposed tests: a logged-in request returns HTTP 200, CSV headers, and one known grade. I have not decided the ownership/staff-access rule, cache isolation, or what happens with missing grades. Those endpoint/cache details are proposals, not claims about current code. Inspect the relevant repository instructions and auth/grade behavior rather than asking me where they live. This is a read-only review, not implementation approval. Give your first review response and wait for my answer if a material decision is missing.",
+      "expected_output": "A brief grounded framing followed by one high-impact unresolved decision question, prioritizing who may export whose grades. It explains the privacy consequence, may recommend own-student-only access for the first release without treating it as agreed, and waits. It does not dump downstream cache/failure/rollout questions or implement anything.",
+      "files": [],
+      "expectations": [
+        "The transcript shows targeted read-only inspection of applicable repository instructions and existing auth/grade behavior, and the response cites at least one relevant repository path without claiming the proposed endpoint already exists.",
+        "The response asks exactly one decision question about authorization/ownership of exported grades, rather than a batch of independently answerable questions.",
+        "The response explains that authentication alone does not settle permission to export another student's grades, or equivalently identifies cross-student data exposure as the material risk.",
+        "Any recommended access rule is labeled as a recommendation, not a user-approved business rule; the response waits for an answer before dependent questions.",
+        "The response does not re-ask the stated purpose, default student, cache duration, or repository locations, and does not present a full downstream questionnaire.",
+        "The run makes no file edits, installations, implementation, commits, publishing actions, or automatic brainstorming/writing-plans handoff."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Give this small documentation task a design-review stress-test; don't do the edit. In docs/ai/workflow.md, expand the existing skills-sync bullet to state that pnpm skills:check is read-only and exits nonzero when .agents/skills is absent or the .claude/skills mirror has missing, extra, or byte-different files. Keep the existing commands, source-of-truth rule, and warning that sync deletes mirror-only files. Change that bullet only: no script, dependency, product-code, or other documentation changes. The reader is a contributor checking a skill-only PR. Acceptance: the added wording matches scripts/sync-skills.mjs, both named package scripts still exist, the existing safeguards remain, and the edited Markdown passes Prettier when tooling is available. Rollback is reverting that one documentation hunk; no runtime rollout or migration is involved. Inspect docs/ai/workflow.md, scripts/sync-skills.mjs, and package.json directly to verify the facts, not by asking me to locate them. If these criteria settle the meaningful risks, say so and finish without inventing interview questions, writing a new spec/plan, or treating the review as edit permission.",
+      "expected_output": "A concise terminal review with Decisions, Open questions, and Acceptance gaps, grounded in the three inspected files. It finds no material unanswered decision if the files match, asks zero questions, and notes any unrun formatting check without mistaking tooling availability for a product-design gap. It does not perform the edit or begin another workflow.",
+      "files": [],
+      "expectations": [
+        "The transcript shows read-only inspection of docs/ai/workflow.md, scripts/sync-skills.mjs, and package.json, and the response cites the relevant evidence.",
+        "The response correctly identifies the --check path as read-only, nonzero on absent source or mismatched mirror, and confirms the skills:sync and skills:check package scripts exist.",
+        "The response includes Decisions, Open questions, and Acceptance gaps, with no material open decision or invented acceptance requirement when the inspected evidence matches the prompt.",
+        "The response asks zero interview or follow-up questions and finishes the review in this turn rather than insisting on exhaustive branches or another interview.",
+        "The response preserves the single-bullet scope and does not demand runtime rollout, security redesign, migration planning, or a new spec/plan for a documentation-only change.",
+        "The run makes no file edits, installations, implementation, commits, publishing actions, or automatic brainstorming/writing-plans handoff, and does not claim Prettier or other checks ran without evidence."
+      ]
+    }
+  ]
+}
