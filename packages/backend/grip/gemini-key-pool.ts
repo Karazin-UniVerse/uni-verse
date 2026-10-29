@@ -9,11 +9,12 @@ import type {
   GeminiKeyState,
 } from './grip.types';
 
-const IMF_DATE_PATTERN = /^\w{3}, (\d{2}) \w{3} \d{4} \d{2}:\d{2}:\d{2} GMT$/;
+const IMF_DATE_PATTERN =
+  /^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), (\d{2}) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} GMT$/;
 const RFC850_DATE_PATTERN =
-  /^\w+, (\d{2}-\w{3}-)(\d{2})( \d{2}:\d{2}:\d{2} GMT)$/;
+  /^(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), (\d{2}-(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-)(\d{2})( \d{2}:\d{2}:\d{2} GMT)$/;
 const ASCTIME_DATE_PATTERN =
-  /^\w{3} \w{3} (\d{2}| \d) \d{2}:\d{2}:\d{2} \d{4}$/;
+  /^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{2}| \d) \d{2}:\d{2}:\d{2} \d{4}$/;
 const RFC850_FUTURE_YEARS = 50;
 const YEARS_PER_CENTURY = 100;
 
