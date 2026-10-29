@@ -79,7 +79,7 @@ for (const line of diff.split('\n')) {
 }
 
 const findings = [];
-const flag = (rule, f, text) => findings.push({ rule, file: f, text: text.trim().slice(0, 120) });
+const flag = (rule, f, detail = '') => findings.push({ rule, file: f, detail });
 const isTest = (f) => /\.(test|spec)\.|_test\.|test_/.test(f);
 const isConstraints = (f) => /CONSTRAINTS\.md$/.test(f);
 
@@ -89,6 +89,15 @@ const SUPPRESSIONS = /@ts-ignore|@ts-nocheck|eslint-disable|biome-ignore|# *noqa
 const STUBS = /throw new (Error|NotImplemented).*[Nn]ot implemented|catch\s*\(\w*\)\s*\{\s*\}|catch\s*\{\s*\}|\bTODO\b|\bpass\s*# *stub/;
 // 2. A test made easier (added skips).
 const SKIPS = /\.(skip|todo)\b|\bxit\(|\bxdescribe\(|@pytest\.mark\.skip|t\.Skip\(/;
+
+// Pair added W/E exception rows with removed rows sharing the same ID to avoid flagging edits
+const getExceptionId = (t) => {
+  const m = t.match(/^\|\s*([WE]\d+)\s*\|/);
+  return m ? m[1] : null;
+};
+const removedExceptionIds = new Set(
+  removed.filter(({ file }) => isConstraints(file)).map(({ text }) => getExceptionId(text)).filter(Boolean)
+);
 
 for (const { file, text } of added) {
   if (SUPPRESSIONS.test(text)) flag('silenced-checker', file, text);
@@ -159,12 +168,12 @@ for (const r of removedRules) {
       }
     });
   }
-  if (verdict) flag(verdict, r.file, r.text + '  ->  ' + a.text);
+  if (verdict) flag(verdict, r.file, `[key: ${r.key}]`);
 }
 
 if (findings.length === 0) { console.log('floor-guard: clean'); process.exit(0); }
 console.error('floor-guard: ' + findings.length + ' floor violation(s):');
-for (const f of findings) console.error(`  [${f.rule}] ${f.file}: ${f.text}`);
+for (const f of findings) console.error(`  [${f.rule}] ${f.file}${f.detail ? ': ' + f.detail : ''}`);
 if (findings.some((f) => f.rule === 'rule-removed')) {
   console.error('\nA rule-removed finding can also mean the rule\'s label changed: rename a rule in one commit and change its thresholds in another.');
 }

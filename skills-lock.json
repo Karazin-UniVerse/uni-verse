@@ -5,7 +5,7 @@
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/api-and-interface-design/SKILL.md",
-      "computedHash": "0d823e9ff32f529f21492a3fd7635fc75b43ff1eb1788d4be0974bfa42e22ae3"
+      "computedHash": "6a92edd58e66f7b5576951c9c63e2ec2eb417e4c45980aa7c93db3d3023aeb05"
     },
     "brainstorming": {
       "source": "obra/superpowers",
@@ -29,7 +29,7 @@
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/constraint-driven-development/SKILL.md",
-      "computedHash": "e7edf3955e685b52c078ca313b518266bd33bab5510358c9f323c0fa21558946"
+      "computedHash": "3d5170ba67bc4c784b5186b5d5cc9f10b852e128279c0310376ab3511aa0a140"
     },
     "deploy-to-vercel": {
       "source": "vercel-labs/agent-skills",
@@ -65,7 +65,7 @@
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/security-and-hardening/SKILL.md",
-      "computedHash": "dbab1f4697ece5cab24a90911ae052320d8f8b191324df7f836aa42344699b89"
+      "computedHash": "765737c44b64475f0eb59ed0fe5a35191c9339ff17dc1b4665a2a8994ad2fbd9"
     },
     "skill-creator": {
       "source": "anthropics/skills",
