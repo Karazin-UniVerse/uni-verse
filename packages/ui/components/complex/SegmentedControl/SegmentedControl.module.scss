@@ -18,7 +18,9 @@
   }
 
   @include narrower-than('sm') {
+    display: flex;
     width: 100%;
+    gap: var(--space-4);
   }
 }
 
@@ -50,6 +52,15 @@
     outline: var(--focus-ring-width) solid var(--accent-primary);
     outline-offset: var(--focus-ring-offset);
   }
+
+  @include narrower-than('sm') {
+    flex: 1 0 auto;
+    min-width: max-content;
+    justify-content: center;
+    padding: var(--space-4) var(--space-8);
+    font-size: var(--font-xs);
+    gap: var(--space-4);
+  }
 }
 
 .activeSegment {
@@ -72,4 +83,20 @@
   line-height: 1;
   background: var(--error-color);
   color: var(--accent-text-on-primary);
+}
+
+.mobileLabel {
+  display: none;
+
+  @include narrower-than('sm') {
+    display: inline;
+  }
+}
+
+.desktopLabel {
+  display: inline;
+
+  @include narrower-than('sm') {
+    display: none;
+  }
 }

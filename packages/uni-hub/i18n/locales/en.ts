@@ -446,9 +446,13 @@ export const en = {
   'opportunities.errors.phoneAlreadySet':
     'Use the phone number already registered to your account, or Telegram.',
   'opportunities.tabs.catalog': 'Catalog',
+  'opportunities.tabs.catalogShort': 'Catalog',
   'opportunities.tabs.myOpportunities': 'My Opportunities',
+  'opportunities.tabs.myOpportunitiesShort': 'Mine',
   'opportunities.tabs.myApplications': 'My Applications',
+  'opportunities.tabs.myApplicationsShort': 'Applied',
   'opportunities.tabs.moderation': 'Moderation',
+  'opportunities.tabs.moderationShort': 'Moderation',
   'opportunities.actions.create': 'Create Opportunity',
   'opportunities.toast.createdDraft': 'Opportunity successfully created as a draft!',
   'opportunities.toast.createError': 'Error creating opportunity',
@@ -494,7 +498,6 @@ export const en = {
   'opportunities.catalog.filterAll': 'All',
   'opportunities.catalog.filterPaid': 'Paid',
   'opportunities.catalog.filterUnpaid': 'Volunteering / Internship',
-  'opportunities.catalog.foundPrefix': 'Found:',
   'opportunities.catalog.emptyDescription':
     'No available opportunities found matching your request',
 

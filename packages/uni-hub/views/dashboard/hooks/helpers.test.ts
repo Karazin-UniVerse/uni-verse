@@ -16,13 +16,13 @@ import {
   isMoodleUnlinked,
   syncStudentProfile,
   applyStoredIdentityToProfile,
-  getInitialUserProfile,
   readSessionIdentity,
   hasSessionChanged,
   type StoredSessionIdentity,
   type MoodleApiResponseTuple,
 } from './helpers';
-import { fallbackStudentProfile, STUDENT_PROFILE_STORAGE_KEY } from '../constants';
+import { STUDENT_PROFILE_STORAGE_KEY } from '../constants';
+import { fallbackStudentProfile } from '@uni-hub/utils/test-fixtures';
 import type { DashboardData } from '../types';
 
 vi.mock('@uni-hub/utils/browser', () => ({
@@ -187,90 +187,6 @@ describe('syncStudentProfile', () => {
   });
 });
 
-describe('getInitialUserProfile', () => {
-  it('should prefer the cached profile over the saved username', () => {
-    const profile = { ...fallbackStudentProfile, fullName: 'Cached Student' };
-
-    localStorage.setItem(STUDENT_PROFILE_STORAGE_KEY, JSON.stringify(profile));
-    localStorage.setItem('username', 'saved.user');
-
-    expect(getInitialUserProfile()).toEqual(profile);
-  });
-
-  it.each([
-    ['an array', '[]'],
-    ['an empty object', '{}'],
-    ['a partial profile', JSON.stringify({ fullName: 'Partial Student' })],
-    ['invalid JSON', '{not json'],
-  ])('should ignore a cached profile that is %s', (_label: string, cached: string) => {
-    localStorage.setItem(STUDENT_PROFILE_STORAGE_KEY, cached);
-    localStorage.setItem('username', 'saved.user');
-
-    expect(getInitialUserProfile()?.fullName).toBe('saved.user');
-  });
-
-  it('should build a profile from the saved username when nothing is cached', () => {
-    localStorage.setItem('username', 'saved.user');
-
-    expect(getInitialUserProfile()).toEqual({
-      ...fallbackStudentProfile,
-      fullName: 'saved.user',
-      email: 'saved.user@karazin.ua',
-    });
-  });
-
-  it('should use username as fullName directly and keep email when username is email', () => {
-    localStorage.setItem('username', 'student@karazin.ua');
-
-    const profile = getInitialUserProfile();
-
-    expect(profile?.email).toBe('student@karazin.ua');
-    expect(profile?.fullName).toBe('student@karazin.ua');
-  });
-
-  it('uses userEmail from storage when username is real name and userEmail is set', () => {
-    localStorage.setItem('username', 'Богдан Мельник');
-    localStorage.setItem('userEmail', 'melnyk.bogdan@student.karazin.ua');
-
-    const profile = getInitialUserProfile();
-
-    expect(profile?.fullName).toBe('Богдан Мельник');
-    expect(profile?.email).toBe('melnyk.bogdan@student.karazin.ua');
-  });
-
-  it('ignores the legacy universe_student_profile cache', () => {
-    localStorage.setItem(
-      'universe_student_profile',
-      JSON.stringify({ ...fallbackStudentProfile, group: 'КС12' }),
-    );
-    localStorage.setItem('username', 'saved.user');
-
-    expect(getInitialUserProfile()?.group).toBeUndefined();
-  });
-
-  it('accepts a cached real profile without group and course', () => {
-    const profile = { ...fallbackStudentProfile, fullName: 'Богдан Мельник' };
-
-    localStorage.setItem(STUDENT_PROFILE_STORAGE_KEY, JSON.stringify(profile));
-
-    expect(getInitialUserProfile()).toEqual(profile);
-  });
-
-  it('never adds a group to a username-based profile', () => {
-    localStorage.setItem('username', 'melnyk.bogdan@student.karazin.ua');
-
-    expect(getInitialUserProfile()).not.toHaveProperty('group');
-  });
-
-  it('should return null when there is no cache and no usable username', () => {
-    expect(getInitialUserProfile()).toBeNull();
-
-    localStorage.setItem('username', fallbackStudentProfile.fullName);
-
-    expect(getInitialUserProfile()).toBeNull();
-  });
-});
-
 describe('applyStoredIdentityToProfile', () => {
   it('should overlay stored corporate username and userEmail when userEmail is set', () => {
     localStorage.setItem('username', 'Богдан Мельник');
@@ -290,9 +206,9 @@ describe('applyStoredIdentityToProfile', () => {
     expect(resolved.gpa).toBe(95.5);
   });
 
-  it('should keep moodle fullName if saved username is empty or fallback, but apply userEmail', () => {
+  it('should keep moodle fullName if saved username is empty, but apply userEmail', () => {
     localStorage.setItem('userEmail', 'melnyk.bogdan@student.karazin.ua');
-    localStorage.setItem('username', fallbackStudentProfile.fullName);
+    localStorage.setItem('username', '');
 
     const moodleProfile = {
       ...fallbackStudentProfile,

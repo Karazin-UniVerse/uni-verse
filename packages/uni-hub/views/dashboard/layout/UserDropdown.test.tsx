@@ -1,8 +1,28 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
-import { fallbackStudentProfile } from '../constants';
+import { fallbackStudentProfile } from '@uni-hub/utils/test-fixtures';
 import { UserDropdown, getMoodleStatusDetails, getUserProfileTitle } from './UserDropdown';
+import userEvent from '@testing-library/user-event';
+import { withAppProviders } from '@uni-hub/utils/test-utils';
+import styles from './DashboardShell.module.scss';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { compile } from 'sass-embedded';
+import { BREAKPOINTS } from '@core/constants/breakpoints';
+
+const dashboardCss = compile(resolve('views/dashboard/layout/DashboardShell.module.scss'), {
+  importers: [
+    {
+      findFileUrl: (url) =>
+        url === '@universe/ui/breakpoints.scss'
+          ? pathToFileURL(resolve('../ui/breakpoints.scss'))
+          : null,
+    },
+  ],
+}).css.replace(/\.([A-Za-z_][\w-]*)/g, (selector, name: string) =>
+  styles[name] ? `.${styles[name]}` : selector,
+);
 
 describe('UserDropdown helpers', () => {
   it('should return linked status details when isMoodleLinked is true', () => {
@@ -43,6 +63,77 @@ describe('UserDropdown helpers', () => {
 });
 
 describe('UserDropdown', () => {
+  it.each([
+    { label: 'unloaded on mobile', profile: null, width: 375 },
+    { label: 'loaded on mobile', profile: fallbackStudentProfile, width: 375 },
+    { label: 'unloaded on desktop', profile: null, width: 1024 },
+    { label: 'loaded on desktop', profile: fallbackStudentProfile, width: 1024 },
+  ])('should keep the profile icon visible when $label', ({ profile, width }) => {
+    const originalWidth = window.innerWidth;
+    const stylesheet = document.createElement('style');
+
+    stylesheet.textContent = dashboardCss;
+    document.head.append(stylesheet);
+    window.innerWidth = width;
+
+    try {
+      render(
+        withAppProviders(
+          <UserDropdown
+            activeStudentProfile={profile}
+            soundEnabled={true}
+            onToggleSound={vi.fn()}
+            onLogout={vi.fn()}
+          />,
+        ),
+      );
+
+      const trigger = screen.getByRole('button', { name: /меню профілю користувача/i });
+      const avatar = trigger.querySelector(`.${styles.avatar}`);
+
+      expect(avatar).toBeVisible();
+
+      if (profile) {
+        const name = screen.getByText(profile.fullName);
+
+        if (width < BREAKPOINTS.md) {
+          expect(name).not.toBeVisible();
+        } else {
+          expect(name).toBeVisible();
+        }
+      }
+    } finally {
+      stylesheet.remove();
+      window.innerWidth = originalWidth;
+    }
+  });
+
+  it('should keep the menu usable without showing an identity until the profile loads', async () => {
+    const user = userEvent.setup();
+    const onLogout = vi.fn();
+
+    render(
+      withAppProviders(
+        <UserDropdown
+          activeStudentProfile={null}
+          soundEnabled={true}
+          onToggleSound={vi.fn()}
+          onLogout={onLogout}
+        />,
+      ),
+    );
+
+    const trigger = screen.getByRole('button', { name: /меню профілю користувача/i });
+
+    expect(trigger).toHaveTextContent('');
+    expect(trigger).not.toHaveAttribute('title');
+    await user.click(trigger);
+    await user.click(screen.getByRole('button', { name: /вийти/i }));
+
+    expect(onLogout).toHaveBeenCalledOnce();
+    expect(screen.queryByText('Барсуков Родіон Сергійович')).not.toBeInTheDocument();
+  });
+
   it('should render a collapsed trigger with the student name and an accessible name', () => {
     render(
       <UserDropdown

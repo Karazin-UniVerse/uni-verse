@@ -104,9 +104,17 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
         <h3 className={styles.title}>{title}</h3>
 
         <div className={styles.tagsRow}>
-          {paymentTagText && <Tag tone={paymentTone}>{paymentTagText}</Tag>}
+          {paymentTagText && (
+            <Tag tone={paymentTone} size="medium">
+              {paymentTagText}
+            </Tag>
+          )}
           {statusBadge}
-          {lifecycleTagText && <Tag tone="info">{lifecycleTagText}</Tag>}
+          {lifecycleTagText && (
+            <Tag tone="info" size="medium">
+              {lifecycleTagText}
+            </Tag>
+          )}
         </div>
 
         {(organizerName || publishedDateText) && (

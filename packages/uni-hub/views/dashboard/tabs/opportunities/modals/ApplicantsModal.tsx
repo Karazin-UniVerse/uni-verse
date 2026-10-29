@@ -53,20 +53,18 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                 <div className={styles.ownerAvatar}>
                   {(app.applicant?.name || app.applicantName || 'S').charAt(0).toUpperCase()}
                 </div>
-                <div className={styles.ownerMeta}>
-                  <div className={styles.ownerRow}>
-                    <span className={styles.applicantName}>
-                      {app.applicant?.name ||
-                        app.applicantName ||
-                        formatMessage('opportunities.applicantsModal.defaultApplicant')}
-                    </span>
-                    <ContactTags
-                      emailLabel={formatMessage('opportunities.emailLabel')}
-                      alternativeContactLabel={formatMessage('opportunities.alternativeContact')}
-                      email={app.applicant?.email}
-                      alternativeContact={app.contactInfo}
-                    />
-                  </div>
+                <div className={styles.applicantMeta}>
+                  <span className={styles.applicantName}>
+                    {app.applicant?.name ||
+                      app.applicantName ||
+                      formatMessage('opportunities.applicantsModal.defaultApplicant')}
+                  </span>
+                  <ContactTags
+                    emailLabel={formatMessage('opportunities.emailLabel')}
+                    alternativeContactLabel={formatMessage('opportunities.alternativeContact')}
+                    email={app.applicant?.email}
+                    alternativeContact={app.contactInfo}
+                  />
                 </div>
               </div>
 

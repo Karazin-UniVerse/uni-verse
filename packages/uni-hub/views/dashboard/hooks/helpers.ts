@@ -15,7 +15,7 @@ import type {
 import { moodleApi } from '@uni-hub/services/api';
 import type { StudentProfile } from '@core/types/student';
 import type { DashboardData } from '../types';
-import { fallbackStudentProfile, STUDENT_PROFILE_STORAGE_KEY } from '../constants';
+import { STUDENT_PROFILE_STORAGE_KEY } from '../constants';
 
 export type GradesApiResponse = Awaited<ReturnType<typeof moodleApi.getGrades>>;
 
@@ -269,40 +269,6 @@ export function getInitialSyncTime(): number | null {
   }
 }
 
-const REQUIRED_PROFILE_KEYS = Object.keys(fallbackStudentProfile).filter(
-  (key: string) => key !== 'avatarUrl',
-);
-
-function isStudentProfile(value: unknown): value is StudentProfile {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return false;
-  }
-
-  const record = value as Record<string, unknown>;
-
-  return REQUIRED_PROFILE_KEYS.every(
-    (key: string) => record[key] !== undefined && record[key] !== null,
-  );
-}
-
-function getCachedUserProfile(): StudentProfile | null {
-  try {
-    const cachedProfile = localStorage.getItem(STUDENT_PROFILE_STORAGE_KEY);
-
-    if (!cachedProfile) return null;
-
-    const parsedProfile: unknown = JSON.parse(cachedProfile);
-
-    if (isStudentProfile(parsedProfile)) {
-      return parsedProfile;
-    }
-  } catch {
-    // ignore invalid JSON / storage errors
-  }
-
-  return null;
-}
-
 /**
  * Represents the current session identity retrieved from persistent storage and tokens.
  */
@@ -402,61 +368,6 @@ export function getSessionEmail(): string | null {
 }
 
 /**
- * Resolves the initial student profile from storage or builds a fallback from the saved username.
- */
-export function getInitialUserProfile(): StudentProfile | null {
-  const cachedProfile = getCachedUserProfile();
-
-  if (cachedProfile) {
-    return cachedProfile;
-  }
-
-  if (!isBrowser) {
-    return null;
-  }
-
-  const savedUser = safeStorage.getItem('username');
-
-  if (!savedUser || savedUser === fallbackStudentProfile.fullName) {
-    return null;
-  }
-
-  let savedEmail = safeStorage.getItem('userEmail');
-
-  if (!savedEmail) {
-    const authProvider = safeStorage.getItem('authProvider');
-
-    if (authProvider !== 'credentials') {
-      const sessionEmail = getSessionEmail();
-
-      if (sessionEmail && (savedUser.includes(' ') || authProvider === 'google')) {
-        savedEmail = sessionEmail;
-
-        safeStorage.setItem('userEmail', sessionEmail);
-      }
-    }
-  }
-
-  let email: string;
-
-  if (savedEmail) {
-    email = savedEmail;
-  } else if (savedUser.includes('@')) {
-    email = savedUser;
-  } else if (!savedUser.includes(' ')) {
-    email = `${savedUser}@karazin.ua`;
-  } else {
-    email = fallbackStudentProfile.email;
-  }
-
-  return {
-    ...fallbackStudentProfile,
-    fullName: savedUser,
-    email,
-  };
-}
-
-/**
  * Persists the current student profile to storage.
  */
 export function syncStudentProfile(profileData?: StudentProfile | null): void {
@@ -498,8 +409,7 @@ export function applyStoredIdentityToProfile(
     }
 
     const savedUser = sessionSnapshot?.username ?? safeStorage.getItem('username');
-    const fullName =
-      savedUser && savedUser !== fallbackStudentProfile.fullName ? savedUser : profileData.fullName;
+    const fullName = savedUser || profileData.fullName;
 
     return {
       ...profileData,

@@ -1,14 +1,23 @@
 .tag {
   display: inline-flex;
   align-items: center;
-  padding: var(--space-2) var(--space-8);
   border-radius: var(--border-radius-small);
-  font-size: var(--font-xs);
   font-weight: var(--font-weight-medium);
   border: 1px solid transparent; /* Remove visible border for soft badges */
   background: var(--bg-surface);
   color: var(--text-primary);
   white-space: nowrap;
+}
+
+.small {
+  padding: var(--space-2) var(--space-8);
+  font-size: var(--font-xs);
+}
+
+.medium {
+  padding: var(--space-4) var(--space-12);
+  font-size: var(--font-sm);
+  border-radius: var(--border-radius-medium);
 }
 
 .default {

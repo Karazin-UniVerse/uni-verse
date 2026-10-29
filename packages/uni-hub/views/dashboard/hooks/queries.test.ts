@@ -20,7 +20,8 @@ import {
   platformNotificationsQueryOptions,
   profileQueryOptions,
 } from './queries';
-import { fallbackStudentProfile, STUDENT_PROFILE_STORAGE_KEY } from '../constants';
+import { STUDENT_PROFILE_STORAGE_KEY } from '../constants';
+import { fallbackStudentProfile } from '@uni-hub/utils/test-fixtures';
 
 const filters: BuildAssignmentParamsOptions = {
   sortOrder: 'asc',
