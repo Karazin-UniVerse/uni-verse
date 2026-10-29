@@ -10,15 +10,37 @@ import type {
 } from './grip.types';
 
 const IMF_DATE_PATTERN =
-  /^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), (\d{2}) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} GMT$/;
+  /^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), (\d{2}) (?<month>\w{3}) \d{4} \d{2}:\d{2}:\d{2} GMT$/;
 const RFC850_DATE_PATTERN =
-  /^(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), (\d{2}-(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-)(\d{2})( \d{2}:\d{2}:\d{2} GMT)$/;
+  /^(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), (?<date>\d{2}-(?<month>\w{3})-)(?<year>\d{2})(?<time> \d{2}:\d{2}:\d{2} GMT)$/;
 const ASCTIME_DATE_PATTERN =
-  /^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{2}| \d) \d{2}:\d{2}:\d{2} \d{4}$/;
+  /^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (?<month>\w{3}) (?<day>\d{2}| \d) \d{2}:\d{2}:\d{2} \d{4}$/;
+const HTTP_MONTHS = new Set([
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+]);
 const RFC850_FUTURE_YEARS = 50;
 const YEARS_PER_CENTURY = 100;
 
-function validatedDateTimestamp(value: string, day: number): number {
+function validatedDateTimestamp(
+  value: string,
+  day: number,
+  month: string,
+): number {
+  if (!HTTP_MONTHS.has(month)) {
+    return Number.NaN;
+  }
+
   const date = new Date(value);
 
   return date.getUTCDate() === day ? date.getTime() : Number.NaN;
@@ -28,13 +50,21 @@ function httpDateTimestamp(value: string, now: number): number {
   const imfDate = IMF_DATE_PATTERN.exec(value);
 
   if (imfDate) {
-    return validatedDateTimestamp(value, Number(imfDate[1]));
+    return validatedDateTimestamp(
+      value,
+      Number(imfDate[1]),
+      imfDate.groups!.month,
+    );
   }
 
   const asctimeDate = ASCTIME_DATE_PATTERN.exec(value);
 
   if (asctimeDate) {
-    return validatedDateTimestamp(`${value} GMT`, Number(asctimeDate[1]));
+    return validatedDateTimestamp(
+      `${value} GMT`,
+      Number(asctimeDate.groups!.day),
+      asctimeDate.groups!.month,
+    );
   }
 
   const rfc850 = RFC850_DATE_PATTERN.exec(value);
@@ -52,18 +82,21 @@ function httpDateTimestamp(value: string, now: number): number {
   const century =
     Math.floor(futureLimit.getUTCFullYear() / YEARS_PER_CENTURY) *
     YEARS_PER_CENTURY;
-  const year = century + Number(rfc850[2]);
-  const day = Number(rfc850[1].slice(0, 2));
+  const { date: datePrefix, month, year: shortYear, time } = rfc850.groups!;
+  const year = century + Number(shortYear);
+  const day = Number(datePrefix.slice(0, 2));
   const timestamp = validatedDateTimestamp(
-    `${rfc850[1]}${year}${rfc850[3]}`,
+    `${datePrefix}${year}${time}`,
     day,
+    month,
   );
   const date = new Date(timestamp);
 
   if (date.getTime() > futureLimit.getTime()) {
     return validatedDateTimestamp(
-      `${rfc850[1]}${year - YEARS_PER_CENTURY}${rfc850[3]}`,
+      `${datePrefix}${year - YEARS_PER_CENTURY}${time}`,
       day,
+      month,
     );
   }
 
