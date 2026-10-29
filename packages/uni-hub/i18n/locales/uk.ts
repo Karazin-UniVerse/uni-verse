@@ -8,7 +8,7 @@ export const uk = {
 
   // Login
   'login.title': 'UNiHub',
-  'login.subtitle': 'Студентський простір Каразінського університету',
+  'login.subtitle': 'Студентський простір 67 університету',
   'login.corporateNotice':
     'Вхід доступний лише за корпоративним акаунтом університету (@student.karazin.ua або @karazin.ua)',
   'login.googleClientMissing':
@@ -148,6 +148,7 @@ export const uk = {
   'streak.day': 'день',
   'streak.daysFew': 'дні',
   'streak.daysMany': 'днів',
+  'streak.secret': '67',
 
   // Courses
   'courses.instructor': 'Викладач',
