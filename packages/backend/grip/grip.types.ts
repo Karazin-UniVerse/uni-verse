@@ -96,3 +96,12 @@ export interface GeminiFailedAttemptParams {
   attempt: number;
   startedAt: number;
 }
+
+export interface GeminiExecuteAttemptParams {
+  context: GeminiAttemptContext;
+  request: GripCompletionRequest;
+  pool: GeminiKeyPool;
+  attempted: Set<number>;
+  lastFailure?: HttpException;
+  attempt?: number;
+}

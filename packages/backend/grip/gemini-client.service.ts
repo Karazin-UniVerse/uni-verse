@@ -29,6 +29,7 @@ import type {
   GeminiAttemptOutcome,
   GeminiFailureParams,
   GeminiFailedAttemptParams,
+  GeminiExecuteAttemptParams,
   GripConfig,
 } from './grip.types';
 
@@ -252,6 +253,85 @@ export class GeminiClientService {
     return failure.exception;
   }
 
+  private async executeAttempt({
+    context,
+    request,
+    pool,
+    attempted,
+    lastFailure,
+    attempt = 1,
+  }: GeminiExecuteAttemptParams): Promise<GripCompletionResponse> {
+    checkCancellation(context);
+    const reservation = pool.reserve(attempted);
+
+    if (!reservation) {
+      throw (
+        lastFailure ??
+        new ServiceUnavailableException(
+          'Upstream model keys temporarily unavailable',
+        )
+      );
+    }
+
+    attempted.add(reservation.slot);
+    const startedAt = Date.now();
+
+    const model = attempt === 1 ? GRIP_ALLOWED_MODEL : GRIP_FALLBACK_MODEL;
+
+    context.payload = JSON.stringify({
+      model,
+      messages: request.messages,
+      response_format: request.response_format,
+      max_tokens: GRIP_MAX_OUTPUT_TOKENS,
+    });
+
+    let nextFailure: HttpException;
+
+    try {
+      const response = await this.attempt(context, reservation.apiKey);
+
+      this.logger.debug('Grip upstream attempt', {
+        keySlot: reservation.slot + 1,
+        attempt,
+        model,
+        elapsedMs: Date.now() - startedAt,
+        outcome: 'success',
+        failover: false,
+      });
+
+      return response;
+    } catch (error: unknown) {
+      nextFailure = this.handleFailedAttempt({
+        error,
+        context,
+        pool,
+        attempted,
+        slot: reservation.slot,
+        attempt,
+        startedAt,
+      });
+    } finally {
+      pool.release(reservation.slot);
+    }
+
+    try {
+      await retryBackoff(context.signal);
+    } catch (error: unknown) {
+      checkCancellation(context);
+
+      throw error;
+    }
+
+    return this.executeAttempt({
+      context,
+      request,
+      pool,
+      attempted,
+      attempt: attempt + 1,
+      lastFailure: nextFailure,
+    });
+  }
+
   async complete(
     request: GripCompletionRequest,
     callerSignal?: AbortSignal,
@@ -264,78 +344,16 @@ export class GeminiClientService {
       : timeoutSignal;
     const context: GeminiAttemptContext = {
       url: `${stripTrailingSlashes(config.geminiBaseUrl)}/chat/completions`,
-      payload: JSON.stringify({
-        model: GRIP_ALLOWED_MODEL,
-        messages: request.messages,
-        response_format: request.response_format,
-        max_tokens: GRIP_MAX_OUTPUT_TOKENS,
-      }),
+      payload: '',
       signal,
       callerSignal,
     };
-    const attempted = new Set<number>();
-    let lastFailure: HttpException | undefined;
 
-    for (let attempt = 1; ; attempt += 1) {
-      checkCancellation(context);
-      const reservation = pool.reserve(attempted);
-
-      if (!reservation) {
-        throw (
-          lastFailure ??
-          new ServiceUnavailableException(
-            'Upstream model keys temporarily unavailable',
-          )
-        );
-      }
-
-      attempted.add(reservation.slot);
-      const startedAt = Date.now();
-
-      const model = attempt === 1 ? GRIP_ALLOWED_MODEL : GRIP_FALLBACK_MODEL;
-
-      context.payload = JSON.stringify({
-        model,
-        messages: request.messages,
-        response_format: request.response_format,
-        max_tokens: GRIP_MAX_OUTPUT_TOKENS,
-      });
-
-      try {
-        const response = await this.attempt(context, reservation.apiKey);
-
-        this.logger.debug('Grip upstream attempt', {
-          keySlot: reservation.slot + 1,
-          attempt,
-          model,
-          elapsedMs: Date.now() - startedAt,
-          outcome: 'success',
-          failover: false,
-        });
-
-        return response;
-      } catch (error: unknown) {
-        lastFailure = this.handleFailedAttempt({
-          error,
-          context,
-          pool,
-          attempted,
-          slot: reservation.slot,
-          attempt,
-          startedAt,
-        });
-      } finally {
-        pool.release(reservation.slot);
-      }
-
-      try {
-        // Failover depends on the previous failure; parallel attempts would duplicate model calls.
-        await retryBackoff(signal);
-      } catch (error: unknown) {
-        checkCancellation(context);
-
-        throw error;
-      }
-    }
+    return this.executeAttempt({
+      context,
+      request,
+      pool,
+      attempted: new Set<number>(),
+    });
   }
 }
