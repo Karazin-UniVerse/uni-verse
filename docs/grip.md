@@ -196,10 +196,51 @@ The live authentication and pre-push loop was verified end-to-end:
 4. **Environment Variables**: Configure the backend environment:
    ```env
    GRIP_GATEWAY_ENABLED=true
-   GEMINI_API_KEY=<gemini-api-key>
+   GEMINI_API_KEYS="<first-gemini-api-key>,<second-gemini-api-key>"
    GRIP_GITHUB_OAUTH_CLIENT_ID=<oauth-client-id>
    GRIP_GITHUB_PERMISSION_TOKEN=<github-permission-token>
    GRIP_TRUSTED_PROXY_ADDRESSES="127.0.0.1,::1" # adjust for load balancer / ingress
    ```
 5. **Database Migration**: Run `pnpm db:migrate` to push `GripSession`, `GripQuotaBucket`, and `GripLease` tables to PostgreSQL.
 6. **Rollout Policy**: The production gateway must be enabled (`GRIP_GATEWAY_ENABLED=true`) alongside deployment. Because the pre-push check is mandatory across the repository, all contributors must enroll via `pnpm grip:setup --gateway <production-url> --client-id <client-id>` before pushing new code.
+
+### Gemini key pool configuration
+
+`GEMINI_API_KEYS` is the only supported server-side key setting: supply one or more
+comma-separated keys, with no empty or duplicate entries. Ask the Project
+coordinator for private values; never put them in Git or collaborator settings.
+Gemini rate limits apply per Google Cloud project, not per key. Separate projects
+can provide independent allocated quota, but do not isolate a shared Gemini outage.
+Use projects within provider terms, not to bypass service restrictions.
+
+For migration, add `GEMINI_API_KEYS` containing the existing and additional key
+before deploying the new backend. Leave `GEMINI_API_KEY` in place for the old
+binary until rollout completes; the new binary does not read it. Restart/redeploy
+to load the list, then remove the old setting. To roll back, restore the old
+setting before starting the old binary. Collaborators keep their existing gateway
+tokens and do not need provider keys or local configuration changes.
+
+The gateway selects the available key with the fewest active attempts, rotating
+ties. Counts and cooldowns are local to each backend process, not coordinated
+across replicas. Database-backed team quotas and the global limit of two
+concurrent logical completions are unchanged; two simultaneous checks normally
+use different keys in one process. A busy key remains eligible for failover.
+
+Network/response-read failures and upstream HTTP `429`, `500`, `502`, `503`, and
+`504` allow one retry with a different eligible key after a 250 ms delay. Both
+attempts and reads share a single 60-second deadline. Cancellation stops retries.
+One-key pools do not retry. Invalid/oversized responses and non-retryable HTTP
+statuses do not retry; invalid whiteboards are still handled by Grip itself.
+Provider attempts can consume additional quota or cost even when the first call
+fails from the gateway's perspective.
+
+Transient transport/5xx failures cool a key down for 30 seconds. HTTP `429` uses
+at least 60 seconds and honors a longer valid `Retry-After` (seconds or HTTP date).
+HTTP `401/403` cools the key for 60 seconds without retrying the current request.
+If all keys are cooling down, new completions fail promptly with sanitized `503`.
+Exhausted failover returns the last attempt's sanitized error.
+
+`GeminiClientService` logs key slot number, attempt, original upstream status when
+available, elapsed milliseconds, outcome category, and failover decision. Success
+is debug-level; failures are warning-level. Keys, prompts, diffs, answers, raw
+provider bodies, and raw exception messages are never included in these logs.

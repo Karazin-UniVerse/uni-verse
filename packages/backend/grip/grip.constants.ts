@@ -7,6 +7,10 @@ export const GRIP_MAX_SCHEMA_NAME_LENGTH = 64;
 export const GRIP_MAX_OUTPUT_TOKENS = 8192;
 export const GRIP_MAX_UPSTREAM_BYTES = 2 * 1024 * 1024;
 export const GRIP_UPSTREAM_TIMEOUT_MS = 60_000;
+export const GRIP_MAX_UPSTREAM_ATTEMPTS = 2;
+export const GRIP_RETRY_BACKOFF_MS = 250;
+export const GRIP_KEY_COOLDOWN_MS = 30_000;
+export const GRIP_KEY_QUOTA_COOLDOWN_MS = 60_000;
 
 export const GRIP_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 export const GRIP_LEASE_TTL_MS = 90_000;

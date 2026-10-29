@@ -5,22 +5,36 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  Logger,
   Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import type {
   GripCompletionRequest,
   GripCompletionResponse,
-  GripCompletionUsage,
 } from '@universe/core/types/grip';
 import {
   GRIP_ALLOWED_MODEL,
   GRIP_MAX_OUTPUT_TOKENS,
-  GRIP_MAX_UPSTREAM_BYTES,
+  GRIP_MAX_UPSTREAM_ATTEMPTS,
+  GRIP_RETRY_BACKOFF_MS,
   GRIP_UPSTREAM_TIMEOUT_MS,
 } from './grip.constants';
 import { resolveGripConfig } from './grip.helpers';
-import type { GripConfig } from './grip.types';
+import { GeminiKeyPool } from './gemini-key-pool';
+import { parseGeminiResponse, readGeminiBody } from './gemini-response.helpers';
+import type {
+  GeminiAttemptContext,
+  GeminiAttemptOutcome,
+  GeminiFailureParams,
+  GripConfig,
+} from './grip.types';
+
+class GeminiAttemptFailure extends Error {
+  constructor(readonly details: GeminiFailureParams) {
+    super(details.exception.message);
+  }
+}
 
 function stripTrailingSlashes(url: string): string {
   let trimmed = url;
@@ -32,277 +46,263 @@ function stripTrailingSlashes(url: string): string {
   return trimmed;
 }
 
-function parseUsage(usageRecord: unknown): GripCompletionUsage | undefined {
-  if (!usageRecord || typeof usageRecord !== 'object') {
-    return undefined;
-  }
+function httpFailure(response: Response): GeminiAttemptFailure {
+  const status = response.status;
+  let exception: HttpException = new BadGatewayException(
+    'Upstream model error',
+  );
 
-  const record = usageRecord as Record<string, unknown>;
-
-  const promptTokens =
-    Number.isSafeInteger(record.prompt_tokens) &&
-    (record.prompt_tokens as number) >= 0
-      ? (record.prompt_tokens as number)
-      : undefined;
-
-  const completionTokens =
-    Number.isSafeInteger(record.completion_tokens) &&
-    (record.completion_tokens as number) >= 0
-      ? (record.completion_tokens as number)
-      : undefined;
-
-  const totalTokens =
-    Number.isSafeInteger(record.total_tokens) &&
-    (record.total_tokens as number) >= 0
-      ? (record.total_tokens as number)
-      : undefined;
-
-  if (
-    promptTokens === undefined &&
-    completionTokens === undefined &&
-    totalTokens === undefined
+  if (status === HttpStatus.TOO_MANY_REQUESTS) {
+    exception = new HttpException(
+      'Upstream quota exceeded',
+      HttpStatus.TOO_MANY_REQUESTS,
+    );
+  } else if (
+    status === HttpStatus.UNAUTHORIZED ||
+    status === HttpStatus.FORBIDDEN
   ) {
-    return undefined;
-  }
-
-  return {
-    ...(promptTokens !== undefined ? { prompt_tokens: promptTokens } : {}),
-    ...(completionTokens !== undefined
-      ? { completion_tokens: completionTokens }
-      : {}),
-    ...(totalTokens !== undefined ? { total_tokens: totalTokens } : {}),
-  };
-}
-
-function parseChoices(data: unknown): GripCompletionResponse['choices'] {
-  const dataRecord = data as {
-    choices?: Array<{
-      message?: { role?: string; content?: unknown };
-      index?: unknown;
-      finish_reason?: unknown;
-    }>;
-  };
-
-  if (!Array.isArray(dataRecord?.choices) || dataRecord.choices.length === 0) {
-    throw new BadGatewayException('Missing choices in upstream model response');
-  }
-
-  const firstChoice = dataRecord.choices[0];
-
-  if (
-    !firstChoice?.message ||
-    typeof firstChoice.message.content !== 'string'
-  ) {
-    throw new BadGatewayException(
-      'Malformed choice message in upstream model response',
+    exception = new ServiceUnavailableException(
+      'Upstream model service unavailable',
     );
   }
 
-  return [
-    {
-      message: {
-        role: 'assistant',
-        content: firstChoice.message.content,
-      },
-      ...(typeof firstChoice.index === 'number'
-        ? { index: firstChoice.index }
-        : {}),
-      ...(typeof firstChoice.finish_reason === 'string'
-        ? { finish_reason: firstChoice.finish_reason }
-        : {}),
-    },
-  ];
+  return new GeminiAttemptFailure({
+    exception,
+    retryable: [
+      HttpStatus.TOO_MANY_REQUESTS,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      HttpStatus.BAD_GATEWAY,
+      HttpStatus.SERVICE_UNAVAILABLE,
+      HttpStatus.GATEWAY_TIMEOUT,
+    ].includes(status),
+    outcome: 'http_error',
+    status,
+    retryAfter: response.headers.get('retry-after'),
+  });
 }
 
-function handleFetchError(
-  error: unknown,
-  signal?: AbortSignal,
-  timeoutSignal?: AbortSignal,
-): never {
-  const isTimeout =
-    (error instanceof Error && error.name === 'TimeoutError') ||
-    Boolean(timeoutSignal?.aborted && !signal?.aborted);
+function checkCancellation(context: GeminiAttemptContext): void {
+  context.callerSignal?.throwIfAborted();
 
-  if (isTimeout) {
+  if (context.signal.aborted) {
     throw new GatewayTimeoutException('Upstream deadline exceeded');
   }
-
-  if (signal?.aborted) {
-    throw error;
-  }
-
-  throw new BadGatewayException('Failed to reach upstream model service');
 }
 
-function handleStreamReadError(
+function transportFailure(
   error: unknown,
-  signal?: AbortSignal,
-  timeoutSignal?: AbortSignal,
-): never {
-  if (
-    error instanceof GatewayTimeoutException ||
-    error instanceof BadGatewayException
-  ) {
-    throw error;
+  context: GeminiAttemptContext,
+  outcome: 'network_error' | 'read_error',
+): GeminiAttemptFailure {
+  checkCancellation(context);
+
+  if (error instanceof Error && error.name === 'TimeoutError') {
+    return new GeminiAttemptFailure({
+      exception: new GatewayTimeoutException('Upstream deadline exceeded'),
+      retryable: false,
+      outcome: 'timeout',
+    });
   }
 
-  const isTimeout =
-    (error instanceof Error && error.name === 'TimeoutError') ||
-    Boolean(timeoutSignal?.aborted && !signal?.aborted);
-
-  if (isTimeout) {
-    throw new GatewayTimeoutException('Upstream deadline exceeded');
+  if (error instanceof BadGatewayException) {
+    return new GeminiAttemptFailure({
+      exception: error,
+      retryable: false,
+      outcome: 'invalid_response',
+    });
   }
 
-  if (signal?.aborted) {
-    throw error;
-  }
+  return new GeminiAttemptFailure({
+    exception: new BadGatewayException(
+      outcome === 'network_error'
+        ? 'Failed to reach upstream model service'
+        : 'Failed to read upstream model response',
+    ),
+    retryable: true,
+    outcome,
+  });
+}
 
-  throw new BadGatewayException('Failed to read upstream model response');
+function retryBackoff(signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const onAbort = (): void => {
+      clearTimeout(timer);
+      reject(signal.reason);
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, GRIP_RETRY_BACKOFF_MS);
+
+    signal.addEventListener('abort', onAbort, { once: true });
+
+    if (signal.aborted) {
+      signal.removeEventListener('abort', onAbort);
+      onAbort();
+    }
+  });
 }
 
 @Injectable()
 export class GeminiClientService {
+  private readonly logger = new Logger(GeminiClientService.name);
+  private pool?: GeminiKeyPool;
+
   constructor(
     @Optional()
     @Inject('GRIP_CONFIG')
     private readonly injectedConfig?: GripConfig | null,
   ) {}
 
-  private requireConfig(): GripConfig {
-    return resolveGripConfig(this.injectedConfig);
-  }
-
-  private handleHttpStatus(status: number): void {
-    if (status === 429) {
-      throw new HttpException(
-        'Upstream quota exceeded',
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
-    }
-
-    if (status === 401 || status === 403) {
-      throw new ServiceUnavailableException(
-        'Upstream model service unavailable',
-      );
-    }
-  }
-
-  private async readResponseBody(
-    body: ReadableStream<Uint8Array> | null,
-    signal?: AbortSignal,
-    timeoutSignal?: AbortSignal,
-  ): Promise<string> {
-    if (!body) {
-      throw new BadGatewayException('Empty upstream model response');
-    }
-
-    const reader = body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let responseText = '';
-    let totalBytes = 0;
+  private async attempt(
+    context: GeminiAttemptContext,
+    apiKey: string,
+  ): Promise<GripCompletionResponse> {
+    let response: Response;
 
     try {
-      while (true) {
-        const { done, value } = await reader.read();
-
-        if (done) {
-          break;
-        }
-
-        totalBytes += value.byteLength;
-
-        if (totalBytes > GRIP_MAX_UPSTREAM_BYTES) {
-          void reader
-            .cancel('Upstream response exceeded size limit')
-            .catch(() => {});
-
-          throw new BadGatewayException(
-            'Upstream response exceeded size limit',
-          );
-        }
-
-        responseText += decoder.decode(value, { stream: true });
-      }
-
-      responseText += decoder.decode();
-
-      return responseText;
+      response = await fetch(context.url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+          'User-Agent': 'Karazin-UniVerse-Grip-Gateway',
+        },
+        body: context.payload,
+        redirect: 'manual',
+        signal: context.signal,
+      });
     } catch (error: unknown) {
-      handleStreamReadError(error, signal, timeoutSignal);
+      throw transportFailure(error, context, 'network_error');
+    }
+
+    if (context.signal.aborted || !response.ok) {
+      void response.body?.cancel().catch(() => {});
+      checkCancellation(context);
+
+      throw httpFailure(response);
+    }
+
+    let text: string;
+
+    try {
+      text = await readGeminiBody(response.body, context.signal);
+    } catch (error: unknown) {
+      throw transportFailure(error, context, 'read_error');
+    }
+
+    checkCancellation(context);
+
+    try {
+      return parseGeminiResponse(text);
+    } catch (error: unknown) {
+      throw transportFailure(error, context, 'read_error');
     }
   }
 
   async complete(
     request: GripCompletionRequest,
-    signal?: AbortSignal,
+    callerSignal?: AbortSignal,
   ): Promise<GripCompletionResponse> {
-    const config = this.requireConfig();
-    const baseUrl = stripTrailingSlashes(config.geminiBaseUrl);
-    const url = `${baseUrl}/chat/completions`;
-
+    const config = resolveGripConfig(this.injectedConfig);
+    const pool = (this.pool ??= new GeminiKeyPool(config.geminiApiKeys));
     const timeoutSignal = AbortSignal.timeout(GRIP_UPSTREAM_TIMEOUT_MS);
-    const combinedSignal = signal
-      ? AbortSignal.any([signal, timeoutSignal])
+    const signal = callerSignal
+      ? AbortSignal.any([callerSignal, timeoutSignal])
       : timeoutSignal;
-
-    const payload = {
-      model: GRIP_ALLOWED_MODEL,
-      messages: request.messages,
-      response_format: request.response_format,
-      max_tokens: GRIP_MAX_OUTPUT_TOKENS,
-    };
-
-    let response: Response;
-
-    try {
-      response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${config.geminiApiKey}`,
-          'User-Agent': 'Karazin-UniVerse-Grip-Gateway',
-        },
-        body: JSON.stringify(payload),
-        redirect: 'error',
-        signal: combinedSignal,
-      });
-    } catch (error: unknown) {
-      handleFetchError(error, signal, timeoutSignal);
-    }
-
-    try {
-      this.handleHttpStatus(response.status);
-    } catch (error: unknown) {
-      void response.body?.cancel().catch(() => {});
-
-      throw error;
-    }
-
-    const responseText = await this.readResponseBody(
-      response.body,
+    const context: GeminiAttemptContext = {
+      url: `${stripTrailingSlashes(config.geminiBaseUrl)}/chat/completions`,
+      payload: JSON.stringify({
+        model: GRIP_ALLOWED_MODEL,
+        messages: request.messages,
+        response_format: request.response_format,
+        max_tokens: GRIP_MAX_OUTPUT_TOKENS,
+      }),
       signal,
-      timeoutSignal,
-    );
-
-    if (!response.ok) {
-      throw new BadGatewayException('Upstream model error');
-    }
-
-    let data: unknown;
-
-    try {
-      data = JSON.parse(responseText);
-    } catch {
-      throw new BadGatewayException('Invalid JSON from upstream model service');
-    }
-
-    const choices = parseChoices(data);
-    const usage = parseUsage((data as { usage?: unknown })?.usage);
-
-    return {
-      choices,
-      ...(usage ? { usage } : {}),
+      callerSignal,
     };
+    const attempted = new Set<number>();
+    let lastFailure: HttpException | undefined;
+
+    for (let attempt = 1; ; attempt += 1) {
+      checkCancellation(context);
+      const reservation = pool.reserve(attempted);
+
+      if (!reservation) {
+        throw (
+          lastFailure ??
+          new ServiceUnavailableException(
+            'Upstream model keys temporarily unavailable',
+          )
+        );
+      }
+
+      attempted.add(reservation.slot);
+      const startedAt = Date.now();
+
+      try {
+        const response = await this.attempt(context, reservation.apiKey);
+
+        this.logger.debug('Grip upstream attempt', {
+          keySlot: reservation.slot + 1,
+          attempt,
+          elapsedMs: Date.now() - startedAt,
+          outcome: 'success',
+          failover: false,
+        });
+
+        return response;
+      } catch (error: unknown) {
+        const failure =
+          error instanceof GeminiAttemptFailure ? error.details : undefined;
+
+        if (
+          failure?.retryable ||
+          failure?.status === HttpStatus.UNAUTHORIZED ||
+          failure?.status === HttpStatus.FORBIDDEN
+        ) {
+          pool.coolDown({
+            slot: reservation.slot,
+            status: failure.status,
+            retryAfter: failure.retryAfter,
+          });
+        }
+
+        const failover = Boolean(
+          failure?.retryable &&
+          attempt < GRIP_MAX_UPSTREAM_ATTEMPTS &&
+          !signal.aborted &&
+          pool.hasAvailable(attempted),
+        );
+        const outcome: GeminiAttemptOutcome = callerSignal?.aborted
+          ? 'cancelled'
+          : 'timeout';
+
+        this.logger.warn('Grip upstream attempt', {
+          keySlot: reservation.slot + 1,
+          attempt,
+          ...(failure?.status !== undefined ? { status: failure.status } : {}),
+          elapsedMs: Date.now() - startedAt,
+          outcome: failure?.outcome ?? outcome,
+          failover,
+        });
+
+        if (!failover) {
+          throw failure?.exception ?? error;
+        }
+
+        lastFailure = failure?.exception;
+      } finally {
+        pool.release(reservation.slot);
+      }
+
+      try {
+        await retryBackoff(signal);
+      } catch (error: unknown) {
+        checkCancellation(context);
+
+        throw error;
+      }
+    }
   }
 }
