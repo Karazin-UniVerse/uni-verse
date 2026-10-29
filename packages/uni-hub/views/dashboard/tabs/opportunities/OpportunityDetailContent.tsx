@@ -35,6 +35,7 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
   const apply = useApplyToOpportunity({ currentUser, opportunity });
   const applicants = useApplicants();
   const canModerate =
+    Boolean(currentUser.userId) &&
     currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR) &&
     currentUser.userId !== opportunity.ownerId &&
     opportunity.status === OPPORTUNITY_STATUS.READY_FOR_REVIEW;

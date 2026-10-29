@@ -25,7 +25,7 @@ export const ModerationActions: React.FC<ModerationActionsProps> = ({
         disabled={disabled}
         onClick={onApprove}
       >
-        <CheckCircle2 size={14} className={styles.btnIcon} />
+        <CheckCircle2 size={14} aria-hidden="true" className={styles.btnIcon} />
         {formatMessage('opportunities.moderation.approve')}
       </Button>
       <Button
@@ -34,7 +34,7 @@ export const ModerationActions: React.FC<ModerationActionsProps> = ({
         disabled={disabled}
         onClick={onOpenRejectModal}
       >
-        <AlertCircle size={14} className={styles.btnIcon} />
+        <AlertCircle size={14} aria-hidden="true" className={styles.btnIcon} />
         {formatMessage('opportunities.moderation.revise')}
       </Button>
       <Button
@@ -43,7 +43,7 @@ export const ModerationActions: React.FC<ModerationActionsProps> = ({
         disabled={disabled}
         onClick={onOpenRejectModal}
       >
-        <XCircle size={14} className={styles.btnIcon} />
+        <XCircle size={14} aria-hidden="true" className={styles.btnIcon} />
         {formatMessage('opportunities.moderation.reject')}
       </Button>
     </div>

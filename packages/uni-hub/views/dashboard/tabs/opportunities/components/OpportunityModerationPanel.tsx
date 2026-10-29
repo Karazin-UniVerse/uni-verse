@@ -3,6 +3,7 @@ import { OPPORTUNITY_MODERATE_ACTION } from '@core/constants/opportunities';
 import { useModeration } from '../hooks/useModeration';
 import { ModerationRejectModal } from '../modals/ModerationRejectModal';
 import { ModerationActions } from './ModerationActions';
+import styles from '../../OpportunitiesTab.module.scss';
 
 interface OpportunityModerationPanelProps {
   opportunityId: string;
@@ -14,7 +15,7 @@ export const OpportunityModerationPanel: React.FC<OpportunityModerationPanelProp
   const moderation = useModeration();
 
   return (
-    <>
+    <div className={styles.detailModerationPanel}>
       <ModerationActions
         onApprove={() =>
           void moderation.handleModerate(opportunityId, OPPORTUNITY_MODERATE_ACTION.APPROVE)
@@ -29,6 +30,6 @@ export const OpportunityModerationPanel: React.FC<OpportunityModerationPanelProp
         onConfirm={moderation.handleRejectConfirm}
         isSubmitting={moderation.submitting}
       />
-    </>
+    </div>
   );
 };
