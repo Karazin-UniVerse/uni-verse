@@ -167,12 +167,12 @@ Five things that will bite you if you skip them:
 4. **Coverage needs no second test run.** Read the lcov your suite already writes and intersect it with `git diff`. Running the suite twice to get a number is the fastest way to make people hate this.
 5. **Semgrep's registry rules are free to run; check the licence before redistributing them.** `opengrep` is a drop-in fork with the same rule format and JSON output if that matters to your legal team.
 
-Add each one to the project's own script so it's reproducible without an agent:
+Add each one to the project's own script so it's reproducible without an agent (starter wrappers — wire in your floor guard and coverage threshold):
 
 ```json
 {
   "scripts": {
-    "check:fast": "tsc --noEmit && eslint . && gitleaks dir . --redact --no-banner",
+    "check:fast": "tsc --noEmit && eslint . && gitleaks dir . --redact --no-banner && node scripts/floor-guard.mjs",
     "check:task": "npm run check:fast && vitest run --coverage",
     "check:full": "npm run check:task && semgrep scan --config p/default && osv-scanner scan source -r ."
   }

@@ -181,13 +181,13 @@ if (!(await db.exists(key))) {
 
 // ✓ let the unique constraint pick the winner
 try {
-  await db.insert({ key, state: 'in_progress', requestHash });
+  await db.insert({ actorId, key, state: 'in_progress', requestHash }); // unique on (actorId, key)
 } catch (e) {
-  if (isUniqueViolation(e)) return replayOrReject(key);
+  if (isUniqueViolation(e)) return replayOrReject(actorId, key);
   throw e;
 }
 const result = await chargeCard(amount);
-await db.update({ key, state: 'succeeded', response: result });
+await db.update({ actorId, key, state: 'succeeded', response: result });
 ```
 
 The unique constraint *is* the mechanism. A store that cannot enforce uniqueness in one operation cannot back this.
