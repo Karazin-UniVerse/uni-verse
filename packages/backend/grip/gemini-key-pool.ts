@@ -9,6 +9,48 @@ import type {
   GeminiKeyState,
 } from './grip.types';
 
+const IMF_DATE_PATTERN = /^\w{3}, \d{2} \w{3} \d{4} \d{2}:\d{2}:\d{2} GMT$/;
+const RFC850_DATE_PATTERN =
+  /^\w+, (\d{2}-\w{3}-)(\d{2})( \d{2}:\d{2}:\d{2} GMT)$/;
+const ASCTIME_DATE_PATTERN =
+  /^\w{3} \w{3} (?:\d{2}| \d) \d{2}:\d{2}:\d{2} \d{4}$/;
+const RFC850_FUTURE_YEARS = 50;
+const YEARS_PER_CENTURY = 100;
+
+function httpDateTimestamp(value: string, now: number): number {
+  if (IMF_DATE_PATTERN.test(value)) {
+    return Date.parse(value);
+  }
+
+  if (ASCTIME_DATE_PATTERN.test(value)) {
+    return Date.parse(`${value} GMT`);
+  }
+
+  const rfc850 = RFC850_DATE_PATTERN.exec(value);
+
+  if (!rfc850) {
+    return Number.NaN;
+  }
+
+  // RFC 9110 interprets two-digit years relative to the 50-year future boundary.
+  const futureLimit = new Date(now);
+
+  futureLimit.setUTCFullYear(
+    futureLimit.getUTCFullYear() + RFC850_FUTURE_YEARS,
+  );
+  const century =
+    Math.floor(futureLimit.getUTCFullYear() / YEARS_PER_CENTURY) *
+    YEARS_PER_CENTURY;
+  const year = century + Number(rfc850[2]);
+  const date = new Date(`${rfc850[1]}${year}${rfc850[3]}`);
+
+  if (date.getTime() > futureLimit.getTime()) {
+    date.setUTCFullYear(year - YEARS_PER_CENTURY);
+  }
+
+  return date.getTime();
+}
+
 function retryAfterTimestamp(
   value: string | null | undefined,
   now: number,
@@ -20,11 +62,7 @@ function retryAfterTimestamp(
   const trimmed = value.trim();
   const timestamp = /^\d+$/.test(trimmed)
     ? now + Number(trimmed) * 1_000
-    : Date.parse(
-        /^\w{3}, \d{2} \w{3} \d{4} \d{2}:\d{2}:\d{2} GMT$/.test(trimmed)
-          ? trimmed
-          : '',
-      );
+    : httpDateTimestamp(trimmed, now);
 
   return Number.isSafeInteger(timestamp) ? timestamp : now;
 }

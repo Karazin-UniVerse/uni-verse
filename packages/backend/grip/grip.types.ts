@@ -1,5 +1,6 @@
 import type { GripCompletionRequest } from '@universe/core/types/grip';
 import type { HttpException } from '@nestjs/common';
+import type { GeminiKeyPool } from './gemini-key-pool';
 
 export interface GripConfig {
   enabled: boolean;
@@ -84,4 +85,14 @@ export interface GeminiAttemptContext {
   payload: string;
   signal: AbortSignal;
   callerSignal?: AbortSignal;
+}
+
+export interface GeminiFailedAttemptParams {
+  error: unknown;
+  context: GeminiAttemptContext;
+  pool: GeminiKeyPool;
+  attempted: ReadonlySet<number>;
+  slot: number;
+  attempt: number;
+  startedAt: number;
 }

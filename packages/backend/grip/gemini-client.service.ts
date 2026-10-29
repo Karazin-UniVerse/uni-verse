@@ -27,6 +27,7 @@ import type {
   GeminiAttemptContext,
   GeminiAttemptOutcome,
   GeminiFailureParams,
+  GeminiFailedAttemptParams,
   GripConfig,
 } from './grip.types';
 
@@ -200,6 +201,56 @@ export class GeminiClientService {
     }
   }
 
+  private handleFailedAttempt({
+    error,
+    context,
+    pool,
+    attempted,
+    slot,
+    attempt,
+    startedAt,
+  }: GeminiFailedAttemptParams): HttpException {
+    const failure =
+      error instanceof GeminiAttemptFailure ? error.details : undefined;
+
+    if (
+      failure?.retryable ||
+      failure?.status === HttpStatus.UNAUTHORIZED ||
+      failure?.status === HttpStatus.FORBIDDEN
+    ) {
+      pool.coolDown({
+        slot,
+        status: failure.status,
+        retryAfter: failure.retryAfter,
+      });
+    }
+
+    const failover = Boolean(
+      failure?.retryable &&
+      attempt < GRIP_MAX_UPSTREAM_ATTEMPTS &&
+      !context.signal.aborted &&
+      pool.hasAvailable(attempted),
+    );
+    const outcome: GeminiAttemptOutcome = context.callerSignal?.aborted
+      ? 'cancelled'
+      : 'timeout';
+
+    this.logger.warn('Grip upstream attempt', {
+      keySlot: slot + 1,
+      attempt,
+      ...(failure?.status !== undefined ? { status: failure.status } : {}),
+      elapsedMs: Date.now() - startedAt,
+      outcome: failure?.outcome ?? outcome,
+      failover,
+    });
+
+    if (!failure || !failover) {
+      throw failure?.exception ?? error;
+    }
+
+    return failure.exception;
+  }
+
   async complete(
     request: GripCompletionRequest,
     callerSignal?: AbortSignal,
@@ -253,50 +304,21 @@ export class GeminiClientService {
 
         return response;
       } catch (error: unknown) {
-        const failure =
-          error instanceof GeminiAttemptFailure ? error.details : undefined;
-
-        if (
-          failure?.retryable ||
-          failure?.status === HttpStatus.UNAUTHORIZED ||
-          failure?.status === HttpStatus.FORBIDDEN
-        ) {
-          pool.coolDown({
-            slot: reservation.slot,
-            status: failure.status,
-            retryAfter: failure.retryAfter,
-          });
-        }
-
-        const failover = Boolean(
-          failure?.retryable &&
-          attempt < GRIP_MAX_UPSTREAM_ATTEMPTS &&
-          !signal.aborted &&
-          pool.hasAvailable(attempted),
-        );
-        const outcome: GeminiAttemptOutcome = callerSignal?.aborted
-          ? 'cancelled'
-          : 'timeout';
-
-        this.logger.warn('Grip upstream attempt', {
-          keySlot: reservation.slot + 1,
+        lastFailure = this.handleFailedAttempt({
+          error,
+          context,
+          pool,
+          attempted,
+          slot: reservation.slot,
           attempt,
-          ...(failure?.status !== undefined ? { status: failure.status } : {}),
-          elapsedMs: Date.now() - startedAt,
-          outcome: failure?.outcome ?? outcome,
-          failover,
+          startedAt,
         });
-
-        if (!failover) {
-          throw failure?.exception ?? error;
-        }
-
-        lastFailure = failure?.exception;
       } finally {
         pool.release(reservation.slot);
       }
 
       try {
+        // Failover depends on the previous failure; parallel attempts would duplicate model calls.
         await retryBackoff(signal);
       } catch (error: unknown) {
         checkCancellation(context);

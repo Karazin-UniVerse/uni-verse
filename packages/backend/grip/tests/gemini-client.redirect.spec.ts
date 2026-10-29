@@ -11,11 +11,13 @@ describe('GeminiClientService redirect refusal with native fetch', () => {
   let upstreamCalls: number;
   let targetCalls: number;
   let redirect: boolean;
+  let authorizations: string[];
 
   beforeEach(async () => {
     upstreamCalls = 0;
     targetCalls = 0;
     redirect = true;
+    authorizations = [];
     jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
     jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => {});
     server = createServer((incoming, response) => {
@@ -25,6 +27,7 @@ describe('GeminiClientService redirect refusal with native fetch', () => {
         targetCalls += 1;
       } else {
         upstreamCalls += 1;
+        authorizations.push(incoming.headers.authorization ?? '');
       }
 
       if (redirect) {
@@ -90,5 +93,10 @@ describe('GeminiClientService redirect refusal with native fetch', () => {
     await expect(service.complete(request)).resolves.toBeDefined();
     await expect(service.complete(request)).resolves.toBeDefined();
     expect(upstreamCalls).toBe(3);
+    expect(authorizations).toEqual([
+      'Bearer first-secret',
+      'Bearer second-secret',
+      'Bearer first-secret',
+    ]);
   });
 });

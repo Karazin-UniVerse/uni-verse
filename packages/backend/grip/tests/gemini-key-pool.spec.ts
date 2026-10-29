@@ -66,6 +66,8 @@ describe('GeminiKeyPool', () => {
   it.each([
     ['120', 120_000],
     ['Thu, 29 Oct 2026 00:02:00 GMT', 120_000],
+    ['Thursday, 29-Oct-26 00:02:00 GMT', 120_000],
+    ['Thu Oct 29 00:02:00 2026', 120_000],
     ['30', 60_000],
     ['0', 60_000],
     ['Wed, 28 Oct 2026 00:00:00 GMT', 60_000],
@@ -73,6 +75,8 @@ describe('GeminiKeyPool', () => {
     ['-2', 60_000],
     ['1.5', 60_000],
     ['Infinity', 60_000],
+    ['2026-10-29T00:02:00Z', 60_000],
+    ['Thu Oct 29 00:02:00 2026 EST', 60_000],
     ['999999999999999999999999999', 60_000],
   ])(
     'honors only valid finite Retry-After values: %s',
@@ -86,6 +90,54 @@ describe('GeminiKeyPool', () => {
       expect(pool.hasAvailable(excluded)).toBe(true);
     },
   );
+
+  it('accepts the space-padded asctime day as UTC', () => {
+    now = Date.UTC(2026, 10, 6);
+    const pool = new GeminiKeyPool(['first']);
+
+    pool.coolDown({
+      slot: 0,
+      status: 429,
+      retryAfter: 'Fri Nov  6 00:02:00 2026',
+    });
+    now += 119_999;
+    expect(pool.hasAvailable(excluded)).toBe(false);
+    now += 1;
+    expect(pool.hasAvailable(excluded)).toBe(true);
+  });
+
+  it.each([
+    ['Thursday, 29-Oct-76 00:00:00 GMT', Date.UTC(2076, 9, 29)],
+    ['Thursday, 29-Oct-76 00:00:01 GMT', Date.UTC(2026, 9, 29, 0, 1)],
+    ['Thursday, 29-Oct-75 00:00:00 GMT', Date.UTC(2075, 9, 29)],
+    ['Thursday, 29-Oct-77 00:00:00 GMT', Date.UTC(2026, 9, 29, 0, 1)],
+  ])(
+    'interprets RFC850 years using the 50-year future boundary: %s',
+    (retryAfter, availableAt) => {
+      const pool = new GeminiKeyPool(['first']);
+
+      pool.coolDown({ slot: 0, status: 429, retryAfter });
+      now = availableAt - 1;
+      expect(pool.hasAvailable(excluded)).toBe(false);
+      now += 1;
+      expect(pool.hasAvailable(excluded)).toBe(true);
+    },
+  );
+
+  it('interprets RFC850 years across a century boundary', () => {
+    now = Date.UTC(2090, 0, 1);
+    const pool = new GeminiKeyPool(['first']);
+
+    pool.coolDown({
+      slot: 0,
+      status: 429,
+      retryAfter: 'Thursday, 01-Jan-05 00:00:00 GMT',
+    });
+    now = Date.UTC(2105, 0, 1) - 1;
+    expect(pool.hasAvailable(excluded)).toBe(false);
+    now += 1;
+    expect(pool.hasAvailable(excluded)).toBe(true);
+  });
 
   it('never shortens an existing cooldown when concurrent attempts fail', () => {
     const pool = new GeminiKeyPool(['first', 'second']);
