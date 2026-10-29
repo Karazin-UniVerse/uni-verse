@@ -11,7 +11,7 @@
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/browser-testing-with-devtools/SKILL.md",
-      "computedHash": "639950ea71851d9c4919608cba8b6276cd1ba30cd82acdc4949c701537eed661"
+      "computedHash": "e6d230846c6e34d324157aeeb6034a316853ac69561d4248ac18e14d4c0f2e4e"
     },
     "code-simplification": {
       "source": "addyosmani/agent-skills",
@@ -35,7 +35,7 @@
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/performance-optimization/SKILL.md",
-      "computedHash": "276aec00aaabae98f4bd6d565745378b498e0d11688315f32179587746b93805"
+      "computedHash": "34b859d9699de1a0bff77c3bcac83cfb4877a2e475b20a478c6f60dfb1866633"
     },
     "receiving-code-review": {
       "source": "obra/superpowers",
