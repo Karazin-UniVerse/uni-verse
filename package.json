@@ -45,7 +45,7 @@
     "lint-staged": "^17.6.0",
     "oxlint": "^1.89.0",
     "prettier": "^3.9.10",
-    "puppeteer-core": "^25.15.0",
+    "puppeteer-core": "^25.16.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "sass-embedded": "^1.105.2",
