@@ -13,7 +13,7 @@ import type { StudentProfile } from '@core/types/student';
 import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export interface UserDropdownProps {
-  activeStudentProfile: StudentProfile;
+  activeStudentProfile: StudentProfile | null;
   soundEnabled: boolean;
   onToggleSound: () => void;
   onLogout: () => void;
@@ -57,8 +57,10 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   const { formatMessage } = useLanguage();
   const statusDetails = getMoodleStatusDetails(Boolean(isMoodleLinked));
   const moodleUrl = process.env.NEXT_PUBLIC_MOODLE_URL;
-  const { fullName, email, group } = activeStudentProfile;
-  const triggerTitle = getUserProfileTitle(activeStudentProfile);
+  const fullName = activeStudentProfile?.fullName;
+  const email = activeStudentProfile?.email;
+  const group = activeStudentProfile?.group;
+  const triggerTitle = activeStudentProfile ? getUserProfileTitle(activeStudentProfile) : undefined;
 
   return (
     <Dropdown
@@ -75,19 +77,21 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
           <span className={styles.avatar}>
             <User size={16} />
           </span>
-          <span className={styles.userName}>{fullName}</span>
+          {fullName && <span className={styles.userName}>{fullName}</span>}
         </button>
       )}
     >
       {(close) => (
         <>
-          <div className={styles.userDropdownHeader}>
-            <strong title={fullName}>{fullName}</strong>
-            <div className={styles.muted} title={email}>
-              {email}
+          {activeStudentProfile && (
+            <div className={styles.userDropdownHeader}>
+              <strong title={fullName}>{fullName}</strong>
+              <div className={styles.muted} title={email}>
+                {email}
+              </div>
+              {group ? <div className={styles.muted}>{group}</div> : null}
             </div>
-            {group ? <div className={styles.muted}>{group}</div> : null}
-          </div>
+          )}
 
           {isMoodleIntegrationEnabled && (
             <div className={styles.dropdownSection}>

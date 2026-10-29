@@ -7,7 +7,7 @@ import { authApi } from '@uni-hub/services/api';
 import { LinkMoodleMode } from '@uni-hub/components/auth';
 import { createAppProvidersWrapper, setTestFeatureFlags } from '@uni-hub/utils/test-utils';
 import type { Notification } from '@core/types/moodle';
-import { fallbackStudentProfile } from '../constants';
+import { fallbackStudentProfile } from '@uni-hub/utils/test-fixtures';
 import type { DashboardHeaderProps } from '../types';
 import { DashboardHeader } from './DashboardHeader';
 

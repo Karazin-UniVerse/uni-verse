@@ -29,7 +29,7 @@ export interface OverviewTabProps {
   assignments: Assignment[];
   grades: Grade[];
   statistics: CourseStatistics | null;
-  activeStudentProfile: StudentProfile;
+  activeStudentProfile: StudentProfile | null;
   loading: boolean;
   onNavigate: NavigateHandler;
   isMoodleLinked?: boolean;
@@ -88,7 +88,7 @@ export interface DashboardHeaderProps {
   onToggleSound: () => void;
   notifications: Notification[];
   unreadCount: number;
-  activeStudentProfile: StudentProfile;
+  activeStudentProfile: StudentProfile | null;
   onOpenLinkMoodle?: (mode?: LinkMoodleMode) => void;
   onOpenUnlinkMoodle?: () => void;
   isMoodleLinked?: boolean;

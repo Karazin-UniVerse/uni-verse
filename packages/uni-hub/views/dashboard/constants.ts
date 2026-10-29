@@ -1,5 +1,4 @@
 import type { CurriculumItem } from '@core/types';
-import type { StudentProfile } from '@core/types/student';
 
 export const NAV_KEY = {
   Overview: 'overview',
@@ -23,27 +22,6 @@ export const STUDY_VIEWS = Object.values(STUDY_VIEW);
 
 /** localStorage key for the cached real student profile. v2 drops the old cache that held a fake group. */
 export const STUDENT_PROFILE_STORAGE_KEY = 'universe_student_profile_v2';
-
-export const fallbackStudentProfile: StudentProfile = {
-  id: 'karazin-student-001',
-  moodleId: 4021,
-  fullName: 'Барсуков Родіон Сергійович',
-  email: 'rodion.barsukov@karazin.ua',
-  avatarUrl: 'https://moodle.universemvp.tech/user/pix.php/4021/f1.jpg',
-  studentCardNumber: 'KB-10293847',
-  recordBookNumber: 'ЗК-2024-042',
-  faculty: 'ННІ Компʼютерних наук та штучного інтелекту',
-  department: 'Кафедра математичного моделювання та аналізу даних',
-  specialty: '122 Компʼютерні науки',
-  educationalProgram: 'Компʼютерні науки та інтелектуальні системи',
-  degree: 'bachelor',
-  studyForm: 'full-time',
-  financing: 'budget',
-  status: 'active',
-  gpa: 92.4,
-  totalCreditsEarned: 120,
-  academicStanding: 'honors',
-};
 
 export const mockKarazinCurriculum: CurriculumItem[] = [
   {

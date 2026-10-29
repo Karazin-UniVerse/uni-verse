@@ -119,6 +119,21 @@ describe('OverviewTab component', () => {
     expect(onNavigate).toHaveBeenCalledWith('study', 'subjects');
   });
 
+  it('should hide the student identity until a profile loads', () => {
+    const props = createDefaultProps({ activeStudentProfile: null });
+    const { rerender } = renderWithProviders(<OverviewTab {...props} />);
+
+    expect(
+      screen.queryByRole('heading', { name: mockStudentProfile.fullName }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(mockStudentProfile.email)).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Швидкі дії' })).toBeInTheDocument();
+
+    rerender(<OverviewTab {...props} activeStudentProfile={mockStudentProfile} />);
+
+    expect(screen.getByRole('heading', { name: mockStudentProfile.fullName })).toBeInTheDocument();
+  });
+
   it('should display contextual greeting and nearest deadline countdown when Moodle integration is enabled', () => {
     const nowSec = Math.floor(Date.now() / 1000);
     const mockUpcomingAssignment: Assignment = {

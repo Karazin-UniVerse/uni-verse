@@ -1,8 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
-import { fallbackStudentProfile } from '../constants';
+import { fallbackStudentProfile } from '@uni-hub/utils/test-fixtures';
 import { UserDropdown, getMoodleStatusDetails, getUserProfileTitle } from './UserDropdown';
+import userEvent from '@testing-library/user-event';
+import { withAppProviders } from '@uni-hub/utils/test-utils';
 
 describe('UserDropdown helpers', () => {
   it('should return linked status details when isMoodleLinked is true', () => {
@@ -43,6 +45,32 @@ describe('UserDropdown helpers', () => {
 });
 
 describe('UserDropdown', () => {
+  it('should keep the menu usable without showing an identity until the profile loads', async () => {
+    const user = userEvent.setup();
+    const onLogout = vi.fn();
+
+    render(
+      withAppProviders(
+        <UserDropdown
+          activeStudentProfile={null}
+          soundEnabled={true}
+          onToggleSound={vi.fn()}
+          onLogout={onLogout}
+        />,
+      ),
+    );
+
+    const trigger = screen.getByRole('button', { name: /меню профілю користувача/i });
+
+    expect(trigger).toHaveTextContent('');
+    expect(trigger).not.toHaveAttribute('title');
+    await user.click(trigger);
+    await user.click(screen.getByRole('button', { name: /вийти/i }));
+
+    expect(onLogout).toHaveBeenCalledOnce();
+    expect(screen.queryByText('Барсуков Родіон Сергійович')).not.toBeInTheDocument();
+  });
+
   it('should render a collapsed trigger with the student name and an accessible name', () => {
     render(
       <UserDropdown
