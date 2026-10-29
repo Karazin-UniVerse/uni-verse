@@ -77,7 +77,25 @@ test('runGripHook rejects .bat and .cmd shims on Windows', async () => {
   }
 });
 
-test('runGripHook populates child environment and never sets GEMINI_API_KEY', async () => {
+test('runGripHook populates gateway credentials without inheriting provider secrets', async (context) => {
+  const previousKey = process.env.GEMINI_API_KEY;
+  const previousKeys = process.env.GEMINI_API_KEYS;
+
+  context.after(() => {
+    for (const [name, value] of [
+      ['GEMINI_API_KEY', previousKey],
+      ['GEMINI_API_KEYS', previousKeys],
+    ]) {
+      if (value === undefined) {
+        delete process.env[name];
+      } else {
+        process.env[name] = value;
+      }
+    }
+  });
+  process.env.GEMINI_API_KEY = 'legacy-secret';
+  process.env.GEMINI_API_KEYS = 'first-secret,second-secret';
+
   const captured = {};
   const fakeSpawn = (exe, args, options) => {
     captured.exe = exe;
@@ -119,4 +137,5 @@ test('runGripHook populates child environment and never sets GEMINI_API_KEY', as
     'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
   );
   assert.equal(captured.options.env.GEMINI_API_KEY, undefined);
+  assert.equal(captured.options.env.GEMINI_API_KEYS, undefined);
 });
