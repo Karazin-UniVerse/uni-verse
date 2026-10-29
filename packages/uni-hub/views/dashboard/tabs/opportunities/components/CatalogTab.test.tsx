@@ -139,6 +139,10 @@ describe('CatalogTab component', () => {
     const unpaidChip = screen.getByRole('button', { name: /волонтерство \/ практика/i });
     const allChip = screen.getByRole('button', { name: /усі/i });
 
+    expect(allChip).toHaveAttribute('aria-pressed', 'true');
+    expect(paidChip).toHaveAttribute('aria-pressed', 'false');
+    expect(unpaidChip).toHaveAttribute('aria-pressed', 'false');
+
     await user.click(paidChip);
     expect(onPaymentFilterChange).toHaveBeenCalledWith('PAID');
 

@@ -498,7 +498,6 @@ export const en = {
   'opportunities.catalog.filterAll': 'All',
   'opportunities.catalog.filterPaid': 'Paid',
   'opportunities.catalog.filterUnpaid': 'Volunteering / Internship',
-  'opportunities.catalog.foundPrefix': 'Found:',
   'opportunities.catalog.emptyDescription':
     'No available opportunities found matching your request',
 

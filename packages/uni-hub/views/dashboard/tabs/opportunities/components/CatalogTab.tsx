@@ -86,6 +86,7 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
               className={`${styles.filterChip} ${paymentFilter === '' ? styles.activeChip : ''}`}
               onClick={() => onPaymentFilterChange('')}
               aria-label={`${formatMessage('opportunities.catalog.filterAll')} (${counts.all})`}
+              aria-pressed={paymentFilter === ''}
             >
               <span>{formatMessage('opportunities.catalog.filterAll')}</span>
               <span className={styles.chipCount}>({counts.all})</span>
@@ -95,6 +96,7 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
               className={`${styles.filterChip} ${paymentFilter === 'PAID' ? styles.activeChip : ''}`}
               onClick={() => onPaymentFilterChange('PAID')}
               aria-label={`${formatMessage('opportunities.catalog.filterPaid')} (${counts.paid})`}
+              aria-pressed={paymentFilter === 'PAID'}
             >
               <span>{formatMessage('opportunities.catalog.filterPaid')}</span>
               <span className={styles.chipCount}>({counts.paid})</span>
@@ -104,6 +106,7 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
               className={`${styles.filterChip} ${paymentFilter === 'UNPAID' ? styles.activeChip : ''}`}
               onClick={() => onPaymentFilterChange('UNPAID')}
               aria-label={`${formatMessage('opportunities.catalog.filterUnpaid')} (${counts.unpaid})`}
+              aria-pressed={paymentFilter === 'UNPAID'}
             >
               <span>{formatMessage('opportunities.catalog.filterUnpaid')}</span>
               <span className={styles.chipCount}>({counts.unpaid})</span>

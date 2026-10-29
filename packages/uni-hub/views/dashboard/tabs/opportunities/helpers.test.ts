@@ -140,6 +140,16 @@ describe('filterOpportunitiesBySearch', () => {
     expect(result[0]?.id).toBe('opp-3');
   });
 
+  it('should handle opportunities with missing owner email safely', () => {
+    const oppWithoutEmail = {
+      ...sampleOpportunities[0]!,
+      owner: { id: 'user-4', name: 'No Email Owner', email: undefined as unknown as string },
+    };
+    const result = filterOpportunitiesBySearch([oppWithoutEmail], 'frontend');
+
+    expect(result).toHaveLength(1);
+  });
+
   it('should return empty array when no opportunity matches', () => {
     const result = filterOpportunitiesBySearch(sampleOpportunities, 'nonexistentquery');
 

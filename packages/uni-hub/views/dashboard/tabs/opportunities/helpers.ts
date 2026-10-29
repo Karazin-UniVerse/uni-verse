@@ -37,7 +37,7 @@ export function filterOpportunitiesBySearch(
     const descMatch = opportunity.description.toLowerCase().includes(query);
     const ownerMatch =
       Boolean(opportunity.owner?.name?.toLowerCase().includes(query)) ||
-      Boolean(opportunity.owner?.email.toLowerCase().includes(query)) ||
+      Boolean(opportunity.owner?.email?.toLowerCase().includes(query)) ||
       opportunity.ownerContactInfo.toLowerCase().includes(query);
 
     return titleMatch || descMatch || ownerMatch;

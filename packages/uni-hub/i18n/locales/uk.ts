@@ -498,7 +498,6 @@ export const uk = {
   'opportunities.catalog.filterAll': 'Усі',
   'opportunities.catalog.filterPaid': 'Оплачувані',
   'opportunities.catalog.filterUnpaid': 'Волонтерство / Практика',
-  'opportunities.catalog.foundPrefix': 'Знайдено:',
   'opportunities.catalog.emptyDescription': 'За вашим запитом не знайдено доступних можливостей',
 
   // Opportunities Status Badges
