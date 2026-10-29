@@ -1,4 +1,5 @@
 export const GRIP_ALLOWED_MODEL = 'gemini-3.5-flash-lite';
+export const GRIP_FALLBACK_MODEL = 'gemini-3.1-flash-lite';
 
 export const GRIP_MAX_REQUEST_BYTES = 256 * 1024;
 export const GRIP_MAX_MESSAGES_COMBINED_BYTES = 200_000;

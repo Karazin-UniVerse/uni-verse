@@ -156,9 +156,13 @@ describe('GeminiClientService key balancing and failover', () => {
         'Bearer second-secret',
       ]);
       expect(fetchSpy.mock.calls[0][0]).toBe(fetchSpy.mock.calls[1][0]);
-      expect(fetchSpy.mock.calls[0][1]?.body).toBe(
-        fetchSpy.mock.calls[1][1]?.body,
-      );
+      const firstBody = JSON.parse(String(fetchSpy.mock.calls[0][1]?.body));
+      const fallbackBody = JSON.parse(String(fetchSpy.mock.calls[1][1]?.body));
+
+      expect(firstBody.model).toBe('gemini-3.5-flash-lite');
+      expect(fallbackBody.model).toBe('gemini-3.1-flash-lite');
+      expect(fallbackBody.messages).toEqual(firstBody.messages);
+      expect(fallbackBody.response_format).toEqual(firstBody.response_format);
       expect(cancelled).toHaveBeenCalledTimes(1);
       expect(warnSpy).toHaveBeenCalledWith(
         'Grip upstream attempt',

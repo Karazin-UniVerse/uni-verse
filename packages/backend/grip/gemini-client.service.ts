@@ -15,6 +15,7 @@ import type {
 } from '@universe/core/types/grip';
 import {
   GRIP_ALLOWED_MODEL,
+  GRIP_FALLBACK_MODEL,
   GRIP_MAX_OUTPUT_TOKENS,
   GRIP_MAX_UPSTREAM_ATTEMPTS,
   GRIP_RETRY_BACKOFF_MS,
@@ -291,12 +292,22 @@ export class GeminiClientService {
       attempted.add(reservation.slot);
       const startedAt = Date.now();
 
+      const model = attempt === 1 ? GRIP_ALLOWED_MODEL : GRIP_FALLBACK_MODEL;
+
+      context.payload = JSON.stringify({
+        model,
+        messages: request.messages,
+        response_format: request.response_format,
+        max_tokens: GRIP_MAX_OUTPUT_TOKENS,
+      });
+
       try {
         const response = await this.attempt(context, reservation.apiKey);
 
         this.logger.debug('Grip upstream attempt', {
           keySlot: reservation.slot + 1,
           attempt,
+          model,
           elapsedMs: Date.now() - startedAt,
           outcome: 'success',
           failover: false,
