@@ -28,6 +28,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @universe/backend db:generate
+      - name: Audit unused code and dependencies (advisory)
+        run: pnpm knip --no-exit-code
       - run: pnpm lint
       - run: pnpm lint:style
       - run: pnpm typecheck
