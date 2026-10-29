@@ -7,10 +7,10 @@ Gemini API keys and making one bounded failover attempt after a transient failur
 The user will provision another key and configure the production environment.
 The user approved this approach and an isolated worktree in chat.
 
-This document is the written design for review, not authorization to implement or
-deploy. After approval, write an implementation plan and agree its execution
-method before changing product code. Do not publish branches, open a PR, change
-production secrets, or automate the human Grip assessment as part of this design.
+The user approved this written design in chat and requested a PR. Write an
+implementation plan and agree its execution method before changing product code.
+Branch publication and PR creation are authorized after verification; deployment,
+production secret changes, and automating the human Grip assessment are not.
 
 ## Evidence and current behavior
 
