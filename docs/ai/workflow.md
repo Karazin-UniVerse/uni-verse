@@ -57,7 +57,7 @@ pnpm exec prettier --check <files you changed>
 
 ### Adversarial Review & High-Stakes Logic
 
-When modifying high-impact or security-sensitive components (such as grade calculation algorithms, authentication/session management, or irreversible Prisma schema changes), invoke the `doubt-driven-development` skill before opening a PR to stress-test assumptions and expose hidden edge cases.
+When modifying high-impact or security-sensitive components (such as grade calculation algorithms, authentication/session management, or irreversible Prisma schema changes), invoke the `doubt-driven-development` skill before opening a PR to stress-test assumptions and expose hidden edge cases. For authentication/session changes and irreversible Prisma schema changes, invoke this skill even when its "When NOT to use" exclusions would otherwise apply.
 
 ### Database & API Migrations
 

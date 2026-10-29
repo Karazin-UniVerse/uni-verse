@@ -47,7 +47,7 @@
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/doubt-driven-development/SKILL.md",
-      "computedHash": "b13f18a68abf2a1fd0c30adeac9bec0ee551adec9f2a1dc2700f1a6e3eb48092"
+      "computedHash": "8772323a9a5abedf379da0867b80b28aa589f385d9d078f3bbb18b2834bc4b72"
     },
     "frontend-design": {
       "source": "anthropics/skills",
