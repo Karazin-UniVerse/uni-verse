@@ -4,7 +4,6 @@ import React from 'react';
 import clsx from 'clsx';
 import {
   Calendar,
-  Mail,
   Coins,
   Briefcase,
   MessageSquare,
@@ -19,6 +18,7 @@ import type { OpportunityApplication } from '@core/types/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { ApplicationStatusBadge } from './ApplicationStatusBadge';
 import { TabStateWrapper } from './TabStateWrapper';
+import { ContactTags } from '@ui';
 import styles from '../../OpportunitiesTab.module.scss';
 
 export interface MyApplicationsTabProps {
@@ -92,12 +92,14 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
                         <span className={styles.ownerName}>
                           {app.opportunity.owner.name || app.opportunity.owner.email}
                         </span>
-                        {app.opportunity.ownerContactInfo && (
-                          <span className={styles.authorContactTag}>
-                            <Mail size={12} />
-                            {app.opportunity.ownerContactInfo}
-                          </span>
-                        )}
+                        <ContactTags
+                          emailLabel={formatMessage('opportunities.emailLabel')}
+                          alternativeContactLabel={formatMessage(
+                            'opportunities.alternativeContact',
+                          )}
+                          email={app.opportunity.owner.email}
+                          alternativeContact={app.opportunity.ownerContactInfo}
+                        />
                       </div>
                     </div>
                   </div>
@@ -134,6 +136,17 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
                   {formatMessage('opportunities.myApplications.motivationLabel')}
                 </div>
                 <p className={styles.motivationText}>{app.motivation}</p>
+              </div>
+            )}
+
+            {(app.applicant?.email || app.contactInfo.trim()) && (
+              <div className={styles.authorStrip}>
+                <ContactTags
+                  email={app.applicant?.email}
+                  alternativeContact={app.contactInfo}
+                  emailLabel={formatMessage('opportunities.emailLabel')}
+                  alternativeContactLabel={formatMessage('opportunities.alternativeContact')}
+                />
               </div>
             )}
 

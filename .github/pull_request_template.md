@@ -2,13 +2,17 @@
 
 - Link: [TR-XXX: Task Name](https://www.notion.so/...)
 
+<!-- Replace placeholders with the real task code/link. Include the code in the PR title. -->
+
 ## Description
+
+<!-- Explain the actual changes, review considerations and checks run or not run. -->
 
 -
 
-### Screenshots / Video (Optional)
+### Screenshots / Video
 
-<!-- Attach screenshots, GIFs, or video recordings demonstrating UI changes -->
+<!-- Required for visual UI changes: attach or link screenshots/video. Otherwise write N/A. -->
 
 ## Type of Change
 

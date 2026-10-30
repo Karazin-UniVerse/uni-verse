@@ -29,6 +29,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
   children,
   renderTrigger,
   className,
+  panelClassName,
   width,
   isFullWidth = false,
   isPadded = false,
@@ -88,6 +89,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
             styles[resolvedPlacement],
             isPadded && styles.padded,
             isOverflowVisible && styles.overflowVisible,
+            panelClassName,
           )}
           style={
             width

@@ -1,11 +1,12 @@
 import type { AuthResponse, GoogleAuthResponse } from '@core/types/auth';
+import { parseJwt } from '@uni-hub/utils/jwt';
 import { safeStorage } from './api.storage';
-import { request } from './api.request';
+import { ApiClient } from './api.request';
 import { clearUserSessionStorage } from './api.session';
 
-export class AuthApi {
+export class AuthApi extends ApiClient {
   async login(email: string, password: string): Promise<{ data: AuthResponse }> {
-    const response = await request<AuthResponse>('/auth/login', {
+    const response = await this.request<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
       retries: 0,
@@ -15,13 +16,16 @@ export class AuthApi {
       safeStorage.setItem('accessToken', response.data.access_token);
       safeStorage.setItem('isLoggedIn', 'true');
       safeStorage.setItem('isMoodleLinked', 'true');
+      const payload = parseJwt(response.data.access_token);
+
+      safeStorage.setItem('userEmail', payload?.email || email);
     }
 
     return response;
   }
 
   async loginWithGoogle(idToken: string): Promise<{ data: GoogleAuthResponse }> {
-    const response = await request<GoogleAuthResponse>('/auth/google', {
+    const response = await this.request<GoogleAuthResponse>('/auth/google', {
       method: 'POST',
       body: JSON.stringify({ idToken }),
       retries: 0,
@@ -29,6 +33,11 @@ export class AuthApi {
 
     if (response.data?.access_token) {
       safeStorage.setItem('accessToken', response.data.access_token);
+      const payload = parseJwt(response.data.access_token);
+
+      if (payload?.email) {
+        safeStorage.setItem('userEmail', payload.email);
+      }
 
       if (response.data.isLinked) {
         safeStorage.setItem('isLoggedIn', 'true');
@@ -45,7 +54,7 @@ export class AuthApi {
     username: string,
     password: string,
   ): Promise<{ data: GoogleAuthResponse }> {
-    const response = await request<GoogleAuthResponse>('/auth/moodle/link', {
+    const response = await this.request<GoogleAuthResponse>('/auth/moodle/link', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
       retries: 0,
@@ -66,7 +75,7 @@ export class AuthApi {
   }
 
   async unlinkMoodleAccount(): Promise<{ data: GoogleAuthResponse }> {
-    const response = await request<GoogleAuthResponse>('/auth/moodle/unlink', {
+    const response = await this.request<GoogleAuthResponse>('/auth/moodle/unlink', {
       method: 'POST',
       retries: 0,
     });
@@ -84,7 +93,7 @@ export class AuthApi {
 
   async logout(): Promise<void> {
     try {
-      await request('/auth/logout', { method: 'POST', retries: 0 });
+      await this.request('/auth/logout', { method: 'POST', retries: 0 });
     } finally {
       clearUserSessionStorage();
     }

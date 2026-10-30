@@ -56,6 +56,7 @@ Before creating any component, decide which tier fits. If the placement is ambig
 - Stories are written only for components in `packages/ui` (`@universe/ui`). Writing stories in `packages/uni-hub`, `packages/backend` or any other package is STRICTLY PROHIBITED.
 - Sidebar sections: Una components go under `Una/*` (for example `title: 'Una/Buttons/Button'`); complex components go under `Complex/*` (for example `title: 'Complex/ExampleComponent'`).
 - Use Component Story Format 3 with `satisfies Meta<typeof Component>` and `StoryObj<typeof meta>`. No untyped parameters (`any`) in story templates.
+- Do not test Storybook stories (`*.stories.test.*`); test component behavior directly instead.
 - Procedure for writing a story: the `storybook-story-writing` skill.
 
 ## Backend (NestJS)

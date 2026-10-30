@@ -15,6 +15,7 @@
 
 .metaRow {
   display: flex;
+
   align-items: center;
   gap: var(--space-16);
   font-size: var(--font-xs);
@@ -22,11 +23,13 @@
   padding: var(--space-8) 0;
   border-bottom: 1px solid var(--card-border);
 
+
   @include narrower-than('sm') {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-4);
   }
+
 }
 
 .metaDot {
@@ -121,7 +124,11 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--warning-color);
+
   margin-bottom: var(--space-6);
+
+  margin-bottom: var(--space-4);
+
 }
 
 .moderationFeedbackText {
@@ -131,6 +138,7 @@
   color: var(--text-primary);
 }
 
+
 .phaseWrapper {
   display: flex;
   align-items: center;
@@ -139,26 +147,12 @@
 }
 
 .phaseLabel {
+
+.reviewHint {
+
   font-size: var(--font-xs);
   color: var(--text-secondary);
-}
-
-.acceptsApplicationsRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  padding-top: var(--space-8);
-  border-top: 1px dashed color-mix(in srgb, var(--accent-primary) 20%, transparent);
-}
-
-.checkboxLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-8);
-  font-size: var(--font-sm);
-  color: var(--text-primary);
-  cursor: pointer;
-  user-select: none;
+  margin: 0;
 }
 
 .footer {

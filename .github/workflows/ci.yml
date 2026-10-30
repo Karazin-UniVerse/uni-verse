@@ -28,6 +28,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @universe/backend db:generate
+      - name: Audit unused code and dependencies (advisory)
+        run: pnpm knip --no-exit-code
       - run: pnpm lint
       - run: pnpm lint:style
       - run: pnpm typecheck
@@ -45,6 +47,8 @@ jobs:
         run: pnpm test:lhci
       - name: Test Graphify wrapper
         run: pnpm test:graphify
+      - name: Test Grip enrollment and push wrapper
+        run: pnpm test:grip
       - name: Build with the Lighthouse mock API
         # Audit-only output: do not deploy/reuse this .next build for real-backend E2E tests.
         # Deployments build independently through .github/workflows/deploy.yml and the host.
@@ -59,7 +63,7 @@ jobs:
         run: pnpm lhci
       - name: Upload Lighthouse reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lighthouse-reports
           path: .lighthouseci/

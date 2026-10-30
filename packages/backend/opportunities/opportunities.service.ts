@@ -9,6 +9,9 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { getPrismaErrorCode } from '../utils/prisma-error';
+import { getOpportunityContentHash } from './opportunities.helpers';
+import { PRISMA_ERROR_CODE } from '../constants/prisma';
+import { persistOpportunityApplication } from './opportunity-application.persistence';
 import {
   CreateOpportunityDto,
   UpdateOpportunityDto,
@@ -29,12 +32,17 @@ import {
   OPPORTUNITY_MODERATE_ACTION,
   OPPORTUNITY_VIEW,
   OPPORTUNITY_VIEW_PARAM,
+  OPPORTUNITY_ERROR,
 } from '@universe/core/constants/opportunities';
 import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
-import { OPPORTUNITY_NOTIFICATION_KEY } from '@universe/core/constants/notifications';
+import {
+  NOTIFICATION_TYPE,
+  OPPORTUNITY_NOTIFICATION_KEY,
+} from '@universe/core/constants/notifications';
 
 export type OpportunityWithOwner = Opportunity & {
   owner: { id: string; name: string | null; email: string };
+  canResubmit?: boolean;
 };
 
 export type ApplicationWithApplicant = OpportunityApplication & {
@@ -42,7 +50,8 @@ export type ApplicationWithApplicant = OpportunityApplication & {
 };
 
 export type ApplicationWithOpportunity = OpportunityApplication & {
-  opportunity: Opportunity;
+  opportunity: OpportunityWithOwner;
+  applicant: ApplicationWithApplicant['applicant'];
 };
 
 export type UpdateApplicationStatusParams = {
@@ -75,7 +84,7 @@ export class OpportunitiesService {
         moderators.map((moderator) =>
           this.notificationsService.createNotification({
             userId: moderator.id,
-            type: 'OPPORTUNITY_READY_FOR_REVIEW',
+            type: NOTIFICATION_TYPE.OPPORTUNITY_READY_FOR_REVIEW,
             title: OPPORTUNITY_NOTIFICATION_KEY.READY_FOR_REVIEW_TITLE,
             message: JSON.stringify({
               opportunityTitle,
@@ -113,6 +122,7 @@ export class OpportunitiesService {
     return this.prisma.opportunity.create({
       data: {
         ...dto,
+        ownerContactInfo: dto.ownerContactInfo?.trim() ?? '',
         ownerId: userId,
         status: OpportunityStatus.DRAFT, // initial status
       },
@@ -196,6 +206,16 @@ export class OpportunitiesService {
       throw new NotFoundException('Opportunity not found');
     }
 
+    if (opportunity.status === OpportunityStatus.REQUIRES_CHANGES) {
+      return {
+        ...opportunity,
+        canResubmit:
+          Boolean(opportunity.moderationContentHash) &&
+          opportunity.moderationContentHash !==
+            getOpportunityContentHash(opportunity),
+      };
+    }
+
     return opportunity;
   }
 
@@ -225,6 +245,17 @@ export class OpportunitiesService {
 
     const data: Prisma.OpportunityUpdateInput = { ...dto };
 
+    if (dto.ownerContactInfo !== undefined) {
+      data.ownerContactInfo = dto.ownerContactInfo.trim();
+    }
+
+    if (
+      opportunity.status === OpportunityStatus.REQUIRES_CHANGES &&
+      !opportunity.moderationContentHash
+    ) {
+      data.moderationContentHash = getOpportunityContentHash(opportunity);
+    }
+
     if (
       opportunity.status === OpportunityStatus.PUBLISHED &&
       hasContentChanges
@@ -233,10 +264,25 @@ export class OpportunitiesService {
       data.moderationComment = null;
     }
 
-    const updated = await this.prisma.opportunity.update({
-      where: { id },
-      data,
-    });
+    let updated;
+
+    try {
+      updated = await this.prisma.opportunity.update({
+        where: {
+          id,
+          ...(opportunity.status === OpportunityStatus.REQUIRES_CHANGES
+            ? { status: opportunity.status, updatedAt: opportunity.updatedAt }
+            : {}),
+        },
+        data,
+      });
+    } catch (error) {
+      if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
+        throw new ConflictException(OPPORTUNITY_ERROR.CHANGES_REQUIRED);
+      }
+
+      throw error;
+    }
 
     if (
       opportunity.status === OpportunityStatus.PUBLISHED &&
@@ -246,6 +292,55 @@ export class OpportunitiesService {
     }
 
     return updated;
+  }
+
+  /**
+   * Delete a draft opportunity.
+   * Only the owner can delete, and only if the opportunity is in DRAFT or REQUIRES_CHANGES status.
+   */
+  async delete(userId: string, id: string): Promise<Opportunity> {
+    const opportunity = await this.prisma.opportunity.findUnique({
+      where: { id },
+    });
+
+    if (opportunity?.ownerId !== userId) {
+      throw new NotFoundException('Opportunity not found');
+    }
+
+    if (
+      opportunity.status !== OpportunityStatus.DRAFT &&
+      opportunity.status !== OpportunityStatus.REQUIRES_CHANGES
+    ) {
+      throw new BadRequestException(
+        'Only opportunities in DRAFT or REQUIRES_CHANGES statuses can be deleted',
+      );
+    }
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        await tx.opportunityApplication.deleteMany({
+          where: { opportunityId: id },
+        });
+
+        return await tx.opportunity.delete({
+          where: {
+            id,
+            ownerId: userId,
+            status: {
+              in: [OpportunityStatus.DRAFT, OpportunityStatus.REQUIRES_CHANGES],
+            },
+          },
+        });
+      });
+    } catch (error) {
+      if (getPrismaErrorCode(error) === 'P2025') {
+        throw new BadRequestException(
+          'Only opportunities in DRAFT or REQUIRES_CHANGES statuses can be deleted',
+        );
+      }
+
+      throw error;
+    }
   }
 
   /**
@@ -276,13 +371,35 @@ export class OpportunitiesService {
       );
     }
 
-    const updatedOpportunity = await this.prisma.opportunity.update({
-      where: { id },
-      data: {
-        status,
-        moderationComment: null,
-      },
-    });
+    if (
+      opportunity.status === OpportunityStatus.REQUIRES_CHANGES &&
+      !opportunity.canResubmit
+    ) {
+      throw new BadRequestException(OPPORTUNITY_ERROR.CHANGES_REQUIRED);
+    }
+
+    let updatedOpportunity;
+
+    try {
+      updatedOpportunity = await this.prisma.opportunity.update({
+        where: {
+          id,
+          ...(opportunity.status === OpportunityStatus.REQUIRES_CHANGES
+            ? { status: opportunity.status, updatedAt: opportunity.updatedAt }
+            : {}),
+        },
+        data: {
+          status,
+          moderationComment: null,
+        },
+      });
+    } catch (error) {
+      if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
+        throw new ConflictException(OPPORTUNITY_ERROR.CHANGES_REQUIRED);
+      }
+
+      throw error;
+    }
 
     await this.notifyModerators(id, updatedOpportunity.title);
 
@@ -368,7 +485,7 @@ export class OpportunitiesService {
 
     await this.notificationsService.createNotification({
       userId: app.applicantId,
-      type: 'OPPORTUNITY_APPLICATION_STATUS',
+      type: NOTIFICATION_TYPE.OPPORTUNITY_APPLICATION_STATUS,
       title: OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE,
       message: JSON.stringify({
         opportunityTitle: app.opportunity.title,
@@ -418,66 +535,27 @@ export class OpportunitiesService {
       );
     }
 
-    const existing = await this.prisma.opportunityApplication.findFirst({
-      where: { applicantId: userId, opportunityId: id },
+    const opportunityApplication = await persistOpportunityApplication({
+      prisma: this.prisma,
+      userId,
+      opportunityId: id,
+      request: dto,
+      ownerId: opportunity.ownerId,
     });
-
-    if (existing && existing.status !== ApplicationStatus.WITHDRAWN) {
-      throw new ConflictException('Already applied to this opportunity');
-    }
-
-    let app;
-
-    try {
-      if (existing) {
-        app = await this.prisma.opportunityApplication.update({
-          where: { id: existing.id, status: ApplicationStatus.WITHDRAWN },
-          data: {
-            applicantName: dto.applicantName,
-            contactInfo: dto.contactInfo,
-            briefDescription: dto.briefDescription ?? null,
-            motivation: dto.motivation ?? null,
-            answers: dto.answers ?? null,
-            status: ApplicationStatus.SUBMITTED,
-            ownerComment: null,
-          },
-        });
-      } else {
-        app = await this.prisma.opportunityApplication.create({
-          data: {
-            ...dto,
-            applicantId: userId,
-            opportunityId: id,
-            status: ApplicationStatus.SUBMITTED,
-          },
-        });
-      }
-    } catch (error) {
-      const errorCode = getPrismaErrorCode(error);
-
-      if (existing && errorCode === 'P2025') {
-        throw new ConflictException('Application is no longer withdrawn');
-      }
-
-      if (!existing && errorCode === 'P2002') {
-        throw new ConflictException('Already applied to this opportunity');
-      }
-
-      throw error;
-    }
 
     await this.notificationsService.createNotification({
       userId: opportunity.ownerId,
-      type: 'OPPORTUNITY_NEW_APPLICATION',
+      type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
       title: OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_TITLE,
       message: JSON.stringify({
         opportunityTitle: opportunity.title,
         applicantName: dto.applicantName,
+        applicationId: opportunityApplication.id,
       }),
       link: `${OPPORTUNITIES_ROUTE}/${id}?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
     });
 
-    return app;
+    return opportunityApplication;
   }
 
   /**
@@ -489,6 +567,7 @@ export class OpportunitiesService {
   ): Promise<OpportunityApplication> {
     const app = await this.prisma.opportunityApplication.findUnique({
       where: { id: applicationId },
+      include: { opportunity: true },
     });
 
     if (!app) throw new NotFoundException('Application not found');
@@ -502,10 +581,38 @@ export class OpportunitiesService {
     )
       throw new BadRequestException('Cannot withdraw completed application');
 
-    return this.prisma.opportunityApplication.update({
-      where: { id: applicationId },
-      data: { status: ApplicationStatus.WITHDRAWN },
-    });
+    try {
+      const updated = await this.prisma.$transaction(async (tx) => {
+        const withdrawn = await tx.opportunityApplication.update({
+          where: {
+            id: applicationId,
+            status: {
+              in: [ApplicationStatus.SUBMITTED, ApplicationStatus.UNDER_REVIEW],
+            },
+          },
+          data: { status: ApplicationStatus.WITHDRAWN },
+        });
+
+        await tx.notification.deleteMany({
+          where: {
+            userId: app.opportunity.ownerId,
+            type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
+            link: { contains: app.opportunityId },
+            message: { contains: `"applicationId":"${applicationId}"` },
+          },
+        });
+
+        return withdrawn;
+      });
+
+      return updated;
+    } catch (error) {
+      if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
+        throw new BadRequestException('Cannot withdraw completed application');
+      }
+
+      throw error;
+    }
   }
 
   /**
@@ -516,7 +623,12 @@ export class OpportunitiesService {
   ): Promise<ApplicationWithOpportunity[]> {
     return this.prisma.opportunityApplication.findMany({
       where: { applicantId: userId },
-      include: { opportunity: true },
+      include: {
+        applicant: { select: { name: true, email: true } },
+        opportunity: {
+          include: { owner: { select: { id: true, name: true, email: true } } },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -524,9 +636,10 @@ export class OpportunitiesService {
   /**
    * Retrieve all opportunities owned by a user.
    */
-  async getMyOpportunities(userId: string): Promise<Opportunity[]> {
+  async getMyOpportunities(userId: string): Promise<OpportunityWithOwner[]> {
     return this.prisma.opportunity.findMany({
       where: { ownerId: userId },
+      include: { owner: { select: { id: true, name: true, email: true } } },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -580,20 +693,40 @@ export class OpportunitiesService {
       throw new BadRequestException('Unknown moderation action');
     }
 
-    const opp = await this.prisma.opportunity.update({
-      where: { id },
-      data: {
-        status: newStatus,
-        moderationComment:
-          dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE
-            ? null
-            : dto.comment,
-      },
-    });
+    let opp: Opportunity;
+
+    try {
+      opp = await this.prisma.opportunity.update({
+        where: {
+          id,
+          status: opportunityToModerate.status,
+          updatedAt: opportunityToModerate.updatedAt,
+        },
+        data: {
+          status: newStatus,
+          moderationContentHash:
+            dto.action === OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES
+              ? getOpportunityContentHash(opportunityToModerate)
+              : null,
+          moderationComment:
+            dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE
+              ? null
+              : dto.comment,
+        },
+      });
+    } catch (error) {
+      if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
+        throw new ConflictException(
+          'Opportunity was modified during moderation. Retry the moderation.',
+        );
+      }
+
+      throw error;
+    }
 
     await this.notificationsService.createNotification({
       userId: opp.ownerId,
-      type: 'OPPORTUNITY_MODERATED',
+      type: NOTIFICATION_TYPE.OPPORTUNITY_MODERATED,
       title: OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE,
       message: JSON.stringify({
         opportunityTitle: opp.title,

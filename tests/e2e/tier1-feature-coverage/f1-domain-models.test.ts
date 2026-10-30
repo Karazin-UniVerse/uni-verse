@@ -20,7 +20,7 @@ describe('Tier 1 - Feature 1: Shared Core Domain Models (@universe/core)', () =>
   });
 
   it('F1-2: domain types index should declare StudentProfile model contract', async () => {
-    const typesPath = 'packages/core/types/index.ts';
+    const typesPath = 'packages/core/types/student.ts';
 
     expect(fileExists(typesPath), `${typesPath} must exist`).toBe(true);
     const content = readWorkspaceFile(typesPath);

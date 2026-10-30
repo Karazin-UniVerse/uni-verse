@@ -26,6 +26,7 @@ export interface Opportunity {
   acceptsApplications?: boolean;
   paymentDetails?: string | null;
   moderationComment?: string | null;
+  canResubmit?: boolean;
   owner?: OpportunityOwner;
   applications?: OpportunityApplication[];
 }
@@ -50,17 +51,18 @@ export interface OpportunityApplication {
 export interface CreateOpportunityRequest {
   title: string;
   description: string;
-  ownerContactInfo: string;
   paymentType: OpportunityPaymentType;
+  ownerContactInfo?: string;
   paymentDetails?: string | null;
   acceptsApplications?: boolean;
+  lifecycleState?: OpportunityLifecycle;
 }
 
 export type UpdateOpportunityRequest = Partial<CreateOpportunityRequest>;
 
 export interface ApplyOpportunityRequest {
   applicantName: string;
-  contactInfo: string;
+  contactInfo?: string;
   motivation?: string;
   briefDescription?: string;
   answers?: string;

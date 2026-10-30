@@ -1,25 +1,28 @@
-import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ModerationRejectModal } from './ModerationRejectModal';
+import type { ModerationRejectModalProps } from './ModerationRejectModal.types';
 
 describe('ModerationRejectModal Component', () => {
-  const baseProps = {
+  const baseProps: ModerationRejectModalProps = {
     open: true,
     onClose: vi.fn(),
     onRevise: vi.fn(),
     onReject: vi.fn(),
     onCommentChange: vi.fn(),
     title: 'Зауваження або повернення на доопрацювання',
+    comment: '',
     commentLabel: 'Опишіть зауваження або причину:',
     placeholder: 'Вкажіть, що саме необхідно виправити...',
     cancelText: 'Скасувати',
     reviseText: 'На доопрацювання',
     rejectText: 'Відхилити',
+    isSubmitting: false,
   };
 
-  it('disables both "На доопрацювання" and "Відхилити" when comment is empty', () => {
+  it('should disable both "На доопрацювання" and "Відхилити" when comment is empty', () => {
     render(<ModerationRejectModal {...baseProps} comment="" />);
 
     const reviseBtn = screen.getByRole('button', { name: 'На доопрацювання' });
@@ -29,7 +32,7 @@ describe('ModerationRejectModal Component', () => {
     expect(rejectBtn).toBeDisabled();
   });
 
-  it('disables both buttons when comment has only whitespace', () => {
+  it('should disable both buttons when comment has only whitespace', () => {
     render(<ModerationRejectModal {...baseProps} comment="    " />);
 
     const reviseBtn = screen.getByRole('button', { name: 'На доопрацювання' });
@@ -39,7 +42,7 @@ describe('ModerationRejectModal Component', () => {
     expect(rejectBtn).toBeDisabled();
   });
 
-  it('enables both buttons and calls handlers when comment is provided', async () => {
+  it('should enable both buttons and call handlers when comment is provided', async () => {
     const onRevise = vi.fn();
     const onReject = vi.fn();
     const user = userEvent.setup();
@@ -66,7 +69,7 @@ describe('ModerationRejectModal Component', () => {
     expect(onReject).toHaveBeenCalledTimes(1);
   });
 
-  it('disables all controls when isSubmitting is true', () => {
+  it('should disable all controls when isSubmitting is true', () => {
     render(<ModerationRejectModal {...baseProps} comment="Коментар" isSubmitting={true} />);
 
     const reviseBtn = screen.getByRole('button', { name: 'На доопрацювання' });
@@ -78,5 +81,36 @@ describe('ModerationRejectModal Component', () => {
     expect(rejectBtn).toBeDisabled();
     expect(cancelBtn).toBeDisabled();
     expect(textarea).toBeDisabled();
+  });
+
+  it('should call onClose when cancel button is clicked', async () => {
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+
+    render(<ModerationRejectModal {...baseProps} onClose={onClose} />);
+
+    const cancelBtn = screen.getByRole('button', { name: 'Скасувати' });
+
+    await user.click(cancelBtn);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should call onCommentChange when typing in comment textarea', async () => {
+    const onCommentChange = vi.fn();
+    const user = userEvent.setup();
+
+    render(<ModerationRejectModal {...baseProps} comment="" onCommentChange={onCommentChange} />);
+
+    const textarea = screen.getByRole('textbox');
+
+    await user.type(textarea, 'Тест');
+    expect(onCommentChange).toHaveBeenCalled();
+  });
+
+  it('should not render anything when open is false', () => {
+    render(<ModerationRejectModal {...baseProps} open={false} />);
+
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Скасувати' })).not.toBeInTheDocument();
   });
 });

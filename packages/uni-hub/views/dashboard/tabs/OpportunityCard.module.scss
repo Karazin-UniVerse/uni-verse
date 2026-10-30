@@ -115,7 +115,11 @@
 .categoryPill {
   display: inline-flex;
   align-items: center;
+
   gap: var(--space-8);
+
+  gap: var(--space-4);
+
   font-size: var(--font-xs);
   font-weight: 500;
   padding: 4px 10px;
@@ -204,11 +208,20 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-12);
+  flex-wrap: wrap;
+  gap: var(--space-8);
   padding-top: 16px;
   margin-top: 18px;
   border-top: 1px solid var(--card-border);
   flex-wrap: wrap;
+}
+
+.ownerContactBlock {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  margin-top: auto;
+  padding-top: var(--space-16);
 }
 
 .ownerInfo {
@@ -262,9 +275,15 @@
 .cardActions {
   display: flex;
   align-items: center;
+
   gap: var(--space-12);
   flex-wrap: wrap;
   min-width: 0;
+
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  max-width: 100%;
+
 }
 
 .warningBox {
@@ -273,7 +292,7 @@
   padding: var(--space-12) var(--space-16);
   background: color-mix(in srgb, var(--warning-color) 10%, var(--bg-surface));
   border-left: 3px solid var(--warning-color);
-  border-radius: 0 10px 10px 0;
+  border-radius: 0 var(--border-radius-medium) var(--border-radius-medium) 0;
   font-size: var(--font-xs);
   line-height: 1.45;
   color: var(--text-primary);

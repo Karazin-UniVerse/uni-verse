@@ -475,6 +475,14 @@ $sidebar-collapsed-width: 88px;
   }
 }
 
+.userName {
+  min-width: 0;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .avatar {
   width: 32px;
   height: 32px;
@@ -501,6 +509,13 @@ $sidebar-collapsed-width: 88px;
   line-height: 16px;
   text-align: center;
   animation: pulse 1.6s var(--ease-standard) infinite;
+}
+
+.notificationsPanel {
+  @include narrower-than('md') {
+    right: calc(-1 * (var(--space-8) + 40px));
+    max-width: calc(100vw - var(--space-24));
+  }
 }
 
 .content {
@@ -1206,7 +1221,7 @@ $sidebar-collapsed-width: 88px;
     gap: var(--space-8);
   }
 
-  .user span:last-child {
+  .user .userName {
     display: none;
   }
 
@@ -1421,10 +1436,18 @@ $sidebar-collapsed-width: 88px;
 .userDropdownHeader {
   padding: var(--space-12) var(--space-16);
   border-bottom: 1px solid var(--border-color);
+  min-width: 0;
 
   strong {
     display: block;
     font-size: var(--font-sm);
+  }
+
+  strong,
+  .muted {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 

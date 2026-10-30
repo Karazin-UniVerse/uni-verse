@@ -130,6 +130,10 @@
     margin-bottom: 0;
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
+
+  .body {
+    padding-bottom: max(var(--space-24), env(safe-area-inset-bottom));
+  }
 }
 
 @keyframes slide-up {

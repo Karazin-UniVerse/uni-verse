@@ -49,16 +49,19 @@ export const OpportunitiesTab: React.FC = () => {
     {
       id: OPPORTUNITY_SUB_TAB.Catalog,
       label: formatMessage('opportunities.tabs.catalog'),
+      shortLabel: formatMessage('opportunities.tabs.catalogShort'),
       icon: <Briefcase size={16} />,
     },
     {
       id: OPPORTUNITY_SUB_TAB.MyOpportunities,
       label: formatMessage('opportunities.tabs.myOpportunities'),
+      shortLabel: formatMessage('opportunities.tabs.myOpportunitiesShort'),
       icon: <FileText size={16} />,
     },
     {
       id: OPPORTUNITY_SUB_TAB.MyApplications,
       label: formatMessage('opportunities.tabs.myApplications'),
+      shortLabel: formatMessage('opportunities.tabs.myApplicationsShort'),
       icon: <Users size={16} />,
     },
     ...(isModerator
@@ -66,6 +69,7 @@ export const OpportunitiesTab: React.FC = () => {
           {
             id: OPPORTUNITY_SUB_TAB.Moderation,
             label: formatMessage('opportunities.tabs.moderation'),
+            shortLabel: formatMessage('opportunities.tabs.moderationShort'),
             icon: <ShieldCheck size={16} />,
             badge: data.moderationQueue.items.length,
           },
@@ -85,12 +89,14 @@ export const OpportunitiesTab: React.FC = () => {
           onSelect={setActiveSubTab}
         />
 
-        <div className={styles.createBtnWrapper}>
-          <Button variant="primary" onClick={create.openCreate} className={styles.createBtn}>
-            <Plus size={16} />
-            {formatMessage('opportunities.actions.create')}
-          </Button>
-        </div>
+        {activeSubTab === OPPORTUNITY_SUB_TAB.MyOpportunities && (
+          <div className={styles.createBtnWrapper}>
+            <Button variant="primary" onClick={create.openCreate} className={styles.createBtn}>
+              <Plus size={16} />
+              {formatMessage('opportunities.actions.create')}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* SubTab Views */}

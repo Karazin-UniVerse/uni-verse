@@ -252,6 +252,7 @@ export const uk = {
   'header.soundUnmute': 'Увімкнути звук',
   'header.openMenu': 'Відкрити меню',
   'header.userMenu': 'Меню профілю користувача',
+  'header.userMenuTitleWithGroup': '{fullName} ({group})',
   'header.unreadCount': '{count} нових',
 
   // Assignment Detail
@@ -285,6 +286,13 @@ export const uk = {
 
   // Gamification
   'badge.unlocked': 'Досягнення',
+  'badge.unlockToast': 'Досягнення: {title} — {description}',
+  'gamification.badges.deadlineSniper.title': 'Снайпер дедлайнів',
+  'gamification.badges.deadlineSniper.description': 'Здали завдання до дедлайну',
+  'gamification.badges.nightOwl.title': 'Нічна сова',
+  'gamification.badges.nightOwl.description': 'Зайшли в дашборд між 22:00 та 05:00',
+  'gamification.badges.semesterMaster.title': 'Майстер семестру',
+  'gamification.badges.semesterMaster.description': 'Усі курси з оцінкою ≥ 80',
   'admission.admitted': 'Допущено до іспиту ({score} / 60 б. — поріг допуску 30 б. досягнуто)',
   'admission.notAdmitted':
     'Не допущено до іспиту ({score} / 60 б. — бракує {remaining} б. для допуску)',
@@ -427,10 +435,24 @@ export const uk = {
   'devPanel.opportunitiesDesc': 'Дошка проєктів та стажувань',
 
   // Opportunities
+  'opportunities.alternativeContact': 'Альтернативний контакт',
+  'opportunities.emailLabel': 'Електронна пошта',
+  'opportunities.contactHint': 'Пошту з вашого профілю буде показано автоматично.',
+  'opportunities.errors.changesRequired':
+    'Перед повторним надсиланням змініть назву, опис, контакти або умови оплати можливості.',
+  'opportunities.errors.alreadyApplied': 'Ви вже подали заявку на цю можливість.',
+  'opportunities.errors.phoneUnavailable':
+    'Цей номер недоступний для використання цим обліковим записом.',
+  'opportunities.errors.phoneAlreadySet':
+    'Використайте номер, уже закріплений за вашим обліковим записом, або Telegram.',
   'opportunities.tabs.catalog': 'Каталог',
+  'opportunities.tabs.catalogShort': 'Каталог',
   'opportunities.tabs.myOpportunities': 'Мої можливості',
+  'opportunities.tabs.myOpportunitiesShort': 'Мої',
   'opportunities.tabs.myApplications': 'Мої відгуки',
+  'opportunities.tabs.myApplicationsShort': 'Відгуки',
   'opportunities.tabs.moderation': 'Модерація',
+  'opportunities.tabs.moderationShort': 'Модерація',
   'opportunities.actions.create': 'Створити можливість',
   'opportunities.toast.createdDraft': 'Можливість успішно створена як чернетка!',
   'opportunities.toast.createError': 'Помилка створення можливості',
@@ -441,12 +463,18 @@ export const uk = {
   'opportunities.toast.stateUpdated': 'Стан проекту оновлено',
   'opportunities.toast.updated': 'Зміни успішно збережено!',
   'opportunities.toast.updateError': 'Помилка оновлення можливості',
+  'opportunities.toast.deleted': 'Чернетку можливості видалено',
+  'opportunities.toast.deleteError': 'Помилка видалення чернетки',
   'opportunities.toast.applicationsOpened': 'Прийом відгуків відкрито',
   'opportunities.toast.applicationsClosed': 'Прийом відгуків закрито',
   'opportunities.toast.statusUpdateError': 'Помилка оновлення статусу',
   'opportunities.confirm.withdraw': 'Ви впевнені, що бажаєте відкликати свій відгук?',
   'opportunities.confirm.withdrawTitle': 'Відкликання відгуку',
   'opportunities.confirm.withdrawConfirm': 'Відкликати',
+  'opportunities.confirm.delete':
+    'Ви впевнені, що бажаєте видалити цю чернетку можливості? Цю дію неможливо скасувати.',
+  'opportunities.confirm.deleteTitle': 'Видалення чернетки',
+  'opportunities.confirm.deleteConfirm': 'Видалити',
   'opportunities.toast.withdrawn': 'Відгук відкликано',
   'opportunities.toast.approved': 'Можливість схвалено та опубліковано в каталозі!',
   'opportunities.toast.rejected': 'Можливість відхилено',
@@ -470,7 +498,6 @@ export const uk = {
   'opportunities.catalog.filterAll': 'Усі',
   'opportunities.catalog.filterPaid': 'Оплачувані',
   'opportunities.catalog.filterUnpaid': 'Волонтерство / Практика',
-  'opportunities.catalog.foundPrefix': 'Знайдено:',
   'opportunities.catalog.emptyDescription': 'За вашим запитом не знайдено доступних можливостей',
 
   // Opportunities Status Badges
@@ -525,14 +552,14 @@ export const uk = {
   'opportunities.createModal.descLabel': 'Опис, завдання та вимоги до кандидата *',
   'opportunities.createModal.descPlaceholder':
     'Детально розкажіть про проект, задачі, очікувану зайнятість та необхідні навички...',
-  'opportunities.createModal.contactLabel': 'Контактні дані організатора *',
-  'opportunities.createModal.contactPlaceholder': 'Telegram (@username) або Email',
+  'opportunities.createModal.contactPlaceholder': 'Telegram (@username), Email або номер телефону',
   'opportunities.createModal.paymentTypeLabel': 'Тип винагороди',
   'opportunities.createModal.unpaidOption': 'Неоплачувана (Практика, досвід)',
   'opportunities.createModal.paidOption': 'Оплачувана',
   'opportunities.createModal.paymentDetailsLabel': 'Деталі та розмір оплати',
   'opportunities.createModal.paymentDetailsPlaceholder':
     'Наприклад: $400/місяць або 5000 грн за етап',
+  'opportunities.createModal.phaseLabel': 'Фаза',
   'opportunities.createModal.acceptsApplications': 'Приймати нові відгуки на можливість',
   'opportunities.createModal.cancel': 'Скасувати',
   'opportunities.createModal.saving': 'Збереження...',
@@ -559,10 +586,12 @@ export const uk = {
   'opportunities.detailModal.defaultOrganizer': 'Каразінський університет',
   'opportunities.detailModal.publishedOn': 'Опубліковано: {date}',
   'opportunities.detailModal.descTitle': 'Опис проекту та вимоги',
-  'opportunities.detailModal.contacts': 'Контакти для звʼязку:',
+  'opportunities.detailModal.email': 'Електронна пошта:',
+  'opportunities.detailModal.contacts': 'Альтернативний контакт:',
   'opportunities.detailModal.manageTitle': 'Керування вашою можливістю',
   'opportunities.detailModal.sendToReview': 'Надіслати на модерацію',
   'opportunities.detailModal.edit': 'Редагувати',
+  'opportunities.detailModal.delete': 'Видалити',
   'opportunities.detailModal.moderationFeedback': 'Зауваження модератора',
   'opportunities.detailModal.phaseLabel': 'Фаза:',
   'opportunities.detailModal.phaseStart': 'Старт',
@@ -570,7 +599,6 @@ export const uk = {
   'opportunities.detailModal.phasePaused': 'На паузі',
   'opportunities.detailModal.phaseCompleted': 'Завершено',
   'opportunities.detailModal.phaseCancelled': 'Скасовано',
-  'opportunities.detailModal.acceptsApplications': 'Приймати нові відгуки на можливість',
   'opportunities.detailModal.applicationsClosed': 'Прийом заявок призупинено автором',
   'opportunities.detail.back': 'Назад до можливостей',
   'opportunities.detailModal.apply': 'Відгукнутися на можливість',
@@ -581,11 +609,9 @@ export const uk = {
     'Супровідне повідомлення (чому вам цікавий цей проект) *',
   'opportunities.applyModal.motivationPlaceholder':
     'Коротко опишіть ваш досвід, стек та чому ви хочете взяти участь...',
-  'opportunities.applyModal.contactLabel': 'Ваш Telegram або номер телефону для звʼязку',
   'opportunities.applyModal.contactPlaceholder': '@username або +380...',
   'opportunities.applyModal.invalidContact':
     'Вкажіть коректний Telegram (@username або посилання) або номер телефону',
-  'opportunities.applyModal.defaultContact': 'Вказано в профілі',
   'opportunities.applyModal.defaultApplicantName': 'Студент',
   'opportunities.applyModal.cancel': 'Скасувати',
   'opportunities.applyModal.submitting': 'Відправка...',
@@ -595,8 +621,6 @@ export const uk = {
   'opportunities.applicantsModal.title': 'Кандидати на можливість ({count})',
   'opportunities.applicantsModal.empty': 'На цю можливість ще немає відгуків',
   'opportunities.applicantsModal.defaultApplicant': 'Студент',
-  'opportunities.applicantsModal.emailLabel': 'Електронна пошта',
-  'opportunities.applicantsModal.directContactLabel': 'Прямий контакт (Telegram / телефон)',
   'opportunities.applicantsModal.motivationLabel': 'Супровідне повідомлення:',
   'opportunities.applicantsModal.submittedOn': 'Подано {date}',
   'opportunities.applicantsModal.accept': 'Прийняти',
