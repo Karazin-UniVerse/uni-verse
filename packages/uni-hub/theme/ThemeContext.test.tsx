@@ -26,9 +26,16 @@ const ThemeConsumer = () => {
 
 describe('ThemeContext', () => {
   beforeEach(() => {
-    window.localStorage.clear();
-    delete document.documentElement.dataset.theme;
-    delete document.documentElement.dataset.colorScheme;
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: false, // светлая системная тема, ожидаем karazinClassic
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      onchange: null,
+      dispatchEvent: vi.fn(),
+    }));
   });
 
   afterEach(() => {
@@ -48,17 +55,46 @@ describe('ThemeContext', () => {
     expect(() => render(<Consumer />)).toThrow('useTheme must be used within ThemeProvider');
   });
 
-  it("should provide default theme 'light' and apply default dataset attributes", () => {
+  it("should synchronize theme across windows/tabs on 'storage' and 'theme-change' events", () => {
     render(
       <ThemeProvider>
         <ThemeConsumer />
       </ThemeProvider>,
     );
 
-    expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
+    expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinClassic');
+
+    act(() => {
+      window.localStorage.setItem(STORAGE_KEY, 'universeSpace');
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key: STORAGE_KEY,
+          newValue: 'universeSpace',
+        }),
+      );
+    });
+
+    expect(screen.getByTestId('theme-value')).toHaveTextContent('universeSpace');
+    expect(document.documentElement.dataset.theme).toBe('universeSpace');
+    expect(document.documentElement.dataset.colorScheme).toBe('dark');
+
+    act(() => {
+      window.localStorage.setItem(STORAGE_KEY, 'karazinClassic');
+      window.dispatchEvent(new Event('theme-change'));
+    });
+
+    expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinClassic');
+    expect(document.documentElement.dataset.theme).toBe('karazinClassic');
     expect(document.documentElement.dataset.colorScheme).toBe('light');
-    expect(document.documentElement.dataset.theme).toBeUndefined();
-    expect(document.documentElement).not.toHaveAttribute('data-theme');
+
+    act(() => {
+      window.localStorage.removeItem(STORAGE_KEY);
+      window.dispatchEvent(new Event('theme-change'));
+    });
+
+    expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinClassic');
+    expect(document.documentElement.dataset.theme).toBe('karazinClassic');
+    expect(document.documentElement.dataset.colorScheme).toBe('light');
   });
 
   it('should load initial theme from localStorage if valid theme stored', () => {
@@ -75,7 +111,7 @@ describe('ThemeContext', () => {
     expect(document.documentElement.dataset.theme).toBe('dark');
   });
 
-  it("should fallback to 'light' if stored theme is invalid", () => {
+  it("should fallback to 'karazinClassic' if stored theme is invalid", () => {
     window.localStorage.setItem(STORAGE_KEY, 'nonexistent-theme');
 
     render(
@@ -84,9 +120,9 @@ describe('ThemeContext', () => {
       </ThemeProvider>,
     );
 
-    expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
+    expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinClassic');
     expect(document.documentElement.dataset.colorScheme).toBe('light');
-    expect(document.documentElement.dataset.theme).toBeUndefined();
+    expect(document.documentElement.dataset.theme).toBe('karazinClassic');
   });
 
   it('should change theme via setTheme, updating state, localStorage, and document.documentElement dataset', async () => {
