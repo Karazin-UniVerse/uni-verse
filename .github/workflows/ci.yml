@@ -84,3 +84,11 @@ jobs:
           DISCORD_PR_WEBHOOK: ${{ secrets.DISCORD_PR_WEBHOOK }}
           NOTIFY_MODE: ci-failure
         run: node .github/scripts/discord-pr-notify.mjs
+
+  deploy:
+    needs: quality
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && vars.GCP_DEPLOY_ENABLED == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy.yml
