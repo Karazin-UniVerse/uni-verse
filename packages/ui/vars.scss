@@ -88,9 +88,7 @@ $space-64: 64px;
   --z-bottom-nav: 100;
   --z-dropdown: 100;
   --z-modal: 1200;
-
   --z-toast: 1300;
-
 
   /* Transitions */
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
@@ -215,15 +213,9 @@ $space-64: 64px;
   /* Feedback Colors (Static) */
   --success-color: var(--green-500);
   --error-color: var(--red-500);
-
-  --warning-color: #f59e0b; /* Consider adding a yellow palette */
-  --warning-light: #fbbf24;
-  --text-on-warning: #1f1300;
-
   --warning-color: var(--yellow-500);
   --warning-light: var(--yellow-400);
   --warning-text: var(--yellow-800);
-
   --info-color: var(--blue-500);
 }
 
