@@ -16,9 +16,17 @@ function finish(code = 0, output = '') {
 }
 
 if (command === 'git') {
-  const currentCalls = state.calls.filter((c) => c[0] === 'git').length;
+  const [subcommand, remote, ref] = args;
+
+  if (subcommand !== 'ls-remote' || remote !== 'origin' || ref !== 'refs/heads/develop') {
+    finish(1, `Unexpected git arguments: ${args.join(' ')}\n`);
+  }
+
+  const backendUpdated = state.calls.some(
+    (c) => c[0] === 'gcloud' && c[3] === 'update' && c[4] === process.env.GCP_BACKEND_SERVICE,
+  );
   const sha =
-    process.env.DEPLOY_TEST_SWITCH_STALE === 'true' && currentCalls > 1
+    process.env.DEPLOY_TEST_SWITCH_STALE === 'true' && backendUpdated
       ? 'newer-commit-sha'
       : process.env.DEPLOY_TEST_LATEST_SHA || process.env.GITHUB_SHA;
 
