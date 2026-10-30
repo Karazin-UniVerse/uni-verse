@@ -8,6 +8,7 @@ permissions: {}
 concurrency:
   group: cloud-run-develop
   cancel-in-progress: false
+  queue: max
 
 jobs:
   deploy:

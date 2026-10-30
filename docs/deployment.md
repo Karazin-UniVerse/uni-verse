@@ -180,11 +180,13 @@ Wait several minutes for IAM propagation. No service account JSON key,
 
 ## 3. Enable and verify
 
-1. Merge the reviewed CI/CD PR into `develop` after bootstrap and variables are
-   configured. If it has already merged, enable deployment and rerun the entire
-   latest `develop` push CI run, or push a reviewed follow-up commit to `develop`.
-2. Set the repository variable `GCP_DEPLOY_ENABLED=true` when ready to deploy.
-   This setting alone does not start a run.
+1. Complete cloud bootstrap and configure the GitHub `develop` environment and
+   its variables. Keep `GCP_DEPLOY_ENABLED` unset or `false` during setup.
+2. Set the repository variable `GCP_DEPLOY_ENABLED=true` when ready to deploy,
+   then merge the reviewed CI/CD PR into `develop`. The merge starts CI; changing
+   the variable alone does not start a run. If the PR has already merged, enable
+   deployment and rerun **all jobs** of the latest `develop` push CI run that
+   contains the new workflow, or push a reviewed follow-up commit to `develop`.
 3. Watch **Actions → CI**: `deploy` runs only after `quality` passes. A PR run
    always skips deployment, even for a branch in this repository.
 4. Confirm both services and image digests in the deployment job summary.
@@ -194,8 +196,12 @@ Wait several minutes for IAM propagation. No service account JSON key,
 
 Images use the checked-out commit SHA as their tag; Cloud Run receives immutable
 image digests. Deployment concurrency prevents overlapping deployments. Immediately
-before updating services, CI skips a commit if `develop` has advanced. GitHub
-concurrency is not a FIFO queue and may replace pending runs with newer ones.
+before updating services, CI skips a commit if `develop` has advanced. The
+`queue: max` setting retains up to 100 pending deployments, so an older CI run
+finishing late cannot replace the pending deployment of the current commit.
+Queue order follows arrival at the concurrency group, not commit order; the
+stale-commit check is still required. Runs beyond the 100-pending limit are
+canceled by GitHub.
 
 Existing Cloud Run env and secret references are preserved with
 `--update-env-vars`. CI changes only backend `FRONTEND_URL`, optional backend
