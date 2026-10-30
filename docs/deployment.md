@@ -70,8 +70,9 @@ variables**, not secrets:
 
 Use origins without trailing slashes for both URLs. `NEXT_PUBLIC_API_URL` must
 not end in `/api`: that is the backend Swagger route, not an API prefix.
-The workflow rejects `FRONTEND_URL` with a trailing slash before building images,
-because the backend compares that value with the browser's slash-free Origin.
+The workflow rejects `FRONTEND_URL` with a trailing slash or an explicit
+scheme-default port (`:443` for https, `:80` for http) before building images,
+because the backend compares that value with the browser's slash-free, port-free Origin.
 
 `GCP_DEPLOY_ENABLED` is a **repository** variable under **Settings → Secrets and
 variables → Actions → Variables**, not an environment variable. Leave it unset
@@ -211,12 +212,13 @@ Wait several minutes for IAM propagation. No service account JSON key,
 
 Images use the checked-out commit SHA as their tag; Cloud Run receives immutable
 image digests. Deployment concurrency prevents overlapping deployments. Immediately
-before updating services, CI skips a commit if `develop` has advanced. The
-`queue: max` setting retains up to 100 pending deployments, so an older CI run
-finishing late cannot replace the pending deployment of the current commit.
-Queue order follows arrival at the concurrency group, not commit order; the
-stale-commit check is still required. Runs beyond the 100-pending limit are
-canceled by GitHub.
+before updating services and before each traffic switch, CI skips a commit if
+`develop` has advanced. Generated revision names are validated against Cloud Run's
+63-character limit before updating services. The `queue: max` setting retains
+up to 100 pending deployments, so an older CI run finishing late cannot replace
+the pending deployment of the current commit. Queue order follows arrival at the
+concurrency group, not commit order; the stale-commit check is still required.
+Runs beyond the 100-pending limit are canceled by GitHub.
 
 Existing Cloud Run env and secret references are preserved with
 `--update-env-vars`. CI changes only backend `FRONTEND_URL`, optional backend

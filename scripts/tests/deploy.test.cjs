@@ -50,7 +50,7 @@ function runStep(name, overrides = {}) {
         '-c',
         `gcloud() { node "$DEPLOY_TEST_CLI" gcloud "$@"; }
 curl() { node "$DEPLOY_TEST_CLI" curl "$@"; }
-git() { printf '%s\\trefs/heads/develop\\n' "$DEPLOY_TEST_LATEST_SHA"; }
+git() { node "$DEPLOY_TEST_CLI" git "$@"; }
 ${readStep(name)}`,
       ],
       {
@@ -98,6 +98,16 @@ test('rejects a slash-terminated frontend origin before writing build configurat
   assert.equal(result.status, 1);
   assert.match(result.stdout, /FRONTEND_URL must not end with a slash/);
   assert.equal(result.state.calls.length, 0);
+});
+
+test('rejects explicit scheme-default ports in FRONTEND_URL', () => {
+  for (const url of ['https://frontend.example:443', 'http://frontend.example:80']) {
+    const result = runStep('Validate deployment configuration', { FRONTEND_URL: url });
+
+    assert.equal(result.status, 1);
+    assert.match(result.stdout, /FRONTEND_URL must not include explicit scheme-default ports/);
+    assert.equal(result.state.calls.length, 0);
+  }
 });
 
 test('accepts a frontend origin without a trailing slash', () => {
@@ -163,5 +173,24 @@ test('skips obsolete commits without calling any cloud command', () => {
   });
 
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(result.state.calls.length, 0);
+  assert.equal(result.state.calls.filter((c) => c[0] === 'gcloud').length, 0);
+});
+
+test('rejects generated revision names exceeding 63 characters', () => {
+  const result = runStep('Update services and check availability', {
+    GCP_BACKEND_SERVICE: 'very-long-backend-service-name-that-definitely-exceeds-limits',
+  });
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /exceeds 63 characters/);
+});
+
+test('rechecks develop freshness before traffic switch and aborts before switching traffic', () => {
+  const result = runStep('Update services and check availability', {
+    DEPLOY_TEST_SWITCH_STALE: 'true',
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /develop has advanced/);
+  assert.deepEqual(result.state.traffic, result.initialTraffic);
 });

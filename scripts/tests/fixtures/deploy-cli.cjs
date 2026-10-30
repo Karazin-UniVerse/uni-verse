@@ -15,6 +15,16 @@ function finish(code = 0, output = '') {
   process.exit(code);
 }
 
+if (command === 'git') {
+  const currentCalls = state.calls.filter((c) => c[0] === 'git').length;
+  const sha =
+    process.env.DEPLOY_TEST_SWITCH_STALE === 'true' && currentCalls > 1
+      ? 'newer-commit-sha'
+      : process.env.DEPLOY_TEST_LATEST_SHA || process.env.GITHUB_SHA;
+
+  finish(0, `${sha}\trefs/heads/develop\n`);
+}
+
 if (command === 'curl') {
   const service = args.at(-1).startsWith(process.env.NEXT_PUBLIC_API_URL) ? 'backend' : 'frontend';
 
@@ -32,11 +42,13 @@ if (args[0] === 'run' && args[1] === 'services') {
   if (action === 'describe') {
     if (failure === 'snapshot') finish(1);
 
+    const traffic = state.traffic[service] || { [`${service}-old`]: 100 };
+
     finish(
       0,
       JSON.stringify({
         status: {
-          traffic: Object.entries(state.traffic[service]).map(([revisionName, percent]) => ({
+          traffic: Object.entries(traffic).map(([revisionName, percent]) => ({
             revisionName,
             percent,
           })),

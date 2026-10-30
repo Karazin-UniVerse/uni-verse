@@ -56,6 +56,11 @@ jobs:
             exit 1
           fi
 
+          if [[ "$FRONTEND_URL" =~ ^https://[^/]+:443$ || "$FRONTEND_URL" =~ ^http://[^/]+:80$ ]]; then
+            echo '::error::FRONTEND_URL must not include explicit scheme-default ports (:443 for https, :80 for http).'
+            exit 1
+          fi
+
           registry="${GCP_REGION}-docker.pkg.dev"
           image_prefix="${registry}/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REPOSITORY}"
           echo "REGISTRY=$registry" >> "$GITHUB_ENV"
@@ -94,11 +99,15 @@ jobs:
 
       - name: Update services and check availability
         run: |
-          latest_sha="$(git ls-remote origin refs/heads/develop | cut -f1)"
-          if [[ "$latest_sha" != "$GITHUB_SHA" ]]; then
-            echo "::notice::develop has advanced; skipping this obsolete deployment."
-            exit 0
-          fi
+          ensure_develop_fresh() {
+            latest_sha="$(git ls-remote origin refs/heads/develop | cut -f1)"
+            if [[ "$latest_sha" != "$GITHUB_SHA" ]]; then
+              echo "::notice::develop has advanced ($latest_sha != $GITHUB_SHA); skipping obsolete deployment."
+              exit 0
+            fi
+          }
+
+          ensure_develop_fresh
 
           backend_digest="$(gcloud artifacts docker images describe "$BACKEND_IMAGE" \
             --project="$GCP_PROJECT_ID" --format='value(image_summary.digest)')"
@@ -157,6 +166,13 @@ jobs:
           backend_revision="${GCP_BACKEND_SERVICE}-${revision_suffix}"
           frontend_revision="${GCP_FRONTEND_SERVICE}-${revision_suffix}"
 
+          for rev in "$backend_revision" "$frontend_revision"; do
+            if (( ${#rev} > 63 )); then
+              echo "::error::Generated revision name exceeds 63 characters ($rev, length: ${#rev}). Shorten service name."
+              exit 1
+            fi
+          done
+
           backend_env="FRONTEND_URL=$FRONTEND_URL"
           if [[ -n "$GOOGLE_CLIENT_ID" ]]; then
             backend_env+=",GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
@@ -167,6 +183,7 @@ jobs:
             --image="${BACKEND_IMAGE%:*}@${backend_digest}" \
             --revision-suffix="$revision_suffix" --no-traffic \
             --update-env-vars="$backend_env" --quiet
+          ensure_develop_fresh
           backend_switched=true
           gcloud run services update-traffic "$GCP_BACKEND_SERVICE" \
             --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
@@ -181,6 +198,7 @@ jobs:
             --image="${FRONTEND_IMAGE%:*}@${frontend_digest}" \
             --revision-suffix="$revision_suffix" --no-traffic \
             --update-env-vars="NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" --quiet
+          ensure_develop_fresh
           frontend_switched=true
           gcloud run services update-traffic "$GCP_FRONTEND_SERVICE" \
             --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
