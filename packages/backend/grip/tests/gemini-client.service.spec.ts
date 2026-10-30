@@ -3,6 +3,7 @@ import {
   GatewayTimeoutException,
   HttpException,
   HttpStatus,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import type { GripCompletionRequest } from '@universe/core/types/grip';
@@ -13,7 +14,7 @@ describe('GeminiClientService', () => {
   let service: GeminiClientService;
   const mockConfig: GripConfig = {
     enabled: true,
-    geminiApiKey: 'secret-gemini-key',
+    geminiApiKeys: ['secret-gemini-key'],
     geminiModel: 'gemini-3.5-flash-lite',
     geminiBaseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
     githubApiUrl: 'https://api.github.com',
@@ -41,6 +42,8 @@ describe('GeminiClientService', () => {
 
   beforeEach(() => {
     service = new GeminiClientService(mockConfig);
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -100,7 +103,7 @@ describe('GeminiClientService', () => {
       completion_tokens: 25,
       total_tokens: 40,
     });
-    expect((result as any).extra_upstream_field).toBeUndefined();
+    expect(result).not.toHaveProperty('extra_upstream_field');
   });
 
   it('maps 429 quota errors to 429 HttpException without exposing upstream body', async () => {
@@ -139,18 +142,23 @@ describe('GeminiClientService', () => {
     }
   });
 
-  it('maps 500/502/503 and malformed choices/JSON to BadGatewayException (502)', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValueOnce(
-      new Response('Internal server error', {
-        status: 500,
-        headers: { 'content-type': 'text/plain' },
-      }),
-    );
+  it.each([500, 502, 503])(
+    'maps upstream HTTP %s to BadGatewayException (502)',
+    async (status) => {
+      jest.spyOn(global, 'fetch').mockResolvedValueOnce(
+        new Response('Internal server error', {
+          status,
+          headers: { 'content-type': 'text/plain' },
+        }),
+      );
 
-    await expect(service.complete(validRequest)).rejects.toThrow(
-      BadGatewayException,
-    );
+      await expect(service.complete(validRequest)).rejects.toThrow(
+        BadGatewayException,
+      );
+    },
+  );
 
+  it('maps malformed JSON to BadGatewayException (502)', async () => {
     jest.spyOn(global, 'fetch').mockResolvedValueOnce(
       new Response('not a json', {
         status: 200,
@@ -161,7 +169,9 @@ describe('GeminiClientService', () => {
     await expect(service.complete(validRequest)).rejects.toThrow(
       BadGatewayException,
     );
+  });
 
+  it('maps missing choices to BadGatewayException (502)', async () => {
     jest.spyOn(global, 'fetch').mockResolvedValueOnce(
       new Response(JSON.stringify({ choices: [] }), {
         status: 200,
