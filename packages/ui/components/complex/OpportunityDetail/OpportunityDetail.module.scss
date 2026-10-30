@@ -15,7 +15,6 @@
 
 .metaRow {
   display: flex;
-
   align-items: center;
   gap: var(--space-16);
   font-size: var(--font-xs);
@@ -23,13 +22,11 @@
   padding: var(--space-8) 0;
   border-bottom: 1px solid var(--card-border);
 
-
   @include narrower-than('sm') {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-4);
   }
-
 }
 
 .metaDot {
@@ -124,11 +121,7 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--warning-color);
-
-  margin-bottom: var(--space-6);
-
   margin-bottom: var(--space-4);
-
 }
 
 .moderationFeedbackText {
@@ -138,7 +131,6 @@
   color: var(--text-primary);
 }
 
-
 .phaseWrapper {
   display: flex;
   align-items: center;
@@ -146,10 +138,7 @@
   margin-left: auto;
 }
 
-.phaseLabel {
-
 .reviewHint {
-
   font-size: var(--font-xs);
   color: var(--text-secondary);
   margin: 0;
