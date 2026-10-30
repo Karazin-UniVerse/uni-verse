@@ -10,6 +10,9 @@ import { APP_THEMES, THEME_COLOR_SCHEME, type AppTheme } from '@core/constants/t
 
 const STORAGE_KEY = 'universe-theme';
 
+/** Media query used to detect the OS colour-scheme preference. */
+const DARK_SCHEME_QUERY = '(prefers-color-scheme: dark)';
+
 type ThemeContextValue = {
   theme: AppTheme;
   setTheme: (theme: AppTheme) => void;
@@ -29,16 +32,39 @@ function applyTheme(theme: AppTheme) {
   }
 }
 
+/**
+ * Returns the system-preference default theme when the user has not saved a choice:
+ *   dark OS preference  → 'karazinGold'
+ *   light OS preference → 'karazinClassic'
+ */
+const getSystemTheme = (): AppTheme =>
+  window.matchMedia(DARK_SCHEME_QUERY).matches ? 'karazinGold' : 'karazinClassic';
+
+/**
+ * Subscribe to all sources that can change the active theme:
+ *   - localStorage writes from other tabs ('storage')
+ *   - in-tab theme changes dispatched by setTheme ('theme-change')
+ *   - OS colour-scheme changes (matchMedia 'change')
+ */
 const subscribeToTheme = (callback: () => void) => {
+  const media = window.matchMedia(DARK_SCHEME_QUERY);
+
   window.addEventListener('storage', callback);
   window.addEventListener('theme-change', callback);
+  media.addEventListener('change', callback);
 
   return () => {
     window.removeEventListener('storage', callback);
     window.removeEventListener('theme-change', callback);
+    media.removeEventListener('change', callback);
   };
 };
 
+/**
+ * Client snapshot: return the stored user preference if one exists,
+ * otherwise fall back to the OS colour-scheme default.
+ * The OS fallback is only used when the user has never explicitly chosen a theme.
+ */
 const getThemeSnapshot = (): AppTheme => {
   const stored = localStorage.getItem(STORAGE_KEY);
 
@@ -48,9 +74,14 @@ const getThemeSnapshot = (): AppTheme => {
     return storedTheme;
   }
 
-  return 'light';
+  return getSystemTheme();
 };
 
+/**
+ * Server snapshot: always return 'light' so SSR produces a deterministic HTML.
+ * The <html> element has suppressHydrationWarning, so the mismatch between this
+ * value and the real client theme (set by the inline script in layout.tsx) is safe.
+ */
 const getThemeServerSnapshot = (): AppTheme => 'light';
 
 export const ThemeProvider: React.FC<Readonly<{ children: React.ReactNode }>> = ({ children }) => {
