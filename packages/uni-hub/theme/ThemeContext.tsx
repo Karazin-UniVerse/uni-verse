@@ -37,8 +37,13 @@ function applyTheme(theme: AppTheme) {
  *   dark OS preference  → 'karazinGold'
  *   light OS preference → 'karazinClassic'
  */
-const getSystemTheme = (): AppTheme =>
-  window.matchMedia(DARK_SCHEME_QUERY).matches ? 'karazinGold' : 'karazinClassic';
+const getSystemTheme = (): AppTheme => {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return 'karazinClassic';
+  }
+
+  return window.matchMedia(DARK_SCHEME_QUERY).matches ? 'karazinGold' : 'karazinClassic';
+};
 
 /**
  * Subscribe to all sources that can change the active theme:
@@ -78,9 +83,12 @@ const getThemeSnapshot = (): AppTheme => {
 };
 
 /**
- * Server snapshot: always return 'light' so SSR produces a deterministic HTML.
- * The <html> element has suppressHydrationWarning, so the mismatch between this
- * value and the real client theme (set by the inline script in layout.tsx) is safe.
+ * Server snapshot: always return 'light' so SSR produces deterministic HTML.
+ * The server cannot know the OS colour scheme, so theme-dependent UI (for example
+ * the ThemeSwitcher label and icon) is hidden until mount and never shows this
+ * placeholder value to the user.
+ * The root attributes (data-theme / data-color-scheme) are set before first paint by
+ * the inline script in layout.tsx; <html> has suppressHydrationWarning for that reason.
  */
 const getThemeServerSnapshot = (): AppTheme => 'light';
 
