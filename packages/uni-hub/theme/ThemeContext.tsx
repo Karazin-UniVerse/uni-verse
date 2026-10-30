@@ -52,16 +52,17 @@ const getSystemTheme = (): AppTheme => {
  *   - OS colour-scheme changes (matchMedia 'change')
  */
 const subscribeToTheme = (callback: () => void) => {
-  const media = window.matchMedia(DARK_SCHEME_QUERY);
+  const media =
+    typeof window.matchMedia === 'function' ? window.matchMedia(DARK_SCHEME_QUERY) : null;
 
   window.addEventListener('storage', callback);
   window.addEventListener('theme-change', callback);
-  media.addEventListener('change', callback);
+  media?.addEventListener('change', callback);
 
   return () => {
     window.removeEventListener('storage', callback);
     window.removeEventListener('theme-change', callback);
-    media.removeEventListener('change', callback);
+    media?.removeEventListener('change', callback);
   };
 };
 
