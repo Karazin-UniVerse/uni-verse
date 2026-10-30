@@ -1,8 +1,9 @@
 import React from 'react';
+import { ModerationActions } from '@ui';
 import { OPPORTUNITY_MODERATE_ACTION } from '@core/constants/opportunities';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useModeration } from '../hooks/useModeration';
 import { ModerationRejectModal } from '../modals/ModerationRejectModal';
-import { ModerationActions } from './ModerationActions';
 import styles from '../../OpportunitiesTab.module.scss';
 
 interface OpportunityModerationPanelProps {
@@ -13,10 +14,14 @@ export const OpportunityModerationPanel: React.FC<OpportunityModerationPanelProp
   opportunityId,
 }) => {
   const moderation = useModeration();
+  const { formatMessage } = useLanguage();
 
   return (
     <div className={styles.detailModerationPanel}>
       <ModerationActions
+        approveText={formatMessage('opportunities.moderation.approve')}
+        reviseText={formatMessage('opportunities.moderation.revise')}
+        rejectText={formatMessage('opportunities.moderation.reject')}
         onApprove={() =>
           void moderation.handleModerate(opportunityId, OPPORTUNITY_MODERATE_ACTION.APPROVE)
         }

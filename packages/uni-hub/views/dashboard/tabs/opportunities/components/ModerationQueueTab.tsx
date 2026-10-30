@@ -1,13 +1,12 @@
 'use client';
 
 import React from 'react';
-import { ContactTags } from '@ui';
+import { ContactTags, ModerationActions } from '@ui';
 import { Clock, Calendar, Coins, Briefcase, AlertCircle, Hash } from 'lucide-react';
 import type { Opportunity } from '@core/types/opportunities';
 import type { OpportunityModerateAction } from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { TabStateWrapper } from './TabStateWrapper';
-import { ModerationActions } from './ModerationActions';
 import styles from '../../OpportunitiesTab.module.scss';
 
 export interface ModerationQueueTabProps {
@@ -143,6 +142,9 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                 </span>
 
                 <ModerationActions
+                  approveText={formatMessage('opportunities.moderation.approve')}
+                  reviseText={formatMessage('opportunities.moderation.revise')}
+                  rejectText={formatMessage('opportunities.moderation.reject')}
                   disabled={isOwnOpportunity}
                   onApprove={() => onModerate(item.id, 'APPROVE')}
                   onOpenRejectModal={() => onOpenRejectModal(item.id)}

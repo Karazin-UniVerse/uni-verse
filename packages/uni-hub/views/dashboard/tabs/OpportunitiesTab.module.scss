@@ -573,22 +573,6 @@
   align-self: flex-start;
 }
 
-.moderationActions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-
-  @include narrower-than('sm') {
-    width: 100%;
-
-    button {
-      flex: 1 1 auto;
-      justify-content: center;
-    }
-  }
-}
-
 .approveBtn {
   background: var(--green-700, #15803d);
   border-color: var(--green-700, #15803d);

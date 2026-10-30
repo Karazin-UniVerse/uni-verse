@@ -1,22 +1,17 @@
 import React from 'react';
 import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@una';
-import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import styles from '../../OpportunitiesTab.module.scss';
-
-interface ModerationActionsProps {
-  onApprove: () => void;
-  onOpenRejectModal: () => void;
-  disabled?: boolean;
-}
+import type { ModerationActionsProps } from './ModerationActions.types';
+import styles from './ModerationActions.module.scss';
 
 export const ModerationActions: React.FC<ModerationActionsProps> = ({
   onApprove,
   onOpenRejectModal,
+  approveText,
+  reviseText,
+  rejectText,
   disabled = false,
 }) => {
-  const { formatMessage } = useLanguage();
-
   return (
     <div className={styles.moderationActions}>
       <Button
@@ -26,7 +21,7 @@ export const ModerationActions: React.FC<ModerationActionsProps> = ({
         onClick={onApprove}
       >
         <CheckCircle2 size={14} aria-hidden="true" className={styles.btnIcon} />
-        {formatMessage('opportunities.moderation.approve')}
+        {approveText}
       </Button>
       <Button
         variant="secondary"
@@ -35,7 +30,7 @@ export const ModerationActions: React.FC<ModerationActionsProps> = ({
         onClick={onOpenRejectModal}
       >
         <AlertCircle size={14} aria-hidden="true" className={styles.btnIcon} />
-        {formatMessage('opportunities.moderation.revise')}
+        {reviseText}
       </Button>
       <Button
         variant="secondary"
@@ -44,7 +39,7 @@ export const ModerationActions: React.FC<ModerationActionsProps> = ({
         onClick={onOpenRejectModal}
       >
         <XCircle size={14} aria-hidden="true" className={styles.btnIcon} />
-        {formatMessage('opportunities.moderation.reject')}
+        {rejectText}
       </Button>
     </div>
   );
