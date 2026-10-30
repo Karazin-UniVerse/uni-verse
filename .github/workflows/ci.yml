@@ -49,6 +49,8 @@ jobs:
         run: pnpm test:graphify
       - name: Test Grip enrollment and push wrapper
         run: pnpm test:grip
+      - name: Test deployment validation and traffic recovery
+        run: pnpm test:deploy
       - name: Build with the Lighthouse mock API
         # Audit-only output: do not deploy/reuse this .next build for real-backend E2E tests.
         # Deployments build independently through .github/workflows/deploy.yml and the host.

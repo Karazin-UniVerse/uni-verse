@@ -31,10 +31,23 @@ change this behavior, pass database credentials to the build, or set
 existing service. Take a database backup and review Prisma schema changes before
 merging them. Deployments are **not** database backups or a migration system.
 
-Backend and frontend updates are sequential, not an atomic pair. A failure after
-the backend update can leave the old frontend talking to the new backend, so
-changes must remain compatible across revisions. Keep persistent uploads in
-external storage; a container filesystem is ephemeral.
+Backend and frontend updates are sequential, not an atomic pair, so changes must
+remain compatible across revisions. New revisions are created with no traffic;
+each traffic switch targets the unique revision name assigned by this CI run,
+not a moving "latest" revision. Before updating either service, CI snapshots both
+services' complete resolved revision-percentage allocations. If a later update,
+traffic switch, or probe fails, the exit handler attempts to restore the saved
+allocation for each service whose traffic switch was attempted, including splits.
+Recovery failure is reported and does not prevent attempting the other service.
+The job remains failed. Recovery pins the previous concrete revisions rather than
+restoring a dynamic `LATEST` target; traffic tags are not changed.
+
+This is best-effort traffic recovery, not a database or configuration rollback.
+Hard termination of the runner can prevent the exit handler from running; in that
+case, or if recovery fails, use the manual procedure below. Do not manually deploy
+or change service traffic during CI rollout/recovery: the GitHub concurrency group
+cannot lock out external writers. Keep persistent uploads in external storage;
+a container filesystem is ephemeral.
 
 ## 1. Configure GitHub's develop environment
 
@@ -57,6 +70,8 @@ variables**, not secrets:
 
 Use origins without trailing slashes for both URLs. `NEXT_PUBLIC_API_URL` must
 not end in `/api`: that is the backend Swagger route, not an API prefix.
+The workflow rejects `FRONTEND_URL` with a trailing slash before building images,
+because the backend compares that value with the browser's slash-free Origin.
 
 `GCP_DEPLOY_ENABLED` is a **repository** variable under **Settings → Secrets and
 variables → Actions → Variables**, not an environment variable. Leave it unset
@@ -240,7 +255,7 @@ apply; Google login does not allow personal Gmail accounts.
 - **New revision fails at startup:** read Cloud Run logs, including Prisma
   output. Do not enable `PRISMA_ACCEPT_DATA_LOSS` to force a deployment through.
 - **Old revision still serves traffic:** CI explicitly routes traffic to the
-  new latest revision after each successful update. A later manual rollback is
+  named revision created by the job after each successful update. A later manual rollback is
   overwritten by the next enabled deployment.
 
 To pause deployment, set `GCP_DEPLOY_ENABLED=false`. This does not cancel a job
@@ -268,3 +283,11 @@ Traffic rollback does not undo database schema changes. Old backend revisions
 can also run `db push` on restart, so inspect schema compatibility first. Do not
 delete active or rollback images when adding an Artifact Registry cleanup policy.
 Configure billing alerts separately: a budget alert is not a spending cap.
+
+## Local workflow regression tests
+
+Run `pnpm test:deploy` (requires Bash and Node.js; Windows uses Git Bash). The tests
+execute the actual YAML run blocks with a stateful external CLI fixture, without
+calling GCP. They cover frontend URL validation, pinned revision routing,
+preservation of traffic splits after failed updates/probes, and failed recovery.
+They do not prove real GCP IAM/API integration or application health.

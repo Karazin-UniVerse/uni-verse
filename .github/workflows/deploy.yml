@@ -51,6 +51,11 @@ jobs:
             fi
           done
 
+          if [[ "$FRONTEND_URL" == */ ]]; then
+            echo '::error::FRONTEND_URL must not end with a slash.'
+            exit 1
+          fi
+
           registry="${GCP_REGION}-docker.pkg.dev"
           image_prefix="${registry}/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REPOSITORY}"
           echo "REGISTRY=$registry" >> "$GITHUB_ENV"
@@ -101,6 +106,57 @@ jobs:
             --project="$GCP_PROJECT_ID" --format='value(image_summary.digest)')"
           [[ "$backend_digest" == sha256:* && "$frontend_digest" == sha256:* ]]
 
+          snapshot_traffic() {
+            gcloud run services describe "$1" \
+              --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
+              --format='json(status.traffic)' |
+              node -e '
+                const fs = require("node:fs");
+                const targets = JSON.parse(fs.readFileSync(0, "utf8")).status.traffic;
+                const revisions = new Map();
+                for (const target of targets) {
+                  if (!target.percent) continue;
+                  if (!target.revisionName) throw new Error("Traffic target has no resolved revision");
+                  revisions.set(target.revisionName, (revisions.get(target.revisionName) || 0) + target.percent);
+                }
+                if ([...revisions.values()].reduce((sum, percent) => sum + percent, 0) !== 100) {
+                  throw new Error("Traffic allocation must total 100 percent");
+                }
+                console.log([...revisions].map(([revision, percent]) => `${revision}=${percent}`).join(","));
+              '
+          }
+
+          backend_traffic="$(snapshot_traffic "$GCP_BACKEND_SERVICE")"
+          frontend_traffic="$(snapshot_traffic "$GCP_FRONTEND_SERVICE")"
+          backend_switched=false
+          frontend_switched=false
+
+          recover_traffic() {
+            status=$?
+            trap - EXIT
+            if (( status != 0 )); then
+              if [[ "$frontend_switched" == true ]]; then
+                gcloud run services update-traffic "$GCP_FRONTEND_SERVICE" \
+                  --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
+                  --to-revisions="$frontend_traffic" --quiet ||
+                  echo "::error::Failed to restore traffic for $GCP_FRONTEND_SERVICE; manual recovery required."
+              fi
+              if [[ "$backend_switched" == true ]]; then
+                gcloud run services update-traffic "$GCP_BACKEND_SERVICE" \
+                  --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
+                  --to-revisions="$backend_traffic" --quiet ||
+                  echo "::error::Failed to restore traffic for $GCP_BACKEND_SERVICE; manual recovery required."
+              fi
+              echo '::warning::Traffic recovery does not undo database schema changes.'
+            fi
+            exit "$status"
+          }
+          trap recover_traffic EXIT
+
+          revision_suffix="ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          backend_revision="${GCP_BACKEND_SERVICE}-${revision_suffix}"
+          frontend_revision="${GCP_FRONTEND_SERVICE}-${revision_suffix}"
+
           backend_env="FRONTEND_URL=$FRONTEND_URL"
           if [[ -n "$GOOGLE_CLIENT_ID" ]]; then
             backend_env+=",GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
@@ -109,9 +165,12 @@ jobs:
           gcloud run services update "$GCP_BACKEND_SERVICE" \
             --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
             --image="${BACKEND_IMAGE%:*}@${backend_digest}" \
+            --revision-suffix="$revision_suffix" --no-traffic \
             --update-env-vars="$backend_env" --quiet
+          backend_switched=true
           gcloud run services update-traffic "$GCP_BACKEND_SERVICE" \
-            --project="$GCP_PROJECT_ID" --region="$GCP_REGION" --to-latest --quiet
+            --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
+            --to-revisions="${backend_revision}=100" --quiet
 
           curl --fail --silent --show-error --location \
             --connect-timeout 10 --max-time 60 --retry 3 \
@@ -120,9 +179,12 @@ jobs:
           gcloud run services update "$GCP_FRONTEND_SERVICE" \
             --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
             --image="${FRONTEND_IMAGE%:*}@${frontend_digest}" \
+            --revision-suffix="$revision_suffix" --no-traffic \
             --update-env-vars="NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" --quiet
+          frontend_switched=true
           gcloud run services update-traffic "$GCP_FRONTEND_SERVICE" \
-            --project="$GCP_PROJECT_ID" --region="$GCP_REGION" --to-latest --quiet
+            --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
+            --to-revisions="${frontend_revision}=100" --quiet
 
           curl --fail --silent --show-error --location \
             --connect-timeout 10 --max-time 60 --retry 3 \
@@ -133,6 +195,8 @@ jobs:
             echo "Commit: $GITHUB_SHA"
             echo "Frontend: $FRONTEND_URL"
             echo "Backend: $NEXT_PUBLIC_API_URL"
+            echo "Backend revision: $backend_revision"
+            echo "Frontend revision: $frontend_revision"
             echo "Backend image: ${BACKEND_IMAGE%:*}@${backend_digest}"
             echo "Frontend image: ${FRONTEND_IMAGE%:*}@${frontend_digest}"
           } >> "$GITHUB_STEP_SUMMARY"

@@ -36,6 +36,7 @@
     "graphify:extract": "node scripts/graphify.cjs extract",
     "graphify:query": "node scripts/graphify.cjs query",
     "test:graphify": "node --test scripts/tests/graphify.test.cjs",
+    "test:deploy": "node --test scripts/tests/deploy.test.cjs",
     "graphify": "node scripts/graphify.cjs"
   },
   "devDependencies": {
