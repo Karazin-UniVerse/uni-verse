@@ -82,6 +82,7 @@ const findings = [];
 const flag = (rule, f, detail = '') => findings.push({ rule, file: f, detail });
 const isTest = (f) => /\.(test|spec)\.|_test\.|test_/.test(f);
 const isConstraints = (f) => /CONSTRAINTS\.md$/.test(f);
+const isDoc = (f) => /\.(md|markdown|txt)$/i.test(f);
 
 // 1. Silenced checker — extend this list for your ecosystem.
 const SUPPRESSIONS = /@ts-ignore|@ts-nocheck|eslint-disable|biome-ignore|# *noqa|# *type: *ignore|istanbul ignore|nosemgrep|gitleaks:allow|Stryker disable/;
@@ -100,17 +101,20 @@ const removedExceptionIds = new Set(
 );
 
 for (const { file, text } of added) {
-  if (SUPPRESSIONS.test(text)) flag('silenced-checker', file, text);
-  if (STUBS.test(text)) flag('unfinished-work', file, text);
-  if (SKIPS.test(text)) flag('test-made-easier', file, text);
-  if (isConstraints(file) && /^\| *(W|E)\d+ *\|/.test(text)) flag('new-exception', file, text);
+  if (!isDoc(file) && SUPPRESSIONS.test(text)) flag('silenced-checker', file);
+  if (!isDoc(file) && STUBS.test(text)) flag('unfinished-work', file);
+  if (isTest(file) && SKIPS.test(text)) flag('test-made-easier', file);
+  if (isConstraints(file) && /^\| *(W|E)\d+ *\|/.test(text)) {
+    const id = getExceptionId(text);
+    if (!id || !removedExceptionIds.has(id)) flag('new-exception', file, id ? `[id: ${id}]` : '');
+  }
 }
 
 // 2b. A test file deleted, or an assertion removed from a test file that still exists.
 for (const f of deleted) if (isTest(f)) flag('test-deleted', f, 'file deleted');
 for (const { file, text } of removed) {
   if (isTest(file) && !deleted.includes(file) && /\b(expect|assert|should)\b/.test(text)) {
-    flag('assertion-removed', file, text);
+    flag('assertion-removed', file);
   }
 }
 

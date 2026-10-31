@@ -27,6 +27,7 @@ export async function runGripHook({ settings, signal, args = [], spawnFn = spawn
   const childEnv = { ...process.env };
 
   delete childEnv.GEMINI_API_KEY;
+  delete childEnv.GEMINI_API_KEYS;
 
   const baseGateway = String(settings.gatewayOrigin || '').replace(/\/+$/, '');
 
