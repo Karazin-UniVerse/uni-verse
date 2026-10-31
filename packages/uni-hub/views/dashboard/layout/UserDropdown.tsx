@@ -199,7 +199,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
               </div>
             )}
 
-            <div className={styles.mobileOnlyItem}>
+            <div>
               <Button
                 type="button"
                 variant="secondary"
