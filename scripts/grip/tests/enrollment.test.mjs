@@ -256,6 +256,34 @@ test('setup defaults --gateway to https://api.universemvp.tech when omitted in m
   assert.deepEqual(await loadSettings({ configDir, repoRoot: second }), settings);
 });
 
+test('setup defaults both --gateway and --client-id when omitted in migration', async (t) => {
+  const { first, second, configDir, root } = createFixture(t);
+  const settings = createSettings();
+
+  settings.gatewayOrigin = 'https://api.universemvp.tech';
+  settings.clientId = 'Ov23liayY7Qv5aVPEomK';
+  const legacy = { ...settings, version: 1, repoRoot: first };
+
+  delete legacy.repository;
+  const legacyPath = path.join(
+    configDir,
+    `${crypto.createHash('sha256').update(first).digest('hex')}.json`,
+  );
+
+  fs.mkdirSync(configDir);
+  fs.writeFileSync(legacyPath, JSON.stringify(legacy));
+
+  const result = spawnSync(process.execPath, [cliPath, 'setup', '--migrate'], {
+    cwd: first,
+    env: { ...process.env, APPDATA: root, XDG_CONFIG_HOME: root },
+    encoding: 'utf8',
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Gateway: https:\/\/api\.universemvp\.tech/);
+  assert.deepEqual(await loadSettings({ configDir, repoRoot: second }), settings);
+});
+
 test('concurrent migrations publish only one profile and preserve the losing legacy enrollment', async (t) => {
   const { first, second, configDir } = createFixture(t);
   const settings = createSettings();
