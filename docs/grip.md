@@ -50,19 +50,25 @@ Grip pre-push checks are **mandatory** for all contributors pushing to this repo
 Enroll once per OS user on this computer for the UniVerse gateway. Run from the root of any UniVerse checkout or worktree with its GitHub `origin` configured:
 
 ```sh
-pnpm grip:setup --gateway <gateway-url> --client-id <github-oauth-client-id>
+pnpm grip:setup
 ```
 
-Replace both placeholders with the team's actual values; `GATEWAY_URL` is not a literal address. Use the gateway origin only, without `/dev-tools/grip` or any other path. Your OAuth Client ID is not a Client Secret, GitHub PAT, or Gemini API key.
+The gateway defaults to `https://api.universemvp.tech` and the client ID to `Ov23liayY7Qv5aVPEomK`. Use flags (`--gateway <url>`, `--client-id <id>`) only if targeting a custom or local backend. Your OAuth Client ID is not a Client Secret, GitHub PAT, or Gemini API key.
 
 Switching branches, creating worktrees, and cloning UniVerse elsewhere on the same computer no longer require another login once those checkouts contain this version of the scripts. One active gateway/account profile is supported per OS user; running setup again replaces it. Re-enroll after token expiry, revocation, or switching gateway/account. Changing the remote to a different repository does not grant it access to the shared profile.
 
 ### Migrate an existing checkout enrollment
 
-If you already completed GitHub authorization with the previous checkout-scoped setup, run this explicitly **from that enrolled checkout**, using the same gateway and OAuth Client ID:
+If you already completed GitHub authorization with the previous checkout-scoped setup and your gateway is still active, run this explicitly **from that enrolled checkout** using the original gateway and client ID:
 
 ```sh
-pnpm grip:setup --migrate --gateway <gateway-url> --client-id <github-oauth-client-id>
+pnpm grip:setup --migrate --gateway <original-origin> --client-id <original-client-id>
+```
+
+The flags may be omitted only when the original values match the new defaults. If the original gateway has been retired (such as Northflank), do not migrate: old sessions cannot be transferred to a new gateway. Run standard enrollment instead:
+
+```sh
+pnpm grip:setup
 ```
 
 Migration validates the existing profile, preserves its token, executable and original expiry, writes the shared profile, and removes only that checkout's old settings file. It does not contact GitHub or silently search other checkouts for credentials. Invalid/expired profiles and a different gateway/client are rejected; an existing shared profile is never overwritten by migration. If no eligible old profile exists, use normal setup instead. Other old branches keep using their old scripts until updated; they cannot discover the new shared profile automatically. Old checkout profiles elsewhere are not migrated or revoked; retire them from those checkouts with their original removal command if needed.
@@ -99,7 +105,7 @@ When you run `git push origin <branch>`:
    Fails closed with exit code 1, requiring enrollment before pushing:
    ```
    [grip] Error: Grip pre-push check is mandatory for this repository, but you are not enrolled.
-   [grip] To enroll, run: pnpm grip:setup --gateway <url> --client-id <id>
+   [grip] To enroll, run: pnpm grip:setup
    ```
 2. **CI Environment (`CI=true`)**:
    Automatically skips interactive checks.
@@ -202,7 +208,7 @@ The live authentication and pre-push loop was verified end-to-end:
    GRIP_TRUSTED_PROXY_ADDRESSES="127.0.0.1,::1" # adjust for load balancer / ingress
    ```
 5. **Database Migration**: Run `pnpm db:migrate` to push `GripSession`, `GripQuotaBucket`, and `GripLease` tables to PostgreSQL.
-6. **Rollout Policy**: The production gateway must be enabled (`GRIP_GATEWAY_ENABLED=true`) alongside deployment. Because the pre-push check is mandatory across the repository, all contributors must enroll via `pnpm grip:setup --gateway <production-url> --client-id <client-id>` before pushing new code.
+6. **Rollout Policy**: The production gateway must be enabled (`GRIP_GATEWAY_ENABLED=true`) alongside deployment. Because the pre-push check is mandatory across the repository, all contributors must enroll via `pnpm grip:setup` before pushing new code.
 
 ### Gemini key pool configuration
 

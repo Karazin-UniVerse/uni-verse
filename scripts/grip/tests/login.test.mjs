@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
 import http from 'node:http';
 import { test } from 'node:test';
-import { loginDevice } from '../device-login.mjs';
+import { launchBrowser, loginDevice } from '../device-login.mjs';
 
 function startFakeGithubServer() {
   let pollCount = 0;
@@ -131,4 +132,63 @@ test('loginDevice throws on access_denied', async () => {
   } finally {
     await fakeGithub.close();
   }
+});
+
+test('loginDevice invokes openBrowserFn with verificationUri', async () => {
+  const fakeGithub = await startFakeGithubServer();
+
+  try {
+    const opened = [];
+
+    await loginDevice({
+      clientId: 'test-client',
+      githubBaseUrl: fakeGithub.url,
+      logger: () => {},
+      openBrowser: true,
+      openBrowserFn: (url) => opened.push(url),
+    });
+
+    assert.equal(opened.length, 1);
+    assert.equal(opened[0], 'http://localhost/activate');
+  } finally {
+    await fakeGithub.close();
+  }
+});
+
+test('launchBrowser handles child error event without unhandled rejection or throw', async () => {
+  const childSuccess = new EventEmitter();
+
+  childSuccess.unref = () => {};
+  let spawned = false;
+
+  launchBrowser('https://github.com/login/device', {
+    spawnFn: () => {
+      process.nextTick(() => childSuccess.emit('spawn'));
+
+      return childSuccess;
+    },
+    onSpawn: () => {
+      spawned = true;
+    },
+  });
+
+  const childError = new EventEmitter();
+
+  childError.unref = () => {};
+  let errored = false;
+
+  launchBrowser('https://github.com/login/device', {
+    spawnFn: () => {
+      process.nextTick(() => childError.emit('error', new Error('spawn ENOENT')));
+
+      return childError;
+    },
+    onError: () => {
+      errored = true;
+    },
+  });
+
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  assert.equal(spawned, true);
+  assert.equal(errored, true);
 });

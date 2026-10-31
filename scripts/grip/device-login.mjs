@@ -1,3 +1,48 @@
+import { spawn } from 'node:child_process';
+
+/**
+ * Launches the system default browser with the given URL.
+ * @param {string} url
+ * @param {{
+ *   spawnFn?: typeof spawn;
+ *   onSpawn?: () => void;
+ *   onError?: (error: Error) => void;
+ * }} [options]
+ */
+export function launchBrowser(url, { onSpawn, onError, spawnFn = spawn } = {}) {
+  try {
+    const isWindows = process.platform === 'win32';
+    const isMac = process.platform === 'darwin';
+    const cmd = isMac ? 'open' : isWindows ? 'cmd.exe' : 'xdg-open';
+    const args = isWindows ? ['/c', 'start', '""', url] : [url];
+
+    const child = spawnFn(cmd, args, { stdio: 'ignore', detached: true });
+
+    if (child) {
+      if (typeof child.once === 'function') {
+        child.once('spawn', () => {
+          if (typeof onSpawn === 'function') {
+            onSpawn();
+          }
+        });
+        child.once('error', (err) => {
+          if (typeof onError === 'function') {
+            onError(err);
+          }
+        });
+      }
+
+      if (typeof child.unref === 'function') {
+        child.unref();
+      }
+    }
+  } catch (err) {
+    if (typeof onError === 'function') {
+      onError(err);
+    }
+  }
+}
+
 /**
  * Asynchronously waits for a specified delay, respecting an optional AbortSignal.
  * @param {number} ms
@@ -41,9 +86,11 @@ function sleep(ms, signal) {
  */
 export async function loginDevice({
   clientId,
+  openBrowserFn,
   signal,
   githubBaseUrl = 'https://github.com',
   logger = console.info,
+  openBrowser = true,
 }) {
   const baseUrl = githubBaseUrl.replace(/\/+$/, '');
   const codeEndpoint = `${baseUrl}/login/device/code`;
@@ -82,6 +129,22 @@ export async function loginDevice({
   logger(
     `\nTo authenticate Grip with GitHub, visit:\n  ${verificationUri}\nEnter one-time code: ${userCode}\n`,
   );
+
+  if (openBrowser) {
+    if (typeof openBrowserFn === 'function') {
+      try {
+        openBrowserFn(verificationUri);
+      } catch {
+        // Ignored
+      }
+    } else if (!process.env.NODE_TEST_CONTEXT && process.stdout.isTTY) {
+      launchBrowser(verificationUri, {
+        onSpawn: () => {
+          logger(`Opening ${verificationUri} in your default browser...`);
+        },
+      });
+    }
+  }
 
   let pollIntervalMs = Math.max(1, interval || 5) * 1000;
   const pollEndpoint = `${baseUrl}/login/oauth/access_token`;
