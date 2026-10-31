@@ -115,21 +115,55 @@ describe('opportunity detail moderation', () => {
     expect(screen.getByRole('button', { name: 'Схвалити' })).toBeEnabled();
   });
 
-  it('should refresh the detail status and remove moderation actions after approval', async () => {
-    const user = userEvent.setup();
-    const queryClient = createTestQueryClient();
-    const opportunity = buildOpportunity('opportunity-1');
+  it.each([
+    {
+      action: 'APPROVE',
+      button: 'Схвалити',
+      confirm: null,
+      nextStatus: OPPORTUNITY_STATUS.PUBLISHED,
+      expectedBadge: 'Опубліковано',
+    },
+    {
+      action: 'REQUIRE_CHANGES',
+      button: 'На доопрацювання',
+      confirm: 'На доопрацювання',
+      nextStatus: OPPORTUNITY_STATUS.REQUIRES_CHANGES,
+      expectedBadge: 'Потребує правок',
+    },
+    {
+      action: 'REJECT',
+      button: 'Відхилити',
+      confirm: 'Відхилити',
+      nextStatus: OPPORTUNITY_STATUS.REJECTED,
+      expectedBadge: 'Відхилено',
+    },
+  ])(
+    'should refresh the detail status and remove moderation actions after $action',
+    async ({ button, confirm, nextStatus, expectedBadge }) => {
+      const user = userEvent.setup();
+      const queryClient = createTestQueryClient();
+      const opportunity = buildOpportunity('opportunity-1');
 
-    queryClient.setQueryData(opportunityKeys.detail(opportunity.id), opportunity);
-    vi.spyOn(opportunitiesApi, 'getOpportunity')
-      .mockResolvedValueOnce({ data: opportunity })
-      .mockResolvedValue({ data: { ...opportunity, status: OPPORTUNITY_STATUS.PUBLISHED } });
-    render(withAppProviders(<OpportunityDetailPage opportunityId={opportunity.id} />, queryClient));
-    await user.click(await screen.findByRole('button', { name: 'Схвалити' }));
+      queryClient.setQueryData(opportunityKeys.detail(opportunity.id), opportunity);
+      vi.spyOn(opportunitiesApi, 'getOpportunity')
+        .mockResolvedValueOnce({ data: opportunity })
+        .mockResolvedValue({ data: { ...opportunity, status: nextStatus } });
+      render(
+        withAppProviders(<OpportunityDetailPage opportunityId={opportunity.id} />, queryClient),
+      );
+      await user.click(await screen.findByRole('button', { name: button }));
 
-    expect(await screen.findByText('Опубліковано')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Схвалити' })).not.toBeInTheDocument();
-  });
+      if (confirm) {
+        await user.type(screen.getByRole('textbox'), 'Reason');
+        await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: confirm }));
+      }
+
+      expect(await screen.findByText(expectedBadge)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Схвалити' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'На доопрацювання' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Відхилити' })).not.toBeInTheDocument();
+    },
+  );
 
   it('should disable every moderation action while a request is pending', async () => {
     const user = userEvent.setup();
