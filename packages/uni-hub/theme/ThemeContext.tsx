@@ -49,19 +49,18 @@ const getSystemTheme = (): AppTheme => {
 };
 
 /**
- * Subscribe to MediaQueryList changes. Older browsers (e.g. Safari < 14) only
- * implement the deprecated addListener/removeListener API.
+ * Subscribe to MediaQueryList changes. Browsers that lack addEventListener on
+ * MediaQueryList (e.g. Safari < 14) are skipped instead of throwing; the OS theme
+ * is still read on load.
  */
 const subscribeToMediaQuery = (media: MediaQueryList, callback: () => void) => {
-  if (typeof media.addEventListener === 'function') {
-    media.addEventListener('change', callback);
-
-    return () => media.removeEventListener('change', callback);
+  if (typeof media.addEventListener !== 'function') {
+    return undefined;
   }
 
-  media.addListener(callback);
+  media.addEventListener('change', callback);
 
-  return () => media.removeListener(callback);
+  return () => media.removeEventListener('change', callback);
 };
 
 /**
