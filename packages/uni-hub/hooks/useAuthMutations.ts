@@ -5,22 +5,13 @@ import {
   type UseMutationOptions,
   type UseMutationResult,
 } from '@tanstack/react-query';
-import type { AuthResponse, GoogleAuthResponse } from '@core/types/auth';
+import type { GoogleAuthResponse } from '@core/types/auth';
 import { authApi } from '@uni-hub/services/api.auth';
 import { endSession } from '@uni-hub/services/api.session';
 
 export interface MoodleCredentials {
   username: string;
   password: string;
-}
-
-export function loginMutationOptions(
-  queryClient: QueryClient,
-): UseMutationOptions<{ data: AuthResponse }, Error, MoodleCredentials> {
-  return {
-    mutationFn: ({ username, password }) => authApi.login(username, password),
-    onSuccess: () => queryClient.clear(),
-  };
 }
 
 export function googleLoginMutationOptions(
@@ -39,10 +30,6 @@ export function logoutMutationOptions(
     mutationFn: () => authApi.logout(),
     onSettled: () => endSession(queryClient),
   };
-}
-
-export function useLogin(): UseMutationResult<{ data: AuthResponse }, Error, MoodleCredentials> {
-  return useMutation(loginMutationOptions(useQueryClient()));
 }
 
 export function useGoogleLogin(): UseMutationResult<{ data: GoogleAuthResponse }, Error, string> {

@@ -77,14 +77,16 @@
   display: flex;
   align-items: flex-start;
   gap: var(--space-8);
-  background: rgb(var(--text-primary-rgb, 0, 0, 0), 0.04);
-  border: 1px solid rgb(var(--text-primary-rgb, 0, 0, 0), 0.08);
+  background: rgb(var(--text-primary-rgb), 0.04);
+  border: 1px solid rgb(var(--text-primary-rgb), 0.08);
   border-radius: var(--border-radius-large);
   padding: var(--space-12) var(--space-16);
   margin-bottom: var(--space-20);
 
   p {
     margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
     font-size: var(--font-xs);
     line-height: 1.5;
     color: var(--text-secondary);
@@ -101,7 +103,7 @@
   text-align: center;
   padding: var(--space-12);
   border-radius: var(--border-radius-medium);
-  background: rgb(var(--text-primary-rgb, 0, 0, 0), 0.04);
+  background: rgb(var(--text-primary-rgb), 0.04);
   color: var(--text-secondary);
   font-size: var(--font-sm);
 }

@@ -2,11 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MutationObserver, QueryClient } from '@tanstack/react-query';
 import { authApi } from '@uni-hub/services/api.auth';
 import { opportunityKeys } from '@uni-hub/views/dashboard/tabs/opportunities/queryKeys';
-import {
-  googleLoginMutationOptions,
-  loginMutationOptions,
-  logoutMutationOptions,
-} from './useAuthMutations';
+import { googleLoginMutationOptions, logoutMutationOptions } from './useAuthMutations';
 
 const storage: Record<string, string> = {};
 
@@ -39,35 +35,6 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('loginMutationOptions', () => {
-  it('drops the cache of the previous user after a successful login', async () => {
-    vi.spyOn(authApi, 'login').mockResolvedValue({ data: { access_token: 'token' } });
-
-    const queryClient = seedPreviousUser();
-    const observer = new MutationObserver(queryClient, loginMutationOptions(queryClient));
-
-    await observer.mutate({ username: 'student', password: 'secret' });
-
-    expect(authApi.login).toHaveBeenCalledWith('student', 'secret');
-    expect(queryClient.getQueryData(opportunityKeys.mine())).toBeUndefined();
-  });
-
-  it('keeps the cache when the login fails', async () => {
-    vi.spyOn(authApi, 'login').mockRejectedValue(new Error('HTTP error 401'));
-
-    const queryClient = seedPreviousUser();
-    const observer = new MutationObserver(queryClient, loginMutationOptions(queryClient));
-
-    await expect(observer.mutate({ username: 'student', password: 'wrong' })).rejects.toThrow(
-      '401',
-    );
-
-    expect(queryClient.getQueryData(opportunityKeys.mine())).toEqual([
-      { id: 'opp-of-previous-user' },
-    ]);
-  });
-});
-
 describe('googleLoginMutationOptions', () => {
   it('drops the cache of the previous user after a successful Google login', async () => {
     vi.spyOn(authApi, 'loginWithGoogle').mockResolvedValue({
@@ -80,6 +47,19 @@ describe('googleLoginMutationOptions', () => {
     await observer.mutate('id-token');
 
     expect(queryClient.getQueryData(opportunityKeys.mine())).toBeUndefined();
+  });
+
+  it('keeps the cache when the Google login fails', async () => {
+    vi.spyOn(authApi, 'loginWithGoogle').mockRejectedValue(new Error('HTTP error 401'));
+
+    const queryClient = seedPreviousUser();
+    const observer = new MutationObserver(queryClient, googleLoginMutationOptions(queryClient));
+
+    await expect(observer.mutate('bad-token')).rejects.toThrow('401');
+
+    expect(queryClient.getQueryData(opportunityKeys.mine())).toEqual([
+      { id: 'opp-of-previous-user' },
+    ]);
   });
 });
 
