@@ -134,7 +134,7 @@ describe('MoodleProfileService', () => {
       'fallback@karazin.ua',
     );
 
-    expect(profile.fullName).toBe('Барсуков Родіон Сергійович');
+    expect(profile.fullName).toBe('Студент');
     expect(profile.email).toBe('fallback@karazin.ua');
     expect(profile.avatarUrl).toBe(
       'https://moodle.universemvp.tech/user/pix.php/4021/f1.jpg',

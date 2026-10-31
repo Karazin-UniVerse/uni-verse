@@ -84,6 +84,26 @@ describe('googleLoginMutationOptions', () => {
 });
 
 describe('logoutMutationOptions', () => {
+  it('immediately cancels active queries and clears session storage upon mutate', async () => {
+    let capturedStorageToken: string | undefined = 'initial';
+
+    vi.spyOn(authApi, 'logout').mockImplementation(async () => {
+      capturedStorageToken = storage.accessToken;
+    });
+    storage.accessToken = 'token-to-clear';
+
+    const queryClient = seedPreviousUser();
+    const cancelQueriesSpy = vi.spyOn(queryClient, 'cancelQueries');
+    const observer = new MutationObserver(queryClient, logoutMutationOptions(queryClient));
+
+    await observer.mutate(undefined);
+
+    expect(cancelQueriesSpy).toHaveBeenCalled();
+    expect(capturedStorageToken).toBeUndefined();
+    expect(storage.accessToken).toBeUndefined();
+    expect(queryClient.getQueryData(opportunityKeys.mine())).toBeUndefined();
+  });
+
   it('clears the session storage and the cache even when the logout request fails', async () => {
     vi.spyOn(authApi, 'logout').mockRejectedValue(new Error('Network failure'));
     storage.accessToken = 'token';

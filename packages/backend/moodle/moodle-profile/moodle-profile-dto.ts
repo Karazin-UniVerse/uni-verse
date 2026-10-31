@@ -14,7 +14,7 @@ export class StudentProfileDto implements StudentProfile {
   @ApiProperty({ example: 4021 })
   moodleId: number | string;
 
-  @ApiProperty({ example: 'Барсуков Родіон Сергійович' })
+  @ApiProperty({ example: 'Іван Петренко' })
   fullName: string;
 
   @ApiProperty({ example: 'rodion.barsukov@karazin.ua' })
