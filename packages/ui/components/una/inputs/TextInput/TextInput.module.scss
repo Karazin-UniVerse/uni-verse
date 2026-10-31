@@ -24,6 +24,16 @@
   &:not(.is-transparent):-webkit-autofill:focus,
   &:not(.is-transparent):-webkit-autofill:active {
     -webkit-box-shadow: 0 0 0 1000px var(--bg-surface) inset;
+    box-shadow: 0 0 0 1000px var(--bg-surface) inset;
+  }
+
+  &:not(.is-transparent):-webkit-autofill:focus {
+    -webkit-box-shadow:
+      0 0 0 1000px var(--bg-surface) inset,
+      0 0 0 3px var(--focus-ring);
+    box-shadow:
+      0 0 0 1000px var(--bg-surface) inset,
+      0 0 0 3px var(--focus-ring);
   }
 
   &:-webkit-autofill,
