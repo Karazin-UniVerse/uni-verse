@@ -1131,7 +1131,9 @@ $sidebar-collapsed-width: 88px;
   }
 
   .layout:not(.mobileOpen) .sider [data-theme-label],
-  .layout:not(.mobileOpen) .sider [data-theme-chevron] {
+  .layout:not(.mobileOpen) .sider [data-theme-chevron],
+  .layout:not(.mobileOpen) .sider [data-lang-label='full'],
+  .layout:not(.mobileOpen) .sider [data-lang-chevron] {
     display: none;
   }
 

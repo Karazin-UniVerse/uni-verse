@@ -49,6 +49,9 @@ describe('LanguageContext and translations', () => {
   });
 
   it('should render translated theme name in ThemeSwitcher', () => {
+    // intentional: default theme is now resolved from the OS colour-scheme preference.
+    // In the happy-dom test environment matchMedia('(prefers-color-scheme: dark)').matches === false,
+    // so the default falls back to 'karazinClassic' -> 'Karazin Classic'.
     render(
       <LanguageProvider>
         <ThemeProvider>
@@ -57,7 +60,7 @@ describe('LanguageContext and translations', () => {
       </LanguageProvider>,
     );
 
-    expect(screen.getByText('Світла')).toBeInTheDocument();
+    expect(screen.getByText('Karazin Classic')).toBeInTheDocument();
   });
 
   it('should fallback to key when translation is missing', () => {

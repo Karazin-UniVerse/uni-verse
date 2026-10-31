@@ -1,3 +1,5 @@
+@use '@universe/ui/breakpoints.scss' as *;
+
 .page {
   min-height: 100vh;
   position: relative;
@@ -34,6 +36,10 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-24);
+
+  @include narrower-than('sm') {
+    padding: calc(var(--space-24) * 3) var(--space-16) var(--space-24);
+  }
 }
 
 .card {
@@ -47,6 +53,10 @@
   box-shadow: 0 12px 40px rgb(0 0 0 / 10%);
   border-radius: 24px;
   padding: var(--space-32);
+
+  @include narrower-than('sm') {
+    padding: var(--space-24) var(--space-16);
+  }
 }
 
 .brand {
@@ -76,6 +86,30 @@
     font-size: var(--font-md);
   }
 }
+
+
+.passwordToggle {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast) var(--ease-standard);
+
+  &:hover {
+    color: var(--accent-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+    border-radius: var(--border-radius-small, 4px);
+  }
+}
+
 
 .error {
   margin: 0;

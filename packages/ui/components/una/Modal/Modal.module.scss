@@ -128,6 +128,7 @@
     max-height: 90vh;
     animation: slide-up var(--transition-medium) var(--ease-standard);
     margin-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0);
   }
 
   .body {
