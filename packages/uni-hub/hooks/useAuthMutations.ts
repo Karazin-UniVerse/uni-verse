@@ -37,7 +37,7 @@ export function logoutMutationOptions(
 ): UseMutationOptions<void, Error, void> {
   return {
     mutationFn: () => authApi.logout(),
-    onMutate: () => endSession(queryClient),
+    onMutate: () => void queryClient.cancelQueries(),
     onSettled: () => endSession(queryClient),
   };
 }
