@@ -20,3 +20,4 @@ ux_ui_audit.md
 /screenshots/
 graphify-out/
 .venv/
+gha-creds-*.json

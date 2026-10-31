@@ -14,6 +14,7 @@ import {
   migrateSettings,
 } from '../settings.mjs';
 import { initializeRepository } from './helpers.mjs';
+import { isRetiredGripGateway } from '../../dev.mjs';
 
 const cliPath = fileURLToPath(new URL('../cli.mjs', import.meta.url));
 const repository = 'Karazin-UniVerse/uni-verse';
@@ -223,6 +224,76 @@ test('migration fails closed on invalid, expired, mismatched or absent legacy en
     assert.equal(fs.existsSync(legacyPath), content !== null);
     assert.doesNotMatch(result.stdout + result.stderr, new RegExp(settings.token));
   }
+});
+
+test('setup defaults --gateway to https://api.universemvp.tech when omitted in migration', async (t) => {
+  const { first, second, configDir, root } = createFixture(t);
+  const settings = createSettings();
+
+  settings.gatewayOrigin = 'https://api.universemvp.tech';
+  const legacy = { ...settings, version: 1, repoRoot: first };
+
+  delete legacy.repository;
+  const legacyPath = path.join(
+    configDir,
+    `${crypto.createHash('sha256').update(first).digest('hex')}.json`,
+  );
+
+  fs.mkdirSync(configDir);
+  fs.writeFileSync(legacyPath, JSON.stringify(legacy));
+
+  const result = spawnSync(
+    process.execPath,
+    [cliPath, 'setup', '--migrate', '--client-id', settings.clientId],
+    {
+      cwd: first,
+      env: { ...process.env, APPDATA: root, XDG_CONFIG_HOME: root },
+      encoding: 'utf8',
+    },
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Gateway: https:\/\/api\.universemvp\.tech/);
+  assert.deepEqual(await loadSettings({ configDir, repoRoot: second }), settings);
+});
+
+test('setup defaults both --gateway and --client-id when omitted in migration', async (t) => {
+  const { first, second, configDir, root } = createFixture(t);
+  const settings = createSettings();
+
+  settings.gatewayOrigin = 'https://api.universemvp.tech';
+  settings.clientId = 'Ov23liayY7Qv5aVPEomK';
+  const legacy = { ...settings, version: 1, repoRoot: first };
+
+  delete legacy.repository;
+  const legacyPath = path.join(
+    configDir,
+    `${crypto.createHash('sha256').update(first).digest('hex')}.json`,
+  );
+
+  fs.mkdirSync(configDir);
+  fs.writeFileSync(legacyPath, JSON.stringify(legacy));
+
+  const result = spawnSync(process.execPath, [cliPath, 'setup', '--migrate'], {
+    cwd: first,
+    env: { ...process.env, APPDATA: root, XDG_CONFIG_HOME: root },
+    encoding: 'utf8',
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Gateway: https:\/\/api\.universemvp\.tech/);
+  assert.deepEqual(await loadSettings({ configDir, repoRoot: second }), settings);
+});
+
+test('isRetiredGripGateway identifies obsolete Northflank and code.run gateway endpoints', () => {
+  assert.equal(isRetiredGripGateway('https://p01--backend-stage--djrwwgsr7dmx.code.run'), true);
+  assert.equal(isRetiredGripGateway('https://my-service.northflank.app'), true);
+  assert.equal(isRetiredGripGateway('https://northflank.app'), true);
+  assert.equal(isRetiredGripGateway('https://northflank-proxy.example.com'), false);
+  assert.equal(isRetiredGripGateway('https://api.universemvp.tech'), false);
+  assert.equal(isRetiredGripGateway('http://localhost:3001'), false);
+  assert.equal(isRetiredGripGateway(''), false);
+  assert.equal(isRetiredGripGateway('invalid-url-string'), false);
 });
 
 test('concurrent migrations publish only one profile and preserve the losing legacy enrollment', async (t) => {

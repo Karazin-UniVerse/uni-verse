@@ -49,6 +49,8 @@ jobs:
         run: pnpm test:graphify
       - name: Test Grip enrollment and push wrapper
         run: pnpm test:grip
+      - name: Test deployment validation and traffic recovery
+        run: pnpm test:deploy
       - name: Build with the Lighthouse mock API
         # Audit-only output: do not deploy/reuse this .next build for real-backend E2E tests.
         # Deployments build independently through .github/workflows/deploy.yml and the host.
@@ -84,3 +86,11 @@ jobs:
           DISCORD_PR_WEBHOOK: ${{ secrets.DISCORD_PR_WEBHOOK }}
           NOTIFY_MODE: ci-failure
         run: node .github/scripts/discord-pr-notify.mjs
+
+  deploy:
+    needs: quality
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && vars.GCP_DEPLOY_ENABLED == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy.yml
