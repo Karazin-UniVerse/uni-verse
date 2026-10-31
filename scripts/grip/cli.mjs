@@ -149,15 +149,17 @@ function parseArgs(argv) {
   return { options, positional };
 }
 
+export const DEFAULT_GATEWAY_URL = 'https://api.universemvp.tech';
+
 async function handleSetup(args) {
   const { options } = parseArgs(args);
-  const gatewayRaw = options.gateway;
+  const gatewayRaw = options.gateway || process.env.GRIP_GATEWAY_URL || DEFAULT_GATEWAY_URL;
   const clientId = options['client-id'];
   const executablePath = options.executable;
 
-  if (!gatewayRaw || !clientId) {
+  if (!clientId) {
     console.error(
-      'Usage: pnpm grip:setup --gateway <url> --client-id <id> [--executable <path> | --migrate]',
+      'Usage: pnpm grip:setup --client-id <id> [--gateway <url>] [--executable <path> | --migrate]',
     );
     process.exit(1);
   }
@@ -303,7 +305,7 @@ async function handleStatus() {
     settings = await loadSettings();
   } catch (error) {
     console.error(`[grip] Status check failed: ${error.message}`);
-    console.info('Run "pnpm grip:setup --gateway <url> --client-id <id>" to re-enroll.');
+    console.info('Run "pnpm grip:setup --client-id <id>" to re-enroll.');
 
     return;
   }
@@ -311,7 +313,7 @@ async function handleStatus() {
   if (!settings) {
     console.info('Grip gateway is NOT enrolled for this OS user.');
     console.info(
-      'Enrollment is mandatory to push code. Run "pnpm grip:setup --gateway <url> --client-id <id>" to enroll.',
+      'Enrollment is mandatory to push code. Run "pnpm grip:setup --client-id <id>" to enroll.',
     );
     console.info(
       'For a previous checkout enrollment, run setup with --migrate from that checkout.',
@@ -360,7 +362,7 @@ async function handleHook(args) {
     console.error(
       '[grip] Error: Grip pre-push check is mandatory for this repository, but you are not enrolled.',
     );
-    console.error('[grip] To enroll, run: pnpm grip:setup --gateway <url> --client-id <id>\n');
+    console.error('[grip] To enroll, run: pnpm grip:setup --client-id <id>\n');
     process.exit(1);
   }
 
