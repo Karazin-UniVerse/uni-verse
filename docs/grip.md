@@ -59,10 +59,16 @@ Switching branches, creating worktrees, and cloning UniVerse elsewhere on the sa
 
 ### Migrate an existing checkout enrollment
 
-If you already completed GitHub authorization with the previous checkout-scoped setup, run this explicitly **from that enrolled checkout**:
+If you already completed GitHub authorization with the previous checkout-scoped setup and your gateway is still active, run this explicitly **from that enrolled checkout** using the original gateway and client ID:
 
 ```sh
-pnpm grip:setup --migrate
+pnpm grip:setup --migrate --gateway <original-origin> --client-id <original-client-id>
+```
+
+The flags may be omitted only when the original values match the new defaults. If the original gateway has been retired (such as Northflank), do not migrate: old sessions cannot be transferred to a new gateway. Run standard enrollment instead:
+
+```sh
+pnpm grip:setup
 ```
 
 Migration validates the existing profile, preserves its token, executable and original expiry, writes the shared profile, and removes only that checkout's old settings file. It does not contact GitHub or silently search other checkouts for credentials. Invalid/expired profiles and a different gateway/client are rejected; an existing shared profile is never overwritten by migration. If no eligible old profile exists, use normal setup instead. Other old branches keep using their old scripts until updated; they cannot discover the new shared profile automatically. Old checkout profiles elsewhere are not migrated or revoked; retire them from those checkouts with their original removal command if needed.

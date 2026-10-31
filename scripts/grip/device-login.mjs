@@ -14,8 +14,16 @@ export function launchBrowser(url, spawnFn = spawn) {
 
     const child = spawnFn(cmd, args, { stdio: 'ignore', detached: true });
 
-    if (child && typeof child.unref === 'function') {
-      child.unref();
+    if (child) {
+      if (typeof child.once === 'function') {
+        child.once('error', () => {
+          // Non-critical if browser launch fails asynchronously
+        });
+      }
+
+      if (typeof child.unref === 'function') {
+        child.unref();
+      }
     }
   } catch {
     // Non-critical if browser launch fails

@@ -3,6 +3,7 @@
 import { spawn } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 
@@ -52,6 +53,18 @@ const DATABASE_OPTIONS = {
     url: process.env.STAGE_DATABASE_URL || '',
   },
 };
+
+export function isRetiredGripGateway(url) {
+  if (!url) return false;
+
+  try {
+    const parsed = new URL(url);
+
+    return parsed.hostname.endsWith('.code.run') || parsed.hostname.includes('northflank');
+  } catch {
+    return false;
+  }
+}
 
 async function runCommand(command, args, env = {}) {
   return new Promise((resolvePromise, reject) => {
@@ -103,7 +116,7 @@ function updateEnvFile(filePath, updates) {
 }
 
 async function main() {
-  const rl = createInterface({ input, output });
+  let rl = createInterface({ input, output });
 
   try {
     console.log(
@@ -259,24 +272,39 @@ async function main() {
     try {
       const { loadSettings } = await import('./grip/settings.mjs');
       const gripSettings = await loadSettings().catch(() => null);
+      const isRetired = Boolean(
+        gripSettings?.gatewayOrigin && isRetiredGripGateway(gripSettings.gatewayOrigin),
+      );
+      const needsEnrollment = !gripSettings || isRetired;
 
-      if (!gripSettings) {
+      if (needsEnrollment) {
         console.log(`\n${c.bold}5. Grip Gateway Pre-Push Check:${c.reset}`);
-        console.log(
-          `   ${c.dim}Grip pre-push check is mandatory for pushing code to GitHub.${c.reset}`,
-        );
+
+        if (isRetired) {
+          console.log(
+            `   ${c.yellow}Your current enrollment points to a retired gateway (${gripSettings.gatewayOrigin}).${c.reset}`,
+          );
+        } else {
+          console.log(
+            `   ${c.dim}Grip pre-push check is mandatory for pushing code to GitHub.${c.reset}`,
+          );
+        }
 
         const gripAnswer = await rl.question(
-          `   ${c.bold}Enroll now with 'pnpm grip:setup'?${c.reset} (Y/n): `,
+          `   ${c.bold}${isRetired ? 'Re-enroll now' : 'Enroll now'} with 'pnpm grip:setup'?${c.reset} (Y/n): `,
         );
 
         if (gripAnswer.trim().toLowerCase() !== 'n') {
+          rl.close();
+
           try {
             await runCommand('pnpm', ['grip:setup']);
           } catch {
             console.log(
               `${c.yellow}⚠ Notice: Grip enrollment was not completed. You can run 'pnpm grip:setup' at any time.${c.reset}`,
             );
+          } finally {
+            rl = createInterface({ input, output });
           }
         }
       } else {
@@ -341,4 +369,6 @@ async function main() {
   }
 }
 
-main();
+if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
+  main();
+}

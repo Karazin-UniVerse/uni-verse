@@ -14,6 +14,7 @@ import {
   migrateSettings,
 } from '../settings.mjs';
 import { initializeRepository } from './helpers.mjs';
+import { isRetiredGripGateway } from '../../dev.mjs';
 
 const cliPath = fileURLToPath(new URL('../cli.mjs', import.meta.url));
 const repository = 'Karazin-UniVerse/uni-verse';
@@ -282,6 +283,15 @@ test('setup defaults both --gateway and --client-id when omitted in migration', 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Gateway: https:\/\/api\.universemvp\.tech/);
   assert.deepEqual(await loadSettings({ configDir, repoRoot: second }), settings);
+});
+
+test('isRetiredGripGateway identifies obsolete Northflank and code.run gateway endpoints', () => {
+  assert.equal(isRetiredGripGateway('https://p01--backend-stage--djrwwgsr7dmx.code.run'), true);
+  assert.equal(isRetiredGripGateway('https://my-service.northflank.app'), true);
+  assert.equal(isRetiredGripGateway('https://api.universemvp.tech'), false);
+  assert.equal(isRetiredGripGateway('http://localhost:3001'), false);
+  assert.equal(isRetiredGripGateway(''), false);
+  assert.equal(isRetiredGripGateway('invalid-url-string'), false);
 });
 
 test('concurrent migrations publish only one profile and preserve the losing legacy enrollment', async (t) => {

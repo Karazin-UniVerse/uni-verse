@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
 import http from 'node:http';
 import { test } from 'node:test';
-import { loginDevice } from '../device-login.mjs';
+import { launchBrowser, loginDevice } from '../device-login.mjs';
 
 function startFakeGithubServer() {
   let pollCount = 0;
@@ -152,4 +153,18 @@ test('loginDevice invokes openBrowserFn with verificationUri', async () => {
   } finally {
     await fakeGithub.close();
   }
+});
+
+test('launchBrowser handles child error event without unhandled rejection or throw', async () => {
+  const child = new EventEmitter();
+
+  child.unref = () => {};
+
+  launchBrowser('https://github.com/login/device', () => {
+    process.nextTick(() => child.emit('error', new Error('spawn ENOENT')));
+
+    return child;
+  });
+
+  await new Promise((resolve) => setTimeout(resolve, 50));
 });
