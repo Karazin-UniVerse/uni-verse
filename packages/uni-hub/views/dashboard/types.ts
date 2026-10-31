@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { StudentProfile } from '@core/types';
+import type { StudentProfile } from '@core/types/student';
 import type { LinkMoodleMode } from '@uni-hub/components/auth';
 import type {
   MoodleCourse,
@@ -29,7 +29,7 @@ export interface OverviewTabProps {
   assignments: Assignment[];
   grades: Grade[];
   statistics: CourseStatistics | null;
-  activeStudentProfile: StudentProfile;
+  activeStudentProfile: StudentProfile | null;
   loading: boolean;
   onNavigate: NavigateHandler;
   isMoodleLinked?: boolean;
@@ -88,7 +88,7 @@ export interface DashboardHeaderProps {
   onToggleSound: () => void;
   notifications: Notification[];
   unreadCount: number;
-  activeStudentProfile: StudentProfile;
+  activeStudentProfile: StudentProfile | null;
   onOpenLinkMoodle?: (mode?: LinkMoodleMode) => void;
   onOpenUnlinkMoodle?: () => void;
   isMoodleLinked?: boolean;

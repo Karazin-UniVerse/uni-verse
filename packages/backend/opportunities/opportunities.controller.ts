@@ -5,6 +5,7 @@ import {
   Body,
   Param,
   Put,
+  Delete,
   Query,
   ForbiddenException,
   Delete,
@@ -71,7 +72,9 @@ export class OpportunitiesController {
    * Get current user opportunities
    */
   @ApiOperation({ summary: 'Get current user opportunities' })
-  getMyOpportunities(@GetUser('sub') userId: string): Promise<Opportunity[]> {
+  getMyOpportunities(
+    @GetUser('sub') userId: string,
+  ): Promise<OpportunityWithOwner[]> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.getMyOpportunities(userId);
@@ -135,6 +138,21 @@ export class OpportunitiesController {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.update(userId, id, dto);
+  }
+
+  @ApiBearerAuth()
+  @Delete(':id')
+  /**
+   * Owner deletes draft opportunity
+   */
+  @ApiOperation({ summary: 'Owner deletes a draft opportunity' })
+  delete(
+    @GetUser('sub') userId: string,
+    @Param('id') id: string,
+  ): Promise<Opportunity> {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+
+    return this.opportunitiesService.delete(userId, id);
   }
 
   @ApiBearerAuth()

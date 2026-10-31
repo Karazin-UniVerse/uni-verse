@@ -1,8 +1,18 @@
 import assert from 'node:assert/strict';
 import test, { describe } from 'node:test';
-import { isValidContactInfo } from '../contacts.ts';
+import { isValidContactInfo, normalizeContactPhone } from '../contacts.ts';
 
 describe('contacts utils', () => {
+  test('normalizes equivalent Ukrainian phone formats without treating Telegram as a phone', () => {
+    for (const value of ['0671234567', '380671234567', '+380671234567', '+380 (67) 123-45-67']) {
+      assert.strictEqual(normalizeContactPhone(value), '+380671234567');
+    }
+
+    assert.strictEqual(normalizeContactPhone('+1 (202) 555-0123'), '+12025550123');
+    assert.strictEqual(normalizeContactPhone('@username'), null);
+    assert.strictEqual(normalizeContactPhone('t.me/username'), null);
+    assert.strictEqual(normalizeContactPhone('invalid'), null);
+  });
   describe('isValidContactInfo', () => {
     test('validates telegram usernames', () => {
       assert.strictEqual(isValidContactInfo('@username'), true);

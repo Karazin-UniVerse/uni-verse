@@ -58,6 +58,12 @@ export class OpportunitiesApi extends ApiClient {
     });
   }
 
+  async deleteOpportunity(id: string): Promise<{ data: Opportunity }> {
+    return this.request<Opportunity>(`/opportunities/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   async getMyOpportunities(): Promise<{ data: Opportunity[] }> {
     return this.request<Opportunity[]>('/opportunities/my');
   }

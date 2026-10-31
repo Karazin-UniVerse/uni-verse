@@ -3,6 +3,7 @@
 import { spawn } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 
@@ -26,14 +27,14 @@ const BACKEND_ENV_PATH = resolve(ROOT_DIR, 'packages', 'backend', '.env');
 
 const REMOTE_BACKENDS = {
   dev: {
-    name: 'Develop Cloud API (djrwwgsr7dmx.code.run)',
-    url: 'https://p01--backend-stage--djrwwgsr7dmx.code.run',
+    name: 'Develop Cloud API (api.universemvp.tech)',
+    url: 'https://api.universemvp.tech',
     tag: 'Recommended for Frontend Devs',
   },
   stage: {
-    name: 'Staging Cloud API (4y9d57mwx2gx.code.run)',
-    url: 'https://p01--backend-stage--4y9d57mwx2gx.code.run',
-    tag: 'Testing & Staging features',
+    name: 'Direct Cloud Run API (europe-west3.run.app)',
+    url: 'https://universe-backend-1038900190823.europe-west3.run.app',
+    tag: 'Direct Google Cloud Run endpoint',
   },
   local: {
     name: 'Local Backend (http://localhost:3001)',
@@ -48,10 +49,25 @@ const DATABASE_OPTIONS = {
     url: 'postgresql://postgres:postgres@localhost:5432/universe?schema=public',
   },
   stage: {
-    name: 'Remote Stage PostgreSQL (stage-db on Northflank)',
+    name: 'Remote Cloud PostgreSQL (Supabase)',
     url: process.env.STAGE_DATABASE_URL || '',
   },
 };
+
+export function isRetiredGripGateway(url) {
+  if (!url) return false;
+
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname;
+
+    return (
+      host.endsWith('.code.run') || host === 'northflank.app' || host.endsWith('.northflank.app')
+    );
+  } catch {
+    return false;
+  }
+}
 
 async function runCommand(command, args, env = {}) {
   return new Promise((resolvePromise, reject) => {
@@ -103,7 +119,7 @@ function updateEnvFile(filePath, updates) {
 }
 
 async function main() {
-  const rl = createInterface({ input, output });
+  let rl = createInterface({ input, output });
 
   try {
     console.log(
@@ -128,12 +144,12 @@ async function main() {
     // 2. Select Backend target
     console.log(`\n${c.bold}2. Select Backend API Target:${c.reset}`);
     console.log(
-      `  ${c.green}[1] Remote Develop API${c.reset} (${c.dim}https://p01--backend-stage--djrwwgsr7dmx.code.run${c.reset}) ${c.magenta}★ [Best for Frontend]${c.reset}\n` +
+      `  ${c.green}[1] Remote Develop API${c.reset} (${c.dim}https://api.universemvp.tech${c.reset}) ${c.magenta}★ [Best for Frontend]${c.reset}\n` +
         `      ${c.dim}No local backend or database required.${c.reset}`,
     );
     console.log(
-      `  ${c.cyan}[2] Remote Staging API${c.reset} (${c.dim}https://p01--backend-stage--4y9d57mwx2gx.code.run${c.reset})\n` +
-        `      ${c.dim}Connect to staging environment.${c.reset}`,
+      `  ${c.cyan}[2] Direct Cloud Run API${c.reset} (${c.dim}https://universe-backend-1038900190823.europe-west3.run.app${c.reset})\n` +
+        `      ${c.dim}Direct endpoint bypassing Cloudflare proxy.${c.reset}`,
     );
     console.log(
       `  ${c.yellow}[3] Local Backend${c.reset} (${c.dim}http://localhost:3001${c.reset})\n` +
@@ -167,8 +183,8 @@ async function main() {
           `      ${c.dim}Requires local PostgreSQL server or Docker container running.${c.reset}`,
       );
       console.log(
-        `  ${c.cyan}[2] Remote Stage Database${c.reset} (${c.dim}stage-db on Northflank${c.reset})\n` +
-          `      ${c.dim}Connects local backend directly to the cloud stage database.${c.reset}`,
+        `  ${c.cyan}[2] Remote Cloud Database${c.reset} (${c.dim}Supabase / Cloud PostgreSQL${c.reset})\n` +
+          `      ${c.dim}Connects local backend directly to the cloud database.${c.reset}`,
       );
       console.log(`  ${c.magenta}[3] Custom PostgreSQL Connection String${c.reset}`);
 
@@ -183,7 +199,7 @@ async function main() {
             `\n${c.yellow}Notice: STAGE_DATABASE_URL environment variable is not set.${c.reset}`,
           );
           const enteredUrl = await rl.question(
-            'Enter Remote Stage DATABASE_URL (ask Project Coordinator): ',
+            'Enter Remote DATABASE_URL (ask Project Coordinator): ',
           );
 
           selectedDbUrl = enteredUrl.trim() || DATABASE_OPTIONS.local.url;
@@ -255,7 +271,55 @@ async function main() {
       }
     }
 
-    // 5. Auth notice & Launch prompt
+    // 5. Check Grip Gateway enrollment
+    try {
+      const { loadSettings } = await import('./grip/settings.mjs');
+      const gripSettings = await loadSettings().catch(() => null);
+      const isRetired = Boolean(
+        gripSettings?.gatewayOrigin && isRetiredGripGateway(gripSettings.gatewayOrigin),
+      );
+      const needsEnrollment = !gripSettings || isRetired;
+
+      if (needsEnrollment) {
+        console.log(`\n${c.bold}5. Grip Gateway Pre-Push Check:${c.reset}`);
+
+        if (isRetired) {
+          console.log(
+            `   ${c.yellow}Your current enrollment points to a retired gateway (${gripSettings.gatewayOrigin}).${c.reset}`,
+          );
+        } else {
+          console.log(
+            `   ${c.dim}Grip pre-push check is mandatory for pushing code to GitHub.${c.reset}`,
+          );
+        }
+
+        const gripAnswer = await rl.question(
+          `   ${c.bold}${isRetired ? 'Re-enroll now' : 'Enroll now'} with 'pnpm grip:setup'?${c.reset} (Y/n): `,
+        );
+
+        if (gripAnswer.trim().toLowerCase() !== 'n') {
+          rl.close();
+
+          try {
+            await runCommand('pnpm', ['grip:setup']);
+          } catch {
+            console.log(
+              `${c.yellow}⚠ Notice: Grip enrollment was not completed. You can run 'pnpm grip:setup' at any time.${c.reset}`,
+            );
+          } finally {
+            rl = createInterface({ input, output });
+          }
+        }
+      } else {
+        console.log(
+          `\n${c.green}✔ Grip Gateway: Enrolled (${gripSettings.gatewayOrigin})${c.reset}`,
+        );
+      }
+    } catch {
+      // Ignored if grip scripts are not available
+    }
+
+    // 6. Auth notice & Launch prompt
     console.log(
       `\n${c.bold}${c.yellow}================== [ Moodle Auth Notice ] ==================${c.reset}`,
     );
@@ -308,4 +372,6 @@ async function main() {
   }
 }
 
-main();
+if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
+  main();
+}

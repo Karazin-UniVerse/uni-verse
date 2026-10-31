@@ -4,10 +4,8 @@ import { Button } from '../../una/Button';
 import { TextInput } from '../../una/inputs/TextInput';
 import { CheckBox } from '../../una/inputs/CheckBox';
 import { Select } from '../../una/Select';
-import type {
-  CreateOpportunityModalProps,
-  OpportunityPaymentType,
-} from './CreateOpportunityModal.types';
+import type { OpportunityLifecycle, OpportunityPaymentType } from '@core/constants/opportunities';
+import type { CreateOpportunityModalProps } from './CreateOpportunityModal.types';
 import styles from './CreateOpportunityModal.module.scss';
 
 export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
@@ -32,14 +30,19 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   cancelText,
   submitText,
   savingText,
+  contactHint,
   acceptsApplicationsLabel,
+  phaseLabel,
+  lifecycleOptions = [],
   submitting = false,
 }) => {
   const titleId = useId();
   const descId = useId();
   const contactId = useId();
+  const contactHintId = useId();
   const paymentTypeId = useId();
   const paymentDetailsId = useId();
+  const phaseSelectId = useId();
 
   return (
     <Modal open={open} onClose={onClose} title={title} width={560} className={className}>
@@ -78,11 +81,16 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
           </label>
           <TextInput
             id={contactId}
+            aria-describedby={contactHint ? contactHintId : undefined}
             placeholder={contactPlaceholder}
             value={formData.ownerContactInfo}
             onChange={(e) => setFormData((prev) => ({ ...prev, ownerContactInfo: e.target.value }))}
-            required
           />
+          {contactHint && (
+            <small id={contactHintId} className={styles.fieldHint}>
+              {contactHint}
+            </small>
+          )}
         </div>
 
         <div className={styles.fieldGroup}>
@@ -122,6 +130,26 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
               placeholder={paymentDetailsPlaceholder}
               value={formData.paymentDetails}
               onChange={(e) => setFormData((prev) => ({ ...prev, paymentDetails: e.target.value }))}
+            />
+          </div>
+        )}
+
+        {phaseLabel && lifecycleOptions.length > 0 && (
+          <div className={styles.fieldGroup}>
+            <label htmlFor={phaseSelectId} className={styles.fieldLabel}>
+              {phaseLabel}
+            </label>
+            <Select
+              id={phaseSelectId}
+              aria-label={phaseLabel}
+              value={formData.lifecycleState ?? ''}
+              onChange={(val) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  lifecycleState: val as OpportunityLifecycle,
+                }))
+              }
+              options={lifecycleOptions}
             />
           </div>
         )}

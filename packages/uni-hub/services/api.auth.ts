@@ -1,4 +1,5 @@
 import type { AuthResponse, GoogleAuthResponse } from '@core/types/auth';
+import { parseJwt } from '@uni-hub/utils/jwt';
 import { safeStorage } from './api.storage';
 import { ApiClient } from './api.request';
 import { clearUserSessionStorage } from './api.session';
@@ -15,6 +16,9 @@ export class AuthApi extends ApiClient {
       safeStorage.setItem('accessToken', response.data.access_token);
       safeStorage.setItem('isLoggedIn', 'true');
       safeStorage.setItem('isMoodleLinked', 'true');
+      const payload = parseJwt(response.data.access_token);
+
+      safeStorage.setItem('userEmail', payload?.email || email);
     }
 
     return response;
@@ -29,6 +33,11 @@ export class AuthApi extends ApiClient {
 
     if (response.data?.access_token) {
       safeStorage.setItem('accessToken', response.data.access_token);
+      const payload = parseJwt(response.data.access_token);
+
+      if (payload?.email) {
+        safeStorage.setItem('userEmail', payload.email);
+      }
 
       if (response.data.isLinked) {
         safeStorage.setItem('isLoggedIn', 'true');

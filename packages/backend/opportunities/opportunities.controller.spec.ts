@@ -22,6 +22,7 @@ describe('OpportunitiesController', () => {
             subscribe: jest.fn(),
             unsubscribe: jest.fn(),
             update: jest.fn(),
+            delete: jest.fn(),
             changeStatus: jest.fn(),
             changeLifecycleState: jest.fn(),
             getOpportunityApplications: jest.fn(),
@@ -177,6 +178,17 @@ describe('OpportunitiesController', () => {
     it('delegates to service.update', async () => {
       await controller.update('user1', 'opp1', {} as any);
       expect(service.update).toHaveBeenCalledWith('user1', 'opp1', {});
+    });
+  });
+
+  describe('delete', () => {
+    it('throws ForbiddenException when userId is empty', () => {
+      expect(() => controller.delete('', 'opp1')).toThrow(ForbiddenException);
+    });
+
+    it('delegates to service.delete', async () => {
+      await controller.delete('user1', 'opp1');
+      expect(service.delete).toHaveBeenCalledWith('user1', 'opp1');
     });
   });
 

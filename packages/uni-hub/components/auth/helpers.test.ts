@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { parseGoogleClaims, getLinkMoodleContentKeys, LinkMoodleMode } from './helpers';
+import {
+  parseGoogleClaims,
+  extractGoogleDisplayName,
+  getLinkMoodleContentKeys,
+  LinkMoodleMode,
+} from './helpers';
 
 describe('getLinkMoodleContentKeys', () => {
   it('returns default connect mode translation keys', () => {
@@ -67,5 +72,40 @@ describe('parseGoogleClaims', () => {
     expect(parseGoogleClaims('')).toEqual({});
     expect(parseGoogleClaims('invalid-token')).toEqual({});
     expect(parseGoogleClaims('header.invalid-base64-payload!!!.signature')).toEqual({});
+  });
+});
+
+describe('extractGoogleDisplayName', () => {
+  it('returns trimmed claims.name when present', () => {
+    expect(extractGoogleDisplayName({ name: '  Богдан Мельник  ' })).toBe('Богдан Мельник');
+  });
+
+  it('combines given_name and family_name when name is absent', () => {
+    expect(
+      extractGoogleDisplayName({
+        given_name: 'Богдан',
+        family_name: 'Мельник',
+      }),
+    ).toBe('Богдан Мельник');
+  });
+
+  it('combines given_name and family_name when name is empty whitespace', () => {
+    expect(
+      extractGoogleDisplayName({
+        name: '   ',
+        given_name: 'Богдан',
+        family_name: 'Мельник',
+      }),
+    ).toBe('Богдан Мельник');
+  });
+
+  it('returns single given_name or family_name when only one is provided', () => {
+    expect(extractGoogleDisplayName({ given_name: 'Богдан' })).toBe('Богдан');
+    expect(extractGoogleDisplayName({ family_name: 'Мельник' })).toBe('Мельник');
+  });
+
+  it('returns empty string when no name claims are present', () => {
+    expect(extractGoogleDisplayName({})).toBe('');
+    expect(extractGoogleDisplayName({ email: 'student@karazin.ua' })).toBe('');
   });
 });

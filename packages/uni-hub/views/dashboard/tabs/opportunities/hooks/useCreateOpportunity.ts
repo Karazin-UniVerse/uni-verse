@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@una';
-import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type {
@@ -9,9 +8,10 @@ import type {
   Opportunity,
   UpdateOpportunityRequest,
 } from '@core/types/opportunities';
-import { OPPORTUNITY_PAYMENT_TYPE } from '@core/constants/opportunities';
+import { OPPORTUNITY_LIFECYCLE, OPPORTUNITY_PAYMENT_TYPE } from '@core/constants/opportunities';
 import { invalidateOpportunities } from '../cache';
 import type { CreateOpportunityFormData } from '../types';
+import { getOpportunityErrorMessage } from '../helpers';
 
 const INITIAL_FORM_DATA: CreateOpportunityFormData = {
   title: '',
@@ -20,6 +20,7 @@ const INITIAL_FORM_DATA: CreateOpportunityFormData = {
   paymentType: OPPORTUNITY_PAYMENT_TYPE.UNPAID,
   paymentDetails: '',
   acceptsApplications: true,
+  lifecycleState: OPPORTUNITY_LIFECYCLE.START,
 };
 
 interface OpportunityUpdate {
@@ -80,6 +81,7 @@ export function useCreateOpportunity({
       paymentType: opportunity.paymentType,
       paymentDetails: opportunity.paymentDetails || '',
       acceptsApplications: opportunity.acceptsApplications !== false,
+      lifecycleState: opportunity.lifecycleState,
     });
     setIsOpen(true);
   };
@@ -107,6 +109,7 @@ export function useCreateOpportunity({
                 formData.paymentDetails.trim()) ||
               null,
             acceptsApplications: formData.acceptsApplications,
+            lifecycleState: formData.lifecycleState,
           },
         });
 
@@ -120,6 +123,7 @@ export function useCreateOpportunity({
           paymentType: formData.paymentType,
           paymentDetails: formData.paymentDetails.trim() || undefined,
           acceptsApplications: formData.acceptsApplications ?? true,
+          lifecycleState: formData.lifecycleState,
         });
 
         toast.success(formatMessage('opportunities.toast.createdDraft'));
@@ -131,7 +135,7 @@ export function useCreateOpportunity({
         ? 'opportunities.toast.updateError'
         : 'opportunities.toast.createError';
 
-      toast.error(getErrorMessage(err, formatMessage(errorKey)));
+      toast.error(getOpportunityErrorMessage(err, formatMessage, formatMessage(errorKey)));
     }
   };
 

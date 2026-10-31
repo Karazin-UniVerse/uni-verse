@@ -36,6 +36,14 @@ model User {
   comments                Comment[]
 
   opportunitySubscriptions OpportunitySubscription[] @relation("UserSubscriptions")
+
+  phone                   UserPhone?
+}
+
+model UserPhone {
+  userId      String @id
+  phoneNumber String @unique
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Course {
@@ -86,18 +94,19 @@ enum PaymentType {
 }
 
 model Opportunity {
-  id                  String                    @id @default(uuid())
-  title               String
-  description         String
-  ownerContactInfo    String
-  partnerInfo         String?
-  status              OpportunityStatus         @default(DRAFT)
-  lifecycleState      OpportunityLifecycleState @default(START)
-  acceptsApplications Boolean                   @default(true)
-  paymentType         PaymentType               @default(UNPAID)
-  paymentDetails      String?
-  details             String?
-  moderationComment   String?
+  id                    String                    @id @default(uuid())
+  title                 String
+  description           String
+  ownerContactInfo      String
+  partnerInfo           String?
+  status                OpportunityStatus         @default(DRAFT)
+  lifecycleState        OpportunityLifecycleState @default(START)
+  acceptsApplications   Boolean                   @default(true)
+  paymentType           PaymentType               @default(UNPAID)
+  paymentDetails        String?
+  details               String?
+  moderationComment     String?
+  moderationContentHash String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -182,4 +191,33 @@ model OpportunitySubscription {
 
   @@unique([userId, opportunityId])
   @@index([opportunityId])
+}
+
+model GripSession {
+  id          String    @id @default(uuid())
+  tokenHash   String    @unique
+  githubId    String
+  githubLogin String
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+  revokedAt   DateTime?
+
+  @@index([expiresAt])
+  @@index([githubId])
+}
+
+model GripQuotaBucket {
+  key          String   @id
+  windowEndsAt DateTime
+  count        Int
+
+  @@index([windowEndsAt])
+}
+
+model GripLease {
+  id        String   @id @default(uuid())
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
 }

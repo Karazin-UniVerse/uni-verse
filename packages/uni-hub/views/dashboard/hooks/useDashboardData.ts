@@ -3,17 +3,15 @@
 import { useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { isLoggedIn } from '@core/utils/auth';
-import type { StudentProfile } from '@core/types';
+import type { StudentProfile } from '@core/types/student';
 import { useFeatures } from '@uni-hub/features';
 import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
-import { fallbackStudentProfile } from '../constants';
 import type { DashboardData } from '../types';
 import {
   applyPlatformNotifications,
   buildFallbackData,
   deriveDashboardState,
   getInitialSyncTime,
-  getInitialUserProfile,
   isMoodleUnlinked,
   loadCachedDashboardData,
   type DashboardState,
@@ -38,7 +36,7 @@ const EMPTY_DASHBOARD_DATA: DashboardData = {
 
 export interface UseDashboardDataResult extends Omit<DashboardState, 'cachedData'> {
   data: DashboardData;
-  studentProfile: StudentProfile;
+  studentProfile: StudentProfile | null;
   hasCachedData: boolean;
   error: Error | null;
   errorUpdatedAt: number;
@@ -73,8 +71,6 @@ export function useDashboardData(): UseDashboardDataResult {
   const profileQuery = useQuery({
     ...profileQueryOptions,
     enabled,
-    initialData: () => getInitialUserProfile() ?? undefined,
-    initialDataUpdatedAt: 0,
   });
 
   const platformQuery = useQuery({
@@ -121,7 +117,7 @@ export function useDashboardData(): UseDashboardDataResult {
     isOfflineData: state.isOfflineData,
     lastSyncTime: manualSyncTime ?? state.lastSyncTime ?? getInitialSyncTime(),
     data,
-    studentProfile: profileQuery.data ?? fallbackStudentProfile,
+    studentProfile: profileQuery.data ?? null,
     hasCachedData:
       data.courses.length > 0 ||
       data.grades.length > 0 ||

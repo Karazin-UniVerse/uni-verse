@@ -9,11 +9,11 @@ import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { LinkMoodleMode } from '@uni-hub/components/auth';
-import type { StudentProfile } from '@core/types';
+import type { StudentProfile } from '@core/types/student';
 import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export interface UserDropdownProps {
-  activeStudentProfile: StudentProfile;
+  activeStudentProfile: StudentProfile | null;
   soundEnabled: boolean;
   onToggleSound: () => void;
   onLogout: () => void;
@@ -29,12 +29,19 @@ export interface MoodleStatusDetails {
   statusKey: TranslationKey;
 }
 
+/**
+ * Resolves the visual badge and translation key for the Moodle connection status.
+ */
 export function getMoodleStatusDetails(isMoodleLinked: boolean): MoodleStatusDetails {
   return {
     isLinked: isMoodleLinked,
     dotColor: isMoodleLinked ? 'var(--success-color, #22c55e)' : 'var(--text-secondary, #94a3b8)',
     statusKey: isMoodleLinked ? 'header.moodleConnected' : 'header.moodleNotConnected',
   };
+}
+
+export function getUserProfileTitle(profile: StudentProfile): string {
+  return profile.group ? `${profile.fullName} (${profile.group})` : profile.fullName;
 }
 
 export const UserDropdown: React.FC<UserDropdownProps> = ({
@@ -50,6 +57,10 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   const { formatMessage } = useLanguage();
   const statusDetails = getMoodleStatusDetails(Boolean(isMoodleLinked));
   const moodleUrl = process.env.NEXT_PUBLIC_MOODLE_URL;
+  const fullName = activeStudentProfile?.fullName;
+  const email = activeStudentProfile?.email;
+  const group = activeStudentProfile?.group;
+  const triggerTitle = activeStudentProfile ? getUserProfileTitle(activeStudentProfile) : undefined;
 
   return (
     <Dropdown
@@ -60,22 +71,27 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
           {...triggerProps}
           type="button"
           className={styles.user}
-          title={`${activeStudentProfile.fullName} (${activeStudentProfile.group})`}
+          title={triggerTitle}
           aria-label={formatMessage('header.userMenu')}
         >
           <span className={styles.avatar}>
             <User size={16} />
           </span>
-          <span>{activeStudentProfile.fullName}</span>
+          {fullName && <span className={styles.userName}>{fullName}</span>}
         </button>
       )}
     >
       {(close) => (
         <>
-          <div className={styles.userDropdownHeader}>
-            <strong>{activeStudentProfile.fullName}</strong>
-            <div className={styles.muted}>{activeStudentProfile.group}</div>
-          </div>
+          {activeStudentProfile && (
+            <div className={styles.userDropdownHeader}>
+              <strong title={fullName}>{fullName}</strong>
+              <div className={styles.muted} title={email}>
+                {email}
+              </div>
+              {group ? <div className={styles.muted}>{group}</div> : null}
+            </div>
+          )}
 
           {isMoodleIntegrationEnabled && (
             <div className={styles.dropdownSection}>

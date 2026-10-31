@@ -45,6 +45,12 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
         formatMessage={formatMessage}
       />
 
+      {isOwner && (
+        <div className={styles.ownerContactBlock}>
+          <OpportunityCatalogMetaRow opportunity={opportunity} formatMessage={formatMessage} />
+        </div>
+      )}
+
       <div className={styles.cardMetaRow}>
         {isOwner ? (
           <OpportunityOwnerMetaRow

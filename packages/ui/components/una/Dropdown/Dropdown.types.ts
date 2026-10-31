@@ -14,6 +14,7 @@ export type DropdownProps = {
   isFullWidth?: boolean;
   isOverflowVisible?: boolean;
   isPadded?: boolean;
+  panelClassName?: string;
   placement?: PopoverPlacement;
   width?: number | string;
 };

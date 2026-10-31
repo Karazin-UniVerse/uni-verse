@@ -3,6 +3,18 @@ const TELEGRAM_REGEX =
 
 const PHONE_CHARS_REGEX = /^\+?[0-9\s\-()]+$/;
 
+export function normalizeContactPhone(value: string): string | null {
+  const trimmed = value.trim();
+
+  if (!isValidPhoneNumber(trimmed)) {
+    return null;
+  }
+
+  const digits = trimmed.replaceAll(/\D/g, '');
+
+  return `+${digits.startsWith('0') ? `38${digits}` : digits}`;
+}
+
 function isValidPhoneNumber(trimmed: string): boolean {
   if (!PHONE_CHARS_REGEX.test(trimmed)) {
     return false;

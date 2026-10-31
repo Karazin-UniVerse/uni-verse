@@ -6,6 +6,11 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { TabStateWrapper } from './TabStateWrapper';
 import type { Opportunity } from '@core/types/opportunities';
 import type { OpportunityPaymentType } from '@core/constants/opportunities';
+import {
+  calculatePaymentCounts,
+  filterOpportunitiesByPayment,
+  filterOpportunitiesBySearch,
+} from '../helpers';
 import { OpportunityCard } from '../../OpportunityCard';
 import styles from '../../OpportunitiesTab.module.scss';
 
@@ -33,28 +38,21 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
   onOpenDetail,
 }) => {
   const { formatMessage } = useLanguage();
-  // Filter catalog opportunities in memory without cascading re-renders or spinner flashes
-  const filteredOpportunities = useMemo(() => {
-    return opportunities.filter((opp) => {
-      if (paymentFilter && opp.paymentType !== paymentFilter) {
-        return false;
-      }
 
-      if (search.trim()) {
-        const q = search.trim().toLowerCase();
-        const titleMatch = opp.title.toLowerCase().includes(q);
-        const descMatch = opp.description.toLowerCase().includes(q);
-        const ownerMatch =
-          Boolean(opp.owner?.name?.toLowerCase().includes(q)) ||
-          Boolean(opp.owner?.email.toLowerCase().includes(q)) ||
-          opp.ownerContactInfo.toLowerCase().includes(q);
+  const searchedOpportunities = useMemo(
+    () => filterOpportunitiesBySearch(opportunities, search),
+    [opportunities, search],
+  );
 
-        return titleMatch || descMatch || ownerMatch;
-      }
+  const counts = useMemo(
+    () => calculatePaymentCounts(searchedOpportunities),
+    [searchedOpportunities],
+  );
 
-      return true;
-    });
-  }, [opportunities, paymentFilter, search]);
+  const filteredOpportunities = useMemo(
+    () => filterOpportunitiesByPayment(searchedOpportunities, paymentFilter),
+    [searchedOpportunities, paymentFilter],
+  );
 
   return (
     <>
@@ -87,31 +85,33 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
               type="button"
               className={`${styles.filterChip} ${paymentFilter === '' ? styles.activeChip : ''}`}
               onClick={() => onPaymentFilterChange('')}
+              aria-label={`${formatMessage('opportunities.catalog.filterAll')} (${counts.all})`}
+              aria-pressed={paymentFilter === ''}
             >
-              {formatMessage('opportunities.catalog.filterAll')}
+              <span>{formatMessage('opportunities.catalog.filterAll')}</span>
+              <span className={styles.chipCount}>({counts.all})</span>
             </button>
             <button
               type="button"
               className={`${styles.filterChip} ${paymentFilter === 'PAID' ? styles.activeChip : ''}`}
               onClick={() => onPaymentFilterChange('PAID')}
+              aria-label={`${formatMessage('opportunities.catalog.filterPaid')} (${counts.paid})`}
+              aria-pressed={paymentFilter === 'PAID'}
             >
-              {formatMessage('opportunities.catalog.filterPaid')}
+              <span>{formatMessage('opportunities.catalog.filterPaid')}</span>
+              <span className={styles.chipCount}>({counts.paid})</span>
             </button>
             <button
               type="button"
               className={`${styles.filterChip} ${paymentFilter === 'UNPAID' ? styles.activeChip : ''}`}
               onClick={() => onPaymentFilterChange('UNPAID')}
+              aria-label={`${formatMessage('opportunities.catalog.filterUnpaid')} (${counts.unpaid})`}
+              aria-pressed={paymentFilter === 'UNPAID'}
             >
-              {formatMessage('opportunities.catalog.filterUnpaid')}
+              <span>{formatMessage('opportunities.catalog.filterUnpaid')}</span>
+              <span className={styles.chipCount}>({counts.unpaid})</span>
             </button>
           </div>
-
-          {!loading && !isError && (
-            <span className={styles.resultCount}>
-              {formatMessage('opportunities.catalog.foundPrefix')}{' '}
-              <strong>{filteredOpportunities.length}</strong>
-            </span>
-          )}
         </div>
       </div>
 

@@ -8,7 +8,7 @@ import {
 import type { MoodleEvent } from '@core/types/moodle';
 
 describe('getAssignmentStatusInfo', () => {
-  it('returns graded status when completed and status is graded', () => {
+  it('should return graded status when completed and status is graded', () => {
     const result = getAssignmentStatusInfo({
       status: 'graded',
       isGraded: true,
@@ -21,7 +21,7 @@ describe('getAssignmentStatusInfo', () => {
     });
   });
 
-  it('supports object argument signature', () => {
+  it('should support object argument signature', () => {
     const result = getAssignmentStatusInfo({
       status: 'submitted',
       isGraded: false,
@@ -35,7 +35,7 @@ describe('getAssignmentStatusInfo', () => {
     });
   });
 
-  it('returns submitted status when completed and status is submitted', () => {
+  it('should return submitted status when completed and status is submitted', () => {
     const result = getAssignmentStatusInfo({
       status: 'submitted',
       isGraded: true,
@@ -48,7 +48,7 @@ describe('getAssignmentStatusInfo', () => {
     });
   });
 
-  it('returns overdue status when overdue and not completed', () => {
+  it('should return overdue status when overdue and not completed', () => {
     const result = getAssignmentStatusInfo({
       status: 'new',
       isGraded: false,
@@ -61,7 +61,7 @@ describe('getAssignmentStatusInfo', () => {
     });
   });
 
-  it('returns in-progress status when neither completed nor overdue', () => {
+  it('should return in-progress status when neither completed nor overdue', () => {
     const result = getAssignmentStatusInfo({
       status: 'new',
       isGraded: false,
@@ -74,7 +74,7 @@ describe('getAssignmentStatusInfo', () => {
     });
   });
 
-  it('returns awaiting review status when isAwaitingReview is true with isOverdue=false', () => {
+  it('should return awaiting review status when isAwaitingReview is true with isOverdue=false', () => {
     const result = getAssignmentStatusInfo({
       status: 'submitted',
       isGraded: false,
@@ -88,7 +88,7 @@ describe('getAssignmentStatusInfo', () => {
     });
   });
 
-  it('returns graded status when isGraded is true with isOverdue=false', () => {
+  it('should return graded status when isGraded is true with isOverdue=false', () => {
     const result = getAssignmentStatusInfo({
       status: 'graded',
       isGraded: true,
@@ -102,7 +102,7 @@ describe('getAssignmentStatusInfo', () => {
     });
   });
 
-  it('returns overdue status when isOverdue is true', () => {
+  it('should return overdue status when isOverdue is true', () => {
     const result = getAssignmentStatusInfo({
       status: 'new',
       isGraded: false,
@@ -118,14 +118,14 @@ describe('getAssignmentStatusInfo', () => {
 });
 
 describe('formatLastSync', () => {
-  it('formats a timestamp as DD.MM.YYYY HH:MM', () => {
+  it('should format a timestamp as DD.MM.YYYY HH:MM', () => {
     const timestamp = new Date('2026-01-05T09:07:00').getTime();
     const result = formatLastSync(timestamp);
 
     expect(result).toMatch(/\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}/);
   });
 
-  it('pads single-digit values', () => {
+  it('should pad single-digit values', () => {
     const d = new Date(2026, 0, 5, 9, 7);
     const result = formatLastSync(d.getTime());
 
@@ -134,7 +134,7 @@ describe('formatLastSync', () => {
 });
 
 describe('trimTrailingPunctuation', () => {
-  it('removes trailing punctuation marks like closing parens, dots, commas, semicolons', () => {
+  it('should remove trailing punctuation marks like closing parens, dots, commas, semicolons', () => {
     expect(trimTrailingPunctuation('https://zoom.us/j/123).')).toBe('https://zoom.us/j/123');
     expect(trimTrailingPunctuation('https://meet.google.com/abc-defg-hij,')).toBe(
       'https://meet.google.com/abc-defg-hij',
@@ -144,13 +144,13 @@ describe('trimTrailingPunctuation', () => {
     );
   });
 
-  it('leaves clean URLs unchanged', () => {
+  it('should leave clean URLs unchanged', () => {
     expect(trimTrailingPunctuation('https://zoom.us/j/123')).toBe('https://zoom.us/j/123');
   });
 });
 
 describe('extractMeetingUrl', () => {
-  it('extracts URL directly from event.url if matching pattern', () => {
+  it('should extract URL directly from event.url if matching pattern', () => {
     const event: MoodleEvent = {
       id: 1,
       name: 'Lecture',
@@ -165,7 +165,7 @@ describe('extractMeetingUrl', () => {
     expect(extractMeetingUrl(event)).toBe('https://zoom.us/j/999888777');
   });
 
-  it('extracts URL from description if event.url is missing', () => {
+  it('should extract URL from description if event.url is missing', () => {
     const event: MoodleEvent = {
       id: 2,
       name: 'Seminar',
@@ -179,7 +179,7 @@ describe('extractMeetingUrl', () => {
     expect(extractMeetingUrl(event)).toBe('https://meet.google.com/xyz-uvwx-rst');
   });
 
-  it('returns null if no meeting link is present', () => {
+  it('should return null if no meeting link is present', () => {
     const event: MoodleEvent = {
       id: 3,
       name: 'Self-study',

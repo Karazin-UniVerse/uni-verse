@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 
 export type OpportunityLifecycleOption = {
-  value: string;
   label: string;
+  value: string;
 };
 
 export type OpportunityDetailProps = {
@@ -20,28 +20,30 @@ export type OpportunityDetailProps = {
   descriptionText?: string;
   contactLabel?: string;
   contactValue?: string;
+  emailLabel?: string;
+  emailValue?: string;
   // Author controls
   isOwner?: boolean;
   canEdit?: boolean;
   onEdit?: () => void;
   editText?: string;
   canSendToReview?: boolean;
+  sendToReviewDisabled?: boolean;
+  sendToReviewHint?: string;
   onSendToReview?: () => void;
   sendToReviewText?: string;
+  canDelete?: boolean;
+  onDelete?: () => void;
+  deleteText?: string;
   onOpenApplicants?: () => void;
   viewApplicantsText?: string;
   moderationComment?: string | null;
   moderationCommentTitle?: string;
   manageTitle?: string;
-  phaseLabel?: string;
-  lifecycleState?: string;
-  lifecycleOptions?: OpportunityLifecycleOption[];
-  onLifecycleChange?: (state: string) => void;
+  // Candidate application status
   acceptsApplications?: boolean;
-  onToggleAcceptsApplications?: (accepts: boolean) => void;
-  acceptsApplicationsLabel?: string;
   applicationsClosedText?: string;
-  // Footer
+  // Candidate actions
   canApply?: boolean;
   applyText?: string;
   onOpenApply?: () => void;

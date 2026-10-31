@@ -54,7 +54,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   return (
     <div className={styles.stack}>
-      <StudentCard activeStudentProfile={activeStudentProfile} isMoodleLinked={isMoodleLinked} />
+      {activeStudentProfile && (
+        <StudentCard activeStudentProfile={activeStudentProfile} isMoodleLinked={isMoodleLinked} />
+      )}
 
       {isMoodleIntegrationEnabled && (
         <div className={styles.overviewHero}>
@@ -74,7 +76,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         <StatCardGrid
           coursesCount={coursesCount}
           assignmentsCount={assignmentsCount}
-          gpa={activeStudentProfile.gpa}
+          gpa={activeStudentProfile?.gpa ?? ''}
           onNavigate={onNavigate}
         />
       )}
