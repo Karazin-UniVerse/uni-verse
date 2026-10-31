@@ -7,6 +7,7 @@ import React, {
   useSyncExternalStore,
 } from 'react';
 import { APP_THEMES, THEME_COLOR_SCHEME, type AppTheme } from '@core/constants/themes';
+import { isBrowser } from '@uni-hub/utils/browser';
 
 const STORAGE_KEY = 'universe-theme';
 
@@ -32,17 +33,35 @@ function applyTheme(theme: AppTheme) {
   }
 }
 
+const canUseMatchMedia = (): boolean => isBrowser && typeof window.matchMedia === 'function';
+
 /**
  * Returns the system-preference default theme when the user has not saved a choice:
  *   dark OS preference  → 'karazinGold'
  *   light OS preference → 'karazinClassic'
  */
 const getSystemTheme = (): AppTheme => {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+  if (!canUseMatchMedia()) {
     return 'karazinClassic';
   }
 
   return window.matchMedia(DARK_SCHEME_QUERY).matches ? 'karazinGold' : 'karazinClassic';
+};
+
+/**
+ * Subscribe to MediaQueryList changes. Older browsers (e.g. Safari < 14) only
+ * implement the deprecated addListener/removeListener API.
+ */
+const subscribeToMediaQuery = (media: MediaQueryList, callback: () => void) => {
+  if (typeof media.addEventListener === 'function') {
+    media.addEventListener('change', callback);
+
+    return () => media.removeEventListener('change', callback);
+  }
+
+  media.addListener(callback);
+
+  return () => media.removeListener(callback);
 };
 
 /**
@@ -52,17 +71,17 @@ const getSystemTheme = (): AppTheme => {
  *   - OS colour-scheme changes (matchMedia 'change')
  */
 const subscribeToTheme = (callback: () => void) => {
-  const media =
-    typeof window.matchMedia === 'function' ? window.matchMedia(DARK_SCHEME_QUERY) : null;
+  const unsubscribeMedia = canUseMatchMedia()
+    ? subscribeToMediaQuery(window.matchMedia(DARK_SCHEME_QUERY), callback)
+    : undefined;
 
   window.addEventListener('storage', callback);
   window.addEventListener('theme-change', callback);
-  media?.addEventListener('change', callback);
 
   return () => {
     window.removeEventListener('storage', callback);
     window.removeEventListener('theme-change', callback);
-    media?.removeEventListener('change', callback);
+    unsubscribeMedia?.();
   };
 };
 
