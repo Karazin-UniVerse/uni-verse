@@ -11,6 +11,7 @@ export * from './NotificationList';
 export * from './ApplyOpportunityModal';
 export * from './CreateOpportunityModal';
 export * from './ModerationRejectModal';
+export * from './ModerationActions';
 export * from './OpportunityDetail';
 export * from './SegmentedControl';
 export * from './BackButton';

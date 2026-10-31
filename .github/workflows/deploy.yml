@@ -1,165 +1,220 @@
 name: Deploy
 
 on:
-  push:
-    branches: [main]
-    tags: ['v*.*.*']
-  workflow_dispatch:
-    inputs:
-      target_env:
-        description: 'Target Environment'
-        required: true
-        default: 'qa'
-        type: choice
-        options:
-          - qa
-          - stage
-      stage_branch:
-        description: 'Branch to deploy to Stage (default: develop)'
-        required: false
-        default: 'develop'
+  workflow_call:
 
 permissions: {}
 
+concurrency:
+  group: cloud-run-develop
+  cancel-in-progress: false
+  queue: max
+
 jobs:
-  deploy-qa:
-    name: Deploy to QA
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.target_env == 'qa')
+    timeout-minutes: 45
     environment:
-      name: qa
+      name: develop
+      url: ${{ vars.FRONTEND_URL }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ vars.GCP_REGION }}
+      GCP_ARTIFACT_REPOSITORY: ${{ vars.GCP_ARTIFACT_REPOSITORY }}
+      GCP_BACKEND_SERVICE: ${{ vars.GCP_BACKEND_SERVICE }}
+      GCP_FRONTEND_SERVICE: ${{ vars.GCP_FRONTEND_SERVICE }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_DEPLOY_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+      NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+      FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+      GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+    defaults:
+      run:
+        shell: bash
     steps:
-      - name: Trigger QA Deploy Webhook
-        env:
-          QA_WEBHOOK: ${{ secrets.QA_DEPLOY_WEBHOOK_URL }}
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Validate deployment configuration
         run: |
-          if [ -z "$QA_WEBHOOK" ]; then
-            echo "::notice::QA_DEPLOY_WEBHOOK_URL is not configured. Webhook skipped (automatic deployment is handled directly by hosting provider)."
-            exit 0
-          fi
-          echo "Triggering deployment to QA environment..."
-          curl -f -X POST --connect-timeout 10 --max-time 30 "$QA_WEBHOOK"
-
-  deploy-stage:
-    name: Deploy to Stage
-    runs-on: ubuntu-latest
-    needs: [deploy-qa]
-    if: |
-      always() &&
-      !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled') &&
-      ((github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
-       (github.event_name == 'workflow_dispatch' && inputs.target_env == 'stage'))
-    environment:
-      name: stage
-    steps:
-      - name: Trigger Stage Backend Deploy
-        env:
-          STAGE_WEBHOOK: ${{ secrets.STAGE_DEPLOY_WEBHOOK_URL }}
-          NF_TOKEN: ${{ secrets.NORTHFLANK_API_TOKEN }}
-          STAGE_BRANCH: ${{ inputs.stage_branch || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || 'develop' }}
-        run: |
-          if [ -n "$STAGE_WEBHOOK" ]; then
-            echo "Triggering backend deployment to Stage via Webhook..."
-            curl -f -X POST --connect-timeout 10 --max-time 30 "$STAGE_WEBHOOK"
-            exit 0
-          fi
-
-          if [ -n "$NF_TOKEN" ]; then
-            echo "Triggering backend deployment to Stage (branch/ref: $STAGE_BRANCH)..."
-
-            COMMIT_SHA=""
-            if [ -n "$STAGE_BRANCH" ]; then
-              COMMIT_SHA=$(git ls-remote "https://github.com/${{ github.repository }}" "refs/heads/${STAGE_BRANCH}" 2>/dev/null | cut -f1)
-              if [ -z "$COMMIT_SHA" ]; then
-                COMMIT_SHA=$(git ls-remote "https://github.com/${{ github.repository }}" "refs/tags/${STAGE_BRANCH}^{}" 2>/dev/null | cut -f1)
-              fi
-              if [ -z "$COMMIT_SHA" ]; then
-                COMMIT_SHA=$(git ls-remote "https://github.com/${{ github.repository }}" "refs/tags/${STAGE_BRANCH}" 2>/dev/null | cut -f1)
-              fi
-              if [ ${#STAGE_BRANCH} -eq 40 ]; then
-                COMMIT_SHA="$STAGE_BRANCH"
-              fi
-            fi
-
-            if [ -z "$COMMIT_SHA" ]; then
-              echo "::error::Could not resolve commit SHA for ref '$STAGE_BRANCH'"
+          for variable in GCP_PROJECT_ID GCP_REGION GCP_ARTIFACT_REPOSITORY \
+            GCP_BACKEND_SERVICE GCP_FRONTEND_SERVICE GCP_WORKLOAD_IDENTITY_PROVIDER \
+            GCP_DEPLOY_SERVICE_ACCOUNT NEXT_PUBLIC_API_URL FRONTEND_URL; do
+            if [[ -z "${!variable}" ]]; then
+              echo "::error::Missing develop environment variable: $variable"
               exit 1
             fi
+          done
 
-            PAYLOAD="{\"sha\":\"$COMMIT_SHA\"}"
-            echo "Target commit SHA: $COMMIT_SHA"
-
-            RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST \
-              "https://api.northflank.com/v1/projects/universe-jewel/services/backend-stage/build" \
-              -H "Authorization: Bearer $NF_TOKEN" \
-              -H "Content-Type: application/json" \
-              -d "$PAYLOAD" \
-              --connect-timeout 10 --max-time 30)
-
-            HTTP_BODY=$(echo "$RESPONSE" | sed -e '$d')
-            HTTP_STATUS=$(echo "$RESPONSE" | tail -n1 | cut -d':' -f2)
-
-            echo "Response Status: $HTTP_STATUS"
-            echo "Response Body: $HTTP_BODY"
-
-            if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
-              echo "::error::Northflank Backend deploy failed with HTTP $HTTP_STATUS: $HTTP_BODY"
-              exit 1
-            fi
-            exit 0
-          fi
-
-          echo "::notice::Neither STAGE_DEPLOY_WEBHOOK_URL nor NORTHFLANK_API_TOKEN is configured. Backend deploy skipped."
-          exit 0
-
-      - name: Trigger Stage Frontend Deploy
-        env:
-          NF_TOKEN: ${{ secrets.NORTHFLANK_API_TOKEN }}
-          STAGE_BRANCH: ${{ inputs.stage_branch || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || 'develop' }}
-        run: |
-          if [ -z "$NF_TOKEN" ]; then
-            echo "::notice::NORTHFLANK_API_TOKEN is not configured. Frontend deploy skipped."
-            exit 0
-          fi
-          echo "Triggering frontend deployment to Stage (branch/ref: $STAGE_BRANCH)..."
-
-          COMMIT_SHA=""
-          if [ -n "$STAGE_BRANCH" ]; then
-            COMMIT_SHA=$(git ls-remote "https://github.com/${{ github.repository }}" "refs/heads/${STAGE_BRANCH}" 2>/dev/null | cut -f1)
-            if [ -z "$COMMIT_SHA" ]; then
-              COMMIT_SHA=$(git ls-remote "https://github.com/${{ github.repository }}" "refs/tags/${STAGE_BRANCH}^{}" 2>/dev/null | cut -f1)
-            fi
-            if [ -z "$COMMIT_SHA" ]; then
-              COMMIT_SHA=$(git ls-remote "https://github.com/${{ github.repository }}" "refs/tags/${STAGE_BRANCH}" 2>/dev/null | cut -f1)
-            fi
-            if [ ${#STAGE_BRANCH} -eq 40 ]; then
-              COMMIT_SHA="$STAGE_BRANCH"
-            fi
-          fi
-
-          if [ -z "$COMMIT_SHA" ]; then
-            echo "::error::Could not resolve commit SHA for ref '$STAGE_BRANCH'"
+          if [[ "$FRONTEND_URL" == */ ]]; then
+            echo '::error::FRONTEND_URL must not end with a slash.'
             exit 1
           fi
 
-          PAYLOAD="{\"sha\":\"$COMMIT_SHA\"}"
-          echo "Target commit SHA: $COMMIT_SHA"
-
-          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST \
-            "https://api.northflank.com/v1/projects/universe-jewel/services/frontend-stage/build" \
-            -H "Authorization: Bearer $NF_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "$PAYLOAD" \
-            --connect-timeout 10 --max-time 30)
-
-          HTTP_BODY=$(echo "$RESPONSE" | sed -e '$d')
-          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1 | cut -d':' -f2)
-
-          echo "Response Status: $HTTP_STATUS"
-          echo "Response Body: $HTTP_BODY"
-
-          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
-            echo "::error::Northflank Frontend deploy failed with HTTP $HTTP_STATUS: $HTTP_BODY"
+          if [[ "$FRONTEND_URL" =~ ^https://[^/]+:443$ || "$FRONTEND_URL" =~ ^http://[^/]+:80$ ]]; then
+            echo '::error::FRONTEND_URL must not include explicit scheme-default ports (:443 for https, :80 for http).'
             exit 1
           fi
+
+          registry="${GCP_REGION}-docker.pkg.dev"
+          image_prefix="${registry}/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REPOSITORY}"
+          echo "REGISTRY=$registry" >> "$GITHUB_ENV"
+          echo "BACKEND_IMAGE=${image_prefix}/backend:${GITHUB_SHA}" >> "$GITHUB_ENV"
+          echo "FRONTEND_IMAGE=${image_prefix}/frontend:${GITHUB_SHA}" >> "$GITHUB_ENV"
+
+      - name: Build backend
+        run: docker build --file Dockerfile --tag "$BACKEND_IMAGE" .
+
+      - name: Build frontend
+        run: |
+          docker build --file Dockerfile.frontend \
+            --build-arg "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" \
+            --build-arg "NEXT_PUBLIC_GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" \
+            --build-arg NEXT_PUBLIC_FEATURE_MOODLE=false \
+            --build-arg NEXT_PUBLIC_FEATURE_EDEAN=false \
+            --build-arg NEXT_PUBLIC_FEATURE_OPPORTUNITIES=true \
+            --build-arg NEXT_PUBLIC_FEATURE_PANEL=true \
+            --tag "$FRONTEND_IMAGE" .
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Push images
+        run: |
+          gcloud auth configure-docker "$REGISTRY" --quiet
+          docker push "$BACKEND_IMAGE"
+          docker push "$FRONTEND_IMAGE"
+
+      - name: Update services and check availability
+        run: |
+          ensure_develop_fresh() {
+            latest_sha="$(git ls-remote origin refs/heads/develop | cut -f1)"
+            if [[ "$latest_sha" != "$GITHUB_SHA" ]]; then
+              echo "::notice::develop has advanced ($latest_sha != $GITHUB_SHA); skipping obsolete deployment."
+              exit 0
+            fi
+          }
+
+          ensure_develop_fresh
+
+          backend_digest="$(gcloud artifacts docker images describe "$BACKEND_IMAGE" \
+            --project="$GCP_PROJECT_ID" --format='value(image_summary.digest)')"
+          frontend_digest="$(gcloud artifacts docker images describe "$FRONTEND_IMAGE" \
+            --project="$GCP_PROJECT_ID" --format='value(image_summary.digest)')"
+          [[ "$backend_digest" == sha256:* && "$frontend_digest" == sha256:* ]]
+
+          snapshot_traffic() {
+            gcloud run services describe "$1" \
+              --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
+              --format='json(status.traffic)' |
+              node -e '
+                const fs = require("node:fs");
+                const targets = JSON.parse(fs.readFileSync(0, "utf8")).status.traffic;
+                const revisions = new Map();
+                for (const target of targets) {
+                  if (!target.percent) continue;
+                  if (!target.revisionName) throw new Error("Traffic target has no resolved revision");
+                  revisions.set(target.revisionName, (revisions.get(target.revisionName) || 0) + target.percent);
+                }
+                if ([...revisions.values()].reduce((sum, percent) => sum + percent, 0) !== 100) {
+                  throw new Error("Traffic allocation must total 100 percent");
+                }
+                console.log([...revisions].map(([revision, percent]) => `${revision}=${percent}`).join(","));
+              '
+          }
+
+          backend_traffic="$(snapshot_traffic "$GCP_BACKEND_SERVICE")"
+          frontend_traffic="$(snapshot_traffic "$GCP_FRONTEND_SERVICE")"
+          backend_switched=false
+          frontend_switched=false
+
+          recover_traffic() {
+            status=$?
+            trap - EXIT
+            if (( status != 0 )); then
+              if [[ "$frontend_switched" == true ]]; then
+                gcloud run services update-traffic "$GCP_FRONTEND_SERVICE" \
+                  --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
+                  --to-revisions="$frontend_traffic" --quiet ||
+                  echo "::error::Failed to restore traffic for $GCP_FRONTEND_SERVICE; manual recovery required."
+              fi
+              if [[ "$backend_switched" == true ]]; then
+                gcloud run services update-traffic "$GCP_BACKEND_SERVICE" \
+                  --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
+                  --to-revisions="$backend_traffic" --quiet ||
+                  echo "::error::Failed to restore traffic for $GCP_BACKEND_SERVICE; manual recovery required."
+              fi
+              echo '::warning::Traffic recovery does not undo database schema changes.'
+            fi
+            exit "$status"
+          }
+          trap recover_traffic EXIT
+
+          revision_suffix="ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          backend_revision="${GCP_BACKEND_SERVICE}-${revision_suffix}"
+          frontend_revision="${GCP_FRONTEND_SERVICE}-${revision_suffix}"
+
+          for rev in "$backend_revision" "$frontend_revision"; do
+            if (( ${#rev} > 63 )); then
+              echo "::error::Generated revision name exceeds 63 characters ($rev, length: ${#rev}). Shorten service name."
+              exit 1
+            fi
+          done
+
+          backend_env="FRONTEND_URL=$FRONTEND_URL"
+          if [[ -n "$GOOGLE_CLIENT_ID" ]]; then
+            backend_env+=",GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
+          fi
+
+          gcloud run services update "$GCP_BACKEND_SERVICE" \
+            --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
+            --image="${BACKEND_IMAGE%:*}@${backend_digest}" \
+            --revision-suffix="$revision_suffix" --no-traffic \
+            --update-env-vars="$backend_env" --quiet
+          ensure_develop_fresh
+          backend_switched=true
+          gcloud run services update-traffic "$GCP_BACKEND_SERVICE" \
+            --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
+            --to-revisions="${backend_revision}=100" --quiet
+
+          curl --fail --silent --show-error --location \
+            --connect-timeout 10 --max-time 60 --retry 3 \
+            --output /dev/null "${NEXT_PUBLIC_API_URL}/api"
+
+          gcloud run services update "$GCP_FRONTEND_SERVICE" \
+            --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
+            --image="${FRONTEND_IMAGE%:*}@${frontend_digest}" \
+            --revision-suffix="$revision_suffix" --no-traffic \
+            --update-env-vars="NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" --quiet
+          ensure_develop_fresh
+          frontend_switched=true
+          gcloud run services update-traffic "$GCP_FRONTEND_SERVICE" \
+            --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
+            --to-revisions="${frontend_revision}=100" --quiet
+
+          curl --fail --silent --show-error --location \
+            --connect-timeout 10 --max-time 60 --retry 3 \
+            --output /dev/null "${FRONTEND_URL}/"
+
+          {
+            echo '## Cloud Run deployment'
+            echo "Commit: $GITHUB_SHA"
+            echo "Frontend: $FRONTEND_URL"
+            echo "Backend: $NEXT_PUBLIC_API_URL"
+            echo "Backend revision: $backend_revision"
+            echo "Frontend revision: $frontend_revision"
+            echo "Backend image: ${BACKEND_IMAGE%:*}@${backend_digest}"
+            echo "Frontend image: ${FRONTEND_IMAGE%:*}@${frontend_digest}"
+          } >> "$GITHUB_STEP_SUMMARY"

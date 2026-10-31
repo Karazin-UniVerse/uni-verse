@@ -553,6 +553,12 @@
   }
 }
 
+.detailModerationPanel {
+  margin-top: var(--space-20);
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--card-border);
+}
+
 .idBadge {
   display: inline-flex;
   align-items: center;
@@ -565,22 +571,6 @@
   border-radius: 6px;
   border: 1px solid var(--card-border);
   align-self: flex-start;
-}
-
-.moderationActions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-
-  @include narrower-than('sm') {
-    width: 100%;
-
-    button {
-      flex: 1 1 auto;
-      justify-content: center;
-    }
-  }
 }
 
 .approveBtn {
