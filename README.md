@@ -65,9 +65,11 @@ The wizard prompts you step-by-step, automatically configures environment files,
    - `[2] Remote Cloud Database` (Supabase / Cloud PostgreSQL; prompts for connection string if not in environment)
    - `[3] Custom PostgreSQL Connection String`
    - Automatically writes `.env` and `packages/backend/.env`, generates Prisma Client (`pnpm db:generate`), and optionally syncs schema (`pnpm db:migrate`).
-4. **Moodle Authentication Notice**:
+4. **Grip Gateway Pre-Push Check**:
+   - Checks if Grip is enrolled on this computer; prompts to automatically run `pnpm grip:setup` if needed.
+5. **Moodle Authentication Notice**:
    - Displays an in-terminal reminder that user authentication delegates to `https://moodle.universemvp.tech`.
-5. **Instant Launch**:
+6. **Instant Launch**:
    - Prompts `Launch development server now? (Y/n)`:
      - **Frontend**: immediately starts `pnpm --filter @universe/uni-hub dev` ([http://localhost:3000](http://localhost:3000)).
      - **Fullstack**: immediately starts the full Turborepo monorepo `pnpm dev`.

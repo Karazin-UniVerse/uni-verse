@@ -132,3 +132,24 @@ test('loginDevice throws on access_denied', async () => {
     await fakeGithub.close();
   }
 });
+
+test('loginDevice invokes openBrowserFn with verificationUri', async () => {
+  const fakeGithub = await startFakeGithubServer();
+
+  try {
+    const opened = [];
+
+    await loginDevice({
+      clientId: 'test-client',
+      githubBaseUrl: fakeGithub.url,
+      logger: () => {},
+      openBrowser: true,
+      openBrowserFn: (url) => opened.push(url),
+    });
+
+    assert.equal(opened.length, 1);
+    assert.equal(opened[0], 'http://localhost/activate');
+  } finally {
+    await fakeGithub.close();
+  }
+});

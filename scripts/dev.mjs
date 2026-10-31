@@ -255,7 +255,40 @@ async function main() {
       }
     }
 
-    // 5. Auth notice & Launch prompt
+    // 5. Check Grip Gateway enrollment
+    try {
+      const { loadSettings } = await import('./grip/settings.mjs');
+      const gripSettings = await loadSettings().catch(() => null);
+
+      if (!gripSettings) {
+        console.log(`\n${c.bold}5. Grip Gateway Pre-Push Check:${c.reset}`);
+        console.log(
+          `   ${c.dim}Grip pre-push check is mandatory for pushing code to GitHub.${c.reset}`,
+        );
+
+        const gripAnswer = await rl.question(
+          `   ${c.bold}Enroll now with 'pnpm grip:setup'?${c.reset} (Y/n): `,
+        );
+
+        if (gripAnswer.trim().toLowerCase() !== 'n') {
+          try {
+            await runCommand('pnpm', ['grip:setup']);
+          } catch {
+            console.log(
+              `${c.yellow}⚠ Notice: Grip enrollment was not completed. You can run 'pnpm grip:setup' at any time.${c.reset}`,
+            );
+          }
+        }
+      } else {
+        console.log(
+          `\n${c.green}✔ Grip Gateway: Enrolled (${gripSettings.gatewayOrigin})${c.reset}`,
+        );
+      }
+    } catch {
+      // Ignored if grip scripts are not available
+    }
+
+    // 6. Auth notice & Launch prompt
     console.log(
       `\n${c.bold}${c.yellow}================== [ Moodle Auth Notice ] ==================${c.reset}`,
     );

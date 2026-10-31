@@ -1,3 +1,27 @@
+import { spawn } from 'node:child_process';
+
+/**
+ * Launches the system default browser with the given URL.
+ * @param {string} url
+ * @param {typeof spawn} [spawnFn]
+ */
+export function launchBrowser(url, spawnFn = spawn) {
+  try {
+    const isWindows = process.platform === 'win32';
+    const isMac = process.platform === 'darwin';
+    const cmd = isMac ? 'open' : isWindows ? 'cmd.exe' : 'xdg-open';
+    const args = isWindows ? ['/c', 'start', '""', url] : [url];
+
+    const child = spawnFn(cmd, args, { stdio: 'ignore', detached: true });
+
+    if (child && typeof child.unref === 'function') {
+      child.unref();
+    }
+  } catch {
+    // Non-critical if browser launch fails
+  }
+}
+
 /**
  * Asynchronously waits for a specified delay, respecting an optional AbortSignal.
  * @param {number} ms
@@ -41,9 +65,11 @@ function sleep(ms, signal) {
  */
 export async function loginDevice({
   clientId,
+  openBrowserFn,
   signal,
   githubBaseUrl = 'https://github.com',
   logger = console.info,
+  openBrowser = true,
 }) {
   const baseUrl = githubBaseUrl.replace(/\/+$/, '');
   const codeEndpoint = `${baseUrl}/login/device/code`;
@@ -82,6 +108,23 @@ export async function loginDevice({
   logger(
     `\nTo authenticate Grip with GitHub, visit:\n  ${verificationUri}\nEnter one-time code: ${userCode}\n`,
   );
+
+  if (openBrowser) {
+    if (typeof openBrowserFn === 'function') {
+      try {
+        openBrowserFn(verificationUri);
+      } catch {
+        // Ignored
+      }
+    } else if (!process.env.NODE_TEST_CONTEXT && process.stdout.isTTY) {
+      try {
+        launchBrowser(verificationUri);
+        logger(`Opening ${verificationUri} in your default browser...`);
+      } catch {
+        // Ignored
+      }
+    }
+  }
 
   let pollIntervalMs = Math.max(1, interval || 5) * 1000;
   const pollEndpoint = `${baseUrl}/login/oauth/access_token`;
