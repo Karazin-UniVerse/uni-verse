@@ -84,9 +84,9 @@
     color: var(--error-color);
 
     &:hover:not(:disabled) {
-      background-color: color-mix(in srgb, var(--error-color) 10%, transparent);
+      background-color: var(--error-color);
       border-color: var(--error-color);
-      color: var(--error-color);
+      color: var(--text-on-accent, #fff);
     }
 
     &:active:not(:disabled) {
