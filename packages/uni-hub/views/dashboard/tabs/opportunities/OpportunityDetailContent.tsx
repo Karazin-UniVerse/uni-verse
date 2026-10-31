@@ -4,10 +4,13 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ConfirmModal } from '@ui';
 import type { Opportunity } from '@core/types/opportunities';
+import { OPPORTUNITY_STATUS } from '@core/constants/opportunities';
+import { ROLE } from '@core/constants/roles';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { ROUTE } from '../../routes';
 import { OpportunityDetailView } from './components/OpportunityDetailView';
+import { OpportunityModerationPanel } from './components/OpportunityModerationPanel';
 import { useApplicants } from './hooks/useApplicants';
 import { useApplicantsDeepLink } from './hooks/useApplicantsDeepLink';
 import { useApplyToOpportunity } from './hooks/useApplyToOpportunity';
@@ -31,6 +34,11 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
   const create = useCreateOpportunity({});
   const apply = useApplyToOpportunity({ currentUser, opportunity });
   const applicants = useApplicants();
+  const canModerate =
+    Boolean(currentUser.userId) &&
+    currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR) &&
+    currentUser.userId !== opportunity.ownerId &&
+    opportunity.status === OPPORTUNITY_STATUS.READY_FOR_REVIEW;
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -69,6 +77,10 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
         onOpenApply={() => apply.setIsApplyOpen(true)}
         onOpenApplicants={() => applicants.open(opportunity)}
       />
+
+      {canModerate && (
+        <OpportunityModerationPanel key={opportunity.id} opportunityId={opportunity.id} />
+      )}
 
       <ConfirmModal
         open={deleteConfirmOpen}
