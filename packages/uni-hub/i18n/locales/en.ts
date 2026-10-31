@@ -10,19 +10,14 @@ export const en = {
 
   // Login
   'login.title': 'UNiHub',
-  'login.subtitle': 'Sign in to your Moodle account',
-  'login.username': 'Username',
-  'login.usernameOrEmail': 'Username or email',
-  'login.password': 'Password',
-  'login.submit': 'Sign In',
-  'login.loading': 'Signing in...',
-  'login.success': 'Signed in successfully',
-  'login.invalidCredentials': 'Login failed. Please check your credentials.',
-  'login.enterUsernameError': 'Please enter a username',
-  'login.enterPasswordError': 'Please enter a password',
+  'login.subtitle': 'Karazin University Student Portal',
+  'login.corporateNotice':
+    'Sign in is only available with a university corporate account (@student.karazin.ua or @karazin.ua)',
+  'login.googleClientMissing':
+    'Google authentication is temporarily unavailable (client ID not configured)',
   'login.showPassword': 'Show password',
   'login.hidePassword': 'Hide password',
-  'login.orMoodle': 'or with Moodle login',
+  'login.success': 'Signed in successfully',
   'login.googleError': 'Google sign-in error',
   'login.linkMoodleTitle': 'Link Moodle Account',
   'login.linkMoodleHint':

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Lock, User } from 'lucide-react';
+import { Info, Lock, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button, Form, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
@@ -10,7 +10,7 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { getErrorMessage, safeStorage } from '@uni-hub/services/api';
 import { endSession } from '@uni-hub/services/api.session';
-import { useGoogleLogin, useLinkMoodle, useLogin } from '@uni-hub/hooks/useAuthMutations';
+import { useGoogleLogin, useLinkMoodle } from '@uni-hub/hooks/useAuthMutations';
 import {
   GoogleLoginButton,
   AuthField,
@@ -26,8 +26,6 @@ import styles from './LoginPage.module.scss';
 const LoginPage: React.FC = () => {
   const { formatMessage } = useLanguage();
   const { isMoodleIntegrationEnabled } = useFeatures();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [linkUsername, setLinkUsername] = useState('');
   const [linkPassword, setLinkPassword] = useState('');
   const [googleUserName, setGoogleUserName] = useState('');
@@ -36,10 +34,9 @@ const LoginPage: React.FC = () => {
   const router = useRouter();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const login = useLogin();
   const googleLogin = useGoogleLogin();
   const linkMoodle = useLinkMoodle();
-  const loading = login.isPending || googleLogin.isPending || linkMoodle.isPending;
+  const loading = googleLogin.isPending || linkMoodle.isPending;
 
   const handleGoogleSuccess = async (idToken: string): Promise<void> => {
     setError('');
@@ -92,41 +89,6 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const handleLogin = async (): Promise<void> => {
-    setError('');
-
-    if (!username.trim()) {
-      setError(formatMessage('login.enterUsernameError'));
-
-      return;
-    }
-
-    if (!password) {
-      setError(formatMessage('login.enterPasswordError'));
-
-      return;
-    }
-
-    try {
-      await login.mutateAsync({ username, password });
-      safeStorage.removeItem(STUDENT_PROFILE_STORAGE_KEY);
-      safeStorage.removeItem('userEmail');
-      safeStorage.setItem('authProvider', 'credentials');
-
-      toast.success(formatMessage('login.success'));
-      safeStorage.setItem('isLoggedIn', 'true');
-      useMoodleStore.getState().setLinked(true);
-      safeStorage.setItem('username', username.trim());
-
-      router.push('/');
-    } catch (err: unknown) {
-      const message = getErrorMessage(err, formatMessage('login.invalidCredentials'));
-
-      setError(message);
-      toast.error(message);
-    }
-  };
-
   const handleLinkMoodle = async (): Promise<void> => {
     setError('');
 
@@ -162,7 +124,7 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const handleSkipLinkMoodle = () => {
+  const handleSkipLinkMoodle = (): void => {
     safeStorage.setItem('isLoggedIn', 'true');
     useMoodleStore.getState().setLinked(false);
 
@@ -182,12 +144,29 @@ const LoginPage: React.FC = () => {
     endSession(queryClient);
   };
 
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  const ssoAction = googleClientId ? (
+    <div className={styles.googleSection}>
+      <GoogleLoginButton
+        onSuccess={handleGoogleSuccess}
+        onError={(msg) => setError(msg)}
+        disabled={loading}
+      />
+    </div>
+  ) : (
+    <div className={styles.configWarning}>
+      <p>{formatMessage('login.googleClientMissing')}</p>
+    </div>
+  );
+
   return (
     <div className={styles.page}>
       <div className={styles.toolbar}>
         <LanguageSwitcher variant="glass" />
         <ThemeSwitcher compact className={styles.themeTrigger} />
       </div>
+
       <div className={styles.center}>
         {isLinkingMoodle ? (
           <Form className={styles.card} action={handleLinkMoodle}>
@@ -265,65 +244,21 @@ const LoginPage: React.FC = () => {
             </div>
           </Form>
         ) : (
-          <Form className={styles.card} action={handleLogin}>
+          <section className={styles.card} aria-labelledby="login-title">
             <div className={styles.brand}>
-              <h1>{formatMessage('login.title')}</h1>
+              <h1 id="login-title">{formatMessage('login.title')}</h1>
               <p>{formatMessage('login.subtitle')}</p>
             </div>
 
-            {Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) && (
-              <>
-                <div className={styles.googleSection}>
-                  <GoogleLoginButton
-                    onSuccess={handleGoogleSuccess}
-                    onError={(msg) => setError(msg)}
-                    disabled={loading}
-                  />
-                </div>
+            <div className={styles.noticeBox} role="note">
+              <Info size={16} className={styles.noticeIcon} aria-hidden />
+              <p>{formatMessage('login.corporateNotice')}</p>
+            </div>
 
-                <div className={styles.divider}>
-                  <span>{formatMessage('login.orMoodle')}</span>
-                </div>
-              </>
-            )}
-
-            <AuthField
-              id="login-username"
-              name="username"
-              label={formatMessage('login.usernameOrEmail')}
-              placeholder={formatMessage('login.usernameOrEmail')}
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              autoComplete="username"
-              icon={<User size={16} />}
-            />
-
-            <AuthField
-              id="login-password"
-              name="password"
-              type="password"
-              label={formatMessage('login.password')}
-              placeholder={formatMessage('login.password')}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
-              icon={<Lock size={16} />}
-            />
+            {ssoAction}
 
             {error && <p className={styles.error}>{error}</p>}
-
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Button
-                type="submit"
-                variant="primary"
-                size="large"
-                disabled={loading}
-                className={styles.submit}
-              >
-                {loading ? formatMessage('login.loading') : formatMessage('login.submit')}
-              </Button>
-            </motion.div>
-          </Form>
+          </section>
         )}
       </div>
     </div>
