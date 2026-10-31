@@ -3,9 +3,13 @@ import { spawn } from 'node:child_process';
 /**
  * Launches the system default browser with the given URL.
  * @param {string} url
- * @param {typeof spawn} [spawnFn]
+ * @param {{
+ *   spawnFn?: typeof spawn;
+ *   onSpawn?: () => void;
+ *   onError?: (error: Error) => void;
+ * }} [options]
  */
-export function launchBrowser(url, spawnFn = spawn) {
+export function launchBrowser(url, { onSpawn, onError, spawnFn = spawn } = {}) {
   try {
     const isWindows = process.platform === 'win32';
     const isMac = process.platform === 'darwin';
@@ -16,8 +20,15 @@ export function launchBrowser(url, spawnFn = spawn) {
 
     if (child) {
       if (typeof child.once === 'function') {
-        child.once('error', () => {
-          // Non-critical if browser launch fails asynchronously
+        child.once('spawn', () => {
+          if (typeof onSpawn === 'function') {
+            onSpawn();
+          }
+        });
+        child.once('error', (err) => {
+          if (typeof onError === 'function') {
+            onError(err);
+          }
         });
       }
 
@@ -25,8 +36,10 @@ export function launchBrowser(url, spawnFn = spawn) {
         child.unref();
       }
     }
-  } catch {
-    // Non-critical if browser launch fails
+  } catch (err) {
+    if (typeof onError === 'function') {
+      onError(err);
+    }
   }
 }
 
@@ -125,12 +138,11 @@ export async function loginDevice({
         // Ignored
       }
     } else if (!process.env.NODE_TEST_CONTEXT && process.stdout.isTTY) {
-      try {
-        launchBrowser(verificationUri);
-        logger(`Opening ${verificationUri} in your default browser...`);
-      } catch {
-        // Ignored
-      }
+      launchBrowser(verificationUri, {
+        onSpawn: () => {
+          logger(`Opening ${verificationUri} in your default browser...`);
+        },
+      });
     }
   }
 

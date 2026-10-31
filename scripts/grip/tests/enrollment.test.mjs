@@ -288,6 +288,8 @@ test('setup defaults both --gateway and --client-id when omitted in migration', 
 test('isRetiredGripGateway identifies obsolete Northflank and code.run gateway endpoints', () => {
   assert.equal(isRetiredGripGateway('https://p01--backend-stage--djrwwgsr7dmx.code.run'), true);
   assert.equal(isRetiredGripGateway('https://my-service.northflank.app'), true);
+  assert.equal(isRetiredGripGateway('https://northflank.app'), true);
+  assert.equal(isRetiredGripGateway('https://northflank-proxy.example.com'), false);
   assert.equal(isRetiredGripGateway('https://api.universemvp.tech'), false);
   assert.equal(isRetiredGripGateway('http://localhost:3001'), false);
   assert.equal(isRetiredGripGateway(''), false);

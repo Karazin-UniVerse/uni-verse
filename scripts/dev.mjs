@@ -59,8 +59,11 @@ export function isRetiredGripGateway(url) {
 
   try {
     const parsed = new URL(url);
+    const host = parsed.hostname;
 
-    return parsed.hostname.endsWith('.code.run') || parsed.hostname.includes('northflank');
+    return (
+      host.endsWith('.code.run') || host === 'northflank.app' || host.endsWith('.northflank.app')
+    );
   } catch {
     return false;
   }

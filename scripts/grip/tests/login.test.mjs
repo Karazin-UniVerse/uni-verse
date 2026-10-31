@@ -156,15 +156,39 @@ test('loginDevice invokes openBrowserFn with verificationUri', async () => {
 });
 
 test('launchBrowser handles child error event without unhandled rejection or throw', async () => {
-  const child = new EventEmitter();
+  const childSuccess = new EventEmitter();
 
-  child.unref = () => {};
+  childSuccess.unref = () => {};
+  let spawned = false;
 
-  launchBrowser('https://github.com/login/device', () => {
-    process.nextTick(() => child.emit('error', new Error('spawn ENOENT')));
+  launchBrowser('https://github.com/login/device', {
+    spawnFn: () => {
+      process.nextTick(() => childSuccess.emit('spawn'));
 
-    return child;
+      return childSuccess;
+    },
+    onSpawn: () => {
+      spawned = true;
+    },
+  });
+
+  const childError = new EventEmitter();
+
+  childError.unref = () => {};
+  let errored = false;
+
+  launchBrowser('https://github.com/login/device', {
+    spawnFn: () => {
+      process.nextTick(() => childError.emit('error', new Error('spawn ENOENT')));
+
+      return childError;
+    },
+    onError: () => {
+      errored = true;
+    },
   });
 
   await new Promise((resolve) => setTimeout(resolve, 50));
+  assert.equal(spawned, true);
+  assert.equal(errored, true);
 });

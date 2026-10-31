@@ -105,7 +105,7 @@ When you run `git push origin <branch>`:
    Fails closed with exit code 1, requiring enrollment before pushing:
    ```
    [grip] Error: Grip pre-push check is mandatory for this repository, but you are not enrolled.
-   [grip] To enroll, run: pnpm grip:setup --client-id <id>
+   [grip] To enroll, run: pnpm grip:setup
    ```
 2. **CI Environment (`CI=true`)**:
    Automatically skips interactive checks.
