@@ -169,6 +169,8 @@ pnpm --filter @universe/ui storybook
 
 ## Google SSO & Corporate Domain Restriction
 
+Cloud Run deployment and GitHub Actions setup: [deployment guide](docs/deployment.md).
+
 UniVerse enforces strict institutional security policies:
 
 1. **Corporate Domain Whitelisting**:
