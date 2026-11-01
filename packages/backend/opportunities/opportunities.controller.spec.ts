@@ -60,6 +60,32 @@ describe('OpportunitiesController', () => {
       await controller.findAll(['MOODLE_STUDENT'], {} as any);
       expect(service.findAll).toHaveBeenCalledWith({}, ['MOODLE_STUDENT']);
     });
+
+    it('sets public Cache-Control header when query is for public catalog', async () => {
+      const mockRes = { setHeader: jest.fn() } as any;
+
+      await controller.findAll(['MOODLE_STUDENT'], {} as any, mockRes);
+
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Cache-Control',
+        'public, max-age=30, s-maxage=60, stale-while-revalidate=120',
+      );
+    });
+
+    it('sets private Cache-Control header when query status is non-published', async () => {
+      const mockRes = { setHeader: jest.fn() } as any;
+
+      await controller.findAll(
+        ['OPPORTUNITIES_MODERATOR'],
+        { status: OpportunityStatus.READY_FOR_REVIEW } as any,
+        mockRes,
+      );
+
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Cache-Control',
+        'private, no-cache, no-store, must-revalidate',
+      );
+    });
   });
 
   describe('getMyOpportunities', () => {
@@ -103,10 +129,47 @@ describe('OpportunitiesController', () => {
 
   describe('findOne', () => {
     it('delegates to service.findOne', async () => {
+      (service.findOne as jest.Mock).mockResolvedValue({
+        id: 'opp1',
+        status: OpportunityStatus.PUBLISHED,
+      });
+
       await controller.findOne('opp1', 'user1', ['MOODLE_STUDENT']);
       expect(service.findOne).toHaveBeenCalledWith('opp1', 'user1', [
         'MOODLE_STUDENT',
       ]);
+    });
+
+    it('sets public Cache-Control header when opportunity is published', async () => {
+      (service.findOne as jest.Mock).mockResolvedValue({
+        id: 'opp1',
+        status: OpportunityStatus.PUBLISHED,
+      });
+
+      const mockRes = { setHeader: jest.fn() } as any;
+
+      await controller.findOne('opp1', 'user1', ['MOODLE_STUDENT'], mockRes);
+
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Cache-Control',
+        'public, max-age=30, s-maxage=60, stale-while-revalidate=120',
+      );
+    });
+
+    it('sets private Cache-Control header when opportunity is non-published', async () => {
+      (service.findOne as jest.Mock).mockResolvedValue({
+        id: 'opp1',
+        status: OpportunityStatus.DRAFT,
+      });
+
+      const mockRes = { setHeader: jest.fn() } as any;
+
+      await controller.findOne('opp1', 'user1', ['MOODLE_STUDENT'], mockRes);
+
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Cache-Control',
+        'private, no-cache, no-store, must-revalidate',
+      );
     });
   });
 
