@@ -103,6 +103,7 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
         onSubmit={create.handleSubmit}
         submitting={create.creating}
         isEdit={create.isEdit}
+        remoderationWarning={create.willRemoderate}
       />
 
       <ApplyOpportunityModal

@@ -315,4 +315,77 @@ describe('CreateOpportunityModal Component', () => {
 
     expect(dialog).toHaveClass('custom-modal-class');
   });
+
+  it('disables and unchecks acceptsApplications checkbox for non-recruitment phases and resets it when switching to a non-recruitment phase', async () => {
+    const user = userEvent.setup();
+    const lifecycleOptions = [
+      { value: 'START' as const, label: 'Start' },
+      { value: 'ACTIVE' as const, label: 'Active' },
+      { value: 'PAUSED' as const, label: 'Paused' },
+      { value: 'COMPLETED' as const, label: 'Completed' },
+      { value: 'CANCELLED' as const, label: 'Cancelled' },
+    ];
+
+    const PhaseWrapper = () => {
+      const [formData, setFormData] = useState<CreateOpportunityFormData>({
+        ...initialFormData,
+        lifecycleState: 'ACTIVE',
+        acceptsApplications: true,
+      });
+
+      return (
+        <CreateOpportunityModal
+          {...defaultProps}
+          formData={formData}
+          setFormData={setFormData}
+          phaseLabel="Project phase"
+          lifecycleOptions={lifecycleOptions}
+          acceptsApplicationsLabel="Open recruitment"
+        />
+      );
+    };
+
+    render(<PhaseWrapper />);
+
+    const phaseSelect = screen.getByLabelText('Project phase');
+    const recruitmentCheckbox = screen.getByRole('checkbox', { name: 'Open recruitment' });
+
+    expect(recruitmentCheckbox).toBeEnabled();
+    expect(recruitmentCheckbox).toBeChecked();
+
+    await user.selectOptions(phaseSelect, 'PAUSED');
+
+    expect(recruitmentCheckbox).toBeDisabled();
+    expect(recruitmentCheckbox).not.toBeChecked();
+
+    await user.selectOptions(phaseSelect, 'COMPLETED');
+
+    expect(recruitmentCheckbox).toBeDisabled();
+    expect(recruitmentCheckbox).not.toBeChecked();
+
+    await user.selectOptions(phaseSelect, 'CANCELLED');
+
+    expect(recruitmentCheckbox).toBeDisabled();
+    expect(recruitmentCheckbox).not.toBeChecked();
+
+    await user.selectOptions(phaseSelect, 'START');
+
+    expect(recruitmentCheckbox).toBeEnabled();
+  });
+
+  it('renders remoderationWarning banner when remoderationWarning prop is provided', () => {
+    const warningMessage =
+      'Saving content changes will send the opportunity for re-moderation and temporarily hide it from the catalog.';
+
+    const { rerender } = render(<CreateOpportunityModal {...defaultProps} />);
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    rerender(<CreateOpportunityModal {...defaultProps} remoderationWarning={warningMessage} />);
+
+    const warningBanner = screen.getByRole('status');
+
+    expect(warningBanner).toBeInTheDocument();
+    expect(warningBanner).toHaveTextContent(warningMessage);
+  });
 });
