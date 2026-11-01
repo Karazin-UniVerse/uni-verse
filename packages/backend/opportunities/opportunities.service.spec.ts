@@ -1214,20 +1214,20 @@ describe('OpportunitiesService', () => {
       } as any);
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         id: '1',
-        lifecycleState: 'CLOSED',
+        lifecycleState: 'PAUSED',
       } as any);
 
       const result = await service.changeLifecycleState(
         'user-1',
         '1',
-        'CLOSED' as any,
+        'PAUSED',
       );
 
       expect(prisma.opportunity.update).toHaveBeenCalledWith({
         where: { id: '1' },
-        data: { lifecycleState: 'CLOSED', acceptsApplications: false },
+        data: { lifecycleState: 'PAUSED', acceptsApplications: false },
       });
-      expect(result.lifecycleState).toBe('CLOSED');
+      expect(result.lifecycleState).toBe('PAUSED');
     });
 
     it('leaves acceptsApplications untouched when changing to a recruitment phase', async () => {

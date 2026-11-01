@@ -402,6 +402,73 @@ describe('OpportunityDetailContent published opportunity controls', () => {
       'opp-published',
       expect.objectContaining({
         title: expect.stringContaining('Updated'),
+        lifecycleState: 'PAUSED',
+        acceptsApplications: false,
+      }),
+    );
+  });
+
+  it('submits lifecycleState and acceptsApplications without re-moderation warning when only phase changes', async () => {
+    const user = userEvent.setup();
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    vi.spyOn(opportunitiesApi, 'updateOpportunity').mockResolvedValue({
+      data: {
+        ...buildOpportunity('opp-published'),
+        status: 'PUBLISHED',
+        lifecycleState: 'PAUSED',
+        acceptsApplications: false,
+      },
+    } as never);
+
+    render(
+      <OpportunityDetailContent
+        opportunity={{
+          ...buildOpportunity('opp-published'),
+          status: 'PUBLISHED',
+          lifecycleState: 'ACTIVE',
+          acceptsApplications: true,
+        }}
+      />,
+      {
+        wrapper: ({ children }) => (
+          <QueryClientProvider client={queryClient}>
+            <ToastProvider>{children}</ToastProvider>
+          </QueryClientProvider>
+        ),
+      },
+    );
+
+    const editBtn = screen.getByRole('button', {
+      name: 'opportunities.detailModal.edit',
+    });
+
+    await user.click(editBtn);
+
+    const phaseSelect = screen.getByLabelText('opportunities.createModal.phaseLabel');
+    const recruitmentCheckbox = screen.getByRole('checkbox', {
+      name: 'opportunities.createModal.acceptsApplications',
+    });
+
+    await user.selectOptions(phaseSelect, 'PAUSED');
+
+    expect(recruitmentCheckbox).toBeDisabled();
+    expect(recruitmentCheckbox).not.toBeChecked();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    const submitBtn = screen.getByRole('button', {
+      name: 'opportunities.createModal.saveChanges',
+    });
+
+    await user.click(submitBtn);
+
+    expect(opportunitiesApi.updateOpportunity).toHaveBeenCalledWith(
+      'opp-published',
+      expect.objectContaining({
+        lifecycleState: 'PAUSED',
+        acceptsApplications: false,
       }),
     );
   });
