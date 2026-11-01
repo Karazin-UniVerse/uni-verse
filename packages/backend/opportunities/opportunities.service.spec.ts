@@ -1225,9 +1225,33 @@ describe('OpportunitiesService', () => {
 
       expect(prisma.opportunity.update).toHaveBeenCalledWith({
         where: { id: '1' },
-        data: { lifecycleState: 'CLOSED' },
+        data: { lifecycleState: 'CLOSED', acceptsApplications: false },
       });
       expect(result.lifecycleState).toBe('CLOSED');
+    });
+
+    it('leaves acceptsApplications untouched when changing to a recruitment phase', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        ownerId: 'user-1',
+      } as any);
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        id: '1',
+        lifecycleState: 'ACTIVE',
+      } as any);
+
+      const result = await service.changeLifecycleState(
+        'user-1',
+        '1',
+        'ACTIVE' as any,
+      );
+
+      expect(prisma.opportunity.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: { lifecycleState: 'ACTIVE' },
+      });
+      expect(result.lifecycleState).toBe('ACTIVE');
     });
   });
 

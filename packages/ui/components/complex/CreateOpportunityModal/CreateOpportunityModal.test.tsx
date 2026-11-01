@@ -371,6 +371,7 @@ describe('CreateOpportunityModal Component', () => {
     await user.selectOptions(phaseSelect, 'START');
 
     expect(recruitmentCheckbox).toBeEnabled();
+    expect(recruitmentCheckbox).not.toBeChecked();
   });
 
   it('renders remoderationWarning banner when remoderationWarning prop is provided', () => {

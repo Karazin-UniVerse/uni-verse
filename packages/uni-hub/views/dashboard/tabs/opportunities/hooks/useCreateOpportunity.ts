@@ -34,6 +34,7 @@ interface OpportunityUpdate {
 }
 
 export interface UseCreateOpportunityProps {
+  currentOpportunity?: Opportunity;
   onCreated?: () => void;
 }
 
@@ -51,6 +52,7 @@ interface UseCreateOpportunityResult {
 }
 
 export function useCreateOpportunity({
+  currentOpportunity,
   onCreated,
 }: UseCreateOpportunityProps): UseCreateOpportunityResult {
   const toast = useToast();
@@ -151,9 +153,14 @@ export function useCreateOpportunity({
     }
   };
 
+  const baselineOpportunity =
+    editingOpportunity && currentOpportunity?.id === editingOpportunity.id
+      ? currentOpportunity
+      : editingOpportunity;
+
   const willRemoderate =
-    editingOpportunity?.status === OPPORTUNITY_STATUS.PUBLISHED &&
-    hasOpportunityContentChanged(editingOpportunity, formData);
+    baselineOpportunity?.status === OPPORTUNITY_STATUS.PUBLISHED &&
+    hasOpportunityContentChanged(baselineOpportunity, formData);
 
   return {
     isOpen,

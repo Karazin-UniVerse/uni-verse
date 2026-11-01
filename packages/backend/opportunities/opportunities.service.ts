@@ -434,7 +434,12 @@ export class OpportunitiesService {
 
     return this.prisma.opportunity.update({
       where: { id },
-      data: { lifecycleState },
+      data: {
+        lifecycleState,
+        ...(!isRecruitmentPhase(lifecycleState)
+          ? { acceptsApplications: false }
+          : {}),
+      },
     });
   }
 

@@ -391,6 +391,19 @@ describe('OpportunityDetailContent published opportunity controls', () => {
     expect(screen.getByRole('status')).toHaveTextContent(
       'opportunities.createModal.remoderationWarning',
     );
+
+    const submitBtn = screen.getByRole('button', {
+      name: 'opportunities.createModal.saveChanges',
+    });
+
+    await user.click(submitBtn);
+
+    expect(opportunitiesApi.updateOpportunity).toHaveBeenCalledWith(
+      'opp-published',
+      expect.objectContaining({
+        title: expect.stringContaining('Updated'),
+      }),
+    );
   });
 
   it('does not render phase select or accepts applications checkbox directly on detail page', () => {
