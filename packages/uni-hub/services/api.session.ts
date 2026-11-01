@@ -25,6 +25,7 @@ export function clearUserSessionStorage(): void {
 }
 
 export function endSession(queryClient: QueryClient): void {
+  void queryClient.cancelQueries();
   clearUserSessionStorage();
   queryClient.clear();
 }
