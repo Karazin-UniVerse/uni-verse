@@ -3,7 +3,7 @@ import { getGripConfig, GripConfigException } from '../grip.config';
 describe('grip.config', () => {
   const validBaseEnv: NodeJS.ProcessEnv = {
     GRIP_GATEWAY_ENABLED: 'true',
-    GEMINI_API_KEY: 'test-gemini-secret-key-12345',
+    GEMINI_API_KEYS: 'test-gemini-secret-key-12345',
     GRIP_GEMINI_MODEL: 'gemini-3.5-flash-lite',
     GRIP_GEMINI_BASE_URL:
       'https://generativelanguage.googleapis.com/v1beta/openai',
@@ -24,7 +24,7 @@ describe('grip.config', () => {
 
   it('enabled incomplete config fails without exposing values', () => {
     const requiredKeys: (keyof typeof validBaseEnv)[] = [
-      'GEMINI_API_KEY',
+      'GEMINI_API_KEYS',
       'GRIP_GEMINI_MODEL',
       'GRIP_GEMINI_BASE_URL',
       'GRIP_GITHUB_API_URL',
@@ -97,5 +97,49 @@ describe('grip.config', () => {
     expect(config?.geminiBaseUrl).toBe('http://127.0.0.1:9099/v1');
     expect(config?.githubApiUrl).toBe('http://localhost:9098');
     expect(config?.trustedProxyAddresses).toEqual(['127.0.0.1', '::1']);
+  });
+
+  it.each([
+    [' first-key ', ['first-key']],
+    [' first-key , second-key ', ['first-key', 'second-key']],
+  ])('parses and trims the configured key pool %s', (value, keys) => {
+    expect(
+      getGripConfig({ ...validBaseEnv, GEMINI_API_KEYS: value }),
+    ).toMatchObject({
+      geminiApiKeys: keys,
+    });
+  });
+
+  it.each([
+    '',
+    ' ',
+    'first-key,',
+    ',first-key',
+    'first-key,first-key',
+    'first key',
+    'first\nkey',
+  ])('rejects invalid key lists without exposing secrets: %j', (value) => {
+    expect(() =>
+      getGripConfig({ ...validBaseEnv, GEMINI_API_KEYS: value }),
+    ).toThrow(GripConfigException);
+
+    try {
+      getGripConfig({ ...validBaseEnv, GEMINI_API_KEYS: value });
+    } catch (error) {
+      expect((error as Error).message).not.toContain('first');
+    }
+  });
+
+  it('does not accept a legacy-only secret and ignores malformed disabled configuration', () => {
+    expect(() =>
+      getGripConfig({
+        ...validBaseEnv,
+        GEMINI_API_KEYS: undefined,
+        GEMINI_API_KEY: 'legacy-key',
+      }),
+    ).toThrow(GripConfigException);
+    expect(
+      getGripConfig({ GRIP_GATEWAY_ENABLED: 'false', GEMINI_API_KEYS: ',' }),
+    ).toBeNull();
   });
 });

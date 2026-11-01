@@ -8,3 +8,8 @@ coverage
 *.log
 .turbo
 .idea
+gha-creds-*.json
+.env
+.env.*
+**/.env
+**/.env.*

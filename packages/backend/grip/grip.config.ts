@@ -45,7 +45,9 @@ export function getGripConfig(env: NodeJS.ProcessEnv): GripConfig | null {
     return null;
   }
 
-  const geminiApiKey = env.GEMINI_API_KEY?.trim();
+  const geminiApiKeys = env.GEMINI_API_KEYS?.split(',').map((key) =>
+    key.trim(),
+  );
   const geminiModel = env.GRIP_GEMINI_MODEL?.trim();
   const geminiBaseUrl = env.GRIP_GEMINI_BASE_URL?.trim();
   const githubApiUrl = env.GRIP_GITHUB_API_URL?.trim();
@@ -55,7 +57,7 @@ export function getGripConfig(env: NodeJS.ProcessEnv): GripConfig | null {
   const githubRepository = env.GRIP_GITHUB_REPOSITORY?.trim();
 
   if (
-    !geminiApiKey ||
+    !geminiApiKeys ||
     !geminiModel ||
     !geminiBaseUrl ||
     !githubApiUrl ||
@@ -66,6 +68,15 @@ export function getGripConfig(env: NodeJS.ProcessEnv): GripConfig | null {
   ) {
     throw new GripConfigException(
       'Grip gateway is enabled but misconfigured: missing required settings',
+    );
+  }
+
+  if (
+    geminiApiKeys.some((key) => !key || /\s/.test(key)) ||
+    new Set(geminiApiKeys).size !== geminiApiKeys.length
+  ) {
+    throw new GripConfigException(
+      'Grip gateway is enabled but misconfigured: invalid GEMINI_API_KEYS',
     );
   }
 
@@ -86,7 +97,7 @@ export function getGripConfig(env: NodeJS.ProcessEnv): GripConfig | null {
 
   return {
     enabled: true,
-    geminiApiKey,
+    geminiApiKeys,
     geminiModel,
     geminiBaseUrl,
     githubApiUrl,

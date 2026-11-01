@@ -10,7 +10,7 @@ describe('GithubClientService', () => {
   let service: GithubClientService;
   const mockConfig: GripConfig = {
     enabled: true,
-    geminiApiKey: 'gemini-key',
+    geminiApiKeys: ['gemini-key'],
     geminiModel: 'gemini-3.5-flash-lite',
     geminiBaseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
     githubApiUrl: 'https://api.github.com',

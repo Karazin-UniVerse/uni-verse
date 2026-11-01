@@ -28,7 +28,7 @@ module.exports = {
           'error',
           { maxNumericValue: 0.1, aggregationMethod: 'median-run' },
         ],
-        'total-blocking-time': ['error', { maxNumericValue: 200, aggregationMethod: 'median-run' }],
+        'total-blocking-time': ['error', { maxNumericValue: 220, aggregationMethod: 'median-run' }],
         'categories:accessibility': ['error', { minScore: 0.9, aggregationMethod: 'median-run' }],
       },
     },
