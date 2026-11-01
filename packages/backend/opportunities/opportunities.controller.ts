@@ -36,6 +36,21 @@ import {
 } from '@universe/database';
 import { Public } from '../auth/decorators/public.decorator';
 
+const CACHE_CONTROL_HEADER = 'Cache-Control';
+const PUBLIC_CACHE_CONTROL =
+  'public, max-age=30, s-maxage=60, stale-while-revalidate=120';
+const PRIVATE_CACHE_CONTROL = 'private, no-cache, no-store, must-revalidate';
+
+function setOpportunityCacheControl(
+  res: Response | undefined,
+  isPublic: boolean,
+): void {
+  res?.setHeader(
+    CACHE_CONTROL_HEADER,
+    isPublic ? PUBLIC_CACHE_CONTROL : PRIVATE_CACHE_CONTROL,
+  );
+}
+
 @ApiTags('Opportunities')
 @Controller('opportunities')
 export class OpportunitiesController {
@@ -68,22 +83,13 @@ export class OpportunitiesController {
     @Query() query: FindOpportunitiesDto,
     @Res({ passthrough: true }) res?: Response,
   ): Promise<OpportunityWithOwner[]> {
+    const opportunities = await this.opportunitiesService.findAll(query, roles);
     const isPublicCatalog =
       !query.status || query.status === OpportunityStatus.PUBLISHED;
 
-    if (isPublicCatalog) {
-      res?.setHeader(
-        'Cache-Control',
-        'public, max-age=30, s-maxage=60, stale-while-revalidate=120',
-      );
-    } else {
-      res?.setHeader(
-        'Cache-Control',
-        'private, no-cache, no-store, must-revalidate',
-      );
-    }
+    setOpportunityCacheControl(res, isPublicCatalog);
 
-    return this.opportunitiesService.findAll(query, roles);
+    return opportunities;
   }
 
   @ApiBearerAuth()
@@ -148,17 +154,10 @@ export class OpportunitiesController {
       roles,
     );
 
-    if (opportunity.status === OpportunityStatus.PUBLISHED) {
-      res?.setHeader(
-        'Cache-Control',
-        'public, max-age=30, s-maxage=60, stale-while-revalidate=120',
-      );
-    } else {
-      res?.setHeader(
-        'Cache-Control',
-        'private, no-cache, no-store, must-revalidate',
-      );
-    }
+    setOpportunityCacheControl(
+      res,
+      opportunity.status === OpportunityStatus.PUBLISHED,
+    );
 
     return opportunity;
   }
