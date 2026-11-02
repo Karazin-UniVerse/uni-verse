@@ -161,14 +161,10 @@ export const TagInput: React.FC<TagInputProps> = ({
       return;
     }
 
-    if (event.key === 'Escape') {
-      if (isOpen) {
-        event.stopPropagation();
-        setIsOpen(false);
-        setActiveIndex(-1);
-      }
-
-      return;
+    if (event.key === 'Escape' && isOpen) {
+      event.stopPropagation();
+      setIsOpen(false);
+      setActiveIndex(-1);
     }
   };
 
@@ -179,10 +175,7 @@ export const TagInput: React.FC<TagInputProps> = ({
 
   return (
     <div ref={rootRef} className={clsx(styles.root, className)}>
-      <div
-        className={clsx(styles.field, disabled && styles.disabled)}
-        onMouseDown={() => inputRef.current?.focus()}
-      >
+      <div className={clsx(styles.field, disabled && styles.disabled)}>
         {safeValue.map((tag) => (
           <Tag key={tag} tone="info" className={styles.chip}>
             <span>{tag}</span>
