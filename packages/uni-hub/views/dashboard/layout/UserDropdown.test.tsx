@@ -209,4 +209,40 @@ describe('UserDropdown', () => {
     expect(screen.getByText('КС-31')).toBeInTheDocument();
     expect(screen.getByText(fallbackStudentProfile.email)).toBeInTheDocument();
   });
+
+  it('should keep the logout button visible on desktop even when profile is null and Moodle is disabled', async () => {
+    const user = userEvent.setup();
+    const stylesheet = document.createElement('style');
+
+    stylesheet.textContent = dashboardCss;
+    document.head.append(stylesheet);
+    const originalWidth = window.innerWidth;
+
+    window.innerWidth = BREAKPOINTS.lg;
+
+    try {
+      render(
+        withAppProviders(
+          <UserDropdown
+            activeStudentProfile={null}
+            soundEnabled={true}
+            onToggleSound={vi.fn()}
+            onLogout={vi.fn()}
+            isMoodleIntegrationEnabled={false}
+          />,
+        ),
+      );
+
+      const trigger = screen.getByRole('button', { name: /меню профілю користувача/i });
+
+      await user.click(trigger);
+
+      const logoutButton = screen.getByRole('button', { name: /вийти/i });
+
+      expect(logoutButton).toBeVisible();
+    } finally {
+      stylesheet.remove();
+      window.innerWidth = originalWidth;
+    }
+  });
 });
