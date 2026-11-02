@@ -80,7 +80,7 @@ for (const line of diff.split('\n')) {
 
 const findings = [];
 const flag = (rule, f, detail = '') => findings.push({ rule, file: f, detail });
-const isTest = (f) => /\.(test|spec)\.|_test\.|test_/.test(f);
+const isTest = (f) => /\.(test|spec)\.|_test\.|test_|(^|\/)(tests?|__tests__)\//i.test(f);
 const isConstraints = (f) => /CONSTRAINTS\.md$/.test(f);
 const isDoc = (f) => /\.(md|markdown|txt)$/i.test(f);
 
@@ -138,6 +138,11 @@ const MIN_BEFORE = /(>=|>|≥|at least|minimum|\bmin\b|no less than|not fall|not
 const MAX_BEFORE = /(<=|<|≤|at most|maximum|\bmax\b|no more than|under|below|not grow|not exceed)\s*$/;
 const MIN_AFTER = /^\s*\S*\s*(?:\|\s*)?(or more|or higher|must not fall|must not drop)/;
 const MAX_AFTER = /^\s*\S*\s*(?:\|\s*)?(or less|or lower|must not grow|must not exceed)/;
+const SEVERITY_LEVELS = { blocking: 3, error: 3, mandatory: 3, warn: 2, warning: 2, advisory: 1, info: 1, optional: 1 };
+const getSeverity = (t) => {
+  const m = t.match(/\b(blocking|mandatory|error|warn(?:ing)?|advisory|info|optional)\b/i);
+  return m ? SEVERITY_LEVELS[m[1].toLowerCase()] : null;
+};
 const thresholds = (t) => {
   const out = [], re = /\d+(?:\.\d+)?/g;
   let m;
@@ -172,6 +177,12 @@ for (const r of removedRules) {
       }
     });
   }
+  if (!verdict) {
+    const wasSev = getSeverity(r.text), nowSev = getSeverity(a.text);
+    if (wasSev !== null && nowSev !== null && nowSev < wasSev) {
+      verdict = 'severity-dropped';
+    }
+  }
   if (verdict) flag(verdict, r.file, `[key: ${ruleKey(r.text)}]`);
 }
 
@@ -183,6 +194,9 @@ if (findings.some((f) => f.rule === 'rule-removed')) {
 }
 if (findings.some((f) => f.rule === 'threshold-removed')) {
   console.error('\nA threshold-removed finding can also mean a number gained or lost its direction words (">= 80%" becoming "80%", or the reverse): compare the two lines before assuming a threshold was deleted.');
+}
+if (findings.some((f) => f.rule === 'severity-dropped')) {
+  console.error('\nA severity-dropped finding means a constraint was downgraded (e.g. blocking to advisory). Keep constraints blocking or track an exception.');
 }
 console.error('\nEach is a move that lowers the bar. Fix the code, or route it through a tracked exception.');
 process.exit(1);

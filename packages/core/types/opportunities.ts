@@ -92,3 +92,11 @@ export interface GetOpportunitiesParams {
   ownerId?: string;
   search?: string;
 }
+
+export interface OpportunityContentFields {
+  title?: string;
+  description?: string;
+  ownerContactInfo?: string;
+  paymentType?: OpportunityPaymentType;
+  paymentDetails?: string | null;
+}
