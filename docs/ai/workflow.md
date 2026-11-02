@@ -55,6 +55,14 @@ pnpm exec prettier --check <files you changed>
 - `pnpm exec oxlint --fix` fixes vertical-spacing violations automatically.
 - Format the lockfile with `pnpm exec prettier --write pnpm-lock.yaml`.
 
+### Adversarial Review & High-Stakes Logic
+
+When modifying high-impact or security-sensitive components (such as grade calculation algorithms, authentication/session management, or irreversible Prisma schema changes), invoke the `doubt-driven-development` skill before opening a PR to stress-test assumptions and expose hidden edge cases. For authentication/session changes and irreversible Prisma schema changes, invoke this skill even when its "When NOT to use" exclusions would otherwise apply.
+
+### Database & API Migrations
+
+When migrating Prisma models or deprecating API endpoints, follow the `deprecation-and-migration` skill using expand-and-contract patterns to ensure zero downtime.
+
 ## Documentation
 
 - Documentation is in English.
