@@ -8,7 +8,6 @@ import {
   Delete,
   Query,
   ForbiddenException,
-  Delete,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import {
