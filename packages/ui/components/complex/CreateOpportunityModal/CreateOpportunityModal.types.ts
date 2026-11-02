@@ -37,6 +37,7 @@ export type CreateOpportunityModalProps = {
   contactHint?: string;
   acceptsApplicationsLabel?: string;
   phaseLabel?: string;
+  remoderationWarning?: string;
   lifecycleOptions?: OpportunityLifecycleOption[];
   tagsLabel?: string;
   tagsPlaceholder?: string;

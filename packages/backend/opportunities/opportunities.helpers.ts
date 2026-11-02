@@ -4,9 +4,9 @@ import {
   ValidationArguments,
 } from 'class-validator';
 import { isValidContactInfo } from '@universe/core/utils/contacts';
+import { normalizeOpportunityContent } from '@universe/core/utils/opportunities';
 import { createHash } from 'node:crypto';
 import type { Opportunity } from '@universe/database';
-import { OPPORTUNITY_PAYMENT_TYPE } from '@universe/core/constants/opportunities';
 
 export function getOpportunityContentHash(
   opportunity: Pick<
@@ -19,15 +19,7 @@ export function getOpportunityContentHash(
     | 'proposedTags'
   >,
 ): string {
-  const content = [
-    opportunity.title.trim(),
-    opportunity.description.trim(),
-    opportunity.ownerContactInfo.trim(),
-    opportunity.paymentType,
-    opportunity.paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID
-      ? opportunity.paymentDetails?.trim() || null
-      : null,
-  ];
+  const content = normalizeOpportunityContent(opportunity);
 
   const tags = [...opportunity.proposedTags].sort((firstTag, secondTag) =>
     firstTag.localeCompare(secondTag),

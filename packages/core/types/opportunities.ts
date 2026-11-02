@@ -102,3 +102,11 @@ export interface GetOpportunitiesParams {
   tags?: string[];
   isRecruiting?: boolean;
 }
+
+export interface OpportunityContentFields {
+  title?: string;
+  description?: string;
+  ownerContactInfo?: string;
+  paymentType?: OpportunityPaymentType;
+  paymentDetails?: string | null;
+}

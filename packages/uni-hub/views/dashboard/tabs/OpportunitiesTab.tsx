@@ -169,6 +169,7 @@ export const OpportunitiesTab: React.FC = () => {
         onSubmit={create.handleSubmit}
         submitting={create.creating}
         isEdit={create.isEdit}
+        remoderationWarning={create.willRemoderate}
       />
 
       <ApplicantsModal

@@ -5,22 +5,19 @@ import { TextInput } from '../../una/inputs/TextInput';
 import { CheckBox } from '../../una/inputs/CheckBox';
 import { Select } from '../../una/Select';
 import { TagInput } from '../../una/inputs/TagInput';
-import {
-  OPPORTUNITY_RECRUITING_LIFECYCLES,
-  type OpportunityLifecycle,
-  type OpportunityPaymentType,
-} from '@core/constants/opportunities';
+import { StatusBanner } from '../StatusBanner';
+import { isRecruitmentPhase } from '@core/utils/opportunities';
+import type { OpportunityLifecycle, OpportunityPaymentType } from '@core/constants/opportunities';
 import type { CreateOpportunityModalProps } from './CreateOpportunityModal.types';
 import styles from './CreateOpportunityModal.module.scss';
 
 export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   open,
   onClose,
+  title,
   formData,
   setFormData,
   onSubmit,
-  className,
-  title,
   titleLabel,
   titlePlaceholder,
   descLabel,
@@ -42,6 +39,8 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   tagsPlaceholder,
   loadTagSuggestions,
   formatCreateTagLabel,
+  remoderationWarning,
+  className,
   removeTagLabel = '',
   lifecycleOptions = [],
   submitting = false,
@@ -54,9 +53,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   const paymentDetailsId = useId();
   const phaseSelectId = useId();
   const tagsId = useId();
-  const canAcceptApplications = Boolean(
-    formData.lifecycleState && OPPORTUNITY_RECRUITING_LIFECYCLES.includes(formData.lifecycleState),
-  );
+  const canAcceptApplications = isRecruitmentPhase(formData.lifecycleState);
 
   return (
     <Modal open={open} onClose={onClose} title={title} width={560} className={className}>
@@ -158,17 +155,13 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
               aria-label={phaseLabel}
               value={formData.lifecycleState ?? ''}
               onChange={(val) =>
-                setFormData((prev) => {
-                  const lifecycleState = val as OpportunityLifecycle;
-
-                  return {
-                    ...prev,
-                    lifecycleState,
-                    acceptsApplications:
-                      prev.acceptsApplications &&
-                      OPPORTUNITY_RECRUITING_LIFECYCLES.includes(lifecycleState),
-                  };
-                })
+                setFormData((prev) => ({
+                  ...prev,
+                  lifecycleState: val as OpportunityLifecycle,
+                  acceptsApplications: isRecruitmentPhase(val as OpportunityLifecycle)
+                    ? prev.acceptsApplications
+                    : false,
+                }))
               }
               options={lifecycleOptions}
             />
@@ -180,8 +173,8 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
             <label className={styles.checkboxLabel}>
               <CheckBox
                 variant="primary"
-                checked={canAcceptApplications && Boolean(formData.acceptsApplications)}
                 disabled={!canAcceptApplications}
+                checked={canAcceptApplications && (formData.acceptsApplications ?? true)}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -210,6 +203,9 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
             />
           </div>
         )}
+
+        {remoderationWarning && <StatusBanner tone="warning">{remoderationWarning}</StatusBanner>}
+
         <div className={styles.modalFooter}>
           <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
             {cancelText}

@@ -36,6 +36,10 @@ import {
 } from '@universe/core/constants/opportunities';
 import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 import {
+  hasOpportunityContentChanged,
+  isRecruitmentPhase,
+} from '@universe/core/utils/opportunities';
+import {
   NOTIFICATION_TYPE,
   OPPORTUNITY_NOTIFICATION_KEY,
 } from '@universe/core/constants/notifications';
@@ -132,10 +136,14 @@ export class OpportunitiesService {
     dto: CreateOpportunityDto,
   ): Promise<Opportunity> {
     const { tags, ...rest } = dto;
+    const acceptsApplications = isRecruitmentPhase(dto.lifecycleState)
+      ? dto.acceptsApplications
+      : false;
 
     return this.prisma.opportunity.create({
       data: {
         ...rest,
+        ...(acceptsApplications !== undefined ? { acceptsApplications } : {}),
         ownerContactInfo: dto.ownerContactInfo?.trim() ?? '',
         proposedTags: normalizeTags(tags ?? []),
         ownerId: userId,
@@ -258,28 +266,22 @@ export class OpportunitiesService {
       );
     }
 
-    if (
-      dto.acceptsApplications === true &&
-      !RECRUITING_LIFECYCLE_STATES.includes(opportunity.lifecycleState)
-    ) {
-      throw new BadRequestException(
-        'Recruitment can only be enabled in START or ACTIVE phase',
-      );
-    }
-
     const { tags, ...rest } = dto;
-
-    const hasContentChanges =
-      dto.title !== undefined ||
-      dto.description !== undefined ||
-      dto.ownerContactInfo !== undefined ||
-      dto.paymentType !== undefined ||
-      dto.paymentDetails !== undefined ||
-      tags !== undefined;
+    const hasContentChanges = hasOpportunityContentChanged(opportunity, dto);
 
     const data: Prisma.OpportunityUpdateInput = { ...rest };
 
     if (tags !== undefined) data.proposedTags = normalizeTags(tags);
+
+    const nextLifecycleState = dto.lifecycleState ?? opportunity.lifecycleState;
+
+    if (
+      !isRecruitmentPhase(nextLifecycleState) &&
+      (dto.lifecycleState !== undefined ||
+        dto.acceptsApplications !== undefined)
+    ) {
+      data.acceptsApplications = false;
+    }
 
     if (dto.ownerContactInfo !== undefined) {
       data.ownerContactInfo = dto.ownerContactInfo.trim();
@@ -459,9 +461,9 @@ export class OpportunitiesService {
       where: { id },
       data: {
         lifecycleState,
-        ...(!RECRUITING_LIFECYCLE_STATES.includes(lifecycleState) && {
-          acceptsApplications: false,
-        }),
+        ...(!isRecruitmentPhase(lifecycleState)
+          ? { acceptsApplications: false }
+          : {}),
       },
     });
   }

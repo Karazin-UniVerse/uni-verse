@@ -15,6 +15,7 @@ export interface CreateOpportunityModalProps {
   onSubmit: (e: React.SyntheticEvent<HTMLFormElement>) => void;
   submitting: boolean;
   isEdit?: boolean;
+  remoderationWarning?: boolean;
 }
 
 export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
@@ -25,6 +26,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   onSubmit,
   submitting,
   isEdit = false,
+  remoderationWarning = false,
 }) => {
   const { formatMessage } = useLanguage();
 
@@ -86,10 +88,15 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
       removeTagLabel={formatMessage('opportunities.tags.remove')}
       formatCreateTagLabel={(tag) => formatMessage('opportunities.tags.create', { tag })}
       loadTagSuggestions={async (query) => {
-        const res = await opportunitiesApi.getTagSuggestions(query);
+        const response = await opportunitiesApi.getTagSuggestions(query);
 
-        return res.data.map((t) => t.name);
+        return response.data.map((tag) => tag.name);
       }}
+      remoderationWarning={
+        remoderationWarning
+          ? formatMessage('opportunities.createModal.remoderationWarning')
+          : undefined
+      }
       cancelText={formatMessage('opportunities.createModal.cancel')}
       submitText={
         isEdit
