@@ -29,7 +29,9 @@ export function getOpportunityContentHash(
       : null,
   ];
 
-  const tags = [...opportunity.proposedTags].sort();
+  const tags = [...opportunity.proposedTags].sort((firstTag, secondTag) =>
+    firstTag.localeCompare(secondTag),
+  );
   const hashedContent = tags.length ? [...content, tags] : content;
 
   return createHash('sha256')

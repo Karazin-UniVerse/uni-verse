@@ -176,7 +176,7 @@ export const TagInput: React.FC<TagInputProps> = ({
     <div ref={rootRef} className={clsx(styles.root, className)}>
       <div
         className={clsx(styles.field, disabled && styles.disabled)}
-        onClick={() => inputRef.current?.focus()}
+        onMouseDown={() => inputRef.current?.focus()}
       >
         {safeValue.map((tag) => (
           <Tag key={tag} tone="info" className={styles.chip}>
@@ -222,6 +222,7 @@ export const TagInput: React.FC<TagInputProps> = ({
             <div
               key={`${option.isNew ? 'new' : 'existing'}-${option.name}`}
               role="option"
+              tabIndex={-1}
               aria-selected={index === activeIndex}
               className={clsx(styles.item, index === activeIndex && styles.itemActive)}
               onMouseDown={(event) => event.preventDefault()}

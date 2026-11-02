@@ -104,13 +104,13 @@ export function filterOpportunitiesByTags(
     return opportunities;
   }
 
-  const normalizedFilters = tags.map((tag) => tag.toLowerCase());
+  const normalizedFilters = new Set(tags.map((tag) => tag.toLowerCase()));
 
   return opportunities.filter((opportunity) => {
     const tagNames = (opportunity.tags?.map((tag) => tag.name.toLowerCase()) ?? []).concat(
       opportunity.proposedTags?.map((tag) => tag.toLowerCase()) ?? [],
     );
 
-    return tagNames.some((name) => normalizedFilters.includes(name));
+    return tagNames.some((name) => normalizedFilters.has(name));
   });
 }
