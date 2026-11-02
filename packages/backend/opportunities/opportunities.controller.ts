@@ -7,8 +7,10 @@ import {
   Put,
   Delete,
   Query,
+  Res,
   ForbiddenException,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import {
   OpportunitiesService,
@@ -28,8 +30,27 @@ import {
   FindOpportunitiesDto,
 } from './dto';
 import { GetUser } from '../auth/decorators/get-user.decorator';
-import { Opportunity, OpportunityApplication } from '@universe/database';
+import {
+  Opportunity,
+  OpportunityApplication,
+  OpportunityStatus,
+} from '@universe/database';
 import { Public } from '../auth/decorators/public.decorator';
+
+const CACHE_CONTROL_HEADER = 'Cache-Control';
+const PUBLIC_CACHE_CONTROL =
+  'public, max-age=30, s-maxage=60, stale-while-revalidate=120';
+const PRIVATE_CACHE_CONTROL = 'private, no-cache, no-store, must-revalidate';
+
+function setOpportunityCacheControl(
+  res: Response | undefined,
+  isPublic: boolean,
+): void {
+  res?.setHeader(
+    CACHE_CONTROL_HEADER,
+    isPublic ? PUBLIC_CACHE_CONTROL : PRIVATE_CACHE_CONTROL,
+  );
+}
 
 @ApiTags('Opportunities')
 @Controller('opportunities')
@@ -58,11 +79,18 @@ export class OpportunitiesController {
    * Get all published opportunities (or filter)
    */
   @ApiOperation({ summary: 'Get all published opportunities (or filter)' })
-  findAll(
+  async findAll(
     @GetUser('roles') roles: string[] | undefined,
     @Query() query: FindOpportunitiesDto,
+    @Res({ passthrough: true }) res?: Response,
   ): Promise<OpportunityWithOwner[]> {
-    return this.opportunitiesService.findAll(query, roles);
+    const opportunities = await this.opportunitiesService.findAll(query, roles);
+    const isPublicCatalog =
+      !query.status || query.status === OpportunityStatus.PUBLISHED;
+
+    setOpportunityCacheControl(res, isPublicCatalog);
+
+    return opportunities;
   }
 
   @ApiBearerAuth()
@@ -115,12 +143,24 @@ export class OpportunitiesController {
    * Get opportunity by ID
    */
   @ApiOperation({ summary: 'Get opportunity by ID' })
-  findOne(
+  async findOne(
     @Param('id') id: string,
     @GetUser('sub') userId?: string,
     @GetUser('roles') roles?: string[],
+    @Res({ passthrough: true }) res?: Response,
   ): Promise<OpportunityWithSubscription> {
-    return this.opportunitiesService.findOneWithSubscription(id, userId, roles);
+    const opportunity = await this.opportunitiesService.findOneWithSubscription(
+      id,
+      userId,
+      roles,
+    );
+
+    setOpportunityCacheControl(
+      res,
+      opportunity.status === OpportunityStatus.PUBLISHED,
+    );
+
+    return opportunity;
   }
 
   @ApiBearerAuth()
