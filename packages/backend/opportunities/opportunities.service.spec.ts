@@ -1244,7 +1244,7 @@ describe('OpportunitiesService', () => {
       const result = await service.changeLifecycleState(
         'user-1',
         '1',
-        'ACTIVE' as any,
+        'ACTIVE',
       );
 
       expect(prisma.opportunity.update).toHaveBeenCalledWith({

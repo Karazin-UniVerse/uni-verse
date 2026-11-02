@@ -386,11 +386,19 @@ describe('OpportunityDetailContent published opportunity controls', () => {
 
     const titleInput = screen.getByLabelText('opportunities.createModal.titleLabel');
 
+    expect(titleInput).toHaveValue('Opportunity opp-published');
+
     await user.type(titleInput, ' Updated');
 
     expect(screen.getByRole('status')).toHaveTextContent(
       'opportunities.createModal.remoderationWarning',
     );
+
+    await user.type(titleInput, '{backspace}'.repeat(' Updated'.length));
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    await user.type(titleInput, ' Updated');
 
     const submitBtn = screen.getByRole('button', {
       name: 'opportunities.createModal.saveChanges',
@@ -401,7 +409,7 @@ describe('OpportunityDetailContent published opportunity controls', () => {
     expect(opportunitiesApi.updateOpportunity).toHaveBeenCalledWith(
       'opp-published',
       expect.objectContaining({
-        title: expect.stringContaining('Updated'),
+        title: 'Opportunity opp-published Updated',
         lifecycleState: 'PAUSED',
         acceptsApplications: false,
       }),
