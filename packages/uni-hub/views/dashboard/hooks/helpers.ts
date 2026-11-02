@@ -382,6 +382,46 @@ export function syncStudentProfile(profileData?: StudentProfile | null): void {
   }
 }
 
+export interface StoredSsoIdentity {
+  email: string;
+  fullName?: string;
+}
+
+/**
+ * Resolves the stored corporate Google SSO identity (fullName and email) from session storage.
+ */
+export function resolveStoredSsoIdentity(
+  sessionSnapshot?: StoredSessionIdentity | null,
+): StoredSsoIdentity | null {
+  if (!isBrowser) {
+    return null;
+  }
+
+  try {
+    const authProvider = sessionSnapshot?.authProvider ?? safeStorage.getItem('authProvider');
+
+    if (authProvider === 'credentials') {
+      return null;
+    }
+
+    const savedEmail =
+      sessionSnapshot?.userEmail ?? safeStorage.getItem('userEmail') ?? getSessionEmail();
+
+    if (!savedEmail) {
+      return null;
+    }
+
+    const savedUser = sessionSnapshot?.username ?? safeStorage.getItem('username');
+
+    return {
+      fullName: savedUser || undefined,
+      email: savedEmail,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Overlays the stored corporate Google identity (fullName and email) onto a fetched
  * Moodle profile while retaining all Moodle academic fields.
@@ -390,35 +430,17 @@ export function applyStoredIdentityToProfile(
   profileData: StudentProfile,
   sessionSnapshot?: StoredSessionIdentity | null,
 ): StudentProfile {
-  if (!isBrowser) {
+  const ssoIdentity = resolveStoredSsoIdentity(sessionSnapshot);
+
+  if (!ssoIdentity) {
     return profileData;
   }
 
-  try {
-    const authProvider = sessionSnapshot?.authProvider ?? safeStorage.getItem('authProvider');
-
-    if (authProvider === 'credentials') {
-      return profileData;
-    }
-
-    const savedEmail =
-      sessionSnapshot?.userEmail ?? safeStorage.getItem('userEmail') ?? getSessionEmail();
-
-    if (!savedEmail) {
-      return profileData;
-    }
-
-    const savedUser = sessionSnapshot?.username ?? safeStorage.getItem('username');
-    const fullName = savedUser || profileData.fullName;
-
-    return {
-      ...profileData,
-      fullName,
-      email: savedEmail,
-    };
-  } catch {
-    return profileData;
-  }
+  return {
+    ...profileData,
+    fullName: ssoIdentity.fullName || profileData.fullName,
+    email: ssoIdentity.email,
+  };
 }
 
 export function isMoodleUnlinked(): boolean {

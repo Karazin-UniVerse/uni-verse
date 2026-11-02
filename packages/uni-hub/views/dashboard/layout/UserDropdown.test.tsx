@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
 import { fallbackStudentProfile } from '@uni-hub/utils/test-fixtures';
@@ -63,6 +63,10 @@ describe('UserDropdown helpers', () => {
 });
 
 describe('UserDropdown', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   it.each([
     { label: 'unloaded on mobile', profile: null, width: 375 },
     { label: 'loaded on mobile', profile: fallbackStudentProfile, width: 375 },
@@ -244,5 +248,34 @@ describe('UserDropdown', () => {
       stylesheet.remove();
       window.innerWidth = originalWidth;
     }
+  });
+
+  it('should fall back to stored Google SSO identity when activeStudentProfile is null', async () => {
+    const user = userEvent.setup();
+
+    localStorage.setItem('authProvider', 'google');
+    localStorage.setItem('username', 'Родіон Барсуков');
+    localStorage.setItem('userEmail', 'barsukov.rodion@student.karazin.ua');
+
+    render(
+      withAppProviders(
+        <UserDropdown
+          activeStudentProfile={null}
+          soundEnabled={true}
+          onToggleSound={vi.fn()}
+          onLogout={vi.fn()}
+          isMoodleIntegrationEnabled={false}
+        />,
+      ),
+    );
+
+    const trigger = screen.getByRole('button', { name: /меню профілю користувача/i });
+
+    expect(trigger).toHaveAttribute('title', 'Родіон Барсуков');
+    expect(screen.getByText('Родіон Барсуков')).toBeInTheDocument();
+
+    await user.click(trigger);
+
+    expect(screen.getByText('barsukov.rodion@student.karazin.ua')).toBeInTheDocument();
   });
 });
