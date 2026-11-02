@@ -57,17 +57,19 @@ The wizard prompts you step-by-step, automatically configures environment files,
 1. **Workspace Dependencies**:
    - Prompts `Run 'pnpm install' before starting? (Y/n)` — press `Enter` to automatically verify and install all dependencies across the workspace.
 2. **Backend API Target**:
-   - `[1] Remote Develop API` (`https://p01--backend-stage--djrwwgsr7dmx.code.run`) — **Recommended for Frontend Developers**. Automatically writes `packages/uni-hub/.env.local` with `NEXT_PUBLIC_API_URL`. You can immediately develop and test UI features with live Moodle LMS data without running NestJS or PostgreSQL locally!
-   - `[2] Remote Staging API` (`https://p01--backend-stage--4y9d57mwx2gx.code.run`) — Points the frontend to the staging deployment.
+   - `[1] Remote Develop API` (`https://api.universemvp.tech`) — **Recommended for Frontend Developers**. Automatically writes `packages/uni-hub/.env.local` with `NEXT_PUBLIC_API_URL`. You can immediately develop and test UI features with live Moodle LMS data without running NestJS or PostgreSQL locally!
+   - `[2] Direct Cloud Run API` (`https://universe-backend-1038900190823.europe-west3.run.app`) — Direct Cloud Run endpoint (bypassing Cloudflare proxy).
    - `[3] Local Backend` (`http://localhost:3001`) — For backend & fullstack developers running NestJS locally.
 3. **Database Selection** (only if Local Backend `[3]` is selected):
    - `[1] Local PostgreSQL` (`localhost:5432`)
-   - `[2] Remote Stage Database` (Northflank stage-db; prompts for connection string if not in environment)
+   - `[2] Remote Cloud Database` (Supabase / Cloud PostgreSQL; prompts for connection string if not in environment)
    - `[3] Custom PostgreSQL Connection String`
    - Automatically writes `.env` and `packages/backend/.env`, generates Prisma Client (`pnpm db:generate`), and optionally syncs schema (`pnpm db:migrate`).
-4. **Moodle Authentication Notice**:
+4. **Grip Gateway Pre-Push Check**:
+   - Checks if Grip is enrolled on this computer; prompts to automatically run `pnpm grip:setup` if needed.
+5. **Moodle Authentication Notice**:
    - Displays an in-terminal reminder that user authentication delegates to `https://moodle.universemvp.tech`.
-5. **Instant Launch**:
+6. **Instant Launch**:
    - Prompts `Launch development server now? (Y/n)`:
      - **Frontend**: immediately starts `pnpm --filter @universe/uni-hub dev` ([http://localhost:3000](http://localhost:3000)).
      - **Fullstack**: immediately starts the full Turborepo monorepo `pnpm dev`.
@@ -108,7 +110,7 @@ If developing packages independently:
   NEXT_PUBLIC_API_URL="http://localhost:3001"
   ```
 
-  > **Tip for Frontend Developers:** Set `NEXT_PUBLIC_API_URL="https://p01--backend-stage--djrwwgsr7dmx.code.run"` in `packages/uni-hub/.env.local` to develop the UI without needing local PostgreSQL or NestJS running!
+  > **Tip for Frontend Developers:** Set `NEXT_PUBLIC_API_URL="https://api.universemvp.tech"` in `packages/uni-hub/.env.local` to develop the UI without needing local PostgreSQL or NestJS running!
 
 - **Backend (`packages/backend`)**: Copy `packages/backend/.env.example` to `packages/backend/.env` before running backend or database commands:
   ```bash

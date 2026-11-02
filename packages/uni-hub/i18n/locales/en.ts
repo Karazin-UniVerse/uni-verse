@@ -561,6 +561,8 @@ export const en = {
     'E.g.: $400/month or 5000 UAH per milestone',
   'opportunities.createModal.phaseLabel': 'Phase',
   'opportunities.createModal.acceptsApplications': 'Accept new applications',
+  'opportunities.createModal.remoderationWarning':
+    'Please note: saving changes to the title, description, contact info, or payment terms will send the opportunity for re-moderation and temporarily hide it from the catalog.',
   'opportunities.createModal.cancel': 'Cancel',
   'opportunities.createModal.saving': 'Saving...',
   'opportunities.createModal.submit': 'Create Draft',

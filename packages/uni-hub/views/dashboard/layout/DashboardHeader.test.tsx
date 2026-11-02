@@ -196,6 +196,7 @@ describe('DashboardHeader', () => {
     window.localStorage.setItem('accessToken', 'test-token');
     window.localStorage.setItem('isLoggedIn', 'true');
     window.localStorage.setItem('moodleToken', 'test-moodle');
+    window.localStorage.setItem('universe_student_profile_v2', '{"fullName":"Previous Account"}');
     window.localStorage.setItem('universe_dashboard_data', '{"courses":[]}');
     window.localStorage.setItem('universe_last_sync_time', '123456789');
 
@@ -218,6 +219,7 @@ describe('DashboardHeader', () => {
     expect(window.localStorage.getItem('accessToken')).toBeNull();
     expect(window.localStorage.getItem('isLoggedIn')).toBeNull();
     expect(window.localStorage.getItem('moodleToken')).toBeNull();
+    expect(window.localStorage.getItem('universe_student_profile_v2')).toBeNull();
     expect(window.localStorage.getItem('universe_dashboard_data')).toBeNull();
     expect(window.localStorage.getItem('universe_last_sync_time')).toBeNull();
   });

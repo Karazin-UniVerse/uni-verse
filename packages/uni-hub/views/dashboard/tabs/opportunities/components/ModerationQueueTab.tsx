@@ -1,18 +1,8 @@
 'use client';
 
 import React from 'react';
-import { ContactTags } from '@ui';
-import {
-  Clock,
-  Calendar,
-  Coins,
-  Briefcase,
-  AlertCircle,
-  Hash,
-  CheckCircle2,
-  XCircle,
-} from 'lucide-react';
-import { Button } from '@una';
+import { ContactTags, ModerationActions } from '@ui';
+import { Clock, Calendar, Coins, Briefcase, AlertCircle, Hash } from 'lucide-react';
 import type { Opportunity } from '@core/types/opportunities';
 import type { OpportunityModerateAction } from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -151,35 +141,14 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                   {item.id.slice(0, 8)}
                 </span>
 
-                <div className={styles.moderationActions}>
-                  <Button
-                    variant="primary"
-                    className={styles.approveBtn}
-                    disabled={isOwnOpportunity}
-                    onClick={() => onModerate(item.id, 'APPROVE')}
-                  >
-                    <CheckCircle2 size={14} className={styles.btnIcon} />
-                    {formatMessage('opportunities.moderation.approve')}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className={styles.reviseBtn}
-                    disabled={isOwnOpportunity}
-                    onClick={() => onOpenRejectModal(item.id)}
-                  >
-                    <AlertCircle size={14} className={styles.btnIcon} />
-                    {formatMessage('opportunities.moderation.revise')}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className={styles.rejectBtn}
-                    disabled={isOwnOpportunity}
-                    onClick={() => onOpenRejectModal(item.id)}
-                  >
-                    <XCircle size={14} className={styles.btnIcon} />
-                    {formatMessage('opportunities.moderation.reject')}
-                  </Button>
-                </div>
+                <ModerationActions
+                  approveText={formatMessage('opportunities.moderation.approve')}
+                  reviseText={formatMessage('opportunities.moderation.revise')}
+                  rejectText={formatMessage('opportunities.moderation.reject')}
+                  disabled={isOwnOpportunity}
+                  onApprove={() => onModerate(item.id, 'APPROVE')}
+                  onOpenRejectModal={() => onOpenRejectModal(item.id)}
+                />
               </div>
             </div>
           );
