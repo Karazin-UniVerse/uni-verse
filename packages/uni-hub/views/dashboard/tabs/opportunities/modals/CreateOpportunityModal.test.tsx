@@ -2,7 +2,7 @@ import type { SyntheticEvent } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { withLanguage } from '@uni-hub/utils/test-utils';
+import { withLanguage, withQueryClient } from '@uni-hub/utils/test-utils';
 import { CreateOpportunityModal } from './CreateOpportunityModal';
 import type { CreateOpportunityFormData } from '../types';
 
@@ -26,7 +26,9 @@ describe('CreateOpportunityModal', () => {
   };
 
   const renderComponent = (props = {}) => {
-    return render(withLanguage(<CreateOpportunityModal {...defaultProps} {...props} />));
+    return render(
+      withQueryClient(withLanguage(<CreateOpportunityModal {...defaultProps} {...props} />)),
+    );
   };
 
   it('should render modal in create mode with create title and inputs', () => {
@@ -160,7 +162,11 @@ describe('CreateOpportunityModal', () => {
 
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
 
-    rerender(withLanguage(<CreateOpportunityModal {...defaultProps} isEdit remoderationWarning />));
+    rerender(
+      withQueryClient(
+        withLanguage(<CreateOpportunityModal {...defaultProps} isEdit remoderationWarning />),
+      ),
+    );
 
     expect(screen.getByRole('status')).toHaveTextContent(
       'Зверніть увагу: після збереження змін у назві, описі, контактах або умовах оплати можливість буде відправлено на повторну модерацію й тимчасово приховано з каталогу.',

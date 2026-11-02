@@ -107,7 +107,13 @@ export const TagInput: React.FC<TagInputProps> = ({
   const addTag = (raw: string): void => {
     const tag = defaultNormalizeTag(raw);
 
-    if (!tag || tag.length > maxTagLength || isLimitReached || safeValue.includes(tag)) {
+    if (
+      disabled ||
+      !tag ||
+      tag.length > maxTagLength ||
+      isLimitReached ||
+      safeValue.includes(tag)
+    ) {
       return;
     }
 
@@ -129,6 +135,10 @@ export const TagInput: React.FC<TagInputProps> = ({
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>): void => {
+    if (event.nativeEvent.isComposing || event.keyCode === 229) {
+      return;
+    }
+
     if (event.key === 'Enter' || event.key === ',') {
       event.preventDefault();
 
@@ -161,7 +171,7 @@ export const TagInput: React.FC<TagInputProps> = ({
       return;
     }
 
-    if (event.key === 'Escape' && isOpen) {
+    if (event.key === 'Escape' && isPanelVisible) {
       event.stopPropagation();
       setIsOpen(false);
       setActiveIndex(-1);

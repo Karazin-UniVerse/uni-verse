@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { useArgs } from 'storybook/preview-api';
 import { OpportunityFilterPanel } from './OpportunityFilterPanel';
 import type {
   OpportunityFilterPanelProps,
@@ -41,18 +41,24 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-function DefaultFilterPanel(args: OpportunityFilterPanelProps): React.ReactElement {
-  const [value, setValue] = useState<OpportunityFilterValue>(args.value);
+function RenderFilterPanel(args: OpportunityFilterPanelProps): React.ReactElement {
+  const [{ value }, updateArgs] = useArgs<OpportunityFilterPanelProps>();
 
-  return <OpportunityFilterPanel {...args} value={value} onApply={setValue} />;
+  return (
+    <OpportunityFilterPanel
+      {...args}
+      value={value}
+      onApply={(nextValue: OpportunityFilterValue) => updateArgs({ value: nextValue })}
+    />
+  );
 }
 
 export const Default: Story = {
-  render: (args) => <DefaultFilterPanel {...args} />,
+  render: RenderFilterPanel,
 };
 
 export const WithActiveFilters: Story = {
-  render: (args) => <DefaultFilterPanel {...args} />,
+  render: RenderFilterPanel,
   args: {
     value: { paymentType: 'PAID', isRecruiting: true, tags: ['react', 'typescript'] },
   },

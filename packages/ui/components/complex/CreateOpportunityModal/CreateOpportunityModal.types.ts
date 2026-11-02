@@ -13,7 +13,7 @@ export type CreateOpportunityFormData = {
   lifecycleState?: OpportunityLifecycle;
 };
 
-export type CreateOpportunityModalProps = {
+type BaseCreateOpportunityModalProps = {
   open: boolean;
   onClose: () => void;
   title: string;
@@ -39,11 +39,25 @@ export type CreateOpportunityModalProps = {
   phaseLabel?: string;
   remoderationWarning?: string;
   lifecycleOptions?: OpportunityLifecycleOption[];
-  tagsLabel?: string;
-  tagsPlaceholder?: string;
-  removeTagLabel?: string;
-  formatCreateTagLabel?: (tag: string) => string;
-  loadTagSuggestions?: (query: string) => Promise<string[]>;
   submitting?: boolean;
   className?: string;
 };
+
+type CreateOpportunityModalTagProps =
+  | {
+      tagsLabel: string;
+      removeTagLabel: string;
+      tagsPlaceholder?: string;
+      formatCreateTagLabel?: (tag: string) => string;
+      loadTagSuggestions?: (query: string) => Promise<string[]>;
+    }
+  | {
+      tagsLabel?: undefined;
+      removeTagLabel?: undefined;
+      tagsPlaceholder?: undefined;
+      formatCreateTagLabel?: undefined;
+      loadTagSuggestions?: undefined;
+    };
+
+export type CreateOpportunityModalProps = BaseCreateOpportunityModalProps &
+  CreateOpportunityModalTagProps;

@@ -52,13 +52,16 @@ describe('useOpportunitiesStore', () => {
     expect(state.tags).toEqual(['design']);
   });
 
-  it('resets state back to catalog defaults via reset', () => {
-    const { setActiveSubTab, setSearch, setPaymentFilter, reset } =
+  it('should reset changed state back to catalog defaults via reset', () => {
+    const { setActiveSubTab, setSearch, setPaymentFilter, setIsRecruiting, setTags, reset } =
       useOpportunitiesStore.getState();
 
     setActiveSubTab(OPPORTUNITY_SUB_TAB.MyApplications);
     setSearch('python');
     setPaymentFilter('PAID');
+
+    setIsRecruiting(true);
+    setTags(['react']);
 
     reset();
 

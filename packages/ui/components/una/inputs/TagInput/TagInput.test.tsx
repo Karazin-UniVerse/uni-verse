@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { useState } from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TagInput } from './TagInput';
 import type { TagInputProps } from './TagInput.types';
@@ -35,6 +35,19 @@ describe('UNA TagInput Component', () => {
     await user.type(input, '  React   Native {Enter}');
 
     expect(screen.getByText('react native')).toBeInTheDocument();
+    expect(input).toHaveValue('');
+  });
+
+  it('should add a new tag on comma and clear the field', async () => {
+    const user = userEvent.setup();
+
+    render(<ControlledTagInput />);
+
+    const input = screen.getByRole('combobox');
+
+    await user.type(input, 'vue,');
+
+    expect(screen.getByRole('button', { name: 'Remove tag vue' })).toBeInTheDocument();
     expect(input).toHaveValue('');
   });
 
@@ -106,6 +119,22 @@ describe('UNA TagInput Component', () => {
     expect(loadSuggestions).toHaveBeenCalledWith('rea');
   });
 
+  it('should add a suggestion on mouse click and close the listbox', async () => {
+    const user = userEvent.setup();
+    const loadSuggestions = vi.fn().mockResolvedValue(['react']);
+
+    render(<ControlledTagInput loadSuggestions={loadSuggestions} debounceMs={0} />);
+
+    await user.type(screen.getByRole('combobox'), 'rea');
+
+    const option = await screen.findByRole('option', { name: 'react' });
+
+    await user.click(within(option).getByRole('button', { name: 'react' }));
+
+    expect(screen.getByRole('button', { name: 'Remove tag react' })).toBeInTheDocument();
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+
   it('should select a suggestion with the keyboard', async () => {
     const user = userEvent.setup();
     const loadSuggestions = vi.fn().mockResolvedValue(['react']);
@@ -143,5 +172,73 @@ describe('UNA TagInput Component', () => {
 
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     expect(parentEscapeHandler).not.toHaveBeenCalled();
+  });
+
+  it('should propagate Escape to parent when the suggestion panel is not visible', async () => {
+    const user = userEvent.setup();
+    const parentEscapeHandler = vi.fn();
+
+    render(
+      <div
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            parentEscapeHandler();
+          }
+        }}
+      >
+        <ControlledTagInput />
+      </div>,
+    );
+
+    const input = screen.getByRole('combobox');
+
+    await user.click(input);
+    await user.keyboard('{Escape}');
+
+    expect(parentEscapeHandler).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not add an open suggestion after the field becomes disabled', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const loadSuggestions = vi.fn().mockResolvedValue(['react']);
+    const props: TagInputProps = {
+      removeLabel: 'Remove',
+      value: [],
+      onChange,
+      loadSuggestions,
+      debounceMs: 0,
+    };
+    const { rerender } = render(<TagInput {...props} />);
+
+    await user.type(screen.getByRole('combobox'), 'rea');
+    await screen.findByRole('option', { name: 'react' });
+
+    rerender(<TagInput {...props} disabled />);
+
+    const option = screen.getByRole('option', { name: 'react' });
+
+    await user.click(within(option).getByRole('button', { name: 'react' }));
+
+    expect(screen.getByRole('combobox')).toBeDisabled();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { key: 'Enter', keyCode: 13, isComposing: true },
+    { key: ',', keyCode: 188, isComposing: true },
+    { key: 'Enter', keyCode: 229, isComposing: false },
+  ])('should preserve composed text for $key with keyCode $keyCode', (keyboardEvent) => {
+    const onChange = vi.fn();
+
+    render(<TagInput removeLabel="Remove" value={[]} onChange={onChange} />);
+
+    const input = screen.getByRole('combobox');
+
+    fireEvent.change(input, { target: { value: 'test' } });
+    fireEvent.keyDown(input, keyboardEvent);
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(input).toHaveValue('test');
   });
 });

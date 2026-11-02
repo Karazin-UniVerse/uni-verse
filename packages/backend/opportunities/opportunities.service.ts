@@ -308,9 +308,8 @@ export class OpportunitiesService {
       updated = await this.prisma.opportunity.update({
         where: {
           id,
-          ...(opportunity.status === OpportunityStatus.REQUIRES_CHANGES
-            ? { status: opportunity.status, updatedAt: opportunity.updatedAt }
-            : {}),
+          status: opportunity.status,
+          updatedAt: opportunity.updatedAt,
         },
         data,
       });

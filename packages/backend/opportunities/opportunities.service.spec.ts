@@ -189,7 +189,11 @@ describe('OpportunitiesService', () => {
         await service.update('owner', publishedOpportunity.id, request);
 
         expect(prisma.opportunity.update).toHaveBeenCalledWith({
-          where: { id: publishedOpportunity.id },
+          where: {
+            id: publishedOpportunity.id,
+            status: 'DRAFT',
+            updatedAt: publishedOpportunity.updatedAt,
+          },
           data: expected,
         });
       },
@@ -380,6 +384,43 @@ describe('OpportunitiesService', () => {
   });
 
   describe('update', () => {
+    it.each(Object.values(OpportunityStatus))(
+      'should reject a stale owner edit from %s without bypassing moderation',
+      async (status) => {
+        const snapshot = {
+          ...publishedOpportunity,
+          status,
+          owner: { id: 'owner', name: 'Organizer', email: 'owner@example.com' },
+          tags: [],
+        };
+
+        jest.spyOn(service, 'findOne').mockResolvedValue(snapshot);
+        jest.spyOn(prisma.user, 'findMany').mockResolvedValue([]);
+        jest
+          .spyOn(prisma.opportunity, 'update')
+          .mockRejectedValue({ code: 'P2025' });
+
+        await expect(
+          service.update('owner', snapshot.id, {
+            title: 'Unreviewed title',
+            tags: ['unreviewed'],
+          }),
+        ).rejects.toThrow(
+          new ConflictException(OPPORTUNITY_ERROR.CHANGES_REQUIRED),
+        );
+        expect(prisma.opportunity.update).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: {
+              id: snapshot.id,
+              status,
+              updatedAt: snapshot.updatedAt,
+            },
+          }),
+        );
+        expect(notificationsService.createNotification).not.toHaveBeenCalled();
+      },
+    );
+
     it.each([
       { tags: [' React ', 'react'], remoderates: false },
       { tags: ['nodejs'], remoderates: true },
@@ -404,7 +445,11 @@ describe('OpportunitiesService', () => {
         });
 
         expect(prisma.opportunity.update).toHaveBeenCalledWith({
-          where: { id: publishedOpportunity.id },
+          where: {
+            id: publishedOpportunity.id,
+            status: 'PUBLISHED',
+            updatedAt: publishedOpportunity.updatedAt,
+          },
           data: {
             title: publishedOpportunity.title,
             proposedTags:
@@ -422,6 +467,7 @@ describe('OpportunitiesService', () => {
 
     it('resets status to READY_FOR_REVIEW, clears moderationComment, and notifies moderators if it was published', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         title: 'old',
         status: 'PUBLISHED',
@@ -439,7 +485,11 @@ describe('OpportunitiesService', () => {
       await service.update('user1', '1', { title: 'new' } as any);
 
       expect(prisma.opportunity.update).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: {
+          id: '1',
+          status: 'PUBLISHED',
+          updatedAt: publishedOpportunity.updatedAt,
+        },
         data: {
           title: 'new',
           status: 'READY_FOR_REVIEW',
@@ -457,6 +507,7 @@ describe('OpportunitiesService', () => {
 
     it('does not reset status if only acceptsApplications changed on published opportunity', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         status: 'PUBLISHED',
         ownerId: 'user1',
@@ -466,7 +517,11 @@ describe('OpportunitiesService', () => {
       await service.update('user1', '1', { acceptsApplications: false });
 
       expect(prisma.opportunity.update).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: {
+          id: '1',
+          status: 'PUBLISHED',
+          updatedAt: publishedOpportunity.updatedAt,
+        },
         data: { acceptsApplications: false },
       });
     });
@@ -500,7 +555,11 @@ describe('OpportunitiesService', () => {
       });
 
       expect(prisma.opportunity.update).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: {
+          id: '1',
+          status: 'PUBLISHED',
+          updatedAt: publishedOpportunity.updatedAt,
+        },
         data: {
           title: publishedOpportunity.title,
           description: publishedOpportunity.description,
@@ -558,7 +617,11 @@ describe('OpportunitiesService', () => {
         });
 
         expect(prisma.opportunity.update).toHaveBeenCalledWith({
-          where: { id: '1' },
+          where: {
+            id: '1',
+            status: 'PUBLISHED',
+            updatedAt: publishedOpportunity.updatedAt,
+          },
           data: {
             lifecycleState,
             acceptsApplications: false,
@@ -569,6 +632,7 @@ describe('OpportunitiesService', () => {
 
     it('does not reset status if it was DRAFT', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         status: 'DRAFT',
         ownerId: 'user1',
@@ -578,7 +642,11 @@ describe('OpportunitiesService', () => {
       await service.update('user1', '1', { title: 'new' } as any);
 
       expect(prisma.opportunity.update).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: {
+          id: '1',
+          status: 'DRAFT',
+          updatedAt: publishedOpportunity.updatedAt,
+        },
         data: { title: 'new' },
       });
     });
@@ -965,31 +1033,40 @@ describe('OpportunitiesService', () => {
   });
 
   describe('delete', () => {
-    it('deletes draft opportunity and applications atomically within a transaction', async () => {
+    it('should delete a draft and its applications on the transaction client', async () => {
       const draftOpportunity: Opportunity = {
         ...publishedOpportunity,
         id: 'draft-1',
         ownerId: 'owner-1',
         status: OpportunityStatus.DRAFT,
       };
+      const transactionClient = {
+        opportunityApplication: {
+          deleteMany: jest.fn().mockResolvedValue({ count: 2 }),
+        },
+        opportunity: {
+          delete: jest.fn().mockResolvedValue(draftOpportunity),
+        },
+      };
 
       jest
         .spyOn(prisma.opportunity, 'findUnique')
         .mockResolvedValue(draftOpportunity);
       jest
-        .spyOn(prisma.opportunityApplication, 'deleteMany')
-        .mockResolvedValue({ count: 2 });
-      jest
-        .spyOn(prisma.opportunity, 'delete')
-        .mockResolvedValue(draftOpportunity);
+        .spyOn(prisma, '$transaction')
+        .mockImplementation(async (callback) =>
+          callback(transactionClient as unknown as Prisma.TransactionClient),
+        );
 
       const result = await service.delete('owner-1', 'draft-1');
 
       expect(prisma.$transaction).toHaveBeenCalled();
-      expect(prisma.opportunityApplication.deleteMany).toHaveBeenCalledWith({
+      expect(
+        transactionClient.opportunityApplication.deleteMany,
+      ).toHaveBeenCalledWith({
         where: { opportunityId: 'draft-1' },
       });
-      expect(prisma.opportunity.delete).toHaveBeenCalledWith({
+      expect(transactionClient.opportunity.delete).toHaveBeenCalledWith({
         where: {
           id: 'draft-1',
           ownerId: 'owner-1',
@@ -998,6 +1075,8 @@ describe('OpportunitiesService', () => {
           },
         },
       });
+      expect(prisma.opportunityApplication.deleteMany).not.toHaveBeenCalled();
+      expect(prisma.opportunity.delete).not.toHaveBeenCalled();
       expect(result).toEqual(draftOpportunity);
     });
 
@@ -1038,23 +1117,40 @@ describe('OpportunitiesService', () => {
       );
     });
 
-    it('rolls back transaction if opportunity deletion fails after deleteMany', async () => {
+    it('should propagate a parent deletion failure after deleting applications on the transaction client', async () => {
+      const transactionClient = {
+        opportunityApplication: {
+          deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+        },
+        opportunity: {
+          delete: jest
+            .fn()
+            .mockRejectedValue(new Error('Parent delete failed')),
+        },
+      };
+
+      jest
+        .spyOn(prisma, '$transaction')
+        .mockImplementation(async (callback) =>
+          callback(transactionClient as unknown as Prisma.TransactionClient),
+        );
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         ...publishedOpportunity,
         id: 'opp-1',
         ownerId: 'owner-1',
         status: OpportunityStatus.DRAFT,
       });
-      jest
-        .spyOn(prisma.opportunityApplication, 'deleteMany')
-        .mockResolvedValue({ count: 1 });
-      jest
-        .spyOn(prisma.opportunity, 'delete')
-        .mockRejectedValue(new Error('Parent delete failed'));
-
       await expect(service.delete('owner-1', 'opp-1')).rejects.toThrow(
         'Parent delete failed',
       );
+      expect(
+        transactionClient.opportunityApplication.deleteMany,
+      ).toHaveBeenCalledWith({
+        where: { opportunityId: 'opp-1' },
+      });
+      expect(transactionClient.opportunity.delete).toHaveBeenCalledTimes(1);
+      expect(prisma.opportunityApplication.deleteMany).not.toHaveBeenCalled();
+      expect(prisma.opportunity.delete).not.toHaveBeenCalled();
     });
 
     it('translates P2025 predicate mismatch into BadRequestException if status changes before delete', async () => {

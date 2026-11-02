@@ -41,7 +41,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   formatCreateTagLabel,
   remoderationWarning,
   className,
-  removeTagLabel = '',
+  removeTagLabel,
   lifecycleOptions = [],
   submitting = false,
 }) => {
@@ -198,7 +198,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
               onChange={(tags) => setFormData((prev) => ({ ...prev, tags }))}
               loadSuggestions={loadTagSuggestions}
               placeholder={tagsPlaceholder}
-              removeLabel={removeTagLabel}
+              removeLabel={removeTagLabel ?? ''}
               formatCreateLabel={formatCreateTagLabel}
             />
           </div>

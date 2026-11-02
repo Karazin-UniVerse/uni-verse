@@ -44,6 +44,17 @@ describe('tags utils', () => {
       assert.deepStrictEqual(getOpportunityTagNames(opp), ['new-tag', 'another-tag']);
     });
 
+    test('should return proposed tags for opportunities awaiting moderation', () => {
+      assert.deepStrictEqual(
+        getOpportunityTagNames({
+          status: OPPORTUNITY_STATUS.READY_FOR_REVIEW,
+          tags: [{ id: 'old', name: 'old' }],
+          proposedTags: ['react'],
+        }),
+        ['react'],
+      );
+    });
+
     test('should return empty array if tags or proposedTags are missing', () => {
       assert.deepStrictEqual(getOpportunityTagNames({ status: OPPORTUNITY_STATUS.PUBLISHED }), []);
       assert.deepStrictEqual(getOpportunityTagNames({ status: OPPORTUNITY_STATUS.DRAFT }), []);
