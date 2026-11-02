@@ -3,4 +3,5 @@ export * from './DateTime';
 export * from './FileInput';
 export * from './RadioButton';
 export * from './Slider';
+export * from './TagInput';
 export * from './TextInput';

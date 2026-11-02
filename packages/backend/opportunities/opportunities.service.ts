@@ -32,10 +32,16 @@ import {
 } from '@universe/core/constants/opportunities';
 import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 import { OPPORTUNITY_NOTIFICATION_KEY } from '@universe/core/constants/notifications';
+import { normalizeTags } from '@universe/core/utils/tags';
 
-export type OpportunityWithOwner = Opportunity & {
-  owner: { id: string; name: string | null; email: string };
-};
+const OPPORTUNITY_INCLUDE = {
+  owner: { select: { id: true, name: true, email: true } },
+  tags: { select: { id: true, name: true } },
+} satisfies Prisma.OpportunityInclude;
+
+export type OpportunityWithOwner = Prisma.OpportunityGetPayload<{
+  include: typeof OPPORTUNITY_INCLUDE;
+}>;
 
 export type ApplicationWithApplicant = OpportunityApplication & {
   applicant: { name: string | null; email: string };
@@ -51,6 +57,11 @@ export type UpdateApplicationStatusParams = {
   status: ApplicationStatus;
   ownerComment?: string;
 };
+
+const RECRUITING_LIFECYCLE_STATES: OpportunityLifecycleState[] = [
+  OpportunityLifecycleState.START,
+  OpportunityLifecycleState.ACTIVE,
+];
 
 @Injectable()
 export class OpportunitiesService {
@@ -110,11 +121,14 @@ export class OpportunitiesService {
     userId: string,
     dto: CreateOpportunityDto,
   ): Promise<Opportunity> {
+    const { tags, ...rest } = dto;
+
     return this.prisma.opportunity.create({
       data: {
-        ...dto,
+        ...rest,
+        proposedTags: normalizeTags(tags ?? []),
         ownerId: userId,
-        status: OpportunityStatus.DRAFT, // initial status
+        status: OpportunityStatus.DRAFT,
       },
     });
   }
@@ -127,7 +141,7 @@ export class OpportunitiesService {
     query: FindOpportunitiesDto,
     userRoles: string[] = [],
   ): Promise<OpportunityWithOwner[]> {
-    const { paymentType, ownerId, search, status } = query;
+    const { paymentType, ownerId, search, status, tags, isRecruiting } = query;
     const where: Prisma.OpportunityWhereInput = {};
 
     const isModerator = Boolean(
@@ -157,12 +171,19 @@ export class OpportunitiesService {
       ];
     }
 
+    if (tags?.length) {
+      where.tags = { some: { name: { in: normalizeTags(tags) } } };
+    }
+
+    if (isRecruiting) {
+      where.acceptsApplications = true;
+      where.lifecycleState = { in: RECRUITING_LIFECYCLE_STATES };
+    }
+
     return this.prisma.opportunity.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      include: {
-        owner: { select: { id: true, name: true, email: true } },
-      },
+      include: OPPORTUNITY_INCLUDE,
     });
   }
 
@@ -177,9 +198,7 @@ export class OpportunitiesService {
   ): Promise<OpportunityWithOwner> {
     const opportunity = await this.prisma.opportunity.findUnique({
       where: { id },
-      include: {
-        owner: { select: { id: true, name: true, email: true } },
-      },
+      include: OPPORTUNITY_INCLUDE,
     });
 
     if (!opportunity) throw new NotFoundException('Opportunity not found');
@@ -216,14 +235,28 @@ export class OpportunitiesService {
       );
     }
 
+    if (
+      dto.acceptsApplications === true &&
+      !RECRUITING_LIFECYCLE_STATES.includes(opportunity.lifecycleState)
+    ) {
+      throw new BadRequestException(
+        'Recruitment can only be enabled in START or ACTIVE phase',
+      );
+    }
+
+    const { tags, ...rest } = dto;
+
     const hasContentChanges =
       dto.title !== undefined ||
       dto.description !== undefined ||
       dto.ownerContactInfo !== undefined ||
       dto.paymentType !== undefined ||
-      dto.paymentDetails !== undefined;
+      dto.paymentDetails !== undefined ||
+      tags !== undefined;
 
-    const data: Prisma.OpportunityUpdateInput = { ...dto };
+    const data: Prisma.OpportunityUpdateInput = { ...rest };
+
+    if (tags !== undefined) data.proposedTags = normalizeTags(tags);
 
     if (
       opportunity.status === OpportunityStatus.PUBLISHED &&
@@ -304,7 +337,12 @@ export class OpportunitiesService {
 
     return this.prisma.opportunity.update({
       where: { id },
-      data: { lifecycleState },
+      data: {
+        lifecycleState,
+        ...(!RECRUITING_LIFECYCLE_STATES.includes(lifecycleState) && {
+          acceptsApplications: false,
+        }),
+      },
     });
   }
 
@@ -401,12 +439,7 @@ export class OpportunitiesService {
       throw new ForbiddenException('Cannot apply to your own opportunity');
     }
 
-    const allowedStates: OpportunityLifecycleState[] = [
-      OpportunityLifecycleState.START,
-      OpportunityLifecycleState.ACTIVE,
-    ];
-
-    if (!allowedStates.includes(opportunity.lifecycleState)) {
+    if (!RECRUITING_LIFECYCLE_STATES.includes(opportunity.lifecycleState)) {
       throw new BadRequestException(
         'Cannot apply to an opportunity in this phase',
       );
@@ -528,6 +561,7 @@ export class OpportunitiesService {
     return this.prisma.opportunity.findMany({
       where: { ownerId: userId },
       orderBy: { createdAt: 'desc' },
+      include: { tags: { select: { id: true, name: true } } },
     });
   }
 
@@ -539,7 +573,6 @@ export class OpportunitiesService {
     id: string,
     dto: ModerateOpportunityDto,
   ): Promise<Opportunity> {
-    // Real-time role check to prevent using cached demoted admin tokens
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
     if (!user?.roles?.includes(Role.OPPORTUNITIES_MODERATOR)) {
@@ -580,15 +613,27 @@ export class OpportunitiesService {
       throw new BadRequestException('Unknown moderation action');
     }
 
-    const opp = await this.prisma.opportunity.update({
-      where: { id },
-      data: {
-        status: newStatus,
-        moderationComment:
-          dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE
-            ? null
-            : dto.comment,
-      },
+    const isApprove = dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE;
+    const names = opportunityToModerate.proposedTags;
+
+    const opp = await this.prisma.$transaction(async (tx) => {
+      if (isApprove && names.length) {
+        await tx.tag.createMany({
+          data: names.map((name) => ({ name })),
+          skipDuplicates: true,
+        });
+      }
+
+      return tx.opportunity.update({
+        where: { id },
+        data: {
+          status: newStatus,
+          moderationComment: isApprove ? null : dto.comment,
+          ...(isApprove && {
+            tags: { set: names.map((name) => ({ name })) },
+          }),
+        },
+      });
     });
 
     await this.notificationsService.createNotification({

@@ -36,6 +36,7 @@ const publishedOpportunity: Opportunity = {
   paymentDetails: null,
   details: null,
   moderationComment: null,
+  proposedTags: [],
   ownerId: 'owner',
   createdAt: new Date('2026-10-01T10:00:00Z'),
   updatedAt: new Date('2026-10-01T10:00:00Z'),

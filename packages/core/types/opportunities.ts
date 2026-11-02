@@ -12,6 +12,11 @@ export interface OpportunityOwner {
   name?: string | null;
 }
 
+export interface OpportunityTag {
+  id: string;
+  name: string;
+}
+
 export interface Opportunity {
   id: string;
   title: string;
@@ -26,6 +31,8 @@ export interface Opportunity {
   acceptsApplications?: boolean;
   paymentDetails?: string | null;
   moderationComment?: string | null;
+  tags?: OpportunityTag[];
+  proposedTags?: string[];
   owner?: OpportunityOwner;
   applications?: OpportunityApplication[];
 }
@@ -54,6 +61,7 @@ export interface CreateOpportunityRequest {
   paymentType: OpportunityPaymentType;
   paymentDetails?: string | null;
   acceptsApplications?: boolean;
+  tags?: string[];
 }
 
 export type UpdateOpportunityRequest = Partial<CreateOpportunityRequest>;
@@ -89,4 +97,6 @@ export interface GetOpportunitiesParams {
   paymentType?: OpportunityPaymentType | '';
   ownerId?: string;
   search?: string;
+  tags?: string[];
+  isRecruiting?: boolean;
 }
