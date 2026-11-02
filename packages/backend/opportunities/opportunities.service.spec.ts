@@ -426,6 +426,102 @@ describe('OpportunitiesService', () => {
       });
     });
 
+    it('does not reset status or notify moderators when update sends identical content fields alongside lifecycleState or acceptsApplications changes', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
+        id: '1',
+        ownerId: 'user1',
+        status: 'PUBLISHED',
+        lifecycleState: 'START',
+        acceptsApplications: true,
+      });
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        ...publishedOpportunity,
+        id: '1',
+        ownerId: 'user1',
+        status: 'PUBLISHED',
+        lifecycleState: 'ACTIVE',
+        acceptsApplications: false,
+      });
+
+      await service.update('user1', '1', {
+        title: publishedOpportunity.title,
+        description: publishedOpportunity.description,
+        ownerContactInfo: publishedOpportunity.ownerContactInfo,
+        paymentType: publishedOpportunity.paymentType,
+        paymentDetails: publishedOpportunity.paymentDetails ?? undefined,
+        lifecycleState: 'ACTIVE',
+        acceptsApplications: false,
+      });
+
+      expect(prisma.opportunity.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: {
+          title: publishedOpportunity.title,
+          description: publishedOpportunity.description,
+          ownerContactInfo: publishedOpportunity.ownerContactInfo,
+          paymentType: publishedOpportunity.paymentType,
+          paymentDetails: undefined,
+          lifecycleState: 'ACTIVE',
+          acceptsApplications: false,
+        },
+      });
+      expect(notificationsService.createNotification).not.toHaveBeenCalled();
+    });
+
+    it.each(['PAUSED', 'COMPLETED', 'CANCELLED'] as const)(
+      'forces acceptsApplications to false when creating or updating with non-recruitment lifecycleState %s',
+      async (lifecycleState) => {
+        await service.create(
+          'owner',
+          plainToInstance(CreateOpportunityDto, {
+            title: 'Research',
+            description: 'Research project',
+            paymentType: 'UNPAID',
+            lifecycleState,
+            acceptsApplications: true,
+          }),
+        );
+
+        expect(prisma.opportunity.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            lifecycleState,
+            acceptsApplications: false,
+          }),
+        });
+
+        jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+          ...publishedOpportunity,
+          id: '1',
+          ownerId: 'owner',
+          status: 'PUBLISHED',
+          lifecycleState: 'ACTIVE',
+          acceptsApplications: true,
+        });
+        jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+          ...publishedOpportunity,
+          id: '1',
+          ownerId: 'owner',
+          status: 'PUBLISHED',
+          lifecycleState,
+          acceptsApplications: false,
+        });
+
+        await service.update('owner', '1', {
+          lifecycleState,
+          acceptsApplications: true,
+        });
+
+        expect(prisma.opportunity.update).toHaveBeenCalledWith({
+          where: { id: '1' },
+          data: {
+            lifecycleState,
+            acceptsApplications: false,
+          },
+        });
+      },
+    );
+
     it('does not reset status if it was DRAFT', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
@@ -1118,20 +1214,44 @@ describe('OpportunitiesService', () => {
       } as any);
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         id: '1',
-        lifecycleState: 'CLOSED',
+        lifecycleState: 'PAUSED',
       } as any);
 
       const result = await service.changeLifecycleState(
         'user-1',
         '1',
-        'CLOSED' as any,
+        'PAUSED',
       );
 
       expect(prisma.opportunity.update).toHaveBeenCalledWith({
         where: { id: '1' },
-        data: { lifecycleState: 'CLOSED' },
+        data: { lifecycleState: 'PAUSED', acceptsApplications: false },
       });
-      expect(result.lifecycleState).toBe('CLOSED');
+      expect(result.lifecycleState).toBe('PAUSED');
+    });
+
+    it('leaves acceptsApplications untouched when changing to a recruitment phase', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        id: '1',
+        status: 'PUBLISHED',
+        ownerId: 'user-1',
+      } as any);
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        id: '1',
+        lifecycleState: 'ACTIVE',
+      } as any);
+
+      const result = await service.changeLifecycleState(
+        'user-1',
+        '1',
+        'ACTIVE',
+      );
+
+      expect(prisma.opportunity.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: { lifecycleState: 'ACTIVE' },
+      });
+      expect(result.lifecycleState).toBe('ACTIVE');
     });
   });
 

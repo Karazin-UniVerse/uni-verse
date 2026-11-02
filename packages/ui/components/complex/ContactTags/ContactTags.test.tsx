@@ -47,4 +47,26 @@ describe('ContactTags', () => {
     expect(screen.getByTitle('Alternative contact')).toHaveTextContent(contact);
     expect(container.querySelector('img')).toBeNull();
   });
+
+  it('should render contact text wrapped in a span for vertical alignment', () => {
+    render(
+      <ContactTags
+        email="student@karazin.ua"
+        alternativeContact="+380671234567"
+        emailLabel="Пошта"
+        alternativeContactLabel="Телефон"
+      />,
+    );
+
+    const emailTag = screen.getByTitle('Пошта');
+    const contactTag = screen.getByTitle('Телефон');
+
+    const emailSpan = emailTag.querySelector('span');
+    const contactSpan = contactTag.querySelector('span');
+
+    expect(emailSpan).toBeInTheDocument();
+    expect(emailSpan).toHaveTextContent('student@karazin.ua');
+    expect(contactSpan).toBeInTheDocument();
+    expect(contactSpan).toHaveTextContent('+380671234567');
+  });
 });

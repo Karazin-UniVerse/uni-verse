@@ -4,6 +4,8 @@ import { Button } from '../../una/Button';
 import { TextInput } from '../../una/inputs/TextInput';
 import { CheckBox } from '../../una/inputs/CheckBox';
 import { Select } from '../../una/Select';
+import { StatusBanner } from '../StatusBanner';
+import { isRecruitmentPhase } from '@core/utils/opportunities';
 import type { OpportunityLifecycle, OpportunityPaymentType } from '@core/constants/opportunities';
 import type { CreateOpportunityModalProps } from './CreateOpportunityModal.types';
 import styles from './CreateOpportunityModal.module.scss';
@@ -11,11 +13,10 @@ import styles from './CreateOpportunityModal.module.scss';
 export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   open,
   onClose,
+  title,
   formData,
   setFormData,
   onSubmit,
-  className,
-  title,
   titleLabel,
   titlePlaceholder,
   descLabel,
@@ -33,6 +34,8 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   contactHint,
   acceptsApplicationsLabel,
   phaseLabel,
+  remoderationWarning,
+  className,
   lifecycleOptions = [],
   submitting = false,
 }) => {
@@ -43,6 +46,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   const paymentTypeId = useId();
   const paymentDetailsId = useId();
   const phaseSelectId = useId();
+  const canAcceptApplications = isRecruitmentPhase(formData.lifecycleState);
 
   return (
     <Modal open={open} onClose={onClose} title={title} width={560} className={className}>
@@ -147,6 +151,9 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
                 setFormData((prev) => ({
                   ...prev,
                   lifecycleState: val as OpportunityLifecycle,
+                  acceptsApplications: isRecruitmentPhase(val as OpportunityLifecycle)
+                    ? prev.acceptsApplications
+                    : false,
                 }))
               }
               options={lifecycleOptions}
@@ -159,7 +166,8 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
             <label className={styles.checkboxLabel}>
               <CheckBox
                 variant="primary"
-                checked={formData.acceptsApplications ?? true}
+                disabled={!canAcceptApplications}
+                checked={canAcceptApplications && (formData.acceptsApplications ?? true)}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -171,6 +179,8 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
             </label>
           </div>
         )}
+
+        {remoderationWarning && <StatusBanner tone="warning">{remoderationWarning}</StatusBanner>}
 
         <div className={styles.modalFooter}>
           <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
