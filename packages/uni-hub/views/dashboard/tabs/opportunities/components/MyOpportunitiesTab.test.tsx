@@ -57,9 +57,7 @@ const renderMyOpportunitiesTab = (props?: Partial<MyOpportunitiesTabProps>) => {
   };
 
   return {
-    ...render(
-      withLanguage(<MyOpportunitiesTab {...defaultProps} />),
-    ),
+    ...render(withLanguage(<MyOpportunitiesTab {...defaultProps} />)),
     props: defaultProps,
   };
 };
@@ -68,6 +66,23 @@ describe('MyOpportunitiesTab component', () => {
   beforeEach(() => {
     localStorage.setItem('universe-lang', 'uk');
   });
+
+  it.each(['', '   ', '@organizer'])(
+    'should show the profile email with alternative contact %j on owner cards',
+    (ownerContactInfo) => {
+      renderMyOpportunitiesTab({
+        myOpportunities: [{ ...mockOpportunities[0], ownerContactInfo }],
+      });
+
+      expect(screen.getByText('alice@frontend.ua')).toBeInTheDocument();
+
+      if (ownerContactInfo.trim()) {
+        expect(screen.getByText('@organizer')).toBeInTheDocument();
+      } else {
+        expect(screen.queryByTitle('Альтернативний контакт')).not.toBeInTheDocument();
+      }
+    },
+  );
 
   it('should render grid of owner opportunity cards with status badges', () => {
     renderMyOpportunitiesTab();

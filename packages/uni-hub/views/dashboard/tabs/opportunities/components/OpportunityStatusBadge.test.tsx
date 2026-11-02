@@ -37,4 +37,12 @@ describe('OpportunityStatusBadge', () => {
 
     expect(screen.getByText('Published')).toBeInTheDocument();
   });
+
+  it('should render with medium size when size="medium" is provided', () => {
+    render(withLanguage(<OpportunityStatusBadge status="PUBLISHED" size="medium" />));
+
+    const badge = screen.getByText('Опубліковано');
+
+    expect(badge).toBeInTheDocument();
+  });
 });

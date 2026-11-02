@@ -26,9 +26,7 @@ describe('CreateOpportunityModal', () => {
   };
 
   const renderComponent = (props = {}) => {
-    return render(
-      withLanguage(<CreateOpportunityModal {...defaultProps} {...props} />),
-    );
+    return render(withLanguage(<CreateOpportunityModal {...defaultProps} {...props} />));
   };
 
   it('should render modal in create mode with create title and inputs', () => {
@@ -57,11 +55,14 @@ describe('CreateOpportunityModal', () => {
       'Детально розкажіть про проект, задачі, очікувану зайнятість та необхідні навички...',
     );
 
-    const contactInput = screen.getByLabelText('Контактні дані організатора *');
+    const contactInput = screen.getByLabelText('Альтернативний контакт');
 
     expect(contactInput).toBeInTheDocument();
     expect(contactInput).toHaveValue(initialFormData.ownerContactInfo);
-    expect(contactInput).toHaveAttribute('placeholder', 'Telegram (@username), Email або номер телефону');
+    expect(contactInput).toHaveAttribute(
+      'placeholder',
+      'Telegram (@username), Email або номер телефону',
+    );
 
     const paymentTypeSelect = screen.getByLabelText('Тип винагороди');
 
@@ -173,7 +174,7 @@ describe('CreateOpportunityModal', () => {
     expect(handleSetFormData).toHaveBeenCalled();
     handleSetFormData.mockClear();
 
-    const contactInput = screen.getByLabelText('Контактні дані організатора *');
+    const contactInput = screen.getByLabelText('Альтернативний контакт');
 
     await user.type(contactInput, '!');
 

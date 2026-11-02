@@ -1,18 +1,10 @@
 'use client';
 
 import React from 'react';
-import {
-  Clock,
-  Calendar,
-  Mail,
-  Coins,
-  Briefcase,
-  AlertCircle,
-  Hash,
-  CheckCircle2,
-  XCircle,
-} from 'lucide-react';
-import { Button } from '@una';
+import { ContactTags, ModerationActions } from '@ui';
+import { Tag } from '@una';
+import { getOpportunityTagNames } from '@core/utils/tags';
+import { Clock, Calendar, Coins, Briefcase, AlertCircle, Hash } from 'lucide-react';
 import type { Opportunity } from '@core/types/opportunities';
 import type { OpportunityModerateAction } from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -86,12 +78,14 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                             item.owner?.email ||
                             formatMessage('opportunities.moderation.unknownOwner')}
                         </span>
-                        {item.ownerContactInfo && (
-                          <span className={styles.authorContactTag}>
-                            <Mail size={12} />
-                            {item.ownerContactInfo}
-                          </span>
-                        )}
+                        <ContactTags
+                          emailLabel={formatMessage('opportunities.emailLabel')}
+                          alternativeContactLabel={formatMessage(
+                            'opportunities.alternativeContact',
+                          )}
+                          email={item.owner?.email}
+                          alternativeContact={item.ownerContactInfo}
+                        />
                       </div>
                     </div>
                   </div>
@@ -125,6 +119,21 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                 <p className={styles.moderationDescriptionText}>{item.description}</p>
               </div>
 
+              {getOpportunityTagNames(item).length > 0 && (
+                <div className={styles.moderationTagsRow}>
+                  <span className={styles.moderationTagsLabel}>
+                    {formatMessage('opportunities.moderation.tagsLabel')}:
+                  </span>
+                  <div className={styles.moderationTagsList}>
+                    {getOpportunityTagNames(item).map((tag) => (
+                      <Tag key={tag} tone="neutral" size="small">
+                        {tag}
+                      </Tag>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {item.moderationComment && (
                 <div className={styles.previousCommentBox}>
                   <AlertCircle size={15} className={styles.commentIcon} />
@@ -149,35 +158,14 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                   {item.id.slice(0, 8)}
                 </span>
 
-                <div className={styles.moderationActions}>
-                  <Button
-                    variant="primary"
-                    className={styles.approveBtn}
-                    disabled={isOwnOpportunity}
-                    onClick={() => onModerate(item.id, 'APPROVE')}
-                  >
-                    <CheckCircle2 size={14} className={styles.btnIcon} />
-                    {formatMessage('opportunities.moderation.approve')}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className={styles.reviseBtn}
-                    disabled={isOwnOpportunity}
-                    onClick={() => onOpenRejectModal(item.id)}
-                  >
-                    <AlertCircle size={14} className={styles.btnIcon} />
-                    {formatMessage('opportunities.moderation.revise')}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className={styles.rejectBtn}
-                    disabled={isOwnOpportunity}
-                    onClick={() => onOpenRejectModal(item.id)}
-                  >
-                    <XCircle size={14} className={styles.btnIcon} />
-                    {formatMessage('opportunities.moderation.reject')}
-                  </Button>
-                </div>
+                <ModerationActions
+                  approveText={formatMessage('opportunities.moderation.approve')}
+                  reviseText={formatMessage('opportunities.moderation.revise')}
+                  rejectText={formatMessage('opportunities.moderation.reject')}
+                  disabled={isOwnOpportunity}
+                  onApprove={() => onModerate(item.id, 'APPROVE')}
+                  onOpenRejectModal={() => onOpenRejectModal(item.id)}
+                />
               </div>
             </div>
           );

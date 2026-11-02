@@ -9,8 +9,11 @@ import type { DashboardData } from '../types';
 import {
   assembleDashboardData,
   buildAssignmentParams,
+  hasSessionChanged,
   isMoodleUnlinked,
   isUnauthorizedError,
+  applyStoredIdentityToProfile,
+  readSessionIdentity,
   persistDashboardSnapshot,
   syncStudentProfile,
   type BuildAssignmentParamsOptions,
@@ -80,14 +83,32 @@ export function dashboardQueryOptions(
   });
 }
 
+/**
+ * Query options for fetching, overlaying corporate identity, and synchronizing the student profile.
+ */
 export const profileQueryOptions = queryOptions({
   queryKey: moodleKeys.profile(),
-  queryFn: async () => {
-    const response = await moodleApi.getProfile();
+  queryFn: async ({ signal }) => {
+    const sessionSnapshot = readSessionIdentity();
+    const response = await moodleApi.getProfile({ signal });
 
-    syncStudentProfile(response.data);
+    if (signal?.aborted) {
+      return response.data;
+    }
 
-    return response.data;
+    if (sessionSnapshot) {
+      const currentSession = readSessionIdentity();
+
+      if (hasSessionChanged(sessionSnapshot, currentSession)) {
+        return response.data;
+      }
+    }
+
+    const resolvedProfile = applyStoredIdentityToProfile(response.data, sessionSnapshot);
+
+    syncStudentProfile(resolvedProfile);
+
+    return resolvedProfile;
   },
 });
 

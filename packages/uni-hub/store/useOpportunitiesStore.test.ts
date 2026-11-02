@@ -13,20 +13,43 @@ describe('useOpportunitiesStore', () => {
     expect(state.activeSubTab).toBe(OPPORTUNITY_SUB_TAB.Catalog);
     expect(state.search).toBe('');
     expect(state.paymentFilter).toBe('');
+    expect(state.isRecruiting).toBe(false);
+    expect(state.tags).toEqual([]);
   });
 
   it('keeps the selected sub-tab, search and payment filter until they change again', () => {
-    const { setActiveSubTab, setSearch, setPaymentFilter } = useOpportunitiesStore.getState();
+    const { setActiveSubTab, setSearch, setPaymentFilter, setIsRecruiting, setTags } =
+      useOpportunitiesStore.getState();
 
     setActiveSubTab(OPPORTUNITY_SUB_TAB.MyApplications);
     setSearch('python');
     setPaymentFilter('PAID');
+    setIsRecruiting(true);
+    setTags(['react']);
 
     const state = useOpportunitiesStore.getState();
 
     expect(state.activeSubTab).toBe(OPPORTUNITY_SUB_TAB.MyApplications);
     expect(state.search).toBe('python');
     expect(state.paymentFilter).toBe('PAID');
+    expect(state.isRecruiting).toBe(true);
+    expect(state.tags).toEqual(['react']);
+  });
+
+  it('sets all filters via setFilters', () => {
+    const { setFilters } = useOpportunitiesStore.getState();
+
+    setFilters({
+      paymentType: 'UNPAID',
+      isRecruiting: true,
+      tags: ['design'],
+    });
+
+    const state = useOpportunitiesStore.getState();
+
+    expect(state.paymentFilter).toBe('UNPAID');
+    expect(state.isRecruiting).toBe(true);
+    expect(state.tags).toEqual(['design']);
   });
 
   it('resets state back to catalog defaults via reset', () => {
@@ -44,5 +67,7 @@ describe('useOpportunitiesStore', () => {
     expect(state.activeSubTab).toBe(OPPORTUNITY_SUB_TAB.Catalog);
     expect(state.search).toBe('');
     expect(state.paymentFilter).toBe('');
+    expect(state.isRecruiting).toBe(false);
+    expect(state.tags).toEqual([]);
   });
 });

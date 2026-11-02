@@ -37,12 +37,19 @@ const renderModerationQueueTab = (props: Partial<ModerationQueueTabProps> = {}) 
     onOpenRejectModal: vi.fn(),
   };
 
-  return render(
-    withLanguage(<ModerationQueueTab {...defaultProps} {...props} />),
-  );
+  return render(withLanguage(<ModerationQueueTab {...defaultProps} {...props} />));
 };
 
 describe('ModerationQueueTab component', () => {
+  it('should show the profile email without a whitespace-only alternative contact', () => {
+    renderModerationQueueTab({
+      moderationQueue: [{ ...mockOpportunity, ownerContactInfo: '   ' }],
+    });
+
+    expect(screen.getByText('jane@example.com')).toBeInTheDocument();
+    expect(screen.queryByTitle('Альтернативний контакт')).not.toBeInTheDocument();
+  });
+
   it('should render moderation card details including title, category, payment type, and owner contacts', () => {
     renderModerationQueueTab();
 
@@ -53,6 +60,7 @@ describe('ModerationQueueTab component', () => {
     expect(screen.getByText(/Подано/i)).toBeInTheDocument();
     expect(screen.getByText('J')).toBeInTheDocument();
     expect(screen.getByText('Jane Doe')).toBeInTheDocument();
+    expect(screen.getByText('jane@example.com')).toBeInTheDocument();
     expect(screen.getByText('lead@example.com')).toBeInTheDocument();
     expect(screen.getByText('Оплачувана (500$/month)')).toBeInTheDocument();
     expect(screen.getByText('Опис пропозиції')).toBeInTheDocument();

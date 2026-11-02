@@ -34,6 +34,13 @@ model User {
   opportunityApplications OpportunityApplication[] @relation("Applicant")
   notifications           Notification[]           @relation("UserNotifications")
   comments                Comment[]
+  phone                   UserPhone?
+}
+
+model UserPhone {
+  userId      String @id
+  phoneNumber String @unique
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Course {
@@ -92,19 +99,20 @@ model Tag {
 }
 
 model Opportunity {
-  id                  String                    @id @default(uuid())
-  title               String
-  description         String
-  ownerContactInfo    String
-  partnerInfo         String?
-  status              OpportunityStatus         @default(DRAFT)
-  lifecycleState      OpportunityLifecycleState @default(START)
-  acceptsApplications Boolean                   @default(false)
-  paymentType         PaymentType               @default(UNPAID)
-  paymentDetails      String?
-  details             String?
-  moderationComment   String?
-  proposedTags        String[]                  @default([])
+  id                    String                    @id @default(uuid())
+  title                 String
+  description           String
+  ownerContactInfo      String
+  partnerInfo           String?
+  status                OpportunityStatus         @default(DRAFT)
+  lifecycleState        OpportunityLifecycleState @default(START)
+  acceptsApplications   Boolean                   @default(false)
+  paymentType           PaymentType               @default(UNPAID)
+  paymentDetails        String?
+  details               String?
+  moderationComment     String?
+  moderationContentHash String?
+  proposedTags          String[]                  @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -175,4 +183,34 @@ model Comment {
 
   applicationId String?
   application   OpportunityApplication? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+
+model GripSession {
+  id          String    @id @default(uuid())
+  tokenHash   String    @unique
+  githubId    String
+  githubLogin String
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+  revokedAt   DateTime?
+
+  @@index([expiresAt])
+  @@index([githubId])
+}
+
+model GripQuotaBucket {
+  key          String   @id
+  windowEndsAt DateTime
+  count        Int
+
+  @@index([windowEndsAt])
+}
+
+model GripLease {
+  id        String   @id @default(uuid())
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
 }

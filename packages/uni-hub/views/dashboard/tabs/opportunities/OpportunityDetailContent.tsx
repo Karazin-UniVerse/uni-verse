@@ -1,11 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ConfirmModal } from '@ui';
 import type { Opportunity } from '@core/types/opportunities';
+import { OPPORTUNITY_STATUS } from '@core/constants/opportunities';
+import { ROLE } from '@core/constants/roles';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
+import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { ROUTE } from '../../routes';
 import { OpportunityDetailView } from './components/OpportunityDetailView';
+import { OpportunityModerationPanel } from './components/OpportunityModerationPanel';
 import { useApplicants } from './hooks/useApplicants';
 import { useApplicantsDeepLink } from './hooks/useApplicantsDeepLink';
 import { useApplyToOpportunity } from './hooks/useApplyToOpportunity';
@@ -24,10 +29,34 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
 }) => {
   const router = useRouter();
   const currentUser = useCurrentUser();
+  const { formatMessage } = useLanguage();
   const actions = useOpportunityActions();
   const create = useCreateOpportunity({});
   const apply = useApplyToOpportunity({ currentUser, opportunity });
   const applicants = useApplicants();
+  const canModerate =
+    Boolean(currentUser.userId) &&
+    currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR) &&
+    currentUser.userId !== opportunity.ownerId &&
+    opportunity.status === OPPORTUNITY_STATUS.READY_FOR_REVIEW;
+
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async (): Promise<void> => {
+    setIsDeleting(true);
+
+    try {
+      const deleted = await actions.handleDeleteOpportunity(opportunity.id);
+
+      if (deleted) {
+        router.push(ROUTE.Opportunities);
+      }
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmOpen(false);
+    }
+  };
 
   useApplicantsDeepLink({
     opportunity,
@@ -43,13 +72,27 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
         opportunity={opportunity}
         userId={currentUser.userId}
         onSendToReview={actions.handleSendToReview}
-        onLifecycleChange={actions.handleLifecycleChange}
-        onToggleAcceptsApplications={(accepts) =>
-          actions.handleToggleAcceptsApplications(opportunity.id, accepts)
-        }
         onEdit={create.openEdit}
+        onDelete={() => setDeleteConfirmOpen(true)}
         onOpenApply={() => apply.setIsApplyOpen(true)}
         onOpenApplicants={() => applicants.open(opportunity)}
+      />
+
+      {canModerate && (
+        <OpportunityModerationPanel key={opportunity.id} opportunityId={opportunity.id} />
+      )}
+
+      <ConfirmModal
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        onConfirm={handleDelete}
+        title={formatMessage('opportunities.confirm.deleteTitle')}
+        message={formatMessage('opportunities.confirm.delete')}
+        cancelLabel={formatMessage('common.cancel')}
+        confirmLabel={formatMessage('opportunities.confirm.deleteConfirm')}
+        closeLabel={formatMessage('modal.close')}
+        loading={isDeleting}
+        variant="danger"
       />
 
       <CreateOpportunityModal

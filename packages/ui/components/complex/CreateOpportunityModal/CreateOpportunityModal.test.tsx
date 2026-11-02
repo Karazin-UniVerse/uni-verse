@@ -31,6 +31,7 @@ describe('CreateOpportunityModal Component', () => {
     descPlaceholder: 'Enter description...',
     contactLabel: 'Contact Information',
     contactPlaceholder: 'Enter contact email or phone...',
+    contactHint: 'Your profile email will be shown automatically.',
     paymentTypeLabel: 'Payment Type',
     paymentDetailsLabel: 'Payment Details',
     paymentDetailsPlaceholder: 'Enter salary or stipend info...',
@@ -66,6 +67,7 @@ describe('CreateOpportunityModal Component', () => {
     expect(contactInput).toBeInTheDocument();
     expect(contactInput).toHaveValue(defaultProps.formData.ownerContactInfo);
     expect(contactInput).toHaveAttribute('placeholder', defaultProps.contactPlaceholder);
+    expect(contactInput).toHaveAccessibleDescription(defaultProps.contactHint);
 
     const paymentTypeSelect = screen.getByLabelText(defaultProps.paymentTypeLabel);
 
@@ -245,14 +247,18 @@ describe('CreateOpportunityModal Component', () => {
     const contactInput = screen.getByLabelText(defaultProps.contactLabel);
     const paymentTypeSelect = screen.getByLabelText(defaultProps.paymentTypeLabel);
 
-    await user.type(titleInput, 'Software Engineer Intern');
-    await user.type(descInput, 'Join our engineering team to build scalable services.');
-    await user.type(contactInput, 'lead@universe.edu');
+    await user.click(titleInput);
+    await user.paste('Software Engineer Intern');
+    await user.click(descInput);
+    await user.paste('Join our engineering team to build scalable services.');
+    await user.click(contactInput);
+    await user.paste('lead@universe.edu');
     await user.selectOptions(paymentTypeSelect, 'PAID');
 
     const paymentDetailsInput = screen.getByLabelText(defaultProps.paymentDetailsLabel);
 
-    await user.type(paymentDetailsInput, '20 USD/hour');
+    await user.click(paymentDetailsInput);
+    await user.paste('20 USD/hour');
 
     expect(titleInput).toHaveValue('Software Engineer Intern');
     expect(descInput).toHaveValue('Join our engineering team to build scalable services.');
@@ -293,7 +299,7 @@ describe('CreateOpportunityModal Component', () => {
 
     expect(titleInput).toBeRequired();
     expect(descInput).toBeRequired();
-    expect(contactInput).toBeRequired();
+    expect(contactInput).not.toBeRequired();
 
     rerender(<CreateOpportunityModal {...defaultProps} formData={paidFormData} />);
 

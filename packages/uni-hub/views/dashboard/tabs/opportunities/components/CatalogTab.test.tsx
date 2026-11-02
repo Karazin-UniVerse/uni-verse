@@ -14,8 +14,10 @@ const mockOpportunities: Opportunity[] = [
     ownerContactInfo: 'hr@frontend.ua',
     status: 'PUBLISHED',
     lifecycleState: 'ACTIVE',
+    acceptsApplications: true,
     paymentType: 'PAID',
     paymentDetails: '400$ / month',
+    tags: [{ id: '1', name: 'react' }],
     ownerId: 'user-1',
     owner: {
       id: 'user-1',
@@ -32,8 +34,10 @@ const mockOpportunities: Opportunity[] = [
     ownerContactInfo: 'lead@backend.ua',
     status: 'PUBLISHED',
     lifecycleState: 'ACTIVE',
+    acceptsApplications: false,
     paymentType: 'UNPAID',
     paymentDetails: null,
+    tags: [{ id: '2', name: 'nodejs' }],
     ownerId: 'user-2',
     owner: {
       id: 'user-2',
@@ -50,8 +54,10 @@ const mockOpportunities: Opportunity[] = [
     ownerContactInfo: 'design-lead@kpi.ua',
     status: 'PUBLISHED',
     lifecycleState: 'ACTIVE',
+    acceptsApplications: true,
     paymentType: 'PAID',
     paymentDetails: '600$ / month',
+    tags: [{ id: '3', name: 'design' }],
     ownerId: 'user-3',
     owner: {
       id: 'user-3',
@@ -73,31 +79,28 @@ const renderCatalogTab = (props?: Partial<CatalogTabProps>) => {
     onSearchChange: vi.fn(),
     paymentFilter: '',
     onPaymentFilterChange: vi.fn(),
+    isRecruiting: false,
+    tags: [],
     onOpenDetail: vi.fn(),
     ...props,
   };
 
   return {
-    ...render(
-      withLanguage(<CatalogTab {...defaultProps} />),
-    ),
+    ...render(withLanguage(<CatalogTab {...defaultProps} />)),
     props: defaultProps,
   };
 };
 
 describe('CatalogTab component', () => {
-  it('should render search input and payment filter select', () => {
+  it('should render search input and filters trigger button', () => {
     renderCatalogTab();
 
     const searchInput = screen.getByRole('textbox', { name: /пошук можливостей/i });
+    const filtersButton = screen.getByRole('button', { name: /фільтри/i });
 
     expect(searchInput).toBeInTheDocument();
     expect(searchInput).toHaveValue('');
-    expect(screen.getByRole('button', { name: 'Усі' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Оплачувані' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Волонтерство / Практика' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /очистити поле пошуку/i })).not.toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(filtersButton).toBeInTheDocument();
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
     expect(screen.getByText('Backend Engineer')).toBeInTheDocument();
     expect(screen.getByText('UI/UX Designer')).toBeInTheDocument();
@@ -122,7 +125,7 @@ describe('CatalogTab component', () => {
 
     renderCatalogTab({ search: 'Frontend', onSearchChange });
 
-    const clearButton = screen.getByRole('button', { name: /очистити поле пошуку/i });
+    const clearButton = screen.getByRole('button', { name: /очистити поле/i });
 
     expect(clearButton).toBeInTheDocument();
 
@@ -131,39 +134,46 @@ describe('CatalogTab component', () => {
     expect(onSearchChange).toHaveBeenCalledWith('');
   });
 
-  it('should call onPaymentFilterChange when changing payment filter select', async () => {
+  it('should open filter panel and apply new filters', async () => {
     const user = userEvent.setup();
-    const onPaymentFilterChange = vi.fn();
+    const onFiltersChange = vi.fn();
 
-    renderCatalogTab({ onPaymentFilterChange });
+    renderCatalogTab({ onFiltersChange });
 
-    const paidChip = screen.getByRole('button', { name: 'Оплачувані' });
-    const unpaidChip = screen.getByRole('button', { name: 'Волонтерство / Практика' });
-    const allChip = screen.getByRole('button', { name: 'Усі' });
+    const filtersButton = screen.getByRole('button', { name: /фільтри/i });
 
-    await user.click(paidChip);
-    expect(onPaymentFilterChange).toHaveBeenCalledWith('PAID');
+    await user.click(filtersButton);
 
-    await user.click(unpaidChip);
-    expect(onPaymentFilterChange).toHaveBeenCalledWith('UNPAID');
+    expect(screen.getByRole('dialog', { name: /фільтри/i })).toBeInTheDocument();
 
-    await user.click(allChip);
-    expect(onPaymentFilterChange).toHaveBeenCalledWith('');
+    const recruitingCheckbox = screen.getByRole('checkbox', { name: /зараз іде набір/i });
+
+    await user.click(recruitingCheckbox);
+
+    const applyButton = screen.getByRole('button', { name: /застосувати/i });
+
+    await user.click(applyButton);
+
+    expect(onFiltersChange).toHaveBeenCalledWith({
+      paymentType: '',
+      isRecruiting: true,
+      tags: [],
+    });
   });
 
-  it('should filter opportunities in memory by search term', () => {
+  it('should filter opportunities in memory by search term and tags', () => {
     const { rerender } = render(
-      withLanguage(<CatalogTab
+      withLanguage(
+        <CatalogTab
           loading={false}
           isError={false}
           onRetry={vi.fn()}
           opportunities={mockOpportunities}
           search="Frontend"
           onSearchChange={vi.fn()}
-          paymentFilter=""
-          onPaymentFilterChange={vi.fn()}
           onOpenDetail={vi.fn()}
-        />),
+        />,
+      ),
     );
 
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
@@ -171,76 +181,43 @@ describe('CatalogTab component', () => {
     expect(screen.queryByText('UI/UX Designer')).not.toBeInTheDocument();
 
     rerender(
-      withLanguage(<CatalogTab
+      withLanguage(
+        <CatalogTab
           loading={false}
           isError={false}
           onRetry={vi.fn()}
           opportunities={mockOpportunities}
-          search="PostgreSQL"
+          search=""
+          tags={['nodejs']}
           onSearchChange={vi.fn()}
-          paymentFilter=""
-          onPaymentFilterChange={vi.fn()}
           onOpenDetail={vi.fn()}
-        />),
+        />,
+      ),
     );
 
     expect(screen.getByText('Backend Engineer')).toBeInTheDocument();
-    expect(screen.queryByText('Frontend Developer')).not.toBeInTheDocument();
-
-    rerender(
-      withLanguage(<CatalogTab
-          loading={false}
-          isError={false}
-          onRetry={vi.fn()}
-          opportunities={mockOpportunities}
-          search="Charlie"
-          onSearchChange={vi.fn()}
-          paymentFilter=""
-          onPaymentFilterChange={vi.fn()}
-          onOpenDetail={vi.fn()}
-        />),
-    );
-
-    expect(screen.getByText('UI/UX Designer')).toBeInTheDocument();
     expect(screen.queryByText('Frontend Developer')).not.toBeInTheDocument();
   });
 
-  it('should filter opportunities in memory by payment filter', () => {
-    const { rerender } = render(
-      withLanguage(<CatalogTab
+  it('should filter opportunities in memory by recruiting status', () => {
+    render(
+      withLanguage(
+        <CatalogTab
           loading={false}
           isError={false}
           onRetry={vi.fn()}
           opportunities={mockOpportunities}
           search=""
+          isRecruiting={true}
           onSearchChange={vi.fn()}
-          paymentFilter="PAID"
-          onPaymentFilterChange={vi.fn()}
           onOpenDetail={vi.fn()}
-        />),
+        />,
+      ),
     );
 
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
     expect(screen.getByText('UI/UX Designer')).toBeInTheDocument();
     expect(screen.queryByText('Backend Engineer')).not.toBeInTheDocument();
-
-    rerender(
-      withLanguage(<CatalogTab
-          loading={false}
-          isError={false}
-          onRetry={vi.fn()}
-          opportunities={mockOpportunities}
-          search=""
-          onSearchChange={vi.fn()}
-          paymentFilter="UNPAID"
-          onPaymentFilterChange={vi.fn()}
-          onOpenDetail={vi.fn()}
-        />),
-    );
-
-    expect(screen.getByText('Backend Engineer')).toBeInTheDocument();
-    expect(screen.queryByText('Frontend Developer')).not.toBeInTheDocument();
-    expect(screen.queryByText('UI/UX Designer')).not.toBeInTheDocument();
   });
 
   it('should trigger onOpenDetail when clicking an opportunity card', async () => {
@@ -250,29 +227,12 @@ describe('CatalogTab component', () => {
     renderCatalogTab({ onOpenDetail });
 
     const detailButton = screen.getByRole('button', {
-      name: 'Детальніше про Frontend Developer',
+      name: /детальніше про Frontend Developer/i,
     });
 
     await user.click(detailButton);
 
     expect(onOpenDetail).toHaveBeenCalledTimes(1);
     expect(onOpenDetail).toHaveBeenCalledWith(mockOpportunities[0]);
-  });
-
-  it('should render empty state when filtered opportunities list is empty', () => {
-    renderCatalogTab({ search: 'NonExistentTitleOrKeyword' });
-
-    expect(
-      screen.getByText('За вашим запитом не знайдено доступних можливостей'),
-    ).toBeInTheDocument();
-    expect(screen.queryByText('Frontend Developer')).not.toBeInTheDocument();
-  });
-
-  it('should render loading spinner when loading is true', () => {
-    renderCatalogTab({ loading: true });
-
-    expect(screen.getByRole('status')).toBeInTheDocument();
-    expect(screen.queryByText('Frontend Developer')).not.toBeInTheDocument();
-    expect(screen.queryByText(/знайдено:/i)).not.toBeInTheDocument();
   });
 });

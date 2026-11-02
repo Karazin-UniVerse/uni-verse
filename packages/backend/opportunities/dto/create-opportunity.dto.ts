@@ -7,10 +7,11 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PaymentType } from '@universe/database';
+import { PaymentType, OpportunityLifecycleState } from '@universe/database';
 import type { CreateOpportunityRequest } from '@universe/core/types/opportunities';
 import {
   TAG_MAX_LENGTH,
@@ -29,10 +30,12 @@ export class CreateOpportunityDto implements CreateOpportunityRequest {
   @IsNotEmpty()
   description: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  @IsNotEmpty()
-  ownerContactInfo: string;
+  @ValidateIf(
+    (dto: CreateOpportunityDto): boolean => dto.ownerContactInfo !== undefined,
+  )
+  ownerContactInfo?: string;
 
   @ApiProperty({ enum: PaymentType, default: PaymentType.UNPAID })
   @IsEnum(PaymentType)
@@ -59,4 +62,13 @@ export class CreateOpportunityDto implements CreateOpportunityRequest {
   @MaxLength(TAG_MAX_LENGTH, { each: true })
   @IsOptional()
   tags?: string[];
+  @ApiPropertyOptional({
+    enum: OpportunityLifecycleState,
+    default: OpportunityLifecycleState.START,
+  })
+  @IsEnum(OpportunityLifecycleState)
+  @ValidateIf(
+    (dto: CreateOpportunityDto): boolean => dto.lifecycleState !== undefined,
+  )
+  lifecycleState?: OpportunityLifecycleState;
 }

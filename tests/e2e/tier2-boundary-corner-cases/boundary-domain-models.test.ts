@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import type { StudentProfile } from '../../../packages/core/types/student';
 import type {
-  StudentProfile,
   CurriculumItem,
   StudentRecordBookItem,
   AssignmentItem,

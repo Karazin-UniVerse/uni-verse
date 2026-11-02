@@ -5,9 +5,12 @@ import {
   Body,
   Param,
   Put,
+  Delete,
   Query,
+  Res,
   ForbiddenException,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import {
   OpportunitiesService,
@@ -26,8 +29,27 @@ import {
   FindOpportunitiesDto,
 } from './dto';
 import { GetUser } from '../auth/decorators/get-user.decorator';
-import { Opportunity, OpportunityApplication } from '@universe/database';
+import {
+  Opportunity,
+  OpportunityApplication,
+  OpportunityStatus,
+} from '@universe/database';
 import { Public } from '../auth/decorators/public.decorator';
+
+const CACHE_CONTROL_HEADER = 'Cache-Control';
+const PUBLIC_CACHE_CONTROL =
+  'public, max-age=30, s-maxage=60, stale-while-revalidate=120';
+const PRIVATE_CACHE_CONTROL = 'private, no-cache, no-store, must-revalidate';
+
+function setOpportunityCacheControl(
+  res: Response | undefined,
+  isPublic: boolean,
+): void {
+  res?.setHeader(
+    CACHE_CONTROL_HEADER,
+    isPublic ? PUBLIC_CACHE_CONTROL : PRIVATE_CACHE_CONTROL,
+  );
+}
 
 @ApiTags('Opportunities')
 @Controller('opportunities')
@@ -56,11 +78,18 @@ export class OpportunitiesController {
    * Get all published opportunities (or filter)
    */
   @ApiOperation({ summary: 'Get all published opportunities (or filter)' })
-  findAll(
+  async findAll(
     @GetUser('roles') roles: string[] | undefined,
     @Query() query: FindOpportunitiesDto,
+    @Res({ passthrough: true }) res?: Response,
   ): Promise<OpportunityWithOwner[]> {
-    return this.opportunitiesService.findAll(query, roles);
+    const opportunities = await this.opportunitiesService.findAll(query, roles);
+    const isPublicCatalog =
+      !query.status || query.status === OpportunityStatus.PUBLISHED;
+
+    setOpportunityCacheControl(res, isPublicCatalog);
+
+    return opportunities;
   }
 
   @ApiBearerAuth()
@@ -69,7 +98,9 @@ export class OpportunitiesController {
    * Get current user opportunities
    */
   @ApiOperation({ summary: 'Get current user opportunities' })
-  getMyOpportunities(@GetUser('sub') userId: string): Promise<Opportunity[]> {
+  getMyOpportunities(
+    @GetUser('sub') userId: string,
+  ): Promise<OpportunityWithOwner[]> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.getMyOpportunities(userId);
@@ -111,12 +142,24 @@ export class OpportunitiesController {
    * Get opportunity by ID
    */
   @ApiOperation({ summary: 'Get opportunity by ID' })
-  findOne(
+  async findOne(
     @Param('id') id: string,
     @GetUser('sub') userId?: string,
     @GetUser('roles') roles?: string[],
+    @Res({ passthrough: true }) res?: Response,
   ): Promise<OpportunityWithOwner> {
-    return this.opportunitiesService.findOne(id, userId, roles);
+    const opportunity = await this.opportunitiesService.findOne(
+      id,
+      userId,
+      roles,
+    );
+
+    setOpportunityCacheControl(
+      res,
+      opportunity.status === OpportunityStatus.PUBLISHED,
+    );
+
+    return opportunity;
   }
 
   @ApiBearerAuth()
@@ -133,6 +176,21 @@ export class OpportunitiesController {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     return this.opportunitiesService.update(userId, id, dto);
+  }
+
+  @ApiBearerAuth()
+  @Delete(':id')
+  /**
+   * Owner deletes draft opportunity
+   */
+  @ApiOperation({ summary: 'Owner deletes a draft opportunity' })
+  delete(
+    @GetUser('sub') userId: string,
+    @Param('id') id: string,
+  ): Promise<Opportunity> {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+
+    return this.opportunitiesService.delete(userId, id);
   }
 
   @ApiBearerAuth()

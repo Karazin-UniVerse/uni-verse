@@ -2,7 +2,8 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { CurriculumItem, StudentProfile } from '@core/types';
+import type { CurriculumItem } from '@core/types';
+import type { StudentProfile } from '@core/types/student';
 import {
   createAppProvidersWrapper,
   setTestFeatureFlags,
@@ -116,6 +117,21 @@ describe('OverviewTab component', () => {
     await user.click(coursesStatCard);
 
     expect(onNavigate).toHaveBeenCalledWith('study', 'subjects');
+  });
+
+  it('should hide the student identity until a profile loads', () => {
+    const props = createDefaultProps({ activeStudentProfile: null });
+    const { rerender } = renderWithProviders(<OverviewTab {...props} />);
+
+    expect(
+      screen.queryByRole('heading', { name: mockStudentProfile.fullName }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(mockStudentProfile.email)).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Швидкі дії' })).toBeInTheDocument();
+
+    rerender(<OverviewTab {...props} activeStudentProfile={mockStudentProfile} />);
+
+    expect(screen.getByRole('heading', { name: mockStudentProfile.fullName })).toBeInTheDocument();
   });
 
   it('should display contextual greeting and nearest deadline countdown when Moodle integration is enabled', () => {

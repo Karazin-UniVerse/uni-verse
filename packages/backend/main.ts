@@ -1,10 +1,11 @@
-import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import morgan from 'morgan';
+import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
+import morgan from 'morgan';
+import { AppModule } from './app.module';
+import { configureBodyParsers } from './utils/body-parsers';
 import { getCorsConfig } from './utils/cors.config';
 
 const LOGGER = new Logger('Main');
@@ -23,9 +24,7 @@ async function bootstrap() {
     bodyParser: false,
   });
 
-  app.useBodyParser('json', { limit: '10mb' });
-  app.useBodyParser('urlencoded', { extended: true, limit: '10mb' });
-
+  configureBodyParsers(app);
   app.enableCors(getCorsConfig());
 
   const document = SwaggerModule.createDocument(app, SWAGGER_CONFIG);

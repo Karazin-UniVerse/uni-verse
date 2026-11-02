@@ -6,6 +6,11 @@ import { moodleApi } from '@uni-hub/services/api.moodle';
 import { notificationsApi } from '@uni-hub/services/api.notifications';
 import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
 import { useDashboardData } from './useDashboardData';
+import { STUDENT_PROFILE_STORAGE_KEY } from '../constants';
+import { fallbackStudentProfile } from '@uni-hub/utils/test-fixtures';
+import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
+import { endSession } from '@uni-hub/services/api.session';
+import { isLoggedIn } from '@core/utils/auth';
 
 const mockToastSuccess = vi.fn();
 const mockToastError = vi.fn();
@@ -31,7 +36,7 @@ vi.mock('@uni-hub/features', () => ({
 }));
 
 vi.mock('@core/utils/auth', () => ({
-  isLoggedIn: () => true,
+  isLoggedIn: vi.fn(() => true),
 }));
 
 describe('useDashboardData', () => {
@@ -39,6 +44,7 @@ describe('useDashboardData', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(isLoggedIn).mockReturnValue(true);
     queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
@@ -46,18 +52,93 @@ describe('useDashboardData', () => {
     });
     useMoodleStore.getState().resetSession();
     vi.spyOn(moodleApi, 'getProfile').mockResolvedValue({
-      data: {
-        id: 1,
-        fullname: 'Student',
-        email: 'student@example.com',
-      },
-    } as never);
+      data: fallbackStudentProfile,
+    });
   });
 
   const createWrapper = () => {
     return ({ children }: { children: React.ReactNode }): React.ReactElement =>
       React.createElement(QueryClientProvider, { client: queryClient }, children);
   };
+
+  it('should not expose a demo profile before a profile has loaded', () => {
+    useMoodleStore.setState({ isMoodleLinked: false });
+    vi.spyOn(notificationsApi, 'getMyNotifications').mockResolvedValue({ data: [] });
+
+    const { result } = renderHook(() => useDashboardData(), { wrapper: createWrapper() });
+
+    expect(result.current.studentProfile).toBeNull();
+  });
+
+  it('should not substitute a stored username or cached identity for a loaded profile', () => {
+    useMoodleStore.setState({ isMoodleLinked: false });
+    localStorage.setItem('username', 'Next Account');
+    localStorage.setItem(
+      STUDENT_PROFILE_STORAGE_KEY,
+      JSON.stringify({ ...fallbackStudentProfile, fullName: 'Previous Account' }),
+    );
+    vi.spyOn(notificationsApi, 'getMyNotifications').mockResolvedValue({ data: [] });
+
+    const { result } = renderHook(() => useDashboardData(), { wrapper: createWrapper() });
+
+    expect(result.current.studentProfile).toBeNull();
+  });
+
+  it('should clear the displayed profile between account sessions', () => {
+    useMoodleStore.setState({ isMoodleLinked: false });
+    vi.spyOn(notificationsApi, 'getMyNotifications').mockResolvedValue({ data: [] });
+    queryClient.setQueryData(moodleKeys.profile(), {
+      ...fallbackStudentProfile,
+      fullName: 'First Account',
+    });
+
+    const { result, unmount } = renderHook(() => useDashboardData(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.studentProfile?.fullName).toBe('First Account');
+    unmount();
+    endSession(queryClient);
+    localStorage.setItem('username', 'Second Account');
+
+    const nextSession = renderHook(() => useDashboardData(), { wrapper: createWrapper() });
+
+    expect(nextSession.result.current.studentProfile).toBeNull();
+  });
+
+  it('should show no profile during a delayed request and display the fetched identity afterwards', async () => {
+    useMoodleStore.setState({ isMoodleLinked: true });
+    localStorage.setItem('username', 'Stored Login');
+    localStorage.setItem('authProvider', 'credentials');
+    let resolveProfile!: (response: Awaited<ReturnType<typeof moodleApi.getProfile>>) => void;
+    const profileResponse = new Promise<Awaited<ReturnType<typeof moodleApi.getProfile>>>(
+      (resolve) => {
+        resolveProfile = resolve;
+      },
+    );
+
+    vi.mocked(moodleApi.getProfile).mockReturnValueOnce(profileResponse);
+    vi.spyOn(moodleApi, 'getCourses').mockResolvedValue({ data: [] });
+    vi.spyOn(moodleApi, 'getGrades').mockResolvedValue({ data: { grades: [] } });
+    vi.spyOn(moodleApi, 'getAssignments').mockResolvedValue({ data: [] });
+    vi.spyOn(moodleApi, 'getEvents').mockResolvedValue({ data: [] });
+    vi.spyOn(moodleApi, 'getNotifications').mockResolvedValue({
+      data: { notifications: [], unreadcount: 0 },
+    });
+    vi.spyOn(moodleApi, 'getStatistics').mockResolvedValue({ data: { total: 0 } });
+    vi.spyOn(notificationsApi, 'getMyNotifications').mockResolvedValue({ data: [] });
+
+    const { result } = renderHook(() => useDashboardData(), { wrapper: createWrapper() });
+
+    expect(result.current.studentProfile).toBeNull();
+    await act(async () => {
+      resolveProfile({ data: { ...fallbackStudentProfile, fullName: 'Fetched Student' } });
+      await profileResponse;
+    });
+    await waitFor(() => {
+      expect(result.current.studentProfile?.fullName).toBe('Fetched Student');
+    });
+  });
 
   it('allows moderator account without moodle linked to refresh platform data and shows success toast', async () => {
     useMoodleStore.setState({ isMoodleLinked: false });
@@ -142,5 +223,19 @@ describe('useDashboardData', () => {
     expect(moodleApi.getCourses).toHaveBeenCalled();
     expect(notificationsApi.getMyNotifications).toHaveBeenCalled();
     expect(mockToastSuccess).toHaveBeenCalledWith('dashboard.syncSuccess');
+  });
+
+  it('should not expose a cached profile when the login session is absent', () => {
+    useMoodleStore.setState({ isMoodleLinked: false });
+    vi.spyOn(notificationsApi, 'getMyNotifications').mockResolvedValue({ data: [] });
+    queryClient.setQueryData(moodleKeys.profile(), {
+      ...fallbackStudentProfile,
+      fullName: 'Cached Account',
+    });
+    vi.mocked(isLoggedIn).mockReturnValue(false);
+
+    const { result } = renderHook(() => useDashboardData(), { wrapper: createWrapper() });
+
+    expect(result.current.studentProfile).toBeNull();
   });
 });

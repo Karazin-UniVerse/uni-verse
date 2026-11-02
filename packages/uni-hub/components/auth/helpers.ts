@@ -14,6 +14,9 @@ export interface LinkMoodleContentKeys {
   successKey: TranslationKey;
 }
 
+/**
+ * Resolves the localized text keys for the Moodle link modal.
+ */
 export function getLinkMoodleContentKeys(
   mode: LinkMoodleMode = LinkMoodleMode.CONNECT,
 ): LinkMoodleContentKeys {
@@ -35,6 +38,9 @@ export interface GoogleJwtClaims {
   picture?: string;
 }
 
+/**
+ * Decodes the payload of a Google OAuth ID token into structured JWT claims.
+ */
 export const parseGoogleClaims = (token: string): GoogleJwtClaims => {
   try {
     const parts = token.split('.');
@@ -57,3 +63,16 @@ export const parseGoogleClaims = (token: string): GoogleJwtClaims => {
     return {};
   }
 };
+
+/**
+ * Extracts a display full name from Google JWT claims, falling back to combined given and family names.
+ */
+export function extractGoogleDisplayName(claims: GoogleJwtClaims): string {
+  const directName = claims.name?.trim();
+
+  if (directName) {
+    return directName;
+  }
+
+  return [claims.given_name?.trim(), claims.family_name?.trim()].filter(Boolean).join(' ');
+}

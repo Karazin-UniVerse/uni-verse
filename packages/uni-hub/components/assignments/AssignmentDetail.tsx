@@ -137,8 +137,11 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
 
       if (deadline !== null && deadline !== undefined && deadline > 0 && nowSec <= deadline) {
         if (useGamificationStore.getState().unlockBadge('DEADLINE_SNIPER')) {
+          const badgeTitle = formatMessage(BADGES.DEADLINE_SNIPER.titleKey);
+          const badgeDesc = formatMessage(BADGES.DEADLINE_SNIPER.descriptionKey);
+
           toast.success(
-            `Ачивка: ${BADGES.DEADLINE_SNIPER.title} — ${BADGES.DEADLINE_SNIPER.description}`,
+            formatMessage('badge.unlockToast', { title: badgeTitle, description: badgeDesc }),
           );
         }
       }

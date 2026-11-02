@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@una';
-import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type {
@@ -9,9 +8,10 @@ import type {
   Opportunity,
   UpdateOpportunityRequest,
 } from '@core/types/opportunities';
-import { OPPORTUNITY_PAYMENT_TYPE } from '@core/constants/opportunities';
+import { OPPORTUNITY_LIFECYCLE, OPPORTUNITY_PAYMENT_TYPE } from '@core/constants/opportunities';
 import { invalidateOpportunities } from '../cache';
 import type { CreateOpportunityFormData } from '../types';
+import { getOpportunityErrorMessage } from '../helpers';
 
 const INITIAL_FORM_DATA: CreateOpportunityFormData = {
   title: '',
@@ -19,7 +19,9 @@ const INITIAL_FORM_DATA: CreateOpportunityFormData = {
   ownerContactInfo: '',
   paymentType: OPPORTUNITY_PAYMENT_TYPE.UNPAID,
   paymentDetails: '',
-  acceptsApplications: true,
+  tags: [],
+  acceptsApplications: false,
+  lifecycleState: OPPORTUNITY_LIFECYCLE.START,
 };
 
 interface OpportunityUpdate {
@@ -79,7 +81,9 @@ export function useCreateOpportunity({
       ownerContactInfo: opportunity.ownerContactInfo || '',
       paymentType: opportunity.paymentType,
       paymentDetails: opportunity.paymentDetails || '',
-      acceptsApplications: opportunity.acceptsApplications !== false,
+      tags: opportunity.tags?.map((t) => t.name) ?? opportunity.proposedTags ?? [],
+      acceptsApplications: opportunity.acceptsApplications === true,
+      lifecycleState: opportunity.lifecycleState,
     });
     setIsOpen(true);
   };
@@ -106,7 +110,9 @@ export function useCreateOpportunity({
               (formData.paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID &&
                 formData.paymentDetails.trim()) ||
               null,
+            tags: formData.tags,
             acceptsApplications: formData.acceptsApplications,
+            lifecycleState: formData.lifecycleState,
           },
         });
 
@@ -119,7 +125,9 @@ export function useCreateOpportunity({
           ownerContactInfo: formData.ownerContactInfo.trim(),
           paymentType: formData.paymentType,
           paymentDetails: formData.paymentDetails.trim() || undefined,
-          acceptsApplications: formData.acceptsApplications ?? true,
+          tags: formData.tags,
+          acceptsApplications: formData.acceptsApplications ?? false,
+          lifecycleState: formData.lifecycleState,
         });
 
         toast.success(formatMessage('opportunities.toast.createdDraft'));
@@ -131,7 +139,7 @@ export function useCreateOpportunity({
         ? 'opportunities.toast.updateError'
         : 'opportunities.toast.createError';
 
-      toast.error(getErrorMessage(err, formatMessage(errorKey)));
+      toast.error(getOpportunityErrorMessage(err, formatMessage, formatMessage(errorKey)));
     }
   };
 

@@ -1,9 +1,12 @@
 import type {
   StudentProfile,
   StudentAcademicStatus,
-} from '@universe/core/types';
+} from '@universe/core/types/student';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+/**
+ * Data transfer object representing a student's profile for the E-Dean's office.
+ */
 export class StudentProfileDto implements StudentProfile {
   @ApiProperty({ example: 'karazin-student-001' })
   id: string | number;
@@ -11,10 +14,10 @@ export class StudentProfileDto implements StudentProfile {
   @ApiProperty({ example: 4021 })
   moodleId: number | string;
 
-  @ApiProperty({ example: 'Барсуков Родіон Сергійович' })
+  @ApiProperty({ example: 'Іван Петренко' })
   fullName: string;
 
-  @ApiProperty({ example: 'rodion.barsukov@karazin.ua' })
+  @ApiProperty({ example: 'example@karazin.ua' })
   email: string;
 
   @ApiPropertyOptional({
@@ -45,11 +48,11 @@ export class StudentProfileDto implements StudentProfile {
   @ApiProperty({ example: 'bachelor', enum: ['bachelor', 'master', 'phd'] })
   degree: 'bachelor' | 'master' | 'phd';
 
-  @ApiProperty({ example: 3 })
-  course: number;
+  @ApiPropertyOptional({ example: 3 })
+  course?: number;
 
-  @ApiProperty({ example: 'КС12' })
-  group: string;
+  @ApiPropertyOptional({ example: 'КС12' })
+  group?: string;
 
   @ApiProperty({ example: 'full-time', enum: ['full-time', 'part-time'] })
   studyForm: 'full-time' | 'part-time';

@@ -10,10 +10,12 @@ import { normalizeTag } from '@universe/core/utils/tags';
 export class TagsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async suggest(query: string) {
+  async suggest(query: string): Promise<Array<{ id: string; name: string }>> {
     const name = normalizeTag(query);
 
-    if (name.length < TAG_SUGGEST_MIN_QUERY_LENGTH) return [];
+    if (name.length < TAG_SUGGEST_MIN_QUERY_LENGTH) {
+      return [];
+    }
 
     return this.prisma.tag.findMany({
       where: { name: { contains: name } },

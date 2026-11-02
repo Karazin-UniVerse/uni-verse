@@ -33,6 +33,7 @@ export interface Opportunity {
   moderationComment?: string | null;
   tags?: OpportunityTag[];
   proposedTags?: string[];
+  canResubmit?: boolean;
   owner?: OpportunityOwner;
   applications?: OpportunityApplication[];
 }
@@ -57,18 +58,19 @@ export interface OpportunityApplication {
 export interface CreateOpportunityRequest {
   title: string;
   description: string;
-  ownerContactInfo: string;
   paymentType: OpportunityPaymentType;
+  ownerContactInfo?: string;
   paymentDetails?: string | null;
   acceptsApplications?: boolean;
   tags?: string[];
+  lifecycleState?: OpportunityLifecycle;
 }
 
 export type UpdateOpportunityRequest = Partial<CreateOpportunityRequest>;
 
 export interface ApplyOpportunityRequest {
   applicantName: string;
-  contactInfo: string;
+  contactInfo?: string;
   motivation?: string;
   briefDescription?: string;
   answers?: string;

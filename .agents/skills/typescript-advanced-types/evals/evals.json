@@ -1,0 +1,33 @@
+{
+  "skill_name": "typescript-advanced-types",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Dry typing review for a small worker queue, not a product change. Given type JobPayloads = { render: { template: string }; retry: { attempt: number } }, our proposed signature is declare function enqueue<Job extends keyof JobPayloads>(kind: Job, payload: JobPayloads[Job]): void. We need to store and forward jobs, and reject mismatched kind/payload pairs even when callers hold union-typed variables. Is this signature sufficient? Show the smallest type-safe replacement that retains the two positional arguments and derives alternatives from JobPayloads. Demonstrate valid literal calls and forwarding a correlated union tuple through the replacement, plus rejected wrong-payload, unknown-kind, and independent-union-pair calls. Separately show what happens when the original proposed generic is explicitly instantiated with the full key union and given a mismatched pair. Explain any narrowing needed to implement the replacement. Use a strict no-emit compiler check with accepted calls and intentional error cases if an installed compiler is available; record its version and limitations. Save any fixture only in the runner-provided temporary output directory. Do not edit product code, install dependencies, change compiler configuration, or add a queue class/framework.",
+      "expected_output": "Explains the union-instantiation hole in the proposed generic, derives a mapped union of argument tuples, and uses it as a non-generic rest parameter (or an equally strict minimal signature). Positive and negative sandbox compiler cases prove correlation rather than only testing literals. Reports actual verification without modifying the repository.",
+      "files": [],
+      "expectations": [
+        "Identifies that enqueue<'render' | 'retry'>('render', { attempt: 1 }) is accepted by the proposed generic and explains why that violates correlation.",
+        "Derives the replacement alternatives from JobPayloads without redeclaring a separate payload contract, and retains two positional arguments.",
+        "Accepts both valid literal jobs and forwarding a correlated union tuple, while rejecting wrong payloads, unknown kinds, and independently union-typed kind/payload arguments.",
+        "Includes strict no-emit compiler evidence with descriptive intentional-error checks and the installed version, or explicitly reports compiler unavailability without claiming success.",
+        "Uses no any, unsafe casts, non-null assertions, ts-ignore, custom queue class, or generic builder; explains implementation narrowing rather than masking an error.",
+        "Does not edit product files, install dependencies, or weaken repository compiler settings."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Dry design review only: a teammate wants a type-safe moderation request DTO for opportunities shared between the Nest backend and student portal. Please read packages/core/types/opportunities.ts, packages/core/constants/opportunities.ts, packages/backend/opportunities/dto/moderate-opportunity.dto.ts, and the canonical shared-contract instructions. The request just needs the existing action and optional comment; no inferred keys or conditional return types. Explain whether anything new is needed and show minimal type-only import/alignment snippets for a backend DTO and frontend parameter using the existing contract and action values. Avoid changing validation behavior or redesigning the API. Do not edit any repository files or install dependencies; put any optional scratch artifact only in the runner-provided temporary output directory.",
+      "expected_output": "Recognizes this is ordinary contract reuse, not advanced typing work. Reuses the existing ModerateOpportunityRequest, ModerateOpportunityDto alignment, and OpportunityModerateAction source. Uses direct domain imports and explains why no new helper types, duplicated contract, enum, or framework is needed.",
+      "files": [],
+      "expectations": [
+        "Treats the request as simple existing-contract reuse rather than an advanced typing problem; in an automatic discovery run, does not invoke typescript-advanced-types, and if explicitly preloaded, explains that advanced machinery is unnecessary.",
+        "Reuses ModerateOpportunityRequest from the existing core domain file and recognizes that ModerateOpportunityDto already implements it.",
+        "Uses the existing OpportunityModerateAction value/type source without adding a new enum or repeated literal union.",
+        "Shows frontend and backend imports from the documented domain paths, not the core package root or a new barrel/re-export shim.",
+        "Introduces no conditional/mapped/template-literal helper, generic DTO factory, duplicated request interface, or runtime validation change.",
+        "Does not edit repository files or install dependencies and makes no unsupported claim that production tests were run."
+      ]
+    }
+  ]
+}

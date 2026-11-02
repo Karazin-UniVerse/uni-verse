@@ -5,6 +5,7 @@ import { withLanguage, withToast } from '@uni-hub/utils/test-utils';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 import { BADGES } from '@uni-hub/constants/gamification';
 import { fireConfetti } from '@uni-hub/utils/confetti';
+import { uk } from '@uni-hub/i18n/locales/uk';
 import type { Grade } from '@core/types/moodle';
 import { BadgeSystem } from './BadgeSystem';
 
@@ -18,6 +19,10 @@ vi.mock('@uni-hub/utils/soundEffects', () => ({
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => render(withLanguage(withToast(ui)));
+
+const deadlineSniperToast = `Досягнення: ${uk[BADGES.DEADLINE_SNIPER.titleKey]} — ${uk[BADGES.DEADLINE_SNIPER.descriptionKey]}`;
+const nightOwlToast = `Досягнення: ${uk[BADGES.NIGHT_OWL.titleKey]} — ${uk[BADGES.NIGHT_OWL.descriptionKey]}`;
+const semesterMasterToast = `Досягнення: ${uk[BADGES.SEMESTER_MASTER.titleKey]} — ${uk[BADGES.SEMESTER_MASTER.descriptionKey]}`;
 
 describe('BadgeSystem component', () => {
   beforeEach(() => {
@@ -52,11 +57,7 @@ describe('BadgeSystem component', () => {
     expect(triggerCelebrationSpy).toHaveBeenCalledTimes(1);
     expect(fireConfetti).toHaveBeenCalled();
     expect(useGamificationStore.getState().unlockedBadges).toContain('DEADLINE_SNIPER');
-    expect(
-      await screen.findByText(
-        `Досягнення: ${BADGES.DEADLINE_SNIPER.title} — ${BADGES.DEADLINE_SNIPER.description}`,
-      ),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(deadlineSniperToast)).toBeInTheDocument();
   });
 
   it('should not toast duplicate badges that were already unlocked', () => {
@@ -71,7 +72,7 @@ describe('BadgeSystem component', () => {
     expect(triggerCelebrationSpy).not.toHaveBeenCalled();
     expect(fireConfetti).not.toHaveBeenCalled();
     expect(
-      screen.queryByText(new RegExp(BADGES.DEADLINE_SNIPER.title, 'i')),
+      screen.queryByText(new RegExp(uk[BADGES.DEADLINE_SNIPER.titleKey], 'i')),
     ).not.toBeInTheDocument();
   });
 
@@ -83,15 +84,9 @@ describe('BadgeSystem component', () => {
     );
 
     expect(triggerCelebrationSpy).toHaveBeenCalledTimes(1);
-    expect(
-      await screen.findByText(
-        `Досягнення: ${BADGES.DEADLINE_SNIPER.title} — ${BADGES.DEADLINE_SNIPER.description}`,
-      ),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(deadlineSniperToast)).toBeInTheDocument();
 
-    rerender(
-      withLanguage(withToast(<BadgeSystem grades={[]} submittedBeforeDeadline={true} />)),
-    );
+    rerender(withLanguage(withToast(<BadgeSystem grades={[]} submittedBeforeDeadline={true} />)));
 
     expect(triggerCelebrationSpy).toHaveBeenCalledTimes(1);
   });
@@ -107,11 +102,7 @@ describe('BadgeSystem component', () => {
 
     expect(triggerCelebrationSpy).toHaveBeenCalledTimes(1);
     expect(useGamificationStore.getState().unlockedBadges).toContain('SEMESTER_MASTER');
-    expect(
-      await screen.findByText(
-        `Досягнення: ${BADGES.SEMESTER_MASTER.title} — ${BADGES.SEMESTER_MASTER.description}`,
-      ),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(semesterMasterToast)).toBeInTheDocument();
   });
 
   it('should not unlock SEMESTER_MASTER when grades are below threshold', () => {
@@ -126,7 +117,7 @@ describe('BadgeSystem component', () => {
     expect(triggerCelebrationSpy).not.toHaveBeenCalled();
     expect(useGamificationStore.getState().unlockedBadges).not.toContain('SEMESTER_MASTER');
     expect(
-      screen.queryByText(new RegExp(BADGES.SEMESTER_MASTER.title, 'i')),
+      screen.queryByText(new RegExp(uk[BADGES.SEMESTER_MASTER.titleKey], 'i')),
     ).not.toBeInTheDocument();
   });
 
@@ -139,11 +130,7 @@ describe('BadgeSystem component', () => {
 
     expect(triggerCelebrationSpy).toHaveBeenCalledTimes(1);
     expect(useGamificationStore.getState().unlockedBadges).toContain('NIGHT_OWL');
-    expect(
-      await screen.findByText(
-        `Досягнення: ${BADGES.NIGHT_OWL.title} — ${BADGES.NIGHT_OWL.description}`,
-      ),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(nightOwlToast)).toBeInTheDocument();
   });
 
   it('should unlock multiple badges simultaneously when conditions are met', async () => {
@@ -158,19 +145,9 @@ describe('BadgeSystem component', () => {
     expect(useGamificationStore.getState().unlockedBadges).toEqual(
       expect.arrayContaining(['NIGHT_OWL', 'SEMESTER_MASTER', 'DEADLINE_SNIPER']),
     );
-    expect(
-      await screen.findByText(
-        `Досягнення: ${BADGES.DEADLINE_SNIPER.title} — ${BADGES.DEADLINE_SNIPER.description}`,
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(`Досягнення: ${BADGES.NIGHT_OWL.title} — ${BADGES.NIGHT_OWL.description}`),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        `Досягнення: ${BADGES.SEMESTER_MASTER.title} — ${BADGES.SEMESTER_MASTER.description}`,
-      ),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(deadlineSniperToast)).toBeInTheDocument();
+    expect(screen.getByText(nightOwlToast)).toBeInTheDocument();
+    expect(screen.getByText(semesterMasterToast)).toBeInTheDocument();
   });
 
   it('should re-evaluate existing eligible input after account activation', () => {
@@ -185,5 +162,14 @@ describe('BadgeSystem component', () => {
     });
 
     expect(useGamificationStore.getState().unlockedBadges).toContain('DEADLINE_SNIPER');
+  });
+
+  it('triggers toast with localized title and description on unlock', async () => {
+    useGamificationStore.getState().setActiveUser('bob');
+
+    renderWithProviders(<BadgeSystem grades={[]} submittedBeforeDeadline />);
+
+    expect(useGamificationStore.getState().unlockedBadges).toContain('DEADLINE_SNIPER');
+    expect(await screen.findByText(deadlineSniperToast)).toBeInTheDocument();
   });
 });

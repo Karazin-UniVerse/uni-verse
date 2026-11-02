@@ -9,6 +9,35 @@ knowledge_base:
   mcp:
     usage: enabled
 reviews:
+  pre_merge_checks:
+    custom_checks:
+      - name: 'Task traceability'
+        mode: 'warning'
+        instructions: |
+          Apply the Task traceability criterion and evidence-handling guidance in
+          docs/ai/workflow.md, section "PR title and description", to the current
+          PR title and description. Pass only when that criterion is met or its
+          documented dependency-bot exception applies. Fail for a concrete missing
+          or mismatched requirement; return Inconclusive when unavailable evidence
+          prevents deciding. Cite the specific gap and smallest correction.
+      - name: 'Description accuracy'
+        mode: 'warning'
+        instructions: |
+          Apply the Description accuracy criterion and evidence-handling guidance
+          in docs/ai/workflow.md, section "PR title and description", against the
+          current PR metadata and full diff, regardless of file type. Pass when
+          the description is materially accurate; fail for a specific omission
+          or contradiction. Return Inconclusive if required evidence is unavailable.
+          Cite the relevant change and smallest correction, not speculative claims.
+      - name: 'Visual evidence'
+        mode: 'warning'
+        instructions: |
+          Apply the Visual evidence criterion and evidence-handling guidance in
+          docs/ai/workflow.md, section "PR title and description", against the full
+          diff and current description. Pass when applicable evidence is provided
+          or no visual change exists; fail if required evidence is missing. Return
+          Inconclusive if inaccessible media or unclear visual impact prevents
+          deciding. Explain the affected UI and smallest correction.
   path_filters:
     - '!GEMINI.md'
   auto_review:

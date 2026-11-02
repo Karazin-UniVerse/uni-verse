@@ -1,0 +1,22 @@
+{
+  "$schema": "https://unpkg.com/knip@6.43.0/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": [".github/scripts/*.mjs"],
+      // Skill resources are invoked from prose, outside this product graph.
+      // Generated Prisma/build outputs are already excluded by .gitignore.
+      "project": [
+        "scripts/**/*.{js,cjs,mjs,ts,scss,sass}",
+        ".github/scripts/**/*.mjs",
+        "configs/oxlint/**/*.{cjs,mjs}",
+        "tests/e2e/**/*.{ts,mjs}",
+      ],
+      "vitest": {
+        "config": ["tests/e2e/vitest.config.mjs"],
+      },
+    },
+    "packages/backend": {
+      "entry": ["main.ts"],
+    },
+  },
+}

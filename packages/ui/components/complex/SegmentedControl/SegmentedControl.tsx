@@ -63,7 +63,14 @@ export function SegmentedControl<TId extends string>({
             onKeyDown={(event) => handleKeyDown(event, index)}
           >
             {item.icon}
-            {item.label}
+            {item.shortLabel ? (
+              <>
+                <span className={styles.desktopLabel}>{item.label}</span>
+                <span className={styles.mobileLabel}>{item.shortLabel}</span>
+              </>
+            ) : (
+              <span>{item.label}</span>
+            )}
             {item.badge !== undefined && item.badge > 0 && (
               <span className={styles.badgePill}>{item.badge}</span>
             )}

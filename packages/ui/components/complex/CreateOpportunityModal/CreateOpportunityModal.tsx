@@ -4,10 +4,13 @@ import { Button } from '../../una/Button';
 import { TextInput } from '../../una/inputs/TextInput';
 import { CheckBox } from '../../una/inputs/CheckBox';
 import { Select } from '../../una/Select';
-import type {
-  CreateOpportunityModalProps,
-  OpportunityPaymentType,
-} from './CreateOpportunityModal.types';
+import { TagInput } from '../../una/inputs/TagInput';
+import {
+  OPPORTUNITY_RECRUITING_LIFECYCLES,
+  type OpportunityLifecycle,
+  type OpportunityPaymentType,
+} from '@core/constants/opportunities';
+import type { CreateOpportunityModalProps } from './CreateOpportunityModal.types';
 import styles from './CreateOpportunityModal.module.scss';
 
 export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
@@ -32,14 +35,28 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   cancelText,
   submitText,
   savingText,
+  contactHint,
   acceptsApplicationsLabel,
+  phaseLabel,
+  tagsLabel,
+  tagsPlaceholder,
+  removeTagLabel,
+  formatCreateTagLabel,
+  loadTagSuggestions,
+  lifecycleOptions = [],
   submitting = false,
 }) => {
   const titleId = useId();
   const descId = useId();
   const contactId = useId();
+  const contactHintId = useId();
   const paymentTypeId = useId();
   const paymentDetailsId = useId();
+  const phaseSelectId = useId();
+  const tagsId = useId();
+  const canAcceptApplications = Boolean(
+    formData.lifecycleState && OPPORTUNITY_RECRUITING_LIFECYCLES.includes(formData.lifecycleState),
+  );
 
   return (
     <Modal open={open} onClose={onClose} title={title} width={560} className={className}>
@@ -78,11 +95,16 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
           </label>
           <TextInput
             id={contactId}
+            aria-describedby={contactHint ? contactHintId : undefined}
             placeholder={contactPlaceholder}
             value={formData.ownerContactInfo}
             onChange={(e) => setFormData((prev) => ({ ...prev, ownerContactInfo: e.target.value }))}
-            required
           />
+          {contactHint && (
+            <small id={contactHintId} className={styles.fieldHint}>
+              {contactHint}
+            </small>
+          )}
         </div>
 
         <div className={styles.fieldGroup}>
@@ -126,12 +148,40 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
           </div>
         )}
 
+        {phaseLabel && lifecycleOptions.length > 0 && (
+          <div className={styles.fieldGroup}>
+            <label htmlFor={phaseSelectId} className={styles.fieldLabel}>
+              {phaseLabel}
+            </label>
+            <Select
+              id={phaseSelectId}
+              aria-label={phaseLabel}
+              value={formData.lifecycleState ?? ''}
+              onChange={(val) =>
+                setFormData((prev) => {
+                  const lifecycleState = val as OpportunityLifecycle;
+
+                  return {
+                    ...prev,
+                    lifecycleState,
+                    acceptsApplications:
+                      prev.acceptsApplications &&
+                      OPPORTUNITY_RECRUITING_LIFECYCLES.includes(lifecycleState),
+                  };
+                })
+              }
+              options={lifecycleOptions}
+            />
+          </div>
+        )}
+
         {acceptsApplicationsLabel && (
           <div className={styles.fieldGroup}>
             <label className={styles.checkboxLabel}>
               <CheckBox
                 variant="primary"
-                checked={formData.acceptsApplications ?? true}
+                checked={canAcceptApplications && Boolean(formData.acceptsApplications)}
+                disabled={!canAcceptApplications}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -144,6 +194,22 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
           </div>
         )}
 
+        {tagsLabel && (
+          <div className={styles.fieldGroup}>
+            <label htmlFor={tagsId} className={styles.fieldLabel}>
+              {tagsLabel}
+            </label>
+            <TagInput
+              id={tagsId}
+              value={formData.tags ?? []}
+              onChange={(tags) => setFormData((prev) => ({ ...prev, tags }))}
+              loadSuggestions={loadTagSuggestions}
+              placeholder={tagsPlaceholder}
+              removeLabel={removeTagLabel}
+              formatCreateLabel={formatCreateTagLabel}
+            />
+          </div>
+        )}
         <div className={styles.modalFooter}>
           <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
             {cancelText}

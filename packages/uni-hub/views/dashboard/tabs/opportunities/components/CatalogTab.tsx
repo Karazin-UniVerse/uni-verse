@@ -3,9 +3,16 @@
 import React, { useMemo } from 'react';
 import { Search, X } from 'lucide-react';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { OpportunityFilterPanel, type OpportunityFilterValue } from '@ui';
 import { TabStateWrapper } from './TabStateWrapper';
 import type { Opportunity } from '@core/types/opportunities';
 import type { OpportunityPaymentType } from '@core/constants/opportunities';
+import {
+  filterOpportunitiesByPayment,
+  filterOpportunitiesByRecruiting,
+  filterOpportunitiesBySearch,
+  filterOpportunitiesByTags,
+} from '../helpers';
 import { OpportunityCard } from '../../OpportunityCard';
 import styles from '../../OpportunitiesTab.module.scss';
 
@@ -16,9 +23,15 @@ export interface CatalogTabProps {
   opportunities: Opportunity[];
   search: string;
   onSearchChange: (val: string) => void;
-  paymentFilter: OpportunityPaymentType | '';
-  onPaymentFilterChange: (val: OpportunityPaymentType | '') => void;
   onOpenDetail: (opp: Opportunity) => void;
+  paymentFilter?: OpportunityPaymentType | '';
+  onPaymentFilterChange?: (val: OpportunityPaymentType | '') => void;
+  isRecruiting?: boolean;
+  onRecruitingChange?: (val: boolean) => void;
+  tags?: string[];
+  onTagsChange?: (tags: string[]) => void;
+  onFiltersChange?: (filters: OpportunityFilterValue) => void;
+  loadTagSuggestions?: (query: string) => Promise<string[]>;
 }
 
 export const CatalogTab: React.FC<CatalogTabProps> = ({
@@ -28,90 +41,85 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
   opportunities,
   search,
   onSearchChange,
-  paymentFilter,
   onPaymentFilterChange,
+  onRecruitingChange,
+  onTagsChange,
+  onFiltersChange,
   onOpenDetail,
+  loadTagSuggestions,
+  paymentFilter = '',
+  isRecruiting = false,
+  tags = [],
 }) => {
   const { formatMessage } = useLanguage();
-  // Filter catalog opportunities in memory without cascading re-renders or spinner flashes
+
   const filteredOpportunities = useMemo(() => {
-    return opportunities.filter((opp) => {
-      if (paymentFilter && opp.paymentType !== paymentFilter) {
-        return false;
-      }
+    let result = filterOpportunitiesBySearch(opportunities, search);
 
-      if (search.trim()) {
-        const q = search.trim().toLowerCase();
-        const titleMatch = opp.title.toLowerCase().includes(q);
-        const descMatch = opp.description.toLowerCase().includes(q);
-        const ownerMatch =
-          Boolean(opp.owner?.name?.toLowerCase().includes(q)) ||
-          Boolean(opp.owner?.email.toLowerCase().includes(q)) ||
-          opp.ownerContactInfo.toLowerCase().includes(q);
+    result = filterOpportunitiesByPayment(result, paymentFilter);
+    result = filterOpportunitiesByRecruiting(result, isRecruiting);
+    result = filterOpportunitiesByTags(result, tags);
 
-        return titleMatch || descMatch || ownerMatch;
-      }
+    return result;
+  }, [opportunities, search, paymentFilter, isRecruiting, tags]);
 
-      return true;
-    });
-  }, [opportunities, paymentFilter, search]);
+  const handleApplyFilters = (newFilters: OpportunityFilterValue): void => {
+    onFiltersChange?.(newFilters);
+    onPaymentFilterChange?.(newFilters.paymentType);
+    onRecruitingChange?.(newFilters.isRecruiting);
+    onTagsChange?.(newFilters.tags);
+  };
 
   return (
     <>
       <div className={styles.toolbar}>
-        <div className={styles.searchBox}>
-          <Search className={styles.searchIcon} size={18} />
-          <input
-            type="text"
-            className={styles.searchInput}
-            placeholder={formatMessage('opportunities.catalog.searchPlaceholder')}
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            aria-label={formatMessage('opportunities.catalog.searchAria')}
-          />
-          {search && (
-            <button
-              type="button"
-              className={styles.clearSearchBtn}
-              onClick={() => onSearchChange('')}
-              aria-label={formatMessage('opportunities.catalog.clearSearchAria')}
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
-
-        <div className={styles.filterControls}>
-          <div className={styles.filterChips}>
-            <button
-              type="button"
-              className={`${styles.filterChip} ${paymentFilter === '' ? styles.activeChip : ''}`}
-              onClick={() => onPaymentFilterChange('')}
-            >
-              {formatMessage('opportunities.catalog.filterAll')}
-            </button>
-            <button
-              type="button"
-              className={`${styles.filterChip} ${paymentFilter === 'PAID' ? styles.activeChip : ''}`}
-              onClick={() => onPaymentFilterChange('PAID')}
-            >
-              {formatMessage('opportunities.catalog.filterPaid')}
-            </button>
-            <button
-              type="button"
-              className={`${styles.filterChip} ${paymentFilter === 'UNPAID' ? styles.activeChip : ''}`}
-              onClick={() => onPaymentFilterChange('UNPAID')}
-            >
-              {formatMessage('opportunities.catalog.filterUnpaid')}
-            </button>
+        <div className={styles.searchAndFilterRow}>
+          <div className={styles.searchBox}>
+            <Search className={styles.searchIcon} size={18} />
+            <input
+              type="text"
+              className={styles.searchInput}
+              placeholder={formatMessage('opportunities.catalog.searchPlaceholder')}
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              aria-label={formatMessage('opportunities.catalog.searchAria')}
+            />
+            {search && (
+              <button
+                type="button"
+                className={styles.clearSearchBtn}
+                onClick={() => onSearchChange('')}
+                aria-label={formatMessage('opportunities.catalog.clearSearchAria')}
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
 
-          {!loading && !isError && (
-            <span className={styles.resultCount}>
-              {formatMessage('opportunities.catalog.foundPrefix')}{' '}
-              <strong>{filteredOpportunities.length}</strong>
-            </span>
-          )}
+          <OpportunityFilterPanel
+            value={{
+              paymentType: paymentFilter,
+              isRecruiting,
+              tags,
+            }}
+            onApply={handleApplyFilters}
+            loadTagSuggestions={loadTagSuggestions}
+            labels={{
+              open: formatMessage('opportunities.catalog.filtersButton'),
+              close: formatMessage('opportunities.catalog.filtersClose'),
+              title: formatMessage('opportunities.catalog.filtersTitle'),
+              paymentType: formatMessage('opportunities.catalog.filterPaymentLabel'),
+              paymentAll: formatMessage('opportunities.catalog.filterAll'),
+              paymentPaid: formatMessage('opportunities.catalog.filterPaid'),
+              paymentUnpaid: formatMessage('opportunities.catalog.filterUnpaid'),
+              recruiting: formatMessage('opportunities.catalog.filterRecruiting'),
+              tags: formatMessage('opportunities.catalog.filterTagsLabel'),
+              tagsPlaceholder: formatMessage('opportunities.catalog.filterTagsPlaceholder'),
+              removeTag: formatMessage('opportunities.tags.remove'),
+              apply: formatMessage('opportunities.catalog.filtersApply'),
+              formatCreateTag: (tag) => formatMessage('opportunities.tags.create', { tag }),
+            }}
+          />
         </div>
       </div>
 

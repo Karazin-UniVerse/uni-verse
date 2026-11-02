@@ -51,6 +51,7 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   return (
     <Dropdown
       width={360}
+      panelClassName={styles.notificationsPanel}
       renderTrigger={(triggerProps) => (
         <Button
           {...triggerProps}

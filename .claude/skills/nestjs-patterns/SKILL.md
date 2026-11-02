@@ -54,6 +54,6 @@ opportunities/
 
 ## Testing
 
-- Jest, with `*.spec.ts` next to the code. Mock `PrismaService` and neighbouring services in unit tests, and assert the exception type, not only that something threw.
+- Jest, with `*.spec.ts` next to the code; [Grip](../../../docs/grip.md#automated-verification) uses a module-local test directory. Mock `PrismaService` and neighbouring services in unit tests, and assert the exception type, not only that something threw.
 - End-to-end specs (`*.e2e-spec.ts`) live in `packages/backend/test/`. Build the app with the same `ValidationPipe` options as `main.ts`; a test that skips them passes payloads production would reject.
 - Run unit tests with `pnpm --filter @universe/backend test` and e2e specs with `pnpm --filter @universe/backend test:e2e`. The unit command does not pick up `*.e2e-spec.ts`, and CI runs only `test:cov`, so an e2e spec is not a CI gate. Jest has no coverage threshold; SonarCloud reports coverage of new code, so cover new branches with unit tests.

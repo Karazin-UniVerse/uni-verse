@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User, Lock } from 'lucide-react';
+import { Lock, User } from 'lucide-react';
 import { Modal, Button, Form, useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { getErrorMessage } from '@uni-hub/services/api';
@@ -26,10 +26,25 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
   const { formatMessage } = useLanguage();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+
+    if (!open) {
+      setError('');
+    }
+  }
+
   const linkMoodle = useLinkMoodle();
   const loading = linkMoodle.isPending;
-  const [error, setError] = useState('');
   const toast = useToast();
+
+  const handleClose = (): void => {
+    setError('');
+    onClose();
+  };
 
   const contentKeys = getLinkMoodleContentKeys(mode);
   const title = formatMessage(contentKeys.titleKey);
@@ -55,6 +70,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
       await linkMoodle.mutateAsync({ username: username.trim(), password });
 
       toast.success(formatMessage(contentKeys.successKey));
+      setError('');
       onSuccess();
     } catch (err: unknown) {
       const message = getErrorMessage(err, formatMessage('login.linkMoodleError'));
@@ -67,7 +83,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       title={title}
       closeLabel={formatMessage('modal.close')}
       width={400}
@@ -87,6 +103,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
         />
 
         <AuthField
+          key={open ? 'open' : 'closed'}
           id="modal-link-moodle-password"
           name="moodlePassword"
           type="password"
@@ -101,7 +118,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
         {error && <p className={styles.error}>{error}</p>}
 
         <div className={styles.actions}>
-          <Button variant="secondary" onClick={onClose} disabled={loading}>
+          <Button variant="secondary" onClick={handleClose} disabled={loading}>
             {formatMessage('common.cancel')}
           </Button>
           <Button type="submit" variant="primary" disabled={loading}>
