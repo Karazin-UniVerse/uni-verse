@@ -83,7 +83,6 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   onOpenApply,
   onOpenApplicants,
   onEdit,
-  onToggleAcceptsApplications,
   onToggleSubscribe,
   isSubscribeLoading,
   onDelete,
