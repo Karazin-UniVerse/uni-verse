@@ -40,14 +40,14 @@ const canUseMatchMedia = (): boolean => isBrowser && typeof window.matchMedia ==
  *   dark OS preference  → 'karazinGold'
  *   light OS preference → 'karazinClassic'
  */
+
 const getSystemTheme = (): AppTheme => {
-  if (!canUseMatchMedia()) {
+  if (!isBrowser || typeof window.matchMedia !== 'function') {
     return 'karazinClassic';
   }
 
   return window.matchMedia(DARK_SCHEME_QUERY).matches ? 'karazinGold' : 'karazinClassic';
 };
-
 /**
  * Subscribe to MediaQueryList changes. Browsers that lack addEventListener on
  * MediaQueryList (e.g. Safari < 14) are skipped instead of throwing; the OS theme

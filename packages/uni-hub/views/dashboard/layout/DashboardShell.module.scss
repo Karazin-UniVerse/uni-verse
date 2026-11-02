@@ -1492,7 +1492,7 @@ $sidebar-collapsed-width: 88px;
 
 .moodleDropdownActions {
   display: flex;
-  gap: var(--space-6, 6px);
+  gap: var(--space-4);
 
   > * {
     flex: 1;

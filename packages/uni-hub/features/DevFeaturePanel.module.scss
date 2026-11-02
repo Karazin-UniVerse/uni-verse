@@ -63,7 +63,7 @@
 .toggleLabel {
   display: flex;
   align-items: center;
-  gap: var(--space-6, 6px);
+  gap: var(--space-4);
   font-size: var(--font-sm, 13px);
   font-weight: 500;
   color: var(--text-primary);
@@ -133,5 +133,5 @@
 }
 
 .btnIcon {
-  margin-right: var(--space-6, 6px);
+  margin-right: var(--space-8);
 }
