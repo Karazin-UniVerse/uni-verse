@@ -25,6 +25,7 @@ const EMPTY_TAGS: string[] = [];
 const defaultNormalizeTag = (tag: string): string => tag.trim().replace(/\s+/g, ' ').toLowerCase();
 
 export const TagInput: React.FC<TagInputProps> = ({
+  removeLabel,
   value,
   onChange,
   loadSuggestions,
@@ -37,7 +38,6 @@ export const TagInput: React.FC<TagInputProps> = ({
   maxTagLength = TAG_MAX_LENGTH,
   minQueryLength = TAG_SUGGEST_MIN_QUERY_LENGTH,
   debounceMs = TAG_SUGGEST_DEBOUNCE_MS,
-  removeLabel = 'Remove',
 }) => {
   const safeValue = value ?? EMPTY_TAGS;
   const [query, setQuery] = useState('');
@@ -162,8 +162,13 @@ export const TagInput: React.FC<TagInputProps> = ({
     }
 
     if (event.key === 'Escape') {
-      setIsOpen(false);
-      setActiveIndex(-1);
+      if (isOpen) {
+        event.stopPropagation();
+        setIsOpen(false);
+        setActiveIndex(-1);
+      }
+
+      return;
     }
   };
 
@@ -206,11 +211,13 @@ export const TagInput: React.FC<TagInputProps> = ({
           onFocus={() => setIsOpen(true)}
           placeholder={safeValue.length === 0 ? placeholder : undefined}
           disabled={disabled || isLimitReached}
-          maxLength={maxTagLength}
           autoComplete="off"
           role="combobox"
           aria-expanded={isPanelVisible}
           aria-controls={isPanelVisible ? listId : undefined}
+          aria-activedescendant={
+            isPanelVisible && activeIndex >= 0 ? `${listId}-option-${activeIndex}` : undefined
+          }
           aria-autocomplete="list"
           isTransparent
         />
@@ -221,6 +228,7 @@ export const TagInput: React.FC<TagInputProps> = ({
           {options.map((option, index) => (
             <div
               key={`${option.isNew ? 'new' : 'existing'}-${option.name}`}
+              id={`${listId}-option-${index}`}
               role="option"
               tabIndex={-1}
               aria-selected={index === activeIndex}

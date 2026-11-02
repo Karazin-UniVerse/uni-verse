@@ -9,6 +9,7 @@ import type {
   UpdateOpportunityRequest,
 } from '@core/types/opportunities';
 import { OPPORTUNITY_LIFECYCLE, OPPORTUNITY_PAYMENT_TYPE } from '@core/constants/opportunities';
+import { getOpportunityTagNames } from '@core/utils/tags';
 import { invalidateOpportunities } from '../cache';
 import type { CreateOpportunityFormData } from '../types';
 import { getOpportunityErrorMessage } from '../helpers';
@@ -81,7 +82,7 @@ export function useCreateOpportunity({
       ownerContactInfo: opportunity.ownerContactInfo || '',
       paymentType: opportunity.paymentType,
       paymentDetails: opportunity.paymentDetails || '',
-      tags: opportunity.tags?.map((t) => t.name) ?? opportunity.proposedTags ?? [],
+      tags: getOpportunityTagNames(opportunity),
       acceptsApplications: opportunity.acceptsApplications === true,
       lifecycleState: opportunity.lifecycleState,
     });

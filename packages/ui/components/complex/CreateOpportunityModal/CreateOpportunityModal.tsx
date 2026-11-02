@@ -40,9 +40,9 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   phaseLabel,
   tagsLabel,
   tagsPlaceholder,
-  removeTagLabel,
-  formatCreateTagLabel,
   loadTagSuggestions,
+  formatCreateTagLabel,
+  removeTagLabel = '',
   lifecycleOptions = [],
   submitting = false,
 }) => {

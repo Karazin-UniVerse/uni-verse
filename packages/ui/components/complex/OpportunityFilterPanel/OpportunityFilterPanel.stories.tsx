@@ -52,6 +52,7 @@ export const Default: Story = {
 };
 
 export const WithActiveFilters: Story = {
+  render: (args) => <DefaultFilterPanel {...args} />,
   args: {
     value: { paymentType: 'PAID', isRecruiting: true, tags: ['react', 'typescript'] },
   },

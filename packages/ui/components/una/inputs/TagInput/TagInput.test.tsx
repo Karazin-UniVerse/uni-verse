@@ -8,10 +8,20 @@ import type { TagInputProps } from './TagInput.types';
 function ControlledTagInput({
   initialValue = [],
   ...props
-}: Omit<TagInputProps, 'value' | 'onChange'> & { initialValue?: string[] }): React.ReactElement {
+}: Omit<TagInputProps, 'value' | 'onChange' | 'removeLabel'> & {
+  initialValue?: string[];
+  removeLabel?: string;
+}): React.ReactElement {
   const [value, setValue] = useState<string[]>(initialValue);
 
-  return <TagInput {...props} value={value} onChange={setValue} />;
+  return (
+    <TagInput
+      {...props}
+      removeLabel={props.removeLabel ?? 'Remove tag'}
+      value={value}
+      onChange={setValue}
+    />
+  );
 }
 
 describe('UNA TagInput Component', () => {
@@ -110,16 +120,28 @@ describe('UNA TagInput Component', () => {
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
-  it('should close the suggestion list on Escape', async () => {
+  it('should close the suggestion list on Escape without propagating', async () => {
     const user = userEvent.setup();
     const loadSuggestions = vi.fn().mockResolvedValue(['react']);
+    const parentEscapeHandler = vi.fn();
 
-    render(<ControlledTagInput loadSuggestions={loadSuggestions} debounceMs={0} />);
+    render(
+      <div
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            parentEscapeHandler();
+          }
+        }}
+      >
+        <ControlledTagInput loadSuggestions={loadSuggestions} debounceMs={0} />
+      </div>,
+    );
 
     await user.type(screen.getByRole('combobox'), 'rea');
     await screen.findByRole('listbox');
     await user.keyboard('{Escape}');
 
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(parentEscapeHandler).not.toHaveBeenCalled();
   });
 });

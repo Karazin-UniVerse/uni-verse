@@ -112,7 +112,7 @@
 
   @include narrower-than('sm') {
     max-width: 100%;
-    min-width: 100%;
+    min-width: 0;
   }
 }
 
