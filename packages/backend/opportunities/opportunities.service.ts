@@ -36,6 +36,10 @@ import {
 } from '@universe/core/constants/opportunities';
 import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 import {
+  hasOpportunityContentChanged,
+  isRecruitmentPhase,
+} from '@universe/core/utils/opportunities';
+import {
   NOTIFICATION_TYPE,
   OPPORTUNITY_NOTIFICATION_KEY,
 } from '@universe/core/constants/notifications';
@@ -119,9 +123,14 @@ export class OpportunitiesService {
     userId: string,
     dto: CreateOpportunityDto,
   ): Promise<Opportunity> {
+    const acceptsApplications = isRecruitmentPhase(dto.lifecycleState)
+      ? dto.acceptsApplications
+      : false;
+
     return this.prisma.opportunity.create({
       data: {
         ...dto,
+        ...(acceptsApplications !== undefined ? { acceptsApplications } : {}),
         ownerContactInfo: dto.ownerContactInfo?.trim() ?? '',
         ownerId: userId,
         status: OpportunityStatus.DRAFT, // initial status
@@ -236,14 +245,18 @@ export class OpportunitiesService {
       );
     }
 
-    const hasContentChanges =
-      dto.title !== undefined ||
-      dto.description !== undefined ||
-      dto.ownerContactInfo !== undefined ||
-      dto.paymentType !== undefined ||
-      dto.paymentDetails !== undefined;
+    const hasContentChanges = hasOpportunityContentChanged(opportunity, dto);
 
     const data: Prisma.OpportunityUpdateInput = { ...dto };
+    const nextLifecycleState = dto.lifecycleState ?? opportunity.lifecycleState;
+
+    if (
+      !isRecruitmentPhase(nextLifecycleState) &&
+      (dto.lifecycleState !== undefined ||
+        dto.acceptsApplications !== undefined)
+    ) {
+      data.acceptsApplications = false;
+    }
 
     if (dto.ownerContactInfo !== undefined) {
       data.ownerContactInfo = dto.ownerContactInfo.trim();
@@ -421,7 +434,12 @@ export class OpportunitiesService {
 
     return this.prisma.opportunity.update({
       where: { id },
-      data: { lifecycleState },
+      data: {
+        lifecycleState,
+        ...(!isRecruitmentPhase(lifecycleState)
+          ? { acceptsApplications: false }
+          : {}),
+      },
     });
   }
 

@@ -10,6 +10,7 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
 import { LinkMoodleMode } from '@uni-hub/components/auth';
 import type { StudentProfile } from '@core/types/student';
+import { resolveStoredSsoIdentity } from '../hooks/helpers';
 import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 
 export interface UserDropdownProps {
@@ -57,10 +58,13 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   const { formatMessage } = useLanguage();
   const statusDetails = getMoodleStatusDetails(Boolean(isMoodleLinked));
   const moodleUrl = process.env.NEXT_PUBLIC_MOODLE_URL;
-  const fullName = activeStudentProfile?.fullName;
-  const email = activeStudentProfile?.email;
+  const ssoIdentity = activeStudentProfile ? null : resolveStoredSsoIdentity();
+  const fullName = activeStudentProfile?.fullName ?? ssoIdentity?.fullName;
+  const email = activeStudentProfile?.email ?? ssoIdentity?.email;
   const group = activeStudentProfile?.group;
-  const triggerTitle = activeStudentProfile ? getUserProfileTitle(activeStudentProfile) : undefined;
+  const triggerTitle = activeStudentProfile
+    ? getUserProfileTitle(activeStudentProfile)
+    : (fullName ?? email);
 
   return (
     <Dropdown
@@ -83,12 +87,14 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
     >
       {(close) => (
         <>
-          {activeStudentProfile && (
+          {(fullName || email) && (
             <div className={styles.userDropdownHeader}>
-              <strong title={fullName}>{fullName}</strong>
-              <div className={styles.muted} title={email}>
-                {email}
-              </div>
+              {fullName && <strong title={fullName}>{fullName}</strong>}
+              {email && (
+                <div className={styles.muted} title={email}>
+                  {email}
+                </div>
+              )}
               {group ? <div className={styles.muted}>{group}</div> : null}
             </div>
           )}
@@ -199,21 +205,19 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
               </div>
             )}
 
-            <div className={styles.mobileOnlyItem}>
-              <Button
-                type="button"
-                variant="secondary"
-                size="medium"
-                onClick={onLogout}
-                style={{
-                  width: '100%',
-                  justifyContent: 'flex-start',
-                  color: 'var(--text-primary)',
-                }}
-              >
-                {formatMessage('sidebar.logout')}
-              </Button>
-            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              size="medium"
+              onClick={onLogout}
+              style={{
+                width: '100%',
+                justifyContent: 'flex-start',
+                color: 'var(--text-primary)',
+              }}
+            >
+              {formatMessage('sidebar.logout')}
+            </Button>
           </div>
         </>
       )}

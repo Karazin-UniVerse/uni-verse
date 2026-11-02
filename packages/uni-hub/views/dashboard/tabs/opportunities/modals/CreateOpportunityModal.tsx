@@ -14,6 +14,7 @@ export interface CreateOpportunityModalProps {
   onSubmit: (e: React.SyntheticEvent<HTMLFormElement>) => void;
   submitting: boolean;
   isEdit?: boolean;
+  remoderationWarning?: boolean;
 }
 
 export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
@@ -24,6 +25,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   onSubmit,
   submitting,
   isEdit = false,
+  remoderationWarning = false,
 }) => {
   const { formatMessage } = useLanguage();
 
@@ -80,6 +82,11 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
       unpaidOptionLabel={formatMessage('opportunities.createModal.unpaidOption')}
       paidOptionLabel={formatMessage('opportunities.createModal.paidOption')}
       acceptsApplicationsLabel={formatMessage('opportunities.createModal.acceptsApplications')}
+      remoderationWarning={
+        remoderationWarning
+          ? formatMessage('opportunities.createModal.remoderationWarning')
+          : undefined
+      }
       cancelText={formatMessage('opportunities.createModal.cancel')}
       submitText={
         isEdit
