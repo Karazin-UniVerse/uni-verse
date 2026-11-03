@@ -217,7 +217,7 @@ describe('UserDropdown', () => {
     document.head.append(stylesheet);
     const originalWidth = window.innerWidth;
 
-    window.innerWidth = 1024;
+    window.innerWidth = BREAKPOINTS.lg;
 
     try {
       const onLogout = vi.fn();
