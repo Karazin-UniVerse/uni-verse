@@ -8,6 +8,7 @@ import {
   TAG_SUGGEST_MIN_QUERY_LENGTH,
 } from '@core/constants/tags';
 import { normalizeTag, normalizeTags } from '@core/utils/tags';
+import { IME_CONFIRMATION_WINDOW_MS } from '@core/constants/input';
 import { useClickOutside } from '../../../../hooks/useClickOutside';
 import { useDebouncedValue } from '../../../../hooks/useDebouncedValue';
 import { DropdownOption } from '../../Dropdown/DropdownOption';
@@ -47,6 +48,8 @@ export const TagInput: React.FC<TagInputProps> = ({
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingFocusRef = useRef(false);
+  const isComposingRef = useRef(false);
+  const lastCompositionEndRef = useRef<number | null>(null);
   const requestIdRef = useRef(0);
   const loadRef = useRef(loadSuggestions);
   const listId = useId();
@@ -147,12 +150,20 @@ export const TagInput: React.FC<TagInputProps> = ({
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (event.nativeEvent.isComposing || event.keyCode === 229) {
+    if (event.nativeEvent.isComposing || isComposingRef.current) {
       return;
     }
 
     if (event.key === 'Enter' || event.key === ',') {
       event.preventDefault();
+
+      // Safari can deliver compositionend before its confirming keydown.
+      if (
+        lastCompositionEndRef.current !== null &&
+        Math.abs(event.timeStamp - lastCompositionEndRef.current) < IME_CONFIRMATION_WINDOW_MS
+      ) {
+        return;
+      }
 
       const activeOption = options[activeIndex];
 
@@ -223,6 +234,14 @@ export const TagInput: React.FC<TagInputProps> = ({
           value={query}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onCompositionStart={() => {
+            isComposingRef.current = true;
+            lastCompositionEndRef.current = null;
+          }}
+          onCompositionEnd={(event) => {
+            isComposingRef.current = false;
+            lastCompositionEndRef.current = event.timeStamp;
+          }}
           onFocus={() => setIsOpen(true)}
           placeholder={safeValue.length === 0 ? placeholder : undefined}
           disabled={disabled || isLimitReached}

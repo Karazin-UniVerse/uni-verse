@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { useState } from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { createEvent, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TagInput } from './TagInput';
 import type { TagInputProps } from './TagInput.types';
@@ -22,6 +22,11 @@ function ControlledTagInput({
       onChange={setValue}
     />
   );
+}
+
+function dispatchAt(input: HTMLElement, event: Event, timeStamp: number): void {
+  Object.defineProperty(event, 'timeStamp', { value: timeStamp });
+  fireEvent(input, event);
 }
 
 describe('UNA TagInput Component', () => {
@@ -48,6 +53,21 @@ describe('UNA TagInput Component', () => {
     await user.type(input, 'vue,');
 
     expect(screen.getByRole('button', { name: 'Remove tag vue' })).toBeInTheDocument();
+    expect(input).toHaveValue('');
+  });
+
+  it('should preserve a comma inside a pasted tag name when committed with Enter', async () => {
+    const user = userEvent.setup();
+
+    render(<ControlledTagInput />);
+
+    const input = screen.getByRole('combobox');
+
+    await user.click(input);
+    await user.paste('Research,Design');
+    await user.keyboard('{Enter}');
+
+    expect(screen.getByRole('button', { name: 'Remove tag research,design' })).toBeInTheDocument();
     expect(input).toHaveValue('');
   });
 
@@ -253,10 +273,9 @@ describe('UNA TagInput Component', () => {
   });
 
   it.each([
-    { key: 'Enter', keyCode: 13, isComposing: true },
-    { key: ',', keyCode: 188, isComposing: true },
-    { key: 'Enter', keyCode: 229, isComposing: false },
-  ])('should preserve composed text for $key with keyCode $keyCode', (keyboardEvent) => {
+    { key: 'Enter', isComposing: true },
+    { key: ',', isComposing: true },
+  ])('should preserve composed text for native composing $key', (keyboardEvent) => {
     const onChange = vi.fn();
 
     render(<TagInput removeLabel="Remove" value={[]} onChange={onChange} />);
@@ -268,6 +287,60 @@ describe('UNA TagInput Component', () => {
 
     expect(onChange).not.toHaveBeenCalled();
     expect(input).toHaveValue('test');
+  });
+
+  it('should retain text while composition is active even when the keyboard flag is false', () => {
+    const onChange = vi.fn();
+
+    render(<TagInput removeLabel="Remove" value={[]} onChange={onChange} />);
+
+    const input = screen.getByRole('combobox');
+
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: '日本語' } });
+    fireEvent.keyDown(input, { key: 'Enter', isComposing: false });
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(input).toHaveValue('日本語');
+  });
+
+  it.each([995, 1005])(
+    'should suppress an IME confirmation delivered after compositionend at timestamp %s',
+    (confirmationAt) => {
+      const onChange = vi.fn();
+
+      render(<TagInput removeLabel="Remove" value={[]} onChange={onChange} />);
+
+      const input = screen.getByRole('combobox');
+
+      fireEvent.compositionStart(input);
+      fireEvent.change(input, { target: { value: '日本語' } });
+      dispatchAt(input, createEvent.compositionEnd(input, { data: '日本語' }), 1000);
+      dispatchAt(
+        input,
+        createEvent.keyDown(input, { key: 'Enter', isComposing: false }),
+        confirmationAt,
+      );
+
+      expect(onChange).not.toHaveBeenCalled();
+      expect(input).toHaveValue('日本語');
+    },
+  );
+
+  it('should accept an intentional Enter after the IME confirmation window', () => {
+    const onChange = vi.fn();
+
+    render(<TagInput removeLabel="Remove" value={[]} onChange={onChange} />);
+
+    const input = screen.getByRole('combobox');
+
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: '日本語' } });
+    dispatchAt(input, createEvent.compositionEnd(input, { data: '日本語' }), 1000);
+    dispatchAt(input, createEvent.keyDown(input, { key: 'Enter', isComposing: false }), 1100);
+
+    expect(onChange).toHaveBeenCalledWith(['日本語']);
+    expect(input).toHaveValue('');
   });
 
   it('should exclude suggestions longer than maxTagLength', async () => {

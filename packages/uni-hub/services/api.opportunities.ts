@@ -17,11 +17,18 @@ import { ApiClient, buildQueryString } from './api.request';
 export class OpportunitiesApi extends ApiClient {
   async getOpportunities(params?: GetOpportunitiesParams): Promise<{ data: Opportunity[] }> {
     const { tags, isRecruiting, ...rest } = params ?? {};
-    const query = buildQueryString({
-      ...rest,
-      ...(tags?.length ? { tags: tags.join(',') } : {}),
-      ...(isRecruiting ? { isRecruiting: true } : {}),
-    });
+    const searchParams = new URLSearchParams(
+      buildQueryString({
+        ...rest,
+        ...(isRecruiting ? { isRecruiting: true } : {}),
+      }),
+    );
+
+    for (const tag of tags ?? []) {
+      searchParams.append('tags', tag);
+    }
+
+    const query = searchParams.size ? `?${searchParams}` : '';
 
     return this.request<Opportunity[]>(`/opportunities${query}`);
   }

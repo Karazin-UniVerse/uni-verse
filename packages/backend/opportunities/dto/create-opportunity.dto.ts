@@ -53,7 +53,9 @@ export class CreateOpportunityDto implements CreateOpportunityRequest {
 
   @ApiPropertyOptional({ type: [String] })
   @Transform(({ value }) =>
-    Array.isArray(value) ? normalizeTags(value) : value,
+    Array.isArray(value) && value.every((tag) => typeof tag === 'string')
+      ? normalizeTags(value)
+      : value,
   )
   @IsArray()
   @ArrayMaxSize(TAG_MAX_PER_OPPORTUNITY)

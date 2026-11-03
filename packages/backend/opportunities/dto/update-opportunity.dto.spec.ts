@@ -4,6 +4,33 @@ import { OpportunityLifecycleState } from '@universe/database';
 import { UpdateOpportunityDto } from './update-opportunity.dto';
 
 describe('UpdateOpportunityDto', () => {
+  it.each([42, null, {}, true])(
+    'should reject a non-string tag entry %j on update',
+    (entry) => {
+      const dto = plainToInstance(UpdateOpportunityDto, {
+        tags: ['react', entry],
+      });
+
+      expect(validateSync(dto)).toEqual([
+        expect.objectContaining({
+          property: 'tags',
+          constraints: expect.objectContaining({
+            isString: expect.any(String),
+          }),
+        }),
+      ]);
+    },
+  );
+
+  it('should retain normalized string tags on update', () => {
+    const dto = plainToInstance(UpdateOpportunityDto, {
+      tags: [' React ', 'react', '   '],
+    });
+
+    expect(validateSync(dto)).toEqual([]);
+    expect(dto.tags).toEqual(['react']);
+  });
+
   it.each([null, 123, {}])(
     'should reject a non-string organizer contact %j',
     (ownerContactInfo) => {

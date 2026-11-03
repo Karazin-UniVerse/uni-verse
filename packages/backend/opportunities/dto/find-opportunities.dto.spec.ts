@@ -3,6 +3,29 @@ import { validateSync } from 'class-validator';
 import { FindOpportunitiesDto } from './find-opportunities.dto';
 
 describe('FindOpportunitiesDto recruitment filter', () => {
+  it.each([
+    { input: ' Research,Design ', expected: ['research,design'] },
+    {
+      input: [' Research,Design ', ' React '],
+      expected: ['research,design', 'react'],
+    },
+    { input: [' React ', 'react', '  '], expected: ['react'] },
+    { input: '', expected: [] },
+  ])('should preserve whole tag names in $input', ({ input, expected }) => {
+    const dto = plainToInstance(FindOpportunitiesDto, { tags: input });
+
+    expect(validateSync(dto)).toEqual([]);
+    expect(dto.tags).toEqual(expected);
+  });
+
+  it('should reject non-string repeated tag parameters', () => {
+    const dto = plainToInstance(FindOpportunitiesDto, { tags: ['react', 42] });
+
+    expect(validateSync(dto)).toEqual([
+      expect.objectContaining({ property: 'tags' }),
+    ]);
+  });
+
   it.each(['garbage', ['true', 'false'], {}])(
     'should reject an invalid supplied recruitment filter: %j',
     (isRecruiting) => {

@@ -33,10 +33,19 @@ export class FindOpportunitiesDto implements GetOpportunitiesParams {
   @IsOptional()
   search?: string;
 
-  @ApiPropertyOptional({ type: [String], description: 'Comma-separated' })
-  @Transform(({ value }) =>
-    typeof value === 'string' ? normalizeTags(value.split(',')) : value,
-  )
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Repeat tags for multiple names; commas are part of a name',
+  })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') return normalizeTags([value]);
+
+    if (Array.isArray(value) && value.every((tag) => typeof tag === 'string')) {
+      return normalizeTags(value);
+    }
+
+    return value;
+  })
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
