@@ -86,7 +86,7 @@
     &:hover:not(:disabled) {
       background-color: var(--error-color);
       border-color: var(--error-color);
-      color: var(--text-on-accent, #fff);
+      color: var(--text-on-error);
     }
 
     &:active:not(:disabled) {
