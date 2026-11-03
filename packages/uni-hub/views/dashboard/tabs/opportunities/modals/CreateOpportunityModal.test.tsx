@@ -1,12 +1,46 @@
-import type { SyntheticEvent } from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { useState, type ReactElement, type SyntheticEvent } from 'react';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { withLanguage, withQueryClient } from '@uni-hub/utils/test-utils';
+import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { CreateOpportunityModal } from './CreateOpportunityModal';
 import type { CreateOpportunityFormData } from '../types';
 
+function EditableModal({
+  onSubmit,
+}: {
+  onSubmit: (form: CreateOpportunityFormData) => void;
+}): ReactElement {
+  const [formData, setFormData] = useState<CreateOpportunityFormData>({
+    title: 'Research',
+    description: 'Research project',
+    ownerContactInfo: '@research_lab',
+    paymentType: 'UNPAID',
+    paymentDetails: '',
+    tags: [],
+  });
+
+  return (
+    <CreateOpportunityModal
+      open
+      onClose={() => undefined}
+      formData={formData}
+      setFormData={setFormData}
+      submitting={false}
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit(formData);
+      }}
+    />
+  );
+}
+
 describe('CreateOpportunityModal', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   const initialFormData: CreateOpportunityFormData = {
     title: 'Стажування для фронтенд-розробника',
     description: 'Потрібен студент для розробки інтерфейсу на React та TypeScript.',
@@ -123,6 +157,28 @@ describe('CreateOpportunityModal', () => {
     await user.click(submitBtn);
 
     expect(handleSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('should load localized tag suggestions and retain the selected tag on submit', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    vi.spyOn(opportunitiesApi, 'getTagSuggestions').mockResolvedValue({
+      data: [{ id: 'react', name: 'react' }],
+    });
+    render(withQueryClient(withLanguage(<EditableModal onSubmit={onSubmit} />)));
+
+    const input = screen.getByRole('combobox', { name: 'Теги' });
+
+    expect(input).toHaveAttribute('placeholder', 'Почніть вводити тег...');
+    await user.type(input, 'rea');
+    await screen.findByRole('option', { name: 'react' });
+    await user.keyboard('{ArrowDown}{Enter}');
+
+    expect(screen.getByRole('button', { name: 'Видалити тег react' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Створити чернетку' }));
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ tags: ['react'] }));
   });
 
   it('should call onClose when cancel button is clicked', async () => {

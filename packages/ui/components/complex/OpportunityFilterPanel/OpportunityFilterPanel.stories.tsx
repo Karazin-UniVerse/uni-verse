@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { useState } from 'react';
 import { VariantColumn } from '../../../storybook/VariantMatrix/VariantColumn';
 import { OpportunityFilterPanel } from './OpportunityFilterPanel';
 import type { OpportunityFilterValue } from './OpportunityFilterPanel.types';
@@ -53,12 +54,20 @@ export const Matrix: Story = {
   argTypes: {
     value: { control: false },
   },
-  render: (args) => (
-    <VariantColumn
-      rows={Object.keys(MATRIX_VALUES) as MatrixVariant[]}
-      renderCell={(variant: MatrixVariant) => (
-        <OpportunityFilterPanel {...args} value={MATRIX_VALUES[variant]} />
-      )}
-    />
-  ),
+  render: function Matrix(args): React.ReactElement {
+    const [values, setValues] = useState(MATRIX_VALUES);
+
+    return (
+      <VariantColumn
+        rows={Object.keys(MATRIX_VALUES) as MatrixVariant[]}
+        renderCell={(variant: MatrixVariant) => (
+          <OpportunityFilterPanel
+            {...args}
+            value={values[variant]}
+            onApply={(value) => setValues((previous) => ({ ...previous, [variant]: value }))}
+          />
+        )}
+      />
+    );
+  },
 };

@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { OpportunityStatus, PaymentType } from '@universe/database';
 import type { GetOpportunitiesParams } from '@universe/core/types/opportunities';
 import { parseBoolean } from '@universe/core/utils/boolean';
-import { normalizeTags } from '@universe/core/utils/opportunities';
+import { normalizeTags } from '@universe/core/utils/tags';
 import { Transform } from 'class-transformer';
 import {
   IsArray,

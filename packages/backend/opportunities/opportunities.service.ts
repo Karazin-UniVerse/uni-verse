@@ -41,8 +41,8 @@ import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 import {
   hasOpportunityContentChanged,
   isRecruitmentPhase,
-  normalizeTags,
 } from '@universe/core/utils/opportunities';
+import { normalizeTags } from '@universe/core/utils/tags';
 import {
   NOTIFICATION_TYPE,
   OPPORTUNITY_NOTIFICATION_KEY,

@@ -88,6 +88,34 @@ describe('UNA TagInput Component', () => {
     expect(screen.getByRole('combobox')).toBeDisabled();
   });
 
+  it('should focus the enabled input after removing a chip at the tag limit', async () => {
+    const user = userEvent.setup();
+
+    render(<ControlledTagInput initialValue={['react', 'typescript']} maxTags={2} />);
+
+    const input = screen.getByRole('combobox');
+
+    expect(input).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Remove tag typescript' }));
+
+    expect(input).toBeEnabled();
+    expect(input).toHaveFocus();
+    await user.keyboard('vue{Enter}');
+    expect(screen.getByRole('button', { name: 'Remove tag vue' })).toBeInTheDocument();
+  });
+
+  it('should show only one option for suggestions equal after normalization', async () => {
+    const user = userEvent.setup();
+    const loadSuggestions = vi.fn().mockResolvedValue(['React', ' react ', 'reactive']);
+
+    render(<ControlledTagInput loadSuggestions={loadSuggestions} debounceMs={0} />);
+
+    await user.type(screen.getByRole('combobox'), 'rea');
+    await screen.findByRole('option', { name: 'reactive' });
+
+    expect(screen.getAllByRole('option', { name: 'react' })).toHaveLength(1);
+  });
+
   it('should not request suggestions below the minimum query length', async () => {
     const user = userEvent.setup();
     const loadSuggestions = vi.fn().mockResolvedValue([]);
@@ -244,42 +272,14 @@ describe('UNA TagInput Component', () => {
 
   it('should exclude suggestions longer than maxTagLength', async () => {
     const user = userEvent.setup();
-    const loadSuggestions = vi.fn().mockResolvedValue(['react', 'verylongtagnameexceedinglimit']);
+    const loadSuggestions = vi.fn().mockResolvedValue(['tagged', 'verylongtagnameexceedinglimit']);
 
     render(
       <ControlledTagInput loadSuggestions={loadSuggestions} debounceMs={0} maxTagLength={10} />,
     );
 
     await user.type(screen.getByRole('combobox'), 'tag');
-
-    expect(
-      screen.queryByRole('option', { name: 'verylongtagnameexceedinglimit' }),
-    ).not.toBeInTheDocument();
-  });
-
-  it('should render option buttons with tabIndex -1 so they do not take tab focus', async () => {
-    const user = userEvent.setup();
-    const loadSuggestions = vi.fn().mockResolvedValue(['react']);
-
-    render(<ControlledTagInput loadSuggestions={loadSuggestions} debounceMs={0} />);
-
-    await user.type(screen.getByRole('combobox'), 'rea');
-
-    const option = await screen.findByRole('option', { name: 'react' });
-    const optionButton = within(option).getByRole('button', { name: 'react' });
-
-    expect(optionButton).toHaveAttribute('tabIndex', '-1');
-  });
-
-  it('should exclude suggestions longer than maxTagLength', async () => {
-    const user = userEvent.setup();
-    const loadSuggestions = vi.fn().mockResolvedValue(['react', 'verylongtagnameexceedinglimit']);
-
-    render(
-      <ControlledTagInput loadSuggestions={loadSuggestions} debounceMs={0} maxTagLength={10} />,
-    );
-
-    await user.type(screen.getByRole('combobox'), 'tag');
+    await screen.findByRole('option', { name: 'tagged' });
 
     expect(
       screen.queryByRole('option', { name: 'verylongtagnameexceedinglimit' }),

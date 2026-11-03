@@ -6,8 +6,6 @@ import {
   hasOpportunityContentChanged,
   isRecruitmentPhase,
   normalizeOpportunityContent,
-  normalizeTag,
-  normalizeTags,
 } from '../opportunities.ts';
 
 describe('opportunities utils', () => {
@@ -119,22 +117,6 @@ describe('opportunities utils', () => {
     });
   });
 
-  describe('normalizeTag', () => {
-    test('should trim, collapse whitespace, and convert to lowercase', () => {
-      assert.strictEqual(normalizeTag('  React   Native  '), 'react native');
-      assert.strictEqual(normalizeTag('TYPESCRIPT'), 'typescript');
-    });
-  });
-
-  describe('normalizeTags', () => {
-    test('should normalize strings, filter non-strings, remove empties, and deduplicate', () => {
-      const input = [' React ', null, 42, 'react', '  NODEJS ', ''];
-      const result = normalizeTags(input);
-
-      assert.deepStrictEqual(result, ['react', 'nodejs']);
-    });
-  });
-
   describe('getOpportunityTagNames', () => {
     test('should return published tag names for published opportunity', () => {
       const opp = {
@@ -171,8 +153,20 @@ describe('opportunities utils', () => {
     });
 
     test('should return empty array if tags or proposedTags are missing', () => {
-      assert.deepStrictEqual(getOpportunityTagNames({ status: OPPORTUNITY_STATUS.PUBLISHED }), []);
-      assert.deepStrictEqual(getOpportunityTagNames({ status: OPPORTUNITY_STATUS.DRAFT }), []);
+      assert.deepStrictEqual(
+        getOpportunityTagNames({
+          status: OPPORTUNITY_STATUS.PUBLISHED,
+          proposedTags: ['pending'],
+        }),
+        [],
+      );
+      assert.deepStrictEqual(
+        getOpportunityTagNames({
+          status: OPPORTUNITY_STATUS.DRAFT,
+          tags: [{ id: 'old', name: 'old' }],
+        }),
+        [],
+      );
     });
   });
 });

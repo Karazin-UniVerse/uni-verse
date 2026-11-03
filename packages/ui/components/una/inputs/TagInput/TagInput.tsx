@@ -7,6 +7,7 @@ import {
   TAG_SUGGEST_DEBOUNCE_MS,
   TAG_SUGGEST_MIN_QUERY_LENGTH,
 } from '@core/constants/tags';
+import { normalizeTag, normalizeTags } from '@core/utils/tags';
 import { useClickOutside } from '../../../../hooks/useClickOutside';
 import { useDebouncedValue } from '../../../../hooks/useDebouncedValue';
 import { DropdownOption } from '../../Dropdown/DropdownOption';
@@ -21,8 +22,6 @@ interface TagOption {
 }
 
 const EMPTY_TAGS: string[] = [];
-
-const defaultNormalizeTag = (tag: string): string => tag.trim().replace(/\s+/g, ' ').toLowerCase();
 
 export const TagInput: React.FC<TagInputProps> = ({
   removeLabel,
@@ -47,6 +46,7 @@ export const TagInput: React.FC<TagInputProps> = ({
 
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const pendingFocusRef = useRef(false);
   const requestIdRef = useRef(0);
   const loadRef = useRef(loadSuggestions);
   const listId = useId();
@@ -55,9 +55,16 @@ export const TagInput: React.FC<TagInputProps> = ({
     loadRef.current = loadSuggestions;
   });
 
-  const normalizedQuery = defaultNormalizeTag(query);
+  const normalizedQuery = normalizeTag(query);
   const debouncedQuery = useDebouncedValue(normalizedQuery, debounceMs);
   const isLimitReached = safeValue.length >= maxTags;
+
+  useEffect(() => {
+    if (pendingFocusRef.current && !disabled && !isLimitReached) {
+      pendingFocusRef.current = false;
+      inputRef.current?.focus();
+    }
+  }, [safeValue, disabled, isLimitReached]);
 
   useClickOutside(rootRef, () => setIsOpen(false), { enabled: isOpen });
 
@@ -74,7 +81,7 @@ export const TagInput: React.FC<TagInputProps> = ({
     load(debouncedQuery)
       .then((names) => {
         if (requestId === requestIdRef.current) {
-          setSuggestions(names.map(defaultNormalizeTag));
+          setSuggestions(normalizeTags(names));
         }
       })
       .catch(() => {
@@ -110,7 +117,7 @@ export const TagInput: React.FC<TagInputProps> = ({
   }, [suggestions, value, normalizedQuery, minQueryLength, maxTagLength, isLimitReached]);
 
   const addTag = (raw: string): void => {
-    const tag = defaultNormalizeTag(raw);
+    const tag = normalizeTag(raw);
 
     if (
       disabled ||
@@ -129,8 +136,8 @@ export const TagInput: React.FC<TagInputProps> = ({
   };
 
   const removeTag = (tag: string): void => {
+    pendingFocusRef.current = true;
     onChange(safeValue.filter((item) => item !== tag));
-    inputRef.current?.focus();
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>): void => {

@@ -10,17 +10,7 @@ import type {
   OpportunityContentFields,
   UpdateOpportunityRequest,
 } from '../types/opportunities.ts';
-
-export const normalizeTag = (tag: string): string => tag.trim().replace(/\s+/g, ' ').toLowerCase();
-
-export const normalizeTags = (tags: unknown[]): string[] => {
-  const normalized = tags
-    .filter((tag): tag is string => typeof tag === 'string')
-    .map(normalizeTag)
-    .filter(Boolean);
-
-  return [...new Set(normalized)];
-};
+import { normalizeTags } from './tags.ts';
 
 export const getOpportunityTagNames = ({
   status,
