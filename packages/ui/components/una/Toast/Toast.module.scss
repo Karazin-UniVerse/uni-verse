@@ -19,6 +19,7 @@
   color: var(--text-primary);
   font-size: var(--font-sm);
   animation: slide-in var(--transition-medium) var(--ease-standard);
+  pointer-events: auto;
 }
 
 .success {
