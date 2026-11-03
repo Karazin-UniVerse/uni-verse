@@ -1,6 +1,10 @@
 import { getErrorMessage } from '@uni-hub/services/api';
 import type { FormatMessage } from '@uni-hub/i18n/LanguageContext';
-import { OPPORTUNITY_ERROR, type OpportunityPaymentType } from '@core/constants/opportunities';
+import {
+  OPPORTUNITY_ERROR,
+  OPPORTUNITY_LIFECYCLE,
+  type OpportunityPaymentType,
+} from '@core/constants/opportunities';
 import type { Opportunity } from '@core/types/opportunities';
 
 export interface OpportunityPaymentCounts {
@@ -39,8 +43,11 @@ export function filterOpportunitiesBySearch(
       Boolean(opportunity.owner?.name?.toLowerCase().includes(query)) ||
       Boolean(opportunity.owner?.email?.toLowerCase().includes(query)) ||
       opportunity.ownerContactInfo.toLowerCase().includes(query);
+    const tagsMatch =
+      Boolean(opportunity.tags?.some((tag) => tag.name.toLowerCase().includes(query))) ||
+      Boolean(opportunity.proposedTags?.some((tag) => tag.toLowerCase().includes(query)));
 
-    return titleMatch || descMatch || ownerMatch;
+    return titleMatch || descMatch || ownerMatch || tagsMatch;
   });
 }
 
@@ -71,4 +78,39 @@ export function filterOpportunitiesByPayment(
   }
 
   return opportunities.filter((opportunity) => opportunity.paymentType === paymentFilter);
+}
+
+export function filterOpportunitiesByRecruiting(
+  opportunities: Opportunity[],
+  isRecruiting: boolean,
+): Opportunity[] {
+  if (!isRecruiting) {
+    return opportunities;
+  }
+
+  return opportunities.filter(
+    (opportunity) =>
+      opportunity.acceptsApplications === true &&
+      (opportunity.lifecycleState === OPPORTUNITY_LIFECYCLE.START ||
+        opportunity.lifecycleState === OPPORTUNITY_LIFECYCLE.ACTIVE),
+  );
+}
+
+export function filterOpportunitiesByTags(
+  opportunities: Opportunity[],
+  tags: string[],
+): Opportunity[] {
+  if (!tags.length) {
+    return opportunities;
+  }
+
+  const normalizedFilters = new Set(tags.map((tag) => tag.toLowerCase()));
+
+  return opportunities.filter((opportunity) => {
+    const tagNames = (opportunity.tags?.map((tag) => tag.name.toLowerCase()) ?? []).concat(
+      opportunity.proposedTags?.map((tag) => tag.toLowerCase()) ?? [],
+    );
+
+    return tagNames.some((name) => normalizedFilters.has(name));
+  });
 }

@@ -4,7 +4,7 @@ import React from 'react';
 import { OpportunityDetail } from '@ui';
 import type { Opportunity } from '@core/types/opportunities';
 import { OPPORTUNITY_STATUS } from '@core/constants/opportunities';
-import { isRecruitmentPhase } from '@core/utils/opportunities';
+import { getOpportunityTagNames, isRecruitmentPhase } from '@core/utils/opportunities';
 import { useLanguage, type FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import { OpportunityStatusBadge } from './OpportunityStatusBadge';
 
@@ -99,6 +99,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   const lifecycleTagText = getLifecycleTagText(opportunity, formatMessage);
   const organizerName = getOrganizerName(opportunity, formatMessage);
   const canApply = canApplyOpportunity(opportunity, isOwner);
+  const tagNames = getOpportunityTagNames(opportunity);
 
   return (
     <OpportunityDetail
@@ -109,6 +110,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       paymentTone={opportunity.paymentType === 'PAID' ? 'success' : 'neutral'}
       statusBadge={<OpportunityStatusBadge status={opportunity.status} size="medium" />}
       lifecycleTagText={lifecycleTagText}
+      tags={tagNames}
       organizerLabel={formatMessage('opportunities.detailModal.organizer')}
       organizerName={organizerName}
       publishedDateText={formatMessage('opportunities.detailModal.publishedOn', {
