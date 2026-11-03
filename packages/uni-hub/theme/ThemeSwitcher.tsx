@@ -19,9 +19,9 @@ const THEME_ICONS: Record<AppTheme, React.ReactNode> = {
   karazinGold: <Crown size={18} />,
 };
 
-const subscribe = () => () => {};
-const getClientSnapshot = () => true;
-const getServerSnapshot = () => false;
+const subscribe = (): (() => void) => () => {};
+const getClientSnapshot = (): boolean => true;
+const getServerSnapshot = (): boolean => false;
 
 const THEME_KEYS: Record<AppTheme, TranslationKey> = {
   light: 'theme.light',

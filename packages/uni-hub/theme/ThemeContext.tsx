@@ -53,7 +53,10 @@ const getSystemTheme = (): AppTheme => {
  * MediaQueryList (e.g. Safari < 14) are skipped instead of throwing; the OS theme
  * is still read on load.
  */
-const subscribeToMediaQuery = (media: MediaQueryList, callback: () => void) => {
+const subscribeToMediaQuery = (
+  media: MediaQueryList,
+  callback: () => void,
+): (() => void) | undefined => {
   if (typeof media.addEventListener !== 'function') {
     return undefined;
   }
@@ -115,7 +118,9 @@ export const ThemeProvider: React.FC<Readonly<{ children: React.ReactNode }>> = 
   const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getThemeServerSnapshot);
 
   useEffect(() => {
-    applyTheme(theme);
+    // Apply the client snapshot, not the server placeholder, so hydration
+    // does not overwrite the theme set by the inline script before first paint.
+    applyTheme(getThemeSnapshot());
   }, [theme]);
 
   const setTheme = useCallback((next: AppTheme) => {

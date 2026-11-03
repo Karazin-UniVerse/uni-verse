@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider, useTheme } from './ThemeContext';
+import { THEME_COLOR_SCHEME } from '@core/constants/themes';
 
 const STORAGE_KEY = 'universe-theme';
 
@@ -24,7 +25,7 @@ const ThemeConsumer = () => {
   );
 };
 
-const mockMatchMedia = (matches: boolean) => {
+const mockMatchMedia = (matches: boolean): void => {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
     matches,
     media: query,
@@ -211,4 +212,56 @@ describe('ThemeContext', () => {
     expect(removeEventListenerSpy).toHaveBeenCalledWith('storage', expect.any(Function));
     expect(removeEventListenerSpy).toHaveBeenCalledWith('theme-change', expect.any(Function));
   });
+});
+it('should follow OS preference changes only while no theme is saved', () => {
+  let prefersDark = false;
+  let mediaListener: (() => void) | undefined;
+
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    get matches() {
+      return prefersDark;
+    },
+    media: query,
+    addEventListener: vi.fn((_event: string, listener: () => void) => {
+      mediaListener = listener;
+    }),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    onchange: null,
+    dispatchEvent: vi.fn(),
+  }));
+
+  render(
+    <ThemeProvider>
+      <ThemeConsumer />
+    </ThemeProvider>,
+  );
+
+  expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinClassic');
+
+  // OS switches to dark with no saved theme: the app follows it
+  act(() => {
+    prefersDark = true;
+    mediaListener?.();
+  });
+
+  expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinGold');
+  expect(document.documentElement.dataset.theme).toBe('karazinGold');
+  expect(document.documentElement.dataset.colorScheme).toBe(THEME_COLOR_SCHEME.karazinGold);
+
+  // The user saves a valid theme: it must win over later OS changes
+  act(() => {
+    window.localStorage.setItem(STORAGE_KEY, 'karazinClassic');
+    window.dispatchEvent(new Event('theme-change'));
+  });
+
+  expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinClassic');
+
+  act(() => {
+    prefersDark = true;
+    mediaListener?.();
+  });
+
+  expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinClassic');
 });
