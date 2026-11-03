@@ -10,6 +10,7 @@ import { STUDENT_PROFILE_STORAGE_KEY } from '../constants';
 import { fallbackStudentProfile } from '@uni-hub/utils/test-fixtures';
 import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import { endSession } from '@uni-hub/services/api.session';
+import { isLoggedIn } from '@core/utils/auth';
 
 const mockToastSuccess = vi.fn();
 const mockToastError = vi.fn();
@@ -35,7 +36,7 @@ vi.mock('@uni-hub/features', () => ({
 }));
 
 vi.mock('@core/utils/auth', () => ({
-  isLoggedIn: () => true,
+  isLoggedIn: vi.fn(() => true),
 }));
 
 describe('useDashboardData', () => {
@@ -43,6 +44,7 @@ describe('useDashboardData', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(isLoggedIn).mockReturnValue(true);
     queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
@@ -221,5 +223,19 @@ describe('useDashboardData', () => {
     expect(moodleApi.getCourses).toHaveBeenCalled();
     expect(notificationsApi.getMyNotifications).toHaveBeenCalled();
     expect(mockToastSuccess).toHaveBeenCalledWith('dashboard.syncSuccess');
+  });
+
+  it('should not expose a cached profile when the login session is absent', () => {
+    useMoodleStore.setState({ isMoodleLinked: false });
+    vi.spyOn(notificationsApi, 'getMyNotifications').mockResolvedValue({ data: [] });
+    queryClient.setQueryData(moodleKeys.profile(), {
+      ...fallbackStudentProfile,
+      fullName: 'Cached Account',
+    });
+    vi.mocked(isLoggedIn).mockReturnValue(false);
+
+    const { result } = renderHook(() => useDashboardData(), { wrapper: createWrapper() });
+
+    expect(result.current.studentProfile).toBeNull();
   });
 });

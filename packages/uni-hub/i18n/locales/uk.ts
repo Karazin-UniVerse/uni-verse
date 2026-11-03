@@ -556,6 +556,8 @@ export const uk = {
     'Наприклад: $400/місяць або 5000 грн за етап',
   'opportunities.createModal.phaseLabel': 'Фаза',
   'opportunities.createModal.acceptsApplications': 'Приймати нові відгуки на можливість',
+  'opportunities.createModal.remoderationWarning':
+    'Зверніть увагу: після збереження змін у назві, описі, контактах або умовах оплати можливість буде відправлено на повторну модерацію й тимчасово приховано з каталогу.',
   'opportunities.createModal.cancel': 'Скасувати',
   'opportunities.createModal.saving': 'Збереження...',
   'opportunities.createModal.submit': 'Створити чернетку',

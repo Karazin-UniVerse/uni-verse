@@ -154,6 +154,19 @@ describe('CreateOpportunityModal', () => {
     expect(screen.queryByRole('heading')).not.toBeInTheDocument();
   });
 
+  it('shows localized re-moderation warning only when remoderationWarning is true', () => {
+    localStorage.setItem('universe-lang', 'uk');
+    const { rerender } = renderComponent({ isEdit: true, remoderationWarning: false });
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    rerender(withLanguage(<CreateOpportunityModal {...defaultProps} isEdit remoderationWarning />));
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Зверніть увагу: після збереження змін у назві, описі, контактах або умовах оплати можливість буде відправлено на повторну модерацію й тимчасово приховано з каталогу.',
+    );
+  });
+
   it('should call setFormData when input fields change', async () => {
     const user = userEvent.setup();
     const handleSetFormData = vi.fn();
