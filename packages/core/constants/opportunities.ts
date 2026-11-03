@@ -19,6 +19,11 @@ export const OPPORTUNITY_LIFECYCLE = {
 export type OpportunityLifecycle =
   (typeof OPPORTUNITY_LIFECYCLE)[keyof typeof OPPORTUNITY_LIFECYCLE];
 
+export const OPPORTUNITY_RECRUITING_LIFECYCLES: readonly OpportunityLifecycle[] = [
+  OPPORTUNITY_LIFECYCLE.START,
+  OPPORTUNITY_LIFECYCLE.ACTIVE,
+];
+
 export const OPPORTUNITY_PAYMENT_TYPE = {
   PAID: 'PAID',
   UNPAID: 'UNPAID',

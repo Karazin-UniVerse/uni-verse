@@ -1,6 +1,8 @@
 import React from 'react';
 import clsx from 'clsx';
 import { Briefcase } from 'lucide-react';
+import { Tag } from '@una';
+import { getOpportunityTagNames } from '@core/utils/opportunities';
 import type { Opportunity } from '@core/types/opportunities';
 import styles from '../../OpportunityCard.module.scss';
 import type { FormatMessage } from '@uni-hub/i18n/LanguageContext';
@@ -23,27 +25,22 @@ export const OpportunityCardTop: React.FC<Props> = ({
 }) => (
   <div className={styles.cardTop}>
     <div className={styles.cardBadgeRow}>
-      <div className={styles.categoryBadgeGroup}>
-        <div
-          className={clsx(
-            styles.categoryPill,
-            isPaid ? styles.paidCategory : styles.unpaidCategory,
-          )}
-        >
-          <Briefcase size={12} />
-          <span>
-            {isPaid
-              ? formatMessage('opportunities.card.vacancy')
-              : formatMessage('opportunities.card.practice')}
-          </span>
-        </div>
-
-        {opportunity.acceptsApplications === false && (
-          <span className={styles.closedPill}>
-            {formatMessage('opportunities.card.applicationsClosedBadge')}
-          </span>
-        )}
+      <div
+        className={clsx(styles.categoryPill, isPaid ? styles.paidCategory : styles.unpaidCategory)}
+      >
+        <Briefcase size={12} />
+        <span>
+          {isPaid
+            ? formatMessage('opportunities.card.vacancy')
+            : formatMessage('opportunities.card.practice')}
+        </span>
       </div>
+
+      {opportunity.acceptsApplications === false && (
+        <span className={styles.closedPill}>
+          {formatMessage('opportunities.card.applicationsClosedBadge')}
+        </span>
+      )}
 
       {isOwner ? (
         statusBadge
@@ -59,6 +56,16 @@ export const OpportunityCardTop: React.FC<Props> = ({
 
     <h3 className={styles.cardTitle}>{opportunity.title}</h3>
     <p className={styles.cardDescription}>{opportunity.description}</p>
+
+    {getOpportunityTagNames(opportunity).length > 0 && (
+      <div className={styles.cardTagsGroup}>
+        {getOpportunityTagNames(opportunity).map((tag) => (
+          <Tag key={tag} tone="neutral" size="small">
+            {tag}
+          </Tag>
+        ))}
+      </div>
+    )}
 
     {isOwner && opportunity.moderationComment && (
       <div className={styles.warningBox}>

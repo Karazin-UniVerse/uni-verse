@@ -145,4 +145,16 @@ describe('UNA DropdownOption Component', () => {
     await user.click(screen.getByRole('button', { name: /option 1/i }));
     expect(handleSelect).toHaveBeenCalledTimes(1);
   });
+
+  it('should forward tabIndex to button when provided', () => {
+    render(
+      <DropdownOption isSelected={false} tabIndex={-1} onSelect={noop}>
+        Custom TabIndex
+      </DropdownOption>,
+    );
+
+    const option = screen.getByRole('button', { name: /custom tabindex/i });
+
+    expect(option).toHaveAttribute('tabIndex', '-1');
+  });
 });

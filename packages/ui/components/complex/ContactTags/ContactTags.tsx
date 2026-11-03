@@ -16,13 +16,13 @@ export function ContactTags({
       {email && (
         <span className={styles.contactTag} title={emailLabel}>
           <Mail size={12} />
-          {email}
+          <span className={styles.contactText}>{email}</span>
         </span>
       )}
       {contact && (
         <span className={styles.contactTag} title={alternativeContactLabel}>
           <ContactIcon value={contact} />
-          {contact}
+          <span className={styles.contactText}>{contact}</span>
         </span>
       )}
     </>

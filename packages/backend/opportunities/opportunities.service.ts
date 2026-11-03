@@ -9,7 +9,10 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { getPrismaErrorCode } from '../utils/prisma-error';
-import { getOpportunityContentHash } from './opportunities.helpers';
+import {
+  applyModerationInTransaction,
+  getOpportunityContentHash,
+} from './opportunities.helpers';
 import { PRISMA_ERROR_CODE } from '../constants/prisma';
 import { persistOpportunityApplication } from './opportunity-application.persistence';
 import {
@@ -36,12 +39,23 @@ import {
 } from '@universe/core/constants/opportunities';
 import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 import {
+  hasOpportunityContentChanged,
+  isRecruitmentPhase,
+} from '@universe/core/utils/opportunities';
+import { normalizeTags } from '@universe/core/utils/tags';
+import {
   NOTIFICATION_TYPE,
   OPPORTUNITY_NOTIFICATION_KEY,
 } from '@universe/core/constants/notifications';
 
-export type OpportunityWithOwner = Opportunity & {
-  owner: { id: string; name: string | null; email: string };
+const OPPORTUNITY_INCLUDE = {
+  owner: { select: { id: true, name: true, email: true } },
+  tags: { select: { id: true, name: true } },
+} satisfies Prisma.OpportunityInclude;
+
+export type OpportunityWithOwner = Prisma.OpportunityGetPayload<{
+  include: typeof OPPORTUNITY_INCLUDE;
+}> & {
   canResubmit?: boolean;
 };
 
@@ -50,7 +64,7 @@ export type ApplicationWithApplicant = OpportunityApplication & {
 };
 
 export type ApplicationWithOpportunity = OpportunityApplication & {
-  opportunity: OpportunityWithOwner;
+  opportunity: Omit<OpportunityWithOwner, 'tags'>;
   applicant: ApplicationWithApplicant['applicant'];
 };
 
@@ -60,6 +74,11 @@ export type UpdateApplicationStatusParams = {
   status: ApplicationStatus;
   ownerComment?: string;
 };
+
+const RECRUITING_LIFECYCLE_STATES: OpportunityLifecycleState[] = [
+  OpportunityLifecycleState.START,
+  OpportunityLifecycleState.ACTIVE,
+];
 
 @Injectable()
 export class OpportunitiesService {
@@ -119,12 +138,19 @@ export class OpportunitiesService {
     userId: string,
     dto: CreateOpportunityDto,
   ): Promise<Opportunity> {
+    const { tags, ...rest } = dto;
+    const acceptsApplications = isRecruitmentPhase(dto.lifecycleState)
+      ? dto.acceptsApplications
+      : false;
+
     return this.prisma.opportunity.create({
       data: {
-        ...dto,
+        ...rest,
+        ...(acceptsApplications !== undefined ? { acceptsApplications } : {}),
         ownerContactInfo: dto.ownerContactInfo?.trim() ?? '',
+        proposedTags: normalizeTags(tags ?? []),
         ownerId: userId,
-        status: OpportunityStatus.DRAFT, // initial status
+        status: OpportunityStatus.DRAFT,
       },
     });
   }
@@ -137,7 +163,7 @@ export class OpportunitiesService {
     query: FindOpportunitiesDto,
     userRoles: string[] = [],
   ): Promise<OpportunityWithOwner[]> {
-    const { paymentType, ownerId, search, status } = query;
+    const { paymentType, ownerId, search, status, tags, isRecruiting } = query;
     const where: Prisma.OpportunityWhereInput = {};
 
     const isModerator = Boolean(
@@ -167,12 +193,21 @@ export class OpportunitiesService {
       ];
     }
 
+    const tagNames = normalizeTags(tags ?? []);
+
+    if (tagNames.length) {
+      where.tags = { some: { name: { in: tagNames } } };
+    }
+
+    if (isRecruiting) {
+      where.acceptsApplications = true;
+      where.lifecycleState = { in: RECRUITING_LIFECYCLE_STATES };
+    }
+
     return this.prisma.opportunity.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      include: {
-        owner: { select: { id: true, name: true, email: true } },
-      },
+      include: OPPORTUNITY_INCLUDE,
     });
   }
 
@@ -187,9 +222,7 @@ export class OpportunitiesService {
   ): Promise<OpportunityWithOwner> {
     const opportunity = await this.prisma.opportunity.findUnique({
       where: { id },
-      include: {
-        owner: { select: { id: true, name: true, email: true } },
-      },
+      include: OPPORTUNITY_INCLUDE,
     });
 
     if (!opportunity) throw new NotFoundException('Opportunity not found');
@@ -236,14 +269,22 @@ export class OpportunitiesService {
       );
     }
 
-    const hasContentChanges =
-      dto.title !== undefined ||
-      dto.description !== undefined ||
-      dto.ownerContactInfo !== undefined ||
-      dto.paymentType !== undefined ||
-      dto.paymentDetails !== undefined;
+    const { tags, ...rest } = dto;
+    const hasContentChanges = hasOpportunityContentChanged(opportunity, dto);
 
-    const data: Prisma.OpportunityUpdateInput = { ...dto };
+    const data: Prisma.OpportunityUpdateInput = { ...rest };
+
+    if (tags !== undefined) data.proposedTags = normalizeTags(tags);
+
+    const nextLifecycleState = dto.lifecycleState ?? opportunity.lifecycleState;
+
+    if (
+      !isRecruitmentPhase(nextLifecycleState) &&
+      (dto.lifecycleState !== undefined ||
+        dto.acceptsApplications !== undefined)
+    ) {
+      data.acceptsApplications = false;
+    }
 
     if (dto.ownerContactInfo !== undefined) {
       data.ownerContactInfo = dto.ownerContactInfo.trim();
@@ -270,9 +311,8 @@ export class OpportunitiesService {
       updated = await this.prisma.opportunity.update({
         where: {
           id,
-          ...(opportunity.status === OpportunityStatus.REQUIRES_CHANGES
-            ? { status: opportunity.status, updatedAt: opportunity.updatedAt }
-            : {}),
+          status: opportunity.status,
+          updatedAt: opportunity.updatedAt,
         },
         data,
       });
@@ -421,7 +461,12 @@ export class OpportunitiesService {
 
     return this.prisma.opportunity.update({
       where: { id },
-      data: { lifecycleState },
+      data: {
+        lifecycleState,
+        ...(!isRecruitmentPhase(lifecycleState)
+          ? { acceptsApplications: false }
+          : {}),
+      },
     });
   }
 
@@ -518,12 +563,7 @@ export class OpportunitiesService {
       throw new ForbiddenException('Cannot apply to your own opportunity');
     }
 
-    const allowedStates: OpportunityLifecycleState[] = [
-      OpportunityLifecycleState.START,
-      OpportunityLifecycleState.ACTIVE,
-    ];
-
-    if (!allowedStates.includes(opportunity.lifecycleState)) {
+    if (!RECRUITING_LIFECYCLE_STATES.includes(opportunity.lifecycleState)) {
       throw new BadRequestException(
         'Cannot apply to an opportunity in this phase',
       );
@@ -639,7 +679,7 @@ export class OpportunitiesService {
   async getMyOpportunities(userId: string): Promise<OpportunityWithOwner[]> {
     return this.prisma.opportunity.findMany({
       where: { ownerId: userId },
-      include: { owner: { select: { id: true, name: true, email: true } } },
+      include: OPPORTUNITY_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -652,7 +692,6 @@ export class OpportunitiesService {
     id: string,
     dto: ModerateOpportunityDto,
   ): Promise<Opportunity> {
-    // Real-time role check to prevent using cached demoted admin tokens
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
     if (!user?.roles?.includes(Role.OPPORTUNITIES_MODERATOR)) {
@@ -696,24 +735,14 @@ export class OpportunitiesService {
     let opp: Opportunity;
 
     try {
-      opp = await this.prisma.opportunity.update({
-        where: {
+      opp = await this.prisma.$transaction((tx) =>
+        applyModerationInTransaction(tx, {
           id,
-          status: opportunityToModerate.status,
-          updatedAt: opportunityToModerate.updatedAt,
-        },
-        data: {
-          status: newStatus,
-          moderationContentHash:
-            dto.action === OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES
-              ? getOpportunityContentHash(opportunityToModerate)
-              : null,
-          moderationComment:
-            dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE
-              ? null
-              : dto.comment,
-        },
-      });
+          opportunity: opportunityToModerate,
+          newStatus,
+          dto,
+        }),
+      );
     } catch (error) {
       if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
         throw new ConflictException(

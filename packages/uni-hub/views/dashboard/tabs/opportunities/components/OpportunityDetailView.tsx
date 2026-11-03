@@ -3,7 +3,8 @@
 import React from 'react';
 import { OpportunityDetail } from '@ui';
 import type { Opportunity } from '@core/types/opportunities';
-import { OPPORTUNITY_LIFECYCLE, OPPORTUNITY_STATUS } from '@core/constants/opportunities';
+import { OPPORTUNITY_STATUS } from '@core/constants/opportunities';
+import { getOpportunityTagNames, isRecruitmentPhase } from '@core/utils/opportunities';
 import { useLanguage, type FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import { OpportunityStatusBadge } from './OpportunityStatusBadge';
 
@@ -57,11 +58,9 @@ function canApplyOpportunity(opportunity: Opportunity, isOwner: boolean): boolea
     return false;
   }
 
-  const isLifecycleOpen =
-    opportunity.lifecycleState === OPPORTUNITY_LIFECYCLE.ACTIVE ||
-    opportunity.lifecycleState === OPPORTUNITY_LIFECYCLE.START;
-
-  return isLifecycleOpen && opportunity.acceptsApplications !== false;
+  return (
+    isRecruitmentPhase(opportunity.lifecycleState) && opportunity.acceptsApplications !== false
+  );
 }
 
 function getOrganizerName(opportunity: Opportunity, formatMessage: FormatMessage): string {
@@ -89,6 +88,8 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
     isOwner &&
     (opportunity.status === OPPORTUNITY_STATUS.DRAFT ||
       opportunity.status === OPPORTUNITY_STATUS.REQUIRES_CHANGES);
+  const canEdit =
+    canManageDraft || (isOwner && opportunity.status === OPPORTUNITY_STATUS.PUBLISHED);
   const sendToReviewDisabled =
     opportunity.status === OPPORTUNITY_STATUS.REQUIRES_CHANGES && opportunity.canResubmit !== true;
   const sendToReviewHint = sendToReviewDisabled
@@ -98,6 +99,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   const lifecycleTagText = getLifecycleTagText(opportunity, formatMessage);
   const organizerName = getOrganizerName(opportunity, formatMessage);
   const canApply = canApplyOpportunity(opportunity, isOwner);
+  const tagNames = getOpportunityTagNames(opportunity);
 
   return (
     <OpportunityDetail
@@ -108,6 +110,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       paymentTone={opportunity.paymentType === 'PAID' ? 'success' : 'neutral'}
       statusBadge={<OpportunityStatusBadge status={opportunity.status} size="medium" />}
       lifecycleTagText={lifecycleTagText}
+      tags={tagNames}
       organizerLabel={formatMessage('opportunities.detailModal.organizer')}
       organizerName={organizerName}
       publishedDateText={formatMessage('opportunities.detailModal.publishedOn', {
@@ -122,7 +125,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       emailLabel={formatMessage('opportunities.detailModal.email')}
       emailValue={opportunity.owner?.email}
       isOwner={isOwner}
-      canEdit={canManageDraft}
+      canEdit={canEdit}
       onEdit={onEdit ? () => onEdit(opportunity) : undefined}
       editText={formatMessage('opportunities.detailModal.edit')}
       canSendToReview={canManageDraft}

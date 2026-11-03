@@ -5,6 +5,7 @@ export const opportunityKeys = {
   detail: (opportunityId: string) => [...opportunityKeys.all, 'detail', opportunityId] as const,
   applications: () => [...opportunityKeys.all, 'applications'] as const,
   moderation: () => [...opportunityKeys.all, 'moderation'] as const,
+  tagSuggestions: (query: string) => [...opportunityKeys.all, 'tagSuggestions', query] as const,
   applicants: (opportunityId: string) =>
     [...opportunityKeys.all, 'applicants', opportunityId] as const,
 };
