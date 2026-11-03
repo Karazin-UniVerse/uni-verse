@@ -199,7 +199,19 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
               </div>
             )}
 
-            <div>
+            <Button
+              type="button"
+              variant="secondary"
+              size="medium"
+              onClick={onLogout}
+              style={{
+                width: '100%',
+                justifyContent: 'flex-start',
+                color: 'var(--text-primary)',
+              }}
+            >
+              {formatMessage('sidebar.logout')}
+            </Button>
               <Button
                 type="button"
                 variant="secondary"
