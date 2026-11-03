@@ -4,4 +4,5 @@ export * from './FileInput';
 export * from './PasswordInput';
 export * from './RadioButton';
 export * from './Slider';
+export * from './TagInput';
 export * from './TextInput';

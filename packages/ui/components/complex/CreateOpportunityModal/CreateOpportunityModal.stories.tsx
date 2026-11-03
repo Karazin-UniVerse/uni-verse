@@ -111,3 +111,21 @@ export const WithoutAlternativeContact: Story = {
     },
   },
 };
+
+export const WithRemoderationWarning: Story = {
+  args: {
+    title: 'Редагувати можливість',
+    submitText: 'Зберегти зміни',
+    remoderationWarning:
+      'Зверніть увагу: після збереження змін у назві, описі, контактах або умовах оплати можливість буде відправлено на повторну модерацію й тимчасово приховано з каталогу.',
+    formData: {
+      title: 'Full-stack Developer (Node.js + React)',
+      description: 'Оновлений опис університетського порталу відкритих можливостей.',
+      ownerContactInfo: 'hr@karazin.ua',
+      paymentType: 'PAID',
+      paymentDetails: '20 000 грн/місяць',
+      lifecycleState: 'ACTIVE',
+      acceptsApplications: true,
+    },
+  },
+};

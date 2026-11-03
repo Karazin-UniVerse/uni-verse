@@ -361,7 +361,7 @@ export class MoodleProfileService {
       return `${siteInfo.lastname} ${siteInfo.firstname}`;
     }
 
-    return 'Барсуков Родіон Сергійович';
+    return 'Студент';
   }
 
   private resolveEmail(

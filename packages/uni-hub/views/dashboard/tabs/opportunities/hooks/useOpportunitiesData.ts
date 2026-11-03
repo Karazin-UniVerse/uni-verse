@@ -1,6 +1,7 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import type { OpportunityPaymentType } from '@core/constants/opportunities';
+import type { OpportunityFilters } from '@uni-hub/store/useOpportunitiesStore';
 import { hasLoadFailed } from '@uni-hub/queries/load-state';
 import { useOpportunitiesStore } from '@uni-hub/store/useOpportunitiesStore';
 import { OPPORTUNITY_SUB_TAB, type OpportunitySubTab } from '../constants';
@@ -25,6 +26,11 @@ interface UseOpportunitiesDataResult {
   setSearch: (search: string) => void;
   paymentFilter: OpportunityPaymentType | '';
   setPaymentFilter: (paymentType: OpportunityPaymentType | '') => void;
+  isRecruiting: boolean;
+  setIsRecruiting: (isRecruiting: boolean) => void;
+  tags: string[];
+  setTags: (tags: string[]) => void;
+  setFilters: (filters: OpportunityFilters) => void;
   catalog: ListState<Opportunity>;
   myOpportunities: ListState<Opportunity>;
   myApplications: ListState<OpportunityApplication>;
@@ -49,6 +55,11 @@ export function useOpportunitiesData(isModerator: boolean): UseOpportunitiesData
   const setSearch = useOpportunitiesStore((state) => state.setSearch);
   const paymentFilter = useOpportunitiesStore((state) => state.paymentFilter);
   const setPaymentFilter = useOpportunitiesStore((state) => state.setPaymentFilter);
+  const isRecruiting = useOpportunitiesStore((state) => state.isRecruiting);
+  const setIsRecruiting = useOpportunitiesStore((state) => state.setIsRecruiting);
+  const tags = useOpportunitiesStore((state) => state.tags);
+  const setTags = useOpportunitiesStore((state) => state.setTags);
+  const setFilters = useOpportunitiesStore((state) => state.setFilters);
 
   const catalog = useQuery({
     ...catalogQueryOptions,
@@ -71,6 +82,11 @@ export function useOpportunitiesData(isModerator: boolean): UseOpportunitiesData
     setSearch,
     paymentFilter,
     setPaymentFilter,
+    isRecruiting,
+    setIsRecruiting,
+    tags,
+    setTags,
+    setFilters,
     catalog: toListState<Opportunity>(catalog),
     myOpportunities: toListState<Opportunity>(myOpportunities),
     myApplications: toListState<OpportunityApplication>(myApplications),
