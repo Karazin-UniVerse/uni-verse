@@ -11,6 +11,31 @@ describe('OpportunitiesApi', () => {
     vi.clearAllMocks();
   });
 
+  it.each([
+    { tags: ['research,design'], expected: ['research,design'] },
+    { tags: ['research,design', 'react'], expected: ['research,design', 'react'] },
+    { tags: [], expected: [] },
+  ])(
+    'should serialize whole tag names as repeated parameters: $tags',
+    async ({ tags, expected }) => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [],
+      } as Response);
+
+      await opportunitiesApi.getOpportunities({ tags, paymentType: 'PAID', isRecruiting: true });
+
+      const requestedUrl = new URL(
+        String(vi.mocked(global.fetch).mock.calls[0][0]),
+        'http://localhost',
+      );
+
+      expect(requestedUrl.searchParams.getAll('tags')).toEqual(expected);
+      expect(requestedUrl.searchParams.get('paymentType')).toBe('PAID');
+      expect(requestedUrl.searchParams.get('isRecruiting')).toBe('true');
+    },
+  );
+
   it('getOpportunities should request /opportunities with serialized query string', async () => {
     const mockData = [{ id: '1', title: 'Test Opp' }];
 

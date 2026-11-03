@@ -8,6 +8,7 @@ import { GoogleLoginButton } from './GoogleLoginButton';
 let mockTheme = 'light';
 let autoScriptReady = true;
 let triggerScriptReady: (() => void) | null = null;
+let triggerScriptError: (() => void) | null = null;
 
 const mockInitialize = vi.fn();
 const mockRenderButton = vi.fn();
@@ -19,14 +20,15 @@ vi.mock('@uni-hub/theme/ThemeContext', () => ({
   }),
 }));
 
-function MockScript({ onReady }: { onReady?: () => void }) {
+function MockScript({ onReady, onError }: { onReady?: () => void; onError?: () => void }) {
   useEffect(() => {
     triggerScriptReady = onReady ?? null;
+    triggerScriptError = onError ?? null;
 
     if (autoScriptReady) {
       onReady?.();
     }
-  }, [onReady]);
+  }, [onReady, onError]);
 
   return null;
 }
@@ -43,6 +45,7 @@ describe('GoogleLoginButton component', () => {
     mockTheme = 'light';
     autoScriptReady = true;
     triggerScriptReady = null;
+    triggerScriptError = null;
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = 'test-client-id';
 
     window.google = {
@@ -235,5 +238,20 @@ describe('GoogleLoginButton component', () => {
 
     expect(mockInitialize).toHaveBeenCalledTimes(1);
     expect(mockRenderButton).toHaveBeenCalledTimes(1);
+  });
+
+  it('should call onError when Google script fails to load', () => {
+    delete (window as any).google;
+    autoScriptReady = false;
+    const handleError = vi.fn();
+
+    render(withLanguage(<GoogleLoginButton onError={handleError} onSuccess={vi.fn()} />));
+
+    act(() => {
+      triggerScriptError?.();
+    });
+
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith('Помилка входу через Google');
   });
 });

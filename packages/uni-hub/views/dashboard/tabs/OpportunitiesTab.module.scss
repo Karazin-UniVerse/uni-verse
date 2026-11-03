@@ -47,6 +47,20 @@
 /* ──────────────────────────────────────────────
    SEARCH & FILTERS TOOLBAR
    ────────────────────────────────────────────── */
+.searchAndFilterRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex: 1;
+  min-width: 260px;
+  max-width: 480px;
+
+  @include narrower-than('sm') {
+    max-width: 100%;
+    min-width: 100%;
+  }
+}
+
 .toolbar {
   position: relative;
   z-index: 10;
@@ -98,7 +112,7 @@
 
   @include narrower-than('sm') {
     max-width: 100%;
-    min-width: 100%;
+    min-width: 0;
   }
 }
 
@@ -1009,4 +1023,24 @@
 
 .btnIcon {
   margin-right: var(--space-8);
+}
+
+.moderationTagsRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+}
+
+.moderationTagsLabel {
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+}
+
+.moderationTagsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
 }
