@@ -1,6 +1,15 @@
 import type { TranslationKey } from './uk';
 
 export const en = {
+  'opportunities.tabs.favorites': 'Favorites',
+  'opportunities.favorites.add': 'Add to favorites',
+  'opportunities.favorites.remove': 'Remove from favorites',
+  'opportunities.favorites.empty': 'You have not saved any opportunities yet.',
+  'opportunities.filteredEmpty': 'No opportunities match your filters.',
+  'opportunities.unavailable.temporary': 'Temporarily unavailable',
+  'opportunities.unavailable.permanent': 'Permanently unavailable',
+  'notifications.opportunityUpdated.title': 'Favorite opportunity updated',
+  'notifications.opportunityUpdated.message': 'Opportunity "{opportunityTitle}" has been updated.',
   // Common / Lang
   'lang.uk': 'Ukrainian',
   'lang.en': 'English',

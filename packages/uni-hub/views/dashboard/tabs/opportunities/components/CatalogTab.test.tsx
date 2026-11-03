@@ -274,9 +274,7 @@ describe('CatalogTab component', () => {
   it('should render empty state when filtered opportunities list is empty', () => {
     renderCatalogTab({ search: 'NonExistentTitleOrKeyword' });
 
-    expect(
-      screen.getByText('За вашим запитом не знайдено доступних можливостей'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Можливостей за обраними фільтрами не знайдено.')).toBeInTheDocument();
     expect(screen.queryByText('Frontend Developer')).not.toBeInTheDocument();
   });
 

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Briefcase, ShieldCheck, Users, FileText } from 'lucide-react';
+import { Plus, Briefcase, ShieldCheck, Users, FileText, Star } from 'lucide-react';
 import { Button } from '@una';
 import { ConfirmModal, SegmentedControl, type SegmentedControlItem } from '@ui';
 import { ROLE } from '@core/constants/roles';
@@ -11,6 +11,8 @@ import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { getOpportunityHref } from '../routes';
 import styles from './OpportunitiesTab.module.scss';
+import { useFavorites } from './opportunities/hooks/useFavorites';
+import { hasLoadFailed } from '@uni-hub/queries/load-state';
 import {
   CatalogTab,
   MyOpportunitiesTab,
@@ -35,6 +37,9 @@ export const OpportunitiesTab: React.FC = () => {
   const isModerator = currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR);
   const data = useOpportunitiesData(isModerator);
   const { activeSubTab, setActiveSubTab } = data;
+  const favorites = useFavorites(
+    activeSubTab === OPPORTUNITY_SUB_TAB.Catalog || activeSubTab === OPPORTUNITY_SUB_TAB.Favorites,
+  );
   const create = useCreateOpportunity({
     onCreated: () => setActiveSubTab(OPPORTUNITY_SUB_TAB.MyOpportunities),
   });
@@ -46,6 +51,11 @@ export const OpportunitiesTab: React.FC = () => {
     router.push(getOpportunityHref(opportunity.id));
 
   const segmentItems: SegmentedControlItem<OpportunitySubTab>[] = [
+    {
+      id: OPPORTUNITY_SUB_TAB.Favorites,
+      label: formatMessage('opportunities.tabs.favorites'),
+      icon: <Star size={16} />,
+    },
     {
       id: OPPORTUNITY_SUB_TAB.Catalog,
       label: formatMessage('opportunities.tabs.catalog'),
@@ -101,12 +111,36 @@ export const OpportunitiesTab: React.FC = () => {
 
       {/* SubTab Views */}
       <div role="tabpanel" id={`panel-${activeSubTab}`}>
-        {activeSubTab === OPPORTUNITY_SUB_TAB.Catalog && (
+        {(activeSubTab === OPPORTUNITY_SUB_TAB.Catalog ||
+          activeSubTab === OPPORTUNITY_SUB_TAB.Favorites) && (
           <CatalogTab
-            loading={data.catalog.loading}
-            isError={data.catalog.isError}
-            onRetry={data.catalog.refetch}
-            opportunities={data.catalog.items}
+            loading={
+              activeSubTab === OPPORTUNITY_SUB_TAB.Favorites
+                ? favorites.query.isLoading
+                : data.catalog.loading
+            }
+            isError={
+              activeSubTab === OPPORTUNITY_SUB_TAB.Favorites
+                ? hasLoadFailed(favorites.query)
+                : data.catalog.isError
+            }
+            onRetry={
+              activeSubTab === OPPORTUNITY_SUB_TAB.Favorites
+                ? () => void favorites.query.refetch()
+                : data.catalog.refetch
+            }
+            opportunities={
+              activeSubTab === OPPORTUNITY_SUB_TAB.Favorites
+                ? (favorites.query.data ?? [])
+                : data.catalog.items
+            }
+            favoriteIds={favorites.savedIds}
+            onToggleFavorite={favorites.toggle}
+            favoritesDisabled={
+              favorites.pending || favorites.query.isLoading || hasLoadFailed(favorites.query)
+            }
+            currentUserId={currentUser.userId}
+            favoritesView={activeSubTab === OPPORTUNITY_SUB_TAB.Favorites}
             search={data.search}
             onSearchChange={data.setSearch}
             paymentFilter={data.paymentFilter}

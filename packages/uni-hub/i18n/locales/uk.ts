@@ -1,4 +1,13 @@
 export const uk = {
+  'opportunities.tabs.favorites': 'Обрані',
+  'opportunities.favorites.add': 'Додати до обраного',
+  'opportunities.favorites.remove': 'Видалити з обраного',
+  'opportunities.favorites.empty': 'Ви ще не додали жодної можливості до обраного.',
+  'opportunities.filteredEmpty': 'Можливостей за обраними фільтрами не знайдено.',
+  'opportunities.unavailable.temporary': 'Тимчасово недоступна',
+  'opportunities.unavailable.permanent': 'Більше недоступна',
+  'notifications.opportunityUpdated.title': 'Оновлення обраної можливості',
+  'notifications.opportunityUpdated.message': 'Можливість «{opportunityTitle}» оновлено.',
   // Common / Lang
   'lang.uk': 'Українська',
   'lang.en': 'English',

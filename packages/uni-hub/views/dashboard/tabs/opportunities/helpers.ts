@@ -1,7 +1,7 @@
 import { getErrorMessage } from '@uni-hub/services/api';
 import type { FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import { OPPORTUNITY_ERROR, type OpportunityPaymentType } from '@core/constants/opportunities';
-import type { Opportunity } from '@core/types/opportunities';
+import type { OpportunityListItem } from '@core/types/opportunities';
 
 export interface OpportunityPaymentCounts {
   all: number;
@@ -22,10 +22,10 @@ export function getOpportunityErrorMessage(
   return key ? formatMessage(key) : message;
 }
 
-export function filterOpportunitiesBySearch(
-  opportunities: Opportunity[],
+export function filterOpportunitiesBySearch<T extends OpportunityListItem>(
+  opportunities: T[],
   search: string,
-): Opportunity[] {
+): T[] {
   if (!search.trim()) {
     return opportunities;
   }
@@ -34,6 +34,11 @@ export function filterOpportunitiesBySearch(
 
   return opportunities.filter((opportunity) => {
     const titleMatch = opportunity.title.toLowerCase().includes(query);
+
+    if ('availability' in opportunity) {
+      return titleMatch;
+    }
+
     const descMatch = opportunity.description.toLowerCase().includes(query);
     const ownerMatch =
       Boolean(opportunity.owner?.name?.toLowerCase().includes(query)) ||
@@ -44,7 +49,9 @@ export function filterOpportunitiesBySearch(
   });
 }
 
-export function calculatePaymentCounts(opportunities: Opportunity[]): OpportunityPaymentCounts {
+export function calculatePaymentCounts(
+  opportunities: OpportunityListItem[],
+): OpportunityPaymentCounts {
   let all = 0;
   let paid = 0;
   let unpaid = 0;
@@ -62,10 +69,10 @@ export function calculatePaymentCounts(opportunities: Opportunity[]): Opportunit
   return { all, paid, unpaid };
 }
 
-export function filterOpportunitiesByPayment(
-  opportunities: Opportunity[],
+export function filterOpportunitiesByPayment<T extends OpportunityListItem>(
+  opportunities: T[],
   paymentFilter: OpportunityPaymentType | '',
-): Opportunity[] {
+): T[] {
   if (!paymentFilter) {
     return opportunities;
   }

@@ -166,7 +166,7 @@ describe('OpportunitiesController', () => {
 
     it('delegates to service.getMyApplications', async () => {
       await controller.getMyApplications('user1');
-      expect(service.getMyApplications).toHaveBeenCalledWith('user1');
+      expect(service.getMyApplications).toHaveBeenCalledWith('user1', []);
     });
   });
 

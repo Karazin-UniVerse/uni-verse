@@ -42,6 +42,7 @@ describe('OpportunitiesTab component', () => {
     };
 
     vi.spyOn(opportunitiesApi, 'getOpportunities').mockResolvedValue({ data: [] });
+    vi.spyOn(opportunitiesApi, 'getFavorites').mockResolvedValue({ data: [] });
     vi.spyOn(opportunitiesApi, 'getMyOpportunities').mockResolvedValue({ data: [] });
     vi.spyOn(opportunitiesApi, 'getMyApplications').mockResolvedValue({ data: [] });
   });

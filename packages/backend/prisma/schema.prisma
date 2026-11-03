@@ -35,6 +35,7 @@ model User {
   notifications           Notification[]           @relation("UserNotifications")
   comments                Comment[]
   phone                   UserPhone?
+  favoriteOpportunities   OpportunityFavorite[]
 }
 
 model UserPhone {
@@ -113,6 +114,20 @@ model Opportunity {
 
   applications OpportunityApplication[] @relation("OpportunityToApplication")
   comments     Comment[]
+  favorites    OpportunityFavorite[]
+}
+
+model OpportunityFavorite {
+  userId        String
+  opportunityId String
+  title         String
+  paymentType   PaymentType
+  createdAt     DateTime @default(now())
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@id([userId, opportunityId])
+  @@index([opportunityId])
 }
 
 enum ApplicationStatus {

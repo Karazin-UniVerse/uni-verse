@@ -84,7 +84,7 @@ describe('OpportunitiesService', () => {
               delete: jest.fn(),
             },
             opportunityApplication: {
-              findMany: jest.fn(),
+              findMany: jest.fn().mockResolvedValue([]),
               findUnique: jest.fn(),
               findFirst: jest.fn(),
               create: jest.fn(),
@@ -102,6 +102,10 @@ describe('OpportunitiesService', () => {
             },
             notification: {
               deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+            },
+            opportunityFavorite: {
+              findMany: jest.fn().mockResolvedValue([]),
+              updateMany: jest.fn().mockResolvedValue({ count: 0 }),
             },
             $transaction: jest.fn(async (callback) =>
               typeof callback === 'function' ? callback(prisma) : callback,
@@ -1796,7 +1800,9 @@ describe('OpportunitiesService', () => {
     it('returns applications for user', async () => {
       jest
         .spyOn(prisma.opportunityApplication, 'findMany')
-        .mockResolvedValue([{ id: 'app-1' }] as any);
+        .mockResolvedValue([
+          { id: 'app-1', opportunity: publishedOpportunity },
+        ] as any);
 
       const res = await service.getMyApplications('user-1');
 

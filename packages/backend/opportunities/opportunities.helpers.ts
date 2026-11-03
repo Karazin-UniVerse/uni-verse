@@ -6,7 +6,29 @@ import {
 import { isValidContactInfo } from '@universe/core/utils/contacts';
 import { createHash } from 'node:crypto';
 import type { Opportunity } from '@universe/database';
-import { OPPORTUNITY_PAYMENT_TYPE } from '@universe/core/constants/opportunities';
+import {
+  OPPORTUNITY_PAYMENT_TYPE,
+  OPPORTUNITY_AVAILABILITY,
+  OPPORTUNITY_STATUS,
+} from '@universe/core/constants/opportunities';
+
+import type { UnavailableOpportunity } from '@universe/core/types/opportunities';
+
+export function unavailableOpportunity(
+  opportunity: Pick<Opportunity, 'id' | 'status' | 'paymentType'>,
+  title = '',
+  paymentType?: Opportunity['paymentType'],
+): UnavailableOpportunity {
+  return {
+    id: opportunity.id,
+    title,
+    ...(paymentType ? { paymentType } : {}),
+    availability:
+      opportunity.status === OPPORTUNITY_STATUS.REJECTED
+        ? OPPORTUNITY_AVAILABILITY.PERMANENT
+        : OPPORTUNITY_AVAILABILITY.TEMPORARY,
+  };
+}
 
 export function getOpportunityContentHash(
   opportunity: Pick<

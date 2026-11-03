@@ -2,7 +2,10 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Spinner } from '@una';
+import { Spinner, Button } from '@una';
+import { useRouter } from 'next/navigation';
+import { OPPORTUNITIES_ROUTE } from '@core/constants/routes';
+import { OpportunityUnavailableNotice } from './components/OpportunityUnavailableNotice';
 import { LoadErrorState } from '@uni-hub/components/common/LoadErrorState';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { OpportunityDetailContent } from './OpportunityDetailContent';
@@ -14,14 +17,26 @@ export interface OpportunityDetailPageProps {
 
 export const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportunityId }) => {
   const { formatMessage } = useLanguage();
+  const router = useRouter();
   const detailQuery = useQuery(opportunityDetailQueryOptions(opportunityId));
 
   if (detailQuery.isLoading) {
     return <Spinner tip={formatMessage('dashboard.updating')} />;
   }
 
-  if (!detailQuery.data) {
+  if (!detailQuery.data || detailQuery.isError) {
     return <LoadErrorState onRetry={() => void detailQuery.refetch()} />;
+  }
+
+  if ('availability' in detailQuery.data) {
+    return (
+      <div>
+        <Button variant="secondary" onClick={() => router.push(OPPORTUNITIES_ROUTE)}>
+          {formatMessage('opportunities.detail.back')}
+        </Button>
+        <OpportunityUnavailableNotice availability={detailQuery.data.availability} />
+      </div>
+    );
   }
 
   return <OpportunityDetailContent opportunity={detailQuery.data} />;
