@@ -10,7 +10,7 @@ export const en = {
 
   // Login
   'login.title': 'UNiHub',
-  'login.subtitle': 'Karazin University Student Portal',
+  'login.subtitle': 'Karazin University Space',
   'login.corporateNotice':
     'Sign in is only available with a university corporate account (@student.karazin.ua or @karazin.ua)',
   'login.googleClientMissing':

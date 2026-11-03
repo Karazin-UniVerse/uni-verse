@@ -8,7 +8,7 @@ export const uk = {
 
   // Login
   'login.title': 'UNiHub',
-  'login.subtitle': 'Студентський простір університету',
+  'login.subtitle': 'Університетський простір',
   'login.corporateNotice':
     'Вхід доступний лише за корпоративним акаунтом університету (@student.karazin.ua або @karazin.ua)',
   'login.googleClientMissing':
