@@ -1,7 +1,7 @@
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
 import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import { OPPORTUNITY_STATUS } from '@core/constants/opportunities';
-import { normalizeTag } from '@core/utils/tags';
+import { normalizeTag } from '@core/utils/opportunities';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { asList } from '@uni-hub/utils/arrays';
 import { opportunityKeys } from './queryKeys';

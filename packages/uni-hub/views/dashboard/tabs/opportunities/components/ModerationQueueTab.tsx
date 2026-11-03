@@ -3,7 +3,7 @@
 import React from 'react';
 import { ContactTags, ModerationActions } from '@ui';
 import { Tag } from '@una';
-import { getOpportunityTagNames } from '@core/utils/tags';
+import { getOpportunityTagNames } from '@core/utils/opportunities';
 import { Clock, Calendar, Coins, Briefcase, AlertCircle, Hash } from 'lucide-react';
 import type { Opportunity } from '@core/types/opportunities';
 import type { OpportunityModerateAction } from '@core/constants/opportunities';

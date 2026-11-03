@@ -628,6 +628,19 @@ export const en = {
   'opportunities.applicantsModal.reject': 'Reject',
   'opportunities.applicantsModal.close': 'Close',
 
+  // Filters & Tags
+  'opportunities.catalog.filtersButton': 'Filters',
+  'opportunities.catalog.filtersTitle': 'Filters',
+  'opportunities.catalog.filtersClose': 'Close filters',
+  'opportunities.catalog.filtersApply': 'Apply',
+  'opportunities.catalog.filterPaymentLabel': 'Compensation',
+  'opportunities.catalog.filterRecruiting': 'Currently recruiting',
+  'opportunities.catalog.filterTagsLabel': 'Tags',
+  'opportunities.catalog.filterTagsPlaceholder': 'Start typing a tag...',
+  'opportunities.tags.remove': 'Remove tag',
+  'opportunities.tags.create': 'Create tag "{tag}"',
+  'opportunities.moderation.tagsLabel': 'Tags',
+
   // Platform Notifications
   'notifications.error.markReadFailed': 'Failed to update notification status',
   'notifications.opportunityApplicationStatus.title': 'Opportunity Application Status',
@@ -651,17 +664,4 @@ export const en = {
   'notifications.action.APPROVE': 'approved and published',
   'notifications.action.REJECT': 'rejected',
   'notifications.action.REQUIRE_CHANGES': 'requires changes',
-
-  //Filters
-  'opportunities.catalog.filtersButton': 'Filters',
-  'opportunities.catalog.filtersTitle': 'Filters',
-  'opportunities.catalog.filtersClose': 'Close filters',
-  'opportunities.catalog.filtersApply': 'Apply',
-  'opportunities.catalog.filterPaymentLabel': 'Compensation',
-  'opportunities.catalog.filterRecruiting': 'Currently recruiting',
-  'opportunities.catalog.filterTagsLabel': 'Tags',
-  'opportunities.catalog.filterTagsPlaceholder': 'Start typing a tag...',
-  'opportunities.tags.remove': 'Remove tag',
-  'opportunities.tags.create': 'Create tag "{tag}"',
-  'opportunities.moderation.tagsLabel': 'Tags',
 } as const satisfies Record<TranslationKey, string>;

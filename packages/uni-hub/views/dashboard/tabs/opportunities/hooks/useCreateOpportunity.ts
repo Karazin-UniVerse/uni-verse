@@ -8,13 +8,16 @@ import type {
   Opportunity,
   UpdateOpportunityRequest,
 } from '@core/types/opportunities';
-import { getOpportunityTagNames } from '@core/utils/tags';
 import {
   OPPORTUNITY_LIFECYCLE,
   OPPORTUNITY_PAYMENT_TYPE,
   OPPORTUNITY_STATUS,
 } from '@core/constants/opportunities';
-import { hasOpportunityContentChanged, isRecruitmentPhase } from '@core/utils/opportunities';
+import {
+  getOpportunityTagNames,
+  hasOpportunityContentChanged,
+  isRecruitmentPhase,
+} from '@core/utils/opportunities';
 import { invalidateOpportunities } from '../cache';
 import type { CreateOpportunityFormData } from '../types';
 import { getOpportunityErrorMessage } from '../helpers';

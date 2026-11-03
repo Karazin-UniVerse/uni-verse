@@ -4,7 +4,7 @@ import {
   TAG_SUGGEST_LIMIT,
   TAG_SUGGEST_MIN_QUERY_LENGTH,
 } from '@universe/core/constants/tags';
-import { normalizeTag } from '@universe/core/utils/tags';
+import { normalizeTag } from '@universe/core/utils/opportunities';
 
 @Injectable()
 export class TagsService {

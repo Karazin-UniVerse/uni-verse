@@ -241,4 +241,62 @@ describe('UNA TagInput Component', () => {
     expect(onChange).not.toHaveBeenCalled();
     expect(input).toHaveValue('test');
   });
+
+  it('should exclude suggestions longer than maxTagLength', async () => {
+    const user = userEvent.setup();
+    const loadSuggestions = vi.fn().mockResolvedValue(['react', 'verylongtagnameexceedinglimit']);
+
+    render(
+      <ControlledTagInput loadSuggestions={loadSuggestions} debounceMs={0} maxTagLength={10} />,
+    );
+
+    await user.type(screen.getByRole('combobox'), 'tag');
+
+    expect(
+      screen.queryByRole('option', { name: 'verylongtagnameexceedinglimit' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('should render option buttons with tabIndex -1 so they do not take tab focus', async () => {
+    const user = userEvent.setup();
+    const loadSuggestions = vi.fn().mockResolvedValue(['react']);
+
+    render(<ControlledTagInput loadSuggestions={loadSuggestions} debounceMs={0} />);
+
+    await user.type(screen.getByRole('combobox'), 'rea');
+
+    const option = await screen.findByRole('option', { name: 'react' });
+    const optionButton = within(option).getByRole('button', { name: 'react' });
+
+    expect(optionButton).toHaveAttribute('tabIndex', '-1');
+  });
+
+  it('should exclude suggestions longer than maxTagLength', async () => {
+    const user = userEvent.setup();
+    const loadSuggestions = vi.fn().mockResolvedValue(['react', 'verylongtagnameexceedinglimit']);
+
+    render(
+      <ControlledTagInput loadSuggestions={loadSuggestions} debounceMs={0} maxTagLength={10} />,
+    );
+
+    await user.type(screen.getByRole('combobox'), 'tag');
+
+    expect(
+      screen.queryByRole('option', { name: 'verylongtagnameexceedinglimit' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('should render option buttons with tabIndex -1 so they do not take tab focus', async () => {
+    const user = userEvent.setup();
+    const loadSuggestions = vi.fn().mockResolvedValue(['react']);
+
+    render(<ControlledTagInput loadSuggestions={loadSuggestions} debounceMs={0} />);
+
+    await user.type(screen.getByRole('combobox'), 'rea');
+
+    const option = await screen.findByRole('option', { name: 'react' });
+    const optionButton = within(option).getByRole('button', { name: 'react' });
+
+    expect(optionButton).toHaveAttribute('tabIndex', '-1');
+  });
 });

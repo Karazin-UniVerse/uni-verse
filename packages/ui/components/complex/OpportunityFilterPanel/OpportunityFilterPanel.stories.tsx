@@ -1,12 +1,20 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useArgs } from 'storybook/preview-api';
+import { VariantColumn } from '../../../storybook/VariantMatrix/VariantColumn';
 import { OpportunityFilterPanel } from './OpportunityFilterPanel';
-import type {
-  OpportunityFilterPanelProps,
-  OpportunityFilterValue,
-} from './OpportunityFilterPanel.types';
+import type { OpportunityFilterValue } from './OpportunityFilterPanel.types';
 
 const KNOWN_TAGS = ['react', 'react native', 'typescript', 'research', 'design'];
+
+type MatrixVariant = 'Default' | 'With active filters';
+
+const MATRIX_VALUES: Record<MatrixVariant, OpportunityFilterValue> = {
+  Default: { paymentType: '', isRecruiting: false, tags: [] },
+  'With active filters': {
+    paymentType: 'PAID',
+    isRecruiting: true,
+    tags: ['react', 'typescript'],
+  },
+};
 
 const meta = {
   title: 'Complex/OpportunityFilterPanel',
@@ -41,25 +49,16 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-function RenderFilterPanel(args: OpportunityFilterPanelProps): React.ReactElement {
-  const [{ value }, updateArgs] = useArgs<OpportunityFilterPanelProps>();
-
-  return (
-    <OpportunityFilterPanel
-      {...args}
-      value={value}
-      onApply={(nextValue: OpportunityFilterValue) => updateArgs({ value: nextValue })}
-    />
-  );
-}
-
-export const Default: Story = {
-  render: RenderFilterPanel,
-};
-
-export const WithActiveFilters: Story = {
-  render: RenderFilterPanel,
-  args: {
-    value: { paymentType: 'PAID', isRecruiting: true, tags: ['react', 'typescript'] },
+export const Matrix: Story = {
+  argTypes: {
+    value: { control: false },
   },
+  render: (args) => (
+    <VariantColumn
+      rows={Object.keys(MATRIX_VALUES) as MatrixVariant[]}
+      renderCell={(variant: MatrixVariant) => (
+        <OpportunityFilterPanel {...args} value={MATRIX_VALUES[variant]} />
+      )}
+    />
+  ),
 };

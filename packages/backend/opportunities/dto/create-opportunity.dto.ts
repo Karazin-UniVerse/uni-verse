@@ -17,7 +17,7 @@ import {
   TAG_MAX_LENGTH,
   TAG_MAX_PER_OPPORTUNITY,
 } from '@universe/core/constants/tags';
-import { normalizeTags } from '@universe/core/utils/tags';
+import { normalizeTags } from '@universe/core/utils/opportunities';
 
 export class CreateOpportunityDto implements CreateOpportunityRequest {
   @ApiProperty()

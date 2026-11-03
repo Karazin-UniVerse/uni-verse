@@ -9,7 +9,10 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { getPrismaErrorCode } from '../utils/prisma-error';
-import { getOpportunityContentHash } from './opportunities.helpers';
+import {
+  applyModerationInTransaction,
+  getOpportunityContentHash,
+} from './opportunities.helpers';
 import { PRISMA_ERROR_CODE } from '../constants/prisma';
 import { persistOpportunityApplication } from './opportunity-application.persistence';
 import {
@@ -38,12 +41,12 @@ import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 import {
   hasOpportunityContentChanged,
   isRecruitmentPhase,
+  normalizeTags,
 } from '@universe/core/utils/opportunities';
 import {
   NOTIFICATION_TYPE,
   OPPORTUNITY_NOTIFICATION_KEY,
 } from '@universe/core/constants/notifications';
-import { normalizeTags } from '@universe/core/utils/tags';
 
 const OPPORTUNITY_INCLUDE = {
   owner: { select: { id: true, name: true, email: true } },
@@ -729,39 +732,17 @@ export class OpportunitiesService {
       throw new BadRequestException('Unknown moderation action');
     }
 
-    const isApprove = dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE;
-    const names = opportunityToModerate.proposedTags;
-
     let opp: Opportunity;
 
     try {
-      opp = await this.prisma.$transaction(async (tx) => {
-        if (isApprove && names.length) {
-          await tx.tag.createMany({
-            data: names.map((name) => ({ name })),
-            skipDuplicates: true,
-          });
-        }
-
-        return tx.opportunity.update({
-          where: {
-            id,
-            status: opportunityToModerate.status,
-            updatedAt: opportunityToModerate.updatedAt,
-          },
-          data: {
-            status: newStatus,
-            moderationContentHash:
-              dto.action === OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES
-                ? getOpportunityContentHash(opportunityToModerate)
-                : null,
-            moderationComment: isApprove ? null : dto.comment,
-            ...(isApprove && {
-              tags: { set: names.map((name) => ({ name })) },
-            }),
-          },
-        });
-      });
+      opp = await this.prisma.$transaction((tx) =>
+        applyModerationInTransaction(tx, {
+          id,
+          opportunity: opportunityToModerate,
+          newStatus,
+          dto,
+        }),
+      );
     } catch (error) {
       if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
         throw new ConflictException(

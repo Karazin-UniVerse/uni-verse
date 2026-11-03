@@ -33,6 +33,8 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   const queryClient = useQueryClient();
   const loadSuggestions = (query: string): Promise<string[]> =>
     loadTagSuggestions(queryClient, query);
+  const formatCreateTagLabel = (tag: string): string =>
+    formatMessage('opportunities.tags.create', { tag });
 
   const lifecycleOptions = [
     {
@@ -90,7 +92,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
       tagsLabel={formatMessage('opportunities.catalog.filterTagsLabel')}
       tagsPlaceholder={formatMessage('opportunities.catalog.filterTagsPlaceholder')}
       removeTagLabel={formatMessage('opportunities.tags.remove')}
-      formatCreateTagLabel={(tag) => formatMessage('opportunities.tags.create', { tag })}
+      formatCreateTagLabel={formatCreateTagLabel}
       loadTagSuggestions={loadSuggestions}
       remoderationWarning={
         remoderationWarning

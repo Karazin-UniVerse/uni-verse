@@ -1,7 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { OpportunityStatus, PaymentType } from '@universe/database';
 import type { GetOpportunitiesParams } from '@universe/core/types/opportunities';
-import { normalizeTags } from '@universe/core/utils/tags';
+import { parseBoolean } from '@universe/core/utils/boolean';
+import { normalizeTags } from '@universe/core/utils/opportunities';
 import { Transform } from 'class-transformer';
 import {
   IsArray,
@@ -42,13 +43,7 @@ export class FindOpportunitiesDto implements GetOpportunitiesParams {
   tags?: string[];
 
   @ApiPropertyOptional()
-  @Transform(({ value }) => {
-    if (value === 'true' || value === true) return true;
-
-    if (value === 'false' || value === false) return false;
-
-    return value;
-  })
+  @Transform(({ value }) => parseBoolean(value) ?? value)
   @IsBoolean()
   @IsOptional()
   isRecruiting?: boolean;

@@ -90,7 +90,12 @@ export const TagInput: React.FC<TagInputProps> = ({
     }
 
     const existing: TagOption[] = suggestions
-      .filter((name) => name.includes(normalizedQuery) && !(value ?? EMPTY_TAGS).includes(name))
+      .filter(
+        (name) =>
+          name.length <= maxTagLength &&
+          name.includes(normalizedQuery) &&
+          !(value ?? EMPTY_TAGS).includes(name),
+      )
       .map((name) => ({ name, isNew: false }));
 
     const hasExactMatch =
@@ -239,7 +244,7 @@ export const TagInput: React.FC<TagInputProps> = ({
               onMouseDown={(event) => event.preventDefault()}
               onMouseEnter={() => setActiveIndex(index)}
             >
-              <DropdownOption isSelected={false} onSelect={() => addTag(option.name)}>
+              <DropdownOption isSelected={false} tabIndex={-1} onSelect={() => addTag(option.name)}>
                 {getOptionLabel(option)}
               </DropdownOption>
             </div>

@@ -630,6 +630,19 @@ export const uk = {
   'opportunities.applicantsModal.reject': 'Відхилити',
   'opportunities.applicantsModal.close': 'Закрити',
 
+  // Filters & Tags
+  'opportunities.catalog.filtersButton': 'Фільтри',
+  'opportunities.catalog.filtersTitle': 'Фільтри',
+  'opportunities.catalog.filtersClose': 'Закрити фільтри',
+  'opportunities.catalog.filtersApply': 'Застосувати',
+  'opportunities.catalog.filterPaymentLabel': 'Тип винагороди',
+  'opportunities.catalog.filterRecruiting': 'Зараз іде набір',
+  'opportunities.catalog.filterTagsLabel': 'Теги',
+  'opportunities.catalog.filterTagsPlaceholder': 'Почніть вводити тег...',
+  'opportunities.tags.remove': 'Видалити тег',
+  'opportunities.tags.create': 'Створити тег «{tag}»',
+  'opportunities.moderation.tagsLabel': 'Теги',
+
   // Platform Notifications
   'notifications.error.markReadFailed': 'Не вдалося оновити статус сповіщення',
   'notifications.opportunityApplicationStatus.title': 'Статус заявки на можливість',
@@ -653,19 +666,6 @@ export const uk = {
   'notifications.action.APPROVE': 'схвалено та опубліковано',
   'notifications.action.REJECT': 'відхилено',
   'notifications.action.REQUIRE_CHANGES': 'потребує змін',
-
-  //Filters
-  'opportunities.catalog.filtersButton': 'Фільтри',
-  'opportunities.catalog.filtersTitle': 'Фільтри',
-  'opportunities.catalog.filtersClose': 'Закрити фільтри',
-  'opportunities.catalog.filtersApply': 'Застосувати',
-  'opportunities.catalog.filterPaymentLabel': 'Тип винагороди',
-  'opportunities.catalog.filterRecruiting': 'Зараз іде набір',
-  'opportunities.catalog.filterTagsLabel': 'Теги',
-  'opportunities.catalog.filterTagsPlaceholder': 'Почніть вводити тег...',
-  'opportunities.tags.remove': 'Видалити тег',
-  'opportunities.tags.create': 'Створити тег «{tag}»',
-  'opportunities.moderation.tagsLabel': 'Теги',
 };
 
 export type TranslationKey = keyof typeof uk;

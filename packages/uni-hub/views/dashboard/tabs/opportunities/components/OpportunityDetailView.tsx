@@ -3,9 +3,8 @@
 import React from 'react';
 import { OpportunityDetail } from '@ui';
 import type { Opportunity } from '@core/types/opportunities';
-import { getOpportunityTagNames } from '@core/utils/tags';
 import { OPPORTUNITY_STATUS } from '@core/constants/opportunities';
-import { isRecruitmentPhase } from '@core/utils/opportunities';
+import { getOpportunityTagNames, isRecruitmentPhase } from '@core/utils/opportunities';
 import { useLanguage, type FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import { OpportunityStatusBadge } from './OpportunityStatusBadge';
 

@@ -2,7 +2,7 @@ import React from 'react';
 import clsx from 'clsx';
 import { Briefcase } from 'lucide-react';
 import { Tag } from '@una';
-import { getOpportunityTagNames } from '@core/utils/tags';
+import { getOpportunityTagNames } from '@core/utils/opportunities';
 import type { Opportunity } from '@core/types/opportunities';
 import styles from '../../OpportunityCard.module.scss';
 import type { FormatMessage } from '@uni-hub/i18n/LanguageContext';
