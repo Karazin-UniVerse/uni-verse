@@ -52,6 +52,7 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   paymentTagText,
   statusBadge,
   lifecycleTagText,
+  tags,
   organizerLabel,
   organizerName,
   publishedDateText,
@@ -115,6 +116,11 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
               {lifecycleTagText}
             </Tag>
           )}
+          {tags?.map((tag) => (
+            <Tag key={tag} tone="neutral" size="medium">
+              {tag}
+            </Tag>
+          ))}
         </div>
 
         {(organizerName || publishedDateText) && (

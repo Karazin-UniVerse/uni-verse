@@ -117,7 +117,7 @@ export function useDashboardData(): UseDashboardDataResult {
     isOfflineData: state.isOfflineData,
     lastSyncTime: manualSyncTime ?? state.lastSyncTime ?? getInitialSyncTime(),
     data,
-    studentProfile: profileQuery.data ?? null,
+    studentProfile: isLoggedIn() ? (profileQuery.data ?? null) : null,
     hasCachedData:
       data.courses.length > 0 ||
       data.grades.length > 0 ||
