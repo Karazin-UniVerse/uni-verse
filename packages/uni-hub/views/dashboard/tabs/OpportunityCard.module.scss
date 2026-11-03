@@ -285,3 +285,10 @@
   font-size: var(--font-xs);
   color: var(--text-secondary);
 }
+
+.cardTagsGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+}

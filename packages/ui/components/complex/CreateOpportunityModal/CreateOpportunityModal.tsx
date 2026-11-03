@@ -4,6 +4,7 @@ import { Button } from '../../una/Button';
 import { TextInput } from '../../una/inputs/TextInput';
 import { CheckBox } from '../../una/inputs/CheckBox';
 import { Select } from '../../una/Select';
+import { TagInput } from '../../una/inputs/TagInput';
 import { StatusBanner } from '../StatusBanner';
 import { isRecruitmentPhase } from '@core/utils/opportunities';
 import type { OpportunityLifecycle, OpportunityPaymentType } from '@core/constants/opportunities';
@@ -34,8 +35,13 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   contactHint,
   acceptsApplicationsLabel,
   phaseLabel,
+  tagsLabel,
+  tagsPlaceholder,
+  loadTagSuggestions,
+  formatCreateTagLabel,
   remoderationWarning,
   className,
+  removeTagLabel,
   lifecycleOptions = [],
   submitting = false,
 }) => {
@@ -46,6 +52,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   const paymentTypeId = useId();
   const paymentDetailsId = useId();
   const phaseSelectId = useId();
+  const tagsId = useId();
   const canAcceptApplications = isRecruitmentPhase(formData.lifecycleState);
 
   return (
@@ -177,6 +184,23 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
               />
               <span>{acceptsApplicationsLabel}</span>
             </label>
+          </div>
+        )}
+
+        {tagsLabel && (
+          <div className={styles.fieldGroup}>
+            <label htmlFor={tagsId} className={styles.fieldLabel}>
+              {tagsLabel}
+            </label>
+            <TagInput
+              id={tagsId}
+              value={formData.tags ?? []}
+              onChange={(tags) => setFormData((prev) => ({ ...prev, tags }))}
+              loadSuggestions={loadTagSuggestions}
+              placeholder={tagsPlaceholder}
+              removeLabel={removeTagLabel ?? ''}
+              formatCreateLabel={formatCreateTagLabel}
+            />
           </div>
         )}
 

@@ -8,19 +8,14 @@ export const uk = {
 
   // Login
   'login.title': 'UNiHub',
-  'login.subtitle': 'Увійдіть у свій акаунт Moodle',
-  'login.username': "Ім'я користувача",
-  'login.usernameOrEmail': 'Ім’я користувача або email',
-  'login.password': 'Пароль',
-  'login.submit': 'Увійти',
-  'login.loading': 'Вхід...',
-  'login.success': 'Вхід виконано успішно',
-  'login.invalidCredentials': 'Помилка входу. Перевірте облікові дані.',
-  'login.enterUsernameError': "Будь ласка, введіть ім'я користувача",
-  'login.enterPasswordError': 'Будь ласка, введіть пароль',
+  'login.subtitle': 'Університетський простір',
+  'login.corporateNotice':
+    'Вхід доступний лише за корпоративним акаунтом університету (@student.karazin.ua або @karazin.ua)',
+  'login.googleClientMissing':
+    'Сервіс авторизації Google тимчасово недоступний (клієнтський ID не налаштовано)',
   'login.showPassword': 'Показати пароль',
   'login.hidePassword': 'Сховати пароль',
-  'login.orMoodle': 'або за допомогою логіна Moodle',
+  'login.success': 'Вхід виконано успішно',
   'login.googleError': 'Помилка входу через Google',
   'login.linkMoodleTitle': "Прив'язка акаунта Moodle",
   'login.linkMoodleHint':
@@ -629,6 +624,19 @@ export const uk = {
   'opportunities.applicantsModal.underReview': 'На розгляд',
   'opportunities.applicantsModal.reject': 'Відхилити',
   'opportunities.applicantsModal.close': 'Закрити',
+
+  // Filters & Tags
+  'opportunities.catalog.filtersButton': 'Фільтри',
+  'opportunities.catalog.filtersTitle': 'Фільтри',
+  'opportunities.catalog.filtersClose': 'Закрити фільтри',
+  'opportunities.catalog.filtersApply': 'Застосувати',
+  'opportunities.catalog.filterPaymentLabel': 'Тип винагороди',
+  'opportunities.catalog.filterRecruiting': 'Зараз іде набір',
+  'opportunities.catalog.filterTagsLabel': 'Теги',
+  'opportunities.catalog.filterTagsPlaceholder': 'Почніть вводити тег...',
+  'opportunities.tags.remove': 'Видалити тег',
+  'opportunities.tags.create': 'Створити тег «{tag}»',
+  'opportunities.moderation.tagsLabel': 'Теги',
 
   // Platform Notifications
   'notifications.error.markReadFailed': 'Не вдалося оновити статус сповіщення',

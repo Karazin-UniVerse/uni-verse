@@ -24,4 +24,5 @@ export type DropdownOptionProps = {
   isSelected: boolean;
   onSelect: () => void;
   icon?: ReactNode;
+  tabIndex?: number;
 };

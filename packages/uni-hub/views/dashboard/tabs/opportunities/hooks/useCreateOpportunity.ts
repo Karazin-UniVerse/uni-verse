@@ -13,7 +13,11 @@ import {
   OPPORTUNITY_PAYMENT_TYPE,
   OPPORTUNITY_STATUS,
 } from '@core/constants/opportunities';
-import { hasOpportunityContentChanged, isRecruitmentPhase } from '@core/utils/opportunities';
+import {
+  getOpportunityTagNames,
+  hasOpportunityContentChanged,
+  isRecruitmentPhase,
+} from '@core/utils/opportunities';
 import { invalidateOpportunities } from '../cache';
 import type { CreateOpportunityFormData } from '../types';
 import { getOpportunityErrorMessage } from '../helpers';
@@ -24,7 +28,8 @@ const INITIAL_FORM_DATA: CreateOpportunityFormData = {
   ownerContactInfo: '',
   paymentType: OPPORTUNITY_PAYMENT_TYPE.UNPAID,
   paymentDetails: '',
-  acceptsApplications: true,
+  tags: [],
+  acceptsApplications: false,
   lifecycleState: OPPORTUNITY_LIFECYCLE.START,
 };
 
@@ -90,6 +95,7 @@ export function useCreateOpportunity({
       ownerContactInfo: opportunity.ownerContactInfo || '',
       paymentType: opportunity.paymentType,
       paymentDetails: opportunity.paymentDetails || '',
+      tags: getOpportunityTagNames(opportunity),
       acceptsApplications: canAcceptApplications && opportunity.acceptsApplications !== false,
       lifecycleState: opportunity.lifecycleState,
     });
@@ -120,6 +126,7 @@ export function useCreateOpportunity({
               (formData.paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID &&
                 formData.paymentDetails.trim()) ||
               null,
+            tags: formData.tags,
             acceptsApplications: canAcceptApplications ? formData.acceptsApplications : false,
             lifecycleState: formData.lifecycleState,
           },
@@ -134,6 +141,7 @@ export function useCreateOpportunity({
           ownerContactInfo: formData.ownerContactInfo.trim(),
           paymentType: formData.paymentType,
           paymentDetails: formData.paymentDetails.trim() || undefined,
+          tags: formData.tags,
           acceptsApplications: canAcceptApplications
             ? (formData.acceptsApplications ?? true)
             : false,

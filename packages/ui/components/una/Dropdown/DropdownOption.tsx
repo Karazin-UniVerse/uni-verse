@@ -9,9 +9,11 @@ export const DropdownOption: React.FC<DropdownOptionProps> = ({
   isSelected,
   onSelect,
   icon,
+  tabIndex,
 }) => (
   <button
     type="button"
+    tabIndex={tabIndex}
     aria-pressed={isSelected}
     className={clsx(styles.option, isSelected && styles.active)}
     onClick={onSelect}
