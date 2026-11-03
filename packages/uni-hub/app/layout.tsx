@@ -43,9 +43,11 @@ const THEME_INIT_SCRIPT = `
   var VALID = ['light','dark','cyberpunk','karazinClassic','universeSpace','karazinGold'];
   var LIGHT_THEMES = ['light','karazinClassic'];
   var stored = localStorage.getItem(KEY);
+  var prefersDark = typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches;
   var theme = (stored && VALID.indexOf(stored) !== -1)
     ? stored
-    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'karazinGold' : 'karazinClassic');
+    : (prefersDark ? 'karazinGold' : 'karazinClassic');
   var root = document.documentElement;
   root.dataset.colorScheme = LIGHT_THEMES.indexOf(theme) !== -1 ? 'light' : 'dark';
   if (theme === 'light') {
