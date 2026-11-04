@@ -28,12 +28,14 @@ describe('useDashboardRefresh', () => {
   it('refetches only platform data when enabled is false and shows success toast', async () => {
     const refetchDashboard = vi.fn().mockResolvedValue({ isError: false });
     const refetchPlatform = vi.fn().mockResolvedValue({ isError: false });
+    const refetchProfile = vi.fn().mockResolvedValue({ isError: false });
 
     const { result } = renderHook(() =>
       useDashboardRefresh({
         enabled: false,
         refetchDashboard,
         refetchPlatform,
+        refetchProfile,
       }),
     );
 
@@ -46,6 +48,7 @@ describe('useDashboardRefresh', () => {
 
     expect(refetchPlatform).toHaveBeenCalledTimes(1);
     expect(refetchDashboard).not.toHaveBeenCalled();
+    expect(refetchProfile).not.toHaveBeenCalled();
     expect(mockToastSuccess).toHaveBeenCalledWith('dashboard.syncSuccess');
     expect(result.current.manualSyncTime).toBeGreaterThan(0);
     expect(result.current.isRefreshing).toBe(false);
@@ -57,12 +60,14 @@ describe('useDashboardRefresh', () => {
   it('handles platform error when enabled is false and shows error toast', async () => {
     const refetchDashboard = vi.fn().mockResolvedValue({ isError: false });
     const refetchPlatform = vi.fn().mockResolvedValue({ isError: true });
+    const refetchProfile = vi.fn().mockResolvedValue({ isError: false });
 
     const { result } = renderHook(() =>
       useDashboardRefresh({
         enabled: false,
         refetchDashboard,
         refetchPlatform,
+        refetchProfile,
       }),
     );
 
@@ -72,6 +77,7 @@ describe('useDashboardRefresh', () => {
 
     expect(refetchPlatform).toHaveBeenCalledTimes(1);
     expect(refetchDashboard).not.toHaveBeenCalled();
+    expect(refetchProfile).not.toHaveBeenCalled();
     expect(mockToastError).toHaveBeenCalledWith('dashboard.loadError');
     expect(result.current.manualSyncTime).toBeNull();
     expect(result.current.isRefreshing).toBe(false);
@@ -80,12 +86,14 @@ describe('useDashboardRefresh', () => {
   it('refetches both dashboard and platform when enabled is true and shows success toast', async () => {
     const refetchDashboard = vi.fn().mockResolvedValue({ isError: false });
     const refetchPlatform = vi.fn().mockResolvedValue({ isError: false });
+    const refetchProfile = vi.fn().mockResolvedValue({ isError: false });
 
     const { result } = renderHook(() =>
       useDashboardRefresh({
         enabled: true,
         refetchDashboard,
         refetchPlatform,
+        refetchProfile,
       }),
     );
 
@@ -94,6 +102,7 @@ describe('useDashboardRefresh', () => {
     });
 
     expect(refetchDashboard).toHaveBeenCalledTimes(1);
+    expect(refetchProfile).toHaveBeenCalledTimes(1);
     expect(refetchPlatform).toHaveBeenCalledTimes(1);
     expect(mockToastSuccess).toHaveBeenCalledWith('dashboard.syncSuccess');
     expect(result.current.manualSyncTime).toBeGreaterThan(0);
@@ -103,12 +112,14 @@ describe('useDashboardRefresh', () => {
   it('handles dashboard refetch failure when enabled is true and shows error toast', async () => {
     const refetchDashboard = vi.fn().mockResolvedValue({ isError: true });
     const refetchPlatform = vi.fn().mockResolvedValue({ isError: false });
+    const refetchProfile = vi.fn().mockResolvedValue({ isError: false });
 
     const { result } = renderHook(() =>
       useDashboardRefresh({
         enabled: true,
         refetchDashboard,
         refetchPlatform,
+        refetchProfile,
       }),
     );
 
@@ -117,6 +128,7 @@ describe('useDashboardRefresh', () => {
     });
 
     expect(refetchDashboard).toHaveBeenCalledTimes(1);
+    expect(refetchProfile).toHaveBeenCalledTimes(1);
     expect(refetchPlatform).toHaveBeenCalledTimes(1);
     expect(mockToastError).toHaveBeenCalledWith('dashboard.loadError');
     expect(result.current.manualSyncTime).toBeNull();
@@ -126,6 +138,7 @@ describe('useDashboardRefresh', () => {
   it('handles localStorage exceptions gracefully in private browsing mode', async () => {
     const refetchDashboard = vi.fn().mockResolvedValue({ isError: false });
     const refetchPlatform = vi.fn().mockResolvedValue({ isError: false });
+    const refetchProfile = vi.fn().mockResolvedValue({ isError: false });
 
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('QuotaExceededError');
@@ -136,6 +149,7 @@ describe('useDashboardRefresh', () => {
         enabled: false,
         refetchDashboard,
         refetchPlatform,
+        refetchProfile,
       }),
     );
 
