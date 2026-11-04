@@ -5,6 +5,7 @@ import { normalizeTag } from '@core/utils/tags';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { asList } from '@uni-hub/utils/arrays';
 import { opportunityKeys } from './queryKeys';
+import { CATALOG_POLL_INTERVAL_MS } from './constants';
 
 async function loadCatalog(): Promise<Opportunity[]> {
   const response = await opportunitiesApi.getOpportunities();
@@ -56,6 +57,8 @@ export function loadTagSuggestions(queryClient: QueryClient, query: string): Pro
 export const catalogQueryOptions = queryOptions({
   queryKey: opportunityKeys.catalog(),
   queryFn: loadCatalog,
+  staleTime: 0,
+  refetchInterval: CATALOG_POLL_INTERVAL_MS,
 });
 
 export const myOpportunitiesQueryOptions = queryOptions({
