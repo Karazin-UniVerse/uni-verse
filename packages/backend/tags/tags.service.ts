@@ -1,23 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  TAG_SUGGEST_LIMIT,
-  TAG_SUGGEST_MIN_QUERY_LENGTH,
-} from '@universe/core/constants/tags';
+import { TAG_SUGGEST_LIMIT } from '@universe/core/constants/tags';
 import { normalizeTag } from '@universe/core/utils/tags';
 
 @Injectable()
 export class TagsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async suggest(
-    query: string = '',
-  ): Promise<Array<{ id: string; name: string }>> {
-    const name = normalizeTag(query);
-
-    if (name.length < TAG_SUGGEST_MIN_QUERY_LENGTH) {
-      return [];
-    }
+  async suggest(query: string): Promise<Array<{ id: string; name: string }>> {
+    const name = normalizeTag(query ?? '');
 
     return this.prisma.tag.findMany({
       where: name ? { name: { contains: name } } : {},

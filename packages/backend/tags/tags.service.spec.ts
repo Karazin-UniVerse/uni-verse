@@ -29,7 +29,7 @@ describe('TagsService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should return top tags when query is empty', async () => {
+  it('should return top tags when query is empty or undefined', async () => {
     const mockTags = [
       { id: '1', name: 'react' },
       { id: '2', name: '3d' },
@@ -46,6 +46,12 @@ describe('TagsService', () => {
       take: 10,
       select: { id: true, name: true },
     });
+
+    const resultUndefined = await service.suggest(
+      undefined as unknown as string,
+    );
+
+    expect(resultUndefined).toEqual(mockTags);
   });
 
   it('should suggest tags when query is short or has whitespace', async () => {
