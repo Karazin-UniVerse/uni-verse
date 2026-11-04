@@ -141,6 +141,34 @@ describe('useOpportunitiesData catalog synchronization', () => {
     expect(getCatalog).toHaveBeenCalledTimes(1);
   });
 
+  it('should refresh the catalog when the browser window becomes visible again', async () => {
+    const opportunity = buildOpportunity('published');
+    const getCatalog = vi
+      .spyOn(opportunitiesApi, 'getOpportunities')
+      .mockResolvedValue({ data: [] });
+    const { result } = renderHook(() => useOpportunitiesData(false), {
+      wrapper: createQueryClientWrapper(queryClient),
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+    expect(result.current.catalog.loading).toBe(false);
+
+    act(() => focusManager.setFocused(false));
+    getCatalog.mockResolvedValue({ data: [opportunity] });
+    expect(result.current.catalog.items).toEqual([]);
+    expect(getCatalog).toHaveBeenCalledTimes(1);
+
+    act(() => focusManager.setFocused(true));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+
+    expect(result.current.catalog.items).toEqual([opportunity]);
+    expect(getCatalog).toHaveBeenCalledTimes(2);
+  });
+
   it('should keep cached cards when a polling request fails and recover on the next poll', async () => {
     const opportunity = buildOpportunity('published');
     const getCatalog = vi
