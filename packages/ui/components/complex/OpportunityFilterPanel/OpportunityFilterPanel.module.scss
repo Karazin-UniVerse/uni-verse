@@ -61,4 +61,6 @@
 
 .apply {
   align-self: flex-end;
+  position: relative;
+  z-index: calc(var(--z-dropdown) + 1);
 }

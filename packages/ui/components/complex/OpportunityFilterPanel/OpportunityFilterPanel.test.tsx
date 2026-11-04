@@ -68,6 +68,29 @@ describe('OpportunityFilterPanel', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it.each([
+    { input: '3D', expectedTag: '3d' },
+    { input: '  React   Native  ', expectedTag: 'react native' },
+  ])(
+    'should include the pending tag $input when Apply is clicked without Enter',
+    async ({ input, expectedTag }) => {
+      const user = userEvent.setup();
+      const onApply = vi.fn();
+
+      render(<OpportunityFilterPanel value={emptyValue} onApply={onApply} labels={labels} />);
+
+      await user.click(screen.getByRole('button', { name: 'Open filters' }));
+      await user.type(screen.getByLabelText('Tags'), input);
+      await user.click(screen.getByRole('button', { name: 'Apply' }));
+
+      expect(onApply).toHaveBeenCalledExactlyOnceWith({
+        paymentType: '',
+        isRecruiting: false,
+        tags: [expectedTag],
+      });
+    },
+  );
+
   it('should discard unapplied changes when the panel is reopened', async () => {
     const user = userEvent.setup();
 
