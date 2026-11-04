@@ -237,6 +237,10 @@
     box-shadow:
       0 1px 3px rgb(0 0 0 / 8%),
       0 1px 2px rgb(0 0 0 / 4%);
+
+    &:hover {
+      color: var(--accent-primary);
+    }
   }
 
   @include narrower-than('sm') {
@@ -265,6 +269,11 @@
   color: var(--accent-primary);
   font-weight: var(--font-weight-bold);
   opacity: 1;
+}
+
+.filterChip.activeChip:hover .chipCount,
+.activeChip:hover .chipCount {
+  color: var(--accent-primary);
 }
 
 /* ──────────────────────────────────────────────
