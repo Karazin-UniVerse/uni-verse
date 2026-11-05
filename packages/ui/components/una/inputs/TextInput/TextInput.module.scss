@@ -45,6 +45,21 @@
     transition: background-color 5000s ease-in-out 0s;
   }
 
+  &:not(.is-transparent):disabled:-webkit-autofill,
+  &:not(.is-transparent):disabled:-webkit-autofill:hover,
+  &:not(.is-transparent):disabled:-webkit-autofill:focus,
+  &:not(.is-transparent):disabled:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--neutral-surface) inset;
+    box-shadow: 0 0 0 1000px var(--neutral-surface) inset;
+  }
+
+  &:disabled:-webkit-autofill,
+  &:disabled:-webkit-autofill:hover,
+  &:disabled:-webkit-autofill:focus,
+  &:disabled:-webkit-autofill:active {
+    -webkit-text-fill-color: var(--text-disabled);
+  }
+
   &:disabled {
     background-color: var(--neutral-surface);
     color: var(--text-disabled);
