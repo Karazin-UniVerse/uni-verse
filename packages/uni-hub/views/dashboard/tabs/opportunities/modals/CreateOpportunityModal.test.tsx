@@ -1,5 +1,5 @@
 import { useState, type ReactElement, type SyntheticEvent } from 'react';
-import { afterEach, describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { withLanguage, withQueryClient } from '@uni-hub/utils/test-utils';
@@ -37,6 +37,10 @@ function EditableModal({
 }
 
 describe('CreateOpportunityModal', () => {
+  beforeEach(() => {
+    vi.spyOn(opportunitiesApi, 'getTagSuggestions').mockResolvedValue({ data: [] });
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -157,6 +161,18 @@ describe('CreateOpportunityModal', () => {
     await user.click(submitBtn);
 
     expect(handleSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('should retain a short pending tag when the form is submitted without Enter', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    render(withQueryClient(withLanguage(<EditableModal onSubmit={onSubmit} />)));
+
+    await user.type(screen.getByRole('combobox', { name: 'Теги' }), '3D');
+    await user.click(screen.getByRole('button', { name: 'Створити чернетку' }));
+
+    expect(onSubmit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ tags: ['3d'] }));
   });
 
   it('should load localized tag suggestions and retain the selected tag on submit', async () => {

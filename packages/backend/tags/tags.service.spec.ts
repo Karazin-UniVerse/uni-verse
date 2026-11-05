@@ -29,14 +29,32 @@ describe('TagsService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should return empty list if query is shorter than 3 characters', async () => {
-    const result = await service.suggest('re');
+  it('should return top tags when query is empty or undefined', async () => {
+    const mockTags = [
+      { id: '1', name: 'react' },
+      { id: '2', name: '3d' },
+    ];
 
-    expect(result).toEqual([]);
-    expect(prisma.tag.findMany).not.toHaveBeenCalled();
+    jest.spyOn(prisma.tag, 'findMany').mockResolvedValue(mockTags as any);
+
+    const result = await service.suggest('');
+
+    expect(result).toEqual(mockTags);
+    expect(prisma.tag.findMany).toHaveBeenCalledWith({
+      where: {},
+      orderBy: [{ opportunities: { _count: 'desc' } }, { name: 'asc' }],
+      take: 10,
+      select: { id: true, name: true },
+    });
+
+    const resultUndefined = await service.suggest(
+      undefined as unknown as string,
+    );
+
+    expect(resultUndefined).toEqual(mockTags);
   });
 
-  it('should suggest tags when query is at least 3 characters', async () => {
+  it('should suggest tags when query is short or has whitespace', async () => {
     const mockTags = [
       { id: '1', name: 'react' },
       { id: '2', name: 'reactive' },
