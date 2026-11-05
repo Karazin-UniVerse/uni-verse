@@ -1,6 +1,6 @@
 import { useState, type ReactElement, type SyntheticEvent } from 'react';
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { withLanguage, withQueryClient } from '@uni-hub/utils/test-utils';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
@@ -173,6 +173,26 @@ describe('CreateOpportunityModal', () => {
     await user.click(screen.getByRole('button', { name: 'Створити чернетку' }));
 
     expect(onSubmit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ tags: ['3d'] }));
+  });
+
+  it('should submit a tag whose composition finishes after the create button takes focus', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    render(withQueryClient(withLanguage(<EditableModal onSubmit={onSubmit} />)));
+
+    const input = screen.getByRole('combobox', { name: 'Теги' });
+    const submit = screen.getByRole('button', { name: 'Створити чернетку' });
+
+    await user.click(input);
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: '日本語' } });
+    await user.pointer({ target: submit, keys: '[MouseLeft>]' });
+    expect(onSubmit).not.toHaveBeenCalled();
+    fireEvent.compositionEnd(input, { data: '日本語' });
+    await user.pointer({ target: submit, keys: '[/MouseLeft]' });
+
+    expect(onSubmit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ tags: ['日本語'] }));
   });
 
   it('should load localized tag suggestions and retain the selected tag on submit', async () => {

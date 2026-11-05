@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { OpportunityFilterPanel } from './OpportunityFilterPanel';
 import type {
@@ -102,5 +102,26 @@ describe('OpportunityFilterPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Open filters' }));
 
     expect(screen.getByRole('checkbox', { name: 'Recruitment is underway' })).not.toBeChecked();
+  });
+
+  it('should include a composition completed after submission-related blur in the applied filters', async () => {
+    const user = userEvent.setup();
+    const onApply = vi.fn();
+
+    render(<OpportunityFilterPanel value={emptyValue} onApply={onApply} labels={labels} />);
+    await user.click(screen.getByRole('button', { name: 'Open filters' }));
+
+    const input = screen.getByLabelText('Tags');
+    const apply = screen.getByRole('button', { name: 'Apply' });
+
+    await user.click(input);
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: '日本語' } });
+    await user.pointer({ target: apply, keys: '[MouseLeft>]' });
+    expect(onApply).not.toHaveBeenCalled();
+    fireEvent.compositionEnd(input, { data: '日本語' });
+    await user.pointer({ target: apply, keys: '[/MouseLeft]' });
+
+    expect(onApply).toHaveBeenCalledExactlyOnceWith({ ...emptyValue, tags: ['日本語'] });
   });
 });

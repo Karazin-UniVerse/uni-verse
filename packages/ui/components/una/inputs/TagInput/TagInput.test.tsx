@@ -107,6 +107,92 @@ describe('UNA TagInput Component', () => {
     expect(input).toHaveValue('日本語');
   });
 
+  it('should commit the final composition value after focus has left the field', async () => {
+    const user = userEvent.setup();
+
+    render(<ControlledTagInput />);
+
+    const input = screen.getByRole('combobox');
+
+    await user.click(input);
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: '日本' } });
+    await user.tab();
+    expect(screen.queryByRole('button', { name: 'Remove tag 日本' })).not.toBeInTheDocument();
+    fireEvent.compositionEnd(input, { data: '日本語', target: { value: '日本語' } });
+
+    expect(screen.getByRole('button', { name: 'Remove tag 日本語' })).toBeInTheDocument();
+    expect(input).toHaveValue('');
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('should not commit composition on completion if focus returned to the field', async () => {
+    const user = userEvent.setup();
+
+    render(<ControlledTagInput />);
+
+    const input = screen.getByRole('combobox');
+
+    await user.click(input);
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: '日本語' } });
+    await user.tab();
+    await user.click(input);
+    fireEvent.compositionEnd(input, { data: '日本語' });
+
+    expect(screen.queryByRole('button', { name: 'Remove tag 日本語' })).not.toBeInTheDocument();
+    expect(input).toHaveValue('日本語');
+  });
+
+  it.each([
+    { initialValue: ['日本語'], finalValue: '日本語', maxTagLength: 10, expectedValue: '' },
+    { initialValue: [], finalValue: '日本語', maxTagLength: 2, expectedValue: '日本語' },
+  ])(
+    'should preserve validation on deferred composition commit ($expectedValue)',
+    async ({ initialValue, finalValue, maxTagLength, expectedValue }) => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+
+      render(
+        <TagInput
+          removeLabel="Remove"
+          value={initialValue}
+          onChange={onChange}
+          maxTagLength={maxTagLength}
+        />,
+      );
+
+      const input = screen.getByRole('combobox');
+
+      await user.click(input);
+      fireEvent.compositionStart(input);
+      fireEvent.change(input, { target: { value: finalValue } });
+      await user.tab();
+      fireEvent.compositionEnd(input, { data: finalValue });
+
+      expect(onChange).not.toHaveBeenCalled();
+      expect(input).toHaveValue(expectedValue);
+    },
+  );
+
+  it('should not commit a deferred composition after the field becomes disabled', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const { rerender } = render(<TagInput removeLabel="Remove" value={[]} onChange={onChange} />);
+
+    const input = screen.getByRole('combobox');
+
+    await user.click(input);
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: '日本語' } });
+    await user.tab();
+    rerender(<TagInput removeLabel="Remove" value={[]} onChange={onChange} disabled />);
+    fireEvent.compositionEnd(input, { data: '日本語' });
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(input).toHaveValue('日本語');
+  });
+
   it('should retain an overlong pending tag without adding it on blur', async () => {
     const user = userEvent.setup();
 

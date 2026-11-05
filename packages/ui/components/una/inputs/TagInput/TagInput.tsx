@@ -49,6 +49,7 @@ export const TagInput: React.FC<TagInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingFocusRef = useRef(false);
   const isComposingRef = useRef(false);
+  const pendingBlurRef = useRef(false);
   const lastCompositionEndRef = useRef<number | null>(null);
   const requestIdRef = useRef(0);
   const loadRef = useRef(loadSuggestions);
@@ -154,6 +155,8 @@ export const TagInput: React.FC<TagInputProps> = ({
       return;
     }
 
+    pendingBlurRef.current = isComposingRef.current;
+
     if (!isComposingRef.current) {
       addTag(query);
 
@@ -258,8 +261,23 @@ export const TagInput: React.FC<TagInputProps> = ({
           onCompositionEnd={(event) => {
             isComposingRef.current = false;
             lastCompositionEndRef.current = event.timeStamp;
+
+            if (pendingBlurRef.current && !rootRef.current?.contains(document.activeElement)) {
+              const finalValue = event.currentTarget.value;
+
+              addTag(finalValue);
+
+              if (safeValue.includes(normalizeTag(finalValue))) {
+                setQuery('');
+              }
+            }
+
+            pendingBlurRef.current = false;
           }}
-          onFocus={() => setIsOpen(true)}
+          onFocus={() => {
+            pendingBlurRef.current = false;
+            setIsOpen(true);
+          }}
           placeholder={safeValue.length === 0 ? placeholder : undefined}
           disabled={disabled || isLimitReached}
           autoComplete="off"
