@@ -6,14 +6,17 @@ description: Use when writing new unit tests from scratch or expanding test cove
 # Unit Test Writing Skill (From Scratch)
 
 ## Overview
+
 This skill guides authoring new unit test suites from scratch and expanding test coverage for React components, custom hooks, and utility modules across `@universe/ui` and `@universe/uni-hub` using **Vitest**, **React Testing Library (RTL)**, **@testing-library/user-event**, and **Happy-DOM**.
 
 It supports:
+
 1. **Single File**: Creating a test suite for a specific component (`MyComponent.tsx`) or hook (`useMyHook.ts`).
 2. **File List**: Creating or completing test suites for a specified list of files.
 3. **Directory Path**: Scanning a folder to identify untested components/hooks and generating their test files.
 
 > **Related Skills**:
+>
 > - For migrating legacy `renderToString` / `react-dom/server` tests, use [`rtl-test-migrator`](../rtl-test-migrator/SKILL.md).
 > - When generating or updating 5+ test files at once, pair this skill with [`parallel-test-orchestrator`](../parallel-test-orchestrator/SKILL.md) to run up to 5 subagents in parallel.
 
@@ -21,15 +24,16 @@ It supports:
 
 ## 1. Monorepo Package Conventions & File Placement
 
-| Package | Target Type | Test File Location | Extension | Run Command |
-| :--- | :--- | :--- | :--- | :--- |
-| **`@universe/ui`** | Una Primitive / Input | `packages/ui/components/una/<Category>/<Name>/<Name>.test.tsx` | `.test.tsx` | `pnpm --filter @universe/ui test <Name> --run` |
-| **`@universe/ui`** | Complex Component | `packages/ui/components/complex/<Name>/<Name>.test.tsx` | `.test.tsx` | `pnpm --filter @universe/ui test <Name> --run` |
-| **`@universe/ui`** | UI Custom Hook | `packages/ui/hooks/tests/<useHook>.test.ts` | `.test.ts` | `pnpm --filter @universe/ui test <useHook> --run` |
-| **`@universe/uni-hub`** | Component / View / Tab / Modal | Co-located next to source: `<Name>.test.tsx` | `.test.tsx` | `pnpm --filter @universe/uni-hub test <Name> --run` |
-| **`@universe/uni-hub`** | Custom Hook / Utility / Service | Co-located next to source: `<Name>.test.ts` | `.test.ts` | `pnpm --filter @universe/uni-hub test <Name> --run` |
+| Package                 | Target Type                     | Test File Location                                             | Extension   | Run Command                                         |
+| :---------------------- | :------------------------------ | :------------------------------------------------------------- | :---------- | :-------------------------------------------------- |
+| **`@universe/ui`**      | Una Primitive / Input           | `packages/ui/components/una/<Category>/<Name>/<Name>.test.tsx` | `.test.tsx` | `pnpm --filter @universe/ui test <Name> --run`      |
+| **`@universe/ui`**      | Complex Component               | `packages/ui/components/complex/<Name>/<Name>.test.tsx`        | `.test.tsx` | `pnpm --filter @universe/ui test <Name> --run`      |
+| **`@universe/ui`**      | UI Custom Hook                  | `packages/ui/hooks/tests/<useHook>.test.ts`                    | `.test.ts`  | `pnpm --filter @universe/ui test <useHook> --run`   |
+| **`@universe/uni-hub`** | Component / View / Tab / Modal  | Co-located next to source: `<Name>.test.tsx`                   | `.test.tsx` | `pnpm --filter @universe/uni-hub test <Name> --run` |
+| **`@universe/uni-hub`** | Custom Hook / Utility / Service | Co-located next to source: `<Name>.test.ts`                    | `.test.ts`  | `pnpm --filter @universe/uni-hub test <Name> --run` |
 
 ### File Extension Rule (`.test.tsx` vs `.test.ts`)
+
 - **`.test.tsx`**: Mandatory whenever the file contains JSX (`<Component />`), including `renderHook` tests whose `wrapper` uses JSX.
 - **`.test.ts`**: Use for pure utilities, helpers, services, and `renderHook` tests that either need no wrapper or use functional wrappers like `createLanguageWrapper()`.
 
@@ -38,41 +42,47 @@ It supports:
 ## 2. Step-by-Step Workflow for Writing Tests from Scratch
 
 ### Step 1: Analyze the Source File First
+
 Before writing any test code, read the target file and its types to identify:
+
 1. **Props & Defaults**: Required vs. optional props, default parameter values, and callback signatures.
 2. **Visual & State Branches**: Loading states (`Spinner`, `Skeleton`), empty states (filtered empty vs. celebratory all-done empty), error banners, and null/early-return guards.
 3. **Interactive Contracts**: Buttons, form inputs, modals, dropdowns, tabs, and keyboard shortcuts (`Escape`, `Enter`, `Space`, `Ctrl+Shift+F`).
 4. **Context & External Dependencies**: Whether the unit consumes `useLanguage`, `useFeatures`, `useTheme`, `useToast`, `next/navigation`, or API service clients.
 
 ### Step 2: Configure Context Wrappers & Feature Flags via `@uni-hub/utils/test-utils`
+
 - **`@universe/ui` components** are language-agnostic design system primitives and receive labels via props—render them directly (wrap in `<ToastProvider>` only when testing toast triggers).
 - **`@universe/uni-hub` components and hooks** must be wrapped using the canonical test helpers from `@uni-hub/utils/test-utils`:
 
-| Helper in `@uni-hub/utils/test-utils` | When to Use | Example |
-| :--- | :--- | :--- |
-| `withLanguage(ui)` | Component consumes `useLanguage()` (`formatMessage`, `language`, `setLanguage`) | `render(withLanguage(<RecentGradesFeed {...props} />))` |
-| `withTheme(ui)` | Component consumes `useTheme()` (`theme`, `toggleTheme`) | `render(withTheme(<ThemeAwareWidget />))` |
-| `withToast(ui)` | Component triggers toasts via `useToast()` | `render(withToast(<DeanContactModal {...props} />))` |
-| `withFeatureToggles(ui, flags?)` | Component reads `useFeatures()` or `useFeatureControls()` | `render(withFeatureToggles(withLanguage(<QuickActions {...props} />)))` |
-| `withQueryClient(ui, client?)` | Component consumes TanStack Query (`useQuery`, `useMutation`) | `render(withQueryClient(<MyDataView />, queryClient))` |
-| `withAppProviders(ui, client?)` | Full page/tab needing `QueryClient + Toast + Theme + Language + Features` | `render(withAppProviders(<AssignmentsTab />))` |
-| `createLanguageWrapper()` | Hook test needing `LanguageProvider` | `renderHook(() => useMyHook(), { wrapper: createLanguageWrapper() })` |
-| `createQueryClientWrapper(client?)` | Hook test needing `QueryClientProvider` | `renderHook(() => useMyQuery(), { wrapper: createQueryClientWrapper() })` |
-| `createAppProvidersWrapper(client?)` | Hook or page test needing all application providers | `renderHook(() => useComplexHook(), { wrapper: createAppProvidersWrapper() })` |
-| `setTestFeatureFlags(flags)` | Enabling/disabling typed feature toggles in tests | `setTestFeatureFlags({ isMoodleIntegrationEnabled: true })` |
-| `resetTestFeatureFlags()` | Resetting flags to defaults (called automatically in `vitest.setup.ts` afterEach) | `resetTestFeatureFlags()` |
-| `ALL_FEATURES_ENABLED` | Readonly object with all features enabled | `setTestFeatureFlags(ALL_FEATURES_ENABLED)` |
+| Helper in `@uni-hub/utils/test-utils`                              | When to Use                                                                                                                                            | Example                                                                        |
+| :----------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------- |
+| `withLanguage(ui)`                                                 | Component consumes `useLanguage()` (`formatMessage`, `language`, `setLanguage`)                                                                        | `render(withLanguage(<RecentGradesFeed {...props} />))`                        |
+| `withTheme(ui)`                                                    | Component consumes `useTheme()` (`theme`, `toggleTheme`)                                                                                               | `render(withTheme(<ThemeAwareWidget />))`                                      |
+| `withToast(ui)`                                                    | Component triggers toasts via `useToast()`                                                                                                             | `render(withToast(<DeanContactModal {...props} />))`                           |
+| `withFeatureToggles(ui, flags?)`                                   | Component reads `useFeatures()` or `useFeatureControls()`                                                                                              | `render(withFeatureToggles(withLanguage(<QuickActions {...props} />)))`        |
+| `withQueryClient(ui, client?)`                                     | Component consumes TanStack Query (`useQuery`, `useMutation`)                                                                                          | `render(withQueryClient(<MyDataView />, queryClient))`                         |
+| `withAppProviders(ui, client?)`                                    | Full page/tab needing `QueryClient + Toast + Theme + Language + Features`                                                                              | `render(withAppProviders(<AssignmentsTab />))`                                 |
+| `createLanguageWrapper()`                                          | Hook test needing `LanguageProvider`                                                                                                                   | `renderHook(() => useMyHook(), { wrapper: createLanguageWrapper() })`          |
+| `createQueryClientWrapper(client?)`                                | Hook test needing `QueryClientProvider`                                                                                                                | `renderHook(() => useMyQuery(), { wrapper: createQueryClientWrapper() })`      |
+| `createAppProvidersWrapper(client?)`                               | Hook or page test needing all application providers                                                                                                    | `renderHook(() => useComplexHook(), { wrapper: createAppProvidersWrapper() })` |
+| `setTestFeatureFlags(flags)`                                       | Enabling/disabling typed feature toggles in tests                                                                                                      | `setTestFeatureFlags({ isMoodleIntegrationEnabled: true })`                    |
+| `resetTestFeatureFlags()` from `@uni-hub/utils/test-feature-flags` | Resetting flags to defaults (called automatically in `vitest.setup.ts` afterEach); kept separate so global setup does not import application providers | `resetTestFeatureFlags()`                                                      |
+| `ALL_FEATURES_ENABLED`                                             | Readonly object with all features enabled                                                                                                              | `setTestFeatureFlags(ALL_FEATURES_ENABLED)`                                    |
 
 > [!IMPORTANT]
 > **Strict Rule**: **NEVER** manually hand-nest `<LanguageProvider>`, `<FeatureToggleProvider>`, `<ThemeProvider>`, or `<ToastProvider>` JSX inside individual test suites, and **NEVER** manually mutate `process.env.NEXT_PUBLIC_FEATURE_*`. Always use `withLanguage`, `withFeatureToggles`, or `withAppProviders` and `setTestFeatureFlags(...)`.
 
 ### Step 3: Set Up Clean Mocks — Avoid Redundant Mock Complexity
+
 Mocks must be surgical and minimal. **Redundant mock complexity is strictly forbidden** because:
+
 1. **Test Dishonesty (False Positives)**: Mocking internal UI primitives (`@una`, `@ui`), child modals (`DeanContactModal`), or auth buttons (`GoogleLoginButton`) allows unit tests to pass even when real prop contracts, imports, rendering, or accessibility attributes are broken.
 2. **Broken Isolation & State Leaks**: Module-level mutable state captured inside `vi.mock` closures (e.g. `let capturedOnError = ...`, `let mockStorage = ...`) leaks state across tests and causes order-dependent failures.
 3. **High Maintenance & Poor Readability**: 30-line `vi.mock(..., async (importActual) => { ... })` blocks bloat test files and obscure the actual component contract under test.
 
 #### What to ALWAYS Use Real vs. What to Mock
+
 - **ALWAYS USE REAL**:
   - Design-system primitives from `@una` (`Button`, `Modal`, `Select`, `Tag`, `Chart`, `ToastProvider`).
   - Child components and modals (`DeanContactModal`, `GoogleLoginButton`).
@@ -90,16 +100,19 @@ When a mock factory references a variable, always use `vi.hoisted(() => ({ ... }
 When testing 2+ variants, tones, status badges, boundary scores, or input mappings that share the same Act/Assert structure, **ALWAYS use `it.each`**.
 
 #### Anti-Patterns (Forbidden)
+
 - ❌ **Manual `for...of + unmount()` loops**: Running loops inside a single `it(...)` block and calling `unmount()` hides test failures, stops on the first failing case, and prevents isolated reporting.
 - ❌ **Manual `for (const size of sizes) { rerender(...) }` loops**: Mutating rendered state across multiple loop iterations inside one test.
 - ❌ **Copy-pasted tests**: Duplicating 3–5 identical 10-line test blocks where only an input number or status string changes.
 
 #### Legitimate Exception
+
 - ✅ A `for...of` loop inside a single `it(...)` test is ONLY acceptable when asserting that a **single** `render()` output contains all items from a fixture array (e.g., asserting that `<Select options={defaultOptions} />` rendered all 3 `<option>` elements in the DOM).
 
 #### Bad vs. Good Example
 
 ❌ **Bad: Manual loop with unmount inside single test**
+
 ```tsx
 it('should render correct tone classes', () => {
   const cases = [
@@ -115,6 +128,7 @@ it('should render correct tone classes', () => {
 ```
 
 ✅ **Good: Parameterized with `it.each`**
+
 ```tsx
 it.each<{ tone: StatusBannerTone; expectedClass: string }>([
   { tone: 'success', expectedClass: '_success_abc' },
@@ -126,6 +140,7 @@ it.each<{ tone: StatusBannerTone; expectedClass: string }>([
 ```
 
 ### Step 5: Design High-Value, Zero-Bloat Test Cases
+
 Every test description **MUST** start with `'should ...'`. Cover these core dimensions without redundant bloat:
 
 1. **Default & Conditional Rendering**:
@@ -140,7 +155,7 @@ Every test description **MUST** start with `'should ...'`. Cover these core dime
      2. `screen.getByLabelText(/.../i)`
      3. `screen.getByPlaceholderText(/.../i)`
      4. `screen.getByText(/.../i)`
-     5. `screen.getByTestId(...)` *(last resort when no semantic role or label exists)*
+     5. `screen.getByTestId(...)` _(last resort when no semantic role or label exists)_
    - Assert semantic ARIA attributes (`aria-expanded`, `aria-invalid`, `aria-disabled`, `aria-current`, `aria-live`, `aria-modal`, `aria-label`).
    - Test keyboard interactions (`await user.keyboard('{Escape}')`, `'{Enter}'`, `' '`, `'{Tab}'`).
 4. **Security & Edge Cases**:
@@ -154,6 +169,7 @@ Every test description **MUST** start with `'should ...'`. Cover these core dime
 ## 3. Canonical Test Templates
 
 ### Template A1: UI Primitive Component Test (`@universe/ui`)
+
 > [!IMPORTANT]
 > **Package Isolation**: `@universe/ui` components are language-agnostic primitives. **NEVER** import `@uni-hub/utils/test-utils` or wrap components in `withLanguage` inside `packages/ui`. Render directly and supply localized text through props.
 
@@ -250,7 +266,9 @@ describe('ExampleCard', () => {
   it('should render title and external link with safe rel attributes', () => {
     renderExampleCard();
 
-    expect(screen.getByRole('heading', { name: 'Algorithms & Data Structures' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Algorithms & Data Structures' }),
+    ).toBeInTheDocument();
 
     const link = screen.getByRole('link');
 
@@ -264,11 +282,14 @@ describe('ExampleCard', () => {
     { status: 'active' as const, expectedLabel: 'Активний' },
     { status: 'completed' as const, expectedLabel: 'Завершено' },
     { status: 'archived' as const, expectedLabel: 'В архіві' },
-  ])('should render $status status badge with $expectedLabel label', ({ status, expectedLabel }) => {
-    renderExampleCard({ status });
+  ])(
+    'should render $status status badge with $expectedLabel label',
+    ({ status, expectedLabel }) => {
+      renderExampleCard({ status });
 
-    expect(screen.getByText(expectedLabel)).toBeInTheDocument();
-  });
+      expect(screen.getByText(expectedLabel)).toBeInTheDocument();
+    },
+  );
 
   it('should call onAction when action button is clicked', async () => {
     const user = userEvent.setup();
@@ -371,16 +392,16 @@ describe('useExampleHook', () => {
 
 ## 4. Strict TypeScript, Oxlint & SonarCloud Guardrails
 
-| Rule / Check | Common Pitfall in Tests | Mandatory Fix |
-| :--- | :--- | :--- |
-| **Test Naming** | `it('renders button', ...)` | Every `it(...)` description **MUST** start with `'should ...'`. |
-| **Oxlint `universe/vertical-spacing`** | Missing blank line after `const`/`let` block or before `return` | Leave an empty line after variable declarations, before `return`, and between logic blocks (or run `pnpm exec oxlint --fix <file>`). |
-| **SonarCloud `S6819` / `S6847`** | `<div role="dialog">` in Modal mocks | Always use `<dialog open aria-label={title}>`. |
-| **SonarCloud `S2245`** | `Math.random()` in test data | Never use `Math.random()`. Use deterministic values (`id: 'opp-1'`). |
-| **SonarCloud `S2871`** | `array.sort()` without comparator | Always pass a comparator: `.sort((a, b) => a.localeCompare(b))`. |
-| **TypeScript `TS2345` / `TS2339` on State Setters** | Passing `vi.fn()` to `React.Dispatch<React.SetStateAction<T>>` prop and reading `.mock.calls` | Type as `Mock & React.Dispatch<React.SetStateAction<T>>` (importing `type Mock` from `'vitest'`). |
-| **TypeScript `TS2345` on SVG Elements** | `expect(wrapper).toContainElement(container.querySelector('svg'))` | `querySelector('svg')` returns `Element \| null`. Cast to `HTMLElement`: `toContainElement(icon as HTMLElement)`. |
-| **Strict Domain Unions** | Using invalid literal strings like `status: 'SUBMITTED'` on `Opportunity` | Import and annotate fixtures with the real type (`Opportunity`, `Assignment`, `Grade`, `Course`) so `tsc --noEmit` catches invalid enum literals immediately. |
+| Rule / Check                                        | Common Pitfall in Tests                                                                       | Mandatory Fix                                                                                                                                                 |
+| :-------------------------------------------------- | :-------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Test Naming**                                     | `it('renders button', ...)`                                                                   | Every `it(...)` description **MUST** start with `'should ...'`.                                                                                               |
+| **Oxlint `universe/vertical-spacing`**              | Missing blank line after `const`/`let` block or before `return`                               | Leave an empty line after variable declarations, before `return`, and between logic blocks (or run `pnpm exec oxlint --fix <file>`).                          |
+| **SonarCloud `S6819` / `S6847`**                    | `<div role="dialog">` in Modal mocks                                                          | Always use `<dialog open aria-label={title}>`.                                                                                                                |
+| **SonarCloud `S2245`**                              | `Math.random()` in test data                                                                  | Never use `Math.random()`. Use deterministic values (`id: 'opp-1'`).                                                                                          |
+| **SonarCloud `S2871`**                              | `array.sort()` without comparator                                                             | Always pass a comparator: `.sort((a, b) => a.localeCompare(b))`.                                                                                              |
+| **TypeScript `TS2345` / `TS2339` on State Setters** | Passing `vi.fn()` to `React.Dispatch<React.SetStateAction<T>>` prop and reading `.mock.calls` | Type as `Mock & React.Dispatch<React.SetStateAction<T>>` (importing `type Mock` from `'vitest'`).                                                             |
+| **TypeScript `TS2345` on SVG Elements**             | `expect(wrapper).toContainElement(container.querySelector('svg'))`                            | `querySelector('svg')` returns `Element \| null`. Cast to `HTMLElement`: `toContainElement(icon as HTMLElement)`.                                             |
+| **Strict Domain Unions**                            | Using invalid literal strings like `status: 'SUBMITTED'` on `Opportunity`                     | Import and annotate fixtures with the real type (`Opportunity`, `Assignment`, `Grade`, `Course`) so `tsc --noEmit` catches invalid enum literals immediately. |
 
 ---
 

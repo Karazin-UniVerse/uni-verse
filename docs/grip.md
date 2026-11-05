@@ -158,7 +158,7 @@ or shorten answers rather than bypassing the check.
 - **`Grip executable not found`**: Ensure Python's Scripts directory is on your system `PATH`, or pass `--executable <path-to-grip.exe>` during `pnpm grip:setup`.
 - **`Access denied (403)`**: Only GitHub users with write/admin permissions on `Karazin-UniVerse/uni-verse` are permitted.
 - **`Enrollment has expired`**: Gateway sessions expire after 30 days. Run `pnpm grip:setup` to refresh.
-- **`SSH / Headless environment`**: Grip whiteboard requires an interactive browser session. For headless or automated pushes, set `CI=true` or run `grip skip` if installed.
+- **`SSH / Headless environment`**: Grip whiteboard requires an interactive browser session. Complete the push from an interactive checkout; coding agents must hand it to the human instead of bypassing the check. See the [agent push rules](ai/workflow.md#hooks).
 
 ---
 

@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FEATURE_STORAGE_KEYS } from '@core/constants/features';
-import { withLanguage, withFeatureToggles, resetTestFeatureFlags } from '@uni-hub/utils/test-utils';
+import { withLanguage, withFeatureToggles } from '@uni-hub/utils/test-utils';
+import { resetTestFeatureFlags } from '@uni-hub/utils/test-feature-flags';
 import { DevFeaturePanel } from './DevFeaturePanel';
 
 const renderDevFeaturePanel = () => {

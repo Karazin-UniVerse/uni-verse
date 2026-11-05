@@ -2,7 +2,7 @@ import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
 import { isBrowser } from '@core/utils/browser';
-import { resetTestFeatureFlags } from '@uni-hub/utils/test-utils';
+import { resetTestFeatureFlags } from '@uni-hub/utils/test-feature-flags';
 
 afterEach(() => {
   cleanup();
