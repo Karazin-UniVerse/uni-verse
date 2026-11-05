@@ -43,6 +43,84 @@ describe('UNA TagInput Component', () => {
     expect(input).toHaveValue('');
   });
 
+  it('should commit a pending tag when focus leaves the field', async () => {
+    const user = userEvent.setup();
+
+    render(<ControlledTagInput />);
+
+    const input = screen.getByRole('combobox');
+
+    await user.type(input, '3D');
+    await user.tab();
+
+    expect(screen.getByRole('button', { name: 'Remove tag 3d' })).toBeInTheDocument();
+    expect(input).toHaveValue('');
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('should not duplicate an existing tag when focus leaves the field', async () => {
+    const user = userEvent.setup();
+
+    render(<ControlledTagInput initialValue={['3d']} />);
+
+    await user.type(screen.getByRole('combobox'), ' 3D ');
+    await user.tab();
+
+    expect(screen.getAllByRole('button', { name: 'Remove tag 3d' })).toHaveLength(1);
+    expect(screen.getByRole('combobox')).toHaveValue('');
+  });
+
+  it('should commit the pending tag after focus moves through a chip remove button', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <>
+        <ControlledTagInput initialValue={['react']} />
+        <button type="button">Continue</button>
+      </>,
+    );
+
+    const input = screen.getByRole('combobox');
+
+    await user.type(input, '3D');
+    await user.keyboard('{Shift>}{Tab}{/Shift}');
+    expect(screen.getByRole('button', { name: 'Remove tag react' })).toHaveFocus();
+    expect(input).toHaveValue('3D');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(screen.getByRole('button', { name: 'Remove tag 3d' })).toBeInTheDocument();
+    expect(input).toHaveValue('');
+  });
+
+  it('should leave unfinished composition intact when focus leaves', () => {
+    const onChange = vi.fn();
+
+    render(<TagInput removeLabel="Remove" value={[]} onChange={onChange} />);
+
+    const input = screen.getByRole('combobox');
+
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: '日本語' } });
+    fireEvent.blur(input);
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(input).toHaveValue('日本語');
+  });
+
+  it('should retain an overlong pending tag without adding it on blur', async () => {
+    const user = userEvent.setup();
+
+    render(<ControlledTagInput maxTagLength={3} />);
+
+    const input = screen.getByRole('combobox');
+
+    await user.type(input, 'long');
+    await user.tab();
+
+    expect(screen.queryByRole('button', { name: 'Remove tag long' })).not.toBeInTheDocument();
+    expect(input).toHaveValue('long');
+  });
+
   it('should add a new tag on comma and clear the field', async () => {
     const user = userEvent.setup();
 
@@ -136,15 +214,29 @@ describe('UNA TagInput Component', () => {
     expect(screen.getAllByRole('option', { name: 'react' })).toHaveLength(1);
   });
 
-  it('should not request suggestions below the minimum query length', async () => {
+  it('should not request suggestions below the minimum query length when configured', async () => {
     const user = userEvent.setup();
     const loadSuggestions = vi.fn().mockResolvedValue([]);
 
-    render(<ControlledTagInput loadSuggestions={loadSuggestions} debounceMs={0} />);
+    render(
+      <ControlledTagInput loadSuggestions={loadSuggestions} debounceMs={0} minQueryLength={3} />,
+    );
 
     await user.type(screen.getByRole('combobox'), 're');
 
     expect(loadSuggestions).not.toHaveBeenCalled();
+  });
+
+  it('should show existing tags when opening the field with an empty query', async () => {
+    const user = userEvent.setup();
+    const loadSuggestions = vi.fn().mockResolvedValue(['react', 'design']);
+
+    render(<ControlledTagInput loadSuggestions={loadSuggestions} debounceMs={0} />);
+
+    await user.click(screen.getByRole('combobox'));
+
+    expect(await screen.findByRole('option', { name: 'react' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'design' })).toBeInTheDocument();
   });
 
   it('should suggest existing tags and offer to create a new one', async () => {

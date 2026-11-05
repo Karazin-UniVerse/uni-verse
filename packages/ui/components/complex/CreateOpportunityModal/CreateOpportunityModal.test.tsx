@@ -79,6 +79,35 @@ describe('CreateOpportunityModal Component', () => {
     expect(screen.getByRole('button', { name: defaultProps.submitText })).toBeInTheDocument();
   });
 
+  it('should save a pending short tag without requiring Enter', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn();
+    const Wrapper = (): React.ReactElement => {
+      const [formData, setFormData] = useState<CreateOpportunityFormData>(initialFormData);
+
+      return (
+        <CreateOpportunityModal
+          {...defaultProps}
+          formData={formData}
+          setFormData={setFormData}
+          tagsLabel="Tags"
+          removeTagLabel="Remove tag"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSave(formData.tags);
+          }}
+        />
+      );
+    };
+
+    render(<Wrapper />);
+
+    await user.type(screen.getByLabelText('Tags'), '3D');
+    await user.click(screen.getByRole('button', { name: defaultProps.submitText }));
+
+    expect(onSave).toHaveBeenCalledExactlyOnceWith(['3d']);
+  });
+
   it('should not render when open is false', () => {
     render(<CreateOpportunityModal {...defaultProps} open={false} />);
 
