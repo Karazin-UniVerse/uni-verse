@@ -63,7 +63,7 @@
   .reviseBtn {
     background-color: transparent;
     border-color: var(--error-color);
-    color: var(--error-text);
+    color: var(--error-color);
 
     &:hover:not(:disabled) {
       filter: brightness(0.92);
