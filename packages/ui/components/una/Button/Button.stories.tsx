@@ -5,16 +5,32 @@ import { Button } from './Button';
 import type { ButtonAsButtonProps } from './Button.types';
 
 type MatrixRow =
-  'primary' | 'secondary' | 'transparent' | 'primary disabled' | 'secondary disabled';
+  | 'primary'
+  | 'secondary'
+  | 'transparent'
+  | 'primary success'
+  | 'primary warning'
+  | 'primary danger'
+  | 'secondary success'
+  | 'secondary warning'
+  | 'secondary danger'
+  | 'primary disabled'
+  | 'secondary disabled';
 type MatrixSize = NonNullable<ButtonAsButtonProps['size']>;
 
 const MATRIX_ROWS: Record<
   MatrixRow,
-  Pick<ButtonAsButtonProps, 'variant' | 'isTransparent' | 'disabled'>
+  Pick<ButtonAsButtonProps, 'variant' | 'tone' | 'isTransparent' | 'disabled'>
 > = {
   primary: { variant: 'primary' },
   secondary: { variant: 'secondary' },
   transparent: { isTransparent: true },
+  'primary success': { variant: 'primary', tone: 'success' },
+  'primary warning': { variant: 'primary', tone: 'warning' },
+  'primary danger': { variant: 'primary', tone: 'danger' },
+  'secondary success': { variant: 'secondary', tone: 'success' },
+  'secondary warning': { variant: 'secondary', tone: 'warning' },
+  'secondary danger': { variant: 'secondary', tone: 'danger' },
   'primary disabled': { variant: 'primary', disabled: true },
   'secondary disabled': { variant: 'secondary', disabled: true },
 };
@@ -28,6 +44,10 @@ const meta: Meta<typeof Button> = {
     variant: {
       control: { type: 'select' },
       options: ['primary', 'secondary'],
+    },
+    tone: {
+      control: { type: 'select' },
+      options: ['default', 'success', 'warning', 'danger'],
     },
     size: {
       control: { type: 'select' },

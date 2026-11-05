@@ -215,6 +215,24 @@ $space-64: 64px;
   --warning-light: var(--yellow-400);
   --warning-text: var(--yellow-800);
   --info-color: var(--blue-500);
+
+  /* Button tones. Defaults suit light themes; dark themes and cyberpunk override them below.
+     -bg/-hover/-active/-text fill primary, -accent colors the outline and text of secondary. */
+  --btn-success-bg: var(--green-700);
+  --btn-success-hover: var(--green-800);
+  --btn-success-active: var(--green-900);
+  --btn-success-text: var(--white-10);
+  --btn-success-accent: var(--green-700);
+  --btn-warning-bg: var(--yellow-500);
+  --btn-warning-hover: var(--yellow-600);
+  --btn-warning-active: var(--yellow-700);
+  --btn-warning-text: var(--yellow-900);
+  --btn-warning-accent: var(--yellow-700);
+  --btn-danger-bg: var(--red-600);
+  --btn-danger-hover: var(--red-700);
+  --btn-danger-active: var(--red-800);
+  --btn-danger-text: var(--white-10);
+  --btn-danger-accent: var(--red-600);
 }
 
 /* ==========================================================================
@@ -386,6 +404,10 @@ $space-64: 64px;
 [data-theme='dark'],
 [data-theme='universeSpace'],
 [data-theme='karazinGold'] {
+  --btn-success-accent: var(--green-400);
+  --btn-warning-accent: var(--yellow-400);
+  --btn-danger-accent: var(--red-400);
+
   /* Neutral Colors */
   --neutral-bg: var(--night-950);
   --neutral-surface: var(--night-900);
@@ -495,6 +517,22 @@ $space-64: 64px;
    Cyberpunk Theme
    ----------------------------------------- */
 [data-theme='cyberpunk'] {
+  --btn-success-bg: var(--green-500);
+  --btn-success-hover: var(--green-400);
+  --btn-success-active: var(--green-300);
+  --btn-success-text: var(--cyberpunk-black);
+  --btn-success-accent: var(--green-400);
+  --btn-warning-bg: var(--cyberpunk-yellow);
+  --btn-warning-hover: color-mix(in srgb, var(--cyberpunk-yellow) 85%, var(--white-10));
+  --btn-warning-active: color-mix(in srgb, var(--cyberpunk-yellow) 70%, var(--white-10));
+  --btn-warning-text: var(--cyberpunk-black);
+  --btn-warning-accent: var(--cyberpunk-yellow);
+  --btn-danger-bg: var(--cyberpunk-pink);
+  --btn-danger-hover: color-mix(in srgb, var(--cyberpunk-pink) 85%, var(--white-10));
+  --btn-danger-active: color-mix(in srgb, var(--cyberpunk-pink) 70%, var(--white-10));
+  --btn-danger-text: var(--white-10);
+  --btn-danger-accent: var(--cyberpunk-pink);
+
   /* Cyberpunk Neon Palette */
   --cyberpunk-black: #0b0b0e;
   --cyberpunk-dark: #121217;

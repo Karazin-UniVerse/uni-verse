@@ -20,40 +20,6 @@
   }
 }
 
-.approveBtn {
-  background: var(--green-700);
-  border-color: var(--green-700);
-  color: var(--white-10);
-  font-weight: var(--font-weight-bold);
-
-  &:hover:not(:disabled) {
-    background: var(--green-800);
-    border-color: var(--green-800);
-  }
-}
-
-.reviseBtn {
-  color: var(--warning-color);
-  border-color: color-mix(in srgb, var(--warning-color) 45%, var(--card-border));
-  background: color-mix(in srgb, var(--warning-color) 8%, var(--bg-surface));
-
-  &:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--warning-color) 16%, var(--bg-surface));
-    border-color: var(--warning-color);
-  }
-}
-
-.rejectBtn {
-  color: var(--error-color);
-  border-color: color-mix(in srgb, var(--error-color) 40%, var(--card-border));
-  background: color-mix(in srgb, var(--error-color) 6%, var(--bg-surface));
-
-  &:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--error-color) 14%, var(--bg-surface));
-    border-color: var(--error-color);
-  }
-}
-
 .btnIcon {
   flex-shrink: 0;
   margin-right: var(--space-8);

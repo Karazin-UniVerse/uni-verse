@@ -14,30 +14,15 @@ export const ModerationActions: React.FC<ModerationActionsProps> = ({
 }) => {
   return (
     <div className={styles.moderationActions}>
-      <Button
-        variant="primary"
-        className={styles.approveBtn}
-        disabled={disabled}
-        onClick={onApprove}
-      >
+      <Button variant="primary" tone="success" disabled={disabled} onClick={onApprove}>
         <CheckCircle2 size={14} aria-hidden="true" className={styles.btnIcon} />
         {approveText}
       </Button>
-      <Button
-        variant="secondary"
-        className={styles.reviseBtn}
-        disabled={disabled}
-        onClick={onOpenRejectModal}
-      >
+      <Button variant="secondary" tone="warning" disabled={disabled} onClick={onOpenRejectModal}>
         <AlertCircle size={14} aria-hidden="true" className={styles.btnIcon} />
         {reviseText}
       </Button>
-      <Button
-        variant="secondary"
-        className={styles.rejectBtn}
-        disabled={disabled}
-        onClick={onOpenRejectModal}
-      >
+      <Button variant="secondary" tone="danger" disabled={disabled} onClick={onOpenRejectModal}>
         <XCircle size={14} aria-hidden="true" className={styles.btnIcon} />
         {rejectText}
       </Button>

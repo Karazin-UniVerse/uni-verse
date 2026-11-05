@@ -64,7 +64,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <Button
             type="button"
             variant="primary"
-            className={clsx(variant === 'danger' && styles.dangerBtn)}
+            tone={variant === 'danger' ? 'danger' : 'default'}
             onClick={onConfirm}
             disabled={loading}
           >
