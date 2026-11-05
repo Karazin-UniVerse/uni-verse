@@ -61,9 +61,9 @@
   flex-wrap: wrap;
 
   .reviseBtn {
-    background-color: transparent;
-    border-color: var(--error-color);
-    color: var(--error-color);
+    background-color: var(--warning-color);
+    border-color: var(--warning-color);
+    color: var(--warning-text);
 
     &:hover:not(:disabled) {
       filter: brightness(0.92);
@@ -84,9 +84,9 @@
     color: var(--error-color);
 
     &:hover:not(:disabled) {
-      background-color: var(--error-color);
+      background-color: color-mix(in srgb, var(--error-color) 10%, transparent);
       border-color: var(--error-color);
-      color: var(--text-on-error);
+      color: var(--error-color);
     }
 
     &:active:not(:disabled) {
