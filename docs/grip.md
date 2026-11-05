@@ -238,7 +238,10 @@ eligible keys on `gemini-3.5-flash-lite`, then eligible keys on
 `gemini-3.1-flash-lite`, stopping at the first success. Each key/model pair is
 attempted at most once per logical completion; the earlier model is never revisited.
 With three healthy configured keys, up to six upstream calls are possible. A
-single-key pool can try both models after a transient failure. Selection within
+single-key pool can try both models after a retryable transport or
+`500`/`502`/`503`/`504` failure, provided the shared deadline has not expired.
+HTTP `429` instead cools that key across both models: no fallback is attempted,
+and later requests fail until the cooldown expires. Selection within
 each model still balances load and rotates ties, rather than promising fixed key
 order. The local Grip request still names the primary model; callers cannot choose
 arbitrary upstream models.
