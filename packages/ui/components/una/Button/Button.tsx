@@ -11,7 +11,9 @@ import css from './Button.module.scss';
  * tokens and forwards all native element attributes.
  *
  * Props:
- * @param {'primary'|'secondary'} variant - Visual variant determining color/style.
+ * @param {'primary'|'secondary'} variant - Visual emphasis: filled (primary) or neutral outline (secondary).
+ * @param {'default'|'success'|'warning'|'danger'} [tone='default'] - Meaning of the action. A non-default tone
+ * recolors either variant: filled with the tone color for primary, outlined in the tone color for secondary.
  * @param children
  * @param className
  * @param {'small'|'medium'|'large'} [size='medium'] - Size token used for padding and font.
@@ -24,6 +26,10 @@ import css from './Button.module.scss';
  * // Regular button
  * <Button variant="primary" size="medium" onClick={() => alert('clicked')}>Save</Button>
  *
+ * // Decision actions
+ * <Button tone="success" onClick={onApprove}>Approve</Button>
+ * <Button variant="secondary" tone="danger" onClick={onReject}>Reject</Button>
+ *
  * // Link-style button
  * <Button isLink href="/docs" variant="secondary">Docs</Button>
  * ```
@@ -32,6 +38,7 @@ export function Button({
   children,
   className,
   variant = 'primary',
+  tone = 'default',
   size = 'medium',
   isLink = false,
   isTransparent = false,
@@ -40,6 +47,7 @@ export function Button({
   const classes = clsx(
     css.btn,
     variant && css[variant],
+    tone !== 'default' && [css.toned, css[tone]],
     size && css[size],
     className,
     isLink && css['is-link'],
