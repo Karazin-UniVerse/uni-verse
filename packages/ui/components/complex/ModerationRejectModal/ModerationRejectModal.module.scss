@@ -61,9 +61,9 @@
   flex-wrap: wrap;
 
   .reviseBtn {
-    background-color: var(--warning-color);
-    border-color: var(--warning-color);
-    color: var(--text-on-warning);
+    background-color: transparent;
+    border-color: var(--error-color);
+    color: var(--error-text);
 
     &:hover:not(:disabled) {
       filter: brightness(0.92);
