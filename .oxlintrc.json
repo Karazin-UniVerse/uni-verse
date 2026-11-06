@@ -88,9 +88,11 @@
     {
       "files": [
         "packages/backend/moodle/moodle-client/moodle.client.service.ts",
-        "packages/backend/grip/github-client.service.ts",
-        "packages/backend/grip/gemini-client.service.ts",
+        "packages/grip/backend/github-client.service.ts",
+        "packages/grip/backend/gemini-client.service.ts",
         "packages/uni-hub/services/api.request.ts",
+        "packages/grip/frontend/services/api.request.ts",
+        "packages/grip/cli/**",
         ".github/scripts/**",
         "scripts/**"
       ],

@@ -1,13 +1,5 @@
-# Grip configuration for UniVerse repository
-# Docs: https://guilyx.github.io/grip/configuration/
-
-hook_mode = "whiteboard"
-passing_score = 70
-fail_open = true
-require_tty = true
-remember_passes_hours = 24.0
-# Leave room for instructions, five answers and Python's non-ASCII JSON escaping.
-max_diff_bytes = 30000
+# Hosted Grip exclusions. Lifecycle, score and budgets are owned by
+# packages/core/constants/grip-hosted.ts, not native Grip configuration.
 
 exclude = [
   "*.lock",

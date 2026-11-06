@@ -1,0 +1,10 @@
+{
+  "extends": "../../backend/tsconfig.build.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist",
+    "incremental": false,
+    "types": ["node"]
+  },
+  "exclude": ["dist", "node_modules", "**/*spec.ts"]
+}

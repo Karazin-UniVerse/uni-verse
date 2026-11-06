@@ -345,6 +345,10 @@ async function executeRequest<T>(
 }
 
 export abstract class ApiClient {
+  protected fetchResponse(url: string, options: RequestInit): Promise<Response> {
+    return fetch(url, options);
+  }
+
   protected request<T>(
     endpoint: string,
     requestOptions: RequestOptions = {},

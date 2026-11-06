@@ -9,6 +9,12 @@ never deployed. The previous Northflank deployment triggers are removed.
 Deployment is disabled until the repository variable `GCP_DEPLOY_ENABLED` is
 `true`. This lets the workflow merge before cloud authentication is configured.
 
+Hosted Grip has separate disabled-by-default activation. Its additive tables,
+server-only frontend/backend settings, scheduler OIDC, backup retention evidence
+and restore-before-traffic cleanup are documented in [Grip activation and retention runbook](../packages/grip/README.md#activation-gate).
+Do not set its retention confirmation flag from CI or treat a deploy as evidence
+that scheduler/backup/restore requirements have been met.
+
 ## Prerequisites
 
 - The two Cloud Run services and Docker Artifact Registry repository already

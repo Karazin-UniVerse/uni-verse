@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "oxlint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.vitest.json",
     "test": "vitest run --config vitest.config.mts"
   },
   "dependencies": {
@@ -41,6 +41,7 @@
     "eslint": "^10.13.0",
     "eslint-config-next": "16.4.3",
     "happy-dom": "^21.0.4",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
   }
 }
