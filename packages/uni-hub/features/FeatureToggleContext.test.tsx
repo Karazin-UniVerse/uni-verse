@@ -3,8 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { FEATURE_STORAGE_KEYS } from '@core/constants/features';
 import { createOverrideStore } from '@core/utils/features';
 import { FeatureToggleProvider, useFeatures, useFeatureControls, DevFeaturePanel } from './index';
-import { setTestFeatureFlags } from '@uni-hub/utils/test-utils';
-import { resetTestFeatureFlags } from '@uni-hub/utils/test-feature-flags';
+import { setTestFeatureFlags, resetTestFeatureFlags } from '@uni-hub/utils/test-utils';
 
 describe('FeatureToggleContext and Components', () => {
   beforeEach(() => {

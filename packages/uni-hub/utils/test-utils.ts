@@ -1,6 +1,12 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { FEATURE_ENV_KEYS, type FeatureFlagKey, type FeatureFlags } from '@core/constants/features';
+import {
+  FEATURE_ENV_KEYS,
+  FEATURE_STORAGE_KEYS,
+  type FeatureFlagKey,
+  type FeatureFlags,
+} from '@core/constants/features';
+import { isBrowser } from '@core/utils/browser';
 import { ToastProvider } from '@una';
 import { FeatureToggleProvider } from '@uni-hub/features';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
@@ -22,6 +28,16 @@ export function setTestFeatureFlags(flags: Partial<FeatureFlags>): void {
     }
 
     process.env[envKey] = String(value);
+  }
+}
+
+export function resetTestFeatureFlags(): void {
+  for (const envKey of Object.values(FEATURE_ENV_KEYS)) {
+    delete process.env[envKey];
+  }
+
+  if (isBrowser()) {
+    window.localStorage?.removeItem(FEATURE_STORAGE_KEYS.OVERRIDES);
   }
 }
 

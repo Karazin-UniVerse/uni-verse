@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { FEATURE_ENV_KEYS, FEATURE_STORAGE_KEYS } from '@core/constants/features';
-import { setTestFeatureFlags } from './test-utils';
-import { resetTestFeatureFlags } from './test-feature-flags';
+import { setTestFeatureFlags, resetTestFeatureFlags } from './test-utils';
 
 describe('resetTestFeatureFlags', () => {
   it('should reset feature values and persisted overrides without clearing unrelated settings', () => {
