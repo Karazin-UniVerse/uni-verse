@@ -1,0 +1,75 @@
+.board {
+  color: var(--text-primary);
+}
+
+.summary {
+  max-width: 72ch;
+  margin-bottom: var(--space-24);
+  font-size: var(--font-lg);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--space-32);
+  align-items: start;
+}
+
+.structure {
+  padding: var(--space-24);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-large);
+  background: var(--bg-surface);
+}
+
+.nodes,
+.edges {
+  display: grid;
+  gap: var(--space-16);
+  padding: 0;
+  list-style: none;
+}
+
+.node {
+  padding: var(--space-16);
+  border-left: var(--space-4) solid var(--accent-primary);
+  background: var(--bg-color);
+  overflow-wrap: anywhere;
+}
+
+.questions {
+  display: grid;
+  gap: var(--space-24);
+}
+
+.question {
+  display: grid;
+  gap: var(--space-8);
+
+  p {
+    margin: 0;
+    font-weight: var(--font-weight-medium);
+  }
+
+  label {
+    color: var(--text-secondary);
+    font-size: var(--font-sm);
+  }
+
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: var(--space-12);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-medium);
+    background: var(--bg-color);
+    color: var(--text-primary);
+    font: inherit;
+    resize: vertical;
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--accent-primary);
+      outline-offset: var(--focus-ring-offset);
+    }
+  }
+}

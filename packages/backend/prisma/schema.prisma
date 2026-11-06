@@ -214,3 +214,89 @@ model GripLease {
 
   @@index([expiresAt])
 }
+
+model GripHostedCheck {
+  id                    String   @id @default(uuid())
+  publicId              String   @unique
+  ownerGithubId         String
+  bindingDigest         String
+  policyVersion         String
+  state                 String   @default("CREATED")
+  createdAt             DateTime @default(now())
+  expiresAt             DateTime
+  passValidUntil        DateTime
+  reason                String?
+  score                 Int?
+  operationId           String?
+  operationDeadline     DateTime?
+  generationRequestId   String?
+  generationRequestHash String?
+  submissionRequestId   String?
+  submissionRequestHash String?
+  boardRevision         String?
+  updatedAt             DateTime @updatedAt
+  content               GripHostedContent?
+
+  @@index([ownerGithubId, bindingDigest, state])
+  @@index([expiresAt])
+  @@index([operationDeadline])
+  @@index([passValidUntil])
+}
+
+model GripHostedContent {
+  checkId      String          @id
+  keyVersion   String
+  iv           Bytes
+  tag          Bytes
+  ciphertext   Bytes
+  purgeAt      DateTime
+  check        GripHostedCheck @relation(fields: [checkId], references: [id], onDelete: Cascade)
+
+  @@index([purgeAt])
+}
+
+model GripHostedIntent {
+  id            String   @id @default(uuid())
+  ownerGithubId String
+  requestId     String
+  requestHash   String
+  checkPublicId String
+  replayUntil   DateTime
+
+  @@unique([ownerGithubId, requestId])
+  @@index([replayUntil])
+}
+
+model GripBrowserSession {
+  id                String   @id @default(uuid())
+  tokenHash         String   @unique
+  githubId          String
+  githubLogin       String
+  csrfHash          String
+  secretKeyVersion  String
+  secretIv          Bytes
+  secretTag         Bytes
+  secretCiphertext  Bytes
+  createdAt         DateTime @default(now())
+  expiresAt         DateTime
+  revokedAt         DateTime?
+
+  @@index([expiresAt])
+  @@index([githubId])
+}
+
+model GripOAuthTransaction {
+  id                String   @id @default(uuid())
+  stateHash         String   @unique
+  browserHash       String
+  returnCheckId     String
+  secretKeyVersion  String
+  secretIv          Bytes
+  secretTag         Bytes
+  secretCiphertext  Bytes
+  createdAt         DateTime @default(now())
+  expiresAt         DateTime
+  consumedAt        DateTime?
+
+  @@index([expiresAt])
+}

@@ -1,0 +1,42 @@
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--space-32) var(--space-24);
+  color: var(--text-primary);
+}
+
+.manifest {
+  margin: var(--space-24) 0;
+  overflow-wrap: anywhere;
+
+  ul {
+    padding-left: var(--space-24);
+  }
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+
+.privacy {
+  max-width: 80ch;
+  margin: var(--space-16) 0 var(--space-32);
+  color: var(--text-secondary);
+}
+
+.diff {
+  margin-top: var(--space-32);
+  padding: var(--space-16);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-medium);
+
+  pre {
+    overflow-x: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}

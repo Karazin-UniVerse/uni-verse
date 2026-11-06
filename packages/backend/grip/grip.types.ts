@@ -1,5 +1,6 @@
 import type { GripCompletionRequest } from '@universe/core/types/grip';
 import type { HttpException } from '@nestjs/common';
+import type { GripModelFailureReason } from '@universe/core/constants/grip-hosted';
 import type { GeminiKeyPool } from './gemini-key-pool';
 
 export interface GripConfig {
@@ -47,6 +48,14 @@ export interface ExchangeSessionParams {
   clientIp: string;
 }
 
+export interface GithubAuthorizationCodeParams {
+  code: string;
+  redirectUri: string;
+  codeVerifier: string;
+  clientId: string;
+  clientSecret: string;
+}
+
 export interface GeminiKeyReservation {
   slot: number;
   apiKey: string;
@@ -63,6 +72,8 @@ export interface GeminiKeyState {
   apiKey: string;
   active: number;
   availableAfter: number;
+  quotaAvailableAfter: number;
+  credentialAvailableAfter: number;
   modelAvailableAfter: Map<string, number>;
 }
 
@@ -86,6 +97,7 @@ export interface GeminiAttemptContext {
   url: string;
   payload: string;
   signal: AbortSignal;
+  blockingReason?: GripModelFailureReason;
   callerSignal?: AbortSignal;
 }
 

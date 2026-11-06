@@ -93,6 +93,33 @@ describe('GeminiClientService key balancing and failover', () => {
     );
   }
 
+  it.each(['attempt', 'backoff'])(
+    'preserves observed quota when the deadline expires during %s',
+    async (phase) => {
+      fetchSpy.mockResolvedValueOnce(new Response('', { status: 429 }));
+      fetchSpy.mockImplementation(
+        (_url, options) =>
+          new Promise((_resolve, reject) => {
+            options?.signal?.addEventListener(
+              'abort',
+              () => reject(options.signal?.reason),
+              { once: true },
+            );
+          }),
+      );
+      const caller = new AbortController();
+      const result = service.complete(request, caller.signal);
+      const assertion = expect(result).rejects.toMatchObject({
+        reason: 'PROVIDER_QUOTA',
+      });
+
+      await jest.advanceTimersByTimeAsync(phase === 'attempt' ? 250 : 1);
+      caller.abort(new DOMException('Deadline exceeded', 'TimeoutError'));
+      await jest.advanceTimersByTimeAsync(0);
+      await assertion;
+    },
+  );
+
   it('rotates healthy calls without leaking internal metadata', async () => {
     fetchSpy.mockImplementation(async () => success());
 
@@ -453,6 +480,58 @@ describe('GeminiClientService key balancing and failover', () => {
     expect(JSON.parse(String(fetchSpy.mock.calls[3][1]?.body)).model).toBe(
       'gemini-3.1-flash-lite',
     );
+  });
+
+  it('should preserve quota denial on a later request while its only key remains cooled down', async () => {
+    service = new GeminiClientService({
+      ...config,
+      geminiApiKeys: ['first-secret'],
+    });
+    fetchSpy.mockResolvedValueOnce(new Response('', { status: 429 }));
+
+    await expect(service.complete(request)).rejects.toMatchObject({
+      status: 429,
+      reason: 'PROVIDER_QUOTA',
+    });
+    await expect(service.complete(request)).rejects.toMatchObject({
+      status: 429,
+      reason: 'PROVIDER_QUOTA',
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not label credential cooldown exhaustion as a technical outage', async () => {
+    service = new GeminiClientService({
+      ...config,
+      geminiApiKeys: ['first-secret'],
+    });
+    fetchSpy.mockResolvedValueOnce(new Response('', { status: 403 }));
+
+    await expect(service.complete(request)).rejects.toMatchObject({
+      reason: 'CREDENTIAL_UNAVAILABLE',
+    });
+    await expect(service.complete(request)).rejects.toMatchObject({
+      reason: 'CREDENTIAL_UNAVAILABLE',
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should keep mixed quota/transient exhaustion non-technical within the original request', async () => {
+    service = new GeminiClientService({
+      ...config,
+      geminiApiKeys: ['first-secret', 'second-secret'],
+    });
+    fetchSpy
+      .mockResolvedValueOnce(new Response('', { status: 429 }))
+      .mockImplementation(async () => new Response('', { status: 503 }));
+    const rejected = expect(service.complete(request)).rejects.toMatchObject({
+      status: 429,
+      reason: 'PROVIDER_QUOTA',
+    });
+
+    await jest.advanceTimersByTimeAsync(500);
+    await rejected;
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
   });
 
   it('cancels retry backoff without dispatching a fallback', async () => {

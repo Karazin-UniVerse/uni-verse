@@ -62,7 +62,54 @@ describe('GithubClientService', () => {
     });
   });
 
+  it('should exchange a browser code with the exact redirect and PKCE verifier without following redirects', async () => {
+    const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValueOnce(
+      Response.json({
+        access_token: 'github-access',
+        token_type: 'bearer',
+        scope: '',
+      }),
+    );
+
+    await expect(
+      service.exchangeAuthorizationCode({
+        code: 'code',
+        redirectUri: 'https://portal.example/callback',
+        codeVerifier: 'verifier',
+        clientId: 'client-id',
+        clientSecret: 'client-secret',
+      }),
+    ).resolves.toBe('github-access');
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://github.com/login/oauth/access_token',
+      expect.objectContaining({
+        method: 'POST',
+        redirect: 'error',
+        body: expect.any(String),
+      }),
+    );
+    expect(JSON.parse(String(fetchSpy.mock.calls[0][1]?.body))).toEqual({
+      client_id: 'client-id',
+      client_secret: 'client-secret',
+      code: 'code',
+      redirect_uri: 'https://portal.example/callback',
+      code_verifier: 'verifier',
+    });
+  });
+
   describe('assertWriter', () => {
+    it.each([401, 403, 429])(
+      'fails closed on GitHub credential or quota HTTP %s',
+      async (status) => {
+        jest
+          .spyOn(global, 'fetch')
+          .mockResolvedValueOnce(new Response('', { status }));
+
+        await expect(
+          service.assertWriter({ githubId: '1234567', login: 'testuser' }),
+        ).rejects.toThrow(ForbiddenException);
+      },
+    );
     it('accepts write, admin and maintain permissions', async () => {
       jest.spyOn(global, 'fetch').mockResolvedValueOnce({
         ok: true,

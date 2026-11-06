@@ -210,6 +210,8 @@ function parseSettings(raw, legacyRoot) {
 
   try {
     validateGatewayUrl(parsed.gatewayOrigin);
+
+    if (parsed.frontendOrigin !== undefined) validateGatewayUrl(parsed.frontendOrigin);
   } catch {
     throw new Error('Grip enrollment gateway URL is invalid. Run pnpm grip:setup to re-enroll');
   }
@@ -238,6 +240,7 @@ function parseSettings(raw, legacyRoot) {
 export async function migrateSettings({
   gatewayOrigin,
   clientId,
+  frontendOrigin,
   configDir,
   repoRoot = process.cwd(),
 }) {
@@ -276,9 +279,9 @@ export async function migrateSettings({
     repository: GRIP_REPOSITORY,
     gatewayOrigin: normalizedGateway,
     clientId,
+    ...(frontendOrigin ? { frontendOrigin: validateGatewayUrl(frontendOrigin) } : {}),
     token: legacy.token,
     expiresAt: legacy.expiresAt,
-    executable: legacy.executable,
   };
 
   try {

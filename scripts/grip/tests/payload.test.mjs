@@ -1,9 +1,8 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { GRIP_HOSTED_POLICY } from '../../../packages/core/constants/grip-hosted.ts';
 
-const config = readFileSync(new URL('../../../.grip.toml', import.meta.url), 'utf8');
-const diffBudget = Number(config.match(/^max_diff_bytes\s*=\s*(\d+)/m)?.[1] ?? 200_000);
+const diffBudget = GRIP_HOSTED_POLICY.MAX_DIFF_BYTES;
 
 // Grip 0.5.0 serializes requests with Python json.dumps (ensure_ascii=True).
 function wireBytes(payload) {

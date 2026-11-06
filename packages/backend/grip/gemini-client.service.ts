@@ -21,6 +21,11 @@ import {
   GRIP_UPSTREAM_TIMEOUT_MS,
 } from './grip.constants';
 import { resolveGripConfig } from './grip.helpers';
+import { GRIP_MODEL_FAILURE_REASON } from '@universe/core/constants/grip-hosted';
+import {
+  classifyGeminiFailure,
+  throwGeminiBlockingFailure,
+} from './gemini-failure';
 import { GeminiKeyPool } from './gemini-key-pool';
 import { parseGeminiResponse, readGeminiBody } from './gemini-response.helpers';
 import type {
@@ -55,16 +60,20 @@ function httpFailure(response: Response): GeminiAttemptFailure {
   );
 
   if (status === HttpStatus.TOO_MANY_REQUESTS) {
-    exception = new HttpException(
-      'Upstream quota exceeded',
-      HttpStatus.TOO_MANY_REQUESTS,
+    exception = classifyGeminiFailure(
+      new HttpException(
+        'Upstream quota exceeded',
+        HttpStatus.TOO_MANY_REQUESTS,
+      ),
+      GRIP_MODEL_FAILURE_REASON.PROVIDER_QUOTA,
     );
   } else if (
     status === HttpStatus.UNAUTHORIZED ||
     status === HttpStatus.FORBIDDEN
   ) {
-    exception = new ServiceUnavailableException(
-      'Upstream model service unavailable',
+    exception = classifyGeminiFailure(
+      new ServiceUnavailableException('Upstream model service unavailable'),
+      GRIP_MODEL_FAILURE_REASON.CREDENTIAL_UNAVAILABLE,
     );
   }
 
@@ -216,6 +225,19 @@ export class GeminiClientService {
       error instanceof GeminiAttemptFailure ? error.details : undefined;
 
     if (
+      failure?.status === HttpStatus.UNAUTHORIZED ||
+      failure?.status === HttpStatus.FORBIDDEN
+    ) {
+      context.blockingReason = GRIP_MODEL_FAILURE_REASON.CREDENTIAL_UNAVAILABLE;
+    } else if (
+      failure?.status === HttpStatus.TOO_MANY_REQUESTS &&
+      context.blockingReason !==
+        GRIP_MODEL_FAILURE_REASON.CREDENTIAL_UNAVAILABLE
+    ) {
+      context.blockingReason = GRIP_MODEL_FAILURE_REASON.PROVIDER_QUOTA;
+    }
+
+    if (
       failure?.retryable ||
       failure?.status === HttpStatus.UNAUTHORIZED ||
       failure?.status === HttpStatus.FORBIDDEN
@@ -250,6 +272,10 @@ export class GeminiClientService {
     });
 
     if (!failure || !failover) {
+      if (failure?.retryable && !context.signal.aborted) {
+        throwGeminiBlockingFailure(pool.getUnavailableReason());
+      }
+
       throw failure?.exception ?? error;
     }
 
@@ -275,6 +301,8 @@ export class GeminiClientService {
     }
 
     if (!reservation) {
+      throwGeminiBlockingFailure(pool.getUnavailableReason());
+
       throw (
         lastFailure ??
         new ServiceUnavailableException(
@@ -359,11 +387,24 @@ export class GeminiClientService {
       callerSignal,
     };
 
-    return this.executeAttempt({
-      context,
-      request,
-      pool,
-      attempted: new Set<number>(),
-    });
+    try {
+      return await this.executeAttempt({
+        context,
+        request,
+        pool,
+        attempted: new Set<number>(),
+      });
+    } catch (error: unknown) {
+      const cancelled =
+        callerSignal?.aborted && callerSignal.reason?.name !== 'TimeoutError';
+
+      if (!cancelled) {
+        throwGeminiBlockingFailure(
+          context.blockingReason ?? pool.getUnavailableReason(),
+        );
+      }
+
+      throw error;
+    }
   }
 }

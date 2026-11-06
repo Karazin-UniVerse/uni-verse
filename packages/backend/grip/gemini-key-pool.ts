@@ -1,5 +1,9 @@
 import { HttpStatus } from '@nestjs/common';
 import {
+  GRIP_MODEL_FAILURE_REASON,
+  type GripModelFailureReason,
+} from '@universe/core/constants/grip-hosted';
+import {
   GRIP_ALLOWED_MODEL,
   GRIP_KEY_COOLDOWN_MS,
   GRIP_KEY_QUOTA_COOLDOWN_MS,
@@ -129,6 +133,8 @@ export class GeminiKeyPool {
       apiKey,
       active: 0,
       availableAfter: 0,
+      quotaAvailableAfter: 0,
+      credentialAvailableAfter: 0,
       modelAvailableAfter: new Map(),
     }));
   }
@@ -187,6 +193,20 @@ export class GeminiKeyPool {
     this.keys[slot].active -= 1;
   }
 
+  getUnavailableReason(): GripModelFailureReason {
+    const now = Date.now();
+
+    if (this.keys.some((key) => key.credentialAvailableAfter > now)) {
+      return GRIP_MODEL_FAILURE_REASON.CREDENTIAL_UNAVAILABLE;
+    }
+
+    if (this.keys.some((key) => key.quotaAvailableAfter > now)) {
+      return GRIP_MODEL_FAILURE_REASON.PROVIDER_QUOTA;
+    }
+
+    return GRIP_MODEL_FAILURE_REASON.TRANSIENT;
+  }
+
   coolDown({
     slot,
     status,
@@ -206,6 +226,18 @@ export class GeminiKeyPool {
 
     if (isQuota || isAuth) {
       key.availableAfter = Math.max(key.availableAfter, availableAfter);
+
+      if (isAuth) {
+        key.credentialAvailableAfter = Math.max(
+          key.credentialAvailableAfter,
+          availableAfter,
+        );
+      } else {
+        key.quotaAvailableAfter = Math.max(
+          key.quotaAvailableAfter,
+          availableAfter,
+        );
+      }
     } else {
       key.modelAvailableAfter.set(
         model,

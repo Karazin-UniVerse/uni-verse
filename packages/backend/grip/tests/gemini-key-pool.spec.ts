@@ -248,4 +248,18 @@ describe('GeminiKeyPool', () => {
     now += 89_000;
     expect(pool.hasAvailable(excluded, 'gemini-3.1-flash-lite')).toBe(true);
   });
+
+  it('should preserve active quota and credential causes alongside transient pair cooldowns', () => {
+    const pool = new GeminiKeyPool(['first', 'second']);
+
+    pool.coolDown({ slot: 0, status: 429, retryAfter: '120' });
+    pool.coolDown({ slot: 1, status: 503 });
+    expect(pool.getUnavailableReason()).toBe('PROVIDER_QUOTA');
+    pool.coolDown({ slot: 1, status: 403 });
+    expect(pool.getUnavailableReason()).toBe('CREDENTIAL_UNAVAILABLE');
+    now += 60_000;
+    expect(pool.getUnavailableReason()).toBe('PROVIDER_QUOTA');
+    now += 60_000;
+    expect(pool.getUnavailableReason()).toBe('TRANSIENT');
+  });
 });

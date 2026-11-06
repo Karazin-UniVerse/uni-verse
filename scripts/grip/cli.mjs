@@ -1,9 +1,8 @@
-import { spawnSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loginDevice } from './device-login.mjs';
-import { runGripHook } from './launcher.mjs';
+import { runHostedPush } from './hosted-hook.mjs';
+import { collectPushManifest } from './push-manifest.mjs';
 import {
   loadSettings,
   removeSettings,
@@ -14,111 +13,6 @@ import {
   migrateSettings,
   GRIP_REPOSITORY,
 } from './settings.mjs';
-
-/**
- * Searches for a usable grip executable.
- * @param {string} [candidatePath]
- * @returns {string} Absolute path to executable
- */
-function resolveExecutable(candidatePath) {
-  if (candidatePath) {
-    const resolved = path.resolve(candidatePath);
-
-    if (!fs.existsSync(resolved)) {
-      throw new Error(`Specified Grip executable does not exist: ${resolved}`);
-    }
-
-    verifyExecutable(resolved);
-
-    return resolved;
-  }
-
-  // 1. Check system path via where.exe (Windows) or which (POSIX)
-  const lookupCmd = process.platform === 'win32' ? 'where.exe' : 'which';
-  const lookupResult = spawnSync(lookupCmd, ['grip'], { encoding: 'utf8' });
-
-  if (lookupResult.status === 0 && lookupResult.stdout) {
-    const lines = lookupResult.stdout
-      .trim()
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter(Boolean);
-
-    for (const line of lines) {
-      let exeCandidate = line;
-
-      if (
-        process.platform === 'win32' &&
-        (exeCandidate.endsWith('.cmd') || exeCandidate.endsWith('.bat'))
-      ) {
-        const directExe = exeCandidate.replace(/\.(cmd|bat)$/i, '.exe');
-
-        if (fs.existsSync(directExe)) {
-          exeCandidate = directExe;
-        }
-      }
-
-      try {
-        verifyExecutable(exeCandidate);
-
-        return exeCandidate;
-      } catch {
-        // Continue searching
-      }
-    }
-  }
-
-  // 2. On Windows, check python user scripts directory
-  if (process.platform === 'win32') {
-    const pyScript = spawnSync(
-      'python',
-      [
-        '-c',
-        "import site, os, sys; print(os.path.join(site.USER_BASE, f'Python{sys.version_info.major}{sys.version_info.minor}', 'Scripts'))",
-      ],
-      { encoding: 'utf8' },
-    );
-
-    if (pyScript.status === 0 && pyScript.stdout) {
-      const userScriptsDir = pyScript.stdout.trim();
-      const gripExe = path.join(userScriptsDir, 'grip.exe');
-
-      if (fs.existsSync(gripExe)) {
-        try {
-          verifyExecutable(gripExe);
-
-          return gripExe;
-        } catch {
-          // Continue
-        }
-      }
-    }
-  }
-
-  throw new Error(
-    'Could not locate a working grip executable.\nPlease install grip (e.g. "pipx install grip-hook==0.5.0" or "pip install grip-hook==0.5.0") or supply --executable <path>.',
-  );
-}
-
-/**
- * Verifies that the executable exists and returns 0 on --version.
- * @param {string} executablePath
- */
-function verifyExecutable(executablePath) {
-  const result = spawnSync(executablePath, ['--version'], { encoding: 'utf8' });
-
-  if (result.status !== 0) {
-    throw new Error(
-      `Executable at ${executablePath} failed verification (exit code ${result.status}): ${result.stderr || result.error}`,
-    );
-  }
-
-  if (!/\b0\.5\.0\b/.test(result.stdout ?? '')) {
-    throw new Error(
-      `Executable at ${executablePath} is not Grip 0.5.0 (got: ${(result.stdout ?? '').trim()}). Please install grip-hook 0.5.0 ("pip install grip-hook==0.5.0").`,
-    );
-  }
-}
 
 /**
  * Parses command line arguments into a dictionary of options and positional args.
@@ -151,33 +45,34 @@ function parseArgs(argv) {
 
 export const DEFAULT_GATEWAY_URL = 'https://api.universemvp.tech';
 export const DEFAULT_CLIENT_ID = 'Ov23liayY7Qv5aVPEomK';
+export const DEFAULT_FRONTEND_ORIGIN =
+  'https://universe-frontend-1038900190823.europe-west3.run.app';
 
 async function handleSetup(args) {
   const { options } = parseArgs(args);
   const gatewayRaw = options.gateway || process.env.GRIP_GATEWAY_URL || DEFAULT_GATEWAY_URL;
   const clientId =
     options['client-id'] || process.env.GRIP_GITHUB_OAUTH_CLIENT_ID || DEFAULT_CLIENT_ID;
-  const executablePath = options.executable;
+
+  if (options.executable)
+    throw new Error('Hosted Grip does not use --executable. Run setup without it.');
 
   if (!clientId) {
-    console.error(
-      'Usage: pnpm grip:setup [--client-id <id>] [--gateway <url>] [--executable <path> | --migrate]',
-    );
+    console.error('Usage: pnpm grip:setup [--client-id <id>] [--gateway <url>] [--migrate]');
     process.exit(1);
   }
 
   const gatewayOrigin = validateGatewayUrl(gatewayRaw);
+  const frontendOrigin = validateGatewayUrl(options['frontend-origin'] || DEFAULT_FRONTEND_ORIGIN);
 
   validateRepository();
 
   if (options.migrate) {
-    if (executablePath) {
-      throw new Error(
-        '--migrate retains the existing executable; do not combine it with --executable.',
-      );
-    }
-
-    const settings = await migrateSettings({ gatewayOrigin, clientId });
+    const settings = await migrateSettings({
+      gatewayOrigin,
+      clientId,
+      ...(options['frontend-origin'] ? { frontendOrigin } : {}),
+    });
 
     console.info('✓ Migrated Grip enrollment for all local UniVerse checkouts and worktrees.');
     console.info(`Gateway: ${gatewayOrigin}`);
@@ -186,9 +81,6 @@ async function handleSetup(args) {
     return;
   }
 
-  const executable = resolveExecutable(executablePath);
-
-  console.info(`Using Grip executable: ${executable}`);
   console.info(`Connecting to gateway: ${gatewayOrigin}`);
 
   const githubToken = await loginDevice({
@@ -229,16 +121,17 @@ async function handleSetup(args) {
     version: 2,
     repository: GRIP_REPOSITORY,
     gatewayOrigin,
+    frontendOrigin,
     clientId,
     token,
     expiresAt,
-    executable,
   });
 
   console.info('\n✓ Grip gateway enrollment successful!');
   console.info(`Repository: ${GRIP_REPOSITORY} (all local checkouts and worktrees)`);
   console.info(`Gateway:    ${gatewayOrigin}`);
-  console.info(`Executable: ${executable}`);
+  console.info(`Frontend:   ${frontendOrigin}`);
+  console.info('Whiteboard: Hosted browser (GitHub login)');
   console.info(`Expires:    ${expiresAt}`);
 }
 
@@ -329,7 +222,7 @@ async function handleStatus() {
   console.info(`Repository:     ${settings.repository} (all local checkouts and worktrees)`);
   console.info(`Gateway Origin: ${settings.gatewayOrigin}`);
   console.info(`Client ID:      ${settings.clientId}`);
-  console.info(`Executable:     ${settings.executable}`);
+  console.info('Whiteboard:     Hosted browser (GitHub login)');
   console.info(`Expires At:     ${settings.expiresAt} (${remainingDays} days remaining)`);
 }
 
@@ -367,16 +260,58 @@ async function handleHook(args) {
   }
 
   try {
-    const exitCode = await runGripHook({
-      settings,
-      args: ['hook', hookType, ...hookArgs],
-    });
+    const controller = new AbortController();
+    const abort = () => controller.abort();
 
-    process.exit(exitCode);
+    process.once('SIGINT', abort);
+    process.once('SIGTERM', abort);
+
+    try {
+      let stdin = '';
+
+      for await (const chunk of process.stdin) {
+        stdin += chunk.toString();
+
+        if (Buffer.byteLength(stdin) > 256 * 1024)
+          throw new Error('Push records exceed the input limit.');
+      }
+
+      process.exitCode = await runPrePush({
+        settings,
+        remoteUrl: hookArgs[1],
+        stdin,
+        signal: controller.signal,
+      });
+    } finally {
+      process.removeListener('SIGINT', abort);
+      process.removeListener('SIGTERM', abort);
+    }
   } catch (error) {
     console.error(`[grip] Error executing pre-push check: ${error.message}`);
     process.exit(1);
   }
+}
+
+export async function runPrePush({
+  settings,
+  remoteUrl,
+  stdin,
+  signal,
+  collect = collectPushManifest,
+  run = runHostedPush,
+  logger = console.info,
+}) {
+  const collected = await collect({ repoRoot: process.cwd(), remoteUrl, stdin, signal });
+
+  if (collected.kind === 'noContent') {
+    logger('[grip] No reviewable content in the pushed objects.');
+
+    return 0;
+  }
+
+  const frontendOrigin = settings.frontendOrigin ?? DEFAULT_FRONTEND_ORIGIN;
+
+  return run({ settings: { ...settings, frontendOrigin }, collected, signal, logger });
 }
 
 async function main() {

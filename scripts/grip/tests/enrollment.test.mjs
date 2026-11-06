@@ -42,7 +42,6 @@ function createSettings() {
     clientId: 'client-123',
     token: 'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
     expiresAt: new Date(Date.now() + 86400000).toISOString(),
-    executable: process.execPath,
   };
 }
 

@@ -7,7 +7,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { resolveGripConfig } from './grip.helpers';
-import type { GripConfig, GripIdentity } from './grip.types';
+import type {
+  GithubAuthorizationCodeParams,
+  GripConfig,
+  GripIdentity,
+} from './grip.types';
 
 @Injectable()
 export class GithubClientService {
@@ -19,6 +23,63 @@ export class GithubClientService {
 
   private requireConfig(): GripConfig {
     return resolveGripConfig(this.injectedConfig);
+  }
+
+  async exchangeAuthorizationCode({
+    code,
+    redirectUri,
+    codeVerifier,
+    clientId,
+    clientSecret,
+  }: GithubAuthorizationCodeParams): Promise<string> {
+    try {
+      const response = await fetch(
+        'https://github.com/login/oauth/access_token',
+        {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            client_id: clientId,
+            client_secret: clientSecret,
+            code,
+            redirect_uri: redirectUri,
+            code_verifier: codeVerifier,
+          }),
+          redirect: 'error',
+          signal: AbortSignal.timeout(10_000),
+        },
+      );
+
+      if (!response.ok) {
+        throw new UnauthorizedException('GitHub browser authentication failed');
+      }
+
+      const result: unknown = await response.json();
+
+      if (
+        !result ||
+        typeof result !== 'object' ||
+        !('access_token' in result) ||
+        typeof result.access_token !== 'string' ||
+        !result.access_token ||
+        result.access_token.length > 4_096
+      ) {
+        throw new UnauthorizedException('GitHub browser authentication failed');
+      }
+
+      return result.access_token;
+    } catch (error: unknown) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+
+      throw new ServiceUnavailableException(
+        'GitHub authentication service unavailable',
+      );
+    }
   }
 
   async identify(accessToken: string): Promise<GripIdentity> {
@@ -95,6 +156,12 @@ export class GithubClientService {
       if (response.status === 404) {
         throw new ForbiddenException(
           'User is not a collaborator on this repository',
+        );
+      }
+
+      if ([401, 403, 429].includes(response.status)) {
+        throw new ForbiddenException(
+          'GitHub permission credentials or quota unavailable',
         );
       }
 

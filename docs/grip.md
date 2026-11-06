@@ -1,6 +1,6 @@
 # Grip: Interactive Browser Push Checks with Team Gateway
 
-[Grip](https://github.com/guilyx/grip) quizzes the **human developer** on their committed changes before allowing a local `git push` to complete. UniVerse uses Grip in **whiteboard mode** (`.grip.toml`) backed by an authenticated, quota-limited **team Gemini gateway** in NestJS (`/dev-tools/grip`).
+[Grip](https://github.com/guilyx/grip) quizzes the **human developer** on their committed changes before allowing a local `git push` to complete. UniVerse uses a hosted whiteboard backed by an authenticated, quota-limited **team Gemini gateway** in NestJS (`/dev-tools/grip`). `.grip.toml` contains exclusions; shared core constants own lifecycle, score and budgets.
 
 Grip pre-push checks are **mandatory** for all contributors pushing to this repository. Pushes are blocked until you enroll via `pnpm grip:setup` and defend your changes on the whiteboard (scoring $\ge 70$).
 
@@ -8,13 +8,13 @@ Grip pre-push checks are **mandatory** for all contributors pushing to this repo
 
 ## Architecture & Privacy
 
-- **Local interactive whiteboard**: Grip opens a browser tab on your computer where you review your diff and answer questions ($\ge 70$ required to pass).
-- **Resilience & Fail-Open**: If the AI model or network fails (`fail_open = true`), Grip logs a warning and permits the push rather than hard-blocking developers.
+- **Hosted interactive whiteboard**: the Node hook prints an HTTPS link and waits while you sign in through GitHub and defend the exact pushed objects ($\ge 70$ required to pass). No local whiteboard server is started. See the [hosted activation and retention runbook](grip-hosted.md).
+- **Resilience & Fail-Open**: Technical provider/network failures temporarily permit an explicitly UNVERIFIED push. Authentication, quota, failed answers, cancellation, expiry and binding mismatches fail closed; no passed result is manufactured.
 - **Team Gateway**: A restricted endpoint in `@universe/backend` proxies structured questions and answers to Google Gemini (`gemini-3.5-flash-lite`).
 - **No shared API keys**: Collaborators never receive or handle Gemini API keys. Authentication is handled through a one-time GitHub OAuth Device Flow exchange.
 - **Repository permission check**: Only GitHub users with **write** or **admin** permissions to `Karazin-UniVerse/uni-verse` qualify for gateway tokens.
 - **Token storage**: One gateway profile (`gateway.json`) is stored privately for your OS user in `%APPDATA%\universe-grip` on Windows or `${XDG_CONFIG_HOME:-~/.config}/universe-grip` on POSIX. Its token is shared across local UniVerse clones, branches, and linked worktrees, not across OS users or machines. The profile records the gateway, OAuth client, and repository identity; only the `Karazin-UniVerse/uni-verse` GitHub origin and push destination are accepted. The gateway stores only SHA-256 token digests.
-- **Gateway privacy**: The gateway does not persist prompts, rubrics, diffs, answers or upstream keys in its database. Local Grip keeps quiz reports, answers and cached boards under `.git/grip/`; do not publish those files or have a coding agent read them. Google receives the permitted diff and answers under your project's Gemini API terms. For Gemini API requests made under an unpaid service, Google uses submitted content and generated responses to improve its products, and human reviewers may read, annotate and process the API input and output. Do not submit sensitive, confidential or personal information through an unpaid service. In the European Economic Area, Switzerland and the United Kingdom, Google states that its paid-service data terms apply even to unpaid Gemini API quota.
+- **Gateway privacy**: Hosted checks temporarily persist encrypted diff/board content and safe grade feedback. Working-DB content has a 23h30m purge target and a 24-hour ceiling; encrypted backups may remain longer under the operator-verified policy. Restore cleanup precedes application access. Browser drafts stay in the current tab. Historical `.git/grip/` reports belong to the human developer; do not publish or have an agent read them. Google receives the permitted diff and answers under the project's Gemini API terms. Unpaid service may use submitted content for product improvement and human review; do not submit confidential, sensitive or personal information. Google states that paid-service data terms apply in the EEA, Switzerland and UK even for unpaid quota.
 - **Quotas**:
   - Per user: 10 requests / minute, 100 requests / UTC day.
   - Global: 500 requests / UTC day, max 2 concurrent calls.
@@ -24,20 +24,9 @@ Grip pre-push checks are **mandatory** for all contributors pushing to this repo
 
 ## Prerequisites
 
-1. **Python 3.11+** installed and available on `PATH`.
-2. **Grip 0.5.0**:
-   ```sh
-   pipx install grip-hook==0.5.0
-   # Or using pip in your Python environment:
-   pip install grip-hook==0.5.0
-   ```
-   Verify installation:
-   ```sh
-   grip --version
-   # Expected: grip, version 0.5.0
-   ```
-   > [!NOTE]
-   > On Windows with Python from the Microsoft Store or standard installer, `grip.exe` is located in your Python user Scripts folder (e.g. `%LOCALAPPDATA%\Packages\PythonSoftwareFoundation...\LocalCache\local-packages\Python313\Scripts\grip.exe`).
+1. **Node.js >=24.20.0** and the repository's pinned pnpm version.
+2. An interactive browser and GitHub repository write access.
+3. An operator-activated hosted gateway and frontend. Python and native Grip are not required.
 
 > [!WARNING]
 > **Do NOT run `grip init`, `grip agents`, or `grip install --append`!**
@@ -53,7 +42,7 @@ Enroll once per OS user on this computer for the UniVerse gateway. Run from the 
 pnpm grip:setup
 ```
 
-The gateway defaults to `https://api.universemvp.tech` and the client ID to `Ov23liayY7Qv5aVPEomK`. Use flags (`--gateway <url>`, `--client-id <id>`) only if targeting a custom or local backend. Your OAuth Client ID is not a Client Secret, GitHub PAT, or Gemini API key.
+The gateway defaults to `https://api.universemvp.tech`, the client ID to `Ov23liayY7Qv5aVPEomK`, and the hosted frontend to `https://universe-frontend-1038900190823.europe-west3.run.app`. Use flags (`--gateway <url>`, `--client-id <id>`, `--frontend-origin <origin>`) for custom or local environments. The hook checks the returned board origin against this configured value before opening it. Your OAuth Client ID is not a Client Secret, GitHub PAT, or Gemini API key.
 
 Switching branches, creating worktrees, and cloning UniVerse elsewhere on the same computer no longer require another login once those checkouts contain this version of the scripts. One active gateway/account profile is supported per OS user; running setup again replaces it. Re-enroll after token expiry, revocation, or switching gateway/account. Changing the remote to a different repository does not grant it access to the shared profile.
 
@@ -71,19 +60,19 @@ The flags may be omitted only when the original values match the new defaults. I
 pnpm grip:setup
 ```
 
-Migration validates the existing profile, preserves its token, executable and original expiry, writes the shared profile, and removes only that checkout's old settings file. It does not contact GitHub or silently search other checkouts for credentials. Invalid/expired profiles and a different gateway/client are rejected; an existing shared profile is never overwritten by migration. If no eligible old profile exists, use normal setup instead. Other old branches keep using their old scripts until updated; they cannot discover the new shared profile automatically. Old checkout profiles elsewhere are not migrated or revoked; retire them from those checkouts with their original removal command if needed.
+Migration validates the existing profile, preserves its token and original expiry, omits obsolete executable state, writes the shared profile, and removes only that checkout's old settings file. It does not contact GitHub or silently search other checkouts for credentials. Invalid/expired profiles and a different gateway/client are rejected; an existing shared profile is never overwritten by migration. If no eligible old profile exists, use normal setup instead. Other old branches keep using their old scripts until updated; they cannot discover the new shared profile automatically. Old checkout profiles elsewhere are not migrated or revoked; retire them from those checkouts with their original removal command if needed.
 
 Migration publishes the shared profile without replacing a concurrently created profile; a losing migration keeps its old enrollment. If publication succeeds but old-file cleanup fails, setup reports success with a warning identifying the old file. Remove **only that old JSON file** manually when possible. Do not run `grip:remove` from the old checkout to clean up a migrated profile: it holds the same token and would revoke the active shared session. No repeated login is required for a cleanup-only warning.
 
 For local backend development:
 
 ```sh
-pnpm grip:setup --gateway http://localhost:3001 --client-id <your-dev-client-id>
+pnpm grip:setup --gateway http://localhost:3001 --frontend-origin http://localhost:3000 --client-id <your-dev-client-id>
 ```
 
 ### What happens during setup:
 
-1. Validates that `grip.exe` (or `grip`) is installed and runnable.
+1. Validates the repository identity and configured gateway origin.
 2. Prompts you with a GitHub one-time code and link (GitHub Device Flow).
 3. Authorizes your GitHub account without requesting any repository write permissions.
 4. Exchanges the GitHub token with the gateway for a 30-day revocable token.
@@ -110,11 +99,11 @@ When you run `git push origin <branch>`:
 2. **CI Environment (`CI=true`)**:
    Automatically skips interactive checks.
 3. **Enrolled checkout**:
-   - Launches Grip in whiteboard mode.
-   - Your default browser opens the local whiteboard interface.
+   - Collects the exact pushed commits, not the working tree.
+   - Your default browser opens the hosted whiteboard; sign in with the enrolled GitHub account.
    - You answer the conceptual questions regarding your changes.
    - Upon scoring $\ge 70$, Grip passes, and the original `git push` **immediately completes**.
-   - A pass for the **same diff** is remembered for **24 hours** (`remember_passes_hours = 24.0`). Additional commits or amendments that change the diff require a new check.
+   - A pass for the **same owner, repository, refs/object IDs, policy and diff digest** is remembered for **24 hours from creation**. A changed binding requires a new check.
 
 ---
 
@@ -155,7 +144,7 @@ or shorten answers rather than bypassing the check.
 
 ## Troubleshooting
 
-- **`Grip executable not found`**: Ensure Python's Scripts directory is on your system `PATH`, or pass `--executable <path-to-grip.exe>` during `pnpm grip:setup`.
+- **Hosted service unavailable**: ask the operator to verify [activation gates](grip-hosted.md). Technical fail-open is reported as UNVERIFIED, never a passed defense. Authentication, quota, failed answers, cancellation, expiry and binding mismatches do not fail open.
 - **`Access denied (403)`**: Only GitHub users with write/admin permissions on `Karazin-UniVerse/uni-verse` are permitted.
 - **`Enrollment has expired`**: Gateway sessions expire after 30 days. Run `pnpm grip:setup` to refresh.
 - **`SSH / Headless environment`**: Grip whiteboard requires an interactive browser session. Complete the push from an interactive checkout; coding agents must hand it to the human instead of bypassing the check. See the [agent push rules](ai/workflow.md#hooks).
@@ -173,7 +162,7 @@ pnpm lint            # Oxlint (0 warnings)
 pnpm lint:style      # Stylelint
 pnpm typecheck       # Turbo TypeScript typecheck
 pnpm test            # Monorepo unit & integration tests
-pnpm test:grip       # Local Grip settings, login, launcher, and hook tests
+pnpm test:grip       # Grip settings, login, hosted lifecycle, cleanup runner and hook tests
 pnpm build           # Turbo production build
 ```
 
@@ -185,9 +174,9 @@ Keep local CLI tests in `scripts/grip/tests/` and backend unit, HTTP, and Postgr
 GRIP_TEST_DATABASE_URL="postgresql://user:pass@localhost:5432/disposable_db" pnpm --filter @universe/backend test:grip:postgres
 ```
 
-### Manual E2E Verification Completed
+### Historical native-flow evidence (not hosted verification)
 
-The live authentication and pre-push loop was verified end-to-end:
+The earlier native authentication/pre-push loop was exercised. This is not evidence of hosted browser OAuth, retention, restore or a successful hosted human defense:
 
 - Device Flow authentication against the local NestJS gateway.
 - Repository permissions check via GitHub API (`admin` role verified).

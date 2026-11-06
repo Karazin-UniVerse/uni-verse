@@ -222,20 +222,14 @@ test('cli hook pre-push fails with code 1 when enrollment has expired', async ()
   }
 });
 
-test('cli hook pre-push forwards args and exit code to grip executable when enrolled', async () => {
+test('cli hook uses a valid old enrollment without launching its missing native executable', async () => {
   const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'grip-hook-test-')));
   const configDir = path.join(tmpDir, 'universe-grip');
 
   initializeRepository(tmpDir);
 
   try {
-    // Cross-platform mock: node executes a local hook script matching the first argument
-    const mockHookScript = path.join(tmpDir, 'hook');
-
-    fs.writeFileSync(
-      mockHookScript,
-      'console.log("MOCK GRIP RUN with args: " + process.argv.slice(1).join(" ")); process.exit(42);\n',
-    );
+    fs.writeFileSync(path.join(tmpDir, '.grip.toml'), 'exclude = [".env"]\n');
 
     await saveSettings(
       {
@@ -245,7 +239,7 @@ test('cli hook pre-push forwards args and exit code to grip executable when enro
         clientId: 'mock-client',
         token: 'ugr_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
         expiresAt: new Date(Date.now() + 86400000).toISOString(),
-        executable: process.execPath,
+        executable: path.join(tmpDir, 'missing-grip.exe'),
       },
       { configDir, repoRoot: tmpDir },
     );
@@ -262,15 +256,12 @@ test('cli hook pre-push forwards args and exit code to grip executable when enro
           XDG_CONFIG_HOME: tmpDir,
         },
         encoding: 'utf8',
+        input: '',
       },
     );
 
-    // Mirrors child exit code 42
-    assert.equal(result.status, 42);
-    assert.match(
-      result.stdout,
-      /MOCK GRIP RUN with args: .*hook pre-push origin https:\/\/github\.com\/Karazin-UniVerse\/uni-verse\.git/,
-    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /No reviewable content/);
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
