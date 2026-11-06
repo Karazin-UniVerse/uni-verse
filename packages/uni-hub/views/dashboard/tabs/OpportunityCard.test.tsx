@@ -83,6 +83,28 @@ describe('OpportunityCard component', () => {
     expect(onOpenDetail).toHaveBeenCalledWith(mockOpportunity);
   });
 
+  it('should call onOpenApplicants when clicking applications button without triggering onOpenDetail', async () => {
+    const onOpenDetail = vi.fn();
+    const onOpenApplicants = vi.fn();
+
+    render(
+      <OpportunityCard
+        opportunity={mockOpportunity}
+        variant="owner"
+        statusBadge={<span>Опубліковано</span>}
+        onOpenDetail={onOpenDetail}
+        onOpenApplicants={onOpenApplicants}
+      />,
+    );
+
+    const applicantsButton = screen.getByRole('button', { name: /відгуки/i });
+
+    await userEvent.click(applicantsButton);
+
+    expect(onOpenApplicants).toHaveBeenCalledWith(mockOpportunity);
+    expect(onOpenDetail).not.toHaveBeenCalled();
+  });
+
   it('should render applications closed badge when acceptsApplications is false', () => {
     const closedOpp: Opportunity = {
       ...mockOpportunity,

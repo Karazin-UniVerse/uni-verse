@@ -195,8 +195,6 @@
 }
 
 .cardMetaRow {
-  position: relative;
-  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -269,6 +267,11 @@
   gap: var(--space-8);
   flex-wrap: wrap;
   max-width: 100%;
+
+  button {
+    position: relative;
+    z-index: 2;
+  }
 }
 
 .warningBox {
