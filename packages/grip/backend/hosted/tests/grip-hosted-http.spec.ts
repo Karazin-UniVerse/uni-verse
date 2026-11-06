@@ -140,7 +140,7 @@ describe('hosted Grip browser HTTP boundary', () => {
   });
 
   it('should map gateway configuration refusal to a non-5xx response on hosted operations', async () => {
-    const { GripConfigException } = await import('../../grip.config');
+    const { GripConfigException } = await import('../../grip.config.ts');
 
     auth.authenticateBrowser.mockRejectedValueOnce(new GripConfigException('misconfigured'));
     await request(app.getHttpServer())
