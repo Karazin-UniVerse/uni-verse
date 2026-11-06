@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { withLanguage } from '@uni-hub/utils/test-utils';
 import type { Opportunity } from '@core/types/opportunities';
+import type { OpportunityFilters } from '@uni-hub/store/useOpportunitiesStore';
 import { CatalogTab, type CatalogTabProps } from './CatalogTab';
 
 const mockOpportunities: Opportunity[] = [
@@ -159,6 +160,45 @@ describe('CatalogTab component', () => {
       isRecruiting: true,
       tags: [],
     });
+  });
+
+  it('should filter by a short pending tag on Apply without requiring Enter', async () => {
+    const user = userEvent.setup();
+    const opportunities: Opportunity[] = [
+      { ...mockOpportunities[0], tags: [{ id: 'tag-3d', name: '3d' }] },
+      mockOpportunities[1],
+    ];
+    const Wrapper = (): React.ReactElement => {
+      const [filters, setFilters] = useState<OpportunityFilters>({
+        paymentType: '',
+        isRecruiting: false,
+        tags: [],
+      });
+
+      return (
+        <CatalogTab
+          loading={false}
+          isError={false}
+          onRetry={vi.fn()}
+          opportunities={opportunities}
+          search=""
+          onSearchChange={vi.fn()}
+          onOpenDetail={vi.fn()}
+          tags={filters.tags}
+          onFiltersChange={setFilters}
+        />
+      );
+    };
+
+    render(withLanguage(<Wrapper />));
+
+    await user.click(screen.getByRole('button', { name: /фільтри/i }));
+    await user.type(screen.getByRole('combobox', { name: 'Теги' }), '3D');
+    await user.click(screen.getByRole('button', { name: 'Застосувати' }));
+
+    expect(screen.getByRole('heading', { name: 'Frontend Developer' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Backend Engineer' })).not.toBeInTheDocument();
+    expect(screen.getByText('3d')).toBeInTheDocument();
   });
 
   it('should filter opportunities in memory by search term and tags', () => {
