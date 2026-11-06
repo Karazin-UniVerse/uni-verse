@@ -20,7 +20,6 @@
       }
     ],
     "paths": {
-      "vitest": ["../../node_modules/vitest"],
       "@uni-hub/*": ["./*"],
       "@core": ["../core/index.ts"],
       "@core/*": ["../core/*"],
