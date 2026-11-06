@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useSyncExternalStore } from 'react';
 import { Sun, Moon, Zap, GraduationCap, Orbit, Crown, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
 import { Dropdown, DropdownOption, type PopoverPlacement } from '@una';
@@ -18,6 +18,10 @@ const THEME_ICONS: Record<AppTheme, React.ReactNode> = {
   universeSpace: <Orbit size={18} />,
   karazinGold: <Crown size={18} />,
 };
+
+const subscribe = (): (() => void) => () => {};
+const getClientSnapshot = (): boolean => true;
+const getServerSnapshot = (): boolean => false;
 
 const THEME_KEYS: Record<AppTheme, TranslationKey> = {
   light: 'theme.light',
@@ -45,6 +49,7 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
 }) => {
   const { theme, setTheme } = useTheme();
   const { formatMessage } = useLanguage();
+  const mounted = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
   const currentThemeLabel = formatMessage(THEME_KEYS[theme]);
 
   if (compact) {
@@ -58,16 +63,27 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
             {...triggerProps}
             type="button"
             className={clsx(styles.compactBtn, isFullWidth && styles.fullWidthBtn, className)}
-            aria-label={`${formatMessage('theme.select')}: ${currentThemeLabel}`}
-            title={currentThemeLabel}
-            // intentional: suppressHydrationWarning – currentThemeLabel resolved client-side from stored preference; server renders default theme
-            suppressHydrationWarning
+            aria-label={
+              mounted
+                ? `${formatMessage('theme.select')}: ${currentThemeLabel}`
+                : formatMessage('theme.select')
+            }
+            title={mounted ? currentThemeLabel : undefined}
           >
-            {THEME_ICONS[theme]}
+            <span
+              className={styles.iconSlot}
+              style={{ visibility: mounted ? 'visible' : 'hidden' }}
+              aria-hidden
+            >
+              {THEME_ICONS[theme]}
+            </span>
             {showLabel && (
               <>
-                {/* intentional: suppressHydrationWarning – label text derived from client-side theme state */}
-                <span className={styles.compactLabel} data-theme-label suppressHydrationWarning>
+                <span
+                  className={styles.compactLabel}
+                  data-theme-label
+                  style={{ visibility: mounted ? 'visible' : 'hidden' }}
+                >
                   {currentThemeLabel}
                 </span>
                 <ChevronDown
