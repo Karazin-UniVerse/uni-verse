@@ -1,0 +1,48 @@
+worker_processes 1;
+worker_shutdown_timeout 8s;
+pid /tmp/frontend-nginx.pid;
+error_log /dev/stderr warn;
+events { worker_connections 1024; }
+http {
+    access_log /dev/stdout;
+    client_body_temp_path /tmp/nginx/client;
+    proxy_temp_path /tmp/nginx/proxy;
+    fastcgi_temp_path /tmp/nginx/fastcgi;
+    uwsgi_temp_path /tmp/nginx/uwsgi;
+    scgi_temp_path /tmp/nginx/scgi;
+    client_max_body_size 0;
+    server {
+        listen __PORT__;
+        proxy_http_version 1.1;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Host "";
+        proxy_set_header X-Forwarded-Proto "";
+        proxy_set_header X-Forwarded-Port "";
+        proxy_set_header Forwarded "";
+        proxy_set_header X-Client-IP "";
+        proxy_set_header Client-IP "";
+        proxy_set_header CF-Connecting-IP "";
+        proxy_set_header True-Client-IP "";
+        proxy_set_header Connection "";
+        proxy_buffering off;
+
+        location = /readyz {
+            auth_request /_grip_ready;
+            proxy_intercept_errors on;
+            error_page 404 =204 /_ready_ok;
+            proxy_pass http://127.0.0.1:3000/__container_readiness_probe__;
+        }
+        location = /_grip_ready {
+            internal;
+            proxy_intercept_errors on;
+            error_page 404 =204 /_ready_ok;
+            proxy_pass http://127.0.0.1:3002/dev-tools/grip/__container_readiness_probe__;
+        }
+        location = /_ready_ok { internal; return 204; }
+        location = /dev-tools/grip { client_max_body_size 256k; proxy_pass http://127.0.0.1:3002; }
+        location ^~ /dev-tools/grip/ { client_max_body_size 256k; proxy_pass http://127.0.0.1:3002; }
+        location / { proxy_pass http://127.0.0.1:3000; }
+    }
+}

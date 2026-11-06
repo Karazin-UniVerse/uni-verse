@@ -67,7 +67,7 @@ The wizard prompts you step-by-step, automatically configures environment files,
    - Automatically writes `.env` and `packages/backend/.env`, generates Prisma Client (`pnpm db:generate`), and optionally syncs schema (`pnpm db:migrate`).
 4. **Grip Gateway Pre-Push Check**:
    - Checks if Grip is enrolled on this computer; prompts to automatically run `pnpm grip:setup` if needed.
-   - Updated hooks open a hosted GitHub-authenticated whiteboard without Python or a local listener. Operators must complete the [activation, retention and restore gates](docs/grip-hosted.md) before enabling hosted mode.
+   - Updated hooks open a hosted GitHub-authenticated whiteboard without Python or a local listener. Operators must complete the [activation, retention and restore gates](packages/grip/README.md#activation-gate) before enabling hosted mode.
 5. **Moodle Authentication Notice**:
    - Displays an in-terminal reminder that user authentication delegates to `https://moodle.universemvp.tech`.
 6. **Instant Launch**:
@@ -194,7 +194,7 @@ UniVerse enforces strict institutional security policies:
 AI coding agents can use the shared [Context7 MCP configuration](docs/context7.md) for library documentation. Each developer signs in with their own account; no shared credentials or application dependencies are required. Local codebase structural knowledge graphs can be generated with zero token spend via [Graphify](docs/graphify.md).
 UniVerse provides manual unused-code and dependency auditing via [Knip](docs/knip.md).
 
-UniVerse enforces mandatory [Grip browser push checks](docs/grip.md) backed by an authenticated, quota-limited team Gemini gateway.
+UniVerse enforces mandatory [Grip browser push checks](packages/grip/README.md) backed by an authenticated, quota-limited team Gemini gateway.
 The pre-push check runs Grip in whiteboard mode before code is sent upstream. All contributors must enroll their checkout before pushing (`pnpm grip:setup`).
 
 Run linters, style checks, type checks, and automated tests across all monorepo packages:

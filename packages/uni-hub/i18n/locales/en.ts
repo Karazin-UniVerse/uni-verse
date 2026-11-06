@@ -1,40 +1,6 @@
 import type { TranslationKey } from './uk';
 
 export const en = {
-  'grip.pushSummary': 'Exact push updates',
-  'grip.title': 'Defend your push',
-  'grip.login': 'Sign in with GitHub',
-  'grip.loginNotice': 'Use the same GitHub account as your Grip enrollment.',
-  'grip.loading': 'Loading your check…',
-  'grip.error': 'Unable to load this check. Verify your account and retry.',
-  'grip.retry': 'Retry',
-  'grip.logout': 'Sign out of GitHub session',
-  'grip.structure': 'Change map',
-  'grip.questions': 'Explain your changes',
-  'grip.answer': 'Answer {index}',
-  'grip.submit': 'Check answers',
-  'grip.submitting': 'Grading answers…',
-  'grip.untrusted': 'Untrusted source',
-  'grip.files': 'Files',
-  'grip.diff': 'Changes in this check',
-  'grip.truncated': 'Only part of the diff is shown. The board does not cover omitted changes.',
-  'grip.privacy':
-    'The server temporarily stores the diff and answers and sends them to Gemini. Working-database content is deleted within 24 hours; backups have a separate retention period.',
-  'grip.submitError':
-    'The result could not be retrieved. Your answers remain in this tab; check the status or retry the request.',
-  'grip.score': 'Score: {score} / 100. Passing score: 70.',
-  'grip.state.CREATED': 'Check created. Waiting for board preparation.',
-  'grip.state.GENERATING': 'Preparing and validating the board…',
-  'grip.state.READY': 'Board ready. Answer all five questions.',
-  'grip.state.GRADING': 'Checking your answers…',
-  'grip.state.PASSED': 'Check passed. The original push may continue.',
-  'grip.state.FAILED': 'The score is below the passing threshold. This push is blocked.',
-  'grip.state.CANCELLED': 'Check cancelled. Push is not permitted.',
-  'grip.state.EXPIRED': 'Check expired. Push is not permitted.',
-  'grip.state.QUOTA_REJECTED':
-    'Quota or service credentials prevent verification. Push is blocked.',
-  'grip.state.TECHNICAL_ERROR':
-    'Technical failure. This check did not pass; the hook will explain whether an unverified push is allowed.',
   // Common / Lang
   'lang.uk': 'Ukrainian',
   'lang.en': 'English',

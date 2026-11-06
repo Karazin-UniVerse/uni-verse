@@ -36,11 +36,12 @@ jobs:
       - name: Run Backend Tests with Coverage
         run: |
           pnpm --filter @universe/backend test:cov
-          node -e "const fs=require('fs'),p='packages/backend/coverage/lcov.info';if(fs.existsSync(p)){const c=fs.readFileSync(p,'utf8').split('\n').map(l=>{if(!l.startsWith('SF:'))return l;const r=l.slice(3).replace(/\\\\/g,'/'),i=r.lastIndexOf('packages/backend/');if(i!==-1)return'SF:'+r.slice(i);return'SF:packages/backend/'+r.replace(/^.*file:\/?/,'').replace(/^\\.\\//,'');}).join('\n');fs.writeFileSync(p,c);console.log('Normalized lcov paths for SonarCloud');}"
+          node -e "const fs=require('fs'),path=require('path'),p='packages/backend/coverage/lcov.info';if(fs.existsSync(p)){const c=fs.readFileSync(p,'utf8').split('\n').map(l=>{if(!l.startsWith('SF:'))return l;const r=l.slice(3).replace(/\\\\/g,'/');return'SF:'+path.posix.normalize(r.includes('packages/backend/')?r.slice(r.lastIndexOf('packages/backend/')):r.includes('packages/grip/backend/')?r.slice(r.lastIndexOf('packages/grip/backend/')):'packages/backend/'+r);}).join('\n');fs.writeFileSync(p,c);console.log('Normalized lcov paths for SonarCloud');}"
       - name: Run Frontend Tests
         run: |
           pnpm --filter @universe/ui test
           pnpm --filter @universe/uni-hub test
+          pnpm --filter @universe/grip-frontend test
       - name: Build Storybook
         run: pnpm --filter @universe/ui build-storybook
       - name: Test Lighthouse support scripts

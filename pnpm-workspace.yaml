@@ -1,3 +1,5 @@
 packages:
-  - "configs/*"
-  - "packages/*"
+  - 'configs/*'
+  - 'packages/*'
+  - 'packages/grip/backend'
+  - 'packages/grip/frontend'

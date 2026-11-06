@@ -1,8 +1,9 @@
 {
   "moduleFileExtensions": ["js", "json", "ts"],
   "rootDir": "..",
+  "roots": ["<rootDir>/../grip/backend"],
   "testEnvironment": "node",
-  "testRegex": "grip/hosted/tests/.*\\.postgres\\.spec\\.ts$",
+  "testRegex": "hosted/tests/.*\\.postgres\\.spec\\.ts$",
   "transform": { "^.+\\.(t|j)s$": "ts-jest" },
   "moduleNameMapper": { "^@universe/core/(.*)$": "<rootDir>/../core/$1" }
 }

@@ -10,12 +10,12 @@
     "db:backfill-roles": "prisma db execute --file prisma/scripts/backfill-roles.sql",
     "db:push": "pnpm db:backfill-roles && prisma db push",
     "db:push:force": "pnpm db:backfill-roles && prisma db push --accept-data-loss",
-    "build": "pnpm --filter @universe/core build && pnpm db:generate && nest build",
+    "build": "pnpm --filter @universe/core build && pnpm db:generate && pnpm --filter @universe/grip-backend build && nest build",
     "format": "prettier --write \"**/*.ts\" \"test/**/*.ts\"",
-    "dev": "nest start --watch",
-    "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
+    "dev": "pnpm start:dev",
+    "start": "pnpm --filter @universe/core build && pnpm db:generate && pnpm --filter @universe/grip-backend build && nest start",
+    "start:dev": "pnpm --filter @universe/core build && pnpm db:generate && pnpm --filter @universe/grip-backend build && node -e \"console.warn('Grip backend changes require restarting start:dev')\" && nest start --watch",
+    "start:debug": "pnpm --filter @universe/core build && pnpm db:generate && pnpm --filter @universe/grip-backend build && node -e \"console.warn('Grip backend changes require restarting start:debug')\" && nest start --debug --watch",
     "start:prod": "pnpm db:push && node dist/main",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
@@ -39,6 +39,7 @@
     "@prisma/client": "^7.10.1",
     "@universe/core": "workspace:*",
     "@universe/database": "workspace:*",
+    "@universe/grip-backend": "workspace:*",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
@@ -92,37 +93,51 @@
       "json",
       "ts"
     ],
-    "rootDir": ".",
+    "rootDir": "..",
+    "roots": [
+      "<rootDir>/backend",
+      "<rootDir>/grip/backend"
+    ],
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
+      "^.+\\.(t|j)s$": [
+        "<rootDir>/backend/node_modules/ts-jest",
+        {
+          "tsconfig": "<rootDir>/backend/tsconfig.json"
+        }
+      ]
     },
     "moduleNameMapper": {
-      "^@universe/core/(.*)$": "<rootDir>/../core/$1"
+      "^@universe/grip-backend/constants$": "<rootDir>/grip/backend/grip.constants.ts",
+      "^@universe/grip-backend/(.*)$": "<rootDir>/grip/backend/$1.ts",
+      "^@universe/grip-backend$": "<rootDir>/grip/backend/grip.module.ts",
+      "^@universe/core/(.*)$": "<rootDir>/core/$1"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s",
-      "!dist/**",
-      "!coverage/**",
-      "!test/**",
-      "!node_modules/**",
-      "!prisma.config.ts",
-      "!prisma/seed*.ts",
-      "!main.ts",
+      "backend/**/*.(t|j)s",
+      "grip/backend/**/*.(t|j)s",
+      "!backend/dist/**",
+      "!grip/backend/dist/**",
+      "!backend/coverage/**",
+      "!backend/test/**",
+      "!**/node_modules/**",
+      "!backend/prisma.config.ts",
+      "!backend/prisma/seed*.ts",
+      "!backend/main.ts",
       "!**/*.module.ts",
       "!**/*.dto.ts",
-      "!types/**"
+      "!backend/types/**"
     ],
     "coverageReporters": [
       "text",
       "lcovonly"
     ],
-    "coverageDirectory": "./coverage",
+    "coverageDirectory": "<rootDir>/backend/coverage",
     "testEnvironment": "node",
     "testPathIgnorePatterns": [
       "/node_modules/",
       "grip-quota\\.integration\\.spec\\.ts$",
-      "grip/hosted/tests/.*\\.postgres\\.spec\\.ts$"
+      "grip/backend/hosted/tests/.*\\.postgres\\.spec\\.ts$"
     ]
   }
 }

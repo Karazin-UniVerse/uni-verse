@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "oxlint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.vitest.json",
     "test": "vitest run --config vitest.config.mts"
   },
   "dependencies": {

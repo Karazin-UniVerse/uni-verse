@@ -9,7 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { MoodleModule } from './moodle/moodle.module';
 import { OpportunitiesModule } from './opportunities/opportunities.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { GripModule } from './grip/grip.module';
+import { GripModule } from '@universe/grip-backend';
 import { TagsModule } from './tags/tags.module';
 import { AtGuard } from './auth/guards/at.guard';
 

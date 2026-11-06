@@ -20,6 +20,7 @@
       }
     ],
     "paths": {
+      "vitest": ["../../node_modules/vitest"],
       "@uni-hub/*": ["./*"],
       "@core": ["../core/index.ts"],
       "@core/*": ["../core/*"],
@@ -37,5 +38,5 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "dist", "**/*.stories.tsx", "**/*.stories.ts"]
+  "exclude": ["node_modules", "dist", "**/*.stories.tsx", "**/*.stories.ts", "vitest.config.mts"]
 }

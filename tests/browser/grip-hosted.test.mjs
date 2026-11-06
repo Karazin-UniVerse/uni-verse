@@ -7,6 +7,16 @@ const requireUi = createRequire(new URL('../../packages/ui/package.json', import
 const { chromium } = requireUi('playwright');
 const origin = process.env.GRIP_BROWSER_TEST_ORIGIN ?? 'http://127.0.0.1:3017';
 
+function luminance(color) {
+  const channels = color.match(/\d+/g).map((value) => {
+    const channel = Number(value) / 255;
+
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+}
+
 test('hosted page handles fixture grading, escapes diff and stays within mobile width', async () => {
   const browser = await chromium.launch({ headless: true });
 
@@ -98,6 +108,20 @@ test('hosted page handles fixture grading, escapes diff and stays within mobile 
     });
     await page.goto(`${origin}/dev-tools/grip/boards/${checkId}`);
     await page.getByText('Fixture change map').waitFor();
+
+    for (const colorScheme of ['light', 'dark']) {
+      await page.emulateMedia({ colorScheme });
+      await page.waitForTimeout(300);
+      const colors = await page.evaluate(() => ({
+        background: getComputedStyle(document.body).backgroundColor,
+        text: getComputedStyle(document.querySelector('main h1')).color,
+      }));
+
+      assert.equal(colors.background, 'rgb(244, 246, 251)', `${colorScheme} background`);
+      assert.equal(colors.text, 'rgb(15, 23, 42)', `${colorScheme} heading`);
+      assert.ok((luminance(colors.background) + 0.05) / (luminance(colors.text) + 0.05) >= 4.5);
+    }
+
     assert.equal(await page.getByRole('textbox').count(), 5);
     assert.equal(await page.locator('main script').count(), 0);
     const submit = page.getByRole('button', { name: 'Перевірити відповіді' });

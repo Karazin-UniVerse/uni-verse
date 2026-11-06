@@ -16,4 +16,3 @@ export * from './OpportunityDetail';
 export * from './OpportunityFilterPanel';
 export * from './SegmentedControl';
 export * from './BackButton';
-export { GripBoard } from './GripBoard/GripBoard';

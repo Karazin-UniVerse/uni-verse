@@ -2,9 +2,15 @@ import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { AtGuard } from './at.guard';
-import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { IS_PUBLIC_KEY } from '@universe/core/constants/auth';
+import { Public } from '../decorators/public.decorator';
 
 describe('AtGuard', () => {
+  it('uses the shared public metadata key', () => {
+    class Fixture {}
+    Public()(Fixture);
+    expect(Reflect.getMetadata(IS_PUBLIC_KEY, Fixture)).toBe(true);
+  });
   let guard: AtGuard;
   let reflector: Reflector;
 
