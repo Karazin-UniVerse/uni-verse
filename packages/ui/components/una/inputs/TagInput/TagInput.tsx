@@ -75,7 +75,7 @@ export const TagInput: React.FC<TagInputProps> = ({
     const requestId = ++requestIdRef.current;
     const load = loadRef.current;
 
-    if (!load || debouncedQuery.length < minQueryLength) {
+    if (!isOpen || !load || debouncedQuery.length < minQueryLength) {
       setSuggestions([]);
 
       return;
@@ -92,7 +92,7 @@ export const TagInput: React.FC<TagInputProps> = ({
           setSuggestions([]);
         }
       });
-  }, [debouncedQuery, minQueryLength]);
+  }, [isOpen, debouncedQuery, minQueryLength]);
 
   const options = useMemo<TagOption[]>(() => {
     if (isLimitReached || normalizedQuery.length < minQueryLength) {
@@ -112,7 +112,7 @@ export const TagInput: React.FC<TagInputProps> = ({
       (value ?? EMPTY_TAGS).includes(normalizedQuery) ||
       existing.some((option) => option.name === normalizedQuery);
 
-    if (hasExactMatch || normalizedQuery.length > maxTagLength) {
+    if (!normalizedQuery || hasExactMatch || normalizedQuery.length > maxTagLength) {
       return existing;
     }
 
@@ -147,6 +147,23 @@ export const TagInput: React.FC<TagInputProps> = ({
     setQuery(event.target.value);
     setActiveIndex(-1);
     setIsOpen(true);
+  };
+
+  const handleBlur = (event: React.FocusEvent<HTMLDivElement>): void => {
+    if (event.currentTarget.contains(event.relatedTarget)) {
+      return;
+    }
+
+    if (!isComposingRef.current) {
+      addTag(query);
+
+      if (safeValue.includes(normalizedQuery)) {
+        setQuery('');
+      }
+    }
+
+    setIsOpen(false);
+    setActiveIndex(-1);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>): void => {
@@ -207,7 +224,7 @@ export const TagInput: React.FC<TagInputProps> = ({
   const isPanelVisible = isOpen && options.length > 0;
 
   return (
-    <div ref={rootRef} className={clsx(styles.root, className)}>
+    <div ref={rootRef} className={clsx(styles.root, className)} onBlur={handleBlur}>
       <div className={clsx(styles.field, disabled && styles.disabled)}>
         {safeValue.map((tag) => (
           <Tag key={tag} tone="info" className={styles.chip}>
