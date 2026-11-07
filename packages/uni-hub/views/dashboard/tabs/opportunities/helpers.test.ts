@@ -3,7 +3,9 @@ import type { Opportunity } from '@core/types/opportunities';
 import {
   calculatePaymentCounts,
   filterOpportunitiesByPayment,
+  filterOpportunitiesByRecruiting,
   filterOpportunitiesBySearch,
+  filterOpportunitiesByTags,
   getOpportunityErrorMessage,
 } from './helpers';
 
@@ -196,5 +198,54 @@ describe('filterOpportunitiesByPayment', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0]?.id).toBe('opp-2');
+  });
+});
+
+describe('filterOpportunitiesByRecruiting', () => {
+  it('should return all opportunities when isRecruiting is false', () => {
+    expect(filterOpportunitiesByRecruiting(sampleOpportunities, false)).toEqual(
+      sampleOpportunities,
+    );
+  });
+
+  it('should filter only opportunities with acceptsApplications=true and START or ACTIVE lifecycle', () => {
+    const list: Opportunity[] = [
+      { ...sampleOpportunities[0]!, acceptsApplications: true, lifecycleState: 'ACTIVE' },
+      { ...sampleOpportunities[1]!, acceptsApplications: false, lifecycleState: 'ACTIVE' },
+      { ...sampleOpportunities[2]!, acceptsApplications: true, lifecycleState: 'COMPLETED' },
+    ];
+
+    const result = filterOpportunitiesByRecruiting(list, true);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.id).toBe('opp-1');
+  });
+});
+
+describe('filterOpportunitiesByTags', () => {
+  it('should return all opportunities when tags list is empty', () => {
+    expect(filterOpportunitiesByTags(sampleOpportunities, [])).toEqual(sampleOpportunities);
+  });
+
+  it('should filter opportunities having at least one matching tag', () => {
+    const list: Opportunity[] = [
+      {
+        ...sampleOpportunities[0]!,
+        tags: [{ id: '1', name: 'react' }],
+      },
+      {
+        ...sampleOpportunities[1]!,
+        tags: [{ id: '2', name: 'nodejs' }],
+      },
+      {
+        ...sampleOpportunities[2]!,
+        proposedTags: ['design'],
+      },
+    ];
+
+    const result = filterOpportunitiesByTags(list, ['react', 'design']);
+
+    expect(result).toHaveLength(2);
+    expect(result.map((item) => item.id)).toEqual(['opp-1', 'opp-3']);
   });
 });

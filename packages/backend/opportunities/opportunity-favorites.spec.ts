@@ -36,6 +36,7 @@ describe('Opportunity favorites and restricted listings', () => {
     paymentDetails: null,
     details: null,
     moderationContentHash: null,
+    proposedTags: [],
     owner: { id: 'owner', name: 'Owner', email: 'private@example.com' },
   };
   const prisma = {
@@ -48,12 +49,17 @@ describe('Opportunity favorites and restricted listings', () => {
       updateMany: jest.fn(),
     },
     opportunityApplication: { findMany: jest.fn() },
+    $transaction: jest.fn(),
   };
   let service: OpportunitiesService;
   const notify = jest.fn();
 
   beforeEach(async () => {
     jest.resetAllMocks();
+    prisma.$transaction.mockImplementation(
+      (callback: (transaction: typeof prisma) => Promise<Opportunity>) =>
+        callback(prisma),
+    );
     const module = await Test.createTestingModule({
       providers: [
         OpportunitiesService,
@@ -194,6 +200,46 @@ describe('Opportunity favorites and restricted listings', () => {
       }),
     );
   });
+
+  it.each(['update', 'lifecycle'] as const)(
+    'notifies subscribers when %s closes applications in an already paused opportunity',
+    async (operation) => {
+      const paused = {
+        ...opportunity,
+        status: OpportunityStatus.PUBLISHED,
+        lifecycleState: OpportunityLifecycleState.PAUSED,
+        acceptsApplications: true,
+      };
+
+      prisma.opportunity.findUnique.mockResolvedValue(paused);
+      prisma.opportunity.update.mockResolvedValue({
+        ...paused,
+        acceptsApplications: false,
+      });
+      prisma.opportunityFavorite.findMany.mockResolvedValue([
+        { userId: 'subscriber' },
+      ]);
+
+      if (operation === 'update') {
+        await service.update('owner', opportunity.id, {
+          acceptsApplications: true,
+        });
+      } else {
+        await service.changeLifecycleState(
+          'owner',
+          opportunity.id,
+          OpportunityLifecycleState.PAUSED,
+        );
+      }
+
+      expect(notify).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'subscriber',
+          type: 'OPPORTUNITY_UPDATED',
+        }),
+      );
+    },
+  );
 
   it('does not notify subscribers about unpublished edits', async () => {
     prisma.opportunity.update.mockResolvedValue(opportunity);

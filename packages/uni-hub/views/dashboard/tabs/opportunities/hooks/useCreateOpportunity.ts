@@ -8,7 +8,16 @@ import type {
   Opportunity,
   UpdateOpportunityRequest,
 } from '@core/types/opportunities';
-import { OPPORTUNITY_LIFECYCLE, OPPORTUNITY_PAYMENT_TYPE } from '@core/constants/opportunities';
+import {
+  OPPORTUNITY_LIFECYCLE,
+  OPPORTUNITY_PAYMENT_TYPE,
+  OPPORTUNITY_STATUS,
+} from '@core/constants/opportunities';
+import {
+  getOpportunityTagNames,
+  hasOpportunityContentChanged,
+  isRecruitmentPhase,
+} from '@core/utils/opportunities';
 import { invalidateOpportunities } from '../cache';
 import type { CreateOpportunityFormData } from '../types';
 import { getOpportunityErrorMessage } from '../helpers';
@@ -19,7 +28,8 @@ const INITIAL_FORM_DATA: CreateOpportunityFormData = {
   ownerContactInfo: '',
   paymentType: OPPORTUNITY_PAYMENT_TYPE.UNPAID,
   paymentDetails: '',
-  acceptsApplications: true,
+  tags: [],
+  acceptsApplications: false,
   lifecycleState: OPPORTUNITY_LIFECYCLE.START,
 };
 
@@ -29,6 +39,7 @@ interface OpportunityUpdate {
 }
 
 export interface UseCreateOpportunityProps {
+  currentOpportunity?: Opportunity;
   onCreated?: () => void;
 }
 
@@ -38,6 +49,7 @@ interface UseCreateOpportunityResult {
   setFormData: React.Dispatch<React.SetStateAction<CreateOpportunityFormData>>;
   creating: boolean;
   isEdit: boolean;
+  willRemoderate: boolean;
   openCreate: () => void;
   openEdit: (opportunity: Opportunity) => void;
   close: () => void;
@@ -45,6 +57,7 @@ interface UseCreateOpportunityResult {
 }
 
 export function useCreateOpportunity({
+  currentOpportunity,
   onCreated,
 }: UseCreateOpportunityProps): UseCreateOpportunityResult {
   const toast = useToast();
@@ -52,7 +65,7 @@ export function useCreateOpportunity({
   const queryClient = useQueryClient();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [editingOpportunityId, setEditingOpportunityId] = useState<string | null>(null);
+  const [editingOpportunity, setEditingOpportunity] = useState<Opportunity | null>(null);
   const [formData, setFormData] = useState<CreateOpportunityFormData>(INITIAL_FORM_DATA);
 
   const createMutation = useMutation({
@@ -67,20 +80,23 @@ export function useCreateOpportunity({
   });
 
   const openCreate = (): void => {
-    setEditingOpportunityId(null);
+    setEditingOpportunity(null);
     setFormData(INITIAL_FORM_DATA);
     setIsOpen(true);
   };
 
   const openEdit = (opportunity: Opportunity): void => {
-    setEditingOpportunityId(opportunity.id);
+    const canAcceptApplications = isRecruitmentPhase(opportunity.lifecycleState);
+
+    setEditingOpportunity(opportunity);
     setFormData({
       title: opportunity.title,
       description: opportunity.description,
       ownerContactInfo: opportunity.ownerContactInfo || '',
       paymentType: opportunity.paymentType,
       paymentDetails: opportunity.paymentDetails || '',
-      acceptsApplications: opportunity.acceptsApplications !== false,
+      tags: getOpportunityTagNames(opportunity),
+      acceptsApplications: canAcceptApplications && opportunity.acceptsApplications !== false,
       lifecycleState: opportunity.lifecycleState,
     });
     setIsOpen(true);
@@ -88,17 +104,19 @@ export function useCreateOpportunity({
 
   const close = (): void => {
     setIsOpen(false);
-    setEditingOpportunityId(null);
+    setEditingOpportunity(null);
     setFormData(INITIAL_FORM_DATA);
   };
 
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
 
+    const canAcceptApplications = isRecruitmentPhase(formData.lifecycleState);
+
     try {
-      if (editingOpportunityId) {
+      if (editingOpportunity) {
         await updateMutation.mutateAsync({
-          id: editingOpportunityId,
+          id: editingOpportunity.id,
           request: {
             title: formData.title.trim(),
             description: formData.description.trim(),
@@ -108,7 +126,8 @@ export function useCreateOpportunity({
               (formData.paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID &&
                 formData.paymentDetails.trim()) ||
               null,
-            acceptsApplications: formData.acceptsApplications,
+            tags: formData.tags,
+            acceptsApplications: canAcceptApplications ? formData.acceptsApplications : false,
             lifecycleState: formData.lifecycleState,
           },
         });
@@ -122,7 +141,10 @@ export function useCreateOpportunity({
           ownerContactInfo: formData.ownerContactInfo.trim(),
           paymentType: formData.paymentType,
           paymentDetails: formData.paymentDetails.trim() || undefined,
-          acceptsApplications: formData.acceptsApplications ?? true,
+          tags: formData.tags,
+          acceptsApplications: canAcceptApplications
+            ? (formData.acceptsApplications ?? true)
+            : false,
           lifecycleState: formData.lifecycleState,
         });
 
@@ -131,7 +153,7 @@ export function useCreateOpportunity({
         onCreated?.();
       }
     } catch (err: unknown) {
-      const errorKey = editingOpportunityId
+      const errorKey = editingOpportunity
         ? 'opportunities.toast.updateError'
         : 'opportunities.toast.createError';
 
@@ -139,12 +161,22 @@ export function useCreateOpportunity({
     }
   };
 
+  const baselineOpportunity =
+    editingOpportunity && currentOpportunity?.id === editingOpportunity.id
+      ? currentOpportunity
+      : editingOpportunity;
+
+  const willRemoderate =
+    baselineOpportunity?.status === OPPORTUNITY_STATUS.PUBLISHED &&
+    hasOpportunityContentChanged(baselineOpportunity, formData);
+
   return {
     isOpen,
     formData,
     setFormData,
     creating: createMutation.isPending || updateMutation.isPending,
-    isEdit: editingOpportunityId !== null,
+    isEdit: editingOpportunity !== null,
+    willRemoderate,
     openCreate,
     openEdit,
     close,

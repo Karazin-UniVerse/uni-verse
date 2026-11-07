@@ -10,6 +10,8 @@ export type OpportunitySubTab = (typeof OPPORTUNITY_SUB_TAB)[keyof typeof OPPORT
 
 export const OPPORTUNITY_SUB_TABS = Object.values(OPPORTUNITY_SUB_TAB);
 
+export const CATALOG_POLL_INTERVAL_MS = 30_000;
+
 export const OPPORTUNITY_CARD_VARIANT = {
   CATALOG: 'catalog',
   OWNER: 'owner',

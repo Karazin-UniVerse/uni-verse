@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider, useTheme } from './ThemeContext';
+import { THEME_COLOR_SCHEME } from '@core/constants/themes';
 
 const STORAGE_KEY = 'universe-theme';
 
@@ -24,11 +25,23 @@ const ThemeConsumer = () => {
   );
 };
 
+const mockMatchMedia = (matches: boolean): void => {
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    matches,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    onchange: null,
+    dispatchEvent: vi.fn(),
+  }));
+};
+
 describe('ThemeContext', () => {
   beforeEach(() => {
-    window.localStorage.clear();
-    delete document.documentElement.dataset.theme;
-    delete document.documentElement.dataset.colorScheme;
+    // Light system theme, so the default is karazinClassic
+    mockMatchMedia(false);
   });
 
   afterEach(() => {
@@ -48,17 +61,41 @@ describe('ThemeContext', () => {
     expect(() => render(<Consumer />)).toThrow('useTheme must be used within ThemeProvider');
   });
 
-  it("should provide default theme 'light' and apply default dataset attributes", () => {
+  it("should provide default theme 'karazinClassic' and apply default dataset attributes", () => {
     render(
       <ThemeProvider>
         <ThemeConsumer />
       </ThemeProvider>,
     );
 
-    expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
+    expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinClassic');
     expect(document.documentElement.dataset.colorScheme).toBe('light');
-    expect(document.documentElement.dataset.theme).toBeUndefined();
-    expect(document.documentElement).not.toHaveAttribute('data-theme');
+    expect(document.documentElement.dataset.theme).toBe('karazinClassic');
+  });
+
+  it('should use karazinGold when system prefers dark and nothing is stored', () => {
+    mockMatchMedia(true);
+
+    render(
+      <ThemeProvider>
+        <ThemeConsumer />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinGold');
+  });
+
+  it('should not crash and use karazinClassic when matchMedia is unavailable', () => {
+    // @ts-expect-error simulating an environment without matchMedia
+    window.matchMedia = undefined;
+
+    render(
+      <ThemeProvider>
+        <ThemeConsumer />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinClassic');
   });
 
   it('should load initial theme from localStorage if valid theme stored', () => {
@@ -75,7 +112,7 @@ describe('ThemeContext', () => {
     expect(document.documentElement.dataset.theme).toBe('dark');
   });
 
-  it("should fallback to 'light' if stored theme is invalid", () => {
+  it("should fallback to 'karazinClassic' if stored theme is invalid", () => {
     window.localStorage.setItem(STORAGE_KEY, 'nonexistent-theme');
 
     render(
@@ -84,9 +121,9 @@ describe('ThemeContext', () => {
       </ThemeProvider>,
     );
 
-    expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
+    expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinClassic');
     expect(document.documentElement.dataset.colorScheme).toBe('light');
-    expect(document.documentElement.dataset.theme).toBeUndefined();
+    expect(document.documentElement.dataset.theme).toBe('karazinClassic');
   });
 
   it('should change theme via setTheme, updating state, localStorage, and document.documentElement dataset', async () => {
@@ -127,7 +164,7 @@ describe('ThemeContext', () => {
       </ThemeProvider>,
     );
 
-    expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
+    expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinClassic');
 
     act(() => {
       window.localStorage.setItem(STORAGE_KEY, 'universeSpace');
@@ -157,8 +194,8 @@ describe('ThemeContext', () => {
       window.dispatchEvent(new Event('theme-change'));
     });
 
-    expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
-    expect(document.documentElement.dataset.theme).toBeUndefined();
+    expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinClassic');
+    expect(document.documentElement.dataset.theme).toBe('karazinClassic');
     expect(document.documentElement.dataset.colorScheme).toBe('light');
   });
 
@@ -175,4 +212,56 @@ describe('ThemeContext', () => {
     expect(removeEventListenerSpy).toHaveBeenCalledWith('storage', expect.any(Function));
     expect(removeEventListenerSpy).toHaveBeenCalledWith('theme-change', expect.any(Function));
   });
+});
+it('should follow OS preference changes only while no theme is saved', () => {
+  let prefersDark = false;
+  let mediaListener: (() => void) | undefined;
+
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    get matches() {
+      return prefersDark;
+    },
+    media: query,
+    addEventListener: vi.fn((_event: string, listener: () => void) => {
+      mediaListener = listener;
+    }),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    onchange: null,
+    dispatchEvent: vi.fn(),
+  }));
+
+  render(
+    <ThemeProvider>
+      <ThemeConsumer />
+    </ThemeProvider>,
+  );
+
+  expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinClassic');
+
+  // OS switches to dark with no saved theme: the app follows it
+  act(() => {
+    prefersDark = true;
+    mediaListener?.();
+  });
+
+  expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinGold');
+  expect(document.documentElement.dataset.theme).toBe('karazinGold');
+  expect(document.documentElement.dataset.colorScheme).toBe(THEME_COLOR_SCHEME.karazinGold);
+
+  // The user saves a valid theme: it must win over later OS changes
+  act(() => {
+    window.localStorage.setItem(STORAGE_KEY, 'karazinClassic');
+    window.dispatchEvent(new Event('theme-change'));
+  });
+
+  expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinClassic');
+
+  act(() => {
+    prefersDark = true;
+    mediaListener?.();
+  });
+
+  expect(screen.getByTestId('theme-value')).toHaveTextContent('karazinClassic');
 });

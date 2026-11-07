@@ -18,6 +18,10 @@
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-full);
   }
+
+  :global(body:has([role='dialog'])) & {
+    display: none;
+  }
 }
 
 .nav {

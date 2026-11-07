@@ -82,6 +82,7 @@ export function useDashboardData(): UseDashboardDataResult {
     enabled,
     refetchDashboard: dashboardQuery.refetch,
     refetchPlatform: platformQuery.refetch,
+    refetchProfile: profileQuery.refetch,
   });
 
   const { error, errorUpdatedAt, data: queryData, isError } = dashboardQuery;

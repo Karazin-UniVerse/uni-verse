@@ -71,6 +71,24 @@ describe('OpportunityCard component', () => {
 
     expect(screen.getByText('Набір закрито')).toBeInTheDocument();
   });
+
+  it('should render 2 direct tag children in badge row when accepting applications', () => {
+    const { container } = render(<OpportunityCard opportunity={mockOpportunity} />);
+    const badgeRow = container.querySelector('[class*="cardBadgeRow"]');
+
+    expect(badgeRow?.children).toHaveLength(2);
+  });
+
+  it('should render 3 direct tag children in badge row when applications are closed', () => {
+    const closedOpp: Opportunity = {
+      ...mockOpportunity,
+      acceptsApplications: false,
+    };
+    const { container } = render(<OpportunityCard opportunity={closedOpp} />);
+    const badgeRow = container.querySelector('[class*="cardBadgeRow"]');
+
+    expect(badgeRow?.children).toHaveLength(3);
+  });
 });
 
 import userEvent from '@testing-library/user-event';

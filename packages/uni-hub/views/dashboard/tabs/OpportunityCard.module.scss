@@ -119,15 +119,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-12);
-  margin-bottom: 2px;
-}
-
-.categoryBadgeGroup {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
   flex-wrap: wrap;
+  gap: var(--space-8) var(--space-12);
+  margin-bottom: 2px;
 }
 
 .categoryPill {
@@ -222,11 +216,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
   gap: var(--space-8);
   padding-top: 16px;
   margin-top: 18px;
   border-top: 1px solid var(--card-border);
+  flex-wrap: wrap;
 }
 
 .ownerContactBlock {
@@ -308,4 +302,11 @@
 .cardDate {
   font-size: var(--font-xs);
   color: var(--text-secondary);
+}
+
+.cardTagsGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
 }

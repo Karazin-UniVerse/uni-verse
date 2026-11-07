@@ -8,7 +8,7 @@
   border: 1px solid var(--card-border);
   border-radius: var(--border-radius-medium);
   font-size: var(--font-xs);
-  line-height: 1;
+  line-height: 1.25;
   font-weight: 500;
   color: var(--text-secondary);
   overflow-wrap: anywhere;
@@ -17,4 +17,10 @@
     display: block;
     flex-shrink: 0;
   }
+}
+
+.contactText {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: inherit;
 }

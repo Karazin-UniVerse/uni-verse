@@ -1,16 +1,22 @@
+import { createHash } from 'node:crypto';
 import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
   ValidationArguments,
 } from 'class-validator';
-import { isValidContactInfo } from '@universe/core/utils/contacts';
-import { createHash } from 'node:crypto';
-import type { Opportunity } from '@universe/database';
 import {
-  OPPORTUNITY_PAYMENT_TYPE,
+  OPPORTUNITY_MODERATE_ACTION,
   OPPORTUNITY_AVAILABILITY,
   OPPORTUNITY_STATUS,
 } from '@universe/core/constants/opportunities';
+import { isValidContactInfo } from '@universe/core/utils/contacts';
+import { normalizeOpportunityContent } from '@universe/core/utils/opportunities';
+import type {
+  Opportunity,
+  OpportunityStatus,
+  Prisma,
+} from '@universe/database';
+import type { ModerateOpportunityDto } from './dto/moderate-opportunity.dto';
 
 import type { UnavailableOpportunity } from '@universe/core/types/opportunities';
 
@@ -30,6 +36,49 @@ export function unavailableOpportunity(
   };
 }
 
+export const toTagRecord = (name: string): { name: string } => ({ name });
+
+export type ApplyModerationParams = {
+  id: string;
+  opportunity: Opportunity;
+  newStatus: OpportunityStatus;
+  dto: ModerateOpportunityDto;
+};
+
+export async function applyModerationInTransaction(
+  tx: Prisma.TransactionClient,
+  { id, opportunity, newStatus, dto }: ApplyModerationParams,
+): Promise<Opportunity> {
+  const isApprove = dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE;
+  const names = opportunity.proposedTags;
+
+  if (isApprove && names.length) {
+    await tx.tag.createMany({
+      data: names.map(toTagRecord),
+      skipDuplicates: true,
+    });
+  }
+
+  return tx.opportunity.update({
+    where: {
+      id,
+      status: opportunity.status,
+      updatedAt: opportunity.updatedAt,
+    },
+    data: {
+      status: newStatus,
+      moderationContentHash:
+        dto.action === OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES
+          ? getOpportunityContentHash(opportunity)
+          : null,
+      moderationComment: isApprove ? null : dto.comment,
+      ...(isApprove && {
+        tags: { set: names.map(toTagRecord) },
+      }),
+    },
+  });
+}
+
 export function getOpportunityContentHash(
   opportunity: Pick<
     Opportunity,
@@ -38,19 +87,19 @@ export function getOpportunityContentHash(
     | 'ownerContactInfo'
     | 'paymentType'
     | 'paymentDetails'
+    | 'proposedTags'
   >,
 ): string {
-  const content = [
-    opportunity.title.trim(),
-    opportunity.description.trim(),
-    opportunity.ownerContactInfo.trim(),
-    opportunity.paymentType,
-    opportunity.paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID
-      ? opportunity.paymentDetails?.trim() || null
-      : null,
-  ];
+  const content = normalizeOpportunityContent(opportunity);
 
-  return createHash('sha256').update(JSON.stringify(content)).digest('hex');
+  const tags = [...opportunity.proposedTags].sort((firstTag, secondTag) =>
+    firstTag.localeCompare(secondTag),
+  );
+  const hashedContent = tags.length ? [...content, tags] : content;
+
+  return createHash('sha256')
+    .update(JSON.stringify(hashedContent))
+    .digest('hex');
 }
 
 @ValidatorConstraint({ name: 'isContactInfo', async: false })

@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { ContactTags, ModerationActions } from '@ui';
+import { Tag } from '@una';
+import { getOpportunityTagNames } from '@core/utils/opportunities';
 import { Clock, Calendar, Coins, Briefcase, AlertCircle, Hash } from 'lucide-react';
 import type { Opportunity } from '@core/types/opportunities';
 import type { OpportunityModerateAction } from '@core/constants/opportunities';
@@ -116,6 +118,21 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                 </div>
                 <p className={styles.moderationDescriptionText}>{item.description}</p>
               </div>
+
+              {getOpportunityTagNames(item).length > 0 && (
+                <div className={styles.moderationTagsRow}>
+                  <span className={styles.moderationTagsLabel}>
+                    {formatMessage('opportunities.moderation.tagsLabel')}:
+                  </span>
+                  <div className={styles.moderationTagsList}>
+                    {getOpportunityTagNames(item).map((tag) => (
+                      <Tag key={tag} tone="neutral" size="small">
+                        {tag}
+                      </Tag>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {item.moderationComment && (
                 <div className={styles.previousCommentBox}>

@@ -63,8 +63,7 @@ describe('Opportunities decomposed subtabs', () => {
     expect(
       screen.getByPlaceholderText('Пошук за назвою або ключовими словами...'),
     ).toBeInTheDocument();
-    expect(screen.getByText('Оплачувані')).toBeInTheDocument();
-    expect(screen.getByText('Волонтерство / Практика')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /фільтри/i })).toBeInTheDocument();
     expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
   });
 

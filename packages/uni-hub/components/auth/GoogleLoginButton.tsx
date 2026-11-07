@@ -73,6 +73,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         src="https://accounts.google.com/gsi/client"
         strategy="afterInteractive"
         onReady={() => setScriptLoaded(true)}
+        onError={() => onErrorRef.current?.(errorTextRef.current)}
       />
       <div
         ref={containerRef}

@@ -1,9 +1,11 @@
 'use client';
 
 import React from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { CreateOpportunityModal as CreateOpportunityModalUI } from '@ui';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { OPPORTUNITY_LIFECYCLE } from '@core/constants/opportunities';
+import { loadTagSuggestions } from '../queries';
 import type { CreateOpportunityFormData } from '../types';
 
 export interface CreateOpportunityModalProps {
@@ -14,6 +16,7 @@ export interface CreateOpportunityModalProps {
   onSubmit: (e: React.SyntheticEvent<HTMLFormElement>) => void;
   submitting: boolean;
   isEdit?: boolean;
+  remoderationWarning?: boolean;
 }
 
 export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
@@ -24,8 +27,14 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   onSubmit,
   submitting,
   isEdit = false,
+  remoderationWarning = false,
 }) => {
   const { formatMessage } = useLanguage();
+  const queryClient = useQueryClient();
+  const loadSuggestions = (query: string): Promise<string[]> =>
+    loadTagSuggestions(queryClient, query);
+  const formatCreateTagLabel = (tag: string): string =>
+    formatMessage('opportunities.tags.create', { tag });
 
   const lifecycleOptions = [
     {
@@ -80,6 +89,16 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
       unpaidOptionLabel={formatMessage('opportunities.createModal.unpaidOption')}
       paidOptionLabel={formatMessage('opportunities.createModal.paidOption')}
       acceptsApplicationsLabel={formatMessage('opportunities.createModal.acceptsApplications')}
+      tagsLabel={formatMessage('opportunities.catalog.filterTagsLabel')}
+      tagsPlaceholder={formatMessage('opportunities.catalog.filterTagsPlaceholder')}
+      removeTagLabel={formatMessage('opportunities.tags.remove')}
+      formatCreateTagLabel={formatCreateTagLabel}
+      loadTagSuggestions={loadSuggestions}
+      remoderationWarning={
+        remoderationWarning
+          ? formatMessage('opportunities.createModal.remoderationWarning')
+          : undefined
+      }
       cancelText={formatMessage('opportunities.createModal.cancel')}
       submitText={
         isEdit

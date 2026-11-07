@@ -91,6 +91,14 @@ enum PaymentType {
   UNPAID
 }
 
+model Tag {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  opportunities Opportunity[]
+}
+
 model Opportunity {
   id                    String                    @id @default(uuid())
   title                 String
@@ -99,12 +107,13 @@ model Opportunity {
   partnerInfo           String?
   status                OpportunityStatus         @default(DRAFT)
   lifecycleState        OpportunityLifecycleState @default(START)
-  acceptsApplications   Boolean                   @default(true)
+  acceptsApplications   Boolean                   @default(false)
   paymentType           PaymentType               @default(UNPAID)
   paymentDetails        String?
   details               String?
   moderationComment     String?
   moderationContentHash String?
+  proposedTags          String[]                  @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -112,6 +121,7 @@ model Opportunity {
   ownerId String
   owner   User   @relation("OpportunityOwner", fields: [ownerId], references: [id])
 
+  tags         Tag[]
   applications OpportunityApplication[] @relation("OpportunityToApplication")
   comments     Comment[]
   favorites    OpportunityFavorite[]

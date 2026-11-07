@@ -44,6 +44,7 @@ const publishedOpportunity: Opportunity = {
   details: null,
   moderationComment: null,
   moderationContentHash: null,
+  proposedTags: [],
   ownerId: 'owner',
   createdAt: new Date('2026-10-01T10:00:00Z'),
   updatedAt: new Date('2026-10-01T10:00:00Z'),
@@ -164,6 +165,7 @@ describe('OpportunitiesService', () => {
             status: 'DRAFT',
             ownerContactInfo:
               ownerContactInfo === '  @organizer  ' ? '@organizer' : '',
+            proposedTags: [],
           },
         });
       },
@@ -296,7 +298,10 @@ describe('OpportunitiesService', () => {
 
       expect(prisma.opportunity.findMany).toHaveBeenCalledWith({
         where: { ownerId: 'owner' },
-        include: { owner: { select: { id: true, name: true, email: true } } },
+        include: {
+          owner: { select: { id: true, name: true, email: true } },
+          tags: { select: { id: true, name: true } },
+        },
         orderBy: { createdAt: 'desc' },
       });
     });
@@ -383,6 +388,89 @@ describe('OpportunitiesService', () => {
   });
 
   describe('update', () => {
+    it.each(Object.values(OpportunityStatus))(
+      'should reject a stale owner edit from %s without bypassing moderation',
+      async (status) => {
+        const snapshot = {
+          ...publishedOpportunity,
+          status,
+          owner: { id: 'owner', name: 'Organizer', email: 'owner@example.com' },
+          tags: [],
+        };
+
+        jest.spyOn(service, 'findOne').mockResolvedValue(snapshot);
+        jest.spyOn(prisma.user, 'findMany').mockResolvedValue([]);
+        jest
+          .spyOn(prisma.opportunity, 'update')
+          .mockRejectedValue({ code: 'P2025' });
+
+        await expect(
+          service.update('owner', snapshot.id, {
+            title: 'Unreviewed title',
+            tags: ['unreviewed'],
+          }),
+        ).rejects.toThrow(
+          new ConflictException(OPPORTUNITY_ERROR.CHANGES_REQUIRED),
+        );
+        expect(prisma.opportunity.update).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: {
+              id: snapshot.id,
+              status,
+              updatedAt: snapshot.updatedAt,
+            },
+          }),
+        );
+        expect(notificationsService.createNotification).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([
+      { tags: [' React ', 'react'], remoderates: false },
+      { tags: ['nodejs'], remoderates: true },
+      { tags: [], remoderates: true },
+    ])(
+      'preserves tag moderation when published edits send $tags',
+      async ({ tags, remoderates }) => {
+        jest.spyOn(service, 'findOne').mockResolvedValue({
+          ...publishedOpportunity,
+          owner: { id: 'owner', name: 'Organizer', email: 'owner@example.com' },
+          tags: [{ id: 'react', name: 'react' }],
+        });
+        jest
+          .spyOn(prisma.opportunity, 'update')
+          .mockResolvedValue(publishedOpportunity);
+        jest.spyOn(prisma.user, 'findMany').mockResolvedValue([]);
+
+        await service.update('owner', publishedOpportunity.id, {
+          title: publishedOpportunity.title,
+          tags,
+          lifecycleState: 'PAUSED',
+        });
+
+        expect(prisma.opportunity.update).toHaveBeenCalledWith({
+          where: {
+            id: publishedOpportunity.id,
+            status: 'PUBLISHED',
+            updatedAt: publishedOpportunity.updatedAt,
+            acceptsApplications: true,
+            lifecycleState: 'ACTIVE',
+          },
+          data: {
+            title: publishedOpportunity.title,
+            proposedTags:
+              tags.length === 0 ? [] : [remoderates ? 'nodejs' : 'react'],
+            lifecycleState: 'PAUSED',
+            acceptsApplications: false,
+            ...(remoderates
+              ? { status: 'READY_FOR_REVIEW', moderationComment: null }
+              : {}),
+          },
+        });
+        expect(prisma.user.findMany).toHaveBeenCalledTimes(remoderates ? 1 : 0);
+      },
+    );
+
     it('resets status to READY_FOR_REVIEW, clears moderationComment, and notifies moderators if it was published', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         ...publishedOpportunity,
@@ -446,6 +534,114 @@ describe('OpportunitiesService', () => {
       });
     });
 
+    it('does not reset status or notify moderators when update sends identical content fields alongside lifecycleState or acceptsApplications changes', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
+        id: '1',
+        ownerId: 'user1',
+        status: 'PUBLISHED',
+        lifecycleState: 'START',
+        acceptsApplications: true,
+      });
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        ...publishedOpportunity,
+        id: '1',
+        ownerId: 'user1',
+        status: 'PUBLISHED',
+        lifecycleState: 'ACTIVE',
+        acceptsApplications: false,
+      });
+
+      await service.update('user1', '1', {
+        title: publishedOpportunity.title,
+        description: publishedOpportunity.description,
+        ownerContactInfo: publishedOpportunity.ownerContactInfo,
+        paymentType: publishedOpportunity.paymentType,
+        paymentDetails: publishedOpportunity.paymentDetails ?? undefined,
+        lifecycleState: 'ACTIVE',
+        acceptsApplications: false,
+      });
+
+      expect(prisma.opportunity.update).toHaveBeenCalledWith({
+        where: {
+          id: '1',
+          status: 'PUBLISHED',
+          updatedAt: publishedOpportunity.updatedAt,
+          acceptsApplications: true,
+          lifecycleState: 'START',
+        },
+        data: {
+          title: publishedOpportunity.title,
+          description: publishedOpportunity.description,
+          ownerContactInfo: publishedOpportunity.ownerContactInfo,
+          paymentType: publishedOpportunity.paymentType,
+          paymentDetails: undefined,
+          lifecycleState: 'ACTIVE',
+          acceptsApplications: false,
+        },
+      });
+      expect(notificationsService.createNotification).not.toHaveBeenCalled();
+    });
+
+    it.each(['PAUSED', 'COMPLETED', 'CANCELLED'] as const)(
+      'forces acceptsApplications to false when creating or updating with non-recruitment lifecycleState %s',
+      async (lifecycleState) => {
+        await service.create(
+          'owner',
+          plainToInstance(CreateOpportunityDto, {
+            title: 'Research',
+            description: 'Research project',
+            paymentType: 'UNPAID',
+            lifecycleState,
+            acceptsApplications: true,
+          }),
+        );
+
+        expect(prisma.opportunity.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            lifecycleState,
+            acceptsApplications: false,
+          }),
+        });
+
+        jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+          ...publishedOpportunity,
+          id: '1',
+          ownerId: 'owner',
+          status: 'PUBLISHED',
+          lifecycleState: 'ACTIVE',
+          acceptsApplications: true,
+        });
+        jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+          ...publishedOpportunity,
+          id: '1',
+          ownerId: 'owner',
+          status: 'PUBLISHED',
+          lifecycleState,
+          acceptsApplications: false,
+        });
+
+        await service.update('owner', '1', {
+          lifecycleState,
+          acceptsApplications: true,
+        });
+
+        expect(prisma.opportunity.update).toHaveBeenCalledWith({
+          where: {
+            id: '1',
+            status: 'PUBLISHED',
+            updatedAt: publishedOpportunity.updatedAt,
+            acceptsApplications: true,
+            lifecycleState: 'ACTIVE',
+          },
+          data: {
+            lifecycleState,
+            acceptsApplications: false,
+          },
+        });
+      },
+    );
+
     it('does not reset status if it was DRAFT', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         ...publishedOpportunity,
@@ -493,7 +689,10 @@ describe('OpportunitiesService', () => {
           id: 'own-opportunity',
           ownerId: 'moderator-1',
           status: 'READY_FOR_REVIEW',
-        } as Awaited<ReturnType<typeof prisma.opportunity.findUnique>>);
+          proposedTags: [],
+        } as unknown as Awaited<
+          ReturnType<typeof prisma.opportunity.findUnique>
+        >);
         jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
           id: 'own-opportunity',
           ownerId: 'moderator-1',
@@ -555,6 +754,7 @@ describe('OpportunitiesService', () => {
         title: 'test',
         ownerId: 'owner1',
         status: 'READY_FOR_REVIEW',
+        proposedTags: [],
       } as any);
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         id: 'opp1',
@@ -588,6 +788,7 @@ describe('OpportunitiesService', () => {
         title: 'test',
         ownerId: 'owner1',
         status: 'READY_FOR_REVIEW',
+        proposedTags: [],
       } as any);
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         id: 'opp1',
@@ -614,6 +815,7 @@ describe('OpportunitiesService', () => {
         title: 'test',
         ownerId: 'owner1',
         status: 'READY_FOR_REVIEW',
+        proposedTags: [],
       } as any);
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         id: 'opp1',
@@ -647,6 +849,7 @@ describe('OpportunitiesService', () => {
         title: 'test',
         ownerId: 'owner1',
         status: 'READY_FOR_REVIEW',
+        proposedTags: [],
       } as any);
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         id: 'opp1',
@@ -679,6 +882,7 @@ describe('OpportunitiesService', () => {
         title: 'test',
         ownerId: 'owner1',
         status: 'READY_FOR_REVIEW',
+        proposedTags: [],
       } as any);
 
       await expect(
@@ -699,6 +903,7 @@ describe('OpportunitiesService', () => {
         title: 'test',
         ownerId: 'owner1',
         status: 'READY_FOR_REVIEW',
+        proposedTags: [],
       } as any);
 
       await expect(
@@ -716,6 +921,7 @@ describe('OpportunitiesService', () => {
         title: 'test',
         ownerId: 'owner1',
         status: 'READY_FOR_REVIEW',
+        proposedTags: [],
         updatedAt: new Date('2026-01-01T00:00:00.000Z'),
       } as any);
       jest.spyOn(prisma.opportunity, 'update').mockRejectedValue({
@@ -759,6 +965,8 @@ describe('OpportunitiesService', () => {
       expect(prisma.opportunity.create).toHaveBeenCalledWith({
         data: {
           ...dto,
+          ownerContactInfo: dto.ownerContactInfo?.trim() ?? '',
+          proposedTags: [],
           ownerId: 'user-1',
           status: 'DRAFT',
         },
@@ -794,6 +1002,7 @@ describe('OpportunitiesService', () => {
         orderBy: { createdAt: 'desc' },
         include: {
           owner: { select: { id: true, name: true, email: true } },
+          tags: { select: { id: true, name: true } },
         },
       });
       expect(result).toHaveLength(1);
@@ -837,31 +1046,40 @@ describe('OpportunitiesService', () => {
   });
 
   describe('delete', () => {
-    it('deletes draft opportunity and applications atomically within a transaction', async () => {
+    it('should delete a draft and its applications on the transaction client', async () => {
       const draftOpportunity: Opportunity = {
         ...publishedOpportunity,
         id: 'draft-1',
         ownerId: 'owner-1',
         status: OpportunityStatus.DRAFT,
       };
+      const transactionClient = {
+        opportunityApplication: {
+          deleteMany: jest.fn().mockResolvedValue({ count: 2 }),
+        },
+        opportunity: {
+          delete: jest.fn().mockResolvedValue(draftOpportunity),
+        },
+      };
 
       jest
         .spyOn(prisma.opportunity, 'findUnique')
         .mockResolvedValue(draftOpportunity);
       jest
-        .spyOn(prisma.opportunityApplication, 'deleteMany')
-        .mockResolvedValue({ count: 2 });
-      jest
-        .spyOn(prisma.opportunity, 'delete')
-        .mockResolvedValue(draftOpportunity);
+        .spyOn(prisma, '$transaction')
+        .mockImplementation(async (callback) =>
+          callback(transactionClient as unknown as Prisma.TransactionClient),
+        );
 
       const result = await service.delete('owner-1', 'draft-1');
 
       expect(prisma.$transaction).toHaveBeenCalled();
-      expect(prisma.opportunityApplication.deleteMany).toHaveBeenCalledWith({
+      expect(
+        transactionClient.opportunityApplication.deleteMany,
+      ).toHaveBeenCalledWith({
         where: { opportunityId: 'draft-1' },
       });
-      expect(prisma.opportunity.delete).toHaveBeenCalledWith({
+      expect(transactionClient.opportunity.delete).toHaveBeenCalledWith({
         where: {
           id: 'draft-1',
           ownerId: 'owner-1',
@@ -870,6 +1088,8 @@ describe('OpportunitiesService', () => {
           },
         },
       });
+      expect(prisma.opportunityApplication.deleteMany).not.toHaveBeenCalled();
+      expect(prisma.opportunity.delete).not.toHaveBeenCalled();
       expect(result).toEqual(draftOpportunity);
     });
 
@@ -910,23 +1130,40 @@ describe('OpportunitiesService', () => {
       );
     });
 
-    it('rolls back transaction if opportunity deletion fails after deleteMany', async () => {
+    it('should propagate a parent deletion failure after deleting applications on the transaction client', async () => {
+      const transactionClient = {
+        opportunityApplication: {
+          deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+        },
+        opportunity: {
+          delete: jest
+            .fn()
+            .mockRejectedValue(new Error('Parent delete failed')),
+        },
+      };
+
+      jest
+        .spyOn(prisma, '$transaction')
+        .mockImplementation(async (callback) =>
+          callback(transactionClient as unknown as Prisma.TransactionClient),
+        );
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         ...publishedOpportunity,
         id: 'opp-1',
         ownerId: 'owner-1',
         status: OpportunityStatus.DRAFT,
       });
-      jest
-        .spyOn(prisma.opportunityApplication, 'deleteMany')
-        .mockResolvedValue({ count: 1 });
-      jest
-        .spyOn(prisma.opportunity, 'delete')
-        .mockRejectedValue(new Error('Parent delete failed'));
-
       await expect(service.delete('owner-1', 'opp-1')).rejects.toThrow(
         'Parent delete failed',
       );
+      expect(
+        transactionClient.opportunityApplication.deleteMany,
+      ).toHaveBeenCalledWith({
+        where: { opportunityId: 'opp-1' },
+      });
+      expect(transactionClient.opportunity.delete).toHaveBeenCalledTimes(1);
+      expect(prisma.opportunityApplication.deleteMany).not.toHaveBeenCalled();
+      expect(prisma.opportunity.delete).not.toHaveBeenCalled();
     });
 
     it('translates P2025 predicate mismatch into BadRequestException if status changes before delete', async () => {
@@ -1147,13 +1384,45 @@ describe('OpportunitiesService', () => {
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         ...publishedOpportunity,
         id: '1',
-        lifecycleState: 'CLOSED',
+        lifecycleState: 'PAUSED',
       } as any);
 
       const result = await service.changeLifecycleState(
         'user-1',
         '1',
-        'CLOSED' as any,
+        'PAUSED',
+      );
+
+      expect(prisma.opportunity.update).toHaveBeenCalledWith({
+        where: {
+          id: '1',
+          status: 'PUBLISHED',
+          updatedAt: publishedOpportunity.updatedAt,
+          lifecycleState: 'ACTIVE',
+          acceptsApplications: true,
+        },
+        data: { lifecycleState: 'PAUSED', acceptsApplications: false },
+      });
+      expect(result.lifecycleState).toBe('PAUSED');
+    });
+
+    it('leaves acceptsApplications untouched when changing to a recruitment phase', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
+        id: '1',
+        status: 'PUBLISHED',
+        ownerId: 'user-1',
+      } as any);
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        ...publishedOpportunity,
+        id: '1',
+        lifecycleState: 'ACTIVE',
+      } as any);
+
+      const result = await service.changeLifecycleState(
+        'user-1',
+        '1',
+        'ACTIVE',
       );
 
       expect(prisma.opportunity.update).toHaveBeenCalledWith({
@@ -1163,9 +1432,9 @@ describe('OpportunitiesService', () => {
           updatedAt: publishedOpportunity.updatedAt,
           lifecycleState: 'ACTIVE',
         },
-        data: { lifecycleState: 'CLOSED' },
+        data: { lifecycleState: 'ACTIVE' },
       });
-      expect(result.lifecycleState).toBe('CLOSED');
+      expect(result.lifecycleState).toBe('ACTIVE');
     });
   });
 

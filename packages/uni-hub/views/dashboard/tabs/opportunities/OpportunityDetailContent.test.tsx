@@ -65,6 +65,7 @@ describe('OpportunityDetailContent applicants deep-link', () => {
     vi.spyOn(opportunitiesApi, 'getOpportunityApplications').mockResolvedValue({
       data: [application],
     });
+    vi.spyOn(opportunitiesApi, 'getTagSuggestions').mockResolvedValue({ data: [] });
   });
 
   afterEach(() => {
@@ -331,6 +332,156 @@ describe('OpportunityDetailContent published opportunity controls', () => {
     vi.restoreAllMocks();
   });
 
+  it('allows owner to edit phase and recruitment on a published opportunity without re-moderation warning, and shows warning when content changes', async () => {
+    const user = userEvent.setup();
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    vi.spyOn(opportunitiesApi, 'updateOpportunity').mockResolvedValue({
+      data: {
+        ...buildOpportunity('opp-published'),
+        status: 'PUBLISHED',
+        lifecycleState: 'PAUSED',
+        acceptsApplications: false,
+      },
+    } as never);
+
+    render(
+      <OpportunityDetailContent
+        opportunity={{
+          ...buildOpportunity('opp-published'),
+          status: 'PUBLISHED',
+          lifecycleState: 'ACTIVE',
+          acceptsApplications: true,
+        }}
+      />,
+      {
+        wrapper: ({ children }) => (
+          <QueryClientProvider client={queryClient}>
+            <ToastProvider>{children}</ToastProvider>
+          </QueryClientProvider>
+        ),
+      },
+    );
+
+    const editBtn = screen.getByRole('button', { name: 'opportunities.detailModal.edit' });
+
+    await user.click(editBtn);
+
+    expect(
+      screen.getByRole('dialog', { name: 'opportunities.createModal.editTitle' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    const phaseSelect = screen.getByLabelText('opportunities.createModal.phaseLabel');
+    const recruitmentCheckbox = screen.getByRole('checkbox', {
+      name: 'opportunities.createModal.acceptsApplications',
+    });
+
+    await user.selectOptions(phaseSelect, 'PAUSED');
+
+    expect(recruitmentCheckbox).toBeDisabled();
+    expect(recruitmentCheckbox).not.toBeChecked();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    const titleInput = screen.getByLabelText('opportunities.createModal.titleLabel');
+
+    expect(titleInput).toHaveValue('Opportunity opp-published');
+
+    await user.type(titleInput, ' Updated');
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'opportunities.createModal.remoderationWarning',
+    );
+
+    await user.type(titleInput, '{backspace}'.repeat(' Updated'.length));
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    await user.type(titleInput, ' Updated');
+
+    const submitBtn = screen.getByRole('button', {
+      name: 'opportunities.createModal.saveChanges',
+    });
+
+    await user.click(submitBtn);
+
+    expect(opportunitiesApi.updateOpportunity).toHaveBeenCalledWith(
+      'opp-published',
+      expect.objectContaining({
+        title: 'Opportunity opp-published Updated',
+        lifecycleState: 'PAUSED',
+        acceptsApplications: false,
+      }),
+    );
+  });
+
+  it('submits lifecycleState and acceptsApplications without re-moderation warning when only phase changes', async () => {
+    const user = userEvent.setup();
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    vi.spyOn(opportunitiesApi, 'updateOpportunity').mockResolvedValue({
+      data: {
+        ...buildOpportunity('opp-published'),
+        status: 'PUBLISHED',
+        lifecycleState: 'PAUSED',
+        acceptsApplications: false,
+      },
+    } as never);
+
+    render(
+      <OpportunityDetailContent
+        opportunity={{
+          ...buildOpportunity('opp-published'),
+          status: 'PUBLISHED',
+          lifecycleState: 'ACTIVE',
+          acceptsApplications: true,
+        }}
+      />,
+      {
+        wrapper: ({ children }) => (
+          <QueryClientProvider client={queryClient}>
+            <ToastProvider>{children}</ToastProvider>
+          </QueryClientProvider>
+        ),
+      },
+    );
+
+    const editBtn = screen.getByRole('button', {
+      name: 'opportunities.detailModal.edit',
+    });
+
+    await user.click(editBtn);
+
+    const phaseSelect = screen.getByLabelText('opportunities.createModal.phaseLabel');
+    const recruitmentCheckbox = screen.getByRole('checkbox', {
+      name: 'opportunities.createModal.acceptsApplications',
+    });
+
+    await user.selectOptions(phaseSelect, 'PAUSED');
+
+    expect(recruitmentCheckbox).toBeDisabled();
+    expect(recruitmentCheckbox).not.toBeChecked();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    const submitBtn = screen.getByRole('button', {
+      name: 'opportunities.createModal.saveChanges',
+    });
+
+    await user.click(submitBtn);
+
+    expect(opportunitiesApi.updateOpportunity).toHaveBeenCalledWith(
+      'opp-published',
+      expect.objectContaining({
+        lifecycleState: 'PAUSED',
+        acceptsApplications: false,
+      }),
+    );
+  });
+
   it('does not render phase select or accepts applications checkbox directly on detail page', () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -355,7 +506,7 @@ describe('OpportunityDetailContent published opportunity controls', () => {
     );
 
     expect(
-      screen.queryByRole('button', { name: 'opportunities.detailModal.edit' }),
+      screen.queryByRole('button', { name: 'opportunities.detailModal.sendToReview' }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'opportunities.detailModal.delete' }),

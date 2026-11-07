@@ -6,6 +6,7 @@ import type {
   OpportunityApplication,
   OpportunityListItem,
   OpportunityFavoriteState,
+  OpportunityTag,
   UpdateOpportunityRequest,
 } from '@core/types/opportunities';
 import type {
@@ -27,9 +28,25 @@ export class OpportunitiesApi extends ApiClient {
   }
 
   async getOpportunities(params?: GetOpportunitiesParams): Promise<{ data: Opportunity[] }> {
-    const query = buildQueryString(params as Record<string, unknown>);
+    const { tags, isRecruiting, ...rest } = params ?? {};
+    const searchParams = new URLSearchParams(
+      buildQueryString({
+        ...rest,
+        ...(isRecruiting ? { isRecruiting: true } : {}),
+      }),
+    );
+
+    for (const tag of tags ?? []) {
+      searchParams.append('tags', tag);
+    }
+
+    const query = searchParams.size ? `?${searchParams}` : '';
 
     return this.request<Opportunity[]>(`/opportunities${query}`);
+  }
+
+  async getTagSuggestions(query: string): Promise<{ data: OpportunityTag[] }> {
+    return this.request<OpportunityTag[]>(`/tags${buildQueryString({ query })}`);
   }
 
   async getOpportunity(id: string): Promise<{ data: OpportunityListItem }> {
