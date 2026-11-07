@@ -5,12 +5,14 @@ import { Search, X } from 'lucide-react';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { OpportunityFilterPanel, type OpportunityFilterValue } from '@ui';
 import { TabStateWrapper } from './TabStateWrapper';
-import type { Opportunity } from '@core/types/opportunities';
+import type { Opportunity, OpportunityListItem } from '@core/types/opportunities';
 import type { OpportunityPaymentType } from '@core/constants/opportunities';
 import {
   filterOpportunitiesByPayment,
   filterOpportunitiesByRecruiting,
   filterOpportunitiesBySearch,
+  getCatalogEmptyKey,
+  canToggleFavorite,
   filterOpportunitiesByTags,
 } from '../helpers';
 import { OpportunityCard } from '../../OpportunityCard';
@@ -20,10 +22,15 @@ export interface CatalogTabProps {
   loading: boolean;
   isError: boolean;
   onRetry: () => void;
-  opportunities: Opportunity[];
+  opportunities: OpportunityListItem[];
   search: string;
   onSearchChange: (val: string) => void;
   onOpenDetail: (opp: Opportunity) => void;
+  favoriteIds?: Set<string>;
+  onToggleFavorite?: (id: string, isFavorite: boolean) => void;
+  favoritesDisabled?: boolean;
+  currentUserId?: string | null;
+  favoritesView?: boolean;
   paymentFilter?: OpportunityPaymentType | '';
   onPaymentFilterChange?: (val: OpportunityPaymentType | '') => void;
   isRecruiting?: boolean;
@@ -46,10 +53,15 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
   onTagsChange,
   onFiltersChange,
   onOpenDetail,
+  favoriteIds,
+  onToggleFavorite,
+  favoritesDisabled,
+  currentUserId,
   loadTagSuggestions,
   paymentFilter = '',
   isRecruiting = false,
   tags = [],
+  favoritesView = false,
 }) => {
   const { formatMessage } = useLanguage();
 
@@ -69,6 +81,8 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
     onRecruitingChange?.(newFilters.isRecruiting);
     onTagsChange?.(newFilters.tags);
   };
+
+  const emptyKey = getCatalogEmptyKey({ search, paymentFilter, favoritesView, isRecruiting, tags });
 
   return (
     <>
@@ -128,11 +142,20 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
         isError={isError}
         onRetry={onRetry}
         isEmpty={filteredOpportunities.length === 0}
-        emptyDescription={formatMessage('opportunities.catalog.emptyDescription')}
+        emptyDescription={formatMessage(emptyKey)}
       >
         <div className={styles.grid}>
           {filteredOpportunities.map((opp) => (
-            <OpportunityCard key={opp.id} opportunity={opp} onOpenDetail={onOpenDetail} />
+            <OpportunityCard
+              key={opp.id}
+              opportunity={opp}
+              onOpenDetail={onOpenDetail}
+              isFavorite={favoriteIds?.has(opp.id) ?? false}
+              onToggleFavorite={
+                canToggleFavorite(opp, currentUserId) ? onToggleFavorite : undefined
+              }
+              favoriteDisabled={favoritesDisabled}
+            />
           ))}
         </div>
       </TabStateWrapper>

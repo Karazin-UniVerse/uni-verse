@@ -275,4 +275,19 @@ describe('CatalogTab component', () => {
     expect(onOpenDetail).toHaveBeenCalledTimes(1);
     expect(onOpenDetail).toHaveBeenCalledWith(mockOpportunities[0]);
   });
+
+  it('should render empty state when filtered opportunities list is empty', () => {
+    renderCatalogTab({ search: 'NonExistentTitleOrKeyword' });
+
+    expect(screen.getByText('Можливостей за обраними фільтрами не знайдено.')).toBeInTheDocument();
+    expect(screen.queryByText('Frontend Developer')).not.toBeInTheDocument();
+  });
+
+  it('should render loading spinner when loading is true', () => {
+    renderCatalogTab({ loading: true });
+
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.queryByText('Frontend Developer')).not.toBeInTheDocument();
+    expect(screen.queryByText(/знайдено:/i)).not.toBeInTheDocument();
+  });
 });

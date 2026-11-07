@@ -9,6 +9,7 @@ import {
   Query,
   Res,
   ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import {
@@ -40,6 +41,11 @@ import {
   OpportunityStatus,
 } from '@universe/database';
 import { Public } from '../auth/decorators/public.decorator';
+import { isUnavailableOpportunity } from '@universe/core/utils/opportunities';
+import type {
+  UnavailableOpportunity,
+  OpportunityFavoriteState,
+} from '@universe/core/types/opportunities';
 
 const CACHE_CONTROL_HEADER = 'Cache-Control';
 const PUBLIC_CACHE_CONTROL =
@@ -60,6 +66,49 @@ function setOpportunityCacheControl(
 @Controller('opportunities')
 export class OpportunitiesController {
   constructor(private readonly opportunitiesService: OpportunitiesService) {}
+
+  @ApiBearerAuth()
+  @Get('favorites')
+  @ApiOperation({
+    summary:
+      'Get current user favorite opportunities, including unavailable summaries',
+  })
+  getFavorites(
+    @GetUser('sub') userId: string,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<(OpportunityWithOwner | UnavailableOpportunity)[]> {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+
+    setOpportunityCacheControl(res, false);
+
+    return this.opportunitiesService.getFavorites(userId);
+  }
+
+  @ApiBearerAuth()
+  @Put(':id/favorite')
+  @ApiOperation({ summary: 'Save a published opportunity' })
+  addFavorite(
+    @GetUser('sub') userId: string,
+    @Param('id') id: string,
+  ): Promise<OpportunityFavoriteState> {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+
+    return this.opportunitiesService.addFavorite(userId, id);
+  }
+
+  @ApiBearerAuth()
+  @Delete(':id/favorite')
+  @ApiOperation({
+    summary: 'Remove a favorite regardless of moderation status',
+  })
+  removeFavorite(
+    @GetUser('sub') userId: string,
+    @Param('id') id: string,
+  ): Promise<OpportunityFavoriteState> {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+
+    return this.opportunitiesService.removeFavorite(userId, id);
+  }
 
   @ApiBearerAuth()
   @Post()
@@ -144,10 +193,11 @@ export class OpportunitiesController {
   @ApiOperation({ summary: 'Get current user applications' })
   getMyApplications(
     @GetUser('sub') userId: string,
+    @GetUser('roles') roles: string[] = [],
   ): Promise<ApplicationWithOpportunity[]> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
-    return this.opportunitiesService.getMyApplications(userId);
+    return this.opportunitiesService.getMyApplications(userId, roles);
   }
 
   @Public()
@@ -162,16 +212,23 @@ export class OpportunitiesController {
     @GetUser('sub') userId?: string,
     @GetUser('roles') roles?: string[],
     @Res({ passthrough: true }) res?: Response,
-  ): Promise<OpportunityWithOwner> {
-    const opportunity = await this.opportunitiesService.findOne(
-      id,
-      userId,
-      roles,
-    );
+  ): Promise<OpportunityWithOwner | UnavailableOpportunity> {
+    let opportunity: OpportunityWithOwner | UnavailableOpportunity;
+
+    try {
+      opportunity = await this.opportunitiesService.findOne(id, userId, roles);
+    } catch (error) {
+      if (!(error instanceof NotFoundException)) {
+        throw error;
+      }
+
+      opportunity = await this.opportunitiesService.getUnavailablePreview(id);
+    }
 
     setOpportunityCacheControl(
       res,
-      opportunity.status === OpportunityStatus.PUBLISHED,
+      !isUnavailableOpportunity(opportunity) &&
+        opportunity.status === OpportunityStatus.PUBLISHED,
     );
 
     return opportunity;

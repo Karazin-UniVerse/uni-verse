@@ -1,5 +1,9 @@
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
-import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
+import type {
+  Opportunity,
+  OpportunityApplication,
+  OpportunityListItem,
+} from '@core/types/opportunities';
 import { OPPORTUNITY_STATUS } from '@core/constants/opportunities';
 import { normalizeTag } from '@core/utils/tags';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
@@ -61,6 +65,11 @@ export const catalogQueryOptions = queryOptions({
   refetchInterval: CATALOG_POLL_INTERVAL_MS,
 });
 
+export const favoritesQueryOptions = queryOptions({
+  queryKey: opportunityKeys.favorites(),
+  queryFn: async () => (await opportunitiesApi.getFavorites()).data,
+});
+
 export const myOpportunitiesQueryOptions = queryOptions({
   queryKey: opportunityKeys.mine(),
   queryFn: loadMyOpportunities,
@@ -79,7 +88,12 @@ export const moderationQueueQueryOptions = queryOptions({
 export const opportunityDetailQueryOptions = (
   opportunityId: string,
 ): ReturnType<
-  typeof queryOptions<Opportunity, Error, Opportunity, ReturnType<typeof opportunityKeys.detail>>
+  typeof queryOptions<
+    OpportunityListItem,
+    Error,
+    OpportunityListItem,
+    ReturnType<typeof opportunityKeys.detail>
+  >
 > =>
   queryOptions({
     queryKey: opportunityKeys.detail(opportunityId),

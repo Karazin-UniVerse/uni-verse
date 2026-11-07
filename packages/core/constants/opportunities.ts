@@ -8,6 +8,14 @@ export const OPPORTUNITY_STATUS = {
 
 export type OpportunityStatus = (typeof OPPORTUNITY_STATUS)[keyof typeof OPPORTUNITY_STATUS];
 
+export const OPPORTUNITY_AVAILABILITY = {
+  TEMPORARY: 'temporary',
+  PERMANENT: 'permanent',
+} as const;
+
+export type OpportunityAvailability =
+  (typeof OPPORTUNITY_AVAILABILITY)[keyof typeof OPPORTUNITY_AVAILABILITY];
+
 export const OPPORTUNITY_LIFECYCLE = {
   START: 'START',
   ACTIVE: 'ACTIVE',

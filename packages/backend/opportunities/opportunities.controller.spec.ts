@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import type { Response } from 'express';
 import { OpportunityStatus } from '@universe/database';
 import { OpportunitiesController } from './opportunities.controller';
@@ -28,6 +28,7 @@ describe('OpportunitiesController', () => {
             create: jest.fn(),
             findAll: jest.fn(),
             findOne: jest.fn(),
+            getUnavailablePreview: jest.fn(),
             update: jest.fn(),
             delete: jest.fn(),
             changeStatus: jest.fn(),
@@ -158,6 +159,13 @@ describe('OpportunitiesController', () => {
   });
 
   describe('getMyApplications', () => {
+    it('forwards caller roles for current permission verification', async () => {
+      await controller.getMyApplications('user1', ['OPPORTUNITIES_MODERATOR']);
+      expect(service.getMyApplications).toHaveBeenCalledWith('user1', [
+        'OPPORTUNITIES_MODERATOR',
+      ]);
+    });
+
     it('throws ForbiddenException when userId is empty', () => {
       expect(() => controller.getMyApplications('')).toThrow(
         ForbiddenException,
@@ -166,11 +174,47 @@ describe('OpportunitiesController', () => {
 
     it('delegates to service.getMyApplications', async () => {
       await controller.getMyApplications('user1');
-      expect(service.getMyApplications).toHaveBeenCalledWith('user1');
+      expect(service.getMyApplications).toHaveBeenCalledWith('user1', []);
     });
   });
 
   describe('findOne', () => {
+    it('returns a private unavailable preview after a detail NotFoundException', async () => {
+      const preview = { id: 'opp1', title: '', availability: 'temporary' };
+      const response = createMockResponse();
+
+      (service.findOne as jest.Mock).mockRejectedValue(new NotFoundException());
+      (service.getUnavailablePreview as jest.Mock).mockResolvedValue(preview);
+      await expect(
+        controller.findOne('opp1', undefined, undefined, response),
+      ).resolves.toEqual(preview);
+      expect(response.setHeader).toHaveBeenCalledWith(
+        CACHE_CONTROL_HEADER,
+        PRIVATE_CACHE_CONTROL,
+      );
+    });
+
+    it('preserves NotFoundException when the unavailable preview also does not exist', async () => {
+      const response = createMockResponse();
+
+      (service.findOne as jest.Mock).mockRejectedValue(new NotFoundException());
+      (service.getUnavailablePreview as jest.Mock).mockRejectedValue(
+        new NotFoundException(),
+      );
+      await expect(
+        controller.findOne('missing', undefined, undefined, response),
+      ).rejects.toThrow(NotFoundException);
+      expect(response.setHeader).not.toHaveBeenCalled();
+    });
+
+    it('does not use the preview fallback for unexpected service errors', async () => {
+      const error = new Error('Database unavailable');
+
+      (service.findOne as jest.Mock).mockRejectedValue(error);
+      await expect(controller.findOne('opp1')).rejects.toBe(error);
+      expect(service.getUnavailablePreview).not.toHaveBeenCalled();
+    });
+
     it('delegates to service.findOne', async () => {
       (service.findOne as jest.Mock).mockResolvedValue({
         id: 'opp1',

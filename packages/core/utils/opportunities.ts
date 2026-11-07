@@ -8,6 +8,7 @@ import {
 import type {
   Opportunity,
   OpportunityContentFields,
+  UnavailableOpportunity,
   UpdateOpportunityRequest,
 } from '../types/opportunities.ts';
 import { normalizeTags } from './tags.ts';
@@ -79,4 +80,10 @@ export function hasOpportunityContentChanged(
     currentTags.length !== updatedTags.length ||
     currentTags.some((tag) => !updatedTags.includes(tag))
   );
+}
+
+export function isUnavailableOpportunity(
+  opportunity: object,
+): opportunity is UnavailableOpportunity {
+  return 'availability' in opportunity;
 }

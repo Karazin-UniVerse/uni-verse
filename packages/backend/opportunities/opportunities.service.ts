@@ -12,8 +12,15 @@ import { getPrismaErrorCode } from '../utils/prisma-error';
 import {
   applyModerationInTransaction,
   getOpportunityContentHash,
+  unavailableOpportunity,
 } from './opportunities.helpers';
+import type {
+  UnavailableOpportunity,
+  OpportunityFavoriteState,
+} from '@universe/core/types/opportunities';
 import { PRISMA_ERROR_CODE } from '../constants/prisma';
+import { PROMISE_STATUS } from '../constants/promises';
+import { SUBSCRIBER_NOTIFICATION_BATCH_SIZE } from './opportunities.constants';
 import { persistOpportunityApplication } from './opportunity-application.persistence';
 import {
   CreateOpportunityDto,
@@ -64,7 +71,7 @@ export type ApplicationWithApplicant = OpportunityApplication & {
 };
 
 export type ApplicationWithOpportunity = OpportunityApplication & {
-  opportunity: Omit<OpportunityWithOwner, 'tags'>;
+  opportunity: Omit<OpportunityWithOwner, 'tags'> | UnavailableOpportunity;
   applicant: ApplicationWithApplicant['applicant'];
 };
 
@@ -88,6 +95,155 @@ export class OpportunitiesService {
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  async addFavorite(
+    userId: string,
+    opportunityId: string,
+  ): Promise<OpportunityFavoriteState> {
+    const opportunity = await this.prisma.opportunity.findUnique({
+      where: { id: opportunityId },
+    });
+
+    if (opportunity?.ownerId === userId) {
+      throw new BadRequestException('Cannot save your own opportunity');
+    }
+
+    if (!opportunity || opportunity.status !== OpportunityStatus.PUBLISHED) {
+      throw new NotFoundException('Opportunity not found');
+    }
+
+    await this.prisma.opportunityFavorite.createMany({
+      data: {
+        userId,
+        opportunityId,
+        title: opportunity.title,
+        paymentType: opportunity.paymentType,
+      },
+      skipDuplicates: true,
+    });
+
+    return { saved: true };
+  }
+
+  async removeFavorite(
+    userId: string,
+    opportunityId: string,
+  ): Promise<OpportunityFavoriteState> {
+    await this.prisma.opportunityFavorite.deleteMany({
+      where: { userId, opportunityId },
+    });
+
+    return { saved: false };
+  }
+
+  async getUnavailablePreview(id: string): Promise<UnavailableOpportunity> {
+    const opportunity = await this.prisma.opportunity.findUnique({
+      where: { id },
+      select: { id: true, status: true, paymentType: true },
+    });
+
+    if (!opportunity || opportunity.status === OpportunityStatus.PUBLISHED) {
+      throw new NotFoundException('Opportunity not found');
+    }
+
+    return unavailableOpportunity(opportunity);
+  }
+
+  async getFavorites(
+    userId: string,
+  ): Promise<(OpportunityWithOwner | UnavailableOpportunity)[]> {
+    const isModerator = await this.hasCurrentModeratorRole(userId);
+    const favorites = await this.prisma.opportunityFavorite.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        opportunity: {
+          include: OPPORTUNITY_INCLUDE,
+        },
+      },
+    });
+
+    return favorites.map(({ opportunity, title, paymentType }) =>
+      opportunity.status === OpportunityStatus.PUBLISHED ||
+      opportunity.ownerId === userId ||
+      isModerator
+        ? opportunity
+        : unavailableOpportunity(opportunity, title, paymentType),
+    );
+  }
+
+  private async hasCurrentModeratorRole(userId: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { roles: true },
+    });
+
+    return user?.roles.includes(Role.OPPORTUNITIES_MODERATOR) ?? false;
+  }
+
+  private async notifySubscribers(opportunity: Opportunity): Promise<void> {
+    if (opportunity.status !== OpportunityStatus.PUBLISHED) {
+      return;
+    }
+
+    try {
+      await this.prisma.opportunityFavorite.updateMany({
+        where: { opportunityId: opportunity.id },
+        data: {
+          title: opportunity.title,
+          paymentType: opportunity.paymentType,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to refresh favorite snapshots for opportunity ${opportunity.id}`,
+        error,
+      );
+    }
+
+    try {
+      const favorites = await this.prisma.opportunityFavorite.findMany({
+        where: { opportunityId: opportunity.id },
+        select: { userId: true },
+      });
+
+      for (
+        let offset = 0;
+        offset < favorites.length;
+        offset += SUBSCRIBER_NOTIFICATION_BATCH_SIZE
+      ) {
+        const batch = favorites.slice(
+          offset,
+          offset + SUBSCRIBER_NOTIFICATION_BATCH_SIZE,
+        );
+        const deliveries = await Promise.allSettled(
+          batch.map(({ userId }) =>
+            this.notificationsService.createNotification({
+              userId,
+              type: NOTIFICATION_TYPE.OPPORTUNITY_UPDATED,
+              title: OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE,
+              message: JSON.stringify({ opportunityTitle: opportunity.title }),
+              link: `${OPPORTUNITIES_ROUTE}/${opportunity.id}`,
+            }),
+          ),
+        );
+
+        for (const delivery of deliveries) {
+          if (delivery.status === PROMISE_STATUS.REJECTED) {
+            this.logger.error(
+              `Failed to notify subscriber for opportunity ${opportunity.id}`,
+              delivery.reason,
+            );
+          }
+        }
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to notify subscribers for opportunity ${opportunity.id}`,
+        error,
+      );
+    }
+  }
 
   private async notifyModerators(
     opportunityId: string,
@@ -114,7 +270,7 @@ export class OpportunitiesService {
       );
 
       for (const [index, delivery] of deliveries.entries()) {
-        if (delivery.status === 'rejected') {
+        if (delivery.status === PROMISE_STATUS.REJECTED) {
           this.logger.error(
             `Failed to deliver moderation notification for opportunity ${opportunityId} to moderator ${moderators[index].id}`,
             delivery.reason instanceof Error
@@ -313,6 +469,12 @@ export class OpportunitiesService {
           id,
           status: opportunity.status,
           updatedAt: opportunity.updatedAt,
+          ...(data.acceptsApplications !== undefined
+            ? { acceptsApplications: opportunity.acceptsApplications }
+            : {}),
+          ...(dto.lifecycleState !== undefined
+            ? { lifecycleState: opportunity.lifecycleState }
+            : {}),
         },
         data,
       });
@@ -329,6 +491,21 @@ export class OpportunitiesService {
       hasContentChanges
     ) {
       await this.notifyModerators(id, updated.title);
+    }
+
+    const hasApplicationAvailabilityChanged =
+      data.acceptsApplications !== undefined &&
+      data.acceptsApplications !== opportunity.acceptsApplications;
+    const hasLifecycleChanged =
+      dto.lifecycleState !== undefined &&
+      dto.lifecycleState !== opportunity.lifecycleState;
+
+    if (
+      opportunity.status === OpportunityStatus.PUBLISHED &&
+      !hasContentChanges &&
+      (hasApplicationAvailabilityChanged || hasLifecycleChanged)
+    ) {
+      await this.notifySubscribers(updated);
     }
 
     return updated;
@@ -459,15 +636,45 @@ export class OpportunitiesService {
     if (opportunity.ownerId !== userId)
       throw new ForbiddenException('Not your opportunity');
 
-    return this.prisma.opportunity.update({
-      where: { id },
-      data: {
-        lifecycleState,
-        ...(!isRecruitmentPhase(lifecycleState)
-          ? { acceptsApplications: false }
-          : {}),
-      },
-    });
+    let updated: Opportunity;
+
+    try {
+      updated = await this.prisma.opportunity.update({
+        where: {
+          id,
+          status: opportunity.status,
+          updatedAt: opportunity.updatedAt,
+          lifecycleState: opportunity.lifecycleState,
+          ...(!isRecruitmentPhase(lifecycleState)
+            ? { acceptsApplications: opportunity.acceptsApplications }
+            : {}),
+        },
+        data: {
+          lifecycleState,
+          ...(!isRecruitmentPhase(lifecycleState)
+            ? { acceptsApplications: false }
+            : {}),
+        },
+      });
+    } catch (error) {
+      if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
+        throw new ConflictException(
+          'Opportunity was modified. Reload and retry.',
+        );
+      }
+
+      throw error;
+    }
+
+    if (
+      opportunity.status === OpportunityStatus.PUBLISHED &&
+      (lifecycleState !== opportunity.lifecycleState ||
+        updated.acceptsApplications !== opportunity.acceptsApplications)
+    ) {
+      await this.notifySubscribers(updated);
+    }
+
+    return updated;
   }
 
   /**
@@ -660,8 +867,12 @@ export class OpportunitiesService {
    */
   async getMyApplications(
     userId: string,
+    userRoles: string[] = [],
   ): Promise<ApplicationWithOpportunity[]> {
-    return this.prisma.opportunityApplication.findMany({
+    const isModerator =
+      userRoles.includes(Role.OPPORTUNITIES_MODERATOR) &&
+      (await this.hasCurrentModeratorRole(userId));
+    const applications = await this.prisma.opportunityApplication.findMany({
       where: { applicantId: userId },
       include: {
         applicant: { select: { name: true, email: true } },
@@ -671,6 +882,16 @@ export class OpportunitiesService {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    return applications.map((application) => ({
+      ...application,
+      opportunity:
+        application.opportunity.status === OpportunityStatus.PUBLISHED ||
+        application.opportunity.ownerId === userId ||
+        isModerator
+          ? application.opportunity
+          : unavailableOpportunity(application.opportunity),
+    }));
   }
 
   /**
@@ -753,17 +974,28 @@ export class OpportunitiesService {
       throw error;
     }
 
-    await this.notificationsService.createNotification({
-      userId: opp.ownerId,
-      type: NOTIFICATION_TYPE.OPPORTUNITY_MODERATED,
-      title: OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE,
-      message: JSON.stringify({
-        opportunityTitle: opp.title,
-        action: dto.action,
-        comment: dto.comment || null,
-      }),
-      link: `${OPPORTUNITIES_ROUTE}/${opp.id}`,
-    });
+    try {
+      await this.notificationsService.createNotification({
+        userId: opp.ownerId,
+        type: NOTIFICATION_TYPE.OPPORTUNITY_MODERATED,
+        title: OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE,
+        message: JSON.stringify({
+          opportunityTitle: opp.title,
+          action: dto.action,
+          comment: dto.comment || null,
+        }),
+        link: `${OPPORTUNITIES_ROUTE}/${opp.id}`,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to notify owner for opportunity ${opp.id}`,
+        error,
+      );
+    }
+
+    if (newStatus === OpportunityStatus.PUBLISHED) {
+      await this.notifySubscribers(opp);
+    }
 
     return opp;
   }
