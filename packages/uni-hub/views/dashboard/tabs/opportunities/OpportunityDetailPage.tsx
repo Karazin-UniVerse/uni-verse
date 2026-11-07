@@ -10,6 +10,7 @@ import { LoadErrorState } from '@uni-hub/components/common/LoadErrorState';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { OpportunityDetailContent } from './OpportunityDetailContent';
 import { opportunityDetailQueryOptions } from './queries';
+import { isUnavailableOpportunity } from '@core/utils/opportunities';
 
 export interface OpportunityDetailPageProps {
   opportunityId: string;
@@ -24,11 +25,11 @@ export const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ op
     return <Spinner tip={formatMessage('dashboard.updating')} />;
   }
 
-  if (!detailQuery.data || detailQuery.isError) {
+  if (!detailQuery.data) {
     return <LoadErrorState onRetry={() => void detailQuery.refetch()} />;
   }
 
-  if ('availability' in detailQuery.data) {
+  if (isUnavailableOpportunity(detailQuery.data)) {
     return (
       <div>
         <Button variant="secondary" onClick={() => router.push(OPPORTUNITIES_ROUTE)}>

@@ -37,15 +37,24 @@ export const OpportunitiesTab: React.FC = () => {
   const isModerator = currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR);
   const data = useOpportunitiesData(isModerator);
   const { activeSubTab, setActiveSubTab } = data;
-  const favorites = useFavorites(
-    activeSubTab === OPPORTUNITY_SUB_TAB.Catalog || activeSubTab === OPPORTUNITY_SUB_TAB.Favorites,
-  );
+  const isFavoritesView = activeSubTab === OPPORTUNITY_SUB_TAB.Favorites;
+  const favorites = useFavorites(activeSubTab === OPPORTUNITY_SUB_TAB.Catalog || isFavoritesView);
   const create = useCreateOpportunity({
     onCreated: () => setActiveSubTab(OPPORTUNITY_SUB_TAB.MyOpportunities),
   });
   const applicants = useApplicants();
   const withdrawal = useWithdrawApplication();
   const moderation = useModeration();
+  const catalogView = isFavoritesView
+    ? {
+        loading: favorites.query.isLoading,
+        isError: hasLoadFailed(favorites.query),
+        refetch: (): void => {
+          void favorites.query.refetch();
+        },
+        items: favorites.query.data ?? [],
+      }
+    : data.catalog;
 
   const openDetail = (opportunity: Opportunity): void =>
     router.push(getOpportunityHref(opportunity.id));
@@ -111,36 +120,19 @@ export const OpportunitiesTab: React.FC = () => {
 
       {/* SubTab Views */}
       <div role="tabpanel" id={`panel-${activeSubTab}`}>
-        {(activeSubTab === OPPORTUNITY_SUB_TAB.Catalog ||
-          activeSubTab === OPPORTUNITY_SUB_TAB.Favorites) && (
+        {(activeSubTab === OPPORTUNITY_SUB_TAB.Catalog || isFavoritesView) && (
           <CatalogTab
-            loading={
-              activeSubTab === OPPORTUNITY_SUB_TAB.Favorites
-                ? favorites.query.isLoading
-                : data.catalog.loading
-            }
-            isError={
-              activeSubTab === OPPORTUNITY_SUB_TAB.Favorites
-                ? hasLoadFailed(favorites.query)
-                : data.catalog.isError
-            }
-            onRetry={
-              activeSubTab === OPPORTUNITY_SUB_TAB.Favorites
-                ? () => void favorites.query.refetch()
-                : data.catalog.refetch
-            }
-            opportunities={
-              activeSubTab === OPPORTUNITY_SUB_TAB.Favorites
-                ? (favorites.query.data ?? [])
-                : data.catalog.items
-            }
+            loading={catalogView.loading}
+            isError={catalogView.isError}
+            onRetry={catalogView.refetch}
+            opportunities={catalogView.items}
             favoriteIds={favorites.savedIds}
             onToggleFavorite={favorites.toggle}
             favoritesDisabled={
               favorites.pending || favorites.query.isLoading || hasLoadFailed(favorites.query)
             }
             currentUserId={currentUser.userId}
-            favoritesView={activeSubTab === OPPORTUNITY_SUB_TAB.Favorites}
+            favoritesView={isFavoritesView}
             search={data.search}
             onSearchChange={data.setSearch}
             paymentFilter={data.paymentFilter}

@@ -1,12 +1,25 @@
-import { BadRequestException, NotFoundException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { OpportunityStatus, Role } from '@universe/database';
+import {
+  OpportunityStatus,
+  OpportunityLifecycleState,
+  Role,
+  type Prisma,
+  type Opportunity,
+} from '@universe/database';
 import { OpportunitiesService } from './opportunities.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
 describe('Opportunity favorites and restricted listings', () => {
-  const opportunity = {
+  const opportunity: Opportunity & {
+    owner: { id: string; name: string; email: string };
+  } = {
     id: 'opportunity',
     ownerId: 'owner',
     title: 'Unreviewed title',
@@ -15,6 +28,14 @@ describe('Opportunity favorites and restricted listings', () => {
     paymentType: 'PAID',
     status: OpportunityStatus.READY_FOR_REVIEW,
     moderationComment: 'Private moderation feedback',
+    lifecycleState: OpportunityLifecycleState.START,
+    updatedAt: new Date('2026-10-01T10:00:00Z'),
+    createdAt: new Date('2026-10-01T10:00:00Z'),
+    acceptsApplications: true,
+    partnerInfo: null,
+    paymentDetails: null,
+    details: null,
+    moderationContentHash: null,
     owner: { id: 'owner', name: 'Owner', email: 'private@example.com' },
   };
   const prisma = {
@@ -32,7 +53,7 @@ describe('Opportunity favorites and restricted listings', () => {
   const notify = jest.fn();
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
     const module = await Test.createTestingModule({
       providers: [
         OpportunitiesService,
@@ -46,6 +67,7 @@ describe('Opportunity favorites and restricted listings', () => {
 
     service = module.get(OpportunitiesService);
     prisma.opportunity.findUnique.mockResolvedValue(opportunity);
+    prisma.user.findUnique.mockResolvedValue({ roles: [] });
   });
 
   it('rejects saving an owned opportunity', async () => {
@@ -131,6 +153,9 @@ describe('Opportunity favorites and restricted listings', () => {
   });
 
   it('keeps moderator access to application opportunity details', async () => {
+    prisma.user.findUnique.mockResolvedValue({
+      roles: [Role.OPPORTUNITIES_MODERATOR],
+    });
     prisma.opportunityApplication.findMany.mockResolvedValue([
       { id: 'application', opportunity },
     ]);
@@ -163,6 +188,9 @@ describe('Opportunity favorites and restricted listings', () => {
       expect.objectContaining({
         userId: 'subscriber',
         type: 'OPPORTUNITY_UPDATED',
+        title: 'notifications.opportunityUpdated.title',
+        message: JSON.stringify({ opportunityTitle: opportunity.title }),
+        link: '/opportunities/opportunity',
       }),
     );
   });
@@ -218,6 +246,9 @@ describe('Opportunity favorites and restricted listings', () => {
       expect.objectContaining({
         userId: 'subscriber',
         type: 'OPPORTUNITY_UPDATED',
+        title: 'notifications.opportunityUpdated.title',
+        message: JSON.stringify({ opportunityTitle: opportunity.title }),
+        link: '/opportunities/opportunity',
       }),
     );
     expect(prisma.opportunityFavorite.updateMany).toHaveBeenCalledWith({
@@ -250,6 +281,9 @@ describe('Opportunity favorites and restricted listings', () => {
         expect.objectContaining({
           userId: 'subscriber',
           type: 'OPPORTUNITY_UPDATED',
+          title: 'notifications.opportunityUpdated.title',
+          message: JSON.stringify({ opportunityTitle: opportunity.title }),
+          link: '/opportunities/opportunity',
         }),
       );
       expect(prisma.opportunityFavorite.updateMany).toHaveBeenCalled();
@@ -303,5 +337,199 @@ describe('Opportunity favorites and restricted listings', () => {
     } finally {
       log.mockRestore();
     }
+  });
+  it.each(['update', 'approval'] as const)(
+    'notifies subscribers when snapshot refresh fails after %s',
+    async (operation) => {
+      const published = {
+        ...opportunity,
+        status: OpportunityStatus.PUBLISHED,
+        acceptsApplications: true,
+      };
+
+      prisma.opportunity.findUnique.mockResolvedValue(
+        operation === 'update' ? published : opportunity,
+      );
+      prisma.opportunity.update.mockResolvedValue({
+        ...published,
+        acceptsApplications: false,
+      });
+      prisma.user.findUnique.mockResolvedValue({
+        roles: [Role.OPPORTUNITIES_MODERATOR],
+      });
+      prisma.opportunityFavorite.updateMany.mockRejectedValue(
+        new Error('Snapshot unavailable'),
+      );
+      prisma.opportunityFavorite.findMany.mockResolvedValue([
+        { userId: 'subscriber' },
+      ]);
+      const log = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation(() => undefined);
+
+      try {
+        if (operation === 'update') {
+          await service.update('owner', opportunity.id, {
+            acceptsApplications: false,
+          });
+        } else {
+          await service.moderate('moderator', opportunity.id, {
+            action: 'APPROVE',
+          });
+        }
+
+        expect(notify).toHaveBeenCalledWith({
+          userId: 'subscriber',
+          type: 'OPPORTUNITY_UPDATED',
+          title: 'notifications.opportunityUpdated.title',
+          message: JSON.stringify({ opportunityTitle: opportunity.title }),
+          link: '/opportunities/opportunity',
+        });
+      } finally {
+        log.mockRestore();
+      }
+    },
+  );
+
+  it('redacts application details when the moderator role in the token has been revoked', async () => {
+    prisma.user.findUnique.mockResolvedValue({ roles: [] });
+    prisma.opportunityApplication.findMany.mockResolvedValue([
+      { id: 'application', opportunity },
+    ]);
+    const [application] = await service.getMyApplications('viewer', [
+      Role.OPPORTUNITIES_MODERATOR,
+    ]);
+
+    expect(application.opportunity).toEqual({
+      id: opportunity.id,
+      title: '',
+      availability: 'temporary',
+    });
+  });
+
+  it('keeps full favorite details for a current moderator after publication is withdrawn', async () => {
+    prisma.user.findUnique.mockResolvedValue({
+      roles: [Role.OPPORTUNITIES_MODERATOR],
+    });
+    prisma.opportunityFavorite.findMany.mockResolvedValue([
+      {
+        title: 'Published title',
+        paymentType: 'UNPAID',
+        opportunity: { ...opportunity, status: OpportunityStatus.PUBLISHED },
+      },
+    ]);
+    expect((await service.getFavorites('moderator'))[0]).toHaveProperty(
+      'description',
+      'Private revision',
+    );
+
+    prisma.opportunityFavorite.findMany.mockResolvedValue([
+      { title: 'Published title', paymentType: 'UNPAID', opportunity },
+    ]);
+    expect((await service.getFavorites('moderator'))[0]).toEqual(opportunity);
+
+    prisma.user.findUnique.mockResolvedValue({ roles: [] });
+    expect((await service.getFavorites('moderator'))[0]).toEqual({
+      id: opportunity.id,
+      title: 'Published title',
+      paymentType: 'UNPAID',
+      availability: 'temporary',
+    });
+  });
+
+  it.each(['update', 'lifecycle'] as const)(
+    'notifies once for concurrent identical %s calls',
+    async (operation) => {
+      const published = {
+        ...opportunity,
+        status: OpportunityStatus.PUBLISHED,
+        acceptsApplications: true,
+      };
+      let persisted = published;
+
+      prisma.opportunity.findUnique.mockImplementation(async () => ({
+        ...persisted,
+      }));
+      prisma.opportunity.update.mockImplementation(
+        async ({ where }: { where: Prisma.OpportunityWhereUniqueInput }) => {
+          if (
+            (where.updatedAt && where.updatedAt !== persisted.updatedAt) ||
+            (where.acceptsApplications !== undefined &&
+              where.acceptsApplications !== persisted.acceptsApplications) ||
+            (where.lifecycleState !== undefined &&
+              where.lifecycleState !== persisted.lifecycleState)
+          ) {
+            throw { code: 'P2025' };
+          }
+
+          persisted = {
+            ...published,
+            acceptsApplications: false,
+            lifecycleState: OpportunityLifecycleState.PAUSED,
+            updatedAt: new Date('2026-10-01T10:00:01Z'),
+          };
+
+          return persisted;
+        },
+      );
+      prisma.opportunityFavorite.findMany.mockResolvedValue([
+        { userId: 'subscriber' },
+      ]);
+      const change = (): ReturnType<typeof service.update> =>
+        operation === 'update'
+          ? service.update('owner', opportunity.id, {
+              acceptsApplications: false,
+            })
+          : service.changeLifecycleState(
+              'owner',
+              opportunity.id,
+              OpportunityLifecycleState.PAUSED,
+            );
+      const results = await Promise.allSettled([change(), change()]);
+
+      expect(
+        results.filter((result) => result.status === 'fulfilled'),
+      ).toHaveLength(1);
+      expect(results.find((result) => result.status === 'rejected')).toEqual({
+        status: 'rejected',
+        reason: expect.any(ConflictException),
+      });
+      expect(notify).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it('bounds concurrent subscriber deliveries while notifying every favorite', async () => {
+    const published = {
+      ...opportunity,
+      status: OpportunityStatus.PUBLISHED,
+      acceptsApplications: true,
+    };
+    let active = 0;
+    let peak = 0;
+    const recipients: string[] = [];
+
+    prisma.opportunity.findUnique.mockResolvedValue(published);
+    prisma.opportunity.update.mockResolvedValue({
+      ...published,
+      acceptsApplications: false,
+    });
+    prisma.opportunityFavorite.findMany.mockResolvedValue(
+      Array.from({ length: 45 }, (_, index) => ({
+        userId: `subscriber-${index}`,
+      })),
+    );
+    notify.mockImplementation(async ({ userId }: { userId: string }) => {
+      active += 1;
+      peak = Math.max(peak, active);
+      recipients.push(userId);
+      await Promise.resolve();
+      active -= 1;
+    });
+    await service.update('owner', opportunity.id, {
+      acceptsApplications: false,
+    });
+
+    expect(peak).toBeLessThanOrEqual(20);
+    expect(new Set(recipients).size).toBe(45);
   });
 });

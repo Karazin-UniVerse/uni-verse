@@ -21,6 +21,7 @@ import { TabStateWrapper } from './TabStateWrapper';
 import { ContactTags } from '@ui';
 import styles from '../../OpportunitiesTab.module.scss';
 import { OpportunityUnavailableNotice } from './OpportunityUnavailableNotice';
+import { isUnavailableOpportunity } from '@core/utils/opportunities';
 
 export interface MyApplicationsTabProps {
   loading: boolean;
@@ -50,9 +51,13 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
       <div className={styles.listStack}>
         {myApplications.map((app) => {
           const unavailable =
-            app.opportunity && 'availability' in app.opportunity ? app.opportunity : undefined;
+            app.opportunity && isUnavailableOpportunity(app.opportunity)
+              ? app.opportunity
+              : undefined;
           const opportunity =
-            app.opportunity && !('availability' in app.opportunity) ? app.opportunity : undefined;
+            app.opportunity && !isUnavailableOpportunity(app.opportunity)
+              ? app.opportunity
+              : undefined;
 
           return (
             <div

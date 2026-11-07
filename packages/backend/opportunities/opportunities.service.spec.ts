@@ -191,7 +191,11 @@ describe('OpportunitiesService', () => {
         await service.update('owner', publishedOpportunity.id, request);
 
         expect(prisma.opportunity.update).toHaveBeenCalledWith({
-          where: { id: publishedOpportunity.id },
+          where: {
+            id: publishedOpportunity.id,
+            status: 'DRAFT',
+            updatedAt: publishedOpportunity.updatedAt,
+          },
           data: expected,
         });
       },
@@ -381,12 +385,14 @@ describe('OpportunitiesService', () => {
   describe('update', () => {
     it('resets status to READY_FOR_REVIEW, clears moderationComment, and notifies moderators if it was published', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         title: 'old',
         status: 'PUBLISHED',
         ownerId: 'user1',
       } as any);
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         title: 'new',
         status: 'READY_FOR_REVIEW',
@@ -398,7 +404,11 @@ describe('OpportunitiesService', () => {
       await service.update('user1', '1', { title: 'new' } as any);
 
       expect(prisma.opportunity.update).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: {
+          id: '1',
+          status: 'PUBLISHED',
+          updatedAt: publishedOpportunity.updatedAt,
+        },
         data: {
           title: 'new',
           status: 'READY_FOR_REVIEW',
@@ -416,6 +426,7 @@ describe('OpportunitiesService', () => {
 
     it('does not reset status if only acceptsApplications changed on published opportunity', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         status: 'PUBLISHED',
         ownerId: 'user1',
@@ -425,13 +436,19 @@ describe('OpportunitiesService', () => {
       await service.update('user1', '1', { acceptsApplications: false });
 
       expect(prisma.opportunity.update).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: {
+          id: '1',
+          status: 'PUBLISHED',
+          updatedAt: publishedOpportunity.updatedAt,
+          acceptsApplications: true,
+        },
         data: { acceptsApplications: false },
       });
     });
 
     it('does not reset status if it was DRAFT', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         status: 'DRAFT',
         ownerId: 'user1',
@@ -441,13 +458,18 @@ describe('OpportunitiesService', () => {
       await service.update('user1', '1', { title: 'new' } as any);
 
       expect(prisma.opportunity.update).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: {
+          id: '1',
+          status: 'DRAFT',
+          updatedAt: publishedOpportunity.updatedAt,
+        },
         data: { title: 'new' },
       });
     });
 
     it('throws ForbiddenException if user is not the owner', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         status: 'PUBLISHED',
         ownerId: 'other-user',
@@ -1104,6 +1126,7 @@ describe('OpportunitiesService', () => {
   describe('changeLifecycleState', () => {
     it('throws ForbiddenException if not owner', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         status: 'PUBLISHED',
         ownerId: 'other',
@@ -1116,11 +1139,13 @@ describe('OpportunitiesService', () => {
 
     it('updates lifecycleState when caller is owner', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         status: 'PUBLISHED',
         ownerId: 'user-1',
       } as any);
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         lifecycleState: 'CLOSED',
       } as any);
@@ -1132,7 +1157,12 @@ describe('OpportunitiesService', () => {
       );
 
       expect(prisma.opportunity.update).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: {
+          id: '1',
+          status: 'PUBLISHED',
+          updatedAt: publishedOpportunity.updatedAt,
+          lifecycleState: 'ACTIVE',
+        },
         data: { lifecycleState: 'CLOSED' },
       });
       expect(result.lifecycleState).toBe('CLOSED');

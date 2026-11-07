@@ -36,6 +36,7 @@ import {
   OpportunityStatus,
 } from '@universe/database';
 import { Public } from '../auth/decorators/public.decorator';
+import { isUnavailableOpportunity } from '@universe/core/utils/opportunities';
 import type {
   UnavailableOpportunity,
   OpportunityFavoriteState,
@@ -211,7 +212,7 @@ export class OpportunitiesController {
 
     setOpportunityCacheControl(
       res,
-      !('availability' in opportunity) &&
+      !isUnavailableOpportunity(opportunity) &&
         opportunity.status === OpportunityStatus.PUBLISHED,
     );
 

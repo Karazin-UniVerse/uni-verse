@@ -51,6 +51,29 @@ describe('OpportunitiesTab component', () => {
     vi.restoreAllMocks();
   });
 
+  it('should render a saved opportunity on the Favorites tab', async (): Promise<void> => {
+    const user = userEvent.setup();
+
+    const saved = {
+      ...buildOpportunity('saved'),
+      status: 'PUBLISHED' as const,
+      title: 'Saved research placement',
+    };
+
+    vi.mocked(opportunitiesApi.getFavorites).mockResolvedValue({ data: [saved] });
+
+    renderOpportunitiesTab();
+
+    await user.click(screen.getByRole('tab', { name: /обрані/i }));
+
+    expect(await screen.findByRole('heading', { name: saved.title })).toBeInTheDocument();
+
+    expect(screen.getByRole('button', { name: /видалити з обраного/i })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
   it('should render tab navigation for Catalog, My Opportunities, and My Applications for regular user', () => {
     renderOpportunitiesTab();
 

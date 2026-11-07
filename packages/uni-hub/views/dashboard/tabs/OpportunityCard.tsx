@@ -13,6 +13,7 @@ import { OpportunityOwnerMetaRow } from './opportunities/components/OpportunityO
 import { OpportunityCatalogMetaRow } from './opportunities/components/OpportunityCatalogMetaRow';
 import { OPPORTUNITY_PAYMENT_TYPE } from '@core/constants/opportunities';
 import { OPPORTUNITY_CARD_VARIANT } from './opportunities/constants';
+import { isUnavailableOpportunity } from '@core/utils/opportunities';
 export interface OpportunityCardProps {
   opportunity: OpportunityListItem;
   variant?: 'catalog' | 'owner';
@@ -49,7 +50,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
     </Button>
   );
 
-  if ('availability' in opportunity) {
+  if (isUnavailableOpportunity(opportunity)) {
     return (
       <article className={styles.card}>
         <h3 className={styles.cardTitle}>{opportunity.title}</h3>

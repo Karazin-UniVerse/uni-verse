@@ -10,6 +10,8 @@ import {
   calculatePaymentCounts,
   filterOpportunitiesByPayment,
   filterOpportunitiesBySearch,
+  getCatalogEmptyKey,
+  canToggleFavorite,
 } from '../helpers';
 import { OpportunityCard } from '../../OpportunityCard';
 import styles from '../../OpportunitiesTab.module.scss';
@@ -64,16 +66,7 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
     [searchedOpportunities, paymentFilter],
   );
 
-  let emptyKey:
-    | 'opportunities.filteredEmpty'
-    | 'opportunities.favorites.empty'
-    | 'opportunities.catalog.emptyDescription' = 'opportunities.catalog.emptyDescription';
-
-  if (search.trim() || paymentFilter) {
-    emptyKey = 'opportunities.filteredEmpty';
-  } else if (favoritesView) {
-    emptyKey = 'opportunities.favorites.empty';
-  }
+  const emptyKey = getCatalogEmptyKey({ search, paymentFilter, favoritesView });
 
   return (
     <>
@@ -151,9 +144,7 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
               onOpenDetail={onOpenDetail}
               isFavorite={favoriteIds?.has(opp.id) ?? false}
               onToggleFavorite={
-                currentUserId && ('availability' in opp || opp.ownerId !== currentUserId)
-                  ? onToggleFavorite
-                  : undefined
+                canToggleFavorite(opp, currentUserId) ? onToggleFavorite : undefined
               }
               favoriteDisabled={favoritesDisabled}
             />

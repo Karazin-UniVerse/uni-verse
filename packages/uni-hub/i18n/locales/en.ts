@@ -1,15 +1,6 @@
 import type { TranslationKey } from './uk';
 
 export const en = {
-  'opportunities.tabs.favorites': 'Favorites',
-  'opportunities.favorites.add': 'Add to favorites',
-  'opportunities.favorites.remove': 'Remove from favorites',
-  'opportunities.favorites.empty': 'You have not saved any opportunities yet.',
-  'opportunities.filteredEmpty': 'No opportunities match your filters.',
-  'opportunities.unavailable.temporary': 'Temporarily unavailable',
-  'opportunities.unavailable.permanent': 'Permanently unavailable',
-  'notifications.opportunityUpdated.title': 'Favorite opportunity updated',
-  'notifications.opportunityUpdated.message': 'Opportunity "{opportunityTitle}" has been updated.',
   // Common / Lang
   'lang.uk': 'Ukrainian',
   'lang.en': 'English',
@@ -454,6 +445,13 @@ export const en = {
   'opportunities.errors.phoneUnavailable': 'This phone number is unavailable for this account.',
   'opportunities.errors.phoneAlreadySet':
     'Use the phone number already registered to your account, or Telegram.',
+  'opportunities.tabs.favorites': 'Favorites',
+  'opportunities.favorites.add': 'Add to favorites',
+  'opportunities.favorites.remove': 'Remove from favorites',
+  'opportunities.favorites.empty': 'You have not saved any opportunities yet.',
+  'opportunities.filteredEmpty': 'No opportunities match your filters.',
+  'opportunities.unavailable.temporary': 'Temporarily unavailable',
+  'opportunities.unavailable.permanent': 'Permanently unavailable',
   'opportunities.tabs.catalog': 'Catalog',
   'opportunities.tabs.catalogShort': 'Catalog',
   'opportunities.tabs.myOpportunities': 'My Opportunities',
@@ -648,6 +646,8 @@ export const en = {
   'notifications.opportunityReadyForReview.title': 'Opportunity Ready for Review',
   'notifications.opportunityReadyForReview.message':
     'Opportunity "{opportunityTitle}" has been submitted for moderation.',
+  'notifications.opportunityUpdated.title': 'Favorite opportunity updated',
+  'notifications.opportunityUpdated.message': 'Opportunity "{opportunityTitle}" has been updated.',
   'notifications.opportunityModerated.title': 'Opportunity Moderation Result',
   'notifications.opportunityModerated.message': 'Opportunity "{opportunityTitle}" {action}.',
   'notifications.opportunityModerated.messageWithComment':

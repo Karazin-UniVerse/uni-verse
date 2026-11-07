@@ -2,6 +2,34 @@ import { getErrorMessage } from '@uni-hub/services/api';
 import type { FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import { OPPORTUNITY_ERROR, type OpportunityPaymentType } from '@core/constants/opportunities';
 import type { OpportunityListItem } from '@core/types/opportunities';
+import { isUnavailableOpportunity } from '@core/utils/opportunities';
+import type { TranslationKey } from '@uni-hub/i18n/locales/uk';
+
+export function getCatalogEmptyKey({
+  search,
+  paymentFilter,
+  favoritesView,
+}: {
+  search: string;
+  paymentFilter: OpportunityPaymentType | '';
+  favoritesView: boolean;
+}): TranslationKey {
+  if (search.trim() || paymentFilter) {
+    return 'opportunities.filteredEmpty';
+  }
+
+  return favoritesView ? 'opportunities.favorites.empty' : 'opportunities.catalog.emptyDescription';
+}
+
+export function canToggleFavorite(
+  opportunity: OpportunityListItem,
+  currentUserId?: string | null,
+): boolean {
+  return (
+    Boolean(currentUserId) &&
+    (isUnavailableOpportunity(opportunity) || opportunity.ownerId !== currentUserId)
+  );
+}
 
 export interface OpportunityPaymentCounts {
   all: number;
@@ -35,7 +63,7 @@ export function filterOpportunitiesBySearch<T extends OpportunityListItem>(
   return opportunities.filter((opportunity) => {
     const titleMatch = opportunity.title.toLowerCase().includes(query);
 
-    if ('availability' in opportunity) {
+    if (isUnavailableOpportunity(opportunity)) {
       return titleMatch;
     }
 
