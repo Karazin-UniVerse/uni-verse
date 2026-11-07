@@ -65,13 +65,17 @@ The wizard prompts you step-by-step, automatically configures environment files,
    - `[2] Remote Cloud Database` (Supabase / Cloud PostgreSQL; prompts for connection string if not in environment)
    - `[3] Custom PostgreSQL Connection String`
    - Automatically writes `.env` and `packages/backend/.env`, generates Prisma Client (`pnpm db:generate`), and optionally syncs schema (`pnpm db:migrate`).
-4. **Grip Gateway Pre-Push Check**:
+4. **Google OAuth Configuration** (optional):
+   - Automatically detects existing `NEXT_PUBLIC_GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_ID` across `.env` files or prompts to enter one.
+5. **SSL / HTTPS Protocol**:
+   - Prompts to enable self-signed HTTPS via Next.js (`--experimental-https`) or pass `--https` flag directly (`pnpm dev:https`).
+6. **Grip Gateway Pre-Push Check**:
    - Checks if Grip is enrolled on this computer; prompts to automatically run `pnpm grip:setup` if needed.
-5. **Moodle Authentication Notice**:
+7. **Moodle Authentication Notice**:
    - Displays an in-terminal reminder that user authentication delegates to `https://moodle.universemvp.tech`.
-6. **Instant Launch**:
+8. **Instant Launch**:
    - Prompts `Launch development server now? (Y/n)`:
-     - **Frontend**: immediately starts `pnpm --filter @universe/uni-hub dev` ([http://localhost:3000](http://localhost:3000)).
+     - **Frontend**: immediately starts `pnpm --filter @universe/uni-hub dev` (or `dev:https` for [https://localhost:3000](https://localhost:3000)).
      - **Fullstack**: immediately starts the full Turborepo monorepo `pnpm dev`.
 
 ---

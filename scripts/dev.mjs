@@ -69,6 +69,19 @@ export function isRetiredGripGateway(url) {
   }
 }
 
+export function readEnvValue(filePath, key) {
+  if (!existsSync(filePath)) return null;
+
+  const content = readFileSync(filePath, 'utf-8');
+  const match = content.match(new RegExp(`^${key}=["']?(.*?)["']?$`, 'm'));
+
+  return match ? match[1].trim() : null;
+}
+
+export function resolveFrontendDevCommand(useHttps = false) {
+  return useHttps ? 'dev:https' : 'dev';
+}
+
 async function runCommand(command, args, env = {}) {
   return new Promise((resolvePromise, reject) => {
     const isWindows = process.platform === 'win32';
@@ -217,32 +230,91 @@ async function main() {
       );
     }
 
-    // 4. Configure environment files
+    // 4. Google OAuth Configuration
+    let existingGoogleClientId =
+      readEnvValue(UNI_HUB_ENV_PATH, 'NEXT_PUBLIC_GOOGLE_CLIENT_ID') ||
+      readEnvValue(ROOT_ENV_PATH, 'GOOGLE_CLIENT_ID') ||
+      readEnvValue(ROOT_ENV_PATH, 'NEXT_PUBLIC_GOOGLE_CLIENT_ID') ||
+      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+      process.env.GOOGLE_CLIENT_ID ||
+      '';
+
+    let selectedGoogleClientId = existingGoogleClientId;
+
+    console.log(`\n${c.bold}4. Google OAuth Configuration (optional):${c.reset}`);
+
+    if (existingGoogleClientId) {
+      console.log(
+        `  ${c.dim}Existing Client ID found:${c.reset} ${c.yellow}${existingGoogleClientId.slice(0, 16)}...${c.reset}`,
+      );
+      const keepAnswer = await rl.question(`  Keep this Google Client ID? (Y/n): `);
+
+      if (keepAnswer.trim().toLowerCase() === 'n') {
+        const entered = await rl.question('  Enter new Google Client ID (press Enter to clear): ');
+
+        selectedGoogleClientId = entered.trim();
+      }
+    } else {
+      console.log(
+        `  ${c.dim}Enables Google SSO on frontend (press Enter to skip if using Moodle login only).${c.reset}`,
+      );
+      const entered = await rl.question('  Enter Google Client ID: ');
+
+      selectedGoogleClientId = entered.trim();
+    }
+
+    if (selectedGoogleClientId) {
+      console.log(`${c.green}✔ Google OAuth: Configured${c.reset}`);
+    } else {
+      console.log(`${c.dim}✔ Google OAuth: Skipped (Moodle login only)${c.reset}`);
+    }
+
+    // 5. SSL / HTTPS protocol selection
+    const isHttpsArg = process.argv.includes('--https');
+    let useHttps = isHttpsArg;
+
+    if (!isHttpsArg) {
+      const httpsAnswer = await rl.question(
+        `\n${c.bold}5. Enable local HTTPS (self-signed SSL via Next.js)?${c.reset} (y/N): `,
+      );
+
+      useHttps = httpsAnswer.trim().toLowerCase() === 'y';
+    }
+
+    const frontendProtocol = useHttps ? 'https' : 'http';
+    const frontendUrl = `${frontendProtocol}://localhost:3000`;
+
+    console.log(
+      `${c.green}✔ Local frontend target: ${c.bold}${frontendUrl}${c.reset}${useHttps ? ' (self-signed SSL)' : ''}`,
+    );
+
+    // 6. Configure environment files
     console.log(`\n${c.cyan}Configuring environment variables...${c.reset}`);
 
     // Update frontend .env.local
-    updateEnvFile(UNI_HUB_ENV_PATH, {
+    const frontendEnvUpdates = {
       PORT: '3000',
       NEXT_PUBLIC_API_URL: selectedBackend.url,
-    });
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: selectedGoogleClientId,
+    };
+
+    updateEnvFile(UNI_HUB_ENV_PATH, frontendEnvUpdates);
     console.log(
       `${c.green}✔ Updated ${c.bold}packages/uni-hub/.env.local${c.reset} (NEXT_PUBLIC_API_URL=${selectedBackend.url})`,
     );
 
     // If local backend, update root and backend .env
     if (isLocalBackend) {
-      updateEnvFile(ROOT_ENV_PATH, {
+      const backendEnvUpdates = {
         PORT: '3001',
         DATABASE_URL: selectedDbUrl,
-        FRONTEND_URL: 'http://localhost:3000',
+        FRONTEND_URL: frontendUrl,
         MOODLE_BASEURL: 'https://moodle.universemvp.tech',
-      });
-      updateEnvFile(BACKEND_ENV_PATH, {
-        PORT: '3001',
-        DATABASE_URL: selectedDbUrl,
-        FRONTEND_URL: 'http://localhost:3000',
-        MOODLE_BASEURL: 'https://moodle.universemvp.tech',
-      });
+        GOOGLE_CLIENT_ID: selectedGoogleClientId,
+      };
+
+      updateEnvFile(ROOT_ENV_PATH, backendEnvUpdates);
+      updateEnvFile(BACKEND_ENV_PATH, backendEnvUpdates);
       console.log(
         `${c.green}✔ Updated ${c.bold}.env${c.reset} and ${c.bold}packages/backend/.env${c.reset}`,
       );
@@ -271,7 +343,7 @@ async function main() {
       }
     }
 
-    // 5. Check Grip Gateway enrollment
+    // 7. Check Grip Gateway enrollment
     try {
       const { loadSettings } = await import('./grip/settings.mjs');
       const gripSettings = await loadSettings().catch(() => null);
@@ -281,7 +353,7 @@ async function main() {
       const needsEnrollment = !gripSettings || isRetired;
 
       if (needsEnrollment) {
-        console.log(`\n${c.bold}5. Grip Gateway Pre-Push Check:${c.reset}`);
+        console.log(`\n${c.bold}7. Grip Gateway Pre-Push Check:${c.reset}`);
 
         if (isRetired) {
           console.log(
@@ -319,7 +391,7 @@ async function main() {
       // Ignored if grip scripts are not available
     }
 
-    // 6. Auth notice & Launch prompt
+    // 8. Auth notice & Launch prompt
     console.log(
       `\n${c.bold}${c.yellow}================== [ Moodle Auth Notice ] ==================${c.reset}`,
     );
@@ -346,10 +418,12 @@ async function main() {
           DATABASE_URL: selectedDbUrl,
         });
       } else {
+        const scriptName = resolveFrontendDevCommand(useHttps);
+
         console.log(
-          `\n${c.green}Starting UniHub frontend (pointing to ${selectedBackend.url})...${c.reset}`,
+          `\n${c.green}Starting UniHub frontend (${frontendUrl} -> ${selectedBackend.url})...${c.reset}`,
         );
-        await runCommand('pnpm', ['--filter', '@universe/uni-hub', 'dev']);
+        await runCommand('pnpm', ['--filter', '@universe/uni-hub', scriptName]);
       }
 
       return;
@@ -360,7 +434,11 @@ async function main() {
     if (isLocalBackend) {
       console.log(`To start manually, run: ${c.bold}pnpm dev${c.reset}`);
     } else {
-      console.log(`To start frontend, run: ${c.bold}pnpm --filter @universe/uni-hub dev${c.reset}`);
+      const scriptName = resolveFrontendDevCommand(useHttps);
+
+      console.log(
+        `To start frontend, run: ${c.bold}pnpm --filter @universe/uni-hub ${scriptName}${c.reset}`,
+      );
     }
   } catch (error) {
     process.exitCode = 1;
