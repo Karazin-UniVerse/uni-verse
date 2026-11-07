@@ -68,6 +68,10 @@ export type ApplicationWithOpportunity = OpportunityApplication & {
   applicant: ApplicationWithApplicant['applicant'];
 };
 
+export type OpportunityWithSubscription = OpportunityWithOwner & {
+  isSubscribed: boolean;
+};
+
 export type UpdateApplicationStatusParams = {
   userId: string;
   applicationId: string;
@@ -447,7 +451,8 @@ export class OpportunitiesService {
   }
 
   /**
-   * Update the lifecycle state of an opportunity (e.g., ACTIVE, CLOSED).
+   * Update the lifecycle state of an opportunity (e.g., ACTIVE, COMPLETED)
+   * and notify all subscribed users about the status change.
    */
   async changeLifecycleState(
     userId: string,
@@ -459,7 +464,7 @@ export class OpportunitiesService {
     if (opportunity.ownerId !== userId)
       throw new ForbiddenException('Not your opportunity');
 
-    return this.prisma.opportunity.update({
+    const updatedOpportunity = await this.prisma.opportunity.update({
       where: { id },
       data: {
         lifecycleState,
@@ -468,6 +473,19 @@ export class OpportunitiesService {
           : {}),
       },
     });
+
+    if (
+      updatedOpportunity.status === OpportunityStatus.PUBLISHED &&
+      opportunity.lifecycleState !== lifecycleState
+    ) {
+      await this.notifySubscribers(
+        id,
+        updatedOpportunity.title,
+        lifecycleState,
+      );
+    }
+
+    return updatedOpportunity;
   }
 
   /**
@@ -766,5 +784,110 @@ export class OpportunitiesService {
     });
 
     return opp;
+  }
+
+  /**
+   * Send notification to all users subscribed to an opportunity.
+   */
+  private async notifySubscribers(
+    opportunityId: string,
+    opportunityTitle: string,
+    lifecycleState: OpportunityLifecycleState,
+  ): Promise<void> {
+    try {
+      const subscribers = await this.prisma.opportunitySubscription.findMany({
+        where: { opportunityId },
+        select: { userId: true },
+      });
+
+      const deliveries = await Promise.allSettled(
+        subscribers.map((sub) =>
+          this.notificationsService.createNotification({
+            userId: sub.userId,
+            type: 'OPPORTUNITY_LIFECYCLE_CHANGED',
+            title: OPPORTUNITY_NOTIFICATION_KEY.LIFECYCLE_CHANGED_TITLE,
+            message: JSON.stringify({ opportunityTitle, lifecycleState }),
+            link: `${OPPORTUNITIES_ROUTE}/${opportunityId}`,
+          }),
+        ),
+      );
+
+      for (const [index, delivery] of deliveries.entries()) {
+        if (delivery.status === 'rejected') {
+          this.logger.error(
+            `Failed to deliver lifecycle notification for opportunity ${opportunityId} to subscriber ${subscribers[index].userId}`,
+            delivery.reason instanceof Error
+              ? delivery.reason.stack
+              : delivery.reason,
+          );
+        }
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to deliver lifecycle notifications for opportunity ${opportunityId}`,
+        error instanceof Error ? error.stack : error,
+      );
+    }
+  }
+
+  /**
+   * Subscribe a user to lifecycle updates of an opportunity.
+   */
+  async subscribe(userId: string, id: string): Promise<{ isSubscribed: true }> {
+    const opportunity = await this.findOne(id, userId);
+
+    if (opportunity.ownerId === userId) {
+      throw new BadRequestException('Cannot subscribe to your own opportunity');
+    }
+
+    if (opportunity.status !== OpportunityStatus.PUBLISHED) {
+      throw new BadRequestException(
+        'Can only subscribe to published opportunities',
+      );
+    }
+
+    await this.prisma.opportunitySubscription.upsert({
+      where: { userId_opportunityId: { userId, opportunityId: id } },
+      create: { userId, opportunityId: id },
+      update: {},
+    });
+
+    return { isSubscribed: true };
+  }
+
+  /**
+   * Unsubscribe a user from lifecycle updates of an opportunity.
+   */
+  async unsubscribe(
+    userId: string,
+    id: string,
+  ): Promise<{ isSubscribed: false }> {
+    await this.prisma.opportunitySubscription.deleteMany({
+      where: { userId, opportunityId: id },
+    });
+
+    return { isSubscribed: false };
+  }
+
+  /**
+   * Find opportunity by ID and include whether the requesting user is subscribed.
+   */
+  async findOneWithSubscription(
+    id: string,
+    userId?: string,
+    userRoles: string[] = [],
+  ): Promise<OpportunityWithSubscription> {
+    const opportunity = await this.findOne(id, userId, userRoles);
+
+    if (!userId) {
+      return { ...opportunity, isSubscribed: false };
+    }
+
+    const subscription = await this.prisma.opportunitySubscription.findFirst({
+      where: { userId, opportunityId: id },
+      select: { userId: true },
+    });
+
+    return { ...opportunity, isSubscribed: Boolean(subscription) };
   }
 }

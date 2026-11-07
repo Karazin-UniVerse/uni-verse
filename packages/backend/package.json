@@ -7,6 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "db:generate": "prisma generate",
+    "db:studio": "prisma studio",
     "db:backfill-roles": "prisma db execute --file prisma/scripts/backfill-roles.sql",
     "db:push": "pnpm db:backfill-roles && prisma db push",
     "db:push:force": "pnpm db:backfill-roles && prisma db push --accept-data-loss",

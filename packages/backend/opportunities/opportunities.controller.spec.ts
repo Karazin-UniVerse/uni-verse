@@ -28,6 +28,9 @@ describe('OpportunitiesController', () => {
             create: jest.fn(),
             findAll: jest.fn(),
             findOne: jest.fn(),
+            findOneWithSubscription: jest.fn(),
+            subscribe: jest.fn(),
+            unsubscribe: jest.fn(),
             update: jest.fn(),
             delete: jest.fn(),
             changeStatus: jest.fn(),
@@ -171,20 +174,33 @@ describe('OpportunitiesController', () => {
   });
 
   describe('findOne', () => {
-    it('delegates to service.findOne', async () => {
-      (service.findOne as jest.Mock).mockResolvedValue({
+    it('delegates to service.findOneWithSubscription and returns subscription state', async () => {
+      const mockResult = {
         id: 'opp1',
+        title: 'Opportunity',
         status: OpportunityStatus.PUBLISHED,
-      });
+        isSubscribed: true,
+      };
 
-      await controller.findOne('opp1', 'user1', ['MOODLE_STUDENT']);
-      expect(service.findOne).toHaveBeenCalledWith('opp1', 'user1', [
+      (service.findOneWithSubscription as jest.Mock).mockResolvedValue(
+        mockResult,
+      );
+
+      const result = await controller.findOne('opp1', 'user1', [
         'MOODLE_STUDENT',
       ]);
+
+      expect(service.findOneWithSubscription).toHaveBeenCalledWith(
+        'opp1',
+        'user1',
+        ['MOODLE_STUDENT'],
+      );
+      expect(result).toEqual(mockResult);
+      expect(result.isSubscribed).toBe(true);
     });
 
-    it('sets public Cache-Control header when opportunity is published', async () => {
-      (service.findOne as jest.Mock).mockResolvedValue({
+    it('sets private Cache-Control header for authenticated published access', async () => {
+      (service.findOneWithSubscription as jest.Mock).mockResolvedValue({
         id: 'opp1',
         status: OpportunityStatus.PUBLISHED,
       });
@@ -195,12 +211,12 @@ describe('OpportunitiesController', () => {
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         CACHE_CONTROL_HEADER,
-        PUBLIC_CACHE_CONTROL,
+        PRIVATE_CACHE_CONTROL,
       );
     });
 
     it('sets public Cache-Control header for anonymous published access', async () => {
-      (service.findOne as jest.Mock).mockResolvedValue({
+      (service.findOneWithSubscription as jest.Mock).mockResolvedValue({
         id: 'opp1',
         status: OpportunityStatus.PUBLISHED,
       });
@@ -216,7 +232,7 @@ describe('OpportunitiesController', () => {
     });
 
     it('sets private Cache-Control header when opportunity is non-published', async () => {
-      (service.findOne as jest.Mock).mockResolvedValue({
+      (service.findOneWithSubscription as jest.Mock).mockResolvedValue({
         id: 'opp1',
         status: OpportunityStatus.DRAFT,
       });
@@ -229,6 +245,44 @@ describe('OpportunitiesController', () => {
         CACHE_CONTROL_HEADER,
         PRIVATE_CACHE_CONTROL,
       );
+    });
+  });
+
+  describe('subscribe', () => {
+    it('throws ForbiddenException when userId is empty', () => {
+      expect(() => controller.subscribe('', 'opp1')).toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('delegates to service.subscribe', async () => {
+      (service.subscribe as jest.Mock).mockResolvedValue({
+        isSubscribed: true,
+      });
+
+      const result = await controller.subscribe('user1', 'opp1');
+
+      expect(service.subscribe).toHaveBeenCalledWith('user1', 'opp1');
+      expect(result).toEqual({ isSubscribed: true });
+    });
+  });
+
+  describe('unsubscribe', () => {
+    it('throws ForbiddenException when userId is empty', () => {
+      expect(() => controller.unsubscribe('', 'opp1')).toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('delegates to service.unsubscribe', async () => {
+      (service.unsubscribe as jest.Mock).mockResolvedValue({
+        isSubscribed: false,
+      });
+
+      const result = await controller.unsubscribe('user1', 'opp1');
+
+      expect(service.unsubscribe).toHaveBeenCalledWith('user1', 'opp1');
+      expect(result).toEqual({ isSubscribed: false });
     });
   });
 

@@ -36,6 +36,7 @@ export interface Opportunity {
   canResubmit?: boolean;
   owner?: OpportunityOwner;
   applications?: OpportunityApplication[];
+  isSubscribed?: boolean;
 }
 
 export interface OpportunityApplication {
