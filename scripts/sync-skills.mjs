@@ -1,4 +1,13 @@
-import { cpSync, existsSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import {
+  copyFileSync,
+  cpSync,
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+} from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -54,6 +63,46 @@ function findDifferences() {
   return differences;
 }
 
+function syncDirectory(sourceDirectory, targetDirectory) {
+  mkdirSync(targetDirectory, { recursive: true });
+  const entries = readdirSync(sourceDirectory, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const sourcePath = join(sourceDirectory, entry.name);
+    const targetPath = join(targetDirectory, entry.name);
+    const targetEntry = existsSync(targetPath) ? lstatSync(targetPath) : undefined;
+
+    if (
+      targetEntry &&
+      (entry.isDirectory() !== targetEntry.isDirectory() ||
+        entry.isSymbolicLink() !== targetEntry.isSymbolicLink())
+    ) {
+      rmSync(targetPath, { recursive: true, force: true });
+    }
+
+    if (entry.isDirectory()) {
+      syncDirectory(sourcePath, targetPath);
+    } else if (
+      !existsSync(targetPath) ||
+      !readFileSync(sourcePath).equals(readFileSync(targetPath))
+    ) {
+      if (entry.isSymbolicLink()) {
+        cpSync(sourcePath, targetPath, { verbatimSymlinks: true });
+      } else {
+        copyFileSync(sourcePath, targetPath);
+      }
+    }
+  }
+
+  const sourceNames = new Set(entries.map((entry) => entry.name));
+
+  for (const entry of readdirSync(targetDirectory)) {
+    if (!sourceNames.has(entry)) {
+      rmSync(join(targetDirectory, entry), { recursive: true, force: true });
+    }
+  }
+}
+
 // The canonical directory must exist in both modes: without it there is nothing to mirror or verify.
 if (!existsSync(source)) {
   console.error('.agents/skills does not exist; it is the canonical skills directory');
@@ -72,9 +121,7 @@ try {
 
     console.info('.claude/skills matches .agents/skills');
   } else {
-    // Replace the mirror wholesale so files deleted from .agents/skills disappear from it too.
-    rmSync(target, { recursive: true, force: true });
-    cpSync(source, target, { recursive: true, verbatimSymlinks: true });
+    syncDirectory(source, target);
     console.info('Synced .agents/skills -> .claude/skills');
   }
 } catch (error) {

@@ -57,6 +57,8 @@ The gateway defaults to `https://api.universemvp.tech` and the client ID to `Ov2
 
 Switching branches, creating worktrees, and cloning UniVerse elsewhere on the same computer no longer require another login once those checkouts contain this version of the scripts. One active gateway/account profile is supported per OS user; running setup again replaces it. Re-enroll after token expiry, revocation, or switching gateway/account. Changing the remote to a different repository does not grant it access to the shared profile.
 
+SSH aliases such as `git@github.com-personal:Karazin-UniVerse/uni-verse.git` and `ssh://git@github.com-personal/Karazin-UniVerse/uni-verse.git` are supported. Grip checks both `origin` and the push destination. For an alias, OpenSSH `ssh -G` must resolve the destination to `hostname github.com`, `user git`, and `port 22`; failed or timed-out configuration checks reject the alias. Standard GitHub HTTPS and SSH URLs continue to work without this extra check.
+
 ### Migrate an existing checkout enrollment
 
 If you already completed GitHub authorization with the previous checkout-scoped setup and your gateway is still active, run this explicitly **from that enrolled checkout** using the original gateway and client ID:
