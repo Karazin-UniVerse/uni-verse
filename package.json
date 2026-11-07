@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "turbo dev",
     "dev:select": "node scripts/dev.mjs",
+    "dev:https": "node scripts/dev.mjs --https",
     "build": "turbo build",
     "lint": "oxlint --deny-warnings",
     "lint:ox": "oxlint --deny-warnings",

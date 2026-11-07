@@ -1,12 +1,15 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
+import { FEATURE_ENV_KEYS } from '@core/constants/features';
 import { isBrowser } from '@core/utils/browser';
-import { resetTestFeatureFlags } from '@uni-hub/utils/test-utils';
 
 afterEach(() => {
   cleanup();
-  resetTestFeatureFlags();
+
+  for (const envKey of Object.values(FEATURE_ENV_KEYS)) {
+    delete process.env[envKey];
+  }
 
   if (isBrowser()) {
     window.localStorage?.clear();
