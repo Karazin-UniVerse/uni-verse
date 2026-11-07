@@ -157,7 +157,7 @@ export class OpportunitiesController {
 
     setOpportunityCacheControl(
       res,
-      opportunity.status === OpportunityStatus.PUBLISHED,
+      !userId && opportunity.status === OpportunityStatus.PUBLISHED,
     );
 
     return opportunity;

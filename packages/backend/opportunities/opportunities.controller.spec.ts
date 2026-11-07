@@ -199,7 +199,7 @@ describe('OpportunitiesController', () => {
       expect(result.isSubscribed).toBe(true);
     });
 
-    it('sets public Cache-Control header when opportunity is published', async () => {
+    it('sets private Cache-Control header for authenticated published access', async () => {
       (service.findOneWithSubscription as jest.Mock).mockResolvedValue({
         id: 'opp1',
         status: OpportunityStatus.PUBLISHED,
@@ -211,7 +211,7 @@ describe('OpportunitiesController', () => {
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         CACHE_CONTROL_HEADER,
-        PUBLIC_CACHE_CONTROL,
+        PRIVATE_CACHE_CONTROL,
       );
     });
 
