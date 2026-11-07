@@ -99,10 +99,8 @@ export class OpportunitiesController {
     @Res({ passthrough: true }) res?: Response,
   ): Promise<OpportunityWithOwner[]> {
     const opportunities = await this.opportunitiesService.findAll(query, roles);
-    const isPublicCatalog =
-      !query.status || query.status === OpportunityStatus.PUBLISHED;
 
-    setOpportunityCacheControl(res, isPublicCatalog);
+    setOpportunityCacheControl(res, false);
 
     return opportunities;
   }

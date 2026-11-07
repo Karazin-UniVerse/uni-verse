@@ -113,6 +113,7 @@ model Opportunity {
   moderationComment     String?
   moderationContentHash String?
   proposedTags          String[]                  @default([])
+  publishedAt           DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -123,6 +124,8 @@ model Opportunity {
   tags         Tag[]
   applications OpportunityApplication[] @relation("OpportunityToApplication")
   comments     Comment[]
+
+  @@index([status, publishedAt(sort: Desc), createdAt(sort: Desc), id(sort: Desc)])
 }
 
 enum ApplicationStatus {
@@ -184,7 +187,6 @@ model Comment {
   applicationId String?
   application   OpportunityApplication? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
-
 
 model GripSession {
   id          String    @id @default(uuid())

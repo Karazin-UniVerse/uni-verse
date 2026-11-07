@@ -206,7 +206,14 @@ export class OpportunitiesService {
 
     return this.prisma.opportunity.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy:
+        where.status === OpportunityStatus.PUBLISHED
+          ? [
+              { publishedAt: { sort: 'desc', nulls: 'last' } },
+              { createdAt: 'desc' },
+              { id: 'desc' },
+            ]
+          : { createdAt: 'desc' },
       include: OPPORTUNITY_INCLUDE,
     });
   }

@@ -28,6 +28,7 @@ export interface Opportunity {
   ownerId: string;
   createdAt: string;
   updatedAt: string;
+  publishedAt?: string | null;
   acceptsApplications?: boolean;
   paymentDetails?: string | null;
   moderationComment?: string | null;

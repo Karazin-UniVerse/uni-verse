@@ -93,6 +93,14 @@ const renderCatalogTab = (props?: Partial<CatalogTabProps>) => {
 };
 
 describe('CatalogTab component', () => {
+  it('should preserve publication order from the API rather than reorder by creation time', () => {
+    renderCatalogTab();
+
+    expect(
+      screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent),
+    ).toEqual(['Frontend Developer', 'Backend Engineer', 'UI/UX Designer']);
+  });
+
   it('should render search input and filters trigger button', () => {
     renderCatalogTab();
 
