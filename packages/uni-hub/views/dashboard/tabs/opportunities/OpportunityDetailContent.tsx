@@ -32,7 +32,7 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
   const currentUser = useCurrentUser();
   const { formatMessage } = useLanguage();
   const actions = useOpportunityActions();
-  const create = useCreateOpportunity({});
+  const create = useCreateOpportunity({ currentOpportunity: opportunity });
   const apply = useApplyToOpportunity({ currentUser, opportunity });
   const applicants = useApplicants();
   const subscribe = useSubscribeOpportunity(opportunity.id, opportunity.isSubscribed ?? false);
@@ -107,6 +107,7 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
         onSubmit={create.handleSubmit}
         submitting={create.creating}
         isEdit={create.isEdit}
+        remoderationWarning={create.willRemoderate}
       />
 
       <ApplyOpportunityModal

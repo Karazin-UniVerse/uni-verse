@@ -13,6 +13,7 @@ export type OpportunityDetailProps = {
   paymentTone?: 'success' | 'neutral';
   statusBadge?: ReactNode;
   lifecycleTagText?: string;
+  tags?: string[];
   organizerLabel?: string;
   organizerName?: string;
   publishedDateText?: string;

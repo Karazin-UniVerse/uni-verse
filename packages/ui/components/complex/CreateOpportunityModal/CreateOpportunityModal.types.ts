@@ -8,11 +8,12 @@ export type CreateOpportunityFormData = {
   ownerContactInfo: string;
   paymentType: OpportunityPaymentType;
   paymentDetails: string;
+  tags?: string[];
   acceptsApplications?: boolean;
   lifecycleState?: OpportunityLifecycle;
 };
 
-export type CreateOpportunityModalProps = {
+type BaseCreateOpportunityModalProps = {
   open: boolean;
   onClose: () => void;
   title: string;
@@ -36,7 +37,27 @@ export type CreateOpportunityModalProps = {
   contactHint?: string;
   acceptsApplicationsLabel?: string;
   phaseLabel?: string;
+  remoderationWarning?: string;
   lifecycleOptions?: OpportunityLifecycleOption[];
   submitting?: boolean;
   className?: string;
 };
+
+type CreateOpportunityModalTagProps =
+  | {
+      tagsLabel: string;
+      removeTagLabel: string;
+      tagsPlaceholder?: string;
+      formatCreateTagLabel?: (tag: string) => string;
+      loadTagSuggestions?: (query: string) => Promise<string[]>;
+    }
+  | {
+      tagsLabel?: undefined;
+      removeTagLabel?: undefined;
+      tagsPlaceholder?: undefined;
+      formatCreateTagLabel?: undefined;
+      loadTagSuggestions?: undefined;
+    };
+
+export type CreateOpportunityModalProps = BaseCreateOpportunityModalProps &
+  CreateOpportunityModalTagProps;

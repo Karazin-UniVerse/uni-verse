@@ -19,6 +19,47 @@
     color: var(--text-disabled);
   }
 
+  &:not(.is-transparent):-webkit-autofill,
+  &:not(.is-transparent):-webkit-autofill:hover,
+  &:not(.is-transparent):-webkit-autofill:focus,
+  &:not(.is-transparent):-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-surface) inset;
+    box-shadow: 0 0 0 1000px var(--bg-surface) inset;
+  }
+
+  &:not(.is-transparent):-webkit-autofill:focus {
+    -webkit-box-shadow:
+      0 0 0 1000px var(--bg-surface) inset,
+      0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+    box-shadow:
+      0 0 0 1000px var(--bg-surface) inset,
+      0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+  }
+
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus,
+  &:-webkit-autofill:active {
+    -webkit-text-fill-color: var(--text-primary);
+    caret-color: var(--text-primary);
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  &:not(.is-transparent):disabled:-webkit-autofill,
+  &:not(.is-transparent):disabled:-webkit-autofill:hover,
+  &:not(.is-transparent):disabled:-webkit-autofill:focus,
+  &:not(.is-transparent):disabled:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--neutral-surface) inset;
+    box-shadow: 0 0 0 1000px var(--neutral-surface) inset;
+  }
+
+  &:disabled:-webkit-autofill,
+  &:disabled:-webkit-autofill:hover,
+  &:disabled:-webkit-autofill:focus,
+  &:disabled:-webkit-autofill:active {
+    -webkit-text-fill-color: var(--text-disabled);
+  }
+
   &:disabled {
     background-color: var(--neutral-surface);
     color: var(--text-disabled);
@@ -48,6 +89,13 @@
     border-color: transparent;
     box-shadow: none; /* Reset the shadow */
     border-bottom: 2px solid var(--accent-primary);
+  }
+
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus,
+  &:-webkit-autofill:active {
+    -webkit-box-shadow: none;
   }
 }
 

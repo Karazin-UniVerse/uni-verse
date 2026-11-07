@@ -11,7 +11,12 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import {
   OpportunitiesService,
   OpportunityWithOwner,
@@ -79,6 +84,16 @@ export class OpportunitiesController {
    * Get all published opportunities (or filter)
    */
   @ApiOperation({ summary: 'Get all published opportunities (or filter)' })
+  @ApiQuery({
+    name: 'tags',
+    required: false,
+    type: String,
+    isArray: true,
+    style: 'form',
+    explode: true,
+    description:
+      'One complete tag name per parameter; repeat tags for multiple names',
+  })
   async findAll(
     @GetUser('roles') roles: string[] | undefined,
     @Query() query: FindOpportunitiesDto,

@@ -1,12 +1,50 @@
-import type { SyntheticEvent } from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { useState, type ReactElement, type SyntheticEvent } from 'react';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { withLanguage } from '@uni-hub/utils/test-utils';
+import { withLanguage, withQueryClient } from '@uni-hub/utils/test-utils';
+import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { CreateOpportunityModal } from './CreateOpportunityModal';
 import type { CreateOpportunityFormData } from '../types';
 
+function EditableModal({
+  onSubmit,
+}: {
+  onSubmit: (form: CreateOpportunityFormData) => void;
+}): ReactElement {
+  const [formData, setFormData] = useState<CreateOpportunityFormData>({
+    title: 'Research',
+    description: 'Research project',
+    ownerContactInfo: '@research_lab',
+    paymentType: 'UNPAID',
+    paymentDetails: '',
+    tags: [],
+  });
+
+  return (
+    <CreateOpportunityModal
+      open
+      onClose={() => undefined}
+      formData={formData}
+      setFormData={setFormData}
+      submitting={false}
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit(formData);
+      }}
+    />
+  );
+}
+
 describe('CreateOpportunityModal', () => {
+  beforeEach(() => {
+    vi.spyOn(opportunitiesApi, 'getTagSuggestions').mockResolvedValue({ data: [] });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   const initialFormData: CreateOpportunityFormData = {
     title: 'Стажування для фронтенд-розробника',
     description: 'Потрібен студент для розробки інтерфейсу на React та TypeScript.',
@@ -26,7 +64,9 @@ describe('CreateOpportunityModal', () => {
   };
 
   const renderComponent = (props = {}) => {
-    return render(withLanguage(<CreateOpportunityModal {...defaultProps} {...props} />));
+    return render(
+      withQueryClient(withLanguage(<CreateOpportunityModal {...defaultProps} {...props} />)),
+    );
   };
 
   it('should render modal in create mode with create title and inputs', () => {
@@ -123,6 +163,40 @@ describe('CreateOpportunityModal', () => {
     expect(handleSubmit).toHaveBeenCalledTimes(1);
   });
 
+  it('should retain a short pending tag when the form is submitted without Enter', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    render(withQueryClient(withLanguage(<EditableModal onSubmit={onSubmit} />)));
+
+    await user.type(screen.getByRole('combobox', { name: 'Теги' }), '3D');
+    await user.click(screen.getByRole('button', { name: 'Створити чернетку' }));
+
+    expect(onSubmit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ tags: ['3d'] }));
+  });
+
+  it('should load localized tag suggestions and retain the selected tag on submit', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    vi.spyOn(opportunitiesApi, 'getTagSuggestions').mockResolvedValue({
+      data: [{ id: 'react', name: 'react' }],
+    });
+    render(withQueryClient(withLanguage(<EditableModal onSubmit={onSubmit} />)));
+
+    const input = screen.getByRole('combobox', { name: 'Теги' });
+
+    expect(input).toHaveAttribute('placeholder', 'Почніть вводити тег...');
+    await user.type(input, 'rea');
+    await screen.findByRole('option', { name: 'react' });
+    await user.keyboard('{ArrowDown}{Enter}');
+
+    expect(screen.getByRole('button', { name: 'Видалити тег react' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Створити чернетку' }));
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ tags: ['react'] }));
+  });
+
   it('should call onClose when cancel button is clicked', async () => {
     const user = userEvent.setup();
     const handleClose = vi.fn();
@@ -152,6 +226,23 @@ describe('CreateOpportunityModal', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+  });
+
+  it('shows localized re-moderation warning only when remoderationWarning is true', () => {
+    localStorage.setItem('universe-lang', 'uk');
+    const { rerender } = renderComponent({ isEdit: true, remoderationWarning: false });
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    rerender(
+      withQueryClient(
+        withLanguage(<CreateOpportunityModal {...defaultProps} isEdit remoderationWarning />),
+      ),
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Зверніть увагу: після збереження змін у назві, описі, контактах або умовах оплати можливість буде відправлено на повторну модерацію й тимчасово приховано з каталогу.',
+    );
   });
 
   it('should call setFormData when input fields change', async () => {

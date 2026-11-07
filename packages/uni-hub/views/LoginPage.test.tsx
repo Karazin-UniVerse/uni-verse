@@ -8,7 +8,6 @@ import LoginPage from './LoginPage';
 const mockPush = vi.fn();
 const mockAuthApi = vi.hoisted(() => ({
   loginWithGoogle: vi.fn(),
-  login: vi.fn(),
   linkMoodleAccount: vi.fn(),
   logout: vi.fn(),
 }));
@@ -73,6 +72,14 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     delete process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     delete (window as unknown as { google?: unknown }).google;
     window.localStorage.clear();
+  });
+
+  it('should render corporate login notice and Google login button on initial view', () => {
+    renderLoginPage();
+
+    expect(screen.getByRole('note')).toHaveTextContent(/корпоративним акаунтом/i);
+    expect(screen.getByTestId('google-btn')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Пароль')).not.toBeInTheDocument();
   });
 
   it('should set isLoggedIn = true and redirect to / without requiring Moodle link when isMoodleIntegrationEnabled is false', async () => {
@@ -265,7 +272,8 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     await user.click(screen.getByRole('button', { name: /повернутися до входу/i }));
 
     expect(screen.queryByPlaceholderText('Логін у Moodle')).not.toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Ім’я користувача або email')).toBeInTheDocument();
+    expect(screen.getByRole('note')).toHaveTextContent(/корпоративним акаунтом/i);
+    expect(screen.getByTestId('google-btn')).toBeInTheDocument();
   });
 
   it('should show error message when GoogleLoginButton triggers onError', async () => {
@@ -282,99 +290,16 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     });
   });
 
-  it('should perform standard Moodle credentials login successfully', async () => {
-    const user = userEvent.setup();
-
-    mockAuthApi.login.mockResolvedValueOnce({
-      data: { access_token: 'moodle-session-token' },
-    });
-
-    renderLoginPage();
-
-    await user.type(screen.getByPlaceholderText('Ім’я користувача або email'), 'moodle_student');
-    await user.type(screen.getByPlaceholderText('Пароль'), 'secretpass');
-
-    await user.click(screen.getByRole('button', { name: /^увійти$/i }));
-
-    await waitFor(() => {
-      expect(window.localStorage.getItem('isLoggedIn')).toBe('true');
-    });
-
-    expect(window.localStorage.getItem('isMoodleLinked')).toBe('true');
-    expect(window.localStorage.getItem('username')).toBe('moodle_student');
-    expect(mockPush).toHaveBeenCalledWith('/');
-    expect(screen.getByText('Вхід виконано успішно')).toBeInTheDocument();
-  });
-
-  it('should show error when username is empty during credentials login', async () => {
-    const user = userEvent.setup();
-
-    renderLoginPage();
-
-    await user.click(screen.getByRole('button', { name: /^увійти$/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText("Будь ласка, введіть ім'я користувача")).toBeInTheDocument();
-    });
-    expect(mockPush).not.toHaveBeenCalled();
-  });
-
-  it('should show error when password is empty during credentials login', async () => {
-    const user = userEvent.setup();
-
-    renderLoginPage();
-
-    await user.type(screen.getByPlaceholderText('Ім’я користувача або email'), 'moodle_student');
-
-    await user.click(screen.getByRole('button', { name: /^увійти$/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText('Будь ласка, введіть пароль')).toBeInTheDocument();
-    });
-    expect(mockPush).not.toHaveBeenCalled();
-  });
-
-  it('should show error toast when credentials login fails', async () => {
-    const user = userEvent.setup();
-
-    mockAuthApi.login.mockRejectedValueOnce(new Error('Невірний логін або пароль'));
-
-    renderLoginPage();
-
-    await user.type(screen.getByPlaceholderText('Ім’я користувача або email'), 'moodle_student');
-    await user.type(screen.getByPlaceholderText('Пароль'), 'wrongpass');
-
-    await user.click(screen.getByRole('button', { name: /^увійти$/i }));
-
-    await waitFor(() => {
-      expect(screen.getAllByText('Невірний логін або пароль').length).toBeGreaterThanOrEqual(1);
-    });
-  });
-
-  it('should toggle password visibility when show password button is clicked', async () => {
-    const user = userEvent.setup();
-
-    renderLoginPage();
-
-    const passwordInput = screen.getByPlaceholderText('Пароль');
-
-    expect(passwordInput).toHaveAttribute('type', 'password');
-
-    await user.click(screen.getByLabelText(/показати пароль/i));
-
-    expect(passwordInput).toHaveAttribute('type', 'text');
-
-    await user.click(screen.getByLabelText(/сховати пароль/i));
-
-    expect(passwordInput).toHaveAttribute('type', 'password');
-  });
-
-  it('should not render Google login button when NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing', () => {
+  it('should render configuration warning when NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing', () => {
     delete process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
     renderLoginPage();
 
-    expect(screen.queryByRole('button', { name: /продовжити з google/i })).not.toBeInTheDocument();
     expect(screen.queryByTestId('google-btn')).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Сервіс авторизації Google тимчасово недоступний (клієнтський ID не налаштовано)',
+      ),
+    ).toBeInTheDocument();
   });
 });

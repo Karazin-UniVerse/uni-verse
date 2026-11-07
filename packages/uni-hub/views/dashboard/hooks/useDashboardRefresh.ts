@@ -8,6 +8,7 @@ export interface UseDashboardRefreshParams {
   enabled: boolean;
   refetchDashboard: () => Promise<{ isError: boolean }>;
   refetchPlatform: () => Promise<{ isError: boolean }>;
+  refetchProfile: () => Promise<{ isError: boolean }>;
 }
 
 export interface UseDashboardRefreshResult {
@@ -20,6 +21,7 @@ export function useDashboardRefresh({
   enabled,
   refetchDashboard,
   refetchPlatform,
+  refetchProfile,
 }: UseDashboardRefreshParams): UseDashboardRefreshResult {
   const toast = useToast();
   const { formatMessage } = useLanguage();
@@ -52,9 +54,13 @@ export function useDashboardRefresh({
         return;
       }
 
-      const [result, platformResult] = await Promise.all([refetchDashboard(), refetchPlatform()]);
+      const [result, platformResult, profileResult] = await Promise.all([
+        refetchDashboard(),
+        refetchPlatform(),
+        refetchProfile(),
+      ]);
 
-      if (!result?.isError && !platformResult?.isError) {
+      if (!result?.isError && !platformResult?.isError && !profileResult.isError) {
         const nowTimestamp = Date.now();
 
         setManualSyncTime(nowTimestamp);
@@ -65,7 +71,7 @@ export function useDashboardRefresh({
     } finally {
       setIsRefreshing(false);
     }
-  }, [enabled, refetchDashboard, refetchPlatform, toast, formatMessage]);
+  }, [enabled, refetchDashboard, refetchPlatform, refetchProfile, toast, formatMessage]);
 
   return {
     isRefreshing,

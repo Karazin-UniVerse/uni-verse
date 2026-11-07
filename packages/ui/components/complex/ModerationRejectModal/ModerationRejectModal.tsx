@@ -53,7 +53,7 @@ export const ModerationRejectModal: React.FC<ModerationRejectModalProps> = ({
             {reviseText}
           </Button>
           <Button
-            variant="primary"
+            variant="secondary"
             className={styles.rejectBtn}
             disabled={!comment.trim() || isSubmitting}
             onClick={onReject}

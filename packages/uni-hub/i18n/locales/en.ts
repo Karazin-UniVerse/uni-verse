@@ -10,19 +10,14 @@ export const en = {
 
   // Login
   'login.title': 'UNiHub',
-  'login.subtitle': 'Sign in to your Moodle account',
-  'login.username': 'Username',
-  'login.usernameOrEmail': 'Username or email',
-  'login.password': 'Password',
-  'login.submit': 'Sign In',
-  'login.loading': 'Signing in...',
-  'login.success': 'Signed in successfully',
-  'login.invalidCredentials': 'Login failed. Please check your credentials.',
-  'login.enterUsernameError': 'Please enter a username',
-  'login.enterPasswordError': 'Please enter a password',
+  'login.subtitle': 'Karazin University Space',
+  'login.corporateNotice':
+    'Sign in is only available with a university corporate account (@student.karazin.ua or @karazin.ua)',
+  'login.googleClientMissing':
+    'Google authentication is temporarily unavailable (client ID not configured)',
   'login.showPassword': 'Show password',
   'login.hidePassword': 'Hide password',
-  'login.orMoodle': 'or with Moodle login',
+  'login.success': 'Signed in successfully',
   'login.googleError': 'Google sign-in error',
   'login.linkMoodleTitle': 'Link Moodle Account',
   'login.linkMoodleHint':
@@ -577,6 +572,8 @@ export const en = {
     'E.g.: $400/month or 5000 UAH per milestone',
   'opportunities.createModal.phaseLabel': 'Phase',
   'opportunities.createModal.acceptsApplications': 'Accept new applications',
+  'opportunities.createModal.remoderationWarning':
+    'Please note: saving changes to the title, description, contact info, or payment terms will send the opportunity for re-moderation and temporarily hide it from the catalog.',
   'opportunities.createModal.cancel': 'Cancel',
   'opportunities.createModal.saving': 'Saving...',
   'opportunities.createModal.submit': 'Create Draft',
@@ -641,6 +638,19 @@ export const en = {
   'opportunities.applicantsModal.underReview': 'Under Review',
   'opportunities.applicantsModal.reject': 'Reject',
   'opportunities.applicantsModal.close': 'Close',
+
+  // Filters & Tags
+  'opportunities.catalog.filtersButton': 'Filters',
+  'opportunities.catalog.filtersTitle': 'Filters',
+  'opportunities.catalog.filtersClose': 'Close filters',
+  'opportunities.catalog.filtersApply': 'Apply',
+  'opportunities.catalog.filterPaymentLabel': 'Compensation',
+  'opportunities.catalog.filterRecruiting': 'Currently recruiting',
+  'opportunities.catalog.filterTagsLabel': 'Tags',
+  'opportunities.catalog.filterTagsPlaceholder': 'Start typing a tag...',
+  'opportunities.tags.remove': 'Remove tag',
+  'opportunities.tags.create': 'Create tag "{tag}"',
+  'opportunities.moderation.tagsLabel': 'Tags',
 
   // Platform Notifications
   'notifications.error.markReadFailed': 'Failed to update notification status',
