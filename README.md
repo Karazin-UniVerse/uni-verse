@@ -67,8 +67,8 @@ The wizard prompts you step-by-step, automatically configures environment files,
    - Automatically writes `.env` and `packages/backend/.env`, generates Prisma Client (`pnpm db:generate`), and optionally syncs schema (`pnpm db:migrate`).
 4. **Google OAuth Configuration** (optional):
    - Automatically detects existing `NEXT_PUBLIC_GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_ID` across `.env` files or prompts to enter one.
-5. **SSL / HTTPS Protocol**:
-   - Prompts to enable self-signed HTTPS via Next.js (`--experimental-https`) or pass `--https` flag directly (`pnpm dev:https`).
+5. **SSL / HTTPS Protocol** (only for remote backend):
+   - Prompts to enable self-signed HTTPS via Next.js (`--experimental-https`) or pass `--https` flag directly (`pnpm dev:https`). Local backend always uses standard HTTP (`http://localhost:3000`).
 6. **Grip Gateway Pre-Push Check**:
    - Checks if Grip is enrolled on this computer; prompts to automatically run `pnpm grip:setup` if needed.
 7. **Moodle Authentication Notice**:

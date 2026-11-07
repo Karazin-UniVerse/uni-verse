@@ -269,24 +269,29 @@ async function main() {
       console.log(`${c.dim}✔ Google OAuth: Skipped (Moodle login only)${c.reset}`);
     }
 
-    // 5. SSL / HTTPS protocol selection
-    const isHttpsArg = process.argv.includes('--https');
-    let useHttps = isHttpsArg;
+    // 5. SSL / HTTPS protocol selection (only applicable for frontend against remote APIs)
+    let useHttps = false;
 
-    if (!isHttpsArg) {
-      const httpsAnswer = await rl.question(
-        `\n${c.bold}5. Enable local HTTPS (self-signed SSL via Next.js)?${c.reset} (y/N): `,
-      );
+    if (!isLocalBackend) {
+      if (process.argv.includes('--https')) {
+        useHttps = true;
+      } else {
+        const httpsAnswer = await rl.question(
+          `\n${c.bold}5. Enable local HTTPS (self-signed SSL via Next.js)?${c.reset} (y/N): `,
+        );
 
-      useHttps = httpsAnswer.trim().toLowerCase() === 'y';
+        useHttps = httpsAnswer.trim().toLowerCase() === 'y';
+      }
     }
 
     const frontendProtocol = useHttps ? 'https' : 'http';
     const frontendUrl = `${frontendProtocol}://localhost:3000`;
 
-    console.log(
-      `${c.green}✔ Local frontend target: ${c.bold}${frontendUrl}${c.reset}${useHttps ? ' (self-signed SSL)' : ''}`,
-    );
+    if (!isLocalBackend) {
+      console.log(
+        `${c.green}✔ Local frontend target: ${c.bold}${frontendUrl}${c.reset}${useHttps ? ' (self-signed SSL)' : ''}`,
+      );
+    }
 
     // 6. Configure environment files
     console.log(`\n${c.cyan}Configuring environment variables...${c.reset}`);
@@ -308,7 +313,7 @@ async function main() {
       const backendEnvUpdates = {
         PORT: '3001',
         DATABASE_URL: selectedDbUrl,
-        FRONTEND_URL: frontendUrl,
+        FRONTEND_URL: 'http://localhost:3000',
         MOODLE_BASEURL: 'https://moodle.universemvp.tech',
         GOOGLE_CLIENT_ID: selectedGoogleClientId,
       };
