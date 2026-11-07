@@ -1,14 +1,14 @@
-# Grip: Interactive Browser Push Checks with Team Gateway
+# Grip: Interactive Pre-Push Quiz with Team Gateway
 
-[Grip](https://github.com/guilyx/grip) quizzes the **human developer** on their committed changes before allowing a local `git push` to complete. UniVerse uses Grip in **whiteboard mode** (`.grip.toml`) backed by an authenticated, quota-limited **team Gemini gateway** in NestJS (`/dev-tools/grip`).
+[Grip](https://github.com/guilyx/grip) quizzes the **human developer** on their committed changes before allowing a local `git push` to complete. UniVerse uses Grip in **quiz mode** (`.grip.toml`) backed by an authenticated, quota-limited **team Gemini gateway** in NestJS (`/dev-tools/grip`).
 
-Grip pre-push checks are **mandatory** for all contributors pushing to this repository. Pushes are blocked until you enroll via `pnpm grip:setup` and defend your changes on the whiteboard (scoring $\ge 70$).
+Grip pre-push checks are **mandatory** for all contributors pushing to this repository. Pushes are blocked until you enroll via `pnpm grip:setup` and defend your changes in the terminal quiz (scoring $\ge 70$).
 
 ---
 
 ## Architecture & Privacy
 
-- **Local interactive whiteboard**: Grip opens a browser tab on your computer where you review your diff and answer questions ($\ge 70$ required to pass).
+- **Terminal interactive quiz**: Grip quizzes you directly in your terminal where you review your diff and answer questions ($\ge 70$ required to pass).
 - **Resilience & Fail-Open**: If the AI model or network fails (`fail_open = true`), Grip logs a warning and permits the push rather than hard-blocking developers.
 - **Team Gateway**: A restricted endpoint in `@universe/backend` proxies structured questions and answers to Google Gemini (`gemini-3.5-flash-lite`).
 - **No shared API keys**: Collaborators never receive or handle Gemini API keys. Authentication is handled through a one-time GitHub OAuth Device Flow exchange.
@@ -110,9 +110,8 @@ When you run `git push origin <branch>`:
 2. **CI Environment (`CI=true`)**:
    Automatically skips interactive checks.
 3. **Enrolled checkout**:
-   - Launches Grip in whiteboard mode.
-   - Your default browser opens the local whiteboard interface.
-   - You answer the conceptual questions regarding your changes.
+   - Launches Grip in quiz mode.
+   - Quizzes you on conceptual questions regarding your changes directly in your terminal.
    - Upon scoring $\ge 70$, Grip passes, and the original `git push` **immediately completes**.
    - A pass for the **same diff** is remembered for **24 hours** (`remember_passes_hours = 24.0`). Additional commits or amendments that change the diff require a new check.
 
@@ -158,7 +157,7 @@ or shorten answers rather than bypassing the check.
 - **`Grip executable not found`**: Ensure Python's Scripts directory is on your system `PATH`, or pass `--executable <path-to-grip.exe>` during `pnpm grip:setup`.
 - **`Access denied (403)`**: Only GitHub users with write/admin permissions on `Karazin-UniVerse/uni-verse` are permitted.
 - **`Enrollment has expired`**: Gateway sessions expire after 30 days. Run `pnpm grip:setup` to refresh.
-- **`SSH / Headless environment`**: Grip whiteboard requires an interactive browser session. Complete the push from an interactive checkout; coding agents must hand it to the human instead of bypassing the check. See the [agent push rules](ai/workflow.md#hooks).
+- **`SSH / Headless environment`**: Grip quiz runs directly in the terminal TTY. Complete the push from an interactive checkout; coding agents must hand it to the human instead of bypassing the check. See the [agent push rules](ai/workflow.md#hooks).
 
 ---
 
@@ -192,7 +191,7 @@ The live authentication and pre-push loop was verified end-to-end:
 - Device Flow authentication against the local NestJS gateway.
 - Repository permissions check via GitHub API (`admin` role verified).
 - Bounded model completion forwarded to Gemini 3.5 Flash Lite via OpenAI-compatible endpoint.
-- Interactive Grip whiteboard check launched on push.
+- Interactive Grip quiz check launched on push.
 
 ### Production Deployment Prerequisites (Human Operations)
 
