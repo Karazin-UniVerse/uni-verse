@@ -2,22 +2,66 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import childProcess from 'node:child_process';
 
 export const GRIP_REPOSITORY = 'Karazin-UniVerse/uni-verse';
+const SSH_CONFIG_TIMEOUT_MS = 5000;
+const ALLOWED_REMOTE =
+  /^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)Karazin-UniVerse\/uni-verse(?:\.git)?\/?$/i;
+
+function isAllowedRemote(remoteUrl, repoRoot) {
+  if (ALLOWED_REMOTE.test(remoteUrl)) {
+    return true;
+  }
+
+  if (!remoteUrl.startsWith('git@') && !remoteUrl.startsWith('ssh://git@')) {
+    return false;
+  }
+
+  const sshRemote =
+    /^(?:git@([a-z0-9][a-z0-9.-]*):|ssh:\/\/git@([a-z0-9][a-z0-9.-]*)\/)([^\s]+)$/i.exec(remoteUrl);
+
+  if (!sshRemote || !ALLOWED_REMOTE.test(`git@github.com:${sshRemote[3]}`)) {
+    return false;
+  }
+
+  const host = sshRemote[1] ?? sshRemote[2];
+  const result = childProcess.spawnSync('ssh', ['-G', `git@${host}`], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+    shell: false,
+    windowsHide: true,
+    timeout: SSH_CONFIG_TIMEOUT_MS,
+  });
+
+  if (result.error || result.status !== 0) {
+    return false;
+  }
+
+  const config = new Map(
+    result.stdout
+      .trim()
+      .split(/\r?\n/)
+      .map((line) => line.trim().split(/\s+/, 2)),
+  );
+
+  return (
+    config.get('hostname')?.toLowerCase() === 'github.com' &&
+    config.get('user') === 'git' &&
+    config.get('port') === '22'
+  );
+}
 
 export function validateRepository({ remoteUrl, repoRoot = process.cwd() } = {}) {
-  const result = spawnSync('git', ['remote', 'get-url', 'origin'], {
+  const result = childProcess.spawnSync('git', ['remote', 'get-url', 'origin'], {
     cwd: repoRoot,
     encoding: 'utf8',
   });
-  const allowedRemote =
-    /^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)Karazin-UniVerse\/uni-verse(?:\.git)?\/?$/i;
 
   if (
     result.status !== 0 ||
-    !allowedRemote.test(result.stdout.trim()) ||
-    (remoteUrl !== undefined && !allowedRemote.test(remoteUrl))
+    !isAllowedRemote(result.stdout.trim(), repoRoot) ||
+    (remoteUrl !== undefined && !isAllowedRemote(remoteUrl, repoRoot))
   ) {
     throw new Error(`Grip enrollment is restricted to the ${GRIP_REPOSITORY} repository.`);
   }
