@@ -56,6 +56,35 @@ describe('useOpportunitiesData catalog synchronization', () => {
     expect(result.current.catalog.loading).toBe(false);
   });
 
+  it('should automatically restore a republished card at the head of the catalog', async () => {
+    const existing = { ...buildOpportunity('existing'), status: 'PUBLISHED' as const };
+    const returning = { ...buildOpportunity('returning'), status: 'PUBLISHED' as const };
+    const getCatalog = vi
+      .spyOn(opportunitiesApi, 'getOpportunities')
+      .mockResolvedValue({ data: [existing, returning] });
+    const { result } = renderHook(() => useOpportunitiesData(false), {
+      wrapper: createQueryClientWrapper(queryClient),
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+    expect(result.current.catalog.items.map((item) => item.id)).toEqual(['existing', 'returning']);
+    getCatalog.mockResolvedValue({ data: [existing] });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_001);
+    });
+    expect(result.current.catalog.items.map((item) => item.id)).toEqual(['existing']);
+    getCatalog.mockResolvedValue({ data: [returning, existing] });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_001);
+    });
+    expect(result.current.catalog.items.map((item) => item.id)).toEqual(['returning', 'existing']);
+    expect(result.current.catalog.loading).toBe(false);
+  });
+
   it('should refresh immediately when reopening a recently cached catalog', async () => {
     const opportunity = buildOpportunity('published');
     const getCatalog = vi
