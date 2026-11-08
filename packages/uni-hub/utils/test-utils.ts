@@ -6,11 +6,11 @@ import {
   type FeatureFlagKey,
   type FeatureFlags,
 } from '@core/constants/features';
+import { isBrowser } from '@core/utils/browser';
 import { ToastProvider } from '@una';
 import { FeatureToggleProvider } from '@uni-hub/features';
 import { LanguageProvider } from '@uni-hub/i18n/LanguageContext';
 import { ThemeProvider } from '@uni-hub/theme/ThemeContext';
-import { isBrowser } from './browser';
 
 export const ALL_FEATURES_ENABLED: Readonly<FeatureFlags> = Object.freeze({
   isMoodleIntegrationEnabled: true,
@@ -36,7 +36,7 @@ export function resetTestFeatureFlags(): void {
     delete process.env[envKey];
   }
 
-  if (isBrowser) {
+  if (isBrowser()) {
     window.localStorage?.removeItem(FEATURE_STORAGE_KEYS.OVERRIDES);
   }
 }

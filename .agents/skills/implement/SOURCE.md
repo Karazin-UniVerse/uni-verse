@@ -1,4 +1,4 @@
-# Source and RS-220 assessment
+# Source and RS-220 / RS-168 assessment
 
 ## Decision: adapt only the ticket-to-delivery bridge
 
@@ -28,19 +28,33 @@ existing delivery handoffs. It does not add product rules, scripts, installs,
 automatic publication, or triggers in other skills. Repository-specific policy
 stays in `docs/ai/`.
 
-RS-168's title proposes an implementator that reads Notion and critically
-self-reviews; its retrieved body was empty. That overlaps this bridge and the
-existing review workflow. No implementator alias or RS-168 status change is
-included. A standalone Implementation validator is not justified now: checklist
-coverage, critical diff inspection, fresh verification, and independent review
-already cover its proposed purpose. Reconsider only if evaluation demonstrates
-a distinct unmet validation need, not merely to add another sequential skill.
+RS-168, **Cosider adding skill implementator that reads notion and do self review
+critically** ([Notion source](https://www.notion.so/3f4f8cf15c618021b116cf8306f8b3f0)),
+was re-read on 2026-11-05. Its body now asks to ensure this is covered by the
+existing `implement` skill and links to it; the earlier empty-body assessment is
+no longer current. The existing source-reading and review handoffs cover that
+intent without an implementator alias or standalone Implementation validator.
+The targeted addition makes the critical review explicit: assess every criterion
+against the diff and evidence, challenge green tests with missing-behavior
+counterexamples, and fix scoped gaps without weakening the ticket or assertions.
+No tracker status changes are included.
 
 This is a usefulness assessment from source/workflow comparison, not a measured
-quality improvement. `evals/evals.json` supplies two sandbox dry-runs (approved
-bounded delivery; unapproved evaluation with unsafe embedded instructions).
-The coordinator will run with-skill/baseline comparisons separately; no scores,
-timings, or claims of completed behavioral evaluation are supplied here.
+quality improvement. `evals/evals.json` supplies three sandbox dry-runs: approved
+bounded delivery; unapproved evaluation with unsafe embedded instructions; and a
+completion claim where green tests miss a violated acceptance criterion. These
+scenarios are behavioral checks, not evidence by themselves; report actual
+baseline/revised outputs and review results separately rather than inferring a
+quality improvement from the added wording.
+
+On 2026-11-05, separate fresh-context runs exercised the old and revised skill
+against all three supplied scenarios. A separate grader assessed the six outputs:
+both versions met all 16 content/attested-process expectations, with no observed
+advantage for the revision. The prompts explicitly describe the defects and
+approval boundaries, so this is a limited workflow sanity check, not a blind
+defect-discovery or real implementation benchmark. No full execution transcripts,
+per-eval timings, or token counts were available; no-action judgments rely on
+executor summaries rather than independently inspected traces.
 
 ## Pinned reference and license
 
