@@ -12,7 +12,6 @@ import { TabStateWrapper } from './TabStateWrapper';
 import styles from '../../OpportunitiesTab.module.scss';
 
 export interface ModerationQueueTabProps {
-  currentUserId: string | null;
   loading: boolean;
   isError: boolean;
   onRetry: () => void;
@@ -22,7 +21,6 @@ export interface ModerationQueueTabProps {
 }
 
 export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
-  currentUserId,
   loading,
   isError,
   onRetry,
@@ -42,8 +40,6 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
     >
       <div className={styles.listStack}>
         {moderationQueue.map((item) => {
-          const isOwnOpportunity = item.ownerId === currentUserId;
-
           return (
             <div key={item.id} className={styles.moderationCard}>
               <div className={styles.moderationHeader}>
@@ -146,12 +142,6 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                 </div>
               )}
 
-              {isOwnOpportunity && (
-                <p className={styles.selfModerationNotice}>
-                  {formatMessage('opportunities.moderation.selfModerationForbidden')}
-                </p>
-              )}
-
               <div className={styles.moderationFooter}>
                 <span className={styles.idBadge}>
                   <Hash size={12} />
@@ -162,7 +152,6 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                   approveText={formatMessage('opportunities.moderation.approve')}
                   reviseText={formatMessage('opportunities.moderation.revise')}
                   rejectText={formatMessage('opportunities.moderation.reject')}
-                  disabled={isOwnOpportunity}
                   onApprove={() => onModerate(item.id, 'APPROVE')}
                   onOpenRejectModal={() => onOpenRejectModal(item.id)}
                 />

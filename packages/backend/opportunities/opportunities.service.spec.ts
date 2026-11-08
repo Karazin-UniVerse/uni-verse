@@ -927,26 +927,29 @@ describe('OpportunitiesService', () => {
       );
     });
 
-    it('throws BadRequestException if REQUIRE_CHANGES has no comment or empty comment', async () => {
-      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
-        id: 'user1',
-        roles: ['OPPORTUNITIES_MODERATOR'],
-      } as any);
-      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
-        id: 'opp1',
-        title: 'test',
-        ownerId: 'owner1',
-        status: 'READY_FOR_REVIEW',
-        proposedTags: [],
-      } as any);
+    it.each(['REQUIRE_CHANGES', 'REJECT'] as const)(
+      'throws BadRequestException if %s has no comment or empty comment',
+      async (action) => {
+        jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+          id: 'user1',
+          roles: ['OPPORTUNITIES_MODERATOR'],
+        } as any);
+        jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+          id: 'opp1',
+          title: 'test',
+          ownerId: 'owner1',
+          status: 'READY_FOR_REVIEW',
+          proposedTags: [],
+        } as any);
 
-      await expect(
-        service.moderate('user1', 'opp1', {
-          action: 'REQUIRE_CHANGES',
-          comment: '   ',
-        } as any),
-      ).rejects.toThrow(BadRequestException);
-    });
+        await expect(
+          service.moderate('user1', 'opp1', {
+            action,
+            comment: '   ',
+          } as any),
+        ).rejects.toThrow(BadRequestException);
+      },
+    );
 
     it('throws BadRequestException for unknown moderation action', async () => {
       jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
@@ -1143,9 +1146,7 @@ describe('OpportunitiesService', () => {
         where: {
           id: 'draft-1',
           ownerId: 'owner-1',
-          status: {
-            in: [OpportunityStatus.DRAFT, OpportunityStatus.REQUIRES_CHANGES],
-          },
+          status: OpportunityStatus.DRAFT,
         },
       });
       expect(prisma.opportunityApplication.deleteMany).not.toHaveBeenCalled();
@@ -1175,20 +1176,28 @@ describe('OpportunitiesService', () => {
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
-    it('throws BadRequestException when opportunity is not in DRAFT or REQUIRES_CHANGES statuses', async () => {
-      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
-        ...publishedOpportunity,
-        id: 'opp-1',
-        ownerId: 'owner-1',
-        status: OpportunityStatus.PUBLISHED,
-      });
+    it.each([
+      OpportunityStatus.PUBLISHED,
+      OpportunityStatus.REQUIRES_CHANGES,
+      OpportunityStatus.READY_FOR_REVIEW,
+      OpportunityStatus.REJECTED,
+    ])(
+      'throws BadRequestException when opportunity is in %s status instead of DRAFT',
+      async (status) => {
+        jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+          ...publishedOpportunity,
+          id: 'opp-1',
+          ownerId: 'owner-1',
+          status,
+        });
 
-      await expect(service.delete('owner-1', 'opp-1')).rejects.toThrow(
-        new BadRequestException(
-          'Only opportunities in DRAFT or REQUIRES_CHANGES statuses can be deleted',
-        ),
-      );
-    });
+        await expect(service.delete('owner-1', 'opp-1')).rejects.toThrow(
+          new BadRequestException(
+            'Only opportunities in DRAFT status can be deleted',
+          ),
+        );
+      },
+    );
 
     it('should propagate a parent deletion failure after deleting applications on the transaction client', async () => {
       const transactionClient = {
@@ -1242,7 +1251,7 @@ describe('OpportunitiesService', () => {
 
       await expect(service.delete('owner-1', 'opp-1')).rejects.toThrow(
         new BadRequestException(
-          'Only opportunities in DRAFT or REQUIRES_CHANGES statuses can be deleted',
+          'Only opportunities in DRAFT status can be deleted',
         ),
       );
     });
@@ -1495,7 +1504,7 @@ describe('OpportunitiesService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('returns applications when caller is owner', async () => {
+    it('returns non-withdrawn applications when caller is owner', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
         status: 'PUBLISHED',
@@ -1507,6 +1516,14 @@ describe('OpportunitiesService', () => {
 
       const result = await service.getOpportunityApplications('user-1', '1');
 
+      expect(prisma.opportunityApplication.findMany).toHaveBeenCalledWith({
+        where: {
+          opportunityId: '1',
+          status: { not: ApplicationStatus.WITHDRAWN },
+        },
+        include: { applicant: { select: { name: true, email: true } } },
+        orderBy: { createdAt: 'desc' },
+      });
       expect(result).toHaveLength(1);
     });
   });

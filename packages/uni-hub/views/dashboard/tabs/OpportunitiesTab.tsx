@@ -49,6 +49,9 @@ export const OpportunitiesTab: React.FC = () => {
     router.push(getOpportunityHref(opportunity.id));
   const loadSuggestions = (query: string): Promise<string[]> =>
     loadTagSuggestions(queryClient, query);
+  const moderationItems = data.moderationQueue.items.filter(
+    (item) => item.ownerId !== currentUser.userId,
+  );
 
   const segmentItems: SegmentedControlItem<OpportunitySubTab>[] = [
     {
@@ -76,7 +79,7 @@ export const OpportunitiesTab: React.FC = () => {
             label: formatMessage('opportunities.tabs.moderation'),
             shortLabel: formatMessage('opportunities.tabs.moderationShort'),
             icon: <ShieldCheck size={16} />,
-            badge: data.moderationQueue.items.length,
+            badge: moderationItems.length,
           },
         ]
       : []),
@@ -149,11 +152,10 @@ export const OpportunitiesTab: React.FC = () => {
 
         {activeSubTab === OPPORTUNITY_SUB_TAB.Moderation && isModerator && (
           <ModerationQueueTab
-            currentUserId={currentUser.userId}
             loading={data.moderationQueue.loading}
             isError={data.moderationQueue.isError}
             onRetry={data.moderationQueue.refetch}
-            moderationQueue={data.moderationQueue.items}
+            moderationQueue={moderationItems}
             onModerate={moderation.handleModerate}
             onOpenRejectModal={moderation.openRejectModal}
           />

@@ -133,7 +133,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       sendToReviewDisabled={sendToReviewDisabled}
       sendToReviewHint={sendToReviewHint}
       sendToReviewText={formatMessage('opportunities.detailModal.sendToReview')}
-      canDelete={canManageDraft}
+      canDelete={isOwner && opportunity.status === OPPORTUNITY_STATUS.DRAFT}
       onDelete={onDelete}
       deleteText={formatMessage('opportunities.detailModal.delete')}
       onOpenApplicants={onOpenApplicants}
