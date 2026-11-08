@@ -51,7 +51,7 @@ export async function applyModerationInTransaction(
           : null,
       moderationComment: isApprove ? null : dto.comment,
       ...(isApprove && {
-        publishedAt: new Date(),
+        publishedAt: opportunity.publishedAt ?? new Date(),
         tags: { set: names.map(toTagRecord) },
       }),
     },

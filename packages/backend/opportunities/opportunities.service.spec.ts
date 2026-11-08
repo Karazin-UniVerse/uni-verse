@@ -691,12 +691,16 @@ describe('OpportunitiesService', () => {
       expect(update[0].data).not.toHaveProperty('publishedAt');
     });
 
-    it.each([null, new Date('2026-10-01T10:00:00Z')])(
-      'should record the latest publication time on approval (previous: %s)',
-      async (publishedAt) => {
-        const publicationTime = new Date('2026-11-06T12:00:00Z');
+    const approvalTime = new Date('2026-11-06T12:00:00Z');
+    const firstPublicationTime = new Date('2026-10-01T10:00:00Z');
 
-        jest.useFakeTimers().setSystemTime(publicationTime);
+    it.each([
+      [null, approvalTime],
+      [firstPublicationTime, firstPublicationTime],
+    ])(
+      'should keep the first publication time on approval (previous: %s)',
+      async (publishedAt, expectedPublishedAt) => {
+        jest.useFakeTimers().setSystemTime(approvalTime);
 
         try {
           jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
@@ -719,7 +723,7 @@ describe('OpportunitiesService', () => {
             expect.objectContaining({
               data: expect.objectContaining({
                 status: OpportunityStatus.PUBLISHED,
-                publishedAt: publicationTime,
+                publishedAt: expectedPublishedAt,
               }),
             }),
           );
