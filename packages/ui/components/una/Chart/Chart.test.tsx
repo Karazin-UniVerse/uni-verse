@@ -1,42 +1,8 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Chart } from './Chart';
 import type { ChartDatum } from './Chart.types';
-
-vi.mock('recharts', async (importOriginal) => {
-  const original = await importOriginal<typeof import('recharts')>();
-
-  return {
-    ...original,
-    ResponsiveContainer: ({
-      children,
-      width = 500,
-      height = 300,
-    }: {
-      children: React.ReactNode;
-      width?: number | string;
-      height?: number | string;
-    }) => {
-      const resolvedWidth = typeof width === 'number' ? width : 500;
-      const resolvedHeight = typeof height === 'number' ? height : 300;
-
-      return (
-        <div
-          data-testid="responsive-container"
-          style={{ width: resolvedWidth, height: resolvedHeight }}
-        >
-          {React.isValidElement(children)
-            ? React.cloneElement(children, {
-                width: resolvedWidth,
-                height: resolvedHeight,
-              } as Record<string, unknown>)
-            : children}
-        </div>
-      );
-    },
-  };
-});
 
 const MOCK_DATA: ChartDatum[] = [
   { name: 'Київ', value: 45 },
@@ -45,6 +11,18 @@ const MOCK_DATA: ChartDatum[] = [
 ];
 
 describe('UNA Chart Component', () => {
+  beforeEach(() => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLElement,
+    ): DOMRect {
+      return new DOMRect(0, 0, 500, Number.parseFloat(this.style.height) || 300);
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('should render chart container with heading when title is provided', () => {
     const { rerender } = render(<Chart title="Статистика студентів" data={MOCK_DATA} />);
 
@@ -60,7 +38,7 @@ describe('UNA Chart Component', () => {
   it('should render chart with provided series/data', () => {
     render(<Chart title="Міста" data={MOCK_DATA} layout="horizontal" />);
 
-    expect(screen.getByTestId('responsive-container')).toBeInTheDocument();
+    expect(screen.getByRole('application')).toBeInTheDocument();
     expect(screen.getByText('Київ')).toBeInTheDocument();
     expect(screen.getByText('Харків')).toBeInTheDocument();
     expect(screen.getByText('Львів')).toBeInTheDocument();
@@ -78,7 +56,7 @@ describe('UNA Chart Component', () => {
   it('should render vertical bar chart layout with data', () => {
     render(<Chart data={MOCK_DATA} type="bar" layout="vertical" />);
 
-    expect(screen.getByTestId('responsive-container')).toBeInTheDocument();
+    expect(screen.getByRole('application')).toBeInTheDocument();
     expect(screen.getByText('Київ')).toBeInTheDocument();
     expect(screen.getByText('Харків')).toBeInTheDocument();
     expect(screen.getByText('Львів')).toBeInTheDocument();
@@ -87,7 +65,7 @@ describe('UNA Chart Component', () => {
   it('should render donut chart with legend and series items', () => {
     render(<Chart data={MOCK_DATA} type="donut" showLegend />);
 
-    expect(screen.getByTestId('responsive-container')).toBeInTheDocument();
+    expect(screen.getByRole('application')).toBeInTheDocument();
 
     const legendItems = screen.getAllByText(/Київ|Харків|Львів/);
 
@@ -101,10 +79,11 @@ describe('UNA Chart Component', () => {
 
     expect(container.firstChild).toHaveClass('custom-test-chart');
 
-    const chartWrapper = screen.getByTestId('responsive-container').parentElement as HTMLElement;
+    const chartWrapper = container.firstElementChild?.children.item(0);
 
     expect(chartWrapper).toBeInTheDocument();
-    expect(chartWrapper.style.height).toBe('320px');
+    expect(chartWrapper).toHaveStyle({ height: '320px' });
+    expect(screen.getByRole('application')).toHaveAttribute('height', '320');
   });
 
   it('should render chart with custom datum colors', () => {

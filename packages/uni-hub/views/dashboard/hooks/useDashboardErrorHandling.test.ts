@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { endSession } from '@uni-hub/services/api.session';
 import { useDashboardErrorHandling } from './useDashboardErrorHandling';
@@ -57,7 +57,12 @@ vi.mock('./helpers', async (importOriginal) => {
 describe('useDashboardErrorHandling', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     delete mockStorage.isMoodleLinked;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('handles 401 platform error by showing toast, ending session and replacing to /login', () => {
@@ -75,6 +80,7 @@ describe('useDashboardErrorHandling', () => {
     expect(mockToast.error).toHaveBeenCalledWith('dashboard.sessionExpired');
     expect(endSession).toHaveBeenCalledTimes(1);
     expect(mockReplace).toHaveBeenCalledWith('/login');
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   it('handles 401 dashboard error by showing toast, ending session and replacing to /login', () => {
@@ -92,9 +98,10 @@ describe('useDashboardErrorHandling', () => {
     expect(mockToast.error).toHaveBeenCalledWith('dashboard.sessionExpired');
     expect(endSession).toHaveBeenCalledTimes(1);
     expect(mockReplace).toHaveBeenCalledWith('/login');
+    expect(console.error).not.toHaveBeenCalled();
   });
 
-  it('shows offline notice toast when non-auth error occurs with offline data', () => {
+  it('should show the offline notice and report the expected non-auth error', () => {
     const error = new Error('Network failure');
 
     renderHook(() =>
@@ -109,9 +116,10 @@ describe('useDashboardErrorHandling', () => {
     expect(mockToast.info).toHaveBeenCalledWith('dashboard.offlineNotice');
     expect(mockToast.error).not.toHaveBeenCalled();
     expect(mockReplace).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledExactlyOnceWith(error);
   });
 
-  it('shows load error toast when non-auth error occurs without offline data', () => {
+  it('should show the load error and report the expected non-auth error', () => {
     const error = new Error('Internal Server Error');
 
     renderHook(() =>
@@ -124,6 +132,7 @@ describe('useDashboardErrorHandling', () => {
     );
 
     expect(mockToast.error).toHaveBeenCalledWith('dashboard.loadError');
+    expect(console.error).toHaveBeenCalledExactlyOnceWith(error);
   });
 
   it('suppresses dashboard error toasts when Moodle is unlinked', () => {
@@ -141,9 +150,10 @@ describe('useDashboardErrorHandling', () => {
 
     expect(mockToast.error).not.toHaveBeenCalled();
     expect(mockToast.info).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
   });
 
-  it('does not re-trigger error toast when errorUpdatedAt does not change', () => {
+  it('should not repeat the error toast or report when errorUpdatedAt does not change', () => {
     const error = new Error('Server Error');
 
     const { rerender } = renderHook(
@@ -162,5 +172,6 @@ describe('useDashboardErrorHandling', () => {
     rerender({ updatedAt: 1000 });
 
     expect(mockToast.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledExactlyOnceWith(error);
   });
 });
