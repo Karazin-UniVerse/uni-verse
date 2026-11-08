@@ -250,7 +250,7 @@ $sidebar-collapsed-width: 88px;
   color: var(--sidebar-text);
   font-size: var(--font-sm);
   font-weight: 400;
-  transition: all var(--transition-medium) var(--ease-standard);
+  transition: var(--transition-medium);
 
   &:hover {
     color: var(--sidebar-text-strong);
