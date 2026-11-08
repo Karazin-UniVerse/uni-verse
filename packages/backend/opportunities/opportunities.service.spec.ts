@@ -45,6 +45,7 @@ const publishedOpportunity: Opportunity = {
   moderationComment: null,
   moderationContentHash: null,
   proposedTags: [],
+  publishedAt: new Date('2026-10-01T10:00:00Z'),
   ownerId: 'owner',
   createdAt: new Date('2026-10-01T10:00:00Z'),
   updatedAt: new Date('2026-10-01T10:00:00Z'),
@@ -665,6 +666,73 @@ describe('OpportunitiesService', () => {
   });
 
   describe('moderate', () => {
+    it.each([
+      OPPORTUNITY_MODERATE_ACTION.REJECT,
+      OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES,
+    ])('should not change publication time for %s', async (action) => {
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        roles: [Role.OPPORTUNITIES_MODERATOR],
+      } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
+        status: OpportunityStatus.READY_FOR_REVIEW,
+      });
+      jest
+        .spyOn(prisma.opportunity, 'update')
+        .mockResolvedValue(publishedOpportunity);
+
+      await service.moderate('moderator', publishedOpportunity.id, {
+        action,
+        comment: 'Correct the description',
+      });
+
+      const [update] = jest.mocked(prisma.opportunity.update).mock.calls;
+
+      expect(update[0].data).not.toHaveProperty('publishedAt');
+    });
+
+    const approvalTime = new Date('2026-11-06T12:00:00Z');
+    const firstPublicationTime = new Date('2026-10-01T10:00:00Z');
+
+    it.each([
+      [null, approvalTime],
+      [firstPublicationTime, firstPublicationTime],
+    ])(
+      'should keep the first publication time on approval (previous: %s)',
+      async (publishedAt, expectedPublishedAt) => {
+        jest.useFakeTimers().setSystemTime(approvalTime);
+
+        try {
+          jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+            roles: [Role.OPPORTUNITIES_MODERATOR],
+          } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+          jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+            ...publishedOpportunity,
+            status: OpportunityStatus.READY_FOR_REVIEW,
+            publishedAt,
+          });
+          jest
+            .spyOn(prisma.opportunity, 'update')
+            .mockResolvedValue(publishedOpportunity);
+
+          await service.moderate('moderator', publishedOpportunity.id, {
+            action: OPPORTUNITY_MODERATE_ACTION.APPROVE,
+          });
+
+          expect(prisma.opportunity.update).toHaveBeenCalledWith(
+            expect.objectContaining({
+              data: expect.objectContaining({
+                status: OpportunityStatus.PUBLISHED,
+                publishedAt: expectedPublishedAt,
+              }),
+            }),
+          );
+        } finally {
+          jest.useRealTimers();
+        }
+      },
+    );
+
     it.each(Object.values(OPPORTUNITY_MODERATE_ACTION))(
       'forbids %s on the moderator own opportunity without writes or notifications',
       async (action) => {
@@ -989,7 +1057,11 @@ describe('OpportunitiesService', () => {
             { description: { contains: 'React', mode: 'insensitive' } },
           ],
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: [
+          { publishedAt: 'desc' },
+          { createdAt: 'desc' },
+          { id: 'desc' },
+        ],
         include: {
           owner: { select: { id: true, name: true, email: true } },
           tags: { select: { id: true, name: true } },
@@ -1008,6 +1080,7 @@ describe('OpportunitiesService', () => {
       expect(prisma.opportunity.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ status: 'READY_FOR_REVIEW' }),
+          orderBy: { createdAt: 'desc' },
         }),
       );
     });
