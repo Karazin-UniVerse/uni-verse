@@ -47,6 +47,7 @@
   background: transparent;
   color: var(--sidebar-text);
   font-weight: 400;
+  transition: all var(--transition-medium) var(--ease-standard);
 
   &:hover {
     color: var(--sidebar-text-strong);
