@@ -208,11 +208,7 @@ export class OpportunitiesService {
       where,
       orderBy:
         where.status === OpportunityStatus.PUBLISHED
-          ? [
-              { publishedAt: { sort: 'desc', nulls: 'last' } },
-              { createdAt: 'desc' },
-              { id: 'desc' },
-            ]
+          ? [{ publishedAt: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }]
           : { createdAt: 'desc' },
       include: OPPORTUNITY_INCLUDE,
     });

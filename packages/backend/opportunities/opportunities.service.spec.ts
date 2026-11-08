@@ -1051,7 +1051,7 @@ describe('OpportunitiesService', () => {
           ],
         },
         orderBy: [
-          { publishedAt: { sort: 'desc', nulls: 'last' } },
+          { publishedAt: 'desc' },
           { createdAt: 'desc' },
           { id: 'desc' },
         ],
