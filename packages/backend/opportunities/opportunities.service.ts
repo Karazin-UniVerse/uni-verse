@@ -336,7 +336,7 @@ export class OpportunitiesService {
 
   /**
    * Delete a draft opportunity.
-   * Only the owner can delete, and only if the opportunity is in DRAFT or REQUIRES_CHANGES status.
+   * Only the owner can delete, and only if the opportunity is in DRAFT status.
    */
   async delete(userId: string, id: string): Promise<Opportunity> {
     const opportunity = await this.prisma.opportunity.findUnique({
@@ -347,12 +347,9 @@ export class OpportunitiesService {
       throw new NotFoundException('Opportunity not found');
     }
 
-    if (
-      opportunity.status !== OpportunityStatus.DRAFT &&
-      opportunity.status !== OpportunityStatus.REQUIRES_CHANGES
-    ) {
+    if (opportunity.status !== OpportunityStatus.DRAFT) {
       throw new BadRequestException(
-        'Only opportunities in DRAFT or REQUIRES_CHANGES statuses can be deleted',
+        'Only opportunities in DRAFT status can be deleted',
       );
     }
 
@@ -366,16 +363,14 @@ export class OpportunitiesService {
           where: {
             id,
             ownerId: userId,
-            status: {
-              in: [OpportunityStatus.DRAFT, OpportunityStatus.REQUIRES_CHANGES],
-            },
+            status: OpportunityStatus.DRAFT,
           },
         });
       });
     } catch (error) {
       if (getPrismaErrorCode(error) === 'P2025') {
         throw new BadRequestException(
-          'Only opportunities in DRAFT or REQUIRES_CHANGES statuses can be deleted',
+          'Only opportunities in DRAFT status can be deleted',
         );
       }
 
@@ -483,7 +478,10 @@ export class OpportunitiesService {
       throw new ForbiddenException('Only the owner can view applications');
 
     return this.prisma.opportunityApplication.findMany({
-      where: { opportunityId: id },
+      where: {
+        opportunityId: id,
+        status: { not: ApplicationStatus.WITHDRAWN },
+      },
       include: { applicant: { select: { name: true, email: true } } },
       orderBy: { createdAt: 'desc' },
     });
@@ -719,6 +717,12 @@ export class OpportunitiesService {
     if (dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE) {
       newStatus = OpportunityStatus.PUBLISHED;
     } else if (dto.action === OPPORTUNITY_MODERATE_ACTION.REJECT) {
+      if (!dto.comment?.trim()) {
+        throw new BadRequestException(
+          'Comment is required when rejecting an opportunity',
+        );
+      }
+
       newStatus = OpportunityStatus.REJECTED;
     } else if (dto.action === OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES) {
       if (!dto.comment?.trim()) {

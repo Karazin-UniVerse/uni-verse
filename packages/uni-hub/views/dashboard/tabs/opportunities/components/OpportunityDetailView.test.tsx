@@ -122,6 +122,27 @@ describe('OpportunityDetailView resubmission', () => {
     expect(onSendToReview).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['DRAFT', true],
+    ['REQUIRES_CHANGES', false],
+  ] as const)('should show delete for %s only when it is a draft', (status, visible) => {
+    localStorage.setItem('universe-lang', 'uk');
+    render(
+      withLanguage(
+        <OpportunityDetailView
+          opportunity={{ ...buildOpportunity('delete-1'), status }}
+          userId="owner-1"
+          onBack={vi.fn()}
+          onSendToReview={vi.fn()}
+          onOpenApply={vi.fn()}
+          onDelete={vi.fn()}
+        />,
+      ),
+    );
+
+    expect(screen.queryByRole('button', { name: 'Видалити' }) !== null).toBe(visible);
+  });
+
   it.each(['DRAFT', 'REQUIRES_CHANGES'] as const)(
     'should allow submitting %s when revisions are satisfied',
     async (status) => {
