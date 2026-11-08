@@ -22,6 +22,7 @@ import {
   OpportunityWithOwner,
   ApplicationWithApplicant,
   ApplicationWithOpportunity,
+  OpportunityWithSubscription,
 } from './opportunities.service';
 import {
   CreateOpportunityDto,
@@ -162,8 +163,8 @@ export class OpportunitiesController {
     @GetUser('sub') userId?: string,
     @GetUser('roles') roles?: string[],
     @Res({ passthrough: true }) res?: Response,
-  ): Promise<OpportunityWithOwner> {
-    const opportunity = await this.opportunitiesService.findOne(
+  ): Promise<OpportunityWithSubscription> {
+    const opportunity = await this.opportunitiesService.findOneWithSubscription(
       id,
       userId,
       roles,
@@ -171,7 +172,7 @@ export class OpportunitiesController {
 
     setOpportunityCacheControl(
       res,
-      opportunity.status === OpportunityStatus.PUBLISHED,
+      !userId && opportunity.status === OpportunityStatus.PUBLISHED,
     );
 
     return opportunity;
@@ -242,6 +243,36 @@ export class OpportunitiesController {
       id,
       dto.lifecycleState,
     );
+  }
+
+  @ApiBearerAuth()
+  @Post(':id/subscribe')
+  /**
+   * Subscribe to lifecycle updates of an opportunity
+   */
+  @ApiOperation({ summary: 'Subscribe to opportunity updates' })
+  subscribe(
+    @GetUser('sub') userId: string,
+    @Param('id') id: string,
+  ): Promise<{ isSubscribed: true }> {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+
+    return this.opportunitiesService.subscribe(userId, id);
+  }
+
+  @ApiBearerAuth()
+  @Delete(':id/subscribe')
+  /**
+   * Unsubscribe from opportunity updates
+   */
+  @ApiOperation({ summary: 'Unsubscribe from opportunity updates' })
+  unsubscribe(
+    @GetUser('sub') userId: string,
+    @Param('id') id: string,
+  ): Promise<{ isSubscribed: false }> {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+
+    return this.opportunitiesService.unsubscribe(userId, id);
   }
 
   @ApiBearerAuth()

@@ -16,6 +16,9 @@ export interface OpportunityDetailViewProps {
   onOpenApply: () => void;
   onOpenApplicants?: () => void;
   onEdit?: (opportunity: Opportunity) => void;
+  onToggleAcceptsApplications?: (accepts: boolean) => void;
+  onToggleSubscribe?: () => void;
+  isSubscribeLoading?: boolean;
   onDelete?: () => void;
 }
 
@@ -79,6 +82,8 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   onOpenApply,
   onOpenApplicants,
   onEdit,
+  onToggleSubscribe,
+  isSubscribeLoading,
   onDelete,
 }) => {
   const { formatMessage, language } = useLanguage();
@@ -146,6 +151,15 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       canApply={canApply}
       applyText={formatMessage('opportunities.detailModal.apply')}
       onOpenApply={onOpenApply}
+      isSubscribed={opportunity.isSubscribed}
+      onToggleSubscribe={
+        userId && opportunity.status === OPPORTUNITY_STATUS.PUBLISHED
+          ? onToggleSubscribe
+          : undefined
+      }
+      isSubscribeLoading={isSubscribeLoading}
+      subscribeText={formatMessage('opportunities.actions.subscribe')}
+      unsubscribeText={formatMessage('opportunities.actions.unsubscribe')}
     />
   );
 };
