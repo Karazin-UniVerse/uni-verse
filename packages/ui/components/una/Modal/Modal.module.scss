@@ -8,6 +8,7 @@
   justify-content: center;
   z-index: var(--z-modal);
   padding: var(--space-24);
+  overscroll-behavior: contain;
 }
 
 .backdrop {
@@ -20,6 +21,7 @@
   padding: 0;
   margin: 0;
   cursor: default;
+  touch-action: none;
   animation: overlay-in var(--transition-medium) var(--ease-standard);
 }
 
@@ -36,6 +38,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  overscroll-behavior: contain;
   animation: dialog-in var(--transition-medium) var(--ease-standard);
 }
 
@@ -113,6 +116,7 @@
 .body {
   padding: var(--space-24);
   overflow: auto;
+  overscroll-behavior: contain;
 }
 
 @include narrower-than('md') {

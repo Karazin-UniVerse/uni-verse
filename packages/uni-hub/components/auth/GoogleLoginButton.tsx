@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Script from 'next/script';
 import styles from './GoogleLoginButton.module.scss';
 import { useTheme } from '@uni-hub/theme/ThemeContext';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { resolveGoogleButtonWidth } from './helpers';
 
 export interface GoogleLoginButtonProps {
   onSuccess: (idToken: string) => void;
@@ -18,6 +19,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   onError,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const currentWidthRef = useRef<number | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(
     () => typeof window !== 'undefined' && Boolean(window.google?.accounts?.id),
   );
@@ -35,6 +37,32 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
     errorTextRef.current = formatMessage('login.googleError');
   });
 
+  const renderGoogleButton = useCallback(
+    (width: number) => {
+      if (!clientId || !containerRef.current || !window.google?.accounts?.id) {
+        return;
+      }
+
+      try {
+        containerRef.current.innerHTML = '';
+
+        window.google.accounts.id.renderButton(containerRef.current, {
+          theme: theme === 'light' ? 'outline' : 'filled_black',
+          size: 'large',
+          text: 'continue_with',
+          shape: 'rectangular',
+          width,
+          locale: language,
+        });
+
+        currentWidthRef.current = width;
+      } catch (err: unknown) {
+        onErrorRef.current?.((err as Error).message || errorTextRef.current);
+      }
+    },
+    [clientId, theme, language],
+  );
+
   useEffect(() => {
     if (!clientId || !scriptLoaded || !window.google || !containerRef.current) {
       return;
@@ -51,21 +79,69 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
           }
         },
       });
-
-      containerRef.current.innerHTML = '';
-
-      window.google.accounts.id.renderButton(containerRef.current, {
-        theme: theme === 'light' ? 'outline' : 'filled_black',
-        size: 'large',
-        text: 'continue_with',
-        shape: 'rectangular',
-        width: 336,
-        locale: language,
-      });
     } catch (err: unknown) {
       onErrorRef.current?.((err as Error).message || errorTextRef.current);
+
+      return;
     }
-  }, [scriptLoaded, clientId, theme, language]);
+
+    const container = containerRef.current;
+    const initialWidth = resolveGoogleButtonWidth(container.clientWidth);
+
+    renderGoogleButton(initialWidth);
+
+    let animationFrameId: number | null = null;
+
+    const handleResize = (measuredWidth: number) => {
+      const nextWidth = resolveGoogleButtonWidth(measuredWidth);
+
+      if (nextWidth !== currentWidthRef.current) {
+        if (animationFrameId !== null) {
+          cancelAnimationFrame(animationFrameId);
+        }
+
+        animationFrameId = requestAnimationFrame(() => {
+          renderGoogleButton(nextWidth);
+        });
+      }
+    };
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const resizeObserver = new ResizeObserver((entries) => {
+        const entry = entries[0];
+
+        if (entry) {
+          const width = entry.contentRect?.width || container.clientWidth;
+
+          handleResize(width);
+        }
+      });
+
+      resizeObserver.observe(container);
+
+      return () => {
+        if (animationFrameId !== null) {
+          cancelAnimationFrame(animationFrameId);
+        }
+
+        resizeObserver.disconnect();
+      };
+    }
+
+    const onWindowResize = () => {
+      handleResize(container.clientWidth);
+    };
+
+    window.addEventListener('resize', onWindowResize);
+
+    return () => {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+
+      window.removeEventListener('resize', onWindowResize);
+    };
+  }, [scriptLoaded, clientId, renderGoogleButton]);
 
   return (
     <div className={styles.wrapper}>

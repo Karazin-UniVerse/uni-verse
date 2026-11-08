@@ -76,3 +76,22 @@ export function extractGoogleDisplayName(claims: GoogleJwtClaims): string {
 
   return [claims.given_name?.trim(), claims.family_name?.trim()].filter(Boolean).join(' ');
 }
+
+export const GOOGLE_BUTTON_FALLBACK_WIDTH = 336;
+export const GOOGLE_BUTTON_MIN_WIDTH = 200;
+export const GOOGLE_BUTTON_MAX_WIDTH = 400;
+
+/**
+ * Calculates a valid Google Identity Services button width based on available container width.
+ * GIS accepts only integer pixel values between 200 and 400.
+ */
+export function resolveGoogleButtonWidth(measuredWidth?: number | null): number {
+  if (typeof measuredWidth !== 'number' || Number.isNaN(measuredWidth) || measuredWidth <= 0) {
+    return GOOGLE_BUTTON_FALLBACK_WIDTH;
+  }
+
+  return Math.max(
+    GOOGLE_BUTTON_MIN_WIDTH,
+    Math.min(GOOGLE_BUTTON_MAX_WIDTH, Math.floor(measuredWidth)),
+  );
+}
