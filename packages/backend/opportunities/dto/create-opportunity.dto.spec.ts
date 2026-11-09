@@ -1,7 +1,11 @@
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { ValidationPipe } from '@nestjs/common';
-import { OpportunityLifecycleState, PaymentType } from '@universe/database';
+import {
+  OpportunityLifecycleState,
+  OpportunityTag,
+  PaymentType,
+} from '@universe/database';
 import { CreateOpportunityDto } from './create-opportunity.dto';
 
 describe('CreateOpportunityDto', () => {
@@ -12,44 +16,43 @@ describe('CreateOpportunityDto', () => {
     paymentType: PaymentType.UNPAID,
   };
 
-  it.each([42, null, {}, true])(
-    'should reject a non-string tag entry %j without silently dropping it',
+  it.each(['react', 'it', 42, null, {}, true])(
+    'should reject a tag %j outside the predefined list',
     (entry) => {
       const dto = plainToInstance(CreateOpportunityDto, {
         ...validPayload,
-        tags: ['react', entry],
+        tags: [OpportunityTag.IT, entry],
       });
 
       expect(validateSync(dto)).toEqual([
         expect.objectContaining({
           property: 'tags',
-          constraints: expect.objectContaining({
-            isString: expect.any(String),
-          }),
+          constraints: { isEnum: expect.any(String) },
         }),
       ]);
     },
   );
 
-  it('should return HTTP 400 for mixed-type tags through the application validation pipe', async () => {
+  it('should return HTTP 400 for unknown tags through the application validation pipe', async () => {
     const pipe = new ValidationPipe({ whitelist: true, transform: true });
 
     await expect(
       pipe.transform(
-        { ...validPayload, tags: ['react', 42] },
+        { ...validPayload, tags: ['custom'] },
         { type: 'body', metatype: CreateOpportunityDto },
       ),
     ).rejects.toMatchObject({ status: 400 });
   });
 
-  it('should preserve normalization and deduplication for valid string tag input', () => {
+  it('should accept any number of predefined tags and deduplicate them', () => {
+    const allTags = Object.values(OpportunityTag);
     const dto = plainToInstance(CreateOpportunityDto, {
       ...validPayload,
-      tags: ['  React Native  ', 'REACT NATIVE', '', '   ', 'research,design'],
+      tags: [...allTags, OpportunityTag.IT],
     });
 
     expect(validateSync(dto)).toEqual([]);
-    expect(dto.tags).toEqual(['react native', 'research,design']);
+    expect(dto.tags).toEqual(allTags);
   });
 
   it.each([null, 123, {}])(

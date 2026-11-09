@@ -4,27 +4,25 @@ import { FindOpportunitiesDto } from './find-opportunities.dto';
 
 describe('FindOpportunitiesDto recruitment filter', () => {
   it.each([
-    { input: ' Research,Design ', expected: ['research,design'] },
-    {
-      input: [' Research,Design ', ' React '],
-      expected: ['research,design', 'react'],
-    },
-    { input: [' React ', 'react', '  '], expected: ['react'] },
-    { input: '', expected: [] },
-  ])('should preserve whole tag names in $input', ({ input, expected }) => {
+    { input: 'IT', expected: ['IT'] },
+    { input: ['IT', 'REMOTE'], expected: ['IT', 'REMOTE'] },
+  ])('should accept predefined tags in $input', ({ input, expected }) => {
     const dto = plainToInstance(FindOpportunitiesDto, { tags: input });
 
     expect(validateSync(dto)).toEqual([]);
     expect(dto.tags).toEqual(expected);
   });
 
-  it('should reject non-string repeated tag parameters', () => {
-    const dto = plainToInstance(FindOpportunitiesDto, { tags: ['react', 42] });
+  it.each(['react', ['IT', 42], ''])(
+    'should reject unknown tags %j',
+    (tags) => {
+      const dto = plainToInstance(FindOpportunitiesDto, { tags });
 
-    expect(validateSync(dto)).toEqual([
-      expect.objectContaining({ property: 'tags' }),
-    ]);
-  });
+      expect(validateSync(dto)).toEqual([
+        expect.objectContaining({ property: 'tags' }),
+      ]);
+    },
+  );
 
   it.each(['garbage', ['true', 'false'], {}])(
     'should reject an invalid supplied recruitment filter: %j',

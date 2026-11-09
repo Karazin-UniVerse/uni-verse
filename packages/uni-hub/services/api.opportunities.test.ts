@@ -5,36 +5,34 @@ import type {
   CreateOpportunityRequest,
   UpdateOpportunityRequest,
 } from '@core/types/opportunities';
+import type { OpportunityTag } from '@core/constants/tags';
 
 describe('OpportunitiesApi', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it.each([
-    { tags: ['research,design'], expected: ['research,design'] },
-    { tags: ['research,design', 'react'], expected: ['research,design', 'react'] },
+  it.each<{ tags: OpportunityTag[]; expected: string[] }>([
+    { tags: ['IT'], expected: ['IT'] },
+    { tags: ['IT', 'REMOTE'], expected: ['IT', 'REMOTE'] },
     { tags: [], expected: [] },
-  ])(
-    'should serialize whole tag names as repeated parameters: $tags',
-    async ({ tags, expected }) => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => [],
-      } as Response);
+  ])('should serialize tags as repeated parameters: $tags', async ({ tags, expected }) => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [],
+    } as Response);
 
-      await opportunitiesApi.getOpportunities({ tags, paymentType: 'PAID', isRecruiting: true });
+    await opportunitiesApi.getOpportunities({ tags, paymentType: 'PAID', isRecruiting: true });
 
-      const requestedUrl = new URL(
-        String(vi.mocked(global.fetch).mock.calls[0][0]),
-        'http://localhost',
-      );
+    const requestedUrl = new URL(
+      String(vi.mocked(global.fetch).mock.calls[0][0]),
+      'http://localhost',
+    );
 
-      expect(requestedUrl.searchParams.getAll('tags')).toEqual(expected);
-      expect(requestedUrl.searchParams.get('paymentType')).toBe('PAID');
-      expect(requestedUrl.searchParams.get('isRecruiting')).toBe('true');
-    },
-  );
+    expect(requestedUrl.searchParams.getAll('tags')).toEqual(expected);
+    expect(requestedUrl.searchParams.get('paymentType')).toBe('PAID');
+    expect(requestedUrl.searchParams.get('isRecruiting')).toBe('true');
+  });
 
   it('getOpportunities should request /opportunities with serialized query string', async () => {
     const mockData = [{ id: '1', title: 'Test Opp' }];

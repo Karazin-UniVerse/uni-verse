@@ -17,6 +17,7 @@ import {
 import {
   ApplicationStatus,
   OpportunityStatus,
+  OpportunityTag,
   Role,
   type Prisma,
   type Opportunity,
@@ -44,7 +45,7 @@ const publishedOpportunity: Opportunity = {
   details: null,
   moderationComment: null,
   moderationContentHash: null,
-  proposedTags: [],
+  tags: [],
   publishedAt: new Date('2026-10-01T10:00:00Z'),
   ownerId: 'owner',
   createdAt: new Date('2026-10-01T10:00:00Z'),
@@ -162,7 +163,6 @@ describe('OpportunitiesService', () => {
             status: 'DRAFT',
             ownerContactInfo:
               ownerContactInfo === '  @organizer  ' ? '@organizer' : '',
-            proposedTags: [],
           },
         });
       },
@@ -297,7 +297,6 @@ describe('OpportunitiesService', () => {
         where: { ownerId: 'owner' },
         include: {
           owner: { select: { id: true, name: true, email: true } },
-          tags: { select: { id: true, name: true } },
         },
         orderBy: { createdAt: 'desc' },
       });
@@ -404,7 +403,7 @@ describe('OpportunitiesService', () => {
         await expect(
           service.update('owner', snapshot.id, {
             title: 'Unreviewed title',
-            tags: ['unreviewed'],
+            tags: [OpportunityTag.IT],
           }),
         ).rejects.toThrow(
           new ConflictException(OPPORTUNITY_ERROR.CHANGES_REQUIRED),
@@ -422,17 +421,13 @@ describe('OpportunitiesService', () => {
       },
     );
 
-    it.each([
-      { tags: [' React ', 'react'], remoderates: false },
-      { tags: ['nodejs'], remoderates: true },
-      { tags: [], remoderates: true },
-    ])(
-      'preserves tag moderation when published edits send $tags',
-      async ({ tags, remoderates }) => {
+    it.each([[[OpportunityTag.IT, OpportunityTag.REMOTE]], [[]]])(
+      'writes tags %j on a published opportunity without remoderation',
+      async (tags) => {
         jest.spyOn(service, 'findOne').mockResolvedValue({
           ...publishedOpportunity,
           owner: { id: 'owner', name: 'Organizer', email: 'owner@example.com' },
-          tags: [{ id: 'react', name: 'react' }],
+          tags: [OpportunityTag.LAW],
         });
         jest
           .spyOn(prisma.opportunity, 'update')
@@ -442,7 +437,6 @@ describe('OpportunitiesService', () => {
         await service.update('owner', publishedOpportunity.id, {
           title: publishedOpportunity.title,
           tags,
-          lifecycleState: 'PAUSED',
         });
 
         expect(prisma.opportunity.update).toHaveBeenCalledWith({
@@ -451,18 +445,9 @@ describe('OpportunitiesService', () => {
             status: 'PUBLISHED',
             updatedAt: publishedOpportunity.updatedAt,
           },
-          data: {
-            title: publishedOpportunity.title,
-            proposedTags:
-              tags.length === 0 ? [] : [remoderates ? 'nodejs' : 'react'],
-            lifecycleState: 'PAUSED',
-            acceptsApplications: false,
-            ...(remoderates
-              ? { status: 'READY_FOR_REVIEW', moderationComment: null }
-              : {}),
-          },
+          data: { title: publishedOpportunity.title, tags },
         });
-        expect(prisma.user.findMany).toHaveBeenCalledTimes(remoderates ? 1 : 0);
+        expect(prisma.user.findMany).not.toHaveBeenCalled();
       },
     );
 
@@ -744,7 +729,6 @@ describe('OpportunitiesService', () => {
           id: 'own-opportunity',
           ownerId: 'moderator-1',
           status: 'READY_FOR_REVIEW',
-          proposedTags: [],
         } as unknown as Awaited<
           ReturnType<typeof prisma.opportunity.findUnique>
         >);
@@ -809,7 +793,6 @@ describe('OpportunitiesService', () => {
         title: 'test',
         ownerId: 'owner1',
         status: 'READY_FOR_REVIEW',
-        proposedTags: [],
       } as any);
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         id: 'opp1',
@@ -843,7 +826,6 @@ describe('OpportunitiesService', () => {
         title: 'test',
         ownerId: 'owner1',
         status: 'READY_FOR_REVIEW',
-        proposedTags: [],
       } as any);
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         id: 'opp1',
@@ -870,7 +852,6 @@ describe('OpportunitiesService', () => {
         title: 'test',
         ownerId: 'owner1',
         status: 'READY_FOR_REVIEW',
-        proposedTags: [],
       } as any);
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         id: 'opp1',
@@ -904,7 +885,6 @@ describe('OpportunitiesService', () => {
         title: 'test',
         ownerId: 'owner1',
         status: 'READY_FOR_REVIEW',
-        proposedTags: [],
       } as any);
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         id: 'opp1',
@@ -939,7 +919,6 @@ describe('OpportunitiesService', () => {
           title: 'test',
           ownerId: 'owner1',
           status: 'READY_FOR_REVIEW',
-          proposedTags: [],
         } as any);
 
         await expect(
@@ -961,7 +940,6 @@ describe('OpportunitiesService', () => {
         title: 'test',
         ownerId: 'owner1',
         status: 'READY_FOR_REVIEW',
-        proposedTags: [],
       } as any);
 
       await expect(
@@ -979,7 +957,6 @@ describe('OpportunitiesService', () => {
         title: 'test',
         ownerId: 'owner1',
         status: 'READY_FOR_REVIEW',
-        proposedTags: [],
         updatedAt: new Date('2026-01-01T00:00:00.000Z'),
       } as any);
       jest.spyOn(prisma.opportunity, 'update').mockRejectedValue({
@@ -1024,7 +1001,6 @@ describe('OpportunitiesService', () => {
         data: {
           ...dto,
           ownerContactInfo: dto.ownerContactInfo?.trim() ?? '',
-          proposedTags: [],
           ownerId: 'user-1',
           status: 'DRAFT',
         },
@@ -1064,7 +1040,6 @@ describe('OpportunitiesService', () => {
         ],
         include: {
           owner: { select: { id: true, name: true, email: true } },
-          tags: { select: { id: true, name: true } },
         },
       });
       expect(result).toHaveLength(1);

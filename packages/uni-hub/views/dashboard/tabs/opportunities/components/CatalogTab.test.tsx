@@ -18,7 +18,7 @@ const mockOpportunities: Opportunity[] = [
     acceptsApplications: true,
     paymentType: 'PAID',
     paymentDetails: '400$ / month',
-    tags: [{ id: '1', name: 'react' }],
+    tags: ['IT'],
     ownerId: 'user-1',
     owner: {
       id: 'user-1',
@@ -38,7 +38,7 @@ const mockOpportunities: Opportunity[] = [
     acceptsApplications: false,
     paymentType: 'UNPAID',
     paymentDetails: null,
-    tags: [{ id: '2', name: 'nodejs' }],
+    tags: ['ENGINEERING'],
     ownerId: 'user-2',
     owner: {
       id: 'user-2',
@@ -58,7 +58,7 @@ const mockOpportunities: Opportunity[] = [
     acceptsApplications: true,
     paymentType: 'PAID',
     paymentDetails: '600$ / month',
-    tags: [{ id: '3', name: 'design' }],
+    tags: ['MEDIA_DESIGN'],
     ownerId: 'user-3',
     owner: {
       id: 'user-3',
@@ -170,10 +170,10 @@ describe('CatalogTab component', () => {
     });
   });
 
-  it('should filter by a short pending tag on Apply without requiring Enter', async () => {
+  it('should filter by a predefined tag picked in the panel and show its localized label', async () => {
     const user = userEvent.setup();
     const opportunities: Opportunity[] = [
-      { ...mockOpportunities[0], tags: [{ id: 'tag-3d', name: '3d' }] },
+      { ...mockOpportunities[0], tags: ['REMOTE'] },
       mockOpportunities[1],
     ];
     const Wrapper = (): React.ReactElement => {
@@ -201,12 +201,14 @@ describe('CatalogTab component', () => {
     render(withLanguage(<Wrapper />));
 
     await user.click(screen.getByRole('button', { name: /фільтри/i }));
-    await user.type(screen.getByRole('combobox', { name: 'Теги' }), '3D');
+    await user.click(screen.getByRole('button', { name: 'Теги' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Віддалено' }));
+    await user.keyboard('{Escape}');
     await user.click(screen.getByRole('button', { name: 'Застосувати' }));
 
     expect(screen.getByRole('heading', { name: 'Frontend Developer' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Backend Engineer' })).not.toBeInTheDocument();
-    expect(screen.getByText('3d')).toBeInTheDocument();
+    expect(screen.getAllByText('Віддалено').length).toBeGreaterThan(0);
   });
 
   it('should filter opportunities in memory by search term and tags', () => {
@@ -236,7 +238,7 @@ describe('CatalogTab component', () => {
           onRetry={vi.fn()}
           opportunities={mockOpportunities}
           search=""
-          tags={['nodejs']}
+          tags={['ENGINEERING']}
           onSearchChange={vi.fn()}
           onOpenDetail={vi.fn()}
         />,
@@ -244,6 +246,13 @@ describe('CatalogTab component', () => {
     );
 
     expect(screen.getByText('Backend Engineer')).toBeInTheDocument();
+    expect(screen.queryByText('Frontend Developer')).not.toBeInTheDocument();
+  });
+
+  it('should find opportunities by the localized tag label in search', () => {
+    renderCatalogTab({ search: 'дизайн' });
+
+    expect(screen.getByText('UI/UX Designer')).toBeInTheDocument();
     expect(screen.queryByText('Frontend Developer')).not.toBeInTheDocument();
   });
 
