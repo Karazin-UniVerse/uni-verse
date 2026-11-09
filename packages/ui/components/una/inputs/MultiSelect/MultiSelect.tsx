@@ -26,11 +26,11 @@ export function MultiSelect<T extends string>({
       ? value.filter((item) => item !== optionValue)
       : [...value, optionValue];
 
-    onChange(
-      groups.flatMap(({ options }) =>
-        options.filter((option) => next.includes(option.value)).map((option) => option.value),
-      ),
+    const grouped = groups.flatMap(({ options }) =>
+      options.filter((option) => next.includes(option.value)).map((option) => option.value),
     );
+
+    onChange([...grouped, ...next.filter((item) => !grouped.includes(item))]);
   };
 
   return (
@@ -47,7 +47,6 @@ export function MultiSelect<T extends string>({
             type="button"
             className={styles.trigger}
             disabled={disabled}
-            aria-haspopup="true"
           >
             <span className={styles.placeholder}>{placeholder}</span>
             <ChevronDown size={16} aria-hidden />
@@ -62,6 +61,7 @@ export function MultiSelect<T extends string>({
                 <CheckBox
                   variant="primary"
                   checked={value.includes(option.value)}
+                  disabled={disabled}
                   onChange={() => toggle(option.value)}
                 />
                 <Tag tone={group.tone} size="small">

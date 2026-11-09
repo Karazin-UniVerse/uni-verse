@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { MultiSelect } from './MultiSelect';
 import type { MultiSelectGroup } from './MultiSelect.types';
 
-type Fruit = 'APPLE' | 'PEAR' | 'KALE';
+type Fruit = 'APPLE' | 'PEAR' | 'KALE' | 'MANGO';
 
 const GROUPS: MultiSelectGroup<Fruit>[] = [
   {
@@ -52,6 +52,7 @@ describe('UNA MultiSelect Component', () => {
     const trigger = screen.getByRole('button', { name: 'Pick items' });
 
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(trigger).not.toHaveAttribute('aria-haspopup');
 
     await user.click(trigger);
 
@@ -98,6 +99,38 @@ describe('UNA MultiSelect Component', () => {
 
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
+  });
+
+  it('should preserve selected values absent from the groups when toggling known options', async () => {
+    const user = userEvent.setup();
+
+    render(<ControlledMultiSelect initialValue={['MANGO', 'PEAR']} />);
+
+    await user.click(screen.getByRole('button', { name: 'Pick items' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Apple' }));
+
+    expect(screen.getByTestId('value').textContent).toBe('APPLE,PEAR,MANGO');
+
+    await user.click(screen.getByRole('checkbox', { name: 'Pear' }));
+
+    expect(screen.getByTestId('value').textContent).toBe('APPLE,MANGO');
+  });
+
+  it('should disable options when disabled while the panel is open', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<ControlledMultiSelect initialValue={['PEAR']} />);
+
+    await user.click(screen.getByRole('button', { name: 'Pick items' }));
+
+    rerender(<ControlledMultiSelect initialValue={['PEAR']} disabled />);
+
+    const apple = screen.getByRole('checkbox', { name: 'Apple' });
+
+    expect(apple).toBeDisabled();
+
+    await user.click(apple);
+
+    expect(screen.getByTestId('value').textContent).toBe('PEAR');
   });
 
   it('should block changes when disabled', () => {

@@ -31,3 +31,23 @@ returns opportunities that have at least one of them:
 
 Unknown keys return HTTP 400. Create and update requests accept a JSON `tags`
 array of the same keys.
+
+## Deployment
+
+Take a database backup and stop old backend revisions before deploying this
+schema change. Old revisions cannot use the new storage; rollback requires
+restoring the backup, not just switching the application revision.
+
+`db:push` and `db:push:force` run `db:drop-free-form-tags` before schema push.
+This transactional, repeatable script permanently deletes the legacy `Tag` and
+`_OpportunityToTag` tables and the `Opportunity.proposedTags` column. Product
+approved discarding these tags; they are not mapped to the predefined list.
+Existing opportunities start with an empty tag array. Do not enable
+`PRISMA_ACCEPT_DATA_LOSS`: unrelated destructive schema changes must still fail.
+
+Verify the cleanup against a disposable PostgreSQL database with
+`TEST_DATABASE_URL` set, from `packages/backend`:
+
+```sh
+node --test prisma/scripts/drop-free-form-tags.test.mjs
+```
