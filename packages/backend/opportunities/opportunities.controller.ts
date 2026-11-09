@@ -38,6 +38,7 @@ import {
   Opportunity,
   OpportunityApplication,
   OpportunityStatus,
+  OpportunityTag,
 } from '@universe/database';
 import { Public } from '../auth/decorators/public.decorator';
 
@@ -86,12 +87,11 @@ export class OpportunitiesController {
   @ApiQuery({
     name: 'tags',
     required: false,
-    type: String,
+    enum: OpportunityTag,
     isArray: true,
     style: 'form',
     explode: true,
-    description:
-      'One complete tag name per parameter; repeat tags for multiple names',
+    description: 'Repeat the parameter for multiple tags',
   })
   async findAll(
     @GetUser('roles') roles: string[] | undefined,

@@ -1,28 +1,10 @@
 import {
   OPPORTUNITY_LIFECYCLE,
   OPPORTUNITY_PAYMENT_TYPE,
-  OPPORTUNITY_STATUS,
   type OpportunityLifecycle,
   type OpportunityPaymentType,
 } from '../constants/opportunities.ts';
-import type {
-  Opportunity,
-  OpportunityContentFields,
-  UpdateOpportunityRequest,
-} from '../types/opportunities.ts';
-import { normalizeTags } from './tags.ts';
-
-export const getOpportunityTagNames = ({
-  status,
-  tags,
-  proposedTags,
-}: Partial<Pick<Opportunity, 'status' | 'tags' | 'proposedTags'>>): string[] => {
-  if (status === OPPORTUNITY_STATUS.PUBLISHED) {
-    return (tags ?? []).map((tag) => tag.name);
-  }
-
-  return proposedTags ?? [];
-};
+import type { OpportunityContentFields, UpdateOpportunityRequest } from '../types/opportunities.ts';
 
 export function isRecruitmentPhase(lifecycleState?: OpportunityLifecycle): boolean {
   return (
@@ -49,8 +31,7 @@ export function normalizeOpportunityContent(
 }
 
 export function hasOpportunityContentChanged(
-  current: OpportunityContentFields &
-    Partial<Pick<Opportunity, 'status' | 'tags' | 'proposedTags'>>,
+  current: OpportunityContentFields,
   updated: UpdateOpportunityRequest,
 ): boolean {
   const mergedPaymentType = updated.paymentType ?? current.paymentType;
@@ -64,19 +45,5 @@ export function hasOpportunityContentChanged(
       updated.paymentDetails !== undefined ? updated.paymentDetails : current.paymentDetails,
   });
 
-  if (currentTuple.some((value, index) => value !== updatedTuple[index])) {
-    return true;
-  }
-
-  if (updated.tags === undefined) {
-    return false;
-  }
-
-  const currentTags = normalizeTags(getOpportunityTagNames(current));
-  const updatedTags = normalizeTags(updated.tags);
-
-  return (
-    currentTags.length !== updatedTags.length ||
-    currentTags.some((tag) => !updatedTags.includes(tag))
-  );
+  return currentTuple.some((value, index) => value !== updatedTuple[index]);
 }

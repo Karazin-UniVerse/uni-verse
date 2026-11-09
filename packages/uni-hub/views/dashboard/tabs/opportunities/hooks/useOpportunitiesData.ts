@@ -1,6 +1,7 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import type { OpportunityPaymentType } from '@core/constants/opportunities';
+import type { OpportunityTag } from '@core/constants/tags';
 import type { OpportunityFilters } from '@uni-hub/store/useOpportunitiesStore';
 import { hasLoadFailed } from '@uni-hub/queries/load-state';
 import { useOpportunitiesStore } from '@uni-hub/store/useOpportunitiesStore';
@@ -28,8 +29,8 @@ interface UseOpportunitiesDataResult {
   setPaymentFilter: (paymentType: OpportunityPaymentType | '') => void;
   isRecruiting: boolean;
   setIsRecruiting: (isRecruiting: boolean) => void;
-  tags: string[];
-  setTags: (tags: string[]) => void;
+  tags: OpportunityTag[];
+  setTags: (tags: OpportunityTag[]) => void;
   setFilters: (filters: OpportunityFilters) => void;
   catalog: ListState<Opportunity>;
   myOpportunities: ListState<Opportunity>;

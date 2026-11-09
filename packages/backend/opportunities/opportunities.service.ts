@@ -42,7 +42,6 @@ import {
   hasOpportunityContentChanged,
   isRecruitmentPhase,
 } from '@universe/core/utils/opportunities';
-import { normalizeTags } from '@universe/core/utils/tags';
 import {
   NOTIFICATION_TYPE,
   OPPORTUNITY_NOTIFICATION_KEY,
@@ -50,7 +49,6 @@ import {
 
 const OPPORTUNITY_INCLUDE = {
   owner: { select: { id: true, name: true, email: true } },
-  tags: { select: { id: true, name: true } },
 } satisfies Prisma.OpportunityInclude;
 
 export type OpportunityWithOwner = Prisma.OpportunityGetPayload<{
@@ -64,7 +62,7 @@ export type ApplicationWithApplicant = OpportunityApplication & {
 };
 
 export type ApplicationWithOpportunity = OpportunityApplication & {
-  opportunity: Omit<OpportunityWithOwner, 'tags'>;
+  opportunity: OpportunityWithOwner;
   applicant: ApplicationWithApplicant['applicant'];
 };
 
@@ -138,17 +136,15 @@ export class OpportunitiesService {
     userId: string,
     dto: CreateOpportunityDto,
   ): Promise<Opportunity> {
-    const { tags, ...rest } = dto;
     const acceptsApplications = isRecruitmentPhase(dto.lifecycleState)
       ? dto.acceptsApplications
       : false;
 
     return this.prisma.opportunity.create({
       data: {
-        ...rest,
+        ...dto,
         ...(acceptsApplications !== undefined ? { acceptsApplications } : {}),
         ownerContactInfo: dto.ownerContactInfo?.trim() ?? '',
-        proposedTags: normalizeTags(tags ?? []),
         ownerId: userId,
         status: OpportunityStatus.DRAFT,
       },
@@ -193,11 +189,7 @@ export class OpportunitiesService {
       ];
     }
 
-    const tagNames = normalizeTags(tags ?? []);
-
-    if (tagNames.length) {
-      where.tags = { some: { name: { in: tagNames } } };
-    }
+    if (tags?.length) where.tags = { hasSome: tags };
 
     if (isRecruiting) {
       where.acceptsApplications = true;
@@ -272,12 +264,9 @@ export class OpportunitiesService {
       );
     }
 
-    const { tags, ...rest } = dto;
     const hasContentChanges = hasOpportunityContentChanged(opportunity, dto);
 
-    const data: Prisma.OpportunityUpdateInput = { ...rest };
-
-    if (tags !== undefined) data.proposedTags = normalizeTags(tags);
+    const data: Prisma.OpportunityUpdateInput = { ...dto };
 
     const nextLifecycleState = dto.lifecycleState ?? opportunity.lifecycleState;
 
@@ -666,9 +655,7 @@ export class OpportunitiesService {
       where: { applicantId: userId },
       include: {
         applicant: { select: { name: true, email: true } },
-        opportunity: {
-          include: { owner: { select: { id: true, name: true, email: true } } },
-        },
+        opportunity: { include: OPPORTUNITY_INCLUDE },
       },
       orderBy: { createdAt: 'desc' },
     });

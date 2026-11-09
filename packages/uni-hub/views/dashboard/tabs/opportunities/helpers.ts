@@ -5,6 +5,7 @@ import {
   OPPORTUNITY_LIFECYCLE,
   type OpportunityPaymentType,
 } from '@core/constants/opportunities';
+import type { OpportunityTag } from '@core/constants/tags';
 import type { Opportunity } from '@core/types/opportunities';
 
 export interface OpportunityPaymentCounts {
@@ -29,6 +30,7 @@ export function getOpportunityErrorMessage(
 export function filterOpportunitiesBySearch(
   opportunities: Opportunity[],
   search: string,
+  getTagLabel: (tag: OpportunityTag) => string,
 ): Opportunity[] {
   if (!search.trim()) {
     return opportunities;
@@ -43,9 +45,9 @@ export function filterOpportunitiesBySearch(
       Boolean(opportunity.owner?.name?.toLowerCase().includes(query)) ||
       Boolean(opportunity.owner?.email?.toLowerCase().includes(query)) ||
       opportunity.ownerContactInfo.toLowerCase().includes(query);
-    const tagsMatch =
-      Boolean(opportunity.tags?.some((tag) => tag.name.toLowerCase().includes(query))) ||
-      Boolean(opportunity.proposedTags?.some((tag) => tag.toLowerCase().includes(query)));
+    const tagsMatch = Boolean(
+      opportunity.tags?.some((tag) => getTagLabel(tag).toLowerCase().includes(query)),
+    );
 
     return titleMatch || descMatch || ownerMatch || tagsMatch;
   });
@@ -98,19 +100,11 @@ export function filterOpportunitiesByRecruiting(
 
 export function filterOpportunitiesByTags(
   opportunities: Opportunity[],
-  tags: string[],
+  tags: OpportunityTag[],
 ): Opportunity[] {
   if (!tags.length) {
     return opportunities;
   }
 
-  const normalizedFilters = new Set(tags.map((tag) => tag.toLowerCase()));
-
-  return opportunities.filter((opportunity) => {
-    const tagNames = (opportunity.tags?.map((tag) => tag.name.toLowerCase()) ?? []).concat(
-      opportunity.proposedTags?.map((tag) => tag.toLowerCase()) ?? [],
-    );
-
-    return tagNames.some((name) => normalizedFilters.has(name));
-  });
+  return opportunities.filter((opportunity) => opportunity.tags?.some((tag) => tags.includes(tag)));
 }

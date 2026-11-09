@@ -4,7 +4,7 @@ import { Button } from '../../una/Button';
 import { TextInput } from '../../una/inputs/TextInput';
 import { CheckBox } from '../../una/inputs/CheckBox';
 import { Select } from '../../una/Select';
-import { TagInput } from '../../una/inputs/TagInput';
+import { MultiSelect } from '../../una/inputs/MultiSelect';
 import { StatusBanner } from '../StatusBanner';
 import { isRecruitmentPhase } from '@core/utils/opportunities';
 import type { OpportunityLifecycle, OpportunityPaymentType } from '@core/constants/opportunities';
@@ -37,8 +37,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   phaseLabel,
   tagsLabel,
   tagsPlaceholder,
-  loadTagSuggestions,
-  formatCreateTagLabel,
+  tagGroups,
   remoderationWarning,
   className,
   removeTagLabel,
@@ -192,14 +191,13 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
             <label htmlFor={tagsId} className={styles.fieldLabel}>
               {tagsLabel}
             </label>
-            <TagInput
+            <MultiSelect
               id={tagsId}
+              groups={tagGroups}
               value={formData.tags ?? []}
               onChange={(tags) => setFormData((prev) => ({ ...prev, tags }))}
-              loadSuggestions={loadTagSuggestions}
               placeholder={tagsPlaceholder}
-              removeLabel={removeTagLabel ?? ''}
-              formatCreateLabel={formatCreateTagLabel}
+              removeLabel={removeTagLabel}
             />
           </div>
         )}

@@ -5,16 +5,12 @@ import type {
   OpportunityPaymentType,
   OpportunityStatus,
 } from '../constants/opportunities.ts';
+import type { OpportunityTag } from '../constants/tags.ts';
 
 export interface OpportunityOwner {
   id: string;
   email: string;
   name?: string | null;
-}
-
-export interface OpportunityTag {
-  id: string;
-  name: string;
 }
 
 export interface Opportunity {
@@ -33,7 +29,6 @@ export interface Opportunity {
   paymentDetails?: string | null;
   moderationComment?: string | null;
   tags?: OpportunityTag[];
-  proposedTags?: string[];
   canResubmit?: boolean;
   owner?: OpportunityOwner;
   applications?: OpportunityApplication[];
@@ -63,7 +58,7 @@ export interface CreateOpportunityRequest {
   ownerContactInfo?: string;
   paymentDetails?: string | null;
   acceptsApplications?: boolean;
-  tags?: string[];
+  tags?: OpportunityTag[];
   lifecycleState?: OpportunityLifecycle;
 }
 
@@ -100,7 +95,7 @@ export interface GetOpportunitiesParams {
   paymentType?: OpportunityPaymentType | '';
   ownerId?: string;
   search?: string;
-  tags?: string[];
+  tags?: OpportunityTag[];
   isRecruiting?: boolean;
 }
 
