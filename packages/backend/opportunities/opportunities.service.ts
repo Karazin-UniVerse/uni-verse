@@ -646,6 +646,16 @@ export class OpportunitiesService {
       return updated;
     } catch (error) {
       if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
+        const current = await this.prisma.opportunityApplication.findUnique({
+          where: { id: applicationId },
+          select: { withdrawalCount: true },
+        });
+
+        if ((current?.withdrawalCount ?? 0) >= MAX_APPLICATION_WITHDRAWALS)
+          throw new BadRequestException(
+            OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED,
+          );
+
         throw new BadRequestException('Cannot withdraw completed application');
       }
 

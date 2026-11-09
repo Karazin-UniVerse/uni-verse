@@ -2135,6 +2135,29 @@ describe('OpportunitiesService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
+    it('reports the limit when a concurrent withdrawal consumed the last slot', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValueOnce({
+          id: 'app-1',
+          applicantId: 'user-1',
+          status: 'SUBMITTED',
+          withdrawalCount: 2,
+          opportunityId: 'opp-1',
+          opportunity: { ownerId: 'owner-1' },
+        } as any)
+        .mockResolvedValueOnce({ withdrawalCount: 3 } as any);
+      jest.spyOn(prisma.opportunityApplication, 'update').mockRejectedValue({
+        code: 'P2025',
+      });
+
+      await expect(
+        service.withdrawApplication('user-1', 'app-1'),
+      ).rejects.toThrow(
+        new BadRequestException(OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED),
+      );
+    });
+
     it('throws BadRequestException when application was already withdrawn 3 times', async () => {
       jest
         .spyOn(prisma.opportunityApplication, 'findUnique')
