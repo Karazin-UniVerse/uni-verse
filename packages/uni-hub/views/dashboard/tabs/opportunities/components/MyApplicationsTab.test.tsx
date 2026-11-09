@@ -212,6 +212,19 @@ describe('MyApplicationsTab component', () => {
     expect(screen.getByText('Ви відкликали цей відгук')).toBeInTheDocument();
   });
 
+  it('should not render withdraw button when withdrawalCount has reached the maximum (3)', () => {
+    const maxedOutApplication: OpportunityApplication = {
+      ...mockApplications[0],
+      id: 'app-max-33333333',
+      status: 'SUBMITTED',
+      withdrawalCount: 3,
+    };
+
+    renderMyApplicationsTab({ myApplications: [maxedOutApplication] });
+
+    expect(screen.queryByRole('button', { name: /відкликати відгук/i })).not.toBeInTheDocument();
+  });
+
   it('should render empty state when myApplications is empty', () => {
     renderMyApplicationsTab({ myApplications: [] });
 

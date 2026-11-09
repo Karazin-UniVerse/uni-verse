@@ -86,6 +86,10 @@ describe('getOpportunityErrorMessage', () => {
       'opportunities.errors.changesRequired (HTTP 400)',
       'translated:opportunities.errors.changesRequired',
     ],
+    [
+      'opportunities.errors.withdrawalLimitReached (HTTP 400)',
+      'translated:opportunities.errors.withdrawalLimitReached',
+    ],
   ])(
     'should translate the domain error %s without exposing transport suffixes',
     (message, expected) => {

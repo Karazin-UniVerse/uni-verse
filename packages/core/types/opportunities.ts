@@ -47,6 +47,7 @@ export interface OpportunityApplication {
   briefDescription?: string | null;
   answers?: string | null;
   ownerComment?: string | null;
+  withdrawalCount?: number;
   opportunity?: Opportunity;
   applicant?: Pick<OpportunityOwner, 'name' | 'email'>;
 }

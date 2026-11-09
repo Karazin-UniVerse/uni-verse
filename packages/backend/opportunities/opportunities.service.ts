@@ -32,6 +32,7 @@ import {
   Role,
 } from '@universe/database';
 import {
+  MAX_APPLICATION_WITHDRAWALS,
   OPPORTUNITY_MODERATE_ACTION,
   OPPORTUNITY_VIEW,
   OPPORTUNITY_VIEW_PARAM,
@@ -606,10 +607,13 @@ export class OpportunitiesService {
       throw new ForbiddenException('Only the applicant can withdraw');
 
     if (
-      app.status === ApplicationStatus.ACCEPTED ||
-      app.status === ApplicationStatus.REJECTED
+      app.status !== ApplicationStatus.SUBMITTED &&
+      app.status !== ApplicationStatus.UNDER_REVIEW
     )
       throw new BadRequestException('Cannot withdraw completed application');
+
+    if ((app.withdrawalCount ?? 0) >= MAX_APPLICATION_WITHDRAWALS)
+      throw new BadRequestException(OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED);
 
     try {
       const updated = await this.prisma.$transaction(async (tx) => {
@@ -619,8 +623,12 @@ export class OpportunitiesService {
             status: {
               in: [ApplicationStatus.SUBMITTED, ApplicationStatus.UNDER_REVIEW],
             },
+            withdrawalCount: { lt: MAX_APPLICATION_WITHDRAWALS },
           },
-          data: { status: ApplicationStatus.WITHDRAWN },
+          data: {
+            status: ApplicationStatus.WITHDRAWN,
+            withdrawalCount: { increment: 1 },
+          },
         });
 
         await tx.notification.deleteMany({
