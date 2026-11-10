@@ -845,6 +845,13 @@
   min-width: 0;
 }
 
+.applicantContacts {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
 .applicantName {
   font-size: var(--font-sm);
   font-weight: 600;

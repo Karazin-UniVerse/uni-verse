@@ -237,6 +237,7 @@ $sidebar-collapsed-width: 88px;
 
 .siderFooter .themeBtn,
 .siderFooter .logoutBtn,
+.siderFooter [data-lang-trigger],
 .themeBtn,
 .logoutBtn {
   width: 100%;
@@ -245,23 +246,27 @@ $sidebar-collapsed-width: 88px;
   gap: var(--space-12);
   padding: var(--space-12) var(--space-16);
   border-radius: var(--border-radius-medium);
+  border: 1px solid transparent;
   color: var(--sidebar-text);
   font-size: var(--font-sm);
   font-weight: 400;
+  transition: var(--transition-medium);
 
   &:hover {
     color: var(--sidebar-text-strong);
     background: var(--sidebar-item-hover-bg);
-    border-color: var(--sidebar-border);
+    border-color: transparent;
   }
 }
 
 .collapsed .siderFooter .themeBtn,
 .collapsed .siderFooter .logoutBtn,
+.collapsed .siderFooter [data-lang-trigger],
 .collapsed .themeBtn,
 .collapsed .logoutBtn {
   justify-content: center;
   padding: var(--space-12) 0;
+  gap: 0;
 }
 
 .main {

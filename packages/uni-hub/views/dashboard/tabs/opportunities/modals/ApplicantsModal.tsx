@@ -59,12 +59,14 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                       app.applicantName ||
                       formatMessage('opportunities.applicantsModal.defaultApplicant')}
                   </span>
-                  <ContactTags
-                    emailLabel={formatMessage('opportunities.emailLabel')}
-                    alternativeContactLabel={formatMessage('opportunities.alternativeContact')}
-                    email={app.applicant?.email}
-                    alternativeContact={app.contactInfo}
-                  />
+                  <div className={styles.applicantContacts}>
+                    <ContactTags
+                      emailLabel={formatMessage('opportunities.emailLabel')}
+                      alternativeContactLabel={formatMessage('opportunities.alternativeContact')}
+                      email={app.applicant?.email}
+                      alternativeContact={app.contactInfo}
+                    />
+                  </div>
                 </div>
               </div>
 
