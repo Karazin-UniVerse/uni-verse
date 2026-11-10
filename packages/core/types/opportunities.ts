@@ -4,6 +4,7 @@ import type {
   OpportunityModerateAction,
   OpportunityPaymentType,
   OpportunityStatus,
+  OpportunityAvailability,
 } from '../constants/opportunities.ts';
 import type { OpportunityTag } from '../constants/tags.ts';
 
@@ -11,6 +12,19 @@ export interface OpportunityOwner {
   id: string;
   email: string;
   name?: string | null;
+}
+
+export interface UnavailableOpportunity {
+  id: string;
+  title: string;
+  availability: OpportunityAvailability;
+  paymentType?: OpportunityPaymentType;
+}
+
+export type OpportunityListItem = Opportunity | UnavailableOpportunity;
+
+export interface OpportunityFavoriteState {
+  saved: boolean;
 }
 
 export interface Opportunity {
@@ -47,7 +61,7 @@ export interface OpportunityApplication {
   briefDescription?: string | null;
   answers?: string | null;
   ownerComment?: string | null;
-  opportunity?: Opportunity;
+  opportunity?: OpportunityListItem;
   applicant?: Pick<OpportunityOwner, 'name' | 'email'>;
 }
 

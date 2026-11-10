@@ -4,6 +4,8 @@ import type {
   GetOpportunitiesParams,
   Opportunity,
   OpportunityApplication,
+  OpportunityListItem,
+  OpportunityFavoriteState,
   UpdateOpportunityRequest,
 } from '@core/types/opportunities';
 import type {
@@ -14,6 +16,16 @@ import type {
 import { ApiClient, buildQueryString } from './api.request';
 
 export class OpportunitiesApi extends ApiClient {
+  async getFavorites(): Promise<{ data: OpportunityListItem[] }> {
+    return this.request<OpportunityListItem[]>('/opportunities/favorites');
+  }
+
+  async setFavorite(id: string, saved: boolean): Promise<{ data: OpportunityFavoriteState }> {
+    return this.request<OpportunityFavoriteState>(`/opportunities/${id}/favorite`, {
+      method: saved ? 'PUT' : 'DELETE',
+    });
+  }
+
   async getOpportunities(params?: GetOpportunitiesParams): Promise<{ data: Opportunity[] }> {
     const { tags, isRecruiting, ...rest } = params ?? {};
     const searchParams = new URLSearchParams(
@@ -32,8 +44,8 @@ export class OpportunitiesApi extends ApiClient {
     return this.request<Opportunity[]>(`/opportunities${query}`);
   }
 
-  async getOpportunity(id: string): Promise<{ data: Opportunity }> {
-    return this.request<Opportunity>(`/opportunities/${id}`);
+  async getOpportunity(id: string): Promise<{ data: OpportunityListItem }> {
+    return this.request<OpportunityListItem>(`/opportunities/${id}`);
   }
 
   async createOpportunity(dto: CreateOpportunityRequest): Promise<{ data: Opportunity }> {

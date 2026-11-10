@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ROLE } from '@core/constants/roles';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
@@ -42,12 +42,94 @@ describe('OpportunitiesTab component', () => {
     };
 
     vi.spyOn(opportunitiesApi, 'getOpportunities').mockResolvedValue({ data: [] });
+    vi.spyOn(opportunitiesApi, 'getFavorites').mockResolvedValue({ data: [] });
     vi.spyOn(opportunitiesApi, 'getMyOpportunities').mockResolvedValue({ data: [] });
     vi.spyOn(opportunitiesApi, 'getMyApplications').mockResolvedValue({ data: [] });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('should render a saved opportunity on the Favorites tab', async (): Promise<void> => {
+    const user = userEvent.setup();
+
+    const saved = {
+      ...buildOpportunity('saved'),
+      status: 'PUBLISHED' as const,
+      title: 'Saved research placement',
+    };
+
+    vi.mocked(opportunitiesApi.getFavorites).mockResolvedValue({ data: [saved] });
+
+    renderOpportunitiesTab();
+
+    await user.click(screen.getByRole('tab', { name: /обрані/i }));
+
+    expect(await screen.findByRole('heading', { name: saved.title })).toBeInTheDocument();
+
+    expect(screen.getByRole('button', { name: /видалити з обраного/i })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('only disables the favorite button for the card being saved', async () => {
+    const user = userEvent.setup();
+    const first = buildOpportunity('first');
+    const second = buildOpportunity('second');
+
+    vi.mocked(opportunitiesApi.getOpportunities).mockResolvedValue({ data: [first, second] });
+    const firstWrite =
+      Promise.withResolvers<Awaited<ReturnType<typeof opportunitiesApi.setFavorite>>>();
+    const secondWrite =
+      Promise.withResolvers<Awaited<ReturnType<typeof opportunitiesApi.setFavorite>>>();
+    const firstRefresh =
+      Promise.withResolvers<Awaited<ReturnType<typeof opportunitiesApi.getFavorites>>>();
+    const save = vi
+      .spyOn(opportunitiesApi, 'setFavorite')
+      .mockReturnValueOnce(firstWrite.promise)
+      .mockReturnValueOnce(secondWrite.promise);
+
+    renderOpportunitiesTab();
+
+    const [firstCard, secondCard] = await screen.findAllByRole('article');
+    const firstButton = within(firstCard).getByRole('button', { name: /додати до обраного/i });
+    const secondButton = within(secondCard).getByRole('button', { name: /додати до обраного/i });
+
+    await waitFor(() => expect(firstButton).toBeEnabled());
+    vi.mocked(opportunitiesApi.getFavorites)
+      .mockReturnValueOnce(firstRefresh.promise)
+      .mockResolvedValue({ data: [first, second] });
+    await user.click(firstButton);
+
+    try {
+      expect(save).toHaveBeenCalledWith(first.id, true);
+      await waitFor(() => expect(firstButton).toBeDisabled());
+      expect(secondButton).toBeEnabled();
+      await user.click(secondButton);
+      expect(save).toHaveBeenCalledWith(second.id, true);
+
+      await act(async () => firstWrite.resolve({ data: { saved: true } }));
+      await waitFor(() => expect(opportunitiesApi.getFavorites).toHaveBeenCalledTimes(2));
+      await act(async () => secondWrite.resolve({ data: { saved: true } }));
+
+      expect(firstButton).toBeDisabled();
+      expect(secondButton).toBeDisabled();
+      expect(opportunitiesApi.getFavorites).toHaveBeenCalledTimes(2);
+
+      await act(async () => firstRefresh.resolve({ data: [first] }));
+      await waitFor(() => {
+        expect(firstButton).toHaveAttribute('aria-pressed', 'true');
+        expect(secondButton).toHaveAttribute('aria-pressed', 'true');
+        expect(firstButton).toBeEnabled();
+        expect(secondButton).toBeEnabled();
+      });
+    } finally {
+      firstWrite.resolve({ data: { saved: true } });
+      secondWrite.resolve({ data: { saved: true } });
+      firstRefresh.resolve({ data: [first] });
+    }
   });
 
   it('should render tab navigation for Catalog, My Opportunities, and My Applications for regular user', () => {

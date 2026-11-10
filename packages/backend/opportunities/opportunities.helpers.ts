@@ -4,7 +4,11 @@ import {
   ValidatorConstraintInterface,
   ValidationArguments,
 } from 'class-validator';
-import { OPPORTUNITY_MODERATE_ACTION } from '@universe/core/constants/opportunities';
+import {
+  OPPORTUNITY_MODERATE_ACTION,
+  OPPORTUNITY_AVAILABILITY,
+  OPPORTUNITY_STATUS,
+} from '@universe/core/constants/opportunities';
 import { isValidContactInfo } from '@universe/core/utils/contacts';
 import { normalizeOpportunityContent } from '@universe/core/utils/opportunities';
 import type {
@@ -13,6 +17,24 @@ import type {
   Prisma,
 } from '@universe/database';
 import type { ModerateOpportunityDto } from './dto/moderate-opportunity.dto';
+
+import type { UnavailableOpportunity } from '@universe/core/types/opportunities';
+
+export function unavailableOpportunity(
+  opportunity: Pick<Opportunity, 'id' | 'status' | 'paymentType'>,
+  title = '',
+  paymentType?: Opportunity['paymentType'],
+): UnavailableOpportunity {
+  return {
+    id: opportunity.id,
+    title,
+    ...(paymentType ? { paymentType } : {}),
+    availability:
+      opportunity.status === OPPORTUNITY_STATUS.REJECTED
+        ? OPPORTUNITY_AVAILABILITY.PERMANENT
+        : OPPORTUNITY_AVAILABILITY.TEMPORARY,
+  };
+}
 
 export type ApplyModerationParams = {
   id: string;

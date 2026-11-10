@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { render, screen } from '@testing-library/react';
 import type { Opportunity } from '@core/types/opportunities';
 import { OpportunityCard } from './OpportunityCard';
+import { buildOpportunity } from './opportunities/test-utils';
 
 describe('OpportunityCard component', () => {
   const mockOpportunity: Opportunity = {
@@ -133,4 +134,49 @@ describe('OpportunityCard component', () => {
 
     expect(badgeRow?.children).toHaveLength(3);
   });
+});
+
+describe('OpportunityCard', () => {
+  const opportunity = { ...buildOpportunity('saved'), status: 'PUBLISHED' as const };
+
+  it('toggles the star independently from opening details', async () => {
+    const toggle = vi.fn();
+    const open = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <OpportunityCard
+        opportunity={opportunity}
+        isFavorite
+        onToggleFavorite={toggle}
+        onOpenDetail={open}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Видалити з обраного' }));
+    expect(toggle).toHaveBeenCalledWith(opportunity.id, true);
+    expect(open).not.toHaveBeenCalled();
+  });
+
+  it.each(['temporary', 'permanent'] as const)(
+    'keeps %s cards removable without detail navigation',
+    async (availability) => {
+      const toggle = vi.fn();
+      const user = userEvent.setup();
+
+      render(
+        <OpportunityCard
+          opportunity={{ id: 'saved', title: 'Saved title', paymentType: 'UNPAID', availability }}
+          isFavorite
+          onToggleFavorite={toggle}
+          onOpenDetail={vi.fn()}
+        />,
+      );
+      expect(screen.getByRole('status')).toHaveTextContent(
+        availability === 'temporary' ? 'Тимчасово недоступна' : 'Більше недоступна',
+      );
+      expect(screen.queryByRole('button', { name: /Переглянути деталі/ })).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Видалити з обраного' }));
+      expect(toggle).toHaveBeenCalledWith('saved', true);
+    },
+  );
 });

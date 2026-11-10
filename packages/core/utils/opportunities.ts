@@ -4,7 +4,11 @@ import {
   type OpportunityLifecycle,
   type OpportunityPaymentType,
 } from '../constants/opportunities.ts';
-import type { OpportunityContentFields, UpdateOpportunityRequest } from '../types/opportunities.ts';
+import type {
+  OpportunityContentFields,
+  UnavailableOpportunity,
+  UpdateOpportunityRequest,
+} from '../types/opportunities.ts';
 
 export function isRecruitmentPhase(lifecycleState?: OpportunityLifecycle): boolean {
   return (
@@ -46,4 +50,10 @@ export function hasOpportunityContentChanged(
   });
 
   return currentTuple.some((value, index) => value !== updatedTuple[index]);
+}
+
+export function isUnavailableOpportunity(
+  opportunity: object,
+): opportunity is UnavailableOpportunity {
+  return 'availability' in opportunity;
 }
