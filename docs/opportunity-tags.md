@@ -1,32 +1,53 @@
 # Opportunity tags
 
-Tags are normalized by trimming, collapsing whitespace and lowercasing. Duplicate
-names are removed. Commas are allowed inside a tag name.
+Tags come from a fixed list. Users pick them; they cannot create or rename tags.
+The list lives in `@universe/core/constants/tags` (`OPPORTUNITY_TAG_GROUPS`) and is
+mirrored by the Prisma enum `OpportunityTag`. Adding a tag means changing both,
+plus the `opportunities.tags.value.*` translation keys in `uk.ts` and `en.ts`.
+
+| Category (`OpportunityTagCategory`) | Tags                                                                                                 |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `FORMAT`                            | `RESEARCH`, `STUDY_PROJECT`, `INTERNSHIP`, `STARTUP`, `CHALLENGE`, `VOLUNTEERING`, `MENTORING`       |
+| `FIELD`                             | `IT`, `ENGINEERING`, `NATURAL_SCIENCES`, `BUSINESS`, `HUMANITIES`, `LAW`, `MEDIA_DESIGN`, `MEDICINE` |
+| `EXPERIENCE`                        | `NO_EXPERIENCE`, `BASIC_KNOWLEDGE`, `ADVANCED`                                                       |
+| `LOCATION`                          | `REMOTE`, `KHARKIV`, `UKRAINE`, `ABROAD`                                                             |
+
+An opportunity can have any number of tags, including none. The API stores and
+returns enum keys; the frontend shows localized labels.
+
+## Moderation
+
+Tags are not part of the moderated content. Changing the tags of a published
+opportunity keeps it `PUBLISHED`.
 
 ## Catalog filter
 
-`GET /opportunities` accepts one complete tag name per `tags` query parameter:
+`GET /opportunities` accepts one tag key per repeated `tags` query parameter and
+returns opportunities that have at least one of them:
 
 ```text
-/opportunities?tags=research%2Cdesign&tags=react
+/opportunities?tags=IT&tags=REMOTE
 ```
 
-This selects the names `research,design` and `react`. A single parameter such as
-`tags=research%2Cdesign` denotes one tag, not two. The frontend API client emits
-repeated parameters; callers must not join tag names with commas. This replaces
-the ambiguous comma-separated wire format. The request type remains `string[]`,
-and matching semantics are unchanged.
+Unknown keys return HTTP 400. Create and update requests accept a JSON `tags`
+array of the same keys.
 
-Create and update requests accept a JSON `tags` array of strings. Mixed-type
-arrays return HTTP 400 instead of silently dropping malformed entries. Valid
-string normalization, including empty-string cleanup, is unchanged.
+## Deployment
 
-## IME input
+Take a database backup and stop old backend revisions before deploying this
+schema change. Old revisions cannot use the new storage; rollback requires
+restoring the backup, not just switching the application revision.
 
-TagInput uses native composition state and a 50 ms event-timestamp window after
-`compositionend` to avoid treating IME confirmation as tag creation. The absolute
-timestamp difference covers Safari's inverted event delivery order without the
-deprecated `KeyboardEvent.keyCode` API. An intentional Enter outside that window
-adds the tag normally.
+`db:push` and `db:push:force` run `db:drop-free-form-tags` before schema push.
+This transactional, repeatable script permanently deletes the legacy `Tag` and
+`_OpportunityToTag` tables and the `Opportunity.proposedTags` column. Product
+approved discarding these tags; they are not mapped to the predefined list.
+Existing opportunities start with an empty tag array. Do not enable
+`PRISMA_ACCEPT_DATA_LOSS`: unrelated destructive schema changes must still fail.
 
-Reference: [Chrome's IME-safe Enter handling](https://developer.chrome.com/docs/modern-web-guidance/guides/forms/ime-safe-enter-submit#strategy_2_the_eventtimestamp_window_workaround_alternative).
+Verify the cleanup against a disposable PostgreSQL database with
+`TEST_DATABASE_URL` set, from `packages/backend`:
+
+```sh
+node --test prisma/scripts/drop-free-form-tags.test.mjs
+```

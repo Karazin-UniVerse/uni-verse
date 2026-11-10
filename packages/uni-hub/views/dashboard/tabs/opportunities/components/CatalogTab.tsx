@@ -7,6 +7,7 @@ import { OpportunityFilterPanel, type OpportunityFilterValue } from '@ui';
 import { TabStateWrapper } from './TabStateWrapper';
 import type { Opportunity, OpportunityListItem } from '@core/types/opportunities';
 import type { OpportunityPaymentType } from '@core/constants/opportunities';
+import type { OpportunityTag } from '@core/constants/tags';
 import {
   filterOpportunitiesByPayment,
   filterOpportunitiesByRecruiting,
@@ -15,6 +16,7 @@ import {
   canToggleFavorite,
   filterOpportunitiesByTags,
 } from '../helpers';
+import { getOpportunityTagGroups, getOpportunityTagLabel } from '../tags';
 import { OpportunityCard } from '../../OpportunityCard';
 import styles from '../../OpportunitiesTab.module.scss';
 
@@ -36,10 +38,9 @@ export interface CatalogTabProps {
   onPaymentFilterChange?: (val: OpportunityPaymentType | '') => void;
   isRecruiting?: boolean;
   onRecruitingChange?: (val: boolean) => void;
-  tags?: string[];
-  onTagsChange?: (tags: string[]) => void;
+  tags?: OpportunityTag[];
+  onTagsChange?: (tags: OpportunityTag[]) => void;
   onFiltersChange?: (filters: OpportunityFilterValue) => void;
-  loadTagSuggestions?: (query: string) => Promise<string[]>;
 }
 
 export const CatalogTab: React.FC<CatalogTabProps> = ({
@@ -59,7 +60,6 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
   favoritesDisabled,
   pendingFavoriteIds,
   currentUserId,
-  loadTagSuggestions,
   paymentFilter = '',
   isRecruiting = false,
   tags = [],
@@ -68,14 +68,16 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
   const { formatMessage } = useLanguage();
 
   const filteredOpportunities = useMemo(() => {
-    let result = filterOpportunitiesBySearch(opportunities, search);
+    let result = filterOpportunitiesBySearch(opportunities, search, (tag) =>
+      getOpportunityTagLabel(tag, formatMessage),
+    );
 
     result = filterOpportunitiesByPayment(result, paymentFilter);
     result = filterOpportunitiesByRecruiting(result, isRecruiting);
     result = filterOpportunitiesByTags(result, tags);
 
     return result;
-  }, [opportunities, search, paymentFilter, isRecruiting, tags]);
+  }, [opportunities, search, paymentFilter, isRecruiting, tags, formatMessage]);
 
   const handleApplyFilters = (newFilters: OpportunityFilterValue): void => {
     onFiltersChange?.(newFilters);
@@ -119,7 +121,7 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
               tags,
             }}
             onApply={handleApplyFilters}
-            loadTagSuggestions={loadTagSuggestions}
+            tagGroups={getOpportunityTagGroups(formatMessage)}
             labels={{
               open: formatMessage('opportunities.catalog.filtersButton'),
               close: formatMessage('opportunities.catalog.filtersClose'),
@@ -133,7 +135,6 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
               tagsPlaceholder: formatMessage('opportunities.catalog.filterTagsPlaceholder'),
               removeTag: formatMessage('opportunities.tags.remove'),
               apply: formatMessage('opportunities.catalog.filtersApply'),
-              formatCreateTag: (tag) => formatMessage('opportunities.tags.create', { tag }),
             }}
           />
         </div>

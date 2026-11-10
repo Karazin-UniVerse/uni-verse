@@ -36,7 +36,8 @@ describe('Opportunity favorites and restricted listings', () => {
     paymentDetails: null,
     details: null,
     moderationContentHash: null,
-    proposedTags: [],
+    tags: [],
+    publishedAt: null,
     owner: { id: 'owner', name: 'Owner', email: 'private@example.com' },
   };
   const prisma = {

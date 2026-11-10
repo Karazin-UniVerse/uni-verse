@@ -1,14 +1,14 @@
-# Grip: Interactive Browser Push Checks with Team Gateway
+# Grip: Interactive Pre-Push Quiz with Team Gateway
 
-[Grip](https://github.com/guilyx/grip) quizzes the **human developer** on their committed changes before allowing a local `git push` to complete. UniVerse uses Grip in **whiteboard mode** (`.grip.toml`) backed by an authenticated, quota-limited **team Gemini gateway** in NestJS (`/dev-tools/grip`).
+[Grip](https://github.com/guilyx/grip) quizzes the **human developer** on their committed changes before allowing a local `git push` to complete. UniVerse uses Grip in **quiz mode** (`.grip.toml`) backed by an authenticated, quota-limited **team Gemini gateway** in NestJS (`/dev-tools/grip`).
 
-Grip pre-push checks are **mandatory** for all contributors pushing to this repository. Pushes are blocked until you enroll via `pnpm grip:setup` and defend your changes on the whiteboard (scoring $\ge 70$).
+Grip pre-push checks are **mandatory** for all contributors pushing to this repository. Pushes are blocked until you enroll via `pnpm grip:setup` and defend your changes in the terminal quiz (scoring $\ge 70$).
 
 ---
 
 ## Architecture & Privacy
 
-- **Local interactive whiteboard**: Grip opens a browser tab on your computer where you review your diff and answer questions ($\ge 70$ required to pass).
+- **Terminal interactive quiz**: Grip quizzes you directly in your terminal where you review your diff and answer questions ($\ge 70$ required to pass).
 - **Resilience & Fail-Open**: If the AI model or network fails (`fail_open = true`), Grip logs a warning and permits the push rather than hard-blocking developers.
 - **Team Gateway**: A restricted endpoint in `@universe/backend` proxies structured questions and answers to Google Gemini (`gemini-3.5-flash-lite`).
 - **No shared API keys**: Collaborators never receive or handle Gemini API keys. Authentication is handled through a one-time GitHub OAuth Device Flow exchange.
@@ -110,9 +110,8 @@ When you run `git push origin <branch>`:
 2. **CI Environment (`CI=true`)**:
    Automatically skips interactive checks.
 3. **Enrolled checkout**:
-   - Launches Grip in whiteboard mode.
-   - Your default browser opens the local whiteboard interface.
-   - You answer the conceptual questions regarding your changes.
+   - Launches Grip in quiz mode.
+   - Quizzes you on conceptual questions regarding your changes directly in your terminal.
    - Upon scoring $\ge 70$, Grip passes, and the original `git push` **immediately completes**.
    - A pass for the **same diff** is remembered for **24 hours** (`remember_passes_hours = 24.0`). Additional commits or amendments that change the diff require a new check.
 
@@ -158,7 +157,7 @@ or shorten answers rather than bypassing the check.
 - **`Grip executable not found`**: Ensure Python's Scripts directory is on your system `PATH`, or pass `--executable <path-to-grip.exe>` during `pnpm grip:setup`.
 - **`Access denied (403)`**: Only GitHub users with write/admin permissions on `Karazin-UniVerse/uni-verse` are permitted.
 - **`Enrollment has expired`**: Gateway sessions expire after 30 days. Run `pnpm grip:setup` to refresh.
-- **`SSH / Headless environment`**: Grip whiteboard requires an interactive browser session. For headless or automated pushes, set `CI=true` or run `grip skip` if installed.
+- **`SSH / Headless environment`**: Grip quiz runs directly in the terminal TTY. Complete the push from an interactive checkout; coding agents must hand it to the human instead of bypassing the check. See the [agent push rules](ai/workflow.md#hooks).
 
 ---
 
@@ -192,7 +191,7 @@ The live authentication and pre-push loop was verified end-to-end:
 - Device Flow authentication against the local NestJS gateway.
 - Repository permissions check via GitHub API (`admin` role verified).
 - Bounded model completion forwarded to Gemini 3.5 Flash Lite via OpenAI-compatible endpoint.
-- Interactive Grip whiteboard check launched on push.
+- Interactive Grip quiz check launched on push.
 
 ### Production Deployment Prerequisites (Human Operations)
 
@@ -233,28 +232,41 @@ concurrent logical completions are unchanged; two simultaneous checks normally
 use different keys in one process. A busy key remains eligible for failover.
 
 Network/response-read failures and upstream HTTP `429`, `500`, `502`, `503`, and
-`504` allow one retry with a different eligible key after a 250 ms delay. The
-attempts use server-selected models: the first uses `gemini-3.5-flash-lite`,
-and the fallback uses `gemini-3.1-flash-lite`. The local Grip request still names
-the primary model; callers cannot choose arbitrary upstream models. This fallback
-was explicitly approved as an extension to the original single-model design.
-Both attempts and reads share a single 60-second deadline. Cancellation stops retries.
-One-key pools do not retry. Invalid/oversized responses and non-retryable HTTP
-statuses do not retry; invalid whiteboards are still handled by Grip itself.
-Provider attempts can consume additional quota or cost even when the first call
-fails from the gateway's perspective.
+`504` allow another eligible attempt after a 250 ms delay. The gateway first tries
+eligible keys on `gemini-3.5-flash-lite`, then eligible keys on
+`gemini-3.1-flash-lite`, stopping at the first success. Each key/model pair is
+attempted at most once per logical completion; the earlier model is never revisited.
+With three healthy configured keys, up to six upstream calls are possible. A
+single-key pool can try both models after a retryable transport or
+`500`/`502`/`503`/`504` failure, provided the shared deadline has not expired.
+HTTP `429` instead cools that key across both models: no fallback is attempted,
+and later requests fail until the cooldown expires. Selection within
+each model still balances load and rotates ties, rather than promising fixed key
+order. The local Grip request still names the primary model; callers cannot choose
+arbitrary upstream models.
 
-Transient transport/5xx failures cool a key down for 30 seconds. HTTP `429` uses
-at least 60 seconds and honors a longer valid `Retry-After` (seconds or HTTP date).
-HTTP `401/403` cools the key for 60 seconds without retrying the current request.
-If all keys are cooling down, new completions fail promptly with sanitized `503`.
-Exhausted failover returns the last attempt's sanitized error.
+All attempts, backoff and response reads share one 60-second deadline. The order
+is best-effort within that deadline: a slow attempt may prevent reaching remaining
+keys or the fallback model. Cancellation stops retries. Invalid/oversized responses
+and non-retryable HTTP statuses stop the current request; invalid whiteboards are
+still handled by Grip itself. Additional provider calls can consume more quota or
+cost, including when a previous call failed from the gateway's perspective.
 
-`GeminiClientService` logs key slot number, attempt, original upstream status when
+Retryable transport and `500`/`502`/`503`/`504` failures cool down only the affected
+key/model pair for 30 seconds, so a primary-model outage does not by itself block
+that key on the fallback. HTTP `429` keeps a key-wide cooldown of at least 60
+seconds and honors a longer valid `Retry-After` (seconds or HTTP date). HTTP
+`401/403` cools the key across both models for 60 seconds without retrying the
+current request. Neither concurrent failures nor successes shorten cooldowns.
+Both the key-wide and model-specific cooldown must expire for a pair to be eligible.
+If no pair is eligible at request entry, the gateway fails promptly with sanitized
+`503`; exhausted retries return the last attempt's sanitized error.
+
+`GeminiClientService` logs key slot number, model, attempt, original upstream status when
 available, elapsed milliseconds, outcome category, and failover decision. Success
 is debug-level; failures are warning-level. Keys, prompts, diffs, answers, raw
 provider bodies, and raw exception messages are never included in these logs.
-Successful-attempt debug logs additionally identify the selected model. Failed
-attempts do not currently include a model field. Model fallback does not enable
-billing or guarantee availability/free quota; both models must be available to the
-configured projects. No live model-compatibility verification has been performed.
+Model fallback does not enable billing or guarantee availability/free quota; both
+models must be available to the configured projects. Use only authorized projects
+within provider terms, not to circumvent quota restrictions. This traversal change
+does not deploy the backend or prove the new order against live provider calls.

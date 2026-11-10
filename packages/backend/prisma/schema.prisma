@@ -91,12 +91,29 @@ enum PaymentType {
   UNPAID
 }
 
-model Tag {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  createdAt DateTime @default(now())
-
-  opportunities Opportunity[]
+enum OpportunityTag {
+  RESEARCH
+  STUDY_PROJECT
+  INTERNSHIP
+  STARTUP
+  CHALLENGE
+  VOLUNTEERING
+  MENTORING
+  IT
+  ENGINEERING
+  NATURAL_SCIENCES
+  BUSINESS
+  HUMANITIES
+  LAW
+  MEDIA_DESIGN
+  MEDICINE
+  NO_EXPERIENCE
+  BASIC_KNOWLEDGE
+  ADVANCED
+  REMOTE
+  KHARKIV
+  UKRAINE
+  ABROAD
 }
 
 model Opportunity {
@@ -113,7 +130,8 @@ model Opportunity {
   details               String?
   moderationComment     String?
   moderationContentHash String?
-  proposedTags          String[]                  @default([])
+  tags                  OpportunityTag[]          @default([])
+  publishedAt           DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -121,10 +139,11 @@ model Opportunity {
   ownerId String
   owner   User   @relation("OpportunityOwner", fields: [ownerId], references: [id])
 
-  tags         Tag[]
   applications OpportunityApplication[] @relation("OpportunityToApplication")
   comments     Comment[]
   favorites    OpportunityFavorite[]
+
+  @@index([status, publishedAt(sort: Desc), createdAt(sort: Desc), id(sort: Desc)])
 }
 
 model OpportunityFavorite {
@@ -199,7 +218,6 @@ model Comment {
   applicationId String?
   application   OpportunityApplication? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
-
 
 model GripSession {
   id          String    @id @default(uuid())

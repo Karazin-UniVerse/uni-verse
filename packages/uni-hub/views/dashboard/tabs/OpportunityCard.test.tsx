@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import { render, screen } from '@testing-library/react';
 import type { Opportunity } from '@core/types/opportunities';
 import { OpportunityCard } from './OpportunityCard';
+import { buildOpportunity } from './opportunities/test-utils';
 
 describe('OpportunityCard component', () => {
   const mockOpportunity: Opportunity = {
@@ -61,6 +63,49 @@ describe('OpportunityCard component', () => {
     expect(screen.getByRole('button', { name: /управління/i })).toBeInTheDocument();
   });
 
+  it('should call onOpenDetail when clicking owner card overlay link', async () => {
+    const onOpenDetail = vi.fn();
+
+    render(
+      <OpportunityCard
+        opportunity={mockOpportunity}
+        variant="owner"
+        statusBadge={<span>Опубліковано</span>}
+        onOpenDetail={onOpenDetail}
+      />,
+    );
+
+    const overlayLink = screen.getByRole('button', {
+      name: `Детальніше про ${mockOpportunity.title}`,
+    });
+
+    await userEvent.click(overlayLink);
+
+    expect(onOpenDetail).toHaveBeenCalledWith(mockOpportunity);
+  });
+
+  it('should call onOpenApplicants when clicking applications button without triggering onOpenDetail', async () => {
+    const onOpenDetail = vi.fn();
+    const onOpenApplicants = vi.fn();
+
+    render(
+      <OpportunityCard
+        opportunity={mockOpportunity}
+        variant="owner"
+        statusBadge={<span>Опубліковано</span>}
+        onOpenDetail={onOpenDetail}
+        onOpenApplicants={onOpenApplicants}
+      />,
+    );
+
+    const applicantsButton = screen.getByRole('button', { name: /відгуки/i });
+
+    await userEvent.click(applicantsButton);
+
+    expect(onOpenApplicants).toHaveBeenCalledWith(mockOpportunity);
+    expect(onOpenDetail).not.toHaveBeenCalled();
+  });
+
   it('should render applications closed badge when acceptsApplications is false', () => {
     const closedOpp: Opportunity = {
       ...mockOpportunity,
@@ -90,10 +135,6 @@ describe('OpportunityCard component', () => {
     expect(badgeRow?.children).toHaveLength(3);
   });
 });
-
-import userEvent from '@testing-library/user-event';
-
-import { buildOpportunity } from './opportunities/test-utils';
 
 describe('OpportunityCard', () => {
   const opportunity = { ...buildOpportunity('saved'), status: 'PUBLISHED' as const };

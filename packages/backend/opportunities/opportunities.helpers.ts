@@ -36,8 +36,6 @@ export function unavailableOpportunity(
   };
 }
 
-export const toTagRecord = (name: string): { name: string } => ({ name });
-
 export type ApplyModerationParams = {
   id: string;
   opportunity: Opportunity;
@@ -50,14 +48,6 @@ export async function applyModerationInTransaction(
   { id, opportunity, newStatus, dto }: ApplyModerationParams,
 ): Promise<Opportunity> {
   const isApprove = dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE;
-  const names = opportunity.proposedTags;
-
-  if (isApprove && names.length) {
-    await tx.tag.createMany({
-      data: names.map(toTagRecord),
-      skipDuplicates: true,
-    });
-  }
 
   return tx.opportunity.update({
     where: {
@@ -73,7 +63,7 @@ export async function applyModerationInTransaction(
           : null,
       moderationComment: isApprove ? null : dto.comment,
       ...(isApprove && {
-        tags: { set: names.map(toTagRecord) },
+        publishedAt: opportunity.publishedAt ?? new Date(),
       }),
     },
   });
@@ -87,18 +77,10 @@ export function getOpportunityContentHash(
     | 'ownerContactInfo'
     | 'paymentType'
     | 'paymentDetails'
-    | 'proposedTags'
   >,
 ): string {
-  const content = normalizeOpportunityContent(opportunity);
-
-  const tags = [...opportunity.proposedTags].sort((firstTag, secondTag) =>
-    firstTag.localeCompare(secondTag),
-  );
-  const hashedContent = tags.length ? [...content, tags] : content;
-
   return createHash('sha256')
-    .update(JSON.stringify(hashedContent))
+    .update(JSON.stringify(normalizeOpportunityContent(opportunity)))
     .digest('hex');
 }
 

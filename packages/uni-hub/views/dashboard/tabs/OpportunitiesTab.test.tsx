@@ -152,15 +152,22 @@ describe('OpportunitiesTab component', () => {
     expect(screen.getByRole('tabpanel')).toHaveAttribute('id', 'panel-catalog');
   });
 
-  it('should render Moderation Queue tab when current user has OPPORTUNITIES_MODERATOR role', () => {
+  it('should render Moderation Queue tab without own opportunities when current user has OPPORTUNITIES_MODERATOR role', async () => {
+    const user = userEvent.setup();
+
     mockCurrentUser = {
       ...mockCurrentUser,
       roles: [ROLE.OPPORTUNITIES_MODERATOR],
     };
 
     const queryClient = createTestQueryClient();
+    const queue = [
+      buildOpportunity('mod-1'),
+      { ...buildOpportunity('own-mod-1'), ownerId: 'user-1' },
+    ];
 
-    queryClient.setQueryData(opportunityKeys.moderation(), [buildOpportunity('mod-1')]);
+    queryClient.setQueryData(opportunityKeys.moderation(), queue);
+    vi.mocked(opportunitiesApi.getOpportunities).mockResolvedValue({ data: queue });
 
     renderOpportunitiesTab(queryClient);
 
@@ -169,6 +176,10 @@ describe('OpportunitiesTab component', () => {
     expect(moderationTab).toBeInTheDocument();
     expect(moderationTab).toHaveAttribute('aria-selected', 'false');
     expect(screen.getByText('1')).toBeInTheDocument();
+
+    await user.click(moderationTab);
+    expect(screen.getByText('Opportunity mod-1')).toBeInTheDocument();
+    expect(screen.queryByText('Opportunity own-mod-1')).not.toBeInTheDocument();
   });
 
   it('should render Create Opportunity button only on My Opportunities tab when logged in as moderator', async (): Promise<void> => {

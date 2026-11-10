@@ -38,6 +38,7 @@ import {
   Opportunity,
   OpportunityApplication,
   OpportunityStatus,
+  OpportunityTag,
 } from '@universe/database';
 import { Public } from '../auth/decorators/public.decorator';
 import { isUnavailableOpportunity } from '@universe/core/utils/opportunities';
@@ -134,12 +135,11 @@ export class OpportunitiesController {
   @ApiQuery({
     name: 'tags',
     required: false,
-    type: String,
+    enum: OpportunityTag,
     isArray: true,
     style: 'form',
     explode: true,
-    description:
-      'One complete tag name per parameter; repeat tags for multiple names',
+    description: 'Repeat the parameter for multiple tags',
   })
   async findAll(
     @GetUser('sub') userId: string | undefined,
@@ -152,10 +152,8 @@ export class OpportunitiesController {
       userId,
       roles,
     );
-    const isPublicCatalog =
-      !query.status || query.status === OpportunityStatus.PUBLISHED;
 
-    setOpportunityCacheControl(res, isPublicCatalog);
+    setOpportunityCacheControl(res, false);
 
     return opportunities;
   }

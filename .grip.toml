@@ -1,7 +1,7 @@
 # Grip configuration for UniVerse repository
 # Docs: https://guilyx.github.io/grip/configuration/
 
-hook_mode = "whiteboard"
+hook_mode = "quiz"
 passing_score = 70
 fail_open = true
 require_tty = true

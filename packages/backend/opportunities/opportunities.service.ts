@@ -50,7 +50,6 @@ import {
   isRecruitmentPhase,
   isUnavailableOpportunity,
 } from '@universe/core/utils/opportunities';
-import { normalizeTags } from '@universe/core/utils/tags';
 import {
   NOTIFICATION_TYPE,
   OPPORTUNITY_NOTIFICATION_KEY,
@@ -58,7 +57,6 @@ import {
 
 const OPPORTUNITY_INCLUDE = {
   owner: { select: { id: true, name: true, email: true } },
-  tags: { select: { id: true, name: true } },
 } satisfies Prisma.OpportunityInclude;
 
 export type OpportunityWithOwner = Prisma.OpportunityGetPayload<{
@@ -72,7 +70,7 @@ export type ApplicationWithApplicant = OpportunityApplication & {
 };
 
 export type ApplicationWithOpportunity = OpportunityApplication & {
-  opportunity: Omit<OpportunityWithOwner, 'tags'> | UnavailableOpportunity;
+  opportunity: OpportunityWithOwner | UnavailableOpportunity;
   applicant: ApplicationWithApplicant['applicant'];
 };
 
@@ -282,17 +280,15 @@ export class OpportunitiesService {
     userId: string,
     dto: CreateOpportunityDto,
   ): Promise<Opportunity> {
-    const { tags, ...rest } = dto;
     const acceptsApplications = isRecruitmentPhase(dto.lifecycleState)
       ? dto.acceptsApplications
       : false;
 
     return this.prisma.opportunity.create({
       data: {
-        ...rest,
+        ...dto,
         ...(acceptsApplications !== undefined ? { acceptsApplications } : {}),
         ownerContactInfo: dto.ownerContactInfo?.trim() ?? '',
-        proposedTags: normalizeTags(tags ?? []),
         ownerId: userId,
         status: OpportunityStatus.DRAFT,
       },
@@ -338,11 +334,7 @@ export class OpportunitiesService {
       ];
     }
 
-    const tagNames = normalizeTags(tags ?? []);
-
-    if (tagNames.length) {
-      where.tags = { some: { name: { in: tagNames } } };
-    }
+    if (tags?.length) where.tags = { hasSome: tags };
 
     if (isRecruiting) {
       where.acceptsApplications = true;
@@ -351,7 +343,10 @@ export class OpportunitiesService {
 
     return this.prisma.opportunity.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy:
+        where.status === OpportunityStatus.PUBLISHED
+          ? [{ publishedAt: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }]
+          : { createdAt: 'desc' },
       include: OPPORTUNITY_INCLUDE,
     });
   }
@@ -432,12 +427,9 @@ export class OpportunitiesService {
       );
     }
 
-    const { tags, ...rest } = dto;
     const hasContentChanges = hasOpportunityContentChanged(opportunity, dto);
 
-    const data: Prisma.OpportunityUpdateInput = { ...rest };
-
-    if (tags !== undefined) data.proposedTags = normalizeTags(tags);
+    const data: Prisma.OpportunityUpdateInput = { ...dto };
 
     const nextLifecycleState = dto.lifecycleState ?? opportunity.lifecycleState;
 
@@ -520,7 +512,7 @@ export class OpportunitiesService {
 
   /**
    * Delete a draft opportunity.
-   * Only the owner can delete, and only if the opportunity is in DRAFT or REQUIRES_CHANGES status.
+   * Only the owner can delete, and only if the opportunity is in DRAFT status.
    */
   async delete(userId: string, id: string): Promise<Opportunity> {
     const opportunity = await this.prisma.opportunity.findUnique({
@@ -531,12 +523,9 @@ export class OpportunitiesService {
       throw new NotFoundException('Opportunity not found');
     }
 
-    if (
-      opportunity.status !== OpportunityStatus.DRAFT &&
-      opportunity.status !== OpportunityStatus.REQUIRES_CHANGES
-    ) {
+    if (opportunity.status !== OpportunityStatus.DRAFT) {
       throw new BadRequestException(
-        'Only opportunities in DRAFT or REQUIRES_CHANGES statuses can be deleted',
+        'Only opportunities in DRAFT status can be deleted',
       );
     }
 
@@ -550,16 +539,14 @@ export class OpportunitiesService {
           where: {
             id,
             ownerId: userId,
-            status: {
-              in: [OpportunityStatus.DRAFT, OpportunityStatus.REQUIRES_CHANGES],
-            },
+            status: OpportunityStatus.DRAFT,
           },
         });
       });
     } catch (error) {
       if (getPrismaErrorCode(error) === 'P2025') {
         throw new BadRequestException(
-          'Only opportunities in DRAFT or REQUIRES_CHANGES statuses can be deleted',
+          'Only opportunities in DRAFT status can be deleted',
         );
       }
 
@@ -697,7 +684,10 @@ export class OpportunitiesService {
       throw new ForbiddenException('Only the owner can view applications');
 
     return this.prisma.opportunityApplication.findMany({
-      where: { opportunityId: id },
+      where: {
+        opportunityId: id,
+        status: { not: ApplicationStatus.WITHDRAWN },
+      },
       include: { applicant: { select: { name: true, email: true } } },
       orderBy: { createdAt: 'desc' },
     });
@@ -883,9 +873,7 @@ export class OpportunitiesService {
       where: { applicantId: userId },
       include: {
         applicant: { select: { name: true, email: true } },
-        opportunity: {
-          include: { owner: { select: { id: true, name: true, email: true } } },
-        },
+        opportunity: { include: OPPORTUNITY_INCLUDE },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -945,6 +933,12 @@ export class OpportunitiesService {
     if (dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE) {
       newStatus = OpportunityStatus.PUBLISHED;
     } else if (dto.action === OPPORTUNITY_MODERATE_ACTION.REJECT) {
+      if (!dto.comment?.trim()) {
+        throw new BadRequestException(
+          'Comment is required when rejecting an opportunity',
+        );
+      }
+
       newStatus = OpportunityStatus.REJECTED;
     } else if (dto.action === OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES) {
       if (!dto.comment?.trim()) {

@@ -117,7 +117,7 @@
 
 .cardBadgeRow {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--space-8) var(--space-12);
@@ -285,6 +285,11 @@
   gap: var(--space-8);
   flex-wrap: wrap;
   max-width: 100%;
+
+  button {
+    position: relative;
+    z-index: 2;
+  }
 }
 
 .warningBox {

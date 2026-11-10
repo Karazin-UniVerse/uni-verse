@@ -1,11 +1,10 @@
-import { queryOptions, type QueryClient } from '@tanstack/react-query';
+import { queryOptions } from '@tanstack/react-query';
 import type {
   Opportunity,
   OpportunityApplication,
   OpportunityListItem,
 } from '@core/types/opportunities';
 import { OPPORTUNITY_STATUS } from '@core/constants/opportunities';
-import { normalizeTag } from '@core/utils/tags';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { asList } from '@uni-hub/utils/arrays';
 import { opportunityKeys } from './queryKeys';
@@ -41,21 +40,6 @@ export async function loadApplicants(opportunityId: string): Promise<Opportunity
   const response = await opportunitiesApi.getOpportunityApplications(opportunityId);
 
   return asList(response.data);
-}
-
-export function loadTagSuggestions(queryClient: QueryClient, query: string): Promise<string[]> {
-  const normalizedQuery = normalizeTag(query);
-
-  return queryClient.fetchQuery(
-    queryOptions({
-      queryKey: opportunityKeys.tagSuggestions(normalizedQuery),
-      queryFn: async (): Promise<string[]> => {
-        const response = await opportunitiesApi.getTagSuggestions(normalizedQuery);
-
-        return response.data.map((tag) => tag.name);
-      },
-    }),
-  );
 }
 
 export const catalogQueryOptions = queryOptions({

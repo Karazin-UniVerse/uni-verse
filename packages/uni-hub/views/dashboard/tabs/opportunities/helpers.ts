@@ -5,6 +5,7 @@ import {
   OPPORTUNITY_LIFECYCLE,
   type OpportunityPaymentType,
 } from '@core/constants/opportunities';
+import type { OpportunityTag } from '@core/constants/tags';
 import type { OpportunityListItem } from '@core/types/opportunities';
 import { isUnavailableOpportunity } from '@core/utils/opportunities';
 import type { TranslationKey } from '@uni-hub/i18n/locales/uk';
@@ -20,7 +21,7 @@ export function getCatalogEmptyKey({
   paymentFilter: OpportunityPaymentType | '';
   favoritesView: boolean;
   isRecruiting?: boolean;
-  tags?: string[];
+  tags?: OpportunityTag[];
 }): TranslationKey {
   if (search.trim() || paymentFilter || isRecruiting || tags.length) {
     return 'opportunities.filteredEmpty';
@@ -61,6 +62,7 @@ export function getOpportunityErrorMessage(
 export function filterOpportunitiesBySearch<T extends OpportunityListItem>(
   opportunities: T[],
   search: string,
+  getTagLabel: (tag: OpportunityTag) => string,
 ): T[] {
   if (!search.trim()) {
     return opportunities;
@@ -80,9 +82,9 @@ export function filterOpportunitiesBySearch<T extends OpportunityListItem>(
       Boolean(opportunity.owner?.name?.toLowerCase().includes(query)) ||
       Boolean(opportunity.owner?.email?.toLowerCase().includes(query)) ||
       opportunity.ownerContactInfo.toLowerCase().includes(query);
-    const tagsMatch =
-      Boolean(opportunity.tags?.some((tag) => tag.name.toLowerCase().includes(query))) ||
-      Boolean(opportunity.proposedTags?.some((tag) => tag.toLowerCase().includes(query)));
+    const tagsMatch = Boolean(
+      opportunity.tags?.some((tag) => getTagLabel(tag).toLowerCase().includes(query)),
+    );
 
     return titleMatch || descMatch || ownerMatch || tagsMatch;
   });
@@ -138,23 +140,14 @@ export function filterOpportunitiesByRecruiting<T extends OpportunityListItem>(
 
 export function filterOpportunitiesByTags<T extends OpportunityListItem>(
   opportunities: T[],
-  tags: string[],
+  tags: OpportunityTag[],
 ): T[] {
   if (!tags.length) {
     return opportunities;
   }
 
-  const normalizedFilters = new Set(tags.map((tag) => tag.toLowerCase()));
-
-  return opportunities.filter((opportunity) => {
-    if (isUnavailableOpportunity(opportunity)) {
-      return false;
-    }
-
-    const tagNames = (opportunity.tags?.map((tag) => tag.name.toLowerCase()) ?? []).concat(
-      opportunity.proposedTags?.map((tag) => tag.toLowerCase()) ?? [],
-    );
-
-    return tagNames.some((name) => normalizedFilters.has(name));
-  });
+  return opportunities.filter(
+    (opportunity) =>
+      !isUnavailableOpportunity(opportunity) && opportunity.tags?.some((tag) => tags.includes(tag)),
+  );
 }
