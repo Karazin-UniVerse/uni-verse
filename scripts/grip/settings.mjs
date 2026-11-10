@@ -6,11 +6,33 @@ import childProcess from 'node:child_process';
 
 export const GRIP_REPOSITORY = 'Karazin-UniVerse/uni-verse';
 const SSH_CONFIG_TIMEOUT_MS = 5000;
-const ALLOWED_REMOTE =
-  /^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)Karazin-UniVerse\/uni-verse(?:\.git)?\/?$/i;
+const HTTPS_REMOTE = /^https:\/\/github\.com\/Karazin-UniVerse\/uni-verse(?:\.git)?\/?$/i;
+const SSH_REMOTE =
+  /^(?:git@([a-z0-9_][a-z0-9._-]*):|ssh:\/\/git@([a-z0-9_][a-z0-9._-]*)(?::(22|443))?\/)Karazin-UniVerse\/uni-verse(?:\.git)?\/?$/i;
+
+// Git's shell finds the OpenSSH bundled with Git for Windows. Match Git's
+// precedence for configured shell commands and the GIT_SSH executable.
+const SSH_CONFIG_ALIAS = [
+  'alias.grip-ssh-config=!f() {',
+  'if [ "${GIT_SSH_COMMAND+x}" ]; then ssh_command=$GIT_SSH_COMMAND;',
+  'elif ssh_command=$(git config --get core.sshCommand); then :;',
+  'else exec "${GIT_SSH-ssh}" -G "$@"; fi;',
+  '[ -n "$ssh_command" ] || exit 1;',
+  'exec sh -c "$ssh_command -G \\"\\$@\\"" grip-ssh "$@";',
+  '}; f',
+].join(' ');
+const SSH_IDENTITY_FIELDS = new Set(['hostname', 'user', 'port']);
+
+function isGitHubSshEndpoint(host, port) {
+  return (host === 'github.com' && port === '22') || (host === 'ssh.github.com' && port === '443');
+}
 
 function isAllowedRemote(remoteUrl, repoRoot) {
-  if (ALLOWED_REMOTE.test(remoteUrl)) {
+  if (typeof remoteUrl !== 'string' || remoteUrl !== remoteUrl.trim()) {
+    return false;
+  }
+
+  if (HTTPS_REMOTE.test(remoteUrl)) {
     return true;
   }
 
@@ -18,15 +40,27 @@ function isAllowedRemote(remoteUrl, repoRoot) {
     return false;
   }
 
-  const sshRemote =
-    /^(?:git@([a-z0-9][a-z0-9.-]*):|ssh:\/\/git@([a-z0-9][a-z0-9.-]*)\/)([^\s]+)$/i.exec(remoteUrl);
+  const sshRemote = SSH_REMOTE.exec(remoteUrl);
 
-  if (!sshRemote || !ALLOWED_REMOTE.test(`git@github.com:${sshRemote[3]}`)) {
+  if (!sshRemote) {
     return false;
   }
 
   const host = sshRemote[1] ?? sshRemote[2];
-  const result = childProcess.spawnSync('ssh', ['-G', `git@${host}`], {
+  const port = sshRemote[3];
+
+  if (isGitHubSshEndpoint(host.toLowerCase(), port ?? '22')) {
+    return true;
+  }
+
+  const args = [
+    '-c',
+    SSH_CONFIG_ALIAS,
+    'grip-ssh-config',
+    ...(port ? ['-p', port] : []),
+    'git@' + host,
+  ];
+  const result = childProcess.spawnSync('git', args, {
     cwd: repoRoot,
     encoding: 'utf8',
     shell: false,
@@ -34,21 +68,30 @@ function isAllowedRemote(remoteUrl, repoRoot) {
     timeout: SSH_CONFIG_TIMEOUT_MS,
   });
 
-  if (result.error || result.status !== 0) {
+  if (result.error || result.status !== 0 || !result.stdout) {
     return false;
   }
 
-  const config = new Map(
-    result.stdout
-      .trim()
-      .split(/\r?\n/)
-      .map((line) => line.trim().split(/\s+/, 2)),
-  );
+  const config = new Map();
+
+  for (const line of result.stdout.split(/\r?\n/)) {
+    const [key, value, extra] = line.trim().split(/\s+/);
+
+    if (!SSH_IDENTITY_FIELDS.has(key)) {
+      continue;
+    }
+
+    if (!value || extra || config.has(key)) {
+      return false;
+    }
+
+    config.set(key, value);
+  }
 
   return (
-    config.get('hostname')?.toLowerCase() === 'github.com' &&
     config.get('user') === 'git' &&
-    config.get('port') === '22'
+    (!port || config.get('port') === port) &&
+    isGitHubSshEndpoint(config.get('hostname')?.toLowerCase(), config.get('port'))
   );
 }
 
@@ -57,11 +100,13 @@ export function validateRepository({ remoteUrl, repoRoot = process.cwd() } = {})
     cwd: repoRoot,
     encoding: 'utf8',
   });
+  const origin = result.stdout?.trim();
 
   if (
     result.status !== 0 ||
-    !isAllowedRemote(result.stdout.trim(), repoRoot) ||
-    (remoteUrl !== undefined && !isAllowedRemote(remoteUrl, repoRoot))
+    !origin ||
+    !isAllowedRemote(origin, repoRoot) ||
+    (remoteUrl !== undefined && remoteUrl !== origin && !isAllowedRemote(remoteUrl, repoRoot))
   ) {
     throw new Error(`Grip enrollment is restricted to the ${GRIP_REPOSITORY} repository.`);
   }

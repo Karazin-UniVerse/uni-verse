@@ -49,6 +49,8 @@ jobs:
         run: pnpm test:graphify
       - name: Test Grip enrollment and push wrapper
         run: pnpm test:grip
+      - name: Test skills mirror synchronization
+        run: pnpm test:skills
       - name: Test deployment validation and traffic recovery
         run: pnpm test:deploy
       - name: Build with the Lighthouse mock API
