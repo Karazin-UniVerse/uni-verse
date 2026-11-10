@@ -9,6 +9,8 @@ import {
   getOpportunityErrorMessage,
 } from './helpers';
 
+const getTagLabel = (tag: string): string => `label-${tag}`;
+
 const sampleOpportunities: Opportunity[] = [
   {
     id: 'opp-1',
@@ -107,27 +109,35 @@ describe('getOpportunityErrorMessage', () => {
 
 describe('filterOpportunitiesBySearch', () => {
   it('should return all opportunities when search query is empty or whitespace', () => {
-    expect(filterOpportunitiesBySearch(sampleOpportunities, '')).toEqual(sampleOpportunities);
-    expect(filterOpportunitiesBySearch(sampleOpportunities, '   ')).toEqual(sampleOpportunities);
+    expect(filterOpportunitiesBySearch(sampleOpportunities, '', getTagLabel)).toEqual(
+      sampleOpportunities,
+    );
+    expect(filterOpportunitiesBySearch(sampleOpportunities, '   ', getTagLabel)).toEqual(
+      sampleOpportunities,
+    );
   });
 
   it('should filter by title case-insensitively', () => {
-    const result = filterOpportunitiesBySearch(sampleOpportunities, 'frontend');
+    const result = filterOpportunitiesBySearch(sampleOpportunities, 'frontend', getTagLabel);
 
     expect(result).toHaveLength(1);
     expect(result[0]?.id).toBe('opp-1');
   });
 
   it('should filter by description', () => {
-    const result = filterOpportunitiesBySearch(sampleOpportunities, 'PostgreSQL');
+    const result = filterOpportunitiesBySearch(sampleOpportunities, 'PostgreSQL', getTagLabel);
 
     expect(result).toHaveLength(1);
     expect(result[0]?.id).toBe('opp-2');
   });
 
   it('should filter by owner name and email', () => {
-    const byName = filterOpportunitiesBySearch(sampleOpportunities, 'Charlie');
-    const byEmail = filterOpportunitiesBySearch(sampleOpportunities, 'alice@frontend.ua');
+    const byName = filterOpportunitiesBySearch(sampleOpportunities, 'Charlie', getTagLabel);
+    const byEmail = filterOpportunitiesBySearch(
+      sampleOpportunities,
+      'alice@frontend.ua',
+      getTagLabel,
+    );
 
     expect(byName).toHaveLength(1);
     expect(byName[0]?.id).toBe('opp-3');
@@ -136,7 +146,7 @@ describe('filterOpportunitiesBySearch', () => {
   });
 
   it('should filter by ownerContactInfo', () => {
-    const result = filterOpportunitiesBySearch(sampleOpportunities, 'design-lead');
+    const result = filterOpportunitiesBySearch(sampleOpportunities, 'design-lead', getTagLabel);
 
     expect(result).toHaveLength(1);
     expect(result[0]?.id).toBe('opp-3');
@@ -147,13 +157,23 @@ describe('filterOpportunitiesBySearch', () => {
       ...sampleOpportunities[0]!,
       owner: { id: 'user-4', name: 'No Email Owner', email: undefined as unknown as string },
     };
-    const result = filterOpportunitiesBySearch([oppWithoutEmail], 'frontend');
+    const result = filterOpportunitiesBySearch([oppWithoutEmail], 'frontend', getTagLabel);
 
     expect(result).toHaveLength(1);
   });
 
+  it('should filter by localized tag label', () => {
+    const list: Opportunity[] = [{ ...sampleOpportunities[1]!, tags: ['LAW'] }];
+
+    expect(filterOpportunitiesBySearch(list, 'label-law', getTagLabel)).toEqual(list);
+  });
+
   it('should return empty array when no opportunity matches', () => {
-    const result = filterOpportunitiesBySearch(sampleOpportunities, 'nonexistentquery');
+    const result = filterOpportunitiesBySearch(
+      sampleOpportunities,
+      'nonexistentquery',
+      getTagLabel,
+    );
 
     expect(result).toHaveLength(0);
   });
@@ -231,19 +251,19 @@ describe('filterOpportunitiesByTags', () => {
     const list: Opportunity[] = [
       {
         ...sampleOpportunities[0]!,
-        tags: [{ id: '1', name: 'react' }],
+        tags: ['IT'],
       },
       {
         ...sampleOpportunities[1]!,
-        tags: [{ id: '2', name: 'nodejs' }],
+        tags: ['LAW'],
       },
       {
         ...sampleOpportunities[2]!,
-        proposedTags: ['design'],
+        tags: ['REMOTE', 'MEDIA_DESIGN'],
       },
     ];
 
-    const result = filterOpportunitiesByTags(list, ['react', 'design']);
+    const result = filterOpportunitiesByTags(list, ['IT', 'MEDIA_DESIGN']);
 
     expect(result).toHaveLength(2);
     expect(result.map((item) => item.id)).toEqual(['opp-1', 'opp-3']);

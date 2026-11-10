@@ -6,7 +6,7 @@ import { Button } from '../../una/Button';
 import { Popover } from '../../una/Popover';
 import { Select } from '../../una/Select';
 import { CheckBox } from '../../una/inputs/CheckBox';
-import { TagInput } from '../../una/inputs/TagInput';
+import { MultiSelect } from '../../una/inputs/MultiSelect';
 import type {
   OpportunityFilterPanelProps,
   OpportunityFilterValue,
@@ -26,7 +26,7 @@ export const OpportunityFilterPanel: React.FC<OpportunityFilterPanelProps> = ({
   value,
   onApply,
   labels,
-  loadTagSuggestions,
+  tagGroups,
   className,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -119,14 +119,13 @@ export const OpportunityFilterPanel: React.FC<OpportunityFilterPanelProps> = ({
             <label htmlFor={tagsId} className={styles.label}>
               {labels.tags}
             </label>
-            <TagInput
+            <MultiSelect
               id={tagsId}
+              groups={tagGroups}
               value={draft.tags}
               onChange={(tags) => setDraft((previous) => ({ ...previous, tags }))}
-              loadSuggestions={loadTagSuggestions}
               placeholder={labels.tagsPlaceholder}
               removeLabel={labels.removeTag}
-              formatCreateLabel={labels.formatCreateTag}
             />
           </div>
 

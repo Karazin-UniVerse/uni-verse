@@ -4,9 +4,10 @@ import React from 'react';
 import { OpportunityDetail } from '@ui';
 import type { Opportunity } from '@core/types/opportunities';
 import { OPPORTUNITY_STATUS } from '@core/constants/opportunities';
-import { getOpportunityTagNames, isRecruitmentPhase } from '@core/utils/opportunities';
+import { isRecruitmentPhase } from '@core/utils/opportunities';
 import { useLanguage, type FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import { OpportunityStatusBadge } from './OpportunityStatusBadge';
+import { getOpportunityTagLabel } from '../tags';
 
 export interface OpportunityDetailViewProps {
   onBack: () => void;
@@ -100,7 +101,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   const lifecycleTagText = getLifecycleTagText(opportunity, formatMessage);
   const organizerName = getOrganizerName(opportunity, formatMessage);
   const canApply = canApplyOpportunity(opportunity, isOwner);
-  const tagNames = getOpportunityTagNames(opportunity);
+  const tagNames = opportunity.tags?.map((tag) => getOpportunityTagLabel(tag, formatMessage));
 
   return (
     <OpportunityDetail
