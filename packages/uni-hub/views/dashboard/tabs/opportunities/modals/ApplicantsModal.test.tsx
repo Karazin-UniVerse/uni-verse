@@ -224,7 +224,7 @@ describe('ApplicantsModal component', () => {
     expect(screen.queryByRole('button', { name: 'Прийняти' })).not.toBeInTheDocument();
   });
 
-  it('should render candidate contacts inside applicantContacts container in a single line', () => {
+  it('should render candidate contacts grouped inside the applicantContacts container', () => {
     const { container } = renderApplicantsModal();
     const contactsContainer = container.querySelector(`.${styles.applicantContacts}`);
 
