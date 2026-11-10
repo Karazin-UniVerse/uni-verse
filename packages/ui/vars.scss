@@ -319,6 +319,7 @@ $space-64: 64px;
   --sidebar-item-hover-bg: var(--bg-hover);
   --sidebar-item-active-bg: color-mix(in srgb, var(--accent-primary) 18%, transparent);
   --sidebar-item-active-accent: transparent;
+  --sidebar-accent: var(--accent-primary);
 
   /* Header */
   --header-bg: var(--bg-color);
@@ -729,6 +730,7 @@ $space-64: 64px;
   --sidebar-item-hover-bg: rgb(224 176 74 / 12%);
   --sidebar-item-active-bg: var(--karazin-navy-700);
   --sidebar-item-active-accent: var(--karazin-gold-500);
+  --sidebar-accent: var(--karazin-gold-400);
 
   /* White header with a gold hairline */
   --header-border: var(--karazin-gold-200);

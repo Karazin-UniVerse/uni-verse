@@ -14,19 +14,21 @@ const LANGUAGES: Array<{ code: AppLanguage; label: string; shortLabel: string; f
 ];
 
 export type LanguageSwitcherProps = {
+  className?: string;
   compact?: boolean;
+  isFullWidth?: boolean;
+  placement?: PopoverPlacement;
   showLabel?: boolean;
   variant?: 'default' | 'glass' | 'sider';
-  placement?: PopoverPlacement;
-  className?: string;
 };
 
 export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
   className,
   compact = false,
+  isFullWidth = false,
+  placement = 'bottom-end',
   showLabel = true,
   variant = 'default',
-  placement = 'bottom-end',
 }) => {
   const { language, setLanguage, formatMessage } = useLanguage();
 
@@ -37,7 +39,7 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
   return (
     <Dropdown
       className={className}
-      isFullWidth={variant === 'sider'}
+      isFullWidth={isFullWidth || variant === 'sider'}
       isPadded
       placement={placement}
       renderTrigger={(triggerProps, isOpen) => (
@@ -49,6 +51,7 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
             styles.trigger,
             variant === 'glass' && styles.glassTrigger,
             variant === 'sider' && styles.siderTrigger,
+            isFullWidth && styles.fullWidthTrigger,
             isCollapsed && styles.collapsedTrigger,
           )}
           aria-label={`${formatMessage('lang.select')}: ${activeLanguage.label}`}

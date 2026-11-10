@@ -165,7 +165,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
 
           <div className={styles.userDropdownBody}>
             <div className={styles.mobileOnlyItem} style={{ marginBottom: 6 }}>
-              <LanguageSwitcher variant="sider" placement="bottom-start" />
+              <LanguageSwitcher isFullWidth placement="bottom-start" />
             </div>
 
             <div className={styles.mobileOnlyItem} style={{ marginBottom: 6 }}>

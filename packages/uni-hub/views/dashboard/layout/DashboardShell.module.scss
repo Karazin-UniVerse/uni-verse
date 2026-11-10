@@ -1456,6 +1456,10 @@ $sidebar-collapsed-width: 88px;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+
+  .moodleStatusLink {
+    color: var(--text-primary);
+  }
 }
 
 .dropdownSection {
@@ -1500,12 +1504,13 @@ $sidebar-collapsed-width: 88px;
 }
 
 .connectMoodleNavItem {
-  color: var(--accent-primary);
-  border: 1px dashed color-mix(in srgb, var(--accent-primary) 40%, transparent);
+  color: var(--sidebar-accent, var(--accent-primary));
+  border: 1px dashed
+    color-mix(in srgb, var(--sidebar-accent, var(--accent-primary)) 40%, transparent);
 
   &:hover {
-    border-color: var(--accent-primary);
-    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+    border-color: var(--sidebar-accent, var(--accent-primary));
+    background: color-mix(in srgb, var(--sidebar-accent, var(--accent-primary)) 8%, transparent);
   }
 }
 
@@ -1513,10 +1518,11 @@ $sidebar-collapsed-width: 88px;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--accent-primary);
+  background: var(--sidebar-accent, var(--accent-primary));
   display: inline-block;
   margin-left: auto;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--sidebar-accent, var(--accent-primary)) 30%, transparent);
   animation: pulse 1.8s infinite;
 }
 

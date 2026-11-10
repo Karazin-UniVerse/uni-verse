@@ -10,9 +10,7 @@ describe('LanguageSwitcher component', () => {
   });
 
   it('should render language switcher with accessible role and current language', () => {
-    render(
-      withLanguage(<LanguageSwitcher />),
-    );
+    render(withLanguage(<LanguageSwitcher />));
 
     const trigger = screen.getByRole('button', { name: 'Мова інтерфейсу: Українська' });
 
@@ -25,9 +23,7 @@ describe('LanguageSwitcher component', () => {
   it('should switch language when language option is selected', async () => {
     const user = userEvent.setup();
 
-    render(
-      withLanguage(<LanguageSwitcher />),
-    );
+    render(withLanguage(<LanguageSwitcher />));
 
     const trigger = screen.getByRole('button', { name: 'Мова інтерфейсу: Українська' });
 
@@ -49,9 +45,7 @@ describe('LanguageSwitcher component', () => {
   it('should reflect active language state', async () => {
     const user = userEvent.setup();
 
-    render(
-      withLanguage(<LanguageSwitcher />),
-    );
+    render(withLanguage(<LanguageSwitcher />));
 
     const trigger = screen.getByRole('button', { name: 'Мова інтерфейсу: Українська' });
 
@@ -87,13 +81,20 @@ describe('LanguageSwitcher component', () => {
   });
 
   it('should not render text label when showLabel is false', () => {
-    render(
-      withLanguage(<LanguageSwitcher showLabel={false} />),
-    );
+    render(withLanguage(<LanguageSwitcher showLabel={false} />));
 
     const trigger = screen.getByRole('button', { name: 'Мова інтерфейсу: Українська' });
 
     expect(trigger).toBeInTheDocument();
     expect(trigger).not.toHaveTextContent('Українська');
+  });
+
+  it('should render full width trigger when isFullWidth is true', () => {
+    render(withLanguage(<LanguageSwitcher isFullWidth />));
+
+    const trigger = screen.getByRole('button', { name: 'Мова інтерфейсу: Українська' });
+
+    expect(trigger).toBeInTheDocument();
+    expect(trigger.className).toContain('fullWidthTrigger');
   });
 });
