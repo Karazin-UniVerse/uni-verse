@@ -9,7 +9,6 @@ import {
   Query,
   Res,
   ForbiddenException,
-  NotFoundException,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import {
@@ -143,11 +142,16 @@ export class OpportunitiesController {
       'One complete tag name per parameter; repeat tags for multiple names',
   })
   async findAll(
-    @GetUser('roles') roles: string[] | undefined,
+    @GetUser('sub') userId: string | undefined,
     @Query() query: FindOpportunitiesDto,
+    @GetUser('roles') roles?: string[],
     @Res({ passthrough: true }) res?: Response,
   ): Promise<OpportunityWithOwner[]> {
-    const opportunities = await this.opportunitiesService.findAll(query, roles);
+    const opportunities = await this.opportunitiesService.findAll(
+      query,
+      userId,
+      roles,
+    );
     const isPublicCatalog =
       !query.status || query.status === OpportunityStatus.PUBLISHED;
 
@@ -213,17 +217,11 @@ export class OpportunitiesController {
     @GetUser('roles') roles?: string[],
     @Res({ passthrough: true }) res?: Response,
   ): Promise<OpportunityWithOwner | UnavailableOpportunity> {
-    let opportunity: OpportunityWithOwner | UnavailableOpportunity;
-
-    try {
-      opportunity = await this.opportunitiesService.findOne(id, userId, roles);
-    } catch (error) {
-      if (!(error instanceof NotFoundException)) {
-        throw error;
-      }
-
-      opportunity = await this.opportunitiesService.getUnavailablePreview(id);
-    }
+    const opportunity = await this.opportunitiesService.getDetails(
+      id,
+      userId,
+      roles,
+    );
 
     setOpportunityCacheControl(
       res,

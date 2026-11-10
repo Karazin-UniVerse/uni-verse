@@ -83,6 +83,34 @@ describe('Opportunity favorites and restricted listings', () => {
     expect(prisma.opportunityFavorite.createMany).not.toHaveBeenCalled();
   });
 
+  it('rejects full detail access when a moderator claim is stale', async () => {
+    await expect(
+      service.findOne(opportunity.id, 'viewer', [Role.OPPORTUNITIES_MODERATOR]),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('returns a redacted detail preview with one opportunity read when a moderator claim is stale', async () => {
+    await expect(
+      service.getDetails(opportunity.id, 'viewer', [
+        Role.OPPORTUNITIES_MODERATOR,
+      ]),
+    ).resolves.toEqual({
+      id: opportunity.id,
+      title: '',
+      availability: 'temporary',
+    });
+    expect(prisma.opportunity.findUnique).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns not found after one opportunity read for a missing detail', async () => {
+    prisma.opportunity.findUnique.mockResolvedValue(null);
+
+    await expect(service.getDetails('missing')).rejects.toThrow(
+      NotFoundException,
+    );
+    expect(prisma.opportunity.findUnique).toHaveBeenCalledTimes(1);
+  });
+
   it('rejects newly saving an unpublished opportunity', async () => {
     await expect(
       service.addFavorite('viewer', opportunity.id),

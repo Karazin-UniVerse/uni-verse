@@ -37,17 +37,19 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
 }) => {
   const { formatMessage, localeTag } = useLanguage();
   const favoriteAction = onToggleFavorite && (
-    <Button
-      variant="secondary"
-      disabled={favoriteDisabled}
-      aria-pressed={isFavorite}
-      aria-label={formatMessage(
-        isFavorite ? 'opportunities.favorites.remove' : 'opportunities.favorites.add',
-      )}
-      onClick={() => onToggleFavorite(opportunity.id, isFavorite)}
-    >
-      <Star size={18} fill={isFavorite ? 'currentColor' : 'none'} aria-hidden="true" />
-    </Button>
+    <div className={styles.favoriteAction}>
+      <Button
+        variant="secondary"
+        disabled={favoriteDisabled}
+        aria-pressed={isFavorite}
+        aria-label={formatMessage(
+          isFavorite ? 'opportunities.favorites.remove' : 'opportunities.favorites.add',
+        )}
+        onClick={() => onToggleFavorite(opportunity.id, isFavorite)}
+      >
+        <Star size={18} fill={isFavorite ? 'currentColor' : 'none'} aria-hidden="true" />
+      </Button>
+    </div>
   );
 
   if (isUnavailableOpportunity(opportunity)) {
@@ -108,7 +110,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   return (
     <article className={cardClassName}>
       {content}
-      {favoriteAction && <div className={styles.favoriteAction}>{favoriteAction}</div>}
+      {favoriteAction}
       <button
         type="button"
         className={styles.cardLink}

@@ -2,7 +2,7 @@
 
 .favoriteAction {
   position: relative;
-  z-index: var(--z-dropdown);
+  z-index: 2;
   align-self: flex-end;
   margin-top: var(--space-12);
 }

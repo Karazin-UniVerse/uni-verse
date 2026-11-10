@@ -340,6 +340,9 @@ describe('OpportunitiesService', () => {
     });
 
     it('returns opportunity if unpublished and caller is OPPORTUNITIES_MODERATOR', async () => {
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        roles: [Role.OPPORTUNITIES_MODERATOR],
+      } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
         status: 'DRAFT',
@@ -353,6 +356,9 @@ describe('OpportunitiesService', () => {
     });
 
     it('returns opportunity if unpublished and caller holds OPPORTUNITIES_MODERATOR among several roles', async () => {
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        roles: [Role.OPPORTUNITIES_MODERATOR],
+      } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
         status: 'DRAFT',
@@ -1010,9 +1016,12 @@ describe('OpportunitiesService', () => {
 
     it('allows OPPORTUNITIES_MODERATOR to query specific statuses', async () => {
       jest.spyOn(prisma.opportunity, 'findMany').mockResolvedValue([] as any);
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        roles: [Role.OPPORTUNITIES_MODERATOR],
+      } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
-      await service.findAll({ status: 'READY_FOR_REVIEW' as any }, [
-        'OPPORTUNITIES_MODERATOR',
+      await service.findAll({ status: 'READY_FOR_REVIEW' }, 'moderator', [
+        Role.OPPORTUNITIES_MODERATOR,
       ]);
 
       expect(prisma.opportunity.findMany).toHaveBeenCalledWith(
@@ -1023,12 +1032,17 @@ describe('OpportunitiesService', () => {
     });
 
     it('throws ForbiddenException when non-moderator queries unpublished status', async () => {
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        roles: [Role.ADMIN],
+      } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
       await expect(
-        service.findAll({ status: 'DRAFT' as any }, ['ADMIN']),
+        service.findAll({ status: 'DRAFT' }, 'admin', [
+          Role.OPPORTUNITIES_MODERATOR,
+        ]),
       ).rejects.toThrow(ForbiddenException);
 
       await expect(
-        service.findAll({ status: 'READY_FOR_REVIEW' as any }, []),
+        service.findAll({ status: 'READY_FOR_REVIEW' }),
       ).rejects.toThrow(ForbiddenException);
     });
 

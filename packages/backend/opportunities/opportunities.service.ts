@@ -48,6 +48,7 @@ import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 import {
   hasOpportunityContentChanged,
   isRecruitmentPhase,
+  isUnavailableOpportunity,
 } from '@universe/core/utils/opportunities';
 import { normalizeTags } from '@universe/core/utils/tags';
 import {
@@ -134,19 +135,6 @@ export class OpportunitiesService {
     });
 
     return { saved: false };
-  }
-
-  async getUnavailablePreview(id: string): Promise<UnavailableOpportunity> {
-    const opportunity = await this.prisma.opportunity.findUnique({
-      where: { id },
-      select: { id: true, status: true, paymentType: true },
-    });
-
-    if (!opportunity || opportunity.status === OpportunityStatus.PUBLISHED) {
-      throw new NotFoundException('Opportunity not found');
-    }
-
-    return unavailableOpportunity(opportunity);
   }
 
   async getFavorites(
@@ -317,17 +305,18 @@ export class OpportunitiesService {
    */
   async findAll(
     query: FindOpportunitiesDto,
+    userId?: string,
     userRoles: string[] = [],
   ): Promise<OpportunityWithOwner[]> {
     const { paymentType, ownerId, search, status, tags, isRecruiting } = query;
     const where: Prisma.OpportunityWhereInput = {};
 
-    const isModerator = Boolean(
-      userRoles?.includes(Role.OPPORTUNITIES_MODERATOR),
-    );
-
     if (status && status !== OpportunityStatus.PUBLISHED) {
-      if (!isModerator) {
+      if (
+        !userId ||
+        !userRoles.includes(Role.OPPORTUNITIES_MODERATOR) ||
+        !(await this.hasCurrentModeratorRole(userId))
+      ) {
         throw new ForbiddenException(
           'Only OPPORTUNITIES_MODERATOR can view opportunities with status other than PUBLISHED',
         );
@@ -367,15 +356,7 @@ export class OpportunitiesService {
     });
   }
 
-  /**
-   * Retrieve an opportunity by ID.
-   * Ensures that unpublished opportunities are only visible to their owners or moderators/admins.
-   */
-  async findOne(
-    id: string,
-    userId?: string,
-    userRoles: string[] = [],
-  ): Promise<OpportunityWithOwner> {
+  private async loadOpportunity(id: string): Promise<OpportunityWithOwner> {
     const opportunity = await this.prisma.opportunity.findUnique({
       where: { id },
       include: OPPORTUNITY_INCLUDE,
@@ -383,16 +364,42 @@ export class OpportunitiesService {
 
     if (!opportunity) throw new NotFoundException('Opportunity not found');
 
-    const isModerator = Boolean(
-      userRoles?.includes(Role.OPPORTUNITIES_MODERATOR),
-    );
+    return opportunity;
+  }
 
-    if (
-      opportunity.status !== OpportunityStatus.PUBLISHED &&
-      opportunity.ownerId !== userId &&
-      !isModerator
-    ) {
+  async findOne(
+    id: string,
+    userId?: string,
+    userRoles: string[] = [],
+  ): Promise<OpportunityWithOwner> {
+    const opportunity = await this.getDetails(id, userId, userRoles);
+
+    if (isUnavailableOpportunity(opportunity)) {
       throw new NotFoundException('Opportunity not found');
+    }
+
+    return opportunity;
+  }
+
+  async getDetails(
+    id: string,
+    userId?: string,
+    userRoles: string[] = [],
+  ): Promise<OpportunityWithOwner | UnavailableOpportunity> {
+    const opportunity = await this.loadOpportunity(id);
+    const isUnpublishedForNonOwner =
+      opportunity.status !== OpportunityStatus.PUBLISHED &&
+      opportunity.ownerId !== userId;
+
+    if (isUnpublishedForNonOwner) {
+      const isCurrentModerator =
+        userId &&
+        userRoles.includes(Role.OPPORTUNITIES_MODERATOR) &&
+        (await this.hasCurrentModeratorRole(userId));
+
+      if (!isCurrentModerator) {
+        return unavailableOpportunity(opportunity);
+      }
     }
 
     if (opportunity.status === OpportunityStatus.REQUIRES_CHANGES) {
@@ -921,9 +928,7 @@ export class OpportunitiesService {
       );
     }
 
-    const opportunityToModerate = await this.findOne(id, userId, [
-      Role.OPPORTUNITIES_MODERATOR,
-    ]);
+    const opportunityToModerate = await this.loadOpportunity(id);
 
     if (opportunityToModerate.ownerId === userId) {
       throw new ForbiddenException('You cannot moderate your own opportunity');

@@ -29,6 +29,7 @@ export interface CatalogTabProps {
   favoriteIds?: Set<string>;
   onToggleFavorite?: (id: string, isFavorite: boolean) => void;
   favoritesDisabled?: boolean;
+  pendingFavoriteIds?: readonly string[];
   currentUserId?: string | null;
   favoritesView?: boolean;
   paymentFilter?: OpportunityPaymentType | '';
@@ -56,6 +57,7 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
   favoriteIds,
   onToggleFavorite,
   favoritesDisabled,
+  pendingFavoriteIds,
   currentUserId,
   loadTagSuggestions,
   paymentFilter = '',
@@ -154,7 +156,7 @@ export const CatalogTab: React.FC<CatalogTabProps> = ({
               onToggleFavorite={
                 canToggleFavorite(opp, currentUserId) ? onToggleFavorite : undefined
               }
-              favoriteDisabled={favoritesDisabled}
+              favoriteDisabled={favoritesDisabled || pendingFavoriteIds?.includes(opp.id)}
             />
           ))}
         </div>

@@ -133,9 +133,8 @@ export const OpportunitiesTab: React.FC = () => {
             opportunities={catalogView.items}
             favoriteIds={favorites.savedIds}
             onToggleFavorite={favorites.toggle}
-            favoritesDisabled={
-              favorites.pending || favorites.query.isLoading || hasLoadFailed(favorites.query)
-            }
+            favoritesDisabled={favorites.query.isLoading || hasLoadFailed(favorites.query)}
+            pendingFavoriteIds={favorites.pendingIds}
             currentUserId={currentUser.userId}
             favoritesView={isFavoritesView}
             search={data.search}
