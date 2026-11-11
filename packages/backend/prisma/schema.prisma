@@ -28,13 +28,17 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  courses                 Course[]                 @relation("CourseInstructors")
-  enrollments             Enrollment[]
-  ownedOpportunities      Opportunity[]            @relation("OpportunityOwner")
-  opportunityApplications OpportunityApplication[] @relation("Applicant")
-  notifications           Notification[]           @relation("UserNotifications")
-  comments                Comment[]
-  phone                   UserPhone?
+  courses                    Course[]                    @relation("CourseInstructors")
+  enrollments                Enrollment[]
+  ownedOpportunities         Opportunity[]               @relation("OpportunityOwner")
+  opportunityApplications    OpportunityApplication[]    @relation("Applicant")
+  notifications              Notification[]              @relation("UserNotifications")
+  comments                   Comment[]
+  phone                      UserPhone?
+  teachingAssignments        TeachingAssignment[]
+  createdTimetableVersions   TimetableVersion[]          @relation("TimetableVersionCreator")
+  teacherUnavailabilities    TeacherUnavailability[]
+  calendarSubscriptionTokens CalendarSubscriptionToken[]
 }
 
 model UserPhone {
@@ -231,4 +235,192 @@ model GripLease {
   createdAt DateTime @default(now())
 
   @@index([expiresAt])
+}
+
+enum TeachingType {
+  LECTURE
+  PRACTICAL
+  SEMINAR
+  LABORATORY
+}
+
+enum TimetableStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model AcademicGroup {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  degreeLevel  String
+  studyForm    String
+  entryYear    Int
+  academicYear String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subgroups           AcademicSubgroup[]
+  streams             AcademicStream[]
+  teachingAssignments TeachingAssignment[]
+
+  @@index([academicYear])
+}
+
+model AcademicSubgroup {
+  id              String   @id @default(uuid())
+  name            String
+  academicGroupId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  academicGroup       AcademicGroup        @relation(fields: [academicGroupId], references: [id], onDelete: Cascade)
+  teachingAssignments TeachingAssignment[]
+
+  @@unique([academicGroupId, name])
+  @@index([academicGroupId])
+}
+
+model AcademicStream {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  groups              AcademicGroup[]
+  teachingAssignments TeachingAssignment[]
+}
+
+model CurriculumPlan {
+  id           String   @id @default(uuid())
+  faculty      String
+  title        String
+  academicYear String
+  semester     Int
+  isDraft      Boolean  @default(true)
+  isArchived   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  teachingAssignments TeachingAssignment[]
+
+  @@index([academicYear, semester])
+}
+
+model TeachingAssignment {
+  id                       String       @id @default(uuid())
+  curriculumPlanId         String
+  disciplineTitle          String
+  teachingType             TeachingType
+  academicHours            Int
+  teacherId                String
+  groupId                  String?
+  subgroupId               String?
+  streamId                 String?
+  isSaturdayOnly           Boolean      @default(false)
+  hasLateSlotAuthorization Boolean      @default(false)
+  meetingUrl               String?
+  createdAt                DateTime     @default(now())
+  updatedAt                DateTime     @updatedAt
+
+  curriculumPlan CurriculumPlan    @relation(fields: [curriculumPlanId], references: [id], onDelete: Restrict)
+  teacher        User              @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  group          AcademicGroup?    @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  subgroup       AcademicSubgroup? @relation(fields: [subgroupId], references: [id], onDelete: Restrict)
+  stream         AcademicStream?   @relation(fields: [streamId], references: [id], onDelete: Restrict)
+  events         TimetableEvent[]
+
+  @@index([curriculumPlanId])
+  @@index([teacherId])
+  @@index([groupId])
+  @@index([subgroupId])
+  @@index([streamId])
+}
+
+model SemesterCalendar {
+  id              String   @id @default(uuid())
+  academicYear    String
+  semester        Int
+  startDate       DateTime
+  teachingWeeks   Int
+  excludedDates   String[] @default([])
+  makeupSaturdays Json     @default("[]")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  timetableVersions TimetableVersion[]
+
+  @@unique([academicYear, semester])
+}
+
+model TimetableVersion {
+  id                 String          @id @default(uuid())
+  semesterCalendarId String
+  status             TimetableStatus @default(DRAFT)
+  publishedAt        DateTime?
+  createdById        String
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  semesterCalendar SemesterCalendar @relation(fields: [semesterCalendarId], references: [id], onDelete: Restrict)
+  createdBy        User             @relation("TimetableVersionCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  events           TimetableEvent[]
+
+  @@index([semesterCalendarId])
+  @@index([createdById])
+  @@index([status])
+}
+
+model TimetableEvent {
+  id                      String        @id @default(uuid())
+  timetableVersionId      String
+  teachingAssignmentId    String
+  date                    DateTime
+  pair                    Int
+  pairSpan                Int           @default(1)
+  meetingUrlOverride      String?
+  disciplineTitleSnapshot String?
+  teachingTypeSnapshot    TeachingType?
+  teacherIdSnapshot       String?
+  isCancelled             Boolean       @default(false)
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  timetableVersion   TimetableVersion   @relation(fields: [timetableVersionId], references: [id], onDelete: Cascade)
+  teachingAssignment TeachingAssignment @relation(fields: [teachingAssignmentId], references: [id], onDelete: Restrict)
+
+  @@index([timetableVersionId])
+  @@index([teachingAssignmentId])
+  @@index([date, pair])
+}
+
+model TeacherUnavailability {
+  id          String   @id @default(uuid())
+  teacherId   String
+  date        DateTime
+  pair        Int
+  isConfirmed Boolean  @default(false)
+  reason      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teacher User @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+
+  @@unique([teacherId, date, pair])
+  @@index([teacherId])
+  @@index([date, pair])
+}
+
+model CalendarSubscriptionToken {
+  id             String    @id @default(uuid())
+  userId         String
+  token          String    @unique
+  isActive       Boolean   @default(true)
+  lastAccessedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
 }

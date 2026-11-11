@@ -1,4 +1,5 @@
 import type {
+  TimetableAssignmentTeachingType,
   TimetableConflictCode,
   TimetablePhaseOrder,
   TimetableSkipReason,
@@ -205,3 +206,47 @@ export type GenerateTimetableResult =
       error: GenerateTimetableErrorCode;
       diagnostics: GenerateTimetableDiagnostics;
     };
+
+export type MakeupSaturdayRequest = {
+  date: string;
+  followsWeekday: number;
+};
+
+export type CreateSemesterCalendarRequest = {
+  academicYear: string;
+  semester: number;
+  startDate: string;
+  teachingWeeks: number;
+  excludedDates?: string[];
+  makeupSaturdays?: MakeupSaturdayRequest[];
+};
+
+export type UpdateSemesterCalendarRequest = Partial<CreateSemesterCalendarRequest>;
+
+export type CreateTeachingAssignmentRequest = {
+  curriculumPlanId: string;
+  disciplineTitle: string;
+  teachingType: TimetableAssignmentTeachingType;
+  academicHours: number;
+  teacherId: string;
+  groupId?: string;
+  subgroupId?: string;
+  streamId?: string;
+  isSaturdayOnly?: boolean;
+  hasLateSlotAuthorization?: boolean;
+  meetingUrl?: string;
+};
+
+export type UpdateTeachingAssignmentRequest = Partial<CreateTeachingAssignmentRequest>;
+
+export type CreateTeacherUnavailabilityRequest = {
+  date: string;
+  pair: number;
+  teacherId?: string;
+  reason?: string;
+};
+
+export type ConfirmTeacherUnavailabilityRequest = {
+  isConfirmed: boolean;
+  reason?: string;
+};

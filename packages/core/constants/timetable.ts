@@ -114,6 +114,16 @@ export const FIRST_LATE_PAIR = 6 as const;
 // Saturday-only classes are preferred up to this pair; later ones are penalized.
 export const LAST_PREFERRED_SATURDAY_PAIR = 3 as const;
 
+export const TIMETABLE_ASSIGNMENT_TEACHING_TYPE = {
+  LECTURE: 'LECTURE',
+  PRACTICAL: 'PRACTICAL',
+  SEMINAR: 'SEMINAR',
+  LABORATORY: 'LABORATORY',
+} as const;
+
+export type TimetableAssignmentTeachingType =
+  (typeof TIMETABLE_ASSIGNMENT_TEACHING_TYPE)[keyof typeof TIMETABLE_ASSIGNMENT_TEACHING_TYPE];
+
 export const TIMETABLE_TEACHING_TYPE = {
   LECTURE: 'LECTURE',
   PRACTICAL: 'PRACTICAL',
