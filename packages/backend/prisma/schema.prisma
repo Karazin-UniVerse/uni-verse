@@ -39,6 +39,10 @@ model User {
   createdTimetableVersions   TimetableVersion[]          @relation("TimetableVersionCreator")
   teacherUnavailabilities    TeacherUnavailability[]
   calendarSubscriptionTokens CalendarSubscriptionToken[]
+  academicGroupId            String?
+  academicGroup              AcademicGroup?              @relation(fields: [academicGroupId], references: [id])
+  academicSubgroupId         String?
+  academicSubgroup           AcademicSubgroup?           @relation(fields: [academicSubgroupId], references: [id])
 }
 
 model UserPhone {
@@ -263,6 +267,7 @@ model AcademicGroup {
   subgroups           AcademicSubgroup[]
   streams             AcademicStream[]
   teachingAssignments TeachingAssignment[]
+  users               User[]
 
   @@index([academicYear])
 }
@@ -276,6 +281,7 @@ model AcademicSubgroup {
 
   academicGroup       AcademicGroup        @relation(fields: [academicGroupId], references: [id], onDelete: Cascade)
   teachingAssignments TeachingAssignment[]
+  users               User[]
 
   @@unique([academicGroupId, name])
   @@index([academicGroupId])

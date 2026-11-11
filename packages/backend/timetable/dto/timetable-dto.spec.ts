@@ -7,6 +7,8 @@ import {
   CreateSemesterCalendarDto,
   CreateTeacherUnavailabilityDto,
   CreateTeachingAssignmentDto,
+  GetSemesterCalendarQueryDto,
+  ListTeachingAssignmentsQueryDto,
   MakeupSaturdayDto,
   UpdateTeachingAssignmentDto,
 } from './index';
@@ -287,6 +289,60 @@ describe('Timetable DTOs', () => {
         pipe.transform(
           { isConfirmed: 'yes' },
           { type: 'body', metatype: ConfirmTeacherUnavailabilityDto },
+        ),
+      ).rejects.toMatchObject({ status: 400 });
+    });
+  });
+
+  describe('ListTeachingAssignmentsQueryDto', () => {
+    it('should validate valid UUID curriculumPlanId', () => {
+      const dto = plainToInstance(ListTeachingAssignmentsQueryDto, {
+        curriculumPlanId: '123e4567-e89b-12d3-a456-426614174000',
+      });
+
+      expect(validateSync(dto)).toEqual([]);
+    });
+
+    it('should reject non-UUID curriculumPlanId', () => {
+      const dto = plainToInstance(ListTeachingAssignmentsQueryDto, {
+        curriculumPlanId: 'not-a-uuid',
+      });
+
+      const errors = validateSync(dto);
+
+      expect(errors).toEqual([
+        expect.objectContaining({ property: 'curriculumPlanId' }),
+      ]);
+    });
+  });
+
+  describe('GetSemesterCalendarQueryDto', () => {
+    it('should validate valid query payload and transform semester to number', async () => {
+      const transformed = await pipe.transform(
+        { academicYear: '2026/2027', semester: '2' },
+        { type: 'query', metatype: GetSemesterCalendarQueryDto },
+      );
+
+      expect(transformed).toEqual({
+        academicYear: '2026/2027',
+        semester: 2,
+      });
+    });
+
+    it('should reject semester outside 1..2', async () => {
+      await expect(
+        pipe.transform(
+          { academicYear: '2026/2027', semester: '3' },
+          { type: 'query', metatype: GetSemesterCalendarQueryDto },
+        ),
+      ).rejects.toMatchObject({ status: 400 });
+    });
+
+    it('should reject non-integer semester', async () => {
+      await expect(
+        pipe.transform(
+          { academicYear: '2026/2027', semester: 'invalid' },
+          { type: 'query', metatype: GetSemesterCalendarQueryDto },
         ),
       ).rejects.toMatchObject({ status: 400 });
     });

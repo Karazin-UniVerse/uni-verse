@@ -30,14 +30,6 @@ export class CreateTeacherUnavailabilityDto implements CreateTeacherUnavailabili
   @Max(7)
   pair: number;
 
-  @ApiPropertyOptional({
-    description:
-      'Teacher ID (defaults to current authenticated user if omitted)',
-  })
-  @IsString()
-  @IsOptional()
-  teacherId?: string;
-
   @ApiPropertyOptional({ description: 'Optional reason for unavailability' })
   @IsString()
   @IsOptional()

@@ -251,6 +251,41 @@ export type ConfirmTeacherUnavailabilityRequest = {
   reason?: string;
 };
 
+export type CreateAcademicGroupRequest = {
+  code: string;
+  degreeLevel: string;
+  studyForm: string;
+  entryYear: number;
+  academicYear: string;
+  subgroups?: string[];
+};
+
+export type CreateCurriculumPlanRequest = {
+  faculty: string;
+  title: string;
+  academicYear: string;
+  semester: number;
+  isDraft?: boolean;
+};
+
+export type GenerateTimetableRequest = {
+  maxCandidates?: number;
+  timeoutMs?: number;
+};
+
+export type UpdateMeetingUrlRequest = {
+  meetingUrl?: string;
+};
+
+export type ListTeachingAssignmentsQueryRequest = {
+  curriculumPlanId: string;
+};
+
+export type GetSemesterCalendarQueryRequest = {
+  academicYear: string;
+  semester: number;
+};
+
 export type IcsCalendarEvent = {
   id: string;
   disciplineTitle: string;
