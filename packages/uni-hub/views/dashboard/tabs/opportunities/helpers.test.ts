@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { Opportunity } from '@core/types/opportunities';
+import type { FormatMessage } from '@uni-hub/i18n/LanguageContext';
+import { en } from '@uni-hub/i18n/locales/en';
+import { uk } from '@uni-hub/i18n/locales/uk';
+import { MAX_APPLICATION_WITHDRAWALS, OPPORTUNITY_ERROR } from '@core/constants/opportunities';
 import {
   calculatePaymentCounts,
   filterOpportunitiesByPayment,
@@ -69,6 +73,27 @@ const sampleOpportunities: Opportunity[] = [
 ];
 
 describe('getOpportunityErrorMessage', () => {
+  it.each([en, uk])('interpolates the withdrawal limit in the localized error', (messages) => {
+    const formatMessage: FormatMessage = (key, values) =>
+      messages[key].replace(/\{(\w+)\}/g, (placeholder, name: string) =>
+        String(values?.[name] ?? placeholder),
+      );
+
+    expect(
+      getOpportunityErrorMessage(
+        new Error(OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED),
+        formatMessage,
+        'fallback',
+      ),
+    ).toBe(
+      messages[OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED].replace(
+        '{limit}',
+        String(MAX_APPLICATION_WITHDRAWALS),
+      ),
+    );
+    expect(messages[OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED]).toContain('{limit}');
+    expect(messages['opportunities.confirm.withdraw']).toContain('{limit}');
+  });
   it.each([
     [
       'opportunities.errors.alreadyApplied (HTTP 409)',

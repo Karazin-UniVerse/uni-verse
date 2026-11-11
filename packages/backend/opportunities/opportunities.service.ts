@@ -41,6 +41,8 @@ import {
 import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 import {
   hasOpportunityContentChanged,
+  hasReachedApplicationWithdrawalLimit,
+  isWithdrawableApplicationStatus,
   isRecruitmentPhase,
 } from '@universe/core/utils/opportunities';
 import {
@@ -606,13 +608,10 @@ export class OpportunitiesService {
     if (app.applicantId !== userId)
       throw new ForbiddenException('Only the applicant can withdraw');
 
-    if (
-      app.status !== ApplicationStatus.SUBMITTED &&
-      app.status !== ApplicationStatus.UNDER_REVIEW
-    )
+    if (!isWithdrawableApplicationStatus(app.status))
       throw new BadRequestException('Cannot withdraw completed application');
 
-    if ((app.withdrawalCount ?? 0) >= MAX_APPLICATION_WITHDRAWALS)
+    if (hasReachedApplicationWithdrawalLimit(app.withdrawalCount))
       throw new BadRequestException(OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED);
 
     try {
@@ -651,7 +650,7 @@ export class OpportunitiesService {
           select: { withdrawalCount: true },
         });
 
-        if ((current?.withdrawalCount ?? 0) >= MAX_APPLICATION_WITHDRAWALS)
+        if (hasReachedApplicationWithdrawalLimit(current?.withdrawalCount))
           throw new BadRequestException(
             OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED,
           );
