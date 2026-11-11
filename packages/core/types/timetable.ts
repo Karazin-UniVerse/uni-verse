@@ -250,3 +250,26 @@ export type ConfirmTeacherUnavailabilityRequest = {
   isConfirmed: boolean;
   reason?: string;
 };
+
+export type IcsCalendarEvent = {
+  id: string;
+  disciplineTitle: string;
+  teachingType?: TimetableTeachingType | string;
+  date?: string;
+  pair?: number;
+  start?: Date;
+  end?: Date;
+  meetingUrl?: string;
+  groupCodes?: string[];
+  teacherName?: string;
+  isCancelled?: boolean;
+  sequence?: number;
+  location?: string;
+  description?: string;
+};
+
+export type GenerateIcsOptions = {
+  events: IcsCalendarEvent[];
+  calendarName?: string;
+  now?: Date;
+};

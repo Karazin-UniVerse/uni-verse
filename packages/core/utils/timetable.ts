@@ -29,6 +29,7 @@ import type {
   EventSlot,
   ExpandSlotParams,
   ExpandSlotResult,
+  GenerateIcsOptions,
   GenerateTimetableDiagnostics,
   GenerateTimetableParams,
   GenerateTimetableResult,
@@ -1212,4 +1213,235 @@ export function generateTimetableCandidates({
     error: 'NO_FEASIBLE_SOLUTION',
     diagnostics: getDiagnostics(),
   };
+}
+
+export function escapeIcsText(value: string): string {
+  return value
+    .replace(/\\/g, String.raw`\\`)
+    .replace(/\r\n|\r|\n/g, String.raw`\n`)
+    .replace(/;/g, String.raw`\;`)
+    .replace(/,/g, String.raw`\,`);
+}
+
+export function sanitizeIcsUrl(url: string): string {
+  return url
+    .replace(/\r\n|\r|\n/g, '')
+    .split('')
+    .filter((char) => {
+      const code = char.charCodeAt(0);
+
+      return code >= 32 && code !== 127;
+    })
+    .join('')
+    .trim();
+}
+
+export function foldLine(line: string, maxOctets = 75): string {
+  const encoder = new TextEncoder();
+
+  if (encoder.encode(line).length <= maxOctets) {
+    return line;
+  }
+
+  const parts: string[] = [];
+  let currentChunk = '';
+  let currentBytes = 0;
+  let limit = maxOctets;
+
+  for (const char of line) {
+    const charBytes = encoder.encode(char).length;
+
+    if (currentBytes + charBytes > limit && currentChunk.length > 0) {
+      parts.push(currentChunk);
+      currentChunk = char;
+      currentBytes = charBytes;
+      limit = maxOctets - 1;
+    } else {
+      currentChunk += char;
+      currentBytes += charBytes;
+    }
+  }
+
+  if (currentChunk.length > 0) {
+    parts.push(currentChunk);
+  }
+
+  return parts.join('\r\n ');
+}
+
+function formatUtcDateTime(date: Date): string {
+  return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+}
+
+function formatLocalDateTime(date: Date, timeZone = TIMETABLE_TIME_ZONE): string {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+
+  const parts = Object.fromEntries(
+    formatter.formatToParts(date).map(({ type, value }) => [type, value]),
+  );
+
+  return `${parts.year}${parts.month}${parts.day}T${parts.hour}${parts.minute}${parts.second}`;
+}
+
+const TEACHING_TYPE_LABELS: Record<string, string> = {
+  LECTURE: 'Лекція',
+  PRACTICAL: 'Практика',
+  LABORATORY: 'Лабораторна',
+  SEMINAR: 'Семінар',
+  EXAM: 'Іспит',
+  lecture: 'Лекція',
+  practical: 'Практика',
+  practice: 'Практика',
+  laboratory: 'Лабораторна',
+  lab: 'Лабораторна',
+  seminar: 'Семінар',
+  exam: 'Іспит',
+};
+
+const EUROPE_KYIV_VTIMEZONE = [
+  'BEGIN:VTIMEZONE',
+  'TZID:Europe/Kyiv',
+  'BEGIN:DAYLIGHT',
+  'TZNAME:EEST',
+  'TZOFFSETFROM:+0200',
+  'TZOFFSETTO:+0300',
+  'DTSTART:19700329T030000',
+  'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU',
+  'END:DAYLIGHT',
+  'BEGIN:STANDARD',
+  'TZNAME:EET',
+  'TZOFFSETFROM:+0300',
+  'TZOFFSETTO:+0200',
+  'DTSTART:19701025T040000',
+  'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU',
+  'END:STANDARD',
+  'END:VTIMEZONE',
+].join('\r\n');
+
+export function generateIcsCalendar(options: GenerateIcsOptions): string {
+  const { events, calendarName, now = new Date() } = options;
+  const dtstamp = formatUtcDateTime(now);
+
+  const lines: string[] = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Karazin UniVerse//Timetable//UK',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+  ];
+
+  if (calendarName) {
+    lines.push(`X-WR-CALNAME:${escapeIcsText(calendarName)}`);
+    lines.push(`NAME:${escapeIcsText(calendarName)}`);
+  }
+
+  lines.push(`X-WR-TIMEZONE:${TIMETABLE_TIME_ZONE}`);
+  lines.push(EUROPE_KYIV_VTIMEZONE);
+
+  for (const event of events) {
+    let dtstart = '';
+    let dtend = '';
+
+    if (event.start && event.end) {
+      dtstart = formatLocalDateTime(event.start, TIMETABLE_TIME_ZONE);
+      dtend = formatLocalDateTime(event.end, TIMETABLE_TIME_ZONE);
+    } else if (event.start && !event.end) {
+      dtstart = formatLocalDateTime(event.start, TIMETABLE_TIME_ZONE);
+      dtend = formatLocalDateTime(
+        new Date(event.start.getTime() + 80 * 60 * 1000),
+        TIMETABLE_TIME_ZONE,
+      );
+    } else if (event.date && event.pair !== undefined && isPairNumber(event.pair)) {
+      const pairResult = getPairInstants(event.date, event.pair);
+
+      if (pairResult.ok) {
+        dtstart = formatLocalDateTime(pairResult.start, TIMETABLE_TIME_ZONE);
+        dtend = formatLocalDateTime(pairResult.end, TIMETABLE_TIME_ZONE);
+      }
+    }
+
+    if (!dtstart || !dtend) {
+      continue;
+    }
+
+    const rawUid = event.id.includes('@') ? event.id : `${event.id}@timetable.universe.karazin.ua`;
+    const uid = escapeIcsText(rawUid);
+
+    let summary = event.disciplineTitle;
+
+    if (event.teachingType) {
+      const typeLabel = TEACHING_TYPE_LABELS[event.teachingType] ?? event.teachingType;
+
+      if (typeLabel && !summary.startsWith(`[${typeLabel}]`)) {
+        summary = `[${typeLabel}] ${summary}`;
+      }
+    }
+
+    const descriptionLines: string[] = [];
+
+    if (event.teacherName) {
+      descriptionLines.push(`Викладач: ${event.teacherName}`);
+    }
+
+    if (event.groupCodes && event.groupCodes.length > 0) {
+      const label = event.groupCodes.length > 1 ? 'Групи' : 'Група';
+
+      descriptionLines.push(`${label}: ${event.groupCodes.join(', ')}`);
+    }
+
+    const meetingUrl = event.meetingUrl ? sanitizeIcsUrl(event.meetingUrl) : undefined;
+
+    if (meetingUrl) {
+      descriptionLines.push(`Посилання: ${meetingUrl}`);
+    }
+
+    if (event.isCancelled) {
+      descriptionLines.push('Статус: Скасовано');
+    }
+
+    if (event.description) {
+      descriptionLines.push(event.description);
+    }
+
+    lines.push('BEGIN:VEVENT');
+    lines.push(`UID:${uid}`);
+    lines.push(`DTSTAMP:${dtstamp}`);
+    lines.push(`DTSTART;TZID=${TIMETABLE_TIME_ZONE}:${dtstart}`);
+    lines.push(`DTEND;TZID=${TIMETABLE_TIME_ZONE}:${dtend}`);
+    lines.push(`SUMMARY:${escapeIcsText(summary)}`);
+
+    if (descriptionLines.length > 0) {
+      lines.push(`DESCRIPTION:${escapeIcsText(descriptionLines.join('\n'))}`);
+    }
+
+    if (event.location) {
+      lines.push(`LOCATION:${escapeIcsText(event.location)}`);
+    }
+
+    if (meetingUrl) {
+      lines.push(`URL:${meetingUrl}`);
+    }
+
+    lines.push(event.isCancelled ? 'STATUS:CANCELLED' : 'STATUS:CONFIRMED');
+    lines.push(`SEQUENCE:${event.sequence ?? 0}`);
+    lines.push('END:VEVENT');
+  }
+
+  lines.push('END:VCALENDAR');
+
+  return (
+    lines
+      .flatMap((line) => line.split('\r\n'))
+      .map((line) => foldLine(line))
+      .join('\r\n') + '\r\n'
+  );
 }
