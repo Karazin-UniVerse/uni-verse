@@ -31,6 +31,8 @@ describe('UserService', () => {
     token: 'sample-token',
     moodleId: 'moodle-123',
     refreshToken: null,
+    academicGroupId: null,
+    academicSubgroupId: null,
     createdAt: mockDate,
     updatedAt: mockDate,
   };

@@ -24,6 +24,8 @@ describe('UserController', () => {
     token: 'moodle-secret-token',
     moodleId: '12345',
     refreshToken: 'hashed-refresh-token',
+    academicGroupId: null,
+    academicSubgroupId: null,
     createdAt: mockDate,
     updatedAt: mockDate,
   };

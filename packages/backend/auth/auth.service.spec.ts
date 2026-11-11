@@ -55,6 +55,8 @@ describe('AuthService', () => {
     token: 'moodle-token-123',
     moodleId: '5001',
     refreshToken: 'hashed-rt-token',
+    academicGroupId: null,
+    academicSubgroupId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

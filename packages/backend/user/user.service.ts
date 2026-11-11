@@ -83,6 +83,8 @@ export class UserService {
         token: createUserDto.token ?? null,
         moodleId: createUserDto.moodleId ?? null,
         refreshToken: null,
+        academicGroupId: null,
+        academicSubgroupId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
