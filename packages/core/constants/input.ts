@@ -1,1 +1,0 @@
-export const IME_CONFIRMATION_WINDOW_MS = 50;

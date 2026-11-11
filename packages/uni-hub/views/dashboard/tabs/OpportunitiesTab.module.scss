@@ -461,12 +461,6 @@
   }
 }
 
-.selfModerationNotice {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--font-sm);
-}
-
 .moderationFooter {
   display: flex;
   align-items: center;
@@ -849,6 +843,13 @@
   align-items: flex-start;
   gap: var(--space-4);
   min-width: 0;
+}
+
+.applicantContacts {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
 }
 
 .applicantName {

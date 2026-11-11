@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Briefcase, ShieldCheck, Users, FileText } from 'lucide-react';
 import { Button } from '@una';
 import { ConfirmModal, SegmentedControl, type SegmentedControlItem } from '@ui';
@@ -10,7 +9,6 @@ import { ROLE } from '@core/constants/roles';
 import type { Opportunity } from '@core/types/opportunities';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { loadTagSuggestions } from './opportunities/queries';
 import { getOpportunityHref } from '../routes';
 import styles from './OpportunitiesTab.module.scss';
 import {
@@ -32,7 +30,6 @@ import {
 
 export const OpportunitiesTab: React.FC = () => {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { formatMessage } = useLanguage();
   const currentUser = useCurrentUser();
   const isModerator = currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR);
@@ -47,8 +44,9 @@ export const OpportunitiesTab: React.FC = () => {
 
   const openDetail = (opportunity: Opportunity): void =>
     router.push(getOpportunityHref(opportunity.id));
-  const loadSuggestions = (query: string): Promise<string[]> =>
-    loadTagSuggestions(queryClient, query);
+  const moderationItems = data.moderationQueue.items.filter(
+    (item) => item.ownerId !== currentUser.userId,
+  );
 
   const segmentItems: SegmentedControlItem<OpportunitySubTab>[] = [
     {
@@ -76,7 +74,7 @@ export const OpportunitiesTab: React.FC = () => {
             label: formatMessage('opportunities.tabs.moderation'),
             shortLabel: formatMessage('opportunities.tabs.moderationShort'),
             icon: <ShieldCheck size={16} />,
-            badge: data.moderationQueue.items.length,
+            badge: moderationItems.length,
           },
         ]
       : []),
@@ -122,7 +120,6 @@ export const OpportunitiesTab: React.FC = () => {
             onTagsChange={data.setTags}
             onFiltersChange={data.setFilters}
             onOpenDetail={openDetail}
-            loadTagSuggestions={loadSuggestions}
           />
         )}
 
@@ -149,11 +146,10 @@ export const OpportunitiesTab: React.FC = () => {
 
         {activeSubTab === OPPORTUNITY_SUB_TAB.Moderation && isModerator && (
           <ModerationQueueTab
-            currentUserId={currentUser.userId}
             loading={data.moderationQueue.loading}
             isError={data.moderationQueue.isError}
             onRetry={data.moderationQueue.refetch}
-            moderationQueue={data.moderationQueue.items}
+            moderationQueue={moderationItems}
             onModerate={moderation.handleModerate}
             onOpenRejectModal={moderation.openRejectModal}
           />

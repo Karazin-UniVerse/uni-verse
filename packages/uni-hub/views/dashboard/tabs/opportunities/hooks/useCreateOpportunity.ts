@@ -13,11 +13,7 @@ import {
   OPPORTUNITY_PAYMENT_TYPE,
   OPPORTUNITY_STATUS,
 } from '@core/constants/opportunities';
-import {
-  getOpportunityTagNames,
-  hasOpportunityContentChanged,
-  isRecruitmentPhase,
-} from '@core/utils/opportunities';
+import { hasOpportunityContentChanged, isRecruitmentPhase } from '@core/utils/opportunities';
 import { invalidateOpportunities } from '../cache';
 import type { CreateOpportunityFormData } from '../types';
 import { getOpportunityErrorMessage } from '../helpers';
@@ -95,7 +91,7 @@ export function useCreateOpportunity({
       ownerContactInfo: opportunity.ownerContactInfo || '',
       paymentType: opportunity.paymentType,
       paymentDetails: opportunity.paymentDetails || '',
-      tags: getOpportunityTagNames(opportunity),
+      tags: opportunity.tags ?? [],
       acceptsApplications: canAcceptApplications && opportunity.acceptsApplications !== false,
       lifecycleState: opportunity.lifecycleState,
     });

@@ -1,9 +1,8 @@
 import { useState, type ReactElement, type SyntheticEvent } from 'react';
-import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { afterEach, describe, it, expect, vi } from 'vitest';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { withLanguage, withQueryClient } from '@uni-hub/utils/test-utils';
-import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { CreateOpportunityModal } from './CreateOpportunityModal';
 import type { CreateOpportunityFormData } from '../types';
 
@@ -37,10 +36,6 @@ function EditableModal({
 }
 
 describe('CreateOpportunityModal', () => {
-  beforeEach(() => {
-    vi.spyOn(opportunitiesApi, 'getTagSuggestions').mockResolvedValue({ data: [] });
-  });
-
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -163,38 +158,31 @@ describe('CreateOpportunityModal', () => {
     expect(handleSubmit).toHaveBeenCalledTimes(1);
   });
 
-  it('should retain a short pending tag when the form is submitted without Enter', async () => {
+  it('should pick localized predefined tags grouped by category and submit their keys', async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
 
     render(withQueryClient(withLanguage(<EditableModal onSubmit={onSubmit} />)));
 
-    await user.type(screen.getByRole('combobox', { name: 'Теги' }), '3D');
+    const trigger = screen.getByRole('button', { name: 'Теги' });
+
+    expect(trigger).toHaveTextContent('Оберіть теги');
+    await user.click(trigger);
+    await user.click(
+      within(screen.getByRole('group', { name: 'Локація' })).getByRole('checkbox', {
+        name: 'Харків',
+      }),
+    );
+    await user.click(screen.getByRole('checkbox', { name: 'ІТ' }));
+    await user.keyboard('{Escape}');
+
+    expect(screen.getByRole('button', { name: 'Видалити тег Харків' })).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Теги' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Створити чернетку' }));
 
-    expect(onSubmit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ tags: ['3d'] }));
-  });
-
-  it('should load localized tag suggestions and retain the selected tag on submit', async () => {
-    const user = userEvent.setup();
-    const onSubmit = vi.fn();
-
-    vi.spyOn(opportunitiesApi, 'getTagSuggestions').mockResolvedValue({
-      data: [{ id: 'react', name: 'react' }],
-    });
-    render(withQueryClient(withLanguage(<EditableModal onSubmit={onSubmit} />)));
-
-    const input = screen.getByRole('combobox', { name: 'Теги' });
-
-    expect(input).toHaveAttribute('placeholder', 'Почніть вводити тег...');
-    await user.type(input, 'rea');
-    await screen.findByRole('option', { name: 'react' });
-    await user.keyboard('{ArrowDown}{Enter}');
-
-    expect(screen.getByRole('button', { name: 'Видалити тег react' })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Створити чернетку' }));
-
-    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ tags: ['react'] }));
+    expect(onSubmit).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ tags: ['IT', 'KHARKIV'] }),
+    );
   });
 
   it('should call onClose when cancel button is clicked', async () => {

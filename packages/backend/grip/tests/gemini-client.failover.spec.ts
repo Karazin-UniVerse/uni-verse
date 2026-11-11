@@ -136,7 +136,7 @@ describe('GeminiClientService key balancing and failover', () => {
   });
 
   it.each([429, 500, 502, 503, 504])(
-    'retries HTTP %s once with another key, unchanged payload, and safe status logs',
+    'retries HTTP %s with another key on the same model and safe status logs',
     async (status) => {
       const cancelled = jest.fn();
 
@@ -162,7 +162,7 @@ describe('GeminiClientService key balancing and failover', () => {
       expect(firstBody.model).toBe('gemini-3.5-flash-lite');
       expect(firstBody.messages).toEqual(request.messages);
       expect(firstBody.response_format).toEqual(request.response_format);
-      expect(fallbackBody.model).toBe('gemini-3.1-flash-lite');
+      expect(fallbackBody.model).toBe('gemini-3.5-flash-lite');
       expect(fallbackBody.messages).toEqual(firstBody.messages);
       expect(fallbackBody.response_format).toEqual(firstBody.response_format);
       expect(cancelled).toHaveBeenCalledTimes(1);
@@ -259,60 +259,200 @@ describe('GeminiClientService key balancing and failover', () => {
     },
   );
 
-  it('makes only two attempts even with three keys and returns the final mapped error', async () => {
+  it('should exhaust primary keys before trying every fallback key and stop after success', async () => {
     fetchSpy
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(success());
+    const result = service.complete(request);
+    const resolved = expect(result).resolves.toMatchObject({
+      choices: [{ message: { content: '{}' } }],
+    });
+
+    await jest.advanceTimersByTimeAsync(1_250);
+    await resolved;
+    expect(bearers()).toEqual([
+      'Bearer first-secret',
+      'Bearer second-secret',
+      'Bearer third-secret',
+      'Bearer first-secret',
+      'Bearer second-secret',
+      'Bearer third-secret',
+    ]);
+    expect(
+      fetchSpy.mock.calls.map(
+        ([, options]) => JSON.parse(String(options?.body)).model,
+      ),
+    ).toEqual([
+      'gemini-3.5-flash-lite',
+      'gemini-3.5-flash-lite',
+      'gemini-3.5-flash-lite',
+      'gemini-3.1-flash-lite',
+      'gemini-3.1-flash-lite',
+      'gemini-3.1-flash-lite',
+    ]);
+    expect(
+      new Set(fetchSpy.mock.calls.map(([, options]) => options?.signal)).size,
+    ).toBe(1);
+  });
+
+  it('should stop after each key/model pair fails and return the last mapped error', async () => {
+    fetchSpy
+      .mockImplementation(async () => new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 500 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
       .mockResolvedValueOnce(new Response('', { status: 503 }))
       .mockResolvedValueOnce(new Response('', { status: 429 }));
     const rejected = expect(service.complete(request)).rejects.toMatchObject({
       status: 429,
     });
 
-    await jest.advanceTimersByTimeAsync(250);
+    await jest.advanceTimersByTimeAsync(1_250);
     await rejected;
-    expect(fetchSpy).toHaveBeenCalledTimes(2);
-    fetchSpy.mockImplementation(async () => success());
-    await service.complete(request);
-    expect(bearers().at(-1)).toBe('Bearer third-secret');
+    expect(fetchSpy).toHaveBeenCalledTimes(6);
+    expect(warnSpy).toHaveBeenLastCalledWith(
+      'Grip upstream attempt',
+      expect.objectContaining({
+        attempt: 6,
+        model: 'gemini-3.1-flash-lite',
+        failover: false,
+      }),
+    );
   });
 
-  it('does not retry a single-key pool and fails promptly while all keys cool down', async () => {
+  it('should succeed on the third primary key without calling the fallback model', async () => {
+    fetchSpy
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(success());
+    const result = service.complete(request);
+
+    await jest.advanceTimersByTimeAsync(500);
+    await expect(result).resolves.toBeDefined();
+    expect(bearers()).toEqual([
+      'Bearer first-secret',
+      'Bearer second-secret',
+      'Bearer third-secret',
+    ]);
+    expect(
+      fetchSpy.mock.calls.every(
+        ([, options]) =>
+          JSON.parse(String(options?.body)).model === 'gemini-3.5-flash-lite',
+      ),
+    ).toBe(true);
+  });
+
+  it('should stop model traversal when the caller cancels at the model boundary', async () => {
+    const caller = new AbortController();
+
+    fetchSpy.mockImplementation(async () => new Response('', { status: 503 }));
+    const rejected = expect(
+      service.complete(request, caller.signal),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+
+    await jest.advanceTimersByTimeAsync(500);
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+    caller.abort();
+    await jest.advanceTimersByTimeAsync(250);
+    await rejected;
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+  });
+
+  it('should try both models with one key and fail promptly when both pairs cool down', async () => {
     service = new GeminiClientService({
       ...config,
       geminiApiKeys: ['first-secret'],
     });
-    fetchSpy.mockResolvedValueOnce(new Response('', { status: 503 }));
+    fetchSpy.mockImplementation(async () => new Response('', { status: 503 }));
 
-    await expect(service.complete(request)).rejects.toBeInstanceOf(
+    const rejected = expect(service.complete(request)).rejects.toBeInstanceOf(
       BadGatewayException,
     );
+
+    await jest.advanceTimersByTimeAsync(250);
+    await rejected;
     await expect(service.complete(request)).rejects.toBeInstanceOf(
       ServiceUnavailableException,
     );
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
     await jest.advanceTimersByTimeAsync(30_000);
     fetchSpy.mockResolvedValueOnce(success());
     await expect(service.complete(request)).resolves.toBeDefined();
   });
 
-  it('does not retry when another completion cools the fallback key during backoff', async () => {
+  it('should switch models when another completion cools the remaining primary key during backoff', async () => {
     service = new GeminiClientService({
       ...config,
       geminiApiKeys: ['first-secret', 'second-secret'],
     });
     fetchSpy
       .mockResolvedValueOnce(new Response('', { status: 503 }))
-      .mockResolvedValueOnce(new Response('', { status: 403 }));
-    const firstRejected = expect(
+      .mockResolvedValueOnce(new Response('', { status: 403 }))
+      .mockResolvedValueOnce(success());
+    const firstResolved = expect(
       service.complete(request),
-    ).rejects.toBeInstanceOf(BadGatewayException);
+    ).resolves.toBeDefined();
 
     await jest.advanceTimersByTimeAsync(1);
     await expect(service.complete(request)).rejects.toBeInstanceOf(
       ServiceUnavailableException,
     );
     await jest.advanceTimersByTimeAsync(249);
-    await firstRejected;
-    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    await firstResolved;
+    expect(bearers()).toEqual([
+      'Bearer first-secret',
+      'Bearer second-secret',
+      'Bearer first-secret',
+    ]);
+    expect(JSON.parse(String(fetchSpy.mock.calls[2][1]?.body)).model).toBe(
+      'gemini-3.1-flash-lite',
+    );
+  });
+
+  it('should start with fallback when all primary pairs remain in cooldown', async () => {
+    fetchSpy
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockImplementation(async () => success());
+    const first = service.complete(request);
+
+    await jest.advanceTimersByTimeAsync(750);
+    await first;
+    await service.complete(request);
+    expect(fetchSpy).toHaveBeenCalledTimes(5);
+    expect(JSON.parse(String(fetchSpy.mock.calls[4][1]?.body)).model).toBe(
+      'gemini-3.1-flash-lite',
+    );
+    expect(bearers().at(-1)).toBe('Bearer second-secret');
+  });
+
+  it('should not reuse a quota-cooled key on the fallback model', async () => {
+    fetchSpy
+      .mockResolvedValueOnce(
+        new Response('', { status: 429, headers: { 'Retry-After': '120' } }),
+      )
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(success());
+    const result = service.complete(request);
+
+    await jest.advanceTimersByTimeAsync(750);
+    await expect(result).resolves.toBeDefined();
+    expect(bearers()).toEqual([
+      'Bearer first-secret',
+      'Bearer second-secret',
+      'Bearer third-secret',
+      'Bearer second-secret',
+    ]);
+    expect(JSON.parse(String(fetchSpy.mock.calls[3][1]?.body)).model).toBe(
+      'gemini-3.1-flash-lite',
+    );
   });
 
   it('cancels retry backoff without dispatching a fallback', async () => {
@@ -423,6 +563,37 @@ describe('GeminiClientService key balancing and failover', () => {
     );
   });
 
+  it('should keep the original deadline while the last fallback key is in flight', async () => {
+    fetchSpy
+      .mockImplementation(
+        async (_url, options) =>
+          new Promise((_resolve, reject) => {
+            options?.signal?.addEventListener(
+              'abort',
+              () => reject(options.signal?.reason),
+              { once: true },
+            );
+          }),
+      )
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }));
+    const rejected = expect(service.complete(request)).rejects.toBeInstanceOf(
+      GatewayTimeoutException,
+    );
+
+    await jest.advanceTimersByTimeAsync(1_250);
+    expect(fetchSpy).toHaveBeenCalledTimes(6);
+    await jest.advanceTimersByTimeAsync(58_750);
+    await rejected;
+    expect(fetchSpy).toHaveBeenCalledTimes(6);
+    expect(
+      new Set(fetchSpy.mock.calls.map(([, options]) => options?.signal)).size,
+    ).toBe(1);
+  });
+
   it('never starts failover when the initial fetch consumes the deadline', async () => {
     fetchSpy.mockImplementationOnce(
       (_url, options) =>
@@ -488,7 +659,7 @@ describe('GeminiClientService key balancing and failover', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('reserves logical quota once and releases its lease after a real fallback', async () => {
+  it('reserves logical quota once and releases its lease after traversing all keys and models', async () => {
     const quota = {
       reserveCompletion: jest.fn().mockResolvedValue({ leaseId: 'lease' }),
       releaseCompletion: jest.fn().mockResolvedValue(undefined),
@@ -500,15 +671,19 @@ describe('GeminiClientService key balancing and failover', () => {
 
     fetchSpy
       .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
       .mockResolvedValueOnce(success());
     const result = gateway.complete({
       request,
       principal: { githubId: '123', login: 'dev', sessionId: 'session' },
     });
 
-    await jest.advanceTimersByTimeAsync(250);
+    await jest.advanceTimersByTimeAsync(1_250);
     await expect(result).resolves.toBeDefined();
-    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(fetchSpy).toHaveBeenCalledTimes(6);
     expect(quota.reserveCompletion).toHaveBeenCalledTimes(1);
     expect(quota.releaseCompletion).toHaveBeenCalledTimes(1);
     expect(quota.releaseCompletion).toHaveBeenCalledWith('lease');

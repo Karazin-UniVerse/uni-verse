@@ -74,6 +74,52 @@ describe('OpportunityDetailView resubmission', () => {
     expect(onEdit).toHaveBeenCalledWith(publishedOpportunity);
   });
 
+  it('shows delete button for owner only when status is DRAFT and calls onDelete when clicked', async () => {
+    const onDelete = vi.fn();
+    const user = userEvent.setup();
+
+    localStorage.setItem('universe-lang', 'uk');
+    render(
+      withLanguage(
+        <OpportunityDetailView
+          opportunity={{ ...buildOpportunity('draft-1'), status: 'DRAFT' }}
+          userId="owner-1"
+          onBack={vi.fn()}
+          onSendToReview={vi.fn()}
+          onOpenApply={vi.fn()}
+          onDelete={onDelete}
+        />,
+      ),
+    );
+
+    const deleteBtn = screen.getByRole('button', { name: 'Видалити' });
+
+    expect(deleteBtn).toBeInTheDocument();
+    await user.click(deleteBtn);
+    expect(onDelete).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['REQUIRES_CHANGES', 'READY_FOR_REVIEW', 'PUBLISHED', 'REJECTED'] as const)(
+    'hides delete button for owner when opportunity status is %s',
+    (status) => {
+      localStorage.setItem('universe-lang', 'uk');
+      render(
+        withLanguage(
+          <OpportunityDetailView
+            opportunity={{ ...buildOpportunity('opp-1'), status }}
+            userId="owner-1"
+            onBack={vi.fn()}
+            onSendToReview={vi.fn()}
+            onOpenApply={vi.fn()}
+            onDelete={vi.fn()}
+          />,
+        ),
+      );
+
+      expect(screen.queryByRole('button', { name: 'Видалити' })).not.toBeInTheDocument();
+    },
+  );
+
   it.each(['READY_FOR_REVIEW', 'REJECTED'] as const)(
     'hides edit button for owner when opportunity status is %s',
     (status) => {
@@ -120,6 +166,27 @@ describe('OpportunityDetailView resubmission', () => {
     );
     await user.click(button);
     expect(onSendToReview).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['DRAFT', true],
+    ['REQUIRES_CHANGES', false],
+  ] as const)('should show delete for %s only when it is a draft', (status, visible) => {
+    localStorage.setItem('universe-lang', 'uk');
+    render(
+      withLanguage(
+        <OpportunityDetailView
+          opportunity={{ ...buildOpportunity('delete-1'), status }}
+          userId="owner-1"
+          onBack={vi.fn()}
+          onSendToReview={vi.fn()}
+          onOpenApply={vi.fn()}
+          onDelete={vi.fn()}
+        />,
+      ),
+    );
+
+    expect(screen.queryByRole('button', { name: 'Видалити' }) !== null).toBe(visible);
   });
 
   it.each(['DRAFT', 'REQUIRES_CHANGES'] as const)(

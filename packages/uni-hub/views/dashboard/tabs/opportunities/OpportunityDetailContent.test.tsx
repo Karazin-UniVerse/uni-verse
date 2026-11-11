@@ -65,7 +65,6 @@ describe('OpportunityDetailContent applicants deep-link', () => {
     vi.spyOn(opportunitiesApi, 'getOpportunityApplications').mockResolvedValue({
       data: [application],
     });
-    vi.spyOn(opportunitiesApi, 'getTagSuggestions').mockResolvedValue({ data: [] });
   });
 
   afterEach(() => {
