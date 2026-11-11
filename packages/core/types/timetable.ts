@@ -1,6 +1,9 @@
 import type {
+  TimetableConflictCode,
   TimetablePhaseOrder,
   TimetableSkipReason,
+  TimetableSoftPenaltyCode,
+  TimetableTeachingType,
   TimetableValidationError,
   TimetableWeekParity,
 } from '../constants/timetable.ts';
@@ -59,3 +62,73 @@ export type SkippedSlotOccurrence = {
 export type ExpandSlotResult =
   | { ok: true; occurrences: DatedSlotOccurrence[]; skipped: SkippedSlotOccurrence[] }
   | { ok: false; error: TimetableValidationError };
+
+/**
+ * One class on one date and pair. A shared stream class is a single event listing every
+ * participating group, e.g. groupIds: ['KS11', 'KS12'] with a streamId; duplicate records of
+ * the same stream and 	eachingAssignmentId are not treated as conflicting.
+ */
+export type ScheduledEvent = {
+  id: string;
+  teachingAssignmentId: string;
+  disciplineTitle: string;
+  teachingType: TimetableTeachingType;
+  teacherId: string;
+  groupIds: string[];
+  date: string;
+  pair: number;
+  subgroupId?: string;
+  streamId?: string;
+  studentIds?: string[];
+  pairSpan?: number;
+  hasLateSlotAuthorization?: boolean;
+  isSaturdayOnly?: boolean;
+  isMakeupSaturday?: boolean;
+};
+
+export type TeacherUnavailability = {
+  teacherId: string;
+  date: string;
+  pair: number;
+  isConfirmed: boolean;
+};
+
+export type CheckTimetableConflictsParams = {
+  events: ScheduledEvent[];
+  unavailability?: TeacherUnavailability[];
+};
+
+export type HardConflict = {
+  code: TimetableConflictCode;
+  message: string;
+  eventIds: string[];
+  details?: Record<string, unknown>;
+};
+
+export type SoftPenalty = {
+  code: TimetableSoftPenaltyCode;
+  score: number;
+  message: string;
+  eventIds: string[];
+};
+
+export type ConflictReport = {
+  isValid: boolean;
+  hardConflicts: HardConflict[];
+  softPenalties: SoftPenalty[];
+  totalPenaltyScore: number;
+};
+
+export type EventSlot = {
+  event: ScheduledEvent;
+  dateMs: number;
+  firstPair: number;
+  lastPair: number;
+};
+
+export type DayOccupancy = {
+  label: string;
+  date: string;
+  pairs: Set<number>;
+  eventIds: Set<string>;
+};

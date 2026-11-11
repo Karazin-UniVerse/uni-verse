@@ -1,20 +1,26 @@
 import assert from 'node:assert/strict';
 import test, { describe } from 'node:test';
 import {
+  TIMETABLE_CONFLICT_CODE,
   TIMETABLE_PHASE_ORDER,
   TIMETABLE_SKIP_REASON,
+  TIMETABLE_SOFT_PENALTY_CODE,
+  TIMETABLE_TEACHING_TYPE,
   TIMETABLE_VALIDATION_ERROR,
   TIMETABLE_WEEK_PARITY,
   TIMETABLE_WEEKDAY,
 } from '../../constants/timetable.ts';
 import type { TimetableValidationError } from '../../constants/timetable.ts';
 import type {
+  ConflictReport,
   ExpandSlotParams,
   ExpandSlotResult,
   PairInstantsResult,
+  ScheduledEvent,
   SemesterCalendarConfig,
 } from '../../types/timetable.ts';
 import {
+  checkTimetableConflicts,
   expandSlotOccurrences,
   getExamInstants,
   getPairInstants,
@@ -578,6 +584,370 @@ describe('timetable utils', () => {
         }),
         TIMETABLE_VALIDATION_ERROR.INVALID_MAKEUP_SATURDAY,
       );
+    });
+  });
+});
+
+const makeEvent = (overrides: Partial<ScheduledEvent> & { id: string }): ScheduledEvent => ({
+  teachingAssignmentId: `assignment-${overrides.id}`,
+  disciplineTitle: 'Algebra',
+  teachingType: TIMETABLE_TEACHING_TYPE.PRACTICAL,
+  teacherId: `teacher-${overrides.id}`,
+  groupIds: ['KS11'],
+  date: '2026-09-07',
+  pair: 2,
+  ...overrides,
+});
+
+const hardCodes = (report: ConflictReport): string[] =>
+  report.hardConflicts.map(({ code }) => code);
+
+const softCodes = (report: ConflictReport): string[] =>
+  report.softPenalties.map(({ code }) => code);
+
+describe('checkTimetableConflicts', () => {
+  test('accepts an empty and a clean timetable', () => {
+    assert.deepStrictEqual(checkTimetableConflicts({ events: [] }), {
+      isValid: true,
+      hardConflicts: [],
+      softPenalties: [],
+      totalPenaltyScore: 0,
+    });
+    assert.ok(
+      checkTimetableConflicts({
+        events: [makeEvent({ id: 'a' }), makeEvent({ id: 'b', groupIds: ['KS12'] })],
+      }).isValid,
+    );
+  });
+
+  test('reports a teacher double booking', () => {
+    const report = checkTimetableConflicts({
+      events: [
+        makeEvent({ id: 'a', teacherId: 't1', groupIds: ['KS11'] }),
+        makeEvent({ id: 'b', teacherId: 't1', groupIds: ['KS12'] }),
+        makeEvent({ id: 'c', teacherId: 't1', groupIds: ['KS13'], pair: 3 }),
+      ],
+    });
+
+    assert.deepStrictEqual(hardCodes(report), [TIMETABLE_CONFLICT_CODE.TEACHER_OVERLAP]);
+    assert.deepStrictEqual(report.hardConflicts[0].eventIds, ['a', 'b']);
+    assert.equal(report.isValid, false);
+  });
+
+  describe('student overlap', () => {
+    const overlapCodes = (
+      first: Partial<ScheduledEvent>,
+      second: Partial<ScheduledEvent>,
+    ): string[] =>
+      hardCodes(
+        checkTimetableConflicts({
+          events: [makeEvent({ id: 'a', ...first }), makeEvent({ id: 'b', ...second })],
+        }),
+      );
+
+    test('same group conflicts', () => {
+      assert.deepStrictEqual(overlapCodes({}, {}), [TIMETABLE_CONFLICT_CODE.STUDENT_OVERLAP]);
+    });
+
+    test('whole group conflicts with its subgroup', () => {
+      assert.deepStrictEqual(overlapCodes({ subgroupId: 'KS11-1' }, {}), [
+        TIMETABLE_CONFLICT_CODE.STUDENT_OVERLAP,
+      ]);
+    });
+
+    test('same subgroup conflicts', () => {
+      assert.deepStrictEqual(overlapCodes({ subgroupId: 'KS11-1' }, { subgroupId: 'KS11-1' }), [
+        TIMETABLE_CONFLICT_CODE.STUDENT_OVERLAP,
+      ]);
+    });
+
+    test('different subgroups of one group are allowed', () => {
+      assert.deepStrictEqual(overlapCodes({ subgroupId: 'KS11-1' }, { subgroupId: 'KS11-2' }), []);
+    });
+
+    test('stream conflicts with each of its groups and their subgroups', () => {
+      const stream = { groupIds: ['KS11', 'KS12'], streamId: 'Stream1' };
+
+      assert.deepStrictEqual(overlapCodes(stream, { groupIds: ['KS12'] }), [
+        TIMETABLE_CONFLICT_CODE.STUDENT_OVERLAP,
+      ]);
+      assert.deepStrictEqual(overlapCodes(stream, { groupIds: ['KS11'], subgroupId: 'KS11-2' }), [
+        TIMETABLE_CONFLICT_CODE.STUDENT_OVERLAP,
+      ]);
+      assert.deepStrictEqual(overlapCodes(stream, { groupIds: ['KS13'] }), []);
+    });
+
+    test('explicit student sets decide the intersection', () => {
+      assert.deepStrictEqual(overlapCodes({ studentIds: ['s1'] }, { studentIds: ['s2'] }), []);
+      assert.deepStrictEqual(overlapCodes({ studentIds: ['s1'] }, { studentIds: ['s1', 's2'] }), [
+        TIMETABLE_CONFLICT_CODE.STUDENT_OVERLAP,
+      ]);
+    });
+
+    test('partially overlapping pair ranges conflict, other dates do not', () => {
+      const exam = { teachingType: TIMETABLE_TEACHING_TYPE.EXAM, pair: 2 };
+
+      assert.deepStrictEqual(overlapCodes(exam, { pair: 3 }), [
+        TIMETABLE_CONFLICT_CODE.EXAM_STUDENT_OVERLAP,
+      ]);
+      assert.deepStrictEqual(overlapCodes(exam, { pair: 4 }), []);
+      assert.deepStrictEqual(overlapCodes({}, { date: '2026-09-08' }), []);
+    });
+  });
+
+  test('exam teacher overlap uses the exam code', () => {
+    const report = checkTimetableConflicts({
+      events: [
+        makeEvent({ id: 'a', teachingType: TIMETABLE_TEACHING_TYPE.EXAM, teacherId: 't1' }),
+        makeEvent({ id: 'b', teacherId: 't1', groupIds: ['KS12'], pair: 3 }),
+      ],
+    });
+
+    assert.deepStrictEqual(hardCodes(report), [TIMETABLE_CONFLICT_CODE.EXAM_TEACHER_OVERLAP]);
+  });
+
+  test('only confirmed unavailability is a hard conflict', () => {
+    const events = [makeEvent({ id: 'a', teacherId: 't1' })];
+    const entry = { teacherId: 't1', date: '2026-09-07', pair: 2 };
+
+    assert.deepStrictEqual(
+      hardCodes(
+        checkTimetableConflicts({ events, unavailability: [{ ...entry, isConfirmed: true }] }),
+      ),
+      [TIMETABLE_CONFLICT_CODE.CONFIRMED_UNAVAILABILITY],
+    );
+    assert.ok(
+      checkTimetableConflicts({ events, unavailability: [{ ...entry, isConfirmed: false }] })
+        .isValid,
+    );
+    assert.ok(
+      checkTimetableConflicts({
+        events,
+        unavailability: [{ ...entry, pair: 3, isConfirmed: true }],
+      }).isValid,
+    );
+  });
+
+  test('pairs 6 and 7 need dean authorization', () => {
+    for (const pair of [6, 7]) {
+      assert.deepStrictEqual(
+        hardCodes(checkTimetableConflicts({ events: [makeEvent({ id: 'a', pair })] })),
+        [TIMETABLE_CONFLICT_CODE.UNAUTHORIZED_LATE_SLOT],
+      );
+      assert.ok(
+        checkTimetableConflicts({
+          events: [makeEvent({ id: 'a', pair, hasLateSlotAuthorization: true })],
+        }).isValid,
+      );
+    }
+  });
+
+  describe('Saturday restriction', () => {
+    const saturday = '2026-09-12';
+
+    test('Saturday-only class is valid on Saturday and invalid on a weekday', () => {
+      assert.ok(
+        checkTimetableConflicts({
+          events: [makeEvent({ id: 'a', date: saturday, isSaturdayOnly: true })],
+        }).isValid,
+      );
+      assert.deepStrictEqual(
+        hardCodes(
+          checkTimetableConflicts({ events: [makeEvent({ id: 'a', isSaturdayOnly: true })] }),
+        ),
+        [TIMETABLE_CONFLICT_CODE.SATURDAY_RESTRICTION_VIOLATION],
+      );
+    });
+
+    test('weekday class on Saturday needs an explicit makeup Saturday', () => {
+      assert.deepStrictEqual(
+        hardCodes(checkTimetableConflicts({ events: [makeEvent({ id: 'a', date: saturday })] })),
+        [TIMETABLE_CONFLICT_CODE.SATURDAY_RESTRICTION_VIOLATION],
+      );
+      assert.ok(
+        checkTimetableConflicts({
+          events: [makeEvent({ id: 'a', date: saturday, isMakeupSaturday: true })],
+        }).isValid,
+      );
+    });
+  });
+
+  describe('exams', () => {
+    const exam = (
+      id: string,
+      date: string,
+      overrides: Partial<ScheduledEvent> = {},
+    ): ScheduledEvent =>
+      makeEvent({ id, date, teachingType: TIMETABLE_TEACHING_TYPE.EXAM, ...overrides });
+
+    test('Monday and Tuesday exams of one group violate the interval', () => {
+      const report = checkTimetableConflicts({
+        events: [exam('a', '2026-09-07'), exam('b', '2026-09-08')],
+      });
+
+      assert.deepStrictEqual(hardCodes(report), [TIMETABLE_CONFLICT_CODE.EXAM_INTERVAL_VIOLATION]);
+    });
+
+    test('Monday and Wednesday exams are valid', () => {
+      assert.ok(
+        checkTimetableConflicts({ events: [exam('a', '2026-09-07'), exam('b', '2026-09-09')] })
+          .isValid,
+      );
+    });
+
+    test('exams of different groups are independent', () => {
+      assert.ok(
+        checkTimetableConflicts({
+          events: [exam('a', '2026-09-07'), exam('b', '2026-09-08', { groupIds: ['KS12'] })],
+        }).isValid,
+      );
+    });
+
+    test('exam interval is checked per stream group', () => {
+      const report = checkTimetableConflicts({
+        events: [
+          exam('a', '2026-09-07', { groupIds: ['KS11', 'KS12'], streamId: 'Stream1' }),
+          exam('b', '2026-09-08', { groupIds: ['KS12'] }),
+        ],
+      });
+
+      assert.deepStrictEqual(hardCodes(report), [TIMETABLE_CONFLICT_CODE.EXAM_INTERVAL_VIOLATION]);
+    });
+
+    test('exam must span two pairs and fit the day', () => {
+      assert.deepStrictEqual(
+        hardCodes(checkTimetableConflicts({ events: [exam('a', '2026-09-07', { pairSpan: 1 })] })),
+        [TIMETABLE_CONFLICT_CODE.INVALID_EVENT_SLOT],
+      );
+      assert.deepStrictEqual(
+        hardCodes(checkTimetableConflicts({ events: [exam('a', '2026-09-07', { pair: 7 })] })),
+        [TIMETABLE_CONFLICT_CODE.INVALID_EVENT_SLOT],
+      );
+    });
+
+    test('exam ending on pair 6 needs late authorization', () => {
+      assert.deepStrictEqual(
+        hardCodes(checkTimetableConflicts({ events: [exam('a', '2026-09-07', { pair: 5 })] })),
+        [TIMETABLE_CONFLICT_CODE.UNAUTHORIZED_LATE_SLOT],
+      );
+    });
+  });
+
+  test('rejects invalid date and pair', () => {
+    const report = checkTimetableConflicts({
+      events: [makeEvent({ id: 'a', date: '2026-02-30' }), makeEvent({ id: 'b', pair: 8 })],
+    });
+
+    assert.deepStrictEqual(hardCodes(report), [
+      TIMETABLE_CONFLICT_CODE.INVALID_EVENT_SLOT,
+      TIMETABLE_CONFLICT_CODE.INVALID_EVENT_SLOT,
+    ]);
+  });
+
+  describe('soft penalties', () => {
+    const lecture = (id: string, date: string, pair = 1): ScheduledEvent =>
+      makeEvent({
+        id,
+        date,
+        pair,
+        teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+        groupIds: ['KS11', 'KS12'],
+      });
+
+    test('practice before lecture is penalized, lecture first is not', () => {
+      const penalized = checkTimetableConflicts({
+        events: [makeEvent({ id: 'p', date: '2026-09-07' }), lecture('l', '2026-09-09')],
+      });
+
+      assert.ok(penalized.isValid);
+      assert.deepStrictEqual(softCodes(penalized), [
+        TIMETABLE_SOFT_PENALTY_CODE.PRACTICE_BEFORE_LECTURE,
+      ]);
+      assert.equal(penalized.totalPenaltyScore, 20);
+      assert.deepStrictEqual(
+        softCodes(
+          checkTimetableConflicts({
+            events: [lecture('l', '2026-09-07'), makeEvent({ id: 'p', date: '2026-09-09' })],
+          }),
+        ),
+        [],
+      );
+    });
+
+    test('practice on the same day after the lecture is fine, before it is not', () => {
+      const lectureEvent = lecture('l', '2026-09-07', 2);
+
+      assert.deepStrictEqual(
+        softCodes(
+          checkTimetableConflicts({
+            events: [lectureEvent, makeEvent({ id: 'p', pair: 3, groupIds: ['KS11'] })],
+          }),
+        ),
+        [],
+      );
+      assert.deepStrictEqual(
+        softCodes(
+          checkTimetableConflicts({
+            events: [lectureEvent, makeEvent({ id: 'p', pair: 1, groupIds: ['KS11'] })],
+          }),
+        ),
+        [TIMETABLE_SOFT_PENALTY_CODE.PRACTICE_BEFORE_LECTURE],
+      );
+    });
+
+    test('practice of another discipline is ignored', () => {
+      assert.deepStrictEqual(
+        softCodes(
+          checkTimetableConflicts({
+            events: [
+              makeEvent({ id: 'p', disciplineTitle: 'Physics' }),
+              lecture('l', '2026-09-09'),
+            ],
+          }),
+        ),
+        [],
+      );
+    });
+
+    test('five pairs a day is penalized for the group and each teacher', () => {
+      const events = [1, 2, 3, 4, 5].map((pair) =>
+        makeEvent({ id: `e${pair}`, pair, teacherId: 't1', hasLateSlotAuthorization: true }),
+      );
+      const report = checkTimetableConflicts({
+        events: events.map((event, index) => ({ ...event, groupIds: [`G${index}`] })),
+      });
+      const loaded = checkTimetableConflicts({
+        events: events.map((event) => ({ ...event, teacherId: `t${event.pair}` })),
+      });
+
+      assert.deepStrictEqual(softCodes(report), [TIMETABLE_SOFT_PENALTY_CODE.EXCESSIVE_DAILY_LOAD]);
+      assert.deepStrictEqual(softCodes(loaded), [TIMETABLE_SOFT_PENALTY_CODE.EXCESSIVE_DAILY_LOAD]);
+      assert.equal(loaded.totalPenaltyScore, 10);
+    });
+
+    test('four pairs a day is not penalized', () => {
+      const events = [1, 2, 3, 4].map((pair) => makeEvent({ id: `e${pair}`, pair }));
+
+      assert.deepStrictEqual(softCodes(checkTimetableConflicts({ events })), []);
+    });
+
+    test('windows between pairs are penalized per free pair', () => {
+      const report = checkTimetableConflicts({
+        events: [makeEvent({ id: 'a', pair: 1 }), makeEvent({ id: 'b', pair: 4 })],
+      });
+
+      assert.deepStrictEqual(softCodes(report), [TIMETABLE_SOFT_PENALTY_CODE.SCHEDULE_WINDOW]);
+      assert.equal(report.totalPenaltyScore, 10);
+    });
+
+    test('late Saturday-only slot is penalized', () => {
+      const saturday = (pair: number): ScheduledEvent =>
+        makeEvent({ id: 'a', date: '2026-09-12', pair, isSaturdayOnly: true });
+
+      assert.deepStrictEqual(softCodes(checkTimetableConflicts({ events: [saturday(3)] })), []);
+      assert.deepStrictEqual(softCodes(checkTimetableConflicts({ events: [saturday(4)] })), [
+        TIMETABLE_SOFT_PENALTY_CODE.LATE_SATURDAY_SLOT,
+      ]);
     });
   });
 });
