@@ -103,7 +103,7 @@
 }
 
 .toned {
-  &.primary:not(:disabled) {
+  &.primary:not(.is-transparent, :disabled) {
     background-color: var(--btn-tone-bg);
     border-color: var(--btn-tone-bg);
     color: var(--btn-tone-text);
@@ -119,13 +119,28 @@
     }
   }
 
-  &.secondary:not(:disabled) {
+  &.secondary:not(.is-transparent, :disabled) {
     background-color: transparent;
     border-color: var(--btn-tone-accent);
     color: var(--btn-tone-accent);
 
     &:hover {
       background-color: color-mix(in srgb, var(--btn-tone-accent) 10%, transparent);
+    }
+
+    &:active {
+      background-color: color-mix(in srgb, var(--btn-tone-accent) 16%, transparent);
+    }
+  }
+
+  &.is-transparent:not(:disabled) {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--btn-tone-accent);
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--btn-tone-accent) 10%, transparent);
+      color: var(--btn-tone-accent);
     }
 
     &:active {
