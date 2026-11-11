@@ -132,3 +132,76 @@ export type DayOccupancy = {
   pairs: Set<number>;
   eventIds: Set<string>;
 };
+
+export type TeachingDemand = {
+  id: string;
+  disciplineTitle: string;
+  teachingType: TimetableTeachingType;
+  teacherId: string;
+  groupIds: string[];
+  academicHours: number;
+  subgroupId?: string;
+  streamId?: string;
+  isSaturdayOnly?: boolean;
+  hasLateSlotAuthorization?: boolean;
+  parity?: TimetableWeekParity;
+  order?: TimetablePhaseOrder;
+  studentIds?: string[];
+};
+
+export type GenerateTimetableOptions = {
+  maxCandidates?: number;
+  timeoutMs?: number;
+};
+
+export type GenerateTimetableParams = {
+  demands: TeachingDemand[];
+  calendar: SemesterCalendarConfig;
+  unavailability?: TeacherUnavailability[];
+  options?: GenerateTimetableOptions;
+};
+
+export type TimetableCandidate = {
+  events: ScheduledEvent[];
+  penaltyScore: number;
+};
+
+export type CandidateSlot = {
+  demandIndex: number;
+  events: ScheduledEvent[];
+  globalIndex: number;
+  heuristicCost: number;
+  pair: number;
+  timeKeys: Set<string>;
+  weekday: number;
+  layerIndex?: number;
+  unitIndex?: number;
+};
+
+export type SchedulableDemandLayer = {
+  demand: TeachingDemand;
+  demandIndex: number;
+  layerIndex: number;
+  requiredPairs: number;
+  unitIndex: number;
+  weeklyCounts: number[];
+};
+
+export type GenerateTimetableDiagnostics = {
+  statesExplored: number;
+  timeMs: number;
+};
+
+export type GenerateTimetableErrorCode = 'NO_FEASIBLE_SOLUTION' | 'TIMEOUT' | 'INVALID_INPUT';
+
+export type GenerateTimetableResult =
+  | {
+      ok: true;
+      candidates: TimetableCandidate[];
+      diagnostics: GenerateTimetableDiagnostics;
+    }
+  | {
+      ok: false;
+      error: GenerateTimetableErrorCode;
+      diagnostics: GenerateTimetableDiagnostics;
+    };
