@@ -72,13 +72,18 @@ export const generateDummyEvents = (): ScheduleEvent[] => {
       const subjectIndex =
         (((dayOffset + pairIndex) % subjects.length) + subjects.length) % subjects.length;
 
+      const location = locations[Math.abs(subjectIndex) % locations.length];
+      const isOnline = location.includes('Дистанційно');
+
       events.push({
         id: `evt-${dayOffset}-${pairIndex}`,
         title: subjects[subjectIndex],
         start,
         end,
         type: types[Math.abs(subjectIndex) % types.length],
-        location: locations[Math.abs(subjectIndex) % locations.length],
+        location,
+        meetingUrl: isOnline ? 'https://meet.google.com/abc-defg-hij' : undefined,
+        teachingAssignmentId: isOnline ? `assign-${dayOffset}-${pairIndex}` : undefined,
       });
     }
   }
@@ -175,3 +180,17 @@ export const formatScheduleDate = (
 
 export const formatScheduleTime = (date: Date, locale: string): string =>
   new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(date);
+
+export const isSafeMeetingUrl = (url?: string | null): boolean => {
+  if (!url) {
+    return false;
+  }
+
+  try {
+    const parsed = new URL(url);
+
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
+};

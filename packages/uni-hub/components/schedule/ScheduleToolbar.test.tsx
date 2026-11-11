@@ -13,9 +13,7 @@ describe('ScheduleToolbar', () => {
   };
 
   const renderToolbar = (props: Partial<ScheduleToolbarProps> = {}) => {
-    return render(
-      withLanguage(<ScheduleToolbar {...defaultProps} {...props} />),
-    );
+    return render(withLanguage(<ScheduleToolbar {...defaultProps} {...props} />));
   };
 
   beforeEach(() => {
@@ -57,17 +55,13 @@ describe('ScheduleToolbar', () => {
     expect(monthRadio).not.toBeChecked();
     expect(dayRadio).not.toBeChecked();
 
-    rerender(
-      withLanguage(<ScheduleToolbar {...defaultProps} viewMode="month" />),
-    );
+    rerender(withLanguage(<ScheduleToolbar {...defaultProps} viewMode="month" />));
 
     expect(screen.getByRole('radio', { name: 'Місяць' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Тиждень' })).not.toBeChecked();
     expect(screen.getByRole('radio', { name: 'День' })).not.toBeChecked();
 
-    rerender(
-      withLanguage(<ScheduleToolbar {...defaultProps} viewMode="day" />),
-    );
+    rerender(withLanguage(<ScheduleToolbar {...defaultProps} viewMode="day" />));
 
     expect(screen.getByRole('radio', { name: 'День' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Місяць' })).not.toBeChecked();
@@ -105,5 +99,20 @@ describe('ScheduleToolbar', () => {
     await user.click(exportButton);
 
     expect(handleExportICS).toHaveBeenCalledTimes(1);
+  });
+
+  it('should render subscribe calendar button and handle clicks when onSubscribeCalendar is provided', async () => {
+    const handleSubscribe = vi.fn();
+    const user = userEvent.setup();
+
+    renderToolbar({ onSubscribeCalendar: handleSubscribe });
+
+    const subscribeButton = screen.getByRole('button', { name: /підписка на календар/i });
+
+    expect(subscribeButton).toBeInTheDocument();
+
+    await user.click(subscribeButton);
+
+    expect(handleSubscribe).toHaveBeenCalledTimes(1);
   });
 });

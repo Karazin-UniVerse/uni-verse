@@ -308,3 +308,101 @@ export type GenerateIcsOptions = {
   calendarName?: string;
   now?: Date;
 };
+
+export type SafeTeacherResponse = {
+  id: string;
+  name: string | null;
+  roles?: string[];
+};
+
+export type AcademicSubgroupResponse = {
+  id: string;
+  name: string;
+  academicGroupId: string;
+};
+
+export type AcademicGroupResponse = {
+  id: string;
+  code: string;
+  degreeLevel?: string;
+  studyForm?: string;
+  entryYear?: number;
+  academicYear?: string;
+  subgroups?: AcademicSubgroupResponse[];
+};
+
+export type AcademicStreamResponse = {
+  id: string;
+  name: string;
+};
+
+export type TeachingAssignmentResponse = {
+  id: string;
+  curriculumPlanId: string;
+  disciplineTitle: string;
+  teachingType: string;
+  academicHours: number;
+  teacherId: string;
+  isSaturdayOnly?: boolean;
+  hasLateSlotAuthorization?: boolean;
+  groupId?: string | null;
+  subgroupId?: string | null;
+  streamId?: string | null;
+  meetingUrl?: string | null;
+  teacher?: SafeTeacherResponse;
+  group?: AcademicGroupResponse | null;
+  subgroup?: AcademicSubgroupResponse | null;
+  stream?: AcademicStreamResponse | null;
+};
+
+export type CurriculumPlanResponse = {
+  id: string;
+  faculty: string;
+  title: string;
+  academicYear: string;
+  semester: number;
+  isDraft: boolean;
+  teachingAssignments?: TeachingAssignmentResponse[];
+};
+
+export type SemesterCalendarResponse = {
+  id: string;
+  academicYear: string;
+  semester: number;
+  startDate: string;
+  teachingWeeks: number;
+  excludedDates?: string[];
+  makeupSaturdays?: Array<{ date: string; followsWeekday: number }>;
+};
+
+export type TeacherUnavailabilityResponse = {
+  id: string;
+  teacherId: string;
+  date: string;
+  pair: number;
+  isConfirmed: boolean;
+  reason?: string | null;
+};
+
+export type GenerateTimetableDraftResponse = {
+  versionId: string;
+  candidates: TimetableCandidate[];
+  diagnostics: GenerateTimetableDiagnostics;
+};
+
+export type GenerateTimetableDraftResult = GenerateTimetableDraftResponse;
+
+export type TimetableVersionResponse = {
+  id: string;
+  curriculumPlanId: string;
+  status: string;
+  versionNumber: number;
+  events: ScheduledEvent[];
+};
+
+export type CalendarSubscriptionTokenResponse = {
+  id: string;
+  userId: string;
+  token: string;
+  createdAt?: string;
+};

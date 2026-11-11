@@ -2,10 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BREAKPOINTS } from '@core/constants/breakpoints';
-import { withLanguage } from '@uni-hub/utils/test-utils';
+import { withLanguage, withToast } from '@uni-hub/utils/test-utils';
+import { timetableApi } from '@uni-hub/services/api.timetable';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { DUMMY_EVENTS, exportToICS } from './helpers';
 import { ScheduleView } from './ScheduleView';
+import type { ScheduleEvent, ScheduleViewProps } from './ScheduleView.types';
 
 vi.mock('../../hooks/useMediaQuery', () => ({
   useMediaQuery: vi.fn(),
@@ -30,10 +32,8 @@ describe('ScheduleView component', () => {
     vi.useRealTimers();
   });
 
-  const renderScheduleView = () =>
-    render(
-      withLanguage(<ScheduleView />),
-    );
+  const renderScheduleView = (props?: Partial<ScheduleViewProps>) =>
+    render(withToast(withLanguage(<ScheduleView {...props} />)));
 
   it('should render schedule view in default month mode on desktop', () => {
     vi.mocked(useMediaQuery).mockReturnValue(false);
@@ -153,5 +153,175 @@ describe('ScheduleView component', () => {
     expect(
       screen.getByRole('button', { name: /попередній день|previous day/i }),
     ).toBeInTheDocument();
+  });
+
+  it('should open subscription modal when subscribe button is clicked', async () => {
+    vi.spyOn(timetableApi, 'createSubscriptionToken').mockResolvedValue({
+      data: { id: 'tok-1', userId: 'user-1', token: 'mock-token-abc' },
+    });
+    const user = userEvent.setup();
+
+    renderScheduleView();
+
+    const subscribeButton = screen.getByRole('button', { name: /підписка на календар/i });
+
+    await user.click(subscribeButton);
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /копіювати/i })).toBeInTheDocument();
+  });
+
+  it('should render meeting URL link for online events', async () => {
+    const testDate = new Date(new Date().setHours(10, 10, 0, 0));
+    const customEvents: ScheduleEvent[] = [
+      {
+        id: 'evt-online-1',
+        title: 'Теорія алгоритмів',
+        start: testDate,
+        end: new Date(testDate.getTime() + 80 * 60 * 1000),
+        type: 'lecture',
+        location: 'Дистанційно',
+        meetingUrl: 'https://meet.google.com/test-meet',
+        teachingAssignmentId: 'assign-1',
+      },
+    ];
+    const user = userEvent.setup();
+
+    renderScheduleView({ events: customEvents, isTeacher: false });
+
+    const dayRadio = screen.getByRole('radio', { name: /^(день|day)$/i });
+
+    await user.click(dayRadio);
+
+    const meetingLink = screen.getByRole('link', { name: /приєднатися до заняття/i });
+
+    expect(meetingLink).toHaveAttribute('href', 'https://meet.google.com/test-meet');
+  });
+
+  it('should allow teacher to edit meeting URL via modal', async () => {
+    const updateSpy = vi.spyOn(timetableApi, 'updateMeetingUrl').mockResolvedValue({
+      data: {
+        id: 'assign-1',
+        curriculumPlanId: 'plan-1',
+        disciplineTitle: 'Теорія алгоритмів',
+        teachingType: 'LECTURE',
+        academicHours: 32,
+        teacherId: 'teacher-1',
+        isSaturdayOnly: false,
+        hasLateSlotAuthorization: false,
+        meetingUrl: 'https://zoom.us/j/999999',
+      },
+    });
+
+    const testDate = new Date(new Date().setHours(10, 10, 0, 0));
+    const customEvents: ScheduleEvent[] = [
+      {
+        id: 'evt-editable-1',
+        title: 'Теорія алгоритмів',
+        start: testDate,
+        end: new Date(testDate.getTime() + 80 * 60 * 1000),
+        type: 'lecture',
+        location: 'Дистанційно',
+        teachingAssignmentId: 'assign-1',
+      },
+    ];
+    const user = userEvent.setup();
+
+    renderScheduleView({ events: customEvents, isTeacher: true });
+
+    const dayRadio = screen.getByRole('radio', { name: /^(день|day)$/i });
+
+    await user.click(dayRadio);
+
+    const editBtn = screen.getByRole('button', { name: /змінити посилання/i });
+
+    await user.click(editBtn);
+
+    const input = screen.getByPlaceholderText(/https:\/\/meet\.google\.com/i);
+
+    await user.clear(input);
+    await user.type(input, 'https://zoom.us/j/999999');
+
+    const saveBtn = screen.getByRole('button', { name: /зберегти/i });
+
+    await user.click(saveBtn);
+
+    expect(updateSpy).toHaveBeenCalledWith('assign-1', 'https://zoom.us/j/999999');
+  });
+
+  it('should show error message and not set fallback URL when createSubscriptionToken fails', async () => {
+    vi.spyOn(timetableApi, 'createSubscriptionToken').mockRejectedValue(new Error('Network error'));
+    const user = userEvent.setup();
+
+    renderScheduleView();
+
+    const subscribeButton = screen.getByRole('button', { name: /підписка на календар/i });
+
+    await user.click(subscribeButton);
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(
+      screen.getAllByText(/не вдалося створити посилання для підписки/i).length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByDisplayValue(/feed\/personal/i)).not.toBeInTheDocument();
+  });
+
+  it('should not update event and show error when updateMeetingUrl fails', async () => {
+    vi.spyOn(timetableApi, 'updateMeetingUrl').mockRejectedValue(new Error('Update failed'));
+
+    const testDate = new Date(new Date().setHours(10, 10, 0, 0));
+    const customEvents: ScheduleEvent[] = [
+      {
+        id: 'evt-fail-1',
+        title: 'Теорія алгоритмів',
+        start: testDate,
+        end: new Date(testDate.getTime() + 80 * 60 * 1000),
+        type: 'lecture',
+        location: 'Дистанційно',
+        teachingAssignmentId: 'assign-fail',
+      },
+    ];
+    const user = userEvent.setup();
+
+    renderScheduleView({ events: customEvents, isTeacher: true });
+
+    const dayRadio = screen.getByRole('radio', { name: /^(день|day)$/i });
+
+    await user.click(dayRadio);
+
+    const editBtn = screen.getByRole('button', { name: /змінити посилання/i });
+
+    await user.click(editBtn);
+
+    const input = screen.getByPlaceholderText(/https:\/\/meet\.google\.com/i);
+
+    await user.clear(input);
+    await user.type(input, 'https://zoom.us/j/123456');
+
+    const saveBtn = screen.getByRole('button', { name: /зберегти/i });
+
+    await user.click(saveBtn);
+
+    expect(screen.getAllByText(/не вдалося оновити посилання на заняття/i).length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('should have closeLabel on subscription modal', async () => {
+    vi.spyOn(timetableApi, 'createSubscriptionToken').mockResolvedValue({
+      data: { id: 'tok-1', userId: 'user-1', token: 'mock-token' },
+    });
+    const user = userEvent.setup();
+
+    renderScheduleView();
+
+    const subscribeButton = screen.getByRole('button', { name: /підписка на календар/i });
+
+    await user.click(subscribeButton);
+
+    const closeButtons = screen.getAllByRole('button', { name: /закрити/i });
+
+    expect(closeButtons.length).toBeGreaterThan(0);
   });
 });

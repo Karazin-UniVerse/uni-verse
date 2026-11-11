@@ -1,8 +1,14 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileEdit, Video } from 'lucide-react';
 import { Button, Empty, Tag } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { addDays, formatScheduleDate, formatScheduleTime, getTypeTone } from './helpers';
+import {
+  addDays,
+  formatScheduleDate,
+  formatScheduleTime,
+  getTypeTone,
+  isSafeMeetingUrl,
+} from './helpers';
 import styles from './ScheduleView.module.scss';
 
 import type { ScheduleDayViewProps } from './ScheduleView.types';
@@ -13,6 +19,8 @@ export const ScheduleDayView: React.FC<ScheduleDayViewProps> = ({
   events,
   locale,
   getTypeName,
+  isTeacher,
+  onEditMeetingUrl,
 }) => {
   const { formatMessage } = useLanguage();
 
@@ -61,6 +69,35 @@ export const ScheduleDayView: React.FC<ScheduleDayViewProps> = ({
                 <Tag tone={getTypeTone(event.type)}>{getTypeName(event.type)}</Tag>
                 <span>{event.location}</span>
               </div>
+              {(event.meetingUrl || (isTeacher && onEditMeetingUrl)) && (
+                <div className={styles.meetingRow}>
+                  {event.meetingUrl &&
+                    (isSafeMeetingUrl(event.meetingUrl) ? (
+                      <a
+                        href={event.meetingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.meetingLink}
+                      >
+                        <Video size={14} /> {formatMessage('schedule.joinMeeting')}
+                      </a>
+                    ) : (
+                      <span className={styles.meetingLink}>
+                        <Video size={14} /> {formatMessage('schedule.joinMeeting')}
+                      </span>
+                    ))}
+                  {isTeacher && onEditMeetingUrl && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="small"
+                      onClick={() => onEditMeetingUrl(event)}
+                    >
+                      <FileEdit size={12} /> {formatMessage('schedule.editMeetingUrl')}
+                    </Button>
+                  )}
+                </div>
+              )}
             </li>
           ))}
         </ul>

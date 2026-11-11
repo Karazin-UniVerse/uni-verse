@@ -1,0 +1,1 @@
+export { TimetableManagementView } from './TimetableManagementView';

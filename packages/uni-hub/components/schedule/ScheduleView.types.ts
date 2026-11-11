@@ -5,6 +5,10 @@ export interface ScheduleEvent {
   end: Date;
   type: 'lecture' | 'lab' | 'practice' | 'exam' | 'other';
   location: string;
+  meetingUrl?: string;
+  teachingAssignmentId?: string;
+  teacherName?: string;
+  groupCodes?: string[];
 }
 
 export type ScheduleViewMode = 'day' | 'week' | 'month';
@@ -13,6 +17,7 @@ export interface ScheduleToolbarProps {
   viewMode: ScheduleViewMode;
   onViewModeChange: (mode: ScheduleViewMode) => void;
   onExportICS: () => void;
+  onSubscribeCalendar?: () => void;
 }
 
 export interface ScheduleDayViewProps {
@@ -21,6 +26,8 @@ export interface ScheduleDayViewProps {
   events: ScheduleEvent[];
   locale: string;
   getTypeName: (type: string) => string;
+  isTeacher?: boolean;
+  onEditMeetingUrl?: (event: ScheduleEvent) => void;
 }
 
 export interface ScheduleWeekViewProps {
@@ -29,6 +36,8 @@ export interface ScheduleWeekViewProps {
   getEventsForDate: (date: Date) => ScheduleEvent[];
   locale: string;
   getTypeName: (type: string) => string;
+  isTeacher?: boolean;
+  onEditMeetingUrl?: (event: ScheduleEvent) => void;
 }
 
 export interface ScheduleWeekDayCardProps {
@@ -37,6 +46,13 @@ export interface ScheduleWeekDayCardProps {
   isToday: boolean;
   locale: string;
   getTypeName: (type: string) => string;
+  isTeacher?: boolean;
+  onEditMeetingUrl?: (event: ScheduleEvent) => void;
+}
+
+export interface ScheduleViewProps {
+  events?: ScheduleEvent[];
+  isTeacher?: boolean;
 }
 
 export interface ScheduleMonthViewProps {

@@ -15,6 +15,8 @@ export const ScheduleWeekView: React.FC<ScheduleWeekViewProps> = ({
   getEventsForDate,
   locale,
   getTypeName,
+  isTeacher,
+  onEditMeetingUrl,
 }) => {
   const { formatMessage } = useLanguage();
   const weekStart = useMemo(() => startOfWeek(selectedDate), [selectedDate]);
@@ -60,6 +62,8 @@ export const ScheduleWeekView: React.FC<ScheduleWeekViewProps> = ({
             isToday={isSameDay(day, today)}
             locale={locale}
             getTypeName={getTypeName}
+            isTeacher={isTeacher}
+            onEditMeetingUrl={onEditMeetingUrl}
           />
         ))}
       </div>

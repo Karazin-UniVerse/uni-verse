@@ -52,9 +52,7 @@ describe('ScheduleDayView', () => {
       ...props,
     };
 
-    return render(
-      withLanguage(<ScheduleDayView {...defaultProps} />),
-    );
+    return render(withLanguage(<ScheduleDayView {...defaultProps} />));
   };
 
   it('should render day schedule title and navigation buttons', () => {
@@ -114,5 +112,44 @@ describe('ScheduleDayView', () => {
 
     expect(screen.getByText(/на цей день занять немає/i)).toBeInTheDocument();
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
+  });
+
+  it('should not render clickable link when meetingUrl has unsafe protocol', () => {
+    const eventsWithUnsafeUrl: ScheduleEvent[] = [
+      {
+        id: 'event-unsafe',
+        title: 'XSS attempt',
+        start: new Date(2026, 4, 15, 8, 30),
+        end: new Date(2026, 4, 15, 9, 50),
+        type: 'lecture',
+        location: 'Дистанційно',
+        meetingUrl: "javascript:alert('pwned')",
+      },
+    ];
+
+    renderComponent({ events: eventsWithUnsafeUrl });
+
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.getByText(/приєднатися до заняття/i)).toBeInTheDocument();
+  });
+
+  it('should render clickable link when meetingUrl is safe https', () => {
+    const eventsWithSafeUrl: ScheduleEvent[] = [
+      {
+        id: 'event-safe',
+        title: 'Safe meet',
+        start: new Date(2026, 4, 15, 8, 30),
+        end: new Date(2026, 4, 15, 9, 50),
+        type: 'lecture',
+        location: 'Дистанційно',
+        meetingUrl: 'https://meet.google.com/abc-defg-hij',
+      },
+    ];
+
+    renderComponent({ events: eventsWithSafeUrl });
+
+    const link = screen.getByRole('link', { name: /приєднатися до заняття/i });
+
+    expect(link).toHaveAttribute('href', 'https://meet.google.com/abc-defg-hij');
   });
 });

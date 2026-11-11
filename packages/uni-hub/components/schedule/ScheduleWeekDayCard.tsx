@@ -1,6 +1,8 @@
 import React from 'react';
+import { FileEdit, Video } from 'lucide-react';
+import { Button } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { formatScheduleDate, formatScheduleTime } from './helpers';
+import { formatScheduleDate, formatScheduleTime, isSafeMeetingUrl } from './helpers';
 import styles from './ScheduleView.module.scss';
 
 import type { ScheduleWeekDayCardProps } from './ScheduleView.types';
@@ -11,6 +13,8 @@ export const ScheduleWeekDayCard: React.FC<ScheduleWeekDayCardProps> = ({
   isToday,
   locale,
   getTypeName,
+  isTeacher,
+  onEditMeetingUrl,
 }) => {
   const { formatMessage } = useLanguage();
 
@@ -30,6 +34,36 @@ export const ScheduleWeekDayCard: React.FC<ScheduleWeekDayCardProps> = ({
               <span>
                 {getTypeName(event.type)} • {event.location}
               </span>
+              {(event.meetingUrl || (isTeacher && onEditMeetingUrl)) && (
+                <div className={styles.meetingRow}>
+                  {event.meetingUrl &&
+                    (isSafeMeetingUrl(event.meetingUrl) ? (
+                      <a
+                        href={event.meetingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.meetingLink}
+                      >
+                        <Video size={12} /> {formatMessage('schedule.joinMeeting')}
+                      </a>
+                    ) : (
+                      <span className={styles.meetingLink}>
+                        <Video size={12} /> {formatMessage('schedule.joinMeeting')}
+                      </span>
+                    ))}
+                  {isTeacher && onEditMeetingUrl && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="small"
+                      onClick={() => onEditMeetingUrl(event)}
+                      aria-label={`${formatMessage('schedule.editMeetingUrl')}: ${event.title}`}
+                    >
+                      <FileEdit size={12} />
+                    </Button>
+                  )}
+                </div>
+              )}
             </li>
           ))}
         </ul>

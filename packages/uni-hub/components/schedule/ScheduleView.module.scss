@@ -213,3 +213,57 @@
   font-weight: var(--font-weight-medium);
   font-size: var(--font-sm);
 }
+
+.toolbarButtons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.meetingLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--accent-primary);
+  text-decoration: none;
+  font-size: var(--font-sm);
+  font-weight: var(--font-weight-medium);
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.meetingRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-top: var(--space-4);
+}
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding: var(--space-16) 0;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+}
+
+.feedUrlRow {
+  display: flex;
+  gap: var(--space-8);
+  align-items: center;
+}
+
+.errorText {
+  color: var(--error-color);
+  font-size: var(--font-sm);
+  margin: 0;
+}

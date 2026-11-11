@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download } from 'lucide-react';
+import { CalendarDays, Download } from 'lucide-react';
 import { Button, RadioButton } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import styles from './ScheduleView.module.scss';
@@ -10,6 +10,7 @@ export const ScheduleToolbar: React.FC<ScheduleToolbarProps> = ({
   viewMode,
   onViewModeChange,
   onExportICS,
+  onSubscribeCalendar,
 }) => {
   const { formatMessage } = useLanguage();
 
@@ -40,9 +41,16 @@ export const ScheduleToolbar: React.FC<ScheduleToolbarProps> = ({
         ))}
       </div>
 
-      <Button type="button" variant="primary" onClick={onExportICS}>
-        <Download size={16} /> {formatMessage('schedule.exportICal')}
-      </Button>
+      <div className={styles.toolbarButtons}>
+        {onSubscribeCalendar && (
+          <Button type="button" variant="secondary" onClick={onSubscribeCalendar}>
+            <CalendarDays size={16} /> {formatMessage('schedule.subscribeCalendar')}
+          </Button>
+        )}
+        <Button type="button" variant="primary" onClick={onExportICS}>
+          <Download size={16} /> {formatMessage('schedule.exportICal')}
+        </Button>
+      </div>
     </div>
   );
 };

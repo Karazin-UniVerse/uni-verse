@@ -71,4 +71,58 @@ describe('ScheduleWeekDayCard', () => {
 
     expect((container.firstChild as HTMLElement).className).toContain('today');
   });
+
+  it('should not render clickable link for unsafe meetingUrl', () => {
+    const eventWithUnsafe: ScheduleEvent[] = [
+      {
+        id: 'event-unsafe-week',
+        title: 'Unsafe Test',
+        start: new Date(2026, 0, 15, 8, 30),
+        end: new Date(2026, 0, 15, 10, 5),
+        type: 'lecture',
+        location: 'Online',
+        meetingUrl: "javascript:alert('xss')",
+      },
+    ];
+
+    render(
+      <ScheduleWeekDayCard
+        day={dummyDate}
+        events={eventWithUnsafe}
+        isToday={false}
+        locale="uk-UA"
+        getTypeName={() => 'Лекція'}
+      />,
+    );
+
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('should render clickable link for safe https meetingUrl', () => {
+    const eventWithSafe: ScheduleEvent[] = [
+      {
+        id: 'event-safe-week',
+        title: 'Safe Test',
+        start: new Date(2026, 0, 15, 8, 30),
+        end: new Date(2026, 0, 15, 10, 5),
+        type: 'lecture',
+        location: 'Online',
+        meetingUrl: 'https://zoom.us/j/123456789',
+      },
+    ];
+
+    render(
+      <ScheduleWeekDayCard
+        day={dummyDate}
+        events={eventWithSafe}
+        isToday={false}
+        locale="uk-UA"
+        getTypeName={() => 'Лекція'}
+      />,
+    );
+
+    const link = screen.getByRole('link', { name: /приєднатися до заняття/i });
+
+    expect(link).toHaveAttribute('href', 'https://zoom.us/j/123456789');
+  });
 });

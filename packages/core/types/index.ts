@@ -132,3 +132,20 @@ export interface LmsConnectionStatus {
   latencyMs?: number;
   userId?: string | number;
 }
+
+export type {
+  ListTeachingAssignmentsQueryRequest,
+  GetSemesterCalendarQueryRequest,
+  CurriculumPlanResponse,
+  TeachingAssignmentResponse,
+  AcademicGroupResponse,
+  AcademicSubgroupResponse,
+  AcademicStreamResponse,
+  SemesterCalendarResponse,
+  TeacherUnavailabilityResponse,
+  GenerateTimetableDraftResponse,
+  GenerateTimetableDraftResult,
+  TimetableVersionResponse,
+  CalendarSubscriptionTokenResponse,
+  SafeTeacherResponse,
+} from './timetable.ts';
