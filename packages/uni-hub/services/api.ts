@@ -18,17 +18,3 @@ export { OpportunitiesApi, opportunitiesApi } from './api.opportunities';
 export { NotificationsApi, notificationsApi } from './api.notifications';
 export type { PlatformNotification, MarkAllAsReadResponse } from './api.notifications';
 export { TimetableApi, timetableApi } from './api.timetable';
-export type {
-  CurriculumPlanResponse,
-  TeachingAssignmentResponse,
-  SemesterCalendarResponse,
-  TeacherUnavailabilityResponse,
-  GenerateTimetableDraftResult,
-  GenerateTimetableDraftResponse,
-  TimetableVersionResponse,
-  CalendarSubscriptionTokenResponse,
-  AcademicGroupResponse,
-  AcademicSubgroupResponse,
-  AcademicStreamResponse,
-  SafeTeacherResponse,
-} from './api.timetable';

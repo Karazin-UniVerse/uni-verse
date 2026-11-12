@@ -1,8 +1,9 @@
 import React, { useCallback, useId, useMemo, useState } from 'react';
 import { AlertCircle, Check, CheckCircle2, Play, Plus, Trash2 } from 'lucide-react';
 import { Button, CheckBox, Select, Spinner, Tag, TextInput } from '@una';
+import type { GenerateTimetableDraftResult } from '@core/types/timetable';
 import { useLanguage, type FormatMessage } from '@uni-hub/i18n/LanguageContext';
-import { timetableApi, type GenerateTimetableDraftResult } from '@uni-hub/services/api.timetable';
+import { timetableApi } from '@uni-hub/services/api.timetable';
 import styles from './TimetableManagement.module.scss';
 
 export interface WorkloadRow {

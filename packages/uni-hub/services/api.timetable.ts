@@ -1,37 +1,17 @@
 import type {
-  AcademicGroupResponse,
-  AcademicStreamResponse,
-  AcademicSubgroupResponse,
   CalendarSubscriptionTokenResponse,
   CreateSemesterCalendarRequest,
   CreateTeacherUnavailabilityRequest,
   CreateTeachingAssignmentRequest,
   CurriculumPlanResponse,
-  GenerateTimetableDraftResponse,
   GenerateTimetableDraftResult,
   GenerateTimetableRequest,
-  SafeTeacherResponse,
   SemesterCalendarResponse,
   TeacherUnavailabilityResponse,
   TeachingAssignmentResponse,
   TimetableVersionResponse,
 } from '@core/types/timetable';
 import { ApiClient, buildQueryString } from './api.request';
-
-export type {
-  AcademicGroupResponse,
-  AcademicStreamResponse,
-  AcademicSubgroupResponse,
-  CalendarSubscriptionTokenResponse,
-  CurriculumPlanResponse,
-  GenerateTimetableDraftResponse,
-  GenerateTimetableDraftResult,
-  SafeTeacherResponse,
-  SemesterCalendarResponse,
-  TeacherUnavailabilityResponse,
-  TeachingAssignmentResponse,
-  TimetableVersionResponse,
-};
 
 export class TimetableApi extends ApiClient {
   async getCurriculumPlan(id: string): Promise<{ data: CurriculumPlanResponse }> {
