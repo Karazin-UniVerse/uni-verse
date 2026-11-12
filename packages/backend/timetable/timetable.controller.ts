@@ -171,6 +171,20 @@ export class TimetableController {
   }
 
   @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Archive a teaching assignment without removing scheduled events',
+  })
+  @Delete('assignments/:id')
+  async deleteTeachingAssignment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser('roles') roles?: string[],
+  ): Promise<{ count: number }> {
+    assertAdmin(roles);
+
+    return this.timetableService.deleteTeachingAssignment(id);
+  }
+
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'List teaching assignments for a curriculum plan' })
   @Get('assignments')
   async listTeachingAssignments(

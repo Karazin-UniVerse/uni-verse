@@ -1,0 +1,1 @@
+ALTER TABLE "TeachingAssignment" ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP(3);

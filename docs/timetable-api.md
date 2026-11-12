@@ -40,6 +40,29 @@ All endpoints except the public `.ics` feed require a valid Bearer JWT (`AtGuard
 
 ## Draft Generation & Publication Rules
 
+### Removing workload
+
+`DELETE /timetable/assignments/:id` requires `ADMIN` and a UUID. It sets the nullable
+`TeachingAssignment.deletedAt` timestamp and returns `{ "count": 1 }`, or
+`{ "count": 0 }` when already archived or missing. Retries are safe. Archived
+assignments are excluded from workload lists, plan assignments and new generation.
+Existing timetable events and their assignment relations remain unchanged, including
+published calendars and historical participant lookups; foreign keys retain `Restrict`.
+
+The management screen queues saved-row removals until Save or Generate. A failed
+archive remains pending and blocks generation. Temporary rows need no request.
+Plan switching is disabled until pending changes are saved, including archive retries.
+
+Deploy the additive nullable column before starting the updated backend, regenerate
+the Prisma client, and restart the backend. Do not reset or reseed existing databases.
+
+To apply only this additive change, run from `packages/backend`:
+
+```bash
+pnpm exec prisma db execute --file prisma/scripts/archive-teaching-assignments.sql
+pnpm db:generate
+```
+
 1. **Multi-Candidate Persistence**:
    - `POST /timetable/plans/:id/generate` validates solver limits (`maxCandidates` in `1..5`, `timeoutMs` in `1..10000`, demands `<= 200`).
    - Fetches events from already-`PUBLISHED` versions of other curriculum plans in the same semester calendar and passes them as `fixedEvents` to avoid cross-plan teacher and student collisions.

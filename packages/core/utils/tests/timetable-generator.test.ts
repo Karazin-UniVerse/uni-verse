@@ -19,6 +19,289 @@ const calendar: SemesterCalendarConfig = {
 };
 
 describe('timetable generator', () => {
+  test('waits for the first lecture of every group in a joint practical', () => {
+    const result = generateTimetableCandidates({
+      demands: [
+        {
+          id: 'PRACTICE',
+          disciplineTitle: 'Calculus',
+          teachingType: TIMETABLE_TEACHING_TYPE.PRACTICAL,
+          groupIds: ['A', 'B'],
+          academicHours: 2,
+        },
+      ],
+      calendar: { ...calendar, teachingWeeks: 1 },
+      nominalWeeks: 1,
+      fixedEvents: [
+        {
+          id: 'LA',
+          disciplineTitle: 'Calculus',
+          teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+          groupIds: ['A'],
+          date: '2026-09-07',
+          pair: 1,
+        },
+        {
+          id: 'LB',
+          disciplineTitle: 'Calculus',
+          teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+          groupIds: ['B'],
+          date: '2026-09-11',
+          pair: 1,
+        },
+      ],
+    });
+
+    assert.ok(result.ok);
+
+    for (const candidate of result.candidates) {
+      assert.equal(candidate.events[0].date, '2026-09-11');
+      assert.ok(candidate.events[0].pair > 1);
+    }
+  });
+
+  test('prunes impossible precedence before exploring unrelated demands', () => {
+    const demands: TeachingDemand[] = [
+      {
+        id: 'LECTURE',
+        disciplineTitle: 'Calculus',
+        teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+        teacherId: 'LECTURER',
+        groupIds: ['GROUP-1'],
+        academicHours: 2,
+      },
+      {
+        id: 'PRACTICE',
+        disciplineTitle: 'Calculus',
+        teachingType: TIMETABLE_TEACHING_TYPE.PRACTICAL,
+        teacherId: 'TUTOR',
+        groupIds: ['GROUP-1'],
+        academicHours: 2,
+      },
+      ...Array.from({ length: 3 }, (_, index): TeachingDemand => ({
+        id: `OTHER-${index}`,
+        disciplineTitle: `Other ${index}`,
+        teachingType: TIMETABLE_TEACHING_TYPE.PRACTICAL,
+        groupIds: [`OTHER-GROUP-${index}`],
+        academicHours: 2,
+      })),
+    ];
+    const unavailability: TeacherUnavailability[] = [
+      '2026-09-07',
+      '2026-09-08',
+      '2026-09-09',
+      '2026-09-10',
+      '2026-09-11',
+    ].flatMap((date) =>
+      ['LECTURER', 'TUTOR'].flatMap((teacherId) =>
+        date === (teacherId === 'LECTURER' ? '2026-09-11' : '2026-09-07')
+          ? []
+          : Array.from({ length: 7 }, (_, index) => ({
+              teacherId,
+              date,
+              pair: index + 1,
+              isConfirmed: true,
+            })),
+      ),
+    );
+    const result = generateTimetableCandidates({
+      demands,
+      calendar: { ...calendar, teachingWeeks: 1 },
+      nominalWeeks: 1,
+      unavailability,
+    });
+
+    assert.ok(result.diagnostics.statesExplored <= 50, JSON.stringify(result.diagnostics));
+    assert.equal(result.ok, false);
+
+    if (!result.ok) {
+      assert.equal(result.error, 'NO_FEASIBLE_SOLUTION');
+    }
+  });
+
+  test('keeps searching while a lecture layer can still precede a fixed practice', () => {
+    const result = generateTimetableCandidates({
+      demands: [
+        {
+          id: 'LATE',
+          disciplineTitle: 'Calculus',
+          teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+          teacherId: 'LECTURER',
+          groupIds: ['A'],
+          academicHours: 2,
+        },
+        {
+          id: 'EARLY',
+          disciplineTitle: 'Calculus',
+          teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+          groupIds: ['A'],
+          academicHours: 2,
+        },
+      ],
+      calendar: { ...calendar, teachingWeeks: 1 },
+      nominalWeeks: 1,
+      fixedEvents: [
+        {
+          id: 'P',
+          disciplineTitle: 'Calculus',
+          teachingType: TIMETABLE_TEACHING_TYPE.PRACTICAL,
+          groupIds: ['A'],
+          date: '2026-09-07',
+          pair: 2,
+        },
+      ],
+      unavailability: ['2026-09-07', '2026-09-08', '2026-09-09', '2026-09-10'].flatMap((date) =>
+        Array.from({ length: 7 }, (_, index) => ({
+          teacherId: 'LECTURER',
+          date,
+          pair: index + 1,
+          isConfirmed: true,
+        })),
+      ),
+    });
+
+    assert.ok(result.ok);
+    assert.ok(
+      result.candidates[0].events.some(
+        (event) =>
+          event.teachingAssignmentId === 'EARLY' && event.date === '2026-09-07' && event.pair === 1,
+      ),
+    );
+  });
+
+  test('one fixed lecture permits practicals in later weeks without a lecture demand', () => {
+    const result = generateTimetableCandidates({
+      demands: [
+        {
+          id: 'P',
+          disciplineTitle: 'Calculus',
+          teachingType: TIMETABLE_TEACHING_TYPE.PRACTICAL,
+          groupIds: ['A', 'NO-LECTURES'],
+          academicHours: 4,
+        },
+      ],
+      calendar: { ...calendar, teachingWeeks: 2 },
+      nominalWeeks: 2,
+      fixedEvents: [
+        {
+          id: 'L',
+          disciplineTitle: 'Calculus',
+          teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+          groupIds: ['A'],
+          date: '2026-09-04',
+          pair: 1,
+        },
+      ],
+    });
+
+    assert.ok(result.ok);
+    assert.deepEqual(
+      result.candidates[0].events.map((event) => event.date),
+      ['2026-09-07', '2026-09-14'],
+    );
+  });
+
+  test('rejects a seminar when its only free day precedes the first lecture', () => {
+    const demands: TeachingDemand[] = [
+      {
+        id: 'LECTURE',
+        disciplineTitle: 'Calculus',
+        teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+        teacherId: 'LECTURER',
+        groupIds: ['GROUP-1'],
+        academicHours: 2,
+      },
+      {
+        id: 'SEMINAR',
+        disciplineTitle: 'Calculus',
+        teachingType: TIMETABLE_TEACHING_TYPE.SEMINAR,
+        teacherId: 'TUTOR',
+        groupIds: ['GROUP-1'],
+        academicHours: 2,
+      },
+    ];
+    const unavailability: TeacherUnavailability[] = [
+      '2026-09-07',
+      '2026-09-08',
+      '2026-09-09',
+      '2026-09-10',
+      '2026-09-11',
+    ].flatMap((date) =>
+      ['LECTURER', 'TUTOR'].flatMap((teacherId) =>
+        date === (teacherId === 'LECTURER' ? '2026-09-11' : '2026-09-07')
+          ? []
+          : Array.from({ length: 7 }, (_, index) => ({
+              teacherId,
+              date,
+              pair: index + 1,
+              isConfirmed: true,
+            })),
+      ),
+    );
+    const result = generateTimetableCandidates({
+      demands,
+      calendar: { ...calendar, teachingWeeks: 1 },
+      nominalWeeks: 1,
+      unavailability,
+    });
+
+    assert.equal(result.ok, false);
+  });
+
+  test('places a practice after the lecture on the same day without weekday preferences', () => {
+    const demands: TeachingDemand[] = [
+      {
+        id: 'FRIDAY-LECTURE',
+        disciplineTitle: 'Calculus',
+        teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+        teacherId: 'LECTURER',
+        groupIds: ['GROUP-1'],
+        academicHours: 2,
+      },
+      {
+        id: 'FRIDAY-PRACTICE',
+        disciplineTitle: 'Calculus',
+        teachingType: TIMETABLE_TEACHING_TYPE.PRACTICAL,
+        groupIds: ['GROUP-1'],
+        academicHours: 2,
+      },
+    ];
+    const unavailability: TeacherUnavailability[] = [
+      '2026-09-07',
+      '2026-09-08',
+      '2026-09-09',
+      '2026-09-10',
+    ].flatMap((date) =>
+      Array.from({ length: 7 }, (_, index) => ({
+        teacherId: 'LECTURER',
+        date,
+        pair: index + 1,
+        isConfirmed: true,
+      })),
+    );
+    const result = generateTimetableCandidates({
+      demands: [...demands].reverse(),
+      calendar: { ...calendar, teachingWeeks: 1 },
+      nominalWeeks: 1,
+      unavailability,
+    });
+
+    assert.ok(result.ok);
+
+    const lecture = result.candidates[0].events.find(
+      (event) => event.teachingAssignmentId === 'FRIDAY-LECTURE',
+    );
+    const practice = result.candidates[0].events.find(
+      (event) => event.teachingAssignmentId === 'FRIDAY-PRACTICE',
+    );
+
+    assert.ok(lecture);
+    assert.ok(practice);
+    assert.equal(lecture.date, '2026-09-11');
+    assert.equal(practice.date, '2026-09-11');
+    assert.ok(practice.pair > lecture.pair);
+  });
+
   test('solves a small solvable scenario with 2 demands, 1 group, 1 teacher', () => {
     const demands: TeachingDemand[] = [
       {

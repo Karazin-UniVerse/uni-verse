@@ -17,8 +17,17 @@ describe('ScheduleMonthView', () => {
     const selectedDate = new Date(2026, 4, 15);
     const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
     const gridStart = startOfWeek(monthStart);
-    const monthDays = Array.from({ length: 42 }, (_, index) => addDays(gridStart, index));
-    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const monthDays: Date[] = [];
+
+    for (let week = 0; week < 6; week += 1) {
+      const weekMonday = addDays(gridStart, week * 7);
+
+      for (let dayIndex = 0; dayIndex < 6; dayIndex += 1) {
+        monthDays.push(addDays(weekMonday, dayIndex));
+      }
+    }
+
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return {
       selectedDate,
@@ -33,9 +42,7 @@ describe('ScheduleMonthView', () => {
   };
 
   const renderComponent = (props: ScheduleMonthViewProps) => {
-    return render(
-      withLanguage(<ScheduleMonthView {...props} />),
-    );
+    return render(withLanguage(<ScheduleMonthView {...props} />));
   };
 
   it('should render month title, navigation buttons, and weekdays header', () => {
@@ -82,7 +89,7 @@ describe('ScheduleMonthView', () => {
     expect(onSelectDate).toHaveBeenCalledWith(new Date(2026, 5, 1));
   });
 
-  it('should render 42 day cells in month grid', () => {
+  it('should render 36 day cells in month grid', () => {
     const mockEvents: ScheduleEvent[] = [
       {
         id: 'evt-1',
@@ -103,8 +110,8 @@ describe('ScheduleMonthView', () => {
     const monthGrid = container.querySelector('[class*="monthGrid"]');
 
     expect(monthGrid).toBeInTheDocument();
-    expect(monthGrid?.children).toHaveLength(42);
-    expect(getEventsForDate).toHaveBeenCalledTimes(42);
+    expect(monthGrid?.children).toHaveLength(36);
+    expect(getEventsForDate).toHaveBeenCalledTimes(36);
     expect(screen.getByText('Algorithms Lecture')).toBeInTheDocument();
   });
 
@@ -121,7 +128,7 @@ describe('ScheduleMonthView', () => {
     const monthGrid = container.querySelector('[class*="monthGrid"]');
     const dayButtons = monthGrid?.querySelectorAll('button') ?? [];
 
-    expect(dayButtons).toHaveLength(42);
+    expect(dayButtons).toHaveLength(36);
 
     await user.click(dayButtons[targetDayIndex]);
 

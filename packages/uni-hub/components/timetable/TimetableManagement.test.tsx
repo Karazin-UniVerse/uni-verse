@@ -6,6 +6,121 @@ import { timetableApi } from '@uni-hub/services/api.timetable';
 import { TimetableManagement } from './TimetableManagement';
 
 describe('TimetableManagement component', () => {
+  it.each(['save', 'generate'])(
+    'persists removal before %s and retries failures',
+    async (action) => {
+      const remove = vi
+        .spyOn(timetableApi, 'deleteTeachingAssignment')
+        .mockRejectedValueOnce(new Error('Archive failed'))
+        .mockResolvedValue({ data: { count: 1 } });
+      const generate = vi.spyOn(timetableApi, 'generateTimetableDraft').mockResolvedValue({
+        data: {
+          versionId: 'version-1',
+          candidates: [],
+          diagnostics: { statesExplored: 0, timeMs: 0 },
+        },
+      });
+      const user = userEvent.setup();
+
+      renderComponent({
+        initialPlanId: 'plan-cs-2026',
+        initialWorkload: [
+          {
+            id: 'assignment-1',
+            disciplineTitle: 'Чисельні методи',
+            teachingType: 'PRACTICE',
+            academicHours: 32,
+            groupId: 'group-2',
+            isSaturdayOnly: false,
+            hasLateSlotAuthorization: false,
+          },
+        ],
+      });
+      await user.click(screen.getByRole('button', { name: /видалити/i }));
+      expect(remove).not.toHaveBeenCalled();
+      expect(screen.getByLabelText('Навчальний план')).toBeDisabled();
+
+      const buttonName = action === 'save' ? /зберегти навантаження/i : /згенерувати розклад/i;
+
+      await user.click(screen.getByRole('button', { name: buttonName }));
+      expect(await screen.findByRole('alert')).toHaveTextContent('Archive failed');
+      expect(generate).not.toHaveBeenCalled();
+      expect(screen.getByLabelText('Навчальний план')).toBeDisabled();
+      await user.click(screen.getByRole('button', { name: buttonName }));
+      expect(remove).toHaveBeenCalledTimes(2);
+      expect(remove).toHaveBeenLastCalledWith('assignment-1');
+      expect(screen.getByLabelText('Навчальний план')).not.toBeDisabled();
+      expect(generate).toHaveBeenCalledTimes(action === 'generate' ? 1 : 0);
+    },
+  );
+
+  it('does not send a deletion for a temporary row', async () => {
+    const remove = vi.spyOn(timetableApi, 'deleteTeachingAssignment');
+    const user = userEvent.setup();
+
+    renderComponent({
+      initialPlanId: 'plan-cs-2026',
+      initialWorkload: [
+        {
+          id: 'row-new',
+          disciplineTitle: 'Temporary',
+          teachingType: 'LECTURE',
+          academicHours: 32,
+          isSaturdayOnly: false,
+          hasLateSlotAuthorization: false,
+        },
+      ],
+    });
+    await user.click(screen.getByRole('button', { name: /видалити/i }));
+    await user.click(screen.getByRole('button', { name: /зберегти навантаження/i }));
+    expect(remove).not.toHaveBeenCalled();
+  });
+
+  it('does not carry saved rows into another empty plan', async () => {
+    vi.spyOn(timetableApi, 'listCurriculumPlans').mockResolvedValue({
+      data: [
+        {
+          id: 'plan-cs-2026',
+          faculty: 'CS',
+          title: 'First',
+          academicYear: '2026/2027',
+          semester: 1,
+          isDraft: true,
+        },
+        {
+          id: 'plan-other',
+          faculty: 'CS',
+          title: 'Second',
+          academicYear: '2026/2027',
+          semester: 2,
+          isDraft: true,
+        },
+      ],
+    });
+    vi.spyOn(timetableApi, 'listTeachingAssignments').mockImplementation(async (id) => ({
+      data:
+        id === 'plan-other'
+          ? []
+          : [
+              {
+                id: 'assignment-1',
+                curriculumPlanId: id,
+                disciplineTitle: 'Old plan row',
+                teachingType: 'LECTURE',
+                academicHours: 32,
+                isSaturdayOnly: false,
+                hasLateSlotAuthorization: false,
+              },
+            ],
+    }));
+    const user = userEvent.setup();
+
+    renderComponent();
+    await screen.findByDisplayValue('Old plan row');
+    await user.selectOptions(screen.getByLabelText('Навчальний план'), 'plan-other');
+    expect(screen.queryByDisplayValue('Old plan row')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /видалити/i })).not.toBeInTheDocument();
+  });
   it.each([false, true])(
     'adjusts the selected draft slot and preserves conflicts (failure: %s)',
     async (fails) => {

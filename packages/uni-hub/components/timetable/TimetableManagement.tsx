@@ -337,6 +337,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
     () => initialWorkload ?? createDefaultWorkload(formatMessage),
   );
   const [dirtyRowIds, setDirtyRowIds] = useState<Set<string>>(() => new Set());
+  const [deletedRowIds, setDeletedRowIds] = useState<Set<string>>(() => new Set());
   const [isSavingWorkload, setIsSavingWorkload] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -496,6 +497,10 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   }, [academicGroups]);
 
   const handleRemoveRow = useCallback((id: string) => {
+    if (!id.startsWith('row-')) {
+      setDeletedRowIds((prev) => new Set(prev).add(id));
+    }
+
     setWorkload((prev) => prev.filter((row) => row.id !== id));
     setDirtyRowIds((prev) => {
       const next = new Set(prev);
@@ -647,6 +652,17 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   );
 
   const persistDirtyWorkload = useCallback(async () => {
+    for (const id of deletedRowIds) {
+      await timetableApi.deleteTeachingAssignment(id);
+      setDeletedRowIds((prev) => {
+        const next = new Set(prev);
+
+        next.delete(id);
+
+        return next;
+      });
+    }
+
     const rowsToPersist = workload.filter(
       (row) => dirtyRowIds.has(row.id) && row.disciplineTitle.trim(),
     );
@@ -701,7 +717,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
 
       return next;
     });
-  }, [dirtyRowIds, planId, workload]);
+  }, [deletedRowIds, dirtyRowIds, planId, workload]);
 
   const handleSaveWorkload = useCallback(async () => {
     setIsSavingWorkload(true);
@@ -877,7 +893,13 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
           id={`${baseId}-planId`}
           value={planId}
           options={planOptions}
-          onChange={setPlanId}
+          onChange={(id) => {
+            setWorkload([]);
+            setPlanId(id);
+          }}
+          disabled={
+            deletedRowIds.size > 0 || dirtyRowIds.size > 0 || isSavingWorkload || isGenerating
+          }
           aria-label={formatMessage('timetable.planId')}
         />
       </section>
@@ -885,7 +907,11 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
       {/* Workload Table */}
       <section className={styles.section}>
         <h3>{formatMessage('timetable.workloadTitle')}</h3>
-        <div className={styles.tableContainer}>
+        <fieldset
+          className={styles.tableContainer}
+          disabled={isSavingWorkload || isGenerating}
+          style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
+        >
           <table className={styles.workloadTable}>
             <thead>
               <tr>
@@ -1012,10 +1038,15 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
               ))}
             </tbody>
           </table>
-        </div>
+        </fieldset>
 
         <div className={styles.tableActions}>
-          <Button type="button" variant="secondary" onClick={handleAddRow}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleAddRow}
+            disabled={isSavingWorkload || isGenerating}
+          >
             <Plus size={16} /> {formatMessage('timetable.addAssignment')}
           </Button>
 
@@ -1023,7 +1054,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
             type="button"
             variant="secondary"
             onClick={handleSaveWorkload}
-            disabled={isSavingWorkload || !planId}
+            disabled={isSavingWorkload || isGenerating || !planId}
           >
             <Save size={16} /> {formatMessage('timetable.saveWorkload')}
           </Button>
@@ -1032,7 +1063,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
             type="button"
             variant="primary"
             onClick={handleGenerate}
-            disabled={isGenerating || !planId}
+            disabled={isGenerating || isSavingWorkload || !planId}
           >
             {isGenerating ? (
               <>

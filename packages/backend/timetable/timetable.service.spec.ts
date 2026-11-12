@@ -19,6 +19,56 @@ import type {
 describe('TimetableService', () => {
   let service: TimetableService;
 
+  it('archives an assignment idempotently without deleting historical events', async () => {
+    mockTeachingAssignmentPrisma.updateMany
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 0 });
+
+    await expect(
+      service.deleteTeachingAssignment('assignment-1'),
+    ).resolves.toEqual({ count: 1 });
+    await expect(
+      service.deleteTeachingAssignment('assignment-1'),
+    ).resolves.toEqual({ count: 0 });
+    expect(mockTeachingAssignmentPrisma.updateMany).toHaveBeenCalledWith({
+      where: { id: 'assignment-1', deletedAt: null },
+      data: { deletedAt: expect.any(Date) },
+    });
+    expect(mockTimetableEventPrisma.update).not.toHaveBeenCalled();
+  });
+
+  it('excludes archived assignments from plan and teacher lists', async () => {
+    mockTeachingAssignmentPrisma.findMany.mockResolvedValue([]);
+    mockCurriculumPlanPrisma.findUnique.mockResolvedValue({
+      id: 'plan-1',
+      teachingAssignments: [],
+    });
+
+    await service.listTeachingAssignments('plan-1');
+    await service.listTeacherAssignments('teacher-1');
+    await service.getCurriculumPlan('plan-1');
+
+    expect(mockTeachingAssignmentPrisma.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { curriculumPlanId: 'plan-1', deletedAt: null },
+      }),
+    );
+    expect(mockTeachingAssignmentPrisma.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { teacherId: 'teacher-1', deletedAt: null },
+      }),
+    );
+    expect(mockCurriculumPlanPrisma.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: {
+          teachingAssignments: expect.objectContaining({
+            where: { deletedAt: null },
+          }),
+        },
+      }),
+    );
+  });
+
   const mockAcademicGroupPrisma = {
     create: jest.fn(),
     findMany: jest.fn(),
@@ -35,6 +85,7 @@ describe('TimetableService', () => {
   };
 
   const mockTeachingAssignmentPrisma = {
+    updateMany: jest.fn(),
     create: jest.fn(),
     findMany: jest.fn(),
     findUnique: jest.fn(),
@@ -482,6 +533,7 @@ describe('TimetableService', () => {
         where: { id: 'plan-1' },
         include: {
           teachingAssignments: {
+            where: { deletedAt: null },
             include: {
               teacher: {
                 select: {
@@ -769,7 +821,7 @@ describe('TimetableService', () => {
 
       expect(result).toEqual(assignments);
       expect(mockTeachingAssignmentPrisma.findMany).toHaveBeenCalledWith({
-        where: { curriculumPlanId: 'plan-1' },
+        where: { curriculumPlanId: 'plan-1', deletedAt: null },
         include: {
           teacher: {
             select: {
@@ -801,7 +853,7 @@ describe('TimetableService', () => {
 
       expect(result).toEqual(assignments);
       expect(mockTeachingAssignmentPrisma.findMany).toHaveBeenCalledWith({
-        where: { teacherId: 'teacher-1' },
+        where: { teacherId: 'teacher-1', deletedAt: null },
         include: {
           teacher: {
             select: {
@@ -1025,6 +1077,11 @@ describe('TimetableService', () => {
       });
 
       expect(result.versionId).toBe('ver-1');
+      expect(mockTeachingAssignmentPrisma.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { curriculumPlanId: 'plan-1', deletedAt: null },
+        }),
+      );
       expect(result.versionIds).toEqual(['ver-1', 'ver-2']);
       expect(result.candidateSummaries).toHaveLength(2);
       expect(result.candidateSummaries[0]).toMatchObject({
@@ -1236,6 +1293,9 @@ describe('TimetableService', () => {
       );
 
       expect(published.status).toBe('PUBLISHED');
+      expect(mockTeachingAssignmentPrisma.findMany).toHaveBeenCalledWith({
+        where: { curriculumPlanId: { in: ['plan-1'] }, deletedAt: null },
+      });
       expect(mockPrismaService.$transaction).toHaveBeenCalledWith(
         expect.any(Function),
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },

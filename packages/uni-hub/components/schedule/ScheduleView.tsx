@@ -116,7 +116,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   const weekdays = useMemo(() => {
     const monday = new Date(2024, 0, 1);
 
-    return Array.from({ length: 7 }, (_, index) => {
+    return Array.from({ length: 6 }, (_, index) => {
       const date = addDays(monday, index);
       const raw = new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(date);
 
@@ -139,8 +139,17 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     const month = selectedDate.getMonth();
     const first = new Date(year, month, 1);
     const start = startOfWeek(first);
+    const days: Date[] = [];
 
-    return Array.from({ length: 42 }, (_, dayIndex) => addDays(start, dayIndex));
+    for (let week = 0; week < 6; week += 1) {
+      const weekMonday = addDays(start, week * 7);
+
+      for (let dayIndex = 0; dayIndex < 6; dayIndex += 1) {
+        days.push(addDays(weekMonday, dayIndex));
+      }
+    }
+
+    return days;
   }, [selectedDate]);
 
   const handleSelectDayMode = useCallback(() => {

@@ -86,6 +86,12 @@ export class TimetableApi extends ApiClient {
     );
   }
 
+  async deleteTeachingAssignment(id: string): Promise<{ data: { count: number } }> {
+    return this.request<{ count: number }>(`/timetable/assignments/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+  }
+
   async listTeachingAssignments(planId: string): Promise<{ data: TeachingAssignmentResponse[] }> {
     const query = buildQueryString({ curriculumPlanId: planId });
 

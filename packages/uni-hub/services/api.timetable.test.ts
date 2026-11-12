@@ -9,6 +9,14 @@ function mockFetchResponse(data: unknown): void {
 }
 
 describe('TimetableApi', () => {
+  it('archives an assignment using an encoded id and DELETE', async () => {
+    mockFetchResponse({});
+    await timetableApi.deleteTeachingAssignment('assignment/1');
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/timetable/assignments/assignment%2F1'),
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
   it('adjusts a draft slot with an encoded version id and PATCH payload', async () => {
     const payload = {
       teachingAssignmentId: 'assignment-1',

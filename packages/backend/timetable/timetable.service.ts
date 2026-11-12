@@ -271,6 +271,7 @@ export class TimetableService {
       where: { id },
       include: {
         teachingAssignments: {
+          where: { deletedAt: null },
           include: {
             teacher: {
               select: TEACHER_SAFE_SELECT,
@@ -477,11 +478,18 @@ export class TimetableService {
     return updated as unknown as TeachingAssignmentWithDetails;
   }
 
+  async deleteTeachingAssignment(id: string): Promise<{ count: number }> {
+    return this.prisma.teachingAssignment.updateMany({
+      where: { id, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+  }
+
   async listTeachingAssignments(
     planId: string,
   ): Promise<TeachingAssignmentWithDetails[]> {
     const assignments = await this.prisma.teachingAssignment.findMany({
-      where: { curriculumPlanId: planId },
+      where: { curriculumPlanId: planId, deletedAt: null },
       include: {
         teacher: {
           select: TEACHER_SAFE_SELECT,
@@ -500,7 +508,7 @@ export class TimetableService {
     teacherId: string,
   ): Promise<TeachingAssignmentWithDetails[]> {
     const assignments = await this.prisma.teachingAssignment.findMany({
-      where: { teacherId },
+      where: { teacherId, deletedAt: null },
       include: {
         teacher: {
           select: TEACHER_SAFE_SELECT,
@@ -641,7 +649,7 @@ export class TimetableService {
     );
 
     const assignments = await this.prisma.teachingAssignment.findMany({
-      where: { curriculumPlanId: planId },
+      where: { curriculumPlanId: planId, deletedAt: null },
       include: {
         teacher: {
           select: TEACHER_SAFE_SELECT,
@@ -1121,7 +1129,7 @@ export class TimetableService {
       const planAssignments =
         planIds.length > 0
           ? ((await tx.teachingAssignment?.findMany?.({
-              where: { curriculumPlanId: { in: planIds } },
+              where: { curriculumPlanId: { in: planIds }, deletedAt: null },
             })) ?? [])
           : [];
 

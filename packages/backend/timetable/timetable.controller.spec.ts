@@ -26,8 +26,36 @@ import type {
 describe('TimetableController', () => {
   let controller: TimetableController;
 
+  it('allows only admins to archive teaching assignments', async () => {
+    mockTimetableService.deleteTeachingAssignment.mockResolvedValue({
+      count: 1,
+    });
+    await expect(
+      controller.deleteTeachingAssignment('assignment-1', [Role.ADMIN]),
+    ).resolves.toEqual({ count: 1 });
+    expect(mockTimetableService.deleteTeachingAssignment).toHaveBeenCalledWith(
+      'assignment-1',
+    );
+    mockTimetableService.deleteTeachingAssignment.mockClear();
+
+    for (const roles of [
+      [Role.INSTRUCTOR],
+      [Role.OPPORTUNITIES_USER],
+      undefined,
+    ]) {
+      await expect(
+        controller.deleteTeachingAssignment('assignment-1', roles),
+      ).rejects.toThrow(ForbiddenException);
+    }
+
+    expect(
+      mockTimetableService.deleteTeachingAssignment,
+    ).not.toHaveBeenCalled();
+  });
+
   const mockTimetableService = {
     createAcademicGroup: jest.fn(),
+    deleteTeachingAssignment: jest.fn(),
     listAcademicGroups: jest.fn(),
     createCurriculumPlan: jest.fn(),
     getCurriculumPlan: jest.fn(),
@@ -647,6 +675,9 @@ describe('TimetableController', () => {
     }
 
     it('applies ParseUUIDPipe to curriculum plan id param', () => {
+      expect(getPipesForParam('deleteTeachingAssignment', 0)).toContain(
+        ParseUUIDPipe,
+      );
       const pipes = getPipesForParam('getCurriculumPlan', 0);
 
       expect(pipes).toContain(ParseUUIDPipe);

@@ -1050,6 +1050,20 @@ describe('checkTimetableConflicts', () => {
       );
     });
 
+    test('one Friday lecture permits multiple practical classes in subsequent weeks', () => {
+      const report = checkTimetableConflicts({
+        events: [
+          lecture('l', '2026-09-11'),
+          makeEvent({ id: 'p1', date: '2026-09-14' }),
+          makeEvent({ id: 'p2', date: '2026-09-15' }),
+          makeEvent({ id: 'p3', date: '2026-09-21' }),
+        ],
+      });
+
+      assert.ok(report.isValid);
+      assert.deepStrictEqual(softCodes(report), []);
+    });
+
     test('practice of another discipline is ignored', () => {
       assert.deepStrictEqual(
         softCodes(

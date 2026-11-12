@@ -692,7 +692,10 @@ function isBeforeSlot(first: EventSlot, second: EventSlot): boolean {
   return compareSlots(first, second) < 0;
 }
 
-function getPrecedencePenalties(slots: EventSlot[]): SoftPenalty[] {
+function getPrecedencePenalties(
+  slots: EventSlot[],
+  pendingLectures: TeachingDemand[] = [],
+): SoftPenalty[] {
   const lectures = slots.filter(
     ({ event }): boolean => event.teachingType === TIMETABLE_TEACHING_TYPE.LECTURE,
   );
@@ -708,28 +711,34 @@ function getPrecedencePenalties(slots: EventSlot[]): SoftPenalty[] {
       continue;
     }
 
-    const groupLectures = lectures.filter(
-      ({ event }): boolean =>
-        event.disciplineTitle === disciplineTitle &&
-        event.groupIds.some((groupId): boolean => groupIds.includes(groupId)),
-    );
-    const earliest = [...groupLectures].sort((first, second): number => {
-      if (first.event.date !== second.event.date) {
-        return first.event.date.localeCompare(second.event.date);
+    for (const groupId of groupIds) {
+      if (
+        pendingLectures.some(
+          (demand): boolean =>
+            demand.disciplineTitle === disciplineTitle && demand.groupIds.includes(groupId),
+        )
+      ) {
+        continue;
       }
 
-      return first.firstPair - second.firstPair;
-    })[0];
+      const earliest = lectures
+        .filter(
+          ({ event }): boolean =>
+            event.disciplineTitle === disciplineTitle && event.groupIds.includes(groupId),
+        )
+        .sort(compareSlots)[0];
 
-    if (earliest && isBeforeSlot(practice, earliest)) {
-      const code = TIMETABLE_SOFT_PENALTY_CODE.PRACTICE_BEFORE_LECTURE;
+      if (earliest && isBeforeSlot(practice, earliest)) {
+        const code = TIMETABLE_SOFT_PENALTY_CODE.PRACTICE_BEFORE_LECTURE;
 
-      penalties.push({
-        code,
-        score: TIMETABLE_SOFT_WEIGHT[code],
-        message: `${disciplineTitle}: ${teachingType} on ${practice.event.date} precedes the first lecture`,
-        eventIds: [practice.event.id, earliest.event.id],
-      });
+        penalties.push({
+          code,
+          score: TIMETABLE_SOFT_WEIGHT[code],
+          message: `${disciplineTitle}: ${teachingType} on ${practice.event.date} precedes the first lecture`,
+          eventIds: [practice.event.id, earliest.event.id],
+        });
+        break;
+      }
     }
   }
 
@@ -810,17 +819,10 @@ export function checkTimetableConflicts({
 
 type SlotHeuristicParams = {
   demand: TeachingDemand;
-  weekday: number;
   pair: number;
-  demandIndex?: number;
 };
 
-function computeSlotHeuristicCost({
-  demand,
-  weekday,
-  pair,
-  demandIndex = 0,
-}: SlotHeuristicParams): number {
+function computeSlotHeuristicCost({ demand, pair }: SlotHeuristicParams): number {
   if (demand.isSaturdayOnly) {
     if (pair > LAST_PREFERRED_SATURDAY_PAIR) {
       return (pair - LAST_PREFERRED_SATURDAY_PAIR) * SATURDAY_LATE_PENALTY_MULTIPLIER;
@@ -829,30 +831,7 @@ function computeSlotHeuristicCost({
     return pair;
   }
 
-  const isLecture = demand.teachingType === TIMETABLE_TEACHING_TYPE.LECTURE;
   let cost = 0;
-
-  if (isLecture) {
-    // Лекції зосереджуються на початку тижня (Пн = 1, Вт = 2) та на ранніх парах (1..3),
-    // щоб практики, семінари та лабораторні роботи завжди слідували після лекцій.
-    cost += Math.abs(weekday - ((demandIndex % 2) + 1)) * (WEEKDAY_PENALTY_MULTIPLIER * 2);
-
-    if (weekday > 2) {
-      cost += WEEKDAY_PENALTY_MULTIPLIER * 4;
-    }
-
-    cost += pair * 2;
-  } else {
-    // Практики, семінари та лабораторні розподіляються після лекцій:
-    // переважно у Середу (3), Четвер (4) та П'ятницю (5).
-    cost += Math.abs(weekday - (((demandIndex * 2) % 3) + 3)) * WEEKDAY_PENALTY_MULTIPLIER;
-
-    if (weekday === 1) {
-      cost += WEEKDAY_PENALTY_MULTIPLIER * 3;
-    }
-
-    cost += pair;
-  }
 
   if (pair <= MAX_STANDARD_PAIR) {
     cost += pair;
@@ -1130,9 +1109,7 @@ export function generateTimetableCandidates({
 
         const heuristicCost = computeSlotHeuristicCost({
           demand,
-          weekday,
           pair,
-          demandIndex,
         });
 
         slots.push({
@@ -1202,6 +1179,11 @@ export function generateTimetableCandidates({
   let assignedCount = 0;
   const candidates: TimetableCandidate[] = [];
   let timedOut = false;
+  const fixedSlots = fixedEvents.flatMap((event): EventSlot[] => {
+    const slot = toEventSlot(event);
+
+    return slot === null ? [] : [slot];
+  });
 
   function search(): void {
     statesExplored += 1;
@@ -1209,6 +1191,27 @@ export function generateTimetableCandidates({
     if (Date.now() - startTime >= timeoutMs) {
       timedOut = true;
 
+      return;
+    }
+
+    const pendingLectures = units
+      .filter(
+        (unit): boolean =>
+          assigned[unit.unitIndex] === null &&
+          unit.demand.teachingType === TIMETABLE_TEACHING_TYPE.LECTURE,
+      )
+      .map((unit): TeachingDemand => unit.demand);
+    const partialSlots = assigned.flatMap((candidate): EventSlot[] =>
+      candidate === null
+        ? []
+        : candidate.events.flatMap((event): EventSlot[] => {
+            const slot = toEventSlot(event);
+
+            return slot === null ? [] : [slot];
+          }),
+    );
+
+    if (getPrecedencePenalties([...fixedSlots, ...partialSlots], pendingLectures).length > 0) {
       return;
     }
 
@@ -1245,7 +1248,11 @@ export function generateTimetableCandidates({
         unavailability,
       });
 
-      if (report.isValid) {
+      const hasPracticeBeforeLecture = report.softPenalties.some(
+        ({ code }): boolean => code === TIMETABLE_SOFT_PENALTY_CODE.PRACTICE_BEFORE_LECTURE,
+      );
+
+      if (report.isValid && !hasPracticeBeforeLecture) {
         candidates.push({
           events,
           penaltyScore: report.totalPenaltyScore,

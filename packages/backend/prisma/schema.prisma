@@ -314,6 +314,7 @@ model CurriculumPlan {
 }
 
 model TeachingAssignment {
+  deletedAt                DateTime?
   id                       String       @id @default(uuid())
   curriculumPlanId         String
   disciplineTitle          String
