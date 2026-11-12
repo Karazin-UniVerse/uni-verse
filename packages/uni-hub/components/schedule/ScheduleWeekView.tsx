@@ -21,7 +21,7 @@ export const ScheduleWeekView: React.FC<ScheduleWeekViewProps> = ({
   const { formatMessage } = useLanguage();
   const weekStart = useMemo(() => startOfWeek(selectedDate), [selectedDate]);
   const days = useMemo(
-    () => Array.from({ length: 7 }, (_, dayIndex) => addDays(weekStart, dayIndex)),
+    () => Array.from({ length: 6 }, (_, dayIndex) => addDays(weekStart, dayIndex)),
     [weekStart],
   );
   const today = useToday();
@@ -39,7 +39,7 @@ export const ScheduleWeekView: React.FC<ScheduleWeekViewProps> = ({
         <h3>
           {formatScheduleDate(weekStart, { day: 'numeric', month: 'short' }, locale)} –{' '}
           {formatScheduleDate(
-            addDays(weekStart, 6),
+            addDays(weekStart, 5),
             { day: 'numeric', month: 'short', year: 'numeric' },
             locale,
           )}

@@ -47,9 +47,7 @@ describe('ScheduleWeekView', () => {
   };
 
   const renderComponent = (props: ScheduleWeekViewProps) => {
-    return render(
-      withLanguage(<ScheduleWeekView {...props} />),
-    );
+    return render(withLanguage(<ScheduleWeekView {...props} />));
   };
 
   it('should render week date range heading and previous/next week navigation buttons', () => {
@@ -57,7 +55,7 @@ describe('ScheduleWeekView', () => {
 
     renderComponent(props);
 
-    expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('May 11 – May 17, 2026');
+    expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('May 11 – May 16, 2026');
     expect(screen.getByRole('button', { name: /previous week/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /next week/i })).toBeInTheDocument();
   });
@@ -92,7 +90,7 @@ describe('ScheduleWeekView', () => {
     expect(onSelectDate).toHaveBeenCalledWith(new Date(2026, 4, 22));
   });
 
-  it('should render 7 week day cards for each day of the week', () => {
+  it('should render 6 week day cards for Monday through Saturday', () => {
     const getEventsForDate = vi.fn(() => []);
     const props = createDefaultProps({ getEventsForDate });
 
@@ -102,18 +100,10 @@ describe('ScheduleWeekView', () => {
     const dayCards = weekGrid ? Array.from(weekGrid.children) : [];
 
     expect(weekGrid).toBeInTheDocument();
-    expect(dayCards).toHaveLength(7);
-    expect(getEventsForDate).toHaveBeenCalledTimes(7);
+    expect(dayCards).toHaveLength(6);
+    expect(getEventsForDate).toHaveBeenCalledTimes(6);
 
-    const expectedWeekdays = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ];
+    const expectedWeekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
     expectedWeekdays.forEach((weekday) => {
       expect(screen.getByText(weekday)).toBeInTheDocument();
@@ -149,18 +139,17 @@ describe('ScheduleWeekView', () => {
 
     const freeDayPlaceholders = screen.getAllByText('Free day');
 
-    expect(freeDayPlaceholders).toHaveLength(6);
+    expect(freeDayPlaceholders).toHaveLength(5);
 
     const weekGrid = container.querySelector('[class*="weekGrid"]');
     const dayCards = weekGrid ? Array.from(weekGrid.children) : [];
 
-    expect(dayCards).toHaveLength(7);
+    expect(dayCards).toHaveLength(6);
     expect(dayCards[2]?.className).toContain('today');
     expect(dayCards[0]?.className).not.toContain('today');
     expect(dayCards[1]?.className).not.toContain('today');
     expect(dayCards[3]?.className).not.toContain('today');
     expect(dayCards[4]?.className).not.toContain('today');
     expect(dayCards[5]?.className).not.toContain('today');
-    expect(dayCards[6]?.className).not.toContain('today');
   });
 });
