@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test, { describe } from 'node:test';
 import { TIMETABLE_TEACHING_TYPE, TIMETABLE_WEEKDAY } from '../../constants/timetable.ts';
 import type {
+  ScheduledEvent,
   SemesterCalendarConfig,
   TeacherUnavailability,
   TeachingDemand,
@@ -422,6 +423,71 @@ describe('timetable generator', () => {
     if (!result.ok) {
       assert.strictEqual(result.error, 'INVALID_INPUT');
     }
+  });
+
+  describe('fixed events', () => {
+    const MONDAY_MS = Date.parse('2026-09-07T00:00:00Z');
+    const WEEK_MS = 7 * 86_400_000;
+    const lecture: TeachingDemand = {
+      id: 'DEMAND-FIXED-LEC',
+      disciplineTitle: 'Calculus',
+      teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+      teacherId: 'TEACHER-1',
+      groupIds: ['GROUP-1'],
+      academicHours: 32,
+    };
+    const getMondayFirstPairs = (overrides: Partial<ScheduledEvent>): ScheduledEvent[] =>
+      Array.from({ length: WEEKS }, (_, weekIndex): ScheduledEvent => ({
+        id: `FIXED-${weekIndex}`,
+        teachingAssignmentId: 'FIXED-ASSIGNMENT',
+        disciplineTitle: 'Published elsewhere',
+        teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+        teacherId: 'TEACHER-OTHER',
+        groupIds: ['GROUP-OTHER'],
+        date: new Date(MONDAY_MS + weekIndex * WEEK_MS).toISOString().slice(0, 10),
+        pair: 1,
+        ...overrides,
+      }));
+
+    test('avoids slots occupied by fixed events of the same group', () => {
+      const fixedEvents = getMondayFirstPairs({ groupIds: ['GROUP-1'] });
+      const result = generateTimetableCandidates({ demands: [lecture], calendar, fixedEvents });
+
+      assert.ok(result.ok);
+
+      const [candidate] = result.candidates;
+      const fixedKeys = new Set(fixedEvents.map(({ date, pair }): string => `${date}|${pair}`));
+
+      assert.strictEqual(candidate.events.length, 16);
+      assert.ok(
+        candidate.events.every(({ date, pair }): boolean => !fixedKeys.has(`${date}|${pair}`)),
+      );
+      assert.ok(candidate.events.every(({ id }): boolean => !id.startsWith('FIXED-')));
+      assert.ok(checkTimetableConflicts({ events: [...fixedEvents, ...candidate.events] }).isValid);
+    });
+
+    test('avoids slots occupied by fixed events of the same teacher', () => {
+      const fixedEvents = getMondayFirstPairs({ teacherId: 'TEACHER-1' });
+      const result = generateTimetableCandidates({ demands: [lecture], calendar, fixedEvents });
+
+      assert.ok(result.ok);
+      assert.ok(
+        checkTimetableConflicts({ events: [...fixedEvents, ...result.candidates[0].events] })
+          .isValid,
+      );
+    });
+
+    test('ignores fixed events of unrelated teachers and groups', () => {
+      const withFixed = generateTimetableCandidates({
+        demands: [lecture],
+        calendar,
+        fixedEvents: getMondayFirstPairs({}),
+      });
+      const without = generateTimetableCandidates({ demands: [lecture], calendar });
+
+      assert.ok(withFixed.ok && without.ok);
+      assert.deepStrictEqual(withFixed.candidates[0].events, without.candidates[0].events);
+    });
   });
 
   describe('shortened semester', () => {

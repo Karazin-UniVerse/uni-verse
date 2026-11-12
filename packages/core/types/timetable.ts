@@ -169,6 +169,8 @@ export type GenerateTimetableParams = {
   unavailability?: TeacherUnavailability[];
   options?: GenerateTimetableOptions;
   nominalWeeks?: number;
+  /** Already published occupancy: respected by the solver, never returned as candidate events. */
+  fixedEvents?: ScheduledEvent[];
 };
 
 export type TimetableCandidate = {

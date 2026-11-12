@@ -861,6 +861,7 @@ export function generateTimetableCandidates({
   nominalWeeks: paramsNominalWeeks,
   options,
   unavailability = [],
+  fixedEvents = [],
 }: GenerateTimetableParams): GenerateTimetableResult {
   const startTime = Date.now();
   let statesExplored = 0;
@@ -951,6 +952,16 @@ export function generateTimetableCandidates({
   }
 
   const confirmedUnavailability = unavailability.filter((entry): boolean => entry.isConfirmed);
+  const fixedByTimeKey = new Map<string, ScheduledEvent[]>();
+
+  for (const fixedEvent of fixedEvents) {
+    for (let offset = 0; offset < getEventSpan(fixedEvent); offset += 1) {
+      const key = `${fixedEvent.date}|${fixedEvent.pair + offset}`;
+
+      fixedByTimeKey.set(key, [...(fixedByTimeKey.get(key) ?? []), fixedEvent]);
+    }
+  }
+
   const unitCandidateSlots: CandidateSlot[][] = [];
   const unitMaxOccurrences = new Map<number, number>();
   let nextGlobalIndex = 0;
@@ -1041,6 +1052,19 @@ export function generateTimetableCandidates({
         );
 
         if (isUnavailable) {
+          continue;
+        }
+
+        const isFixedOccupied = expandResult.occurrences.some((occurrence): boolean =>
+          (fixedByTimeKey.get(`${occurrence.date}|${occurrence.pair}`) ?? []).some(
+            (fixedEvent): boolean =>
+              fixedEvent.teacherId === demand.teacherId ||
+              (!(demand.streamId !== undefined && demand.streamId === fixedEvent.streamId) &&
+                hasStudentIntersection(demand, fixedEvent)),
+          ),
+        );
+
+        if (isFixedOccupied) {
           continue;
         }
 
@@ -1170,7 +1194,10 @@ export function generateTimetableCandidates({
         return;
       }
 
-      const report = checkTimetableConflicts({ events, unavailability });
+      const report = checkTimetableConflicts({
+        events: [...fixedEvents, ...events],
+        unavailability,
+      });
 
       if (report.isValid) {
         candidates.push({
