@@ -38,7 +38,12 @@ import {
   type TeachingAssignmentWithDetails,
   type TimetableVersionWithEvents,
 } from './timetable.service';
-import type { IcsCalendarEvent } from '@universe/core/types/timetable';
+import type {
+  AdjustDraftSlotResponse,
+  IcsCalendarEvent,
+  SemesterCalendarResponse,
+  TeacherSlotPreference,
+} from '@universe/core/types/timetable';
 import {
   AdjustDraftSlotDto,
   RescheduleEventDto,
@@ -51,6 +56,7 @@ import {
   GenerateTimetableDto,
   GetSemesterCalendarQueryDto,
   ListTeachingAssignmentsQueryDto,
+  SaveSlotPreferencesDto,
   UpdateMeetingUrlDto,
   UpdateTeachingAssignmentDto,
 } from './dto';
@@ -79,6 +85,43 @@ export class ParseFeedTokenPipe implements PipeTransform<string, string> {
 @UseGuards(AtGuard)
 export class TimetableController {
   constructor(private readonly timetableService: TimetableService) {}
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List semesters for instructor preferences' })
+  @Get('my/slot-preferences/semesters')
+  listPreferenceSemesters(
+    @GetUser('sub') userId: string,
+  ): Promise<SemesterCalendarResponse[]> {
+    return this.timetableService.listPreferenceSemesters(userId);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Read own semester slot preferences' })
+  @Get('my/slot-preferences/:semesterCalendarId')
+  getMySlotPreferences(
+    @GetUser('sub') userId: string,
+    @Param('semesterCalendarId', ParseUUIDPipe) semesterCalendarId: string,
+  ): Promise<TeacherSlotPreference[]> {
+    return this.timetableService.getMySlotPreferences(
+      userId,
+      semesterCalendarId,
+    );
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Replace own semester slot preferences' })
+  @Put('my/slot-preferences/:semesterCalendarId')
+  saveMySlotPreferences(
+    @GetUser('sub') userId: string,
+    @Param('semesterCalendarId', ParseUUIDPipe) semesterCalendarId: string,
+    @Body() dto: SaveSlotPreferencesDto,
+  ): Promise<TeacherSlotPreference[]> {
+    return this.timetableService.saveMySlotPreferences(
+      userId,
+      semesterCalendarId,
+      dto,
+    );
+  }
 
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create an academic group' })
@@ -311,7 +354,7 @@ export class TimetableController {
     @Param('versionId', ParseUUIDPipe) versionId: string,
     @Body() dto: AdjustDraftSlotDto,
     @GetUser('roles') roles?: string[],
-  ): Promise<TimetableVersionWithEvents & { penaltyScore: number }> {
+  ): Promise<AdjustDraftSlotResponse> {
     assertAdmin(roles);
 
     return this.timetableService.adjustDraftSlot(versionId, dto);

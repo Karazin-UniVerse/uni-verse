@@ -34,6 +34,7 @@ describe('ScheduleMonthDayCell', () => {
     expect(screen.getByText('Class 1')).toBeInTheDocument();
     expect(screen.getByText('Class 2')).toBeInTheDocument();
     expect(screen.getByText('Class 3')).toBeInTheDocument();
+    expect(screen.getByTitle('Class 1')).toHaveTextContent('Class 1');
     expect(screen.queryByText(/^\+/)).not.toBeInTheDocument();
   });
 

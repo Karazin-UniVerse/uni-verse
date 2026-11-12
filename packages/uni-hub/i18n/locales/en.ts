@@ -798,4 +798,19 @@ export const en = {
   'notifications.action.APPROVE': 'approved and published',
   'notifications.action.REJECT': 'rejected',
   'notifications.action.REQUIRE_CHANGES': 'requires changes',
+
+  // Teacher Slot Preferences
+  'preferences.title': 'Schedule Preferences (Teacher)',
+  'preferences.description':
+    'Select preferred and undesirable slots per week for the selected semester. Click a cell to toggle its status.',
+  'preferences.semester': 'Academic semester:',
+  'preferences.save': 'Apply preferences',
+  'preferences.discard': 'Discard changes',
+  'preferences.savedSuccess': 'Preferences saved successfully',
+  'preferences.error': 'Failed to load or save preferences',
+  'preferences.preferred': 'Preferred',
+  'preferences.undesirable': 'Undesirable',
+  'preferences.neutral': 'Neutral',
+  'timetable.preferenceViolations': 'Teacher preference violations ({count})',
+  'timetable.preferenceViolationItem': '{teacher}: {date}, pair #{pair}',
 } as const satisfies Record<TranslationKey, string>;

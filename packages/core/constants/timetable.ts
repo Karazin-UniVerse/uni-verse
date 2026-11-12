@@ -152,6 +152,18 @@ export const WEEKDAY_PENALTY_MULTIPLIER = 10 as const;
 export const LATE_PAIR_PENALTY = 30 as const;
 export const SATURDAY_LATE_PENALTY_MULTIPLIER = 50 as const;
 
+export const SLOT_PREFERENCE = {
+  PREFERRED: 'PREFERRED',
+  UNDESIRABLE: 'UNDESIRABLE',
+} as const;
+
+export type SlotPreference = (typeof SLOT_PREFERENCE)[keyof typeof SLOT_PREFERENCE];
+
+export const TEACHING_DAYS_PER_WEEK = 6 as const;
+export const MAX_SLOT_PREFERENCES = TEACHING_DAYS_PER_WEEK * LAST_PAIR;
+export const PREFERRED_SLOT_HEURISTIC_BONUS = -100 as const;
+export const UNDESIRABLE_SLOT_HEURISTIC_PENALTY = 1000 as const;
+
 export const DEFAULT_ICS_FOLD_LIMIT = 75 as const;
 export const DEFAULT_PAIR_DURATION_MINUTES = 80 as const;
 export const ICS_PRODID = '-//Karazin UniVerse//Timetable//UK' as const;

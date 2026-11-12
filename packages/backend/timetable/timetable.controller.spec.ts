@@ -78,6 +78,9 @@ describe('TimetableController', () => {
     rotateSubscriptionToken: jest.fn(),
     revokeSubscriptionTokens: jest.fn(),
     getIcsFeed: jest.fn(),
+    listPreferenceSemesters: jest.fn(),
+    getMySlotPreferences: jest.fn(),
+    saveMySlotPreferences: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -149,6 +152,45 @@ describe('TimetableController', () => {
         expect(mockTimetableService.rescheduleEvent).not.toHaveBeenCalled();
       },
     );
+  });
+
+  describe('slot preferences', () => {
+    it('delegates listPreferenceSemesters to service with userId', async () => {
+      mockTimetableService.listPreferenceSemesters.mockResolvedValue([]);
+      await expect(
+        controller.listPreferenceSemesters('teacher-1'),
+      ).resolves.toEqual([]);
+      expect(mockTimetableService.listPreferenceSemesters).toHaveBeenCalledWith(
+        'teacher-1',
+      );
+    });
+
+    it('delegates getMySlotPreferences to service with userId and semesterId', async () => {
+      mockTimetableService.getMySlotPreferences.mockResolvedValue([]);
+      await expect(
+        controller.getMySlotPreferences('teacher-1', 'semester-1'),
+      ).resolves.toEqual([]);
+      expect(mockTimetableService.getMySlotPreferences).toHaveBeenCalledWith(
+        'teacher-1',
+        'semester-1',
+      );
+    });
+
+    it('delegates saveMySlotPreferences to service with userId, semesterId and dto', async () => {
+      const dto = {
+        slots: [{ weekday: 1, pair: 1, preference: 'PREFERRED' as const }],
+      };
+
+      mockTimetableService.saveMySlotPreferences.mockResolvedValue(dto.slots);
+      await expect(
+        controller.saveMySlotPreferences('teacher-1', 'semester-1', dto),
+      ).resolves.toEqual(dto.slots);
+      expect(mockTimetableService.saveMySlotPreferences).toHaveBeenCalledWith(
+        'teacher-1',
+        'semester-1',
+        dto,
+      );
+    });
   });
 
   describe('academic groups', () => {

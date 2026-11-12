@@ -19,6 +19,241 @@ const calendar: SemesterCalendarConfig = {
 };
 
 describe('timetable generator', () => {
+  test('prefers saved teacher slots and returns strict candidates before relaxed alternatives', () => {
+    const result = generateTimetableCandidates({
+      calendar,
+      demands: [
+        {
+          id: 'preferred',
+          disciplineTitle: 'Calculus',
+          teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+          teacherId: 'teacher',
+          groupIds: ['group'],
+          academicHours: 32,
+        },
+      ],
+      preferences: [
+        {
+          teacherId: 'teacher',
+          semesterCalendarId: 'semester',
+          weekday: 5,
+          pair: 2,
+          preference: 'PREFERRED',
+        },
+      ],
+    });
+
+    assert.ok(result.ok);
+    assert.equal(result.candidates[0].events[0].date, '2026-09-11');
+    assert.equal(result.candidates[0].events[0].pair, 2);
+  });
+
+  test('falls back to undesirable slots when every allowed slot is undesirable', () => {
+    const preferences = Array.from({ length: 5 }, (_, day) =>
+      Array.from({ length: 7 }, (_, index) => ({
+        teacherId: 'teacher',
+        semesterCalendarId: 'semester',
+        weekday: day + 1,
+        pair: index + 1,
+        preference: 'UNDESIRABLE' as const,
+      })),
+    ).flat();
+    const result = generateTimetableCandidates({
+      calendar,
+      demands: [
+        {
+          id: 'fallback',
+          disciplineTitle: 'Calculus',
+          teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+          teacherId: 'teacher',
+          groupIds: ['group'],
+          academicHours: 32,
+        },
+      ],
+      preferences,
+    });
+
+    assert.ok(result.ok);
+    assert.equal(result.candidates[0].preferenceViolations?.length, 16);
+  });
+
+  test('ranks strict candidates ahead of relaxed alternatives without duplicates', () => {
+    const undesirable: Array<{
+      teacherId: string;
+      semesterCalendarId: string;
+      weekday: number;
+      pair: number;
+      preference: 'UNDESIRABLE';
+    }> = [];
+
+    for (let weekday = 2; weekday <= 5; weekday += 1) {
+      for (let pair = 1; pair <= 5; pair += 1) {
+        undesirable.push({
+          teacherId: 'teacher',
+          semesterCalendarId: 'semester',
+          weekday,
+          pair,
+          preference: 'UNDESIRABLE',
+        });
+      }
+    }
+
+    for (let pair = 2; pair <= 5; pair += 1) {
+      undesirable.push({
+        teacherId: 'teacher',
+        semesterCalendarId: 'semester',
+        weekday: 1,
+        pair,
+        preference: 'UNDESIRABLE',
+      });
+    }
+
+    const result = generateTimetableCandidates({
+      calendar: { ...calendar, teachingWeeks: 1 },
+      nominalWeeks: 1,
+      options: { maxCandidates: 3 },
+      demands: [
+        {
+          id: 'single-lecture',
+          disciplineTitle: 'Calculus',
+          teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+          teacherId: 'teacher',
+          groupIds: ['group'],
+          academicHours: 2,
+        },
+      ],
+      preferences: undesirable,
+    });
+
+    assert.ok(result.ok);
+    assert.equal(result.candidates.length, 3);
+    assert.equal(result.candidates[0].preferenceViolations?.length, 0);
+    assert.equal(result.candidates[0].events[0].date, '2026-09-07');
+    assert.equal(result.candidates[0].events[0].pair, 1);
+    assert.ok((result.candidates[1].preferenceViolations?.length ?? 0) > 0);
+    assert.ok((result.candidates[2].preferenceViolations?.length ?? 0) > 0);
+
+    const keys = result.candidates.map(
+      (candidate) => `${candidate.events[0].date}|${candidate.events[0].pair}`,
+    );
+
+    assert.equal(new Set(keys).size, 3);
+  });
+
+  test('isolates preferences per teacher and keeps unavailability and late limits mandatory', () => {
+    const result = generateTimetableCandidates({
+      calendar: { ...calendar, teachingWeeks: 1 },
+      nominalWeeks: 1,
+      demands: [
+        {
+          id: 'teacher-a-lecture',
+          disciplineTitle: 'Algorithms',
+          teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+          teacherId: 'teacher-a',
+          groupIds: ['group-1'],
+          academicHours: 2,
+        },
+        {
+          id: 'teacher-b-lecture',
+          disciplineTitle: 'Physics',
+          teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+          teacherId: 'teacher-b',
+          groupIds: ['group-2'],
+          academicHours: 2,
+        },
+      ],
+      unavailability: [
+        {
+          teacherId: 'teacher-a',
+          date: '2026-09-07',
+          pair: 6,
+          isConfirmed: true,
+        },
+        {
+          teacherId: 'teacher-a',
+          date: '2026-09-07',
+          pair: 1,
+          isConfirmed: true,
+        },
+      ],
+      preferences: [
+        {
+          teacherId: 'teacher-a',
+          semesterCalendarId: 'semester',
+          weekday: 1,
+          pair: 6,
+          preference: 'PREFERRED',
+        },
+        {
+          teacherId: 'teacher-a',
+          semesterCalendarId: 'semester',
+          weekday: 1,
+          pair: 1,
+          preference: 'PREFERRED',
+        },
+        {
+          teacherId: 'teacher-a',
+          semesterCalendarId: 'semester',
+          weekday: 6,
+          pair: 1,
+          preference: 'PREFERRED',
+        },
+        {
+          teacherId: 'teacher-a',
+          semesterCalendarId: 'semester',
+          weekday: 2,
+          pair: 2,
+          preference: 'UNDESIRABLE',
+        },
+      ],
+    });
+
+    assert.ok(result.ok);
+
+    const teacherAEvent = result.candidates[0].events.find(
+      (event) => event.teachingAssignmentId === 'teacher-a-lecture',
+    );
+    const teacherBEvent = result.candidates[0].events.find(
+      (event) => event.teachingAssignmentId === 'teacher-b-lecture',
+    );
+
+    assert.ok(teacherAEvent);
+    assert.ok(teacherBEvent);
+    assert.notEqual(teacherAEvent.date, '2026-09-12');
+    assert.ok(teacherAEvent.pair <= 5);
+    assert.equal(teacherBEvent.date, '2026-09-07');
+    assert.equal(teacherBEvent.pair, 1);
+  });
+
+  test('shares overall timeout across preference passes', () => {
+    const result = generateTimetableCandidates({
+      calendar,
+      options: { timeoutMs: 0 },
+      demands: [
+        {
+          id: 'timeout-lecture',
+          disciplineTitle: 'Calculus',
+          teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+          teacherId: 'teacher',
+          groupIds: ['group'],
+          academicHours: 32,
+        },
+      ],
+      preferences: [
+        {
+          teacherId: 'teacher',
+          semesterCalendarId: 'semester',
+          weekday: 1,
+          pair: 1,
+          preference: 'PREFERRED',
+        },
+      ],
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.error, 'TIMEOUT');
+  });
+
   test('waits for the first lecture of every group in a joint practical', () => {
     const result = generateTimetableCandidates({
       demands: [

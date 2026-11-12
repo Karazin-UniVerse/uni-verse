@@ -282,4 +282,49 @@ describe('TimetableApi', () => {
 
     expect(defaultUrl).toContain('/timetable/calendar/feed/test-token-456');
   });
+
+  it('listPreferenceSemesters sends GET to /timetable/my/slot-preferences/semesters', async () => {
+    const mockData = [{ id: 'semester-1', academicYear: '2026/2027', semester: 1 }];
+
+    mockFetchResponse(mockData);
+
+    const response = await timetableApi.listPreferenceSemesters();
+
+    expect(response.data).toEqual(mockData);
+    expect(vi.mocked(global.fetch)).toHaveBeenCalledWith(
+      expect.stringContaining('/timetable/my/slot-preferences/semesters'),
+      expect.anything(),
+    );
+  });
+
+  it('getMySlotPreferences sends GET with encoded semesterCalendarId', async () => {
+    const mockData = [{ weekday: 1, pair: 1, preference: 'PREFERRED' }];
+
+    mockFetchResponse(mockData);
+
+    const response = await timetableApi.getMySlotPreferences('sem/1');
+
+    expect(response.data).toEqual(mockData);
+    expect(vi.mocked(global.fetch)).toHaveBeenCalledWith(
+      expect.stringContaining('/timetable/my/slot-preferences/sem%2F1'),
+      expect.anything(),
+    );
+  });
+
+  it('saveMySlotPreferences sends PUT with encoded id and payload', async () => {
+    const payload = {
+      slots: [{ weekday: 2, pair: 3, preference: 'UNDESIRABLE' as const }],
+    };
+    const mockData = payload.slots;
+
+    mockFetchResponse(mockData);
+
+    const response = await timetableApi.saveMySlotPreferences('sem-1', payload);
+
+    expect(response.data).toEqual(mockData);
+    expect(vi.mocked(global.fetch)).toHaveBeenCalledWith(
+      expect.stringContaining('/timetable/my/slot-preferences/sem-1'),
+      expect.objectContaining({ method: 'PUT', body: JSON.stringify(payload) }),
+    );
+  });
 });

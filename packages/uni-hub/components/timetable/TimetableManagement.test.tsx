@@ -149,9 +149,8 @@ describe('TimetableManagement component', () => {
         adjust.mockResolvedValue({
           data: {
             id: 'selected-version',
-            curriculumPlanId: 'plan',
             status: 'DRAFT',
-            versionNumber: 1,
+            penaltyScore: 0,
             events: [{ ...event, date: '2026-11-10', pair: 3 }],
           },
         });
@@ -189,6 +188,81 @@ describe('TimetableManagement component', () => {
       }
     },
   );
+  it('should retain moved and unmoved metadata when persisted IDs replace solver IDs', async () => {
+    const events = [
+      {
+        id: 'solver-practice',
+        teachingAssignmentId: 'assignment-1',
+        disciplineTitle: 'Algorithms',
+        teachingType: 'PRACTICAL' as const,
+        teacherId: 'teacher-1',
+        groupIds: ['group-1'],
+        date: '2026-11-09',
+        pair: 1,
+      },
+      {
+        id: 'solver-lab',
+        teachingAssignmentId: 'assignment-2',
+        disciplineTitle: 'Physics',
+        teachingType: 'LABORATORY' as const,
+        teacherId: 'teacher-10',
+        groupIds: ['group-2'],
+        date: '2026-11-09',
+        pair: 2,
+      },
+    ];
+
+    vi.spyOn(timetableApi, 'generateTimetableDraft').mockResolvedValue({
+      data: {
+        versionId: 'fallback',
+        candidates: [{ versionId: 'selected-version', events, penaltyScore: 0 }],
+        diagnostics: { statesExplored: 1, timeMs: 1 },
+      },
+    });
+    const adjust = vi.spyOn(timetableApi, 'adjustDraftSlot').mockResolvedValue({
+      data: {
+        id: 'selected-version',
+        status: 'DRAFT',
+        penaltyScore: 0,
+        events: [
+          { ...events[0], id: 'persisted-practice', date: '2026-11-10', pair: 3 },
+          { ...events[1], id: 'persisted-lab' },
+        ],
+      },
+    });
+    const user = userEvent.setup();
+
+    renderComponent();
+    await user.click(screen.getByRole('button', { name: /Згенерувати розклад/i }));
+    await user.click(screen.getAllByRole('button', { name: 'Змінити слот' })[0]);
+
+    const dialog = screen.getByRole('dialog');
+
+    await user.selectOptions(within(dialog).getByLabelText('День тижня'), '2');
+    await user.selectOptions(within(dialog).getByLabelText('Пара'), '3');
+    await user.click(within(dialog).getByRole('button', { name: 'Зберегти' }));
+
+    const movedRow = screen.getByText('Algorithms').closest('tr')!;
+    const unmovedRow = screen.getByText('Physics').closest('tr')!;
+
+    expect(movedRow).toHaveTextContent('КС11');
+    expect(movedRow).toHaveTextContent('teacher-1');
+    expect(movedRow).toHaveTextContent('Пр');
+    expect(unmovedRow).toHaveTextContent('КС12');
+    expect(unmovedRow).toHaveTextContent('teacher-10');
+    expect(unmovedRow).toHaveTextContent('Лаб');
+    await user.click(within(movedRow).getByRole('button', { name: 'Змінити слот' }));
+    await user.selectOptions(within(screen.getByRole('dialog')).getByLabelText('Пара'), '4');
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Зберегти' }));
+    expect(adjust).toHaveBeenLastCalledWith('selected-version', {
+      teachingAssignmentId: 'assignment-1',
+      fromWeekday: 2,
+      fromPair: 3,
+      toWeekday: 2,
+      toPair: 4,
+    });
+  });
+
   it('blocks an adjustment that overlaps another class for the same group', async () => {
     const event = {
       id: 'event-1',
@@ -358,6 +432,39 @@ describe('TimetableManagement component', () => {
     expect(screen.getByText(/варіант #1/i)).toBeInTheDocument();
     expect(screen.getByText(/варіант #2/i)).toBeInTheDocument();
     expect(screen.getByText(/розклад без штрафів/i)).toBeInTheDocument();
+  });
+
+  it('displays preference violation details for relaxed candidates only', async () => {
+    vi.spyOn(timetableApi, 'generateTimetableDraft').mockResolvedValue({
+      data: {
+        versionId: 'ver-draft-pref',
+        candidates: [
+          { events: [], penaltyScore: 0, preferenceViolations: [] },
+          {
+            events: [],
+            penaltyScore: 0,
+            preferenceViolations: [
+              {
+                teacherId: 'teacher-1',
+                date: '2026-09-07',
+                pair: 2,
+                eventId: 'evt-viol-1',
+              },
+            ],
+          },
+        ],
+        diagnostics: { statesExplored: 10, timeMs: 5 },
+      },
+    });
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await user.click(screen.getByRole('button', { name: /згенерувати розклад/i }));
+
+    expect(await screen.findByText('Порушення побажань викладача (1)')).toBeInTheDocument();
+    expect(screen.getByText(/2026-09-07, пара #2/)).toBeInTheDocument();
+    expect(screen.getAllByText(/розклад без штрафів/i)).toHaveLength(1);
   });
 
   it('triggers publishTimetableVersion when approving candidate and shows success banner', async () => {

@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import userEvent from '@testing-library/user-event';
 import { BREAKPOINTS } from '@core/constants/breakpoints';
-import { withLanguage, withToast } from '@uni-hub/utils/test-utils';
+import { withLanguage, withQueryClient, withToast } from '@uni-hub/utils/test-utils';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { DUMMY_EVENTS, exportToICS } from './helpers';
@@ -39,7 +39,15 @@ describe('ScheduleView component', () => {
   });
 
   const renderScheduleView = (props?: Partial<ScheduleViewProps>) =>
-    render(withToast(withLanguage(<ScheduleView {...props} />)));
+    render(withQueryClient(withToast(withLanguage(<ScheduleView {...props} />))));
+
+  it('hides teacher slot preferences for non-instructor roles', () => {
+    vi.mocked(useCurrentUser).mockReturnValue({ userId: 'admin', roles: ['ADMIN'] });
+
+    renderScheduleView();
+
+    expect(screen.queryByText(/Побажання щодо розкладу/i)).not.toBeInTheDocument();
+  });
 
   it.each([
     { fails: false, week: false },

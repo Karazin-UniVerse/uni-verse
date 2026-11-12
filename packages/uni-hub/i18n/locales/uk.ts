@@ -800,6 +800,21 @@ export const uk = {
   'notifications.action.APPROVE': 'схвалено та опубліковано',
   'notifications.action.REJECT': 'відхилено',
   'notifications.action.REQUIRE_CHANGES': 'потребує змін',
+
+  // Teacher Slot Preferences
+  'preferences.title': 'Побажання щодо розкладу (Викладач)',
+  'preferences.description':
+    'Оберіть бажані та небажані пари на тиждень для обраного семестру. Клікніть по клітинці для зміни статусу.',
+  'preferences.semester': 'Навчальний семестр:',
+  'preferences.save': 'Застосувати побажання',
+  'preferences.discard': 'Скасувати зміни',
+  'preferences.savedSuccess': 'Побажання успішно збережено',
+  'preferences.error': 'Не вдалося завантажити або зберегти побажання',
+  'preferences.preferred': 'Бажана',
+  'preferences.undesirable': 'Небажана',
+  'preferences.neutral': 'Нейтрально',
+  'timetable.preferenceViolations': 'Порушення побажань викладача ({count})',
+  'timetable.preferenceViolationItem': '{teacher}: {date}, пара #{pair}',
 };
 
 export type TranslationKey = keyof typeof uk;

@@ -22,11 +22,15 @@ import {
   type TimetableVersion,
 } from '@universe/database';
 import type {
+  AdjustDraftSlotResponse,
   GenerateTimetableDiagnostics,
   IcsCalendarEvent,
   ScheduledEvent,
   SemesterCalendarConfig,
+  SemesterCalendarResponse,
   TeacherUnavailability,
+  TeacherSlotPreference,
+  SaveTeacherSlotPreferencesRequest,
   TeachingDemand,
   TimetableCandidate,
   TimetableDemandDeficit,
@@ -219,6 +223,116 @@ function parseMakeupSaturdayDates(
 @Injectable()
 export class TimetableService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private async assertPreferenceTeacher(userId: string): Promise<void> {
+    const teacher = await this.prisma.user.findFirst({
+      where: { id: userId, roles: { has: Role.INSTRUCTOR } },
+      select: { id: true },
+    });
+
+    if (!teacher) {
+      throw new ForbiddenException('Instructor role required');
+    }
+  }
+
+  async listPreferenceSemesters(
+    userId: string,
+  ): Promise<SemesterCalendarResponse[]> {
+    await this.assertPreferenceTeacher(userId);
+
+    const calendars = await this.prisma.semesterCalendar.findMany({
+      select: {
+        id: true,
+        academicYear: true,
+        semester: true,
+        startDate: true,
+        teachingWeeks: true,
+      },
+      orderBy: { startDate: 'desc' },
+    });
+
+    return calendars.map((calendar) => ({
+      ...calendar,
+      startDate: toIsoDateString(calendar.startDate),
+    }));
+  }
+
+  async getMySlotPreferences(
+    userId: string,
+    semesterCalendarId: string,
+  ): Promise<TeacherSlotPreference[]> {
+    await this.assertPreferenceTeacher(userId);
+
+    const calendar = await this.prisma.semesterCalendar.findUnique({
+      where: { id: semesterCalendarId },
+    });
+
+    if (!calendar) {
+      throw new NotFoundException('Semester calendar not found');
+    }
+
+    return this.prisma.teacherSlotPreference.findMany({
+      where: { teacherId: userId, semesterCalendarId },
+      select: {
+        teacherId: true,
+        semesterCalendarId: true,
+        weekday: true,
+        pair: true,
+        preference: true,
+      },
+      orderBy: [{ weekday: 'asc' }, { pair: 'asc' }],
+    });
+  }
+
+  async saveMySlotPreferences(
+    userId: string,
+    semesterCalendarId: string,
+    request: SaveTeacherSlotPreferencesRequest,
+  ): Promise<TeacherSlotPreference[]> {
+    await this.getMySlotPreferences(userId, semesterCalendarId);
+
+    try {
+      return await this.prisma.$transaction(
+        async (tx) => {
+          const where = { teacherId: userId, semesterCalendarId };
+
+          await tx.teacherSlotPreference.deleteMany({ where });
+
+          if (request.slots.length > 0) {
+            await tx.teacherSlotPreference.createMany({
+              data: request.slots.map((slot) => ({ ...slot, ...where })),
+            });
+          }
+
+          return tx.teacherSlotPreference.findMany({
+            where,
+            select: {
+              teacherId: true,
+              semesterCalendarId: true,
+              weekday: true,
+              pair: true,
+              preference: true,
+            },
+            orderBy: [{ weekday: 'asc' }, { pair: 'asc' }],
+          });
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+    } catch (error) {
+      const errorCode = getPrismaErrorCode(error);
+
+      if (
+        errorCode === PRISMA_ERROR_CODE.TRANSACTION_CONFLICT ||
+        errorCode === PRISMA_ERROR_CODE.UNIQUE_CONSTRAINT
+      ) {
+        throw new ConflictException(
+          'Preferences changed concurrently; retry saving',
+        );
+      }
+
+      throw error;
+    }
+  }
 
   async createAcademicGroup(
     dto: CreateAcademicGroupDto,
@@ -777,7 +891,31 @@ export class TimetableService {
         [],
     };
 
+    const teacherIds = Array.from(
+      new Set(
+        demands.flatMap((demand) =>
+          demand.teacherId ? [demand.teacherId] : [],
+        ),
+      ),
+    );
+    const preferences =
+      teacherIds.length > 0
+        ? await this.prisma.teacherSlotPreference.findMany({
+            where: {
+              semesterCalendarId: calendar.id,
+              teacherId: { in: teacherIds },
+            },
+            select: {
+              teacherId: true,
+              semesterCalendarId: true,
+              weekday: true,
+              pair: true,
+              preference: true,
+            },
+          })
+        : [];
     const result = generateTimetableCandidates({
+      preferences,
       demands,
       calendar: calendarConfig,
       unavailability: unavailabilityList,
@@ -874,7 +1012,7 @@ export class TimetableService {
   async adjustDraftSlot(
     versionId: string,
     dto: AdjustDraftSlotDto,
-  ): Promise<TimetableVersionWithEvents & { penaltyScore: number }> {
+  ): Promise<AdjustDraftSlotResponse> {
     return this.prisma.$transaction(
       async (tx) => {
         const version = await tx.timetableVersion.findUnique({
@@ -973,8 +1111,8 @@ export class TimetableService {
 
         return {
           ...versionRecord,
-          events: projected.map(
-            ({ teachingAssignment: _assignment, ...event }) => event,
+          events: projected.map((event) =>
+            toScheduledEvent(event, makeupDates),
           ),
           penaltyScore: report.totalPenaltyScore,
         };

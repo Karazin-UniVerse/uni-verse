@@ -1,4 +1,5 @@
 ﻿import type {
+  SlotPreference,
   TimetableAssignmentTeachingType,
   TimetableConflictCode,
   TimetablePhaseOrder,
@@ -163,6 +164,28 @@ export type GenerateTimetableOptions = {
   nominalWeeks?: number;
 };
 
+export type SlotPreferenceItem = {
+  weekday: number;
+  pair: number;
+  preference: SlotPreference;
+};
+
+export type TeacherSlotPreference = SlotPreferenceItem & {
+  teacherId: string;
+  semesterCalendarId: string;
+};
+
+export type SaveTeacherSlotPreferencesRequest = {
+  slots: SlotPreferenceItem[];
+};
+
+export type PreferenceViolation = {
+  teacherId: string;
+  date: string;
+  pair: number;
+  eventId: string;
+};
+
 export type GenerateTimetableParams = {
   demands: TeachingDemand[];
   calendar: SemesterCalendarConfig;
@@ -171,6 +194,7 @@ export type GenerateTimetableParams = {
   nominalWeeks?: number;
   /** Already published occupancy: respected by the solver, never returned as candidate events. */
   fixedEvents?: ScheduledEvent[];
+  preferences?: TeacherSlotPreference[];
 };
 
 export type TimetableCandidate = {
@@ -178,6 +202,7 @@ export type TimetableCandidate = {
   penaltyScore: number;
   versionId?: string;
   candidateIndex?: number;
+  preferenceViolations?: PreferenceViolation[];
 };
 
 export type CandidateSlot = {
@@ -433,6 +458,13 @@ export type TimetableVersionResponse = {
   status: string;
   versionNumber: number;
   events: ScheduledEvent[];
+};
+
+export type AdjustDraftSlotResponse = {
+  id: string;
+  status: string;
+  events: ScheduledEvent[];
+  penaltyScore: number;
 };
 
 export type CalendarSubscriptionTokenResponse = {

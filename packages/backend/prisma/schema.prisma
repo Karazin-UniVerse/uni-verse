@@ -38,6 +38,7 @@ model User {
   teachingAssignments        TeachingAssignment[]
   createdTimetableVersions   TimetableVersion[]          @relation("TimetableVersionCreator")
   teacherUnavailabilities    TeacherUnavailability[]
+  slotPreferences           TeacherSlotPreference[]
   calendarSubscriptionTokens CalendarSubscriptionToken[]
   academicGroupId            String?
   academicGroup              AcademicGroup?              @relation(fields: [academicGroupId], references: [id])
@@ -357,8 +358,28 @@ model SemesterCalendar {
   updatedAt       DateTime @updatedAt
 
   timetableVersions TimetableVersion[]
+  slotPreferences   TeacherSlotPreference[]
 
   @@unique([academicYear, semester])
+}
+
+enum SlotPreference {
+  PREFERRED
+  UNDESIRABLE
+}
+
+model TeacherSlotPreference {
+  id                 String @id @default(uuid())
+  teacherId          String
+  semesterCalendarId String
+  weekday            Int
+  pair               Int
+  preference         SlotPreference
+  teacher            User @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  semesterCalendar   SemesterCalendar @relation(fields: [semesterCalendarId], references: [id], onDelete: Restrict)
+
+  @@unique([teacherId, semesterCalendarId, weekday, pair])
+  @@index([semesterCalendarId])
 }
 
 model TimetableVersion {

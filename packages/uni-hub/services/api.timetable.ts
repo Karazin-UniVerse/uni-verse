@@ -1,6 +1,9 @@
 import type {
   AcademicGroupResponse,
+  TeacherSlotPreference,
+  SaveTeacherSlotPreferencesRequest,
   AdjustDraftSlotRequest,
+  AdjustDraftSlotResponse,
   CalendarSubscriptionTokenResponse,
   CreateSemesterCalendarRequest,
   CreateTeacherUnavailabilityRequest,
@@ -22,11 +25,31 @@ import { ApiClient, buildQueryString } from './api.request';
 import { API_BASE_URL } from './api.storage';
 
 export class TimetableApi extends ApiClient {
+  async listPreferenceSemesters(): Promise<{ data: SemesterCalendarResponse[] }> {
+    return this.request<SemesterCalendarResponse[]>('/timetable/my/slot-preferences/semesters');
+  }
+
+  async getMySlotPreferences(id: string): Promise<{ data: TeacherSlotPreference[] }> {
+    return this.request<TeacherSlotPreference[]>(
+      `/timetable/my/slot-preferences/${encodeURIComponent(id)}`,
+    );
+  }
+
+  async saveMySlotPreferences(
+    id: string,
+    payload: SaveTeacherSlotPreferencesRequest,
+  ): Promise<{ data: TeacherSlotPreference[] }> {
+    return this.request<TeacherSlotPreference[]>(
+      `/timetable/my/slot-preferences/${encodeURIComponent(id)}`,
+      { method: 'PUT', body: JSON.stringify(payload) },
+    );
+  }
+
   async adjustDraftSlot(
     versionId: string,
     payload: AdjustDraftSlotRequest,
-  ): Promise<{ data: TimetableVersionResponse & { penaltyScore?: number } }> {
-    return this.request<TimetableVersionResponse & { penaltyScore?: number }>(
+  ): Promise<{ data: AdjustDraftSlotResponse }> {
+    return this.request<AdjustDraftSlotResponse>(
       `/timetable/versions/${encodeURIComponent(versionId)}/slots`,
       { method: 'PATCH', body: JSON.stringify(payload) },
     );

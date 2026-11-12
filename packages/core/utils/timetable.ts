@@ -22,7 +22,9 @@ import {
   MIN_EXAM_FREE_DAYS,
   MS_PER_DAY,
   PAIR_SCHEDULE,
+  PREFERRED_SLOT_HEURISTIC_BONUS,
   SATURDAY_LATE_PENALTY_MULTIPLIER,
+  SLOT_PREFERENCE,
   SUNDAY,
   TEACHING_TYPE_LABELS,
   TIMETABLE_CONFLICT_CODE,
@@ -35,9 +37,10 @@ import {
   TIMETABLE_VALIDATION_ERROR,
   TIMETABLE_WEEK_PARITY,
   TIMETABLE_WEEKDAY,
+  UNDESIRABLE_SLOT_HEURISTIC_PENALTY,
   WEEKDAY_PENALTY_MULTIPLIER,
 } from '../constants/timetable.ts';
-import type { PairNumber } from '../constants/timetable.ts';
+import type { PairNumber, SlotPreference } from '../constants/timetable.ts';
 import type {
   CandidateSlot,
   CheckTimetableConflictsParams,
@@ -875,14 +878,81 @@ function slotsShareAnyTime(slotA: CandidateSlot, slotB: CandidateSlot): boolean 
   return false;
 }
 
-export function generateTimetableCandidates({
-  demands,
-  calendar,
-  nominalWeeks: paramsNominalWeeks,
-  options,
-  unavailability = [],
-  fixedEvents = [],
-}: GenerateTimetableParams): GenerateTimetableResult {
+export function generateTimetableCandidates(
+  params: GenerateTimetableParams,
+): GenerateTimetableResult {
+  if (!params.preferences?.length) {
+    return searchTimetableCandidates(params);
+  }
+
+  const started = Date.now();
+  const timeoutMs = params.options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const maxCandidates = params.options?.maxCandidates ?? DEFAULT_MAX_CANDIDATES;
+  const strict = searchTimetableCandidates(
+    { ...params, options: { ...params.options, timeoutMs: timeoutMs / 2 } },
+    true,
+  );
+
+  if (!strict.ok && strict.error === 'INVALID_INPUT') {
+    return strict;
+  }
+
+  if (strict.ok && strict.candidates.length >= maxCandidates) {
+    return strict;
+  }
+
+  const relaxed = searchTimetableCandidates({
+    ...params,
+    options: { ...params.options, timeoutMs: Math.max(0, timeoutMs - (Date.now() - started)) },
+  });
+  const candidates = strict.ok ? [...strict.candidates] : [];
+  const signature = (candidate: TimetableCandidate): string =>
+    candidate.events
+      .map((event) => `${event.teachingAssignmentId}:${event.date}:${event.pair}`)
+      .sort()
+      .join('|');
+  const seen = new Set(candidates.map(signature));
+
+  if (relaxed.ok) {
+    for (const candidate of relaxed.candidates) {
+      const key = signature(candidate);
+
+      if (!seen.has(key)) {
+        candidates.push(candidate);
+        seen.add(key);
+      }
+    }
+  }
+
+  candidates.sort(
+    (first, second) =>
+      (first.preferenceViolations?.length ?? 0) - (second.preferenceViolations?.length ?? 0) ||
+      first.penaltyScore - second.penaltyScore,
+  );
+  const diagnostics = {
+    statesExplored: strict.diagnostics.statesExplored + relaxed.diagnostics.statesExplored,
+    timeMs: Date.now() - started,
+  };
+
+  if (candidates.length > 0) {
+    return { ok: true, candidates: candidates.slice(0, maxCandidates), diagnostics };
+  }
+
+  return { ...relaxed, diagnostics };
+}
+
+function searchTimetableCandidates(
+  {
+    demands,
+    calendar,
+    nominalWeeks: paramsNominalWeeks,
+    options,
+    unavailability = [],
+    fixedEvents = [],
+    preferences = [],
+  }: GenerateTimetableParams,
+  strictPreferences = false,
+): GenerateTimetableResult {
   const startTime = Date.now();
   let statesExplored = 0;
 
@@ -972,6 +1042,12 @@ export function generateTimetableCandidates({
   }
 
   const confirmedUnavailability = unavailability.filter((entry): boolean => entry.isConfirmed);
+  const preferenceMap = new Map<string, SlotPreference>();
+
+  for (const entry of preferences) {
+    preferenceMap.set(`${entry.teacherId}|${entry.weekday}|${entry.pair}`, entry.preference);
+  }
+
   const fixedByTimeKey = new Map<string, ScheduledEvent[]>();
 
   for (const fixedEvent of fixedEvents) {
@@ -1028,6 +1104,14 @@ export function generateTimetableCandidates({
 
     for (const weekday of weekdays) {
       for (let pair = FIRST_PAIR; pair <= maxPair; pair += 1) {
+        const preference = demand.teacherId
+          ? preferenceMap.get(`${demand.teacherId}|${weekday}|${pair}`)
+          : undefined;
+
+        if (strictPreferences && preference === SLOT_PREFERENCE.UNDESIRABLE) {
+          continue;
+        }
+
         if (Date.now() - startTime >= timeoutMs) {
           return { ok: false, error: 'TIMEOUT', diagnostics: getDiagnostics() };
         }
@@ -1107,10 +1191,18 @@ export function generateTimetableCandidates({
           }),
         );
 
-        const heuristicCost = computeSlotHeuristicCost({
-          demand,
-          pair,
-        });
+        const preferenceCost =
+          preference === SLOT_PREFERENCE.PREFERRED
+            ? PREFERRED_SLOT_HEURISTIC_BONUS
+            : preference === SLOT_PREFERENCE.UNDESIRABLE
+              ? UNDESIRABLE_SLOT_HEURISTIC_PENALTY
+              : 0;
+        const heuristicCost =
+          preferenceCost +
+          computeSlotHeuristicCost({
+            demand,
+            pair,
+          });
 
         slots.push({
           globalIndex: nextGlobalIndex,
@@ -1253,9 +1345,25 @@ export function generateTimetableCandidates({
       );
 
       if (report.isValid && !hasPracticeBeforeLecture) {
+        const preferenceViolations = events
+          .filter(
+            (event) =>
+              event.teacherId !== undefined &&
+              preferenceMap.get(
+                `${event.teacherId}|${new Date(event.date).getUTCDay()}|${event.pair}`,
+              ) === SLOT_PREFERENCE.UNDESIRABLE,
+          )
+          .map((event) => ({
+            teacherId: event.teacherId!,
+            date: event.date,
+            pair: event.pair,
+            eventId: event.id,
+          }));
+
         candidates.push({
           events,
           penaltyScore: report.totalPenaltyScore,
+          ...(preferences.length > 0 ? { preferenceViolations } : {}),
         });
       }
 

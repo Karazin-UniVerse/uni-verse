@@ -39,6 +39,7 @@ describe('TimetableService', () => {
 
   it('excludes archived assignments from plan and teacher lists', async () => {
     mockTeachingAssignmentPrisma.findMany.mockResolvedValue([]);
+    mockSlotPreferencePrisma.findMany.mockResolvedValue([]);
     mockCurriculumPlanPrisma.findUnique.mockResolvedValue({
       id: 'plan-1',
       teachingAssignments: [],
@@ -95,6 +96,13 @@ describe('TimetableService', () => {
   const mockSemesterCalendarPrisma = {
     upsert: jest.fn(),
     findUnique: jest.fn(),
+    findMany: jest.fn(),
+  };
+
+  const mockSlotPreferencePrisma = {
+    findMany: jest.fn(),
+    deleteMany: jest.fn(),
+    createMany: jest.fn(),
   };
 
   const mockTeacherUnavailabilityPrisma = {
@@ -142,6 +150,7 @@ describe('TimetableService', () => {
     timetableEvent: mockTimetableEventPrisma,
     calendarSubscriptionToken: mockCalendarSubscriptionTokenPrisma,
     user: mockUserPrisma,
+    teacherSlotPreference: mockSlotPreferencePrisma,
   };
 
   const mockPrismaService = {
@@ -176,6 +185,136 @@ describe('TimetableService', () => {
     }).compile();
 
     service = module.get<TimetableService>(TimetableService);
+  });
+
+  describe('teacher slot preferences', () => {
+    it('replaces only the current teacher semester grid and supports clearing', async () => {
+      mockUserPrisma.findFirst.mockResolvedValue({
+        id: 'teacher-1',
+        roles: [Role.INSTRUCTOR],
+      });
+      mockSemesterCalendarPrisma.findUnique.mockResolvedValue({
+        id: 'semester-1',
+      });
+      mockSlotPreferencePrisma.findMany.mockResolvedValue([]);
+
+      await service.saveMySlotPreferences('teacher-1', 'semester-1', {
+        slots: [],
+      });
+
+      expect(mockSlotPreferencePrisma.deleteMany).toHaveBeenCalledWith({
+        where: { teacherId: 'teacher-1', semesterCalendarId: 'semester-1' },
+      });
+      expect(mockSlotPreferencePrisma.createMany).not.toHaveBeenCalled();
+      expect(mockPrismaService.$transaction).toHaveBeenCalledWith(
+        expect.any(Function),
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        },
+      );
+    });
+
+    it('saves non-empty slots atomically for the current teacher and semester', async () => {
+      mockUserPrisma.findFirst.mockResolvedValue({
+        id: 'teacher-1',
+        roles: [Role.INSTRUCTOR],
+      });
+      mockSemesterCalendarPrisma.findUnique.mockResolvedValue({
+        id: 'semester-1',
+      });
+      const expected = [
+        {
+          teacherId: 'teacher-1',
+          semesterCalendarId: 'semester-1',
+          weekday: 2,
+          pair: 3,
+          preference: 'PREFERRED',
+        },
+      ];
+
+      mockSlotPreferencePrisma.findMany.mockResolvedValue(expected);
+
+      const saved = await service.saveMySlotPreferences(
+        'teacher-1',
+        'semester-1',
+        {
+          slots: [{ weekday: 2, pair: 3, preference: 'PREFERRED' }],
+        },
+      );
+
+      expect(saved).toEqual(expected);
+      expect(mockSlotPreferencePrisma.createMany).toHaveBeenCalledWith({
+        data: [
+          {
+            teacherId: 'teacher-1',
+            semesterCalendarId: 'semester-1',
+            weekday: 2,
+            pair: 3,
+            preference: 'PREFERRED',
+          },
+        ],
+      });
+    });
+
+    it('rejects a missing semester calendar with NotFoundException', async () => {
+      mockUserPrisma.findFirst.mockResolvedValue({
+        id: 'teacher-1',
+        roles: [Role.INSTRUCTOR],
+      });
+      mockSemesterCalendarPrisma.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.getMySlotPreferences('teacher-1', 'missing-semester'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('lists semesters formatted as ISO date strings for instructors', async () => {
+      mockUserPrisma.findFirst.mockResolvedValue({
+        id: 'teacher-1',
+        roles: [Role.INSTRUCTOR],
+      });
+      mockSemesterCalendarPrisma.findMany.mockResolvedValue([
+        {
+          id: 'semester-1',
+          academicYear: '2026/2027',
+          semester: 1,
+          startDate: new Date('2026-09-07T00:00:00.000Z'),
+          teachingWeeks: 16,
+        },
+      ]);
+
+      await expect(
+        service.listPreferenceSemesters('teacher-1'),
+      ).resolves.toEqual([
+        {
+          id: 'semester-1',
+          academicYear: '2026/2027',
+          semester: 1,
+          startDate: '2026-09-07',
+          teachingWeeks: 16,
+        },
+      ]);
+    });
+
+    it('rejects a non-teacher before reading preferences', async () => {
+      mockUserPrisma.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.getMySlotPreferences('student-1', 'semester-1'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('translates a concurrent replacement conflict instead of leaking Prisma errors', async () => {
+      mockUserPrisma.findFirst.mockResolvedValue({ id: 'teacher-1' });
+      mockSemesterCalendarPrisma.findUnique.mockResolvedValue({
+        id: 'semester-1',
+      });
+      mockPrismaService.$transaction.mockRejectedValueOnce({ code: 'P2034' });
+
+      await expect(
+        service.saveMySlotPreferences('teacher-1', 'semester-1', { slots: [] }),
+      ).rejects.toThrow(ConflictException);
+    });
   });
 
   describe('manual adjustments', () => {
@@ -260,6 +399,76 @@ describe('TimetableService', () => {
           stableKey: 'assignment-1:2026-09-15:2',
         },
       });
+    });
+
+    it('returns complete scheduled events for moved and unmoved slots with historical snapshots', async () => {
+      mockTimetableVersionPrisma.findUnique.mockResolvedValue({
+        ...draft,
+        generationId: 'generation-1',
+        candidateIndex: 2,
+        events: [
+          {
+            ...event,
+            disciplineTitleSnapshot: 'Historical calculus',
+            teachingTypeSnapshot: TeachingType.PRACTICAL,
+            teacherIdSnapshot: 'historical-teacher',
+          },
+          {
+            ...event,
+            id: 'persisted-lab',
+            teachingAssignmentId: 'assignment-2',
+            pair: 3,
+            teachingAssignment: {
+              ...assignment,
+              id: 'assignment-2',
+              disciplineTitle: 'Physics',
+              teachingType: TeachingType.LABORATORY,
+              groupId: null,
+              subgroupId: 'subgroup-1',
+              subgroup: { academicGroupId: 'group-2' },
+              streamId: 'stream-1',
+              stream: { groups: [{ id: 'group-3' }] },
+            },
+          },
+        ],
+      });
+
+      const result = await service.adjustDraftSlot(draft.id, slot);
+
+      expect(result).toMatchObject({
+        id: 'version-1',
+        status: 'DRAFT',
+        generationId: 'generation-1',
+        candidateIndex: 2,
+        penaltyScore: expect.any(Number),
+        events: [
+          {
+            id: 'event-1',
+            teachingAssignmentId: 'assignment-1',
+            disciplineTitle: 'Historical calculus',
+            teachingType: 'PRACTICAL',
+            teacherId: 'historical-teacher',
+            groupIds: ['group-1'],
+            date: '2026-09-08',
+            pair: 2,
+            pairSpan: 1,
+          },
+          {
+            id: 'persisted-lab',
+            teachingAssignmentId: 'assignment-2',
+            disciplineTitle: 'Physics',
+            teachingType: 'LABORATORY',
+            teacherId: 'teacher-1',
+            groupIds: ['group-2', 'group-3'],
+            subgroupId: 'subgroup-1',
+            streamId: 'stream-1',
+            date: '2026-09-07',
+            pair: 3,
+          },
+        ],
+      });
+      expect(result.events[0]).not.toHaveProperty('teachingAssignment');
+      expect(mockTimetableEventPrisma.update).toHaveBeenCalledTimes(1);
     });
 
     it('reschedules one published event', async () => {

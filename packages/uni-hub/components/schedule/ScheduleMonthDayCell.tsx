@@ -24,8 +24,10 @@ export const ScheduleMonthDayCell: React.FC<ScheduleMonthDayCellProps> = ({
       <span className={styles.dayNum}>{day.getDate()}</span>
       <ul>
         {visibleEvents.map((event) => (
-          <li key={event.id}>
-            <Tag tone={getTypeTone(event.type)}>{event.title}</Tag>
+          <li key={event.id} title={event.title}>
+            <Tag tone={getTypeTone(event.type)} className={styles.monthEvent}>
+              {event.title}
+            </Tag>
           </li>
         ))}
         {hiddenCount > 0 && (

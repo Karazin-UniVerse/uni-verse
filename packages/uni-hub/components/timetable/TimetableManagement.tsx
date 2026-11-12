@@ -841,11 +841,8 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
               index === candidateIndex
                 ? {
                     ...candidate,
-                    events: response.data.events.map((event) => ({
-                      ...candidate.events.find((previousEvent) => previousEvent.id === event.id),
-                      ...event,
-                    })),
-                    penaltyScore: response.data.penaltyScore ?? candidate.penaltyScore,
+                    events: response.data.events,
+                    penaltyScore: response.data.penaltyScore,
                   }
                 : candidate,
             ),
@@ -1103,40 +1100,77 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
           </div>
 
           <div className={styles.candidatesList}>
-            {draftResult.candidates.map((cand, idx) => (
-              <div
-                key={idx}
-                className={`${styles.candidateCard} ${
-                  selectedCandidateIndex === idx ? styles.selectedCandidate : ''
-                }`}
-                onClick={() => setSelectedCandidateIndex(idx)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    setSelectedCandidateIndex(idx);
-                  }
-                }}
-              >
-                <div className={styles.candidateHeader}>
-                  <span>{formatMessage('timetable.candidateNumbered', { number: idx + 1 })}</span>
-                  <Tag tone={cand.penaltyScore === 0 ? 'success' : 'warning'}>
-                    {formatMessage('timetable.penaltyScoreVal', { score: cand.penaltyScore })}
-                  </Tag>
+            {draftResult.candidates.map((cand, idx) => {
+              const violations = cand.preferenceViolations ?? [];
+              let scoreTone: 'success' | 'warning' | 'danger' = 'success';
+
+              if (violations.length > 0) {
+                scoreTone = 'danger';
+              } else if (cand.penaltyScore > 0) {
+                scoreTone = 'warning';
+              }
+
+              return (
+                <div
+                  key={idx}
+                  className={`${styles.candidateCard} ${
+                    selectedCandidateIndex === idx ? styles.selectedCandidate : ''
+                  }`}
+                  onClick={() => setSelectedCandidateIndex(idx)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      setSelectedCandidateIndex(idx);
+                    }
+                  }}
+                >
+                  <div className={styles.candidateHeader}>
+                    <span>{formatMessage('timetable.candidateNumbered', { number: idx + 1 })}</span>
+                    <Tag tone={scoreTone}>
+                      {formatMessage('timetable.penaltyScoreVal', { score: cand.penaltyScore })}
+                    </Tag>
+                  </div>
+                  <div className={styles.penaltyDetails}>
+                    {cand.penaltyScore === 0 && violations.length === 0 ? (
+                      <span>
+                        <Check size={14} /> {formatMessage('timetable.noPenalties')}
+                      </span>
+                    ) : (
+                      <span>
+                        {formatMessage('timetable.softPenaltiesVal', { score: cand.penaltyScore })}
+                      </span>
+                    )}
+                    {violations.length > 0 && (
+                      <>
+                        <Tag tone="danger">
+                          {formatMessage('timetable.preferenceViolations', {
+                            count: violations.length,
+                          })}
+                        </Tag>
+                        <ul className={styles.violationList}>
+                          {violations.map((violation) => {
+                            const teacherName =
+                              teachers.find((teacher) => teacher.id === violation.teacherId)
+                                ?.name ?? violation.teacherId;
+
+                            return (
+                              <li key={`${violation.eventId}-${violation.date}-${violation.pair}`}>
+                                {formatMessage('timetable.preferenceViolationItem', {
+                                  teacher: teacherName,
+                                  date: violation.date,
+                                  pair: violation.pair,
+                                })}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div className={styles.penaltyDetails}>
-                  {cand.penaltyScore === 0 ? (
-                    <span>
-                      <Check size={14} /> {formatMessage('timetable.noPenalties')}
-                    </span>
-                  ) : (
-                    <span>
-                      {formatMessage('timetable.softPenaltiesVal', { score: cand.penaltyScore })}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Weekly Schedule Preview of Selected Candidate */}

@@ -19,6 +19,7 @@ import { ScheduleDayView } from './ScheduleDayView';
 import { ScheduleMonthView } from './ScheduleMonthView';
 import { ScheduleToolbar } from './ScheduleToolbar';
 import { ScheduleWeekView } from './ScheduleWeekView';
+import { TeacherSlotPreferences } from '../timetable/TeacherSlotPreferences';
 import styles from './ScheduleView.module.scss';
 
 import type { ScheduleEvent, ScheduleViewMode, ScheduleViewProps } from './ScheduleView.types';
@@ -51,6 +52,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       roles.includes('INSTRUCTOR') ||
       roles.includes('ADMIN') ||
       roles.includes('DEAN'));
+  const isInstructor = roles.includes('INSTRUCTOR') || roles.includes('TEACHER');
 
   const { events: fetchedEvents } = useMySchedule();
   const [meetingUrlOverrides, setMeetingUrlOverrides] = useState<Map<string, string>>(
@@ -266,6 +268,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
   return (
     <div className={styles.root}>
+      {isInstructor && <TeacherSlotPreferences />}
+
       <ScheduleToolbar
         viewMode={viewMode}
         onViewModeChange={setSelectedViewMode}

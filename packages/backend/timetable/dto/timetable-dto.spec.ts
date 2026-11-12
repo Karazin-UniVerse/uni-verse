@@ -11,6 +11,7 @@ import {
   GetSemesterCalendarQueryDto,
   ListTeachingAssignmentsQueryDto,
   MakeupSaturdayDto,
+  SaveSlotPreferencesDto,
   UpdateMeetingUrlDto,
   UpdateTeachingAssignmentDto,
 } from './index';
@@ -446,6 +447,59 @@ describe('Timetable DTOs', () => {
           { type: 'query', metatype: GetSemesterCalendarQueryDto },
         ),
       ).rejects.toMatchObject({ status: 400 });
+    });
+  });
+
+  describe('SaveSlotPreferencesDto', () => {
+    it('should validate a valid slot preferences payload', () => {
+      const dto = plainToInstance(SaveSlotPreferencesDto, {
+        slots: [
+          { weekday: 1, pair: 1, preference: 'PREFERRED' },
+          { weekday: 5, pair: 3, preference: 'UNDESIRABLE' },
+        ],
+      });
+
+      expect(validateSync(dto)).toEqual([]);
+    });
+
+    it('should reject duplicate weekday/pair slots', () => {
+      const dto = plainToInstance(SaveSlotPreferencesDto, {
+        slots: [
+          { weekday: 1, pair: 2, preference: 'PREFERRED' },
+          { weekday: 1, pair: 2, preference: 'UNDESIRABLE' },
+        ],
+      });
+
+      const errors = validateSync(dto);
+
+      expect(errors).toHaveLength(1);
+      expect(errors[0].property).toBe('slots');
+    });
+
+    it('should reject invalid weekday, pair, or preference value', () => {
+      const dto = plainToInstance(SaveSlotPreferencesDto, {
+        slots: [{ weekday: 7, pair: 0, preference: 'MAYBE' }],
+      });
+
+      const errors = validateSync(dto);
+
+      expect(errors).toHaveLength(1);
+      expect(errors[0].children?.[0].children?.map((e) => e.property)).toEqual(
+        expect.arrayContaining(['weekday', 'pair', 'preference']),
+      );
+    });
+
+    it('should reject arrays exceeding 42 items', () => {
+      const slots = Array.from({ length: 43 }, (_, index) => ({
+        weekday: (index % 6) + 1,
+        pair: Math.floor(index / 6) + 1,
+        preference: 'PREFERRED',
+      }));
+      const dto = plainToInstance(SaveSlotPreferencesDto, { slots });
+      const errors = validateSync(dto);
+
+      expect(errors).toHaveLength(1);
+      expect(errors[0].property).toBe('slots');
     });
   });
 });
