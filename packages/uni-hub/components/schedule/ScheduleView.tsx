@@ -99,11 +99,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     (type: string) => {
       switch (type) {
         case 'lecture':
-          return formatMessage('schedule.typeLecture');
+          return formatMessage('schedule.typeLectureShort');
         case 'lab':
-          return formatMessage('schedule.typeLab');
+          return formatMessage('schedule.typeLabShort');
         case 'practice':
-          return formatMessage('schedule.typePractice');
+          return formatMessage('schedule.typePracticeShort');
         case 'exam':
           return formatMessage('schedule.typeExam');
         default:

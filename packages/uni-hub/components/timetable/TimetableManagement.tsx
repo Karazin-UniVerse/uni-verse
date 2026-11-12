@@ -132,26 +132,26 @@ const getTeachingTypeBadge = (
     case 'PRACTICAL':
     case 'PRACTICE':
       return {
-        label: formatMessage('timetable.typePractical'),
+        label: formatMessage('timetable.typePracticalShort'),
         tone: 'success',
         cardClass: styles.eventPractice,
       };
     case 'LABORATORY':
     case 'LAB':
       return {
-        label: formatMessage('timetable.typeLaboratory'),
+        label: formatMessage('timetable.typeLaboratoryShort'),
         tone: 'warning',
         cardClass: styles.eventLab,
       };
     case 'SEMINAR':
       return {
-        label: formatMessage('timetable.typeSeminar'),
+        label: formatMessage('timetable.typeSeminarShort'),
         tone: 'default',
         cardClass: styles.eventSeminar,
       };
     default:
       return {
-        label: formatMessage('timetable.typeLecture'),
+        label: formatMessage('timetable.typeLectureShort'),
         tone: 'info',
         cardClass: styles.eventLecture,
       };

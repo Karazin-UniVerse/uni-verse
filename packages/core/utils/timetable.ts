@@ -829,20 +829,29 @@ function computeSlotHeuristicCost({
     return pair;
   }
 
-  // Рівномірний розподіл навантаження по днях тижня (Пн-Пт)
-  // Замість однобічного збивання всіх лекцій на Пн, а всіх практик на Пт/Чт,
-  // кожна дисципліна має рівномірно збалансований базовий день, що дозволяє
-  // розкладати заняття гармонійно по понеділку, вівторку, середі, четвергу і п'ятниці.
   const isLecture = demand.teachingType === TIMETABLE_TEACHING_TYPE.LECTURE;
-  const preferredDay = isLecture
-    ? ((demandIndex * 2) % 3) + 1 // лекції розподіляються на Пн (1), Вт (2), Ср (3)
-    : ((demandIndex * 2 + 1) % 5) + 1; // практики рівномірно по днях 1..5
+  let cost = 0;
 
-  let cost = Math.abs(weekday - preferredDay) * WEEKDAY_PENALTY_MULTIPLIER;
-
-  // Лекції бажано ставити раніше за день (Пн-Ср)
   if (isLecture) {
-    cost += weekday * 2;
+    // Лекції зосереджуються на початку тижня (Пн = 1, Вт = 2) та на ранніх парах (1..3),
+    // щоб практики, семінари та лабораторні роботи завжди слідували після лекцій.
+    cost += Math.abs(weekday - ((demandIndex % 2) + 1)) * (WEEKDAY_PENALTY_MULTIPLIER * 2);
+
+    if (weekday > 2) {
+      cost += WEEKDAY_PENALTY_MULTIPLIER * 4;
+    }
+
+    cost += pair * 2;
+  } else {
+    // Практики, семінари та лабораторні розподіляються після лекцій:
+    // переважно у Середу (3), Четвер (4) та П'ятницю (5).
+    cost += Math.abs(weekday - (((demandIndex * 2) % 3) + 3)) * WEEKDAY_PENALTY_MULTIPLIER;
+
+    if (weekday === 1) {
+      cost += WEEKDAY_PENALTY_MULTIPLIER * 3;
+    }
+
+    cost += pair;
   }
 
   if (pair <= MAX_STANDARD_PAIR) {

@@ -729,18 +729,34 @@ export class TimetableService {
       },
     );
 
-    const demands: TeachingDemand[] = assignments.map((a) => ({
-      id: a.id,
-      disciplineTitle: a.disciplineTitle,
-      teachingType: a.teachingType as unknown as TeachingDemand['teachingType'],
-      teacherId: a.teacherId ?? undefined,
-      groupIds: buildGroupIds(a),
-      academicHours: a.academicHours,
-      subgroupId: a.subgroupId ?? undefined,
-      streamId: a.streamId ?? undefined,
-      isSaturdayOnly: a.isSaturdayOnly,
-      hasLateSlotAuthorization: a.hasLateSlotAuthorization,
-    }));
+    const demands: TeachingDemand[] = assignments
+      .map((a) => ({
+        id: a.id,
+        disciplineTitle: a.disciplineTitle,
+        teachingType:
+          a.teachingType as unknown as TeachingDemand['teachingType'],
+        teacherId: a.teacherId ?? undefined,
+        groupIds: buildGroupIds(a),
+        academicHours: a.academicHours,
+        subgroupId: a.subgroupId ?? undefined,
+        streamId: a.streamId ?? undefined,
+        isSaturdayOnly: a.isSaturdayOnly,
+        hasLateSlotAuthorization: a.hasLateSlotAuthorization,
+      }))
+      .sort((first, second) => {
+        const firstIsLecture = first.teachingType === 'LECTURE';
+        const secondIsLecture = second.teachingType === 'LECTURE';
+
+        if (firstIsLecture && !secondIsLecture) {
+          return -1;
+        }
+
+        if (!firstIsLecture && secondIsLecture) {
+          return 1;
+        }
+
+        return first.disciplineTitle.localeCompare(second.disciplineTitle);
+      });
 
     const startDateStr = toIsoDateString(calendar.startDate);
 
