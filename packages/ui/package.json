@@ -42,12 +42,12 @@
     "@testing-library/user-event": "^14.6.8",
     "@types/react": "^19.3.0",
     "@universe/core": "workspace:*",
-    "@vitest/browser-playwright": "^5.1.0",
-    "@vitest/coverage-v8": "^5.1.0",
+    "@vitest/browser-playwright": "5.0.5",
+    "@vitest/coverage-v8": "5.0.5",
     "happy-dom": "^21.0.4",
     "playwright": "^1.65.0",
     "storybook": "^10.6.6",
     "typescript": "^6.0.3",
-    "vitest": "^5.1.0"
+    "vitest": "5.0.5"
   }
 }
