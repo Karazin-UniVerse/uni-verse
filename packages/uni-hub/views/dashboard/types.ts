@@ -79,6 +79,7 @@ export interface DashboardSidebarProps {
   soundEnabled: boolean;
   onLogout: () => void;
   isMoodleLinked?: boolean;
+  roles?: readonly string[];
 }
 
 export interface DashboardHeaderProps {

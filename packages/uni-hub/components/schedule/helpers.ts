@@ -1,3 +1,5 @@
+import { generateIcsCalendar } from '@universe/core/utils/timetable';
+import type { IcsCalendarEvent } from '@universe/core/types/timetable';
 import type { ScheduleEvent } from './ScheduleView.types';
 
 export const addDays = (date: Date, days: number): Date => {
@@ -117,24 +119,27 @@ export const escapeICSText = (value: string): string =>
     .replace(/;/g, String.raw`\;`)
     .replace(/,/g, String.raw`\,`);
 
-export const generateICSContent = (events: ScheduleEvent[]): string => {
-  const formatDateICS = (date: Date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+export const generateICSContent = (
+  events: ScheduleEvent[],
+  options?: { calendarName?: string; now?: Date },
+): string => {
+  const icsEvents: IcsCalendarEvent[] = events.map((event) => ({
+    id: event.id,
+    disciplineTitle: event.title,
+    teachingType: event.type,
+    start: event.start,
+    end: event.end,
+    location: event.location,
+    meetingUrl: event.meetingUrl,
+    teacherName: event.teacherName,
+    groupCodes: event.groupCodes,
+  }));
 
-  let icsContent = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//UNiVerse//Schedule//EN\r\n';
-
-  events.forEach((event) => {
-    icsContent += 'BEGIN:VEVENT\r\n';
-    icsContent += `UID:${event.id}@universemvp.tech\r\n`;
-    icsContent += `DTSTAMP:${formatDateICS(new Date())}\r\n`;
-    icsContent += `DTSTART:${formatDateICS(event.start)}\r\n`;
-    icsContent += `DTEND:${formatDateICS(event.end)}\r\n`;
-    icsContent += `SUMMARY:${escapeICSText(event.title)}\r\n`;
-    icsContent += `LOCATION:${escapeICSText(event.location)}\r\n`;
-    icsContent += 'END:VEVENT\r\n';
+  return generateIcsCalendar({
+    events: icsEvents,
+    calendarName: options?.calendarName ?? 'Karazin UniVerse Schedule',
+    now: options?.now,
   });
-  icsContent += 'END:VCALENDAR\r\n';
-
-  return icsContent;
 };
 
 export const exportToICS = (events: ScheduleEvent[]): void => {

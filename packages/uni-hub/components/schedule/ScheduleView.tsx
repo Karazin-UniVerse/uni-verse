@@ -5,7 +5,14 @@ import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
-import { addDays, DUMMY_EVENTS, exportToICS, isSameDay, startOfWeek } from './helpers';
+import {
+  addDays,
+  DUMMY_EVENTS,
+  exportToICS,
+  isSafeMeetingUrl,
+  isSameDay,
+  startOfWeek,
+} from './helpers';
 import { ScheduleDayView } from './ScheduleDayView';
 import { ScheduleMonthView } from './ScheduleMonthView';
 import { ScheduleToolbar } from './ScheduleToolbar';
@@ -151,15 +158,26 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       return;
     }
 
+    const trimmedUrl = meetingUrlInput.trim();
+
+    if (trimmedUrl !== '' && !isSafeMeetingUrl(trimmedUrl)) {
+      const errorMsg = formatMessage('schedule.invalidMeetingUrl');
+
+      setMeetingUrlError(errorMsg);
+      toast.error(errorMsg);
+
+      return;
+    }
+
     setIsSavingUrl(true);
     setMeetingUrlError(null);
 
     const targetId = editingEvent.teachingAssignmentId ?? editingEvent.id;
 
     try {
-      await timetableApi.updateMeetingUrl(targetId, meetingUrlInput);
+      await timetableApi.updateMeetingUrl(targetId, trimmedUrl);
       setEvents((prev) =>
-        prev.map((e) => (e.id === editingEvent.id ? { ...e, meetingUrl: meetingUrlInput } : e)),
+        prev.map((e) => (e.id === editingEvent.id ? { ...e, meetingUrl: trimmedUrl } : e)),
       );
       toast.success(formatMessage('schedule.meetingUrlSaved'));
       setEditingEvent(null);

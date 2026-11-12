@@ -6,6 +6,7 @@ export const NAV_KEY = {
   Schedule: 'schedule',
   ConnectMoodle: 'connectMoodle',
   Opportunities: 'opportunities',
+  Timetable: 'timetable',
 } as const;
 
 export type NavKey = (typeof NAV_KEY)[keyof typeof NAV_KEY];

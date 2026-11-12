@@ -211,10 +211,10 @@ describe('TimetableApi', () => {
   it('getIcsFeedUrl returns full URL with custom base or window origin', () => {
     const url = timetableApi.getIcsFeedUrl('test-token-123', 'https://hub.karazin.ua');
 
-    expect(url).toBe('https://hub.karazin.ua/api/timetable/calendar/feed/test-token-123');
+    expect(url).toBe('https://hub.karazin.ua/timetable/calendar/feed/test-token-123');
 
     const defaultUrl = timetableApi.getIcsFeedUrl('test-token-456');
 
-    expect(defaultUrl).toContain('/api/timetable/calendar/feed/test-token-456');
+    expect(defaultUrl).toContain('/timetable/calendar/feed/test-token-456');
   });
 });

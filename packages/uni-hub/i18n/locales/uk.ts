@@ -61,6 +61,7 @@ export const uk = {
   'nav.schedule': 'Розклад',
   'nav.connectMoodle': 'Підключити Moodle',
   'nav.opportunities': 'Можливості',
+  'nav.timetable': 'Керування розкладом',
 
   // Study views
   'study.views.subjects': 'Дисципліни',
@@ -243,6 +244,7 @@ export const uk = {
   'schedule.save': 'Зберегти',
   'schedule.cancel': 'Скасувати',
   'schedule.meetingUrlSaved': 'Посилання оновлено',
+  'schedule.invalidMeetingUrl': 'Посилання має починатися з http:// або https://',
   'schedule.subscribeError': 'Не вдалося створити посилання для підписки',
   'schedule.updateMeetingUrlError': 'Не вдалося оновити посилання на заняття',
   'schedule.prevWeek': 'Попередній тиждень',

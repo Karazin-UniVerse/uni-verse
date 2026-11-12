@@ -63,6 +63,7 @@ export const en = {
   'nav.schedule': 'Schedule',
   'nav.connectMoodle': 'Connect Moodle',
   'nav.opportunities': 'Opportunities',
+  'nav.timetable': 'Timetable Management',
 
   // Study views
   'study.views.subjects': 'Subjects',
@@ -244,6 +245,7 @@ export const en = {
   'schedule.save': 'Save',
   'schedule.cancel': 'Cancel',
   'schedule.meetingUrlSaved': 'Link updated',
+  'schedule.invalidMeetingUrl': 'URL must begin with http:// or https://',
   'schedule.subscribeError': 'Failed to create subscription feed URL',
   'schedule.updateMeetingUrlError': 'Failed to update meeting link',
   'schedule.prevWeek': 'Previous week',

@@ -339,6 +339,28 @@ describe('resolveNavKey', () => {
     ).toBe(NAV_KEY.Overview);
   });
 
+  it('falls back to overview if user lacks required role for the item', () => {
+    const adminNavItems = [{ key: NAV_KEY.Overview }, { key: NAV_KEY.Timetable, roles: ['ADMIN'] }];
+
+    expect(
+      resolveNavKey(NAV_KEY.Timetable, {
+        navItems: adminNavItems,
+        features,
+        isMoodleLinked: true,
+        roles: ['STUDENT'],
+      }),
+    ).toBe(NAV_KEY.Overview);
+
+    expect(
+      resolveNavKey(NAV_KEY.Timetable, {
+        navItems: adminNavItems,
+        features,
+        isMoodleLinked: true,
+        roles: ['ADMIN'],
+      }),
+    ).toBe(NAV_KEY.Timetable);
+  });
+
   describe('parseRouteId', () => {
     it('parses a positive integer segment', () => {
       expect(parseRouteId('5')).toBe(5);

@@ -263,22 +263,32 @@ export function getExamScoreDisplay(
 }
 
 export interface NavKeyContext {
-  navItems: ReadonlyArray<{ key: NavKey; featureFlag?: FeatureFlagKey }>;
+  navItems: ReadonlyArray<{
+    key: NavKey;
+    featureFlag?: FeatureFlagKey;
+    roles?: readonly string[];
+  }>;
   features: FeatureFlags;
   isMoodleLinked: boolean;
+  roles?: readonly string[];
 }
 
 export function resolveNavKey(
   key: NavKey,
-  { navItems, features, isMoodleLinked }: NavKeyContext,
+  { navItems, features, isMoodleLinked, roles = [] }: NavKeyContext,
 ): NavKey {
   if (key === NAV_KEY.ConnectMoodle && (isMoodleLinked || !features.isMoodleIntegrationEnabled)) {
     return NAV_KEY.Overview;
   }
 
-  const featureFlag = navItems.find((item) => item.key === key)?.featureFlag;
+  const navItem = navItems.find((item) => item.key === key);
+  const featureFlag = navItem?.featureFlag;
 
   if (featureFlag && !features[featureFlag]) {
+    return NAV_KEY.Overview;
+  }
+
+  if (navItem?.roles && !navItem.roles.some((role) => roles.includes(role))) {
     return NAV_KEY.Overview;
   }
 

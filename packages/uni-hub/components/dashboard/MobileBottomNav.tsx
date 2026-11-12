@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useFeatures } from '@uni-hub/features';
 import { playClick } from '@uni-hub/utils/soundEffects';
+import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { getVisibleNavItems } from '@uni-hub/views/dashboard/layout/DashboardSidebar';
 import type { NavKey } from '@uni-hub/views/dashboard/constants';
 import styles from './MobileBottomNav.module.scss';
@@ -22,7 +23,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 }) => {
   const { formatMessage } = useLanguage();
   const flags = useFeatures();
-  const visibleNavItems = getVisibleNavItems(flags, true);
+  const { roles } = useCurrentUser();
+  const visibleNavItems = getVisibleNavItems(flags, true, roles);
 
   return (
     <nav className={styles.container} aria-label="Мобільна навігація">

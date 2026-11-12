@@ -225,14 +225,18 @@ describe('schedule helpers', () => {
       },
     ];
 
-    it('generates a valid iCalendar VCALENDAR string with escaped fields', () => {
+    it('generates a valid iCalendar VCALENDAR string with escaped fields and Europe/Kyiv timezone', () => {
       const ics = generateICSContent(sampleEvents);
 
       expect(ics).toContain('BEGIN:VCALENDAR');
       expect(ics).toContain('VERSION:2.0');
+      expect(ics).toContain('X-WR-TIMEZONE:Europe/Kyiv');
+      expect(ics).toContain('TZID:Europe/Kyiv');
       expect(ics).toContain('BEGIN:VEVENT');
-      expect(ics).toContain('UID:test-event-1@universemvp.tech');
-      expect(ics).toContain('SUMMARY:Math\\, Logic & AI\\; Lecture');
+      expect(ics).toContain('UID:test-event-1@timetable.universe.karazin.ua');
+      expect(ics).toContain('DTSTART;TZID=Europe/Kyiv:');
+      expect(ics).toContain('DTEND;TZID=Europe/Kyiv:');
+      expect(ics).toContain('SUMMARY:[Лекція] Math\\, Logic & AI\\; Lecture');
       expect(ics).toContain('LOCATION:Room 101\\, Building 2');
       expect(ics).toContain('END:VEVENT');
       expect(ics).toContain('END:VCALENDAR');

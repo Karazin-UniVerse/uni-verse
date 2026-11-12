@@ -19,6 +19,7 @@ describe('dashboard routes', () => {
       expect(getNavKeyFromPathname('/schedule')).toBe(NAV_KEY.Schedule);
       expect(getNavKeyFromPathname('/opportunities')).toBe(NAV_KEY.Opportunities);
       expect(getNavKeyFromPathname('/connect-moodle')).toBe(NAV_KEY.ConnectMoodle);
+      expect(getNavKeyFromPathname('/timetable')).toBe(NAV_KEY.Timetable);
     });
 
     it('maps nested paths to the key of their first segment', () => {
@@ -45,6 +46,7 @@ describe('dashboard routes', () => {
         [NAV_KEY.Schedule]: ROUTE.Schedule,
         [NAV_KEY.Opportunities]: ROUTE.Opportunities,
         [NAV_KEY.ConnectMoodle]: ROUTE.ConnectMoodle,
+        [NAV_KEY.Timetable]: ROUTE.TIMETABLE,
       });
     });
   });

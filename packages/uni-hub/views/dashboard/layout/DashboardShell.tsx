@@ -36,6 +36,7 @@ const PAGE_TITLE_KEYS: Record<NavKey, TranslationKey> = {
   [NAV_KEY.Overview]: 'nav.overview',
   [NAV_KEY.Study]: 'nav.study',
   [NAV_KEY.Schedule]: 'nav.schedule',
+  [NAV_KEY.Timetable]: 'nav.timetable',
   [NAV_KEY.Opportunities]: 'nav.opportunities',
   [NAV_KEY.ConnectMoodle]: 'nav.connectMoodle',
 };
@@ -46,7 +47,7 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
   const queryClient = useQueryClient();
   const features = useFeatures();
   const logout = useLogout();
-  const { userId } = useCurrentUser();
+  const { userId, roles } = useCurrentUser();
 
   useAuthProtection(userId);
   useDailyStreak(userId);
@@ -91,6 +92,7 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
     navItems: NAV_ITEMS,
     features,
     isMoodleLinked,
+    roles,
   });
 
   useEffect(() => {
@@ -163,6 +165,7 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
         soundEnabled={soundEnabled}
         onLogout={handleLogout}
         isMoodleLinked={isMoodleLinked}
+        roles={roles}
       />
       <MobileBottomNav activeKey={activeKey} onSelectKey={selectKey} soundEnabled={soundEnabled} />
 

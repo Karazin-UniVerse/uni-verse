@@ -12,6 +12,7 @@ import type {
   TimetableVersionResponse,
 } from '@core/types/timetable';
 import { ApiClient, buildQueryString } from './api.request';
+import { API_BASE_URL } from './api.storage';
 
 export class TimetableApi extends ApiClient {
   async getCurriculumPlan(id: string): Promise<{ data: CurriculumPlanResponse }> {
@@ -121,14 +122,10 @@ export class TimetableApi extends ApiClient {
   }
 
   getIcsFeedUrl(token: string, baseOrigin?: string): string {
-    const origin =
-      baseOrigin ??
-      (typeof window !== 'undefined' && window.location?.origin
-        ? window.location.origin
-        : 'http://localhost:3000');
+    const origin = baseOrigin ?? API_BASE_URL;
     const normalized = origin.replace(/\/$/, '');
 
-    return `${normalized}/api/timetable/calendar/feed/${encodeURIComponent(token)}`;
+    return `${normalized}/timetable/calendar/feed/${encodeURIComponent(token)}`;
   }
 }
 

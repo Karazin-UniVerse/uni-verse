@@ -12,6 +12,7 @@ import {
 import * as soundEffects from '@uni-hub/utils/soundEffects';
 import styles from '@uni-hub/views/dashboard/layout/DashboardShell.module.scss';
 import type { FeatureFlags } from '@core/constants/features';
+import { ROLE } from '@core/constants/roles';
 import { NAV_KEY } from '../constants';
 import { NAV_KEY_ROUTE } from '../routes';
 import type { DashboardSidebarProps } from '../types';
@@ -50,24 +51,23 @@ const renderSidebar = (props: Partial<DashboardSidebarProps> = {}) => {
 
 describe('DashboardSidebar routes', () => {
   it('should have a route for every navigation item', () => {
-    for (const item of getVisibleNavItems(allEnabledFlags, false)) {
+    for (const item of getVisibleNavItems(allEnabledFlags, false, [ROLE.ADMIN])) {
       expect(NAV_KEY_ROUTE[item.key]).toMatch(/^\//);
     }
   });
 });
 
 describe('DashboardSidebar helpers', () => {
-  it('should return standard NAV_ITEMS when isMoodleLinked is true', () => {
+  it('should return standard non-admin items when roles is empty and isMoodleLinked is true', () => {
     const items = getVisibleNavItems(allEnabledFlags, true);
 
-    expect(items).toEqual(NAV_ITEMS);
     expect(items.some((item) => item.key === NAV_KEY.ConnectMoodle)).toBe(false);
+    expect(items.some((item) => item.key === NAV_KEY.Timetable)).toBe(false);
   });
 
   it('should include connectMoodle item when isMoodleLinked is false', () => {
     const items = getVisibleNavItems(allEnabledFlags, false);
 
-    expect(items.length).toBe(NAV_ITEMS.length + 1);
     expect(items.some((item) => item.key === NAV_KEY.ConnectMoodle)).toBe(true);
 
     const connectItem = items.find((item) => item.key === NAV_KEY.ConnectMoodle);
@@ -75,11 +75,25 @@ describe('DashboardSidebar helpers', () => {
     expect(connectItem?.labelKey).toBe('nav.connectMoodle');
     expect(connectItem?.shortLabelKey).toBe('nav.connectMoodle');
   });
+
+  it('should include timetable item when role is ADMIN and isEDeanEnabled is true', () => {
+    const items = getVisibleNavItems(allEnabledFlags, true, [ROLE.ADMIN]);
+
+    expect(items.some((item) => item.key === NAV_KEY.Timetable)).toBe(true);
+  });
+
+  it('should not include timetable item when isEDeanEnabled is false even if role is ADMIN', () => {
+    const items = getVisibleNavItems({ ...allEnabledFlags, isEDeanEnabled: false }, true, [
+      ROLE.ADMIN,
+    ]);
+
+    expect(items.some((item) => item.key === NAV_KEY.Timetable)).toBe(false);
+  });
 });
 
 describe('DashboardSidebar navigation & feature gating', () => {
   it('should include all navigation items when all feature flags are enabled', () => {
-    expect(NAV_ITEMS).toHaveLength(4);
+    expect(NAV_ITEMS).toHaveLength(5);
 
     const visible = getVisibleNavItems(allEnabledFlags, true);
 
@@ -87,6 +101,16 @@ describe('DashboardSidebar navigation & feature gating', () => {
       NAV_KEY.Overview,
       NAV_KEY.Study,
       NAV_KEY.Schedule,
+      NAV_KEY.Opportunities,
+    ]);
+
+    const adminVisible = getVisibleNavItems(allEnabledFlags, true, [ROLE.ADMIN]);
+
+    expect(adminVisible.map((item) => item.key)).toEqual([
+      NAV_KEY.Overview,
+      NAV_KEY.Study,
+      NAV_KEY.Schedule,
+      NAV_KEY.Timetable,
       NAV_KEY.Opportunities,
     ]);
   });
@@ -157,6 +181,25 @@ describe('DashboardSidebar component rendering & interactions', () => {
     expect(handleSelectKey).toHaveBeenCalledWith(NAV_KEY.Schedule);
     expect(handleCloseMobileMenu).toHaveBeenCalledTimes(1);
     expect(playClickSpy).toHaveBeenCalledWith(true);
+  });
+
+  it('should render timetable management button when user has ADMIN role and select it on click', async () => {
+    const user = userEvent.setup();
+    const handleSelectKey = vi.fn();
+
+    renderSidebar({
+      activeKey: NAV_KEY.Overview,
+      onSelectKey: handleSelectKey,
+      roles: [ROLE.ADMIN],
+    });
+
+    const timetableBtn = screen.getByRole('button', { name: 'Керування розкладом' });
+
+    expect(timetableBtn).toBeInTheDocument();
+
+    await user.click(timetableBtn);
+
+    expect(handleSelectKey).toHaveBeenCalledWith(NAV_KEY.Timetable);
   });
 
   it('should toggle collapsed state when collapse toggle button is clicked', async () => {

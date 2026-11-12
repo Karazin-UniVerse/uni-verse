@@ -7,16 +7,19 @@ import {
   LayoutDashboard,
   BookOpen,
   CalendarDays,
+  CalendarCog,
   ChevronLeft,
   LogOut,
   Link2,
   Sparkles,
 } from 'lucide-react';
 import { Button } from '@una';
+import { ROLE, type Role } from '@core/constants/roles';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useFeatures } from '@uni-hub/features';
+import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import type { FeatureFlags, FeatureFlagKey } from '@core/constants/features';
 import { playClick } from '@uni-hub/utils/soundEffects';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
@@ -30,6 +33,7 @@ export interface NavItemConfig {
   labelKey: TranslationKey;
   shortLabelKey?: TranslationKey;
   featureFlag?: FeatureFlagKey;
+  roles?: readonly Role[];
 }
 
 export const NAV_ITEMS: NavItemConfig[] = [
@@ -54,6 +58,14 @@ export const NAV_ITEMS: NavItemConfig[] = [
     featureFlag: 'isEDeanEnabled',
   },
   {
+    key: NAV_KEY.Timetable,
+    icon: <CalendarCog size={18} />,
+    labelKey: 'nav.timetable',
+    shortLabelKey: 'nav.timetable',
+    featureFlag: 'isEDeanEnabled',
+    roles: [ROLE.ADMIN],
+  },
+  {
     key: NAV_KEY.Opportunities,
     icon: <Sparkles size={18} />,
     labelKey: 'nav.opportunities',
@@ -65,8 +77,19 @@ export const NAV_ITEMS: NavItemConfig[] = [
 export const getVisibleNavItems = (
   flags: FeatureFlags,
   isMoodleLinked: boolean,
+  roles: readonly string[] = [],
 ): NavItemConfig[] => {
-  const baseItems = NAV_ITEMS.filter((item) => !item.featureFlag || flags[item.featureFlag]);
+  const baseItems = NAV_ITEMS.filter((item) => {
+    if (item.featureFlag && !flags[item.featureFlag]) {
+      return false;
+    }
+
+    if (item.roles && !item.roles.some((role) => roles.includes(role))) {
+      return false;
+    }
+
+    return true;
+  });
 
   if (!isMoodleLinked && flags.isMoodleIntegrationEnabled) {
     return [
@@ -92,11 +115,14 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   onSelectKey,
   soundEnabled,
   onLogout,
+  roles: propRoles,
   isMoodleLinked = true,
 }) => {
   const { formatMessage } = useLanguage();
   const flags = useFeatures();
-  const visibleNavItems = getVisibleNavItems(flags, isMoodleLinked);
+  const currentUser = useCurrentUser();
+  const roles = propRoles ?? currentUser.roles;
+  const visibleNavItems = getVisibleNavItems(flags, isMoodleLinked, roles);
   const siderRef = useRef<HTMLElement>(null);
 
   useEffect(() => {

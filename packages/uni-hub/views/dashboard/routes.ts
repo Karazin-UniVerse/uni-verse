@@ -7,6 +7,7 @@ export const ROUTE = {
   Schedule: '/schedule',
   Opportunities: OPPORTUNITIES_ROUTE,
   ConnectMoodle: '/connect-moodle',
+  TIMETABLE: '/timetable',
 } as const;
 
 export const NAV_KEY_ROUTE: Record<NavKey, string> = {
@@ -15,6 +16,7 @@ export const NAV_KEY_ROUTE: Record<NavKey, string> = {
   [NAV_KEY.Schedule]: ROUTE.Schedule,
   [NAV_KEY.Opportunities]: ROUTE.Opportunities,
   [NAV_KEY.ConnectMoodle]: ROUTE.ConnectMoodle,
+  [NAV_KEY.Timetable]: ROUTE.TIMETABLE,
 };
 
 export function getNavKeyFromPathname(pathname: string): NavKey {

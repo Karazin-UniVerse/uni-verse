@@ -249,6 +249,48 @@ describe('ScheduleView component', () => {
     expect(updateSpy).toHaveBeenCalledWith('assign-1', 'https://zoom.us/j/999999');
   });
 
+  it('should validate meeting URL on client side and prevent API call for invalid URL', async () => {
+    const updateSpy = vi.spyOn(timetableApi, 'updateMeetingUrl');
+
+    const testDate = new Date(new Date().setHours(10, 10, 0, 0));
+    const customEvents: ScheduleEvent[] = [
+      {
+        id: 'evt-editable-2',
+        title: 'Теорія алгоритмів',
+        start: testDate,
+        end: new Date(testDate.getTime() + 80 * 60 * 1000),
+        type: 'lecture',
+        location: 'Дистанційно',
+        teachingAssignmentId: 'assign-2',
+      },
+    ];
+    const user = userEvent.setup();
+
+    renderScheduleView({ events: customEvents, isTeacher: true });
+
+    const dayRadio = screen.getByRole('radio', { name: /^(день|day)$/i });
+
+    await user.click(dayRadio);
+
+    const editBtn = screen.getByRole('button', { name: /змінити посилання/i });
+
+    await user.click(editBtn);
+
+    const input = screen.getByPlaceholderText(/https:\/\/meet\.google\.com/i);
+
+    await user.clear(input);
+    await user.type(input, 'javascript:alert(1)');
+
+    const saveBtn = screen.getByRole('button', { name: /зберегти/i });
+
+    await user.click(saveBtn);
+
+    expect(updateSpy).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      /посилання має починатися з http:\/\/ або https:\/\//i,
+    );
+  });
+
   it('should show error message and not set fallback URL when createSubscriptionToken fails', async () => {
     vi.spyOn(timetableApi, 'createSubscriptionToken').mockRejectedValue(new Error('Network error'));
     const user = userEvent.setup();
