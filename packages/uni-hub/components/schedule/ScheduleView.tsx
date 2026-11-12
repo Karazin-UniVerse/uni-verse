@@ -173,11 +173,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     setMeetingUrlError(null);
 
     const targetId = editingEvent.teachingAssignmentId ?? editingEvent.id;
+    const nextUrl = trimmedUrl === '' ? undefined : trimmedUrl;
 
     try {
-      await timetableApi.updateMeetingUrl(targetId, trimmedUrl);
+      await timetableApi.updateMeetingUrl(targetId, nextUrl);
       setEvents((prev) =>
-        prev.map((e) => (e.id === editingEvent.id ? { ...e, meetingUrl: trimmedUrl } : e)),
+        prev.map((e) => (e.id === editingEvent.id ? { ...e, meetingUrl: nextUrl } : e)),
       );
       toast.success(formatMessage('schedule.meetingUrlSaved'));
       setEditingEvent(null);

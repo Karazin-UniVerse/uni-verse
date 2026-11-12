@@ -249,6 +249,57 @@ describe('ScheduleView component', () => {
     expect(updateSpy).toHaveBeenCalledWith('assign-1', 'https://zoom.us/j/999999');
   });
 
+  it('should pass undefined to updateMeetingUrl when clearing meeting URL', async () => {
+    const updateSpy = vi.spyOn(timetableApi, 'updateMeetingUrl').mockResolvedValue({
+      data: {
+        id: 'assign-1',
+        curriculumPlanId: 'plan-1',
+        disciplineTitle: 'Теорія алгоритмів',
+        teachingType: 'LECTURE',
+        academicHours: 32,
+        teacherId: 'teacher-1',
+        isSaturdayOnly: false,
+        hasLateSlotAuthorization: false,
+        meetingUrl: null,
+      },
+    });
+
+    const testDate = new Date(new Date().setHours(10, 10, 0, 0));
+    const customEvents: ScheduleEvent[] = [
+      {
+        id: 'evt-editable-clear',
+        title: 'Теорія алгоритмів',
+        start: testDate,
+        end: new Date(testDate.getTime() + 80 * 60 * 1000),
+        type: 'lecture',
+        location: 'Дистанційно',
+        meetingUrl: 'https://zoom.us/j/999999',
+        teachingAssignmentId: 'assign-1',
+      },
+    ];
+    const user = userEvent.setup();
+
+    renderScheduleView({ events: customEvents, isTeacher: true });
+
+    const dayRadio = screen.getByRole('radio', { name: /^(день|day)$/i });
+
+    await user.click(dayRadio);
+
+    const editBtn = screen.getByRole('button', { name: /змінити посилання/i });
+
+    await user.click(editBtn);
+
+    const input = screen.getByPlaceholderText(/https:\/\/meet\.google\.com/i);
+
+    await user.clear(input);
+
+    const saveBtn = screen.getByRole('button', { name: /зберегти/i });
+
+    await user.click(saveBtn);
+
+    expect(updateSpy).toHaveBeenCalledWith('assign-1', undefined);
+  });
+
   it('should validate meeting URL on client side and prevent API call for invalid URL', async () => {
     const updateSpy = vi.spyOn(timetableApi, 'updateMeetingUrl');
 

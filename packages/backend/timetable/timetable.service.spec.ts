@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Role, TeachingType } from '@universe/database';
+import { Prisma, Role, TeachingType } from '@universe/database';
 import { PrismaService } from '../prisma/prisma.service';
 import { MAX_SOLVER_DEMANDS, TimetableService } from './timetable.service';
 import type {
@@ -819,10 +819,20 @@ describe('TimetableService', () => {
       );
 
       expect(published.status).toBe('PUBLISHED');
-      expect(mockPrismaService.$transaction).toHaveBeenCalled();
+      expect(mockPrismaService.$transaction).toHaveBeenCalledWith(
+        expect.any(Function),
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
       expect(mockTimetableVersionPrisma.updateMany).toHaveBeenCalledWith({
         where: {
           semesterCalendarId: 'cal-1',
+          events: {
+            some: {
+              teachingAssignment: {
+                curriculumPlanId: 'plan-1',
+              },
+            },
+          },
           status: 'PUBLISHED',
           id: { not: 'ver-1' },
         },
@@ -1123,6 +1133,10 @@ describe('TimetableService', () => {
       const result = await service.createSubscriptionToken('user-1');
 
       expect(result).toEqual(existing);
+      expect(mockPrismaService.$transaction).toHaveBeenCalledWith(
+        expect.any(Function),
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
       expect(mockCalendarSubscriptionTokenPrisma.create).not.toHaveBeenCalled();
     });
 

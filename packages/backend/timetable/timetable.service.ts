@@ -7,13 +7,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  Prisma,
   Role,
   type AcademicGroup,
   type AcademicStream,
   type AcademicSubgroup,
   type CalendarSubscriptionToken,
   type CurriculumPlan,
-  type Prisma,
   type SemesterCalendar,
   type TeacherUnavailability as TeacherUnavailabilityRecord,
   type TeachingAssignment,
@@ -883,6 +883,18 @@ export class TimetableService {
         await tx.timetableVersion.updateMany({
           where: {
             semesterCalendarId: version.semesterCalendarId,
+            ...(planIds.length > 0
+              ? {
+                  events: {
+                    some: {
+                      teachingAssignment: {
+                        curriculumPlanId:
+                          planIds.length === 1 ? planIds[0] : { in: planIds },
+                      },
+                    },
+                  },
+                }
+              : {}),
             status: 'PUBLISHED',
             id: { not: versionId },
           },
@@ -913,8 +925,9 @@ export class TimetableService {
     };
 
     if (typeof this.prisma.$transaction === 'function') {
-      return this.prisma.$transaction((tx) =>
-        runInTransaction(tx as unknown as PrismaService),
+      return this.prisma.$transaction(
+        (tx) => runInTransaction(tx as unknown as PrismaService),
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );
     }
 
@@ -973,42 +986,11 @@ export class TimetableService {
       orConditions.push({ subgroupId: userSubgroupId });
     }
 
-    let publishedVersionFilter: Prisma.TimetableEventWhereInput = {
-      timetableVersion: {
-        status: 'PUBLISHED',
-      },
-    };
-
-    if (typeof this.prisma.timetableVersion?.findMany === 'function') {
-      const publishedVersions = await this.prisma.timetableVersion.findMany({
-        where: { status: 'PUBLISHED' },
-        orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
-        select: { id: true, semesterCalendarId: true },
-      });
-
-      if (publishedVersions && publishedVersions.length > 0) {
-        const latestByCalendar = new Map<string, string>();
-
-        for (const v of publishedVersions) {
-          const calKey = v.semesterCalendarId ?? v.id;
-
-          if (!latestByCalendar.has(calKey)) {
-            latestByCalendar.set(calKey, v.id);
-          }
-        }
-
-        publishedVersionFilter = {
-          timetableVersionId: { in: [...latestByCalendar.values()] },
-          timetableVersion: {
-            status: 'PUBLISHED',
-          },
-        };
-      }
-    }
-
     const events = await this.prisma.timetableEvent.findMany({
       where: {
-        ...publishedVersionFilter,
+        timetableVersion: {
+          status: 'PUBLISHED',
+        },
         teachingAssignment: {
           OR: orConditions,
         },
@@ -1098,26 +1080,39 @@ export class TimetableService {
   async createSubscriptionToken(
     userId: string,
   ): Promise<CalendarSubscriptionToken> {
-    if (typeof this.prisma.calendarSubscriptionToken.findFirst === 'function') {
-      const existing = await this.prisma.calendarSubscriptionToken.findFirst({
-        where: { userId, isActive: true },
-        orderBy: { createdAt: 'desc' },
-      });
+    const createOrGet = async (
+      tx: PrismaService,
+    ): Promise<CalendarSubscriptionToken> => {
+      if (typeof tx.calendarSubscriptionToken.findFirst === 'function') {
+        const existing = await tx.calendarSubscriptionToken.findFirst({
+          where: { userId, isActive: true },
+          orderBy: { createdAt: 'desc' },
+        });
 
-      if (existing) {
-        return existing;
+        if (existing) {
+          return existing;
+        }
       }
+
+      const token = crypto.randomBytes(32).toString('base64url');
+
+      return tx.calendarSubscriptionToken.create({
+        data: {
+          userId,
+          token,
+          isActive: true,
+        },
+      });
+    };
+
+    if (typeof this.prisma.$transaction === 'function') {
+      return this.prisma.$transaction(
+        (tx) => createOrGet(tx as unknown as PrismaService),
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
     }
 
-    const token = crypto.randomBytes(32).toString('base64url');
-
-    return this.prisma.calendarSubscriptionToken.create({
-      data: {
-        userId,
-        token,
-        isActive: true,
-      },
-    });
+    return createOrGet(this.prisma);
   }
 
   async rotateSubscriptionToken(
@@ -1143,8 +1138,9 @@ export class TimetableService {
     };
 
     if (typeof this.prisma.$transaction === 'function') {
-      return this.prisma.$transaction((tx) =>
-        rotate(tx as unknown as PrismaService),
+      return this.prisma.$transaction(
+        (tx) => rotate(tx as unknown as PrismaService),
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );
     }
 
@@ -1152,17 +1148,28 @@ export class TimetableService {
   }
 
   async revokeSubscriptionTokens(userId: string): Promise<{ count: number }> {
-    const result = await this.prisma.calendarSubscriptionToken.updateMany({
-      where: { userId, isActive: true },
-      data: { isActive: false },
-    });
+    const revoke = async (tx: PrismaService): Promise<{ count: number }> => {
+      const result = await tx.calendarSubscriptionToken.updateMany({
+        where: { userId, isActive: true },
+        data: { isActive: false },
+      });
 
-    return { count: result.count };
+      return { count: result.count };
+    };
+
+    if (typeof this.prisma.$transaction === 'function') {
+      return this.prisma.$transaction(
+        (tx) => revoke(tx as unknown as PrismaService),
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+    }
+
+    return revoke(this.prisma);
   }
 
   async updateMeetingUrl(
     assignmentId: string,
-    meetingUrl: string | undefined,
+    meetingUrl: string | null | undefined,
     userContext: { userId: string; roles?: string[] },
   ): Promise<TeachingAssignment> {
     const assignment = await this.prisma.teachingAssignment.findUnique({
@@ -1186,7 +1193,7 @@ export class TimetableService {
 
     return this.prisma.teachingAssignment.update({
       where: { id: assignmentId },
-      data: { meetingUrl: meetingUrl ?? null },
+      data: { meetingUrl: meetingUrl || null },
     });
   }
 }

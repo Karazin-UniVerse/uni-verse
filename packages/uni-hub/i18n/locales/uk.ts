@@ -268,6 +268,7 @@ export const uk = {
   'timetable.planId': 'Навчальний план',
   'timetable.workloadTitle': 'Педагогічне навантаження',
   'timetable.addAssignment': 'Додати навантаження',
+  'timetable.saveWorkload': 'Зберегти навантаження',
   'timetable.disciplineTitle': 'Дисципліна',
   'timetable.teachingType': 'Тип',
   'timetable.hours': 'Години',

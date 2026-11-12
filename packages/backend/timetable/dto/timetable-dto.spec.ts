@@ -160,6 +160,22 @@ describe('Timetable DTOs', () => {
   });
 
   describe('UpdateMeetingUrlDto', () => {
+    it('should allow empty string, null, or undefined to clear meetingUrl', () => {
+      expect(
+        validateSync(plainToInstance(UpdateMeetingUrlDto, { meetingUrl: '' })),
+      ).toEqual([]);
+      expect(
+        validateSync(
+          plainToInstance(UpdateMeetingUrlDto, { meetingUrl: null }),
+        ),
+      ).toEqual([]);
+      expect(
+        validateSync(
+          plainToInstance(UpdateMeetingUrlDto, { meetingUrl: undefined }),
+        ),
+      ).toEqual([]);
+    });
+
     it('should reject meetingUrl exceeding 2048 characters', () => {
       const dto = plainToInstance(UpdateMeetingUrlDto, {
         meetingUrl: `https://example.com/${'a'.repeat(2040)}`,

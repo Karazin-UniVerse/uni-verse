@@ -1,7 +1,10 @@
-import React, { useCallback, useId, useMemo, useState } from 'react';
-import { AlertCircle, Check, CheckCircle2, Play, Plus, Trash2 } from 'lucide-react';
+import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { AlertCircle, Check, CheckCircle2, Play, Plus, Save, Trash2 } from 'lucide-react';
 import { Button, CheckBox, Select, Spinner, Tag, TextInput } from '@una';
-import type { GenerateTimetableDraftResult } from '@core/types/timetable';
+import type {
+  CreateTeachingAssignmentRequest,
+  GenerateTimetableDraftResult,
+} from '@core/types/timetable';
 import { useLanguage, type FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import styles from './TimetableManagement.module.scss';
@@ -15,6 +18,36 @@ export interface WorkloadRow {
   isSaturdayOnly: boolean;
   hasLateSlotAuthorization: boolean;
 }
+
+const toUiTeachingType = (type: string): WorkloadRow['teachingType'] => {
+  switch (type) {
+    case 'PRACTICAL':
+    case 'PRACTICE':
+      return 'PRACTICE';
+    case 'LABORATORY':
+    case 'LAB':
+      return 'LAB';
+    case 'SEMINAR':
+      return 'SEMINAR';
+    default:
+      return 'LECTURE';
+  }
+};
+
+const toApiTeachingType = (
+  type: WorkloadRow['teachingType'],
+): CreateTeachingAssignmentRequest['teachingType'] => {
+  switch (type) {
+    case 'PRACTICE':
+      return 'PRACTICAL';
+    case 'LAB':
+      return 'LABORATORY';
+    case 'SEMINAR':
+      return 'SEMINAR';
+    default:
+      return 'LECTURE';
+  }
+};
 
 const createDefaultWorkload = (formatMessage: FormatMessage): WorkloadRow[] => [
   {
@@ -62,12 +95,47 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   const [workload, setWorkload] = useState<WorkloadRow[]>(
     () => initialWorkload ?? createDefaultWorkload(formatMessage),
   );
+  const [dirtyRowIds, setDirtyRowIds] = useState<Set<string>>(() => new Set());
+  const [isSavingWorkload, setIsSavingWorkload] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [draftResult, setDraftResult] = useState<GenerateTimetableDraftResult | null>(null);
   const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0);
   const [isPublished, setIsPublished] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialWorkload || !planId.trim()) {
+      return;
+    }
+
+    let isActive = true;
+
+    Promise.resolve(timetableApi.listTeachingAssignments(planId))
+      .then((response) => {
+        if (isActive && Array.isArray(response?.data) && response.data.length > 0) {
+          setWorkload(
+            response.data.map((assignment) => ({
+              id: assignment.id,
+              disciplineTitle: assignment.disciplineTitle,
+              teachingType: toUiTeachingType(assignment.teachingType),
+              academicHours: assignment.academicHours,
+              teacherId: assignment.teacherId,
+              isSaturdayOnly: Boolean(assignment.isSaturdayOnly),
+              hasLateSlotAuthorization: Boolean(assignment.hasLateSlotAuthorization),
+            })),
+          );
+          setDirtyRowIds(new Set());
+        }
+      })
+      .catch(() => {
+        // Keep current/default rows when offline or unmocked
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [initialWorkload, planId]);
 
   const teachingTypeOptions = useMemo(
     () => [
@@ -80,8 +148,9 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   );
 
   const handleAddRow = useCallback(() => {
+    const newId = `row-${Date.now()}`;
     const newRow: WorkloadRow = {
-      id: `row-${Date.now()}`,
+      id: newId,
       disciplineTitle: '',
       teachingType: 'LECTURE',
       academicHours: 32,
@@ -91,18 +160,86 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
     };
 
     setWorkload((prev) => [...prev, newRow]);
+    setDirtyRowIds((prev) => new Set(prev).add(newId));
   }, []);
 
   const handleRemoveRow = useCallback((id: string) => {
     setWorkload((prev) => prev.filter((row) => row.id !== id));
+    setDirtyRowIds((prev) => {
+      const next = new Set(prev);
+
+      next.delete(id);
+
+      return next;
+    });
   }, []);
 
   const handleUpdateRow = useCallback(
     <K extends keyof WorkloadRow>(id: string, key: K, value: WorkloadRow[K]) => {
       setWorkload((prev) => prev.map((row) => (row.id === id ? { ...row, [key]: value } : row)));
+      setDirtyRowIds((prev) => new Set(prev).add(id));
     },
     [],
   );
+
+  const persistDirtyWorkload = useCallback(async () => {
+    const rowsToPersist = workload.filter(
+      (row) => dirtyRowIds.has(row.id) && row.disciplineTitle.trim() && row.teacherId.trim(),
+    );
+
+    if (rowsToPersist.length === 0) {
+      return;
+    }
+
+    const updatedIds = new Map<string, string>();
+
+    for (const row of rowsToPersist) {
+      const created = await timetableApi.createTeachingAssignment({
+        curriculumPlanId: planId,
+        disciplineTitle: row.disciplineTitle.trim(),
+        teachingType: toApiTeachingType(row.teachingType),
+        academicHours: row.academicHours,
+        teacherId: row.teacherId.trim(),
+        isSaturdayOnly: row.isSaturdayOnly,
+        hasLateSlotAuthorization: row.hasLateSlotAuthorization,
+      });
+
+      if (created?.data?.id) {
+        updatedIds.set(row.id, created.data.id);
+      }
+    }
+
+    if (updatedIds.size > 0) {
+      setWorkload((prev) =>
+        prev.map((row) =>
+          updatedIds.has(row.id) ? { ...row, id: updatedIds.get(row.id) ?? row.id } : row,
+        ),
+      );
+    }
+
+    setDirtyRowIds((prev) => {
+      const next = new Set(prev);
+
+      for (const row of rowsToPersist) {
+        next.delete(row.id);
+      }
+
+      return next;
+    });
+  }, [dirtyRowIds, planId, workload]);
+
+  const handleSaveWorkload = useCallback(async () => {
+    setIsSavingWorkload(true);
+    setError(null);
+
+    try {
+      await persistDirtyWorkload();
+    } catch {
+      setError(formatMessage('timetable.generateError'));
+    } finally {
+      setIsSavingWorkload(false);
+    }
+  }, [formatMessage, persistDirtyWorkload]);
 
   const handleGenerate = useCallback(async () => {
     setIsGenerating(true);
@@ -110,6 +247,8 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
     setError(null);
 
     try {
+      await persistDirtyWorkload();
+
       const response = await timetableApi.generateTimetableDraft(planId, {
         maxCandidates: 3,
         timeoutMs: 5000,
@@ -123,7 +262,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
     } finally {
       setIsGenerating(false);
     }
-  }, [formatMessage, planId]);
+  }, [formatMessage, persistDirtyWorkload, planId]);
 
   const handlePublish = useCallback(async () => {
     if (!draftResult) {
@@ -133,8 +272,11 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
     setIsPublishing(true);
     setError(null);
 
+    const targetVersionId =
+      draftResult.candidates[selectedCandidateIndex]?.versionId || draftResult.versionId;
+
     try {
-      await timetableApi.publishTimetableVersion(draftResult.versionId);
+      await timetableApi.publishTimetableVersion(targetVersionId);
       setIsPublished(true);
     } catch {
       setIsPublished(false);
@@ -142,7 +284,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
     } finally {
       setIsPublishing(false);
     }
-  }, [draftResult, formatMessage]);
+  }, [draftResult, formatMessage, selectedCandidateIndex]);
 
   return (
     <div className={styles.root}>
@@ -271,6 +413,15 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
         <div className={styles.tableActions}>
           <Button type="button" variant="secondary" onClick={handleAddRow}>
             <Plus size={16} /> {formatMessage('timetable.addAssignment')}
+          </Button>
+
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleSaveWorkload}
+            disabled={isSavingWorkload}
+          >
+            <Save size={16} /> {formatMessage('timetable.saveWorkload')}
           </Button>
 
           <Button type="button" variant="primary" onClick={handleGenerate} disabled={isGenerating}>

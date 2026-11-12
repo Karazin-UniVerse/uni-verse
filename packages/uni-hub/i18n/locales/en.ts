@@ -269,6 +269,7 @@ export const en = {
   'timetable.planId': 'Curriculum plan',
   'timetable.workloadTitle': 'Teaching workload',
   'timetable.addAssignment': 'Add workload',
+  'timetable.saveWorkload': 'Save workload',
   'timetable.disciplineTitle': 'Discipline',
   'timetable.teachingType': 'Type',
   'timetable.hours': 'Hours',

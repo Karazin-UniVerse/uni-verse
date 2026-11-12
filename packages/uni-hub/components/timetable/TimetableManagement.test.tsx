@@ -8,6 +8,7 @@ import { TimetableManagement } from './TimetableManagement';
 describe('TimetableManagement component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(timetableApi, 'listTeachingAssignments').mockResolvedValue({ data: [] });
   });
 
   const renderComponent = (props = {}) => render(withLanguage(<TimetableManagement {...props} />));
@@ -117,6 +118,85 @@ describe('TimetableManagement component', () => {
 
     expect(publishSpy).toHaveBeenCalledWith('ver-draft-101');
     expect(screen.getByText(/розклад успішно опубліковано/i)).toBeInTheDocument();
+  });
+
+  it('publishes selected candidate versionId when another candidate is chosen', async () => {
+    vi.spyOn(timetableApi, 'generateTimetableDraft').mockResolvedValue({
+      data: {
+        versionId: 'ver-cand-1',
+        candidates: [
+          { versionId: 'ver-cand-1', candidateIndex: 0, events: [], penaltyScore: 0 },
+          { versionId: 'ver-cand-2', candidateIndex: 1, events: [], penaltyScore: 10 },
+        ],
+        diagnostics: { statesExplored: 20, timeMs: 8 },
+      },
+    });
+
+    const publishSpy = vi.spyOn(timetableApi, 'publishTimetableVersion').mockResolvedValue({
+      data: {
+        id: 'ver-cand-2',
+        curriculumPlanId: 'plan-cs-2026',
+        status: 'PUBLISHED',
+        versionNumber: 2,
+        events: [],
+      },
+    });
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await user.click(screen.getByRole('button', { name: /згенерувати розклад/i }));
+    await user.click(screen.getByText(/варіант #2/i));
+    await user.click(screen.getByRole('button', { name: /затвердити та опублікувати/i }));
+
+    expect(publishSpy).toHaveBeenCalledWith('ver-cand-2');
+  });
+
+  it('loads assignments from listTeachingAssignments and persists edited workload via createTeachingAssignment', async () => {
+    vi.spyOn(timetableApi, 'listTeachingAssignments').mockResolvedValue({
+      data: [
+        {
+          id: 'assign-loaded-1',
+          curriculumPlanId: 'plan-cs-2026',
+          disciplineTitle: 'Комп’ютерні мережі',
+          teachingType: 'LECTURE',
+          academicHours: 32,
+          teacherId: 'teacher-10',
+          isSaturdayOnly: false,
+          hasLateSlotAuthorization: false,
+        },
+      ],
+    });
+    const createSpy = vi.spyOn(timetableApi, 'createTeachingAssignment').mockResolvedValue({
+      data: {
+        id: 'assign-created-2',
+        curriculumPlanId: 'plan-cs-2026',
+        disciplineTitle: 'Кібербезпека',
+        teachingType: 'LECTURE',
+        academicHours: 32,
+        teacherId: 'teacher-10',
+        isSaturdayOnly: false,
+        hasLateSlotAuthorization: false,
+      },
+    });
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    const loadedInput = await screen.findByDisplayValue('Комп’ютерні мережі');
+
+    await user.clear(loadedInput);
+    await user.type(loadedInput, 'Кібербезпека');
+
+    await user.click(screen.getByRole('button', { name: /зберегти навантаження/i }));
+
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        curriculumPlanId: 'plan-cs-2026',
+        disciplineTitle: 'Кібербезпека',
+        teacherId: 'teacher-10',
+      }),
+    );
   });
 
   it('displays error message and does not create fake candidates on draft generation failure', async () => {

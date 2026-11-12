@@ -176,6 +176,8 @@ export type GenerateTimetableParams = {
 export type TimetableCandidate = {
   events: ScheduledEvent[];
   penaltyScore: number;
+  versionId?: string;
+  candidateIndex?: number;
 };
 
 export type CandidateSlot = {
@@ -292,7 +294,7 @@ export type GenerateTimetableRequest = {
 };
 
 export type UpdateMeetingUrlRequest = {
-  meetingUrl?: string;
+  meetingUrl?: string | null;
 };
 
 export type ListTeachingAssignmentsQueryRequest = {
