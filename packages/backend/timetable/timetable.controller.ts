@@ -1,11 +1,15 @@
 import {
+  BadRequestException,
   Body,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   Header,
+  Injectable,
   Param,
   ParseUUIDPipe,
+  type PipeTransform,
   Post,
   Put,
   Query,
@@ -47,6 +51,19 @@ import {
 function assertAdmin(roles?: string[]): void {
   if (!roles?.includes(Role.ADMIN) && !roles?.includes('ADMIN')) {
     throw new ForbiddenException('Administrative privileges required');
+  }
+}
+
+const FEED_TOKEN_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
+
+@Injectable()
+export class ParseFeedTokenPipe implements PipeTransform<string, string> {
+  transform(value: string): string {
+    if (typeof value !== 'string' || !FEED_TOKEN_PATTERN.test(value)) {
+      throw new BadRequestException('Invalid calendar subscription token');
+    }
+
+    return value;
   }
 }
 
@@ -92,7 +109,10 @@ export class TimetableController {
   @Get('curriculum-plans/:id')
   async getCurriculumPlan(
     @Param('id', ParseUUIDPipe) id: string,
+    @GetUser('roles') roles?: string[],
   ): Promise<CurriculumPlanWithAssignments> {
+    assertAdmin(roles);
+
     return this.timetableService.getCurriculumPlan(id);
   }
 
@@ -113,10 +133,24 @@ export class TimetableController {
   @Get('assignments')
   async listTeachingAssignments(
     @Query() query: ListTeachingAssignmentsQueryDto,
+    @GetUser('roles') roles?: string[],
   ): Promise<TeachingAssignmentWithDetails[]> {
+    assertAdmin(roles);
+
     return this.timetableService.listTeachingAssignments(
       query.curriculumPlanId,
     );
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'List teaching assignments for the current teacher',
+  })
+  @Get('my/assignments')
+  async listMyTeachingAssignments(
+    @GetUser('sub') userId: string,
+  ): Promise<TeachingAssignmentWithDetails[]> {
+    return this.timetableService.listTeacherAssignments(userId);
   }
 
   @ApiBearerAuth()
@@ -136,7 +170,7 @@ export class TimetableController {
 
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Configure or upsert a semester calendar' })
-  @Post('calendar')
+  @Post(['calendar', 'semester-calendar'])
   async configureSemesterCalendar(
     @Body() dto: CreateSemesterCalendarDto,
     @GetUser('roles') roles?: string[],
@@ -148,10 +182,13 @@ export class TimetableController {
 
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a semester calendar' })
-  @Get('calendar')
+  @Get(['calendar', 'semester-calendar'])
   async getSemesterCalendar(
     @Query() query: GetSemesterCalendarQueryDto,
+    @GetUser('roles') roles?: string[],
   ): Promise<SemesterCalendar> {
+    assertAdmin(roles);
+
     return this.timetableService.getSemesterCalendar(
       query.academicYear,
       query.semester,
@@ -225,7 +262,9 @@ export class TimetableController {
   }
 
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create a personal calendar subscription token' })
+  @ApiOperation({
+    summary: 'Get or create a personal calendar subscription token',
+  })
   @Post('calendar/tokens')
   async createSubscriptionToken(
     @GetUser('sub') userId: string,
@@ -233,12 +272,34 @@ export class TimetableController {
     return this.timetableService.createSubscriptionToken(userId);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Rotate personal calendar subscription token',
+  })
+  @Post('calendar/tokens/rotate')
+  async rotateSubscriptionToken(
+    @GetUser('sub') userId: string,
+  ): Promise<CalendarSubscriptionToken> {
+    return this.timetableService.rotateSubscriptionToken(userId);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Revoke all active personal calendar subscription tokens',
+  })
+  @Delete('calendar/tokens')
+  async revokeSubscriptionTokens(
+    @GetUser('sub') userId: string,
+  ): Promise<{ count: number }> {
+    return this.timetableService.revokeSubscriptionTokens(userId);
+  }
+
   @Public()
   @ApiOperation({ summary: 'Get calendar feed in ICS format' })
   @Header('Content-Type', 'text/calendar; charset=utf-8')
   @Get('calendar/feed/:token')
   async getCalendarFeed(
-    @Param('token', ParseUUIDPipe) token: string,
+    @Param('token', ParseFeedTokenPipe) token: string,
   ): Promise<string> {
     return this.timetableService.getIcsFeed(token);
   }

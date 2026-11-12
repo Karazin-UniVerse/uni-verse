@@ -1,5 +1,5 @@
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsOptional, IsUrl } from 'class-validator';
+import { IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
 import type { UpdateTeachingAssignmentRequest } from '@universe/core/types/timetable';
 import { CreateTeachingAssignmentDto } from './create-teaching-assignment.dto';
 
@@ -9,7 +9,16 @@ export class UpdateTeachingAssignmentDto
   })
   implements UpdateTeachingAssignmentRequest
 {
-  @ApiPropertyOptional({ description: 'Online meeting URL' })
+  @ApiPropertyOptional({ description: 'Target academic group ID' })
+  @IsString()
+  @IsOptional()
+  override groupId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Online meeting URL',
+    maxLength: 2048,
+  })
+  @MaxLength(2048)
   @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   @IsOptional()
   override meetingUrl?: string;

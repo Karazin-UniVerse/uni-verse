@@ -29,11 +29,13 @@ import type {
   TeacherUnavailability,
   TeachingDemand,
   TimetableCandidate,
+  TimetableDemandDeficit,
 } from '@universe/core/types/timetable';
 import {
   checkTimetableConflicts,
   generateIcsCalendar,
   generateTimetableCandidates,
+  getPairsFromAcademicHours,
 } from '@universe/core/utils/timetable';
 import { PrismaService } from '../prisma/prisma.service';
 import type {
@@ -50,6 +52,8 @@ export const TEACHER_SAFE_SELECT = {
   name: true,
   roles: true,
 } as const;
+
+export const MAX_SOLVER_DEMANDS = 200;
 
 export type SafeTeacher = {
   id: string;
@@ -72,15 +76,89 @@ export type CurriculumPlanWithAssignments = CurriculumPlan & {
   teachingAssignments: TeachingAssignmentWithDetails[];
 };
 
-export type GenerateTimetableDraftResult = {
+export type GeneratedCandidateSummary = {
   versionId: string;
-  candidates: TimetableCandidate[];
+  candidateIndex: number;
+  penaltyScore: number;
+  eventCount: number;
+};
+
+export type GenerateTimetableDraftResult = {
+  generationId: string;
+  versionId: string;
+  versionIds: string[];
+  candidateSummaries: GeneratedCandidateSummary[];
+  candidates: Array<
+    TimetableCandidate & { versionId: string; candidateIndex: number }
+  >;
   diagnostics: GenerateTimetableDiagnostics;
 };
 
 export type TimetableVersionWithEvents = TimetableVersion & {
   events: TimetableEvent[];
 };
+
+type AssignmentWithRelations = TeachingAssignment & {
+  group?: AcademicGroup | null;
+  subgroup?: AcademicSubgroup | null;
+  stream?: (AcademicStream & { groups?: AcademicGroup[] }) | null;
+};
+
+function toIsoDateString(value: Date | string): string {
+  return value instanceof Date
+    ? value.toISOString().slice(0, 10)
+    : String(value).slice(0, 10);
+}
+
+function buildGroupIds(assignment?: AssignmentWithRelations | null): string[] {
+  const groupIds: string[] = [];
+
+  if (assignment?.groupId) {
+    groupIds.push(assignment.groupId);
+  }
+
+  if (
+    assignment?.subgroup?.academicGroupId &&
+    !groupIds.includes(assignment.subgroup.academicGroupId)
+  ) {
+    groupIds.push(assignment.subgroup.academicGroupId);
+  }
+
+  if (assignment?.stream?.groups) {
+    for (const group of assignment.stream.groups) {
+      if (!groupIds.includes(group.id)) {
+        groupIds.push(group.id);
+      }
+    }
+  }
+
+  return groupIds;
+}
+
+function parseMakeupSaturdayDates(
+  calendar?: SemesterCalendar | null,
+): Set<string> {
+  const raw = calendar?.makeupSaturdays;
+
+  if (!Array.isArray(raw)) {
+    return new Set<string>();
+  }
+
+  const dates = new Set<string>();
+
+  for (const item of raw) {
+    if (
+      typeof item === 'object' &&
+      item !== null &&
+      'date' in item &&
+      typeof (item as { date: unknown }).date === 'string'
+    ) {
+      dates.add((item as { date: string }).date);
+    }
+  }
+
+  return dates;
+}
 
 @Injectable()
 export class TimetableService {
@@ -159,6 +237,34 @@ export class TimetableService {
   async createTeachingAssignment(
     dto: CreateTeachingAssignmentDto,
   ): Promise<TeachingAssignmentWithDetails> {
+    if (!dto.groupId && !dto.subgroupId && !dto.streamId) {
+      throw new BadRequestException(
+        'Teaching assignment must specify at least one of groupId, subgroupId, or streamId',
+      );
+    }
+
+    let resolvedGroupId = dto.groupId;
+
+    if (dto.subgroupId) {
+      const subgroup = await this.prisma.academicSubgroup?.findUnique?.({
+        where: { id: dto.subgroupId },
+      });
+
+      if (dto.groupId && subgroup && subgroup.academicGroupId !== dto.groupId) {
+        throw new BadRequestException(
+          `Subgroup '${dto.subgroupId}' does not belong to group '${dto.groupId}'`,
+        );
+      }
+
+      if (dto.groupId && subgroup === null) {
+        throw new BadRequestException(`Subgroup '${dto.subgroupId}' not found`);
+      }
+
+      if (!resolvedGroupId && subgroup?.academicGroupId) {
+        resolvedGroupId = subgroup.academicGroupId;
+      }
+    }
+
     const created = await this.prisma.teachingAssignment.create({
       data: {
         curriculumPlanId: dto.curriculumPlanId,
@@ -166,7 +272,7 @@ export class TimetableService {
         teachingType: dto.teachingType,
         academicHours: dto.academicHours,
         teacherId: dto.teacherId,
-        groupId: dto.groupId,
+        groupId: resolvedGroupId,
         subgroupId: dto.subgroupId,
         streamId: dto.streamId,
         isSaturdayOnly: dto.isSaturdayOnly ?? false,
@@ -191,6 +297,25 @@ export class TimetableService {
   ): Promise<TeachingAssignmentWithDetails[]> {
     const assignments = await this.prisma.teachingAssignment.findMany({
       where: { curriculumPlanId: planId },
+      include: {
+        teacher: {
+          select: TEACHER_SAFE_SELECT,
+        },
+        group: true,
+        subgroup: true,
+        stream: true,
+      },
+      orderBy: { disciplineTitle: 'asc' },
+    });
+
+    return assignments as unknown as TeachingAssignmentWithDetails[];
+  }
+
+  async listTeacherAssignments(
+    teacherId: string,
+  ): Promise<TeachingAssignmentWithDetails[]> {
+    const assignments = await this.prisma.teachingAssignment.findMany({
+      where: { teacherId },
       include: {
         teacher: {
           select: TEACHER_SAFE_SELECT,
@@ -306,6 +431,24 @@ export class TimetableService {
     planId: string,
     options?: GenerateTimetableDto & { userId?: string; createdById?: string },
   ): Promise<GenerateTimetableDraftResult> {
+    if (
+      options?.maxCandidates !== undefined &&
+      (!Number.isInteger(options.maxCandidates) ||
+        options.maxCandidates < 1 ||
+        options.maxCandidates > 5)
+    ) {
+      throw new BadRequestException('maxCandidates must be between 1 and 5');
+    }
+
+    if (
+      options?.timeoutMs !== undefined &&
+      (!Number.isInteger(options.timeoutMs) ||
+        options.timeoutMs < 1 ||
+        options.timeoutMs > 10000)
+    ) {
+      throw new BadRequestException('timeoutMs must be between 1 and 10000');
+    }
+
     const plan = await this.getCurriculumPlan(planId);
     const calendar = await this.getSemesterCalendar(
       plan.academicYear,
@@ -328,6 +471,12 @@ export class TimetableService {
       },
     });
 
+    if (assignments.length > MAX_SOLVER_DEMANDS) {
+      throw new BadRequestException(
+        `Curriculum plan exceeds the maximum allowed demands (${MAX_SOLVER_DEMANDS})`,
+      );
+    }
+
     const unavailabilities = await this.prisma.teacherUnavailability.findMany({
       where: { isConfirmed: true },
     });
@@ -335,49 +484,80 @@ export class TimetableService {
     const unavailabilityList: TeacherUnavailability[] = unavailabilities.map(
       (u) => ({
         teacherId: u.teacherId,
-        date:
-          u.date instanceof Date
-            ? u.date.toISOString().slice(0, 10)
-            : String(u.date).slice(0, 10),
+        date: toIsoDateString(u.date),
         pair: u.pair,
         isConfirmed: u.isConfirmed,
       }),
     );
 
-    const demands: TeachingDemand[] = assignments.map((a) => {
-      const groupIds: string[] = [];
+    const publishedEventsRecords =
+      (await this.prisma.timetableEvent?.findMany?.({
+        where: {
+          isCancelled: false,
+          timetableVersion: {
+            semesterCalendarId: calendar.id,
+            status: 'PUBLISHED',
+          },
+          teachingAssignment: {
+            curriculumPlanId: { not: planId },
+          },
+        },
+        include: {
+          teachingAssignment: {
+            include: {
+              group: true,
+              subgroup: true,
+              stream: {
+                include: {
+                  groups: true,
+                },
+              },
+            },
+          },
+        },
+      })) ?? [];
 
-      if (a.groupId) {
-        groupIds.push(a.groupId);
-      }
+    const makeupDates = parseMakeupSaturdayDates(calendar);
+    const fixedEvents: ScheduledEvent[] = publishedEventsRecords.map(
+      (event) => {
+        const a = event.teachingAssignment;
+        const dateStr = toIsoDateString(event.date);
 
-      if (a.stream?.groups) {
-        for (const g of a.stream.groups) {
-          if (!groupIds.includes(g.id)) {
-            groupIds.push(g.id);
-          }
-        }
-      }
+        return {
+          id: event.id,
+          teachingAssignmentId: event.teachingAssignmentId,
+          disciplineTitle:
+            event.disciplineTitleSnapshot ?? a?.disciplineTitle ?? '',
+          teachingType: (event.teachingTypeSnapshot ??
+            a?.teachingType) as unknown as ScheduledEvent['teachingType'],
+          teacherId: event.teacherIdSnapshot ?? a?.teacherId ?? '',
+          groupIds: buildGroupIds(a),
+          date: dateStr,
+          pair: event.pair,
+          pairSpan: event.pairSpan,
+          subgroupId: a?.subgroupId ?? undefined,
+          streamId: a?.streamId ?? undefined,
+          hasLateSlotAuthorization: a?.hasLateSlotAuthorization,
+          isSaturdayOnly: a?.isSaturdayOnly,
+          isMakeupSaturday: makeupDates.has(dateStr),
+        };
+      },
+    );
 
-      return {
-        id: a.id,
-        disciplineTitle: a.disciplineTitle,
-        teachingType:
-          a.teachingType as unknown as TeachingDemand['teachingType'],
-        teacherId: a.teacherId,
-        groupIds,
-        academicHours: a.academicHours,
-        subgroupId: a.subgroupId ?? undefined,
-        streamId: a.streamId ?? undefined,
-        isSaturdayOnly: a.isSaturdayOnly,
-        hasLateSlotAuthorization: a.hasLateSlotAuthorization,
-      };
-    });
+    const demands: TeachingDemand[] = assignments.map((a) => ({
+      id: a.id,
+      disciplineTitle: a.disciplineTitle,
+      teachingType: a.teachingType as unknown as TeachingDemand['teachingType'],
+      teacherId: a.teacherId,
+      groupIds: buildGroupIds(a),
+      academicHours: a.academicHours,
+      subgroupId: a.subgroupId ?? undefined,
+      streamId: a.streamId ?? undefined,
+      isSaturdayOnly: a.isSaturdayOnly,
+      hasLateSlotAuthorization: a.hasLateSlotAuthorization,
+    }));
 
-    const startDateStr =
-      calendar.startDate instanceof Date
-        ? calendar.startDate.toISOString().slice(0, 10)
-        : String(calendar.startDate).slice(0, 10);
+    const startDateStr = toIsoDateString(calendar.startDate);
 
     const calendarConfig: SemesterCalendarConfig = {
       startDate: startDateStr,
@@ -392,6 +572,7 @@ export class TimetableService {
       demands,
       calendar: calendarConfig,
       unavailability: unavailabilityList,
+      fixedEvents,
       options: {
         maxCandidates: options?.maxCandidates,
         timeoutMs: options?.timeoutMs,
@@ -404,7 +585,6 @@ export class TimetableService {
       );
     }
 
-    const candidate = result.candidates[0];
     const assignmentMap = new Map(assignments.map((a) => [a.id, a]));
 
     let createdById = options?.userId || options?.createdById;
@@ -415,41 +595,69 @@ export class TimetableService {
       createdById = defaultUser?.id ?? 'system';
     }
 
-    const eventsCreate = (candidate?.events ?? []).map((event) => {
-      const assignment = assignmentMap.get(event.teachingAssignmentId);
+    const generationId = crypto.randomUUID();
+    const versionIds: string[] = [];
+    const candidateSummaries: GeneratedCandidateSummary[] = [];
+    const persistedCandidates: Array<
+      TimetableCandidate & { versionId: string; candidateIndex: number }
+    > = [];
 
-      return {
-        teachingAssignmentId: event.teachingAssignmentId,
-        date: new Date(event.date),
-        pair: event.pair,
-        pairSpan: event.pairSpan ?? 1,
-        meetingUrlOverride: null,
-        disciplineTitleSnapshot:
-          assignment?.disciplineTitle ?? event.disciplineTitle,
-        teachingTypeSnapshot: (assignment?.teachingType ??
-          event.teachingType) as unknown as TeachingType,
-        teacherIdSnapshot: assignment?.teacherId ?? event.teacherId,
-        isCancelled: false,
-      };
-    });
+    for (const [candidateIndex, candidate] of result.candidates.entries()) {
+      const eventsCreate = (candidate?.events ?? []).map((event) => {
+        const assignment = assignmentMap.get(event.teachingAssignmentId);
 
-    const version = await this.prisma.timetableVersion.create({
-      data: {
-        semesterCalendarId: calendar.id,
-        status: 'DRAFT',
-        createdById,
-        events: {
-          create: eventsCreate,
+        return {
+          teachingAssignmentId: event.teachingAssignmentId,
+          stableKey: `${event.teachingAssignmentId}:${event.date}:${event.pair}`,
+          date: new Date(event.date),
+          pair: event.pair,
+          pairSpan: event.pairSpan ?? 1,
+          meetingUrlOverride: null,
+          disciplineTitleSnapshot:
+            assignment?.disciplineTitle ?? event.disciplineTitle,
+          teachingTypeSnapshot: (assignment?.teachingType ??
+            event.teachingType) as unknown as TeachingType,
+          teacherIdSnapshot: assignment?.teacherId ?? event.teacherId,
+          isCancelled: false,
+        };
+      });
+
+      const version = await this.prisma.timetableVersion.create({
+        data: {
+          semesterCalendarId: calendar.id,
+          status: 'DRAFT',
+          candidateIndex,
+          generationId,
+          createdById,
+          events: {
+            create: eventsCreate,
+          },
         },
-      },
-      include: {
-        events: true,
-      },
-    });
+        include: {
+          events: true,
+        },
+      });
+
+      versionIds.push(version.id);
+      candidateSummaries.push({
+        versionId: version.id,
+        candidateIndex,
+        penaltyScore: candidate.penaltyScore,
+        eventCount: candidate.events.length,
+      });
+      persistedCandidates.push({
+        ...candidate,
+        versionId: version.id,
+        candidateIndex,
+      });
+    }
 
     return {
-      versionId: version.id,
-      candidates: result.candidates,
+      generationId,
+      versionId: versionIds[0] ?? '',
+      versionIds,
+      candidateSummaries,
+      candidates: persistedCandidates,
       diagnostics: result.diagnostics,
     };
   }
@@ -458,110 +666,259 @@ export class TimetableService {
     versionId: string,
     _userId: string,
   ): Promise<TimetableVersionWithEvents> {
-    const version = await this.prisma.timetableVersion.findUnique({
-      where: { id: versionId },
-      include: {
-        events: {
-          include: {
-            teachingAssignment: {
-              include: {
-                group: true,
-                stream: {
-                  include: {
-                    groups: true,
+    const runInTransaction = async (
+      tx: PrismaService,
+    ): Promise<TimetableVersionWithEvents> => {
+      const version = await tx.timetableVersion.findUnique({
+        where: { id: versionId },
+        include: {
+          semesterCalendar: true,
+          events: {
+            include: {
+              teachingAssignment: {
+                include: {
+                  group: true,
+                  subgroup: true,
+                  stream: {
+                    include: {
+                      groups: true,
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    if (!version) {
-      throw new NotFoundException(
-        `Timetable version with ID '${versionId}' not found`,
-      );
-    }
-
-    const unavailabilities = await this.prisma.teacherUnavailability.findMany({
-      where: { isConfirmed: true },
-    });
-
-    const unavailabilityList: TeacherUnavailability[] = unavailabilities.map(
-      (u) => ({
-        teacherId: u.teacherId,
-        date:
-          u.date instanceof Date
-            ? u.date.toISOString().slice(0, 10)
-            : String(u.date).slice(0, 10),
-        pair: u.pair,
-        isConfirmed: u.isConfirmed,
-      }),
-    );
-
-    const scheduledEvents: ScheduledEvent[] = version.events.map((event) => {
-      const a = event.teachingAssignment;
-      const groupIds: string[] = [];
-
-      if (a?.groupId) {
-        groupIds.push(a.groupId);
+      if (!version) {
+        throw new NotFoundException(
+          `Timetable version with ID '${versionId}' not found`,
+        );
       }
 
-      if (a?.stream?.groups) {
-        for (const g of a.stream.groups) {
-          if (!groupIds.includes(g.id)) {
-            groupIds.push(g.id);
-          }
+      if (version.status !== 'DRAFT') {
+        throw new ConflictException(
+          `Timetable version '${versionId}' is already ${version.status}`,
+        );
+      }
+
+      const activeEvents = version.events.filter((e) => !e.isCancelled);
+
+      if (activeEvents.length === 0) {
+        throw new ConflictException(
+          'Cannot publish an empty timetable version',
+        );
+      }
+
+      const planIds = [
+        ...new Set(
+          activeEvents
+            .map((e) => e.teachingAssignment?.curriculumPlanId)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      ];
+
+      const planAssignments =
+        planIds.length > 0
+          ? ((await tx.teachingAssignment?.findMany?.({
+              where: { curriculumPlanId: { in: planIds } },
+            })) ?? [])
+          : [];
+
+      const assignmentRecords = new Map<
+        string,
+        { id: string; academicHours?: number }
+      >();
+
+      for (const a of planAssignments) {
+        assignmentRecords.set(a.id, a);
+      }
+
+      for (const e of activeEvents) {
+        if (
+          e.teachingAssignment &&
+          !assignmentRecords.has(e.teachingAssignmentId)
+        ) {
+          assignmentRecords.set(e.teachingAssignmentId, {
+            id: e.teachingAssignmentId,
+            academicHours: e.teachingAssignment.academicHours,
+          });
         }
       }
 
-      const dateStr =
-        event.date instanceof Date
-          ? event.date.toISOString().slice(0, 10)
-          : String(event.date).slice(0, 10);
+      const deficits: TimetableDemandDeficit[] = [];
 
-      return {
-        id: event.id,
-        teachingAssignmentId: event.teachingAssignmentId,
-        disciplineTitle:
-          event.disciplineTitleSnapshot ?? a?.disciplineTitle ?? '',
-        teachingType: (event.teachingTypeSnapshot ??
-          a?.teachingType) as unknown as ScheduledEvent['teachingType'],
-        teacherId: event.teacherIdSnapshot ?? a?.teacherId ?? '',
-        groupIds,
-        date: dateStr,
-        pair: event.pair,
-        pairSpan: event.pairSpan,
-        subgroupId: a?.subgroupId ?? undefined,
-        streamId: a?.streamId ?? undefined,
-        hasLateSlotAuthorization: a?.hasLateSlotAuthorization,
-        isSaturdayOnly: a?.isSaturdayOnly,
-      };
-    });
+      for (const [assignmentId, assignment] of assignmentRecords) {
+        if (assignment.academicHours === undefined) {
+          continue;
+        }
 
-    const conflictReport = checkTimetableConflicts({
-      events: scheduledEvents,
-      unavailability: unavailabilityList,
-    });
+        const pairsResult = getPairsFromAcademicHours(assignment.academicHours);
+        const requiredPairs = pairsResult.ok
+          ? pairsResult.pairs
+          : Math.ceil(assignment.academicHours / 2);
+        const scheduledCount = activeEvents.filter(
+          (e) => e.teachingAssignmentId === assignmentId,
+        ).length;
 
-    if (!conflictReport.isValid) {
-      throw new ConflictException({
-        message: 'Timetable version has conflicts and cannot be published',
-        conflicts: conflictReport.hardConflicts,
+        if (scheduledCount !== requiredPairs) {
+          deficits.push({
+            demandId: assignmentId,
+            required: requiredPairs,
+            scheduled: scheduledCount,
+          });
+        }
+      }
+
+      if (deficits.length > 0) {
+        throw new ConflictException({
+          message:
+            'Timetable version has incomplete workload and cannot be published',
+          deficits,
+        });
+      }
+
+      const unavailabilities = await tx.teacherUnavailability.findMany({
+        where: { isConfirmed: true },
       });
+
+      const unavailabilityList: TeacherUnavailability[] = unavailabilities.map(
+        (u) => ({
+          teacherId: u.teacherId,
+          date: toIsoDateString(u.date),
+          pair: u.pair,
+          isConfirmed: u.isConfirmed,
+        }),
+      );
+
+      const calendar =
+        version.semesterCalendar ??
+        (version.semesterCalendarId
+          ? await tx.semesterCalendar?.findUnique?.({
+              where: { id: version.semesterCalendarId },
+            })
+          : null);
+      const makeupDates = parseMakeupSaturdayDates(calendar);
+
+      const otherPublishedEventsRecords = version.semesterCalendarId
+        ? ((await tx.timetableEvent?.findMany?.({
+            where: {
+              isCancelled: false,
+              timetableVersionId: { not: versionId },
+              timetableVersion: {
+                semesterCalendarId: version.semesterCalendarId,
+                status: 'PUBLISHED',
+              },
+              ...(planIds.length > 0
+                ? {
+                    teachingAssignment: {
+                      curriculumPlanId: { notIn: planIds },
+                    },
+                  }
+                : {}),
+            },
+            include: {
+              teachingAssignment: {
+                include: {
+                  group: true,
+                  subgroup: true,
+                  stream: {
+                    include: {
+                      groups: true,
+                    },
+                  },
+                },
+              },
+            },
+          })) ?? [])
+        : [];
+
+      const toScheduledEvent = (
+        event: TimetableEvent & {
+          teachingAssignment?: AssignmentWithRelations | null;
+        },
+      ): ScheduledEvent => {
+        const a = event.teachingAssignment;
+        const dateStr = toIsoDateString(event.date);
+
+        return {
+          id: event.id,
+          teachingAssignmentId: event.teachingAssignmentId,
+          disciplineTitle:
+            event.disciplineTitleSnapshot ?? a?.disciplineTitle ?? '',
+          teachingType: (event.teachingTypeSnapshot ??
+            a?.teachingType) as unknown as ScheduledEvent['teachingType'],
+          teacherId: event.teacherIdSnapshot ?? a?.teacherId ?? '',
+          groupIds: buildGroupIds(a),
+          date: dateStr,
+          pair: event.pair,
+          pairSpan: event.pairSpan,
+          subgroupId: a?.subgroupId ?? undefined,
+          streamId: a?.streamId ?? undefined,
+          hasLateSlotAuthorization: a?.hasLateSlotAuthorization,
+          isSaturdayOnly: a?.isSaturdayOnly,
+          isMakeupSaturday: makeupDates.has(dateStr),
+        };
+      };
+
+      const scheduledEvents: ScheduledEvent[] = [
+        ...otherPublishedEventsRecords.map(toScheduledEvent),
+        ...activeEvents.map(toScheduledEvent),
+      ];
+
+      const conflictReport = checkTimetableConflicts({
+        events: scheduledEvents,
+        unavailability: unavailabilityList,
+      });
+
+      if (!conflictReport.isValid) {
+        throw new ConflictException({
+          message: 'Timetable version has conflicts and cannot be published',
+          conflicts: conflictReport.hardConflicts,
+        });
+      }
+
+      if (version.semesterCalendarId && tx.timetableVersion.updateMany) {
+        await tx.timetableVersion.updateMany({
+          where: {
+            semesterCalendarId: version.semesterCalendarId,
+            status: 'PUBLISHED',
+            id: { not: versionId },
+          },
+          data: {
+            status: 'ARCHIVED',
+          },
+        });
+      }
+
+      const publishedAt = new Date();
+
+      try {
+        return await tx.timetableVersion.update({
+          where: { id: versionId, status: 'DRAFT' },
+          data: {
+            status: 'PUBLISHED',
+            publishedAt,
+          },
+          include: {
+            events: true,
+          },
+        });
+      } catch {
+        throw new ConflictException(
+          `Timetable version '${versionId}' could not be published because it is no longer a draft`,
+        );
+      }
+    };
+
+    if (typeof this.prisma.$transaction === 'function') {
+      return this.prisma.$transaction((tx) =>
+        runInTransaction(tx as unknown as PrismaService),
+      );
     }
 
-    return this.prisma.timetableVersion.update({
-      where: { id: versionId },
-      data: {
-        status: 'PUBLISHED',
-        publishedAt: new Date(),
-      },
-      include: {
-        events: true,
-      },
-    });
+    return runInTransaction(this.prisma);
   }
 
   async getIcsFeed(token: string): Promise<string> {
@@ -600,7 +957,7 @@ export class TimetableService {
     ];
 
     if (userGroupId) {
-      orConditions.push({ groupId: userGroupId });
+      orConditions.push({ groupId: userGroupId, subgroupId: null });
       orConditions.push({
         stream: {
           groups: {
@@ -616,11 +973,42 @@ export class TimetableService {
       orConditions.push({ subgroupId: userSubgroupId });
     }
 
+    let publishedVersionFilter: Prisma.TimetableEventWhereInput = {
+      timetableVersion: {
+        status: 'PUBLISHED',
+      },
+    };
+
+    if (typeof this.prisma.timetableVersion?.findMany === 'function') {
+      const publishedVersions = await this.prisma.timetableVersion.findMany({
+        where: { status: 'PUBLISHED' },
+        orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
+        select: { id: true, semesterCalendarId: true },
+      });
+
+      if (publishedVersions && publishedVersions.length > 0) {
+        const latestByCalendar = new Map<string, string>();
+
+        for (const v of publishedVersions) {
+          const calKey = v.semesterCalendarId ?? v.id;
+
+          if (!latestByCalendar.has(calKey)) {
+            latestByCalendar.set(calKey, v.id);
+          }
+        }
+
+        publishedVersionFilter = {
+          timetableVersionId: { in: [...latestByCalendar.values()] },
+          timetableVersion: {
+            status: 'PUBLISHED',
+          },
+        };
+      }
+    }
+
     const events = await this.prisma.timetableEvent.findMany({
       where: {
-        timetableVersion: {
-          status: 'PUBLISHED',
-        },
+        ...publishedVersionFilter,
         teachingAssignment: {
           OR: orConditions,
         },
@@ -644,7 +1032,25 @@ export class TimetableService {
       orderBy: [{ date: 'asc' }, { pair: 'asc' }],
     });
 
-    const icsEvents: IcsCalendarEvent[] = events.map((event) => {
+    const filteredEvents = events.filter((event) => {
+      const a = event.teachingAssignment;
+
+      if (!a) {
+        return true;
+      }
+
+      if (a.teacherId === user.id) {
+        return true;
+      }
+
+      if (a.subgroupId) {
+        return Boolean(userSubgroupId && a.subgroupId === userSubgroupId);
+      }
+
+      return true;
+    });
+
+    const icsEvents: IcsCalendarEvent[] = filteredEvents.map((event) => {
       const a = event.teachingAssignment;
       const groupCodes: string[] = [];
 
@@ -660,19 +1066,22 @@ export class TimetableService {
         }
       }
 
-      const dateStr =
-        event.date instanceof Date
-          ? event.date.toISOString().slice(0, 10)
-          : String(event.date).slice(0, 10);
+      const dateStr = toIsoDateString(event.date);
+      const stableId =
+        event.stableKey ||
+        (event.teachingAssignmentId
+          ? `${event.teachingAssignmentId}:${dateStr}:${event.pair}`
+          : event.id);
 
       return {
-        id: event.id,
+        id: stableId,
         disciplineTitle:
           event.disciplineTitleSnapshot ?? a?.disciplineTitle ?? 'Untitled',
         teachingType: (event.teachingTypeSnapshot ??
           a?.teachingType) as unknown as IcsCalendarEvent['teachingType'],
         date: dateStr,
         pair: event.pair,
+        pairSpan: event.pairSpan,
         meetingUrl: event.meetingUrlOverride ?? a?.meetingUrl ?? undefined,
         groupCodes: groupCodes.length > 0 ? groupCodes : undefined,
         teacherName: a?.teacher?.name ?? undefined,
@@ -689,7 +1098,18 @@ export class TimetableService {
   async createSubscriptionToken(
     userId: string,
   ): Promise<CalendarSubscriptionToken> {
-    const token = crypto.randomUUID();
+    if (typeof this.prisma.calendarSubscriptionToken.findFirst === 'function') {
+      const existing = await this.prisma.calendarSubscriptionToken.findFirst({
+        where: { userId, isActive: true },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (existing) {
+        return existing;
+      }
+    }
+
+    const token = crypto.randomBytes(32).toString('base64url');
 
     return this.prisma.calendarSubscriptionToken.create({
       data: {
@@ -698,6 +1118,46 @@ export class TimetableService {
         isActive: true,
       },
     });
+  }
+
+  async rotateSubscriptionToken(
+    userId: string,
+  ): Promise<CalendarSubscriptionToken> {
+    const token = crypto.randomBytes(32).toString('base64url');
+
+    const rotate = async (
+      tx: PrismaService,
+    ): Promise<CalendarSubscriptionToken> => {
+      await tx.calendarSubscriptionToken.updateMany({
+        where: { userId, isActive: true },
+        data: { isActive: false },
+      });
+
+      return tx.calendarSubscriptionToken.create({
+        data: {
+          userId,
+          token,
+          isActive: true,
+        },
+      });
+    };
+
+    if (typeof this.prisma.$transaction === 'function') {
+      return this.prisma.$transaction((tx) =>
+        rotate(tx as unknown as PrismaService),
+      );
+    }
+
+    return rotate(this.prisma);
+  }
+
+  async revokeSubscriptionTokens(userId: string): Promise<{ count: number }> {
+    const result = await this.prisma.calendarSubscriptionToken.updateMany({
+      where: { userId, isActive: true },
+      data: { isActive: false },
+    });
+
+    return { count: result.count };
   }
 
   async updateMeetingUrl(

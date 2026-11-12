@@ -363,6 +363,8 @@ model TimetableVersion {
   id                 String          @id @default(uuid())
   semesterCalendarId String
   status             TimetableStatus @default(DRAFT)
+  candidateIndex     Int?
+  generationId       String?
   publishedAt        DateTime?
   createdById        String
   createdAt          DateTime        @default(now())
@@ -375,12 +377,14 @@ model TimetableVersion {
   @@index([semesterCalendarId])
   @@index([createdById])
   @@index([status])
+  @@index([generationId])
 }
 
 model TimetableEvent {
   id                      String        @id @default(uuid())
   timetableVersionId      String
   teachingAssignmentId    String
+  stableKey               String
   date                    DateTime
   pair                    Int
   pairSpan                Int           @default(1)
@@ -398,6 +402,7 @@ model TimetableEvent {
   @@index([timetableVersionId])
   @@index([teachingAssignmentId])
   @@index([date, pair])
+  @@index([stableKey])
 }
 
 model TeacherUnavailability {

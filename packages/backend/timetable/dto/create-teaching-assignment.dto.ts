@@ -2,13 +2,17 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsDivisibleBy,
   IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUrl,
+  Max,
+  MaxLength,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import type { CreateTeachingAssignmentRequest } from '@universe/core/types/timetable';
 import { TeachingType } from '@universe/database';
@@ -28,10 +32,16 @@ export class CreateTeachingAssignmentDto implements CreateTeachingAssignmentRequ
   @IsEnum(TeachingType)
   teachingType: TeachingType;
 
-  @ApiProperty({ description: 'Academic hours count', minimum: 1 })
+  @ApiProperty({
+    description: 'Academic hours count',
+    minimum: 2,
+    maximum: 400,
+  })
   @Type(() => Number)
   @IsInt()
-  @Min(1)
+  @Min(2)
+  @Max(400)
+  @IsDivisibleBy(2)
   academicHours: number;
 
   @ApiProperty({ description: 'Assigned teacher user ID' })
@@ -40,17 +50,26 @@ export class CreateTeachingAssignmentDto implements CreateTeachingAssignmentRequ
   teacherId: string;
 
   @ApiPropertyOptional({ description: 'Target academic group ID' })
+  @ValidateIf(
+    (o: CreateTeachingAssignmentDto) =>
+      (!o.subgroupId && !o.streamId) || o.groupId !== undefined,
+  )
   @IsString()
-  @IsOptional()
+  @IsNotEmpty({
+    message:
+      'At least one of groupId, subgroupId, or streamId must be provided',
+  })
   groupId?: string;
 
   @ApiPropertyOptional({ description: 'Target academic subgroup ID' })
   @IsString()
+  @IsNotEmpty()
   @IsOptional()
   subgroupId?: string;
 
   @ApiPropertyOptional({ description: 'Target academic stream ID' })
   @IsString()
+  @IsNotEmpty()
   @IsOptional()
   streamId?: string;
 
@@ -71,6 +90,7 @@ export class CreateTeachingAssignmentDto implements CreateTeachingAssignmentRequ
   hasLateSlotAuthorization?: boolean;
 
   @ApiPropertyOptional({ description: 'Online meeting URL' })
+  @MaxLength(2048)
   @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   @IsOptional()
   meetingUrl?: string;
