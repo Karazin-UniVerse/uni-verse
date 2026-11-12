@@ -31,6 +31,7 @@ import type {
   TimetableCandidate,
   TimetableDemandDeficit,
 } from '@universe/core/types/timetable';
+import { TIMETABLE_WEEKDAY } from '@universe/core/constants/timetable';
 import {
   checkTimetableConflicts,
   generateIcsCalendar,
@@ -41,6 +42,8 @@ import { PRISMA_ERROR_CODE } from '../constants/prisma';
 import { PrismaService } from '../prisma/prisma.service';
 import { getPrismaErrorCode } from '../utils/prisma-error';
 import type {
+  AdjustDraftSlotDto,
+  RescheduleEventDto,
   CreateAcademicGroupDto,
   CreateCurriculumPlanDto,
   CreateSemesterCalendarDto,
@@ -106,6 +109,45 @@ type AssignmentWithRelations = TeachingAssignment & {
   subgroup?: AcademicSubgroup | null;
   stream?: (AcademicStream & { groups?: AcademicGroup[] }) | null;
 };
+
+const EVENT_ASSIGNMENT_INCLUDE = {
+  teachingAssignment: {
+    include: {
+      group: true,
+      subgroup: true,
+      stream: { include: { groups: true } },
+    },
+  },
+} as const;
+
+function toScheduledEvent(
+  event: TimetableEvent & {
+    teachingAssignment?: AssignmentWithRelations | null;
+  },
+  makeupDates: Set<string>,
+): ScheduledEvent {
+  const assignment = event.teachingAssignment;
+  const date = toIsoDateString(event.date);
+
+  return {
+    id: event.id,
+    teachingAssignmentId: event.teachingAssignmentId,
+    disciplineTitle:
+      event.disciplineTitleSnapshot ?? assignment?.disciplineTitle ?? '',
+    teachingType: (event.teachingTypeSnapshot ??
+      assignment?.teachingType) as ScheduledEvent['teachingType'],
+    teacherId: event.teacherIdSnapshot ?? assignment?.teacherId ?? undefined,
+    groupIds: buildGroupIds(assignment),
+    date,
+    pair: event.pair,
+    pairSpan: event.pairSpan,
+    subgroupId: assignment?.subgroupId ?? undefined,
+    streamId: assignment?.streamId ?? undefined,
+    hasLateSlotAuthorization: assignment?.hasLateSlotAuthorization,
+    isSaturdayOnly: assignment?.isSaturdayOnly,
+    isMakeupSaturday: makeupDates.has(date),
+  };
+}
 
 function toIsoDateString(value: Date | string): string {
   return value instanceof Date
@@ -805,6 +847,204 @@ export class TimetableService {
     };
   }
 
+  async adjustDraftSlot(
+    versionId: string,
+    dto: AdjustDraftSlotDto,
+  ): Promise<TimetableVersionWithEvents & { penaltyScore: number }> {
+    return this.prisma.$transaction(
+      async (tx) => {
+        const version = await tx.timetableVersion.findUnique({
+          where: { id: versionId },
+          include: {
+            semesterCalendar: true,
+            events: { include: EVENT_ASSIGNMENT_INCLUDE },
+          },
+        });
+
+        if (!version) {
+          throw new NotFoundException('Timetable version not found');
+        }
+
+        if (version.status !== 'DRAFT') {
+          throw new BadRequestException(
+            'Only draft timetable slots can be adjusted',
+          );
+        }
+
+        const matchingEvents = version.events.filter(
+          (event) =>
+            !event.isCancelled &&
+            event.teachingAssignmentId === dto.teachingAssignmentId &&
+            event.date.getUTCDay() === dto.fromWeekday &&
+            event.pair === dto.fromPair,
+        );
+
+        if (matchingEvents.length === 0) {
+          throw new NotFoundException('Draft timetable slot not found');
+        }
+
+        if (
+          dto.toWeekday !== TIMETABLE_WEEKDAY.SATURDAY &&
+          matchingEvents.some(
+            (event) => event.teachingAssignment?.isSaturdayOnly,
+          )
+        ) {
+          throw new BadRequestException(
+            'Saturday-only assignments must remain on Saturday',
+          );
+        }
+
+        const changes = new Map(
+          matchingEvents.map((event) => {
+            const date = new Date(event.date);
+
+            date.setUTCDate(
+              date.getUTCDate() + dto.toWeekday - dto.fromWeekday,
+            );
+
+            return [
+              event.id,
+              {
+                date,
+                pair: dto.toPair,
+                stableKey: `${event.teachingAssignmentId}:${toIsoDateString(date)}:${dto.toPair}`,
+              },
+            ];
+          }),
+        );
+        const projected = version.events.map((event) => ({
+          ...event,
+          ...changes.get(event.id),
+        }));
+        const makeupDates = parseMakeupSaturdayDates(version.semesterCalendar);
+        const unavailability = await tx.teacherUnavailability.findMany({
+          where: { isConfirmed: true },
+        });
+        const report = checkTimetableConflicts({
+          events: projected
+            .filter((event) => !event.isCancelled)
+            .map((event) => toScheduledEvent(event, makeupDates)),
+          unavailability: unavailability.map((entry) => ({
+            ...entry,
+            date: toIsoDateString(entry.date),
+          })),
+        });
+
+        if (!report.isValid) {
+          throw new ConflictException({
+            message: 'Adjusting slot creates conflicts',
+            conflicts: report.hardConflicts,
+          });
+        }
+
+        for (const [id, data] of changes) {
+          await tx.timetableEvent.update({ where: { id }, data });
+        }
+
+        const {
+          semesterCalendar: _calendar,
+          events: _events,
+          ...versionRecord
+        } = version;
+
+        return {
+          ...versionRecord,
+          events: projected.map(
+            ({ teachingAssignment: _assignment, ...event }) => event,
+          ),
+          penaltyScore: report.totalPenaltyScore,
+        };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+  }
+
+  async rescheduleEvent(
+    eventId: string,
+    dto: RescheduleEventDto,
+  ): Promise<TimetableEvent> {
+    return this.prisma.$transaction(
+      async (tx) => {
+        const event = await tx.timetableEvent.findUnique({
+          where: { id: eventId },
+          include: {
+            ...EVENT_ASSIGNMENT_INCLUDE,
+            timetableVersion: { include: { semesterCalendar: true } },
+          },
+        });
+
+        if (!event) {
+          throw new NotFoundException('Timetable event not found');
+        }
+
+        if (
+          event.timetableVersion.status !== 'PUBLISHED' ||
+          event.isCancelled
+        ) {
+          throw new BadRequestException(
+            'Only active published events can be rescheduled',
+          );
+        }
+
+        const date = new Date(dto.newDate);
+
+        if (
+          event.teachingAssignment?.isSaturdayOnly &&
+          date.getUTCDay() !== TIMETABLE_WEEKDAY.SATURDAY
+        ) {
+          throw new BadRequestException(
+            'Saturday-only assignments must remain on Saturday',
+          );
+        }
+
+        const others = await tx.timetableEvent.findMany({
+          where: {
+            id: { not: eventId },
+            date,
+            isCancelled: false,
+            timetableVersion: {
+              status: 'PUBLISHED',
+              semesterCalendarId: event.timetableVersion.semesterCalendarId,
+            },
+          },
+          include: EVENT_ASSIGNMENT_INCLUDE,
+        });
+        const unavailability = await tx.teacherUnavailability.findMany({
+          where: { isConfirmed: true, date },
+        });
+        const makeupDates = parseMakeupSaturdayDates(
+          event.timetableVersion.semesterCalendar,
+        );
+        const report = checkTimetableConflicts({
+          events: [...others, { ...event, date, pair: dto.newPair }].map(
+            (entry) => toScheduledEvent(entry, makeupDates),
+          ),
+          unavailability: unavailability.map((entry) => ({
+            ...entry,
+            date: toIsoDateString(entry.date),
+          })),
+        });
+
+        if (!report.isValid) {
+          throw new ConflictException({
+            message: 'Rescheduling event creates conflicts',
+            conflicts: report.hardConflicts,
+          });
+        }
+
+        return tx.timetableEvent.update({
+          where: { id: eventId },
+          data: {
+            date,
+            pair: dto.newPair,
+            stableKey: `${event.teachingAssignmentId}:${dto.newDate}:${dto.newPair}`,
+          },
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+  }
+
   async publishTimetableVersion(
     versionId: string,
     _userId: string,
@@ -977,37 +1217,11 @@ export class TimetableService {
           })) ?? [])
         : [];
 
-      const toScheduledEvent = (
-        event: TimetableEvent & {
-          teachingAssignment?: AssignmentWithRelations | null;
-        },
-      ): ScheduledEvent => {
-        const a = event.teachingAssignment;
-        const dateStr = toIsoDateString(event.date);
-
-        return {
-          id: event.id,
-          teachingAssignmentId: event.teachingAssignmentId,
-          disciplineTitle:
-            event.disciplineTitleSnapshot ?? a?.disciplineTitle ?? '',
-          teachingType: (event.teachingTypeSnapshot ??
-            a?.teachingType) as unknown as ScheduledEvent['teachingType'],
-          teacherId: event.teacherIdSnapshot ?? a?.teacherId ?? undefined,
-          groupIds: buildGroupIds(a),
-          date: dateStr,
-          pair: event.pair,
-          pairSpan: event.pairSpan,
-          subgroupId: a?.subgroupId ?? undefined,
-          streamId: a?.streamId ?? undefined,
-          hasLateSlotAuthorization: a?.hasLateSlotAuthorization,
-          isSaturdayOnly: a?.isSaturdayOnly,
-          isMakeupSaturday: makeupDates.has(dateStr),
-        };
-      };
-
       const scheduledEvents: ScheduledEvent[] = [
-        ...otherPublishedEventsRecords.map(toScheduledEvent),
-        ...activeEvents.map(toScheduledEvent),
+        ...otherPublishedEventsRecords.map((event) =>
+          toScheduledEvent(event, makeupDates),
+        ),
+        ...activeEvents.map((event) => toScheduledEvent(event, makeupDates)),
       ];
 
       const conflictReport = checkTimetableConflicts({

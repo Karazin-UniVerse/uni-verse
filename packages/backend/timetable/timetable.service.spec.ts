@@ -63,6 +63,8 @@ describe('TimetableService', () => {
 
   const mockTimetableEventPrisma = {
     findMany: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
   };
 
   const mockCalendarSubscriptionTokenPrisma = {
@@ -123,6 +125,269 @@ describe('TimetableService', () => {
     }).compile();
 
     service = module.get<TimetableService>(TimetableService);
+  });
+
+  describe('manual adjustments', () => {
+    const assignment = {
+      id: 'assignment-1',
+      teacherId: 'teacher-1',
+      groupId: 'group-1',
+      disciplineTitle: 'Calculus',
+      teachingType: TeachingType.LECTURE,
+      isSaturdayOnly: false,
+      hasLateSlotAuthorization: false,
+    };
+    const event = {
+      id: 'event-1',
+      timetableVersionId: 'version-1',
+      teachingAssignmentId: assignment.id,
+      teachingAssignment: assignment,
+      date: new Date('2026-09-07'),
+      pair: 1,
+      pairSpan: 1,
+      isCancelled: false,
+      stableKey: 'assignment-1:2026-09-07:1',
+    };
+    const calendar = { id: 'calendar-1', makeupSaturdays: [] };
+    const draft = {
+      id: 'version-1',
+      status: 'DRAFT',
+      semesterCalendarId: calendar.id,
+      semesterCalendar: calendar,
+      events: [event],
+    };
+    const slot = {
+      teachingAssignmentId: assignment.id,
+      fromWeekday: 1,
+      fromPair: 1,
+      toWeekday: 2,
+      toPair: 2,
+    };
+    const reschedule = { newDate: '2026-09-08', newPair: 2 };
+
+    beforeEach(() => {
+      mockTeacherUnavailabilityPrisma.findMany.mockResolvedValue([]);
+      mockTimetableVersionPrisma.findUnique.mockResolvedValue(draft);
+      mockTimetableEventPrisma.findUnique.mockResolvedValue({
+        ...event,
+        timetableVersion: { ...draft, status: 'PUBLISHED' },
+      });
+      mockTimetableEventPrisma.update.mockImplementation(
+        async ({ data, where }) => ({ ...event, id: where.id, ...data }),
+      );
+    });
+
+    it('moves every recurrence of the draft slot and returns recalculated penalties', async () => {
+      const secondEvent = {
+        ...event,
+        id: 'event-2',
+        date: new Date('2026-09-14'),
+      };
+
+      mockTimetableVersionPrisma.findUnique.mockResolvedValue({
+        ...draft,
+        events: [event, secondEvent],
+      });
+
+      const result = await service.adjustDraftSlot(draft.id, slot);
+
+      expect(result.events).toHaveLength(2);
+      expect(result.penaltyScore).toEqual(expect.any(Number));
+      expect(mockTimetableEventPrisma.update).toHaveBeenCalledWith({
+        where: { id: 'event-1' },
+        data: {
+          date: new Date('2026-09-08'),
+          pair: 2,
+          stableKey: 'assignment-1:2026-09-08:2',
+        },
+      });
+      expect(mockTimetableEventPrisma.update).toHaveBeenCalledWith({
+        where: { id: 'event-2' },
+        data: {
+          date: new Date('2026-09-15'),
+          pair: 2,
+          stableKey: 'assignment-1:2026-09-15:2',
+        },
+      });
+    });
+
+    it('reschedules one published event', async () => {
+      await expect(
+        service.rescheduleEvent(event.id, reschedule),
+      ).resolves.toMatchObject({
+        date: new Date(reschedule.newDate),
+        pair: 2,
+        stableKey: 'assignment-1:2026-09-08:2',
+      });
+      expect(mockTimetableEventPrisma.update).toHaveBeenCalledTimes(1);
+      expect(mockPrismaService.$transaction).toHaveBeenCalledWith(
+        expect.any(Function),
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+    });
+
+    it.each(['student', 'teacher'])(
+      'rejects draft %s collisions without writing',
+      async (collision) => {
+        const other = {
+          ...event,
+          id: 'other',
+          teachingAssignmentId: 'other-assignment',
+          date: new Date('2026-09-08'),
+          pair: 2,
+          teachingAssignment: {
+            ...assignment,
+            teacherId:
+              collision === 'teacher' ? assignment.teacherId : 'other-teacher',
+            groupId:
+              collision === 'student' ? assignment.groupId : 'other-group',
+          },
+        };
+
+        mockTimetableVersionPrisma.findUnique.mockResolvedValue({
+          ...draft,
+          events: [event, other],
+        });
+
+        await expect(service.adjustDraftSlot(draft.id, slot)).rejects.toThrow(
+          ConflictException,
+        );
+        expect(mockTimetableEventPrisma.update).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each(['student', 'teacher'])(
+      'rejects published %s collisions without writing',
+      async (collision) => {
+        mockTimetableEventPrisma.findMany.mockResolvedValue([
+          {
+            ...event,
+            id: 'other',
+            teachingAssignmentId: 'other-assignment',
+            date: new Date('2026-09-08'),
+            pair: 2,
+            teachingAssignment: {
+              ...assignment,
+              teacherId:
+                collision === 'teacher'
+                  ? assignment.teacherId
+                  : 'other-teacher',
+              groupId:
+                collision === 'student' ? assignment.groupId : 'other-group',
+            },
+          },
+        ]);
+
+        await expect(
+          service.rescheduleEvent(event.id, reschedule),
+        ).rejects.toThrow(ConflictException);
+        expect(mockTimetableEventPrisma.update).not.toHaveBeenCalled();
+      },
+    );
+
+    it('rejects missing versions and missing slots', async () => {
+      mockTimetableVersionPrisma.findUnique.mockResolvedValueOnce(null);
+      await expect(service.adjustDraftSlot('missing', slot)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(
+        service.adjustDraftSlot(draft.id, { ...slot, fromPair: 3 }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('rejects a missing event', async () => {
+      mockTimetableEventPrisma.findUnique.mockResolvedValue(null);
+      await expect(
+        service.rescheduleEvent('missing', reschedule),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('rejects published draft adjustments and unpublished event reschedules', async () => {
+      mockTimetableVersionPrisma.findUnique.mockResolvedValue({
+        ...draft,
+        status: 'PUBLISHED',
+      });
+      await expect(service.adjustDraftSlot(draft.id, slot)).rejects.toThrow(
+        BadRequestException,
+      );
+      mockTimetableEventPrisma.findUnique.mockResolvedValue({
+        ...event,
+        timetableVersion: draft,
+      });
+      await expect(
+        service.rescheduleEvent(event.id, reschedule),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects confirmed teacher unavailability for both operations', async () => {
+      mockTeacherUnavailabilityPrisma.findMany.mockResolvedValue([
+        {
+          teacherId: assignment.teacherId,
+          date: new Date(reschedule.newDate),
+          pair: 2,
+          isConfirmed: true,
+        },
+      ]);
+      await expect(service.adjustDraftSlot(draft.id, slot)).rejects.toThrow(
+        ConflictException,
+      );
+      await expect(
+        service.rescheduleEvent(event.id, reschedule),
+      ).rejects.toThrow(ConflictException);
+      expect(mockTimetableEventPrisma.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects Saturday-only events moved to weekdays', async () => {
+      const saturdayEvent = {
+        ...event,
+        date: new Date('2026-09-12'),
+        teachingAssignment: { ...assignment, isSaturdayOnly: true },
+      };
+
+      mockTimetableVersionPrisma.findUnique.mockResolvedValue({
+        ...draft,
+        events: [saturdayEvent],
+      });
+      mockTimetableEventPrisma.findUnique.mockResolvedValue({
+        ...saturdayEvent,
+        timetableVersion: { ...draft, status: 'PUBLISHED' },
+      });
+      await expect(
+        service.adjustDraftSlot(draft.id, { ...slot, fromWeekday: 6 }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.rescheduleEvent(event.id, reschedule),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects weekday events on an unapproved Saturday but allows makeup dates', async () => {
+      await expect(
+        service.adjustDraftSlot(draft.id, { ...slot, toWeekday: 6 }),
+      ).rejects.toThrow(ConflictException);
+      await expect(
+        service.rescheduleEvent(event.id, {
+          newDate: '2026-09-12',
+          newPair: 2,
+        }),
+      ).rejects.toThrow(ConflictException);
+      mockTimetableEventPrisma.findUnique.mockResolvedValue({
+        ...event,
+        timetableVersion: {
+          ...draft,
+          status: 'PUBLISHED',
+          semesterCalendar: {
+            ...calendar,
+            makeupSaturdays: [{ date: '2026-09-12', replacesWeekday: 1 }],
+          },
+        },
+      });
+      await expect(
+        service.rescheduleEvent(event.id, {
+          newDate: '2026-09-12',
+          newPair: 2,
+        }),
+      ).resolves.toMatchObject({ pair: 2 });
+    });
   });
 
   describe('createAcademicGroup and listAcademicGroups', () => {

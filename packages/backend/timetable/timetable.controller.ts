@@ -9,6 +9,7 @@ import {
   Injectable,
   Param,
   ParseUUIDPipe,
+  Patch,
   type PipeTransform,
   Post,
   Put,
@@ -23,6 +24,7 @@ import {
   type SemesterCalendar,
   type TeacherUnavailability as TeacherUnavailabilityRecord,
   type TeachingAssignment,
+  type TimetableEvent,
 } from '@universe/database';
 import { AtGuard } from '../auth/guards/at.guard';
 import { Public } from '../auth/decorators/public.decorator';
@@ -38,6 +40,8 @@ import {
 } from './timetable.service';
 import type { IcsCalendarEvent } from '@universe/core/types/timetable';
 import {
+  AdjustDraftSlotDto,
+  RescheduleEventDto,
   ConfirmTeacherUnavailabilityDto,
   CreateAcademicGroupDto,
   CreateCurriculumPlanDto,
@@ -284,6 +288,32 @@ export class TimetableController {
       ...dto,
       userId,
     });
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Adjust a recurring draft timetable slot' })
+  @Patch('versions/:versionId/slots')
+  async adjustDraftSlot(
+    @Param('versionId', ParseUUIDPipe) versionId: string,
+    @Body() dto: AdjustDraftSlotDto,
+    @GetUser('roles') roles?: string[],
+  ): Promise<TimetableVersionWithEvents & { penaltyScore: number }> {
+    assertAdmin(roles);
+
+    return this.timetableService.adjustDraftSlot(versionId, dto);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Reschedule a published timetable event' })
+  @Patch('events/:id/reschedule')
+  async rescheduleEvent(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RescheduleEventDto,
+    @GetUser('roles') roles?: string[],
+  ): Promise<TimetableEvent> {
+    assertAdmin(roles);
+
+    return this.timetableService.rescheduleEvent(id, dto);
   }
 
   @ApiBearerAuth()

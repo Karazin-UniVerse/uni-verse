@@ -44,6 +44,8 @@ describe('TimetableController', () => {
     confirmTeacherUnavailability: jest.fn(),
     generateTimetableDraft: jest.fn(),
     publishTimetableVersion: jest.fn(),
+    adjustDraftSlot: jest.fn(),
+    rescheduleEvent: jest.fn(),
     createSubscriptionToken: jest.fn(),
     rotateSubscriptionToken: jest.fn(),
     revokeSubscriptionTokens: jest.fn(),
@@ -64,6 +66,61 @@ describe('TimetableController', () => {
     }).compile();
 
     controller = module.get<TimetableController>(TimetableController);
+  });
+
+  describe('manual adjustments', () => {
+    const slot = {
+      teachingAssignmentId: 'assignment-1',
+      fromWeekday: 1,
+      fromPair: 1,
+      toWeekday: 2,
+      toPair: 2,
+    };
+    const reschedule = { newDate: '2026-09-08', newPair: 2 };
+
+    it('allows admins to adjust draft slots', async () => {
+      mockTimetableService.adjustDraftSlot.mockResolvedValue({ events: [] });
+      await expect(
+        controller.adjustDraftSlot('version-1', slot, [Role.ADMIN]),
+      ).resolves.toEqual({ events: [] });
+      expect(mockTimetableService.adjustDraftSlot).toHaveBeenCalledWith(
+        'version-1',
+        slot,
+      );
+    });
+
+    it('allows admins to reschedule events', async () => {
+      mockTimetableService.rescheduleEvent.mockResolvedValue({ id: 'event-1' });
+      await expect(
+        controller.rescheduleEvent('event-1', reschedule, [Role.ADMIN]),
+      ).resolves.toEqual({ id: 'event-1' });
+      expect(mockTimetableService.rescheduleEvent).toHaveBeenCalledWith(
+        'event-1',
+        reschedule,
+      );
+    });
+
+    it.each([Role.INSTRUCTOR, Role.OPPORTUNITIES_USER, undefined])(
+      'rejects non-admin roles %s',
+      async (roles) => {
+        await expect(
+          controller.adjustDraftSlot(
+            'version-1',
+            slot,
+            roles ? [roles] : undefined,
+          ),
+        ).rejects.toThrow(ForbiddenException);
+        await expect(
+          controller.rescheduleEvent(
+            'event-1',
+            reschedule,
+            roles ? [roles] : undefined,
+          ),
+        ).rejects.toThrow(ForbiddenException);
+        expect(mockTimetableService.adjustDraftSlot).not.toHaveBeenCalled();
+        expect(mockTimetableService.rescheduleEvent).not.toHaveBeenCalled();
+      },
+    );
   });
 
   describe('academic groups', () => {
@@ -624,6 +681,13 @@ describe('TimetableController', () => {
 
       expect(pipes).toContain(ParseUUIDPipe);
     });
+
+    it.each(['adjustDraftSlot', 'rescheduleEvent'])(
+      'applies ParseUUIDPipe to %s',
+      (methodName) => {
+        expect(getPipesForParam(methodName, 0)).toContain(ParseUUIDPipe);
+      },
+    );
 
     it('applies ParseFeedTokenPipe to getCalendarFeed token param and validates base64url tokens', () => {
       const pipes = getPipesForParam('getCalendarFeed', 0);

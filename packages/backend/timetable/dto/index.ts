@@ -11,3 +11,5 @@ export * from './generate-timetable.dto';
 export * from './update-meeting-url.dto';
 export * from './list-teaching-assignments-query.dto';
 export * from './get-semester-calendar-query.dto';
+export * from './adjust-draft-slot.dto';
+export * from './reschedule-event.dto';
