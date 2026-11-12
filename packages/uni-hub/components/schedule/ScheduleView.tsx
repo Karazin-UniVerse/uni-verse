@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { BREAKPOINTS } from '@core/constants/breakpoints';
 import { Button, Modal, TextInput, useToast } from '@una';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
+import { useMySchedule } from '@uni-hub/hooks/useMySchedule';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -40,7 +41,26 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       roles.includes('ADMIN') ||
       roles.includes('DEAN'));
 
-  const [events, setEvents] = useState<ScheduleEvent[]>(() => propEvents ?? DUMMY_EVENTS);
+  const { events: fetchedEvents } = useMySchedule();
+  const [meetingUrlOverrides, setMeetingUrlOverrides] = useState<Map<string, string>>(
+    () => new Map(),
+  );
+
+  const events = useMemo(() => {
+    let base = propEvents;
+
+    if (!base) {
+      base = fetchedEvents.length > 0 ? fetchedEvents : DUMMY_EVENTS;
+    }
+
+    if (meetingUrlOverrides.size === 0) {
+      return base;
+    }
+
+    return base.map((e) =>
+      meetingUrlOverrides.has(e.id) ? { ...e, meetingUrl: meetingUrlOverrides.get(e.id) } : e,
+    );
+  }, [fetchedEvents, meetingUrlOverrides, propEvents]);
   const [selectedViewMode, setSelectedViewMode] = useState<ScheduleViewMode | null>(null);
   const viewMode = selectedViewMode ?? (isMobile ? 'day' : 'month');
 
@@ -177,9 +197,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
     try {
       await timetableApi.updateMeetingUrl(targetId, nextUrl);
-      setEvents((prev) =>
-        prev.map((e) => (e.id === editingEvent.id ? { ...e, meetingUrl: nextUrl } : e)),
-      );
+      setMeetingUrlOverrides((prev) => new Map(prev).set(editingEvent.id, nextUrl ?? ''));
       toast.success(formatMessage('schedule.meetingUrlSaved'));
       setEditingEvent(null);
     } catch {

@@ -319,7 +319,7 @@ model TeachingAssignment {
   disciplineTitle          String
   teachingType             TeachingType
   academicHours            Int
-  teacherId                String
+  teacherId                String?
   groupId                  String?
   subgroupId               String?
   streamId                 String?
@@ -330,7 +330,7 @@ model TeachingAssignment {
   updatedAt                DateTime     @updatedAt
 
   curriculumPlan CurriculumPlan    @relation(fields: [curriculumPlanId], references: [id], onDelete: Restrict)
-  teacher        User              @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  teacher        User?             @relation(fields: [teacherId], references: [id], onDelete: Restrict)
   group          AcademicGroup?    @relation(fields: [groupId], references: [id], onDelete: Restrict)
   subgroup       AcademicSubgroup? @relation(fields: [subgroupId], references: [id], onDelete: Restrict)
   stream         AcademicStream?   @relation(fields: [streamId], references: [id], onDelete: Restrict)

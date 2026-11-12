@@ -197,6 +197,18 @@ export function getWeeklyPairCounts({
     };
   }
 
+  // Weekly plus two extra pairs: in the first week and at the midpoint of the semester.
+  if (weeks % 4 === 0 && pairs === weeks + 2) {
+    const extraWeeks = new Set([0, Math.floor(weeks / 2)]);
+
+    return {
+      ok: true,
+      counts: Array.from({ length: weeks }, (_, weekIndex): number =>
+        extraWeeks.has(weekIndex) ? 2 : 1,
+      ),
+    };
+  }
+
   return { ok: false, error: TIMETABLE_VALIDATION_ERROR.UNSUPPORTED_PATTERN };
 }
 
@@ -471,7 +483,7 @@ function getOverlapConflicts(slots: EventSlot[]): HardConflict[] {
         continue;
       }
 
-      if (first.event.teacherId === second.event.teacherId) {
+      if (first.event.teacherId !== undefined && first.event.teacherId === second.event.teacherId) {
         conflicts.push({
           code: isExam
             ? TIMETABLE_CONFLICT_CODE.EXAM_TEACHER_OVERLAP
@@ -796,7 +808,19 @@ export function checkTimetableConflicts({
   };
 }
 
-function computeSlotHeuristicCost(demand: TeachingDemand, weekday: number, pair: number): number {
+type SlotHeuristicParams = {
+  demand: TeachingDemand;
+  weekday: number;
+  pair: number;
+  demandIndex?: number;
+};
+
+function computeSlotHeuristicCost({
+  demand,
+  weekday,
+  pair,
+  demandIndex = 0,
+}: SlotHeuristicParams): number {
   if (demand.isSaturdayOnly) {
     if (pair > LAST_PREFERRED_SATURDAY_PAIR) {
       return (pair - LAST_PREFERRED_SATURDAY_PAIR) * SATURDAY_LATE_PENALTY_MULTIPLIER;
@@ -805,12 +829,20 @@ function computeSlotHeuristicCost(demand: TeachingDemand, weekday: number, pair:
     return pair;
   }
 
-  let cost = 0;
+  // Рівномірний розподіл навантаження по днях тижня (Пн-Пт)
+  // Замість однобічного збивання всіх лекцій на Пн, а всіх практик на Пт/Чт,
+  // кожна дисципліна має рівномірно збалансований базовий день, що дозволяє
+  // розкладати заняття гармонійно по понеділку, вівторку, середі, четвергу і п'ятниці.
+  const isLecture = demand.teachingType === TIMETABLE_TEACHING_TYPE.LECTURE;
+  const preferredDay = isLecture
+    ? ((demandIndex * 2) % 3) + 1 // лекції розподіляються на Пн (1), Вт (2), Ср (3)
+    : ((demandIndex * 2 + 1) % 5) + 1; // практики рівномірно по днях 1..5
 
-  if (demand.teachingType === TIMETABLE_TEACHING_TYPE.LECTURE) {
-    cost += weekday * WEEKDAY_PENALTY_MULTIPLIER;
-  } else {
-    cost += (6 - weekday) * WEEKDAY_PENALTY_MULTIPLIER;
+  let cost = Math.abs(weekday - preferredDay) * WEEKDAY_PENALTY_MULTIPLIER;
+
+  // Лекції бажано ставити раніше за день (Пн-Ср)
+  if (isLecture) {
+    cost += weekday * 2;
   }
 
   if (pair <= MAX_STANDARD_PAIR) {
@@ -825,7 +857,7 @@ function computeSlotHeuristicCost(demand: TeachingDemand, weekday: number, pair:
 }
 
 function hasTeacherConflict(first: TeachingDemand, second: TeachingDemand): boolean {
-  if (first.teacherId !== second.teacherId) {
+  if (first.teacherId === undefined || first.teacherId !== second.teacherId) {
     return false;
   }
 
@@ -1058,7 +1090,7 @@ export function generateTimetableCandidates({
         const isFixedOccupied = expandResult.occurrences.some((occurrence): boolean =>
           (fixedByTimeKey.get(`${occurrence.date}|${occurrence.pair}`) ?? []).some(
             (fixedEvent): boolean =>
-              fixedEvent.teacherId === demand.teacherId ||
+              (demand.teacherId !== undefined && fixedEvent.teacherId === demand.teacherId) ||
               (!(demand.streamId !== undefined && demand.streamId === fixedEvent.streamId) &&
                 hasStudentIntersection(demand, fixedEvent)),
           ),
@@ -1087,7 +1119,12 @@ export function generateTimetableCandidates({
           }),
         );
 
-        const heuristicCost = computeSlotHeuristicCost(demand, weekday, pair);
+        const heuristicCost = computeSlotHeuristicCost({
+          demand,
+          weekday,
+          pair,
+          demandIndex,
+        });
 
         slots.push({
           globalIndex: nextGlobalIndex,

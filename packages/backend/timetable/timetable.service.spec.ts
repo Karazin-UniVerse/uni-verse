@@ -31,6 +31,7 @@ describe('TimetableService', () => {
   const mockCurriculumPlanPrisma = {
     create: jest.fn(),
     findUnique: jest.fn(),
+    findMany: jest.fn(),
   };
 
   const mockTeachingAssignmentPrisma = {
@@ -74,6 +75,7 @@ describe('TimetableService', () => {
 
   const mockUserPrisma = {
     findFirst: jest.fn(),
+    findMany: jest.fn(),
   };
 
   const mockPrismaTables = {
@@ -330,6 +332,156 @@ describe('TimetableService', () => {
 
       await expect(service.createTeachingAssignment(dto)).rejects.toThrow(
         BadRequestException,
+      );
+    });
+
+    it.each([
+      ['curriculum plan', 'TeachingAssignment_curriculumPlanId_fkey'],
+      ['teacher', 'TeachingAssignment_teacherId_fkey'],
+    ])(
+      'translates a missing %s foreign key into BadRequestException without leaking Prisma text',
+      async (_label, constraint) => {
+        mockTeachingAssignmentPrisma.create.mockRejectedValue({
+          code: 'P2003',
+          message: `Foreign key constraint violated on the constraint: \`${constraint}\``,
+        });
+
+        const dto: CreateTeachingAssignmentDto = {
+          curriculumPlanId: 'missing-plan',
+          disciplineTitle: 'Calculus',
+          teachingType: TeachingType.LECTURE,
+          academicHours: 32,
+          teacherId: 'missing-teacher',
+          groupId: 'group-1',
+        };
+
+        const error = await service
+          .createTeachingAssignment(dto)
+          .catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(BadRequestException);
+        expect((error as BadRequestException).message).not.toMatch(
+          /Foreign key|Prisma|_fkey/,
+        );
+      },
+    );
+
+    it('translates a missing foreign key on update into BadRequestException', async () => {
+      mockTeachingAssignmentPrisma.findUnique.mockResolvedValue({
+        id: 'assign-1',
+        groupId: 'group-1',
+        subgroupId: null,
+        streamId: null,
+      });
+      mockTeachingAssignmentPrisma.update.mockRejectedValue({ code: 'P2003' });
+
+      await expect(
+        service.updateTeachingAssignment('assign-1', { teacherId: 'missing' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('creates a teaching assignment without a teacher', async () => {
+      mockTeachingAssignmentPrisma.create.mockResolvedValue({
+        id: 'assign-1',
+        teacherId: null,
+      });
+
+      await service.createTeachingAssignment({
+        curriculumPlanId: 'plan-1',
+        disciplineTitle: 'Calculus',
+        teachingType: TeachingType.LECTURE,
+        academicHours: 32,
+        streamId: 'stream-1',
+      });
+
+      expect(mockTeachingAssignmentPrisma.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ teacherId: undefined }),
+        }),
+      );
+    });
+
+    it('lists teachers as safe id and name pairs for users with the instructor role', async () => {
+      const teachers = [
+        { id: 't-1', name: 'Prof Smith', roles: [Role.INSTRUCTOR] },
+      ];
+
+      mockUserPrisma.findMany.mockResolvedValue(teachers);
+
+      const result = await service.listTeachers();
+
+      expect(result).toEqual(teachers);
+      expect(mockUserPrisma.findMany).toHaveBeenCalledWith({
+        where: { roles: { has: Role.INSTRUCTOR } },
+        select: { id: true, name: true, roles: true },
+        orderBy: { name: 'asc' },
+      });
+    });
+
+    it('lists curriculum plans that are not archived', async () => {
+      const plans = [
+        { id: 'plan-1', title: 'CS', academicYear: '2026/2027', semester: 1 },
+      ];
+
+      mockCurriculumPlanPrisma.findMany.mockResolvedValue(plans);
+
+      const result = await service.listCurriculumPlans();
+
+      expect(result).toEqual(plans);
+      expect(mockCurriculumPlanPrisma.findMany).toHaveBeenCalledWith({
+        where: { isArchived: false },
+        orderBy: [
+          { academicYear: 'desc' },
+          { semester: 'desc' },
+          { title: 'asc' },
+        ],
+      });
+    });
+
+    it('updates an existing teaching assignment and clears mutually exclusive target fields', async () => {
+      mockTeachingAssignmentPrisma.findUnique.mockResolvedValue({
+        id: 'assign-1',
+        curriculumPlanId: 'plan-1',
+        disciplineTitle: 'Calculus',
+        teachingType: TeachingType.LECTURE,
+        academicHours: 32,
+        teacherId: 'teacher-1',
+        groupId: 'group-1',
+        subgroupId: null,
+        streamId: null,
+      });
+      mockTeachingAssignmentPrisma.update.mockResolvedValue({
+        id: 'assign-1',
+        curriculumPlanId: 'plan-1',
+        disciplineTitle: 'Advanced Calculus',
+        teachingType: TeachingType.LECTURE,
+        academicHours: 48,
+        teacherId: 'teacher-2',
+        groupId: null,
+        subgroupId: null,
+        streamId: 'stream-1',
+      });
+
+      const result = await service.updateTeachingAssignment('assign-1', {
+        disciplineTitle: 'Advanced Calculus',
+        academicHours: 48,
+        teacherId: 'teacher-2',
+        streamId: 'stream-1',
+      });
+
+      expect(result.academicHours).toBe(48);
+      expect(mockTeachingAssignmentPrisma.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'assign-1' },
+          data: expect.objectContaining({
+            disciplineTitle: 'Advanced Calculus',
+            academicHours: 48,
+            teacherId: 'teacher-2',
+            streamId: 'stream-1',
+            groupId: null,
+            subgroupId: null,
+          }),
+        }),
       );
     });
 

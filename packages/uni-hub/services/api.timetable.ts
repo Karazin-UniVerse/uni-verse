@@ -7,19 +7,34 @@ import type {
   CurriculumPlanResponse,
   GenerateTimetableDraftResult,
   GenerateTimetableRequest,
+  IcsCalendarEvent,
+  SafeTeacherResponse,
   SemesterCalendarResponse,
   TeacherUnavailabilityResponse,
   TeachingAssignmentResponse,
   TimetableVersionResponse,
+  UpdateTeachingAssignmentRequest,
 } from '@core/types/timetable';
 import { ApiClient, buildQueryString } from './api.request';
 import { API_BASE_URL } from './api.storage';
 
 export class TimetableApi extends ApiClient {
+  async getMyScheduleEvents(): Promise<{ data: IcsCalendarEvent[] }> {
+    return this.request<IcsCalendarEvent[]>('/timetable/my/events');
+  }
+
   async getCurriculumPlan(id: string): Promise<{ data: CurriculumPlanResponse }> {
     return this.request<CurriculumPlanResponse>(
       `/timetable/curriculum-plans/${encodeURIComponent(id)}`,
     );
+  }
+
+  async listCurriculumPlans(): Promise<{ data: CurriculumPlanResponse[] }> {
+    return this.request<CurriculumPlanResponse[]>('/timetable/curriculum-plans');
+  }
+
+  async listTeachers(): Promise<{ data: SafeTeacherResponse[] }> {
+    return this.request<SafeTeacherResponse[]>('/timetable/teachers');
   }
 
   async listAcademicGroups(): Promise<{ data: AcademicGroupResponse[] }> {
@@ -33,6 +48,19 @@ export class TimetableApi extends ApiClient {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+  }
+
+  async updateTeachingAssignment(
+    id: string,
+    payload: UpdateTeachingAssignmentRequest,
+  ): Promise<{ data: TeachingAssignmentResponse }> {
+    return this.request<TeachingAssignmentResponse>(
+      `/timetable/assignments/${encodeURIComponent(id)}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      },
+    );
   }
 
   async listTeachingAssignments(planId: string): Promise<{ data: TeachingAssignmentResponse[] }> {

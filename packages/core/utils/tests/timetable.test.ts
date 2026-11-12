@@ -127,9 +127,20 @@ describe('timetable utils', () => {
       assert.strictEqual(sum(result.counts), 24);
     });
 
+    test('36 hours over 16 weeks is one weekly pair plus extra pairs in weeks 1 and 9', () => {
+      const result = getWeeklyPairCounts({ pairs: 18, weeks: 16 });
+
+      assert.ok(result.ok);
+      assert.deepStrictEqual(
+        result.counts,
+        Array.from({ length: 16 }, (_, index) => (index === 0 || index === 8 ? 2 : 1)),
+      );
+      assert.strictEqual(sum(result.counts), 18);
+    });
+
     test('reports an unsupported pattern instead of inventing weeks', () => {
-      // 18 pairs over 16 weeks needs two extra pairs on dean-chosen weeks.
-      assert.deepStrictEqual(getWeeklyPairCounts({ pairs: 18, weeks: 16 }), {
+      // 19 pairs over 16 weeks matches no approved pattern.
+      assert.deepStrictEqual(getWeeklyPairCounts({ pairs: 19, weeks: 16 }), {
         ok: false,
         error: TIMETABLE_VALIDATION_ERROR.UNSUPPORTED_PATTERN,
       });
@@ -633,6 +644,30 @@ describe('checkTimetableConflicts', () => {
     assert.deepStrictEqual(hardCodes(report), [TIMETABLE_CONFLICT_CODE.TEACHER_OVERLAP]);
     assert.deepStrictEqual(report.hardConflicts[0].eventIds, ['a', 'b']);
     assert.equal(report.isValid, false);
+  });
+
+  test('events without a teacher never clash on the teacher, but still clash on students', () => {
+    const unassigned = (id: string, groupIds: string[]): ScheduledEvent => ({
+      ...makeEvent({ id, groupIds }),
+      teacherId: undefined,
+    });
+
+    assert.deepStrictEqual(
+      hardCodes(
+        checkTimetableConflicts({
+          events: [unassigned('a', ['KS11']), unassigned('b', ['KS12'])],
+        }),
+      ),
+      [],
+    );
+    assert.deepStrictEqual(
+      hardCodes(
+        checkTimetableConflicts({
+          events: [unassigned('a', ['KS11']), unassigned('b', ['KS11'])],
+        }),
+      ),
+      [TIMETABLE_CONFLICT_CODE.STUDENT_OVERLAP],
+    );
   });
 
   describe('student overlap', () => {

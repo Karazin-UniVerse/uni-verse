@@ -58,6 +58,30 @@ describe('TimetableApi', () => {
     expect(JSON.parse(vi.mocked(global.fetch).mock.calls[0][1]?.body as string)).toEqual(payload);
   });
 
+  it('updateTeachingAssignment sends PUT to /timetable/assignments/:id', async () => {
+    const payload = {
+      disciplineTitle: 'Updated Algorithms',
+      academicHours: 48,
+    };
+    const mockData = {
+      id: 'assign-1',
+      curriculumPlanId: 'plan-1',
+      teachingType: 'LECTURE',
+      teacherId: 'teacher-1',
+      ...payload,
+    };
+
+    mockFetchResponse(mockData);
+
+    const response = await timetableApi.updateTeachingAssignment('assign-1', payload);
+
+    expect(response.data).toEqual(mockData);
+    expect(vi.mocked(global.fetch)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain('/timetable/assignments/assign-1');
+    expect(vi.mocked(global.fetch).mock.calls[0][1]?.method).toBe('PUT');
+    expect(JSON.parse(vi.mocked(global.fetch).mock.calls[0][1]?.body as string)).toEqual(payload);
+  });
+
   it('listTeachingAssignments sends GET to /timetable/assignments with planId query', async () => {
     const mockData = [{ id: 'assign-1', disciplineTitle: 'Algorithms' }];
 

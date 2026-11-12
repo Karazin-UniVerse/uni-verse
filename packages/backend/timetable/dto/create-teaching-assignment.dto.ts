@@ -44,10 +44,13 @@ export class CreateTeachingAssignmentDto implements CreateTeachingAssignmentRequ
   @IsDivisibleBy(2)
   academicHours: number;
 
-  @ApiProperty({ description: 'Assigned teacher user ID' })
+  @ApiPropertyOptional({
+    description: 'Assigned teacher user ID; may be unassigned for now',
+  })
   @IsString()
   @IsNotEmpty()
-  teacherId: string;
+  @IsOptional()
+  teacherId?: string;
 
   @ApiPropertyOptional({ description: 'Target academic group ID' })
   @ValidateIf(

@@ -31,7 +31,10 @@ describe('TimetableController', () => {
     listAcademicGroups: jest.fn(),
     createCurriculumPlan: jest.fn(),
     getCurriculumPlan: jest.fn(),
+    listCurriculumPlans: jest.fn(),
+    listTeachers: jest.fn(),
     createTeachingAssignment: jest.fn(),
+    updateTeachingAssignment: jest.fn(),
     listTeachingAssignments: jest.fn(),
     listTeacherAssignments: jest.fn(),
     updateMeetingUrl: jest.fn(),
@@ -144,6 +147,24 @@ describe('TimetableController', () => {
       );
     });
 
+    it('lists curriculum plans and teachers for admin only', async () => {
+      mockTimetableService.listCurriculumPlans.mockResolvedValue([{ id: 'p' }]);
+      mockTimetableService.listTeachers.mockResolvedValue([{ id: 't' }]);
+
+      await expect(
+        controller.listCurriculumPlans([Role.ADMIN]),
+      ).resolves.toEqual([{ id: 'p' }]);
+      await expect(controller.listTeachers([Role.ADMIN])).resolves.toEqual([
+        { id: 't' },
+      ]);
+      await expect(
+        controller.listCurriculumPlans([Role.INSTRUCTOR]),
+      ).rejects.toThrow(ForbiddenException);
+      await expect(controller.listTeachers([Role.INSTRUCTOR])).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
     it('rejects getCurriculumPlan for non-admin', async () => {
       await expect(
         controller.getCurriculumPlan('plan-1', [Role.INSTRUCTOR]),
@@ -181,6 +202,33 @@ describe('TimetableController', () => {
     it('rejects createTeachingAssignment for non-admin', async () => {
       await expect(
         controller.createTeachingAssignment(dto, [Role.INSTRUCTOR]),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('updates teaching assignment for admin', async () => {
+      mockTimetableService.updateTeachingAssignment.mockResolvedValue({
+        id: 'assign-1',
+        ...dto,
+        academicHours: 48,
+      });
+
+      const result = await controller.updateTeachingAssignment(
+        'assign-1',
+        { academicHours: 48 },
+        [Role.ADMIN],
+      );
+
+      expect(result).toEqual({ id: 'assign-1', ...dto, academicHours: 48 });
+      expect(
+        mockTimetableService.updateTeachingAssignment,
+      ).toHaveBeenCalledWith('assign-1', { academicHours: 48 });
+    });
+
+    it('rejects updateTeachingAssignment for non-admin', async () => {
+      await expect(
+        controller.updateTeachingAssignment('assign-1', { academicHours: 48 }, [
+          Role.INSTRUCTOR,
+        ]),
       ).rejects.toThrow(ForbiddenException);
     });
 

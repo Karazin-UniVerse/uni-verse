@@ -32,9 +32,11 @@ import {
   type AcademicGroupWithSubgroups,
   type CurriculumPlanWithAssignments,
   type GenerateTimetableDraftResult,
+  type SafeTeacher,
   type TeachingAssignmentWithDetails,
   type TimetableVersionWithEvents,
 } from './timetable.service';
+import type { IcsCalendarEvent } from '@universe/core/types/timetable';
 import {
   ConfirmTeacherUnavailabilityDto,
   CreateAcademicGroupDto,
@@ -46,6 +48,7 @@ import {
   GetSemesterCalendarQueryDto,
   ListTeachingAssignmentsQueryDto,
   UpdateMeetingUrlDto,
+  UpdateTeachingAssignmentDto,
 } from './dto';
 
 function assertAdmin(roles?: string[]): void {
@@ -105,6 +108,28 @@ export class TimetableController {
   }
 
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'List active curriculum plans' })
+  @Get('curriculum-plans')
+  async listCurriculumPlans(
+    @GetUser('roles') roles?: string[],
+  ): Promise<CurriculumPlan[]> {
+    assertAdmin(roles);
+
+    return this.timetableService.listCurriculumPlans();
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List teachers available for assignments' })
+  @Get('teachers')
+  async listTeachers(
+    @GetUser('roles') roles?: string[],
+  ): Promise<SafeTeacher[]> {
+    assertAdmin(roles);
+
+    return this.timetableService.listTeachers();
+  }
+
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a curriculum plan by ID' })
   @Get('curriculum-plans/:id')
   async getCurriculumPlan(
@@ -126,6 +151,19 @@ export class TimetableController {
     assertAdmin(roles);
 
     return this.timetableService.createTeachingAssignment(dto);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a teaching assignment' })
+  @Put('assignments/:id')
+  async updateTeachingAssignment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateTeachingAssignmentDto,
+    @GetUser('roles') roles?: string[],
+  ): Promise<TeachingAssignmentWithDetails> {
+    assertAdmin(roles);
+
+    return this.timetableService.updateTeachingAssignment(id, dto);
   }
 
   @ApiBearerAuth()
@@ -259,6 +297,17 @@ export class TimetableController {
     assertAdmin(roles);
 
     return this.timetableService.publishTimetableVersion(versionId, userId);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get current user schedule events for published timetable',
+  })
+  @Get('my/events')
+  async getMyScheduleEvents(
+    @GetUser('sub') userId: string,
+  ): Promise<IcsCalendarEvent[]> {
+    return this.timetableService.getMyScheduleEvents(userId);
   }
 
   @ApiBearerAuth()

@@ -17,6 +17,7 @@ import type {
   GenerateTimetableDraftResult,
   ScheduledEvent,
 } from '@core/types/timetable';
+import { useTimetableReferences } from '@uni-hub/hooks/useTimetableReferences';
 import { useLanguage, type FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import styles from './TimetableManagement.module.scss';
@@ -219,9 +220,9 @@ export interface WorkloadRow {
   disciplineTitle: string;
   teachingType: 'LECTURE' | 'PRACTICE' | 'SEMINAR' | 'LAB';
   academicHours: number;
-  teacherId: string;
   isSaturdayOnly: boolean;
   hasLateSlotAuthorization: boolean;
+  teacherId?: string;
   groupId?: string;
   subgroupId?: string;
   streamId?: string;
@@ -322,12 +323,12 @@ export interface TimetableManagementProps {
 
 export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   initialWorkload,
-  initialPlanId = 'plan-cs-2026',
+  initialPlanId = '',
 }) => {
   const { formatMessage } = useLanguage();
   const baseId = useId();
 
-  const [planId, setPlanId] = useState(initialPlanId);
+  const [chosenPlanId, setPlanId] = useState(initialPlanId);
   const [academicGroups, setAcademicGroups] = useState<AcademicGroupResponse[]>(
     () => DEFAULT_GROUPS,
   );
@@ -342,6 +343,42 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0);
   const [isPublished, setIsPublished] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { plans, teachers } = useTimetableReferences();
+  const planId = chosenPlanId || plans[0]?.id || '';
+
+  const planOptions = useMemo(() => {
+    const options = plans.map((plan) => ({
+      value: plan.id,
+      label: formatMessage('timetable.planOption', {
+        title: plan.title,
+        academicYear: plan.academicYear,
+        semester: plan.semester,
+      }),
+    }));
+
+    if (options.length === 0) {
+      return [{ value: '', label: formatMessage('timetable.noPlans') }];
+    }
+
+    return [{ value: '', label: formatMessage('timetable.selectPlan') }, ...options];
+  }, [formatMessage, plans]);
+
+  const teacherOptions = useMemo(() => {
+    const options = teachers.map((teacher) => ({
+      value: teacher.id,
+      label: teacher.name ?? teacher.id,
+    }));
+
+    return [
+      {
+        value: '',
+        label: formatMessage(
+          options.length === 0 ? 'timetable.noTeachers' : 'timetable.selectTeacher',
+        ),
+      },
+      ...options,
+    ];
+  }, [formatMessage, teachers]);
 
   useEffect(() => {
     let isActive = true;
@@ -378,7 +415,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
               disciplineTitle: assignment.disciplineTitle,
               teachingType: toUiTeachingType(assignment.teachingType),
               academicHours: assignment.academicHours,
-              teacherId: assignment.teacherId,
+              teacherId: assignment.teacherId ?? undefined,
               groupId: assignment.groupId ?? undefined,
               subgroupId: assignment.subgroupId ?? undefined,
               streamId: assignment.streamId ?? undefined,
@@ -410,10 +447,12 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
 
   const groupOrStreamOptions = useMemo(() => {
     const options: Array<{ value: string; label: string }> = [
-      ...academicGroups.map((g) => ({
-        value: g.id,
-        label: g.code,
-      })),
+      ...academicGroups
+        .filter((g) => g.id !== 'stream-1' && g.code !== 'stream-1')
+        .map((g) => ({
+          value: g.id,
+          label: g.code,
+        })),
       { value: 'stream-1', label: formatMessage('timetable.stream1') },
       { value: 'custom-stream', label: formatMessage('timetable.specifyStream') },
     ];
@@ -438,7 +477,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
       disciplineTitle: '',
       teachingType: 'LECTURE',
       academicHours: 32,
-      teacherId: '',
+      teacherId: undefined,
       groupId: defaultGroup,
       subgroupId: undefined,
       streamId: undefined,
@@ -603,7 +642,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
 
   const persistDirtyWorkload = useCallback(async () => {
     const rowsToPersist = workload.filter(
-      (row) => dirtyRowIds.has(row.id) && row.disciplineTitle.trim() && row.teacherId.trim(),
+      (row) => dirtyRowIds.has(row.id) && row.disciplineTitle.trim(),
     );
 
     if (rowsToPersist.length === 0) {
@@ -613,21 +652,29 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
     const updatedIds = new Map<string, string>();
 
     for (const row of rowsToPersist) {
-      const created = await timetableApi.createTeachingAssignment({
+      const payload = {
         curriculumPlanId: planId,
         disciplineTitle: row.disciplineTitle.trim(),
         teachingType: toApiTeachingType(row.teachingType),
         academicHours: row.academicHours,
-        teacherId: row.teacherId.trim(),
+        teacherId: row.teacherId || undefined,
         groupId: row.groupId?.trim() || undefined,
         subgroupId: row.subgroupId?.trim() || undefined,
         streamId: row.streamId?.trim() || undefined,
         isSaturdayOnly: row.isSaturdayOnly,
         hasLateSlotAuthorization: row.hasLateSlotAuthorization,
-      });
+      };
 
-      if (created?.data?.id) {
-        updatedIds.set(row.id, created.data.id);
+      const isTemporaryRow = row.id.startsWith('row-');
+
+      if (isTemporaryRow) {
+        const created = await timetableApi.createTeachingAssignment(payload);
+
+        if (created?.data?.id) {
+          updatedIds.set(row.id, created.data.id);
+        }
+      } else {
+        await timetableApi.updateTeachingAssignment(row.id, payload);
       }
     }
 
@@ -656,8 +703,12 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
 
     try {
       await persistDirtyWorkload();
-    } catch {
-      setError(formatMessage('timetable.generateError'));
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message
+          ? `${formatMessage('timetable.generateError')} (${err.message})`
+          : formatMessage('timetable.generateError'),
+      );
     } finally {
       setIsSavingWorkload(false);
     }
@@ -678,9 +729,13 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
 
       setDraftResult(response.data);
       setSelectedCandidateIndex(0);
-    } catch {
+    } catch (err) {
       setDraftResult(null);
-      setError(formatMessage('timetable.generateError'));
+      setError(
+        err instanceof Error && err.message
+          ? `${formatMessage('timetable.generateError')} (${err.message})`
+          : formatMessage('timetable.generateError'),
+      );
     } finally {
       setIsGenerating(false);
     }
@@ -738,11 +793,11 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
       {/* Curriculum Plan Selection */}
       <section className={styles.planRow}>
         <label htmlFor={`${baseId}-planId`}>{formatMessage('timetable.planId')}</label>
-        <TextInput
+        <Select
           id={`${baseId}-planId`}
           value={planId}
-          onChange={(e) => setPlanId(e.target.value)}
-          size="medium"
+          options={planOptions}
+          onChange={setPlanId}
           aria-label={formatMessage('timetable.planId')}
         />
       </section>
@@ -828,10 +883,10 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
                     />
                   </td>
                   <td>
-                    <TextInput
-                      value={row.teacherId}
-                      onChange={(e) => handleUpdateRow(row.id, 'teacherId', e.target.value)}
-                      placeholder={formatMessage('timetable.teacher')}
+                    <Select
+                      value={row.teacherId ?? ''}
+                      options={teacherOptions}
+                      onChange={(val) => handleUpdateRow(row.id, 'teacherId', val)}
                       aria-label={formatMessage('timetable.teacher')}
                     />
                   </td>
@@ -888,12 +943,17 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
             type="button"
             variant="secondary"
             onClick={handleSaveWorkload}
-            disabled={isSavingWorkload}
+            disabled={isSavingWorkload || !planId}
           >
             <Save size={16} /> {formatMessage('timetable.saveWorkload')}
           </Button>
 
-          <Button type="button" variant="primary" onClick={handleGenerate} disabled={isGenerating}>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={handleGenerate}
+            disabled={isGenerating || !planId}
+          >
             {isGenerating ? (
               <>
                 <Spinner size="small" /> {formatMessage('timetable.generating')}

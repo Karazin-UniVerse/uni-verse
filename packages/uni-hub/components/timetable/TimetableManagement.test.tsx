@@ -10,17 +10,58 @@ describe('TimetableManagement component', () => {
     vi.clearAllMocks();
     vi.spyOn(timetableApi, 'listTeachingAssignments').mockResolvedValue({ data: [] });
     vi.spyOn(timetableApi, 'listAcademicGroups').mockResolvedValue({ data: [] });
+    vi.spyOn(timetableApi, 'listCurriculumPlans').mockResolvedValue({
+      data: [
+        {
+          id: 'plan-cs-2026',
+          faculty: 'ННІ КН та ШІ',
+          title: 'Комп’ютерні науки',
+          academicYear: '2026/2027',
+          semester: 1,
+          isDraft: false,
+        },
+      ],
+    });
+    vi.spyOn(timetableApi, 'listTeachers').mockResolvedValue({
+      data: [
+        { id: 'teacher-1', name: 'Подоляка О.М.' },
+        { id: 'teacher-10', name: 'Буткевич М.В.' },
+      ],
+    });
   });
 
   const renderComponent = (props = {}) => render(withLanguage(<TimetableManagement {...props} />));
 
-  it('renders plan ID, workload table headers, and initial workload rows', () => {
+  it('offers existing plans and teachers as choices instead of free text ids', async () => {
     renderComponent();
 
     expect(
       screen.getByRole('heading', { level: 2, name: /керування розкладом/i }),
     ).toBeInTheDocument();
-    expect(screen.getByDisplayValue('plan-cs-2026')).toBeInTheDocument();
+
+    const planSelect = await screen.findByLabelText('Навчальний план');
+
+    expect(planSelect.tagName).toBe('SELECT');
+    expect(
+      await screen.findByRole('option', { name: /Комп’ютерні науки \(2026\/2027/ }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole('option', { name: 'Буткевич М.В.' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText('Викладач')[0].tagName).toBe('SELECT');
+  });
+
+  it('disables generate and save until a plan is available', async () => {
+    vi.spyOn(timetableApi, 'listCurriculumPlans').mockResolvedValue({ data: [] });
+
+    renderComponent();
+
+    expect(await screen.findByRole('option', { name: /планів не знайдено/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /згенерувати розклад/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /зберегти навантаження/i })).toBeDisabled();
+  });
+
+  it('renders workload table headers and initial workload rows', () => {
+    renderComponent();
+
     expect(screen.getByText('Дисципліна')).toBeInTheDocument();
     expect(screen.getByText('Тип')).toBeInTheDocument();
     expect(screen.getByText('Група / Потік')).toBeInTheDocument();
@@ -155,7 +196,7 @@ describe('TimetableManagement component', () => {
     expect(publishSpy).toHaveBeenCalledWith('ver-cand-2');
   });
 
-  it('loads assignments from listTeachingAssignments and persists edited workload via createTeachingAssignment', async () => {
+  it('loads assignments from listTeachingAssignments and persists edited workload via updateTeachingAssignment', async () => {
     vi.spyOn(timetableApi, 'listTeachingAssignments').mockResolvedValue({
       data: [
         {
@@ -165,23 +206,26 @@ describe('TimetableManagement component', () => {
           teachingType: 'LECTURE',
           academicHours: 32,
           teacherId: 'teacher-10',
+          groupId: 'group-1',
           isSaturdayOnly: false,
           hasLateSlotAuthorization: false,
         },
       ],
     });
-    const createSpy = vi.spyOn(timetableApi, 'createTeachingAssignment').mockResolvedValue({
+    const updateSpy = vi.spyOn(timetableApi, 'updateTeachingAssignment').mockResolvedValue({
       data: {
-        id: 'assign-created-2',
+        id: 'assign-loaded-1',
         curriculumPlanId: 'plan-cs-2026',
         disciplineTitle: 'Кібербезпека',
         teachingType: 'LECTURE',
         academicHours: 32,
         teacherId: 'teacher-10',
+        groupId: 'group-1',
         isSaturdayOnly: false,
         hasLateSlotAuthorization: false,
       },
     });
+    const createSpy = vi.spyOn(timetableApi, 'createTeachingAssignment');
     const user = userEvent.setup();
 
     renderComponent();
@@ -193,13 +237,35 @@ describe('TimetableManagement component', () => {
 
     await user.click(screen.getByRole('button', { name: /зберегти навантаження/i }));
 
-    expect(createSpy).toHaveBeenCalledWith(
+    expect(updateSpy).toHaveBeenCalledWith(
+      'assign-loaded-1',
       expect.objectContaining({
         curriculumPlanId: 'plan-cs-2026',
         disciplineTitle: 'Кібербезпека',
         teacherId: 'teacher-10',
       }),
     );
+    expect(createSpy).not.toHaveBeenCalled();
+  });
+
+  it('deduplicates stream-1 in groupOrStreamOptions when API returns stream-1 in groups list', async () => {
+    vi.spyOn(timetableApi, 'listAcademicGroups').mockResolvedValue({
+      data: [
+        { id: 'group-ks11', code: 'КС11', subgroups: [] },
+        { id: 'stream-1', code: 'Потік 1', subgroups: [] },
+      ],
+    });
+
+    renderComponent();
+
+    await screen.findAllByRole('option', { name: 'КС11' });
+
+    const firstSelect = screen.getAllByLabelText('Група / Потік')[0];
+    const streamOptions = Array.from(firstSelect.querySelectorAll('option')).filter(
+      (opt) => (opt as HTMLOptionElement).value === 'stream-1',
+    );
+
+    expect(streamOptions).toHaveLength(1);
   });
 
   it('displays error message and does not create fake candidates on draft generation failure', async () => {

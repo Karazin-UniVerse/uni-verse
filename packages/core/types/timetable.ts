@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   TimetableAssignmentTeachingType,
   TimetableConflictCode,
   TimetablePhaseOrder,
@@ -74,10 +74,10 @@ export type ScheduledEvent = {
   teachingAssignmentId: string;
   disciplineTitle: string;
   teachingType: TimetableTeachingType;
-  teacherId: string;
   groupIds: string[];
   date: string;
   pair: number;
+  teacherId?: string;
   subgroupId?: string;
   streamId?: string;
   studentIds?: string[];
@@ -145,9 +145,9 @@ export type TeachingDemand = {
   id: string;
   disciplineTitle: string;
   teachingType: TimetableTeachingType;
-  teacherId: string;
   groupIds: string[];
   academicHours: number;
+  teacherId?: string;
   subgroupId?: string;
   streamId?: string;
   isSaturdayOnly?: boolean;
@@ -248,7 +248,7 @@ export type CreateTeachingAssignmentRequest = {
   disciplineTitle: string;
   teachingType: TimetableAssignmentTeachingType;
   academicHours: number;
-  teacherId: string;
+  teacherId?: string;
   groupId?: string;
   subgroupId?: string;
   streamId?: string;
@@ -363,7 +363,7 @@ export type TeachingAssignmentResponse = {
   disciplineTitle: string;
   teachingType: string;
   academicHours: number;
-  teacherId: string;
+  teacherId?: string | null;
   isSaturdayOnly?: boolean;
   hasLateSlotAuthorization?: boolean;
   groupId?: string | null;

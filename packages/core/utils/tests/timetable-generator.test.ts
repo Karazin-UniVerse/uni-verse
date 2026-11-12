@@ -54,6 +54,26 @@ describe('timetable generator', () => {
     assert.ok(result.diagnostics.timeMs >= 0);
   });
 
+  test('schedules demands without a teacher and never double books the group', () => {
+    const demands: TeachingDemand[] = ['A', 'B', 'C'].map((suffix): TeachingDemand => ({
+      id: `NO-TEACHER-${suffix}`,
+      disciplineTitle: `Discipline ${suffix}`,
+      teachingType: TIMETABLE_TEACHING_TYPE.PRACTICAL,
+      groupIds: ['GROUP-1'],
+      academicHours: 32,
+    }));
+
+    const result = generateTimetableCandidates({ demands, calendar });
+
+    assert.ok(result.ok);
+
+    const [candidate] = result.candidates;
+
+    assert.strictEqual(candidate.events.length, 48);
+    assert.ok(checkTimetableConflicts({ events: candidate.events }).isValid);
+    assert.ok(candidate.events.every((event) => event.teacherId === undefined));
+  });
+
   test('solves demand with stream sharing a lecture across 2 groups', () => {
     const demands: TeachingDemand[] = [
       {

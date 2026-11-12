@@ -1,4 +1,5 @@
 export const PRISMA_ERROR_CODE = {
   UNIQUE_CONSTRAINT: 'P2002',
+  FOREIGN_KEY: 'P2003',
   RECORD_NOT_FOUND: 'P2025',
 } as const;
