@@ -9,7 +9,7 @@ import {
   Save,
   Trash2,
 } from 'lucide-react';
-import { Button, CheckBox, Modal, Select, Spinner, Tag, TextInput } from '@una';
+import { Button, CheckBox, Modal, Select, Tag, TextInput } from '@una';
 import { PAIR_SCHEDULE, type PairNumber } from '@core/constants/timetable';
 import { checkTimetableConflicts } from '@core/utils/timetable';
 import type {
@@ -1036,7 +1036,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
           >
             {isGenerating ? (
               <>
-                <Spinner size="small" className={styles.buttonSpinner} />{' '}
+                <span className={styles.inlineSpinner} aria-hidden="true" />{' '}
                 {formatMessage('timetable.generating')}
               </>
             ) : (
@@ -1249,7 +1249,8 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
               >
                 {isPublishing ? (
                   <>
-                    <Spinner size="small" /> {formatMessage('timetable.publishing')}
+                    <span className={styles.inlineSpinner} aria-hidden="true" />{' '}
+                    {formatMessage('timetable.publishing')}
                   </>
                 ) : (
                   <>

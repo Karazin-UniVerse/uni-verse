@@ -85,6 +85,23 @@
   min-width: 130px;
 }
 
+.inlineSpinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid currentcolor;
+  border-top-color: transparent;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .tableActions {
   display: flex;
   justify-content: space-between;
@@ -92,12 +109,6 @@
   gap: var(--space-12);
   margin-top: var(--space-8);
   flex-wrap: wrap;
-
-  .buttonSpinner {
-    display: inline-flex;
-    padding: 0;
-    vertical-align: middle;
-  }
 }
 
 .diagnosticsGrid {
