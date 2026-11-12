@@ -1,13 +1,218 @@
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { AlertCircle, Check, CheckCircle2, Play, Plus, Save, Trash2 } from 'lucide-react';
+import {
+  AlertCircle,
+  Check,
+  CheckCircle2,
+  ExternalLink,
+  Play,
+  Plus,
+  Save,
+  Trash2,
+} from 'lucide-react';
 import { Button, CheckBox, Select, Spinner, Tag, TextInput } from '@una';
+import { PAIR_SCHEDULE, type PairNumber } from '@core/constants/timetable';
 import type {
+  AcademicGroupResponse,
   CreateTeachingAssignmentRequest,
   GenerateTimetableDraftResult,
+  ScheduledEvent,
 } from '@core/types/timetable';
 import { useLanguage, type FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import styles from './TimetableManagement.module.scss';
+
+type PreviewEvent = ScheduledEvent & {
+  weekday?: number;
+  dayOfWeek?: number;
+  teacherName?: string;
+  groupCode?: string;
+  groupCodes?: string[];
+  subgroupName?: string;
+  streamName?: string;
+  meetingUrl?: string | null;
+};
+
+type DiagnosticsWithDuration = GenerateTimetableDraftResult['diagnostics'] & {
+  durationMs?: number;
+};
+
+type DraftResultWithSummaries = GenerateTimetableDraftResult & {
+  candidateSummaries?: Array<{
+    eventCount?: number;
+  }>;
+};
+
+const PREVIEW_DAYS = [1, 2, 3, 4, 5, 6] as const;
+const PREVIEW_PAIRS: PairNumber[] = [1, 2, 3, 4, 5, 6, 7];
+
+const getEventWeekday = (event: PreviewEvent): number | null => {
+  if (typeof event.weekday === 'number' && event.weekday >= 1 && event.weekday <= 6) {
+    return event.weekday;
+  }
+
+  if (typeof event.dayOfWeek === 'number' && event.dayOfWeek >= 1 && event.dayOfWeek <= 6) {
+    return event.dayOfWeek;
+  }
+
+  if (event.date) {
+    const normalized = event.date.includes('T') ? event.date : `${event.date}T00:00:00Z`;
+    const day = new Date(normalized).getUTCDay();
+
+    if (day >= 1 && day <= 6) {
+      return day;
+    }
+  }
+
+  return null;
+};
+
+const buildPreviewSlots = (events: PreviewEvent[]): Map<string, PreviewEvent[]> => {
+  const slots = new Map<string, PreviewEvent[]>();
+  const seenPerSlot = new Map<string, Set<string>>();
+  const hasRegularEvents = events.some((event) => !event.isMakeupSaturday);
+
+  for (const event of events) {
+    if (hasRegularEvents && event.isMakeupSaturday) {
+      continue;
+    }
+
+    const weekday = getEventWeekday(event);
+
+    if (!weekday) {
+      continue;
+    }
+
+    const span = Math.max(1, event.pairSpan ?? 1);
+    const dedupeKey =
+      event.teachingAssignmentId ||
+      `${event.disciplineTitle}|${event.teachingType}|${event.teacherId}|${(event.groupCodes ?? event.groupIds ?? []).join(',')}|${event.subgroupId ?? ''}|${event.streamId ?? ''}`;
+
+    for (let offset = 0; offset < span; offset += 1) {
+      const pair = event.pair + offset;
+
+      if (pair < 1 || pair > 7) {
+        continue;
+      }
+
+      const slotKey = `${weekday}-${pair}`;
+      let seen = seenPerSlot.get(slotKey);
+
+      if (!seen) {
+        seen = new Set<string>();
+        seenPerSlot.set(slotKey, seen);
+      }
+
+      if (seen.has(dedupeKey)) {
+        continue;
+      }
+
+      seen.add(dedupeKey);
+
+      const list = slots.get(slotKey) ?? [];
+
+      list.push(event);
+      slots.set(slotKey, list);
+    }
+  }
+
+  return slots;
+};
+
+const getTeachingTypeBadge = (
+  type: string,
+  formatMessage: FormatMessage,
+): {
+  label: string;
+  tone: 'info' | 'success' | 'warning' | 'default';
+  cardClass: string;
+} => {
+  switch (type) {
+    case 'PRACTICAL':
+    case 'PRACTICE':
+      return {
+        label: formatMessage('timetable.typePractical'),
+        tone: 'success',
+        cardClass: styles.eventPractice,
+      };
+    case 'LABORATORY':
+    case 'LAB':
+      return {
+        label: formatMessage('timetable.typeLaboratory'),
+        tone: 'warning',
+        cardClass: styles.eventLab,
+      };
+    case 'SEMINAR':
+      return {
+        label: formatMessage('timetable.typeSeminar'),
+        tone: 'default',
+        cardClass: styles.eventSeminar,
+      };
+    default:
+      return {
+        label: formatMessage('timetable.typeLecture'),
+        tone: 'info',
+        cardClass: styles.eventLecture,
+      };
+  }
+};
+
+const getTargetBadges = (
+  event: PreviewEvent,
+  academicGroups: AcademicGroupResponse[],
+  formatMessage: FormatMessage,
+): string[] => {
+  const badges: string[] = [];
+
+  if (event.streamName || event.streamId) {
+    badges.push(
+      formatMessage('timetable.streamBadge', {
+        stream: event.streamName || event.streamId || '',
+      }),
+    );
+  }
+
+  const rawGroups = event.groupCodes?.length
+    ? event.groupCodes
+    : event.groupCode
+      ? [event.groupCode]
+      : (event.groupIds ?? []);
+
+  if (rawGroups.length > 0) {
+    const resolvedGroups = rawGroups.map((groupId) => {
+      const matched = academicGroups.find(
+        (group) => group.id === groupId || group.code === groupId,
+      );
+
+      return matched?.code ?? groupId;
+    });
+
+    badges.push(resolvedGroups.join(', '));
+  }
+
+  if (event.subgroupName || event.subgroupId) {
+    const rawSubgroup = event.subgroupName || event.subgroupId || '';
+    let resolvedSubgroup = rawSubgroup;
+
+    for (const group of academicGroups) {
+      const matched = group.subgroups?.find(
+        (sub) => sub.id === rawSubgroup || sub.name === rawSubgroup,
+      );
+
+      if (matched) {
+        resolvedSubgroup = matched.name;
+        break;
+      }
+    }
+
+    badges.push(
+      formatMessage('timetable.subgroupBadge', {
+        subgroup: resolvedSubgroup,
+      }),
+    );
+  }
+
+  return badges;
+};
 
 export interface WorkloadRow {
   id: string;
@@ -17,7 +222,29 @@ export interface WorkloadRow {
   teacherId: string;
   isSaturdayOnly: boolean;
   hasLateSlotAuthorization: boolean;
+  groupId?: string;
+  subgroupId?: string;
+  streamId?: string;
 }
+
+const DEFAULT_GROUPS: AcademicGroupResponse[] = [
+  {
+    id: 'group-1',
+    code: 'КС11',
+    subgroups: [
+      { id: 'subgroup-1', name: 'Підгрупа 1', academicGroupId: 'group-1' },
+      { id: 'subgroup-2', name: 'Підгрупа 2', academicGroupId: 'group-1' },
+    ],
+  },
+  {
+    id: 'group-2',
+    code: 'КС12',
+    subgroups: [
+      { id: 'subgroup-3', name: 'Підгрупа 1', academicGroupId: 'group-2' },
+      { id: 'subgroup-4', name: 'Підгрупа 2', academicGroupId: 'group-2' },
+    ],
+  },
+];
 
 const toUiTeachingType = (type: string): WorkloadRow['teachingType'] => {
   switch (type) {
@@ -56,6 +283,9 @@ const createDefaultWorkload = (formatMessage: FormatMessage): WorkloadRow[] => [
     teachingType: 'LECTURE',
     academicHours: 32,
     teacherId: 'teacher-1',
+    groupId: 'group-1',
+    subgroupId: undefined,
+    streamId: undefined,
     isSaturdayOnly: false,
     hasLateSlotAuthorization: false,
   },
@@ -65,6 +295,9 @@ const createDefaultWorkload = (formatMessage: FormatMessage): WorkloadRow[] => [
     teachingType: 'PRACTICE',
     academicHours: 32,
     teacherId: 'teacher-2',
+    groupId: 'group-1',
+    subgroupId: undefined,
+    streamId: undefined,
     isSaturdayOnly: false,
     hasLateSlotAuthorization: false,
   },
@@ -74,6 +307,9 @@ const createDefaultWorkload = (formatMessage: FormatMessage): WorkloadRow[] => [
     teachingType: 'LAB',
     academicHours: 32,
     teacherId: 'teacher-3',
+    groupId: 'group-1',
+    subgroupId: 'subgroup-1',
+    streamId: undefined,
     isSaturdayOnly: false,
     hasLateSlotAuthorization: true,
   },
@@ -92,6 +328,9 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   const baseId = useId();
 
   const [planId, setPlanId] = useState(initialPlanId);
+  const [academicGroups, setAcademicGroups] = useState<AcademicGroupResponse[]>(
+    () => DEFAULT_GROUPS,
+  );
   const [workload, setWorkload] = useState<WorkloadRow[]>(
     () => initialWorkload ?? createDefaultWorkload(formatMessage),
   );
@@ -103,6 +342,25 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0);
   const [isPublished, setIsPublished] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isActive = true;
+
+    timetableApi
+      .listAcademicGroups()
+      .then((response) => {
+        if (isActive && Array.isArray(response?.data) && response.data.length > 0) {
+          setAcademicGroups(response.data);
+        }
+      })
+      .catch(() => {
+        // Keep current/default groups when offline or unmocked
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (initialWorkload || !planId.trim()) {
@@ -121,6 +379,9 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
               teachingType: toUiTeachingType(assignment.teachingType),
               academicHours: assignment.academicHours,
               teacherId: assignment.teacherId,
+              groupId: assignment.groupId ?? undefined,
+              subgroupId: assignment.subgroupId ?? undefined,
+              streamId: assignment.streamId ?? undefined,
               isSaturdayOnly: Boolean(assignment.isSaturdayOnly),
               hasLateSlotAuthorization: Boolean(assignment.hasLateSlotAuthorization),
             })),
@@ -147,21 +408,47 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
     [formatMessage],
   );
 
+  const groupOrStreamOptions = useMemo(() => {
+    const options: Array<{ value: string; label: string }> = [
+      ...academicGroups.map((g) => ({
+        value: g.id,
+        label: g.code,
+      })),
+      { value: 'stream-1', label: formatMessage('timetable.stream1') },
+      { value: 'custom-stream', label: formatMessage('timetable.specifyStream') },
+    ];
+
+    return options;
+  }, [academicGroups, formatMessage]);
+
+  const subgroupOptions = useMemo(
+    () => [
+      { value: '', label: formatMessage('timetable.subgroupAll') },
+      { value: '1', label: formatMessage('timetable.subgroup1') },
+      { value: '2', label: formatMessage('timetable.subgroup2') },
+    ],
+    [formatMessage],
+  );
+
   const handleAddRow = useCallback(() => {
     const newId = `row-${Date.now()}`;
+    const defaultGroup = academicGroups[0]?.id ?? 'group-1';
     const newRow: WorkloadRow = {
       id: newId,
       disciplineTitle: '',
       teachingType: 'LECTURE',
       academicHours: 32,
       teacherId: '',
+      groupId: defaultGroup,
+      subgroupId: undefined,
+      streamId: undefined,
       isSaturdayOnly: false,
       hasLateSlotAuthorization: false,
     };
 
     setWorkload((prev) => [...prev, newRow]);
     setDirtyRowIds((prev) => new Set(prev).add(newId));
-  }, []);
+  }, [academicGroups]);
 
   const handleRemoveRow = useCallback((id: string) => {
     setWorkload((prev) => prev.filter((row) => row.id !== id));
@@ -182,6 +469,138 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
     [],
   );
 
+  const handleGroupOrStreamChange = useCallback(
+    (rowId: string, val: string) => {
+      setWorkload((prev) =>
+        prev.map((r) => {
+          if (r.id !== rowId) return r;
+
+          if (val === 'custom-stream') {
+            return {
+              ...r,
+              streamId: r.streamId && r.streamId !== 'stream-1' ? r.streamId : 'stream-custom',
+              groupId: undefined,
+              subgroupId: undefined,
+            };
+          }
+
+          if (val === 'stream-1') {
+            return {
+              ...r,
+              streamId: 'stream-1',
+              groupId: undefined,
+              subgroupId: undefined,
+            };
+          }
+
+          const matchedGroup = academicGroups.find((g) => g.id === val || g.code === val);
+          const groupId = matchedGroup?.id ?? val;
+
+          let newSubgroupId = undefined;
+
+          if (r.subgroupId) {
+            const isSub2 =
+              r.subgroupId === '2' || r.subgroupId.endsWith('-2') || r.subgroupId === 'subgroup-2';
+
+            newSubgroupId = isSub2
+              ? (matchedGroup?.subgroups?.[1]?.id ?? 'subgroup-2')
+              : (matchedGroup?.subgroups?.[0]?.id ?? 'subgroup-1');
+          }
+
+          return {
+            ...r,
+            groupId,
+            streamId: undefined,
+            subgroupId: newSubgroupId,
+          };
+        }),
+      );
+      setDirtyRowIds((prev) => new Set(prev).add(rowId));
+    },
+    [academicGroups],
+  );
+
+  const handleSubgroupChange = useCallback(
+    (rowId: string, val: string) => {
+      setWorkload((prev) =>
+        prev.map((r) => {
+          if (r.id !== rowId) return r;
+
+          if (!val) {
+            return { ...r, subgroupId: undefined };
+          }
+
+          const currentGroup = academicGroups.find(
+            (g) => g.id === r.groupId || g.code === r.groupId,
+          );
+
+          const targetSubgroupId =
+            val === '2'
+              ? (currentGroup?.subgroups?.[1]?.id ?? 'subgroup-2')
+              : (currentGroup?.subgroups?.[0]?.id ?? 'subgroup-1');
+
+          return { ...r, subgroupId: targetSubgroupId };
+        }),
+      );
+      setDirtyRowIds((prev) => new Set(prev).add(rowId));
+    },
+    [academicGroups],
+  );
+
+  const getSelectedGroupOrStream = useCallback(
+    (row: WorkloadRow) => {
+      if (row.streamId) {
+        if (row.streamId === 'stream-1') {
+          return 'stream-1';
+        }
+
+        return 'custom-stream';
+      }
+
+      if (row.groupId) {
+        const found = academicGroups.find((g) => g.id === row.groupId || g.code === row.groupId);
+
+        return found?.id ?? row.groupId;
+      }
+
+      return academicGroups[0]?.id ?? '';
+    },
+    [academicGroups],
+  );
+
+  const getSubgroupValue = useCallback(
+    (row: WorkloadRow) => {
+      if (!row.subgroupId || row.streamId) {
+        return '';
+      }
+
+      const currentGroup = academicGroups.find(
+        (g) => g.id === row.groupId || g.code === row.groupId,
+      );
+
+      if (currentGroup?.subgroups && currentGroup.subgroups.length > 0) {
+        if (row.subgroupId === currentGroup.subgroups[0]?.id) {
+          return '1';
+        }
+
+        if (row.subgroupId === currentGroup.subgroups[1]?.id) {
+          return '2';
+        }
+      }
+
+      if (
+        row.subgroupId === 'subgroup-2' ||
+        row.subgroupId === '2' ||
+        row.subgroupId.endsWith('-2')
+      ) {
+        return '2';
+      }
+
+      return '1';
+    },
+    [academicGroups],
+  );
+
   const persistDirtyWorkload = useCallback(async () => {
     const rowsToPersist = workload.filter(
       (row) => dirtyRowIds.has(row.id) && row.disciplineTitle.trim() && row.teacherId.trim(),
@@ -200,6 +619,9 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
         teachingType: toApiTeachingType(row.teachingType),
         academicHours: row.academicHours,
         teacherId: row.teacherId.trim(),
+        groupId: row.groupId?.trim() || undefined,
+        subgroupId: row.subgroupId?.trim() || undefined,
+        streamId: row.streamId?.trim() || undefined,
         isSaturdayOnly: row.isSaturdayOnly,
         hasLateSlotAuthorization: row.hasLateSlotAuthorization,
       });
@@ -286,6 +708,21 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
     }
   }, [draftResult, formatMessage, selectedCandidateIndex]);
 
+  const selectedCandidate = draftResult?.candidates[selectedCandidateIndex];
+  const previewSlots = useMemo(
+    () => buildPreviewSlots((selectedCandidate?.events ?? []) as PreviewEvent[]),
+    [selectedCandidate],
+  );
+  const executionTimeMs =
+    draftResult?.diagnostics?.timeMs ??
+    (draftResult?.diagnostics as DiagnosticsWithDuration | undefined)?.durationMs ??
+    0;
+  const scheduledEventsCount =
+    (draftResult as DraftResultWithSummaries | null)?.candidateSummaries?.[selectedCandidateIndex]
+      ?.eventCount ??
+    selectedCandidate?.events?.length ??
+    0;
+
   return (
     <div className={styles.root}>
       <header className={styles.header}>
@@ -319,6 +756,8 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
               <tr>
                 <th>{formatMessage('timetable.disciplineTitle')}</th>
                 <th>{formatMessage('timetable.teachingType')}</th>
+                <th>{formatMessage('timetable.groupOrStream')}</th>
+                <th>{formatMessage('timetable.subgroup')}</th>
                 <th>{formatMessage('timetable.hours')}</th>
                 <th>{formatMessage('timetable.teacher')}</th>
                 <th>{formatMessage('timetable.saturdayOnly')}</th>
@@ -346,6 +785,36 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
                       }
                       aria-label={formatMessage('timetable.teachingType')}
                     />
+                  </td>
+                  <td>
+                    <div className={styles.groupCell}>
+                      <Select
+                        value={getSelectedGroupOrStream(row)}
+                        options={groupOrStreamOptions}
+                        onChange={(val) => handleGroupOrStreamChange(row.id, val)}
+                        aria-label={formatMessage('timetable.groupOrStream')}
+                      />
+                      {(row.streamId === 'custom-stream' ||
+                        (Boolean(row.streamId) && row.streamId !== 'stream-1')) && (
+                        <TextInput
+                          value={row.streamId === 'custom-stream' ? '' : (row.streamId ?? '')}
+                          placeholder={formatMessage('timetable.streamPlaceholder')}
+                          onChange={(e) => handleUpdateRow(row.id, 'streamId', e.target.value)}
+                          aria-label={formatMessage('timetable.streamPlaceholder')}
+                        />
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <div className={styles.subgroupCell}>
+                      <Select
+                        value={getSubgroupValue(row)}
+                        options={subgroupOptions}
+                        onChange={(val) => handleSubgroupChange(row.id, val)}
+                        disabled={Boolean(row.streamId)}
+                        aria-label={formatMessage('timetable.subgroup')}
+                      />
+                    </div>
                   </td>
                   <td>
                     <TextInput
@@ -451,7 +920,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
               <span>{formatMessage('timetable.executionTime')}</span>
               <strong>
                 {formatMessage('timetable.executionTimeVal', {
-                  time: draftResult.diagnostics.timeMs,
+                  time: executionTimeMs,
                 })}
               </strong>
             </div>
@@ -496,6 +965,117 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Weekly Schedule Preview of Selected Candidate */}
+          <div className={styles.previewSection}>
+            <h4>{formatMessage('timetable.previewTitle')}</h4>
+            {selectedCandidate?.events && selectedCandidate.events.length > 0 ? (
+              <div className={styles.previewGrid}>
+                <table>
+                  <thead className={styles.gridHeader}>
+                    <tr>
+                      <th>{formatMessage('timetable.pairHeader')}</th>
+                      <th>{formatMessage('timetable.dayMon')}</th>
+                      <th>{formatMessage('timetable.dayTue')}</th>
+                      <th>{formatMessage('timetable.dayWed')}</th>
+                      <th>{formatMessage('timetable.dayThu')}</th>
+                      <th>{formatMessage('timetable.dayFri')}</th>
+                      <th>{formatMessage('timetable.daySat')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {PREVIEW_PAIRS.map((pair) => {
+                      const schedule = PAIR_SCHEDULE[pair];
+
+                      return (
+                        <tr key={pair} className={styles.pairRow}>
+                          <td className={styles.pairTimeCell}>
+                            <strong>#{pair}</strong>
+                            <span>
+                              {schedule.start}–{schedule.end}
+                            </span>
+                          </td>
+                          {PREVIEW_DAYS.map((day) => {
+                            const slotEvents = previewSlots.get(`${day}-${pair}`) ?? [];
+
+                            return (
+                              <td key={day} className={styles.gridCell}>
+                                {slotEvents.length === 0 ? (
+                                  <div className={styles.emptyCell}>
+                                    {formatMessage('timetable.emptySlot')}
+                                  </div>
+                                ) : (
+                                  <div className={styles.slotStack}>
+                                    {slotEvents.map((event) => {
+                                      const typeInfo = getTeachingTypeBadge(
+                                        event.teachingType,
+                                        formatMessage,
+                                      );
+                                      const targetBadges = getTargetBadges(
+                                        event,
+                                        academicGroups,
+                                        formatMessage,
+                                      );
+
+                                      return (
+                                        <div
+                                          key={event.id}
+                                          className={`${styles.eventCard} ${typeInfo.cardClass}`}
+                                        >
+                                          <div className={styles.eventTitle}>
+                                            {event.disciplineTitle}
+                                          </div>
+                                          <div className={styles.eventBadges}>
+                                            <Tag size="small" tone={typeInfo.tone}>
+                                              {typeInfo.label}
+                                            </Tag>
+                                            {targetBadges.map((badge) => (
+                                              <Tag key={badge} size="small" tone="neutral">
+                                                {badge}
+                                              </Tag>
+                                            ))}
+                                            {event.isSaturdayOnly && (
+                                              <Tag size="small" tone="warning">
+                                                {formatMessage('timetable.saturdayOnly')}
+                                              </Tag>
+                                            )}
+                                          </div>
+                                          <div className={styles.eventMeta}>
+                                            {event.teacherName || event.teacherId}
+                                          </div>
+                                          {event.meetingUrl && (
+                                            <a
+                                              href={event.meetingUrl}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className={styles.onlineLink}
+                                            >
+                                              <ExternalLink size={12} />{' '}
+                                              {formatMessage('timetable.onlineLink')}
+                                            </a>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className={styles.emptyPreview}>
+                {formatMessage('timetable.scheduledEventsCount', {
+                  count: scheduledEventsCount,
+                })}
+              </div>
+            )}
           </div>
 
           {/* Publication Action */}

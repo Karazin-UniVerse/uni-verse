@@ -9,6 +9,7 @@ describe('TimetableManagement component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(timetableApi, 'listTeachingAssignments').mockResolvedValue({ data: [] });
+    vi.spyOn(timetableApi, 'listAcademicGroups').mockResolvedValue({ data: [] });
   });
 
   const renderComponent = (props = {}) => render(withLanguage(<TimetableManagement {...props} />));
@@ -22,6 +23,8 @@ describe('TimetableManagement component', () => {
     expect(screen.getByDisplayValue('plan-cs-2026')).toBeInTheDocument();
     expect(screen.getByText('Дисципліна')).toBeInTheDocument();
     expect(screen.getByText('Тип')).toBeInTheDocument();
+    expect(screen.getByText('Група / Потік')).toBeInTheDocument();
+    expect(screen.getByText('Підгрупа')).toBeInTheDocument();
     expect(screen.getByText('Години')).toBeInTheDocument();
     expect(screen.getByText('Викладач')).toBeInTheDocument();
     expect(screen.getByText('Лише субота')).toBeInTheDocument();
@@ -240,5 +243,185 @@ describe('TimetableManagement component', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent(/не вдалося опублікувати розклад/i);
     expect(screen.queryByText(/розклад успішно опубліковано/i)).not.toBeInTheDocument();
+  });
+
+  it('fetches available academic groups on mount', async () => {
+    const listGroupsSpy = vi.spyOn(timetableApi, 'listAcademicGroups').mockResolvedValue({
+      data: [
+        {
+          id: 'group-cs-11',
+          code: 'КС11',
+          subgroups: [
+            { id: 'sub-cs-11-1', name: 'Підгрупа 1', academicGroupId: 'group-cs-11' },
+            { id: 'sub-cs-11-2', name: 'Підгрупа 2', academicGroupId: 'group-cs-11' },
+          ],
+        },
+      ],
+    });
+
+    renderComponent();
+
+    expect(listGroupsSpy).toHaveBeenCalled();
+    expect(await screen.findAllByRole('option', { name: 'КС11' })).not.toHaveLength(0);
+  });
+
+  it('allows selecting group and subgroup and passes them to createTeachingAssignment', async () => {
+    vi.spyOn(timetableApi, 'listAcademicGroups').mockResolvedValue({
+      data: [
+        {
+          id: 'group-cs-11',
+          code: 'КС11',
+          subgroups: [
+            { id: 'sub-cs-11-1', name: 'Підгрупа 1', academicGroupId: 'group-cs-11' },
+            { id: 'sub-cs-11-2', name: 'Підгрупа 2', academicGroupId: 'group-cs-11' },
+          ],
+        },
+        {
+          id: 'group-cs-12',
+          code: 'КС12',
+          subgroups: [
+            { id: 'sub-cs-12-1', name: 'Підгрупа 1', academicGroupId: 'group-cs-12' },
+            { id: 'sub-cs-12-2', name: 'Підгрупа 2', academicGroupId: 'group-cs-12' },
+          ],
+        },
+      ],
+    });
+    const createSpy = vi.spyOn(timetableApi, 'createTeachingAssignment').mockResolvedValue({
+      data: {
+        id: 'assign-1',
+        curriculumPlanId: 'plan-cs-2026',
+        disciplineTitle: 'Паралельні та розподілені обчислення',
+        teachingType: 'LECTURE',
+        academicHours: 32,
+        teacherId: 'teacher-1',
+        groupId: 'group-cs-12',
+        subgroupId: 'sub-cs-12-1',
+        isSaturdayOnly: false,
+        hasLateSlotAuthorization: false,
+      },
+    });
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    const groupSelects = await screen.findAllByLabelText('Група / Потік');
+    const subgroupSelects = screen.getAllByLabelText('Підгрупа');
+
+    await user.selectOptions(groupSelects[0], 'group-cs-12');
+    await user.selectOptions(subgroupSelects[0], '1');
+
+    await user.click(screen.getByRole('button', { name: /зберегти навантаження/i }));
+
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        groupId: 'group-cs-12',
+        subgroupId: 'sub-cs-12-1',
+      }),
+    );
+  });
+
+  it('allows selecting stream, disables subgroup select, and sends streamId', async () => {
+    const createSpy = vi.spyOn(timetableApi, 'createTeachingAssignment').mockResolvedValue({
+      data: {
+        id: 'assign-stream-1',
+        curriculumPlanId: 'plan-cs-2026',
+        disciplineTitle: 'Паралельні та розподілені обчислення',
+        teachingType: 'LECTURE',
+        academicHours: 32,
+        teacherId: 'teacher-1',
+        streamId: 'stream-1',
+        isSaturdayOnly: false,
+        hasLateSlotAuthorization: false,
+      },
+    });
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    const groupSelects = screen.getAllByLabelText('Група / Потік');
+    const subgroupSelects = screen.getAllByLabelText('Підгрупа');
+
+    await user.selectOptions(groupSelects[0], 'stream-1');
+
+    expect(subgroupSelects[0]).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: /зберегти навантаження/i }));
+
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        streamId: 'stream-1',
+        groupId: undefined,
+        subgroupId: undefined,
+      }),
+    );
+  });
+
+  it('renders weekly schedule preview grid for the selected candidate and supports durationMs fallback', async () => {
+    vi.spyOn(timetableApi, 'generateTimetableDraft').mockResolvedValue({
+      data: {
+        versionId: 'ver-cand-1',
+        candidates: [
+          {
+            versionId: 'ver-cand-1',
+            candidateIndex: 0,
+            penaltyScore: 0,
+            events: [
+              {
+                id: 'ev-1',
+                teachingAssignmentId: 'assign-1',
+                disciplineTitle: 'Архітектура хмарних систем',
+                teachingType: 'LECTURE',
+                teacherId: 'teacher-cloud',
+                groupIds: ['group-1'],
+                streamId: 'stream-cs',
+                date: '2026-09-07',
+                pair: 1,
+                isSaturdayOnly: true,
+              },
+            ],
+          },
+          {
+            versionId: 'ver-cand-2',
+            candidateIndex: 1,
+            penaltyScore: 10,
+            events: [
+              {
+                id: 'ev-2',
+                teachingAssignmentId: 'assign-2',
+                disciplineTitle: 'Безпека мереж',
+                teachingType: 'LABORATORY',
+                teacherId: 'teacher-sec',
+                groupIds: ['group-2'],
+                subgroupId: 'subgroup-3',
+                date: '2026-09-08',
+                pair: 2,
+              },
+            ],
+          },
+        ],
+        diagnostics: {
+          statesExplored: 42,
+          durationMs: 27,
+        } as unknown as { statesExplored: number; timeMs: number },
+      },
+    });
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await user.click(screen.getByRole('button', { name: /згенерувати розклад/i }));
+
+    expect(screen.getByText('27 ms')).toBeInTheDocument();
+    expect(screen.getByText(/тижневий розклад обраного варіанта/i)).toBeInTheDocument();
+    expect(screen.getByText('Пн')).toBeInTheDocument();
+    expect(screen.getByText('08:30–09:50')).toBeInTheDocument();
+    expect(screen.getByText('Архітектура хмарних систем')).toBeInTheDocument();
+    expect(screen.getByText('teacher-cloud')).toBeInTheDocument();
+    expect(screen.getByText('Потік: stream-cs')).toBeInTheDocument();
+
+    await user.click(screen.getByText(/варіант #2/i));
+
+    expect(screen.getByText('Безпека мереж')).toBeInTheDocument();
+    expect(screen.getByText('teacher-sec')).toBeInTheDocument();
   });
 });

@@ -1,4 +1,5 @@
 import type {
+  AcademicGroupResponse,
   CalendarSubscriptionTokenResponse,
   CreateSemesterCalendarRequest,
   CreateTeacherUnavailabilityRequest,
@@ -19,6 +20,10 @@ export class TimetableApi extends ApiClient {
     return this.request<CurriculumPlanResponse>(
       `/timetable/curriculum-plans/${encodeURIComponent(id)}`,
     );
+  }
+
+  async listAcademicGroups(): Promise<{ data: AcademicGroupResponse[] }> {
+    return this.request<AcademicGroupResponse[]>('/timetable/groups');
   }
 
   async createTeachingAssignment(

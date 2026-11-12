@@ -9,5 +9,6 @@ export type SelectProps = {
   options: Option[];
   id?: string;
   className?: string;
+  disabled?: boolean;
   'aria-label'?: string;
 };
