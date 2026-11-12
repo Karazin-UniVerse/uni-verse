@@ -604,6 +604,14 @@ $space-64: 64px;
   --scrollbar-thumb: rgb(0 240 255 / 45%);
   --scrollbar-thumb-hover: var(--cyberpunk-pink);
   --scrollbar-radius: 0px;
+
+  /* Cards: visible at rest */
+  --card-border: rgb(255 0 85 / 55%);
+  --card-shadow: 0 0 10px rgb(255 0 85 / 20%);
+  --card-shadow-hover: 0 0 18px rgb(0 240 255 / 45%), 0 0 6px rgb(255 0 85 / 50%);
+
+  /* Content area darker than cards so they stand out */
+  --bg-content: var(--cyberpunk-black);
 }
 
 /* -----------------------------------------

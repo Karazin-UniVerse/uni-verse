@@ -440,6 +440,8 @@ export const uk = {
     'Цей номер недоступний для використання цим обліковим записом.',
   'opportunities.errors.phoneAlreadySet':
     'Використайте номер, уже закріплений за вашим обліковим записом, або Telegram.',
+  'opportunities.errors.withdrawalLimitReached':
+    'Ви вже відкликали відгук на цю можливість максимальну кількість разів ({limit}).',
   'opportunities.tabs.catalog': 'Каталог',
   'opportunities.tabs.catalogShort': 'Каталог',
   'opportunities.tabs.myOpportunities': 'Мої можливості',
@@ -463,7 +465,8 @@ export const uk = {
   'opportunities.toast.applicationsOpened': 'Прийом відгуків відкрито',
   'opportunities.toast.applicationsClosed': 'Прийом відгуків закрито',
   'opportunities.toast.statusUpdateError': 'Помилка оновлення статусу',
-  'opportunities.confirm.withdraw': 'Ви впевнені, що бажаєте відкликати свій відгук?',
+  'opportunities.confirm.withdraw':
+    'Ви впевнені, що бажаєте відкликати свій відгук? Відкликати та подати відгук наново на одну можливість можна не більше {limit} разів.',
   'opportunities.confirm.withdrawTitle': 'Відкликання відгуку',
   'opportunities.confirm.withdrawConfirm': 'Відкликати',
   'opportunities.confirm.delete':

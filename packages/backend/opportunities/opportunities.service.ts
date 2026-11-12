@@ -32,6 +32,7 @@ import {
   Role,
 } from '@universe/database';
 import {
+  MAX_APPLICATION_WITHDRAWALS,
   OPPORTUNITY_MODERATE_ACTION,
   OPPORTUNITY_VIEW,
   OPPORTUNITY_VIEW_PARAM,
@@ -40,6 +41,8 @@ import {
 import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 import {
   hasOpportunityContentChanged,
+  hasReachedApplicationWithdrawalLimit,
+  isWithdrawableApplicationStatus,
   isRecruitmentPhase,
 } from '@universe/core/utils/opportunities';
 import {
@@ -605,11 +608,11 @@ export class OpportunitiesService {
     if (app.applicantId !== userId)
       throw new ForbiddenException('Only the applicant can withdraw');
 
-    if (
-      app.status === ApplicationStatus.ACCEPTED ||
-      app.status === ApplicationStatus.REJECTED
-    )
+    if (!isWithdrawableApplicationStatus(app.status))
       throw new BadRequestException('Cannot withdraw completed application');
+
+    if (hasReachedApplicationWithdrawalLimit(app.withdrawalCount))
+      throw new BadRequestException(OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED);
 
     try {
       const updated = await this.prisma.$transaction(async (tx) => {
@@ -619,8 +622,12 @@ export class OpportunitiesService {
             status: {
               in: [ApplicationStatus.SUBMITTED, ApplicationStatus.UNDER_REVIEW],
             },
+            withdrawalCount: { lt: MAX_APPLICATION_WITHDRAWALS },
           },
-          data: { status: ApplicationStatus.WITHDRAWN },
+          data: {
+            status: ApplicationStatus.WITHDRAWN,
+            withdrawalCount: { increment: 1 },
+          },
         });
 
         await tx.notification.deleteMany({
@@ -638,6 +645,16 @@ export class OpportunitiesService {
       return updated;
     } catch (error) {
       if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
+        const current = await this.prisma.opportunityApplication.findUnique({
+          where: { id: applicationId },
+          select: { withdrawalCount: true },
+        });
+
+        if (hasReachedApplicationWithdrawalLimit(current?.withdrawalCount))
+          throw new BadRequestException(
+            OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED,
+          );
+
         throw new BadRequestException('Cannot withdraw completed application');
       }
 
