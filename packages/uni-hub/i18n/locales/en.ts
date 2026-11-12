@@ -440,6 +440,8 @@ export const en = {
   'opportunities.errors.phoneUnavailable': 'This phone number is unavailable for this account.',
   'opportunities.errors.phoneAlreadySet':
     'Use the phone number already registered to your account, or Telegram.',
+  'opportunities.errors.withdrawalLimitReached':
+    'You have already withdrawn your application for this opportunity the maximum number of times ({limit}).',
   'opportunities.tabs.catalog': 'Catalog',
   'opportunities.tabs.catalogShort': 'Catalog',
   'opportunities.tabs.myOpportunities': 'My Opportunities',
@@ -463,7 +465,8 @@ export const en = {
   'opportunities.toast.applicationsOpened': 'Applications acceptance opened',
   'opportunities.toast.applicationsClosed': 'Applications acceptance closed',
   'opportunities.toast.statusUpdateError': 'Error updating status',
-  'opportunities.confirm.withdraw': 'Are you sure you want to withdraw your application?',
+  'opportunities.confirm.withdraw':
+    'Are you sure you want to withdraw your application? You can withdraw and re-apply to the same opportunity at most {limit} times.',
   'opportunities.confirm.withdrawTitle': 'Withdraw application',
   'opportunities.confirm.withdrawConfirm': 'Withdraw',
   'opportunities.confirm.delete':

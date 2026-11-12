@@ -4,9 +4,33 @@ import {
   hasOpportunityContentChanged,
   isRecruitmentPhase,
   normalizeOpportunityContent,
+  isWithdrawableApplicationStatus,
+  hasReachedApplicationWithdrawalLimit,
 } from '../opportunities.ts';
 
 describe('opportunities utils', () => {
+  test('only submitted and under-review applications have a withdrawable status', () => {
+    for (const status of [
+      'SUBMITTED',
+      'UNDER_REVIEW',
+      'ACCEPTED',
+      'REJECTED',
+      'WITHDRAWN',
+    ] as const) {
+      assert.equal(
+        isWithdrawableApplicationStatus(status),
+        status === 'SUBMITTED' || status === 'UNDER_REVIEW',
+      );
+    }
+  });
+
+  test('withdrawal limit includes the boundary and preserves missing counts as zero', () => {
+    assert.equal(hasReachedApplicationWithdrawalLimit(undefined), false);
+    assert.equal(hasReachedApplicationWithdrawalLimit(0), false);
+    assert.equal(hasReachedApplicationWithdrawalLimit(2), false);
+    assert.equal(hasReachedApplicationWithdrawalLimit(3), true);
+    assert.equal(hasReachedApplicationWithdrawalLimit(4), true);
+  });
   describe('isRecruitmentPhase', () => {
     test('allows recruitment only in START, ACTIVE, or default undefined phase', () => {
       assert.strictEqual(isRecruitmentPhase(undefined), true);

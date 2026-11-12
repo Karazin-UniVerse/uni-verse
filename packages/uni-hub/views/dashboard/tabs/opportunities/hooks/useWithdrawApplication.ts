@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@una';
-import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { invalidateOpportunities } from '../cache';
+import { getOpportunityErrorMessage } from '../helpers';
 
 interface UseWithdrawApplicationResult {
   withdrawApplicationId: string | null;
@@ -32,7 +32,13 @@ export function useWithdrawApplication(): UseWithdrawApplicationResult {
       await withdrawMutation.mutateAsync(withdrawApplicationId);
       toast.success(formatMessage('opportunities.toast.withdrawn'));
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, formatMessage('opportunities.toast.genericError')));
+      toast.error(
+        getOpportunityErrorMessage(
+          err,
+          formatMessage,
+          formatMessage('opportunities.toast.genericError'),
+        ),
+      );
     } finally {
       setWithdrawApplicationId(null);
     }

@@ -62,6 +62,7 @@ const withdrawnApplication: OpportunityApplication = {
   motivation: null,
   answers: null,
   ownerComment: null,
+  withdrawalCount: 1,
   status: 'WITHDRAWN',
   createdAt: new Date('2026-10-01T10:00:00Z'),
   updatedAt: new Date('2026-10-01T10:00:00Z'),
@@ -2096,8 +2097,12 @@ describe('OpportunitiesService', () => {
           status: {
             in: [ApplicationStatus.SUBMITTED, ApplicationStatus.UNDER_REVIEW],
           },
+          withdrawalCount: { lt: 3 },
         },
-        data: { status: 'WITHDRAWN' },
+        data: {
+          status: 'WITHDRAWN',
+          withdrawalCount: { increment: 1 },
+        },
       });
       expect(result.status).toBe('WITHDRAWN');
       expect(deleteSpy).toHaveBeenCalledWith({
@@ -2128,6 +2133,49 @@ describe('OpportunitiesService', () => {
       await expect(
         service.withdrawApplication('user-1', 'app-1'),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('reports the limit when a concurrent withdrawal consumed the last slot', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValueOnce({
+          id: 'app-1',
+          applicantId: 'user-1',
+          status: 'SUBMITTED',
+          withdrawalCount: 2,
+          opportunityId: 'opp-1',
+          opportunity: { ownerId: 'owner-1' },
+        } as any)
+        .mockResolvedValueOnce({ withdrawalCount: 3 } as any);
+      jest.spyOn(prisma.opportunityApplication, 'update').mockRejectedValue({
+        code: 'P2025',
+      });
+
+      await expect(
+        service.withdrawApplication('user-1', 'app-1'),
+      ).rejects.toThrow(
+        new BadRequestException(OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED),
+      );
+    });
+
+    it('throws BadRequestException when application was already withdrawn 3 times', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue({
+          id: 'app-1',
+          applicantId: 'user-1',
+          status: 'SUBMITTED',
+          withdrawalCount: 3,
+          opportunityId: 'opp-1',
+          opportunity: { ownerId: 'owner-1' },
+        } as any);
+
+      await expect(
+        service.withdrawApplication('user-1', 'app-1'),
+      ).rejects.toThrow(
+        new BadRequestException(OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED),
+      );
+      expect(prisma.opportunityApplication.update).not.toHaveBeenCalled();
     });
   });
 
