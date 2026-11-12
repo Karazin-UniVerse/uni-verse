@@ -1036,7 +1036,8 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
           >
             {isGenerating ? (
               <>
-                <Spinner size="small" /> {formatMessage('timetable.generating')}
+                <Spinner size="small" className={styles.buttonSpinner} />{' '}
+                {formatMessage('timetable.generating')}
               </>
             ) : (
               <>
