@@ -670,6 +670,51 @@ describe('checkTimetableConflicts', () => {
     );
   });
 
+  test('detects conflict when an event is rescheduled to an occupied slot', () => {
+    const originalEvent = makeEvent({
+      id: 'ev-1',
+      groupIds: ['KS11'],
+      teacherId: 'prof-1',
+      pair: 1,
+    });
+    const otherGroupEvent = makeEvent({
+      id: 'ev-2',
+      groupIds: ['KS12'],
+      teacherId: 'prof-1',
+      pair: 2,
+    });
+    const studentEvent = makeEvent({
+      id: 'ev-3',
+      groupIds: ['KS11'],
+      teacherId: 'prof-2',
+      pair: 3,
+    });
+
+    // Shifting ev-1 to pair 2 collides on teacher
+    const shiftedToTeacher = { ...originalEvent, pair: 2 };
+
+    assert.deepStrictEqual(
+      hardCodes(checkTimetableConflicts({ events: [shiftedToTeacher, otherGroupEvent] })),
+      [TIMETABLE_CONFLICT_CODE.TEACHER_OVERLAP],
+    );
+
+    // Shifting ev-1 to pair 3 collides on students
+    const shiftedToStudents = { ...originalEvent, pair: 3 };
+
+    assert.deepStrictEqual(
+      hardCodes(checkTimetableConflicts({ events: [shiftedToStudents, studentEvent] })),
+      [TIMETABLE_CONFLICT_CODE.STUDENT_OVERLAP],
+    );
+
+    // Shifting ev-1 to pair 4 has no conflict
+    const shiftedToFree = { ...originalEvent, pair: 4 };
+
+    assert.strictEqual(
+      checkTimetableConflicts({ events: [shiftedToFree, otherGroupEvent, studentEvent] }).isValid,
+      true,
+    );
+  });
+
   describe('student overlap', () => {
     const overlapCodes = (
       first: Partial<ScheduledEvent>,

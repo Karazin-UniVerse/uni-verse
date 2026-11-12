@@ -297,6 +297,20 @@ export type UpdateMeetingUrlRequest = {
   meetingUrl?: string | null;
 };
 
+export type AdjustDraftSlotRequest = {
+  teachingAssignmentId: string;
+  fromWeekday: number;
+  fromPair: number;
+  toWeekday: number;
+  toPair: number;
+};
+
+export type RescheduleEventRequest = {
+  newDate: string;
+  newPair: number;
+  reason?: string;
+};
+
 export type ListTeachingAssignmentsQueryRequest = {
   curriculumPlanId: string;
 };
