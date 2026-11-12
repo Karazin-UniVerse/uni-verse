@@ -26,6 +26,7 @@ import {
   getPairInstants,
   getPairsFromAcademicHours,
   getWeeklyPairCounts,
+  hasStudentIntersection,
 } from '../timetable.ts';
 
 const sum = (counts: number[]): number => counts.reduce((total, count) => total + count, 0);
@@ -661,6 +662,46 @@ describe('checkTimetableConflicts', () => {
       ]);
     });
 
+    test('same subgroup without groupIds detects overlap', () => {
+      const report = checkTimetableConflicts({
+        events: [
+          makeEvent({ id: 'a', groupIds: [], subgroupId: 'KS11-1' }),
+          makeEvent({ id: 'b', groupIds: [], subgroupId: 'KS11-1' }),
+        ],
+      });
+
+      assert.ok(hardCodes(report).includes(TIMETABLE_CONFLICT_CODE.STUDENT_OVERLAP));
+    });
+
+    test('hasStudentIntersection handles subgroups correctly', () => {
+      // (a) two events with the same defined subgroupId ALWAYS intersect
+      assert.strictEqual(
+        hasStudentIntersection(
+          { groupIds: [], subgroupId: 'KS11-1' },
+          { groupIds: [], subgroupId: 'KS11-1' },
+        ),
+        true,
+      );
+
+      // (b) different subgroups of the SAME group still do not intersect
+      assert.strictEqual(
+        hasStudentIntersection(
+          { groupIds: ['KS11'], subgroupId: 'KS11-1' },
+          { groupIds: ['KS11'], subgroupId: 'KS11-2' },
+        ),
+        false,
+      );
+
+      // whole group vs its subgroup still intersects
+      assert.strictEqual(
+        hasStudentIntersection(
+          { groupIds: ['KS11'] },
+          { groupIds: ['KS11'], subgroupId: 'KS11-1' },
+        ),
+        true,
+      );
+    });
+
     test('different subgroups of one group are allowed', () => {
       assert.deepStrictEqual(overlapCodes({ subgroupId: 'KS11-1' }, { subgroupId: 'KS11-2' }), []);
     });
@@ -770,6 +811,24 @@ describe('checkTimetableConflicts', () => {
         }).isValid,
       );
     });
+
+    test('exam on Saturday is a hard violation (SATURDAY_RESTRICTION_VIOLATION)', () => {
+      assert.deepStrictEqual(
+        hardCodes(
+          checkTimetableConflicts({
+            events: [
+              makeEvent({
+                id: 'exam-sat',
+                date: saturday,
+                teachingType: TIMETABLE_TEACHING_TYPE.EXAM,
+                pair: 1,
+              }),
+            ],
+          }),
+        ),
+        [TIMETABLE_CONFLICT_CODE.SATURDAY_RESTRICTION_VIOLATION],
+      );
+    });
   });
 
   describe('exams', () => {
@@ -842,6 +901,22 @@ describe('checkTimetableConflicts', () => {
       TIMETABLE_CONFLICT_CODE.INVALID_EVENT_SLOT,
       TIMETABLE_CONFLICT_CODE.INVALID_EVENT_SLOT,
     ]);
+  });
+
+  test('rejects event with subgroupId but empty groupIds as MISSING_PARTICIPANTS', () => {
+    const report = checkTimetableConflicts({
+      events: [makeEvent({ id: 'a', subgroupId: 'KS11-1', groupIds: [] })],
+    });
+
+    assert.ok(hardCodes(report).includes(TIMETABLE_CONFLICT_CODE.MISSING_PARTICIPANTS));
+  });
+
+  test('rejects event with no participants at all as MISSING_PARTICIPANTS', () => {
+    const report = checkTimetableConflicts({
+      events: [makeEvent({ id: 'a', groupIds: [], studentIds: undefined, streamId: undefined })],
+    });
+
+    assert.ok(hardCodes(report).includes(TIMETABLE_CONFLICT_CODE.MISSING_PARTICIPANTS));
   });
 
   describe('soft penalties', () => {

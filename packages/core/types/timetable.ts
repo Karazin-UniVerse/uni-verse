@@ -127,6 +127,13 @@ export type EventSlot = {
   lastPair: number;
 };
 
+export type ParticipantEntity = {
+  groupIds: string[];
+  subgroupId?: string;
+  streamId?: string;
+  studentIds?: string[];
+};
+
 export type DayOccupancy = {
   label: string;
   date: string;
@@ -153,6 +160,7 @@ export type TeachingDemand = {
 export type GenerateTimetableOptions = {
   maxCandidates?: number;
   timeoutMs?: number;
+  nominalWeeks?: number;
 };
 
 export type GenerateTimetableParams = {
@@ -160,6 +168,7 @@ export type GenerateTimetableParams = {
   calendar: SemesterCalendarConfig;
   unavailability?: TeacherUnavailability[];
   options?: GenerateTimetableOptions;
+  nominalWeeks?: number;
 };
 
 export type TimetableCandidate = {
@@ -188,9 +197,16 @@ export type SchedulableDemandLayer = {
   weeklyCounts: number[];
 };
 
+export type TimetableDemandDeficit = {
+  demandId: string;
+  required: number;
+  scheduled: number;
+};
+
 export type GenerateTimetableDiagnostics = {
   statesExplored: number;
   timeMs: number;
+  deficits?: TimetableDemandDeficit[];
 };
 
 export type GenerateTimetableErrorCode = 'NO_FEASIBLE_SOLUTION' | 'TIMEOUT' | 'INVALID_INPUT';
@@ -292,6 +308,7 @@ export type IcsCalendarEvent = {
   teachingType?: TimetableTeachingType | string;
   date?: string;
   pair?: number;
+  pairSpan?: number;
   start?: Date;
   end?: Date;
   meetingUrl?: string;

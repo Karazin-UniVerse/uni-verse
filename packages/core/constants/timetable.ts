@@ -1,5 +1,7 @@
 export const ACADEMIC_HOURS_PER_PAIR = 2 as const;
 
+export const DEFAULT_NOMINAL_WEEKS = 16 as const;
+
 export const TIMETABLE_TIME_ZONE = 'Europe/Kyiv' as const;
 
 // Local bell schedule. A pair is 80 clock minutes but always counts as ACADEMIC_HOURS_PER_PAIR.
@@ -78,6 +80,7 @@ export const TIMETABLE_CONFLICT_CODE = {
   EXAM_INTERVAL_VIOLATION: 'EXAM_INTERVAL_VIOLATION',
   EXAM_TEACHER_OVERLAP: 'EXAM_TEACHER_OVERLAP',
   EXAM_STUDENT_OVERLAP: 'EXAM_STUDENT_OVERLAP',
+  MISSING_PARTICIPANTS: 'MISSING_PARTICIPANTS',
 } as const;
 
 export type TimetableConflictCode =
@@ -134,3 +137,56 @@ export const TIMETABLE_TEACHING_TYPE = {
 
 export type TimetableTeachingType =
   (typeof TIMETABLE_TEACHING_TYPE)[keyof typeof TIMETABLE_TEACHING_TYPE];
+
+export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+export const ISO_DATE_LENGTH = 10 as const;
+export const DAYS_PER_WEEK = 7 as const;
+export const MS_PER_DAY = 86_400_000 as const;
+export const SUNDAY = 0 as const;
+
+export const DEFAULT_MAX_CANDIDATES = 1 as const;
+export const DEFAULT_TIMEOUT_MS = 5000 as const;
+export const MAX_STANDARD_PAIR = 4 as const;
+export const MID_STANDARD_PAIR = 5 as const;
+export const WEEKDAY_PENALTY_MULTIPLIER = 10 as const;
+export const LATE_PAIR_PENALTY = 30 as const;
+export const SATURDAY_LATE_PENALTY_MULTIPLIER = 50 as const;
+
+export const DEFAULT_ICS_FOLD_LIMIT = 75 as const;
+export const DEFAULT_PAIR_DURATION_MINUTES = 80 as const;
+export const ICS_PRODID = '-//Karazin UniVerse//Timetable//UK' as const;
+
+export const TEACHING_TYPE_LABELS: Readonly<Record<string, string>> = {
+  LECTURE: 'Лекція',
+  PRACTICAL: 'Практика',
+  LABORATORY: 'Лабораторна',
+  SEMINAR: 'Семінар',
+  EXAM: 'Іспит',
+  lecture: 'Лекція',
+  practical: 'Практика',
+  practice: 'Практика',
+  laboratory: 'Лабораторна',
+  lab: 'Лабораторна',
+  seminar: 'Семінар',
+  exam: 'Іспит',
+};
+
+export const EUROPE_KYIV_VTIMEZONE = [
+  'BEGIN:VTIMEZONE',
+  'TZID:Europe/Kyiv',
+  'BEGIN:DAYLIGHT',
+  'TZNAME:EEST',
+  'TZOFFSETFROM:+0200',
+  'TZOFFSETTO:+0300',
+  'DTSTART:19700329T030000',
+  'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU',
+  'END:DAYLIGHT',
+  'BEGIN:STANDARD',
+  'TZNAME:EET',
+  'TZOFFSETFROM:+0300',
+  'TZOFFSETTO:+0200',
+  'DTSTART:19701025T040000',
+  'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU',
+  'END:STANDARD',
+  'END:VTIMEZONE',
+].join('\r\n');

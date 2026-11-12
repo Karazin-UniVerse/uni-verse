@@ -369,5 +369,43 @@ describe('timetable-ics', () => {
         unfolded.includes('URL:https://meet.google.com/test-roomBEGIN:VEVENTSUMMARY:Injected\r\n'),
       );
     });
+
+    test('renders exam spanning its pairs (pair 1 -> 08:30-11:30)', () => {
+      const ics = generateIcsCalendar({
+        events: [
+          {
+            id: 'exam-event-1',
+            disciplineTitle: 'Алгебра',
+            teachingType: 'EXAM',
+            date: '2026-09-01',
+            pair: 1,
+          },
+        ],
+        now: fixedNow,
+      });
+      const unfolded = ics.replace(/\r\n /g, '');
+
+      assert.ok(unfolded.includes('DTSTART;TZID=Europe/Kyiv:20260901T083000\r\n'));
+      assert.ok(unfolded.includes('DTEND;TZID=Europe/Kyiv:20260901T113000\r\n'));
+    });
+
+    test('renders event with custom pairSpan', () => {
+      const ics = generateIcsCalendar({
+        events: [
+          {
+            id: 'span-event-1',
+            disciplineTitle: 'Лабораторний практикум',
+            date: '2026-09-01',
+            pair: 1,
+            pairSpan: 2,
+          },
+        ],
+        now: fixedNow,
+      });
+      const unfolded = ics.replace(/\r\n /g, '');
+
+      assert.ok(unfolded.includes('DTSTART;TZID=Europe/Kyiv:20260901T083000\r\n'));
+      assert.ok(unfolded.includes('DTEND;TZID=Europe/Kyiv:20260901T113000\r\n'));
+    });
   });
 });

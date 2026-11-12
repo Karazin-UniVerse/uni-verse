@@ -1,13 +1,30 @@
 import {
   ACADEMIC_HOURS_PER_PAIR,
+  DAYS_PER_WEEK,
+  DEFAULT_ICS_FOLD_LIMIT,
+  DEFAULT_MAX_CANDIDATES,
+  DEFAULT_NOMINAL_WEEKS,
+  DEFAULT_PAIR_DURATION_MINUTES,
+  DEFAULT_TIMEOUT_MS,
+  EUROPE_KYIV_VTIMEZONE,
   EXAM_PAIR_COUNT,
   FIRST_LATE_PAIR,
   FIRST_PAIR,
+  ICS_PRODID,
+  ISO_DATE_LENGTH,
+  ISO_DATE_PATTERN,
   LAST_PAIR,
   LAST_PREFERRED_SATURDAY_PAIR,
+  LATE_PAIR_PENALTY,
   MAX_PREFERRED_DAILY_PAIRS,
+  MAX_STANDARD_PAIR,
+  MID_STANDARD_PAIR,
   MIN_EXAM_FREE_DAYS,
+  MS_PER_DAY,
   PAIR_SCHEDULE,
+  SATURDAY_LATE_PENALTY_MULTIPLIER,
+  SUNDAY,
+  TEACHING_TYPE_LABELS,
   TIMETABLE_CONFLICT_CODE,
   TIMETABLE_PHASE_ORDER,
   TIMETABLE_SKIP_REASON,
@@ -18,6 +35,7 @@ import {
   TIMETABLE_VALIDATION_ERROR,
   TIMETABLE_WEEK_PARITY,
   TIMETABLE_WEEKDAY,
+  WEEKDAY_PENALTY_MULTIPLIER,
 } from '../constants/timetable.ts';
 import type { PairNumber } from '../constants/timetable.ts';
 import type {
@@ -36,6 +54,7 @@ import type {
   HardConflict,
   PairInstantsResult,
   PairsFromHoursResult,
+  ParticipantEntity,
   SchedulableDemandLayer,
   ScheduledEvent,
   SkippedSlotOccurrence,
@@ -43,23 +62,10 @@ import type {
   TeacherUnavailability,
   TeachingDemand,
   TimetableCandidate,
+  TimetableDemandDeficit,
   WeeklyPairCountsParams,
   WeeklyPairCountsResult,
 } from '../types/timetable.ts';
-
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const ISO_DATE_LENGTH = 10;
-const DAYS_PER_WEEK = 7;
-const MS_PER_DAY = 86_400_000;
-const SUNDAY = 0;
-
-const DEFAULT_MAX_CANDIDATES = 1;
-const DEFAULT_TIMEOUT_MS = 5000;
-const MAX_STANDARD_PAIR = 4;
-const MID_STANDARD_PAIR = 5;
-const WEEKDAY_PENALTY_MULTIPLIER = 10;
-const LATE_PAIR_PENALTY = 30;
-const SATURDAY_LATE_PENALTY_MULTIPLIER = 50;
 
 const TIME_ZONE_FORMAT = new Intl.DateTimeFormat('en-US', {
   timeZone: TIMETABLE_TIME_ZONE,
@@ -409,14 +415,21 @@ function isSlotOverlap(first: EventSlot, second: EventSlot): boolean {
 }
 
 /**
- * Explicit student sets win when both events carry them. Otherwise students intersect through a
- * shared stream or a shared group; two different subgroups of one group never intersect.
+ * Explicit student sets win when both entities carry them. Otherwise students intersect through a
+ * shared subgroup, shared stream, or a shared group; two different subgroups of one group never intersect.
  */
-function hasStudentIntersection(first: ScheduledEvent, second: ScheduledEvent): boolean {
+export function hasStudentIntersection(
+  first: ParticipantEntity,
+  second: ParticipantEntity,
+): boolean {
   if (first.studentIds && second.studentIds) {
     const firstStudents = new Set(first.studentIds);
 
     return second.studentIds.some((studentId): boolean => firstStudents.has(studentId));
+  }
+
+  if (first.subgroupId !== undefined && second.subgroupId !== undefined) {
+    return first.subgroupId === second.subgroupId;
   }
 
   const hasSharedGroup = first.groupIds.some((groupId): boolean =>
@@ -427,11 +440,7 @@ function hasStudentIntersection(first: ScheduledEvent, second: ScheduledEvent): 
     return first.streamId !== undefined && first.streamId === second.streamId;
   }
 
-  return (
-    first.subgroupId === undefined ||
-    second.subgroupId === undefined ||
-    first.subgroupId === second.subgroupId
-  );
+  return true;
 }
 
 /** Two records of one stream class (same stream and assignment) describe a single lesson. */
@@ -543,13 +552,16 @@ function getCalendarRestrictionConflicts(slots: EventSlot[]): HardConflict[] {
     const isSaturdayOnlyOnWeekday = event.isSaturdayOnly === true && !isSaturday;
     const isWeekdayOnlyOnSaturday =
       isSaturday && !isExam && event.isSaturdayOnly !== true && event.isMakeupSaturday !== true;
+    const isExamOnSaturday = isSaturday && isExam;
 
-    if (isSaturdayOnlyOnWeekday || isWeekdayOnlyOnSaturday) {
+    if (isSaturdayOnlyOnWeekday || isWeekdayOnlyOnSaturday || isExamOnSaturday) {
       conflicts.push({
         code: TIMETABLE_CONFLICT_CODE.SATURDAY_RESTRICTION_VIOLATION,
-        message: isSaturdayOnlyOnWeekday
-          ? 'Saturday-only discipline scheduled on a weekday'
-          : 'Weekday discipline scheduled on a non-makeup Saturday',
+        message: isExamOnSaturday
+          ? 'Exam cannot be scheduled on Saturday'
+          : isSaturdayOnlyOnWeekday
+            ? 'Saturday-only discipline scheduled on a weekday'
+            : 'Weekday discipline scheduled on a non-makeup Saturday',
         eventIds: [event.id],
         details: { date: event.date },
       });
@@ -747,8 +759,24 @@ export function checkTimetableConflicts({
       message: `Event ${event.id} has an invalid date, pair or pair span`,
       eventIds: [event.id],
     }));
+  const participantConflicts: HardConflict[] = events
+    .filter((event): boolean => {
+      const hasNoParticipants =
+        event.groupIds.length === 0 &&
+        (!event.studentIds || event.studentIds.length === 0) &&
+        !event.streamId;
+      const hasSubgroupWithoutGroup = event.subgroupId !== undefined && event.groupIds.length === 0;
+
+      return hasNoParticipants || hasSubgroupWithoutGroup;
+    })
+    .map((event): HardConflict => ({
+      code: TIMETABLE_CONFLICT_CODE.MISSING_PARTICIPANTS,
+      message: `Event ${event.id} must specify participants and parent group for subgroup`,
+      eventIds: [event.id],
+    }));
   const hardConflicts = [
     ...invalidConflicts,
+    ...participantConflicts,
     ...getOverlapConflicts(slots),
     ...getUnavailabilityConflicts(slots, unavailability),
     ...getCalendarRestrictionConflicts(slots),
@@ -796,28 +824,6 @@ function computeSlotHeuristicCost(demand: TeachingDemand, weekday: number, pair:
   return cost;
 }
 
-function hasStudentConflict(first: TeachingDemand, second: TeachingDemand): boolean {
-  if (first.studentIds && second.studentIds) {
-    const firstStudents = new Set(first.studentIds);
-
-    return second.studentIds.some((studentId): boolean => firstStudents.has(studentId));
-  }
-
-  const hasSharedGroup = first.groupIds.some((groupId): boolean =>
-    second.groupIds.includes(groupId),
-  );
-
-  if (!hasSharedGroup) {
-    return first.streamId !== undefined && first.streamId === second.streamId;
-  }
-
-  return (
-    first.subgroupId === undefined ||
-    second.subgroupId === undefined ||
-    first.subgroupId === second.subgroupId
-  );
-}
-
 function hasTeacherConflict(first: TeachingDemand, second: TeachingDemand): boolean {
   if (first.teacherId !== second.teacherId) {
     return false;
@@ -852,6 +858,7 @@ function slotsShareAnyTime(slotA: CandidateSlot, slotB: CandidateSlot): boolean 
 export function generateTimetableCandidates({
   demands,
   calendar,
+  nominalWeeks: paramsNominalWeeks,
   options,
   unavailability = [],
 }: GenerateTimetableParams): GenerateTimetableResult {
@@ -860,11 +867,20 @@ export function generateTimetableCandidates({
 
   const maxCandidates = options?.maxCandidates ?? DEFAULT_MAX_CANDIDATES;
   const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const nominalWeeks = options?.nominalWeeks ?? paramsNominalWeeks ?? DEFAULT_NOMINAL_WEEKS;
 
-  const getDiagnostics = (): GenerateTimetableDiagnostics => ({
-    statesExplored,
-    timeMs: Date.now() - startTime,
-  });
+  const getDiagnostics = (deficits?: TimetableDemandDeficit[]): GenerateTimetableDiagnostics => {
+    const diagnostics: GenerateTimetableDiagnostics = {
+      statesExplored,
+      timeMs: Date.now() - startTime,
+    };
+
+    if (deficits && deficits.length > 0) {
+      diagnostics.deficits = deficits;
+    }
+
+    return diagnostics;
+  };
 
   if (demands.length === 0) {
     statesExplored = 1;
@@ -883,6 +899,21 @@ export function generateTimetableCandidates({
 
   for (let demandIndex = 0; demandIndex < demands.length; demandIndex += 1) {
     const demand = demands[demandIndex];
+
+    if (demand.teachingType === TIMETABLE_TEACHING_TYPE.EXAM) {
+      return { ok: false, error: 'INVALID_INPUT', diagnostics: getDiagnostics() };
+    }
+
+    const hasNoParticipants =
+      demand.groupIds.length === 0 &&
+      (!demand.studentIds || demand.studentIds.length === 0) &&
+      !demand.streamId;
+    const hasSubgroupWithoutGroup = demand.subgroupId !== undefined && demand.groupIds.length === 0;
+
+    if (hasNoParticipants || hasSubgroupWithoutGroup) {
+      return { ok: false, error: 'INVALID_INPUT', diagnostics: getDiagnostics() };
+    }
+
     const pairsResult = getPairsFromAcademicHours(demand.academicHours);
 
     if (!pairsResult.ok) {
@@ -891,7 +922,7 @@ export function generateTimetableCandidates({
 
     const weeklyResult = getWeeklyPairCounts({
       pairs: pairsResult.pairs,
-      weeks: calendar.teachingWeeks,
+      weeks: nominalWeeks,
       parity: demand.parity,
       order: demand.order,
     });
@@ -903,15 +934,16 @@ export function generateTimetableCandidates({
     const maxCount = Math.max(...weeklyResult.counts);
 
     for (let level = 1; level <= maxCount; level += 1) {
-      const layerCounts = weeklyResult.counts.map((count): number => (count >= level ? 1 : 0));
-      const layerRequiredPairs = layerCounts.reduce((sum, count): number => sum + count, 0);
+      const fullLayerCounts = weeklyResult.counts.map((count): number => (count >= level ? 1 : 0));
+      const layerRequiredPairs = fullLayerCounts.reduce((sum, count): number => sum + count, 0);
+      const truncatedWeeklyCounts = fullLayerCounts.slice(0, calendar.teachingWeeks);
 
       units.push({
         unitIndex: unitIndexCounter,
         demandIndex,
         demand,
         layerIndex: level - 1,
-        weeklyCounts: layerCounts,
+        weeklyCounts: truncatedWeeklyCounts,
         requiredPairs: layerRequiredPairs,
       });
       unitIndexCounter += 1;
@@ -920,7 +952,33 @@ export function generateTimetableCandidates({
 
   const confirmedUnavailability = unavailability.filter((entry): boolean => entry.isConfirmed);
   const unitCandidateSlots: CandidateSlot[][] = [];
+  const unitMaxOccurrences = new Map<number, number>();
   let nextGlobalIndex = 0;
+
+  const calculateDeficits = (): TimetableDemandDeficit[] => {
+    const deficits: TimetableDemandDeficit[] = [];
+
+    for (let demandIdx = 0; demandIdx < demands.length; demandIdx += 1) {
+      const demand = demands[demandIdx];
+      const required = demand.academicHours / ACADEMIC_HOURS_PER_PAIR;
+      const demandUnits = units.filter((unit): boolean => unit.demandIndex === demandIdx);
+      const scheduled = demandUnits.reduce((sum, unit): number => {
+        const candidateSlots = unitCandidateSlots[unit.unitIndex];
+
+        if (candidateSlots && candidateSlots.length > 0) {
+          return sum + unit.requiredPairs;
+        }
+
+        return sum + (unitMaxOccurrences.get(unit.unitIndex) ?? 0);
+      }, 0);
+
+      if (scheduled < required) {
+        deficits.push({ demandId: demand.id, required, scheduled });
+      }
+    }
+
+    return deficits;
+  };
 
   for (const unit of units) {
     const { demand, weeklyCounts, requiredPairs, layerIndex, unitIndex, demandIndex } = unit;
@@ -957,6 +1015,12 @@ export function generateTimetableCandidates({
             error: 'INVALID_INPUT',
             diagnostics: getDiagnostics(),
           };
+        }
+
+        const currentMax = unitMaxOccurrences.get(unitIndex) ?? 0;
+
+        if (expandResult.occurrences.length > currentMax) {
+          unitMaxOccurrences.set(unitIndex, expandResult.occurrences.length);
         }
 
         // Workload completeness: if a holiday excluded an occurrence and no makeup restored it,
@@ -1020,7 +1084,7 @@ export function generateTimetableCandidates({
       return {
         ok: false,
         error: 'NO_FEASIBLE_SOLUTION',
-        diagnostics: getDiagnostics(),
+        diagnostics: getDiagnostics(calculateDeficits()),
       };
     }
 
@@ -1045,7 +1109,7 @@ export function generateTimetableCandidates({
 
       const isSameDemand = unitA.demandIndex === unitB.demandIndex;
       const checkTeacher = isSameDemand || hasTeacherConflict(unitA.demand, unitB.demand);
-      const checkStudent = isSameDemand || hasStudentConflict(unitA.demand, unitB.demand);
+      const checkStudent = isSameDemand || hasStudentIntersection(unitA.demand, unitB.demand);
 
       if (!checkTeacher && !checkStudent) {
         continue;
@@ -1211,7 +1275,7 @@ export function generateTimetableCandidates({
   return {
     ok: false,
     error: 'NO_FEASIBLE_SOLUTION',
-    diagnostics: getDiagnostics(),
+    diagnostics: getDiagnostics(calculateDeficits()),
   };
 }
 
@@ -1236,7 +1300,7 @@ export function sanitizeIcsUrl(url: string): string {
     .trim();
 }
 
-export function foldLine(line: string, maxOctets = 75): string {
+export function foldLine(line: string, maxOctets: number = DEFAULT_ICS_FOLD_LIMIT): string {
   const encoder = new TextEncoder();
 
   if (encoder.encode(line).length <= maxOctets) {
@@ -1292,41 +1356,6 @@ function formatLocalDateTime(date: Date, timeZone = TIMETABLE_TIME_ZONE): string
   return `${parts.year}${parts.month}${parts.day}T${parts.hour}${parts.minute}${parts.second}`;
 }
 
-const TEACHING_TYPE_LABELS: Record<string, string> = {
-  LECTURE: 'Лекція',
-  PRACTICAL: 'Практика',
-  LABORATORY: 'Лабораторна',
-  SEMINAR: 'Семінар',
-  EXAM: 'Іспит',
-  lecture: 'Лекція',
-  practical: 'Практика',
-  practice: 'Практика',
-  laboratory: 'Лабораторна',
-  lab: 'Лабораторна',
-  seminar: 'Семінар',
-  exam: 'Іспит',
-};
-
-const EUROPE_KYIV_VTIMEZONE = [
-  'BEGIN:VTIMEZONE',
-  'TZID:Europe/Kyiv',
-  'BEGIN:DAYLIGHT',
-  'TZNAME:EEST',
-  'TZOFFSETFROM:+0200',
-  'TZOFFSETTO:+0300',
-  'DTSTART:19700329T030000',
-  'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU',
-  'END:DAYLIGHT',
-  'BEGIN:STANDARD',
-  'TZNAME:EET',
-  'TZOFFSETFROM:+0300',
-  'TZOFFSETTO:+0200',
-  'DTSTART:19701025T040000',
-  'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU',
-  'END:STANDARD',
-  'END:VTIMEZONE',
-].join('\r\n');
-
 export function generateIcsCalendar(options: GenerateIcsOptions): string {
   const { events, calendarName, now = new Date() } = options;
   const dtstamp = formatUtcDateTime(now);
@@ -1334,7 +1363,7 @@ export function generateIcsCalendar(options: GenerateIcsOptions): string {
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Karazin UniVerse//Timetable//UK',
+    `PRODID:${ICS_PRODID}`,
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
   ];
@@ -1357,15 +1386,25 @@ export function generateIcsCalendar(options: GenerateIcsOptions): string {
     } else if (event.start && !event.end) {
       dtstart = formatLocalDateTime(event.start, TIMETABLE_TIME_ZONE);
       dtend = formatLocalDateTime(
-        new Date(event.start.getTime() + 80 * 60 * 1000),
+        new Date(event.start.getTime() + DEFAULT_PAIR_DURATION_MINUTES * 60 * 1000),
         TIMETABLE_TIME_ZONE,
       );
     } else if (event.date && event.pair !== undefined && isPairNumber(event.pair)) {
-      const pairResult = getPairInstants(event.date, event.pair);
+      const isExam =
+        event.teachingType === TIMETABLE_TEACHING_TYPE.EXAM ||
+        event.teachingType === 'EXAM' ||
+        event.teachingType === 'exam';
+      const span = event.pairSpan ?? (isExam ? EXAM_PAIR_COUNT : 1);
+      const endPair = event.pair + span - 1;
 
-      if (pairResult.ok) {
-        dtstart = formatLocalDateTime(pairResult.start, TIMETABLE_TIME_ZONE);
-        dtend = formatLocalDateTime(pairResult.end, TIMETABLE_TIME_ZONE);
+      if (isPairNumber(endPair)) {
+        const startResult = getPairInstants(event.date, event.pair);
+        const endResult = getPairInstants(event.date, endPair);
+
+        if (startResult.ok && endResult.ok) {
+          dtstart = formatLocalDateTime(startResult.start, TIMETABLE_TIME_ZONE);
+          dtend = formatLocalDateTime(endResult.end, TIMETABLE_TIME_ZONE);
+        }
       }
     }
 

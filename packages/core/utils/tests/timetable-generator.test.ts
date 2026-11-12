@@ -365,4 +365,121 @@ describe('timetable generator', () => {
 
     assert.ok(report.isValid);
   });
+
+  test('rejects demand with no participants as INVALID_INPUT', () => {
+    const demand: TeachingDemand = {
+      id: 'DEMAND-NO-PARTICIPANTS',
+      disciplineTitle: 'Discrete Math',
+      teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+      teacherId: 'TEACHER-MATH',
+      groupIds: [],
+      academicHours: 32,
+    };
+
+    const result = generateTimetableCandidates({ demands: [demand], calendar });
+
+    assert.strictEqual(result.ok, false);
+
+    if (!result.ok) {
+      assert.strictEqual(result.error, 'INVALID_INPUT');
+    }
+  });
+
+  test('rejects demand with subgroupId but empty groupIds as INVALID_INPUT', () => {
+    const demand: TeachingDemand = {
+      id: 'DEMAND-SUBGROUP-NO-GROUP',
+      disciplineTitle: 'Discrete Math',
+      teachingType: TIMETABLE_TEACHING_TYPE.PRACTICAL,
+      teacherId: 'TEACHER-MATH',
+      groupIds: [],
+      subgroupId: 'MATH-101-1',
+      academicHours: 32,
+    };
+
+    const result = generateTimetableCandidates({ demands: [demand], calendar });
+
+    assert.strictEqual(result.ok, false);
+
+    if (!result.ok) {
+      assert.strictEqual(result.error, 'INVALID_INPUT');
+    }
+  });
+
+  test('rejects demand with EXAM teaching type as INVALID_INPUT', () => {
+    const demand: TeachingDemand = {
+      id: 'DEMAND-EXAM',
+      disciplineTitle: 'Discrete Math Exam',
+      teachingType: TIMETABLE_TEACHING_TYPE.EXAM,
+      teacherId: 'TEACHER-MATH',
+      groupIds: ['MATH-101'],
+      academicHours: 32,
+    };
+
+    const result = generateTimetableCandidates({ demands: [demand], calendar });
+
+    assert.strictEqual(result.ok, false);
+
+    if (!result.ok) {
+      assert.strictEqual(result.error, 'INVALID_INPUT');
+    }
+  });
+
+  describe('shortened semester', () => {
+    const demand32h: TeachingDemand = {
+      id: 'DEMAND-SHORT-32H',
+      disciplineTitle: 'Discrete Math',
+      teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+      teacherId: 'TEACHER-MATH',
+      groupIds: ['MATH-101'],
+      academicHours: 32,
+    };
+
+    test('32h/14 weeks with 0 makeup Saturdays fails and reports deficit 2', () => {
+      const calendar14Weeks: SemesterCalendarConfig = {
+        startDate: '2026-09-07',
+        teachingWeeks: 14,
+        excludedDates: [],
+        makeupSaturdays: [],
+      };
+
+      const result = generateTimetableCandidates({
+        demands: [demand32h],
+        calendar: calendar14Weeks,
+      });
+
+      assert.strictEqual(result.ok, false);
+
+      if (!result.ok) {
+        assert.strictEqual(result.error, 'NO_FEASIBLE_SOLUTION');
+        assert.deepStrictEqual(result.diagnostics.deficits, [
+          { demandId: 'DEMAND-SHORT-32H', required: 16, scheduled: 14 },
+        ]);
+      }
+    });
+
+    test('32h/14 weeks with 2 matching makeup Saturdays succeeds with exactly 16 events', () => {
+      const calendar14WeeksWithMakeups: SemesterCalendarConfig = {
+        startDate: '2026-09-07',
+        teachingWeeks: 14,
+        excludedDates: [],
+        makeupSaturdays: [
+          { date: '2026-09-12', followsWeekday: TIMETABLE_WEEKDAY.MONDAY },
+          { date: '2026-09-19', followsWeekday: TIMETABLE_WEEKDAY.MONDAY },
+        ],
+      };
+
+      const result = generateTimetableCandidates({
+        demands: [demand32h],
+        calendar: calendar14WeeksWithMakeups,
+      });
+
+      assert.ok(result.ok);
+      assert.strictEqual(result.candidates.length, 1);
+      assert.strictEqual(result.candidates[0].events.length, 16);
+
+      const report = checkTimetableConflicts({ events: result.candidates[0].events });
+
+      assert.ok(report.isValid);
+    });
+  });
 });
