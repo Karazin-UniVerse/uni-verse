@@ -1,91 +1,71 @@
-# Timetable API Documentation
-
-This document describes the endpoints, authorization roles, data contracts, and deployment procedures for the UniVerse Timetable subsystem.
+# Timetable API
 
 ## Overview
 
-The Timetable module enables dean office administrators to:
+The Timetable module manages academic groups, curriculum plans, teaching assignments, semester calendars, constraint-based timetable generation, atomic publication, and RFC 5545 `.ics` subscription feeds.
 
-- Define academic groups, subgroups, and streams.
-- Create curriculum plans and configure semester teaching assignments.
-- Set up semester calendars with excluded dates (holidays) and makeup Saturdays.
-- Collect teacher unavailability preferences and confirm hard restrictions.
-- Deterministically generate conflict-free timetable candidate versions.
-- Re-validate and atomically publish a draft timetable.
-- Expose RFC 5545 `.ics` personal calendar feeds for students and instructors.
+## Database Schema Synchronization
 
----
+After updating `packages/backend/prisma/schema.prisma`, regenerate the Prisma client and push schema changes to PostgreSQL:
 
-## Authorization & Roles
+```bash
+pnpm --filter @universe/backend db:generate
+pnpm --filter @universe/backend db:push
+```
 
-- **Dean / Administrator (`Role.ADMIN`)**: Full read/write access to curriculum plans, teaching assignments, semester calendars, draft generation, and timetable publication.
-- **Teacher (`Role.INSTRUCTOR` / authenticated user)**: Can submit unavailability requests for themselves, update online meeting URLs for their assigned classes (`PUT /timetable/assignments/:id/meeting-url`), and retrieve their own teaching assignments (`GET /timetable/my/assignments`).
-- **Student / Authenticated User**: Can obtain a personal calendar subscription token (`POST /timetable/calendar/tokens`), rotate tokens, or revoke them.
-- **Public**: The calendar ICS feed (`GET /timetable/calendar/feed/:token`) is public without bearer auth, authenticated solely via the secret token in the URL.
+## Endpoints & Authorization
 
----
+All endpoints except the public `.ics` feed require a valid Bearer JWT (`AtGuard`). Administrative endpoints require the `ADMIN` role (Dean's office / Administrator).
 
-## Endpoints
+| Method   | Path                                                   | Access                     | Description                                                                                                            |
+| -------- | ------------------------------------------------------ | -------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `POST`   | `/timetable/groups`                                    | `ADMIN`                    | Create an academic group with optional subgroups.                                                                      |
+| `GET`    | `/timetable/groups`                                    | Authenticated              | List all academic groups with subgroups.                                                                               |
+| `POST`   | `/timetable/curriculum-plans`                          | `ADMIN`                    | Create a curriculum plan.                                                                                              |
+| `GET`    | `/timetable/curriculum-plans/:id`                      | `ADMIN`                    | Get a curriculum plan with its teaching assignments.                                                                   |
+| `POST`   | `/timetable/assignments`                               | `ADMIN`                    | Create a teaching assignment (`academicHours` even integer `2..400`, requires `groupId`, `subgroupId`, or `streamId`). |
+| `GET`    | `/timetable/assignments?curriculumPlanId=...`          | `ADMIN`                    | List teaching assignments for a curriculum plan.                                                                       |
+| `GET`    | `/timetable/my/assignments`                            | Authenticated              | List teaching assignments assigned to the current teacher.                                                             |
+| `PUT`    | `/timetable/assignments/:id/meeting-url`               | Assigned Teacher / `ADMIN` | Update online meeting URL (`http`/`https`, max `2048` chars).                                                          |
+| `POST`   | `/timetable/calendar` (`/timetable/semester-calendar`) | `ADMIN`                    | Configure or upsert a semester calendar.                                                                               |
+| `GET`    | `/timetable/calendar` (`/timetable/semester-calendar`) | `ADMIN`                    | Get a semester calendar by `academicYear` and `semester`.                                                              |
+| `POST`   | `/timetable/teachers/:teacherId/unavailability`        | Self / `ADMIN`             | Submit a teacher unavailability slot request.                                                                          |
+| `PUT`    | `/timetable/unavailability/:id/confirm`                | `ADMIN`                    | Confirm or reject a teacher unavailability request.                                                                    |
+| `POST`   | `/timetable/plans/:id/generate`                        | `ADMIN`                    | Generate up to `maxCandidates` (`1..5`, timeout `1..10000` ms, max `200` demands) draft timetable versions.            |
+| `POST`   | `/timetable/versions/:id/publish`                      | `ADMIN`                    | Atomically validate and publish a draft timetable version.                                                             |
+| `POST`   | `/timetable/calendar/tokens`                           | Authenticated              | Get existing active subscription token or create a new one.                                                            |
+| `POST`   | `/timetable/calendar/tokens/rotate`                    | Authenticated              | Deactivate existing tokens and issue a new token.                                                                      |
+| `DELETE` | `/timetable/calendar/tokens`                           | Authenticated              | Revoke all active subscription tokens for the current user.                                                            |
+| `GET`    | `/timetable/calendar/feed/:token`                      | Public (Token)             | Fetch personal `.ics` calendar feed (`text/calendar; charset=utf-8`).                                                  |
 
-### 1. Academic Groups & Curriculum Plans
+## Draft Generation & Publication Rules
 
-- `POST /timetable/groups` [Admin only]: Create an academic group.
-- `GET /timetable/groups` [Authenticated]: List all academic groups with subgroups.
-- `POST /timetable/curriculum-plans` [Admin only]: Create a curriculum plan.
-- `GET /timetable/curriculum-plans/:id` [Admin only]: Get curriculum plan details with assignments.
+1. **Multi-Candidate Persistence**:
+   - `POST /timetable/plans/:id/generate` validates solver limits (`maxCandidates` in `1..5`, `timeoutMs` in `1..10000`, demands `<= 200`).
+   - Fetches events from already-`PUBLISHED` versions of other curriculum plans in the same semester calendar and passes them as `fixedEvents` to avoid cross-plan teacher and student collisions.
+   - Generates a shared `generationId` and persists every candidate as an independent `DRAFT` `TimetableVersion` with its `candidateIndex` (`0..N-1`).
+   - Each `TimetableEvent` stores a deterministic `stableKey` (`${teachingAssignmentId}:${date}:${pair}`).
+2. **Atomic Publication**:
+   - `POST /timetable/versions/:id/publish` executes inside `prisma.$transaction`.
+   - Rejects empty versions (`ConflictException`).
+   - Verifies that every assignment in the curriculum plan has non-cancelled events equal to `academicHours / 2` pairs (`getPairsFromAcademicHours`), throwing `ConflictException` with deficits if incomplete.
+   - Runs `checkTimetableConflicts` against the version's events combined with other `PUBLISHED` versions in the same semester calendar and confirmed teacher unavailability, restoring `isMakeupSaturday`, `isSaturdayOnly`, `hasLateSlotAuthorization`, and full participant `groupIds`.
+   - Archives any previous `PUBLISHED` version for the same semester calendar (`status = ARCHIVED`) and transitions the target version from `DRAFT` to `PUBLISHED` using optimistic status locking.
 
-### 2. Teaching Workload Assignments
+## ICS Feed & Subgroup Filtering Rules
 
-- `POST /timetable/assignments` [Admin only]: Create an assignment (validates `academicHours` as even integer 2..400; requires `groupId`, `subgroupId`, or `streamId`).
-- `GET /timetable/assignments?curriculumPlanId=UUID` [Admin only]: List assignments for a plan.
-- `GET /timetable/my/assignments` [Teacher / Authenticated]: List assignments where the current user is the assigned instructor.
-- `PUT /timetable/assignments/:id/meeting-url` [Teacher or Admin]: Update meeting link (max 2048 chars, strictly HTTP/HTTPS).
+- Only the latest `PUBLISHED` version per semester calendar is included in the feed.
+- Each event uses `event.stableKey` as its RFC 5545 `UID` base (`${stableKey}@timetable.universe.karazin.ua`) so calendar clients update events in place across revisions, and honours `pairSpan` and `isCancelled`.
+- **Teacher filtering**: includes events where `teachingAssignment.teacherId === user.id`.
+- **Student filtering**:
+  - Group-wide classes: `assignment.groupId === user.academicGroupId && assignment.subgroupId === null`.
+  - Subgroup classes: `user.academicSubgroupId !== null && assignment.subgroupId === user.academicSubgroupId` (events for other subgroups of the same group are excluded).
+  - Stream classes: `assignment.stream.groups.some(g => g.id === user.academicGroupId)`.
 
-### 3. Semester Calendar & Unavailability
+## Subscription Token Lifecycle
 
-- `POST /timetable/calendar` [Admin only]: Configure semester calendar (`startDate`, `teachingWeeks`, `excludedDates`, `makeupSaturdays`).
-- `GET /timetable/calendar?academicYear=2026/2027&semester=1` [Admin only]: Fetch semester calendar.
-- `POST /timetable/teachers/:teacherId/unavailability` [Teacher / Admin]: Request unavailable slot.
-- `PUT /timetable/unavailability/:id/confirm` [Admin only]: Confirm hard unavailability.
-
-### 4. Generation & Publication
-
-- `POST /timetable/plans/:id/generate` [Admin only]:
-  - Accepts `maxCandidates` (1..5), `timeoutMs` (100..10000).
-  - Enforces max 200 demands per plan.
-  - Generates drafts and persists each candidate as a separate `TimetableVersion` with `DRAFT` status and stable keys.
-- `POST /timetable/versions/:id/publish` [Admin only]:
-  - Executes atomically in a transaction.
-  - Enforces exact workload hours fulfillment (no deficits).
-  - Runs cross-plan conflict verification against any already published versions.
-  - Atomically archives any previously published version for the semester calendar.
-
-### 5. Calendar Subscriptions
-
-- `POST /timetable/calendar/tokens` [Authenticated]: Get or create active personal subscription token.
-- `POST /timetable/calendar/tokens/rotate` [Authenticated]: Invalidate previous tokens and issue a fresh 256-bit base64url token.
-- `DELETE /timetable/calendar/tokens` [Authenticated]: Revoke all subscription tokens for user.
-- `GET /timetable/calendar/feed/:token` [Public]: Download RFC 5545 compliant `.ics` calendar feed with `Europe/Kyiv` timezone support.
-
----
-
-## Schema Migration & Deployment
-
-UniVerse data models use Prisma with `db:push` for deployment:
-
-1. Validate and format the Prisma schema:
-
-   ```bash
-   pnpm --filter @universe/backend prisma format
-   ```
-
-2. Generate Prisma Client:
-
-   ```bash
-   pnpm --filter @universe/backend db:generate
-   ```
-
-3. Push schema changes to the database:
-   ```bash
-   pnpm --filter @universe/backend prisma db push
-   ```
+- Tokens are generated using `crypto.randomBytes(32).toString('base64url')`.
+- `POST /timetable/calendar/tokens` is idempotent: it returns the user's active token if one exists, or creates a new one.
+- `POST /timetable/calendar/tokens/rotate` atomically deactivates all active tokens for the user and creates a fresh token.
+- `DELETE /timetable/calendar/tokens` deactivates all active tokens for the user.
+- Every successful `GET /timetable/calendar/feed/:token` updates `lastAccessedAt`.

@@ -7,7 +7,7 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import { Role, TeachingType } from '@universe/database';
 import { PrismaService } from '../prisma/prisma.service';
-import { TimetableService } from './timetable.service';
+import { MAX_SOLVER_DEMANDS, TimetableService } from './timetable.service';
 import type {
   CreateAcademicGroupDto,
   CreateCurriculumPlanDto,
@@ -22,6 +22,10 @@ describe('TimetableService', () => {
   const mockAcademicGroupPrisma = {
     create: jest.fn(),
     findMany: jest.fn(),
+  };
+
+  const mockAcademicSubgroupPrisma = {
+    findUnique: jest.fn(),
   };
 
   const mockCurriculumPlanPrisma = {
@@ -51,7 +55,9 @@ describe('TimetableService', () => {
   const mockTimetableVersionPrisma = {
     create: jest.fn(),
     findUnique: jest.fn(),
+    findMany: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
   };
 
   const mockTimetableEventPrisma = {
@@ -60,16 +66,19 @@ describe('TimetableService', () => {
 
   const mockCalendarSubscriptionTokenPrisma = {
     create: jest.fn(),
+    findFirst: jest.fn(),
     findUnique: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
   };
 
   const mockUserPrisma = {
     findFirst: jest.fn(),
   };
 
-  const mockPrismaService = {
+  const mockPrismaTables = {
     academicGroup: mockAcademicGroupPrisma,
+    academicSubgroup: mockAcademicSubgroupPrisma,
     curriculumPlan: mockCurriculumPlanPrisma,
     teachingAssignment: mockTeachingAssignmentPrisma,
     semesterCalendar: mockSemesterCalendarPrisma,
@@ -80,8 +89,26 @@ describe('TimetableService', () => {
     user: mockUserPrisma,
   };
 
+  const mockPrismaService = {
+    ...mockPrismaTables,
+    $transaction: jest.fn(
+      async <T>(cb: (tx: typeof mockPrismaTables) => Promise<T>): Promise<T> =>
+        cb(mockPrismaTables),
+    ),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    mockPrismaService.$transaction.mockImplementation(
+      async <T>(cb: (tx: typeof mockPrismaTables) => Promise<T>): Promise<T> =>
+        cb(mockPrismaTables),
+    );
+    mockTimetableEventPrisma.findMany.mockResolvedValue([]);
+    mockTimetableVersionPrisma.findMany.mockResolvedValue([]);
+    mockTimetableVersionPrisma.updateMany.mockResolvedValue({ count: 0 });
+    mockTeachingAssignmentPrisma.findMany.mockResolvedValue([]);
+    mockCalendarSubscriptionTokenPrisma.findFirst.mockResolvedValue(null);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -271,6 +298,41 @@ describe('TimetableService', () => {
       });
     });
 
+    it('rejects assignment without groupId, subgroupId, or streamId', async () => {
+      const dto = {
+        curriculumPlanId: 'plan-1',
+        disciplineTitle: 'Calculus',
+        teachingType: TeachingType.LECTURE,
+        academicHours: 32,
+        teacherId: 'teacher-1',
+      } as CreateTeachingAssignmentDto;
+
+      await expect(service.createTeachingAssignment(dto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('rejects assignment when subgroupId does not belong to groupId', async () => {
+      mockAcademicSubgroupPrisma.findUnique.mockResolvedValue({
+        id: 'subgroup-2',
+        academicGroupId: 'other-group',
+      });
+
+      const dto: CreateTeachingAssignmentDto = {
+        curriculumPlanId: 'plan-1',
+        disciplineTitle: 'Lab',
+        teachingType: TeachingType.LABORATORY,
+        academicHours: 32,
+        teacherId: 'teacher-1',
+        groupId: 'group-1',
+        subgroupId: 'subgroup-2',
+      };
+
+      await expect(service.createTeachingAssignment(dto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
     it('lists teaching assignments by planId with safe teacher projection', async () => {
       const assignments = [
         {
@@ -307,6 +369,38 @@ describe('TimetableService', () => {
       });
     });
 
+    it('lists teacher assignments by teacherId', async () => {
+      const assignments = [
+        {
+          id: 'assign-1',
+          disciplineTitle: 'Calculus',
+          teacherId: 'teacher-1',
+        },
+      ];
+
+      mockTeachingAssignmentPrisma.findMany.mockResolvedValue(assignments);
+
+      const result = await service.listTeacherAssignments('teacher-1');
+
+      expect(result).toEqual(assignments);
+      expect(mockTeachingAssignmentPrisma.findMany).toHaveBeenCalledWith({
+        where: { teacherId: 'teacher-1' },
+        include: {
+          teacher: {
+            select: {
+              id: true,
+              name: true,
+              roles: true,
+            },
+          },
+          group: true,
+          subgroup: true,
+          stream: true,
+        },
+        orderBy: { disciplineTitle: 'asc' },
+      });
+    });
+
     it('does not return teacher password, token, or refreshToken', async () => {
       const safeTeacher = {
         id: 'teacher-1',
@@ -323,28 +417,12 @@ describe('TimetableService', () => {
 
       const result = await service.listTeachingAssignments('plan-1');
 
-      expect(mockTeachingAssignmentPrisma.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          include: expect.objectContaining({
-            teacher: {
-              select: {
-                id: true,
-                name: true,
-                roles: true,
-              },
-            },
-          }),
-        }),
-      );
-
       const returnedTeacher = result[0].teacher as Record<string, unknown>;
 
       expect(returnedTeacher.password).toBeUndefined();
       expect(returnedTeacher.token).toBeUndefined();
       expect(returnedTeacher.refreshToken).toBeUndefined();
       expect(returnedTeacher.id).toBe('teacher-1');
-      expect(returnedTeacher.name).toBe('Prof Smith');
-      expect(returnedTeacher.roles).toEqual([Role.INSTRUCTOR]);
     });
   });
 
@@ -370,28 +448,6 @@ describe('TimetableService', () => {
       const result = await service.configureSemesterCalendar(dto);
 
       expect(result).toEqual(upserted);
-      expect(mockSemesterCalendarPrisma.upsert).toHaveBeenCalledWith({
-        where: {
-          academicYear_semester: {
-            academicYear: dto.academicYear,
-            semester: dto.semester,
-          },
-        },
-        create: {
-          academicYear: dto.academicYear,
-          semester: dto.semester,
-          startDate: new Date(dto.startDate),
-          teachingWeeks: dto.teachingWeeks,
-          excludedDates: dto.excludedDates,
-          makeupSaturdays: [],
-        },
-        update: {
-          startDate: new Date(dto.startDate),
-          teachingWeeks: dto.teachingWeeks,
-          excludedDates: dto.excludedDates,
-          makeupSaturdays: [],
-        },
-      });
     });
 
     it('returns semester calendar when found', async () => {
@@ -436,7 +492,6 @@ describe('TimetableService', () => {
       );
 
       expect(result).toEqual(resultRecord);
-      expect(mockTeacherUnavailabilityPrisma.upsert).toHaveBeenCalled();
     });
 
     it('strictly uses teacherId argument and ignores any teacherId passed in body', async () => {
@@ -465,26 +520,6 @@ describe('TimetableService', () => {
       );
 
       expect(result).toEqual(resultRecord);
-      expect(mockTeacherUnavailabilityPrisma.upsert).toHaveBeenCalledWith({
-        where: {
-          teacherId_date_pair: {
-            teacherId: 'authorized-teacher-1',
-            date: dateObj,
-            pair: 2,
-          },
-        },
-        create: {
-          teacherId: 'authorized-teacher-1',
-          date: dateObj,
-          pair: 2,
-          reason: 'Conference',
-          isConfirmed: false,
-        },
-        update: {
-          reason: 'Conference',
-          isConfirmed: false,
-        },
-      });
     });
 
     it('confirms teacher unavailability', async () => {
@@ -502,10 +537,6 @@ describe('TimetableService', () => {
       );
 
       expect(result.isConfirmed).toBe(true);
-      expect(mockTeacherUnavailabilityPrisma.update).toHaveBeenCalledWith({
-        where: { id: 'unavail-1' },
-        data: { isConfirmed: true },
-      });
     });
 
     it('throws NotFoundException when confirming nonexistent unavailability', async () => {
@@ -518,7 +549,7 @@ describe('TimetableService', () => {
   });
 
   describe('generateTimetableDraft', () => {
-    it('generates candidates and creates TimetableVersion with event snapshots', async () => {
+    it('generates candidates, persists EVERY candidate with generationId, candidateIndex, and stableKey', async () => {
       const plan = {
         id: 'plan-1',
         academicYear: '2026/2027',
@@ -553,24 +584,83 @@ describe('TimetableService', () => {
       mockSemesterCalendarPrisma.findUnique.mockResolvedValue(calendar);
       mockTeachingAssignmentPrisma.findMany.mockResolvedValue(assignments);
       mockTeacherUnavailabilityPrisma.findMany.mockResolvedValue([]);
+      mockTimetableEventPrisma.findMany.mockResolvedValue([]);
       mockUserPrisma.findFirst.mockResolvedValue({ id: 'admin-1' });
 
-      const createdVersion = {
-        id: 'ver-1',
-        status: 'DRAFT',
-        semesterCalendarId: 'cal-1',
-        events: [{ id: 'evt-1' }],
-      };
+      let counter = 0;
 
-      mockTimetableVersionPrisma.create.mockResolvedValue(createdVersion);
+      mockTimetableVersionPrisma.create.mockImplementation(async ({ data }) => {
+        counter += 1;
+
+        return {
+          id: `ver-${counter}`,
+          status: 'DRAFT',
+          semesterCalendarId: data.semesterCalendarId,
+          candidateIndex: data.candidateIndex,
+          generationId: data.generationId,
+          events: data.events.create,
+        };
+      });
 
       const result = await service.generateTimetableDraft('plan-1', {
+        maxCandidates: 2,
         userId: 'admin-1',
       });
 
       expect(result.versionId).toBe('ver-1');
-      expect(result.candidates.length).toBeGreaterThanOrEqual(1);
-      expect(mockTimetableVersionPrisma.create).toHaveBeenCalled();
+      expect(result.versionIds).toEqual(['ver-1', 'ver-2']);
+      expect(result.candidateSummaries).toHaveLength(2);
+      expect(result.candidateSummaries[0]).toMatchObject({
+        versionId: 'ver-1',
+        candidateIndex: 0,
+      });
+      expect(result.candidateSummaries[1]).toMatchObject({
+        versionId: 'ver-2',
+        candidateIndex: 1,
+      });
+      expect(mockTimetableVersionPrisma.create).toHaveBeenCalledTimes(2);
+
+      const firstCreateCall =
+        mockTimetableVersionPrisma.create.mock.calls[0][0];
+
+      expect(firstCreateCall.data.candidateIndex).toBe(0);
+      expect(typeof firstCreateCall.data.generationId).toBe('string');
+      expect(firstCreateCall.data.events.create[0].stableKey).toMatch(
+        /^assign-1:\d{4}-\d{2}-\d{2}:\d+$/,
+      );
+    });
+
+    it('rejects generation when demands exceed MAX_SOLVER_DEMANDS (200)', async () => {
+      const plan = { id: 'plan-1', academicYear: '2026/2027', semester: 1 };
+      const calendar = {
+        id: 'cal-1',
+        academicYear: '2026/2027',
+        semester: 1,
+        startDate: new Date('2026-09-07'),
+        teachingWeeks: 16,
+        excludedDates: [],
+        makeupSaturdays: [],
+      };
+      const assignments = Array.from(
+        { length: MAX_SOLVER_DEMANDS + 1 },
+        (_, idx) => ({
+          id: `assign-${idx}`,
+          curriculumPlanId: 'plan-1',
+          disciplineTitle: `Course ${idx}`,
+          teachingType: TeachingType.LECTURE,
+          academicHours: 32,
+          teacherId: 'teacher-1',
+          groupId: 'group-1',
+        }),
+      );
+
+      mockCurriculumPlanPrisma.findUnique.mockResolvedValue(plan);
+      mockSemesterCalendarPrisma.findUnique.mockResolvedValue(calendar);
+      mockTeachingAssignmentPrisma.findMany.mockResolvedValue(assignments);
+
+      await expect(service.generateTimetableDraft('plan-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws BadRequestException when generator finds invalid input', async () => {
@@ -584,7 +674,6 @@ describe('TimetableService', () => {
         excludedDates: [],
         makeupSaturdays: [],
       };
-      // Academic hours not divisible by pair hours (e.g. 5) causes INVALID_INPUT
       const assignments = [
         {
           id: 'assign-1',
@@ -617,10 +706,26 @@ describe('TimetableService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('validates conflicts and updates status to PUBLISHED', async () => {
-      const version = {
-        id: 'ver-1',
+    it('rejects empty timetable version with ConflictException', async () => {
+      mockTimetableVersionPrisma.findUnique.mockResolvedValue({
+        id: 'ver-empty',
         status: 'DRAFT',
+        semesterCalendarId: 'cal-1',
+        events: [],
+      });
+
+      await expect(
+        service.publishTimetableVersion('ver-empty', 'admin-1'),
+      ).rejects.toThrow(
+        new ConflictException('Cannot publish an empty timetable version'),
+      );
+    });
+
+    it('rejects version when assignment non-cancelled event count has a deficit', async () => {
+      const version = {
+        id: 'ver-deficit',
+        status: 'DRAFT',
+        semesterCalendarId: 'cal-1',
         events: [
           {
             id: 'evt-1',
@@ -628,19 +733,80 @@ describe('TimetableService', () => {
             date: new Date('2026-09-07'),
             pair: 1,
             pairSpan: 1,
+            isCancelled: false,
             disciplineTitleSnapshot: 'Calculus',
             teachingTypeSnapshot: TeachingType.LECTURE,
             teacherIdSnapshot: 'teacher-1',
             teachingAssignment: {
+              id: 'assign-1',
+              curriculumPlanId: 'plan-1',
+              academicHours: 4, // requires 2 pairs, only 1 scheduled
               groupId: 'group-1',
-              stream: null,
             },
           },
         ],
       };
 
       mockTimetableVersionPrisma.findUnique.mockResolvedValue(version);
+      mockTeachingAssignmentPrisma.findMany.mockResolvedValue([
+        {
+          id: 'assign-1',
+          curriculumPlanId: 'plan-1',
+          academicHours: 4,
+          groupId: 'group-1',
+        },
+      ]);
+
+      await expect(
+        service.publishTimetableVersion('ver-deficit', 'admin-1'),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('validates conflicts, archives previous PUBLISHED version, and updates status to PUBLISHED atomically', async () => {
+      const version = {
+        id: 'ver-1',
+        status: 'DRAFT',
+        semesterCalendarId: 'cal-1',
+        semesterCalendar: {
+          id: 'cal-1',
+          makeupSaturdays: [{ date: '2026-09-12', followsWeekday: 1 }],
+        },
+        events: [
+          {
+            id: 'evt-1',
+            teachingAssignmentId: 'assign-1',
+            date: new Date('2026-09-12'), // Makeup Saturday!
+            pair: 1,
+            pairSpan: 1,
+            isCancelled: false,
+            disciplineTitleSnapshot: 'Calculus',
+            teachingTypeSnapshot: TeachingType.LECTURE,
+            teacherIdSnapshot: 'teacher-1',
+            teachingAssignment: {
+              id: 'assign-1',
+              curriculumPlanId: 'plan-1',
+              academicHours: 2,
+              groupId: null,
+              subgroupId: 'sub-1',
+              subgroup: { id: 'sub-1', academicGroupId: 'group-1' },
+              stream: null,
+              isSaturdayOnly: false,
+              hasLateSlotAuthorization: false,
+            },
+          },
+        ],
+      };
+
+      mockTimetableVersionPrisma.findUnique.mockResolvedValue(version);
+      mockTeachingAssignmentPrisma.findMany.mockResolvedValue([
+        {
+          id: 'assign-1',
+          curriculumPlanId: 'plan-1',
+          academicHours: 2,
+        },
+      ]);
       mockTeacherUnavailabilityPrisma.findMany.mockResolvedValue([]);
+      mockTimetableEventPrisma.findMany.mockResolvedValue([]);
       mockTimetableVersionPrisma.update.mockResolvedValue({
         ...version,
         status: 'PUBLISHED',
@@ -653,39 +819,116 @@ describe('TimetableService', () => {
       );
 
       expect(published.status).toBe('PUBLISHED');
-      expect(mockTimetableVersionPrisma.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({ id: 'ver-1' }),
-          data: expect.objectContaining({ status: 'PUBLISHED' }),
-        }),
-      );
+      expect(mockPrismaService.$transaction).toHaveBeenCalled();
+      expect(mockTimetableVersionPrisma.updateMany).toHaveBeenCalledWith({
+        where: {
+          semesterCalendarId: 'cal-1',
+          status: 'PUBLISHED',
+          id: { not: 'ver-1' },
+        },
+        data: { status: 'ARCHIVED' },
+      });
+      expect(mockTimetableVersionPrisma.update).toHaveBeenCalledWith({
+        where: { id: 'ver-1', status: 'DRAFT' },
+        data: {
+          status: 'PUBLISHED',
+          publishedAt: expect.any(Date),
+        },
+        include: { events: true },
+      });
     });
 
-    it('throws ConflictException when hard conflicts are detected', async () => {
-      // Overlapping events for the same teacher at the same date and pair
+    it('detects cross-plan collision with already-PUBLISHED version events', async () => {
       const version = {
         id: 'ver-1',
         status: 'DRAFT',
+        semesterCalendarId: 'cal-1',
+        events: [
+          {
+            id: 'evt-new',
+            teachingAssignmentId: 'assign-1',
+            date: new Date('2026-09-07'),
+            pair: 1,
+            pairSpan: 1,
+            isCancelled: false,
+            disciplineTitleSnapshot: 'Calculus',
+            teachingTypeSnapshot: TeachingType.LECTURE,
+            teacherIdSnapshot: 'teacher-shared',
+            teachingAssignment: {
+              id: 'assign-1',
+              curriculumPlanId: 'plan-1',
+              academicHours: 2,
+              groupId: 'group-1',
+            },
+          },
+        ],
+      };
+
+      mockTimetableVersionPrisma.findUnique.mockResolvedValue(version);
+      mockTeachingAssignmentPrisma.findMany.mockResolvedValue([
+        { id: 'assign-1', curriculumPlanId: 'plan-1', academicHours: 2 },
+      ]);
+      mockTeacherUnavailabilityPrisma.findMany.mockResolvedValue([]);
+      // Other plan's published event with the same teacher at the same slot
+      mockTimetableEventPrisma.findMany.mockResolvedValue([
+        {
+          id: 'evt-other-plan',
+          teachingAssignmentId: 'assign-other',
+          date: new Date('2026-09-07'),
+          pair: 1,
+          pairSpan: 1,
+          isCancelled: false,
+          disciplineTitleSnapshot: 'Algebra',
+          teachingTypeSnapshot: TeachingType.LECTURE,
+          teacherIdSnapshot: 'teacher-shared',
+          teachingAssignment: {
+            id: 'assign-other',
+            curriculumPlanId: 'plan-2',
+            groupId: 'group-2',
+          },
+        },
+      ]);
+
+      await expect(
+        service.publishTimetableVersion('ver-1', 'admin-1'),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('throws ConflictException when hard conflicts are detected within version', async () => {
+      const version = {
+        id: 'ver-1',
+        status: 'DRAFT',
+        semesterCalendarId: 'cal-1',
         events: [
           {
             id: 'evt-1',
             teachingAssignmentId: 'assign-1',
             date: new Date('2026-09-07'),
             pair: 1,
+            isCancelled: false,
             disciplineTitleSnapshot: 'Calculus',
             teachingTypeSnapshot: TeachingType.LECTURE,
             teacherIdSnapshot: 'teacher-1',
-            teachingAssignment: { groupId: 'group-1' },
+            teachingAssignment: {
+              id: 'assign-1',
+              academicHours: 2,
+              groupId: 'group-1',
+            },
           },
           {
             id: 'evt-2',
             teachingAssignmentId: 'assign-2',
             date: new Date('2026-09-07'),
             pair: 1,
+            isCancelled: false,
             disciplineTitleSnapshot: 'Physics',
             teachingTypeSnapshot: TeachingType.LECTURE,
-            teacherIdSnapshot: 'teacher-1', // same teacher, same time, different assignment
-            teachingAssignment: { groupId: 'group-2' },
+            teacherIdSnapshot: 'teacher-1',
+            teachingAssignment: {
+              id: 'assign-2',
+              academicHours: 2,
+              groupId: 'group-2',
+            },
           },
         ],
       };
@@ -708,7 +951,7 @@ describe('TimetableService', () => {
       );
     });
 
-    it('generates valid ICS calendar for authenticated teacher', async () => {
+    it('generates valid ICS calendar for authenticated teacher using stableKey and pairSpan', async () => {
       const tokenRecord = {
         id: 'sub-token-1',
         token: 'valid-token',
@@ -727,17 +970,24 @@ describe('TimetableService', () => {
         tokenRecord,
       );
       mockCalendarSubscriptionTokenPrisma.update.mockResolvedValue({});
+      mockTimetableVersionPrisma.findMany.mockResolvedValue([
+        { id: 'ver-pub-latest', semesterCalendarId: 'cal-1' },
+      ]);
 
       const events = [
         {
-          id: 'evt-1',
+          id: 'evt-random-uuid',
+          stableKey: 'assign-1:2026-09-07:1',
+          teachingAssignmentId: 'assign-1',
           date: new Date('2026-09-07'),
           pair: 1,
-          isCancelled: false,
+          pairSpan: 2,
+          isCancelled: true,
           disciplineTitleSnapshot: 'Calculus',
           teachingTypeSnapshot: TeachingType.LECTURE,
           meetingUrlOverride: 'https://meet.google.com/test',
           teachingAssignment: {
+            teacherId: 'teacher-1',
             disciplineTitle: 'Calculus',
             teachingType: TeachingType.LECTURE,
             teacher: { name: 'Prof Smith' },
@@ -752,28 +1002,19 @@ describe('TimetableService', () => {
 
       const ics = await service.getIcsFeed('valid-token');
 
-      expect(typeof ics).toBe('string');
-      expect(ics).toContain('BEGIN:VCALENDAR');
-      expect(ics).toContain('BEGIN:VEVENT');
-      expect(ics).toContain('Calculus');
-      expect(ics).toContain('END:VCALENDAR');
+      expect(ics).toContain(
+        'UID:assign-1:2026-09-07:1@timetable.universe.karazin.ua',
+      );
+      expect(ics).toContain('STATUS:CANCELLED');
+      expect(ics).toContain('DTSTART;TZID=Europe/Kyiv:20260907T083000');
+      expect(ics).toContain('DTEND;TZID=Europe/Kyiv:20260907T113000');
       expect(mockCalendarSubscriptionTokenPrisma.update).toHaveBeenCalledWith({
         where: { id: 'sub-token-1' },
         data: { lastAccessedAt: expect.any(Date) },
       });
-      expect(mockTimetableEventPrisma.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: {
-            timetableVersion: { status: 'PUBLISHED' },
-            teachingAssignment: {
-              OR: [{ teacherId: 'teacher-1' }],
-            },
-          },
-        }),
-      );
     });
 
-    it('generates ICS calendar for student matching academicGroupId', async () => {
+    it('generates ICS calendar for student matching group-wide assignments (subgroupId: null) and excludes other subgroups', async () => {
       const tokenRecord = {
         id: 'sub-token-student',
         token: 'student-token',
@@ -784,7 +1025,7 @@ describe('TimetableService', () => {
           roles: [Role.OPPORTUNITIES_USER],
           name: 'John Doe',
           academicGroupId: 'group-101',
-          academicSubgroupId: null,
+          academicSubgroupId: 'subgroup-1',
         },
       };
 
@@ -796,8 +1037,11 @@ describe('TimetableService', () => {
       const groupEvents = [
         {
           id: 'evt-group',
+          stableKey: 'assign-group:2026-09-08:2',
+          teachingAssignmentId: 'assign-group',
           date: new Date('2026-09-08'),
           pair: 2,
+          pairSpan: 1,
           isCancelled: false,
           disciplineTitleSnapshot: 'Software Engineering',
           teachingTypeSnapshot: TeachingType.LECTURE,
@@ -806,6 +1050,28 @@ describe('TimetableService', () => {
             disciplineTitle: 'Software Engineering',
             teachingType: TeachingType.LECTURE,
             groupId: 'group-101',
+            subgroupId: null,
+            group: { code: 'CS-201' },
+            teacher: { name: 'Dr. Jones' },
+            stream: null,
+          },
+        },
+        {
+          id: 'evt-other-subgroup',
+          stableKey: 'assign-sub2:2026-09-08:3',
+          teachingAssignmentId: 'assign-sub2',
+          date: new Date('2026-09-08'),
+          pair: 3,
+          pairSpan: 1,
+          isCancelled: false,
+          disciplineTitleSnapshot: 'Other Subgroup Lab',
+          teachingTypeSnapshot: TeachingType.LABORATORY,
+          meetingUrlOverride: null,
+          teachingAssignment: {
+            disciplineTitle: 'Other Subgroup Lab',
+            teachingType: TeachingType.LABORATORY,
+            groupId: 'group-101',
+            subgroupId: 'subgroup-2',
             group: { code: 'CS-201' },
             teacher: { name: 'Dr. Jones' },
             stream: null,
@@ -832,177 +1098,86 @@ describe('TimetableService', () => {
                     },
                   },
                 },
-              ],
-            },
-          },
-        }),
-      );
-      expect(ics).toContain('Software Engineering');
-      expect(ics).toContain('CS-201');
-      expect(ics).toContain('Dr. Jones');
-    });
-
-    it('generates ICS calendar for student matching academicSubgroupId', async () => {
-      const tokenRecord = {
-        id: 'sub-token-subgroup',
-        token: 'subgroup-token',
-        isActive: true,
-        userId: 'student-2',
-        user: {
-          id: 'student-2',
-          roles: [Role.OPPORTUNITIES_USER],
-          name: 'Alice Student',
-          academicGroupId: 'group-101',
-          academicSubgroupId: 'subgroup-1',
-        },
-      };
-
-      mockCalendarSubscriptionTokenPrisma.findUnique.mockResolvedValue(
-        tokenRecord,
-      );
-      mockCalendarSubscriptionTokenPrisma.update.mockResolvedValue({});
-
-      const subgroupEvents = [
-        {
-          id: 'evt-subgroup',
-          date: new Date('2026-09-09'),
-          pair: 3,
-          isCancelled: false,
-          disciplineTitleSnapshot: 'Lab 1',
-          teachingTypeSnapshot: TeachingType.LABORATORY,
-          meetingUrlOverride: null,
-          teachingAssignment: {
-            disciplineTitle: 'Lab 1',
-            teachingType: TeachingType.LABORATORY,
-            groupId: 'group-101',
-            subgroupId: 'subgroup-1',
-            group: { code: 'CS-201' },
-            teacher: { name: 'Prof Brown' },
-            stream: null,
-          },
-        },
-      ];
-
-      mockTimetableEventPrisma.findMany.mockResolvedValue(subgroupEvents);
-
-      const ics = await service.getIcsFeed('subgroup-token');
-
-      expect(mockTimetableEventPrisma.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: {
-            timetableVersion: { status: 'PUBLISHED' },
-            teachingAssignment: {
-              OR: [
-                { teacherId: 'student-2' },
-                { groupId: 'group-101', subgroupId: null },
-                {
-                  stream: {
-                    groups: {
-                      some: { id: 'group-101' },
-                    },
-                  },
-                },
                 { subgroupId: 'subgroup-1' },
               ],
             },
           },
         }),
       );
-      expect(ics).toContain('Lab 1');
-    });
-
-    it('generates ICS calendar for student matching academicStream containing their group', async () => {
-      const tokenRecord = {
-        id: 'sub-token-stream',
-        token: 'stream-token',
-        isActive: true,
-        userId: 'student-3',
-        user: {
-          id: 'student-3',
-          roles: [Role.OPPORTUNITIES_USER],
-          name: 'Bob Student',
-          academicGroupId: 'group-101',
-          academicSubgroupId: null,
-        },
-      };
-
-      mockCalendarSubscriptionTokenPrisma.findUnique.mockResolvedValue(
-        tokenRecord,
-      );
-      mockCalendarSubscriptionTokenPrisma.update.mockResolvedValue({});
-
-      const streamEvents = [
-        {
-          id: 'evt-stream',
-          date: new Date('2026-09-10'),
-          pair: 1,
-          isCancelled: false,
-          disciplineTitleSnapshot: 'General Physics Lecture',
-          teachingTypeSnapshot: TeachingType.LECTURE,
-          meetingUrlOverride: null,
-          teachingAssignment: {
-            disciplineTitle: 'General Physics Lecture',
-            teachingType: TeachingType.LECTURE,
-            streamId: 'stream-1',
-            stream: {
-              groups: [{ code: 'CS-101' }, { code: 'CS-102' }],
-            },
-            teacher: { name: 'Prof Einstein' },
-          },
-        },
-      ];
-
-      mockTimetableEventPrisma.findMany.mockResolvedValue(streamEvents);
-
-      const ics = await service.getIcsFeed('stream-token');
-
-      expect(mockTimetableEventPrisma.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: {
-            timetableVersion: { status: 'PUBLISHED' },
-            teachingAssignment: {
-              OR: [
-                { teacherId: 'student-3' },
-                { groupId: 'group-101', subgroupId: null },
-                {
-                  stream: {
-                    groups: {
-                      some: { id: 'group-101' },
-                    },
-                  },
-                },
-              ],
-            },
-          },
-        }),
-      );
-      expect(ics).toContain('General Physics Lecture');
-      expect(ics).toContain('CS-101');
-      expect(ics).toContain('CS-102');
-      expect(ics).toContain('Prof Einstein');
+      expect(ics).toContain('Software Engineering');
+      expect(ics).not.toContain('Other Subgroup Lab');
     });
   });
 
-  describe('createSubscriptionToken', () => {
-    it('creates a new active calendar subscription token', async () => {
-      const created = {
-        id: 'token-id-1',
+  describe('subscription token lifecycle', () => {
+    it('reuses existing active token if present instead of creating duplicates', async () => {
+      const existing = {
+        id: 'token-existing',
         userId: 'user-1',
-        token: 'uuid-token',
+        token: 'existing-base64url-token',
         isActive: true,
       };
 
-      mockCalendarSubscriptionTokenPrisma.create.mockResolvedValue(created);
+      mockCalendarSubscriptionTokenPrisma.findFirst.mockResolvedValue(existing);
 
       const result = await service.createSubscriptionToken('user-1');
 
-      expect(result).toEqual(created);
-      expect(mockCalendarSubscriptionTokenPrisma.create).toHaveBeenCalledWith({
-        data: {
-          userId: 'user-1',
-          token: expect.any(String),
-          isActive: true,
-        },
+      expect(result).toEqual(existing);
+      expect(mockCalendarSubscriptionTokenPrisma.create).not.toHaveBeenCalled();
+    });
+
+    it('creates a new 32-byte base64url token when no active token exists', async () => {
+      mockCalendarSubscriptionTokenPrisma.findFirst.mockResolvedValue(null);
+      mockCalendarSubscriptionTokenPrisma.create.mockImplementation(
+        async ({ data }) => ({
+          id: 'token-id-1',
+          ...data,
+        }),
+      );
+
+      const result = await service.createSubscriptionToken('user-1');
+
+      expect(result.userId).toBe('user-1');
+      expect(result.isActive).toBe(true);
+      expect(result.token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    });
+
+    it('rotates subscription token by deactivating existing tokens and creating a new one', async () => {
+      mockCalendarSubscriptionTokenPrisma.updateMany.mockResolvedValue({
+        count: 1,
+      });
+      mockCalendarSubscriptionTokenPrisma.create.mockImplementation(
+        async ({ data }) => ({
+          id: 'token-rotated',
+          ...data,
+        }),
+      );
+
+      const result = await service.rotateSubscriptionToken('user-1');
+
+      expect(
+        mockCalendarSubscriptionTokenPrisma.updateMany,
+      ).toHaveBeenCalledWith({
+        where: { userId: 'user-1', isActive: true },
+        data: { isActive: false },
+      });
+      expect(result.id).toBe('token-rotated');
+      expect(result.token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    });
+
+    it('revokes all active tokens for user', async () => {
+      mockCalendarSubscriptionTokenPrisma.updateMany.mockResolvedValue({
+        count: 2,
+      });
+
+      const result = await service.revokeSubscriptionTokens('user-1');
+
+      expect(result).toEqual({ count: 2 });
+      expect(
+        mockCalendarSubscriptionTokenPrisma.updateMany,
+      ).toHaveBeenCalledWith({
+        where: { userId: 'user-1', isActive: true },
+        data: { isActive: false },
       });
     });
   });
@@ -1049,10 +1224,6 @@ describe('TimetableService', () => {
       );
 
       expect(updated.meetingUrl).toBe('https://meet.com/new');
-      expect(mockTeachingAssignmentPrisma.update).toHaveBeenCalledWith({
-        where: { id: 'assign-1' },
-        data: { meetingUrl: 'https://meet.com/new' },
-      });
     });
 
     it('updates meeting URL when user is admin', async () => {

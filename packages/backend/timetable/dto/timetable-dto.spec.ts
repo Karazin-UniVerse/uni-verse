@@ -7,9 +7,11 @@ import {
   CreateSemesterCalendarDto,
   CreateTeacherUnavailabilityDto,
   CreateTeachingAssignmentDto,
+  GenerateTimetableDto,
   GetSemesterCalendarQueryDto,
   ListTeachingAssignmentsQueryDto,
   MakeupSaturdayDto,
+  UpdateMeetingUrlDto,
   UpdateTeachingAssignmentDto,
 } from './index';
 
@@ -34,6 +36,37 @@ describe('Timetable DTOs', () => {
       expect(validateSync(dto)).toEqual([]);
     });
 
+    it('should validate when subgroupId or streamId is provided instead of groupId', () => {
+      const subgroupDto = plainToInstance(CreateTeachingAssignmentDto, {
+        ...validAssignment,
+        groupId: undefined,
+        subgroupId: 'sub-1',
+      });
+      const streamDto = plainToInstance(CreateTeachingAssignmentDto, {
+        ...validAssignment,
+        groupId: undefined,
+        streamId: 'stream-1',
+      });
+
+      expect(validateSync(subgroupDto)).toEqual([]);
+      expect(validateSync(streamDto)).toEqual([]);
+    });
+
+    it('should reject when none of groupId, subgroupId, or streamId is provided', () => {
+      const dto = plainToInstance(CreateTeachingAssignmentDto, {
+        ...validAssignment,
+        groupId: undefined,
+        subgroupId: undefined,
+        streamId: undefined,
+      });
+
+      const errors = validateSync(dto);
+
+      expect(errors).toEqual([
+        expect.objectContaining({ property: 'groupId' }),
+      ]);
+    });
+
     it('should validate a correct assignment payload with valid HTTP and HTTPS meetingUrl', () => {
       const httpDto = plainToInstance(CreateTeachingAssignmentDto, {
         ...validAssignment,
@@ -48,18 +81,21 @@ describe('Timetable DTOs', () => {
       expect(validateSync(httpsDto)).toEqual([]);
     });
 
-    it('should reject non-positive academic hours', () => {
-      const dto = plainToInstance(CreateTeachingAssignmentDto, {
-        ...validAssignment,
-        academicHours: 0,
-      });
+    it.each([0, -2, 1, 3, 33, 401, 402])(
+      'should reject invalid academic hours %d (must be even integer in 2..400)',
+      (academicHours) => {
+        const dto = plainToInstance(CreateTeachingAssignmentDto, {
+          ...validAssignment,
+          academicHours,
+        });
 
-      const errors = validateSync(dto);
+        const errors = validateSync(dto);
 
-      expect(errors).toEqual([
-        expect.objectContaining({ property: 'academicHours' }),
-      ]);
-    });
+        expect(errors).toEqual([
+          expect.objectContaining({ property: 'academicHours' }),
+        ]);
+      },
+    );
 
     it('should reject invalid teaching type', () => {
       const dto = plainToInstance(CreateTeachingAssignmentDto, {
@@ -80,7 +116,8 @@ describe('Timetable DTOs', () => {
       'ftp://example.com/meeting',
       'not-a-url',
       'example.com/meeting',
-    ])('should reject invalid meetingUrl %s', (invalidUrl) => {
+      `https://example.com/${'a'.repeat(2040)}`,
+    ])('should reject invalid or overly long meetingUrl %s', (invalidUrl) => {
       const dto = plainToInstance(CreateTeachingAssignmentDto, {
         ...validAssignment,
         meetingUrl: invalidUrl,
@@ -108,6 +145,7 @@ describe('Timetable DTOs', () => {
       'data:text/html,<script>alert(1)</script>',
       'ftp://example.com/meeting',
       'just-text',
+      `https://example.com/${'a'.repeat(2040)}`,
     ])('should reject invalid meetingUrl %s', (invalidUrl) => {
       const dto = plainToInstance(UpdateTeachingAssignmentDto, {
         meetingUrl: invalidUrl,
@@ -119,6 +157,53 @@ describe('Timetable DTOs', () => {
         expect.objectContaining({ property: 'meetingUrl' }),
       ]);
     });
+  });
+
+  describe('UpdateMeetingUrlDto', () => {
+    it('should reject meetingUrl exceeding 2048 characters', () => {
+      const dto = plainToInstance(UpdateMeetingUrlDto, {
+        meetingUrl: `https://example.com/${'a'.repeat(2040)}`,
+      });
+
+      const errors = validateSync(dto);
+
+      expect(errors).toEqual([
+        expect.objectContaining({ property: 'meetingUrl' }),
+      ]);
+    });
+  });
+
+  describe('GenerateTimetableDto', () => {
+    it('should validate valid maxCandidates (1..5) and timeoutMs (1..10000)', () => {
+      const dto = plainToInstance(GenerateTimetableDto, {
+        maxCandidates: 5,
+        timeoutMs: 10000,
+      });
+
+      expect(validateSync(dto)).toEqual([]);
+    });
+
+    it.each([0, 6, -1])(
+      'should reject invalid maxCandidates %d',
+      (maxCandidates) => {
+        const dto = plainToInstance(GenerateTimetableDto, { maxCandidates });
+
+        expect(validateSync(dto)).toEqual([
+          expect.objectContaining({ property: 'maxCandidates' }),
+        ]);
+      },
+    );
+
+    it.each([0, 10001, -10])(
+      'should reject invalid timeoutMs %d',
+      (timeoutMs) => {
+        const dto = plainToInstance(GenerateTimetableDto, { timeoutMs });
+
+        expect(validateSync(dto)).toEqual([
+          expect.objectContaining({ property: 'timeoutMs' }),
+        ]);
+      },
+    );
   });
 
   describe('CreateSemesterCalendarDto', () => {

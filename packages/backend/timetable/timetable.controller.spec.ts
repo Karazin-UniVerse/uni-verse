@@ -1,7 +1,14 @@
-import { ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Role, TeachingType } from '@universe/database';
-import { TimetableController } from './timetable.controller';
+import {
+  ParseFeedTokenPipe,
+  TimetableController,
+} from './timetable.controller';
 import { TimetableService } from './timetable.service';
 import type {
   ConfirmTeacherUnavailabilityDto,
@@ -26,6 +33,7 @@ describe('TimetableController', () => {
     getCurriculumPlan: jest.fn(),
     createTeachingAssignment: jest.fn(),
     listTeachingAssignments: jest.fn(),
+    listTeacherAssignments: jest.fn(),
     updateMeetingUrl: jest.fn(),
     configureSemesterCalendar: jest.fn(),
     getSemesterCalendar: jest.fn(),
@@ -34,6 +42,8 @@ describe('TimetableController', () => {
     generateTimetableDraft: jest.fn(),
     publishTimetableVersion: jest.fn(),
     createSubscriptionToken: jest.fn(),
+    rotateSubscriptionToken: jest.fn(),
+    revokeSubscriptionTokens: jest.fn(),
     getIcsFeed: jest.fn(),
   };
 
@@ -121,7 +131,7 @@ describe('TimetableController', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('gets curriculum plan by id', async () => {
+    it('gets curriculum plan by id for admin', async () => {
       mockTimetableService.getCurriculumPlan.mockResolvedValue({
         id: 'plan-1',
       });
@@ -133,6 +143,13 @@ describe('TimetableController', () => {
         'plan-1',
       );
     });
+
+    it('rejects getCurriculumPlan for non-admin', async () => {
+      await expect(
+        controller.getCurriculumPlan('plan-1', [Role.INSTRUCTOR]),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockTimetableService.getCurriculumPlan).not.toHaveBeenCalled();
+    });
   });
 
   describe('teaching assignments', () => {
@@ -142,6 +159,7 @@ describe('TimetableController', () => {
       teachingType: TeachingType.LECTURE,
       academicHours: 32,
       teacherId: 'teacher-1',
+      groupId: 'group-1',
     };
 
     it('creates teaching assignment for admin', async () => {
@@ -166,7 +184,7 @@ describe('TimetableController', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('lists teaching assignments by planId using query DTO', async () => {
+    it('lists teaching assignments by planId using query DTO for admin', async () => {
       mockTimetableService.listTeachingAssignments.mockResolvedValue([]);
 
       const query: ListTeachingAssignmentsQueryDto = {
@@ -180,6 +198,34 @@ describe('TimetableController', () => {
       expect(result).toEqual([]);
       expect(mockTimetableService.listTeachingAssignments).toHaveBeenCalledWith(
         '11111111-1111-1111-1111-111111111111',
+      );
+    });
+
+    it('rejects listTeachingAssignments for non-admin', async () => {
+      const query: ListTeachingAssignmentsQueryDto = {
+        curriculumPlanId: '11111111-1111-1111-1111-111111111111',
+      };
+
+      await expect(
+        controller.listTeachingAssignments(query, [Role.INSTRUCTOR]),
+      ).rejects.toThrow(ForbiddenException);
+      expect(
+        mockTimetableService.listTeachingAssignments,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('lists own teaching assignments for authenticated teacher', async () => {
+      const ownAssignments = [{ id: 'assign-1', teacherId: 'teacher-1' }];
+
+      mockTimetableService.listTeacherAssignments.mockResolvedValue(
+        ownAssignments,
+      );
+
+      const result = await controller.listMyTeachingAssignments('teacher-1');
+
+      expect(result).toEqual(ownAssignments);
+      expect(mockTimetableService.listTeacherAssignments).toHaveBeenCalledWith(
+        'teacher-1',
       );
     });
 
@@ -242,7 +288,7 @@ describe('TimetableController', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('gets semester calendar using query DTO', async () => {
+    it('gets semester calendar using query DTO for admin', async () => {
       mockTimetableService.getSemesterCalendar.mockResolvedValue({
         id: 'cal-1',
       });
@@ -259,6 +305,18 @@ describe('TimetableController', () => {
         '2026/2027',
         1,
       );
+    });
+
+    it('rejects getSemesterCalendar for non-admin', async () => {
+      const query: GetSemesterCalendarQueryDto = {
+        academicYear: '2026/2027',
+        semester: 1,
+      };
+
+      await expect(
+        controller.getSemesterCalendar(query, [Role.INSTRUCTOR]),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockTimetableService.getSemesterCalendar).not.toHaveBeenCalled();
     });
   });
 
@@ -402,17 +460,43 @@ describe('TimetableController', () => {
   });
 
   describe('calendar feeds and tokens', () => {
-    it('creates calendar subscription token for authenticated user', async () => {
+    it('creates or reuses calendar subscription token for authenticated user', async () => {
       mockTimetableService.createSubscriptionToken.mockResolvedValue({
-        token: 'uuid-token',
+        token: 'base64url-token',
       });
 
       const result = await controller.createSubscriptionToken('user-1');
 
-      expect(result).toEqual({ token: 'uuid-token' });
+      expect(result).toEqual({ token: 'base64url-token' });
       expect(mockTimetableService.createSubscriptionToken).toHaveBeenCalledWith(
         'user-1',
       );
+    });
+
+    it('rotates calendar subscription token for authenticated user', async () => {
+      mockTimetableService.rotateSubscriptionToken.mockResolvedValue({
+        token: 'rotated-token',
+      });
+
+      const result = await controller.rotateSubscriptionToken('user-1');
+
+      expect(result).toEqual({ token: 'rotated-token' });
+      expect(mockTimetableService.rotateSubscriptionToken).toHaveBeenCalledWith(
+        'user-1',
+      );
+    });
+
+    it('revokes calendar subscription tokens for authenticated user', async () => {
+      mockTimetableService.revokeSubscriptionTokens.mockResolvedValue({
+        count: 2,
+      });
+
+      const result = await controller.revokeSubscriptionTokens('user-1');
+
+      expect(result).toEqual({ count: 2 });
+      expect(
+        mockTimetableService.revokeSubscriptionTokens,
+      ).toHaveBeenCalledWith('user-1');
     });
 
     it('returns public ICS calendar feed', async () => {
@@ -420,16 +504,18 @@ describe('TimetableController', () => {
 
       mockTimetableService.getIcsFeed.mockResolvedValue(icsString);
 
-      const result = await controller.getCalendarFeed('feed-token-123');
+      const result = await controller.getCalendarFeed(
+        'feed-token-1234567890abcd',
+      );
 
       expect(result).toBe(icsString);
       expect(mockTimetableService.getIcsFeed).toHaveBeenCalledWith(
-        'feed-token-123',
+        'feed-token-1234567890abcd',
       );
     });
   });
 
-  describe('route parameter ParseUUIDPipe validation', () => {
+  describe('route parameter validation pipes', () => {
     function getPipesForParam(
       methodName: string,
       paramIndex: number,
@@ -458,43 +544,53 @@ describe('TimetableController', () => {
     it('applies ParseUUIDPipe to curriculum plan id param', () => {
       const pipes = getPipesForParam('getCurriculumPlan', 0);
 
-      expect(pipes.length).toBeGreaterThan(0);
+      expect(pipes).toContain(ParseUUIDPipe);
     });
 
     it('applies ParseUUIDPipe to updateMeetingUrl assignment id param', () => {
       const pipes = getPipesForParam('updateMeetingUrl', 0);
 
-      expect(pipes.length).toBeGreaterThan(0);
+      expect(pipes).toContain(ParseUUIDPipe);
     });
 
     it('applies ParseUUIDPipe to requestTeacherUnavailability teacherId param', () => {
       const pipes = getPipesForParam('requestTeacherUnavailability', 0);
 
-      expect(pipes.length).toBeGreaterThan(0);
+      expect(pipes).toContain(ParseUUIDPipe);
     });
 
     it('applies ParseUUIDPipe to confirmTeacherUnavailability id param', () => {
       const pipes = getPipesForParam('confirmTeacherUnavailability', 0);
 
-      expect(pipes.length).toBeGreaterThan(0);
+      expect(pipes).toContain(ParseUUIDPipe);
     });
 
     it('applies ParseUUIDPipe to generateTimetableDraft plan id param', () => {
       const pipes = getPipesForParam('generateTimetableDraft', 0);
 
-      expect(pipes.length).toBeGreaterThan(0);
+      expect(pipes).toContain(ParseUUIDPipe);
     });
 
     it('applies ParseUUIDPipe to publishTimetableVersion version id param', () => {
       const pipes = getPipesForParam('publishTimetableVersion', 0);
 
-      expect(pipes.length).toBeGreaterThan(0);
+      expect(pipes).toContain(ParseUUIDPipe);
     });
 
-    it('applies ParseUUIDPipe to getCalendarFeed token param', () => {
+    it('applies ParseFeedTokenPipe to getCalendarFeed token param and validates base64url tokens', () => {
       const pipes = getPipesForParam('getCalendarFeed', 0);
 
-      expect(pipes.length).toBeGreaterThan(0);
+      expect(pipes).toContain(ParseFeedTokenPipe);
+
+      const pipe = new ParseFeedTokenPipe();
+
+      expect(pipe.transform('abcdef1234567890_ABCDEF-12345678')).toBe(
+        'abcdef1234567890_ABCDEF-12345678',
+      );
+      expect(() => pipe.transform('short')).toThrow(BadRequestException);
+      expect(() => pipe.transform('invalid token with spaces!')).toThrow(
+        BadRequestException,
+      );
     });
   });
 });
