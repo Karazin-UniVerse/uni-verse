@@ -89,8 +89,8 @@
   height: 42px;
   padding: 0 14px;
   background: var(--bg-hover);
-  border: 1px solid transparent;
-  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  border-radius: var(--border-radius-medium);
   transition: all var(--transition-fast) var(--ease-standard);
 
   &:hover {
@@ -150,7 +150,7 @@
   width: 22px;
   height: 22px;
   padding: 0;
-  border-radius: 50%;
+  border-radius: var(--border-radius-full);
   border: 1px solid var(--card-border);
   background: var(--bg-surface);
   color: var(--text-secondary);
@@ -215,14 +215,14 @@
   color: var(--success-color, #10b981);
   background: color-mix(in srgb, var(--success-color, #10b981) 10%, transparent);
   padding: 5px 12px;
-  border-radius: 14px;
+  border-radius: var(--border-radius-full);
   border: 1px solid color-mix(in srgb, var(--success-color, #10b981) 25%, transparent);
 }
 
 .ownerAvatar {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: var(--border-radius-full);
   background: linear-gradient(
     135deg,
     var(--blue-600, #2563eb),
@@ -277,7 +277,7 @@
 .moderationCard {
   background: var(--bg-surface);
   border: 1px solid var(--card-border);
-  border-radius: 20px;
+  border-radius: var(--border-radius-large);
   padding: 24px;
   box-shadow: var(--card-shadow);
   display: flex;
@@ -299,7 +299,7 @@
     left: 0;
     width: 4px;
     background: var(--warning-color, #f59e0b);
-    border-radius: 20px 0 0 20px;
+    border-radius: var(--border-radius-large) 0 0 var(--border-radius-large);
     z-index: 2;
   }
 
@@ -352,7 +352,7 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   padding: 4px 10px;
-  border-radius: 8px;
+  border-radius: var(--border-radius-medium);
   color: var(--warning-color, #f59e0b);
   background: color-mix(in srgb, var(--warning-color, #f59e0b) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--warning-color, #f59e0b) 25%, transparent);
@@ -405,14 +405,14 @@
   color: var(--text-secondary);
   background: var(--bg-hover);
   padding: 5px 12px;
-  border-radius: 12px;
+  border-radius: var(--border-radius-full);
   border: 1px solid var(--card-border);
 }
 
 .moderationDescriptionBox {
   padding: 16px 20px;
   background: color-mix(in srgb, var(--text-primary) 3%, var(--bg-surface));
-  border-radius: 14px;
+  border-radius: var(--border-radius-medium);
   border: 1px solid var(--card-border);
 }
 
@@ -441,7 +441,7 @@
   padding: 12px 16px;
   background: color-mix(in srgb, var(--warning-color, #f59e0b) 8%, var(--bg-surface));
   border: 1px solid color-mix(in srgb, var(--warning-color, #f59e0b) 25%, transparent);
-  border-radius: 12px;
+  border-radius: var(--border-radius-medium);
   font-size: var(--font-xs);
   line-height: 1.5;
 
@@ -492,7 +492,7 @@
   color: var(--text-secondary);
   background: var(--bg-hover);
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: var(--border-radius-small);
   border: 1px solid var(--card-border);
   align-self: flex-start;
 }
@@ -551,7 +551,7 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   padding: 4px 10px;
-  border-radius: 8px;
+  border-radius: var(--border-radius-medium);
 
   &.badgeSubmitted {
     color: var(--accent-primary);
@@ -587,7 +587,7 @@
 .applicationCard {
   background: var(--bg-surface);
   border: 1px solid var(--card-border);
-  border-radius: 20px;
+  border-radius: var(--border-radius-large);
   padding: 24px;
   box-shadow: var(--card-shadow);
   display: flex;
@@ -609,7 +609,7 @@
     left: 0;
     width: 4px;
     background: var(--accent-primary);
-    border-radius: 20px 0 0 20px;
+    border-radius: var(--border-radius-large) 0 0 var(--border-radius-large);
     z-index: 2;
   }
 
@@ -688,7 +688,7 @@
 .motivationBox {
   padding: 16px 20px;
   background: color-mix(in srgb, var(--text-primary) 3%, var(--bg-surface));
-  border-radius: 14px;
+  border-radius: var(--border-radius-medium);
   border: 1px solid var(--card-border);
 }
 
@@ -720,7 +720,7 @@
   padding: 12px 16px;
   background: color-mix(in srgb, var(--accent-primary) 8%, var(--bg-surface));
   border: 1px solid color-mix(in srgb, var(--accent-primary) 25%, transparent);
-  border-radius: 12px;
+  border-radius: var(--border-radius-medium);
   font-size: var(--font-xs);
   line-height: 1.5;
 
@@ -816,7 +816,7 @@
 .applicantCard {
   background: var(--bg-surface);
   border: 1px solid var(--card-border);
-  border-radius: 16px;
+  border-radius: var(--border-radius-large);
   padding: 18px 20px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
   display: flex;
@@ -867,7 +867,7 @@
 .applicantMotivationBox {
   padding: 12px 16px;
   background: color-mix(in srgb, var(--text-primary) 3%, var(--bg-surface));
-  border-radius: 12px;
+  border-radius: var(--border-radius-medium);
   border: 1px solid var(--card-border);
 }
 
