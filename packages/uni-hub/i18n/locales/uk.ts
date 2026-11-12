@@ -1,4 +1,15 @@
 export const uk = {
+  'timetable.adjustSlot': 'Змінити слот',
+  'timetable.adjustConflict': 'Слот конфліктує з іншим заняттям або обмеженнями розкладу',
+  'timetable.currentSlot': 'Поточний слот: {day}, пара {pair}',
+  'timetable.targetWeekday': 'День тижня',
+  'timetable.targetPair': 'Пара',
+  'timetable.adjustError': 'Не вдалося змінити слот',
+  'schedule.rescheduleEvent': 'Перенести заняття',
+  'schedule.newDate': 'Нова дата',
+  'schedule.rescheduleReason': 'Причина (необов’язково)',
+  'schedule.rescheduleSuccess': 'Заняття перенесено',
+  'schedule.rescheduleError': 'Не вдалося перенести заняття',
   // Common / Lang
   'lang.uk': 'Українська',
   'lang.en': 'English',

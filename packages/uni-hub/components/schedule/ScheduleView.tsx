@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { BREAKPOINTS } from '@core/constants/breakpoints';
-import { Button, Modal, TextInput, useToast } from '@una';
+import { PAIR_SCHEDULE, type PairNumber } from '@core/constants/timetable';
+import { Button, Modal, Select, TextInput, useToast } from '@una';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { useMySchedule } from '@uni-hub/hooks/useMySchedule';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -33,6 +34,16 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   const locale = localeTag;
   const { roles } = useCurrentUser();
   const toast = useToast();
+  const isAdmin = roles.includes('ADMIN');
+  const [rescheduledEvents, setRescheduledEvents] = useState<Map<string, ScheduleEvent>>(
+    () => new Map(),
+  );
+  const [reschedulingEvent, setReschedulingEvent] = useState<ScheduleEvent | null>(null);
+  const [newDate, setNewDate] = useState('');
+  const [newPair, setNewPair] = useState('1');
+  const [reason, setReason] = useState('');
+  const [rescheduleError, setRescheduleError] = useState<string | null>(null);
+  const [isRescheduling, setIsRescheduling] = useState(false);
 
   const isTeacher =
     propIsTeacher ??
@@ -53,14 +64,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       base = fetchedEvents.length > 0 ? fetchedEvents : DUMMY_EVENTS;
     }
 
-    if (meetingUrlOverrides.size === 0) {
-      return base;
-    }
+    return base.map((event) => {
+      const updated = rescheduledEvents.get(event.id) ?? event;
 
-    return base.map((e) =>
-      meetingUrlOverrides.has(e.id) ? { ...e, meetingUrl: meetingUrlOverrides.get(e.id) } : e,
-    );
-  }, [fetchedEvents, meetingUrlOverrides, propEvents]);
+      return meetingUrlOverrides.has(event.id)
+        ? { ...updated, meetingUrl: meetingUrlOverrides.get(event.id) }
+        : updated;
+    });
+  }, [fetchedEvents, meetingUrlOverrides, propEvents, rescheduledEvents]);
   const [selectedViewMode, setSelectedViewMode] = useState<ScheduleViewMode | null>(null);
   const viewMode = selectedViewMode ?? (isMobile ? 'day' : 'month');
 
@@ -210,6 +221,40 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     }
   }, [editingEvent, formatMessage, meetingUrlInput, toast]);
 
+  const handleReschedule = async (): Promise<void> => {
+    if (!reschedulingEvent || !isAdmin) {
+      return;
+    }
+
+    setIsRescheduling(true);
+    setRescheduleError(null);
+
+    try {
+      const response = await timetableApi.rescheduleEvent(reschedulingEvent.id, {
+        newDate,
+        newPair: Number(newPair),
+        reason: reason.trim() || undefined,
+      });
+      const date = response.data.date.split('T')[0];
+      const bell = PAIR_SCHEDULE[response.data.pair as PairNumber];
+      const start = new Date(`${date}T${bell.start}:00`);
+      const end = new Date(`${date}T${bell.end}:00`);
+
+      setRescheduledEvents((previous) =>
+        new Map(previous).set(reschedulingEvent.id, { ...reschedulingEvent, start, end }),
+      );
+      setSelectedDate(start);
+      toast.success(formatMessage('schedule.rescheduleSuccess'));
+      setReschedulingEvent(null);
+    } catch (failure) {
+      setRescheduleError(
+        failure instanceof Error ? failure.message : formatMessage('schedule.rescheduleError'),
+      );
+    } finally {
+      setIsRescheduling(false);
+    }
+  };
+
   return (
     <div className={styles.root}>
       <ScheduleToolbar
@@ -309,6 +354,33 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             </p>
           )}
           <label htmlFor="meeting-url-input">{formatMessage('schedule.meetingUrlLabel')}</label>
+          {isAdmin && editingEvent && (
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={isSavingUrl}
+              onClick={() => {
+                setReschedulingEvent(editingEvent);
+                const date = editingEvent.start;
+
+                setNewDate(
+                  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+                );
+                setNewPair(
+                  Object.entries(PAIR_SCHEDULE).find(
+                    ([, bell]) =>
+                      bell.start ===
+                      `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`,
+                  )?.[0] ?? '1',
+                );
+                setReason('');
+                setRescheduleError(null);
+                setEditingEvent(null);
+              }}
+            >
+              {formatMessage('schedule.rescheduleEvent')}
+            </Button>
+          )}
           <TextInput
             id="meeting-url-input"
             type="url"
@@ -335,6 +407,53 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             </Button>
           </div>
         </div>
+      </Modal>
+      <Modal
+        open={Boolean(reschedulingEvent)}
+        onClose={() => {
+          if (!isRescheduling) setReschedulingEvent(null);
+        }}
+        title={formatMessage('schedule.rescheduleEvent')}
+        closeLabel={formatMessage('common.close')}
+      >
+        <form
+          className={styles.modalBody}
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleReschedule();
+          }}
+        >
+          <p>{reschedulingEvent?.title}</p>
+          {rescheduleError && (
+            <p className={styles.errorText} role="alert">
+              {rescheduleError}
+            </p>
+          )}
+          <TextInput
+            type="date"
+            required
+            aria-label={formatMessage('schedule.newDate')}
+            value={newDate}
+            disabled={isRescheduling}
+            onChange={(event) => setNewDate(event.target.value)}
+          />
+          <Select
+            aria-label={formatMessage('timetable.targetPair')}
+            value={newPair}
+            disabled={isRescheduling}
+            onChange={setNewPair}
+            options={Object.keys(PAIR_SCHEDULE).map((pair) => ({ value: pair, label: pair }))}
+          />
+          <TextInput
+            aria-label={formatMessage('schedule.rescheduleReason')}
+            value={reason}
+            disabled={isRescheduling}
+            onChange={(event) => setReason(event.target.value)}
+          />
+          <Button type="submit" disabled={isRescheduling || !newDate}>
+            {formatMessage('schedule.save')}
+          </Button>
+        </form>
       </Modal>
     </div>
   );

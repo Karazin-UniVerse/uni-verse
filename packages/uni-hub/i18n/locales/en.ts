@@ -1,6 +1,17 @@
 import type { TranslationKey } from './uk';
 
 export const en = {
+  'timetable.adjustSlot': 'Adjust slot',
+  'timetable.adjustConflict': 'The slot conflicts with another class or timetable restrictions',
+  'timetable.currentSlot': 'Current slot: {day}, pair {pair}',
+  'timetable.targetWeekday': 'Weekday',
+  'timetable.targetPair': 'Pair',
+  'timetable.adjustError': 'Could not adjust the slot',
+  'schedule.rescheduleEvent': 'Reschedule event',
+  'schedule.newDate': 'New date',
+  'schedule.rescheduleReason': 'Reason (optional)',
+  'schedule.rescheduleSuccess': 'Event rescheduled',
+  'schedule.rescheduleError': 'Could not reschedule the event',
   // Common / Lang
   'lang.uk': 'Ukrainian',
   'lang.en': 'English',

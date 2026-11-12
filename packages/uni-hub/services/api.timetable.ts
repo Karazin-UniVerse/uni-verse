@@ -1,5 +1,6 @@
 import type {
   AcademicGroupResponse,
+  AdjustDraftSlotRequest,
   CalendarSubscriptionTokenResponse,
   CreateSemesterCalendarRequest,
   CreateTeacherUnavailabilityRequest,
@@ -8,6 +9,8 @@ import type {
   GenerateTimetableDraftResult,
   GenerateTimetableRequest,
   IcsCalendarEvent,
+  RescheduleEventRequest,
+  ScheduledEvent,
   SafeTeacherResponse,
   SemesterCalendarResponse,
   TeacherUnavailabilityResponse,
@@ -19,6 +22,26 @@ import { ApiClient, buildQueryString } from './api.request';
 import { API_BASE_URL } from './api.storage';
 
 export class TimetableApi extends ApiClient {
+  async adjustDraftSlot(
+    versionId: string,
+    payload: AdjustDraftSlotRequest,
+  ): Promise<{ data: TimetableVersionResponse & { penaltyScore?: number } }> {
+    return this.request<TimetableVersionResponse & { penaltyScore?: number }>(
+      `/timetable/versions/${encodeURIComponent(versionId)}/slots`,
+      { method: 'PATCH', body: JSON.stringify(payload) },
+    );
+  }
+
+  async rescheduleEvent(
+    eventId: string,
+    payload: RescheduleEventRequest,
+  ): Promise<{ data: Pick<ScheduledEvent, 'date' | 'pair'> }> {
+    return this.request<Pick<ScheduledEvent, 'date' | 'pair'>>(
+      `/timetable/events/${encodeURIComponent(eventId)}/reschedule`,
+      { method: 'PATCH', body: JSON.stringify(payload) },
+    );
+  }
+
   async getMyScheduleEvents(): Promise<{ data: IcsCalendarEvent[] }> {
     return this.request<IcsCalendarEvent[]>('/timetable/my/events');
   }

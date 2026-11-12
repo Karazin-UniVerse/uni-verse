@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import userEvent from '@testing-library/user-event';
 import { BREAKPOINTS } from '@core/constants/breakpoints';
 import { withLanguage, withToast } from '@uni-hub/utils/test-utils';
@@ -11,6 +12,10 @@ import type { ScheduleEvent, ScheduleViewProps } from './ScheduleView.types';
 
 vi.mock('../../hooks/useMediaQuery', () => ({
   useMediaQuery: vi.fn(),
+}));
+
+vi.mock('@uni-hub/hooks/useCurrentUser', () => ({
+  useCurrentUser: vi.fn(() => ({ userId: null, roles: [] })),
 }));
 
 vi.mock('./helpers', async (importOriginal) => {
@@ -26,6 +31,7 @@ describe('ScheduleView component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useMediaQuery).mockReturnValue(false);
+    vi.mocked(useCurrentUser).mockReturnValue({ userId: null, roles: [] });
   });
 
   afterEach(() => {
@@ -34,6 +40,86 @@ describe('ScheduleView component', () => {
 
   const renderScheduleView = (props?: Partial<ScheduleViewProps>) =>
     render(withToast(withLanguage(<ScheduleView {...props} />)));
+
+  it.each([
+    { fails: false, week: false },
+    { fails: true, week: false },
+    { fails: false, week: true },
+  ])('reschedules an admin event and reports conflicts (%o)', async ({ fails, week }) => {
+    vi.mocked(useCurrentUser).mockReturnValue({ userId: 'admin', roles: ['ADMIN'] });
+    vi.mocked(useMediaQuery).mockReturnValue(true);
+    const start = new Date(new Date().setHours(8, 30, 0, 0));
+    const event: ScheduleEvent = {
+      id: 'event-1',
+      title: 'Algorithms',
+      start,
+      end: new Date(start.getTime() + 80 * 60000),
+      type: 'lecture',
+      location: 'Online',
+    };
+    const reschedule = vi.spyOn(timetableApi, 'rescheduleEvent');
+
+    if (fails) {
+      reschedule.mockRejectedValue(new Error('Teacher conflict (HTTP 409)'));
+    } else {
+      reschedule.mockResolvedValue({ data: { date: '2026-11-13', pair: 3 } });
+    }
+
+    const user = userEvent.setup();
+
+    renderScheduleView({ events: [event] });
+
+    if (week) {
+      await user.click(screen.getByRole('radio', { name: 'Тиждень' }));
+    }
+
+    await user.click(screen.getByRole('button', { name: /Змінити посилання/i }));
+    await user.click(screen.getByRole('button', { name: 'Перенести заняття' }));
+
+    const dialog = screen.getByRole('dialog');
+
+    await user.clear(within(dialog).getByLabelText('Нова дата'));
+    await user.type(within(dialog).getByLabelText('Нова дата'), '2026-11-13');
+    await user.selectOptions(within(dialog).getByLabelText('Пара'), '3');
+    await user.type(within(dialog).getByLabelText('Причина (необов’язково)'), 'Makeup');
+    await user.click(within(dialog).getByRole('button', { name: 'Зберегти' }));
+
+    expect(reschedule).toHaveBeenCalledWith('event-1', {
+      newDate: '2026-11-13',
+      newPair: 3,
+      reason: 'Makeup',
+    });
+
+    if (fails) {
+      expect(await screen.findByRole('alert')).toHaveTextContent('Teacher conflict');
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    } else {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(screen.getByText(/12:00/)).toBeInTheDocument();
+    }
+  });
+
+  it('does not offer rescheduling to teachers without admin role', async () => {
+    vi.mocked(useMediaQuery).mockReturnValue(true);
+    const start = new Date();
+    const user = userEvent.setup();
+
+    renderScheduleView({
+      isTeacher: true,
+      events: [
+        {
+          id: 'event-1',
+          title: 'Algorithms',
+          start,
+          end: start,
+          type: 'lecture',
+          location: 'Online',
+        },
+      ],
+    });
+    await user.click(screen.getByRole('button', { name: /Змінити посилання/i }));
+    expect(screen.queryByRole('button', { name: 'Перенести заняття' })).not.toBeInTheDocument();
+  });
 
   it('should render schedule view in default month mode on desktop', () => {
     vi.mocked(useMediaQuery).mockReturnValue(false);

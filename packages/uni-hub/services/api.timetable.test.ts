@@ -9,6 +9,39 @@ function mockFetchResponse(data: unknown): void {
 }
 
 describe('TimetableApi', () => {
+  it('adjusts a draft slot with an encoded version id and PATCH payload', async () => {
+    const payload = {
+      teachingAssignmentId: 'assignment-1',
+      fromWeekday: 1,
+      fromPair: 1,
+      toWeekday: 2,
+      toPair: 3,
+    };
+    const data = { events: [] };
+
+    mockFetchResponse(data);
+
+    expect((await timetableApi.adjustDraftSlot('version/1', payload)).data).toEqual(data);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/timetable/versions/version%2F1/slots'),
+      expect.objectContaining({ method: 'PATCH', body: JSON.stringify(payload) }),
+    );
+  });
+
+  it('reschedules an event with an encoded event id and PATCH payload', async () => {
+    const payload = { newDate: '2026-11-13', newPair: 3, reason: 'Makeup lesson' };
+
+    mockFetchResponse({ id: 'event/1', ...payload });
+
+    expect((await timetableApi.rescheduleEvent('event/1', payload)).data).toEqual({
+      id: 'event/1',
+      ...payload,
+    });
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/timetable/events/event%2F1/reschedule'),
+      expect.objectContaining({ method: 'PATCH', body: JSON.stringify(payload) }),
+    );
+  });
   beforeEach(() => {
     vi.clearAllMocks();
   });

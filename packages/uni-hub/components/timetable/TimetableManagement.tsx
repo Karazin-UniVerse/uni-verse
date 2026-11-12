@@ -9,8 +9,9 @@ import {
   Save,
   Trash2,
 } from 'lucide-react';
-import { Button, CheckBox, Select, Spinner, Tag, TextInput } from '@una';
+import { Button, CheckBox, Modal, Select, Spinner, Tag, TextInput } from '@una';
 import { PAIR_SCHEDULE, type PairNumber } from '@core/constants/timetable';
+import { checkTimetableConflicts } from '@core/utils/timetable';
 import type {
   AcademicGroupResponse,
   CreateTeachingAssignmentRequest,
@@ -325,7 +326,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   initialWorkload,
   initialPlanId = '',
 }) => {
-  const { formatMessage } = useLanguage();
+  const { formatMessage, localeTag } = useLanguage();
   const baseId = useId();
 
   const [chosenPlanId, setPlanId] = useState(initialPlanId);
@@ -343,6 +344,11 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0);
   const [isPublished, setIsPublished] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [adjustingEvent, setAdjustingEvent] = useState<PreviewEvent | null>(null);
+  const [targetWeekday, setTargetWeekday] = useState('1');
+  const [targetPair, setTargetPair] = useState('1');
+  const [adjustmentError, setAdjustmentError] = useState<string | null>(null);
+  const [isAdjusting, setIsAdjusting] = useState(false);
   const { plans, teachers } = useTimetableReferences();
   const planId = chosenPlanId || plans[0]?.id || '';
 
@@ -764,6 +770,80 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   }, [draftResult, formatMessage, selectedCandidateIndex]);
 
   const selectedCandidate = draftResult?.candidates[selectedCandidateIndex];
+  const weekdayOptions = PREVIEW_DAYS.map((day) => ({
+    value: String(day),
+    label: new Intl.DateTimeFormat(localeTag, { weekday: 'long' }).format(new Date(2024, 0, day)),
+  }));
+  const adjustmentConflict = useMemo(() => {
+    if (!adjustingEvent || !selectedCandidate) {
+      return false;
+    }
+
+    const projected = selectedCandidate.events.map((event) => {
+      if (
+        event.teachingAssignmentId !== adjustingEvent.teachingAssignmentId ||
+        getEventWeekday(event) !== getEventWeekday(adjustingEvent) ||
+        event.pair !== adjustingEvent.pair
+      ) {
+        return event;
+      }
+
+      const date = new Date(event.date);
+
+      date.setUTCDate(date.getUTCDate() + Number(targetWeekday) - getEventWeekday(adjustingEvent)!);
+
+      return { ...event, date: date.toISOString().slice(0, 10), pair: Number(targetPair) };
+    });
+
+    return !checkTimetableConflicts({ events: projected }).isValid;
+  }, [adjustingEvent, selectedCandidate, targetWeekday, targetPair]);
+  const handleAdjustSlot = async (): Promise<void> => {
+    if (!draftResult || !adjustingEvent || adjustmentConflict) {
+      return;
+    }
+
+    const candidateIndex = selectedCandidateIndex;
+    const versionId = selectedCandidate?.versionId ?? draftResult.versionId;
+
+    setIsAdjusting(true);
+    setAdjustmentError(null);
+
+    try {
+      const response = await timetableApi.adjustDraftSlot(versionId, {
+        teachingAssignmentId: adjustingEvent.teachingAssignmentId,
+        fromWeekday: getEventWeekday(adjustingEvent)!,
+        fromPair: adjustingEvent.pair,
+        toWeekday: Number(targetWeekday),
+        toPair: Number(targetPair),
+      });
+
+      setDraftResult(
+        (previous) =>
+          previous && {
+            ...previous,
+            candidates: previous.candidates.map((candidate, index) =>
+              index === candidateIndex
+                ? {
+                    ...candidate,
+                    events: response.data.events.map((event) => ({
+                      ...candidate.events.find((previousEvent) => previousEvent.id === event.id),
+                      ...event,
+                    })),
+                    penaltyScore: response.data.penaltyScore ?? candidate.penaltyScore,
+                  }
+                : candidate,
+            ),
+          },
+      );
+      setAdjustingEvent(null);
+    } catch (failure) {
+      setAdjustmentError(
+        failure instanceof Error ? failure.message : formatMessage('timetable.adjustError'),
+      );
+    } finally {
+      setIsAdjusting(false);
+    }
+  };
   const previewSlots = useMemo(
     () => buildPreviewSlots((selectedCandidate?.events ?? []) as PreviewEvent[]),
     [selectedCandidate],
@@ -1086,6 +1166,21 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
                                           <div className={styles.eventTitle}>
                                             {event.disciplineTitle}
                                           </div>
+                                          {!isPublished && (
+                                            <Button
+                                              type="button"
+                                              variant="secondary"
+                                              size="small"
+                                              onClick={() => {
+                                                setAdjustingEvent(event);
+                                                setTargetWeekday(String(day));
+                                                setTargetPair(String(event.pair));
+                                                setAdjustmentError(null);
+                                              }}
+                                            >
+                                              {formatMessage('timetable.adjustSlot')}
+                                            </Button>
+                                          )}
                                           <div className={styles.eventBadges}>
                                             <Tag size="small" tone={typeInfo.tone}>
                                               {typeInfo.label}
@@ -1165,6 +1260,54 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
           </div>
         </section>
       )}
+      <Modal
+        open={Boolean(adjustingEvent)}
+        onClose={() => {
+          if (!isAdjusting) setAdjustingEvent(null);
+        }}
+        title={formatMessage('timetable.adjustSlot')}
+        closeLabel={formatMessage('common.close')}
+      >
+        {adjustingEvent && (
+          <form
+            onSubmit={(submitEvent) => {
+              submitEvent.preventDefault();
+              void handleAdjustSlot();
+            }}
+          >
+            <p>{adjustingEvent.disciplineTitle}</p>
+            <p>{getTeachingTypeBadge(adjustingEvent.teachingType, formatMessage).label}</p>
+            <p>
+              {formatMessage('timetable.currentSlot', {
+                day:
+                  weekdayOptions.find(
+                    (option) => option.value === String(getEventWeekday(adjustingEvent)),
+                  )?.label ?? '',
+                pair: adjustingEvent.pair,
+              })}
+            </p>
+            {adjustmentError && <p role="alert">{adjustmentError}</p>}
+            {adjustmentConflict && <p role="alert">{formatMessage('timetable.adjustConflict')}</p>}
+            <Select
+              aria-label={formatMessage('timetable.targetWeekday')}
+              value={targetWeekday}
+              onChange={setTargetWeekday}
+              options={weekdayOptions}
+              disabled={isAdjusting}
+            />
+            <Select
+              aria-label={formatMessage('timetable.targetPair')}
+              value={targetPair}
+              onChange={setTargetPair}
+              options={PREVIEW_PAIRS.map((pair) => ({ value: String(pair), label: String(pair) }))}
+              disabled={isAdjusting}
+            />
+            <Button type="submit" disabled={isAdjusting || adjustmentConflict}>
+              {formatMessage('schedule.save')}
+            </Button>
+          </form>
+        )}
+      </Modal>
     </div>
   );
 };

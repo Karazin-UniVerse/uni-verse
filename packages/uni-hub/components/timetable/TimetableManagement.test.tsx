@@ -1,11 +1,126 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { withLanguage } from '@uni-hub/utils/test-utils';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import { TimetableManagement } from './TimetableManagement';
 
 describe('TimetableManagement component', () => {
+  it.each([false, true])(
+    'adjusts the selected draft slot and preserves conflicts (failure: %s)',
+    async (fails) => {
+      const event = {
+        id: 'event-1',
+        teachingAssignmentId: 'assignment-1',
+        disciplineTitle: 'Algorithms',
+        teachingType: 'LECTURE' as const,
+        groupIds: ['group-1'],
+        date: '2026-11-09',
+        pair: 1,
+      };
+
+      vi.spyOn(timetableApi, 'generateTimetableDraft').mockResolvedValue({
+        data: {
+          versionId: 'fallback',
+          candidates: [{ versionId: 'selected-version', events: [event], penaltyScore: 0 }],
+          diagnostics: { statesExplored: 1, timeMs: 1 },
+        },
+      });
+      const adjust = vi.spyOn(timetableApi, 'adjustDraftSlot');
+
+      if (fails) {
+        adjust.mockRejectedValue(new Error('Teacher conflict (HTTP 409)'));
+      } else {
+        adjust.mockResolvedValue({
+          data: {
+            id: 'selected-version',
+            curriculumPlanId: 'plan',
+            status: 'DRAFT',
+            versionNumber: 1,
+            events: [{ ...event, date: '2026-11-10', pair: 3 }],
+          },
+        });
+      }
+
+      const user = userEvent.setup();
+
+      renderComponent();
+      await user.click(screen.getByRole('button', { name: /Згенерувати розклад/i }));
+      await user.click(screen.getByRole('button', { name: 'Змінити слот' }));
+
+      const dialog = screen.getByRole('dialog');
+
+      await user.selectOptions(within(dialog).getByLabelText('День тижня'), '2');
+      await user.selectOptions(within(dialog).getByLabelText('Пара'), '3');
+      await user.click(within(dialog).getByRole('button', { name: 'Зберегти' }));
+
+      expect(adjust).toHaveBeenCalledWith('selected-version', {
+        teachingAssignmentId: 'assignment-1',
+        fromWeekday: 1,
+        fromPair: 1,
+        toWeekday: 2,
+        toPair: 3,
+      });
+
+      if (fails) {
+        expect(await screen.findByRole('alert')).toHaveTextContent('Teacher conflict');
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      } else {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        const rows = screen.getAllByRole('row');
+        const row = rows.find((candidate) => within(candidate).queryByText('#3'));
+
+        expect(row).toHaveTextContent('Algorithms');
+      }
+    },
+  );
+  it('blocks an adjustment that overlaps another class for the same group', async () => {
+    const event = {
+      id: 'event-1',
+      teachingAssignmentId: 'assignment-1',
+      disciplineTitle: 'Algorithms',
+      teachingType: 'LECTURE' as const,
+      groupIds: ['group-1'],
+      date: '2026-11-09',
+      pair: 1,
+    };
+
+    vi.spyOn(timetableApi, 'generateTimetableDraft').mockResolvedValue({
+      data: {
+        versionId: 'version-1',
+        candidates: [
+          {
+            events: [
+              event,
+              {
+                ...event,
+                id: 'event-2',
+                teachingAssignmentId: 'assignment-2',
+                disciplineTitle: 'Databases',
+                pair: 2,
+              },
+            ],
+            penaltyScore: 0,
+          },
+        ],
+        diagnostics: { statesExplored: 1, timeMs: 1 },
+      },
+    });
+    const adjust = vi.spyOn(timetableApi, 'adjustDraftSlot');
+    const user = userEvent.setup();
+
+    renderComponent();
+    await user.click(screen.getByRole('button', { name: /Згенерувати розклад/i }));
+    await user.click(screen.getAllByRole('button', { name: 'Змінити слот' })[0]);
+
+    const dialog = screen.getByRole('dialog');
+
+    await user.selectOptions(within(dialog).getByLabelText('Пара'), '2');
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Слот конфліктує');
+    expect(within(dialog).getByRole('button', { name: 'Зберегти' })).toBeDisabled();
+    expect(adjust).not.toHaveBeenCalled();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(timetableApi, 'listTeachingAssignments').mockResolvedValue({ data: [] });
