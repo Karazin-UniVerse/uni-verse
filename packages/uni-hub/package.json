@@ -39,8 +39,8 @@
     "@types/react": "^19",
     "@types/react-datepicker": "^7.0.0",
     "@types/react-dom": "^19",
-    "eslint": "^10.13.0",
-    "eslint-config-next": "16.4.3",
+    "eslint": "^10.14.0",
+    "eslint-config-next": "16.4.5",
     "happy-dom": "^21.0.4",
     "typescript": "^6.0.3"
   }
