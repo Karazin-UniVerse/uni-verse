@@ -18,6 +18,7 @@ import type {
   GenerateTimetableDraftResult,
   GenerateTimetableRequest,
   IcsCalendarEvent,
+  ImportCurriculumPlanRequest,
   SafeTeacherResponse,
   SemesterCalendarResponse,
   TeacherUnavailabilityResponse,
@@ -76,6 +77,14 @@ export class TimetableApi extends ApiClient {
     return this.request<SemesterCalendarResponse[]>('/timetable/my/slot-preferences/semesters');
   }
 
+  async listSemesterSlotPreferences(
+    semesterCalendarId: string,
+  ): Promise<{ data: TeacherSlotPreference[] }> {
+    return this.request<TeacherSlotPreference[]>(
+      `/timetable/semester-calendar/${encodeURIComponent(semesterCalendarId)}/slot-preferences`,
+    );
+  }
+
   async getMySlotPreferences(id: string): Promise<{ data: TeacherSlotPreference[] }> {
     return this.request<TeacherSlotPreference[]>(
       `/timetable/my/slot-preferences/${encodeURIComponent(id)}`,
@@ -124,6 +133,15 @@ export class TimetableApi extends ApiClient {
 
   async listCurriculumPlans(): Promise<{ data: CurriculumPlanResponse[] }> {
     return this.request<CurriculumPlanResponse[]>('/timetable/curriculum-plans');
+  }
+
+  async importCurriculumPlan(
+    payload: ImportCurriculumPlanRequest,
+  ): Promise<{ data: CurriculumPlanResponse }> {
+    return this.request<CurriculumPlanResponse>('/timetable/curriculum-plans/import', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   }
 
   async listTeachers(): Promise<{ data: SafeTeacherResponse[] }> {

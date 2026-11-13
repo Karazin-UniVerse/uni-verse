@@ -64,6 +64,7 @@ import type {
   CreateTeacherUnavailabilityDto,
   CreateTeachingAssignmentDto,
   GenerateTimetableDto,
+  ImportCurriculumPlanDto,
   UpdateTeachingAssignmentDto,
 } from './dto';
 
@@ -131,6 +132,32 @@ const EVENT_ASSIGNMENT_INCLUDE = {
 const MISSING_PLAN_OR_TEACHER_MESSAGE =
   'Curriculum plan or teacher does not exist';
 
+const SLOT_PREFERENCE_SELECT = {
+  teacherId: true,
+  semesterCalendarId: true,
+  weekday: true,
+  pair: true,
+  preference: true,
+} as const;
+
+const MISSING_GROUP_OR_STREAM_MESSAGE = 'Group or stream does not exist';
+
+function toCurriculumPlanData(dto: CreateCurriculumPlanDto): {
+  faculty: string;
+  title: string;
+  academicYear: string;
+  semester: number;
+  isDraft: boolean;
+} {
+  return {
+    faculty: dto.faculty.trim(),
+    title: dto.title.trim(),
+    academicYear: dto.academicYear.trim(),
+    semester: dto.semester,
+    isDraft: dto.isDraft ?? true,
+  };
+}
+
 function rethrowMissingReference(error: unknown): never {
   if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.FOREIGN_KEY) {
     throw new BadRequestException(MISSING_PLAN_OR_TEACHER_MESSAGE);
@@ -192,14 +219,27 @@ export class TimetableService {
 
     return this.prisma.teacherSlotPreference.findMany({
       where: { teacherId: userId, semesterCalendarId },
-      select: {
-        teacherId: true,
-        semesterCalendarId: true,
-        weekday: true,
-        pair: true,
-        preference: true,
-      },
+      select: SLOT_PREFERENCE_SELECT,
       orderBy: [{ weekday: 'asc' }, { pair: 'asc' }],
+    });
+  }
+
+  /** Every teacher's preferences for a semester, so the dean can see them on a draft. */
+  async listSemesterSlotPreferences(
+    semesterCalendarId: string,
+  ): Promise<TeacherSlotPreference[]> {
+    const calendar = await this.prisma.semesterCalendar.findUnique({
+      where: { id: semesterCalendarId },
+    });
+
+    if (!calendar) {
+      throw new NotFoundException('Semester calendar not found');
+    }
+
+    return this.prisma.teacherSlotPreference.findMany({
+      where: { semesterCalendarId },
+      select: SLOT_PREFERENCE_SELECT,
+      orderBy: [{ teacherId: 'asc' }, { weekday: 'asc' }, { pair: 'asc' }],
     });
   }
 
@@ -225,13 +265,7 @@ export class TimetableService {
 
           return tx.teacherSlotPreference.findMany({
             where,
-            select: {
-              teacherId: true,
-              semesterCalendarId: true,
-              weekday: true,
-              pair: true,
-              preference: true,
-            },
+            select: SLOT_PREFERENCE_SELECT,
             orderBy: [{ weekday: 'asc' }, { pair: 'asc' }],
           });
         },
@@ -289,14 +323,54 @@ export class TimetableService {
     dto: CreateCurriculumPlanDto,
   ): Promise<CurriculumPlan> {
     return this.prisma.curriculumPlan.create({
-      data: {
-        faculty: dto.faculty,
-        title: dto.title,
-        academicYear: dto.academicYear,
-        semester: dto.semester,
-        isDraft: dto.isDraft ?? true,
-      },
+      data: toCurriculumPlanData(dto),
     });
+  }
+
+  /** Creates the plan and all of its teaching assignments in one transaction. */
+  async importCurriculumPlan(
+    dto: ImportCurriculumPlanDto,
+  ): Promise<CurriculumPlan> {
+    if (dto.groupId && dto.streamId) {
+      throw new BadRequestException(
+        'Imported assignments must specify either groupId or streamId, not both',
+      );
+    }
+
+    if (dto.assignments.length > 0 && !dto.groupId && !dto.streamId) {
+      throw new BadRequestException(
+        'Imported assignments must specify a groupId or streamId',
+      );
+    }
+
+    return this.prisma
+      .$transaction(async (tx) => {
+        const plan = await tx.curriculumPlan.create({
+          data: toCurriculumPlanData(dto),
+        });
+
+        if (dto.assignments.length > 0) {
+          await tx.teachingAssignment.createMany({
+            data: dto.assignments.map((assignment) => ({
+              curriculumPlanId: plan.id,
+              disciplineTitle: assignment.disciplineTitle.trim(),
+              teachingType: assignment.teachingType,
+              academicHours: assignment.academicHours,
+              groupId: dto.groupId,
+              streamId: dto.streamId,
+            })),
+          });
+        }
+
+        return plan;
+      })
+      .catch((error: unknown) => {
+        if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.FOREIGN_KEY) {
+          throw new BadRequestException(MISSING_GROUP_OR_STREAM_MESSAGE);
+        }
+
+        throw error;
+      });
   }
 
   async getCurriculumPlan(id: string): Promise<CurriculumPlanWithAssignments> {
@@ -913,13 +987,7 @@ export class TimetableService {
               semesterCalendarId: calendar.id,
               teacherId: { in: teacherIds },
             },
-            select: {
-              teacherId: true,
-              semesterCalendarId: true,
-              weekday: true,
-              pair: true,
-              preference: true,
-            },
+            select: SLOT_PREFERENCE_SELECT,
           })
         : [];
     const result = generateTimetableCandidates({

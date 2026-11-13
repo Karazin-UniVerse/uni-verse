@@ -1,6 +1,11 @@
 import { generateIcsCalendar } from '@universe/core/utils/timetable';
+import { LAST_PAIR, PAIR_SCHEDULE, type PairNumber } from '@universe/core/constants/timetable';
 import type { IcsCalendarEvent } from '@universe/core/types/timetable';
-import type { ScheduleEvent } from './ScheduleView.types';
+import type { ScheduleEvent, ScheduleEventGroup } from './ScheduleView.types';
+
+const TEACHING_DAYS_PER_WEEK = 6;
+const MONTH_GRID_WEEKS = 6;
+const MINUTES_PER_HOUR = 60;
 
 export const addDays = (date: Date, days: number): Date => {
   const dateCopy = new Date(date);
@@ -19,6 +24,65 @@ export const startOfWeek = (date: Date): Date => {
   dateCopy.setHours(0, 0, 0, 0);
 
   return dateCopy;
+};
+
+/** Monday to Saturday of the week that contains the date. */
+export const getWeekDays = (date: Date): Date[] => {
+  const monday = startOfWeek(date);
+
+  return Array.from({ length: TEACHING_DAYS_PER_WEEK }, (_, index) => addDays(monday, index));
+};
+
+/** Six Monday-to-Saturday weeks covering the month of the date. */
+export const getMonthGridDays = (date: Date): Date[] => {
+  const monday = startOfWeek(new Date(date.getFullYear(), date.getMonth(), 1));
+
+  return Array.from({ length: MONTH_GRID_WEEKS }, (_, week) =>
+    getWeekDays(addDays(monday, week * 7)),
+  ).flat();
+};
+
+const toMinutes = (clock: string): number => {
+  const [hours, minutes] = clock.split(':').map(Number);
+
+  return hours * MINUTES_PER_HOUR + minutes;
+};
+
+/** The bell-schedule pair an event belongs to: the first pair that has not ended at its start. */
+export const getPairNumber = (date: Date): PairNumber => {
+  const minutes = date.getHours() * MINUTES_PER_HOUR + date.getMinutes();
+  const pairs = Object.keys(PAIR_SCHEDULE).map(Number) as PairNumber[];
+
+  return pairs.find((pair) => minutes < toMinutes(PAIR_SCHEDULE[pair].end)) ?? LAST_PAIR;
+};
+
+/** Collapses classes of one discipline on a day into one entry, keeping the earliest start. */
+export const groupDayEvents = (events: ScheduleEvent[]): ScheduleEventGroup[] => {
+  const groups = new Map<string, ScheduleEventGroup>();
+
+  for (const event of events) {
+    const group = groups.get(event.title);
+
+    if (!group) {
+      groups.set(event.title, {
+        key: event.id,
+        title: event.title,
+        start: event.start,
+        types: [event.type],
+      });
+      continue;
+    }
+
+    if (!group.types.includes(event.type)) {
+      group.types.push(event.type);
+    }
+
+    if (event.start < group.start) {
+      group.start = event.start;
+    }
+  }
+
+  return [...groups.values()].sort((left, right) => left.start.getTime() - right.start.getTime());
 };
 
 export const isSameDay = (leftDate: Date, rightDate?: Date | null): boolean =>
@@ -158,23 +222,6 @@ export const exportToICS = (events: ScheduleEvent[]): void => {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
-};
-
-export const getTypeTone = (
-  type: string,
-): 'info' | 'warning' | 'success' | 'danger' | 'default' => {
-  switch (type) {
-    case 'lecture':
-      return 'info';
-    case 'lab':
-      return 'warning';
-    case 'practice':
-      return 'success';
-    case 'exam':
-      return 'danger';
-    default:
-      return 'default';
-  }
 };
 
 export const formatScheduleDate = (

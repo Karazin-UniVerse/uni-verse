@@ -9,6 +9,7 @@ import {
   CreateTeachingAssignmentDto,
   GenerateTimetableDto,
   GetSemesterCalendarQueryDto,
+  ImportCurriculumPlanDto,
   ListTeachingAssignmentsQueryDto,
   MakeupSaturdayDto,
   SaveSlotPreferencesDto,
@@ -500,6 +501,71 @@ describe('Timetable DTOs', () => {
 
       expect(errors).toHaveLength(1);
       expect(errors[0].property).toBe('slots');
+    });
+  });
+  describe('ImportCurriculumPlanDto', () => {
+    const validImport = {
+      faculty: 'ННІ КН та ШІ',
+      title: 'КН, 2 курс',
+      academicYear: '2026/2027',
+      semester: 1,
+      groupId: 'group-1',
+      assignments: [
+        {
+          disciplineTitle: 'Бази даних',
+          teachingType: TeachingType.LECTURE,
+          academicHours: 32,
+        },
+      ],
+    };
+
+    it('accepts a plan with assignments', () => {
+      expect(
+        validateSync(plainToInstance(ImportCurriculumPlanDto, validImport)),
+      ).toEqual([]);
+    });
+
+    it('rejects whitespace-only discipline names', () => {
+      const dto = plainToInstance(ImportCurriculumPlanDto, {
+        ...validImport,
+        assignments: [
+          { ...validImport.assignments[0], disciplineTitle: '   ' },
+        ],
+      });
+
+      expect(validateSync(dto)).not.toEqual([]);
+    });
+
+    it.each([
+      { assignments: [[]] },
+      { assignments: [[validImport.assignments[0]]] },
+      { assignments: [null] },
+      { assignments: null },
+    ])('rejects malformed assignment collections: %j', ({ assignments }) => {
+      const dto = plainToInstance(ImportCurriculumPlanDto, {
+        ...validImport,
+        assignments,
+      });
+
+      expect(validateSync(dto, { whitelist: true })).not.toEqual([]);
+    });
+
+    it('validates every imported assignment', () => {
+      const errors = validateSync(
+        plainToInstance(ImportCurriculumPlanDto, {
+          ...validImport,
+          assignments: [
+            { disciplineTitle: '', teachingType: 'EXAM', academicHours: 33 },
+          ],
+        }),
+      );
+
+      expect(errors).toHaveLength(1);
+      expect(errors[0].property).toBe('assignments');
+      expect(
+        Object.keys(errors[0].children?.[0]?.children?.[0]?.constraints ?? {}),
+      ).toContain('isNotEmpty');
+      expect(errors[0].children?.[0]?.children).toHaveLength(3);
     });
   });
 });

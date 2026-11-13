@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import { useTimetableReferences } from './useTimetableReferences';
 
@@ -41,5 +41,28 @@ describe('useTimetableReferences', () => {
 
     await waitFor(() => expect(result.current.teachers).toHaveLength(1));
     expect(result.current.plans).toEqual([]);
+  });
+  it('puts a newly created plan first without refetching', async () => {
+    const listPlans = vi.spyOn(timetableApi, 'listCurriculumPlans').mockResolvedValue({ data: [] });
+
+    vi.spyOn(timetableApi, 'listTeachers').mockResolvedValue({ data: [] });
+
+    const { result } = renderHook(() => useTimetableReferences());
+
+    await waitFor(() => expect(listPlans).toHaveBeenCalledTimes(1));
+    await act(async () => {});
+    act(() => {
+      result.current.addPlan({
+        id: 'plan-new',
+        faculty: 'CS',
+        title: 'New',
+        academicYear: '2026/2027',
+        semester: 2,
+        isDraft: true,
+      });
+    });
+
+    expect(result.current.plans.map((plan) => plan.id)).toEqual(['plan-new']);
+    expect(listPlans).toHaveBeenCalledTimes(1);
   });
 });

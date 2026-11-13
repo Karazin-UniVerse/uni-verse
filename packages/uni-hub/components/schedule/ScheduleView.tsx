@@ -15,8 +15,9 @@ import { useMySchedule } from '@uni-hub/hooks/useMySchedule';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
-import { addDays, exportToICS, isSafeMeetingUrl, isSameDay, startOfWeek } from './helpers';
+import { addDays, exportToICS, getMonthGridDays, isSafeMeetingUrl, isSameDay } from './helpers';
 import { ScheduleDayView } from './ScheduleDayView';
+import { ScheduleLegend } from './ScheduleLegend';
 import { ScheduleMonthView } from './ScheduleMonthView';
 import { ScheduleToolbar } from './ScheduleToolbar';
 import { ScheduleWeekView } from './ScheduleWeekView';
@@ -145,6 +146,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
           return formatMessage('schedule.typeLabShort');
         case 'practice':
           return formatMessage('schedule.typePracticeShort');
+        case 'seminar':
+          return formatMessage('schedule.typeSeminarShort');
         case 'exam':
           return formatMessage('schedule.typeExam');
         default:
@@ -175,23 +178,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     [events],
   );
 
-  const monthDays = useMemo(() => {
-    const year = selectedDate.getFullYear();
-    const month = selectedDate.getMonth();
-    const first = new Date(year, month, 1);
-    const start = startOfWeek(first);
-    const days: Date[] = [];
-
-    for (let week = 0; week < 6; week += 1) {
-      const weekMonday = addDays(start, week * 7);
-
-      for (let dayIndex = 0; dayIndex < 6; dayIndex += 1) {
-        days.push(addDays(weekMonday, dayIndex));
-      }
-    }
-
-    return days;
-  }, [selectedDate]);
+  const monthDays = useMemo(() => getMonthGridDays(selectedDate), [selectedDate]);
 
   const handleSelectDayMode = useCallback(() => {
     setSelectedViewMode('day');
@@ -271,6 +258,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     }
   }, [editingEvent, formatMessage, meetingUrlInput, toast]);
 
+  const eventActions = {
+    getTypeName,
+    isTeacher,
+    onEditMeetingUrl: handleEditMeetingUrl,
+  };
+
   const handleReschedule = async (): Promise<void> => {
     if (!reschedulingEvent || (!isAdmin && !isInstructor)) {
       return;
@@ -338,6 +331,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
         onSubscribeCalendar={handleOpenSubscribe}
       />
 
+      <ScheduleLegend getTypeName={getTypeName} />
+
       <div className={styles.body}>
         {viewMode === 'month' && (
           <ScheduleMonthView
@@ -348,6 +343,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             locale={locale}
             weekdays={weekdays}
             monthDays={monthDays}
+            isCompact={isMobile}
+            {...eventActions}
           />
         )}
         {viewMode === 'week' && (
@@ -356,20 +353,19 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             onSelectDate={setSelectedDate}
             getEventsForDate={getEventsForDate}
             locale={locale}
-            getTypeName={getTypeName}
-            isTeacher={isTeacher}
-            onEditMeetingUrl={handleEditMeetingUrl}
+            isCompact={isMobile}
+            {...eventActions}
           />
         )}
         {viewMode === 'day' && (
           <ScheduleDayView
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
-            events={getEventsForDate(selectedDate)}
+            getEventsForDate={getEventsForDate}
             locale={locale}
-            getTypeName={getTypeName}
-            isTeacher={isTeacher}
-            onEditMeetingUrl={handleEditMeetingUrl}
+            weekdays={weekdays}
+            isCompact={isMobile}
+            {...eventActions}
           />
         )}
       </div>

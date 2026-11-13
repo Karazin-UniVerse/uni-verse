@@ -3,7 +3,10 @@ import {
   addDays,
   startOfWeek,
   isSameDay,
-  getTypeTone,
+  getMonthGridDays,
+  getPairNumber,
+  getWeekDays,
+  groupDayEvents,
   formatScheduleDate,
   formatScheduleTime,
   generateDummyEvents,
@@ -106,14 +109,63 @@ describe('schedule helpers', () => {
     });
   });
 
-  describe('getTypeTone', () => {
-    it('maps event types to corresponding tones', () => {
-      expect(getTypeTone('lecture')).toBe('info');
-      expect(getTypeTone('lab')).toBe('warning');
-      expect(getTypeTone('practice')).toBe('success');
-      expect(getTypeTone('exam')).toBe('danger');
-      expect(getTypeTone('other')).toBe('default');
-      expect(getTypeTone('unknown-type')).toBe('default');
+  describe('calendar grids', () => {
+    it('lists Monday to Saturday of the week', () => {
+      const days = getWeekDays(new Date(2026, 10, 13));
+
+      expect(days.map((day) => day.getDate())).toEqual([9, 10, 11, 12, 13, 14]);
+    });
+
+    it('covers the month with six teaching weeks starting on Monday', () => {
+      const days = getMonthGridDays(new Date(2026, 10, 13));
+
+      expect(days).toHaveLength(36);
+      expect(days[0]).toEqual(new Date(2026, 9, 26));
+      expect(days.at(-1)).toEqual(new Date(2026, 11, 5));
+    });
+  });
+
+  describe('getPairNumber', () => {
+    it('maps a start time to its bell-schedule pair', () => {
+      expect(getPairNumber(new Date(2026, 10, 13, 8, 30))).toBe(1);
+      expect(getPairNumber(new Date(2026, 10, 13, 12, 0))).toBe(3);
+      expect(getPairNumber(new Date(2026, 10, 13, 11, 45))).toBe(3);
+      expect(getPairNumber(new Date(2026, 10, 13, 21, 0))).toBe(7);
+    });
+  });
+
+  describe('groupDayEvents', () => {
+    it('merges classes of one discipline and keeps the earliest start', () => {
+      const base = { end: new Date(2026, 10, 13, 9, 50), location: '' };
+      const groups = groupDayEvents([
+        {
+          ...base,
+          id: 'b',
+          title: 'Чисельні методи',
+          start: new Date(2026, 10, 13, 10, 10),
+          type: 'practice',
+        },
+        {
+          ...base,
+          id: 'a',
+          title: 'Чисельні методи',
+          start: new Date(2026, 10, 13, 8, 30),
+          type: 'lecture',
+        },
+        {
+          ...base,
+          id: 'c',
+          title: 'Філософія',
+          start: new Date(2026, 10, 13, 9, 0),
+          type: 'seminar',
+        },
+      ]);
+
+      expect(groups.map(({ title, types }) => [title, types])).toEqual([
+        ['Чисельні методи', ['practice', 'lecture']],
+        ['Філософія', ['seminar']],
+      ]);
+      expect(groups[0].start).toEqual(new Date(2026, 10, 13, 8, 30));
     });
   });
 

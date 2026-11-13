@@ -58,6 +58,8 @@ describe('TimetableController', () => {
     deleteTeachingAssignment: jest.fn(),
     listAcademicGroups: jest.fn(),
     createCurriculumPlan: jest.fn(),
+    importCurriculumPlan: jest.fn(),
+    listSemesterSlotPreferences: jest.fn(),
     getCurriculumPlan: jest.fn(),
     listCurriculumPlans: jest.fn(),
     listTeachers: jest.fn(),
@@ -172,6 +174,38 @@ describe('TimetableController', () => {
     });
   });
 
+  describe('semester slot preferences', () => {
+    it('lists every teacher preference for admin', async () => {
+      const slots = [
+        {
+          teacherId: 'teacher-1',
+          semesterCalendarId: 'semester-1',
+          weekday: 1,
+          pair: 1,
+          preference: 'PREFERRED' as const,
+        },
+      ];
+
+      mockTimetableService.listSemesterSlotPreferences.mockResolvedValue(slots);
+
+      await expect(
+        controller.listSemesterSlotPreferences('semester-1', [Role.ADMIN]),
+      ).resolves.toEqual(slots);
+      expect(
+        mockTimetableService.listSemesterSlotPreferences,
+      ).toHaveBeenCalledWith('semester-1');
+    });
+
+    it('rejects non-admins', async () => {
+      await expect(
+        controller.listSemesterSlotPreferences('semester-1', [Role.INSTRUCTOR]),
+      ).rejects.toThrow(ForbiddenException);
+      expect(
+        mockTimetableService.listSemesterSlotPreferences,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
   describe('academic groups', () => {
     const dto: CreateAcademicGroupDto = {
       code: 'CS-101',
@@ -238,6 +272,41 @@ describe('TimetableController', () => {
       await expect(
         controller.createCurriculumPlan(dto, [Role.INSTRUCTOR]),
       ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('imports a curriculum plan with assignments for admin', async () => {
+      const importDto = {
+        ...dto,
+        groupId: 'group-1',
+        assignments: [
+          {
+            disciplineTitle: 'Бази даних',
+            teachingType: 'LECTURE' as const,
+            academicHours: 32,
+          },
+        ],
+      };
+
+      mockTimetableService.importCurriculumPlan.mockResolvedValue({
+        id: 'plan-2',
+        ...dto,
+      });
+
+      await expect(
+        controller.importCurriculumPlan(importDto, [Role.ADMIN]),
+      ).resolves.toEqual({ id: 'plan-2', ...dto });
+      expect(mockTimetableService.importCurriculumPlan).toHaveBeenCalledWith(
+        importDto,
+      );
+    });
+
+    it('rejects importCurriculumPlan for non-admin', async () => {
+      await expect(
+        controller.importCurriculumPlan({ ...dto, assignments: [] }, [
+          Role.INSTRUCTOR,
+        ]),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockTimetableService.importCurriculumPlan).not.toHaveBeenCalled();
     });
 
     it('gets curriculum plan by id for admin', async () => {

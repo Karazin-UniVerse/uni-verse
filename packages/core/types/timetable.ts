@@ -1,4 +1,6 @@
 ﻿import type {
+  CurriculumDisciplineNote,
+  CurriculumSheetKind,
   RescheduleScope,
   RescheduleRequestStatus,
   SlotPreference,
@@ -379,6 +381,48 @@ export type CreateCurriculumPlanRequest = {
   academicYear: string;
   semester: number;
   isDraft?: boolean;
+};
+
+export type ImportedTeachingAssignmentRequest = {
+  disciplineTitle: string;
+  teachingType: TimetableAssignmentTeachingType;
+  academicHours: number;
+};
+
+export type ImportCurriculumPlanRequest = CreateCurriculumPlanRequest & {
+  assignments: ImportedTeachingAssignmentRequest[];
+  groupId?: string;
+  streamId?: string;
+};
+
+/** Spreadsheet cells by zero-based row and column; empty cells are empty strings. */
+export type SpreadsheetGrid = ReadonlyArray<ReadonlyArray<string>>;
+
+export type SpreadsheetSheet = {
+  name: string;
+  grid: SpreadsheetGrid;
+};
+
+export type CurriculumHoursByType = Record<TimetableAssignmentTeachingType, number>;
+
+export type CurriculumDiscipline = {
+  title: string;
+  hours: CurriculumHoursByType;
+  notes: CurriculumDisciplineNote[];
+  department?: string;
+};
+
+export type CurriculumTerm = {
+  courseYear: number;
+  semester: number;
+  disciplines: CurriculumDiscipline[];
+};
+
+export type ParsedCurriculumSheet = {
+  sheetName: string;
+  kind: CurriculumSheetKind;
+  terms: CurriculumTerm[];
+  specialty?: string;
 };
 
 export type GenerateTimetableRequest = {

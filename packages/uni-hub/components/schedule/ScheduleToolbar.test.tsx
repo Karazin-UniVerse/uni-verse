@@ -32,16 +32,10 @@ describe('ScheduleToolbar', () => {
 
     const radiogroup = screen.getByRole('radiogroup', { name: 'Режим розкладу' });
     const radios = screen.getAllByRole('radio');
-    const monthRadio = screen.getByRole('radio', { name: 'Місяць' });
-    const weekRadio = screen.getByRole('radio', { name: 'Тиждень' });
-    const dayRadio = screen.getByRole('radio', { name: 'День' });
     const exportButton = screen.getByRole('button', { name: /експорт у ical/i });
 
     expect(radiogroup).toBeInTheDocument();
-    expect(radios).toHaveLength(3);
-    expect(monthRadio).toHaveAttribute('value', 'month');
-    expect(weekRadio).toHaveAttribute('value', 'week');
-    expect(dayRadio).toHaveAttribute('value', 'day');
+    expect(radios.map((radio) => radio.textContent)).toEqual(['Місяць', 'Тиждень', 'День']);
     expect(exportButton).toBeInTheDocument();
   });
 

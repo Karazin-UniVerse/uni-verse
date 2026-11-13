@@ -1,10 +1,11 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@una';
 import { useToday } from '@uni-hub/hooks/useToday';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { formatScheduleDate, isSameDay } from './helpers';
+import { ScheduleDayEvents } from './ScheduleDayEvents';
+import { ScheduleDotCalendar } from './ScheduleDotCalendar';
 import { ScheduleMonthDayCell } from './ScheduleMonthDayCell';
+import { ScheduleNav } from './ScheduleNav';
 import styles from './ScheduleView.module.scss';
 
 import type { ScheduleMonthViewProps } from './ScheduleView.types';
@@ -17,58 +18,73 @@ export const ScheduleMonthView: React.FC<ScheduleMonthViewProps> = ({
   locale,
   weekdays,
   monthDays,
+  getTypeName,
+  isTeacher,
+  onEditMeetingUrl,
+  isCompact = false,
 }) => {
   const { formatMessage } = useLanguage();
   const currentMonth = selectedDate.getMonth();
   const today = useToday();
+  const shiftMonth = (offset: number): void =>
+    onSelectDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + offset, 1));
 
   return (
     <div className={styles.month}>
-      <div className={styles.monthNav}>
-        <Button
-          type="button"
-          variant="secondary"
-          size="small"
-          aria-label={formatMessage('schedule.prevMonth')}
-          onClick={() =>
-            onSelectDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1))
-          }
-        >
-          <ChevronLeft size={16} />
-        </Button>
-        <h3>{formatScheduleDate(selectedDate, { month: 'long', year: 'numeric' }, locale)}</h3>
-        <Button
-          type="button"
-          variant="secondary"
-          size="small"
-          aria-label={formatMessage('schedule.nextMonth')}
-          onClick={() =>
-            onSelectDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1))
-          }
-        >
-          <ChevronRight size={16} />
-        </Button>
-      </div>
-      <div className={styles.weekdays}>
-        {weekdays.map((weekdayLabel) => (
-          <div key={weekdayLabel}>{weekdayLabel}</div>
-        ))}
-      </div>
-      <div className={styles.monthGrid}>
-        {monthDays.map((day) => (
-          <ScheduleMonthDayCell
-            key={day.toISOString()}
-            day={day}
-            events={getEventsForDate(day)}
-            inMonth={day.getMonth() === currentMonth}
-            isToday={isSameDay(day, today)}
-            onSelect={() => {
-              onSelectDate(day);
-              onSelectDayMode();
-            }}
+      <ScheduleNav
+        title={formatScheduleDate(selectedDate, { month: 'long', year: 'numeric' }, locale)}
+        prevLabel={formatMessage('schedule.prevMonth')}
+        nextLabel={formatMessage('schedule.nextMonth')}
+        onPrev={() => shiftMonth(-1)}
+        onNext={() => shiftMonth(1)}
+        onToday={() => onSelectDate(today ?? new Date())}
+      />
+
+      {isCompact ? (
+        <>
+          <ScheduleDotCalendar
+            monthDate={selectedDate}
+            selectedDate={selectedDate}
+            getEventsForDate={getEventsForDate}
+            onSelectDate={onSelectDate}
+            locale={locale}
+            weekdays={weekdays}
           />
-        ))}
-      </div>
+          <ScheduleDayEvents
+            date={selectedDate}
+            events={getEventsForDate(selectedDate)}
+            locale={locale}
+            getTypeName={getTypeName}
+            isTeacher={isTeacher}
+            onEditMeetingUrl={onEditMeetingUrl}
+          />
+        </>
+      ) : (
+        <>
+          <div className={styles.weekdays}>
+            {weekdays.map((weekdayLabel) => (
+              <div key={weekdayLabel}>{weekdayLabel}</div>
+            ))}
+          </div>
+          <div className={styles.monthGrid}>
+            {monthDays.map((day) => (
+              <ScheduleMonthDayCell
+                key={day.toISOString()}
+                day={day}
+                events={getEventsForDate(day)}
+                inMonth={day.getMonth() === currentMonth}
+                isToday={isSameDay(day, today)}
+                locale={locale}
+                getTypeName={getTypeName}
+                onSelect={() => {
+                  onSelectDate(day);
+                  onSelectDayMode();
+                }}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };

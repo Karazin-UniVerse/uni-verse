@@ -53,6 +53,7 @@ import {
   CreateTeachingAssignmentDto,
   GenerateTimetableDto,
   GetSemesterCalendarQueryDto,
+  ImportCurriculumPlanDto,
   ListTeachingAssignmentsQueryDto,
   SaveSlotPreferencesDto,
   UpdateMeetingUrlDto,
@@ -145,6 +146,20 @@ export class TimetableController {
     assertAdmin(roles);
 
     return this.timetableService.createCurriculumPlan(dto);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Create a curriculum plan together with its teaching assignments',
+  })
+  @Post('curriculum-plans/import')
+  async importCurriculumPlan(
+    @Body() dto: ImportCurriculumPlanDto,
+    @GetUser('roles') roles?: string[],
+  ): Promise<CurriculumPlan> {
+    assertAdmin(roles);
+
+    return this.timetableService.importCurriculumPlan(dto);
   }
 
   @ApiBearerAuth()
@@ -258,6 +273,22 @@ export class TimetableController {
       userId,
       roles,
     });
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "List every teacher's slot preferences for a semester",
+  })
+  @Get('semester-calendar/:semesterCalendarId/slot-preferences')
+  async listSemesterSlotPreferences(
+    @Param('semesterCalendarId', ParseUUIDPipe) semesterCalendarId: string,
+    @GetUser('roles') roles?: string[],
+  ): Promise<TeacherSlotPreference[]> {
+    assertAdmin(roles);
+
+    return this.timetableService.listSemesterSlotPreferences(
+      semesterCalendarId,
+    );
   }
 
   @ApiBearerAuth()

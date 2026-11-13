@@ -26,6 +26,8 @@ describe('ScheduleMonthDayCell', () => {
         events={events}
         inMonth={true}
         isToday={false}
+        locale="uk-UA"
+        getTypeName={(type) => type}
         onSelect={noop}
       />,
     );
@@ -34,7 +36,7 @@ describe('ScheduleMonthDayCell', () => {
     expect(screen.getByText('Class 1')).toBeInTheDocument();
     expect(screen.getByText('Class 2')).toBeInTheDocument();
     expect(screen.getByText('Class 3')).toBeInTheDocument();
-    expect(screen.getByTitle('Class 1')).toHaveTextContent('Class 1');
+    expect(screen.getByTitle(/^Class 1/)).toHaveTextContent('Class 1');
     expect(screen.queryByText(/^\+/)).not.toBeInTheDocument();
   });
 
@@ -47,6 +49,8 @@ describe('ScheduleMonthDayCell', () => {
         events={events}
         inMonth={true}
         isToday={false}
+        locale="uk-UA"
+        getTypeName={(type) => type}
         onSelect={noop}
       />,
     );
@@ -54,7 +58,7 @@ describe('ScheduleMonthDayCell', () => {
     expect(screen.getByText('Class 1')).toBeInTheDocument();
     expect(screen.getByText('Class 2')).toBeInTheDocument();
     expect(screen.getByText('Class 3')).toBeInTheDocument();
-    expect(screen.getByText('+2')).toBeInTheDocument();
+    expect(screen.getByText('+2 ще')).toBeInTheDocument();
   });
 
   it('should apply outMonth class when inMonth is false', () => {
@@ -64,6 +68,8 @@ describe('ScheduleMonthDayCell', () => {
         events={[]}
         inMonth={false}
         isToday={false}
+        locale="uk-UA"
+        getTypeName={(type) => type}
         onSelect={noop}
       />,
     );
@@ -78,6 +84,8 @@ describe('ScheduleMonthDayCell', () => {
         events={[]}
         inMonth={true}
         isToday={true}
+        locale="uk-UA"
+        getTypeName={(type) => type}
         onSelect={noop}
       />,
     );

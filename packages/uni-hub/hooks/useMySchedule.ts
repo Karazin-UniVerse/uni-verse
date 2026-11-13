@@ -15,6 +15,8 @@ function toScheduleEventType(type?: string): ScheduleEvent['type'] {
     case 'PRACTICE':
     case 'PRACTICAL':
       return 'practice';
+    case 'SEMINAR':
+      return 'seminar';
     case 'EXAM':
       return 'exam';
     default:
@@ -47,8 +49,7 @@ export function useMySchedule(): { events: ScheduleEvent[]; isLoading: boolean; 
           type: toScheduleEventType(e.teachingType),
           start,
           end,
-          location:
-            e.groupCodes && e.groupCodes.length > 0 ? e.groupCodes.join(', ') : 'Каразінський',
+          location: e.location ?? '',
           meetingUrl: e.meetingUrl || undefined,
           teachingAssignmentId: e.teachingAssignmentId,
           teacherName: e.teacherName,

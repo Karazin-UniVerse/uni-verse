@@ -1,17 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { CurriculumPlanResponse, SafeTeacherResponse } from '@core/types/timetable';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 
-export interface TimetableReferences {
+interface TimetableReferenceLists {
   plans: CurriculumPlanResponse[];
   teachers: SafeTeacherResponse[];
 }
 
-const EMPTY_REFERENCES: TimetableReferences = { plans: [], teachers: [] };
+export interface TimetableReferences extends TimetableReferenceLists {
+  addPlan: (plan: CurriculumPlanResponse) => void;
+}
+
+const EMPTY_REFERENCES: TimetableReferenceLists = { plans: [], teachers: [] };
 
 /** Loads the curriculum plans and teachers the dean may pick from, so ids are never typed by hand. */
 export function useTimetableReferences(): TimetableReferences {
-  const [references, setReferences] = useState<TimetableReferences>(EMPTY_REFERENCES);
+  const [references, setReferences] = useState<TimetableReferenceLists>(EMPTY_REFERENCES);
 
   useEffect(() => {
     let isActive = true;
@@ -34,5 +38,9 @@ export function useTimetableReferences(): TimetableReferences {
     };
   }, []);
 
-  return references;
+  const addPlan = useCallback((plan: CurriculumPlanResponse) => {
+    setReferences((previous) => ({ ...previous, plans: [plan, ...previous.plans] }));
+  }, []);
+
+  return { ...references, addPlan };
 }

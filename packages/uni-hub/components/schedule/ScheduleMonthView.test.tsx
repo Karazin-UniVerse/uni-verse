@@ -37,6 +37,7 @@ describe('ScheduleMonthView', () => {
       locale: 'en-US',
       weekdays,
       monthDays,
+      getTypeName: (type: string) => type,
       ...overrides,
     };
   };
@@ -135,5 +136,37 @@ describe('ScheduleMonthView', () => {
     expect(onSelectDate).toHaveBeenCalledTimes(1);
     expect(onSelectDate).toHaveBeenCalledWith(targetDay);
     expect(onSelectDayMode).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows dots and the selected day list instead of titles on a phone', async () => {
+    const user = userEvent.setup();
+    const onSelectDate = vi.fn();
+    const lecture: ScheduleEvent = {
+      id: 'evt-3',
+      title: 'Algorithms Lecture',
+      start: new Date(2026, 4, 15, 8, 30),
+      end: new Date(2026, 4, 15, 9, 50),
+      type: 'lecture',
+      location: 'Aud. 101',
+    };
+    const props = createDefaultProps({
+      isCompact: true,
+      onSelectDate,
+      getEventsForDate: (date: Date) =>
+        date.getDate() === 15 && date.getMonth() === 4 ? [lecture] : [],
+    });
+
+    renderComponent(props);
+
+    const selectedDay = screen.getByRole('button', { name: 'May 15, classes: 1' });
+
+    expect(selectedDay).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getAllByText('Algorithms Lecture')).toHaveLength(1);
+    expect(screen.getByText('Classes: 1')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'May 16, classes: 0' }));
+
+    expect(onSelectDate).toHaveBeenCalledWith(new Date(2026, 4, 16));
+    expect(props.onSelectDayMode).not.toHaveBeenCalled();
   });
 });

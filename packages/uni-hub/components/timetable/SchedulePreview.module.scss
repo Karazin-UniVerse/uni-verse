@@ -1,0 +1,398 @@
+@use '@universe/ui/breakpoints.scss' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.viewSwitch {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: var(--space-2);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-medium);
+  background: var(--bg-hover);
+
+  @include narrower-than('sm') {
+    align-self: stretch;
+  }
+}
+
+.viewOption {
+  flex: 1;
+  min-height: var(--space-32);
+  padding: var(--space-4) var(--space-16);
+  border: 0;
+  border-radius: var(--border-radius-small);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--font-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+
+  &[aria-checked='true'] {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-weight: var(--font-weight-bold);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+  }
+}
+
+/* Teacher slot overlay */
+
+.teacherFilter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8) var(--space-16);
+}
+
+.teacherChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.teacherChip {
+  min-height: var(--space-32);
+  padding: 0 var(--space-12);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-full);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+
+  &[aria-checked='true'] {
+    border-color: var(--accent-primary);
+    background: var(--accent-primary);
+    color: var(--accent-text-on-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+  }
+}
+
+.slotLegend {
+  display: flex;
+  gap: var(--space-16);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
+  }
+}
+
+.slotSwatch {
+  width: var(--space-16);
+  height: var(--space-16);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-small);
+}
+
+.dimmed {
+  opacity: 0.45;
+}
+
+.warning {
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--error-color);
+}
+
+/* Week grid */
+
+.weekGrid {
+  overflow: auto;
+  max-height: 75dvh;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-medium);
+  background: var(--bg-surface);
+  -webkit-overflow-scrolling: touch;
+
+  table {
+    width: 100%;
+    min-width: 800px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: var(--font-xs);
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: var(--space-8) var(--space-12);
+    background: var(--bg-hover);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-secondary);
+    text-align: center;
+
+    &:first-child {
+      width: 112px;
+      left: 0;
+      z-index: 3;
+    }
+  }
+
+  tbody tr:not(:last-child) > * {
+    border-bottom: 1px solid var(--border-color);
+  }
+}
+
+.pairTimeCell {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding: var(--space-8);
+  background: var(--bg-hover);
+  border-right: 1px solid var(--border-color);
+  text-align: center;
+  vertical-align: middle;
+
+  strong {
+    display: block;
+    font-size: var(--font-sm);
+    color: var(--text-primary);
+  }
+
+  span {
+    display: block;
+    margin-top: var(--space-2);
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-regular);
+  }
+}
+
+.gridCell {
+  min-width: 0;
+  height: var(--space-48);
+  padding: var(--space-8);
+  background: var(--bg-surface);
+  vertical-align: top;
+
+  &:not(:last-child) {
+    border-right: 1px solid var(--border-color);
+  }
+}
+
+.slotStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+/* Event card: neutral surface, the type colour only on the stripe and the label */
+
+.eventCard {
+  --event-accent: var(--accent-primary);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-8) var(--space-8) var(--space-8) var(--space-12);
+  border: 1px solid var(--border-color);
+  border-left: var(--space-4) solid var(--event-accent);
+  border-radius: var(--border-radius-small);
+  background: color-mix(in srgb, var(--event-accent) 6%, var(--bg-surface));
+  overflow-wrap: anywhere;
+}
+
+.lecture {
+  --event-accent: var(--accent-primary);
+}
+
+.practice {
+  --event-accent: var(--success-color);
+}
+
+.lab {
+  --event-accent: var(--warning-color);
+}
+
+.seminar {
+  --event-accent: var(--purple-500);
+}
+
+.eventHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.typeLabel {
+  padding: var(--space-2) var(--space-8);
+  border-radius: var(--border-radius-small);
+  background: color-mix(in srgb, var(--event-accent) 16%, transparent);
+  color: var(--text-primary);
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+.eventTitle {
+  margin: 0;
+  font-size: var(--font-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.eventBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.eventMeta {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+
+.onlineLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--accent-primary);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* Day agenda (mobile-first view) */
+
+.agenda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.dayTabs {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.dayTab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--space-48);
+  padding: var(--space-4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-medium);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--font-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+
+  &[aria-selected='true'] {
+    border-color: var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 10%, var(--bg-surface));
+    color: var(--text-primary);
+    font-weight: var(--font-weight-bold);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+  }
+}
+
+.dayTabCount {
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-regular);
+  color: var(--text-secondary);
+}
+
+.dayPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.dayEmpty {
+  margin: 0;
+  padding: var(--space-24) var(--space-12);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--border-radius-medium);
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  text-align: center;
+}
+
+.agendaRow {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: var(--space-12);
+  align-items: start;
+}
+
+.agendaTime {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-8);
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+
+  strong {
+    font-size: var(--font-sm);
+    color: var(--text-primary);
+  }
+}
+
+/* Slot tones last, so they win over the grid cell background */
+
+.preferred {
+  background: color-mix(in srgb, var(--success-color) 14%, var(--bg-surface));
+}
+
+.undesirable {
+  background: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--error-color) 16%, var(--bg-surface)) 0 var(--space-4),
+    var(--bg-surface) var(--space-4) var(--space-8)
+  );
+}
+
+.eventCard.undesirable {
+  border-color: var(--error-color);
+  background: color-mix(in srgb, var(--event-accent) 6%, var(--bg-surface));
+}

@@ -27,6 +27,10 @@ vi.mock('./helpers', async (importOriginal) => {
   };
 });
 
+// The view shows the local day, so "today" must be the local date, not the UTC one.
+const toLocalIsoDate = (date: Date): string =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
 describe('ScheduleView component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -61,7 +65,7 @@ describe('ScheduleView component', () => {
   ])('reschedules an admin event and reports conflicts (%o)', async ({ fails, week }) => {
     vi.mocked(useCurrentUser).mockReturnValue({ userId: 'admin', roles: ['ADMIN'] });
     vi.mocked(useMediaQuery).mockReturnValue(true);
-    const todayIso = new Date().toISOString().slice(0, 10);
+    const todayIso = toLocalIsoDate(new Date());
     const initialEvent = {
       id: 'event-1',
       disciplineTitle: 'Algorithms',
@@ -151,14 +155,14 @@ describe('ScheduleView component', () => {
     } else {
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
       await waitFor(() => expect(getMyEvents).toHaveBeenCalledTimes(2));
-      expect(await screen.findByText(/12:00/)).toBeInTheDocument();
+      expect(await screen.findAllByText(/12:00/)).not.toHaveLength(0);
     }
   });
 
   it('allows an instructor to preview and submit a series reschedule request while keeping input on conflict', async () => {
     vi.mocked(useCurrentUser).mockReturnValue({ userId: 'teacher-1', roles: ['INSTRUCTOR'] });
     vi.mocked(useMediaQuery).mockReturnValue(true);
-    const todayIso = new Date().toISOString().slice(0, 10);
+    const todayIso = toLocalIsoDate(new Date());
 
     vi.spyOn(timetableApi, 'listPreferenceSemesters').mockResolvedValue({ data: [] });
     vi.spyOn(timetableApi, 'listRescheduleRequests').mockResolvedValue({
@@ -259,7 +263,7 @@ describe('ScheduleView component', () => {
   ])('shows localized text for server failure "$failure"', async ({ failure, text }) => {
     vi.mocked(useCurrentUser).mockReturnValue({ userId: 'admin', roles: ['ADMIN'] });
     vi.mocked(useMediaQuery).mockReturnValue(true);
-    const todayIso = new Date().toISOString().slice(0, 10);
+    const todayIso = toLocalIsoDate(new Date());
 
     vi.spyOn(timetableApi, 'getMyScheduleEvents').mockResolvedValue({
       data: [

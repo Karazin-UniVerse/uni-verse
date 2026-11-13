@@ -1,41 +1,37 @@
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { SemesterSettings } from './SemesterSettings';
+import { useQuery } from '@tanstack/react-query';
+import { WorkloadSummary } from './WorkloadSummary';
+import {
+  semesterCalendarQueryOptions,
+  semesterSlotPreferencesQueryOptions,
+} from './semesterQueries';
+import { CurriculumPlanDialog } from './CurriculumPlanDialog';
 import {
   AlertCircle,
   Check,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
-  ExternalLink,
   Play,
   Plus,
   Save,
   Trash2,
 } from 'lucide-react';
 import { Button, CheckBox, Modal, Select, Tag, TextInput } from '@una';
-import { PAIR_SCHEDULE, type PairNumber } from '@core/constants/timetable';
 import { checkTimetableConflicts } from '@core/utils/timetable';
 import type {
   AcademicGroupResponse,
+  CurriculumPlanResponse,
   CreateTeachingAssignmentRequest,
   GenerateTimetableDraftResult,
-  ScheduledEvent,
 } from '@core/types/timetable';
 import { useTimetableReferences } from '@uni-hub/hooks/useTimetableReferences';
 import { useLanguage, type FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import { timetableApi } from '@uni-hub/services/api.timetable';
+import { getEventWeekday, getTeachingTypeLabel, PREVIEW_DAYS, PREVIEW_PAIRS } from './helpers';
+import { SchedulePreview } from './SchedulePreview';
+import type { PreviewEvent } from './SchedulePreview.types';
 import styles from './TimetableManagement.module.scss';
-
-type PreviewEvent = ScheduledEvent & {
-  weekday?: number;
-  dayOfWeek?: number;
-  teacherName?: string;
-  groupCode?: string;
-  groupCodes?: string[];
-  subgroupName?: string;
-  streamName?: string;
-  meetingUrl?: string | null;
-};
 
 type DiagnosticsWithDuration = GenerateTimetableDraftResult['diagnostics'] & {
   durationMs?: number;
@@ -45,178 +41,6 @@ type DraftResultWithSummaries = GenerateTimetableDraftResult & {
   candidateSummaries?: Array<{
     eventCount?: number;
   }>;
-};
-
-const PREVIEW_DAYS = [1, 2, 3, 4, 5, 6] as const;
-const PREVIEW_PAIRS: PairNumber[] = [1, 2, 3, 4, 5, 6, 7];
-
-const getEventWeekday = (event: PreviewEvent): number | null => {
-  if (typeof event.weekday === 'number' && event.weekday >= 1 && event.weekday <= 6) {
-    return event.weekday;
-  }
-
-  if (typeof event.dayOfWeek === 'number' && event.dayOfWeek >= 1 && event.dayOfWeek <= 6) {
-    return event.dayOfWeek;
-  }
-
-  if (event.date) {
-    const normalized = event.date.includes('T') ? event.date : `${event.date}T00:00:00Z`;
-    const day = new Date(normalized).getUTCDay();
-
-    if (day >= 1 && day <= 6) {
-      return day;
-    }
-  }
-
-  return null;
-};
-
-const buildPreviewSlots = (events: PreviewEvent[]): Map<string, PreviewEvent[]> => {
-  const slots = new Map<string, PreviewEvent[]>();
-  const seenPerSlot = new Map<string, Set<string>>();
-  const hasRegularEvents = events.some((event) => !event.isMakeupSaturday);
-
-  for (const event of events) {
-    if (hasRegularEvents && event.isMakeupSaturday) {
-      continue;
-    }
-
-    const weekday = getEventWeekday(event);
-
-    if (!weekday) {
-      continue;
-    }
-
-    const span = Math.max(1, event.pairSpan ?? 1);
-    const dedupeKey =
-      event.teachingAssignmentId ||
-      `${event.disciplineTitle}|${event.teachingType}|${event.teacherId}|${(event.groupCodes ?? event.groupIds ?? []).join(',')}|${event.subgroupId ?? ''}|${event.streamId ?? ''}`;
-
-    for (let offset = 0; offset < span; offset += 1) {
-      const pair = event.pair + offset;
-
-      if (pair < 1 || pair > 7) {
-        continue;
-      }
-
-      const slotKey = `${weekday}-${pair}`;
-      let seen = seenPerSlot.get(slotKey);
-
-      if (!seen) {
-        seen = new Set<string>();
-        seenPerSlot.set(slotKey, seen);
-      }
-
-      if (seen.has(dedupeKey)) {
-        continue;
-      }
-
-      seen.add(dedupeKey);
-
-      const list = slots.get(slotKey) ?? [];
-
-      list.push(event);
-      slots.set(slotKey, list);
-    }
-  }
-
-  return slots;
-};
-
-const getTeachingTypeBadge = (
-  type: string,
-  formatMessage: FormatMessage,
-): {
-  label: string;
-  tone: 'info' | 'success' | 'warning' | 'default';
-  cardClass: string;
-} => {
-  switch (type) {
-    case 'PRACTICAL':
-    case 'PRACTICE':
-      return {
-        label: formatMessage('timetable.typePracticalShort'),
-        tone: 'success',
-        cardClass: styles.eventPractice,
-      };
-    case 'LABORATORY':
-    case 'LAB':
-      return {
-        label: formatMessage('timetable.typeLaboratoryShort'),
-        tone: 'warning',
-        cardClass: styles.eventLab,
-      };
-    case 'SEMINAR':
-      return {
-        label: formatMessage('timetable.typeSeminarShort'),
-        tone: 'default',
-        cardClass: styles.eventSeminar,
-      };
-    default:
-      return {
-        label: formatMessage('timetable.typeLectureShort'),
-        tone: 'info',
-        cardClass: styles.eventLecture,
-      };
-  }
-};
-
-const getTargetBadges = (
-  event: PreviewEvent,
-  academicGroups: AcademicGroupResponse[],
-  formatMessage: FormatMessage,
-): string[] => {
-  const badges: string[] = [];
-
-  if (event.streamName || event.streamId) {
-    badges.push(
-      formatMessage('timetable.streamBadge', {
-        stream: event.streamName || event.streamId || '',
-      }),
-    );
-  }
-
-  const rawGroups = event.groupCodes?.length
-    ? event.groupCodes
-    : event.groupCode
-      ? [event.groupCode]
-      : (event.groupIds ?? []);
-
-  if (rawGroups.length > 0) {
-    const resolvedGroups = rawGroups.map((groupId) => {
-      const matched = academicGroups.find(
-        (group) => group.id === groupId || group.code === groupId,
-      );
-
-      return matched?.code ?? groupId;
-    });
-
-    badges.push(resolvedGroups.join(', '));
-  }
-
-  if (event.subgroupName || event.subgroupId) {
-    const rawSubgroup = event.subgroupName || event.subgroupId || '';
-    let resolvedSubgroup = rawSubgroup;
-
-    for (const group of academicGroups) {
-      const matched = group.subgroups?.find(
-        (sub) => sub.id === rawSubgroup || sub.name === rawSubgroup,
-      );
-
-      if (matched) {
-        resolvedSubgroup = matched.name;
-        break;
-      }
-    }
-
-    badges.push(
-      formatMessage('timetable.subgroupBadge', {
-        subgroup: resolvedSubgroup,
-      }),
-    );
-  }
-
-  return badges;
 };
 
 export interface WorkloadRow {
@@ -354,9 +178,34 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   const [targetPair, setTargetPair] = useState('1');
   const [adjustmentError, setAdjustmentError] = useState<string | null>(null);
   const [isAdjusting, setIsAdjusting] = useState(false);
-  const { plans, teachers } = useTimetableReferences();
+  const { plans, teachers, addPlan } = useTimetableReferences();
+  const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
   const planId = chosenPlanId || plans[0]?.id || '';
   const selectedPlan = plans.find((plan) => plan.id === planId);
+  const calendarQuery = useQuery(
+    semesterCalendarQueryOptions(selectedPlan?.academicYear ?? '', selectedPlan?.semester ?? 1),
+  );
+  const slotPreferencesQuery = useQuery(
+    semesterSlotPreferencesQueryOptions(calendarQuery.data?.id ?? ''),
+  );
+
+  const handleSelectPlan = useCallback((id: string) => {
+    setCalendarReady(false);
+    setWorkload([]);
+    setDraftResult(null);
+    setSelectedCandidateIndex(0);
+    setIsPublished(false);
+    setPlanId(id);
+  }, []);
+
+  const handlePlanCreated = useCallback(
+    (plan: CurriculumPlanResponse) => {
+      addPlan(plan);
+      setIsPlanDialogOpen(false);
+      handleSelectPlan(plan.id);
+    },
+    [addPlan, handleSelectPlan],
+  );
 
   const planOptions = useMemo(() => {
     const options = plans.map((plan) => ({
@@ -860,6 +709,12 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
 
     return !checkTimetableConflicts({ events: projected }).isValid;
   }, [adjustingEvent, selectedCandidate, targetWeekday, targetPair]);
+  const handleStartAdjust = useCallback((event: PreviewEvent, weekday: number): void => {
+    setAdjustingEvent(event);
+    setTargetWeekday(String(weekday));
+    setTargetPair(String(event.pair));
+    setAdjustmentError(null);
+  }, []);
   const handleAdjustSlot = async (): Promise<void> => {
     if (!draftResult || !adjustingEvent || adjustmentConflict) {
       return;
@@ -904,10 +759,8 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
       setIsAdjusting(false);
     }
   };
-  const previewSlots = useMemo(
-    () => buildPreviewSlots((selectedCandidate?.events ?? []) as PreviewEvent[]),
-    [selectedCandidate],
-  );
+  const hasPendingWorkload =
+    deletedRowIds.size > 0 || dirtyRowIds.size > 0 || isSavingWorkload || isGenerating;
   const executionTimeMs =
     draftResult?.diagnostics?.timeMs ??
     (draftResult?.diagnostics as DiagnosticsWithDuration | undefined)?.durationMs ??
@@ -937,25 +790,37 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
           id={`${baseId}-planId`}
           value={planId}
           options={planOptions}
-          onChange={(id) => {
-            setCalendarReady(false);
-            setWorkload([]);
-            setPlanId(id);
-          }}
-          disabled={
-            deletedRowIds.size > 0 || dirtyRowIds.size > 0 || isSavingWorkload || isGenerating
-          }
+          onChange={handleSelectPlan}
+          disabled={hasPendingWorkload}
           aria-label={formatMessage('timetable.planId')}
         />
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => setIsPlanDialogOpen(true)}
+          disabled={hasPendingWorkload}
+        >
+          <Plus size={16} /> {formatMessage('timetable.addPlan')}
+        </Button>
       </section>
+      {isPlanDialogOpen && (
+        <CurriculumPlanDialog
+          open
+          academicGroups={academicGroups}
+          plans={plans}
+          onClose={() => setIsPlanDialogOpen(false)}
+          onCreated={handlePlanCreated}
+        />
+      )}
 
       {/* Workload Table */}
       {selectedPlan && (
-        <SemesterSettings
+        <WorkloadSummary
           key={planId}
           academicYear={selectedPlan.academicYear}
           semester={selectedPlan.semester}
-          onReadyChange={setCalendarReady}
+          workload={workload}
+          onCalendarReadyChange={setCalendarReady}
         />
       )}
       <section className={styles.section}>
@@ -966,179 +831,209 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
           disabled={isSavingWorkload || isGenerating}
           tabIndex={0}
         >
-          <table className={styles.workloadTable}>
+          <div className={styles.tableInner}>
+            <div className={styles.tableHead}>
+              <table className={styles.workloadTable}>
+                <thead>
+                  <tr>
+                    <th>{formatMessage('timetable.teachingType')}</th>
+                    <th>{formatMessage('timetable.groupOrStream')}</th>
+                    <th>{formatMessage('timetable.subgroup')}</th>
+                    <th>{formatMessage('timetable.hours')}</th>
+                    <th>{formatMessage('timetable.teacher')}</th>
+                    <th>{formatMessage('timetable.saturdayOnly')}</th>
+                    <th>{formatMessage('timetable.lateSlotAuth')}</th>
+                    <th>{formatMessage('timetable.actions')}</th>
+                  </tr>
+                </thead>
+              </table>
+            </div>
             {workloadGroups.map((group) => {
               const isCollapsed = collapsedGroups.has(group.key);
               const ids = group.rows.map((row) => row.id);
               const label = group.title || formatMessage('timetable.disciplineTitle');
 
               return (
-                <tbody key={group.key}>
-                  <tr className={styles.groupRow}>
-                    <td colSpan={8}>
-                      <div className={styles.groupHeader}>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="small"
-                          aria-expanded={!isCollapsed}
-                          aria-label={formatMessage(
-                            isCollapsed
-                              ? 'timetable.expandDiscipline'
-                              : 'timetable.collapseDiscipline',
-                            { discipline: label },
-                          )}
-                          onClick={() => handleToggleGroup(group.key)}
-                        >
-                          {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
-                        </Button>
-                        <TextInput
-                          value={group.title}
-                          onChange={(e) => handleRenameGroup(ids, e.target.value)}
-                          placeholder={formatMessage('timetable.disciplineTitle')}
-                          aria-label={formatMessage('timetable.disciplineTitle')}
-                        />
-                        <Tag>{group.rows.length}</Tag>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="small"
-                          onClick={() => handleAddRow(group.title)}
-                          aria-label={formatMessage('timetable.addWorkloadToDiscipline', {
-                            discipline: label,
-                          })}
-                        >
-                          <Plus size={14} />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
+                <section key={group.key} className={styles.workloadGroup}>
+                  <div className={styles.groupHeader}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="small"
+                      aria-expanded={!isCollapsed}
+                      aria-label={formatMessage(
+                        isCollapsed ? 'timetable.expandDiscipline' : 'timetable.collapseDiscipline',
+                        { discipline: label },
+                      )}
+                      onClick={() => handleToggleGroup(group.key)}
+                    >
+                      {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+                    </Button>
+                    <TextInput
+                      value={group.title}
+                      onChange={(e) => handleRenameGroup(ids, e.target.value)}
+                      placeholder={formatMessage('timetable.disciplineTitle')}
+                      aria-label={formatMessage('timetable.disciplineTitle')}
+                    />
+                    <Tag>{group.rows.length}</Tag>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="small"
+                      onClick={() => handleAddRow(group.title)}
+                      aria-label={formatMessage('timetable.addWorkloadToDiscipline', {
+                        discipline: label,
+                      })}
+                    >
+                      <Plus size={14} />
+                    </Button>
+                  </div>
                   {!isCollapsed && (
-                    <tr className={styles.columnHeaderRow}>
-                      <th>{formatMessage('timetable.teachingType')}</th>
-                      <th>{formatMessage('timetable.groupOrStream')}</th>
-                      <th>{formatMessage('timetable.subgroup')}</th>
-                      <th>{formatMessage('timetable.hours')}</th>
-                      <th>{formatMessage('timetable.teacher')}</th>
-                      <th>{formatMessage('timetable.saturdayOnly')}</th>
-                      <th>{formatMessage('timetable.lateSlotAuth')}</th>
-                      <th>{formatMessage('timetable.actions')}</th>
-                    </tr>
-                  )}
-                  {!isCollapsed &&
-                    group.rows.map((row) => (
-                      <tr key={row.id}>
-                        <td>
-                          <Select
-                            value={row.teachingType}
-                            options={teachingTypeOptions}
-                            onChange={(val) =>
-                              handleUpdateRow(
-                                row.id,
-                                'teachingType',
-                                val as WorkloadRow['teachingType'],
-                              )
-                            }
-                            aria-label={formatMessage('timetable.teachingType')}
-                          />
-                        </td>
-                        <td>
-                          <div className={styles.groupCell}>
-                            <Select
-                              value={getSelectedGroupOrStream(row)}
-                              options={groupOrStreamOptions}
-                              onChange={(val) => handleGroupOrStreamChange(row.id, val)}
-                              aria-label={formatMessage('timetable.groupOrStream')}
-                            />
-                            {(row.streamId === 'custom-stream' ||
-                              (Boolean(row.streamId) && row.streamId !== 'stream-1')) && (
-                              <TextInput
-                                value={row.streamId === 'custom-stream' ? '' : (row.streamId ?? '')}
-                                placeholder={formatMessage('timetable.streamPlaceholder')}
-                                onChange={(e) =>
-                                  handleUpdateRow(row.id, 'streamId', e.target.value)
+                    <table className={styles.workloadTable}>
+                      <tbody>
+                        {group.rows.map((row) => (
+                          <tr key={row.id}>
+                            <td data-label={formatMessage('timetable.teachingType')}>
+                              <Select
+                                value={row.teachingType}
+                                options={teachingTypeOptions}
+                                onChange={(val) =>
+                                  handleUpdateRow(
+                                    row.id,
+                                    'teachingType',
+                                    val as WorkloadRow['teachingType'],
+                                  )
                                 }
-                                aria-label={formatMessage('timetable.streamPlaceholder')}
+                                aria-label={formatMessage('timetable.teachingType')}
                               />
-                            )}
-                          </div>
-                        </td>
-                        <td>
-                          <div className={styles.subgroupCell}>
-                            <Select
-                              value={getSubgroupValue(row)}
-                              options={subgroupOptions}
-                              onChange={(val) => handleSubgroupChange(row.id, val)}
-                              disabled={Boolean(row.streamId)}
-                              aria-label={formatMessage('timetable.subgroup')}
-                            />
-                          </div>
-                        </td>
-                        <td>
-                          <TextInput
-                            type="number"
-                            value={row.academicHours}
-                            onChange={(e) =>
-                              handleUpdateRow(row.id, 'academicHours', Number(e.target.value) || 0)
-                            }
-                            style={{ width: '80px' }}
-                            aria-label={formatMessage('timetable.hours')}
-                          />
-                        </td>
-                        <td>
-                          <Select
-                            value={row.teacherId ?? ''}
-                            options={teacherOptions}
-                            onChange={(val) => handleUpdateRow(row.id, 'teacherId', val)}
-                            aria-label={formatMessage('timetable.teacher')}
-                          />
-                        </td>
-                        <td style={{ textAlign: 'center' }}>
-                          <CheckBox
-                            variant="primary"
-                            checked={row.isSaturdayOnly}
-                            onChange={(e) =>
-                              handleUpdateRow(row.id, 'isSaturdayOnly', e.target.checked)
-                            }
-                            aria-label={formatMessage('timetable.saturdayOnlyRow', {
-                              discipline:
-                                row.disciplineTitle || formatMessage('timetable.disciplineTitle'),
-                            })}
-                          />
-                        </td>
-                        <td style={{ textAlign: 'center' }}>
-                          <CheckBox
-                            variant="primary"
-                            checked={row.hasLateSlotAuthorization}
-                            onChange={(e) =>
-                              handleUpdateRow(row.id, 'hasLateSlotAuthorization', e.target.checked)
-                            }
-                            aria-label={formatMessage('timetable.lateSlotAuthRow', {
-                              discipline:
-                                row.disciplineTitle || formatMessage('timetable.disciplineTitle'),
-                            })}
-                          />
-                        </td>
-                        <td>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="small"
-                            onClick={() => handleRemoveRow(row.id)}
-                            aria-label={formatMessage('timetable.deleteRow', {
-                              discipline:
-                                row.disciplineTitle || formatMessage('timetable.disciplineTitle'),
-                            })}
-                          >
-                            <Trash2 size={14} />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
+                            </td>
+                            <td data-label={formatMessage('timetable.groupOrStream')}>
+                              <div className={styles.groupCell}>
+                                <Select
+                                  value={getSelectedGroupOrStream(row)}
+                                  options={groupOrStreamOptions}
+                                  onChange={(val) => handleGroupOrStreamChange(row.id, val)}
+                                  aria-label={formatMessage('timetable.groupOrStream')}
+                                />
+                                {(row.streamId === 'custom-stream' ||
+                                  (Boolean(row.streamId) && row.streamId !== 'stream-1')) && (
+                                  <TextInput
+                                    value={
+                                      row.streamId === 'custom-stream' ? '' : (row.streamId ?? '')
+                                    }
+                                    placeholder={formatMessage('timetable.streamPlaceholder')}
+                                    onChange={(e) =>
+                                      handleUpdateRow(row.id, 'streamId', e.target.value)
+                                    }
+                                    aria-label={formatMessage('timetable.streamPlaceholder')}
+                                  />
+                                )}
+                              </div>
+                            </td>
+                            <td data-label={formatMessage('timetable.subgroup')}>
+                              <div className={styles.subgroupCell}>
+                                <Select
+                                  value={getSubgroupValue(row)}
+                                  options={subgroupOptions}
+                                  onChange={(val) => handleSubgroupChange(row.id, val)}
+                                  disabled={Boolean(row.streamId)}
+                                  aria-label={formatMessage('timetable.subgroup')}
+                                />
+                              </div>
+                            </td>
+                            <td data-label={formatMessage('timetable.hours')}>
+                              <TextInput
+                                type="number"
+                                value={row.academicHours}
+                                onChange={(e) =>
+                                  handleUpdateRow(
+                                    row.id,
+                                    'academicHours',
+                                    Number(e.target.value) || 0,
+                                  )
+                                }
+                                className={styles.hoursInput}
+                                aria-label={formatMessage('timetable.hours')}
+                              />
+                            </td>
+                            <td
+                              data-label={formatMessage('timetable.teacher')}
+                              className={row.teacherId ? undefined : styles.missingTeacher}
+                              title={
+                                row.teacherId
+                                  ? undefined
+                                  : formatMessage('timetable.teacherMissing')
+                              }
+                            >
+                              <Select
+                                value={row.teacherId ?? ''}
+                                options={teacherOptions}
+                                onChange={(val) => handleUpdateRow(row.id, 'teacherId', val)}
+                                aria-label={formatMessage('timetable.teacher')}
+                              />
+                            </td>
+                            <td
+                              className={styles.checkCell}
+                              data-label={formatMessage('timetable.saturdayOnly')}
+                            >
+                              <CheckBox
+                                variant="primary"
+                                checked={row.isSaturdayOnly}
+                                onChange={(e) =>
+                                  handleUpdateRow(row.id, 'isSaturdayOnly', e.target.checked)
+                                }
+                                aria-label={formatMessage('timetable.saturdayOnlyRow', {
+                                  discipline:
+                                    row.disciplineTitle ||
+                                    formatMessage('timetable.disciplineTitle'),
+                                })}
+                              />
+                            </td>
+                            <td
+                              className={styles.checkCell}
+                              data-label={formatMessage('timetable.lateSlotAuth')}
+                            >
+                              <CheckBox
+                                variant="primary"
+                                checked={row.hasLateSlotAuthorization}
+                                onChange={(e) =>
+                                  handleUpdateRow(
+                                    row.id,
+                                    'hasLateSlotAuthorization',
+                                    e.target.checked,
+                                  )
+                                }
+                                aria-label={formatMessage('timetable.lateSlotAuthRow', {
+                                  discipline:
+                                    row.disciplineTitle ||
+                                    formatMessage('timetable.disciplineTitle'),
+                                })}
+                              />
+                            </td>
+                            <td data-label={formatMessage('timetable.actions')}>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="small"
+                                onClick={() => handleRemoveRow(row.id)}
+                                aria-label={formatMessage('timetable.deleteRow', {
+                                  discipline:
+                                    row.disciplineTitle ||
+                                    formatMessage('timetable.disciplineTitle'),
+                                })}
+                              >
+                                <Trash2 size={14} />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </section>
               );
             })}
-          </table>
+          </div>
         </fieldset>
 
         <div className={styles.tableActions}>
@@ -1203,7 +1098,11 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
             </div>
           </div>
 
-          <div className={styles.candidatesList}>
+          <div
+            className={styles.candidatesList}
+            role="radiogroup"
+            aria-label={formatMessage('timetable.candidatesFound')}
+          >
             {draftResult.candidates.map((cand, idx) => {
               const violations = cand.preferenceViolations ?? [];
               let scoreTone: 'success' | 'warning' | 'danger' = 'success';
@@ -1215,20 +1114,19 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
               }
 
               return (
-                <div
+                <label
                   key={idx}
                   className={`${styles.candidateCard} ${
                     selectedCandidateIndex === idx ? styles.selectedCandidate : ''
                   }`}
-                  onClick={() => setSelectedCandidateIndex(idx)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      setSelectedCandidateIndex(idx);
-                    }
-                  }}
                 >
+                  <input
+                    type="radio"
+                    name={`${baseId}-candidate`}
+                    className={styles.candidateRadio}
+                    checked={selectedCandidateIndex === idx}
+                    onChange={() => setSelectedCandidateIndex(idx)}
+                  />
                   <div className={styles.candidateHeader}>
                     <span>{formatMessage('timetable.candidateNumbered', { number: idx + 1 })}</span>
                     <Tag tone={scoreTone}>
@@ -1272,7 +1170,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
                       </>
                     )}
                   </div>
-                </div>
+                </label>
               );
             })}
           </div>
@@ -1281,124 +1179,13 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
           <div className={styles.previewSection}>
             <h4>{formatMessage('timetable.previewTitle')}</h4>
             {selectedCandidate?.events && selectedCandidate.events.length > 0 ? (
-              <div
-                className={styles.previewGrid}
-                role="region"
-                tabIndex={0}
-                aria-label={formatMessage('timetable.previewTitle')}
-              >
-                <table>
-                  <thead className={styles.gridHeader}>
-                    <tr>
-                      <th>{formatMessage('timetable.pairHeader')}</th>
-                      <th>{formatMessage('timetable.dayMon')}</th>
-                      <th>{formatMessage('timetable.dayTue')}</th>
-                      <th>{formatMessage('timetable.dayWed')}</th>
-                      <th>{formatMessage('timetable.dayThu')}</th>
-                      <th>{formatMessage('timetable.dayFri')}</th>
-                      <th>{formatMessage('timetable.daySat')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {PREVIEW_PAIRS.map((pair) => {
-                      const schedule = PAIR_SCHEDULE[pair];
-
-                      return (
-                        <tr key={pair} className={styles.pairRow}>
-                          <td className={styles.pairTimeCell}>
-                            <strong>#{pair}</strong>
-                            <span>
-                              {schedule.start}–{schedule.end}
-                            </span>
-                          </td>
-                          {PREVIEW_DAYS.map((day) => {
-                            const slotEvents = previewSlots.get(`${day}-${pair}`) ?? [];
-
-                            return (
-                              <td key={day} className={styles.gridCell}>
-                                {slotEvents.length === 0 ? (
-                                  <div className={styles.emptyCell}>
-                                    {formatMessage('timetable.emptySlot')}
-                                  </div>
-                                ) : (
-                                  <div className={styles.slotStack}>
-                                    {slotEvents.map((event) => {
-                                      const typeInfo = getTeachingTypeBadge(
-                                        event.teachingType,
-                                        formatMessage,
-                                      );
-                                      const targetBadges = getTargetBadges(
-                                        event,
-                                        academicGroups,
-                                        formatMessage,
-                                      );
-
-                                      return (
-                                        <div
-                                          key={event.id}
-                                          className={`${styles.eventCard} ${typeInfo.cardClass}`}
-                                        >
-                                          <div className={styles.eventTitle}>
-                                            {event.disciplineTitle}
-                                          </div>
-                                          {!isPublished && (
-                                            <Button
-                                              type="button"
-                                              variant="secondary"
-                                              size="small"
-                                              onClick={() => {
-                                                setAdjustingEvent(event);
-                                                setTargetWeekday(String(day));
-                                                setTargetPair(String(event.pair));
-                                                setAdjustmentError(null);
-                                              }}
-                                            >
-                                              {formatMessage('timetable.adjustSlot')}
-                                            </Button>
-                                          )}
-                                          <div className={styles.eventBadges}>
-                                            <Tag size="small" tone={typeInfo.tone}>
-                                              {typeInfo.label}
-                                            </Tag>
-                                            {targetBadges.map((badge) => (
-                                              <Tag key={badge} size="small" tone="neutral">
-                                                {badge}
-                                              </Tag>
-                                            ))}
-                                            {event.isSaturdayOnly && (
-                                              <Tag size="small" tone="warning">
-                                                {formatMessage('timetable.saturdayOnly')}
-                                              </Tag>
-                                            )}
-                                          </div>
-                                          <div className={styles.eventMeta}>
-                                            {event.teacherName || event.teacherId}
-                                          </div>
-                                          {event.meetingUrl && (
-                                            <a
-                                              href={event.meetingUrl}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className={styles.onlineLink}
-                                            >
-                                              <ExternalLink size={12} />{' '}
-                                              {formatMessage('timetable.onlineLink')}
-                                            </a>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <SchedulePreview
+                events={selectedCandidate.events as PreviewEvent[]}
+                academicGroups={academicGroups}
+                onAdjust={isPublished ? undefined : handleStartAdjust}
+                teachers={teachers}
+                slotPreferences={slotPreferencesQuery.data}
+              />
             ) : (
               <div className={styles.emptyPreview}>
                 {formatMessage('timetable.scheduledEventsCount', {
@@ -1452,7 +1239,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
             }}
           >
             <p>{adjustingEvent.disciplineTitle}</p>
-            <p>{getTeachingTypeBadge(adjustingEvent.teachingType, formatMessage).label}</p>
+            <p>{getTeachingTypeLabel(adjustingEvent.teachingType, formatMessage)}</p>
             <p>
               {formatMessage('timetable.currentSlot', {
                 day:

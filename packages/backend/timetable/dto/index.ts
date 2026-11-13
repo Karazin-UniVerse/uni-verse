@@ -7,6 +7,7 @@ export * from './create-teacher-unavailability.dto';
 export * from './confirm-teacher-unavailability.dto';
 export * from './create-academic-group.dto';
 export * from './create-curriculum-plan.dto';
+export * from './import-curriculum-plan.dto';
 export * from './generate-timetable.dto';
 export * from './update-meeting-url.dto';
 export * from './list-teaching-assignments-query.dto';

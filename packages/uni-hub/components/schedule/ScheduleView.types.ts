@@ -3,7 +3,7 @@ export interface ScheduleEvent {
   title: string;
   start: Date;
   end: Date;
-  type: 'lecture' | 'lab' | 'practice' | 'exam' | 'other';
+  type: 'lecture' | 'lab' | 'practice' | 'seminar' | 'exam' | 'other';
   location: string;
   meetingUrl?: string;
   teachingAssignmentId?: string;
@@ -20,34 +20,77 @@ export interface ScheduleToolbarProps {
   onSubscribeCalendar?: () => void;
 }
 
-export interface ScheduleDayViewProps {
-  selectedDate: Date;
-  onSelectDate: (date: Date) => void;
-  events: ScheduleEvent[];
-  locale: string;
+export interface ScheduleEventActions {
   getTypeName: (type: string) => string;
   isTeacher?: boolean;
   onEditMeetingUrl?: (event: ScheduleEvent) => void;
 }
 
-export interface ScheduleWeekViewProps {
+export interface ScheduleDayViewProps extends ScheduleEventActions {
   selectedDate: Date;
   onSelectDate: (date: Date) => void;
   getEventsForDate: (date: Date) => ScheduleEvent[];
   locale: string;
-  getTypeName: (type: string) => string;
-  isTeacher?: boolean;
-  onEditMeetingUrl?: (event: ScheduleEvent) => void;
+  weekdays: string[];
+  isCompact?: boolean;
 }
 
-export interface ScheduleWeekDayCardProps {
+export interface ScheduleWeekViewProps extends ScheduleEventActions {
+  selectedDate: Date;
+  onSelectDate: (date: Date) => void;
+  getEventsForDate: (date: Date) => ScheduleEvent[];
+  locale: string;
+  isCompact?: boolean;
+}
+
+export interface ScheduleWeekDayCardProps extends ScheduleEventActions {
   day: Date;
   events: ScheduleEvent[];
   isToday: boolean;
   locale: string;
-  getTypeName: (type: string) => string;
-  isTeacher?: boolean;
-  onEditMeetingUrl?: (event: ScheduleEvent) => void;
+}
+
+export interface ScheduleWeekGridProps extends ScheduleEventActions {
+  days: Date[];
+  getEventsForDate: (date: Date) => ScheduleEvent[];
+  locale: string;
+}
+
+export interface ScheduleEventCardProps extends ScheduleEventActions {
+  event: ScheduleEvent;
+  isDense?: boolean;
+}
+
+export interface ScheduleNavProps {
+  title: string;
+  prevLabel: string;
+  nextLabel: string;
+  onPrev: () => void;
+  onNext: () => void;
+  onToday: () => void;
+}
+
+export interface ScheduleDotCalendarProps {
+  monthDate: Date;
+  selectedDate: Date;
+  getEventsForDate: (date: Date) => ScheduleEvent[];
+  onSelectDate: (date: Date) => void;
+  locale: string;
+  weekdays: string[];
+}
+
+export interface ScheduleWeekStripProps {
+  selectedDate: Date;
+  getEventsForDate: (date: Date) => ScheduleEvent[];
+  onSelectDate: (date: Date) => void;
+  locale: string;
+}
+
+export interface ScheduleEventGroup {
+  key: string;
+  title: string;
+  start: Date;
+  types: ScheduleEvent['type'][];
 }
 
 export interface ScheduleViewProps {
@@ -55,7 +98,7 @@ export interface ScheduleViewProps {
   isTeacher?: boolean;
 }
 
-export interface ScheduleMonthViewProps {
+export interface ScheduleMonthViewProps extends ScheduleEventActions {
   selectedDate: Date;
   onSelectDate: (date: Date) => void;
   onSelectDayMode: () => void;
@@ -63,6 +106,7 @@ export interface ScheduleMonthViewProps {
   locale: string;
   weekdays: string[];
   monthDays: Date[];
+  isCompact?: boolean;
 }
 
 export interface ScheduleMonthDayCellProps {
@@ -70,5 +114,7 @@ export interface ScheduleMonthDayCellProps {
   events: ScheduleEvent[];
   inMonth: boolean;
   isToday: boolean;
+  locale: string;
+  getTypeName: (type: string) => string;
   onSelect: () => void;
 }

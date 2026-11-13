@@ -2,14 +2,11 @@
 
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  PAIR_SCHEDULE,
-  SLOT_PREFERENCE,
-  TEACHING_DAYS_PER_WEEK,
-  type SlotPreference,
-} from '@core/constants/timetable';
+import { BREAKPOINTS } from '@core/constants/breakpoints';
+import { TEACHING_DAYS_PER_WEEK, type SlotPreference } from '@core/constants/timetable';
 import type { SlotPreferenceItem } from '@core/types/timetable';
 import { Button, useToast } from '@una';
+import { useMediaQuery } from '@uni-hub/hooks/useMediaQuery';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import {
@@ -17,51 +14,12 @@ import {
   preferenceSemestersQueryOptions,
   slotPreferenceKeys,
 } from './slotPreferencesQueries';
+import { setSlotPreference } from './helpers';
+import { SlotPreferenceDays } from './SlotPreferenceDays';
+import { SlotPreferenceGrid } from './SlotPreferenceGrid';
 import styles from './TeacherSlotPreferences.module.scss';
 
 const REFERENCE_MONDAY_YEAR = 2024;
-
-function getNextPreference(current?: SlotPreference): SlotPreference | undefined {
-  if (current === undefined) {
-    return SLOT_PREFERENCE.PREFERRED;
-  }
-
-  if (current === SLOT_PREFERENCE.PREFERRED) {
-    return SLOT_PREFERENCE.UNDESIRABLE;
-  }
-
-  return undefined;
-}
-
-function toggleSlotPreference(
-  currentSlots: SlotPreferenceItem[],
-  weekday: number,
-  pair: number,
-): SlotPreferenceItem[] {
-  const existing = currentSlots.find((slot) => slot.weekday === weekday && slot.pair === pair);
-  const nextPreference = getNextPreference(existing?.preference);
-  const remaining = currentSlots.filter((slot) => slot.weekday !== weekday || slot.pair !== pair);
-
-  if (!nextPreference) {
-    return remaining;
-  }
-
-  return [...remaining, { weekday, pair, preference: nextPreference }];
-}
-
-function getPreferenceStateKey(
-  preference?: SlotPreference,
-): 'preferences.preferred' | 'preferences.undesirable' | 'preferences.neutral' {
-  if (preference === SLOT_PREFERENCE.PREFERRED) {
-    return 'preferences.preferred';
-  }
-
-  if (preference === SLOT_PREFERENCE.UNDESIRABLE) {
-    return 'preferences.undesirable';
-  }
-
-  return 'preferences.neutral';
-}
 
 export function TeacherSlotPreferences(): React.JSX.Element {
   const { formatMessage, localeTag } = useLanguage();
@@ -105,6 +63,7 @@ export function TeacherSlotPreferences(): React.JSX.Element {
   const isBusy = semestersQuery.isLoading || preferencesQuery.isLoading || saveMutation.isPending;
   const hasError = semestersQuery.isError || preferencesQuery.isError || saveMutation.isError;
   const displayedSlots = draftSlots ?? preferencesQuery.data ?? [];
+  const isMobile = useMediaQuery('less', BREAKPOINTS.md);
 
   const weekdays = useMemo(
     () =>
@@ -117,10 +76,22 @@ export function TeacherSlotPreferences(): React.JSX.Element {
     [localeTag],
   );
 
-  const handleToggleCell = (weekday: number, pair: number): void => {
+  const handleChange = (weekday: number, pair: number, preference?: SlotPreference): void => {
     setDraftSlots((previous) =>
-      toggleSlotPreference(previous ?? preferencesQuery.data ?? [], weekday, pair),
+      setSlotPreference({
+        slots: previous ?? preferencesQuery.data ?? [],
+        weekday,
+        pair,
+        preference,
+      }),
     );
+  };
+
+  const viewProps = {
+    slots: displayedSlots,
+    weekdays,
+    disabled: isBusy || !activeSemesterId,
+    onChange: handleChange,
   };
 
   const handleSelectSemester = (targetId: string): void => {
@@ -170,68 +141,7 @@ export function TeacherSlotPreferences(): React.JSX.Element {
         </p>
       )}
 
-      <div
-        className={styles.scrollContainer}
-        role="region"
-        aria-label={formatMessage('preferences.title')}
-      >
-        <table className={styles.gridTable}>
-          <thead>
-            <tr>
-              <th className={styles.pairHeader}>{formatMessage('timetable.pairHeader')}</th>
-              {weekdays.map((dayName, dayIndex) => (
-                <th key={dayIndex} className={styles.dayHeader}>
-                  {dayName}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(PAIR_SCHEDULE).map(([pairString, time]) => {
-              const pair = Number(pairString);
-
-              return (
-                <tr key={pair}>
-                  <th className={styles.pairHeader}>
-                    #{pair} <br />
-                    <span>{time.start}</span>
-                  </th>
-                  {weekdays.map((dayName, dayIndex) => {
-                    const weekday = dayIndex + 1;
-                    const slot = displayedSlots.find(
-                      (entry) => entry.weekday === weekday && entry.pair === pair,
-                    );
-                    const currentPref = slot?.preference;
-                    const stateLabel = formatMessage(getPreferenceStateKey(currentPref));
-                    const ariaLabel = `${dayName}, ${pair}: ${stateLabel}`;
-                    const cellClassName = [
-                      styles.slotButton,
-                      currentPref === SLOT_PREFERENCE.PREFERRED ? styles.preferred : '',
-                      currentPref === SLOT_PREFERENCE.UNDESIRABLE ? styles.undesirable : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ');
-
-                    return (
-                      <td key={weekday} className={styles.slotCell}>
-                        <button
-                          type="button"
-                          className={cellClassName}
-                          disabled={isBusy || !activeSemesterId}
-                          aria-label={ariaLabel}
-                          onClick={() => handleToggleCell(weekday, pair)}
-                        >
-                          <span>{stateLabel}</span>
-                        </button>
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      {isMobile ? <SlotPreferenceDays {...viewProps} /> : <SlotPreferenceGrid {...viewProps} />}
 
       <div className={styles.actions}>
         <Button type="button" variant="primary" disabled={isBusy || !isDirty} onClick={handleSave}>

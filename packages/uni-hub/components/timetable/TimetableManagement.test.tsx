@@ -253,10 +253,10 @@ describe('TimetableManagement component', () => {
 
     expect(movedRow).toHaveTextContent('КС11');
     expect(movedRow).toHaveTextContent('teacher-1');
-    expect(movedRow).toHaveTextContent('Пр');
+    expect(movedRow).toHaveTextContent('ПР');
     expect(unmovedRow).toHaveTextContent('КС12');
     expect(unmovedRow).toHaveTextContent('teacher-10');
-    expect(unmovedRow).toHaveTextContent('Лаб');
+    expect(unmovedRow).toHaveTextContent('ЛР');
     await user.click(within(movedRow).getByRole('button', { name: 'Змінити слот' }));
     await user.selectOptions(within(screen.getByRole('dialog')).getByLabelText('Пара'), '4');
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Зберегти' }));
@@ -332,6 +332,7 @@ describe('TimetableManagement component', () => {
     vi.clearAllMocks();
     vi.spyOn(timetableApi, 'listTeachingAssignments').mockResolvedValue({ data: [] });
     vi.spyOn(timetableApi, 'listAcademicGroups').mockResolvedValue({ data: [] });
+    vi.spyOn(timetableApi, 'listSemesterSlotPreferences').mockResolvedValue({ data: [] });
     vi.spyOn(timetableApi, 'listCurriculumPlans').mockResolvedValue({
       data: [
         {
@@ -407,13 +408,13 @@ describe('TimetableManagement component', () => {
     expect(
       screen.getByRole('button', { name: 'Розгорнути дисципліну Алгоритми та структури даних' }),
     ).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getAllByText('Тип')).toHaveLength(2);
-    expect(screen.getAllByText('Група / Потік')).toHaveLength(2);
-    expect(screen.getAllByText('Підгрупа')).toHaveLength(2);
-    expect(screen.getAllByText('Години')).toHaveLength(2);
-    expect(screen.getAllByText('Викладач')).toHaveLength(2);
-    expect(screen.getAllByText('Лише субота')).toHaveLength(2);
-    expect(screen.getAllByText('Пізні пари')).toHaveLength(2);
+    expect(screen.getAllByText('Тип')).toHaveLength(1);
+    expect(screen.getAllByText('Група / Потік')).toHaveLength(1);
+    expect(screen.getAllByText('Підгрупа')).toHaveLength(1);
+    expect(screen.getAllByText('Години')).toHaveLength(1);
+    expect(screen.getAllByText('Викладач')).toHaveLength(1);
+    expect(screen.getAllByText('Лише субота')).toHaveLength(1);
+    expect(screen.getAllByText('Пізні пари')).toHaveLength(1);
     expect(screen.getByDisplayValue('Паралельні та розподілені обчислення')).toBeInTheDocument();
   });
 
@@ -888,12 +889,109 @@ describe('TimetableManagement component', () => {
     expect(screen.getByText('Пн')).toBeInTheDocument();
     expect(screen.getByText('08:30–09:50')).toBeInTheDocument();
     expect(screen.getByText('Архітектура хмарних систем')).toBeInTheDocument();
-    expect(screen.getByText('teacher-cloud')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('region', { name: /тижневий розклад/i })).getByText('teacher-cloud'),
+    ).toBeInTheDocument();
     expect(screen.getByText('Потік: stream-cs')).toBeInTheDocument();
 
     await user.click(screen.getByText(/варіант #2/i));
 
     expect(screen.getByText('Безпека мереж')).toBeInTheDocument();
-    expect(screen.getByText('teacher-sec')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('region', { name: /тижневий розклад/i })).getByText('teacher-sec'),
+    ).toBeInTheDocument();
+  });
+  it('creates a curriculum plan from the dialog and switches to it', async () => {
+    vi.spyOn(timetableApi, 'importCurriculumPlan').mockResolvedValue({
+      data: {
+        id: 'plan-new',
+        faculty: 'ННІ КН та ШІ',
+        title: 'Новий план',
+        academicYear: '2026/2027',
+        semester: 2,
+        isDraft: true,
+      },
+    });
+    const listAssignments = vi.spyOn(timetableApi, 'listTeachingAssignments');
+    const user = userEvent.setup();
+
+    renderComponent();
+    await waitFor(() => expect(screen.getByRole('button', { name: /Додати план/i })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: /Додати план/i }));
+
+    const dialog = screen.getByRole('dialog');
+
+    await user.type(within(dialog).getByLabelText('Назва плану'), 'Новий план');
+    await user.click(within(dialog).getByRole('button', { name: 'Створити план' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByLabelText('Навчальний план')).toHaveValue('plan-new');
+    await waitFor(() => expect(listAssignments).toHaveBeenLastCalledWith('plan-new'));
+  });
+
+  it("tints the preview with the chosen teacher's slots and flags undesirable placements", async () => {
+    vi.spyOn(timetableApi, 'listSemesterSlotPreferences').mockResolvedValue({
+      data: [
+        {
+          teacherId: 'teacher-1',
+          semesterCalendarId: 'calendar-1',
+          weekday: 1,
+          pair: 1,
+          preference: 'UNDESIRABLE',
+        },
+        {
+          teacherId: 'teacher-1',
+          semesterCalendarId: 'calendar-1',
+          weekday: 1,
+          pair: 2,
+          preference: 'PREFERRED',
+        },
+      ],
+    });
+    vi.spyOn(timetableApi, 'generateTimetableDraft').mockResolvedValue({
+      data: {
+        versionId: 'version-1',
+        candidates: [
+          {
+            versionId: 'version-1',
+            penaltyScore: 0,
+            events: [
+              {
+                id: 'ev-1',
+                teachingAssignmentId: 'assign-1',
+                disciplineTitle: 'Чисельні методи',
+                teachingType: 'LECTURE',
+                teacherId: 'teacher-1',
+                groupIds: ['group-1'],
+                date: '2026-09-07',
+                pair: 1,
+              },
+            ],
+          },
+        ],
+        diagnostics: { statesExplored: 1, timeMs: 1 },
+      },
+    });
+    const user = userEvent.setup();
+
+    renderComponent();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /згенерувати розклад/i })).toBeEnabled(),
+    );
+    await user.click(screen.getByRole('button', { name: /згенерувати розклад/i }));
+
+    expect(await screen.findByText('Небажаний слот')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: 'Подоляка О.М.' }));
+
+    const grid = screen.getByRole('region', { name: /тижневий розклад/i });
+    const mondayCells = within(grid)
+      .getAllByRole('row')
+      .slice(1, 3)
+      .map((row) => row.querySelectorAll('td')[0]);
+
+    expect(mondayCells[0]?.className).toContain('undesirable');
+    expect(mondayCells[1]?.className).toContain('preferred');
+    expect(screen.getByText('Бажаний час')).toBeInTheDocument();
   });
 });

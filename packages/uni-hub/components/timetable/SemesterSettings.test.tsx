@@ -56,3 +56,46 @@ it('loads a non-default duration and preserves calendar exceptions when saving',
     }),
   );
 });
+
+it('creates a missing semester calendar from the start date and weeks', async () => {
+  const user = userEvent.setup();
+  const onReadyChange = vi.fn();
+
+  api.getSemesterCalendar.mockRejectedValue(new Error('Semester calendar not found'));
+  api.configureSemesterCalendar.mockResolvedValue({
+    data: {
+      id: 'calendar-2',
+      academicYear: '2026/2027',
+      semester: 2,
+      startDate: '2027-02-01',
+      teachingWeeks: 16,
+      excludedDates: [],
+      makeupSaturdays: [],
+    },
+  });
+
+  render(
+    withQueryClient(
+      withLanguage(
+        <SemesterSettings academicYear="2026/2027" semester={2} onReadyChange={onReadyChange} />,
+      ),
+    ),
+  );
+
+  expect(await screen.findByText('The semester calendar is not set up yet')).toBeInTheDocument();
+  expect(screen.getByLabelText('Teaching weeks')).toHaveValue(16);
+
+  await user.type(screen.getByLabelText('Semester start'), '2027-02-01');
+  await user.click(screen.getByRole('button', { name: 'Save semester settings' }));
+
+  await waitFor(() =>
+    expect(api.configureSemesterCalendar).toHaveBeenCalledWith({
+      academicYear: '2026/2027',
+      semester: 2,
+      startDate: '2027-02-01',
+      teachingWeeks: 16,
+      excludedDates: [],
+      makeupSaturdays: [],
+    }),
+  );
+});

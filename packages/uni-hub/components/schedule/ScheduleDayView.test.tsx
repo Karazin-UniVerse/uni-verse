@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { withLanguage } from '@uni-hub/utils/test-utils';
 import { ScheduleDayView } from './ScheduleDayView';
@@ -46,8 +46,9 @@ describe('ScheduleDayView', () => {
     const defaultProps: ScheduleDayViewProps = {
       selectedDate,
       onSelectDate: vi.fn(),
-      events: sampleEvents,
+      getEventsForDate: () => sampleEvents,
       locale: 'uk-UA',
+      weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
       getTypeName: getTypeNameMock,
       ...props,
     };
@@ -93,7 +94,7 @@ describe('ScheduleDayView', () => {
   });
 
   it('should render list of schedule events with time, title, and type tag', () => {
-    renderComponent({ events: sampleEvents });
+    renderComponent({ getEventsForDate: () => sampleEvents });
 
     expect(screen.getByText('Паралельні обчислення')).toBeInTheDocument();
     expect(screen.getByText('Бази даних')).toBeInTheDocument();
@@ -101,14 +102,16 @@ describe('ScheduleDayView', () => {
     expect(screen.getByText('Лаб. 3-12')).toBeInTheDocument();
     expect(screen.getByText('Лекція')).toBeInTheDocument();
     expect(screen.getByText('Лабораторна робота')).toBeInTheDocument();
-    expect(screen.getByText(/08:30/)).toBeInTheDocument();
-    expect(screen.getByText(/09:50/)).toBeInTheDocument();
-    expect(screen.getByText(/10:10/)).toBeInTheDocument();
-    expect(screen.getByText(/11:30/)).toBeInTheDocument();
+    const timeline = within(screen.getByRole('list'));
+
+    expect(timeline.getByText(/08:30/)).toBeInTheDocument();
+    expect(timeline.getByText(/09:50/)).toBeInTheDocument();
+    expect(timeline.getByText(/10:10/)).toBeInTheDocument();
+    expect(timeline.getByText(/11:30/)).toBeInTheDocument();
   });
 
   it('should render empty state when events list is empty', () => {
-    renderComponent({ events: [] });
+    renderComponent({ getEventsForDate: () => [] });
 
     expect(screen.getByText(/на цей день занять немає/i)).toBeInTheDocument();
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
@@ -127,7 +130,7 @@ describe('ScheduleDayView', () => {
       },
     ];
 
-    renderComponent({ events: eventsWithUnsafeUrl });
+    renderComponent({ getEventsForDate: () => eventsWithUnsafeUrl });
 
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
     expect(screen.getByText(/приєднатися до заняття/i)).toBeInTheDocument();
@@ -146,10 +149,19 @@ describe('ScheduleDayView', () => {
       },
     ];
 
-    renderComponent({ events: eventsWithSafeUrl });
+    renderComponent({ getEventsForDate: () => eventsWithSafeUrl });
 
     const link = screen.getByRole('link', { name: /приєднатися до заняття/i });
 
     expect(link).toHaveAttribute('href', 'https://meet.google.com/abc-defg-hij');
+  });
+
+  it('summarises the number of pairs and the span of the day', () => {
+    renderComponent();
+
+    const summary = screen.getByText('Пар за день').closest('dl');
+
+    expect(summary).toHaveTextContent('2');
+    expect(summary).toHaveTextContent('08:30–11:30');
   });
 });

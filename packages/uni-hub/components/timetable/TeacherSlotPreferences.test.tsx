@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { withLanguage, withQueryClient, withToast } from '@uni-hub/utils/test-utils';
@@ -14,6 +14,10 @@ vi.mock('../../services/api.timetable', () => ({
   timetableApi: api,
 }));
 
+const media = vi.hoisted(() => ({ isMobile: false }));
+
+vi.mock('@uni-hub/hooks/useMediaQuery', () => ({ useMediaQuery: () => media.isMobile }));
+
 function renderPreferences() {
   return render(withQueryClient(withToast(withLanguage(<TeacherSlotPreferences />))));
 }
@@ -22,6 +26,7 @@ describe('TeacherSlotPreferences', () => {
   beforeEach(() => {
     localStorage.setItem('universe-lang', 'en');
     vi.clearAllMocks();
+    media.isMobile = false;
 
     api.listPreferenceSemesters.mockResolvedValue({
       data: [{ id: 'semester-1', academicYear: '2026/2027', semester: 1 }],
@@ -96,5 +101,28 @@ describe('TeacherSlotPreferences', () => {
 
     await user.selectOptions(select, 'semester-2');
     expect(api.getMySlotPreferences).toHaveBeenCalledWith('semester-2');
+  });
+
+  it('lets a phone pick an explicit preference per pair, one day at a time', async () => {
+    media.isMobile = true;
+    const user = userEvent.setup();
+
+    renderPreferences();
+    await waitFor(() => expect(api.getMySlotPreferences).toHaveBeenCalledWith('semester-1'));
+
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: 'Tue' }));
+
+    const secondPair = screen.getByRole('radiogroup', { name: 'Tue, 2' });
+
+    expect(within(secondPair).getByRole('radio', { name: 'Neutral' })).toBeChecked();
+
+    await user.click(within(secondPair).getByRole('radio', { name: 'Undesirable' }));
+    await user.click(screen.getByRole('button', { name: /Apply preferences/i }));
+
+    expect(api.saveMySlotPreferences).toHaveBeenCalledWith('semester-1', {
+      slots: [{ weekday: 2, pair: 2, preference: 'UNDESIRABLE' }],
+    });
   });
 });

@@ -1,29 +1,48 @@
-@use '@universe/ui/breakpoints.scss' as *;
-
 .root {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-12);
+  flex-direction: column;
+  gap: var(--space-8);
   min-width: 0;
 
+  p {
+    margin: 0;
+    font-size: var(--font-xs);
+  }
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  gap: var(--space-8);
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+    font-size: var(--font-xs);
+    color: var(--text-secondary);
+  }
+
   input {
-    width: 8ch;
-    padding: var(--space-8);
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--space-32);
+    padding: 0 var(--space-8);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-small);
     background: var(--bg-surface);
     color: var(--text-primary);
     font: inherit;
+    font-size: var(--font-sm);
   }
+}
 
-  @include narrower-than('sm') {
-    align-items: stretch;
-    flex-direction: column;
+.status {
+  color: var(--text-secondary);
+}
 
-    input {
-      width: 100%;
-      box-sizing: border-box;
-    }
-  }
+.ready {
+  color: var(--success-color);
+  font-weight: var(--font-weight-medium);
 }

@@ -1,0 +1,113 @@
+@use '@universe/ui/breakpoints.scss' as *;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-width: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  font-size: var(--font-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-12);
+
+  @include narrower-than('sm') {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.hint,
+.status {
+  margin: 0;
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-regular);
+  color: var(--text-secondary);
+}
+
+.error {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--error-color);
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.summary {
+  margin: 0;
+  font-size: var(--font-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.previewScroll {
+  max-height: 40dvh;
+  overflow: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-medium);
+}
+
+.previewTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-sm);
+
+  th,
+  td {
+    padding: var(--space-8) var(--space-12);
+    border-bottom: 1px solid var(--border-color);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  th:first-child,
+  td:first-child {
+    text-align: left;
+    white-space: normal;
+  }
+
+  th {
+    position: sticky;
+    top: 0;
+    background-color: var(--bg-surface);
+    background-image: linear-gradient(var(--bg-hover), var(--bg-hover));
+    font-weight: var(--font-weight-bold);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.disciplineCell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-8);
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-12);
+
+  @include narrower-than('sm') {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}

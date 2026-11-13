@@ -92,11 +92,11 @@ describe('ScheduleWeekView', () => {
 
   it('should render 6 week day cards for Monday through Saturday', () => {
     const getEventsForDate = vi.fn(() => []);
-    const props = createDefaultProps({ getEventsForDate });
+    const props = createDefaultProps({ getEventsForDate, isCompact: true });
 
     const { container } = renderComponent(props);
 
-    const weekGrid = container.querySelector('[class*="weekGrid"]');
+    const weekGrid = container.querySelector('[class*="weekList"]');
     const dayCards = weekGrid ? Array.from(weekGrid.children) : [];
 
     expect(weekGrid).toBeInTheDocument();
@@ -128,7 +128,7 @@ describe('ScheduleWeekView', () => {
 
       return [];
     });
-    const props = createDefaultProps({ getEventsForDate });
+    const props = createDefaultProps({ getEventsForDate, isCompact: true });
 
     const { container } = renderComponent(props);
 
@@ -141,7 +141,7 @@ describe('ScheduleWeekView', () => {
 
     expect(freeDayPlaceholders).toHaveLength(5);
 
-    const weekGrid = container.querySelector('[class*="weekGrid"]');
+    const weekGrid = container.querySelector('[class*="weekList"]');
     const dayCards = weekGrid ? Array.from(weekGrid.children) : [];
 
     expect(dayCards).toHaveLength(6);
@@ -151,5 +151,34 @@ describe('ScheduleWeekView', () => {
     expect(dayCards[3]?.className).not.toContain('today');
     expect(dayCards[4]?.className).not.toContain('today');
     expect(dayCards[5]?.className).not.toContain('today');
+  });
+
+  it('places classes by pair and day in the desktop grid', () => {
+    const lab: ScheduleEvent = {
+      id: 'evt-2',
+      title: 'Databases',
+      start: new Date(2026, 4, 13, 12, 0),
+      end: new Date(2026, 4, 13, 13, 20),
+      type: 'lab',
+      location: '',
+      meetingUrl: 'https://meet.example.com/db',
+    };
+    const props = createDefaultProps({
+      getEventsForDate: (date: Date) => (date.getDate() === 13 ? [lab] : []),
+    });
+
+    renderComponent(props);
+
+    const rows = screen.getAllByRole('row');
+    const thirdPair = rows.find((row) => row.textContent?.startsWith('312:00'));
+
+    expect(rows).toHaveLength(5);
+    expect(thirdPair?.querySelectorAll('td')[2]).toHaveTextContent('Databases');
+    expect(thirdPair?.querySelectorAll('td')[2]?.className).toContain('todayColumn');
+    expect(screen.getByText('Online')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Databases/ })).toHaveAttribute(
+      'href',
+      'https://meet.example.com/db',
+    );
   });
 });

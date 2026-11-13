@@ -1,6 +1,6 @@
 import React from 'react';
 import { CalendarDays, Download } from 'lucide-react';
-import { Button, RadioButton } from '@una';
+import { Button } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import styles from './ScheduleView.module.scss';
 
@@ -28,16 +28,16 @@ export const ScheduleToolbar: React.FC<ScheduleToolbarProps> = ({
             ['day', formatMessage('schedule.modeDay')],
           ] as const
         ).map(([value, label]) => (
-          <label key={value} className={styles.radioLabel}>
-            <RadioButton
-              variant="primary"
-              name="schedule-view"
-              value={value}
-              checked={viewMode === value}
-              onChange={() => onViewModeChange(value)}
-            />
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={viewMode === value}
+            className={styles.viewOption}
+            onClick={() => onViewModeChange(value)}
+          >
             {label}
-          </label>
+          </button>
         ))}
       </div>
 

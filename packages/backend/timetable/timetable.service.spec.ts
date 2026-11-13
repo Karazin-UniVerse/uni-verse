@@ -14,6 +14,7 @@ import type {
   CreateSemesterCalendarDto,
   CreateTeacherUnavailabilityDto,
   CreateTeachingAssignmentDto,
+  ImportCurriculumPlanDto,
 } from './dto';
 
 describe('TimetableService', () => {
@@ -88,6 +89,7 @@ describe('TimetableService', () => {
   const mockTeachingAssignmentPrisma = {
     updateMany: jest.fn(),
     create: jest.fn(),
+    createMany: jest.fn(),
     findMany: jest.fn(),
     findUnique: jest.fn(),
     update: jest.fn(),
@@ -190,6 +192,37 @@ describe('TimetableService', () => {
   });
 
   describe('teacher slot preferences', () => {
+    it("lists every teacher's preferences of a semester", async () => {
+      mockSemesterCalendarPrisma.findUnique.mockResolvedValue({
+        id: 'semester-1',
+      });
+      mockSlotPreferencePrisma.findMany.mockResolvedValue([
+        {
+          teacherId: 'teacher-2',
+          weekday: 1,
+          pair: 1,
+          preference: 'PREFERRED',
+        },
+      ]);
+
+      await expect(
+        service.listSemesterSlotPreferences('semester-1'),
+      ).resolves.toHaveLength(1);
+      expect(mockSlotPreferencePrisma.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { semesterCalendarId: 'semester-1' },
+        }),
+      );
+    });
+
+    it('reports a missing semester when listing preferences', async () => {
+      mockSemesterCalendarPrisma.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.listSemesterSlotPreferences('missing'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
     it('replaces only the current teacher semester grid and supports clearing', async () => {
       mockUserPrisma.findFirst.mockResolvedValue({
         id: 'teacher-1',
@@ -626,6 +659,104 @@ describe('TimetableService', () => {
       const result = await service.createCurriculumPlan(dto);
 
       expect(result).toEqual(created);
+    });
+
+    describe('importCurriculumPlan', () => {
+      const importDto: ImportCurriculumPlanDto = {
+        faculty: ' ННІ КН та ШІ ',
+        title: 'КН, 2 курс',
+        academicYear: '2026/2027',
+        semester: 1,
+        groupId: 'group-1',
+        assignments: [
+          {
+            disciplineTitle: ' Бази даних ',
+            teachingType: TeachingType.LECTURE,
+            academicHours: 32,
+          },
+          {
+            disciplineTitle: 'Бази даних',
+            teachingType: TeachingType.LABORATORY,
+            academicHours: 16,
+          },
+        ],
+      };
+
+      it('creates the plan and its assignments in one transaction', async () => {
+        mockCurriculumPlanPrisma.create.mockResolvedValue({ id: 'plan-9' });
+        mockTeachingAssignmentPrisma.createMany.mockResolvedValue({ count: 2 });
+
+        await expect(service.importCurriculumPlan(importDto)).resolves.toEqual({
+          id: 'plan-9',
+        });
+        expect(mockPrismaService.$transaction).toHaveBeenCalledTimes(1);
+        expect(mockCurriculumPlanPrisma.create).toHaveBeenCalledWith({
+          data: {
+            faculty: 'ННІ КН та ШІ',
+            title: 'КН, 2 курс',
+            academicYear: '2026/2027',
+            semester: 1,
+            isDraft: true,
+          },
+        });
+        expect(mockTeachingAssignmentPrisma.createMany).toHaveBeenCalledWith({
+          data: [
+            {
+              curriculumPlanId: 'plan-9',
+              disciplineTitle: 'Бази даних',
+              teachingType: TeachingType.LECTURE,
+              academicHours: 32,
+              groupId: 'group-1',
+              streamId: undefined,
+            },
+            {
+              curriculumPlanId: 'plan-9',
+              disciplineTitle: 'Бази даних',
+              teachingType: TeachingType.LABORATORY,
+              academicHours: 16,
+              groupId: 'group-1',
+              streamId: undefined,
+            },
+          ],
+        });
+      });
+
+      it('creates an empty plan without a target group', async () => {
+        mockCurriculumPlanPrisma.create.mockResolvedValue({ id: 'plan-10' });
+
+        await service.importCurriculumPlan({
+          ...importDto,
+          groupId: undefined,
+          assignments: [],
+        });
+
+        expect(mockTeachingAssignmentPrisma.createMany).not.toHaveBeenCalled();
+      });
+
+      it('rejects assignments without a group or stream', async () => {
+        await expect(
+          service.importCurriculumPlan({ ...importDto, groupId: undefined }),
+        ).rejects.toThrow(BadRequestException);
+        expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+      });
+
+      it('rejects an ambiguous group and stream target before writing', async () => {
+        await expect(
+          service.importCurriculumPlan({ ...importDto, streamId: 'stream-1' }),
+        ).rejects.toThrow(BadRequestException);
+        expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+      });
+
+      it('reports an unknown group as a bad request', async () => {
+        mockCurriculumPlanPrisma.create.mockResolvedValue({ id: 'plan-11' });
+        mockTeachingAssignmentPrisma.createMany.mockRejectedValue({
+          code: 'P2003',
+        });
+
+        await expect(service.importCurriculumPlan(importDto)).rejects.toThrow(
+          'Group or stream does not exist',
+        );
+      });
     });
 
     it('returns plan when found with safe teacher projection', async () => {
