@@ -319,6 +319,7 @@ $space-64: 64px;
   --sidebar-item-hover-bg: var(--bg-hover);
   --sidebar-item-active-bg: color-mix(in srgb, var(--accent-primary) 18%, transparent);
   --sidebar-item-active-accent: transparent;
+  --sidebar-accent: var(--accent-primary);
 
   /* Header */
   --header-bg: var(--bg-color);
@@ -422,6 +423,7 @@ $space-64: 64px;
   --header-bg: transparent;
   --sidebar-bg: var(--night-850);
   --sidebar-text-active: var(--white-10);
+  --sidebar-accent: var(--accent-primary);
 
   /* RGB color channels for alpha blending and mesh gradients */
   --primary-rgb: 119, 148, 246;
@@ -536,6 +538,7 @@ $space-64: 64px;
   --text-secondary: var(--cyberpunk-cyan);
   --text-disabled: var(--cyberpunk-text-dim);
   --border-color: var(--cyberpunk-pink);
+  --sidebar-accent: var(--accent-primary);
 
   /* Primary Button Overrides */
   --btn-primary-bg: var(--cyberpunk-yellow);
@@ -737,6 +740,7 @@ $space-64: 64px;
   --sidebar-item-hover-bg: rgb(224 176 74 / 12%);
   --sidebar-item-active-bg: var(--karazin-navy-700);
   --sidebar-item-active-accent: var(--karazin-gold-500);
+  --sidebar-accent: var(--karazin-gold-400);
 
   /* White header with a gold hairline */
   --header-border: var(--karazin-gold-200);
