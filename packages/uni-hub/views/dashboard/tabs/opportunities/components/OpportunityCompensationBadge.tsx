@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sparkles, Coins } from 'lucide-react';
-import styles from '../../OpportunityCard.module.scss';
+import { CategoryPill } from '@ui';
 
 interface Props {
   isPaid: boolean;
@@ -14,20 +14,10 @@ export const OpportunityCompensationBadge: React.FC<Props> = ({
   paidLabel,
   experienceLabel,
   paymentDetails,
-}) => {
-  if (isPaid) {
-    return (
-      <span className={styles.compensationPill}>
-        <Coins size={12} />
-        {paymentDetails || paidLabel}
-      </span>
-    );
-  }
-
-  return (
-    <span className={styles.experiencePill}>
-      <Sparkles size={12} />
-      {experienceLabel}
-    </span>
-  );
-};
+}) => (
+  <CategoryPill
+    icon={isPaid ? <Coins size={12} /> : <Sparkles size={12} />}
+    label={isPaid ? paymentDetails || paidLabel : experienceLabel}
+    tone={isPaid ? 'success' : 'neutral'}
+  />
+);
