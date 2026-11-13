@@ -5,7 +5,7 @@ export function buildOpportunity(id: string): Opportunity {
     id,
     title: `Opportunity ${id}`,
     description: 'Description',
-    ownerContactInfo: 'owner@example.com',
+    ownerContactInfo: '@owner_contact',
     status: 'READY_FOR_REVIEW',
     lifecycleState: 'START',
     paymentType: 'UNPAID',
