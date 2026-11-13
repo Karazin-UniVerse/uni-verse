@@ -5,7 +5,10 @@ import { ContactTags, ModerationActions } from '@ui';
 import { Tag } from '@una';
 import { Clock, Calendar, Coins, Briefcase, AlertCircle, Hash } from 'lucide-react';
 import type { Opportunity } from '@core/types/opportunities';
-import type { OpportunityModerateAction } from '@core/constants/opportunities';
+import {
+  OPPORTUNITY_PAYMENT_TYPE,
+  type OpportunityModerateAction,
+} from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { TabStateWrapper } from './TabStateWrapper';
 import { getOpportunityTagLabel } from '../tags';
@@ -43,7 +46,7 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
           return (
             <div key={item.id} className={styles.moderationCard}>
               <div className={styles.moderationHeader}>
-                <div className={styles.moderationMainCol}>
+                <div className={styles.moderationTopRow}>
                   <div className={styles.moderationBadgeRow}>
                     <span className={styles.reviewPendingBadge}>
                       <Clock size={12} />
@@ -61,6 +64,28 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                     </span>
                   </div>
 
+                  <div className={styles.moderationTypeCol}>
+                    {item.paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID ? (
+                      <span className={styles.compensationPill}>
+                        <Coins size={13} />
+                        <span>
+                          {item.paymentDetails
+                            ? formatMessage('opportunities.moderation.paidWithAmount', {
+                                amount: item.paymentDetails,
+                              })
+                            : formatMessage('opportunities.moderation.paid')}
+                        </span>
+                      </span>
+                    ) : (
+                      <span className={styles.unpaidPill}>
+                        <Briefcase size={13} />
+                        <span>{formatMessage('opportunities.moderation.practice')}</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.moderationMainCol}>
                   <h3 className={styles.moderationTitle}>{item.title}</h3>
 
                   <div className={styles.authorStrip}>
@@ -68,12 +93,12 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                       {(item.owner?.name || item.owner?.email || 'U').charAt(0).toUpperCase()}
                     </div>
                     <div className={styles.ownerMeta}>
+                      <span className={styles.ownerName}>
+                        {item.owner?.name ||
+                          item.owner?.email ||
+                          formatMessage('opportunities.moderation.unknownOwner')}
+                      </span>
                       <div className={styles.ownerRow}>
-                        <span className={styles.ownerName}>
-                          {item.owner?.name ||
-                            item.owner?.email ||
-                            formatMessage('opportunities.moderation.unknownOwner')}
-                        </span>
                         <ContactTags
                           emailLabel={formatMessage('opportunities.emailLabel')}
                           alternativeContactLabel={formatMessage(
@@ -85,26 +110,6 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div className={styles.moderationTypeCol}>
-                  {item.paymentType === 'PAID' ? (
-                    <span className={styles.compensationPill}>
-                      <Coins size={13} />
-                      <span>
-                        {item.paymentDetails
-                          ? formatMessage('opportunities.moderation.paidWithAmount', {
-                              amount: item.paymentDetails,
-                            })
-                          : formatMessage('opportunities.moderation.paid')}
-                      </span>
-                    </span>
-                  ) : (
-                    <span className={styles.unpaidPill}>
-                      <Briefcase size={13} />
-                      <span>{formatMessage('opportunities.moderation.practice')}</span>
-                    </span>
-                  )}
                 </div>
               </div>
 

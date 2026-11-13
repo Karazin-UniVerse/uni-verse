@@ -66,6 +66,8 @@ describe('GoogleLoginButton component', () => {
     }
 
     delete (window as any).google;
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it('should render button container without inert when not disabled', () => {
@@ -253,5 +255,106 @@ describe('GoogleLoginButton component', () => {
 
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith('Помилка входу через Google');
+  });
+
+  it('renders Google button matching measured container width', () => {
+    const clientWidthSpy = vi
+      .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
+      .mockReturnValue(280);
+
+    render(withLanguage(<GoogleLoginButton onSuccess={vi.fn()} />));
+
+    expect(mockRenderButton).toHaveBeenCalledWith(
+      expect.any(HTMLDivElement),
+      expect.objectContaining({
+        width: 280,
+      }),
+    );
+
+    clientWidthSpy.mockRestore();
+  });
+
+  it('updates Google button width when ResizeObserver reports a resize', async () => {
+    let observerCallback: ResizeObserverCallback | null = null;
+
+    class MockResizeObserver {
+      constructor(callback: ResizeObserverCallback) {
+        observerCallback = callback;
+      }
+
+      observe = vi.fn();
+      unobserve = vi.fn();
+      disconnect = vi.fn();
+    }
+
+    vi.stubGlobal('ResizeObserver', MockResizeObserver);
+
+    render(withLanguage(<GoogleLoginButton onSuccess={vi.fn()} />));
+
+    expect(mockRenderButton).toHaveBeenCalledWith(
+      expect.any(HTMLDivElement),
+      expect.objectContaining({
+        width: 336,
+      }),
+    );
+
+    act(() => {
+      observerCallback?.(
+        [
+          {
+            contentRect: { width: 290 } as DOMRectReadOnly,
+            target: document.createElement('div'),
+          } as unknown as ResizeObserverEntry,
+        ],
+        {} as ResizeObserver,
+      );
+    });
+
+    await new Promise((resolve) => {
+      requestAnimationFrame(resolve);
+    });
+
+    expect(mockRenderButton).toHaveBeenLastCalledWith(
+      expect.any(HTMLDivElement),
+      expect.objectContaining({
+        width: 290,
+      }),
+    );
+
+    vi.unstubAllGlobals();
+  });
+
+  it('updates Google button width on window resize when ResizeObserver is undefined', async () => {
+    vi.stubGlobal('ResizeObserver', undefined);
+
+    const clientWidthSpy = vi
+      .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
+      .mockReturnValue(336);
+
+    render(withLanguage(<GoogleLoginButton onSuccess={vi.fn()} />));
+
+    expect(mockRenderButton).toHaveBeenCalledWith(
+      expect.any(HTMLDivElement),
+      expect.objectContaining({
+        width: 336,
+      }),
+    );
+
+    clientWidthSpy.mockReturnValue(270);
+
+    act(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    await new Promise((resolve) => {
+      requestAnimationFrame(resolve);
+    });
+
+    expect(mockRenderButton).toHaveBeenLastCalledWith(
+      expect.any(HTMLDivElement),
+      expect.objectContaining({
+        width: 270,
+      }),
+    );
   });
 });
