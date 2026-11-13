@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Validate,
   ValidateIf,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
@@ -15,6 +16,7 @@ import {
   PaymentType,
 } from '@universe/database';
 import type { CreateOpportunityRequest } from '@universe/core/types/opportunities';
+import { IsContactInfoConstraint } from '../opportunities.helpers';
 
 export class CreateOpportunityDto implements CreateOpportunityRequest {
   @ApiProperty()
@@ -32,6 +34,7 @@ export class CreateOpportunityDto implements CreateOpportunityRequest {
   @ValidateIf(
     (dto: CreateOpportunityDto): boolean => dto.ownerContactInfo !== undefined,
   )
+  @Validate(IsContactInfoConstraint)
   ownerContactInfo?: string;
 
   @ApiProperty({ enum: PaymentType, default: PaymentType.UNPAID })
