@@ -75,6 +75,80 @@
   }
 }
 
+/* Tones: success, warning and danger recolor primary (filled) and secondary (outlined).
+   Each tone class only sets the --btn-tone-* values; .toned applies them.
+   :not(:disabled) keeps the regular disabled look of each variant. */
+.success {
+  --btn-tone-bg: var(--btn-success-bg);
+  --btn-tone-hover: var(--btn-success-hover);
+  --btn-tone-active: var(--btn-success-active);
+  --btn-tone-text: var(--btn-success-text);
+  --btn-tone-accent: var(--btn-success-accent);
+}
+
+.warning {
+  --btn-tone-bg: var(--btn-warning-bg);
+  --btn-tone-hover: var(--btn-warning-hover);
+  --btn-tone-active: var(--btn-warning-active);
+  --btn-tone-text: var(--btn-warning-text);
+  --btn-tone-accent: var(--btn-warning-accent);
+}
+
+.danger {
+  --btn-tone-bg: var(--btn-danger-bg);
+  --btn-tone-hover: var(--btn-danger-hover);
+  --btn-tone-active: var(--btn-danger-active);
+  --btn-tone-text: var(--btn-danger-text);
+  --btn-tone-accent: var(--btn-danger-accent);
+}
+
+.toned {
+  &.primary:not(.is-transparent, :disabled) {
+    background-color: var(--btn-tone-bg);
+    border-color: var(--btn-tone-bg);
+    color: var(--btn-tone-text);
+
+    &:hover {
+      background-color: var(--btn-tone-hover);
+      border-color: var(--btn-tone-hover);
+    }
+
+    &:active {
+      background-color: var(--btn-tone-active);
+      border-color: var(--btn-tone-active);
+    }
+  }
+
+  &.secondary:not(.is-transparent, :disabled) {
+    background-color: transparent;
+    border-color: var(--btn-tone-accent);
+    color: var(--btn-tone-accent);
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--btn-tone-accent) 10%, transparent);
+    }
+
+    &:active {
+      background-color: color-mix(in srgb, var(--btn-tone-accent) 16%, transparent);
+    }
+  }
+
+  &.is-transparent:not(:disabled) {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--btn-tone-accent);
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--btn-tone-accent) 10%, transparent);
+      color: var(--btn-tone-accent);
+    }
+
+    &:active {
+      background-color: color-mix(in srgb, var(--btn-tone-accent) 16%, transparent);
+    }
+  }
+}
+
 /* Transparent/Ghost Button Styles */
 .is-transparent {
   background-color: transparent;

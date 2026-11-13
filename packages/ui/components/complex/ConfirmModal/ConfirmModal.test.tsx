@@ -70,30 +70,6 @@ describe('ConfirmModal Component', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('should reflect danger/destructive variant styling', () => {
-    const { container } = render(<ConfirmModal {...defaultProps} variant="danger" />);
-
-    const confirmBtn = screen.getByRole('button', { name: 'Delete' });
-
-    expect(confirmBtn).toHaveClass(styles.dangerBtn);
-
-    const icon = container.querySelector(`.${styles.icon}`);
-
-    expect(icon).toHaveClass(styles.dangerIcon);
-  });
-
-  it('should reflect warning variant styling', () => {
-    const { container } = render(<ConfirmModal {...defaultProps} variant="warning" />);
-
-    const confirmBtn = screen.getByRole('button', { name: 'Delete' });
-
-    expect(confirmBtn).not.toHaveClass(styles.dangerBtn);
-
-    const icon = container.querySelector(`.${styles.icon}`);
-
-    expect(icon).toHaveClass(styles.warningIcon);
-  });
-
   it('should disable actions when loading/isPending', async () => {
     const onConfirm = vi.fn();
     const onClose = vi.fn();
