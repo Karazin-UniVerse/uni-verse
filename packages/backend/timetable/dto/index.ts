@@ -13,4 +13,5 @@ export * from './list-teaching-assignments-query.dto';
 export * from './get-semester-calendar-query.dto';
 export * from './adjust-draft-slot.dto';
 export * from './reschedule-event.dto';
+export * from './reschedule-request.dto';
 export * from './save-slot-preferences.dto';

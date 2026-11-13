@@ -1,48 +1,85 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useId, useMemo, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { BREAKPOINTS } from '@core/constants/breakpoints';
-import { PAIR_SCHEDULE, type PairNumber } from '@core/constants/timetable';
+import { RESPONSE_CODES } from '@core/constants/response-codes';
+import {
+  MAX_RESCHEDULE_REASON_LENGTH,
+  PAIR_SCHEDULE,
+  RESCHEDULE_SCOPE,
+  type RescheduleScope,
+  type PairNumber,
+} from '@core/constants/timetable';
 import { Button, Modal, Select, TextInput, useToast } from '@una';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { useMySchedule } from '@uni-hub/hooks/useMySchedule';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
-import {
-  addDays,
-  DUMMY_EVENTS,
-  exportToICS,
-  isSafeMeetingUrl,
-  isSameDay,
-  startOfWeek,
-} from './helpers';
+import { addDays, exportToICS, isSafeMeetingUrl, isSameDay, startOfWeek } from './helpers';
 import { ScheduleDayView } from './ScheduleDayView';
 import { ScheduleMonthView } from './ScheduleMonthView';
 import { ScheduleToolbar } from './ScheduleToolbar';
 import { ScheduleWeekView } from './ScheduleWeekView';
 import { TeacherSlotPreferences } from '../timetable/TeacherSlotPreferences';
+import { RescheduleRequests } from '../timetable/RescheduleRequests';
+import type { ReschedulePreviewResponse } from '@core/types/timetable';
 import styles from './ScheduleView.module.scss';
 
 import type { ScheduleEvent, ScheduleViewMode, ScheduleViewProps } from './ScheduleView.types';
 
 export type { ScheduleEvent };
 
+const CONFLICT_STATUS_MARKER = `(HTTP ${RESPONSE_CODES.CONFLICT})`;
+const INVALID_PROPOSAL_PATTERN =
+  /Invalid rescheduling proposal|STARTED_EVENT|OUTSIDE_CALENDAR|INVALID_TARGET|NO_CHANGE/;
+
+function getRescheduleErrorKey(
+  failure: unknown,
+): 'schedule.rescheduleConflict' | 'schedule.rescheduleInvalid' | 'schedule.rescheduleError' {
+  const message = failure instanceof Error ? failure.message : '';
+
+  if (message.includes(CONFLICT_STATUS_MARKER)) {
+    return 'schedule.rescheduleConflict';
+  }
+
+  if (INVALID_PROPOSAL_PATTERN.test(message)) {
+    return 'schedule.rescheduleInvalid';
+  }
+
+  return 'schedule.rescheduleError';
+}
+
 export const ScheduleView: React.FC<ScheduleViewProps> = ({
   events: propEvents,
   isTeacher: propIsTeacher,
 }) => {
   const isMobile = useMediaQuery('less', BREAKPOINTS.md);
+  const rescheduleFormId = useId();
   const { localeTag, formatMessage } = useLanguage();
   const locale = localeTag;
   const { roles } = useCurrentUser();
   const toast = useToast();
   const isAdmin = roles.includes('ADMIN');
-  const [rescheduledEvents, setRescheduledEvents] = useState<Map<string, ScheduleEvent>>(
-    () => new Map(),
-  );
+  const queryClient = useQueryClient();
+  const rescheduleMutation = useMutation({
+    mutationFn: async (proposal: Parameters<typeof timetableApi.previewReschedule>[0]) =>
+      isAdmin
+        ? timetableApi.rescheduleEvent(proposal.eventId, {
+            newDate: proposal.newDate,
+            newPair: proposal.newPair,
+            scope: proposal.scope,
+            reason: proposal.reason,
+          })
+        : timetableApi.createRescheduleRequest(proposal),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['timetable'] }),
+  });
   const [reschedulingEvent, setReschedulingEvent] = useState<ScheduleEvent | null>(null);
   const [newDate, setNewDate] = useState('');
   const [newPair, setNewPair] = useState('1');
   const [reason, setReason] = useState('');
+  const [scope, setScope] = useState<RescheduleScope>(RESCHEDULE_SCOPE.ONCE);
+  const [preview, setPreview] = useState<ReschedulePreviewResponse | null>(null);
+  const [previewSignature, setPreviewSignature] = useState('');
   const [rescheduleError, setRescheduleError] = useState<string | null>(null);
   const [isRescheduling, setIsRescheduling] = useState(false);
 
@@ -54,7 +91,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       roles.includes('DEAN'));
   const isInstructor = roles.includes('INSTRUCTOR') || roles.includes('TEACHER');
 
-  const { events: fetchedEvents } = useMySchedule();
+  const {
+    events: fetchedEvents,
+    isError: scheduleFailed,
+    isLoading: scheduleLoading,
+  } = useMySchedule();
   const [meetingUrlOverrides, setMeetingUrlOverrides] = useState<Map<string, string>>(
     () => new Map(),
   );
@@ -63,17 +104,15 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     let base = propEvents;
 
     if (!base) {
-      base = fetchedEvents.length > 0 ? fetchedEvents : DUMMY_EVENTS;
+      base = fetchedEvents;
     }
 
-    return base.map((event) => {
-      const updated = rescheduledEvents.get(event.id) ?? event;
-
-      return meetingUrlOverrides.has(event.id)
-        ? { ...updated, meetingUrl: meetingUrlOverrides.get(event.id) }
-        : updated;
-    });
-  }, [fetchedEvents, meetingUrlOverrides, propEvents, rescheduledEvents]);
+    return base.map((event) =>
+      meetingUrlOverrides.has(event.id)
+        ? { ...event, meetingUrl: meetingUrlOverrides.get(event.id) }
+        : event,
+    );
+  }, [fetchedEvents, meetingUrlOverrides, propEvents]);
   const [selectedViewMode, setSelectedViewMode] = useState<ScheduleViewMode | null>(null);
   const viewMode = selectedViewMode ?? (isMobile ? 'day' : 'month');
 
@@ -233,7 +272,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   }, [editingEvent, formatMessage, meetingUrlInput, toast]);
 
   const handleReschedule = async (): Promise<void> => {
-    if (!reschedulingEvent || !isAdmin) {
+    if (!reschedulingEvent || (!isAdmin && !isInstructor)) {
       return;
     }
 
@@ -241,26 +280,45 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     setRescheduleError(null);
 
     try {
-      const response = await timetableApi.rescheduleEvent(reschedulingEvent.id, {
+      const proposal = {
+        eventId: reschedulingEvent.id,
         newDate,
         newPair: Number(newPair),
-        reason: reason.trim() || undefined,
-      });
-      const date = response.data.date.split('T')[0];
-      const bell = PAIR_SCHEDULE[response.data.pair as PairNumber];
-      const start = new Date(`${date}T${bell.start}:00`);
-      const end = new Date(`${date}T${bell.end}:00`);
+        reason: reason.trim(),
+        scope,
+      };
+      const signature = JSON.stringify(proposal);
 
-      setRescheduledEvents((previous) =>
-        new Map(previous).set(reschedulingEvent.id, { ...reschedulingEvent, start, end }),
-      );
-      setSelectedDate(start);
+      if (previewSignature !== signature) {
+        const response = await timetableApi.previewReschedule(proposal);
+
+        setPreview(response.data);
+        setPreviewSignature(signature);
+
+        return;
+      }
+
+      if (!isAdmin) {
+        await rescheduleMutation.mutateAsync(proposal);
+        toast.success(formatMessage('schedule.requestSubmitted'));
+        setReschedulingEvent(null);
+
+        return;
+      }
+
+      const response = await rescheduleMutation.mutateAsync(proposal);
+      const moved = response.data.changes.find((change) => change.eventId === reschedulingEvent.id);
+
+      if (moved) {
+        const bell = PAIR_SCHEDULE[moved.newPair as PairNumber];
+
+        setSelectedDate(new Date(`${moved.newDate}T${bell.start}:00`));
+      }
+
       toast.success(formatMessage('schedule.rescheduleSuccess'));
       setReschedulingEvent(null);
     } catch (failure) {
-      setRescheduleError(
-        failure instanceof Error ? failure.message : formatMessage('schedule.rescheduleError'),
-      );
+      setRescheduleError(formatMessage(getRescheduleErrorKey(failure)));
     } finally {
       setIsRescheduling(false);
     }
@@ -268,6 +326,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
   return (
     <div className={styles.root}>
+      {!propEvents && scheduleFailed && <p role="alert">{formatMessage('schedule.loadError')}</p>}
+      {!propEvents && scheduleLoading && <p role="status">{formatMessage('schedule.loading')}</p>}
+      {(isAdmin || isInstructor) && <RescheduleRequests isAdmin={isAdmin} />}
       {isInstructor && <TeacherSlotPreferences />}
 
       <ScheduleToolbar
@@ -367,33 +428,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             </p>
           )}
           <label htmlFor="meeting-url-input">{formatMessage('schedule.meetingUrlLabel')}</label>
-          {isAdmin && editingEvent && (
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={isSavingUrl}
-              onClick={() => {
-                setReschedulingEvent(editingEvent);
-                const date = editingEvent.start;
-
-                setNewDate(
-                  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
-                );
-                setNewPair(
-                  Object.entries(PAIR_SCHEDULE).find(
-                    ([, bell]) =>
-                      bell.start ===
-                      `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`,
-                  )?.[0] ?? '1',
-                );
-                setReason('');
-                setRescheduleError(null);
-                setEditingEvent(null);
-              }}
-            >
-              {formatMessage('schedule.rescheduleEvent')}
-            </Button>
-          )}
           <TextInput
             id="meeting-url-input"
             type="url"
@@ -402,6 +436,36 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             placeholder={formatMessage('schedule.meetingUrlPlaceholder')}
           />
           <div className={styles.modalActions}>
+            {(isAdmin || isInstructor) && editingEvent && (
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={isSavingUrl}
+                onClick={() => {
+                  setReschedulingEvent(editingEvent);
+                  const date = editingEvent.start;
+
+                  setNewDate(
+                    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+                  );
+                  setNewPair(
+                    Object.entries(PAIR_SCHEDULE).find(
+                      ([, bell]) =>
+                        bell.start ===
+                        `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`,
+                    )?.[0] ?? '1',
+                  );
+                  setReason('');
+                  setScope(RESCHEDULE_SCOPE.ONCE);
+                  setPreview(null);
+                  setPreviewSignature('');
+                  setRescheduleError(null);
+                  setEditingEvent(null);
+                }}
+              >
+                {formatMessage('schedule.rescheduleEvent')}
+              </Button>
+            )}
             <Button
               type="button"
               variant="secondary"
@@ -442,30 +506,66 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               {rescheduleError}
             </p>
           )}
+          <label htmlFor={`${rescheduleFormId}-date`}>{formatMessage('schedule.newDate')}</label>
           <TextInput
+            id={`${rescheduleFormId}-date`}
             type="date"
             required
-            aria-label={formatMessage('schedule.newDate')}
             value={newDate}
             disabled={isRescheduling}
             onChange={(event) => setNewDate(event.target.value)}
           />
+          <label htmlFor={`${rescheduleFormId}-pair`}>
+            {formatMessage('timetable.targetPair')}
+          </label>
           <Select
-            aria-label={formatMessage('timetable.targetPair')}
+            id={`${rescheduleFormId}-pair`}
             value={newPair}
             disabled={isRescheduling}
             onChange={setNewPair}
             options={Object.keys(PAIR_SCHEDULE).map((pair) => ({ value: pair, label: pair }))}
           />
+          <label htmlFor={`${rescheduleFormId}-reason`}>
+            {formatMessage('schedule.rescheduleReason')}
+          </label>
           <TextInput
-            aria-label={formatMessage('schedule.rescheduleReason')}
+            id={`${rescheduleFormId}-reason`}
+            required
+            maxLength={MAX_RESCHEDULE_REASON_LENGTH}
             value={reason}
             disabled={isRescheduling}
             onChange={(event) => setReason(event.target.value)}
           />
-          <Button type="submit" disabled={isRescheduling || !newDate}>
+          <label htmlFor={`${rescheduleFormId}-scope`}>
+            {formatMessage('schedule.rescheduleScope')}
+          </label>
+          <Select
+            id={`${rescheduleFormId}-scope`}
+            value={scope}
+            onChange={(value) => setScope(value as RescheduleScope)}
+            disabled={isRescheduling}
+            options={[
+              { value: RESCHEDULE_SCOPE.ONCE, label: formatMessage('schedule.scopeOnce') },
+              { value: RESCHEDULE_SCOPE.SERIES, label: formatMessage('schedule.scopeSeries') },
+            ]}
+          />
+          <Button type="submit" disabled={isRescheduling || !newDate || !reason.trim()}>
             {formatMessage('schedule.save')}
           </Button>
+          {preview && (
+            <ul>
+              {preview.changes.map((change) => (
+                <li key={change.eventId}>
+                  {formatMessage('schedule.occurrenceChange', {
+                    oldDate: change.oldDate,
+                    oldPair: change.oldPair,
+                    newDate: change.newDate,
+                    newPair: change.newPair,
+                  })}
+                </li>
+              ))}
+            </ul>
+          )}
         </form>
       </Modal>
     </div>

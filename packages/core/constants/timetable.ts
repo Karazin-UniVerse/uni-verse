@@ -4,6 +4,23 @@ export const DEFAULT_NOMINAL_WEEKS = 16 as const;
 
 export const TIMETABLE_TIME_ZONE = 'Europe/Kyiv' as const;
 
+export const RESCHEDULE_SCOPE = { ONCE: 'ONCE', SERIES: 'SERIES' } as const;
+
+export type RescheduleScope = (typeof RESCHEDULE_SCOPE)[keyof typeof RESCHEDULE_SCOPE];
+
+export const RESCHEDULE_REQUEST_STATUS = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export type RescheduleRequestStatus =
+  (typeof RESCHEDULE_REQUEST_STATUS)[keyof typeof RESCHEDULE_REQUEST_STATUS];
+
+export const MAX_RESCHEDULE_REASON_LENGTH = 1000 as const;
+export const DEFAULT_RESCHEDULE_PAGE_SIZE = 20 as const;
+export const MAX_RESCHEDULE_PAGE_SIZE = 100 as const;
+
 // Local bell schedule. A pair is 80 clock minutes but always counts as ACADEMIC_HOURS_PER_PAIR.
 export const PAIR_SCHEDULE = {
   1: { start: '08:30', end: '09:50' },

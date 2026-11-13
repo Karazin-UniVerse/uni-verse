@@ -57,6 +57,8 @@ The user approved this scope in conversation. This written specification require
 
 ## UI and mobile scope
 
+- User-requested scope addition: the dean's office can explicitly set the number of teaching weeks for the selected academic year and semester through the existing semester calendar API. Load the persisted value, validate a positive integer, and save before generation. Existing semesters are not silently reset to 16. Generation and rescheduling use the saved calendar; changing duration never changes assigned academic hours or historical published occurrences. If shortening would exclude published occurrences, reject the calendar update rather than silently truncating them. Display insufficient-capacity errors instead of changing workload hours.
+
 - Instructors get a request action on their own eligible event and a list of their requests with scope, original/proposed times, reason, status and rejection explanation.
 - Administrators get pending-request review showing all affected occurrences and approve/reject controls, plus direct single/series rescheduling on eligible events.
 - Preview the full affected set before submission or a direct move. Disable duplicate submits; expose pending, empty, loading, error and successful states.

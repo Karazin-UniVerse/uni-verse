@@ -99,6 +99,8 @@
 
 **Interfaces:** Preserve desktop component props and six-day calendar. Use existing `BREAKPOINTS` and SCSS design tokens; no new responsive JavaScript framework or duplicated mobile business logic.
 
+- [ ] User-requested addition: expose a localized positive-integer teaching-weeks field in dean timetable settings using existing `getSemesterCalendar` / `configureSemesterCalendar` methods. Add failing backend tests preventing duration changes that exclude already published occurrences and frontend tests loading/saving non-16 values and blocking generation after failed save. Preserve workload hours; exercise generation and series boundaries for a 14-week and an 18-week calendar. Reuse persisted calendar dates and exceptions rather than resetting them when only changing duration. Save valid settings before generation; do not silently rewrite historical events.
+
 - [ ] Add failing component tests for reachable event/request actions, full accessible labels despite truncation, loading/error/empty states and long reason text. Do not claim DOM-only tests prove layout.
 - [ ] Run the relevant frontend tests and confirm new assertions fail before implementation.
 - [ ] Apply minimal responsive styles: stacked controls, wrapping actions, bounded dialogs with internal scrolling, `min-width: 0` where required and labeled internal table scrolling. Preserve all essential event and decision information.

@@ -73,7 +73,6 @@ describe('TimetableController', () => {
     generateTimetableDraft: jest.fn(),
     publishTimetableVersion: jest.fn(),
     adjustDraftSlot: jest.fn(),
-    rescheduleEvent: jest.fn(),
     createSubscriptionToken: jest.fn(),
     rotateSubscriptionToken: jest.fn(),
     revokeSubscriptionTokens: jest.fn(),
@@ -107,7 +106,6 @@ describe('TimetableController', () => {
       toWeekday: 2,
       toPair: 2,
     };
-    const reschedule = { newDate: '2026-09-08', newPair: 2 };
 
     it('allows admins to adjust draft slots', async () => {
       mockTimetableService.adjustDraftSlot.mockResolvedValue({ events: [] });
@@ -117,17 +115,6 @@ describe('TimetableController', () => {
       expect(mockTimetableService.adjustDraftSlot).toHaveBeenCalledWith(
         'version-1',
         slot,
-      );
-    });
-
-    it('allows admins to reschedule events', async () => {
-      mockTimetableService.rescheduleEvent.mockResolvedValue({ id: 'event-1' });
-      await expect(
-        controller.rescheduleEvent('event-1', reschedule, [Role.ADMIN]),
-      ).resolves.toEqual({ id: 'event-1' });
-      expect(mockTimetableService.rescheduleEvent).toHaveBeenCalledWith(
-        'event-1',
-        reschedule,
       );
     });
 
@@ -141,15 +128,7 @@ describe('TimetableController', () => {
             roles ? [roles] : undefined,
           ),
         ).rejects.toThrow(ForbiddenException);
-        await expect(
-          controller.rescheduleEvent(
-            'event-1',
-            reschedule,
-            roles ? [roles] : undefined,
-          ),
-        ).rejects.toThrow(ForbiddenException);
         expect(mockTimetableService.adjustDraftSlot).not.toHaveBeenCalled();
-        expect(mockTimetableService.rescheduleEvent).not.toHaveBeenCalled();
       },
     );
   });
@@ -755,12 +734,9 @@ describe('TimetableController', () => {
       expect(pipes).toContain(ParseUUIDPipe);
     });
 
-    it.each(['adjustDraftSlot', 'rescheduleEvent'])(
-      'applies ParseUUIDPipe to %s',
-      (methodName) => {
-        expect(getPipesForParam(methodName, 0)).toContain(ParseUUIDPipe);
-      },
-    );
+    it('applies ParseUUIDPipe to adjustDraftSlot', () => {
+      expect(getPipesForParam('adjustDraftSlot', 0)).toContain(ParseUUIDPipe);
+    });
 
     it('applies ParseFeedTokenPipe to getCalendarFeed token param and validates base64url tokens', () => {
       const pipes = getPipesForParam('getCalendarFeed', 0);

@@ -1,4 +1,6 @@
 ﻿import type {
+  RescheduleScope,
+  RescheduleRequestStatus,
   SlotPreference,
   TimetableAssignmentTeachingType,
   TimetableConflictCode,
@@ -9,6 +11,72 @@
   TimetableValidationError,
   TimetableWeekParity,
 } from '../constants/timetable.ts';
+
+export type RescheduleProposalInput = {
+  eventId: string;
+  newDate: string;
+  newPair: number;
+  scope: RescheduleScope;
+  reason: string;
+};
+
+export type RescheduleOccurrenceChange = {
+  eventId: string;
+  oldDate: string;
+  oldPair: number;
+  newDate: string;
+  newPair: number;
+};
+
+export type ReschedulePreviewResponse = {
+  changes: RescheduleOccurrenceChange[];
+};
+
+export type BuildRescheduleChangesParams = {
+  eventId: string;
+  events: ScheduledEvent[];
+  newDate: string;
+  newPair: number;
+  scope: RescheduleScope;
+  calendar: SemesterCalendarConfig;
+  now: Date;
+};
+
+export type BuildRescheduleChangesResult =
+  | { ok: true; changes: RescheduleOccurrenceChange[] }
+  | {
+      ok: false;
+      error:
+        'EVENT_NOT_FOUND' | 'INVALID_TARGET' | 'NO_CHANGE' | 'STARTED_EVENT' | 'OUTSIDE_CALENDAR';
+    };
+
+export type RescheduleRequestResponse = RescheduleProposalInput & {
+  id: string;
+  requesterName: string;
+  disciplineTitle: string;
+  status: RescheduleRequestStatus;
+  changes: RescheduleOccurrenceChange[];
+  createdAt: string;
+  decidedAt: string | null;
+  decisionExplanation: string | null;
+};
+
+export type RescheduleRequestPage = {
+  items: RescheduleRequestResponse[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type ListRescheduleRequestsQuery = {
+  page?: number;
+  pageSize?: number;
+  status?: RescheduleRequestStatus;
+};
+
+export type RejectRescheduleRequest = {
+  explanation: string;
+};
 
 export type PairsFromHoursResult =
   { ok: true; pairs: number } | { ok: false; error: TimetableValidationError };
@@ -330,11 +398,7 @@ export type AdjustDraftSlotRequest = {
   toPair: number;
 };
 
-export type RescheduleEventRequest = {
-  newDate: string;
-  newPair: number;
-  reason?: string;
-};
+export type RescheduleEventRequest = Omit<RescheduleProposalInput, 'eventId'>;
 
 export type ListTeachingAssignmentsQueryRequest = {
   curriculumPlanId: string;
@@ -348,6 +412,7 @@ export type GetSemesterCalendarQueryRequest = {
 export type IcsCalendarEvent = {
   id: string;
   disciplineTitle: string;
+  teachingAssignmentId?: string;
   teachingType?: TimetableTeachingType | string;
   date?: string;
   pair?: number;

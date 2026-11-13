@@ -798,6 +798,18 @@ describe('checkTimetableConflicts', () => {
       assert.deepStrictEqual(overlapCodes(stream, { groupIds: ['KS13'] }), []);
     });
 
+    test('distinct occurrences of the same stream assignment still conflict when overlapping', () => {
+      const streamOccurrence = {
+        groupIds: ['KS11', 'KS12'],
+        streamId: 'Stream1',
+        teachingAssignmentId: 'assign-stream',
+      };
+
+      assert.deepStrictEqual(overlapCodes(streamOccurrence, streamOccurrence), [
+        TIMETABLE_CONFLICT_CODE.STUDENT_OVERLAP,
+      ]);
+    });
+
     test('explicit student sets decide the intersection', () => {
       assert.deepStrictEqual(overlapCodes({ studentIds: ['s1'] }, { studentIds: ['s2'] }), []);
       assert.deepStrictEqual(overlapCodes({ studentIds: ['s1'] }, { studentIds: ['s1', 's2'] }), [

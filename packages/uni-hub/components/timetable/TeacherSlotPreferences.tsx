@@ -170,7 +170,11 @@ export function TeacherSlotPreferences(): React.JSX.Element {
         </p>
       )}
 
-      <div className={styles.scrollContainer}>
+      <div
+        className={styles.scrollContainer}
+        role="region"
+        aria-label={formatMessage('preferences.title')}
+      >
         <table className={styles.gridTable}>
           <thead>
             <tr>

@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, waitFor } from '@testing-library/react';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import userEvent from '@testing-library/user-event';
 import { BREAKPOINTS } from '@core/constants/breakpoints';
 import { withLanguage, withQueryClient, withToast } from '@uni-hub/utils/test-utils';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
-import { DUMMY_EVENTS, exportToICS } from './helpers';
+import { exportToICS } from './helpers';
 import { ScheduleView } from './ScheduleView';
 import type { ScheduleEvent, ScheduleViewProps } from './ScheduleView.types';
 
@@ -32,6 +32,11 @@ describe('ScheduleView component', () => {
     vi.clearAllMocks();
     vi.mocked(useMediaQuery).mockReturnValue(false);
     vi.mocked(useCurrentUser).mockReturnValue({ userId: null, roles: [] });
+    vi.spyOn(timetableApi, 'getMyScheduleEvents').mockResolvedValue({ data: [] });
+    vi.spyOn(timetableApi, 'listRescheduleRequests').mockResolvedValue({
+      data: { items: [], total: 0, page: 1, pageSize: 20 },
+    });
+    vi.spyOn(timetableApi, 'listPreferenceSemesters').mockResolvedValue({ data: [] });
   });
 
   afterEach(() => {
@@ -56,32 +61,69 @@ describe('ScheduleView component', () => {
   ])('reschedules an admin event and reports conflicts (%o)', async ({ fails, week }) => {
     vi.mocked(useCurrentUser).mockReturnValue({ userId: 'admin', roles: ['ADMIN'] });
     vi.mocked(useMediaQuery).mockReturnValue(true);
-    const start = new Date(new Date().setHours(8, 30, 0, 0));
-    const event: ScheduleEvent = {
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const initialEvent = {
       id: 'event-1',
-      title: 'Algorithms',
-      start,
-      end: new Date(start.getTime() + 80 * 60000),
-      type: 'lecture',
-      location: 'Online',
+      disciplineTitle: 'Algorithms',
+      teachingType: 'LECTURE',
+      date: todayIso,
+      pair: 1,
+      pairSpan: 1,
+      groupCodes: ['Online'],
     };
+
+    vi.spyOn(timetableApi, 'listRescheduleRequests').mockResolvedValue({
+      data: { items: [], total: 0, page: 1, pageSize: 20 },
+    });
+    const getMyEvents = vi
+      .spyOn(timetableApi, 'getMyScheduleEvents')
+      .mockResolvedValueOnce({ data: [initialEvent] })
+      .mockResolvedValue({
+        data: [{ ...initialEvent, date: '2026-11-13', pair: 3 }],
+      });
     const reschedule = vi.spyOn(timetableApi, 'rescheduleEvent');
+
+    vi.spyOn(timetableApi, 'previewReschedule').mockResolvedValue({
+      data: {
+        changes: [
+          {
+            eventId: 'event-1',
+            oldDate: todayIso,
+            oldPair: 1,
+            newDate: '2026-11-13',
+            newPair: 3,
+          },
+        ],
+      },
+    });
 
     if (fails) {
       reschedule.mockRejectedValue(new Error('Teacher conflict (HTTP 409)'));
     } else {
-      reschedule.mockResolvedValue({ data: { date: '2026-11-13', pair: 3 } });
+      reschedule.mockResolvedValue({
+        data: {
+          changes: [
+            {
+              eventId: 'event-1',
+              oldDate: todayIso,
+              oldPair: 1,
+              newDate: '2026-11-13',
+              newPair: 3,
+            },
+          ],
+        },
+      });
     }
 
     const user = userEvent.setup();
 
-    renderScheduleView({ events: [event] });
+    renderScheduleView();
 
     if (week) {
       await user.click(screen.getByRole('radio', { name: 'Тиждень' }));
     }
 
-    await user.click(screen.getByRole('button', { name: /Змінити посилання/i }));
+    await user.click(await screen.findByRole('button', { name: /Змінити посилання/i }));
     await user.click(screen.getByRole('button', { name: 'Перенести заняття' }));
 
     const dialog = screen.getByRole('dialog');
@@ -89,22 +131,194 @@ describe('ScheduleView component', () => {
     await user.clear(within(dialog).getByLabelText('Нова дата'));
     await user.type(within(dialog).getByLabelText('Нова дата'), '2026-11-13');
     await user.selectOptions(within(dialog).getByLabelText('Пара'), '3');
-    await user.type(within(dialog).getByLabelText('Причина (необов’язково)'), 'Makeup');
+    await user.type(within(dialog).getByLabelText('Причина'), 'Makeup');
+    await user.click(within(dialog).getByRole('button', { name: 'Зберегти' }));
     await user.click(within(dialog).getByRole('button', { name: 'Зберегти' }));
 
     expect(reschedule).toHaveBeenCalledWith('event-1', {
+      scope: 'ONCE',
       newDate: '2026-11-13',
       newPair: 3,
       reason: 'Makeup',
     });
 
     if (fails) {
-      expect(await screen.findByRole('alert')).toHaveTextContent('Teacher conflict');
+      const alert = await within(dialog).findByRole('alert');
+
+      expect(alert).toHaveTextContent('Перенесення створює конфлікт у розкладі');
+      expect(alert).not.toHaveTextContent('Teacher conflict');
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     } else {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-      expect(screen.getByText(/12:00/)).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      await waitFor(() => expect(getMyEvents).toHaveBeenCalledTimes(2));
+      expect(await screen.findByText(/12:00/)).toBeInTheDocument();
     }
+  });
+
+  it('allows an instructor to preview and submit a series reschedule request while keeping input on conflict', async () => {
+    vi.mocked(useCurrentUser).mockReturnValue({ userId: 'teacher-1', roles: ['INSTRUCTOR'] });
+    vi.mocked(useMediaQuery).mockReturnValue(true);
+    const todayIso = new Date().toISOString().slice(0, 10);
+
+    vi.spyOn(timetableApi, 'listPreferenceSemesters').mockResolvedValue({ data: [] });
+    vi.spyOn(timetableApi, 'listRescheduleRequests').mockResolvedValue({
+      data: { items: [], total: 0, page: 1, pageSize: 20 },
+    });
+    vi.spyOn(timetableApi, 'getMyScheduleEvents').mockResolvedValue({
+      data: [
+        {
+          id: 'event-1',
+          disciplineTitle: 'Calculus',
+          teachingType: 'LECTURE',
+          date: todayIso,
+          pair: 1,
+          pairSpan: 1,
+          groupCodes: ['KS11'],
+        },
+      ],
+    });
+    const preview = vi.spyOn(timetableApi, 'previewReschedule').mockResolvedValue({
+      data: {
+        changes: [
+          {
+            eventId: 'event-1',
+            oldDate: todayIso,
+            oldPair: 1,
+            newDate: '2026-11-13',
+            newPair: 3,
+          },
+          {
+            eventId: 'event-2',
+            oldDate: '2026-11-19',
+            oldPair: 1,
+            newDate: '2026-11-20',
+            newPair: 3,
+          },
+        ],
+      },
+    });
+    const createRequest = vi
+      .spyOn(timetableApi, 'createRescheduleRequest')
+      .mockRejectedValueOnce(new Error('Target occupied (HTTP 409)'))
+      .mockResolvedValueOnce({
+        data: {
+          id: 'req-1',
+          eventId: 'event-1',
+          newDate: '2026-11-13',
+          newPair: 3,
+          scope: 'SERIES',
+          reason: 'Conference travel',
+          requesterName: 'Teacher',
+          disciplineTitle: 'Calculus',
+          status: 'PENDING',
+          changes: [],
+          createdAt: '2026-11-12T10:00:00Z',
+          decidedAt: null,
+          decisionExplanation: null,
+        },
+      });
+
+    const user = userEvent.setup();
+
+    renderScheduleView();
+
+    await user.click(await screen.findByRole('button', { name: /Змінити посилання/i }));
+    await user.click(screen.getByRole('button', { name: 'Перенести заняття' }));
+
+    const dialog = screen.getByRole('dialog');
+
+    await user.clear(within(dialog).getByLabelText('Нова дата'));
+    await user.type(within(dialog).getByLabelText('Нова дата'), '2026-11-13');
+    await user.selectOptions(within(dialog).getByLabelText('Пара'), '3');
+    await user.selectOptions(within(dialog).getByLabelText('Обсяг перенесення'), 'SERIES');
+    await user.type(within(dialog).getByLabelText('Причина'), 'Conference travel');
+    await user.click(within(dialog).getByRole('button', { name: 'Зберегти' }));
+
+    expect(preview).toHaveBeenCalledTimes(1);
+    expect(await within(dialog).findByText(/2026-11-20, пара 3/)).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole('button', { name: 'Зберегти' }));
+    const alert = await within(dialog).findByRole('alert');
+
+    expect(alert).toHaveTextContent('Перенесення створює конфлікт у розкладі');
+    expect(alert).not.toHaveTextContent('Target occupied');
+    expect(within(dialog).getByLabelText('Причина')).toHaveValue('Conference travel');
+
+    await user.click(within(dialog).getByRole('button', { name: 'Зберегти' }));
+    expect(createRequest).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  }, 15_000);
+
+  it.each([
+    {
+      failure: 'Invalid rescheduling proposal (HTTP 400)',
+      text: 'Неможливо перенести заняття на цю дату чи пару',
+    },
+    { failure: 'STARTED_EVENT', text: 'Неможливо перенести заняття на цю дату чи пару' },
+    { failure: 'Internal server error (HTTP 500)', text: 'Не вдалося перенести заняття' },
+  ])('shows localized text for server failure "$failure"', async ({ failure, text }) => {
+    vi.mocked(useCurrentUser).mockReturnValue({ userId: 'admin', roles: ['ADMIN'] });
+    vi.mocked(useMediaQuery).mockReturnValue(true);
+    const todayIso = new Date().toISOString().slice(0, 10);
+
+    vi.spyOn(timetableApi, 'getMyScheduleEvents').mockResolvedValue({
+      data: [
+        {
+          id: 'event-1',
+          disciplineTitle: 'Algorithms',
+          teachingType: 'LECTURE',
+          date: todayIso,
+          pair: 1,
+          pairSpan: 1,
+          groupCodes: ['Online'],
+        },
+      ],
+    });
+    vi.spyOn(timetableApi, 'previewReschedule').mockRejectedValue(new Error(failure));
+
+    const user = userEvent.setup();
+
+    renderScheduleView();
+
+    await user.click(await screen.findByRole('button', { name: /Змінити посилання/i }));
+    await user.click(screen.getByRole('button', { name: 'Перенести заняття' }));
+
+    const dialog = screen.getByRole('dialog');
+
+    await user.type(within(dialog).getByLabelText('Причина'), 'Makeup');
+    await user.click(within(dialog).getByRole('button', { name: 'Зберегти' }));
+
+    const alert = await within(dialog).findByRole('alert');
+
+    expect(alert).toHaveTextContent(text);
+    expect(alert).not.toHaveTextContent(failure);
+    expect(within(dialog).getByLabelText('Причина')).toHaveValue('Makeup');
+  });
+
+  it('places the reschedule button in the modal actions, not between label and input', async () => {
+    vi.mocked(useCurrentUser).mockReturnValue({ userId: 'admin', roles: ['ADMIN'] });
+    vi.mocked(useMediaQuery).mockReturnValue(true);
+    const start = new Date();
+    const user = userEvent.setup();
+
+    renderScheduleView({
+      events: [
+        {
+          id: 'event-1',
+          title: 'Algorithms',
+          start,
+          end: start,
+          type: 'lecture',
+          location: 'Online',
+        },
+      ],
+    });
+    await user.click(screen.getByRole('button', { name: /Змінити посилання/i }));
+
+    const input = screen.getByPlaceholderText(/https:\/\/meet\.google\.com/i);
+    const button = screen.getByRole('button', { name: 'Перенести заняття' });
+
+    expect(input.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('does not offer rescheduling to teachers without admin role', async () => {
@@ -228,7 +442,7 @@ describe('ScheduleView component', () => {
     await user.click(exportButton);
 
     expect(exportToICS).toHaveBeenCalledTimes(1);
-    expect(exportToICS).toHaveBeenCalledWith(DUMMY_EVENTS);
+    expect(exportToICS).toHaveBeenCalledWith([]);
   });
 
   it('should switch to day view when a day cell is clicked in month view', async () => {

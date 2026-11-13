@@ -24,7 +24,6 @@ import {
   type SemesterCalendar,
   type TeacherUnavailability as TeacherUnavailabilityRecord,
   type TeachingAssignment,
-  type TimetableEvent,
 } from '@universe/database';
 import { AtGuard } from '../auth/guards/at.guard';
 import { Public } from '../auth/decorators/public.decorator';
@@ -46,7 +45,6 @@ import type {
 } from '@universe/core/types/timetable';
 import {
   AdjustDraftSlotDto,
-  RescheduleEventDto,
   ConfirmTeacherUnavailabilityDto,
   CreateAcademicGroupDto,
   CreateCurriculumPlanDto,
@@ -60,12 +58,7 @@ import {
   UpdateMeetingUrlDto,
   UpdateTeachingAssignmentDto,
 } from './dto';
-
-function assertAdmin(roles?: string[]): void {
-  if (!roles?.includes(Role.ADMIN) && !roles?.includes('ADMIN')) {
-    throw new ForbiddenException('Administrative privileges required');
-  }
-}
+import { assertAdmin } from './timetable.helpers';
 
 const FEED_TOKEN_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
 
@@ -358,19 +351,6 @@ export class TimetableController {
     assertAdmin(roles);
 
     return this.timetableService.adjustDraftSlot(versionId, dto);
-  }
-
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Reschedule a published timetable event' })
-  @Patch('events/:id/reschedule')
-  async rescheduleEvent(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: RescheduleEventDto,
-    @GetUser('roles') roles?: string[],
-  ): Promise<TimetableEvent> {
-    assertAdmin(roles);
-
-    return this.timetableService.rescheduleEvent(id, dto);
   }
 
   @ApiBearerAuth()

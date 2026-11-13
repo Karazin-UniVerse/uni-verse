@@ -1,0 +1,29 @@
+@use '@universe/ui/breakpoints.scss' as *;
+
+.root {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-12);
+  min-width: 0;
+
+  input {
+    width: 8ch;
+    padding: var(--space-8);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-small);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font: inherit;
+  }
+
+  @include narrower-than('sm') {
+    align-items: stretch;
+    flex-direction: column;
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+    }
+  }
+}

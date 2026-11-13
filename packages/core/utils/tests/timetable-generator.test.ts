@@ -1085,5 +1085,46 @@ describe('timetable generator', () => {
 
       assert.ok(report.isValid);
     });
+
+    test('supports native 14-week (28h) and 18-week (36h and 32h) calendars', () => {
+      const result14 = generateTimetableCandidates({
+        demands: [{ ...demand32h, id: 'DEMAND-14W', academicHours: 28 }],
+        calendar: {
+          startDate: '2026-09-07',
+          teachingWeeks: 14,
+          excludedDates: [],
+          makeupSaturdays: [],
+        },
+      });
+
+      assert.ok(result14.ok);
+      assert.strictEqual(result14.candidates[0].events.length, 14);
+
+      const result18Native = generateTimetableCandidates({
+        demands: [{ ...demand32h, id: 'DEMAND-18W', academicHours: 36 }],
+        calendar: {
+          startDate: '2026-09-07',
+          teachingWeeks: 18,
+          excludedDates: [],
+          makeupSaturdays: [],
+        },
+      });
+
+      assert.ok(result18Native.ok);
+      assert.strictEqual(result18Native.candidates[0].events.length, 18);
+
+      const result18Nominal = generateTimetableCandidates({
+        demands: [demand32h],
+        calendar: {
+          startDate: '2026-09-07',
+          teachingWeeks: 18,
+          excludedDates: [],
+          makeupSaturdays: [],
+        },
+      });
+
+      assert.ok(result18Nominal.ok);
+      assert.strictEqual(result18Nominal.candidates[0].events.length, 16);
+    });
   });
 });

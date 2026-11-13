@@ -1,4 +1,11 @@
 import crypto from 'node:crypto';
+import { lockTimetableWrites } from './timetable-write-lock';
+import {
+  toScheduledEvent,
+  toIsoDateString,
+  buildGroupIds,
+  parseMakeupSaturdayDates,
+} from './timetable.helpers';
 import {
   BadRequestException,
   ConflictException,
@@ -35,7 +42,11 @@ import type {
   TimetableCandidate,
   TimetableDemandDeficit,
 } from '@universe/core/types/timetable';
-import { TIMETABLE_WEEKDAY } from '@universe/core/constants/timetable';
+import {
+  DAYS_PER_WEEK,
+  MS_PER_DAY,
+  TIMETABLE_WEEKDAY,
+} from '@universe/core/constants/timetable';
 import {
   checkTimetableConflicts,
   generateIcsCalendar,
@@ -47,7 +58,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { getPrismaErrorCode } from '../utils/prisma-error';
 import type {
   AdjustDraftSlotDto,
-  RescheduleEventDto,
   CreateAcademicGroupDto,
   CreateCurriculumPlanDto,
   CreateSemesterCalendarDto,
@@ -108,12 +118,6 @@ export type TimetableVersionWithEvents = TimetableVersion & {
   events: TimetableEvent[];
 };
 
-type AssignmentWithRelations = TeachingAssignment & {
-  group?: AcademicGroup | null;
-  subgroup?: AcademicSubgroup | null;
-  stream?: (AcademicStream & { groups?: AcademicGroup[] }) | null;
-};
-
 const EVENT_ASSIGNMENT_INCLUDE = {
   teachingAssignment: {
     include: {
@@ -124,66 +128,6 @@ const EVENT_ASSIGNMENT_INCLUDE = {
   },
 } as const;
 
-function toScheduledEvent(
-  event: TimetableEvent & {
-    teachingAssignment?: AssignmentWithRelations | null;
-  },
-  makeupDates: Set<string>,
-): ScheduledEvent {
-  const assignment = event.teachingAssignment;
-  const date = toIsoDateString(event.date);
-
-  return {
-    id: event.id,
-    teachingAssignmentId: event.teachingAssignmentId,
-    disciplineTitle:
-      event.disciplineTitleSnapshot ?? assignment?.disciplineTitle ?? '',
-    teachingType: (event.teachingTypeSnapshot ??
-      assignment?.teachingType) as ScheduledEvent['teachingType'],
-    teacherId: event.teacherIdSnapshot ?? assignment?.teacherId ?? undefined,
-    groupIds: buildGroupIds(assignment),
-    date,
-    pair: event.pair,
-    pairSpan: event.pairSpan,
-    subgroupId: assignment?.subgroupId ?? undefined,
-    streamId: assignment?.streamId ?? undefined,
-    hasLateSlotAuthorization: assignment?.hasLateSlotAuthorization,
-    isSaturdayOnly: assignment?.isSaturdayOnly,
-    isMakeupSaturday: makeupDates.has(date),
-  };
-}
-
-function toIsoDateString(value: Date | string): string {
-  return value instanceof Date
-    ? value.toISOString().slice(0, 10)
-    : String(value).slice(0, 10);
-}
-
-function buildGroupIds(assignment?: AssignmentWithRelations | null): string[] {
-  const groupIds: string[] = [];
-
-  if (assignment?.groupId) {
-    groupIds.push(assignment.groupId);
-  }
-
-  if (
-    assignment?.subgroup?.academicGroupId &&
-    !groupIds.includes(assignment.subgroup.academicGroupId)
-  ) {
-    groupIds.push(assignment.subgroup.academicGroupId);
-  }
-
-  if (assignment?.stream?.groups) {
-    for (const group of assignment.stream.groups) {
-      if (!groupIds.includes(group.id)) {
-        groupIds.push(group.id);
-      }
-    }
-  }
-
-  return groupIds;
-}
-
 const MISSING_PLAN_OR_TEACHER_MESSAGE =
   'Curriculum plan or teacher does not exist';
 
@@ -193,31 +137,6 @@ function rethrowMissingReference(error: unknown): never {
   }
 
   throw error;
-}
-
-function parseMakeupSaturdayDates(
-  calendar?: SemesterCalendar | null,
-): Set<string> {
-  const raw = calendar?.makeupSaturdays;
-
-  if (!Array.isArray(raw)) {
-    return new Set<string>();
-  }
-
-  const dates = new Set<string>();
-
-  for (const item of raw) {
-    if (
-      typeof item === 'object' &&
-      item !== null &&
-      'date' in item &&
-      typeof (item as { date: unknown }).date === 'string'
-    ) {
-      dates.add((item as { date: string }).date);
-    }
-  }
-
-  return dates;
 }
 
 @Injectable()
@@ -640,28 +559,117 @@ export class TimetableService {
   async configureSemesterCalendar(
     dto: CreateSemesterCalendarDto,
   ): Promise<SemesterCalendar> {
-    return this.prisma.semesterCalendar.upsert({
-      where: {
-        academicYear_semester: {
-          academicYear: dto.academicYear,
-          semester: dto.semester,
+    try {
+      return await this.prisma.$transaction(
+        async (tx) => {
+          await lockTimetableWrites(tx);
+
+          const start = new Date(dto.startDate);
+          const monday =
+            start.getTime() -
+            ((start.getUTCDay() + DAYS_PER_WEEK - 1) % DAYS_PER_WEEK) *
+              MS_PER_DAY;
+          const end = new Date(
+            monday + dto.teachingWeeks * DAYS_PER_WEEK * MS_PER_DAY,
+          );
+
+          if (
+            dto.makeupSaturdays?.some((entry) => {
+              const makeupDate = new Date(entry.date);
+
+              return makeupDate < start || makeupDate >= end;
+            })
+          ) {
+            throw new BadRequestException(
+              'Makeup Saturday must fall within semester teaching weeks',
+            );
+          }
+
+          const existing = await tx.semesterCalendar.findUnique({
+            where: {
+              academicYear_semester: {
+                academicYear: dto.academicYear,
+                semester: dto.semester,
+              },
+            },
+          });
+
+          if (existing) {
+            const publishedEvents = await tx.timetableEvent.findMany({
+              where: {
+                timetableVersion: {
+                  semesterCalendarId: existing.id,
+                  status: 'PUBLISHED',
+                },
+                isCancelled: false,
+              },
+              select: {
+                date: true,
+                teachingAssignment: { select: { isSaturdayOnly: true } },
+              },
+            });
+            const makeupDates = new Set(
+              dto.makeupSaturdays?.map((entry) => entry.date) ?? [],
+            );
+
+            if (
+              publishedEvents.some((event) => {
+                const isoDate = toIsoDateString(event.date);
+
+                return (
+                  event.date < start ||
+                  event.date >= end ||
+                  dto.excludedDates?.includes(isoDate) ||
+                  (event.date.getUTCDay() === TIMETABLE_WEEKDAY.SATURDAY &&
+                    !event.teachingAssignment?.isSaturdayOnly &&
+                    !makeupDates.has(isoDate))
+                );
+              })
+            ) {
+              throw new ConflictException(
+                'Calendar change would exclude published classes',
+              );
+            }
+          }
+
+          return tx.semesterCalendar.upsert({
+            where: {
+              academicYear_semester: {
+                academicYear: dto.academicYear,
+                semester: dto.semester,
+              },
+            },
+            create: {
+              academicYear: dto.academicYear,
+              semester: dto.semester,
+              startDate: start,
+              teachingWeeks: dto.teachingWeeks,
+              excludedDates: dto.excludedDates ?? [],
+              makeupSaturdays: (dto.makeupSaturdays ??
+                []) as unknown as object[],
+            },
+            update: {
+              startDate: start,
+              teachingWeeks: dto.teachingWeeks,
+              excludedDates: dto.excludedDates ?? [],
+              makeupSaturdays: (dto.makeupSaturdays ??
+                []) as unknown as object[],
+            },
+          });
         },
-      },
-      create: {
-        academicYear: dto.academicYear,
-        semester: dto.semester,
-        startDate: new Date(dto.startDate),
-        teachingWeeks: dto.teachingWeeks,
-        excludedDates: dto.excludedDates ?? [],
-        makeupSaturdays: (dto.makeupSaturdays ?? []) as unknown as object[],
-      },
-      update: {
-        startDate: new Date(dto.startDate),
-        teachingWeeks: dto.teachingWeeks,
-        excludedDates: dto.excludedDates ?? [],
-        makeupSaturdays: (dto.makeupSaturdays ?? []) as unknown as object[],
-      },
-    });
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+    } catch (error) {
+      if (
+        getPrismaErrorCode(error) === PRISMA_ERROR_CODE.TRANSACTION_CONFLICT
+      ) {
+        throw new ConflictException(
+          'Calendar changed concurrently; retry saving',
+        );
+      }
+
+      throw error;
+    }
   }
 
   async getSemesterCalendar(
@@ -1121,92 +1129,6 @@ export class TimetableService {
     );
   }
 
-  async rescheduleEvent(
-    eventId: string,
-    dto: RescheduleEventDto,
-  ): Promise<TimetableEvent> {
-    return this.prisma.$transaction(
-      async (tx) => {
-        const event = await tx.timetableEvent.findUnique({
-          where: { id: eventId },
-          include: {
-            ...EVENT_ASSIGNMENT_INCLUDE,
-            timetableVersion: { include: { semesterCalendar: true } },
-          },
-        });
-
-        if (!event) {
-          throw new NotFoundException('Timetable event not found');
-        }
-
-        if (
-          event.timetableVersion.status !== 'PUBLISHED' ||
-          event.isCancelled
-        ) {
-          throw new BadRequestException(
-            'Only active published events can be rescheduled',
-          );
-        }
-
-        const date = new Date(dto.newDate);
-
-        if (
-          event.teachingAssignment?.isSaturdayOnly &&
-          date.getUTCDay() !== TIMETABLE_WEEKDAY.SATURDAY
-        ) {
-          throw new BadRequestException(
-            'Saturday-only assignments must remain on Saturday',
-          );
-        }
-
-        const others = await tx.timetableEvent.findMany({
-          where: {
-            id: { not: eventId },
-            date,
-            isCancelled: false,
-            timetableVersion: {
-              status: 'PUBLISHED',
-              semesterCalendarId: event.timetableVersion.semesterCalendarId,
-            },
-          },
-          include: EVENT_ASSIGNMENT_INCLUDE,
-        });
-        const unavailability = await tx.teacherUnavailability.findMany({
-          where: { isConfirmed: true, date },
-        });
-        const makeupDates = parseMakeupSaturdayDates(
-          event.timetableVersion.semesterCalendar,
-        );
-        const report = checkTimetableConflicts({
-          events: [...others, { ...event, date, pair: dto.newPair }].map(
-            (entry) => toScheduledEvent(entry, makeupDates),
-          ),
-          unavailability: unavailability.map((entry) => ({
-            ...entry,
-            date: toIsoDateString(entry.date),
-          })),
-        });
-
-        if (!report.isValid) {
-          throw new ConflictException({
-            message: 'Rescheduling event creates conflicts',
-            conflicts: report.hardConflicts,
-          });
-        }
-
-        return tx.timetableEvent.update({
-          where: { id: eventId },
-          data: {
-            date,
-            pair: dto.newPair,
-            stableKey: `${event.teachingAssignmentId}:${dto.newDate}:${dto.newPair}`,
-          },
-        });
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    );
-  }
-
   async publishTimetableVersion(
     versionId: string,
     _userId: string,
@@ -1214,6 +1136,8 @@ export class TimetableService {
     const runInTransaction = async (
       tx: PrismaService,
     ): Promise<TimetableVersionWithEvents> => {
+      await lockTimetableWrites(tx);
+
       const version = await tx.timetableVersion.findUnique({
         where: { id: versionId },
         include: {
@@ -1346,42 +1270,63 @@ export class TimetableService {
           : null);
       const makeupDates = parseMakeupSaturdayDates(calendar);
 
-      const otherPublishedEventsRecords = version.semesterCalendarId
-        ? ((await tx.timetableEvent?.findMany?.({
-            where: {
-              isCancelled: false,
-              timetableVersionId: { not: versionId },
-              timetableVersion: {
-                semesterCalendarId: version.semesterCalendarId,
-                status: 'PUBLISHED',
-              },
-              ...(planIds.length > 0
-                ? {
+      const otherPublishedEventsRecords =
+        (await tx.timetableEvent?.findMany?.({
+          where: {
+            isCancelled: false,
+            timetableVersionId: { not: versionId },
+            timetableVersion: {
+              status: 'PUBLISHED',
+            },
+            ...(version.semesterCalendarId && planIds.length > 0
+              ? {
+                  NOT: {
+                    timetableVersion: {
+                      semesterCalendarId: version.semesterCalendarId,
+                    },
                     teachingAssignment: {
-                      curriculumPlanId: { notIn: planIds },
+                      curriculumPlanId: { in: planIds },
+                    },
+                  },
+                }
+              : version.semesterCalendarId
+                ? {
+                    timetableVersion: {
+                      semesterCalendarId: { not: version.semesterCalendarId },
                     },
                   }
                 : {}),
-            },
-            include: {
-              teachingAssignment: {
-                include: {
-                  group: true,
-                  subgroup: true,
-                  stream: {
-                    include: {
-                      groups: true,
-                    },
+          },
+          include: {
+            timetableVersion: { include: { semesterCalendar: true } },
+            teachingAssignment: {
+              include: {
+                group: true,
+                subgroup: true,
+                stream: {
+                  include: {
+                    groups: true,
                   },
                 },
               },
             },
-          })) ?? [])
-        : [];
+          },
+        })) ?? [];
 
       const scheduledEvents: ScheduledEvent[] = [
         ...otherPublishedEventsRecords.map((event) =>
-          toScheduledEvent(event, makeupDates),
+          toScheduledEvent(
+            event,
+            parseMakeupSaturdayDates(
+              (
+                event as TimetableEvent & {
+                  timetableVersion?: {
+                    semesterCalendar?: SemesterCalendar | null;
+                  };
+                }
+              ).timetableVersion?.semesterCalendar,
+            ),
+          ),
         ),
         ...activeEvents.map((event) => toScheduledEvent(event, makeupDates)),
       ];
@@ -1444,10 +1389,22 @@ export class TimetableService {
     };
 
     if (typeof this.prisma.$transaction === 'function') {
-      return this.prisma.$transaction(
-        (tx) => runInTransaction(tx as unknown as PrismaService),
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-      );
+      try {
+        return await this.prisma.$transaction(
+          (tx) => runInTransaction(tx as unknown as PrismaService),
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        );
+      } catch (error) {
+        if (
+          getPrismaErrorCode(error) === PRISMA_ERROR_CODE.TRANSACTION_CONFLICT
+        ) {
+          throw new ConflictException(
+            'Timetable changed concurrently; retry publishing',
+          );
+        }
+
+        throw error;
+      }
     }
 
     return runInTransaction(this.prisma);
@@ -1549,14 +1506,10 @@ export class TimetableService {
       }
 
       const dateStr = toIsoDateString(event.date);
-      const stableId =
-        event.stableKey ||
-        (event.teachingAssignmentId
-          ? `${event.teachingAssignmentId}:${dateStr}:${event.pair}`
-          : event.id);
 
       return {
-        id: stableId,
+        id: event.id,
+        teachingAssignmentId: event.teachingAssignmentId,
         disciplineTitle:
           event.disciplineTitleSnapshot ?? a?.disciplineTitle ?? 'Untitled',
         teachingType: (event.teachingTypeSnapshot ??

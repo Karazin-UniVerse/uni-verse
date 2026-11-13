@@ -1,4 +1,10 @@
 import type {
+  RescheduleEventRequest,
+  RescheduleProposalInput,
+  ReschedulePreviewResponse,
+  RescheduleRequestResponse,
+  RescheduleRequestPage,
+  ListRescheduleRequestsQuery,
   AcademicGroupResponse,
   TeacherSlotPreference,
   SaveTeacherSlotPreferencesRequest,
@@ -12,8 +18,6 @@ import type {
   GenerateTimetableDraftResult,
   GenerateTimetableRequest,
   IcsCalendarEvent,
-  RescheduleEventRequest,
-  ScheduledEvent,
   SafeTeacherResponse,
   SemesterCalendarResponse,
   TeacherUnavailabilityResponse,
@@ -25,6 +29,49 @@ import { ApiClient, buildQueryString } from './api.request';
 import { API_BASE_URL } from './api.storage';
 
 export class TimetableApi extends ApiClient {
+  async previewReschedule(
+    payload: RescheduleProposalInput,
+  ): Promise<{ data: ReschedulePreviewResponse }> {
+    return this.request('/timetable/reschedule-preview', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async createRescheduleRequest(
+    payload: RescheduleProposalInput,
+  ): Promise<{ data: RescheduleRequestResponse }> {
+    return this.request('/timetable/my/reschedule-requests', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async listRescheduleRequests(
+    query: ListRescheduleRequestsQuery,
+    own: boolean,
+  ): Promise<{ data: RescheduleRequestPage }> {
+    return this.request(
+      `/timetable/${own ? 'my/' : ''}reschedule-requests${buildQueryString(query)}`,
+    );
+  }
+
+  async approveRescheduleRequest(id: string): Promise<{ data: RescheduleRequestResponse }> {
+    return this.request(`/timetable/reschedule-requests/${encodeURIComponent(id)}/approve`, {
+      method: 'POST',
+    });
+  }
+
+  async rejectRescheduleRequest(
+    id: string,
+    explanation: string,
+  ): Promise<{ data: RescheduleRequestResponse }> {
+    return this.request(`/timetable/reschedule-requests/${encodeURIComponent(id)}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ explanation }),
+    });
+  }
+
   async listPreferenceSemesters(): Promise<{ data: SemesterCalendarResponse[] }> {
     return this.request<SemesterCalendarResponse[]>('/timetable/my/slot-preferences/semesters');
   }
@@ -58,8 +105,8 @@ export class TimetableApi extends ApiClient {
   async rescheduleEvent(
     eventId: string,
     payload: RescheduleEventRequest,
-  ): Promise<{ data: Pick<ScheduledEvent, 'date' | 'pair'> }> {
-    return this.request<Pick<ScheduledEvent, 'date' | 'pair'>>(
+  ): Promise<{ data: ReschedulePreviewResponse }> {
+    return this.request<ReschedulePreviewResponse>(
       `/timetable/events/${encodeURIComponent(eventId)}/reschedule`,
       { method: 'PATCH', body: JSON.stringify(payload) },
     );

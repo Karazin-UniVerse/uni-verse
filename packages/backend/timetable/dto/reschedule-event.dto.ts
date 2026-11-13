@@ -1,13 +1,22 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsDateString,
+  IsEnum,
   IsInt,
-  IsOptional,
+  IsNotEmpty,
   IsString,
   Matches,
   Max,
+  MaxLength,
   Min,
 } from 'class-validator';
+import { RescheduleScope } from '@universe/database';
+import {
+  FIRST_PAIR,
+  LAST_PAIR,
+  MAX_RESCHEDULE_REASON_LENGTH,
+} from '@universe/core/constants/timetable';
 import type { RescheduleEventRequest } from '@universe/core/types/timetable';
 
 export class RescheduleEventDto implements RescheduleEventRequest {
@@ -16,14 +25,22 @@ export class RescheduleEventDto implements RescheduleEventRequest {
   @IsDateString({ strict: true })
   newDate: string;
 
-  @ApiProperty({ minimum: 1, maximum: 7 })
+  @ApiProperty({ minimum: FIRST_PAIR, maximum: LAST_PAIR })
   @IsInt()
-  @Min(1)
-  @Max(7)
+  @Min(FIRST_PAIR)
+  @Max(LAST_PAIR)
   newPair: number;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty({ enum: RescheduleScope })
+  @IsEnum(RescheduleScope)
+  scope: RescheduleScope;
+
+  @ApiProperty({ maxLength: MAX_RESCHEDULE_REASON_LENGTH })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
-  reason?: string;
+  @IsNotEmpty()
+  @MaxLength(MAX_RESCHEDULE_REASON_LENGTH)
+  reason: string;
 }

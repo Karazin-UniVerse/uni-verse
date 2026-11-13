@@ -28,22 +28,25 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  courses                    Course[]                    @relation("CourseInstructors")
+  courses                    Course[]                     @relation("CourseInstructors")
   enrollments                Enrollment[]
-  ownedOpportunities         Opportunity[]               @relation("OpportunityOwner")
-  opportunityApplications    OpportunityApplication[]    @relation("Applicant")
-  notifications              Notification[]              @relation("UserNotifications")
+  ownedOpportunities         Opportunity[]                @relation("OpportunityOwner")
+  opportunityApplications    OpportunityApplication[]     @relation("Applicant")
+  notifications              Notification[]               @relation("UserNotifications")
   comments                   Comment[]
   phone                      UserPhone?
   teachingAssignments        TeachingAssignment[]
-  createdTimetableVersions   TimetableVersion[]          @relation("TimetableVersionCreator")
+  createdTimetableVersions   TimetableVersion[]           @relation("TimetableVersionCreator")
   teacherUnavailabilities    TeacherUnavailability[]
-  slotPreferences           TeacherSlotPreference[]
+  slotPreferences            TeacherSlotPreference[]
   calendarSubscriptionTokens CalendarSubscriptionToken[]
   academicGroupId            String?
-  academicGroup              AcademicGroup?              @relation(fields: [academicGroupId], references: [id])
+  academicGroup              AcademicGroup?               @relation(fields: [academicGroupId], references: [id])
   academicSubgroupId         String?
-  academicSubgroup           AcademicSubgroup?           @relation(fields: [academicSubgroupId], references: [id])
+  academicSubgroup           AcademicSubgroup?            @relation(fields: [academicSubgroupId], references: [id])
+  rescheduleRequests         TimetableRescheduleRequest[] @relation("RescheduleRequester")
+  reviewedRescheduleRequests TimetableRescheduleRequest[] @relation("RescheduleReviewer")
+  rescheduleAudits           TimetableRescheduleAudit[]
 }
 
 model UserPhone {
@@ -369,13 +372,13 @@ enum SlotPreference {
 }
 
 model TeacherSlotPreference {
-  id                 String @id @default(uuid())
+  id                 String           @id @default(uuid())
   teacherId          String
   semesterCalendarId String
   weekday            Int
   pair               Int
   preference         SlotPreference
-  teacher            User @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  teacher            User             @relation(fields: [teacherId], references: [id], onDelete: Restrict)
   semesterCalendar   SemesterCalendar @relation(fields: [semesterCalendarId], references: [id], onDelete: Restrict)
 
   @@unique([teacherId, semesterCalendarId, weekday, pair])
@@ -419,13 +422,92 @@ model TimetableEvent {
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
 
-  timetableVersion   TimetableVersion   @relation(fields: [timetableVersionId], references: [id], onDelete: Cascade)
-  teachingAssignment TeachingAssignment @relation(fields: [teachingAssignmentId], references: [id], onDelete: Restrict)
+  timetableVersion      TimetableVersion                @relation(fields: [timetableVersionId], references: [id], onDelete: Cascade)
+  teachingAssignment    TeachingAssignment              @relation(fields: [teachingAssignmentId], references: [id], onDelete: Restrict)
+  rescheduleRequests    TimetableRescheduleRequest[]
+  rescheduleOccurrences TimetableRescheduleOccurrence[]
+  rescheduleAudits      TimetableRescheduleAudit[]
 
   @@index([timetableVersionId])
   @@index([teachingAssignmentId])
   @@index([date, pair])
   @@index([stableKey])
+}
+
+enum RescheduleScope {
+  ONCE
+  SERIES
+}
+
+enum RescheduleRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model TimetableRescheduleRequest {
+  id                  String                  @id @default(uuid())
+  requesterId         String
+  eventId             String
+  newDate             DateTime
+  newPair             Int
+  scope               RescheduleScope
+  reason              String                  @db.VarChar(1000)
+  status              RescheduleRequestStatus @default(PENDING)
+  reviewerId          String?
+  decisionExplanation String?                 @db.VarChar(1000)
+  decidedAt           DateTime?
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+
+  requester   User                            @relation("RescheduleRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+  reviewer    User?                           @relation("RescheduleReviewer", fields: [reviewerId], references: [id], onDelete: Restrict)
+  event       TimetableEvent                  @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  occurrences TimetableRescheduleOccurrence[]
+  audits      TimetableRescheduleAudit[]
+
+  @@index([requesterId, createdAt, id])
+  @@index([status, createdAt, id])
+  @@index([reviewerId])
+  @@index([eventId])
+}
+
+model TimetableRescheduleOccurrence {
+  id            String   @id @default(uuid())
+  requestId     String
+  eventId       String
+  oldDate       DateTime
+  oldPair       Int
+  newDate       DateTime
+  newPair       Int
+  sourceContext Json
+
+  request TimetableRescheduleRequest @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  event   TimetableEvent             @relation(fields: [eventId], references: [id], onDelete: Restrict)
+
+  @@unique([requestId, eventId])
+  @@index([eventId])
+}
+
+model TimetableRescheduleAudit {
+  id        String   @id @default(uuid())
+  actorId   String
+  requestId String?
+  eventId   String
+  reason    String   @db.VarChar(1000)
+  oldDate   DateTime
+  oldPair   Int
+  newDate   DateTime
+  newPair   Int
+  createdAt DateTime @default(now())
+
+  actor   User                        @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  request TimetableRescheduleRequest? @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  event   TimetableEvent              @relation(fields: [eventId], references: [id], onDelete: Restrict)
+
+  @@unique([requestId, eventId])
+  @@index([actorId])
+  @@index([eventId, createdAt])
 }
 
 model TeacherUnavailability {

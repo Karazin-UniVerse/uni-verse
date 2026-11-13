@@ -37,7 +37,12 @@ describe('TimetableApi', () => {
   });
 
   it('reschedules an event with an encoded event id and PATCH payload', async () => {
-    const payload = { newDate: '2026-11-13', newPair: 3, reason: 'Makeup lesson' };
+    const payload = {
+      scope: 'ONCE' as const,
+      newDate: '2026-11-13',
+      newPair: 3,
+      reason: 'Makeup lesson',
+    };
 
     mockFetchResponse({ id: 'event/1', ...payload });
 

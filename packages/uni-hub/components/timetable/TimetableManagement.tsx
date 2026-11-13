@@ -1,8 +1,11 @@
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { SemesterSettings } from './SemesterSettings';
 import {
   AlertCircle,
   Check,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   ExternalLink,
   Play,
   Plus,
@@ -330,6 +333,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   const baseId = useId();
 
   const [chosenPlanId, setPlanId] = useState(initialPlanId);
+  const [calendarReady, setCalendarReady] = useState(false);
   const [academicGroups, setAcademicGroups] = useState<AcademicGroupResponse[]>(
     () => DEFAULT_GROUPS,
   );
@@ -352,6 +356,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   const [isAdjusting, setIsAdjusting] = useState(false);
   const { plans, teachers } = useTimetableReferences();
   const planId = chosenPlanId || plans[0]?.id || '';
+  const selectedPlan = plans.find((plan) => plan.id === planId);
 
   const planOptions = useMemo(() => {
     const options = plans.map((plan) => ({
@@ -476,25 +481,61 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
     [formatMessage],
   );
 
-  const handleAddRow = useCallback(() => {
-    const newId = `row-${Date.now()}`;
-    const defaultGroup = academicGroups[0]?.id ?? 'group-1';
-    const newRow: WorkloadRow = {
-      id: newId,
-      disciplineTitle: '',
-      teachingType: 'LECTURE',
-      academicHours: 32,
-      teacherId: undefined,
-      groupId: defaultGroup,
-      subgroupId: undefined,
-      streamId: undefined,
-      isSaturdayOnly: false,
-      hasLateSlotAuthorization: false,
-    };
+  const [collapsedGroups, setCollapsedGroups] = useState<ReadonlySet<string>>(() => new Set());
 
-    setWorkload((prev) => [...prev, newRow]);
-    setDirtyRowIds((prev) => new Set(prev).add(newId));
-  }, [academicGroups]);
+  const workloadGroups = useMemo(() => {
+    const byTitle = new Map<string, WorkloadRow[]>();
+
+    for (const row of workload) {
+      const title = row.disciplineTitle.trim();
+
+      byTitle.set(title, [...(byTitle.get(title) ?? []), row]);
+    }
+
+    return [...byTitle.entries()].map(([title, rows]) => ({ key: rows[0].id, title, rows }));
+  }, [workload]);
+
+  const handleRenameGroup = useCallback((ids: readonly string[], title: string) => {
+    setWorkload((prev) =>
+      prev.map((row) => (ids.includes(row.id) ? { ...row, disciplineTitle: title } : row)),
+    );
+    setDirtyRowIds((prev) => new Set([...prev, ...ids]));
+  }, []);
+
+  const handleToggleGroup = useCallback((key: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+
+      if (!next.delete(key)) {
+        next.add(key);
+      }
+
+      return next;
+    });
+  }, []);
+
+  const handleAddRow = useCallback(
+    (disciplineTitle = '') => {
+      const newId = `row-${Date.now()}`;
+      const defaultGroup = academicGroups[0]?.id ?? 'group-1';
+      const newRow: WorkloadRow = {
+        id: newId,
+        disciplineTitle,
+        teachingType: 'LECTURE',
+        academicHours: 32,
+        teacherId: undefined,
+        groupId: defaultGroup,
+        subgroupId: undefined,
+        streamId: undefined,
+        isSaturdayOnly: false,
+        hasLateSlotAuthorization: false,
+      };
+
+      setWorkload((prev) => [...prev, newRow]);
+      setDirtyRowIds((prev) => new Set(prev).add(newId));
+    },
+    [academicGroups],
+  );
 
   const handleRemoveRow = useCallback((id: string) => {
     if (!id.startsWith('row-')) {
@@ -737,6 +778,12 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   }, [formatMessage, persistDirtyWorkload]);
 
   const handleGenerate = useCallback(async () => {
+    if (!calendarReady) {
+      setError(formatMessage('timetable.calendarError'));
+
+      return;
+    }
+
     setIsGenerating(true);
     setIsPublished(false);
     setError(null);
@@ -761,7 +808,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
     } finally {
       setIsGenerating(false);
     }
-  }, [formatMessage, persistDirtyWorkload, planId]);
+  }, [calendarReady, formatMessage, persistDirtyWorkload, planId]);
 
   const handlePublish = useCallback(async () => {
     if (!draftResult) {
@@ -891,6 +938,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
           value={planId}
           options={planOptions}
           onChange={(id) => {
+            setCalendarReady(false);
             setWorkload([]);
             setPlanId(id);
           }}
@@ -902,138 +950,194 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
       </section>
 
       {/* Workload Table */}
+      {selectedPlan && (
+        <SemesterSettings
+          key={planId}
+          academicYear={selectedPlan.academicYear}
+          semester={selectedPlan.semester}
+          onReadyChange={setCalendarReady}
+        />
+      )}
       <section className={styles.section}>
         <h3>{formatMessage('timetable.workloadTitle')}</h3>
         <fieldset
           className={styles.tableContainer}
+          aria-label={formatMessage('timetable.workloadTitle')}
           disabled={isSavingWorkload || isGenerating}
-          style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
+          tabIndex={0}
         >
           <table className={styles.workloadTable}>
-            <thead>
-              <tr>
-                <th>{formatMessage('timetable.disciplineTitle')}</th>
-                <th>{formatMessage('timetable.teachingType')}</th>
-                <th>{formatMessage('timetable.groupOrStream')}</th>
-                <th>{formatMessage('timetable.subgroup')}</th>
-                <th>{formatMessage('timetable.hours')}</th>
-                <th>{formatMessage('timetable.teacher')}</th>
-                <th>{formatMessage('timetable.saturdayOnly')}</th>
-                <th>{formatMessage('timetable.lateSlotAuth')}</th>
-                <th>{formatMessage('timetable.actions')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {workload.map((row) => (
-                <tr key={row.id}>
-                  <td>
-                    <TextInput
-                      value={row.disciplineTitle}
-                      onChange={(e) => handleUpdateRow(row.id, 'disciplineTitle', e.target.value)}
-                      placeholder={formatMessage('timetable.disciplineTitle')}
-                      aria-label={formatMessage('timetable.disciplineTitle')}
-                    />
-                  </td>
-                  <td>
-                    <Select
-                      value={row.teachingType}
-                      options={teachingTypeOptions}
-                      onChange={(val) =>
-                        handleUpdateRow(row.id, 'teachingType', val as WorkloadRow['teachingType'])
-                      }
-                      aria-label={formatMessage('timetable.teachingType')}
-                    />
-                  </td>
-                  <td>
-                    <div className={styles.groupCell}>
-                      <Select
-                        value={getSelectedGroupOrStream(row)}
-                        options={groupOrStreamOptions}
-                        onChange={(val) => handleGroupOrStreamChange(row.id, val)}
-                        aria-label={formatMessage('timetable.groupOrStream')}
-                      />
-                      {(row.streamId === 'custom-stream' ||
-                        (Boolean(row.streamId) && row.streamId !== 'stream-1')) && (
+            {workloadGroups.map((group) => {
+              const isCollapsed = collapsedGroups.has(group.key);
+              const ids = group.rows.map((row) => row.id);
+              const label = group.title || formatMessage('timetable.disciplineTitle');
+
+              return (
+                <tbody key={group.key}>
+                  <tr className={styles.groupRow}>
+                    <td colSpan={8}>
+                      <div className={styles.groupHeader}>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="small"
+                          aria-expanded={!isCollapsed}
+                          aria-label={formatMessage(
+                            isCollapsed
+                              ? 'timetable.expandDiscipline'
+                              : 'timetable.collapseDiscipline',
+                            { discipline: label },
+                          )}
+                          onClick={() => handleToggleGroup(group.key)}
+                        >
+                          {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+                        </Button>
                         <TextInput
-                          value={row.streamId === 'custom-stream' ? '' : (row.streamId ?? '')}
-                          placeholder={formatMessage('timetable.streamPlaceholder')}
-                          onChange={(e) => handleUpdateRow(row.id, 'streamId', e.target.value)}
-                          aria-label={formatMessage('timetable.streamPlaceholder')}
+                          value={group.title}
+                          onChange={(e) => handleRenameGroup(ids, e.target.value)}
+                          placeholder={formatMessage('timetable.disciplineTitle')}
+                          aria-label={formatMessage('timetable.disciplineTitle')}
                         />
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    <div className={styles.subgroupCell}>
-                      <Select
-                        value={getSubgroupValue(row)}
-                        options={subgroupOptions}
-                        onChange={(val) => handleSubgroupChange(row.id, val)}
-                        disabled={Boolean(row.streamId)}
-                        aria-label={formatMessage('timetable.subgroup')}
-                      />
-                    </div>
-                  </td>
-                  <td>
-                    <TextInput
-                      type="number"
-                      value={row.academicHours}
-                      onChange={(e) =>
-                        handleUpdateRow(row.id, 'academicHours', Number(e.target.value) || 0)
-                      }
-                      style={{ width: '80px' }}
-                      aria-label={formatMessage('timetable.hours')}
-                    />
-                  </td>
-                  <td>
-                    <Select
-                      value={row.teacherId ?? ''}
-                      options={teacherOptions}
-                      onChange={(val) => handleUpdateRow(row.id, 'teacherId', val)}
-                      aria-label={formatMessage('timetable.teacher')}
-                    />
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <CheckBox
-                      variant="primary"
-                      checked={row.isSaturdayOnly}
-                      onChange={(e) => handleUpdateRow(row.id, 'isSaturdayOnly', e.target.checked)}
-                      aria-label={formatMessage('timetable.saturdayOnlyRow', {
-                        discipline:
-                          row.disciplineTitle || formatMessage('timetable.disciplineTitle'),
-                      })}
-                    />
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <CheckBox
-                      variant="primary"
-                      checked={row.hasLateSlotAuthorization}
-                      onChange={(e) =>
-                        handleUpdateRow(row.id, 'hasLateSlotAuthorization', e.target.checked)
-                      }
-                      aria-label={formatMessage('timetable.lateSlotAuthRow', {
-                        discipline:
-                          row.disciplineTitle || formatMessage('timetable.disciplineTitle'),
-                      })}
-                    />
-                  </td>
-                  <td>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="small"
-                      onClick={() => handleRemoveRow(row.id)}
-                      aria-label={formatMessage('timetable.deleteRow', {
-                        discipline:
-                          row.disciplineTitle || formatMessage('timetable.disciplineTitle'),
-                      })}
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+                        <Tag>{group.rows.length}</Tag>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="small"
+                          onClick={() => handleAddRow(group.title)}
+                          aria-label={formatMessage('timetable.addWorkloadToDiscipline', {
+                            discipline: label,
+                          })}
+                        >
+                          <Plus size={14} />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                  {!isCollapsed && (
+                    <tr className={styles.columnHeaderRow}>
+                      <th>{formatMessage('timetable.teachingType')}</th>
+                      <th>{formatMessage('timetable.groupOrStream')}</th>
+                      <th>{formatMessage('timetable.subgroup')}</th>
+                      <th>{formatMessage('timetable.hours')}</th>
+                      <th>{formatMessage('timetable.teacher')}</th>
+                      <th>{formatMessage('timetable.saturdayOnly')}</th>
+                      <th>{formatMessage('timetable.lateSlotAuth')}</th>
+                      <th>{formatMessage('timetable.actions')}</th>
+                    </tr>
+                  )}
+                  {!isCollapsed &&
+                    group.rows.map((row) => (
+                      <tr key={row.id}>
+                        <td>
+                          <Select
+                            value={row.teachingType}
+                            options={teachingTypeOptions}
+                            onChange={(val) =>
+                              handleUpdateRow(
+                                row.id,
+                                'teachingType',
+                                val as WorkloadRow['teachingType'],
+                              )
+                            }
+                            aria-label={formatMessage('timetable.teachingType')}
+                          />
+                        </td>
+                        <td>
+                          <div className={styles.groupCell}>
+                            <Select
+                              value={getSelectedGroupOrStream(row)}
+                              options={groupOrStreamOptions}
+                              onChange={(val) => handleGroupOrStreamChange(row.id, val)}
+                              aria-label={formatMessage('timetable.groupOrStream')}
+                            />
+                            {(row.streamId === 'custom-stream' ||
+                              (Boolean(row.streamId) && row.streamId !== 'stream-1')) && (
+                              <TextInput
+                                value={row.streamId === 'custom-stream' ? '' : (row.streamId ?? '')}
+                                placeholder={formatMessage('timetable.streamPlaceholder')}
+                                onChange={(e) =>
+                                  handleUpdateRow(row.id, 'streamId', e.target.value)
+                                }
+                                aria-label={formatMessage('timetable.streamPlaceholder')}
+                              />
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <div className={styles.subgroupCell}>
+                            <Select
+                              value={getSubgroupValue(row)}
+                              options={subgroupOptions}
+                              onChange={(val) => handleSubgroupChange(row.id, val)}
+                              disabled={Boolean(row.streamId)}
+                              aria-label={formatMessage('timetable.subgroup')}
+                            />
+                          </div>
+                        </td>
+                        <td>
+                          <TextInput
+                            type="number"
+                            value={row.academicHours}
+                            onChange={(e) =>
+                              handleUpdateRow(row.id, 'academicHours', Number(e.target.value) || 0)
+                            }
+                            style={{ width: '80px' }}
+                            aria-label={formatMessage('timetable.hours')}
+                          />
+                        </td>
+                        <td>
+                          <Select
+                            value={row.teacherId ?? ''}
+                            options={teacherOptions}
+                            onChange={(val) => handleUpdateRow(row.id, 'teacherId', val)}
+                            aria-label={formatMessage('timetable.teacher')}
+                          />
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <CheckBox
+                            variant="primary"
+                            checked={row.isSaturdayOnly}
+                            onChange={(e) =>
+                              handleUpdateRow(row.id, 'isSaturdayOnly', e.target.checked)
+                            }
+                            aria-label={formatMessage('timetable.saturdayOnlyRow', {
+                              discipline:
+                                row.disciplineTitle || formatMessage('timetable.disciplineTitle'),
+                            })}
+                          />
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <CheckBox
+                            variant="primary"
+                            checked={row.hasLateSlotAuthorization}
+                            onChange={(e) =>
+                              handleUpdateRow(row.id, 'hasLateSlotAuthorization', e.target.checked)
+                            }
+                            aria-label={formatMessage('timetable.lateSlotAuthRow', {
+                              discipline:
+                                row.disciplineTitle || formatMessage('timetable.disciplineTitle'),
+                            })}
+                          />
+                        </td>
+                        <td>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="small"
+                            onClick={() => handleRemoveRow(row.id)}
+                            aria-label={formatMessage('timetable.deleteRow', {
+                              discipline:
+                                row.disciplineTitle || formatMessage('timetable.disciplineTitle'),
+                            })}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              );
+            })}
           </table>
         </fieldset>
 
@@ -1041,10 +1145,10 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
           <Button
             type="button"
             variant="secondary"
-            onClick={handleAddRow}
+            onClick={() => handleAddRow()}
             disabled={isSavingWorkload || isGenerating}
           >
-            <Plus size={16} /> {formatMessage('timetable.addAssignment')}
+            <Plus size={16} /> {formatMessage('timetable.addDiscipline')}
           </Button>
 
           <Button
@@ -1060,7 +1164,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
             type="button"
             variant="primary"
             onClick={handleGenerate}
-            disabled={isGenerating || isSavingWorkload || !planId}
+            disabled={isGenerating || isSavingWorkload || !planId || !calendarReady}
           >
             {isGenerating ? (
               <>
@@ -1177,7 +1281,12 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
           <div className={styles.previewSection}>
             <h4>{formatMessage('timetable.previewTitle')}</h4>
             {selectedCandidate?.events && selectedCandidate.events.length > 0 ? (
-              <div className={styles.previewGrid}>
+              <div
+                className={styles.previewGrid}
+                role="region"
+                tabIndex={0}
+                aria-label={formatMessage('timetable.previewTitle')}
+              >
                 <table>
                   <thead className={styles.gridHeader}>
                     <tr>

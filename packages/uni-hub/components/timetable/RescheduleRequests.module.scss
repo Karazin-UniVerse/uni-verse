@@ -1,0 +1,50 @@
+@use '@universe/ui/breakpoints.scss' as *;
+
+.root {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-12);
+}
+
+.card {
+  min-width: 0;
+  padding: var(--space-16);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-medium);
+  overflow-wrap: anywhere;
+
+  ul {
+    max-height: 16rem;
+    overflow: auto;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-12);
+
+  label {
+    display: grid;
+    gap: var(--space-8);
+    min-width: 0;
+    flex: 1;
+  }
+
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+    font: inherit;
+    color: var(--text-primary);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-medium);
+    padding: var(--space-8);
+  }
+
+  @include narrower-than('sm') {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

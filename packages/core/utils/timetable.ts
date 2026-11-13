@@ -458,9 +458,10 @@ export function hasStudentIntersection(
   return true;
 }
 
-/** Two records of one stream class (same stream and assignment) describe a single lesson. */
+/** Two records of one event ID and stream describe a single lesson. */
 function isSameStreamClass(first: ScheduledEvent, second: ScheduledEvent): boolean {
   return (
+    first.id === second.id &&
     first.streamId !== undefined &&
     first.streamId === second.streamId &&
     first.teachingAssignmentId === second.teachingAssignmentId
@@ -958,7 +959,7 @@ function searchTimetableCandidates(
 
   const maxCandidates = options?.maxCandidates ?? DEFAULT_MAX_CANDIDATES;
   const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  const nominalWeeks = options?.nominalWeeks ?? paramsNominalWeeks ?? DEFAULT_NOMINAL_WEEKS;
+  const explicitNominalWeeks = options?.nominalWeeks ?? paramsNominalWeeks;
 
   const getDiagnostics = (deficits?: TimetableDemandDeficit[]): GenerateTimetableDiagnostics => {
     const diagnostics: GenerateTimetableDiagnostics = {
@@ -1011,12 +1012,21 @@ function searchTimetableCandidates(
       return { ok: false, error: 'INVALID_INPUT', diagnostics: getDiagnostics() };
     }
 
-    const weeklyResult = getWeeklyPairCounts({
+    const nativeWeeklyResult = getWeeklyPairCounts({
       pairs: pairsResult.pairs,
-      weeks: nominalWeeks,
+      weeks: explicitNominalWeeks ?? calendar.teachingWeeks,
       parity: demand.parity,
       order: demand.order,
     });
+    const weeklyResult =
+      nativeWeeklyResult.ok || explicitNominalWeeks !== undefined
+        ? nativeWeeklyResult
+        : getWeeklyPairCounts({
+            pairs: pairsResult.pairs,
+            weeks: DEFAULT_NOMINAL_WEEKS,
+            parity: demand.parity,
+            order: demand.order,
+          });
 
     if (!weeklyResult.ok) {
       return { ok: false, error: 'INVALID_INPUT', diagnostics: getDiagnostics() };
@@ -1027,7 +1037,16 @@ function searchTimetableCandidates(
     for (let level = 1; level <= maxCount; level += 1) {
       const fullLayerCounts = weeklyResult.counts.map((count): number => (count >= level ? 1 : 0));
       const layerRequiredPairs = fullLayerCounts.reduce((sum, count): number => sum + count, 0);
-      const truncatedWeeklyCounts = fullLayerCounts.slice(0, calendar.teachingWeeks);
+      const truncatedWeeklyCounts =
+        fullLayerCounts.length >= calendar.teachingWeeks
+          ? fullLayerCounts.slice(0, calendar.teachingWeeks)
+          : [
+              ...fullLayerCounts,
+              ...Array.from(
+                { length: calendar.teachingWeeks - fullLayerCounts.length },
+                (): number => 0,
+              ),
+            ];
 
       units.push({
         unitIndex: unitIndexCounter,

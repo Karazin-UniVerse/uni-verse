@@ -1,4 +1,8 @@
+@use '@universe/ui/breakpoints.scss' as *;
+
 .root {
+  min-width: 0;
+  max-width: 100%;
   margin-bottom: var(--space-24);
   padding: var(--space-16);
   border: 1px solid var(--border-color);
@@ -42,9 +46,17 @@
   font-size: var(--font-sm);
   font-weight: var(--font-weight-medium);
   color: var(--text-primary);
+  flex-wrap: wrap;
+
+  @include narrower-than('sm') {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 .select {
+  max-width: 100%;
   padding: var(--space-8) var(--space-12);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-small);
@@ -59,7 +71,10 @@
 }
 
 .scrollContainer {
+  min-width: 0;
+  max-width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   margin-bottom: var(--space-16);
   padding-bottom: var(--space-4);
 }
@@ -152,6 +167,11 @@
   align-items: center;
   gap: var(--space-12);
   flex-wrap: wrap;
+
+  @include narrower-than('sm') {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 :global([data-color-scheme='dark']) {

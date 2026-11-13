@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { withLanguage } from '@uni-hub/utils/test-utils';
+import { withLanguage, withQueryClient, createTestQueryClient } from '@uni-hub/utils/test-utils';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import { TimetableManagement } from './TimetableManagement';
 
@@ -159,6 +159,9 @@ describe('TimetableManagement component', () => {
       const user = userEvent.setup();
 
       renderComponent();
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: /Згенерувати розклад/i })).toBeEnabled(),
+      );
       await user.click(screen.getByRole('button', { name: /Згенерувати розклад/i }));
       await user.click(screen.getByRole('button', { name: 'Змінити слот' }));
 
@@ -233,6 +236,9 @@ describe('TimetableManagement component', () => {
     const user = userEvent.setup();
 
     renderComponent();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Згенерувати розклад/i })).toBeEnabled(),
+    );
     await user.click(screen.getByRole('button', { name: /Згенерувати розклад/i }));
     await user.click(screen.getAllByRole('button', { name: 'Змінити слот' })[0]);
 
@@ -299,6 +305,9 @@ describe('TimetableManagement component', () => {
     const user = userEvent.setup();
 
     renderComponent();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Згенерувати розклад/i })).toBeEnabled(),
+    );
     await user.click(screen.getByRole('button', { name: /Згенерувати розклад/i }));
     await user.click(screen.getAllByRole('button', { name: 'Змінити слот' })[0]);
 
@@ -311,6 +320,15 @@ describe('TimetableManagement component', () => {
   });
 
   beforeEach(() => {
+    vi.spyOn(timetableApi, 'getSemesterCalendar').mockResolvedValue({
+      data: {
+        id: 'calendar-1',
+        academicYear: '2026/2027',
+        semester: 1,
+        startDate: '2026-09-07',
+        teachingWeeks: 16,
+      },
+    });
     vi.clearAllMocks();
     vi.spyOn(timetableApi, 'listTeachingAssignments').mockResolvedValue({ data: [] });
     vi.spyOn(timetableApi, 'listAcademicGroups').mockResolvedValue({ data: [] });
@@ -334,7 +352,19 @@ describe('TimetableManagement component', () => {
     });
   });
 
-  const renderComponent = (props = {}) => render(withLanguage(<TimetableManagement {...props} />));
+  const renderComponent = (props = {}) => {
+    const client = createTestQueryClient();
+
+    client.setQueryData(['timetable', 'semesterCalendar', '2026/2027', 1], {
+      id: 'calendar-1',
+      academicYear: '2026/2027',
+      semester: 1,
+      startDate: '2026-09-07',
+      teachingWeeks: 16,
+    });
+
+    return render(withQueryClient(withLanguage(<TimetableManagement {...props} />), client));
+  };
 
   it('offers existing plans and teachers as choices instead of free text ids', async () => {
     renderComponent();
@@ -363,18 +393,43 @@ describe('TimetableManagement component', () => {
     expect(screen.getByRole('button', { name: /зберегти навантаження/i })).toBeDisabled();
   });
 
-  it('renders workload table headers and initial workload rows', () => {
+  it('renders workload table headers and initial workload rows', async () => {
     renderComponent();
 
-    expect(screen.getByText('Дисципліна')).toBeInTheDocument();
-    expect(screen.getByText('Тип')).toBeInTheDocument();
-    expect(screen.getByText('Група / Потік')).toBeInTheDocument();
-    expect(screen.getByText('Підгрупа')).toBeInTheDocument();
-    expect(screen.getByText('Години')).toBeInTheDocument();
-    expect(screen.getByText('Викладач')).toBeInTheDocument();
-    expect(screen.getByText('Лише субота')).toBeInTheDocument();
-    expect(screen.getByText('Пізні пари')).toBeInTheDocument();
+    expect(screen.getAllByLabelText('Дисципліна')).toHaveLength(3);
+
+    const collapse = screen.getByRole('button', {
+      name: 'Згорнути дисципліну Алгоритми та структури даних',
+    });
+
+    expect(collapse).toHaveAttribute('aria-expanded', 'true');
+    await userEvent.click(collapse);
+    expect(
+      screen.getByRole('button', { name: 'Розгорнути дисципліну Алгоритми та структури даних' }),
+    ).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getAllByText('Тип')).toHaveLength(2);
+    expect(screen.getAllByText('Група / Потік')).toHaveLength(2);
+    expect(screen.getAllByText('Підгрупа')).toHaveLength(2);
+    expect(screen.getAllByText('Години')).toHaveLength(2);
+    expect(screen.getAllByText('Викладач')).toHaveLength(2);
+    expect(screen.getAllByText('Лише субота')).toHaveLength(2);
+    expect(screen.getAllByText('Пізні пари')).toHaveLength(2);
     expect(screen.getByDisplayValue('Паралельні та розподілені обчислення')).toBeInTheDocument();
+  });
+
+  it('adds a workload row inside an existing discipline group', async () => {
+    const user = userEvent.setup();
+
+    renderComponent();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Додати навантаження до дисципліни Алгоритми та структури даних',
+      }),
+    );
+
+    expect(screen.getAllByPlaceholderText('Дисципліна')).toHaveLength(3);
+    expect(screen.getAllByRole('button', { name: /видалити/i })).toHaveLength(4);
   });
 
   it('allows adding and removing workload rows', async () => {
@@ -382,9 +437,7 @@ describe('TimetableManagement component', () => {
 
     renderComponent();
 
-    const addBtn = screen.getByRole('button', { name: /додати навантаження/i });
-
-    await user.click(addBtn);
+    await user.click(screen.getByRole('button', { name: 'Додати дисципліну' }));
 
     const inputs = screen.getAllByPlaceholderText('Дисципліна');
 
@@ -419,6 +472,7 @@ describe('TimetableManagement component', () => {
 
     const generateBtn = screen.getByRole('button', { name: /згенерувати розклад/i });
 
+    await waitFor(() => expect(generateBtn).toBeEnabled());
     await user.click(generateBtn);
 
     expect(generateSpy).toHaveBeenCalledWith('plan-cs-2026', {
@@ -460,6 +514,9 @@ describe('TimetableManagement component', () => {
 
     renderComponent();
 
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /згенерувати розклад/i })).toBeEnabled(),
+    );
     await user.click(screen.getByRole('button', { name: /згенерувати розклад/i }));
 
     expect(await screen.findByText('Порушення побажань викладача (1)')).toBeInTheDocument();
@@ -491,6 +548,7 @@ describe('TimetableManagement component', () => {
 
     const generateBtn = screen.getByRole('button', { name: /згенерувати розклад/i });
 
+    await waitFor(() => expect(generateBtn).toBeEnabled());
     await user.click(generateBtn);
 
     const publishBtn = screen.getByRole('button', { name: /затвердити та опублікувати/i });
@@ -526,8 +584,11 @@ describe('TimetableManagement component', () => {
 
     renderComponent();
 
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /згенерувати розклад/i })).toBeEnabled(),
+    );
     await user.click(screen.getByRole('button', { name: /згенерувати розклад/i }));
-    await user.click(screen.getByText(/варіант #2/i));
+    await user.click(await screen.findByText(/варіант #2/i));
     await user.click(screen.getByRole('button', { name: /затвердити та опублікувати/i }));
 
     expect(publishSpy).toHaveBeenCalledWith('ver-cand-2');
@@ -615,6 +676,7 @@ describe('TimetableManagement component', () => {
 
     const generateBtn = screen.getByRole('button', { name: /згенерувати розклад/i });
 
+    await waitFor(() => expect(generateBtn).toBeEnabled());
     await user.click(generateBtn);
 
     expect(screen.getByRole('alert')).toHaveTextContent(/не вдалося згенерувати розклад/i);
@@ -638,6 +700,7 @@ describe('TimetableManagement component', () => {
 
     const generateBtn = screen.getByRole('button', { name: /згенерувати розклад/i });
 
+    await waitFor(() => expect(generateBtn).toBeEnabled());
     await user.click(generateBtn);
 
     const publishBtn = screen.getByRole('button', { name: /затвердити та опублікувати/i });
@@ -707,7 +770,10 @@ describe('TimetableManagement component', () => {
 
     renderComponent();
 
-    const groupSelects = await screen.findAllByLabelText('Група / Потік');
+    await waitFor(() =>
+      expect(screen.getAllByRole('option', { name: 'КС12' })[0]).toHaveValue('group-cs-12'),
+    );
+    const groupSelects = screen.getAllByLabelText('Група / Потік');
     const subgroupSelects = screen.getAllByLabelText('Підгрупа');
 
     await user.selectOptions(groupSelects[0], 'group-cs-12');
@@ -812,6 +878,9 @@ describe('TimetableManagement component', () => {
 
     renderComponent();
 
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /згенерувати розклад/i })).toBeEnabled(),
+    );
     await user.click(screen.getByRole('button', { name: /згенерувати розклад/i }));
 
     expect(screen.getByText('27 ms')).toBeInTheDocument();

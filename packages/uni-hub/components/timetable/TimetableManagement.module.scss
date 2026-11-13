@@ -1,4 +1,8 @@
+@use '@universe/ui/breakpoints.scss' as *;
+
 .root {
+  min-width: 0;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: var(--space-20);
@@ -6,6 +10,10 @@
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-large);
+
+  @include narrower-than('sm') {
+    padding: var(--space-12);
+  }
 }
 
 .header {
@@ -27,6 +35,12 @@
   align-items: center;
   gap: var(--space-12);
   flex-wrap: wrap;
+  min-width: 0;
+
+  @include narrower-than('sm') {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 .section {
@@ -42,8 +56,14 @@
 }
 
 .tableContainer {
-  overflow-x: auto;
-  border: 1px solid var(--border-color);
+  --workload-group-header-height: 3.5rem;
+
+  overflow: auto;
+  max-height: 75dvh;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
   border-radius: var(--border-radius-medium);
   -webkit-overflow-scrolling: touch;
 }
@@ -71,6 +91,31 @@
 
   tr:last-child td {
     border-bottom: none;
+  }
+}
+
+.groupRow td {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-sizing: border-box;
+  height: var(--workload-group-header-height);
+  background: var(--bg-hover);
+}
+
+.columnHeaderRow th {
+  position: sticky;
+  top: var(--workload-group-header-height);
+  z-index: 1;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+
+  input {
+    min-width: 240px;
   }
 }
 
@@ -109,15 +154,21 @@
   gap: var(--space-12);
   margin-top: var(--space-8);
   flex-wrap: wrap;
+
+  @include narrower-than('sm') {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 .diagnosticsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
   gap: var(--space-12);
 }
 
 .diagCard {
+  min-width: 0;
   padding: var(--space-12);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-medium);
@@ -138,11 +189,13 @@
 
 .candidatesList {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
   gap: var(--space-12);
 }
 
 .candidateCard {
+  min-width: 0;
+  overflow-wrap: anywhere;
   padding: var(--space-12);
   border: 2px solid var(--border-color);
   border-radius: var(--border-radius-medium);
@@ -203,7 +256,8 @@
 }
 
 .previewGrid {
-  overflow-x: auto;
+  overflow: auto;
+  max-height: 75dvh;
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-medium);
   background: var(--bg-surface);
@@ -219,6 +273,9 @@
 
 .gridHeader {
   th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
     padding: var(--space-8) var(--space-12);
     background: var(--bg-hover);
     border-bottom: 1px solid var(--border-color);

@@ -1,4 +1,8 @@
+@use '@universe/ui/breakpoints.scss' as *;
+
 .root {
+  min-width: 0;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: var(--space-16);
@@ -17,6 +21,7 @@
   display: flex;
   gap: var(--space-16);
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .radioLabel {
@@ -28,11 +33,16 @@
 }
 
 .body {
+  min-width: 0;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-large);
   padding: var(--space-16);
   overflow: auto;
+
+  @include narrower-than('sm') {
+    padding: var(--space-12);
+  }
 }
 
 .panel h3,
@@ -89,6 +99,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-12);
+  flex-wrap: wrap;
 }
 
 .weekGrid {
@@ -96,6 +107,11 @@
   gap: var(--space-12);
   overflow-x: auto;
   padding-bottom: var(--space-8);
+
+  @include narrower-than('sm') {
+    flex-direction: column;
+    overflow-x: visible;
+  }
 }
 
 .dayCard {
@@ -105,6 +121,11 @@
   border-radius: var(--border-radius-medium);
   padding: var(--space-12);
   background: var(--bg-surface);
+
+  @include narrower-than('sm') {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
 }
 
 .dayCardHeader {
@@ -186,6 +207,11 @@
   gap: var(--space-4);
   transition: var(--transition-small);
 
+  @include narrower-than('sm') {
+    min-height: 64px;
+    padding: var(--space-4);
+  }
+
   &:hover {
     border-color: var(--accent-primary);
   }
@@ -250,13 +276,23 @@
   align-items: center;
   gap: var(--space-8);
   margin-top: var(--space-4);
+  flex-wrap: wrap;
 }
 
 .modalBody {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-16);
   padding: var(--space-16) 0;
+  overflow-wrap: anywhere;
+
+  ul {
+    margin: 0;
+    padding-left: var(--space-16);
+    max-height: 14rem;
+    overflow-y: auto;
+  }
 }
 
 .modalActions {
@@ -264,12 +300,14 @@
   justify-content: flex-end;
   gap: var(--space-8);
   margin-top: var(--space-8);
+  flex-wrap: wrap;
 }
 
 .feedUrlRow {
   display: flex;
   gap: var(--space-8);
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .errorText {
