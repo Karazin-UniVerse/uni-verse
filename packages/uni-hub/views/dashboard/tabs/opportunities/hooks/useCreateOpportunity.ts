@@ -13,6 +13,7 @@ import {
   OPPORTUNITY_PAYMENT_TYPE,
   OPPORTUNITY_STATUS,
 } from '@core/constants/opportunities';
+import { isValidContactInfo } from '@core/utils/contacts';
 import { hasOpportunityContentChanged, isRecruitmentPhase } from '@core/utils/opportunities';
 import { invalidateOpportunities } from '../cache';
 import type { CreateOpportunityFormData } from '../types';
@@ -106,6 +107,12 @@ export function useCreateOpportunity({
 
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
+
+    if (formData.ownerContactInfo.trim() && !isValidContactInfo(formData.ownerContactInfo)) {
+      toast.error(formatMessage('opportunities.applyModal.invalidContact'));
+
+      return;
+    }
 
     const canAcceptApplications = isRecruitmentPhase(formData.lifecycleState);
 

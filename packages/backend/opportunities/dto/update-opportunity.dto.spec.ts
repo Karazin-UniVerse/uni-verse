@@ -43,6 +43,17 @@ describe('UpdateOpportunityDto', () => {
     expect(validateSync(dto)).toEqual([]);
   });
 
+  it.each(['@ivan_dev_tg, ivan.project@gmail.com', 'ivan.project@gmail.com'])(
+    'should reject multiple or invalid organizer contacts %s on update',
+    (ownerContactInfo) => {
+      const dto = plainToInstance(UpdateOpportunityDto, { ownerContactInfo });
+
+      expect(validateSync(dto)).toEqual([
+        expect.objectContaining({ property: 'ownerContactInfo' }),
+      ]);
+    },
+  );
+
   it('accepts an empty payload', () => {
     const dto = plainToInstance(UpdateOpportunityDto, {});
 
