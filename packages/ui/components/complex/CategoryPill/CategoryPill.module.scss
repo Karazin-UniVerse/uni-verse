@@ -1,0 +1,12 @@
+.categoryPill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}

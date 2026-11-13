@@ -99,73 +99,11 @@
 
 .cardBadgeRow {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--space-8) var(--space-12);
   margin-bottom: 2px;
-}
-
-.categoryPill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-4);
-  font-size: var(--font-xs);
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: var(--border-radius-full);
-  border: 1px solid transparent;
-
-  &.paidCategory {
-    color: var(--success-color);
-    background: color-mix(in srgb, var(--success-color) 12%, transparent);
-    border-color: color-mix(in srgb, var(--success-color) 25%, transparent);
-  }
-
-  &.unpaidCategory {
-    color: var(--accent-primary);
-    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
-    border-color: color-mix(in srgb, var(--accent-primary) 25%, transparent);
-  }
-}
-
-.compensationPill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--font-xs);
-  font-weight: 600;
-  color: var(--success-color);
-  background: color-mix(in srgb, var(--success-color) 10%, transparent);
-  padding: 5px 12px;
-  border-radius: var(--border-radius-full);
-  border: 1px solid color-mix(in srgb, var(--success-color) 25%, transparent);
-}
-
-.experiencePill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--font-xs);
-  font-weight: 500;
-  color: var(--text-secondary);
-  background: var(--bg-hover);
-  padding: 5px 12px;
-  border-radius: var(--border-radius-full);
-  border: 1px solid var(--card-border);
-}
-
-.closedPill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--font-xs);
-  font-weight: 500;
-  color: var(--text-secondary);
-  background: var(--bg-hover);
-  border: 1px solid var(--border-color);
-  padding: 4px 8px;
-  border-radius: var(--border-radius-full);
 }
 
 .cardTitle {
