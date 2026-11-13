@@ -481,6 +481,50 @@ describe('OpportunityDetailContent published opportunity controls', () => {
     );
   });
 
+  it('omits unchanged legacy ownerContactInfo when editing other fields', async () => {
+    const user = userEvent.setup();
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const opportunity = {
+      ...buildOpportunity('opp-legacy'),
+      ownerContactInfo: 'legacy@example.com',
+      status: 'PUBLISHED' as const,
+      lifecycleState: 'ACTIVE' as const,
+      acceptsApplications: true,
+    };
+
+    const updateSpy = vi.spyOn(opportunitiesApi, 'updateOpportunity').mockResolvedValueOnce({
+      data: {
+        ...opportunity,
+        lifecycleState: 'PAUSED',
+        acceptsApplications: false,
+      },
+    } as never);
+
+    updateSpy.mockClear();
+
+    render(<OpportunityDetailContent opportunity={opportunity} />, {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>{children}</ToastProvider>
+        </QueryClientProvider>
+      ),
+    });
+
+    await user.click(screen.getByRole('button', { name: 'opportunities.detailModal.edit' }));
+    await user.selectOptions(
+      screen.getByLabelText('opportunities.createModal.phaseLabel'),
+      'PAUSED',
+    );
+    await user.click(screen.getByRole('button', { name: 'opportunities.createModal.saveChanges' }));
+
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    const [, payload] = updateSpy.mock.calls[0];
+
+    expect(payload).not.toHaveProperty('ownerContactInfo');
+  });
+
   it('does not render phase select or accepts applications checkbox directly on detail page', () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
