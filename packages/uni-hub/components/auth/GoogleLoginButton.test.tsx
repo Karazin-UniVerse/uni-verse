@@ -66,6 +66,8 @@ describe('GoogleLoginButton component', () => {
     }
 
     delete (window as any).google;
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it('should render button container without inert when not disabled', () => {
@@ -323,9 +325,7 @@ describe('GoogleLoginButton component', () => {
   });
 
   it('updates Google button width on window resize when ResizeObserver is undefined', async () => {
-    const originalResizeObserver = window.ResizeObserver;
-
-    delete (window as { ResizeObserver?: unknown }).ResizeObserver;
+    vi.stubGlobal('ResizeObserver', undefined);
 
     const clientWidthSpy = vi
       .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
@@ -356,11 +356,5 @@ describe('GoogleLoginButton component', () => {
         width: 270,
       }),
     );
-
-    clientWidthSpy.mockRestore();
-
-    if (originalResizeObserver) {
-      window.ResizeObserver = originalResizeObserver;
-    }
   });
 });

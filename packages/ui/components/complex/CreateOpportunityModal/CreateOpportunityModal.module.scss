@@ -69,9 +69,9 @@
 
 .modalFooter {
   position: sticky;
-  bottom: calc(var(--space-24) * -1);
-  margin: auto calc(var(--space-24) * -1) calc(var(--space-24) * -1);
-  padding: var(--space-16) var(--space-24);
+  bottom: 0;
+  margin-top: auto;
+  padding: var(--space-16) 0 0;
   background: var(--bg-color);
   border-top: 1px solid var(--card-border);
   display: flex;
@@ -80,10 +80,4 @@
   gap: var(--space-12);
   flex-wrap: wrap;
   z-index: 2;
-
-  @include narrower-than('md') {
-    bottom: calc(max(var(--space-24), env(safe-area-inset-bottom)) * -1);
-    margin-bottom: calc(max(var(--space-24), env(safe-area-inset-bottom)) * -1);
-    padding-bottom: max(var(--space-16), env(safe-area-inset-bottom));
-  }
 }

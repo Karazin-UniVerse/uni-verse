@@ -30,20 +30,21 @@ describe('useScrollLock', () => {
     expect(document.body.style.overflow).toBe('auto');
   });
 
-  it('should lock and restore scrollable application containers (main, content)', () => {
-    const main = document.createElement('main');
+  it('should lock and restore explicit [data-scroll-container] elements', () => {
+    const container = document.createElement('div');
 
-    main.style.overflowY = 'auto';
-    document.body.appendChild(main);
+    container.setAttribute('data-scroll-container', '');
+    container.style.overflowY = 'auto';
+    document.body.appendChild(container);
 
     const { unmount } = renderHook(() => useScrollLock(true));
 
-    expect(main.style.overflowY).toBe('hidden');
+    expect(container.style.overflowY).toBe('hidden');
 
     unmount();
-    expect(main.style.overflowY).toBe('auto');
+    expect(container.style.overflowY).toBe('auto');
 
-    main.remove();
+    container.remove();
   });
 
   it('should handle nested/stacked scroll locks without prematurely unlocking', () => {

@@ -21,7 +21,7 @@
   padding: 0;
   margin: 0;
   cursor: default;
-  touch-action: none;
+  touch-action: pinch-zoom;
   animation: overlay-in var(--transition-medium) var(--ease-standard);
 }
 

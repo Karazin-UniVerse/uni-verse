@@ -6,7 +6,10 @@ import { Tag } from '@una';
 import { getOpportunityTagNames } from '@core/utils/opportunities';
 import { Clock, Calendar, Coins, Briefcase, AlertCircle, Hash } from 'lucide-react';
 import type { Opportunity } from '@core/types/opportunities';
-import type { OpportunityModerateAction } from '@core/constants/opportunities';
+import {
+  OPPORTUNITY_PAYMENT_TYPE,
+  type OpportunityModerateAction,
+} from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { TabStateWrapper } from './TabStateWrapper';
 import styles from '../../OpportunitiesTab.module.scss';
@@ -66,7 +69,7 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                   </div>
 
                   <div className={styles.moderationTypeCol}>
-                    {item.paymentType === 'PAID' ? (
+                    {item.paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID ? (
                       <span className={styles.compensationPill}>
                         <Coins size={13} />
                         <span>

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { isBrowser } from '@core/utils/browser';
 
 let lockCount = 0;
 let originalBodyOverflow = '';
@@ -7,12 +8,12 @@ let lockedContainers: { element: HTMLElement; originalOverflow: string }[] = [];
 
 /**
  * Locks background page scrolling when enabled is true.
- * Handles document body, html, and scrollable application containers (e.g. main/content shells).
+ * Handles document body, html, and explicit `[data-scroll-container]` elements.
  * Uses a reference counter to safely support nested or stacked modals.
  */
 export function useScrollLock(enabled: boolean = true): void {
   useEffect(() => {
-    if (!enabled || typeof document === 'undefined') {
+    if (!enabled || !isBrowser()) {
       return;
     }
 
@@ -23,22 +24,16 @@ export function useScrollLock(enabled: boolean = true): void {
       document.body.style.overflow = 'hidden';
       document.documentElement.style.overflow = 'hidden';
 
-      const containers = document.querySelectorAll<HTMLElement>(
-        'main, [class*="content"], [data-scroll-container]',
-      );
+      const containers = document.querySelectorAll<HTMLElement>('[data-scroll-container]');
 
       lockedContainers = [];
 
       containers.forEach((element) => {
-        const computed = window.getComputedStyle(element);
-
-        if (computed.overflowY === 'auto' || computed.overflowY === 'scroll') {
-          lockedContainers.push({
-            element,
-            originalOverflow: element.style.overflowY,
-          });
-          element.style.overflowY = 'hidden';
-        }
+        lockedContainers.push({
+          element,
+          originalOverflow: element.style.overflowY,
+        });
+        element.style.overflowY = 'hidden';
       });
     }
 

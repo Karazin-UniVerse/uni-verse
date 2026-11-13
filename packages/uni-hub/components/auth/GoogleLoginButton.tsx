@@ -90,19 +90,11 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
 
     renderGoogleButton(initialWidth);
 
-    let animationFrameId: number | null = null;
-
     const handleResize = (measuredWidth: number) => {
       const nextWidth = resolveGoogleButtonWidth(measuredWidth);
 
       if (nextWidth !== currentWidthRef.current) {
-        if (animationFrameId !== null) {
-          cancelAnimationFrame(animationFrameId);
-        }
-
-        animationFrameId = requestAnimationFrame(() => {
-          renderGoogleButton(nextWidth);
-        });
+        renderGoogleButton(nextWidth);
       }
     };
 
@@ -120,10 +112,6 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
       resizeObserver.observe(container);
 
       return () => {
-        if (animationFrameId !== null) {
-          cancelAnimationFrame(animationFrameId);
-        }
-
         resizeObserver.disconnect();
       };
     }
@@ -135,10 +123,6 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
     window.addEventListener('resize', onWindowResize);
 
     return () => {
-      if (animationFrameId !== null) {
-        cancelAnimationFrame(animationFrameId);
-      }
-
       window.removeEventListener('resize', onWindowResize);
     };
   }, [scriptLoaded, clientId, renderGoogleButton]);
