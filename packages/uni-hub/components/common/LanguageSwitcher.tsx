@@ -39,7 +39,7 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
   return (
     <Dropdown
       className={className}
-      isFullWidth={isFullWidth || variant === 'sider'}
+      isFullWidth={isFullWidth}
       isPadded
       placement={placement}
       renderTrigger={(triggerProps, isOpen) => (
@@ -51,7 +51,7 @@ export const LanguageSwitcher: React.FC<Readonly<LanguageSwitcherProps>> = ({
             styles.trigger,
             variant === 'glass' && styles.glassTrigger,
             variant === 'sider' && styles.siderTrigger,
-            isFullWidth && styles.fullWidthTrigger,
+            variant !== 'sider' && isFullWidth && styles.fullWidthTrigger,
             isCollapsed && styles.collapsedTrigger,
           )}
           aria-label={`${formatMessage('lang.select')}: ${activeLanguage.label}`}

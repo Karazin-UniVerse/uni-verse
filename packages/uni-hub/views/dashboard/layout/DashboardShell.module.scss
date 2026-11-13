@@ -26,6 +26,17 @@ $sidebar-collapsed-width: 88px;
   }
 }
 
+@keyframes navBadgePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--sidebar-accent) 40%, transparent);
+  }
+
+  70% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--sidebar-accent) 0%, transparent);
+  }
+}
+
 .layout {
   display: grid;
   grid-template-columns: $sidebar-width 1fr;
@@ -1504,13 +1515,12 @@ $sidebar-collapsed-width: 88px;
 }
 
 .connectMoodleNavItem {
-  color: var(--sidebar-accent, var(--accent-primary));
-  border: 1px dashed
-    color-mix(in srgb, var(--sidebar-accent, var(--accent-primary)) 40%, transparent);
+  color: var(--sidebar-accent);
+  border: 1px dashed color-mix(in srgb, var(--sidebar-accent) 40%, transparent);
 
   &:hover {
-    border-color: var(--sidebar-accent, var(--accent-primary));
-    background: color-mix(in srgb, var(--sidebar-accent, var(--accent-primary)) 8%, transparent);
+    border-color: var(--sidebar-accent);
+    background: color-mix(in srgb, var(--sidebar-accent) 8%, transparent);
   }
 }
 
@@ -1518,12 +1528,11 @@ $sidebar-collapsed-width: 88px;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--sidebar-accent, var(--accent-primary));
+  background: var(--sidebar-accent);
   display: inline-block;
   margin-left: auto;
-  box-shadow: 0 0 0 2px
-    color-mix(in srgb, var(--sidebar-accent, var(--accent-primary)) 30%, transparent);
-  animation: pulse 1.8s infinite;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--sidebar-accent) 30%, transparent);
+  animation: navBadgePulse 1.8s infinite;
 }
 
 .mobileOnlyItem {
