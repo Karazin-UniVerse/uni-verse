@@ -9,6 +9,7 @@ import { OPPORTUNITY_VIEW, OPPORTUNITY_VIEW_PARAM } from '@core/constants/opport
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { OpportunityDetailContent } from './OpportunityDetailContent';
 import { buildOpportunity } from './test-utils';
+import { opportunityKeys } from './queryKeys';
 
 let query = new URLSearchParams(`${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`);
 let userId: string | null = 'owner-1';
@@ -521,5 +522,84 @@ describe('OpportunityDetailContent published opportunity controls', () => {
         name: 'opportunities.detailModal.acceptsApplications',
       }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('OpportunityDetailContent favorites', () => {
+  const id = 'favorite-opportunity';
+  const opportunity = { ...buildOpportunity(id), status: 'PUBLISHED' as const };
+  const addLabel = 'opportunities.favorites.add';
+  const removeLabel = 'opportunities.favorites.remove';
+
+  beforeEach(() => {
+    query = new URLSearchParams();
+    userId = 'reader';
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
+  function renderFavorite(isFavorite = false) {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const detail = (saved: boolean) => (
+      <OpportunityDetailContent opportunity={{ ...opportunity, isFavorite: saved }} />
+    );
+    const view = render(detail(isFavorite), {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>{children}</ToastProvider>
+        </QueryClientProvider>
+      ),
+    });
+
+    return { queryClient, showFavorite: (saved: boolean) => view.rerender(detail(saved)) };
+  }
+
+  it('hides the favorite control from the owner', () => {
+    userId = opportunity.ownerId;
+    renderFavorite();
+
+    expect(screen.queryByRole('button', { name: addLabel })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: removeLabel })).not.toBeInTheDocument();
+  });
+
+  it.each([false, true])('toggles favorite state (previously saved: %s)', async (saved) => {
+    const user = userEvent.setup();
+    const response = Promise.withResolvers<{ data: { saved: boolean } }>();
+    const request = vi.spyOn(opportunitiesApi, 'setFavorite').mockReturnValue(response.promise);
+    const { queryClient, showFavorite } = renderFavorite(saved);
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+    const button = screen.getByRole('button', { name: saved ? removeLabel : addLabel });
+
+    await user.click(button);
+    await waitFor(() => expect(button).toBeDisabled());
+    expect(request).toHaveBeenCalledExactlyOnceWith(id, !saved);
+    await user.click(button);
+    expect(request).toHaveBeenCalledTimes(1);
+
+    response.resolve({ data: { saved: !saved } });
+    await waitFor(() => expect(button).toBeEnabled());
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: opportunityKeys.all }, undefined);
+
+    showFavorite(!saved);
+    expect(screen.getByRole('button', { name: saved ? addLabel : removeLabel })).toBeEnabled();
+  });
+
+  it.each([false, true])('shows a request failure (previously saved: %s)', async (saved) => {
+    const user = userEvent.setup();
+
+    vi.spyOn(opportunitiesApi, 'setFavorite').mockRejectedValue(
+      new Error('Favorite request failed'),
+    );
+    const { queryClient } = renderFavorite(saved);
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+    const button = screen.getByRole('button', { name: saved ? removeLabel : addLabel });
+
+    await user.click(button);
+
+    expect(await screen.findByText('Favorite request failed')).toBeInTheDocument();
+    expect(button).toBeEnabled();
+    expect(invalidate).not.toHaveBeenCalled();
   });
 });

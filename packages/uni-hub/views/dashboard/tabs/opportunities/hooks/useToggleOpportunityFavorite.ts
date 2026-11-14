@@ -5,31 +5,30 @@ import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { invalidateOpportunities } from '../cache';
 
-interface UseSubscribeOpportunityResult {
-  handleToggleSubscribe: () => Promise<void>;
-  isSubscribeLoading: boolean;
+interface UseToggleOpportunityFavoriteResult {
+  handleToggleFavorite: () => Promise<void>;
+  isFavoritePending: boolean;
 }
 
-export function useSubscribeOpportunity(
+export function useToggleOpportunityFavorite(
   id: string,
-  isSubscribed: boolean,
-): UseSubscribeOpportunityResult {
+  isFavorite: boolean,
+): UseToggleOpportunityFavoriteResult {
   const toast = useToast();
   const { formatMessage } = useLanguage();
   const queryClient = useQueryClient();
 
-  const subscribeMutation = useMutation({
-    mutationFn: (subscribe: boolean) =>
-      subscribe ? opportunitiesApi.subscribe(id) : opportunitiesApi.unsubscribe(id),
+  const favoriteMutation = useMutation({
+    mutationFn: (saved: boolean) => opportunitiesApi.setFavorite(id, saved),
     onSuccess: () => invalidateOpportunities(queryClient),
   });
 
-  const handleToggleSubscribe = async (): Promise<void> => {
+  const handleToggleFavorite = async (): Promise<void> => {
     try {
-      await subscribeMutation.mutateAsync(!isSubscribed);
+      await favoriteMutation.mutateAsync(!isFavorite);
       toast.success(
         formatMessage(
-          isSubscribed ? 'opportunities.toast.unsubscribed' : 'opportunities.toast.subscribed',
+          isFavorite ? 'opportunities.toast.favoriteRemoved' : 'opportunities.toast.favoriteAdded',
         ),
       );
     } catch (err: unknown) {
@@ -38,7 +37,7 @@ export function useSubscribeOpportunity(
   };
 
   return {
-    handleToggleSubscribe,
-    isSubscribeLoading: subscribeMutation.isPending,
+    handleToggleFavorite,
+    isFavoritePending: favoriteMutation.isPending,
   };
 }

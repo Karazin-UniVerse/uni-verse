@@ -28,9 +28,9 @@ describe('OpportunitiesController', () => {
             create: jest.fn(),
             findAll: jest.fn(),
             findOne: jest.fn(),
-            findOneWithSubscription: jest.fn(),
-            subscribe: jest.fn(),
-            unsubscribe: jest.fn(),
+            findOneWithFavorite: jest.fn(),
+            addFavorite: jest.fn(),
+            removeFavorite: jest.fn(),
             update: jest.fn(),
             delete: jest.fn(),
             changeStatus: jest.fn(),
@@ -174,33 +174,31 @@ describe('OpportunitiesController', () => {
   });
 
   describe('findOne', () => {
-    it('delegates to service.findOneWithSubscription and returns subscription state', async () => {
+    it('delegates to service.findOneWithFavorite and returns subscription state', async () => {
       const mockResult = {
         id: 'opp1',
         title: 'Opportunity',
         status: OpportunityStatus.PUBLISHED,
-        isSubscribed: true,
+        isFavorite: true,
       };
 
-      (service.findOneWithSubscription as jest.Mock).mockResolvedValue(
-        mockResult,
-      );
+      (service.findOneWithFavorite as jest.Mock).mockResolvedValue(mockResult);
 
       const result = await controller.findOne('opp1', 'user1', [
         'MOODLE_STUDENT',
       ]);
 
-      expect(service.findOneWithSubscription).toHaveBeenCalledWith(
+      expect(service.findOneWithFavorite).toHaveBeenCalledWith(
         'opp1',
         'user1',
         ['MOODLE_STUDENT'],
       );
       expect(result).toEqual(mockResult);
-      expect(result.isSubscribed).toBe(true);
+      expect(result.isFavorite).toBe(true);
     });
 
     it('sets private Cache-Control header for authenticated published access', async () => {
-      (service.findOneWithSubscription as jest.Mock).mockResolvedValue({
+      (service.findOneWithFavorite as jest.Mock).mockResolvedValue({
         id: 'opp1',
         status: OpportunityStatus.PUBLISHED,
       });
@@ -216,7 +214,7 @@ describe('OpportunitiesController', () => {
     });
 
     it('sets public Cache-Control header for anonymous published access', async () => {
-      (service.findOneWithSubscription as jest.Mock).mockResolvedValue({
+      (service.findOneWithFavorite as jest.Mock).mockResolvedValue({
         id: 'opp1',
         status: OpportunityStatus.PUBLISHED,
       });
@@ -232,7 +230,7 @@ describe('OpportunitiesController', () => {
     });
 
     it('sets private Cache-Control header when opportunity is non-published', async () => {
-      (service.findOneWithSubscription as jest.Mock).mockResolvedValue({
+      (service.findOneWithFavorite as jest.Mock).mockResolvedValue({
         id: 'opp1',
         status: OpportunityStatus.DRAFT,
       });
@@ -248,41 +246,41 @@ describe('OpportunitiesController', () => {
     });
   });
 
-  describe('subscribe', () => {
+  describe('addFavorite', () => {
     it('throws ForbiddenException when userId is empty', () => {
-      expect(() => controller.subscribe('', 'opp1')).toThrow(
+      expect(() => controller.addFavorite('', 'opp1')).toThrow(
         ForbiddenException,
       );
     });
 
-    it('delegates to service.subscribe', async () => {
-      (service.subscribe as jest.Mock).mockResolvedValue({
-        isSubscribed: true,
+    it('delegates to service.addFavorite', async () => {
+      (service.addFavorite as jest.Mock).mockResolvedValue({
+        saved: true,
       });
 
-      const result = await controller.subscribe('user1', 'opp1');
+      const result = await controller.addFavorite('user1', 'opp1');
 
-      expect(service.subscribe).toHaveBeenCalledWith('user1', 'opp1');
-      expect(result).toEqual({ isSubscribed: true });
+      expect(service.addFavorite).toHaveBeenCalledWith('user1', 'opp1');
+      expect(result).toEqual({ saved: true });
     });
   });
 
-  describe('unsubscribe', () => {
+  describe('removeFavorite', () => {
     it('throws ForbiddenException when userId is empty', () => {
-      expect(() => controller.unsubscribe('', 'opp1')).toThrow(
+      expect(() => controller.removeFavorite('', 'opp1')).toThrow(
         ForbiddenException,
       );
     });
 
-    it('delegates to service.unsubscribe', async () => {
-      (service.unsubscribe as jest.Mock).mockResolvedValue({
-        isSubscribed: false,
+    it('delegates to service.removeFavorite', async () => {
+      (service.removeFavorite as jest.Mock).mockResolvedValue({
+        saved: false,
       });
 
-      const result = await controller.unsubscribe('user1', 'opp1');
+      const result = await controller.removeFavorite('user1', 'opp1');
 
-      expect(service.unsubscribe).toHaveBeenCalledWith('user1', 'opp1');
-      expect(result).toEqual({ isSubscribed: false });
+      expect(service.removeFavorite).toHaveBeenCalledWith('user1', 'opp1');
+      expect(result).toEqual({ saved: false });
     });
   });
 

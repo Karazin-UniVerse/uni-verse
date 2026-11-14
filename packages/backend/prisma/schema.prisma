@@ -35,9 +35,9 @@ model User {
   notifications           Notification[]           @relation("UserNotifications")
   comments                Comment[]
 
-  opportunitySubscriptions OpportunitySubscription[] @relation("UserSubscriptions")
+  favoriteOpportunities OpportunityFavorite[]
 
-  phone                   UserPhone?
+  phone UserPhone?
 }
 
 model UserPhone {
@@ -127,7 +127,7 @@ model Opportunity {
   applications OpportunityApplication[] @relation("OpportunityToApplication")
   comments     Comment[]
 
-  subscriptions OpportunitySubscription[] @relation("OpportunitySubscriptions")
+  favorites OpportunityFavorite[]
 }
 
 enum ApplicationStatus {
@@ -190,16 +190,16 @@ model Comment {
   application   OpportunityApplication? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
 
-model OpportunitySubscription {
-  id            String   @id @default(uuid())
+model OpportunityFavorite {
   userId        String
   opportunityId String
-  createdAt     DateTime @default(now())
+  title         String
+  paymentType   PaymentType
+  createdAt     DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
 
-  user        User        @relation("UserSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
-  opportunity Opportunity @relation("OpportunitySubscriptions", fields: [opportunityId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, opportunityId])
+  @@id([userId, opportunityId])
   @@index([opportunityId])
 }
 

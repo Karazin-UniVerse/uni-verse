@@ -1,3 +1,4 @@
+import type { OpportunityFavoriteState } from '@universe/core/types/opportunities';
 import {
   Controller,
   Get,
@@ -22,7 +23,7 @@ import {
   OpportunityWithOwner,
   ApplicationWithApplicant,
   ApplicationWithOpportunity,
-  OpportunityWithSubscription,
+  OpportunityWithFavorite,
 } from './opportunities.service';
 import {
   CreateOpportunityDto,
@@ -163,8 +164,8 @@ export class OpportunitiesController {
     @GetUser('sub') userId?: string,
     @GetUser('roles') roles?: string[],
     @Res({ passthrough: true }) res?: Response,
-  ): Promise<OpportunityWithSubscription> {
-    const opportunity = await this.opportunitiesService.findOneWithSubscription(
+  ): Promise<OpportunityWithFavorite> {
+    const opportunity = await this.opportunitiesService.findOneWithFavorite(
       id,
       userId,
       roles,
@@ -246,33 +247,27 @@ export class OpportunitiesController {
   }
 
   @ApiBearerAuth()
-  @Post(':id/subscribe')
-  /**
-   * Subscribe to lifecycle updates of an opportunity
-   */
-  @ApiOperation({ summary: 'Subscribe to opportunity updates' })
-  subscribe(
+  @Put(':id/favorite')
+  @ApiOperation({ summary: 'Save a published opportunity' })
+  addFavorite(
     @GetUser('sub') userId: string,
     @Param('id') id: string,
-  ): Promise<{ isSubscribed: true }> {
+  ): Promise<OpportunityFavoriteState> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
-    return this.opportunitiesService.subscribe(userId, id);
+    return this.opportunitiesService.addFavorite(userId, id);
   }
 
   @ApiBearerAuth()
-  @Delete(':id/subscribe')
-  /**
-   * Unsubscribe from opportunity updates
-   */
-  @ApiOperation({ summary: 'Unsubscribe from opportunity updates' })
-  unsubscribe(
+  @Delete(':id/favorite')
+  @ApiOperation({ summary: 'Remove an opportunity from favorites' })
+  removeFavorite(
     @GetUser('sub') userId: string,
     @Param('id') id: string,
-  ): Promise<{ isSubscribed: false }> {
+  ): Promise<OpportunityFavoriteState> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
-    return this.opportunitiesService.unsubscribe(userId, id);
+    return this.opportunitiesService.removeFavorite(userId, id);
   }
 
   @ApiBearerAuth()

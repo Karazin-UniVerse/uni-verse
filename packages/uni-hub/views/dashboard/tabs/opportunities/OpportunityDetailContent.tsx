@@ -19,7 +19,7 @@ import { useOpportunityActions } from './hooks/useOpportunityActions';
 import { ApplicantsModal } from './modals/ApplicantsModal';
 import { ApplyOpportunityModal } from './modals/ApplyOpportunityModal';
 import { CreateOpportunityModal } from './modals/CreateOpportunityModal';
-import { useSubscribeOpportunity } from './hooks/useSubscribeOpportunity';
+import { useToggleOpportunityFavorite } from './hooks/useToggleOpportunityFavorite';
 
 export interface OpportunityDetailContentProps {
   opportunity: Opportunity;
@@ -35,7 +35,7 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
   const create = useCreateOpportunity({ currentOpportunity: opportunity });
   const apply = useApplyToOpportunity({ currentUser, opportunity });
   const applicants = useApplicants();
-  const subscribe = useSubscribeOpportunity(opportunity.id, opportunity.isSubscribed ?? false);
+  const favorite = useToggleOpportunityFavorite(opportunity.id, opportunity.isFavorite ?? false);
   const canModerate =
     Boolean(currentUser.userId) &&
     currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR) &&
@@ -78,8 +78,8 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
         onDelete={() => setDeleteConfirmOpen(true)}
         onOpenApply={() => apply.setIsApplyOpen(true)}
         onOpenApplicants={() => applicants.open(opportunity)}
-        onToggleSubscribe={subscribe.handleToggleSubscribe}
-        isSubscribeLoading={subscribe.isSubscribeLoading}
+        onToggleFavorite={favorite.handleToggleFavorite}
+        isFavoritePending={favorite.isFavoritePending}
       />
 
       {canModerate && (

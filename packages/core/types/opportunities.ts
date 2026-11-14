@@ -36,7 +36,7 @@ export interface Opportunity {
   canResubmit?: boolean;
   owner?: OpportunityOwner;
   applications?: OpportunityApplication[];
-  isSubscribed?: boolean;
+  isFavorite?: boolean;
 }
 
 export interface OpportunityApplication {
@@ -110,4 +110,8 @@ export interface OpportunityContentFields {
   ownerContactInfo?: string;
   paymentType?: OpportunityPaymentType;
   paymentDetails?: string | null;
+}
+
+export interface OpportunityFavoriteState {
+  saved: boolean;
 }

@@ -51,9 +51,9 @@ export type OpportunityDetailProps = {
   className?: string;
 
   // Subscription
-  isSubscribed?: boolean;
-  onToggleSubscribe?: () => void;
-  subscribeText?: string;
-  unsubscribeText?: string;
-  isSubscribeLoading?: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
+  addFavoriteText?: string;
+  removeFavoriteText?: string;
+  isFavoritePending?: boolean;
 };

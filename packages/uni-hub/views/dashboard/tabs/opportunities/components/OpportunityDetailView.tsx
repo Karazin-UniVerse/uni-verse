@@ -17,8 +17,8 @@ export interface OpportunityDetailViewProps {
   onOpenApplicants?: () => void;
   onEdit?: (opportunity: Opportunity) => void;
   onToggleAcceptsApplications?: (accepts: boolean) => void;
-  onToggleSubscribe?: () => void;
-  isSubscribeLoading?: boolean;
+  onToggleFavorite?: () => void;
+  isFavoritePending?: boolean;
   onDelete?: () => void;
 }
 
@@ -82,8 +82,8 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   onOpenApply,
   onOpenApplicants,
   onEdit,
-  onToggleSubscribe,
-  isSubscribeLoading,
+  onToggleFavorite,
+  isFavoritePending,
   onDelete,
 }) => {
   const { formatMessage, language } = useLanguage();
@@ -151,15 +151,13 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       canApply={canApply}
       applyText={formatMessage('opportunities.detailModal.apply')}
       onOpenApply={onOpenApply}
-      isSubscribed={opportunity.isSubscribed}
-      onToggleSubscribe={
-        userId && opportunity.status === OPPORTUNITY_STATUS.PUBLISHED
-          ? onToggleSubscribe
-          : undefined
+      isFavorite={opportunity.isFavorite}
+      onToggleFavorite={
+        userId && opportunity.status === OPPORTUNITY_STATUS.PUBLISHED ? onToggleFavorite : undefined
       }
-      isSubscribeLoading={isSubscribeLoading}
-      subscribeText={formatMessage('opportunities.actions.subscribe')}
-      unsubscribeText={formatMessage('opportunities.actions.unsubscribe')}
+      isFavoritePending={isFavoritePending}
+      addFavoriteText={formatMessage('opportunities.favorites.add')}
+      removeFavoriteText={formatMessage('opportunities.favorites.remove')}
     />
   );
 };

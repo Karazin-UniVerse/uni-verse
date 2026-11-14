@@ -78,9 +78,9 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   onDelete,
   deleteText,
   className,
-  onToggleSubscribe,
-  subscribeText,
-  unsubscribeText,
+  onToggleFavorite,
+  addFavoriteText,
+  removeFavoriteText,
   canDelete = false,
   sendToReviewDisabled = false,
   acceptsApplications = true,
@@ -89,9 +89,9 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   canEdit = false,
   canSendToReview = false,
   canApply = false,
-  isSubscribed = false,
+  isFavorite = false,
 
-  isSubscribeLoading = false,
+  isFavoritePending = false,
 }) => {
   const reviewHintId = useId();
   const footerButton = getCandidateFooterButton({
@@ -103,15 +103,15 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
     applicationsClosedText,
   });
 
-  const subscribeButton =
-    !isOwner && onToggleSubscribe && subscribeText && unsubscribeText ? (
-      <Button variant="secondary" onClick={onToggleSubscribe} disabled={isSubscribeLoading}>
-        {isSubscribed ? (
+  const favoriteButton =
+    !isOwner && onToggleFavorite && addFavoriteText && removeFavoriteText ? (
+      <Button variant="secondary" onClick={onToggleFavorite} disabled={isFavoritePending}>
+        {isFavorite ? (
           <BellOff size={14} className={styles.btnIcon} />
         ) : (
           <Bell size={14} className={styles.btnIcon} />
         )}
-        {isSubscribed ? unsubscribeText : subscribeText}
+        {isFavorite ? removeFavoriteText : addFavoriteText}
       </Button>
     ) : null;
 
@@ -237,9 +237,9 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
           </div>
         )}
 
-        {(footerButton || subscribeButton) && (
+        {(footerButton || favoriteButton) && (
           <div className={styles.footer}>
-            {subscribeButton}
+            {favoriteButton}
             {footerButton}
           </div>
         )}

@@ -1,3 +1,4 @@
+import type { OpportunityFavoriteState } from '@universe/core/types/opportunities';
 import {
   Injectable,
   NotFoundException,
@@ -68,8 +69,8 @@ export type ApplicationWithOpportunity = OpportunityApplication & {
   applicant: ApplicationWithApplicant['applicant'];
 };
 
-export type OpportunityWithSubscription = OpportunityWithOwner & {
-  isSubscribed: boolean;
+export type OpportunityWithFavorite = OpportunityWithOwner & {
+  isFavorite: boolean;
 };
 
 export type UpdateApplicationStatusParams = {
@@ -317,6 +318,9 @@ export class OpportunitiesService {
           id,
           status: opportunity.status,
           updatedAt: opportunity.updatedAt,
+          ...(dto.lifecycleState !== undefined
+            ? { lifecycleState: opportunity.lifecycleState }
+            : {}),
         },
         data,
       });
@@ -333,6 +337,14 @@ export class OpportunitiesService {
       hasContentChanges
     ) {
       await this.notifyModerators(id, updated.title);
+    }
+
+    if (
+      dto.lifecycleState !== undefined &&
+      updated.status === OpportunityStatus.PUBLISHED &&
+      updated.lifecycleState !== opportunity.lifecycleState
+    ) {
+      await this.notifyFavorites(id, updated.title, updated.lifecycleState);
     }
 
     return updated;
@@ -459,33 +471,7 @@ export class OpportunitiesService {
     id: string,
     lifecycleState: OpportunityLifecycleState,
   ): Promise<Opportunity> {
-    const opportunity = await this.findOne(id, userId);
-
-    if (opportunity.ownerId !== userId)
-      throw new ForbiddenException('Not your opportunity');
-
-    const updatedOpportunity = await this.prisma.opportunity.update({
-      where: { id },
-      data: {
-        lifecycleState,
-        ...(!isRecruitmentPhase(lifecycleState)
-          ? { acceptsApplications: false }
-          : {}),
-      },
-    });
-
-    if (
-      updatedOpportunity.status === OpportunityStatus.PUBLISHED &&
-      opportunity.lifecycleState !== lifecycleState
-    ) {
-      await this.notifySubscribers(
-        id,
-        updatedOpportunity.title,
-        lifecycleState,
-      );
-    }
-
-    return updatedOpportunity;
+    return this.update(userId, id, { lifecycleState });
   }
 
   /**
@@ -787,38 +773,32 @@ export class OpportunitiesService {
   }
 
   /**
-   * Send notification to all users subscribed to an opportunity.
+   * Notify users who saved the opportunity.
    */
-  private async notifySubscribers(
+  private async notifyFavorites(
     opportunityId: string,
     opportunityTitle: string,
     lifecycleState: OpportunityLifecycleState,
   ): Promise<void> {
     try {
-      const subscribers = await this.prisma.opportunitySubscription.findMany({
+      const favorites = await this.prisma.opportunityFavorite.findMany({
         where: { opportunityId },
         select: { userId: true },
       });
 
-      const deliveries = await Promise.allSettled(
-        subscribers.map((sub) =>
-          this.notificationsService.createNotification({
-            userId: sub.userId,
-            type: 'OPPORTUNITY_LIFECYCLE_CHANGED',
+      for (const { userId } of favorites) {
+        try {
+          await this.notificationsService.createNotification({
+            userId,
+            type: NOTIFICATION_TYPE.OPPORTUNITY_LIFECYCLE_CHANGED,
             title: OPPORTUNITY_NOTIFICATION_KEY.LIFECYCLE_CHANGED_TITLE,
             message: JSON.stringify({ opportunityTitle, lifecycleState }),
             link: `${OPPORTUNITIES_ROUTE}/${opportunityId}`,
-          }),
-        ),
-      );
-
-      for (const [index, delivery] of deliveries.entries()) {
-        if (delivery.status === 'rejected') {
+          });
+        } catch (error) {
           this.logger.error(
-            `Failed to deliver lifecycle notification for opportunity ${opportunityId} to subscriber ${subscribers[index].userId}`,
-            delivery.reason instanceof Error
-              ? delivery.reason.stack
-              : delivery.reason,
+            `Failed to deliver lifecycle notification for opportunity ${opportunityId} to subscriber ${userId}`,
+            error instanceof Error ? error.stack : error,
           );
         }
       }
@@ -831,63 +811,70 @@ export class OpportunitiesService {
   }
 
   /**
-   * Subscribe a user to lifecycle updates of an opportunity.
+   * Save a published opportunity to the user’s favorites.
    */
-  async subscribe(userId: string, id: string): Promise<{ isSubscribed: true }> {
-    const opportunity = await this.findOne(id, userId);
-
-    if (opportunity.ownerId === userId) {
-      throw new BadRequestException('Cannot subscribe to your own opportunity');
-    }
-
-    if (opportunity.status !== OpportunityStatus.PUBLISHED) {
-      throw new BadRequestException(
-        'Can only subscribe to published opportunities',
-      );
-    }
-
-    await this.prisma.opportunitySubscription.upsert({
-      where: { userId_opportunityId: { userId, opportunityId: id } },
-      create: { userId, opportunityId: id },
-      update: {},
+  async addFavorite(
+    userId: string,
+    id: string,
+  ): Promise<OpportunityFavoriteState> {
+    const opportunity = await this.prisma.opportunity.findUnique({
+      where: { id },
     });
 
-    return { isSubscribed: true };
+    if (opportunity?.ownerId === userId) {
+      throw new BadRequestException('Cannot save your own opportunity');
+    }
+
+    if (!opportunity || opportunity.status !== OpportunityStatus.PUBLISHED) {
+      throw new NotFoundException('Opportunity not found');
+    }
+
+    await this.prisma.opportunityFavorite.createMany({
+      data: {
+        userId,
+        opportunityId: id,
+        title: opportunity.title,
+        paymentType: opportunity.paymentType,
+      },
+      skipDuplicates: true,
+    });
+
+    return { saved: true };
   }
 
   /**
-   * Unsubscribe a user from lifecycle updates of an opportunity.
+   * Remove an opportunity from the user’s favorites.
    */
-  async unsubscribe(
+  async removeFavorite(
     userId: string,
     id: string,
-  ): Promise<{ isSubscribed: false }> {
-    await this.prisma.opportunitySubscription.deleteMany({
+  ): Promise<OpportunityFavoriteState> {
+    await this.prisma.opportunityFavorite.deleteMany({
       where: { userId, opportunityId: id },
     });
 
-    return { isSubscribed: false };
+    return { saved: false };
   }
 
   /**
-   * Find opportunity by ID and include whether the requesting user is subscribed.
+   * Find opportunity by ID and include whether the requesting user saved it.
    */
-  async findOneWithSubscription(
+  async findOneWithFavorite(
     id: string,
     userId?: string,
     userRoles: string[] = [],
-  ): Promise<OpportunityWithSubscription> {
+  ): Promise<OpportunityWithFavorite> {
     const opportunity = await this.findOne(id, userId, userRoles);
 
     if (!userId) {
-      return { ...opportunity, isSubscribed: false };
+      return { ...opportunity, isFavorite: false };
     }
 
-    const subscription = await this.prisma.opportunitySubscription.findFirst({
+    const favorite = await this.prisma.opportunityFavorite.findFirst({
       where: { userId, opportunityId: id },
       select: { userId: true },
     });
 
-    return { ...opportunity, isSubscribed: Boolean(subscription) };
+    return { ...opportunity, isFavorite: Boolean(favorite) };
   }
 }

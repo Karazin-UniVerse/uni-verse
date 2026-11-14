@@ -4,6 +4,7 @@ import type {
   GetOpportunitiesParams,
   Opportunity,
   OpportunityApplication,
+  OpportunityFavoriteState,
   OpportunityTag,
   UpdateOpportunityRequest,
 } from '@core/types/opportunities';
@@ -131,15 +132,9 @@ export class OpportunitiesApi extends ApiClient {
     });
   }
 
-  async subscribe(id: string): Promise<{ data: { isSubscribed: boolean } }> {
-    return this.request<{ isSubscribed: boolean }>(`/opportunities/${id}/subscribe`, {
-      method: 'POST',
-    });
-  }
-
-  async unsubscribe(id: string): Promise<{ data: { isSubscribed: boolean } }> {
-    return this.request<{ isSubscribed: boolean }>(`/opportunities/${id}/subscribe`, {
-      method: 'DELETE',
+  async setFavorite(id: string, saved: boolean): Promise<{ data: OpportunityFavoriteState }> {
+    return this.request<OpportunityFavoriteState>(`/opportunities/${id}/favorite`, {
+      method: saved ? 'PUT' : 'DELETE',
     });
   }
 }
