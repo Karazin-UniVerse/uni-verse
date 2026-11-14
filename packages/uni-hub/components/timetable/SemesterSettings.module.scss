@@ -13,6 +13,7 @@
 .fields {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 88px;
+  align-items: end;
   gap: var(--space-8);
 
   label {

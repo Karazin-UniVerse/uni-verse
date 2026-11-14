@@ -6,6 +6,7 @@ import {
   DEFAULT_NOMINAL_WEEKS,
   DEFAULT_PAIR_DURATION_MINUTES,
   DEFAULT_TIMEOUT_MS,
+  SATURDAY_ATTEMPT_TIME_SHARE,
   EUROPE_KYIV_VTIMEZONE,
   EXAM_PAIR_COUNT,
   FIRST_LATE_PAIR,
@@ -15,6 +16,7 @@ import {
   ISO_DATE_PATTERN,
   LAST_PAIR,
   LAST_PREFERRED_SATURDAY_PAIR,
+  MAX_PAIRS_PER_SATURDAY,
   LATE_PAIR_PENALTY,
   MAX_PREFERRED_DAILY_PAIRS,
   MAX_STANDARD_PAIR,
@@ -215,6 +217,24 @@ export function getWeeklyPairCounts({
   return { ok: false, error: TIMETABLE_VALIDATION_ERROR.UNSUPPORTED_PATTERN };
 }
 
+/**
+ * Spreads any number of pairs over the weeks as evenly as possible: every week gets the same base
+ * share and the remainder goes to evenly spaced weeks. The generator falls back to it when no
+ * named pattern of `getWeeklyPairCounts` fits the hours.
+ */
+export function getEvenWeeklyPairCounts(pairs: number, weeks: number): number[] {
+  const base = Math.floor(pairs / weeks);
+  const remainder = pairs - base * weeks;
+
+  return Array.from(
+    { length: weeks },
+    (_, weekIndex): number =>
+      base +
+      Math.floor(((weekIndex + 1) * remainder) / weeks) -
+      Math.floor((weekIndex * remainder) / weeks),
+  );
+}
+
 export function getPairInstants(date: string, pair: number): PairInstantsResult {
   if (!isPairNumber(pair)) {
     return { ok: false, error: TIMETABLE_VALIDATION_ERROR.INVALID_PAIR_NUMBER };
@@ -233,10 +253,16 @@ export function getPairInstants(date: string, pair: number): PairInstantsResult 
   };
 }
 
-function getMondayMs(dateMs: number): number {
-  const daysSinceMonday = (new Date(dateMs).getUTCDay() + 6) % DAYS_PER_WEEK;
+/** Teaching weeks run seven days from the semester start, whatever weekday it falls on. */
+export function getTeachingWeekdayMs(startMs: number, weekIndex: number, weekday: number): number {
+  const daysFromStart = (weekday - new Date(startMs).getUTCDay() + DAYS_PER_WEEK) % DAYS_PER_WEEK;
 
-  return dateMs - daysSinceMonday * MS_PER_DAY;
+  return startMs + (weekIndex * DAYS_PER_WEEK + daysFromStart) * MS_PER_DAY;
+}
+
+/** The first day after the last teaching week. */
+export function getSemesterEndMs(startMs: number, teachingWeeks: number): number {
+  return startMs + teachingWeeks * DAYS_PER_WEEK * MS_PER_DAY;
 }
 
 function parseDates(dates: string[]): number[] | null {
@@ -257,8 +283,9 @@ function parseDates(dates: string[]): number[] | null {
 
 /**
  * Expands one weekly slot into dated occurrences. `weeklyCounts` already encodes week parity,
- * so a week with a zero count never yields a regular occurrence. Regular dates that are excluded
- * or before `startDate` go to `skipped`. A makeup Saturday is an additional day running the
+ * so a week with a zero count never yields a regular occurrence. Week `n` is the seven days from
+ * `startDate + 7n`, so every weekday occurs once per week whatever day the semester starts on.
+ * Excluded dates go to `skipped`. A makeup Saturday is an additional day running the
  * timetable of the weekday it follows; it does not replace that weekday in its own week.
  */
 export function expandSlotOccurrences({
@@ -303,20 +330,18 @@ export function expandSlotOccurrences({
     return { ok: false, error: TIMETABLE_VALIDATION_ERROR.INVALID_SEMESTER_CONFIG };
   }
 
-  const firstMondayMs = getMondayMs(startMs);
   const excluded = new Set(excludedMs);
   const occurrences: DatedSlotOccurrence[] = [];
   const skipped: SkippedSlotOccurrence[] = [];
-  const getWeekdayMs = (weekIndex: number, targetWeekday: number): number =>
-    firstMondayMs + (weekIndex * DAYS_PER_WEEK + targetWeekday - 1) * MS_PER_DAY;
 
   const makeupDates = new Set<number>();
   const makeups: Array<{ dateMs: number; weekIndex: number }> = [];
 
   for (const [index, { followsWeekday }] of makeupSaturdays.entries()) {
     const dateMs = makeupMs[index];
-    const weekIndex = Math.floor((dateMs - firstMondayMs) / MS_PER_DAY / DAYS_PER_WEEK);
-    const isSaturday = dateMs === getWeekdayMs(weekIndex, TIMETABLE_WEEKDAY.SATURDAY);
+    const weekIndex = Math.floor((dateMs - startMs) / MS_PER_DAY / DAYS_PER_WEEK);
+    const isSaturday =
+      dateMs === getTeachingWeekdayMs(startMs, weekIndex, TIMETABLE_WEEKDAY.SATURDAY);
     const isFollowsValid =
       Number.isInteger(followsWeekday) &&
       followsWeekday >= TIMETABLE_WEEKDAY.MONDAY &&
@@ -341,15 +366,9 @@ export function expandSlotOccurrences({
 
   const place = (dateMs: number, weekIndex: number, makeup: boolean): void => {
     const date = formatIsoDate(dateMs);
-    const reason =
-      dateMs < startMs
-        ? TIMETABLE_SKIP_REASON.BEFORE_SEMESTER_START
-        : excluded.has(dateMs)
-          ? TIMETABLE_SKIP_REASON.EXCLUDED_DATE
-          : null;
 
-    if (reason !== null) {
-      skipped.push({ date, weekIndex, pair, reason });
+    if (excluded.has(dateMs)) {
+      skipped.push({ date, weekIndex, pair, reason: TIMETABLE_SKIP_REASON.EXCLUDED_DATE });
     } else if (makeup) {
       occurrences.push({ date, weekIndex, pair, isMakeup: true, originalWeekday: weekday });
     } else {
@@ -359,7 +378,7 @@ export function expandSlotOccurrences({
 
   for (let weekIndex = 0; weekIndex < teachingWeeks; weekIndex += 1) {
     if (weeklyCounts[weekIndex] > 0) {
-      place(getWeekdayMs(weekIndex, weekday), weekIndex, false);
+      place(getTeachingWeekdayMs(startMs, weekIndex, weekday), weekIndex, false);
     }
   }
 
@@ -882,8 +901,70 @@ function slotsShareAnyTime(slotA: CandidateSlot, slotB: CandidateSlot): boolean 
 export function generateTimetableCandidates(
   params: GenerateTimetableParams,
 ): GenerateTimetableResult {
+  const noMissingOccurrences =
+    params.calendar.excludedDates.length === 0 &&
+    params.demands.every((demand): boolean => {
+      const pattern = getWeeklyPairCounts({
+        pairs: demand.academicHours / ACADEMIC_HOURS_PER_PAIR,
+        weeks: params.options?.nominalWeeks ?? params.nominalWeeks ?? params.calendar.teachingWeeks,
+        parity: demand.parity,
+        order: demand.order,
+      });
+
+      return pattern.ok && pattern.counts.length <= params.calendar.teachingWeeks;
+    });
+
+  if (params.calendar.teachingWeeks >= DEFAULT_NOMINAL_WEEKS || noMissingOccurrences) {
+    return generateWithPreferences(params);
+  }
+
+  const started = Date.now();
+  const timeoutMs = params.options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const lastAttempt = params.calendar.teachingWeeks;
+  let statesExplored = 0;
+  let timedOut = false;
+
+  for (let maxAutomaticDates = 0; maxAutomaticDates <= lastAttempt; maxAutomaticDates += 1) {
+    const remainingMs = Math.max(0, timeoutMs - (Date.now() - started));
+    // A tight Saturday count may be slow to settle; give it a share of the time and move on to one
+    // more Saturday instead of spending the whole budget there.
+    const attemptMs =
+      maxAutomaticDates === lastAttempt ? remainingMs : remainingMs / SATURDAY_ATTEMPT_TIME_SHARE;
+    // Short semesters are tight: undesirable slots stay a penalty instead of a hard ban.
+    const result = searchTimetableCandidates(
+      { ...params, options: { ...params.options, timeoutMs: attemptMs } },
+      false,
+      maxAutomaticDates,
+    );
+
+    statesExplored += result.diagnostics.statesExplored;
+    timedOut ||= !result.ok && result.error === 'TIMEOUT';
+
+    const isFinal =
+      result.ok ||
+      result.error === 'INVALID_INPUT' ||
+      maxAutomaticDates === lastAttempt ||
+      Date.now() - started >= timeoutMs;
+
+    if (isFinal) {
+      const diagnostics = { ...result.diagnostics, statesExplored, timeMs: Date.now() - started };
+
+      // Without a finished search over every Saturday count, infeasibility is not proven.
+      return !result.ok && timedOut
+        ? { ok: false, error: 'TIMEOUT', diagnostics }
+        : { ...result, diagnostics };
+    }
+  }
+
+  throw new Error('Unreachable Saturday search bound');
+}
+
+function generateWithPreferences(
+  params: GenerateTimetableParams,
+  maxAutomaticDates = 0,
+): GenerateTimetableResult {
   if (!params.preferences?.length) {
-    return searchTimetableCandidates(params);
+    return searchTimetableCandidates(params, false, maxAutomaticDates);
   }
 
   const started = Date.now();
@@ -892,6 +973,7 @@ export function generateTimetableCandidates(
   const strict = searchTimetableCandidates(
     { ...params, options: { ...params.options, timeoutMs: timeoutMs / 2 } },
     true,
+    maxAutomaticDates,
   );
 
   if (!strict.ok && strict.error === 'INVALID_INPUT') {
@@ -902,10 +984,14 @@ export function generateTimetableCandidates(
     return strict;
   }
 
-  const relaxed = searchTimetableCandidates({
-    ...params,
-    options: { ...params.options, timeoutMs: Math.max(0, timeoutMs - (Date.now() - started)) },
-  });
+  const relaxed = searchTimetableCandidates(
+    {
+      ...params,
+      options: { ...params.options, timeoutMs: Math.max(0, timeoutMs - (Date.now() - started)) },
+    },
+    false,
+    maxAutomaticDates,
+  );
   const candidates = strict.ok ? [...strict.candidates] : [];
   const signature = (candidate: TimetableCandidate): string =>
     candidate.events
@@ -953,6 +1039,7 @@ function searchTimetableCandidates(
     preferences = [],
   }: GenerateTimetableParams,
   strictPreferences = false,
+  maxAutomaticDates = 0,
 ): GenerateTimetableResult {
   const startTime = Date.now();
   let statesExplored = 0;
@@ -1028,14 +1115,13 @@ function searchTimetableCandidates(
             order: demand.order,
           });
 
-    if (!weeklyResult.ok) {
-      return { ok: false, error: 'INVALID_INPUT', diagnostics: getDiagnostics() };
-    }
-
-    const maxCount = Math.max(...weeklyResult.counts);
+    const weeklyCounts = weeklyResult.ok
+      ? weeklyResult.counts
+      : getEvenWeeklyPairCounts(pairsResult.pairs, explicitNominalWeeks ?? calendar.teachingWeeks);
+    const maxCount = Math.max(...weeklyCounts);
 
     for (let level = 1; level <= maxCount; level += 1) {
-      const fullLayerCounts = weeklyResult.counts.map((count): number => (count >= level ? 1 : 0));
+      const fullLayerCounts = weeklyCounts.map((count): number => (count >= level ? 1 : 0));
       const layerRequiredPairs = fullLayerCounts.reduce((sum, count): number => sum + count, 0);
       const truncatedWeeklyCounts =
         fullLayerCounts.length >= calendar.teachingWeeks
@@ -1077,6 +1163,7 @@ function searchTimetableCandidates(
     }
   }
 
+  const semesterStartMs = parseIsoDate(calendar.startDate)!;
   const unitCandidateSlots: CandidateSlot[][] = [];
   const unitMaxOccurrences = new Map<number, number>();
   let nextGlobalIndex = 0;
@@ -1108,6 +1195,8 @@ function searchTimetableCandidates(
 
   for (const unit of units) {
     const { demand, weeklyCounts, requiredPairs, layerIndex, unitIndex, demandIndex } = unit;
+    // Try weekdays in teaching-week order, so a week that starts midweek still tries its first
+    // days first and lectures can come before the practices.
     const weekdays = demand.isSaturdayOnly
       ? [TIMETABLE_WEEKDAY.SATURDAY]
       : [
@@ -1116,7 +1205,11 @@ function searchTimetableCandidates(
           TIMETABLE_WEEKDAY.WEDNESDAY,
           TIMETABLE_WEEKDAY.THURSDAY,
           TIMETABLE_WEEKDAY.FRIDAY,
-        ];
+        ].sort(
+          (first, second): number =>
+            getTeachingWeekdayMs(semesterStartMs, 0, first) -
+            getTeachingWeekdayMs(semesterStartMs, 0, second),
+        );
 
     const maxPair = demand.hasLateSlotAuthorization ? LAST_PAIR : FIRST_LATE_PAIR - 1;
     const slots: CandidateSlot[] = [];
@@ -1159,7 +1252,14 @@ function searchTimetableCandidates(
 
         // Workload completeness: if a holiday excluded an occurrence and no makeup restored it,
         // this slot cannot satisfy the required pairs for this demand layer.
-        if (expandResult.occurrences.length !== requiredPairs) {
+        if (
+          expandResult.occurrences.length !== requiredPairs &&
+          !(
+            calendar.teachingWeeks < DEFAULT_NOMINAL_WEEKS &&
+            maxAutomaticDates > 0 &&
+            expandResult.occurrences.length < requiredPairs
+          )
+        ) {
           continue;
         }
 
@@ -1246,11 +1346,112 @@ function searchTimetableCandidates(
       };
     }
 
-    slots.sort((first, second): number => first.heuristicCost - second.heuristicCost);
+    slots.sort(
+      (first, second): number =>
+        (preferences.length > 0 ? first.heuristicCost - second.heuristicCost : 0) ||
+        (maxAutomaticDates > 0 ? second.events.length - first.events.length : 0) ||
+        first.heuristicCost - second.heuristicCost,
+    );
     unitCandidateSlots.push(slots);
   }
 
   const totalSlots = nextGlobalIndex;
+  // Each clique must fit its missing occurrences into the same bounded Saturday capacity.
+  // Take the minimum deficit over every regular/manual slot, never a frozen weekday choice.
+  const resourceUnits = new Map<string, number[]>();
+
+  for (const unit of units) {
+    const keys = [
+      ...(unit.demand.teacherId ? [`teacher:${unit.demand.teacherId}`] : []),
+      ...unit.demand.groupIds.map((groupId): string => `group:${groupId}`),
+    ];
+
+    for (const key of keys) {
+      const members = resourceUnits.get(key) ?? [];
+
+      if (
+        members.every((index): boolean =>
+          key.startsWith('teacher:')
+            ? hasTeacherConflict(unit.demand, units[index].demand) ||
+              unit.demandIndex === units[index].demandIndex
+            : hasStudentIntersection(unit.demand, units[index].demand),
+        )
+      ) {
+        members.push(unit.unitIndex);
+        resourceUnits.set(key, members);
+      }
+    }
+  }
+
+  const minimumDeficits = units.map((unit): number =>
+    Math.max(
+      0,
+      unit.requiredPairs -
+        Math.max(...unitCandidateSlots[unit.unitIndex].map((slot): number => slot.events.length)),
+    ),
+  );
+  const capacityGroups = [...resourceUnits.values()].map((members) => {
+    const pairCapacity = members.some(
+      (index): boolean => units[index].demand.hasLateSlotAuthorization === true,
+    )
+      ? LAST_PAIR
+      : FIRST_LATE_PAIR - 1;
+
+    return {
+      members,
+      dateCapacities: [] as number[],
+      pairCapacity,
+      capacity: Math.min(pairCapacity, MAX_PAIRS_PER_SATURDAY),
+    };
+  });
+
+  const weekSaturdays = Array.from({ length: calendar.teachingWeeks }, (_, week): string =>
+    formatIsoDate(getTeachingWeekdayMs(semesterStartMs, week, TIMETABLE_WEEKDAY.SATURDAY)),
+  );
+  const saturdayDates = weekSaturdays.filter(
+    (date): boolean => !calendar.excludedDates.includes(date),
+  );
+
+  for (const group of capacityGroups) {
+    let maximumAvailable = 0;
+
+    for (const date of saturdayDates) {
+      const mandatory = group.members.reduce(
+        (sum, index): number =>
+          sum +
+          Math.min(
+            ...unitCandidateSlots[index].map(
+              (slot): number => slot.events.filter((event): boolean => event.date === date).length,
+            ),
+          ),
+        0,
+      );
+
+      const available = Math.max(0, group.capacity - mandatory);
+
+      group.dateCapacities.push(available);
+
+      maximumAvailable = Math.max(maximumAvailable, available);
+    }
+
+    group.capacity = maximumAvailable;
+    group.dateCapacities.sort((first, second): number => second - first);
+  }
+
+  const firstMakeupDate = saturdayDates[0] ?? calendar.startDate;
+
+  if (
+    capacityGroups.some(
+      ({ members, dateCapacities }): boolean =>
+        members.reduce((sum, index): number => sum + minimumDeficits[index], 0) >
+        dateCapacities
+          .slice(0, maxAutomaticDates)
+          .reduce((sum, capacity): number => sum + capacity, 0),
+    )
+  ) {
+    return { ok: false, error: 'NO_FEASIBLE_SOLUTION', diagnostics: getDiagnostics() };
+  }
+
   const conflicts = new Uint8Array(totalSlots * totalSlots);
 
   for (let firstUnit = 0; firstUnit < units.length; firstUnit += 1) {
@@ -1305,10 +1506,35 @@ function searchTimetableCandidates(
       return;
     }
 
+    if (
+      capacityGroups.some(
+        ({ members, dateCapacities }): boolean =>
+          members.reduce((sum, index): number => {
+            const slot = assigned[index];
+
+            return (
+              sum +
+              (slot === null
+                ? minimumDeficits[index]
+                : units[index].requiredPairs - slot.events.length)
+            );
+          }, 0) >
+          dateCapacities
+            .slice(0, maxAutomaticDates)
+            .reduce((sum, capacity): number => sum + capacity, 0),
+      )
+    ) {
+      return;
+    }
+
     const pendingLectures = units
       .filter(
         (unit): boolean =>
-          assigned[unit.unitIndex] === null &&
+          (assigned[unit.unitIndex] === null ||
+            ((assigned[unit.unitIndex]?.events.length ?? 0) < unit.requiredPairs &&
+              !assigned[unit.unitIndex]?.events.some(
+                (event): boolean => event.date < weekSaturdays[0],
+              ))) &&
           unit.demand.teachingType === TIMETABLE_TEACHING_TYPE.LECTURE,
       )
       .map((unit): TeachingDemand => unit.demand);
@@ -1326,6 +1552,23 @@ function searchTimetableCandidates(
       return;
     }
 
+    // No Saturday makeup lecture can precede a practice held before the first eligible Saturday.
+    const unassignedLectures = units
+      .filter(
+        (unit): boolean =>
+          assigned[unit.unitIndex] === null &&
+          unit.demand.teachingType === TIMETABLE_TEACHING_TYPE.LECTURE,
+      )
+      .map((unit): TeachingDemand => unit.demand);
+    const slotsBeforeMakeups = [...fixedSlots, ...partialSlots].filter(
+      ({ event }): boolean =>
+        event.teachingType === TIMETABLE_TEACHING_TYPE.LECTURE || event.date < firstMakeupDate,
+    );
+
+    if (getPrecedencePenalties(slotsBeforeMakeups, unassignedLectures).length > 0) {
+      return;
+    }
+
     if (assignedCount === units.length) {
       const events: ScheduledEvent[] = [];
 
@@ -1337,6 +1580,254 @@ function searchTimetableCandidates(
             events.push(slot.events[eventIndex]);
           }
         }
+      }
+
+      const automaticMakeupDates = new Set<string>();
+      const missing = units.flatMap((unit): TeachingDemand[] => {
+        const count = unit.requiredPairs - (assigned[unit.unitIndex]?.events.length ?? 0);
+
+        return Array.from({ length: count }, (): TeachingDemand => unit.demand);
+      });
+
+      missing.sort(
+        (first, second): number =>
+          Number(second.teachingType === TIMETABLE_TEACHING_TYPE.LECTURE) -
+            Number(first.teachingType === TIMETABLE_TEACHING_TYPE.LECTURE) ||
+          second.groupIds.length - first.groupIds.length ||
+          missing.filter((demand): boolean => demand.teacherId === second.teacherId).length -
+            missing.filter((demand): boolean => demand.teacherId === first.teacherId).length,
+      );
+      function completeMissing(index: number): boolean {
+        if (Date.now() - startTime >= timeoutMs) {
+          timedOut = true;
+
+          return false;
+        }
+
+        statesExplored += 1;
+
+        if (
+          getPrecedencePenalties(
+            [...fixedEvents, ...events].flatMap((event): EventSlot[] => {
+              const slot = toEventSlot(event);
+
+              return slot === null ? [] : [slot];
+            }),
+            missing
+              .slice(index)
+              .filter((demand): boolean => demand.teachingType === TIMETABLE_TEACHING_TYPE.LECTURE),
+          ).length > 0
+        ) {
+          return false;
+        }
+
+        for (const { members, pairCapacity: capacity } of capacityGroups) {
+          const remaining = missing
+            .slice(index)
+            .filter((demand): boolean =>
+              members.some((member): boolean => units[member].demand === demand),
+            ).length;
+
+          if (remaining === 0) {
+            continue;
+          }
+
+          let availableUsed = 0;
+          const availableUnused: number[] = [];
+
+          for (const date of saturdayDates) {
+            const occupied = new Set<number>();
+
+            for (const existing of [...fixedEvents, ...events]) {
+              if (
+                existing.date !== date ||
+                !members.every((member): boolean => {
+                  const demand = units[member].demand;
+
+                  return (
+                    (demand.teacherId !== undefined && demand.teacherId === existing.teacherId) ||
+                    hasStudentIntersection(demand, existing)
+                  );
+                })
+              ) {
+                continue;
+              }
+
+              for (
+                let pair = existing.pair;
+                pair < existing.pair + getEventSpan(existing);
+                pair += 1
+              ) {
+                if (pair <= capacity) occupied.add(pair);
+              }
+            }
+
+            const available = Math.max(
+              0,
+              Math.min(capacity, MAX_PAIRS_PER_SATURDAY) - occupied.size,
+            );
+
+            if (automaticMakeupDates.has(date)) {
+              availableUsed += available;
+            } else {
+              availableUnused.push(available);
+            }
+          }
+
+          availableUnused.sort((first, second): number => second - first);
+
+          if (
+            remaining >
+            availableUsed +
+              availableUnused
+                .slice(0, maxAutomaticDates - automaticMakeupDates.size)
+                .reduce((sum, count): number => sum + count, 0)
+          ) {
+            return false;
+          }
+        }
+
+        if (index === missing.length) {
+          return (
+            getPrecedencePenalties(
+              [...fixedEvents, ...events].flatMap((event): EventSlot[] => {
+                const slot = toEventSlot(event);
+
+                return slot === null ? [] : [slot];
+              }),
+            ).length === 0
+          );
+        }
+
+        const demand = missing[index];
+        const maxPair = demand.hasLateSlotAuthorization ? LAST_PAIR : FIRST_LATE_PAIR - 1;
+        const orderedPairs = Array.from(
+          { length: maxPair },
+          (_, index): number => index + FIRST_PAIR,
+        );
+        const pairCost = (pair: number): number => {
+          const preference = demand.teacherId
+            ? preferenceMap.get(`${demand.teacherId}|${TIMETABLE_WEEKDAY.SATURDAY}|${pair}`)
+            : undefined;
+          const preferenceCost =
+            preference === SLOT_PREFERENCE.PREFERRED
+              ? PREFERRED_SLOT_HEURISTIC_BONUS
+              : preference === SLOT_PREFERENCE.UNDESIRABLE
+                ? UNDESIRABLE_SLOT_HEURISTIC_PENALTY
+                : 0;
+
+          return preferenceCost + computeSlotHeuristicCost({ demand, pair });
+        };
+
+        orderedPairs.sort((first, second): number => pairCost(first) - pairCost(second));
+
+        // Lectures take the earliest Saturdays so they can still precede the practices; other
+        // classes fill the Saturdays already in use first to keep the number of extra dates low.
+        const orderedDates =
+          demand.teachingType === TIMETABLE_TEACHING_TYPE.LECTURE
+            ? saturdayDates
+            : [...saturdayDates].sort(
+                (first, second): number =>
+                  Number(automaticMakeupDates.has(second)) -
+                  Number(automaticMakeupDates.has(first)),
+              );
+
+        for (const date of orderedDates) {
+          const alreadyUsed = automaticMakeupDates.has(date);
+
+          if (!alreadyUsed && automaticMakeupDates.size >= maxAutomaticDates) {
+            continue;
+          }
+
+          for (const [pairRank, pair] of orderedPairs.entries()) {
+            const previous = index > 0 && missing[index - 1] === demand ? events.at(-1) : undefined;
+
+            if (
+              previous &&
+              (date < previous.date ||
+                (date === previous.date && pairRank <= orderedPairs.indexOf(previous.pair)))
+            ) {
+              continue;
+            }
+
+            if (
+              strictPreferences &&
+              demand.teacherId &&
+              preferenceMap.get(`${demand.teacherId}|${TIMETABLE_WEEKDAY.SATURDAY}|${pair}`) ===
+                SLOT_PREFERENCE.UNDESIRABLE
+            ) {
+              continue;
+            }
+
+            const event: ScheduledEvent = {
+              ...demand,
+              id: `${demand.id}-${date}-${pair}`,
+              teachingAssignmentId: demand.id,
+              date,
+              pair,
+              isMakeupSaturday: true,
+            };
+
+            const sameDay = [...fixedEvents, ...events].filter(
+              (existing): boolean => existing.date === date,
+            );
+            const countPairs = (matches: (existing: ScheduledEvent) => boolean): number =>
+              sameDay
+                .filter(matches)
+                .reduce((sum, existing): number => sum + getEventSpan(existing), 0);
+
+            if (
+              (event.teacherId !== undefined &&
+                countPairs((existing): boolean => existing.teacherId === event.teacherId) >=
+                  MAX_PAIRS_PER_SATURDAY) ||
+              countPairs((existing): boolean => hasStudentIntersection(event, existing)) >=
+                MAX_PAIRS_PER_SATURDAY
+            ) {
+              break;
+            }
+
+            if (
+              confirmedUnavailability.some(
+                (entry): boolean =>
+                  entry.teacherId === event.teacherId && entry.date === date && entry.pair === pair,
+              ) ||
+              [...fixedEvents, ...events].some(
+                (existing): boolean =>
+                  existing.date === date &&
+                  existing.pair <= pair &&
+                  existing.pair + getEventSpan(existing) > pair &&
+                  (existing.id === event.id ||
+                    (event.teacherId !== undefined && existing.teacherId === event.teacherId) ||
+                    hasStudentIntersection(event, existing)),
+              )
+            ) {
+              continue;
+            }
+
+            events.push(event);
+            automaticMakeupDates.add(date);
+
+            if (completeMissing(index + 1)) {
+              return true;
+            }
+
+            events.pop();
+
+            if (!alreadyUsed) {
+              automaticMakeupDates.delete(date);
+            }
+
+            if (timedOut) {
+              return false;
+            }
+          }
+        }
+
+        return false;
+      }
+
+      if (!completeMissing(0)) {
+        return;
       }
 
       // Workload completeness check:
@@ -1381,6 +1872,7 @@ function searchTimetableCandidates(
 
         candidates.push({
           events,
+          automaticMakeupDates: [...automaticMakeupDates].sort(),
           penaltyScore: report.totalPenaltyScore,
           ...(preferences.length > 0 ? { preferenceViolations } : {}),
         });
@@ -1392,6 +1884,7 @@ function searchTimetableCandidates(
     let bestUnitIndex = -1;
     let minCompatibleCount = Number.POSITIVE_INFINITY;
     let bestCompatibleSlots: CandidateSlot[] = [];
+    const remainingDeficits = [...minimumDeficits];
 
     for (let unitIndex = 0; unitIndex < units.length; unitIndex += 1) {
       if (assigned[unitIndex] !== null) {
@@ -1426,6 +1919,10 @@ function searchTimetableCandidates(
         return;
       }
 
+      remainingDeficits[unitIndex] =
+        units[unitIndex].requiredPairs -
+        Math.max(...compatible.map((slot): number => slot.events.length));
+
       if (
         compatible.length < minCompatibleCount ||
         (compatible.length === minCompatibleCount &&
@@ -1439,6 +1936,27 @@ function searchTimetableCandidates(
     }
 
     if (bestUnitIndex === -1) {
+      return;
+    }
+
+    if (
+      capacityGroups.some(
+        ({ members, dateCapacities }): boolean =>
+          members.reduce((sum, index): number => {
+            const slot = assigned[index];
+
+            return (
+              sum +
+              (slot === null
+                ? remainingDeficits[index]
+                : units[index].requiredPairs - slot.events.length)
+            );
+          }, 0) >
+          dateCapacities
+            .slice(0, maxAutomaticDates)
+            .reduce((sum, capacity): number => sum + capacity, 0),
+      )
+    ) {
       return;
     }
 

@@ -37,6 +37,7 @@ export const CurriculumPlanDialog: React.FC<CurriculumPlanDialogProps> = ({
 }) => {
   const { formatMessage } = useLanguage();
   const baseId = useId();
+  const formId = `${baseId}-form`;
   const curriculumFile = useCurriculumFile();
   const [termKey, setTermKey] = useState('');
   const [fields, setFields] = useState<CurriculumPlanFieldValues>(() => ({
@@ -148,8 +149,22 @@ export const CurriculumPlanDialog: React.FC<CurriculumPlanDialogProps> = ({
       title={formatMessage('timetable.planDialogTitle')}
       closeLabel={formatMessage('common.close')}
       width={720}
+      footer={
+        <>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isSaving}>
+            {formatMessage('common.cancel')}
+          </Button>
+          <Button
+            type="submit"
+            form={formId}
+            disabled={isSaving || curriculumFile.status === 'reading'}
+          >
+            {formatMessage(isSaving ? 'timetable.planCreating' : 'timetable.planCreate')}
+          </Button>
+        </>
+      }
     >
-      <form className={styles.form} onSubmit={(event) => void handleSubmit(event)}>
+      <form id={formId} className={styles.form} onSubmit={(event) => void handleSubmit(event)}>
         <FileInput
           label={formatMessage('timetable.planFile')}
           hint={formatMessage('timetable.planFileHint')}
@@ -206,15 +221,6 @@ export const CurriculumPlanDialog: React.FC<CurriculumPlanDialogProps> = ({
             {error}
           </p>
         )}
-
-        <div className={styles.actions}>
-          <Button type="button" variant="secondary" onClick={onClose} disabled={isSaving}>
-            {formatMessage('common.cancel')}
-          </Button>
-          <Button type="submit" disabled={isSaving || curriculumFile.status === 'reading'}>
-            {formatMessage(isSaving ? 'timetable.planCreating' : 'timetable.planCreate')}
-          </Button>
-        </div>
       </form>
     </Modal>
   );

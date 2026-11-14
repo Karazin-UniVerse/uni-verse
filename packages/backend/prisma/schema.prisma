@@ -386,6 +386,7 @@ model TeacherSlotPreference {
 }
 
 model TimetableVersion {
+  automaticMakeupDates String[] @default([])
   id                 String          @id @default(uuid())
   semesterCalendarId String
   status             TimetableStatus @default(DRAFT)

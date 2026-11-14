@@ -15,6 +15,8 @@ export const Modal: React.FC<ModalProps> = ({
   className,
   closeLabel,
   title,
+  description,
+  footer,
   closeButton = true,
   closeOnClickOutside = true,
   closeOnEscape = true,
@@ -24,6 +26,7 @@ export const Modal: React.FC<ModalProps> = ({
   width = 700,
 }) => {
   const titleId = useId();
+  const descriptionId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useClickOutside(dialogRef, onClose, {
@@ -61,15 +64,25 @@ export const Modal: React.FC<ModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
+        aria-describedby={description ? descriptionId : undefined}
         aria-label={dialogAriaLabel}
         tabIndex={-1}
       >
         {(title || closeButton) && (
           <div className={styles.header}>
-            {title && (
-              <h3 id={titleId} className={styles.title}>
-                {title}
-              </h3>
+            {(title || description) && (
+              <div className={styles.heading}>
+                {title && (
+                  <h3 id={titleId} className={styles.title}>
+                    {title}
+                  </h3>
+                )}
+                {description && (
+                  <p id={descriptionId} className={styles.description}>
+                    {description}
+                  </p>
+                )}
+              </div>
             )}
             {closeButton && (
               <button
@@ -85,6 +98,7 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
         )}
         <div className={styles.body}>{children}</div>
+        {footer && <div className={styles.footer}>{footer}</div>}
       </div>
     </div>
   );

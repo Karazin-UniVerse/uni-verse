@@ -269,6 +269,104 @@ describe('Timetable rescheduling concurrency (PostgreSQL integration)', () => {
     expect(await client1.timetableRescheduleAudit.count()).toBe(1);
   });
 
+  it('persists generated short-semester compensation on the draft, not the calendar', async () => {
+    await client1.semesterCalendar.update({
+      where: { id: ids.calendar },
+      data: { teachingWeeks: 14 },
+    });
+    await client1.teachingAssignment.update({
+      where: { id: ids.assign1 },
+      data: { academicHours: 32 },
+    });
+    const generated = await timetable1.generateTimetableDraft(ids.plan1, {
+      userId: ids.admin,
+      maxCandidates: 1,
+      timeoutMs: 5000,
+    });
+    const versionId = generated.versionIds[0];
+
+    try {
+      const version = await client1.timetableVersion.findUniqueOrThrow({
+        where: { id: versionId },
+        include: { events: true, semesterCalendar: true },
+      });
+
+      expect(version.events).toHaveLength(16);
+      expect(version.automaticMakeupDates.length).toBeGreaterThan(0);
+      expect(version.automaticMakeupDates).toEqual(
+        generated.candidates[0].automaticMakeupDates,
+      );
+      expect(version.semesterCalendar.makeupSaturdays).toEqual([]);
+      await timetable1.publishTimetableVersion(versionId, ids.admin);
+    } finally {
+      await client1.timetableVersion.delete({ where: { id: versionId } });
+    }
+  });
+
+  it('reloads version-specific Saturday authorization without changing the shared calendar', async () => {
+    const saturday = '2028-09-09';
+
+    await client1.timetableVersion.update({
+      where: { id: ids.ver1 },
+      data: { automaticMakeupDates: [saturday] },
+    });
+    await rescheduling2.reschedule(
+      {
+        eventId: ids.evt1,
+        newDate: saturday,
+        newPair: 2,
+        scope: 'ONCE',
+        reason: 'Makeup Saturday',
+      },
+      ids.admin,
+    );
+    const saved = await client1.timetableEvent.findUniqueOrThrow({
+      where: { id: ids.evt1 },
+    });
+    const calendar = await client1.semesterCalendar.findUniqueOrThrow({
+      where: { id: ids.calendar },
+    });
+
+    expect(saved.date.toISOString().slice(0, 10)).toBe(saturday);
+    expect(calendar.makeupSaturdays).toEqual([]);
+    await client1.timetableVersion.update({
+      where: { id: ids.ver1 },
+      data: { status: 'DRAFT' },
+    });
+    await timetable1.publishTimetableVersion(ids.ver1, ids.admin);
+
+    const published = await client1.timetableVersion.findUniqueOrThrow({
+      where: { id: ids.ver1 },
+    });
+
+    expect(published.status).toBe('PUBLISHED');
+    expect(published.automaticMakeupDates).toEqual([saturday]);
+  });
+
+  it('rejects publication when calendar edits invalidate a saved compensation date', async () => {
+    await client1.timetableVersion.update({
+      where: { id: ids.ver1 },
+      data: { status: 'DRAFT', automaticMakeupDates: ['2028-09-09'] },
+    });
+    await client1.timetableEvent.update({
+      where: { id: ids.evt1 },
+      data: { date: new Date('2028-09-09') },
+    });
+    await client1.semesterCalendar.update({
+      where: { id: ids.calendar },
+      data: { excludedDates: ['2028-09-09'] },
+    });
+
+    await expect(
+      timetable1.publishTimetableVersion(ids.ver1, ids.admin),
+    ).rejects.toThrow(ConflictException);
+    const version = await client1.timetableVersion.findUniqueOrThrow({
+      where: { id: ids.ver1 },
+    });
+
+    expect(version.status).toBe('DRAFT');
+  });
+
   it('serializes concurrent approve vs approve and approve vs reject with at most one decision', async () => {
     const reqA = await requests1.create(ids.teacher, {
       eventId: ids.evt1,

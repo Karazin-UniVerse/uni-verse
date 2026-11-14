@@ -185,4 +185,25 @@ describe('UNA Modal Component', () => {
     unmount();
     expect(document.body.style.overflow).toBe('');
   });
+
+  it('should describe the dialog and render footer actions outside the scrolling body', () => {
+    render(
+      <Modal
+        open={true}
+        onClose={() => {}}
+        title="Reschedule"
+        description="Algorithms, Monday pair 1"
+        footer={<button type="button">Save</button>}
+      >
+        <p>Form</p>
+      </Modal>,
+    );
+
+    const dialog = screen.getByRole('dialog', { name: 'Reschedule' });
+
+    expect(dialog).toHaveAccessibleDescription('Algorithms, Monday pair 1');
+    expect(screen.getByRole('button', { name: 'Save' }).parentElement).not.toContainElement(
+      screen.getByText('Form'),
+    );
+  });
 });

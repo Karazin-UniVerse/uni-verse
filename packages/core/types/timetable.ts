@@ -106,6 +106,7 @@ export type SemesterCalendarConfig = {
   teachingWeeks: number;
   excludedDates: string[];
   makeupSaturdays: Array<{ date: string; followsWeekday: number }>;
+  automaticMakeupDates?: string[];
 };
 
 export type ExpandSlotParams = {
@@ -270,6 +271,7 @@ export type GenerateTimetableParams = {
 export type TimetableCandidate = {
   events: ScheduledEvent[];
   penaltyScore: number;
+  automaticMakeupDates?: string[];
   versionId?: string;
   candidateIndex?: number;
   preferenceViolations?: PreferenceViolation[];

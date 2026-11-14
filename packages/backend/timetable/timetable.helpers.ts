@@ -70,8 +70,12 @@ export function parseMakeupSaturdays(
 
 export function parseMakeupSaturdayDates(
   calendar?: SemesterCalendar | null,
+  automaticMakeupDates: readonly string[] = [],
 ): Set<string> {
-  return new Set(parseMakeupSaturdays(calendar).map((entry) => entry.date));
+  return new Set([
+    ...parseMakeupSaturdays(calendar).map((entry) => entry.date),
+    ...automaticMakeupDates,
+  ]);
 }
 
 export function toScheduledEvent(

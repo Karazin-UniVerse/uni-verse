@@ -88,6 +88,27 @@ describe('TimetableReschedulingService preview', () => {
     });
   });
 
+  it('authorizes a Saturday only for the selected version', async () => {
+    const target = { ...input, newDate: '2027-10-09' };
+
+    await expect(
+      service.preview(target, 'teacher-1', 'INSTRUCTOR'),
+    ).rejects.toThrow(BadRequestException);
+    prisma.timetableEvent.findUnique.mockResolvedValue({
+      ...event,
+      timetableVersion: {
+        ...event.timetableVersion,
+        automaticMakeupDates: [target.newDate],
+      },
+    });
+
+    await expect(
+      service.preview(target, 'teacher-1', 'INSTRUCTOR'),
+    ).resolves.toMatchObject({
+      changes: [{ newDate: target.newDate }],
+    });
+  });
+
   it('rejects another instructor before revealing a proposal', async () => {
     await expect(
       service.preview(input, 'teacher-2', 'INSTRUCTOR'),

@@ -1,5 +1,30 @@
 # Timetable API
 
+## Automatic compensation dates (deployment prerequisite)
+
+Short-semester candidates carry version-specific `automaticMakeupDates`. These
+authorize mixed-origin compensating Saturday classes without modifying shared
+`SemesterCalendar.makeupSaturdays` or authorizing dates for unrelated candidates.
+Draft adjustment, publication, calendar validation and rescheduling use the saved
+version dates. All candidate versions of one generation are persisted atomically.
+
+Before deploying code that reads this field, apply the additive SQL and regenerate
+the client against the explicitly selected database:
+
+```bash
+pnpm --filter @universe/backend exec prisma db execute --file prisma/scripts/add-automatic-makeup-dates.sql
+pnpm --filter @universe/backend db:generate
+```
+
+This script adds an empty-default array to existing versions; it does not modify
+their events or the shared semester calendar. It is not run automatically by the
+development server.
+
+Automatic compensation searches additional Saturday-date budgets from zero upward.
+Successful candidates therefore use a proven minimum date count; an unfinished
+lower-budget search returns `TIMEOUT`, not a successful candidate or a claim of
+infeasibility. The configured timeout covers all search and preference passes.
+
 ## Overview
 
 The Timetable module manages academic groups, curriculum plans, teaching assignments, semester calendars, constraint-based timetable generation, atomic publication, and RFC 5545 `.ics` subscription feeds.

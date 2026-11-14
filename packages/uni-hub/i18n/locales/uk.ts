@@ -319,9 +319,6 @@ export const uk = {
   'timetable.generateDraft': 'Згенерувати розклад',
   'timetable.generating': 'Генерація...',
   'timetable.generateError': 'Не вдалося згенерувати розклад',
-  'timetable.diagnosticsTitle': 'Діагностика генерації',
-  'timetable.statesExplored': 'Досліджено станів',
-  'timetable.executionTime': 'Час генерації',
   'timetable.executionTimeVal': '{time} ms',
   'timetable.candidatesFound': 'Знайдено варіантів',
   'timetable.candidate': 'Варіант',
@@ -331,7 +328,6 @@ export const uk = {
   'timetable.softPenalties': 'М’які обмеження',
   'timetable.softPenaltiesVal': 'М’які обмеження: {score}',
   'timetable.noPenalties': 'Розклад без штрафів',
-  'timetable.publishVersion': 'Затвердити та опублікувати',
   'timetable.publishing': 'Публікація...',
   'timetable.publishError': 'Не вдалося опублікувати розклад',
   'timetable.publishedSuccess': 'Розклад успішно опубліковано!',
@@ -354,6 +350,13 @@ export const uk = {
   'schedule.typeSeminar': 'Семінар',
   'schedule.summaryPairs': 'Пар за день',
   'schedule.summaryHours': 'З першої до останньої',
+  'schedule.previewChanges': 'Переглянути зміни',
+  'schedule.confirmReschedule': 'Підтвердити перенесення',
+  'schedule.changesTitle': 'Що зміниться',
+  'schedule.subscribeHint':
+    'Посилання особисте: не діліться ним. Календар оновлюється автоматично.',
+  'schedule.eventSlot': '{date} · {start}–{end}',
+  'schedule.reasonHint': 'Причину побачить деканат під час погодження.',
   'schedule.typeLectureShort': 'ЛК',
   'schedule.typeLabShort': 'ЛР',
   'schedule.typePracticeShort': 'ПР',
@@ -374,8 +377,8 @@ export const uk = {
   'timetable.planDialogTitle': 'Новий навчальний план',
   'timetable.planFile': 'Файл навчального плану (.xlsx)',
   'timetable.planFileHint': 'РНП або НП з Excel. Без файлу буде створено порожній план.',
-  'timetable.planFileBrowse': 'Обрати файл',
-  'timetable.planFileDrag': 'або перетягніть його сюди',
+  'timetable.planFileBrowse': 'оберіть його',
+  'timetable.planFileDrag': 'Перетягніть файл сюди або',
   'timetable.planFileError':
     'Не вдалося прочитати файл. Перевірте, що це .xlsx з навчальним планом.',
   'timetable.planFileEmpty': 'У файлі немає аркушів з навчальним планом',
@@ -425,6 +428,15 @@ export const uk = {
   'timetable.slotUndesirable': 'Небажаний час',
   'timetable.slotUndesirableWarning': 'Небажаний слот',
   'timetable.teacherMissing': 'Оберіть викладача',
+  'timetable.draftTitle': 'Чернетка розкладу',
+  'timetable.regenerate': 'Згенерувати ще раз',
+  'timetable.publishCandidate': 'Опублікувати варіант #{number}',
+  'timetable.draftMeta': 'Знайдено варіантів: {count}',
+  'timetable.statesExploredMeta': 'досліджено станів: {count}',
+  'timetable.generateTimeout':
+    'Генератор не встиг скласти розклад за відведений час. Спробуйте ще раз або послабте обмеження: «лише субота», «пізні пари», кількість пар.',
+  'timetable.generateInvalidInput':
+    'Генератор не може розкласти частину занять: перевірте групу або потік кожного заняття та календар семестру.',
   'timetable.viewMode': 'Вигляд розкладу',
   'timetable.viewWeek': 'Тиждень',
   'timetable.viewDay': 'За днями',
@@ -880,8 +892,11 @@ export const uk = {
 
   // Teacher Slot Preferences
   'preferences.title': 'Побажання щодо розкладу (Викладач)',
+  'preferences.summary': 'Бажаних: {preferred} · небажаних: {undesirable}',
+  'preferences.legend': 'Стани слотів',
+  'preferences.cycleHint': 'Клік по клітинці: нейтрально → бажана → небажана',
   'preferences.description':
-    'Оберіть бажані та небажані пари на тиждень для обраного семестру. Клікніть по клітинці для зміни статусу.',
+    'Позначте, коли вам зручно викладати. Генерація розкладу ставить ваші пари в бажані слоти й оминає небажані.',
   'timetable.semesterSettings': 'Налаштування семестру',
   'schedule.requestSubmitted': 'Заявку подано на погодження деканату',
   'schedule.requestsTitle': 'Заявки на перенесення',
@@ -903,7 +918,11 @@ export const uk = {
   'schedule.scopeOnce': 'Лише це заняття',
   'schedule.scopeSeries': 'Це та наступні заняття',
   'timetable.teachingWeeks': 'Навчальних тижнів',
+  'timetable.shortSemesterSaturdays':
+    'За потреби генератор залучить мінімальну кількість субот, щоб зберегти всі навчальні години.',
   'timetable.saveSemesterSettings': 'Зберегти налаштування семестру',
+  'timetable.calendarPublishedConflict':
+    'Семестр уже має опублікований розклад із заняттями поза новими датами. Залиште дати, що охоплюють усі опубліковані заняття.',
   'timetable.calendarError':
     'Не вдалося завантажити або зберегти календар семестру. Незбережені зміни блокують генерацію.',
   'preferences.semester': 'Навчальний семестр:',

@@ -42,16 +42,13 @@ import type {
   TimetableCandidate,
   TimetableDemandDeficit,
 } from '@universe/core/types/timetable';
-import {
-  DAYS_PER_WEEK,
-  MS_PER_DAY,
-  TIMETABLE_WEEKDAY,
-} from '@universe/core/constants/timetable';
+import { TIMETABLE_WEEKDAY } from '@universe/core/constants/timetable';
 import {
   checkTimetableConflicts,
   generateIcsCalendar,
   generateTimetableCandidates,
   getPairsFromAcademicHours,
+  getSemesterEndMs,
 } from '@universe/core/utils/timetable';
 import { PRISMA_ERROR_CODE } from '../constants/prisma';
 import { PrismaService } from '../prisma/prisma.service';
@@ -639,12 +636,8 @@ export class TimetableService {
           await lockTimetableWrites(tx);
 
           const start = new Date(dto.startDate);
-          const monday =
-            start.getTime() -
-            ((start.getUTCDay() + DAYS_PER_WEEK - 1) % DAYS_PER_WEEK) *
-              MS_PER_DAY;
           const end = new Date(
-            monday + dto.teachingWeeks * DAYS_PER_WEEK * MS_PER_DAY,
+            getSemesterEndMs(start.getTime(), dto.teachingWeeks),
           );
 
           if (
@@ -680,6 +673,7 @@ export class TimetableService {
               select: {
                 date: true,
                 teachingAssignment: { select: { isSaturdayOnly: true } },
+                timetableVersion: { select: { automaticMakeupDates: true } },
               },
             });
             const makeupDates = new Set(
@@ -696,7 +690,10 @@ export class TimetableService {
                   dto.excludedDates?.includes(isoDate) ||
                   (event.date.getUTCDay() === TIMETABLE_WEEKDAY.SATURDAY &&
                     !event.teachingAssignment?.isSaturdayOnly &&
-                    !makeupDates.has(isoDate))
+                    !makeupDates.has(isoDate) &&
+                    !(
+                      event.timetableVersion?.automaticMakeupDates ?? []
+                    ).includes(isoDate))
                 );
               })
             ) {
@@ -884,14 +881,15 @@ export class TimetableService {
         where: {
           isCancelled: false,
           timetableVersion: {
-            semesterCalendarId: calendar.id,
             status: 'PUBLISHED',
           },
-          teachingAssignment: {
-            curriculumPlanId: { not: planId },
+          NOT: {
+            timetableVersion: { semesterCalendarId: calendar.id },
+            teachingAssignment: { curriculumPlanId: planId },
           },
         },
         include: {
+          timetableVersion: { include: { semesterCalendar: true } },
           teachingAssignment: {
             include: {
               group: true,
@@ -906,7 +904,6 @@ export class TimetableService {
         },
       })) ?? [];
 
-    const makeupDates = parseMakeupSaturdayDates(calendar);
     const fixedEvents: ScheduledEvent[] = publishedEventsRecords.map(
       (event) => {
         const a = event.teachingAssignment;
@@ -928,7 +925,13 @@ export class TimetableService {
           streamId: a?.streamId ?? undefined,
           hasLateSlotAuthorization: a?.hasLateSlotAuthorization,
           isSaturdayOnly: a?.isSaturdayOnly,
-          isMakeupSaturday: makeupDates.has(dateStr),
+          isMakeupSaturday:
+            parseMakeupSaturdayDates(
+              event.timetableVersion?.semesterCalendar ?? calendar,
+            ).has(dateStr) ||
+            (event.timetableVersion?.automaticMakeupDates ?? []).includes(
+              dateStr,
+            ),
         };
       },
     );
@@ -1025,55 +1028,58 @@ export class TimetableService {
       TimetableCandidate & { versionId: string; candidateIndex: number }
     > = [];
 
-    for (const [candidateIndex, candidate] of result.candidates.entries()) {
-      const eventsCreate = (candidate?.events ?? []).map((event) => {
-        const assignment = assignmentMap.get(event.teachingAssignmentId);
+    await this.prisma.$transaction(async (tx) => {
+      for (const [candidateIndex, candidate] of result.candidates.entries()) {
+        const eventsCreate = (candidate?.events ?? []).map((event) => {
+          const assignment = assignmentMap.get(event.teachingAssignmentId);
 
-        return {
-          teachingAssignmentId: event.teachingAssignmentId,
-          stableKey: `${event.teachingAssignmentId}:${event.date}:${event.pair}`,
-          date: new Date(event.date),
-          pair: event.pair,
-          pairSpan: event.pairSpan ?? 1,
-          meetingUrlOverride: null,
-          disciplineTitleSnapshot:
-            assignment?.disciplineTitle ?? event.disciplineTitle,
-          teachingTypeSnapshot: (assignment?.teachingType ??
-            event.teachingType) as unknown as TeachingType,
-          teacherIdSnapshot: assignment?.teacherId ?? event.teacherId,
-          isCancelled: false,
-        };
-      });
+          return {
+            teachingAssignmentId: event.teachingAssignmentId,
+            stableKey: `${event.teachingAssignmentId}:${event.date}:${event.pair}`,
+            date: new Date(event.date),
+            pair: event.pair,
+            pairSpan: event.pairSpan ?? 1,
+            meetingUrlOverride: null,
+            disciplineTitleSnapshot:
+              assignment?.disciplineTitle ?? event.disciplineTitle,
+            teachingTypeSnapshot: (assignment?.teachingType ??
+              event.teachingType) as unknown as TeachingType,
+            teacherIdSnapshot: assignment?.teacherId ?? event.teacherId,
+            isCancelled: false,
+          };
+        });
 
-      const version = await this.prisma.timetableVersion.create({
-        data: {
-          semesterCalendarId: calendar.id,
-          status: 'DRAFT',
-          candidateIndex,
-          generationId,
-          createdById,
-          events: {
-            create: eventsCreate,
+        const version = await tx.timetableVersion.create({
+          data: {
+            semesterCalendarId: calendar.id,
+            status: 'DRAFT',
+            candidateIndex,
+            generationId,
+            automaticMakeupDates: candidate.automaticMakeupDates ?? [],
+            createdById,
+            events: {
+              create: eventsCreate,
+            },
           },
-        },
-        include: {
-          events: true,
-        },
-      });
+          include: {
+            events: true,
+          },
+        });
 
-      versionIds.push(version.id);
-      candidateSummaries.push({
-        versionId: version.id,
-        candidateIndex,
-        penaltyScore: candidate.penaltyScore,
-        eventCount: candidate.events.length,
-      });
-      persistedCandidates.push({
-        ...candidate,
-        versionId: version.id,
-        candidateIndex,
-      });
-    }
+        versionIds.push(version.id);
+        candidateSummaries.push({
+          versionId: version.id,
+          candidateIndex,
+          penaltyScore: candidate.penaltyScore,
+          eventCount: candidate.events.length,
+        });
+        persistedCandidates.push({
+          ...candidate,
+          versionId: version.id,
+          candidateIndex,
+        });
+      }
+    });
 
     return {
       generationId,
@@ -1154,7 +1160,10 @@ export class TimetableService {
           ...event,
           ...changes.get(event.id),
         }));
-        const makeupDates = parseMakeupSaturdayDates(version.semesterCalendar);
+        const makeupDates = parseMakeupSaturdayDates(
+          version.semesterCalendar,
+          version.automaticMakeupDates,
+        );
         const unavailability = await tx.teacherUnavailability.findMany({
           where: { isConfirmed: true },
         });
@@ -1336,7 +1345,28 @@ export class TimetableService {
               where: { id: version.semesterCalendarId },
             })
           : null);
-      const makeupDates = parseMakeupSaturdayDates(calendar);
+      const makeupDates = parseMakeupSaturdayDates(
+        calendar,
+        version.automaticMakeupDates,
+      );
+
+      if (calendar && (version.automaticMakeupDates ?? []).length > 0) {
+        const start = calendar.startDate.getTime();
+        const end = getSemesterEndMs(start, calendar.teachingWeeks);
+
+        if (
+          activeEvents.some(
+            (event) =>
+              event.date.getTime() < start ||
+              event.date.getTime() >= end ||
+              calendar.excludedDates.includes(toIsoDateString(event.date)),
+          )
+        ) {
+          throw new ConflictException(
+            'Calendar changed; regenerate the draft before publishing',
+          );
+        }
+      }
 
       const otherPublishedEventsRecords =
         (await tx.timetableEvent?.findMany?.({
@@ -1386,13 +1416,8 @@ export class TimetableService {
           toScheduledEvent(
             event,
             parseMakeupSaturdayDates(
-              (
-                event as TimetableEvent & {
-                  timetableVersion?: {
-                    semesterCalendar?: SemesterCalendar | null;
-                  };
-                }
-              ).timetableVersion?.semesterCalendar,
+              event.timetableVersion?.semesterCalendar,
+              event.timetableVersion?.automaticMakeupDates,
             ),
           ),
         ),

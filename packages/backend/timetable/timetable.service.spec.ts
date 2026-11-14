@@ -1408,6 +1408,20 @@ describe('TimetableService', () => {
         mockTimetableVersionPrisma.create.mock.calls[0][0];
 
       expect(firstCreateCall.data.candidateIndex).toBe(0);
+      expect(firstCreateCall.data.automaticMakeupDates).toEqual([]);
+      expect(mockPrismaService.$transaction).toHaveBeenCalledTimes(1);
+      expect(mockTimetableEventPrisma.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            isCancelled: false,
+            timetableVersion: { status: 'PUBLISHED' },
+            NOT: {
+              timetableVersion: { semesterCalendarId: 'cal-1' },
+              teachingAssignment: { curriculumPlanId: 'plan-1' },
+            },
+          },
+        }),
+      );
       expect(typeof firstCreateCall.data.generationId).toBe('string');
       expect(firstCreateCall.data.events.create[0].stableKey).toMatch(
         /^assign-1:\d{4}-\d{2}-\d{2}:\d+$/,

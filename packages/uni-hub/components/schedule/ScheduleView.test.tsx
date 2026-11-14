@@ -136,8 +136,10 @@ describe('ScheduleView component', () => {
     await user.type(within(dialog).getByLabelText('Нова дата'), '2026-11-13');
     await user.selectOptions(within(dialog).getByLabelText('Пара'), '3');
     await user.type(within(dialog).getByLabelText('Причина'), 'Makeup');
-    await user.click(within(dialog).getByRole('button', { name: 'Зберегти' }));
-    await user.click(within(dialog).getByRole('button', { name: 'Зберегти' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Переглянути зміни' }));
+    await user.click(
+      await within(dialog).findByRole('button', { name: 'Підтвердити перенесення' }),
+    );
 
     expect(reschedule).toHaveBeenCalledWith('event-1', {
       scope: 'ONCE',
@@ -234,21 +236,21 @@ describe('ScheduleView component', () => {
     await user.clear(within(dialog).getByLabelText('Нова дата'));
     await user.type(within(dialog).getByLabelText('Нова дата'), '2026-11-13');
     await user.selectOptions(within(dialog).getByLabelText('Пара'), '3');
-    await user.selectOptions(within(dialog).getByLabelText('Обсяг перенесення'), 'SERIES');
+    await user.click(within(dialog).getByRole('radio', { name: 'Це та наступні заняття' }));
     await user.type(within(dialog).getByLabelText('Причина'), 'Conference travel');
-    await user.click(within(dialog).getByRole('button', { name: 'Зберегти' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Переглянути зміни' }));
 
     expect(preview).toHaveBeenCalledTimes(1);
     expect(await within(dialog).findByText(/2026-11-20, пара 3/)).toBeInTheDocument();
 
-    await user.click(within(dialog).getByRole('button', { name: 'Зберегти' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Підтвердити перенесення' }));
     const alert = await within(dialog).findByRole('alert');
 
     expect(alert).toHaveTextContent('Перенесення створює конфлікт у розкладі');
     expect(alert).not.toHaveTextContent('Target occupied');
     expect(within(dialog).getByLabelText('Причина')).toHaveValue('Conference travel');
 
-    await user.click(within(dialog).getByRole('button', { name: 'Зберегти' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Підтвердити перенесення' }));
     expect(createRequest).toHaveBeenCalledTimes(2);
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   }, 15_000);
@@ -290,7 +292,7 @@ describe('ScheduleView component', () => {
     const dialog = screen.getByRole('dialog');
 
     await user.type(within(dialog).getByLabelText('Причина'), 'Makeup');
-    await user.click(within(dialog).getByRole('button', { name: 'Зберегти' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Переглянути зміни' }));
 
     const alert = await within(dialog).findByRole('alert');
 

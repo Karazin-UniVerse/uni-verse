@@ -80,7 +80,6 @@ export type TimetablePhaseOrder =
 
 export const TIMETABLE_SKIP_REASON = {
   EXCLUDED_DATE: 'EXCLUDED_DATE',
-  BEFORE_SEMESTER_START: 'BEFORE_SEMESTER_START',
 } as const;
 
 export type TimetableSkipReason =
@@ -134,6 +133,10 @@ export const FIRST_LATE_PAIR = 6 as const;
 // Saturday-only classes are preferred up to this pair; later ones are penalized.
 export const LAST_PREFERRED_SATURDAY_PAIR = 3 as const;
 
+// A short semester may add any number of Saturdays, but one group or teacher gets at most this
+// many pairs on a single Saturday.
+export const MAX_PAIRS_PER_SATURDAY = 5 as const;
+
 export const TIMETABLE_ASSIGNMENT_TEACHING_TYPE = {
   LECTURE: 'LECTURE',
   PRACTICAL: 'PRACTICAL',
@@ -183,6 +186,9 @@ export const SUNDAY = 0 as const;
 
 export const DEFAULT_MAX_CANDIDATES = 1 as const;
 export const DEFAULT_TIMEOUT_MS = 5000 as const;
+
+// A short-semester attempt with a given Saturday count gets at most this share of the remaining time.
+export const SATURDAY_ATTEMPT_TIME_SHARE = 4 as const;
 export const MAX_STANDARD_PAIR = 4 as const;
 export const MID_STANDARD_PAIR = 5 as const;
 export const WEEKDAY_PENALTY_MULTIPLIER = 10 as const;

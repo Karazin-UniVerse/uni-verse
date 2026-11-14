@@ -21,6 +21,12 @@ describe('assertAdmin', () => {
 });
 
 describe('parseMakeupSaturdays', () => {
+  it('combines manual and version-specific automatic dates without changing the calendar', () => {
+    expect(parseMakeupSaturdayDates(null, ['2026-09-12'])).toEqual(
+      new Set(['2026-09-12']),
+    );
+    expect(parseMakeupSaturdayDates(null)).toEqual(new Set());
+  });
   const calendar = {
     makeupSaturdays: [
       { date: '2027-10-09', followsWeekday: 3 },

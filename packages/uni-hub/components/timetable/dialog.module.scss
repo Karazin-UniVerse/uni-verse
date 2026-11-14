@@ -1,0 +1,157 @@
+@use '@universe/ui/breakpoints.scss' as *;
+
+/* Shared layout for the timetable and schedule dialogs: a class summary, labelled fields, notes. */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-width: 0;
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-12) var(--space-16);
+  border: 1px solid var(--border-color);
+  border-left: var(--space-4) solid var(--accent-primary);
+  border-radius: var(--border-radius-medium);
+  background: color-mix(in srgb, var(--accent-primary) 5%, var(--bg-surface));
+  overflow-wrap: anywhere;
+}
+
+.summaryLabel {
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-secondary);
+}
+
+.summaryTitle {
+  font-size: var(--font-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.summaryMeta {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-12);
+
+  @include narrower-than('sm') {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  font-size: var(--font-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+
+  textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 88px;
+    padding: var(--space-8) var(--space-12);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-medium);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font: inherit;
+    font-weight: var(--font-weight-regular);
+    resize: vertical;
+  }
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.hint {
+  margin: 0;
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-regular);
+  color: var(--text-secondary);
+}
+
+.alert {
+  margin: 0;
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid color-mix(in srgb, var(--error-color) 40%, transparent);
+  border-radius: var(--border-radius-medium);
+  background: color-mix(in srgb, var(--error-color) 8%, var(--bg-surface));
+  color: var(--error-color);
+  font-size: var(--font-sm);
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--border-radius-medium);
+  background: var(--bg-hover);
+}
+
+.segment {
+  min-height: var(--space-40);
+  padding: 0 var(--space-12);
+  border: 0;
+  border-radius: var(--border-radius-small);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--font-sm);
+  cursor: pointer;
+
+  &[aria-checked='true'] {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-weight: var(--font-weight-bold);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.changes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: var(--space-12) var(--space-16);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-medium);
+  list-style: none;
+  font-size: var(--font-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.copyRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-8);
+
+  @include narrower-than('sm') {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.spacer {
+  flex: 1;
+}

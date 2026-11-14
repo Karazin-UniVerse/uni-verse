@@ -154,6 +154,63 @@
   background: color-mix(in srgb, var(--error-color) 14%, var(--bg-card));
 }
 
+.legendRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8) var(--space-16);
+  margin-bottom: var(--space-12);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-16);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-sm);
+  color: var(--text-primary);
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
+  }
+}
+
+.swatch {
+  width: var(--space-16);
+  height: var(--space-16);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-small);
+  background: var(--bg-card);
+}
+
+.summaryText {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+
+.dayMarks {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--space-4);
+}
+
+.dayMark {
+  width: var(--space-4);
+  height: var(--space-4);
+  border-radius: var(--border-radius-full);
+  background: var(--success-color);
+}
+
+.dayMarkUndesirable {
+  background: var(--error-color);
+}
+
 .days {
   display: flex;
   flex-direction: column;
@@ -168,6 +225,11 @@
 }
 
 .dayTab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
   min-height: var(--space-48);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-medium);

@@ -1,15 +1,15 @@
-import React, { useCallback, useId, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { BREAKPOINTS } from '@core/constants/breakpoints';
 import { RESPONSE_CODES } from '@core/constants/response-codes';
+import { hasHttpStatus } from '@uni-hub/utils/httpErrors';
 import {
-  MAX_RESCHEDULE_REASON_LENGTH,
   PAIR_SCHEDULE,
   RESCHEDULE_SCOPE,
   type RescheduleScope,
   type PairNumber,
 } from '@core/constants/timetable';
-import { Button, Modal, Select, TextInput, useToast } from '@una';
+import { useToast } from '@una';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { useMySchedule } from '@uni-hub/hooks/useMySchedule';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -18,6 +18,9 @@ import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { addDays, exportToICS, getMonthGridDays, isSafeMeetingUrl, isSameDay } from './helpers';
 import { ScheduleDayView } from './ScheduleDayView';
 import { ScheduleLegend } from './ScheduleLegend';
+import { ScheduleMeetingDialog } from './ScheduleMeetingDialog';
+import { ScheduleRescheduleDialog } from './ScheduleRescheduleDialog';
+import { ScheduleSubscribeDialog } from './ScheduleSubscribeDialog';
 import { ScheduleMonthView } from './ScheduleMonthView';
 import { ScheduleToolbar } from './ScheduleToolbar';
 import { ScheduleWeekView } from './ScheduleWeekView';
@@ -26,11 +29,15 @@ import { RescheduleRequests } from '../timetable/RescheduleRequests';
 import type { ReschedulePreviewResponse } from '@core/types/timetable';
 import styles from './ScheduleView.module.scss';
 
-import type { ScheduleEvent, ScheduleViewMode, ScheduleViewProps } from './ScheduleView.types';
+import type {
+  RescheduleFormValues,
+  ScheduleEvent,
+  ScheduleViewMode,
+  ScheduleViewProps,
+} from './ScheduleView.types';
 
 export type { ScheduleEvent };
 
-const CONFLICT_STATUS_MARKER = `(HTTP ${RESPONSE_CODES.CONFLICT})`;
 const INVALID_PROPOSAL_PATTERN =
   /Invalid rescheduling proposal|STARTED_EVENT|OUTSIDE_CALENDAR|INVALID_TARGET|NO_CHANGE/;
 
@@ -39,7 +46,7 @@ function getRescheduleErrorKey(
 ): 'schedule.rescheduleConflict' | 'schedule.rescheduleInvalid' | 'schedule.rescheduleError' {
   const message = failure instanceof Error ? failure.message : '';
 
-  if (message.includes(CONFLICT_STATUS_MARKER)) {
+  if (hasHttpStatus(failure, RESPONSE_CODES.CONFLICT)) {
     return 'schedule.rescheduleConflict';
   }
 
@@ -55,7 +62,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   isTeacher: propIsTeacher,
 }) => {
   const isMobile = useMediaQuery('less', BREAKPOINTS.md);
-  const rescheduleFormId = useId();
   const { localeTag, formatMessage } = useLanguage();
   const locale = localeTag;
   const { roles } = useCurrentUser();
@@ -264,6 +270,40 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     onEditMeetingUrl: handleEditMeetingUrl,
   };
 
+  const rescheduleSignature = reschedulingEvent
+    ? JSON.stringify({
+        eventId: reschedulingEvent.id,
+        newDate,
+        newPair: Number(newPair),
+        reason: reason.trim(),
+        scope,
+      })
+    : '';
+
+  const handleStartReschedule = (event: ScheduleEvent): void => {
+    const pad = (value: number): string => String(value).padStart(2, '0');
+    const start = `${pad(event.start.getHours())}:${pad(event.start.getMinutes())}`;
+
+    setReschedulingEvent(event);
+    setNewDate(
+      `${event.start.getFullYear()}-${pad(event.start.getMonth() + 1)}-${pad(event.start.getDate())}`,
+    );
+    setNewPair(Object.entries(PAIR_SCHEDULE).find(([, bell]) => bell.start === start)?.[0] ?? '1');
+    setReason('');
+    setScope(RESCHEDULE_SCOPE.ONCE);
+    setPreview(null);
+    setPreviewSignature('');
+    setRescheduleError(null);
+    setEditingEvent(null);
+  };
+
+  const handleRescheduleChange = (patch: Partial<RescheduleFormValues>): void => {
+    setNewDate((value) => patch.newDate ?? value);
+    setNewPair((value) => patch.newPair ?? value);
+    setReason((value) => patch.reason ?? value);
+    setScope((value) => patch.scope ?? value);
+  };
+
   const handleReschedule = async (): Promise<void> => {
     if (!reschedulingEvent || (!isAdmin && !isInstructor)) {
       return;
@@ -370,200 +410,37 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
         )}
       </div>
 
-      {/* Calendar Subscription Modal */}
-      <Modal
+      <ScheduleSubscribeDialog
         open={isSubscribeOpen}
+        feedUrl={feedUrl}
+        isCopied={isCopied}
+        error={subscribeError}
+        onCopy={() => void handleCopyFeedUrl()}
         onClose={() => setIsSubscribeOpen(false)}
-        title={formatMessage('schedule.subscribeTitle')}
-        closeLabel={formatMessage('common.close') || formatMessage('schedule.close')}
-      >
-        <div className={styles.modalBody}>
-          <p>{formatMessage('schedule.subscribeDescription')}</p>
-          {subscribeError ? (
-            <p className={styles.errorText} role="alert">
-              {subscribeError}
-            </p>
-          ) : (
-            <div className={styles.feedUrlRow}>
-              <TextInput
-                readOnly
-                value={feedUrl}
-                aria-label={formatMessage('schedule.subscribeTitle')}
-              />
-              <Button
-                type="button"
-                variant="primary"
-                onClick={handleCopyFeedUrl}
-                disabled={!feedUrl}
-              >
-                {isCopied
-                  ? formatMessage('schedule.feedUrlCopied')
-                  : formatMessage('schedule.copyFeedUrl')}
-              </Button>
-            </div>
-          )}
-          <div className={styles.modalActions}>
-            <Button type="button" variant="secondary" onClick={() => setIsSubscribeOpen(false)}>
-              {formatMessage('schedule.close')}
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Edit Meeting URL Modal */}
-      <Modal
-        open={Boolean(editingEvent)}
+      />
+      <ScheduleMeetingDialog
+        event={editingEvent}
+        url={meetingUrlInput}
+        error={meetingUrlError}
+        isSaving={isSavingUrl}
+        locale={locale}
+        onUrlChange={setMeetingUrlInput}
+        onSave={() => void handleSaveMeetingUrl()}
         onClose={() => setEditingEvent(null)}
-        title={`${formatMessage('schedule.meetingUrlTitle')}: ${editingEvent?.title ?? ''}`}
-        closeLabel={formatMessage('common.close') || formatMessage('schedule.close')}
-      >
-        <div className={styles.modalBody}>
-          {meetingUrlError && (
-            <p className={styles.errorText} role="alert">
-              {meetingUrlError}
-            </p>
-          )}
-          <label htmlFor="meeting-url-input">{formatMessage('schedule.meetingUrlLabel')}</label>
-          <TextInput
-            id="meeting-url-input"
-            type="url"
-            value={meetingUrlInput}
-            onChange={(e) => setMeetingUrlInput(e.target.value)}
-            placeholder={formatMessage('schedule.meetingUrlPlaceholder')}
-          />
-          <div className={styles.modalActions}>
-            {(isAdmin || isInstructor) && editingEvent && (
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={isSavingUrl}
-                onClick={() => {
-                  setReschedulingEvent(editingEvent);
-                  const date = editingEvent.start;
-
-                  setNewDate(
-                    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
-                  );
-                  setNewPair(
-                    Object.entries(PAIR_SCHEDULE).find(
-                      ([, bell]) =>
-                        bell.start ===
-                        `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`,
-                    )?.[0] ?? '1',
-                  );
-                  setReason('');
-                  setScope(RESCHEDULE_SCOPE.ONCE);
-                  setPreview(null);
-                  setPreviewSignature('');
-                  setRescheduleError(null);
-                  setEditingEvent(null);
-                }}
-              >
-                {formatMessage('schedule.rescheduleEvent')}
-              </Button>
-            )}
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setEditingEvent(null)}
-              disabled={isSavingUrl}
-            >
-              {formatMessage('schedule.cancel')}
-            </Button>
-            <Button
-              type="button"
-              variant="primary"
-              onClick={handleSaveMeetingUrl}
-              disabled={isSavingUrl}
-            >
-              {formatMessage('schedule.save')}
-            </Button>
-          </div>
-        </div>
-      </Modal>
-      <Modal
-        open={Boolean(reschedulingEvent)}
-        onClose={() => {
-          if (!isRescheduling) setReschedulingEvent(null);
-        }}
-        title={formatMessage('schedule.rescheduleEvent')}
-        closeLabel={formatMessage('common.close')}
-      >
-        <form
-          className={styles.modalBody}
-          onSubmit={(event) => {
-            event.preventDefault();
-            void handleReschedule();
-          }}
-        >
-          <p>{reschedulingEvent?.title}</p>
-          {rescheduleError && (
-            <p className={styles.errorText} role="alert">
-              {rescheduleError}
-            </p>
-          )}
-          <label htmlFor={`${rescheduleFormId}-date`}>{formatMessage('schedule.newDate')}</label>
-          <TextInput
-            id={`${rescheduleFormId}-date`}
-            type="date"
-            required
-            value={newDate}
-            disabled={isRescheduling}
-            onChange={(event) => setNewDate(event.target.value)}
-          />
-          <label htmlFor={`${rescheduleFormId}-pair`}>
-            {formatMessage('timetable.targetPair')}
-          </label>
-          <Select
-            id={`${rescheduleFormId}-pair`}
-            value={newPair}
-            disabled={isRescheduling}
-            onChange={setNewPair}
-            options={Object.keys(PAIR_SCHEDULE).map((pair) => ({ value: pair, label: pair }))}
-          />
-          <label htmlFor={`${rescheduleFormId}-reason`}>
-            {formatMessage('schedule.rescheduleReason')}
-          </label>
-          <TextInput
-            id={`${rescheduleFormId}-reason`}
-            required
-            maxLength={MAX_RESCHEDULE_REASON_LENGTH}
-            value={reason}
-            disabled={isRescheduling}
-            onChange={(event) => setReason(event.target.value)}
-          />
-          <label htmlFor={`${rescheduleFormId}-scope`}>
-            {formatMessage('schedule.rescheduleScope')}
-          </label>
-          <Select
-            id={`${rescheduleFormId}-scope`}
-            value={scope}
-            onChange={(value) => setScope(value as RescheduleScope)}
-            disabled={isRescheduling}
-            options={[
-              { value: RESCHEDULE_SCOPE.ONCE, label: formatMessage('schedule.scopeOnce') },
-              { value: RESCHEDULE_SCOPE.SERIES, label: formatMessage('schedule.scopeSeries') },
-            ]}
-          />
-          <Button type="submit" disabled={isRescheduling || !newDate || !reason.trim()}>
-            {formatMessage('schedule.save')}
-          </Button>
-          {preview && (
-            <ul>
-              {preview.changes.map((change) => (
-                <li key={change.eventId}>
-                  {formatMessage('schedule.occurrenceChange', {
-                    oldDate: change.oldDate,
-                    oldPair: change.oldPair,
-                    newDate: change.newDate,
-                    newPair: change.newPair,
-                  })}
-                </li>
-              ))}
-            </ul>
-          )}
-        </form>
-      </Modal>
+        onReschedule={isAdmin || isInstructor ? handleStartReschedule : undefined}
+      />
+      <ScheduleRescheduleDialog
+        event={reschedulingEvent}
+        values={{ newDate, newPair, reason, scope }}
+        preview={preview}
+        isPreviewCurrent={Boolean(preview) && previewSignature === rescheduleSignature}
+        isSaving={isRescheduling}
+        error={rescheduleError}
+        locale={locale}
+        onChange={handleRescheduleChange}
+        onSubmit={() => void handleReschedule()}
+        onClose={() => setReschedulingEvent(null)}
+      />
     </div>
   );
 };

@@ -481,11 +481,12 @@ describe('TimetableManagement component', () => {
       timeoutMs: 5000,
     });
 
-    expect(screen.getByText(/діагностика генерації/i)).toBeInTheDocument();
-    expect(screen.getByText('88')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Чернетка розкладу' })).toBeInTheDocument();
+    expect(screen.getByText('досліджено станів: 88')).toBeInTheDocument();
     expect(screen.getByText('15 ms')).toBeInTheDocument();
-    expect(screen.getByText(/варіант #1/i)).toBeInTheDocument();
-    expect(screen.getByText(/варіант #2/i)).toBeInTheDocument();
+    expect(screen.getByText('Варіант #1')).toBeInTheDocument();
+    expect(screen.getByText('Варіант #2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /опублікувати варіант #1/i })).toBeInTheDocument();
     expect(screen.getByText(/розклад без штрафів/i)).toBeInTheDocument();
   });
 
@@ -552,7 +553,7 @@ describe('TimetableManagement component', () => {
     await waitFor(() => expect(generateBtn).toBeEnabled());
     await user.click(generateBtn);
 
-    const publishBtn = screen.getByRole('button', { name: /затвердити та опублікувати/i });
+    const publishBtn = screen.getByRole('button', { name: /опублікувати варіант/i });
 
     await user.click(publishBtn);
 
@@ -590,7 +591,7 @@ describe('TimetableManagement component', () => {
     );
     await user.click(screen.getByRole('button', { name: /згенерувати розклад/i }));
     await user.click(await screen.findByText(/варіант #2/i));
-    await user.click(screen.getByRole('button', { name: /затвердити та опублікувати/i }));
+    await user.click(screen.getByRole('button', { name: /опублікувати варіант/i }));
 
     expect(publishSpy).toHaveBeenCalledWith('ver-cand-2');
   });
@@ -681,7 +682,7 @@ describe('TimetableManagement component', () => {
     await user.click(generateBtn);
 
     expect(screen.getByRole('alert')).toHaveTextContent(/не вдалося згенерувати розклад/i);
-    expect(screen.queryByText(/діагностика генерації/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Чернетка розкладу' })).not.toBeInTheDocument();
   });
 
   it('displays error message and does not mark published when publishing fails', async () => {
@@ -704,7 +705,7 @@ describe('TimetableManagement component', () => {
     await waitFor(() => expect(generateBtn).toBeEnabled());
     await user.click(generateBtn);
 
-    const publishBtn = screen.getByRole('button', { name: /затвердити та опублікувати/i });
+    const publishBtn = screen.getByRole('button', { name: /опублікувати варіант/i });
 
     await user.click(publishBtn);
 
@@ -993,5 +994,37 @@ describe('TimetableManagement component', () => {
     expect(mondayCells[0]?.className).toContain('undesirable');
     expect(mondayCells[1]?.className).toContain('preferred');
     expect(screen.getByText('Бажаний час')).toBeInTheDocument();
+  });
+
+  it('explains a solver timeout instead of showing the raw server error', async () => {
+    vi.spyOn(timetableApi, 'generateTimetableDraft').mockRejectedValue(
+      new Error('Failed to generate timetable draft: TIMEOUT (HTTP 400)'),
+    );
+    const user = userEvent.setup();
+
+    renderComponent({
+      initialPlanId: 'plan-cs-2026',
+      initialWorkload: [
+        {
+          id: 'assignment-1',
+          disciplineTitle: 'Фізичне виховання',
+          teachingType: 'PRACTICE',
+          academicHours: 30,
+          groupId: 'group-1',
+          isSaturdayOnly: false,
+          hasLateSlotAuthorization: false,
+        },
+      ],
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /згенерувати розклад/i })).toBeEnabled(),
+    );
+    await user.click(screen.getByRole('button', { name: /згенерувати розклад/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Генератор не встиг скласти розклад',
+    );
+    expect(screen.getByRole('alert')).not.toHaveTextContent('TIMEOUT');
   });
 });

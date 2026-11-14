@@ -23,6 +23,28 @@ const calendar = {
   makeupSaturdays: [],
 };
 
+test('authorizes only version-specific automatic Saturdays', () => {
+  const params = {
+    eventId: event.id,
+    events: [event],
+    newDate: '2026-10-24',
+    newPair: 2,
+    scope: RESCHEDULE_SCOPE.ONCE,
+    now: new Date('2026-10-01T00:00:00Z'),
+  };
+
+  assert.deepEqual(buildRescheduleChanges({ ...params, calendar }), {
+    ok: false,
+    error: 'OUTSIDE_CALENDAR',
+  });
+  assert.ok(
+    buildRescheduleChanges({
+      ...params,
+      calendar: { ...calendar, automaticMakeupDates: ['2026-10-24'] },
+    }).ok,
+  );
+});
+
 test('series preserves alternating intervals across DST and excludes other weekly slots', () => {
   const result = buildRescheduleChanges({
     eventId: event.id,

@@ -1,18 +1,11 @@
-import {
-  DAYS_PER_WEEK,
-  LAST_PAIR,
-  MS_PER_DAY,
-  RESCHEDULE_SCOPE,
-  SUNDAY,
-  TIMETABLE_WEEKDAY,
-} from '../constants/timetable.ts';
+import { LAST_PAIR, RESCHEDULE_SCOPE, SUNDAY, TIMETABLE_WEEKDAY } from '../constants/timetable.ts';
 import type {
   BuildRescheduleChangesParams,
   BuildRescheduleChangesResult,
   RescheduleOccurrenceChange,
   ScheduledEvent,
 } from '../types/timetable.ts';
-import { getPairInstants } from './timetable.ts';
+import { getPairInstants, getSemesterEndMs } from './timetable.ts';
 
 function sameSeries(selected: ScheduledEvent, event: ScheduledEvent): boolean {
   return (
@@ -57,9 +50,7 @@ export function buildRescheduleChanges({
 
   const offset = Date.parse(newDate) - Date.parse(selected.date);
   const start = Date.parse(calendar.startDate);
-  const startWeekday = new Date(start).getUTCDay();
-  const monday = start - ((startWeekday + DAYS_PER_WEEK - 1) % DAYS_PER_WEEK) * MS_PER_DAY;
-  const end = monday + calendar.teachingWeeks * DAYS_PER_WEEK * MS_PER_DAY;
+  const end = getSemesterEndMs(start, calendar.teachingWeeks);
   const series = events
     .filter(
       (event) =>
@@ -77,7 +68,9 @@ export function buildRescheduleChanges({
     const weekday = new Date(dateMs).getUTCDay();
     const sourceInstants = getPairInstants(event.date, event.pair);
     const targetInstants = getPairInstants(date, newPair);
-    const isMakeup = calendar.makeupSaturdays.some((entry) => entry.date === date);
+    const isMakeup =
+      calendar.makeupSaturdays.some((entry) => entry.date === date) ||
+      calendar.automaticMakeupDates?.includes(date) === true;
 
     if (
       !sourceInstants.ok ||

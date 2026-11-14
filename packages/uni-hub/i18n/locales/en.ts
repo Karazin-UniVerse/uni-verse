@@ -320,9 +320,6 @@ export const en = {
   'timetable.generateDraft': 'Generate timetable',
   'timetable.generating': 'Generating...',
   'timetable.generateError': 'Failed to generate timetable',
-  'timetable.diagnosticsTitle': 'Generation diagnostics',
-  'timetable.statesExplored': 'States explored',
-  'timetable.executionTime': 'Execution time',
   'timetable.executionTimeVal': '{time} ms',
   'timetable.candidatesFound': 'Candidates found',
   'timetable.candidate': 'Candidate',
@@ -332,7 +329,6 @@ export const en = {
   'timetable.softPenalties': 'Soft penalties',
   'timetable.softPenaltiesVal': 'Soft penalties: {score}',
   'timetable.noPenalties': 'Timetable without penalties',
-  'timetable.publishVersion': 'Approve and publish',
   'timetable.publishing': 'Publishing...',
   'timetable.publishError': 'Failed to publish timetable',
   'timetable.publishedSuccess': 'Timetable successfully published!',
@@ -355,6 +351,13 @@ export const en = {
   'schedule.typeSeminar': 'Seminar',
   'schedule.summaryPairs': 'Pairs today',
   'schedule.summaryHours': 'First to last',
+  'schedule.previewChanges': 'Preview changes',
+  'schedule.confirmReschedule': 'Confirm rescheduling',
+  'schedule.changesTitle': 'What changes',
+  'schedule.subscribeHint':
+    'The link is personal, do not share it. The calendar updates automatically.',
+  'schedule.eventSlot': '{date} · {start}–{end}',
+  'schedule.reasonHint': 'The dean sees the reason when approving.',
   'schedule.typeLectureShort': 'Lec',
   'schedule.typeLabShort': 'Lab',
   'schedule.typePracticeShort': 'Prac',
@@ -376,8 +379,8 @@ export const en = {
   'timetable.planFile': 'Curriculum file (.xlsx)',
   'timetable.planFileHint':
     'A working (РНП) or programme (НП) plan from Excel. Without a file an empty plan is created.',
-  'timetable.planFileBrowse': 'Choose file',
-  'timetable.planFileDrag': 'or drop it here',
+  'timetable.planFileBrowse': 'browse',
+  'timetable.planFileDrag': 'Drop the file here or',
   'timetable.planFileError': 'Could not read the file. Check that it is an .xlsx curriculum.',
   'timetable.planFileEmpty': 'The file has no curriculum sheets',
   'timetable.planFileReading': 'Reading the file…',
@@ -426,6 +429,15 @@ export const en = {
   'timetable.slotUndesirable': 'Undesirable time',
   'timetable.slotUndesirableWarning': 'Undesirable slot',
   'timetable.teacherMissing': 'Choose a teacher',
+  'timetable.draftTitle': 'Timetable draft',
+  'timetable.regenerate': 'Generate again',
+  'timetable.publishCandidate': 'Publish candidate #{number}',
+  'timetable.draftMeta': 'Candidates found: {count}',
+  'timetable.statesExploredMeta': 'states explored: {count}',
+  'timetable.generateTimeout':
+    'The generator ran out of time. Try again or relax the constraints: Saturday only, late pairs, the number of pairs.',
+  'timetable.generateInvalidInput':
+    'The generator cannot place some classes: check the group or stream of every class and the semester calendar.',
   'timetable.viewMode': 'Schedule view',
   'timetable.viewWeek': 'Week',
   'timetable.viewDay': 'By day',
@@ -878,8 +890,11 @@ export const en = {
 
   // Teacher Slot Preferences
   'preferences.title': 'Schedule Preferences (Teacher)',
+  'preferences.summary': 'Preferred: {preferred} · undesirable: {undesirable}',
+  'preferences.legend': 'Slot states',
+  'preferences.cycleHint': 'Click a cell: neutral → preferred → undesirable',
   'preferences.description':
-    'Select preferred and undesirable slots per week for the selected semester. Click a cell to toggle its status.',
+    'Mark when it suits you to teach. Timetable generation puts your pairs into preferred slots and avoids undesirable ones.',
   'timetable.semesterSettings': 'Semester settings',
   'schedule.requestSubmitted': 'Request submitted for dean approval',
   'schedule.requestsTitle': 'Rescheduling requests',
@@ -902,7 +917,11 @@ export const en = {
   'schedule.scopeOnce': 'This class only',
   'schedule.scopeSeries': 'This and subsequent classes',
   'timetable.teachingWeeks': 'Teaching weeks',
+  'timetable.shortSemesterSaturdays':
+    'If needed, the generator will use the minimum number of Saturdays to preserve all teaching hours.',
   'timetable.saveSemesterSettings': 'Save semester settings',
+  'timetable.calendarPublishedConflict':
+    'This semester already has a published timetable with classes outside the new dates. Keep dates that cover every published class.',
   'timetable.calendarError':
     'Could not load or save the semester calendar. Unsaved changes block generation.',
   'preferences.semester': 'Academic semester:',

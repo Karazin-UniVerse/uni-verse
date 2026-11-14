@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import test, { describe } from 'node:test';
-import { TIMETABLE_TEACHING_TYPE, TIMETABLE_WEEKDAY } from '../../constants/timetable.ts';
+import {
+  MAX_PAIRS_PER_SATURDAY,
+  TIMETABLE_TEACHING_TYPE,
+  TIMETABLE_WEEKDAY,
+} from '../../constants/timetable.ts';
 import type {
   ScheduledEvent,
   SemesterCalendarConfig,
@@ -785,6 +789,37 @@ describe('timetable generator', () => {
     }
   });
 
+  test('spreads hours that fit no named pattern evenly over the semester', () => {
+    const demands: TeachingDemand[] = [
+      {
+        id: 'ELECTIVE-30',
+        disciplineTitle: 'University elective',
+        teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+        teacherId: 'TEACHER-ELECTIVE',
+        groupIds: ['GROUP-ELECTIVE'],
+        academicHours: 30,
+      },
+    ];
+
+    const result = generateTimetableCandidates({ demands, calendar });
+
+    assert.strictEqual(result.ok, true);
+
+    if (result.ok) {
+      const events = result.candidates[0].events;
+      const weekOf = (date: string): number =>
+        Math.floor((Date.parse(date) - Date.parse(calendar.startDate)) / (7 * 86_400_000));
+      const perWeek = new Map<number, number>();
+
+      for (const event of events) {
+        perWeek.set(weekOf(event.date), (perWeek.get(weekOf(event.date)) ?? 0) + 1);
+      }
+
+      assert.strictEqual(events.length, 15);
+      assert.ok(Math.max(...perWeek.values()) <= 1);
+    }
+  });
+
   test('supports maxCandidates option to return multiple valid candidates', () => {
     const demands: TeachingDemand[] = [
       {
@@ -1029,6 +1064,200 @@ describe('timetable generator', () => {
   });
 
   describe('shortened semester', () => {
+    test('orders relaxed Saturday pairs by preferences without losing canonical combinations', () => {
+      const preferences = Array.from({ length: 5 }, (_, day) =>
+        Array.from({ length: 5 }, (_, pair) => ({
+          teacherId: 'teacher',
+          semesterCalendarId: 'semester',
+          weekday: day + 1,
+          pair: pair + 1,
+          preference: 'UNDESIRABLE' as const,
+        })),
+      ).flat();
+
+      preferences.push({
+        teacherId: 'teacher',
+        semesterCalendarId: 'semester',
+        weekday: 6,
+        pair: 1,
+        preference: 'UNDESIRABLE',
+      });
+      const result = generateTimetableCandidates({
+        calendar: { ...calendar, teachingWeeks: 14 },
+        demands: [
+          {
+            id: 'relaxed',
+            disciplineTitle: 'Calculus',
+            teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+            teacherId: 'teacher',
+            groupIds: ['group'],
+            academicHours: 32,
+          },
+        ],
+        preferences,
+      });
+
+      assert.ok(result.ok);
+      assert.equal(result.candidates[0].automaticMakeupDates?.length, 1);
+      assert.equal(result.candidates[0].preferenceViolations?.length, 14);
+      assert.deepEqual(
+        result.candidates[0].events
+          .filter((event) => event.isMakeupSaturday)
+          .map((event) => event.pair),
+        [2, 3],
+      );
+      const preferredResult = generateTimetableCandidates({
+        calendar: { ...calendar, teachingWeeks: 14 },
+        demands: [
+          {
+            id: 'preferred-rank',
+            disciplineTitle: 'Calculus',
+            teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+            teacherId: 'teacher',
+            groupIds: ['group'],
+            academicHours: 32,
+          },
+        ],
+        preferences: [
+          ...preferences,
+          {
+            teacherId: 'teacher',
+            semesterCalendarId: 'semester',
+            weekday: 6,
+            pair: 5,
+            preference: 'PREFERRED',
+          },
+        ],
+      });
+
+      assert.ok(preferredResult.ok);
+      assert.equal(preferredResult.candidates[0].preferenceViolations?.length, 14);
+      assert.deepEqual(
+        preferredResult.candidates[0].events
+          .filter((event) => event.isMakeupSaturday)
+          .map((event) => event.pair),
+        [5, 2],
+      );
+    });
+    test('sums distinct Saturday capacities instead of reusing the best date capacity', () => {
+      const demands: TeachingDemand[] = Array.from({ length: 10 }, (_, index) => ({
+        id: `shared-${index}`,
+        disciplineTitle: `Course ${index}`,
+        teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+        teacherId: 'shared',
+        groupIds: ['group'],
+        academicHours: 32,
+      }));
+
+      demands.push({
+        id: 'saturday',
+        disciplineTitle: 'Saturday',
+        teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+        groupIds: ['group'],
+        academicHours: 24,
+        isSaturdayOnly: true,
+      });
+
+      const result = generateTimetableCandidates({
+        calendar: { ...calendar, teachingWeeks: 14 },
+        demands,
+        options: { timeoutMs: 1000 },
+      });
+
+      assert.ok(result.ok, JSON.stringify(result.diagnostics));
+      assert.equal(result.candidates[0].events.length, 172);
+      assert.equal(result.candidates[0].automaticMakeupDates?.length, 5);
+      assert.ok(checkTimetableConflicts({ events: result.candidates[0].events }).isValid);
+    });
+    test('adds as many Saturdays as needed but never more than five pairs on one of them', () => {
+      const demands: TeachingDemand[] = Array.from({ length: 12 }, (_, index) => ({
+        id: `crowded-${index}`,
+        disciplineTitle: `Course ${index}`,
+        teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+        teacherId: `teacher-${index}`,
+        groupIds: ['crowded-group'],
+        academicHours: 32,
+        hasLateSlotAuthorization: true,
+      }));
+      const result = generateTimetableCandidates({
+        calendar: { ...calendar, teachingWeeks: 14 },
+        demands,
+        options: { timeoutMs: 3000 },
+      });
+
+      assert.ok(result.ok, JSON.stringify(result.diagnostics));
+
+      const pairsPerSaturday = new Map<string, number>();
+
+      for (const event of result.candidates[0].events) {
+        if (new Date(`${event.date}T00:00:00Z`).getUTCDay() === TIMETABLE_WEEKDAY.SATURDAY) {
+          pairsPerSaturday.set(event.date, (pairsPerSaturday.get(event.date) ?? 0) + 1);
+        }
+      }
+
+      assert.equal(result.candidates[0].events.length, 192);
+      assert.ok(pairsPerSaturday.size >= 5);
+      assert.ok(Math.max(...pairsPerSaturday.values()) <= MAX_PAIRS_PER_SATURDAY);
+    });
+    test('keeps every lecture ahead of its practices when a short semester starts midweek', () => {
+      const demands: TeachingDemand[] = Array.from({ length: 4 }, (_, index) => [
+        {
+          id: `midweek-lecture-${index}`,
+          disciplineTitle: `Course ${index}`,
+          teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+          teacherId: `lecturer-${index}`,
+          groupIds: ['midweek-group'],
+          academicHours: 32,
+        },
+        {
+          id: `midweek-practice-${index}`,
+          disciplineTitle: `Course ${index}`,
+          teachingType: TIMETABLE_TEACHING_TYPE.PRACTICAL,
+          teacherId: `assistant-${index}`,
+          groupIds: ['midweek-group'],
+          academicHours: 32,
+        },
+      ]).flat();
+      const result = generateTimetableCandidates({
+        calendar: { ...calendar, startDate: '2026-09-08', teachingWeeks: 14 },
+        demands,
+        options: { timeoutMs: 3000 },
+      });
+
+      assert.ok(result.ok, JSON.stringify(result.diagnostics));
+
+      const { events } = result.candidates[0];
+      const firstOf = (id: string): string =>
+        events
+          .filter((event) => event.teachingAssignmentId === id)
+          .map((event) => `${event.date}|${event.pair}`)
+          .sort()[0];
+
+      assert.equal(events.length, 128);
+
+      for (let index = 0; index < 4; index += 1) {
+        assert.ok(firstOf(`midweek-lecture-${index}`) < firstOf(`midweek-practice-${index}`));
+      }
+    });
+    test('rejects impossible teacher Saturday budgets before enumerating weekday combinations', () => {
+      const demands: TeachingDemand[] = Array.from({ length: 8 }, (_, index) => ({
+        id: `capacity-${index}`,
+        disciplineTitle: `Course ${index}`,
+        teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+        teacherId: 'shared',
+        groupIds: [`group-${index}`],
+        academicHours: 32,
+      }));
+      const result = generateTimetableCandidates({
+        calendar: { ...calendar, teachingWeeks: 14 },
+        demands,
+        options: { timeoutMs: 1000 },
+      });
+
+      assert.ok(result.ok, JSON.stringify(result.diagnostics));
+      assert.equal(result.candidates[0].automaticMakeupDates?.length, 4);
+      assert.equal(result.candidates[0].events.length, 128);
+    });
     const demand32h: TeachingDemand = {
       id: 'DEMAND-SHORT-32H',
       disciplineTitle: 'Discrete Math',
@@ -1038,7 +1267,165 @@ describe('timetable generator', () => {
       academicHours: 32,
     };
 
-    test('32h/14 weeks with 0 makeup Saturdays fails and reports deficit 2', () => {
+    test('shares one automatic Saturday across different weekday origins and respects fixed occupancy', () => {
+      const shortCalendar = { ...calendar, teachingWeeks: 14 };
+      const demands = [demand32h, { ...demand32h, id: 'other', disciplineTitle: 'Physics' }];
+      const fixedEvents: ScheduledEvent[] = [];
+
+      for (let week = 0; week < 14; week += 1) {
+        for (let weekday = 1; weekday <= 5; weekday += 1) {
+          for (let pair = 1; pair <= 5; pair += 1) {
+            if ((weekday === 1 || weekday === 2) && pair === 1) continue;
+
+            fixedEvents.push({
+              ...demand32h,
+              id: `fixed-${week}-${weekday}-${pair}`,
+              teachingAssignmentId: 'fixed',
+              date: new Date(Date.parse(calendar.startDate) + (week * 7 + weekday - 1) * 86400000)
+                .toISOString()
+                .slice(0, 10),
+              pair,
+            });
+          }
+        }
+      }
+
+      const result = generateTimetableCandidates({ calendar: shortCalendar, demands, fixedEvents });
+
+      assert.ok(result.ok);
+      const candidate = result.candidates[0];
+
+      assert.equal(candidate.events.length, 32);
+      assert.equal(candidate.automaticMakeupDates?.length, 1);
+      assert.equal(
+        new Set(
+          candidate.events
+            .filter((event) => !event.isMakeupSaturday)
+            .map((event) => new Date(event.date).getUTCDay()),
+        ).size,
+        2,
+      );
+      assert.ok(checkTimetableConflicts({ events: [...fixedEvents, ...candidate.events] }).isValid);
+    });
+
+    test('counts a midweek start from its first day and avoids excluded Saturdays', () => {
+      const result = generateTimetableCandidates({
+        calendar: {
+          ...calendar,
+          startDate: '2026-09-09',
+          teachingWeeks: 14,
+          excludedDates: ['2026-09-12'],
+        },
+        demands: [demand32h],
+        preferences: [
+          {
+            teacherId: demand32h.teacherId!,
+            semesterCalendarId: 'semester',
+            weekday: 1,
+            pair: 1,
+            preference: 'PREFERRED',
+          },
+        ],
+      });
+
+      assert.ok(result.ok);
+      const candidate = result.candidates[0];
+
+      assert.equal(candidate.events.length, 16);
+      assert.equal(candidate.events.filter((event) => event.isMakeupSaturday).length, 2);
+      assert.equal(candidate.automaticMakeupDates?.length, 1);
+      assert.ok(
+        candidate.events.every(
+          (event) =>
+            event.date >= '2026-09-09' && event.date < '2026-12-16' && event.date !== '2026-09-12',
+        ),
+      );
+    });
+
+    test('proves two dates are needed when only one pair per Saturday is available', () => {
+      const unavailability = Array.from({ length: 14 }, (_, week) => {
+        const date = new Date(Date.parse('2026-09-12') + week * 7 * 86400000)
+          .toISOString()
+          .slice(0, 10);
+
+        return Array.from({ length: 4 }, (_, pair) => ({
+          teacherId: demand32h.teacherId!,
+          date,
+          pair: pair + 2,
+          isConfirmed: true,
+        }));
+      }).flat();
+      const result = generateTimetableCandidates({
+        calendar: { ...calendar, teachingWeeks: 14 },
+        demands: [demand32h],
+        unavailability,
+      });
+
+      assert.ok(result.ok);
+      assert.equal(result.candidates[0].automaticMakeupDates?.length, 2);
+      assert.equal(result.candidates[0].events.length, 16);
+    });
+
+    test('does not count ordinary Saturday-only lessons as automatic dates', () => {
+      const result = generateTimetableCandidates({
+        calendar: { ...calendar, teachingWeeks: 14 },
+        demands: [{ ...demand32h, isSaturdayOnly: true, academicHours: 28 }],
+      });
+
+      assert.ok(result.ok);
+      assert.equal(result.candidates[0].automaticMakeupDates?.length, 0);
+      assert.equal(result.candidates[0].events.length, 14);
+    });
+
+    test('uses a single manual occurrence before compensating the remaining deficit', () => {
+      const result = generateTimetableCandidates({
+        calendar: {
+          ...calendar,
+          teachingWeeks: 14,
+          makeupSaturdays: [{ date: '2026-09-12', followsWeekday: 1 }],
+        },
+        demands: [demand32h],
+        preferences: [
+          {
+            teacherId: demand32h.teacherId!,
+            semesterCalendarId: 'semester',
+            weekday: 1,
+            pair: 1,
+            preference: 'PREFERRED',
+          },
+        ],
+      });
+
+      assert.ok(result.ok);
+      assert.equal(result.candidates[0].events.length, 16);
+      assert.equal(result.candidates[0].events.filter((event) => event.isMakeupSaturday).length, 2);
+      assert.equal(result.candidates[0].automaticMakeupDates?.length, 1);
+    });
+
+    test('reports TIMEOUT while proving the minimum rather than returning infeasibility', () => {
+      const originalNow = Date.now;
+      let calls = 0;
+
+      Date.now = (): number => calls++;
+
+      try {
+        const result = generateTimetableCandidates({
+          calendar: { ...calendar, teachingWeeks: 14 },
+          demands: [demand32h],
+          options: { timeoutMs: 50 },
+        });
+
+        assert.equal(result.ok, false);
+
+        if (!result.ok) {
+          assert.equal(result.error, 'TIMEOUT');
+        }
+      } finally {
+        Date.now = originalNow;
+      }
+    });
+
+    test('32h/14 weeks preserves 16 occurrences using one minimum additional Saturday', () => {
       const calendar14Weeks: SemesterCalendarConfig = {
         startDate: '2026-09-07',
         teachingWeeks: 14,
@@ -1051,14 +1438,18 @@ describe('timetable generator', () => {
         calendar: calendar14Weeks,
       });
 
-      assert.strictEqual(result.ok, false);
+      assert.ok(result.ok);
+      const candidate = result.candidates[0];
 
-      if (!result.ok) {
-        assert.strictEqual(result.error, 'NO_FEASIBLE_SOLUTION');
-        assert.deepStrictEqual(result.diagnostics.deficits, [
-          { demandId: 'DEMAND-SHORT-32H', required: 16, scheduled: 14 },
-        ]);
-      }
+      assert.equal(candidate.events.length, 16);
+      assert.equal(new Set(candidate.events.map((event) => event.id)).size, 16);
+      assert.equal(
+        new Set(
+          candidate.events.filter((event) => event.isMakeupSaturday).map((event) => event.date),
+        ).size,
+        1,
+      );
+      assert.ok(checkTimetableConflicts({ events: candidate.events }).isValid);
     });
 
     test('32h/14 weeks with 2 matching makeup Saturdays succeeds with exactly 16 events', () => {

@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { FixedCell } from '../../../storybook/FixedCell/FixedCell';
 import { VariantMatrix } from '../../../storybook/VariantMatrix/VariantMatrix';
+import { Button } from '../Button';
 import { Modal } from './Modal';
 import type { ModalProps } from './Modal.types';
 import { noop } from '@core/utils/fn';
@@ -46,6 +47,14 @@ const meta = {
       control: 'boolean',
       description: 'Відображати кнопку закриття (хрестик) у шапці',
     },
+    description: {
+      control: 'text',
+      description: 'Підзаголовок під назвою; пов’язується з діалогом через aria-describedby',
+    },
+    footer: {
+      control: false,
+      description: 'Дії внизу вікна, поза прокручуваним вмістом',
+    },
   },
 } satisfies Meta<typeof Modal>;
 
@@ -86,4 +95,25 @@ export const Matrix: Story = {
       )}
     />
   ),
+};
+
+export const WithFooter: Story = {
+  args: {
+    open: true,
+    onClose: noop,
+    title: 'Перенести заняття',
+    description: 'Алгоритми та структури даних · Пн, 1 пара',
+    closeLabel: 'Закрити',
+    lockScroll: false,
+    trapFocus: false,
+    restoreFocus: false,
+    width: 520,
+    children: 'Поля форми',
+    footer: (
+      <>
+        <Button variant="secondary">Скасувати</Button>
+        <Button>Зберегти</Button>
+      </>
+    ),
+  },
 };

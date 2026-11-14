@@ -41,6 +41,22 @@ export const SlotPreferenceDays: React.FC<SlotPreferenceViewProps> = ({
             onClick={() => setWeekday(index + 1)}
           >
             {dayName}
+            <span className={styles.dayMarks} aria-hidden="true">
+              {[SLOT_PREFERENCE.PREFERRED, SLOT_PREFERENCE.UNDESIRABLE]
+                .filter((preference) =>
+                  slots.some(
+                    (slot) => slot.weekday === index + 1 && slot.preference === preference,
+                  ),
+                )
+                .map((preference) => (
+                  <span
+                    key={preference}
+                    className={`${styles.dayMark} ${
+                      preference === SLOT_PREFERENCE.UNDESIRABLE ? styles.dayMarkUndesirable : ''
+                    }`}
+                  />
+                ))}
+            </span>
           </button>
         ))}
       </div>

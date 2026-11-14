@@ -82,6 +82,7 @@ async function sourceContext(
         select: {
           status: true,
           semesterCalendarId: true,
+          automaticMakeupDates: true,
           semesterCalendar: true,
         },
       },

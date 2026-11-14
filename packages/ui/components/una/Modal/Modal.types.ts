@@ -8,6 +8,8 @@ export type ModalProps = {
   className?: string;
   closeLabel?: string;
   title?: ReactNode;
+  description?: ReactNode;
+  footer?: ReactNode;
   closeButton?: boolean;
   closeOnClickOutside?: boolean;
   closeOnEscape?: boolean;

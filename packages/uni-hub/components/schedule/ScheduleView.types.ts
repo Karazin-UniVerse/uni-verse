@@ -1,3 +1,5 @@
+import type { RescheduleScope } from '@core/constants/timetable';
+
 export interface ScheduleEvent {
   id: string;
   title: string;
@@ -117,4 +119,11 @@ export interface ScheduleMonthDayCellProps {
   locale: string;
   getTypeName: (type: string) => string;
   onSelect: () => void;
+}
+
+export interface RescheduleFormValues {
+  newDate: string;
+  newPair: string;
+  reason: string;
+  scope: RescheduleScope;
 }

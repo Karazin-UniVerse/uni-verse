@@ -176,7 +176,12 @@ export class TimetableReschedulingService {
       include: EVENT_CONTEXT_INCLUDE,
     });
     const makeupSaturdays = parseMakeupSaturdays(calendar);
-    const makeupDates = new Set(makeupSaturdays.map((entry) => entry.date));
+    const automaticMakeupDates =
+      selected.timetableVersion.automaticMakeupDates ?? [];
+    const makeupDates = parseMakeupSaturdayDates(
+      calendar,
+      automaticMakeupDates,
+    );
     const result = buildRescheduleChanges({
       eventId: selected.id,
       events: versionEvents.map((event) =>
@@ -194,6 +199,7 @@ export class TimetableReschedulingService {
             )
           : [],
         makeupSaturdays,
+        automaticMakeupDates,
       },
       now: new Date(),
     });
@@ -232,7 +238,10 @@ export class TimetableReschedulingService {
       const change = changes.get(event.id);
       const scheduled = toScheduledEvent(
         event,
-        parseMakeupSaturdayDates(event.timetableVersion.semesterCalendar),
+        parseMakeupSaturdayDates(
+          event.timetableVersion.semesterCalendar,
+          event.timetableVersion.automaticMakeupDates,
+        ),
       );
 
       return change
@@ -261,7 +270,10 @@ export class TimetableReschedulingService {
       events: occupancy.map((event) =>
         toScheduledEvent(
           event,
-          parseMakeupSaturdayDates(event.timetableVersion.semesterCalendar),
+          parseMakeupSaturdayDates(
+            event.timetableVersion.semesterCalendar,
+            event.timetableVersion.automaticMakeupDates,
+          ),
         ),
       ),
     });

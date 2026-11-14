@@ -20,11 +20,14 @@ import type {
   SemesterCalendarConfig,
 } from '../../types/timetable.ts';
 import {
+  getEvenWeeklyPairCounts,
   checkTimetableConflicts,
   expandSlotOccurrences,
   getExamInstants,
   getPairInstants,
   getPairsFromAcademicHours,
+  getSemesterEndMs,
+  getTeachingWeekdayMs,
   getWeeklyPairCounts,
   hasStudentIntersection,
 } from '../timetable.ts';
@@ -59,6 +62,55 @@ describe('timetable utils', () => {
           error: TIMETABLE_VALIDATION_ERROR.INVALID_ACADEMIC_HOURS,
         });
       }
+    });
+  });
+
+  describe('teaching weeks', () => {
+    const tuesday = Date.parse('2026-09-01T00:00:00Z');
+    const isoOf = (dateMs: number): string => new Date(dateMs).toISOString().slice(0, 10);
+
+    test('a week starting on Tuesday runs to the next Monday', () => {
+      assert.equal(
+        isoOf(getTeachingWeekdayMs(tuesday, 0, TIMETABLE_WEEKDAY.TUESDAY)),
+        '2026-09-01',
+      );
+      assert.equal(
+        isoOf(getTeachingWeekdayMs(tuesday, 0, TIMETABLE_WEEKDAY.SATURDAY)),
+        '2026-09-05',
+      );
+      assert.equal(isoOf(getTeachingWeekdayMs(tuesday, 0, TIMETABLE_WEEKDAY.MONDAY)), '2026-09-07');
+      assert.equal(
+        isoOf(getTeachingWeekdayMs(tuesday, 15, TIMETABLE_WEEKDAY.MONDAY)),
+        '2026-12-21',
+      );
+    });
+
+    test('the semester ends seven days per teaching week after the start', () => {
+      assert.equal(isoOf(getSemesterEndMs(tuesday, 16)), '2026-12-22');
+    });
+  });
+
+  describe('getEvenWeeklyPairCounts', () => {
+    test('keeps the total and differs by at most one pair between weeks', () => {
+      for (const [pairs, weeks] of [
+        [15, 16],
+        [32, 16],
+        [20, 14],
+        [7, 16],
+      ]) {
+        const counts = getEvenWeeklyPairCounts(pairs, weeks);
+
+        assert.equal(counts.length, weeks);
+        assert.equal(
+          counts.reduce((sum, count) => sum + count, 0),
+          pairs,
+        );
+        assert.ok(Math.max(...counts) - Math.min(...counts) <= 1);
+      }
+    });
+
+    test('spaces the remainder through the semester instead of bunching it at the start', () => {
+      assert.deepEqual(getEvenWeeklyPairCounts(4, 8), [0, 1, 0, 1, 0, 1, 0, 1]);
     });
   });
 
@@ -340,20 +392,14 @@ describe('timetable utils', () => {
       assert.deepStrictEqual(result.skipped, []);
     });
 
-    test('dates in week 1 before startDate are skipped as BEFORE_SEMESTER_START', () => {
+    test('a midweek start counts teaching weeks from the start date', () => {
       const result = expand({ calendar: { ...calendar, startDate: '2026-09-10' } });
 
       assert.ok(result.ok);
-      assert.strictEqual(result.occurrences.length, WEEKS - 1);
-      assert.strictEqual(result.occurrences[0].date, '2026-09-16');
-      assert.deepStrictEqual(result.skipped, [
-        {
-          date: '2026-09-09',
-          weekIndex: 0,
-          pair: 2,
-          reason: TIMETABLE_SKIP_REASON.BEFORE_SEMESTER_START,
-        },
-      ]);
+      assert.strictEqual(result.occurrences.length, WEEKS);
+      assert.deepStrictEqual(result.occurrences[0], { date: '2026-09-16', weekIndex: 0, pair: 2 });
+      assert.strictEqual(result.occurrences.at(-1)?.date, '2026-12-30');
+      assert.deepStrictEqual(result.skipped, []);
     });
 
     test('an excluded holiday is skipped and reported', () => {
@@ -432,7 +478,7 @@ describe('timetable utils', () => {
       assert.strictEqual(result.occurrences.length, WEEKS);
     });
 
-    test('reports every skip reason', () => {
+    test('reports excluded regular and makeup dates', () => {
       const result = expand({
         weekday: TIMETABLE_WEEKDAY.MONDAY,
         calendar: {
@@ -447,7 +493,6 @@ describe('timetable utils', () => {
       assert.deepStrictEqual(
         result.skipped.map(({ date, reason }) => [date, reason]),
         [
-          ['2026-09-07', TIMETABLE_SKIP_REASON.BEFORE_SEMESTER_START],
           ['2026-09-14', TIMETABLE_SKIP_REASON.EXCLUDED_DATE],
           ['2026-10-03', TIMETABLE_SKIP_REASON.EXCLUDED_DATE],
         ],

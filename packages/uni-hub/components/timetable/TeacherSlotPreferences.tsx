@@ -3,7 +3,11 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BREAKPOINTS } from '@core/constants/breakpoints';
-import { TEACHING_DAYS_PER_WEEK, type SlotPreference } from '@core/constants/timetable';
+import {
+  SLOT_PREFERENCE,
+  TEACHING_DAYS_PER_WEEK,
+  type SlotPreference,
+} from '@core/constants/timetable';
 import type { SlotPreferenceItem } from '@core/types/timetable';
 import { Button, useToast } from '@una';
 import { useMediaQuery } from '@uni-hub/hooks/useMediaQuery';
@@ -140,6 +144,34 @@ export function TeacherSlotPreferences(): React.JSX.Element {
           {formatMessage('preferences.error')}
         </p>
       )}
+
+      <div className={styles.legendRow}>
+        <ul className={styles.legend} aria-label={formatMessage('preferences.legend')}>
+          <li>
+            <span className={`${styles.swatch} ${styles.preferred}`} aria-hidden="true" />
+            {formatMessage('preferences.preferred')}
+          </li>
+          <li>
+            <span className={styles.swatch} aria-hidden="true" />
+            {formatMessage('preferences.neutral')}
+          </li>
+          <li>
+            <span className={`${styles.swatch} ${styles.undesirable}`} aria-hidden="true" />
+            {formatMessage('preferences.undesirable')}
+          </li>
+        </ul>
+        <span className={styles.summaryText}>
+          {!isMobile && `${formatMessage('preferences.cycleHint')} · `}
+          {formatMessage('preferences.summary', {
+            preferred: displayedSlots.filter(
+              (slot) => slot.preference === SLOT_PREFERENCE.PREFERRED,
+            ).length,
+            undesirable: displayedSlots.filter(
+              (slot) => slot.preference === SLOT_PREFERENCE.UNDESIRABLE,
+            ).length,
+          })}
+        </span>
+      </div>
 
       {isMobile ? <SlotPreferenceDays {...viewProps} /> : <SlotPreferenceGrid {...viewProps} />}
 

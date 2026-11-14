@@ -100,14 +100,3 @@
   gap: var(--space-4) var(--space-8);
   overflow-wrap: anywhere;
 }
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-12);
-
-  @include narrower-than('sm') {
-    flex-direction: column-reverse;
-    align-items: stretch;
-  }
-}

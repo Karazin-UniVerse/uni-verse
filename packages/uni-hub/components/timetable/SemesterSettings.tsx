@@ -3,7 +3,15 @@
 import { useEffect, useId, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@una';
-import { DEFAULT_NOMINAL_WEEKS, ISO_DATE_PATTERN } from '@core/constants/timetable';
+import {
+  DEFAULT_NOMINAL_WEEKS,
+  ISO_DATE_PATTERN,
+  MS_PER_DAY,
+  SUNDAY,
+} from '@core/constants/timetable';
+import { getSemesterEndMs } from '@core/utils/timetable';
+import { RESPONSE_CODES } from '@core/constants/response-codes';
+import { hasHttpStatus } from '@uni-hub/utils/httpErrors';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import { semesterCalendarQueryOptions, semesterKeys } from './semesterQueries';
@@ -11,15 +19,11 @@ import styles from './SemesterSettings.module.scss';
 
 type SemesterDraft = { startDate?: string; weeks?: string };
 
-// The last teaching day is the Saturday of the last week when the semester starts on a Monday.
-const DAYS_FROM_MONDAY_TO_SATURDAY = 5;
-
+/** The last class day: teaching weeks run seven days from the start, and Sunday has no classes. */
 const getLastTeachingDay = (startDate: string, weeks: number): Date => {
-  const date = new Date(`${startDate}T00:00:00`);
+  const lastDayMs = getSemesterEndMs(Date.parse(`${startDate}T00:00:00Z`), weeks) - MS_PER_DAY;
 
-  date.setDate(date.getDate() + (weeks - 1) * 7 + DAYS_FROM_MONDAY_TO_SATURDAY);
-
-  return date;
+  return new Date(new Date(lastDayMs).getUTCDay() === SUNDAY ? lastDayMs - MS_PER_DAY : lastDayMs);
 };
 
 export function SemesterSettings({
@@ -80,9 +84,11 @@ export function SemesterSettings({
 
   if (ready) {
     status = formatMessage('timetable.semesterSavedUntil', {
-      end: new Intl.DateTimeFormat(localeTag, { day: 'numeric', month: 'long' }).format(
-        getLastTeachingDay(startDate, weekCount),
-      ),
+      end: new Intl.DateTimeFormat(localeTag, {
+        day: 'numeric',
+        month: 'long',
+        timeZone: 'UTC',
+      }).format(getLastTeachingDay(startDate, weekCount)),
     });
   } else if (!calendar.data && !calendar.isLoading) {
     status = formatMessage('timetable.semesterMissing');
@@ -111,6 +117,9 @@ export function SemesterSettings({
             min={1}
             step={1}
             value={weeks}
+            aria-describedby={
+              valid && weekCount < DEFAULT_NOMINAL_WEEKS ? `${id}-saturdays` : undefined
+            }
             disabled={isBusy}
             onChange={(event) =>
               setDraft((previous) => ({ ...previous, weeks: event.target.value }))
@@ -118,6 +127,11 @@ export function SemesterSettings({
           />
         </label>
       </div>
+      {valid && weekCount < DEFAULT_NOMINAL_WEEKS && (
+        <p id={`${id}-saturdays`} className={styles.status} role="status">
+          {formatMessage('timetable.shortSemesterSaturdays')}
+        </p>
+      )}
       <p className={ready ? styles.ready : styles.status} role="status">
         {status}
       </p>
@@ -131,7 +145,15 @@ export function SemesterSettings({
           {formatMessage('timetable.saveSemesterSettings')}
         </Button>
       )}
-      {save.isError && <p role="alert">{formatMessage('timetable.calendarError')}</p>}
+      {save.isError && (
+        <p role="alert">
+          {formatMessage(
+            hasHttpStatus(save.error, RESPONSE_CODES.CONFLICT)
+              ? 'timetable.calendarPublishedConflict'
+              : 'timetable.calendarError',
+          )}
+        </p>
+      )}
     </section>
   );
 }

@@ -41,8 +41,18 @@ it('loads a non-default duration and preserves calendar exceptions when saving',
   const input = await screen.findByLabelText('Teaching weeks');
 
   await waitFor(() => expect(input).toHaveValue(14));
+  expect(
+    screen.getByText(
+      'If needed, the generator will use the minimum number of Saturdays to preserve all teaching hours.',
+    ),
+  ).toBeInTheDocument();
+  await user.clear(input);
+  expect(screen.queryByText(/minimum number of Saturdays/)).not.toBeInTheDocument();
+  await user.type(input, '16');
+  expect(screen.queryByText(/minimum number of Saturdays/)).not.toBeInTheDocument();
   await user.clear(input);
   await user.type(input, '18');
+  expect(screen.queryByText(/minimum number of Saturdays/)).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Save semester settings' }));
 
   await waitFor(() =>
@@ -98,4 +108,55 @@ it('creates a missing semester calendar from the start date and weeks', async ()
       makeupSaturdays: [],
     }),
   );
+});
+
+it('explains that published classes block a change of semester dates', async () => {
+  const user = userEvent.setup();
+
+  api.configureSemesterCalendar.mockRejectedValue(
+    new Error('Calendar change would exclude published classes (HTTP 409)'),
+  );
+
+  render(
+    withQueryClient(
+      withLanguage(
+        <SemesterSettings academicYear="2026/2027" semester={1} onReadyChange={vi.fn()} />,
+      ),
+    ),
+  );
+
+  const input = await screen.findByLabelText('Teaching weeks');
+
+  await waitFor(() => expect(input).toHaveValue(14));
+  await user.clear(input);
+  await user.type(input, '12');
+  await user.click(screen.getByRole('button', { name: 'Save semester settings' }));
+
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'This semester already has a published timetable with classes outside the new dates.',
+  );
+});
+
+it('counts the last class day from a midweek start', async () => {
+  api.getSemesterCalendar.mockResolvedValue({
+    data: {
+      id: 'calendar',
+      academicYear: '2026/2027',
+      semester: 1,
+      startDate: '2026-09-01',
+      teachingWeeks: 16,
+      excludedDates: [],
+      makeupSaturdays: [],
+    },
+  });
+
+  render(
+    withQueryClient(
+      withLanguage(
+        <SemesterSettings academicYear="2026/2027" semester={1} onReadyChange={vi.fn()} />,
+      ),
+    ),
+  );
+
+  expect(await screen.findByText(/December 21/)).toBeInTheDocument();
 });

@@ -1,23 +1,15 @@
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { AdjustSlotDialog } from './AdjustSlotDialog';
+import { DraftResults } from './DraftResults';
 import { WorkloadSummary } from './WorkloadSummary';
 import {
   semesterCalendarQueryOptions,
   semesterSlotPreferencesQueryOptions,
 } from './semesterQueries';
 import { CurriculumPlanDialog } from './CurriculumPlanDialog';
-import {
-  AlertCircle,
-  Check,
-  CheckCircle2,
-  ChevronDown,
-  ChevronRight,
-  Play,
-  Plus,
-  Save,
-  Trash2,
-} from 'lucide-react';
-import { Button, CheckBox, Modal, Select, Tag, TextInput } from '@una';
+import { AlertCircle, ChevronDown, ChevronRight, Play, Plus, Save, Trash2 } from 'lucide-react';
+import { Button, CheckBox, Select, Tag, TextInput } from '@una';
 import { checkTimetableConflicts } from '@core/utils/timetable';
 import type {
   AcademicGroupResponse,
@@ -28,8 +20,7 @@ import type {
 import { useTimetableReferences } from '@uni-hub/hooks/useTimetableReferences';
 import { useLanguage, type FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import { timetableApi } from '@uni-hub/services/api.timetable';
-import { getEventWeekday, getTeachingTypeLabel, PREVIEW_DAYS, PREVIEW_PAIRS } from './helpers';
-import { SchedulePreview } from './SchedulePreview';
+import { getEventWeekday, PREVIEW_DAYS } from './helpers';
 import type { PreviewEvent } from './SchedulePreview.types';
 import styles from './TimetableManagement.module.scss';
 
@@ -41,6 +32,23 @@ type DraftResultWithSummaries = GenerateTimetableDraftResult & {
   candidateSummaries?: Array<{
     eventCount?: number;
   }>;
+};
+
+/** Solver failures the dean can act on get their own explanation; the rest keep the server text. */
+const describeGenerationError = (failure: unknown, formatMessage: FormatMessage): string => {
+  const message = failure instanceof Error ? failure.message : '';
+
+  if (message.includes('TIMEOUT')) {
+    return formatMessage('timetable.generateTimeout');
+  }
+
+  if (message.includes('INVALID_INPUT')) {
+    return formatMessage('timetable.generateInvalidInput');
+  }
+
+  return message
+    ? `${formatMessage('timetable.generateError')} (${message})`
+    : formatMessage('timetable.generateError');
 };
 
 export interface WorkloadRow {
@@ -190,6 +198,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   );
 
   const handleSelectPlan = useCallback((id: string) => {
+    setError(null);
     setCalendarReady(false);
     setWorkload([]);
     setDraftResult(null);
@@ -649,11 +658,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
       setSelectedCandidateIndex(0);
     } catch (err) {
       setDraftResult(null);
-      setError(
-        err instanceof Error && err.message
-          ? `${formatMessage('timetable.generateError')} (${err.message})`
-          : formatMessage('timetable.generateError'),
-      );
+      setError(describeGenerationError(err, formatMessage));
     } finally {
       setIsGenerating(false);
     }
@@ -1075,202 +1080,37 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
         </div>
       </section>
 
-      {/* Diagnostics and Candidates Display */}
       {draftResult && (
-        <section className={styles.section}>
-          <h3>{formatMessage('timetable.diagnosticsTitle')}</h3>
-          <div className={styles.diagnosticsGrid}>
-            <div className={styles.diagCard}>
-              <span>{formatMessage('timetable.statesExplored')}</span>
-              <strong>{draftResult.diagnostics.statesExplored}</strong>
-            </div>
-            <div className={styles.diagCard}>
-              <span>{formatMessage('timetable.executionTime')}</span>
-              <strong>
-                {formatMessage('timetable.executionTimeVal', {
-                  time: executionTimeMs,
-                })}
-              </strong>
-            </div>
-            <div className={styles.diagCard}>
-              <span>{formatMessage('timetable.candidatesFound')}</span>
-              <strong>{draftResult.candidates.length}</strong>
-            </div>
-          </div>
-
-          <div
-            className={styles.candidatesList}
-            role="radiogroup"
-            aria-label={formatMessage('timetable.candidatesFound')}
-          >
-            {draftResult.candidates.map((cand, idx) => {
-              const violations = cand.preferenceViolations ?? [];
-              let scoreTone: 'success' | 'warning' | 'danger' = 'success';
-
-              if (violations.length > 0) {
-                scoreTone = 'danger';
-              } else if (cand.penaltyScore > 0) {
-                scoreTone = 'warning';
-              }
-
-              return (
-                <label
-                  key={idx}
-                  className={`${styles.candidateCard} ${
-                    selectedCandidateIndex === idx ? styles.selectedCandidate : ''
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name={`${baseId}-candidate`}
-                    className={styles.candidateRadio}
-                    checked={selectedCandidateIndex === idx}
-                    onChange={() => setSelectedCandidateIndex(idx)}
-                  />
-                  <div className={styles.candidateHeader}>
-                    <span>{formatMessage('timetable.candidateNumbered', { number: idx + 1 })}</span>
-                    <Tag tone={scoreTone}>
-                      {formatMessage('timetable.penaltyScoreVal', { score: cand.penaltyScore })}
-                    </Tag>
-                  </div>
-                  <div className={styles.penaltyDetails}>
-                    {cand.penaltyScore === 0 && violations.length === 0 ? (
-                      <span>
-                        <Check size={14} /> {formatMessage('timetable.noPenalties')}
-                      </span>
-                    ) : (
-                      <span>
-                        {formatMessage('timetable.softPenaltiesVal', { score: cand.penaltyScore })}
-                      </span>
-                    )}
-                    {violations.length > 0 && (
-                      <>
-                        <Tag tone="danger">
-                          {formatMessage('timetable.preferenceViolations', {
-                            count: violations.length,
-                          })}
-                        </Tag>
-                        <ul className={styles.violationList}>
-                          {violations.map((violation) => {
-                            const teacherName =
-                              teachers.find((teacher) => teacher.id === violation.teacherId)
-                                ?.name ?? violation.teacherId;
-
-                            return (
-                              <li key={`${violation.eventId}-${violation.date}-${violation.pair}`}>
-                                {formatMessage('timetable.preferenceViolationItem', {
-                                  teacher: teacherName,
-                                  date: violation.date,
-                                  pair: violation.pair,
-                                })}
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </>
-                    )}
-                  </div>
-                </label>
-              );
-            })}
-          </div>
-
-          {/* Weekly Schedule Preview of Selected Candidate */}
-          <div className={styles.previewSection}>
-            <h4>{formatMessage('timetable.previewTitle')}</h4>
-            {selectedCandidate?.events && selectedCandidate.events.length > 0 ? (
-              <SchedulePreview
-                events={selectedCandidate.events as PreviewEvent[]}
-                academicGroups={academicGroups}
-                onAdjust={isPublished ? undefined : handleStartAdjust}
-                teachers={teachers}
-                slotPreferences={slotPreferencesQuery.data}
-              />
-            ) : (
-              <div className={styles.emptyPreview}>
-                {formatMessage('timetable.scheduledEventsCount', {
-                  count: scheduledEventsCount,
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Publication Action */}
-          <div className={styles.publishRow}>
-            {isPublished ? (
-              <div className={styles.publishedBanner}>
-                <CheckCircle2 size={18} /> {formatMessage('timetable.publishedSuccess')}
-              </div>
-            ) : (
-              <Button
-                type="button"
-                variant="primary"
-                onClick={handlePublish}
-                disabled={isPublishing}
-              >
-                {isPublishing ? (
-                  <>
-                    <span className={styles.inlineSpinner} aria-hidden="true" />{' '}
-                    {formatMessage('timetable.publishing')}
-                  </>
-                ) : (
-                  <>
-                    <Check size={16} /> {formatMessage('timetable.publishVersion')}
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-        </section>
+        <DraftResults
+          draft={draftResult}
+          selectedIndex={selectedCandidateIndex}
+          executionTimeMs={executionTimeMs}
+          scheduledEventsCount={scheduledEventsCount}
+          teachers={teachers}
+          academicGroups={academicGroups}
+          slotPreferences={slotPreferencesQuery.data}
+          isPublished={isPublished}
+          isPublishing={isPublishing}
+          isGenerating={isGenerating}
+          onSelect={setSelectedCandidateIndex}
+          onRegenerate={() => void handleGenerate()}
+          onPublish={() => void handlePublish()}
+          onAdjust={handleStartAdjust}
+        />
       )}
-      <Modal
-        open={Boolean(adjustingEvent)}
-        onClose={() => {
-          if (!isAdjusting) setAdjustingEvent(null);
-        }}
-        title={formatMessage('timetable.adjustSlot')}
-        closeLabel={formatMessage('common.close')}
-      >
-        {adjustingEvent && (
-          <form
-            onSubmit={(submitEvent) => {
-              submitEvent.preventDefault();
-              void handleAdjustSlot();
-            }}
-          >
-            <p>{adjustingEvent.disciplineTitle}</p>
-            <p>{getTeachingTypeLabel(adjustingEvent.teachingType, formatMessage)}</p>
-            <p>
-              {formatMessage('timetable.currentSlot', {
-                day:
-                  weekdayOptions.find(
-                    (option) => option.value === String(getEventWeekday(adjustingEvent)),
-                  )?.label ?? '',
-                pair: adjustingEvent.pair,
-              })}
-            </p>
-            {adjustmentError && <p role="alert">{adjustmentError}</p>}
-            {adjustmentConflict && <p role="alert">{formatMessage('timetable.adjustConflict')}</p>}
-            <Select
-              aria-label={formatMessage('timetable.targetWeekday')}
-              value={targetWeekday}
-              onChange={setTargetWeekday}
-              options={weekdayOptions}
-              disabled={isAdjusting}
-            />
-            <Select
-              aria-label={formatMessage('timetable.targetPair')}
-              value={targetPair}
-              onChange={setTargetPair}
-              options={PREVIEW_PAIRS.map((pair) => ({ value: String(pair), label: String(pair) }))}
-              disabled={isAdjusting}
-            />
-            <Button type="submit" disabled={isAdjusting || adjustmentConflict}>
-              {formatMessage('schedule.save')}
-            </Button>
-          </form>
-        )}
-      </Modal>
+      <AdjustSlotDialog
+        event={adjustingEvent}
+        weekdayOptions={weekdayOptions}
+        targetWeekday={targetWeekday}
+        targetPair={targetPair}
+        hasConflict={adjustmentConflict}
+        isSaving={isAdjusting}
+        error={adjustmentError}
+        onWeekdayChange={setTargetWeekday}
+        onPairChange={setTargetPair}
+        onClose={() => setAdjustingEvent(null)}
+        onSubmit={() => void handleAdjustSlot()}
+      />
     </div>
   );
 };

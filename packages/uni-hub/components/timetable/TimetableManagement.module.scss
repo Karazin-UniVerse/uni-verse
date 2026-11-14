@@ -38,9 +38,18 @@
   flex-wrap: wrap;
   min-width: 0;
 
+  select {
+    min-width: 0;
+    max-width: 100%;
+  }
+
   @include narrower-than('sm') {
     flex-direction: column;
     align-items: stretch;
+
+    select {
+      width: 100%;
+    }
   }
 }
 
@@ -150,6 +159,16 @@ $workload-column-widths: 14%, 16%, 13%, 9%, 22%, 10%, 10%, 6%;
     padding: var(--space-8) var(--space-12);
     border-bottom: 1px solid var(--border-color);
     vertical-align: middle;
+    overflow-wrap: anywhere;
+
+    /* Columns have fixed widths: controls fill their cell instead of their longest option */
+    select,
+    input:not([type='checkbox']) {
+      box-sizing: border-box;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+    }
   }
 
   tr:last-child td {
@@ -191,7 +210,7 @@ $workload-column-widths: 14%, 16%, 13%, 9%, 22%, 10%, 10%, 6%;
 }
 
 .hoursInput {
-  width: 80px;
+  width: 100%;
 }
 
 .checkCell {
@@ -270,18 +289,16 @@ $workload-column-widths: 14%, 16%, 13%, 9%, 22%, 10%, 10%, 6%;
     }
   }
 
-  .checkCell {
+  .workloadTable .checkCell {
     flex-direction: row;
     align-items: center;
+    justify-content: flex-start;
+    gap: var(--space-8);
     text-align: left;
 
     &::before {
       order: 1;
     }
-  }
-
-  .hoursInput {
-    width: 100%;
   }
 }
 
@@ -316,36 +333,81 @@ $workload-column-widths: 14%, 16%, 13%, 9%, 22%, 10%, 10%, 6%;
   }
 }
 
-.diagnosticsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
-  gap: var(--space-12);
+.draft {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-width: 0;
 }
 
-.diagCard {
-  min-width: 0;
-  padding: var(--space-12);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-medium);
-  background: var(--bg-surface);
+.draftHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-12) var(--space-24);
+}
+
+.draftHeading {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 
-  span:first-child {
-    font-size: var(--font-xs);
-    color: var(--text-secondary);
+  h3 {
+    margin: 0;
+    font-size: var(--font-lg);
+    font-weight: var(--font-weight-bold);
   }
+}
+
+.draftMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-12);
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
 
   strong {
-    font-size: var(--font-lg);
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+.draftActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+
+  @include narrower-than('sm') {
+    width: 100%;
+
+    > * {
+      flex: 1;
+    }
+  }
+}
+
+.draftBody {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: var(--space-16);
+  align-items: start;
+
+  @include narrower-than('lg') {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 .candidatesList {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  display: flex;
+  flex-direction: column;
   gap: var(--space-12);
+
+  @include narrower-than('lg') {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  }
 }
 
 .candidateCard {
@@ -414,7 +476,7 @@ $workload-column-widths: 14%, 16%, 13%, 9%, 22%, 10%, 10%, 6%;
   display: flex;
   flex-direction: column;
   gap: var(--space-12);
-  margin-top: var(--space-8);
+  min-width: 0;
 
   h4 {
     margin: 0;
@@ -432,20 +494,8 @@ $workload-column-widths: 14%, 16%, 13%, 9%, 22%, 10%, 10%, 6%;
   font-size: var(--font-sm);
 }
 
-.publishRow {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-12);
-  align-items: center;
-
-  @include narrower-than('sm') {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
 .publishedBanner {
-  padding: var(--space-12) var(--space-16);
+  padding: var(--space-8) var(--space-12);
   border: 1px solid color-mix(in srgb, var(--success-color) 30%, transparent);
   background: color-mix(in srgb, var(--success-color) 12%, transparent);
   border-radius: var(--border-radius-medium);
