@@ -89,6 +89,17 @@ jobs:
           NOTIFY_MODE: ci-failure
         run: node .github/scripts/discord-pr-notify.mjs
 
+  skills-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: node --test scripts/tests/sync-skills.test.mjs
+
   deploy:
     needs: quality
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && vars.GCP_DEPLOY_ENABLED == 'true'

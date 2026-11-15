@@ -18,6 +18,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 
 function createMirror(context) {
@@ -34,7 +35,7 @@ function createMirror(context) {
   mkdirSync(target, { recursive: true });
   const run = (...args) => spawnSync(process.execPath, [script, ...args], { encoding: 'utf8' });
 
-  return { root, source, target, run };
+  return { root, script, source, target, run };
 }
 
 test('sync preserves unchanged files and directories while updating the mirror', (context) => {
@@ -121,10 +122,32 @@ if (process.platform !== 'win32') {
 
 if (process.platform === 'win32') {
   test('sync retries a Windows sharing lock before removing an obsolete file', async (context) => {
-    const { target, run } = createMirror(context);
+    const { root, script, target } = createMirror(context);
     const lockedFile = join(target, 'obsolete.md');
+    const releaseFile = join(root, 'release-lock');
+    const releasedFile = join(root, 'lock-released');
+    const preload = join(root, 'release-on-retry.mjs');
 
     writeFileSync(lockedFile, 'obsolete');
+    // Where sync would sleep before retrying, release the real Windows lock and
+    // wait for confirmation, independent of process startup or scheduling speed.
+    writeFileSync(
+      preload,
+      `import { existsSync, writeFileSync } from 'node:fs';
+const wait = Atomics.wait;
+const releaseFile = ${JSON.stringify(releaseFile)};
+const releasedFile = ${JSON.stringify(releasedFile)};
+Atomics.wait = (buffer, index, value) => {
+  writeFileSync(releaseFile, '');
+  const deadline = Date.now() + 5000;
+  while (!existsSync(releasedFile)) {
+    if (Date.now() >= deadline) throw new Error('Windows lock release timed out');
+    wait(buffer, index, value, 20);
+  }
+  return 'timed-out';
+};
+`,
+    );
     const locker = spawn(
       'powershell.exe',
       [
@@ -132,24 +155,50 @@ if (process.platform === 'win32') {
         '-NonInteractive',
         '-Command',
         '$file = [IO.File]::Open($env:SKILLS_TEST_LOCK, "Open", "Read", "Read"); ' +
-          'try { [Console]::WriteLine("ready"); Start-Sleep -Milliseconds 400 } ' +
-          'finally { $file.Dispose() }',
+          'try { [Console]::WriteLine("ready"); ' +
+          'while (-not [IO.File]::Exists($env:SKILLS_TEST_RELEASE)) { Start-Sleep -Milliseconds 20 } } ' +
+          'finally { $file.Dispose() }; [IO.File]::WriteAllText($env:SKILLS_TEST_RELEASED, "")',
       ],
       {
-        env: { ...process.env, SKILLS_TEST_LOCK: lockedFile },
+        env: {
+          ...process.env,
+          SKILLS_TEST_LOCK: lockedFile,
+          SKILLS_TEST_RELEASE: releaseFile,
+          SKILLS_TEST_RELEASED: releasedFile,
+        },
         windowsHide: true,
       },
     );
-    const finished = once(locker, 'exit');
+    const finished = once(locker, 'close');
 
-    await Promise.race([
-      once(locker.stdout, 'data'),
-      finished.then(() => assert.fail('The lock holder exited before opening the test file')),
-    ]);
-    const result = run();
+    try {
+      await Promise.race([
+        once(locker.stdout, 'data', { signal: AbortSignal.timeout(10_000) }),
+        finished.then(() => assert.fail('The lock holder exited before opening the test file')),
+      ]);
+      const result = spawnSync(
+        process.execPath,
+        ['--import', pathToFileURL(preload).href, script],
+        {
+          encoding: 'utf8',
+          timeout: 10_000,
+        },
+      );
 
-    await finished;
-    assert.equal(result.status, 0, result.stderr);
-    assert.equal(existsSync(lockedFile), false);
+      assert.ifError(result.error);
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(
+        existsSync(releasedFile),
+        true,
+        'The sync must retry after encountering the lock',
+      );
+      assert.equal(existsSync(lockedFile), false);
+      const [status] = await finished;
+
+      assert.equal(status, 0);
+    } finally {
+      locker.kill();
+      await finished;
+    }
   });
 }

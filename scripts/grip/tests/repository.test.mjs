@@ -70,6 +70,29 @@ test('resolves an identical SSH origin and push destination once', (context) => 
   assert.equal(commands.mock.callCount(), 2);
 });
 
+test('resolves different URL spellings of the same SSH alias once per validation', (context) => {
+  const commands = mockCommands(context, { origin: `git@personal:${repository}` });
+  const remoteUrl = `ssh://git@personal/${repository}`;
+
+  validateRepository({ remoteUrl });
+  assert.equal(commands.mock.callCount(), 2);
+
+  validateRepository({ remoteUrl });
+  assert.equal(commands.mock.callCount(), 4);
+});
+
+test('probes the same alias separately for an explicitly requested port', (context) => {
+  const commands = mockCommands(context, {
+    origin: `git@personal:${repository}`,
+    sshResult: { status: 0, stdout: 'hostname ssh.github.com\nuser git\nport 443\n' },
+  });
+
+  validateRepository({ remoteUrl: `ssh://git@personal:443/${repository}` });
+
+  assert.equal(commands.mock.callCount(), 3);
+  assert.deepEqual(commands.mock.calls[2].arguments[1].slice(3), ['-p', '443', 'git@personal']);
+});
+
 test('passes an explicit SSH URL port to the config probe', (context) => {
   const commands = mockCommands(context, {
     origin: `ssh://git@personal:443/${repository}`,

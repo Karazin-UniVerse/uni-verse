@@ -27,7 +27,7 @@ function isGitHubSshEndpoint(host, port) {
   return (host === 'github.com' && port === '22') || (host === 'ssh.github.com' && port === '443');
 }
 
-function isAllowedRemote(remoteUrl, repoRoot) {
+function isAllowedRemote(remoteUrl, repoRoot, verifiedAliases) {
   if (typeof remoteUrl !== 'string' || remoteUrl !== remoteUrl.trim()) {
     return false;
   }
@@ -50,6 +50,12 @@ function isAllowedRemote(remoteUrl, repoRoot) {
   const port = sshRemote[3];
 
   if (isGitHubSshEndpoint(host.toLowerCase(), port ?? '22')) {
+    return true;
+  }
+
+  const alias = `${host}:${port ?? ''}`;
+
+  if (verifiedAliases.has(alias)) {
     return true;
   }
 
@@ -88,11 +94,16 @@ function isAllowedRemote(remoteUrl, repoRoot) {
     config.set(key, value);
   }
 
-  return (
+  const isAllowed =
     config.get('user') === 'git' &&
     (!port || config.get('port') === port) &&
-    isGitHubSshEndpoint(config.get('hostname')?.toLowerCase(), config.get('port'))
-  );
+    isGitHubSshEndpoint(config.get('hostname')?.toLowerCase(), config.get('port'));
+
+  if (isAllowed) {
+    verifiedAliases.add(alias);
+  }
+
+  return isAllowed;
 }
 
 export function validateRepository({ remoteUrl, repoRoot = process.cwd() } = {}) {
@@ -101,12 +112,15 @@ export function validateRepository({ remoteUrl, repoRoot = process.cwd() } = {})
     encoding: 'utf8',
   });
   const origin = result.stdout?.trim();
+  const verifiedAliases = new Set();
 
   if (
     result.status !== 0 ||
     !origin ||
-    !isAllowedRemote(origin, repoRoot) ||
-    (remoteUrl !== undefined && remoteUrl !== origin && !isAllowedRemote(remoteUrl, repoRoot))
+    !isAllowedRemote(origin, repoRoot, verifiedAliases) ||
+    (remoteUrl !== undefined &&
+      remoteUrl !== origin &&
+      !isAllowedRemote(remoteUrl, repoRoot, verifiedAliases))
   ) {
     throw new Error(`Grip enrollment is restricted to the ${GRIP_REPOSITORY} repository.`);
   }
