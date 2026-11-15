@@ -6,9 +6,9 @@ import {
 } from 'class-validator';
 import {
   OPPORTUNITY_MODERATE_ACTION,
-  OPPORTUNITY_AVAILABILITY,
   OPPORTUNITY_STATUS,
 } from '@universe/core/constants/opportunities';
+import { OpportunityAvailability } from '@universe/core/constants/opportunity-availability';
 import { isValidContactInfo } from '@universe/core/utils/contacts';
 import { normalizeOpportunityContent } from '@universe/core/utils/opportunities';
 import type {
@@ -20,10 +20,14 @@ import type { ModerateOpportunityDto } from './dto/moderate-opportunity.dto';
 
 import type { UnavailableOpportunity } from '@universe/core/types/opportunities';
 
+/** Builds the public summary using fields captured at publication. */
 export function unavailableOpportunity(
-  opportunity: Pick<Opportunity, 'id' | 'status' | 'paymentType'>,
-  title = '',
-  paymentType?: Opportunity['paymentType'],
+  opportunity: Pick<
+    Opportunity,
+    'id' | 'status' | 'publishedTitle' | 'publishedPaymentType'
+  >,
+  title = opportunity.publishedTitle ?? '',
+  paymentType = opportunity.publishedPaymentType,
 ): UnavailableOpportunity {
   return {
     id: opportunity.id,
@@ -31,8 +35,8 @@ export function unavailableOpportunity(
     ...(paymentType ? { paymentType } : {}),
     availability:
       opportunity.status === OPPORTUNITY_STATUS.REJECTED
-        ? OPPORTUNITY_AVAILABILITY.PERMANENT
-        : OPPORTUNITY_AVAILABILITY.TEMPORARY,
+        ? OpportunityAvailability.PERMANENT
+        : OpportunityAvailability.TEMPORARY,
   };
 }
 
@@ -64,6 +68,8 @@ export async function applyModerationInTransaction(
       moderationComment: isApprove ? null : dto.comment,
       ...(isApprove && {
         publishedAt: opportunity.publishedAt ?? new Date(),
+        publishedTitle: opportunity.title,
+        publishedPaymentType: opportunity.paymentType,
       }),
     },
   });

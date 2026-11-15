@@ -4,8 +4,8 @@ import type {
   OpportunityModerateAction,
   OpportunityPaymentType,
   OpportunityStatus,
-  OpportunityAvailability,
 } from '../constants/opportunities.ts';
+import type { OpportunityAvailability } from '../constants/opportunity-availability.ts';
 import type { OpportunityTag } from '../constants/tags.ts';
 
 export interface OpportunityOwner {
@@ -14,11 +14,9 @@ export interface OpportunityOwner {
   name?: string | null;
 }
 
-export interface UnavailableOpportunity {
-  id: string;
-  title: string;
+export interface UnavailableOpportunity
+  extends Pick<Opportunity, 'id' | 'title'>, Partial<Pick<Opportunity, 'paymentType'>> {
   availability: OpportunityAvailability;
-  paymentType?: OpportunityPaymentType;
 }
 
 export type OpportunityListItem = Opportunity | UnavailableOpportunity;
@@ -61,7 +59,7 @@ export interface OpportunityApplication {
   briefDescription?: string | null;
   answers?: string | null;
   ownerComment?: string | null;
-  opportunity?: OpportunityListItem;
+  opportunity?: Opportunity | UnavailableOpportunity;
   applicant?: Pick<OpportunityOwner, 'name' | 'email'>;
 }
 

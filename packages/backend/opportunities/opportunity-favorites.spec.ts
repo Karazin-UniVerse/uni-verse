@@ -7,6 +7,7 @@ import {
 import { Test } from '@nestjs/testing';
 import {
   OpportunityStatus,
+  OpportunityTag,
   OpportunityLifecycleState,
   Role,
   type Prisma,
@@ -38,6 +39,8 @@ describe('Opportunity favorites and restricted listings', () => {
     moderationContentHash: null,
     tags: [],
     publishedAt: null,
+    publishedTitle: null,
+    publishedPaymentType: null,
     owner: { id: 'owner', name: 'Owner', email: 'private@example.com' },
   };
   const prisma = {
@@ -173,15 +176,47 @@ describe('Opportunity favorites and restricted listings', () => {
     },
   );
 
-  it('redacts unpublished opportunity content in My Applications', async () => {
+  it('prefers the last published summary when the saved copy is stale', async () => {
+    prisma.opportunityFavorite.findMany.mockResolvedValue([
+      {
+        title: 'Older title',
+        paymentType: 'PAID',
+        opportunity: {
+          ...opportunity,
+          publishedTitle: 'Latest approved title',
+          publishedPaymentType: 'UNPAID',
+        },
+      },
+    ]);
+
+    await expect(service.getFavorites('viewer')).resolves.toEqual([
+      {
+        id: opportunity.id,
+        title: 'Latest approved title',
+        paymentType: 'UNPAID',
+        availability: 'temporary',
+      },
+    ]);
+  });
+
+  it('keeps the last published summary while redacting unpublished edits in My Applications', async () => {
     prisma.opportunityApplication.findMany.mockResolvedValue([
-      { id: 'application', motivation: 'My motivation', opportunity },
+      {
+        id: 'application',
+        motivation: 'My motivation',
+        opportunity: {
+          ...opportunity,
+          publishedTitle: 'Published title',
+          publishedPaymentType: 'UNPAID',
+        },
+      },
     ]);
     const [application] = await service.getMyApplications('viewer');
 
     expect(application.opportunity).toEqual({
       id: opportunity.id,
-      title: '',
+      title: 'Published title',
+      paymentType: 'UNPAID',
       availability: 'temporary',
     });
     expect(application.motivation).toBe('My motivation');
@@ -200,6 +235,50 @@ describe('Opportunity favorites and restricted listings', () => {
 
     expect(application.opportunity).toEqual(opportunity);
   });
+
+  const initialTags = [OpportunityTag.RESEARCH, OpportunityTag.INTERNSHIP];
+
+  it.each([
+    {
+      scenario: 'changed published tags',
+      status: OpportunityStatus.PUBLISHED,
+      tags: [OpportunityTag.RESEARCH],
+      notifications: 1,
+    },
+    {
+      scenario: 'identical tags',
+      status: OpportunityStatus.PUBLISHED,
+      tags: initialTags,
+      notifications: 0,
+    },
+    {
+      scenario: 'reordered tags',
+      status: OpportunityStatus.PUBLISHED,
+      tags: [...initialTags].reverse(),
+      notifications: 0,
+    },
+    {
+      scenario: 'unpublished changes',
+      status: OpportunityStatus.READY_FOR_REVIEW,
+      tags: [],
+      notifications: 0,
+    },
+  ])(
+    'sends $notifications favorite notifications for $scenario',
+    async ({ status, tags, notifications }) => {
+      const original = { ...opportunity, status, tags: initialTags };
+
+      prisma.opportunity.findUnique.mockResolvedValue(original);
+      prisma.opportunity.update.mockResolvedValue({ ...original, tags });
+      prisma.opportunityFavorite.findMany.mockResolvedValue([
+        { userId: 'subscriber' },
+      ]);
+
+      await service.update('owner', opportunity.id, { tags });
+
+      expect(notify).toHaveBeenCalledTimes(notifications);
+    },
+  );
 
   it('notifies subscribers about published non-moderated changes', async () => {
     const published = {
@@ -317,6 +396,14 @@ describe('Opportunity favorites and restricted listings', () => {
       { userId: 'subscriber' },
     ]);
     await service.moderate('moderator', opportunity.id, { action: 'APPROVE' });
+    expect(prisma.opportunity.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          publishedTitle: opportunity.title,
+          publishedPaymentType: opportunity.paymentType,
+        }),
+      }),
+    );
     expect(notify).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: 'subscriber',
@@ -432,9 +519,9 @@ describe('Opportunity favorites and restricted listings', () => {
       prisma.user.findUnique.mockResolvedValue({
         roles: [Role.OPPORTUNITIES_MODERATOR],
       });
-      prisma.opportunityFavorite.updateMany.mockRejectedValue(
-        new Error('Snapshot unavailable'),
-      );
+      const refreshError = new Error('Snapshot unavailable');
+
+      prisma.opportunityFavorite.updateMany.mockRejectedValue(refreshError);
       prisma.opportunityFavorite.findMany.mockResolvedValue([
         { userId: 'subscriber' },
       ]);
@@ -453,6 +540,21 @@ describe('Opportunity favorites and restricted listings', () => {
           });
         }
 
+        expect(prisma.opportunityFavorite.updateMany).toHaveBeenCalledWith({
+          where: { opportunityId: opportunity.id },
+          data: {
+            title: opportunity.title,
+            paymentType: opportunity.paymentType,
+          },
+        });
+        expect(prisma.opportunityFavorite.findMany).toHaveBeenCalledWith({
+          where: { opportunityId: opportunity.id },
+          select: { userId: true },
+        });
+        expect(log).toHaveBeenCalledWith(
+          `Failed to refresh favorite snapshots for opportunity ${opportunity.id}`,
+          refreshError,
+        );
         expect(notify).toHaveBeenCalledWith({
           userId: 'subscriber',
           type: 'OPPORTUNITY_UPDATED',

@@ -17,6 +17,7 @@ const favoriteRefreshes = new WeakMap<QueryClient, Promise<void>>();
 
 type FavoriteMutation = { id: string; isFavorite: boolean };
 
+/** Loads saved IDs and tracks pending favorites by opportunity. */
 export function useFavorites(enabled: boolean) {
   const queryClient = useQueryClient();
   const toast = useToast();

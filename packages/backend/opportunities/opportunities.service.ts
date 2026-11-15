@@ -19,7 +19,7 @@ import type {
   OpportunityFavoriteState,
 } from '@universe/core/types/opportunities';
 import { PRISMA_ERROR_CODE } from '../constants/prisma';
-import { PROMISE_STATUS } from '../constants/promises';
+import { PROMISE_STATUS } from '@universe/core/constants/promises';
 import { SUBSCRIBER_NOTIFICATION_BATCH_SIZE } from './opportunities.constants';
 import { persistOpportunityApplication } from './opportunity-application.persistence';
 import {
@@ -95,6 +95,7 @@ export class OpportunitiesService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
+  /** Saves a published opportunity for update notifications. */
   async addFavorite(
     userId: string,
     opportunityId: string,
@@ -124,6 +125,7 @@ export class OpportunitiesService {
     return { saved: true };
   }
 
+  /** Removes a saved opportunity even after it becomes unavailable. */
   async removeFavorite(
     userId: string,
     opportunityId: string,
@@ -135,6 +137,7 @@ export class OpportunitiesService {
     return { saved: false };
   }
 
+  /** Lists saved opportunities, with last-published summaries for unavailable entries. */
   async getFavorites(
     userId: string,
   ): Promise<(OpportunityWithOwner | UnavailableOpportunity)[]> {
@@ -154,10 +157,15 @@ export class OpportunitiesService {
       opportunity.ownerId === userId ||
       isModerator
         ? opportunity
-        : unavailableOpportunity(opportunity, title, paymentType),
+        : unavailableOpportunity(
+            opportunity,
+            opportunity.publishedTitle ?? title,
+            opportunity.publishedPaymentType ?? paymentType,
+          ),
     );
   }
 
+  /** Checks the persisted role before exposing unpublished content. */
   private async hasCurrentModeratorRole(userId: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -167,6 +175,7 @@ export class OpportunitiesService {
     return user?.roles.includes(Role.OPPORTUNITIES_MODERATOR) ?? false;
   }
 
+  /** Delivers published updates to saved recipients in bounded batches. */
   private async notifySubscribers(opportunity: Opportunity): Promise<void> {
     if (opportunity.status !== OpportunityStatus.PUBLISHED) {
       return;
@@ -376,6 +385,7 @@ export class OpportunitiesService {
     return opportunity;
   }
 
+  /** Returns full details to authorized viewers and a published summary otherwise. */
   async getDetails(
     id: string,
     userId?: string,
@@ -412,7 +422,7 @@ export class OpportunitiesService {
 
   /**
    * Update an existing opportunity.
-   * If it was already published, it is reverted to READY_FOR_REVIEW to prevent bypassing moderation.
+   * Content edits return published opportunities to review. Public metadata changes notify favorites.
    */
   async update(
     userId: string,
@@ -499,10 +509,19 @@ export class OpportunitiesService {
       dto.lifecycleState !== undefined &&
       dto.lifecycleState !== opportunity.lifecycleState;
 
+    const previousTags = new Set(opportunity.tags);
+    const currentTags = new Set(dto.tags);
+    const hasTagsChanged =
+      dto.tags !== undefined &&
+      (previousTags.size !== currentTags.size ||
+        [...currentTags].some((tag) => !previousTags.has(tag)));
+
     if (
       opportunity.status === OpportunityStatus.PUBLISHED &&
       !hasContentChanges &&
-      (hasApplicationAvailabilityChanged || hasLifecycleChanged)
+      (hasApplicationAvailabilityChanged ||
+        hasLifecycleChanged ||
+        hasTagsChanged)
     ) {
       await this.notifySubscribers(updated);
     }

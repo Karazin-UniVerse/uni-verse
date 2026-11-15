@@ -1,3 +1,4 @@
+import { OpportunityAvailability } from '@core/constants/opportunity-availability';
 import React from 'react';
 import { act, render, screen } from '@testing-library/react';
 import { notifyManager } from '@tanstack/react-query';
@@ -19,7 +20,11 @@ vi.mock('@uni-hub/hooks/useCurrentUser', () => ({
 }));
 
 const opportunity = { ...buildOpportunity('loaded'), status: 'PUBLISHED' as const };
-const unavailable = { id: opportunity.id, title: '', availability: 'temporary' as const };
+const unavailable = {
+  id: opportunity.id,
+  title: '',
+  availability: OpportunityAvailability.TEMPORARY,
+};
 
 describe('OpportunityDetailPage background refresh', () => {
   beforeEach(() => {

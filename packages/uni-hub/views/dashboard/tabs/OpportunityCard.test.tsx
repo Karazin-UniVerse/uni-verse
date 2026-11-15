@@ -1,3 +1,4 @@
+import { OpportunityAvailability } from '@core/constants/opportunity-availability';
 import { describe, it, expect, vi } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { render, screen } from '@testing-library/react';
@@ -157,7 +158,7 @@ describe('OpportunityCard', () => {
     expect(open).not.toHaveBeenCalled();
   });
 
-  it.each(['temporary', 'permanent'] as const)(
+  it.each([OpportunityAvailability.TEMPORARY, OpportunityAvailability.PERMANENT])(
     'keeps %s cards removable without detail navigation',
     async (availability) => {
       const toggle = vi.fn();
@@ -172,9 +173,11 @@ describe('OpportunityCard', () => {
         />,
       );
       expect(screen.getByRole('status')).toHaveTextContent(
-        availability === 'temporary' ? 'Тимчасово недоступна' : 'Більше недоступна',
+        availability === OpportunityAvailability.TEMPORARY
+          ? 'Тимчасово недоступна'
+          : 'Більше недоступна',
       );
-      expect(screen.queryByRole('button', { name: /Переглянути деталі/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Детальніше про/ })).not.toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: 'Видалити з обраного' }));
       expect(toggle).toHaveBeenCalledWith('saved', true);
     },

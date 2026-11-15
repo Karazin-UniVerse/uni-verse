@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { withLanguage } from '@uni-hub/utils/test-utils';
+import { OpportunityAvailability } from '@core/constants/opportunity-availability';
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { MyApplicationsTab, type MyApplicationsTabProps } from './MyApplicationsTab';
 
@@ -148,6 +149,27 @@ describe('MyApplicationsTab component', () => {
     expect(screen.getByText('Практика')).toBeInTheDocument();
     expect(screen.getByText(/Відповідь автора пропозиції:/i)).toBeInTheDocument();
     expect(screen.getByText('Reviewing your portfolio right now.')).toBeInTheDocument();
+  });
+
+  it('shows the last published title and compensation for an unavailable opportunity', () => {
+    renderMyApplicationsTab({
+      myApplications: [
+        {
+          ...mockApplications[0],
+          opportunity: {
+            id: 'opp-1',
+            title: 'Last published title',
+            availability: OpportunityAvailability.TEMPORARY,
+            paymentType: 'PAID',
+          },
+        },
+      ],
+    });
+
+    expect(screen.getByRole('heading', { name: 'Last published title' })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Тимчасово недоступна');
+    expect(screen.getByText('Оплачувана')).toBeInTheDocument();
+    expect(screen.queryByText('mentor@example.com')).not.toBeInTheDocument();
   });
 
   it('should render fallback default title when opportunity title is not provided', () => {

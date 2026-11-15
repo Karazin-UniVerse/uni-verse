@@ -16,10 +16,12 @@ import type {
 import { ApiClient, buildQueryString } from './api.request';
 
 export class OpportunitiesApi extends ApiClient {
+  /** Loads saved opportunities, including unavailable summaries. */
   async getFavorites(): Promise<{ data: OpportunityListItem[] }> {
     return this.request<OpportunityListItem[]>('/opportunities/favorites');
   }
 
+  /** Adds or removes a favorite through the idempotent API. */
   async setFavorite(id: string, saved: boolean): Promise<{ data: OpportunityFavoriteState }> {
     return this.request<OpportunityFavoriteState>(`/opportunities/${id}/favorite`, {
       method: saved ? 'PUT' : 'DELETE',
