@@ -32,6 +32,7 @@ const PLANS = [
     title: 'КН, 1 курс',
     academicYear: '2026/2027',
     semester: 1,
+    studySemester: null,
     isDraft: false,
   },
 ];
@@ -95,6 +96,7 @@ describe('CurriculumPlanDialog', () => {
       faculty: 'ННІ КН та ШІ',
       academicYear: '2026/2027',
       semester: 1,
+      studySemester: 3,
       groupId: 'group-21',
       assignments: [
         { disciplineTitle: 'Бази даних', teachingType: 'LECTURE', academicHours: 32 },
@@ -118,6 +120,28 @@ describe('CurriculumPlanDialog', () => {
 
     expect(within(dialog).getByText('Дисциплін: 1, занять: 1')).toBeInTheDocument();
     expect(within(dialog).getByLabelText('Семестр')).toHaveValue('2');
+  });
+
+  it('derives the study semester from the chosen term and keeps the semester in step', async () => {
+    const user = userEvent.setup();
+
+    renderDialog();
+    await uploadCurriculum(user);
+
+    const dialog = screen.getByRole('dialog');
+
+    await user.selectOptions(within(dialog).getByLabelText('Курс і семестр з файлу'), '0:1');
+
+    expect(within(dialog).getByLabelText(/^Семестр навчання/)).toHaveValue('4');
+    expect(within(dialog).getByLabelText('Семестр')).toBeDisabled();
+
+    await user.selectOptions(within(dialog).getByLabelText(/^Семестр навчання/), '5');
+
+    expect(within(dialog).getByLabelText('Семестр')).toHaveValue('1');
+
+    await user.selectOptions(within(dialog).getByLabelText(/^Семестр навчання/), '');
+
+    expect(within(dialog).getByLabelText('Семестр')).toBeEnabled();
   });
 
   it('creates an empty plan without a file', async () => {

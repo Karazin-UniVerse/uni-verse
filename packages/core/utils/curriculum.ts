@@ -3,8 +3,10 @@ import {
   CURRICULUM_DISCIPLINE_NOTE,
   CURRICULUM_SHEET_KIND,
   DEFAULT_NOMINAL_WEEKS,
+  SEMESTERS_PER_YEAR,
   TIMETABLE_ASSIGNMENT_TEACHING_TYPE,
 } from '../constants/timetable.ts';
+import { isSaturdayOnlyDiscipline } from './study-semester.ts';
 import type {
   CurriculumDisciplineNote,
   TimetableAssignmentTeachingType,
@@ -32,7 +34,6 @@ const TYPE_HEADERS: ReadonlyArray<[string, TimetableAssignmentTeachingType]> = [
 
 const TITLE_HEADER = 'освітні компоненти';
 const SUMMARY_ROW_PREFIXES = ['разом', 'загальний обсяг', 'всього'];
-const SEMESTERS_PER_YEAR = 2;
 
 const normalize = (value: string | undefined): string =>
   (value ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -346,6 +347,7 @@ export const parseCurriculumWorkbook = (sheets: SpreadsheetSheet[]): ParsedCurri
 /** One teaching assignment per teaching type that has hours. */
 export const toImportedAssignments = (
   disciplines: CurriculumDiscipline[],
+  studySemester?: number,
 ): ImportedTeachingAssignmentRequest[] =>
   disciplines.flatMap((discipline) =>
     TYPE_HEADERS.flatMap(([, teachingType]) =>
@@ -355,6 +357,9 @@ export const toImportedAssignments = (
               disciplineTitle: discipline.title,
               teachingType,
               academicHours: discipline.hours[teachingType],
+              ...(isSaturdayOnlyDiscipline(discipline.title, studySemester)
+                ? { isSaturdayOnly: true }
+                : {}),
             },
           ]
         : [],

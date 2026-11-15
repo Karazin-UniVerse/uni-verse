@@ -296,9 +296,44 @@ describe('Timetable rescheduling concurrency (PostgreSQL integration)', () => {
       expect(version.automaticMakeupDates).toEqual(
         generated.candidates[0].automaticMakeupDates,
       );
+      expect(version.automaticMakeupDays).toEqual(
+        generated.candidates[0].automaticMakeupDays,
+      );
+      expect(version.automaticMakeupDays).toHaveLength(2);
       expect(version.semesterCalendar.makeupSaturdays).toEqual([]);
       await timetable1.publishTimetableVersion(versionId, ids.admin);
+
+      const makeup = version.events.find((event) =>
+        version.automaticMakeupDates.includes(
+          event.date.toISOString().slice(0, 10),
+        ),
+      );
+
+      expect(makeup).toBeDefined();
+
+      if (!makeup) {
+        throw new Error('Generated fixture must contain a makeup event');
+      }
+
+      await rescheduling2.reschedule(
+        {
+          eventId: makeup.id,
+          newDate: makeup.date.toISOString().slice(0, 10),
+          newPair: makeup.pair === 1 ? 2 : 1,
+          scope: 'ONCE',
+          reason: 'Adjust one published compensation lesson',
+        },
+        ids.admin,
+      );
+      const reloaded = await client1.timetableVersion.findUniqueOrThrow({
+        where: { id: versionId },
+      });
+
+      expect(reloaded.automaticMakeupDays).toEqual(version.automaticMakeupDays);
     } finally {
+      await client1.timetableRescheduleAudit.deleteMany({
+        where: { event: { timetableVersionId: versionId } },
+      });
       await client1.timetableVersion.delete({ where: { id: versionId } });
     }
   });

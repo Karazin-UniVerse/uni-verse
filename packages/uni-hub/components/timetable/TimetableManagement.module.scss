@@ -319,6 +319,19 @@ $workload-column-widths: 14%, 16%, 13%, 9%, 22%, 10%, 10%, 6%;
   }
 }
 
+.generateOption {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8);
+  margin-top: var(--space-12);
+  font-size: var(--font-sm);
+
+  small {
+    display: block;
+    margin-top: var(--space-2);
+  }
+}
+
 .tableActions {
   display: flex;
   justify-content: space-between;

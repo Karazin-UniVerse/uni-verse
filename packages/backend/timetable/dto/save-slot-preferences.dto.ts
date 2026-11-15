@@ -26,11 +26,11 @@ import type {
 class SlotPreferenceDto implements SlotPreferenceItem {
   @ApiProperty({
     minimum: TIMETABLE_WEEKDAY.MONDAY,
-    maximum: TIMETABLE_WEEKDAY.SATURDAY,
+    maximum: TIMETABLE_WEEKDAY.FRIDAY,
   })
   @IsInt()
   @Min(TIMETABLE_WEEKDAY.MONDAY)
-  @Max(TIMETABLE_WEEKDAY.SATURDAY)
+  @Max(TIMETABLE_WEEKDAY.FRIDAY)
   weekday: number;
 
   @ApiProperty({ minimum: FIRST_PAIR, maximum: LAST_PAIR })

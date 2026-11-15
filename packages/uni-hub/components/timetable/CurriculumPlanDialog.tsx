@@ -2,6 +2,7 @@ import React, { useId, useState } from 'react';
 import { Button, FileInput, Modal, Select } from '@una';
 import type { ParsedCurriculumSheet } from '@core/types/timetable';
 import { toImportedAssignments } from '@core/utils/curriculum';
+import { getStudySemester } from '@core/utils/study-semester';
 import { useCurriculumFile } from '@uni-hub/hooks/useCurriculumFile';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { timetableApi } from '@uni-hub/services/api.timetable';
@@ -45,6 +46,7 @@ export const CurriculumPlanDialog: React.FC<CurriculumPlanDialogProps> = ({
     faculty: plans[0]?.faculty ?? '',
     academicYear: plans[0]?.academicYear ?? '',
     semester: '1',
+    studySemester: '',
   }));
   const [groupId, setGroupId] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -52,7 +54,8 @@ export const CurriculumPlanDialog: React.FC<CurriculumPlanDialogProps> = ({
 
   const selected = findTerm(curriculumFile.sheets, termKey);
   const disciplines = selected ? selected.sheet.terms[selected.termIndex].disciplines : [];
-  const assignments = toImportedAssignments(disciplines);
+  const studySemester = fields.studySemester ? Number(fields.studySemester) : undefined;
+  const assignments = toImportedAssignments(disciplines, studySemester);
   const termOptions = curriculumFile.sheets.flatMap((sheet, sheetIndex) =>
     sheet.terms.map((term, termIndex) => ({
       value: toTermKey(sheetIndex, termIndex),
@@ -90,6 +93,7 @@ export const CurriculumPlanDialog: React.FC<CurriculumPlanDialogProps> = ({
           course: courseYear,
         }),
         semester: String(semester),
+        studySemester: String(getStudySemester(courseYear, semester)),
       }));
     }
   };
@@ -108,6 +112,7 @@ export const CurriculumPlanDialog: React.FC<CurriculumPlanDialogProps> = ({
       faculty: fields.faculty.trim(),
       academicYear: fields.academicYear.trim(),
       semester: Number(fields.semester),
+      studySemester,
     };
 
     if (!payload.title || !payload.faculty || !ACADEMIC_YEAR_PATTERN.test(payload.academicYear)) {

@@ -1,6 +1,12 @@
 import type { TranslationKey } from './uk';
 
 export const en = {
+  'timetable.makeupDaysTitle': 'Makeup Saturdays',
+  'timetable.makeupDayItem': '{date} � follows {weekday} ({parity}), source date {sourceDate}',
+  'timetable.weekNumerator': 'numerator',
+  'timetable.weekDenominator': 'denominator',
+  'timetable.sourceDayRegenerationRequired':
+    'This assignment has Saturdays following a missing teaching-day template. Regenerate the timetable to change its weekday or pair.',
   'timetable.adjustSlot': 'Adjust slot',
   'timetable.adjustConflict': 'The slot conflicts with another class or timetable restrictions',
   'timetable.currentSlot': 'Current slot: {day}, pair {pair}',
@@ -393,6 +399,16 @@ export const en = {
   'timetable.planAcademicYearHint': 'Formatted as 2026/2027',
   'timetable.planSemester': 'Semester',
   'timetable.planSemesterOption': 'Semester {semester}',
+  'timetable.planStudySemester': 'Study semester',
+  'timetable.planStudySemesterNone': 'Not set',
+  'timetable.planStudySemesterHint':
+    'In study semesters 4–6, pair 3 on Wednesday stays free for the electives students choose.',
+  'timetable.summaryElectiveReserved': 'Pair 3 on Wednesday is free for the students’ electives.',
+  'timetable.compactSaturdays': 'Compact Saturdays',
+  'timetable.compactSaturdaysHint':
+    'Fewer Saturdays: a Saturday may hold classes of different days, and their pairs change. Without it each Saturday repeats one missed day.',
+  'timetable.compactSaturdaysNote':
+    'Compact mode: a Saturday may hold classes from different missed days.',
   'timetable.planGroup': 'Group for every class',
   'timetable.planGroupHint':
     'Subgroups, streams and teachers can be changed in the workload after the plan is created.',
@@ -918,7 +934,7 @@ export const en = {
   'schedule.scopeSeries': 'This and subsequent classes',
   'timetable.teachingWeeks': 'Teaching weeks',
   'timetable.shortSemesterSaturdays':
-    'If needed, the generator will use the minimum number of Saturdays to preserve all teaching hours.',
+    'All teaching hours must fit within the semester, accounting for available Saturdays and timetable constraints.',
   'timetable.saveSemesterSettings': 'Save semester settings',
   'timetable.calendarPublishedConflict':
     'This semester already has a published timetable with classes outside the new dates. Keep dates that cover every published class.',

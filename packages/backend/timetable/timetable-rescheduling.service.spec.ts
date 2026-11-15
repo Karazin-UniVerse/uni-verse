@@ -145,6 +145,33 @@ describe('TimetableReschedulingService preview', () => {
     ).rejects.toThrow(ConflictException);
   });
 
+  it('rejects moving a class of study semesters 4-6 to the reserved elective slot', async () => {
+    const reserved = {
+      ...event,
+      teachingAssignment: {
+        ...event.teachingAssignment,
+        curriculumPlan: { studySemester: 4 },
+      },
+    };
+
+    prisma.timetableEvent.findUnique.mockResolvedValue(reserved);
+    prisma.timetableEvent.findMany.mockResolvedValue([reserved]);
+
+    // 2027-10-06 is a Wednesday
+    const failure = await service
+      .preview(
+        { ...input, newDate: '2027-10-06', newPair: 3 },
+        'teacher-1',
+        'INSTRUCTOR',
+      )
+      .catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(ConflictException);
+    expect((failure as ConflictException).getResponse()).toMatchObject({
+      conflicts: [expect.objectContaining({ code: 'RESERVED_SLOT_OCCUPIED' })],
+    });
+  });
+
   it('bounds the occupancy query to affected dates and the same semester', async () => {
     await service.preview(input, 'teacher-1', 'INSTRUCTOR');
 

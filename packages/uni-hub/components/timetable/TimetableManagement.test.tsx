@@ -85,6 +85,7 @@ describe('TimetableManagement component', () => {
           title: 'First',
           academicYear: '2026/2027',
           semester: 1,
+          studySemester: null,
           isDraft: true,
         },
         {
@@ -93,6 +94,7 @@ describe('TimetableManagement component', () => {
           title: 'Second',
           academicYear: '2026/2027',
           semester: 2,
+          studySemester: null,
           isDraft: true,
         },
       ],
@@ -341,6 +343,7 @@ describe('TimetableManagement component', () => {
           title: 'Комп’ютерні науки',
           academicYear: '2026/2027',
           semester: 1,
+          studySemester: null,
           isDraft: false,
         },
       ],
@@ -353,7 +356,7 @@ describe('TimetableManagement component', () => {
     });
   });
 
-  const renderComponent = (props = {}) => {
+  const renderComponent = (props = {}, teachingWeeks = 16) => {
     const client = createTestQueryClient();
 
     client.setQueryData(['timetable', 'semesterCalendar', '2026/2027', 1], {
@@ -361,7 +364,7 @@ describe('TimetableManagement component', () => {
       academicYear: '2026/2027',
       semester: 1,
       startDate: '2026-09-07',
-      teachingWeeks: 16,
+      teachingWeeks,
     });
 
     return render(withQueryClient(withLanguage(<TimetableManagement {...props} />), client));
@@ -453,6 +456,70 @@ describe('TimetableManagement component', () => {
     expect(updatedInputs.length).toBe(3);
   });
 
+  it('tells that Wednesday pair 3 stays free in study semesters 4 to 6', async () => {
+    vi.spyOn(timetableApi, 'listCurriculumPlans').mockResolvedValue({
+      data: [
+        {
+          id: 'plan-cs-2026',
+          faculty: 'ННІ КН та ШІ',
+          title: 'КН, 3 курс',
+          academicYear: '2026/2027',
+          semester: 1,
+          studySemester: 5,
+          isDraft: true,
+        },
+      ],
+    });
+
+    renderComponent({ initialPlanId: 'plan-cs-2026' });
+
+    expect(await screen.findByText(/3-тя пара середи вільна/)).toBeInTheDocument();
+  });
+
+  it('does not mention the reserved pair for other study semesters', async () => {
+    renderComponent({ initialPlanId: 'plan-cs-2026' });
+
+    await screen.findByLabelText('Навчальний план');
+    expect(screen.queryByText(/3-тя пара середи вільна/)).not.toBeInTheDocument();
+  });
+
+  it('offers compact Saturdays for a short semester and sends the choice', async () => {
+    vi.spyOn(timetableApi, 'getSemesterCalendar').mockResolvedValue({
+      data: {
+        id: 'calendar-1',
+        academicYear: '2026/2027',
+        semester: 1,
+        startDate: '2026-09-07',
+        teachingWeeks: 14,
+      },
+    });
+    const generateSpy = vi.spyOn(timetableApi, 'generateTimetableDraft').mockResolvedValue({
+      data: {
+        versionId: 'ver-draft-102',
+        candidates: [
+          { events: [], penaltyScore: 0, automaticMakeupDates: ['2026-09-12', '2026-09-19'] },
+        ],
+        diagnostics: { statesExplored: 1, timeMs: 1 },
+      },
+    });
+    const user = userEvent.setup();
+
+    renderComponent({}, 14);
+
+    const generateBtn = screen.getByRole('button', { name: /згенерувати розклад/i });
+
+    await waitFor(() => expect(generateBtn).toBeEnabled());
+    await user.click(screen.getByRole('checkbox', { name: /компактні суботи/i }));
+    await user.click(generateBtn);
+
+    expect(generateSpy).toHaveBeenCalledWith(
+      'plan-cs-2026',
+      expect.objectContaining({ compactSaturdays: true }),
+    );
+    expect(await screen.findByText('2026-09-19')).toBeInTheDocument();
+    expect(screen.getByText(/Компактний режим/)).toBeInTheDocument();
+  });
+
   it('triggers generateTimetableDraft, displays diagnostics and candidate options', async () => {
     const generateSpy = vi.spyOn(timetableApi, 'generateTimetableDraft').mockResolvedValue({
       data: {
@@ -479,7 +546,9 @@ describe('TimetableManagement component', () => {
     expect(generateSpy).toHaveBeenCalledWith('plan-cs-2026', {
       maxCandidates: 3,
       timeoutMs: 5000,
+      compactSaturdays: false,
     });
+    expect(screen.queryByLabelText('Компактні суботи')).not.toBeInTheDocument();
 
     expect(screen.getByRole('heading', { name: 'Чернетка розкладу' })).toBeInTheDocument();
     expect(screen.getByText('досліджено станів: 88')).toBeInTheDocument();
@@ -910,6 +979,7 @@ describe('TimetableManagement component', () => {
         title: 'Новий план',
         academicYear: '2026/2027',
         semester: 2,
+        studySemester: null,
         isDraft: true,
       },
     });

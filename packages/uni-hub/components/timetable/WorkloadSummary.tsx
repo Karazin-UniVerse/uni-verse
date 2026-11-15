@@ -1,6 +1,11 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ACADEMIC_HOURS_PER_PAIR, DEFAULT_NOMINAL_WEEKS } from '@core/constants/timetable';
+import {
+  ACADEMIC_HOURS_PER_PAIR,
+  DEFAULT_NOMINAL_WEEKS,
+  ELECTIVE_RESERVED_SLOT,
+} from '@core/constants/timetable';
+import { isReservedSlot } from '@core/utils/study-semester';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { SemesterSettings } from './SemesterSettings';
 import {
@@ -13,6 +18,7 @@ import styles from './TimetableManagement.module.scss';
 type WorkloadSummaryProps = {
   academicYear: string;
   semester: number;
+  studySemester: number | null;
   workload: WorkloadRow[];
   onCalendarReadyChange: (ready: boolean) => void;
 };
@@ -21,6 +27,7 @@ type WorkloadSummaryProps = {
 export const WorkloadSummary: React.FC<WorkloadSummaryProps> = ({
   academicYear,
   semester,
+  studySemester,
   workload,
   onCalendarReadyChange,
 }) => {
@@ -29,6 +36,12 @@ export const WorkloadSummary: React.FC<WorkloadSummaryProps> = ({
   const preferences = useQuery(semesterSlotPreferencesQueryOptions(calendar.data?.id ?? ''));
   const hours = workload.reduce((total, row) => total + row.academicHours, 0);
   const weeks = calendar.data?.teachingWeeks ?? DEFAULT_NOMINAL_WEEKS;
+  const hasElectiveSlot = isReservedSlot({
+    studySemester: studySemester ?? undefined,
+    weekday: ELECTIVE_RESERVED_SLOT.WEEKDAY,
+    firstPair: ELECTIVE_RESERVED_SLOT.PAIR,
+    lastPair: ELECTIVE_RESERVED_SLOT.PAIR,
+  });
   const unassigned = workload.filter((row) => !row.teacherId).length;
   const teacherIds = new Set(workload.flatMap((row) => (row.teacherId ? [row.teacherId] : [])));
   const filledIds = new Set((preferences.data ?? []).map((slot) => slot.teacherId));
@@ -54,6 +67,11 @@ export const WorkloadSummary: React.FC<WorkloadSummaryProps> = ({
             pairs: Math.round(hours / ACADEMIC_HOURS_PER_PAIR / weeks),
           })}
         </span>
+        {hasElectiveSlot && (
+          <span className={styles.summaryHint}>
+            {formatMessage('timetable.summaryElectiveReserved')}
+          </span>
+        )}
       </div>
       <div className={`${styles.summaryCard} ${unassigned > 0 ? styles.summaryWarning : ''}`}>
         <span className={styles.summaryLabel}>{formatMessage('timetable.summaryNoTeacher')}</span>

@@ -5,6 +5,7 @@ import {
   toIsoDateString,
   buildGroupIds,
   parseMakeupSaturdayDates,
+  parseAutomaticMakeupDays,
 } from './timetable.helpers';
 import {
   BadRequestException,
@@ -50,6 +51,8 @@ import {
   getPairsFromAcademicHours,
   getSemesterEndMs,
 } from '@universe/core/utils/timetable';
+import { getSemesterOfYear } from '@universe/core/utils/study-semester';
+import { generateCompactTimetableCandidates } from '@universe/core/utils/timetable-compaction';
 import { PRISMA_ERROR_CODE } from '../constants/prisma';
 import { PrismaService } from '../prisma/prisma.service';
 import { getPrismaErrorCode } from '../utils/prisma-error';
@@ -119,6 +122,7 @@ export type TimetableVersionWithEvents = TimetableVersion & {
 const EVENT_ASSIGNMENT_INCLUDE = {
   teachingAssignment: {
     include: {
+      curriculumPlan: { select: { studySemester: true } },
       group: true,
       subgroup: true,
       stream: { include: { groups: true } },
@@ -144,13 +148,24 @@ function toCurriculumPlanData(dto: CreateCurriculumPlanDto): {
   title: string;
   academicYear: string;
   semester: number;
+  studySemester: number | null;
   isDraft: boolean;
 } {
+  if (
+    dto.studySemester !== undefined &&
+    getSemesterOfYear(dto.studySemester) !== dto.semester
+  ) {
+    throw new BadRequestException(
+      'Study semester does not match the semester of the academic year',
+    );
+  }
+
   return {
     faculty: dto.faculty.trim(),
     title: dto.title.trim(),
     academicYear: dto.academicYear.trim(),
     semester: dto.semester,
+    studySemester: dto.studySemester ?? null,
     isDraft: dto.isDraft ?? true,
   };
 }
@@ -215,7 +230,11 @@ export class TimetableService {
     }
 
     return this.prisma.teacherSlotPreference.findMany({
-      where: { teacherId: userId, semesterCalendarId },
+      where: {
+        teacherId: userId,
+        semesterCalendarId,
+        weekday: { lte: TIMETABLE_WEEKDAY.FRIDAY },
+      },
       select: SLOT_PREFERENCE_SELECT,
       orderBy: [{ weekday: 'asc' }, { pair: 'asc' }],
     });
@@ -234,7 +253,10 @@ export class TimetableService {
     }
 
     return this.prisma.teacherSlotPreference.findMany({
-      where: { semesterCalendarId },
+      where: {
+        semesterCalendarId,
+        weekday: { lte: TIMETABLE_WEEKDAY.FRIDAY },
+      },
       select: SLOT_PREFERENCE_SELECT,
       orderBy: [{ teacherId: 'asc' }, { weekday: 'asc' }, { pair: 'asc' }],
     });
@@ -353,6 +375,7 @@ export class TimetableService {
               disciplineTitle: assignment.disciplineTitle.trim(),
               teachingType: assignment.teachingType,
               academicHours: assignment.academicHours,
+              isSaturdayOnly: assignment.isSaturdayOnly ?? false,
               groupId: dto.groupId,
               streamId: dto.streamId,
             })),
@@ -892,6 +915,7 @@ export class TimetableService {
           timetableVersion: { include: { semesterCalendar: true } },
           teachingAssignment: {
             include: {
+              curriculumPlan: { select: { studySemester: true } },
               group: true,
               subgroup: true,
               stream: {
@@ -925,6 +949,7 @@ export class TimetableService {
           streamId: a?.streamId ?? undefined,
           hasLateSlotAuthorization: a?.hasLateSlotAuthorization,
           isSaturdayOnly: a?.isSaturdayOnly,
+          studySemester: a?.curriculumPlan?.studySemester ?? undefined,
           isMakeupSaturday:
             parseMakeupSaturdayDates(
               event.timetableVersion?.semesterCalendar ?? calendar,
@@ -949,6 +974,7 @@ export class TimetableService {
         streamId: a.streamId ?? undefined,
         isSaturdayOnly: a.isSaturdayOnly,
         hasLateSlotAuthorization: a.hasLateSlotAuthorization,
+        studySemester: plan.studySemester ?? undefined,
       }))
       .sort((first, second) => {
         const firstIsLecture = first.teachingType === 'LECTURE';
@@ -993,7 +1019,10 @@ export class TimetableService {
             select: SLOT_PREFERENCE_SELECT,
           })
         : [];
-    const result = generateTimetableCandidates({
+    const generate = options?.compactSaturdays
+      ? generateCompactTimetableCandidates
+      : generateTimetableCandidates;
+    const result = generate({
       preferences,
       demands,
       calendar: calendarConfig,
@@ -1056,6 +1085,7 @@ export class TimetableService {
             candidateIndex,
             generationId,
             automaticMakeupDates: candidate.automaticMakeupDates ?? [],
+            automaticMakeupDays: candidate.automaticMakeupDays ?? [],
             createdById,
             events: {
               create: eventsCreate,
@@ -1136,6 +1166,23 @@ export class TimetableService {
           throw new BadRequestException(
             'Saturday-only assignments must remain on Saturday',
           );
+        }
+
+        const mappedDates = new Set(
+          parseAutomaticMakeupDays(version.automaticMakeupDays).map(
+            (entry) => entry.date,
+          ),
+        );
+
+        if (
+          version.events.some(
+            (event) =>
+              !event.isCancelled &&
+              event.teachingAssignmentId === dto.teachingAssignmentId &&
+              mappedDates.has(toIsoDateString(event.date)),
+          )
+        ) {
+          throw new ConflictException('SOURCE_DAY_REGENERATION_REQUIRED');
         }
 
         const changes = new Map(
@@ -1223,6 +1270,7 @@ export class TimetableService {
             include: {
               teachingAssignment: {
                 include: {
+                  curriculumPlan: { select: { studySemester: true } },
                   group: true,
                   subgroup: true,
                   stream: {
@@ -1350,7 +1398,7 @@ export class TimetableService {
         version.automaticMakeupDates,
       );
 
-      if (calendar && (version.automaticMakeupDates ?? []).length > 0) {
+      if (calendar) {
         const start = calendar.startDate.getTime();
         const end = getSemesterEndMs(start, calendar.teachingWeeks);
 
@@ -1364,6 +1412,32 @@ export class TimetableService {
         ) {
           throw new ConflictException(
             'Calendar changed; regenerate the draft before publishing',
+          );
+        }
+      }
+
+      const automaticMakeupDays = parseAutomaticMakeupDays(
+        version.automaticMakeupDays,
+      );
+
+      if (automaticMakeupDays.length > 0) {
+        const mappedDates = new Set(
+          automaticMakeupDays.map((entry) => entry.date),
+        );
+        const authorizedDates = new Set(version.automaticMakeupDates);
+
+        if (
+          mappedDates.size !== authorizedDates.size ||
+          [...mappedDates].some((date) => !authorizedDates.has(date)) ||
+          automaticMakeupDays.some(
+            (entry) =>
+              !activeEvents.some(
+                (event) => toIsoDateString(event.date) === entry.date,
+              ),
+          )
+        ) {
+          throw new ConflictException(
+            'Source-day compensation dates do not match the saved timetable',
           );
         }
       }
@@ -1399,6 +1473,7 @@ export class TimetableService {
             timetableVersion: { include: { semesterCalendar: true } },
             teachingAssignment: {
               include: {
+                curriculumPlan: { select: { studySemester: true } },
                 group: true,
                 subgroup: true,
                 stream: {

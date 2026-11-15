@@ -17,6 +17,7 @@ describe('useTimetableReferences', () => {
           title: 'CS',
           academicYear: '2026/2027',
           semester: 1,
+          studySemester: null,
           isDraft: false,
         },
       ],
@@ -58,6 +59,7 @@ describe('useTimetableReferences', () => {
         title: 'New',
         academicYear: '2026/2027',
         semester: 2,
+        studySemester: null,
         isDraft: true,
       });
     });

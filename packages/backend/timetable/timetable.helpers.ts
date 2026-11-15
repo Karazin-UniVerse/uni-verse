@@ -1,6 +1,11 @@
-import { ForbiddenException } from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  ISO_DATE_LENGTH,
+  TIMETABLE_WEEKDAY,
+} from '@universe/core/constants/timetable';
 import {
   Role,
+  type Prisma,
   type AcademicGroup,
   type AcademicStream,
   type AcademicSubgroup,
@@ -8,7 +13,10 @@ import {
   type TeachingAssignment,
   type TimetableEvent,
 } from '@universe/database';
-import type { ScheduledEvent } from '@universe/core/types/timetable';
+import type {
+  AutomaticMakeupDay,
+  ScheduledEvent,
+} from '@universe/core/types/timetable';
 
 export function assertAdmin(roles?: string[]): void {
   if (!roles?.includes(Role.ADMIN) && !roles?.includes('ADMIN')) {
@@ -20,6 +28,7 @@ type AssignmentWithRelations = TeachingAssignment & {
   group?: AcademicGroup | null;
   subgroup?: AcademicSubgroup | null;
   stream?: (AcademicStream & { groups?: AcademicGroup[] }) | null;
+  curriculumPlan?: { studySemester: number | null } | null;
 };
 
 export function toIsoDateString(value: Date | string): string {
@@ -104,5 +113,57 @@ export function toScheduledEvent(
     hasLateSlotAuthorization: assignment?.hasLateSlotAuthorization,
     isSaturdayOnly: assignment?.isSaturdayOnly,
     isMakeupSaturday: makeupDates.has(date),
+    studySemester: assignment?.curriculumPlan?.studySemester ?? undefined,
   };
+}
+
+export function parseAutomaticMakeupDays(
+  value?: Prisma.JsonValue,
+): AutomaticMakeupDay[] {
+  if (value === undefined) {
+    return [];
+  }
+
+  if (!Array.isArray(value)) {
+    throw new ConflictException('Invalid source-day compensation metadata');
+  }
+
+  const mappings: AutomaticMakeupDay[] = [];
+  const targets = new Set<string>();
+  const sources = new Set<string>();
+
+  for (const entry of value) {
+    if (
+      typeof entry !== 'object' ||
+      entry === null ||
+      Array.isArray(entry) ||
+      typeof entry.date !== 'string' ||
+      typeof entry.sourceDate !== 'string'
+    ) {
+      throw new ConflictException('Invalid source-day compensation metadata');
+    }
+
+    const date = new Date(entry.date);
+    const source = new Date(entry.sourceDate);
+
+    if (
+      !Number.isFinite(date.getTime()) ||
+      !Number.isFinite(source.getTime()) ||
+      date.toISOString().slice(0, ISO_DATE_LENGTH) !== entry.date ||
+      source.toISOString().slice(0, ISO_DATE_LENGTH) !== entry.sourceDate ||
+      date.getUTCDay() !== TIMETABLE_WEEKDAY.SATURDAY ||
+      source.getUTCDay() < TIMETABLE_WEEKDAY.MONDAY ||
+      source.getUTCDay() > TIMETABLE_WEEKDAY.FRIDAY ||
+      targets.has(entry.date) ||
+      sources.has(entry.sourceDate)
+    ) {
+      throw new ConflictException('Invalid source-day compensation metadata');
+    }
+
+    targets.add(entry.date);
+    sources.add(entry.sourceDate);
+    mappings.push({ date: entry.date, sourceDate: entry.sourceDate });
+  }
+
+  return mappings;
 }

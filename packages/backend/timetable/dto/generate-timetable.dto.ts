@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, Max, Min } from 'class-validator';
 import type { GenerateTimetableRequest } from '@universe/core/types/timetable';
 
 export class GenerateTimetableDto implements GenerateTimetableRequest {
@@ -27,4 +27,12 @@ export class GenerateTimetableDto implements GenerateTimetableRequest {
   @Max(10000)
   @IsOptional()
   timeoutMs?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Short semesters: use as few extra Saturdays as possible, mixing classes of different weekdays',
+  })
+  @IsBoolean()
+  @IsOptional()
+  compactSaturdays?: boolean;
 }

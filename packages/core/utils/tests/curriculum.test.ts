@@ -153,4 +153,31 @@ describe('curriculum workbook parsing', () => {
       { disciplineTitle: 'Бази даних', teachingType: 'PRACTICAL', academicHours: 16 },
     ]);
   });
+  test('marks only the audit training of national resistance in semester 3 as Saturday-only', () => {
+    const disciplines = [
+      {
+        title: 'Основи національного спротиву (Аудиторна підготовка)',
+        hours: { LECTURE: 0, LABORATORY: 0, PRACTICAL: 32, SEMINAR: 0 },
+        notes: [],
+      },
+      {
+        title: 'Бази даних',
+        hours: { LECTURE: 32, LABORATORY: 0, PRACTICAL: 0, SEMINAR: 0 },
+        notes: [],
+      },
+    ];
+
+    assert.deepEqual(
+      toImportedAssignments(disciplines, 3).map(({ isSaturdayOnly }) => isSaturdayOnly),
+      [true, undefined],
+    );
+    assert.deepEqual(
+      toImportedAssignments(disciplines, 2).map(({ isSaturdayOnly }) => isSaturdayOnly),
+      [undefined, undefined],
+    );
+    assert.deepEqual(
+      toImportedAssignments(disciplines).map(({ isSaturdayOnly }) => isSaturdayOnly),
+      [undefined, undefined],
+    );
+  });
 });

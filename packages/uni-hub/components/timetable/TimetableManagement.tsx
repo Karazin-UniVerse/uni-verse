@@ -10,6 +10,7 @@ import {
 import { CurriculumPlanDialog } from './CurriculumPlanDialog';
 import { AlertCircle, ChevronDown, ChevronRight, Play, Plus, Save, Trash2 } from 'lucide-react';
 import { Button, CheckBox, Select, Tag, TextInput } from '@una';
+import { DEFAULT_NOMINAL_WEEKS } from '@core/constants/timetable';
 import { checkTimetableConflicts } from '@core/utils/timetable';
 import type {
   AcademicGroupResponse,
@@ -166,6 +167,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
 
   const [chosenPlanId, setPlanId] = useState(initialPlanId);
   const [calendarReady, setCalendarReady] = useState(false);
+  const [compactSaturdays, setCompactSaturdays] = useState(false);
   const [academicGroups, setAcademicGroups] = useState<AcademicGroupResponse[]>(
     () => DEFAULT_GROUPS,
   );
@@ -193,6 +195,8 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   const calendarQuery = useQuery(
     semesterCalendarQueryOptions(selectedPlan?.academicYear ?? '', selectedPlan?.semester ?? 1),
   );
+  const isShortSemester =
+    calendarQuery.data !== undefined && calendarQuery.data.teachingWeeks < DEFAULT_NOMINAL_WEEKS;
   const slotPreferencesQuery = useQuery(
     semesterSlotPreferencesQueryOptions(calendarQuery.data?.id ?? ''),
   );
@@ -652,6 +656,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
       const response = await timetableApi.generateTimetableDraft(planId, {
         maxCandidates: 3,
         timeoutMs: 5000,
+        compactSaturdays: isShortSemester && compactSaturdays,
       });
 
       setDraftResult(response.data);
@@ -662,7 +667,14 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
     } finally {
       setIsGenerating(false);
     }
-  }, [calendarReady, formatMessage, persistDirtyWorkload, planId]);
+  }, [
+    calendarReady,
+    compactSaturdays,
+    formatMessage,
+    isShortSemester,
+    persistDirtyWorkload,
+    planId,
+  ]);
 
   const handlePublish = useCallback(async () => {
     if (!draftResult) {
@@ -758,7 +770,11 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
       setAdjustingEvent(null);
     } catch (failure) {
       setAdjustmentError(
-        failure instanceof Error ? failure.message : formatMessage('timetable.adjustError'),
+        failure instanceof Error && failure.message.includes('SOURCE_DAY_REGENERATION_REQUIRED')
+          ? formatMessage('timetable.sourceDayRegenerationRequired')
+          : failure instanceof Error
+            ? failure.message
+            : formatMessage('timetable.adjustError'),
       );
     } finally {
       setIsAdjusting(false);
@@ -824,6 +840,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
           key={planId}
           academicYear={selectedPlan.academicYear}
           semester={selectedPlan.semester}
+          studySemester={selectedPlan.studySemester}
           workload={workload}
           onCalendarReadyChange={setCalendarReady}
         />
@@ -1078,11 +1095,28 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
             )}
           </Button>
         </div>
+        {isShortSemester && (
+          <label className={styles.generateOption}>
+            <CheckBox
+              variant="primary"
+              checked={compactSaturdays}
+              onChange={(event) => setCompactSaturdays(event.target.checked)}
+              disabled={isGenerating}
+            />
+            <span>
+              {formatMessage('timetable.compactSaturdays')}
+              <small className={styles.summaryHint}>
+                {formatMessage('timetable.compactSaturdaysHint')}
+              </small>
+            </span>
+          </label>
+        )}
       </section>
 
       {draftResult && (
         <DraftResults
           draft={draftResult}
+          semesterStartDate={calendarQuery.data!.startDate}
           selectedIndex={selectedCandidateIndex}
           executionTimeMs={executionTimeMs}
           scheduledEventsCount={scheduledEventsCount}

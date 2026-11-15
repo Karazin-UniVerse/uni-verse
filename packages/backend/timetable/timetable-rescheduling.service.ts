@@ -27,6 +27,7 @@ import {
 const EVENT_CONTEXT_INCLUDE = {
   teachingAssignment: {
     include: {
+      curriculumPlan: { select: { studySemester: true } },
       group: true,
       subgroup: true,
       stream: { include: { groups: true } },

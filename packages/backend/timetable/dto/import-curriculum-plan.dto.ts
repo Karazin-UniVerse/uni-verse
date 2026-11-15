@@ -3,6 +3,7 @@ import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsDivisibleBy,
   IsEnum,
   IsInt,
@@ -49,6 +50,11 @@ class ImportedTeachingAssignmentDto implements ImportedTeachingAssignmentRequest
   @Max(400)
   @IsDivisibleBy(ACADEMIC_HOURS_PER_PAIR)
   academicHours: number;
+
+  @ApiPropertyOptional({ description: 'The class is held on Saturdays only' })
+  @IsBoolean()
+  @IsOptional()
+  isSaturdayOnly?: boolean;
 }
 
 export class ImportCurriculumPlanDto

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { buildPreviewSlots, countDayEvents, getEventWeekday, getTeachingTypeKey } from './helpers';
+import {
+  buildPreviewSlots,
+  countDayEvents,
+  getEventWeekday,
+  getTeachingTypeKey,
+  getSourceWeekParity,
+} from './helpers';
 import type { PreviewEvent } from './SchedulePreview.types';
 
 const createEvent = (overrides: Partial<PreviewEvent>): PreviewEvent => ({
@@ -34,5 +40,13 @@ describe('timetable preview helpers', () => {
     expect(getTeachingTypeKey('LABORATORY')).toBe('lab');
     expect(getTeachingTypeKey('SEMINAR')).toBe('seminar');
     expect(getTeachingTypeKey('LECTURE')).toBe('lecture');
+  });
+});
+
+describe('source teaching-week parity', () => {
+  it('derives parity from a missing day rather than its replacement Saturday', () => {
+    expect(getSourceWeekParity('2026-12-21', '2026-09-07')).toBe('DENOMINATOR');
+    expect(getSourceWeekParity('2026-12-14', '2026-09-07')).toBe('NUMERATOR');
+    expect(getSourceWeekParity('2026-12-21', '2026-09-09')).toBe('NUMERATOR');
   });
 });

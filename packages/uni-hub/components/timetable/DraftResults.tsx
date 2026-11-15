@@ -8,6 +8,8 @@ import type {
   AcademicGroupResponse,
 } from '@core/types/timetable';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
+import { DAY_LABEL_KEYS, getSourceWeekParity } from './helpers';
+import { TIMETABLE_WEEK_PARITY } from '@core/constants/timetable';
 import { DraftCandidates } from './DraftCandidates';
 import { SchedulePreview } from './SchedulePreview';
 import type { PreviewEvent } from './SchedulePreview.types';
@@ -15,6 +17,7 @@ import styles from './TimetableManagement.module.scss';
 
 type DraftResultsProps = {
   draft: GenerateTimetableDraftResult;
+  semesterStartDate: string;
   selectedIndex: number;
   executionTimeMs: number;
   scheduledEventsCount: number;
@@ -33,6 +36,7 @@ type DraftResultsProps = {
 /** A generated draft: how it was found, the variants to choose from and the chosen week. */
 export const DraftResults: React.FC<DraftResultsProps> = ({
   draft,
+  semesterStartDate,
   selectedIndex,
   executionTimeMs,
   scheduledEventsCount,
@@ -49,6 +53,10 @@ export const DraftResults: React.FC<DraftResultsProps> = ({
 }) => {
   const { formatMessage } = useLanguage();
   const events = draft.candidates[selectedIndex]?.events ?? [];
+  const compactSaturdays =
+    (draft.candidates[selectedIndex]?.automaticMakeupDays?.length ?? 0) === 0
+      ? (draft.candidates[selectedIndex]?.automaticMakeupDates ?? [])
+      : [];
 
   return (
     <section className={styles.draft} aria-labelledby="draft-title">
@@ -108,6 +116,45 @@ export const DraftResults: React.FC<DraftResultsProps> = ({
         />
         <div className={styles.previewSection}>
           <h4>{formatMessage('timetable.previewTitle')}</h4>
+          {(draft.candidates[selectedIndex]?.automaticMakeupDays?.length ?? 0) > 0 && (
+            <section aria-label={formatMessage('timetable.makeupDaysTitle')}>
+              <h4>{formatMessage('timetable.makeupDaysTitle')}</h4>
+              <ul>
+                {draft.candidates[selectedIndex].automaticMakeupDays?.map(
+                  ({ date, sourceDate }) => (
+                    <li key={date}>
+                      {formatMessage('timetable.makeupDayItem', {
+                        date,
+                        sourceDate,
+                        weekday: formatMessage(
+                          DAY_LABEL_KEYS[new Date(sourceDate).getUTCDay() - 1],
+                        ),
+                        parity: formatMessage(
+                          getSourceWeekParity(sourceDate, semesterStartDate) ===
+                            TIMETABLE_WEEK_PARITY.NUMERATOR
+                            ? 'timetable.weekNumerator'
+                            : 'timetable.weekDenominator',
+                        ),
+                      })}
+                    </li>
+                  ),
+                )}
+              </ul>
+            </section>
+          )}
+          {compactSaturdays.length > 0 && (
+            <section aria-label={formatMessage('timetable.makeupDaysTitle')}>
+              <h4>{formatMessage('timetable.makeupDaysTitle')}</h4>
+              <p className={styles.summaryHint}>
+                {formatMessage('timetable.compactSaturdaysNote')}
+              </p>
+              <ul>
+                {compactSaturdays.map((date) => (
+                  <li key={date}>{date}</li>
+                ))}
+              </ul>
+            </section>
+          )}
           {events.length > 0 ? (
             <SchedulePreview
               events={events as PreviewEvent[]}

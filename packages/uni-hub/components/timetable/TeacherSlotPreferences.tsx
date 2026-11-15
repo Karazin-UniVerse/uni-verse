@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BREAKPOINTS } from '@core/constants/breakpoints';
 import {
   SLOT_PREFERENCE,
-  TEACHING_DAYS_PER_WEEK,
+  SLOT_PREFERENCE_DAYS_PER_WEEK,
   type SlotPreference,
 } from '@core/constants/timetable';
 import type { SlotPreferenceItem } from '@core/types/timetable';
@@ -71,7 +71,7 @@ export function TeacherSlotPreferences(): React.JSX.Element {
 
   const weekdays = useMemo(
     () =>
-      Array.from({ length: TEACHING_DAYS_PER_WEEK }, (_, index) => {
+      Array.from({ length: SLOT_PREFERENCE_DAYS_PER_WEEK }, (_, index) => {
         const date = new Date(REFERENCE_MONDAY_YEAR, 0, index + 1);
         const name = new Intl.DateTimeFormat(localeTag, { weekday: 'short' }).format(date);
 

@@ -110,7 +110,15 @@ describe('timetable utils', () => {
     });
 
     test('spaces the remainder through the semester instead of bunching it at the start', () => {
-      assert.deepEqual(getEvenWeeklyPairCounts(4, 8), [0, 1, 0, 1, 0, 1, 0, 1]);
+      assert.deepEqual(getEvenWeeklyPairCounts(4, 8), [1, 0, 1, 0, 1, 0, 1, 0]);
+    });
+
+    test('always teaches in the first week, so a lecture never trails its practice', () => {
+      assert.deepEqual(getEvenWeeklyPairCounts(15, 16), [...Array(15).fill(1), 0]);
+
+      for (const pairs of [1, 7, 14, 15, 20, 31]) {
+        assert.ok(getEvenWeeklyPairCounts(pairs, 16)[0] > 0);
+      }
     });
   });
 
@@ -1057,6 +1065,27 @@ describe('checkTimetableConflicts', () => {
   });
 
   describe('soft penalties', () => {
+    test('does not combine unrelated lessons into an unassigned teacher workload', () => {
+      const events = Array.from({ length: 6 }, (_, index) =>
+        makeEvent({
+          id: `unassigned-${index}`,
+          pair: index + 1,
+          teacherId: undefined,
+          groupIds: [`group-${index}`],
+          teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+          hasLateSlotAuthorization: true,
+        }),
+      );
+      const report = checkTimetableConflicts({ events });
+
+      assert.ok(report.isValid);
+      assert.ok(
+        !report.softPenalties.some(
+          (penalty) => penalty.code === TIMETABLE_SOFT_PENALTY_CODE.EXCESSIVE_DAILY_LOAD,
+        ),
+      );
+    });
+
     const lecture = (id: string, date: string, pair = 1): ScheduledEvent =>
       makeEvent({
         id,

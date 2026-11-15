@@ -212,6 +212,19 @@ describe('Timetable DTOs', () => {
       },
     );
 
+    it('accepts the compact Saturdays flag and rejects other values', () => {
+      expect(
+        validateSync(
+          plainToInstance(GenerateTimetableDto, { compactSaturdays: true }),
+        ),
+      ).toEqual([]);
+      expect(
+        validateSync(
+          plainToInstance(GenerateTimetableDto, { compactSaturdays: 'yes' }),
+        ),
+      ).toEqual([expect.objectContaining({ property: 'compactSaturdays' })]);
+    });
+
     it.each([0, 10001, -10])(
       'should reject invalid timeoutMs %d',
       (timeoutMs) => {
@@ -523,6 +536,27 @@ describe('Timetable DTOs', () => {
       expect(
         validateSync(plainToInstance(ImportCurriculumPlanDto, validImport)),
       ).toEqual([]);
+    });
+
+    it('accepts a study semester from 1 to 8 and a Saturday-only class', () => {
+      const dto = plainToInstance(ImportCurriculumPlanDto, {
+        ...validImport,
+        studySemester: 3,
+        assignments: [{ ...validImport.assignments[0], isSaturdayOnly: true }],
+      });
+
+      expect(validateSync(dto)).toEqual([]);
+    });
+
+    it.each([0, 9, 1.5])('rejects study semester %d', (studySemester) => {
+      const dto = plainToInstance(ImportCurriculumPlanDto, {
+        ...validImport,
+        studySemester,
+      });
+
+      expect(validateSync(dto)).toEqual([
+        expect.objectContaining({ property: 'studySemester' }),
+      ]);
     });
 
     it('rejects whitespace-only discipline names', () => {

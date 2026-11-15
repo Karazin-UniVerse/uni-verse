@@ -1,8 +1,9 @@
-import { ForbiddenException } from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { Role } from '@universe/database';
 import type { SemesterCalendar } from '@universe/database';
 import {
   assertAdmin,
+  parseAutomaticMakeupDays,
   parseMakeupSaturdayDates,
   parseMakeupSaturdays,
 } from './timetable.helpers';
@@ -47,5 +48,29 @@ describe('parseMakeupSaturdays', () => {
 
   it('returns nothing without a calendar', () => {
     expect(parseMakeupSaturdays(null)).toEqual([]);
+  });
+});
+
+describe('parseAutomaticMakeupDays', () => {
+  it('reloads valid source dates without taking the target week parity', () => {
+    const entries = [{ date: '2026-09-12', sourceDate: '2026-12-21' }];
+
+    expect(parseAutomaticMakeupDays(entries)).toEqual(entries);
+    expect(parseAutomaticMakeupDays([])).toEqual([]);
+    expect(parseAutomaticMakeupDays()).toEqual([]);
+  });
+
+  it.each([
+    null,
+    { date: '2026-09-12' },
+    [{ date: '2026-09-12', sourceDate: '2026-12-27' }],
+    [{ date: '2026-09-14', sourceDate: '2026-12-21' }],
+    [{ date: '2026-02-30', sourceDate: '2026-12-21' }],
+    [
+      { date: '2026-09-12', sourceDate: '2026-12-21' },
+      { date: '2026-09-12', sourceDate: '2026-12-22' },
+    ],
+  ])('rejects malformed or duplicate saved templates %p', (value) => {
+    expect(() => parseAutomaticMakeupDays(value)).toThrow(ConflictException);
   });
 });

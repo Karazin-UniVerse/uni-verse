@@ -43,16 +43,22 @@ it('loads a non-default duration and preserves calendar exceptions when saving',
   await waitFor(() => expect(input).toHaveValue(14));
   expect(
     screen.getByText(
-      'If needed, the generator will use the minimum number of Saturdays to preserve all teaching hours.',
+      'All teaching hours must fit within the semester, accounting for available Saturdays and timetable constraints.',
     ),
   ).toBeInTheDocument();
   await user.clear(input);
-  expect(screen.queryByText(/minimum number of Saturdays/)).not.toBeInTheDocument();
+  expect(
+    screen.queryByText(/All teaching hours must fit within the semester/),
+  ).not.toBeInTheDocument();
   await user.type(input, '16');
-  expect(screen.queryByText(/minimum number of Saturdays/)).not.toBeInTheDocument();
+  expect(
+    screen.queryByText(/All teaching hours must fit within the semester/),
+  ).not.toBeInTheDocument();
   await user.clear(input);
   await user.type(input, '18');
-  expect(screen.queryByText(/minimum number of Saturdays/)).not.toBeInTheDocument();
+  expect(
+    screen.queryByText(/All teaching hours must fit within the semester/),
+  ).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Save semester settings' }));
 
   await waitFor(() =>

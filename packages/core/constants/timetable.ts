@@ -59,6 +59,18 @@ export const TIMETABLE_WEEKDAY = {
   SATURDAY: 6,
 } as const;
 
+export const SEMESTERS_PER_YEAR = 2 as const;
+export const MAX_STUDY_SEMESTER = 8 as const;
+
+// Study semesters 4-6 keep this slot free for the elective each student chooses.
+export const ELECTIVE_RESERVED_STUDY_SEMESTERS = { FIRST: 4, LAST: 6 } as const;
+export const ELECTIVE_RESERVED_SLOT = { WEEKDAY: TIMETABLE_WEEKDAY.WEDNESDAY, PAIR: 3 } as const;
+
+// Only study semester 3 teaches the Saturday-only «Аудиторна підготовка» of national resistance.
+export const SATURDAY_ONLY_STUDY_SEMESTER = 3 as const;
+export const SATURDAY_ONLY_DISCIPLINE_PATTERN =
+  /основи національного спротиву.*аудиторна підготовка/i;
+
 export type TimetableValidationError =
   (typeof TIMETABLE_VALIDATION_ERROR)[keyof typeof TIMETABLE_VALIDATION_ERROR];
 
@@ -97,6 +109,7 @@ export const TIMETABLE_CONFLICT_CODE = {
   EXAM_TEACHER_OVERLAP: 'EXAM_TEACHER_OVERLAP',
   EXAM_STUDENT_OVERLAP: 'EXAM_STUDENT_OVERLAP',
   MISSING_PARTICIPANTS: 'MISSING_PARTICIPANTS',
+  RESERVED_SLOT_OCCUPIED: 'RESERVED_SLOT_OCCUPIED',
 } as const;
 
 export type TimetableConflictCode =
@@ -202,8 +215,9 @@ export const SLOT_PREFERENCE = {
 
 export type SlotPreference = (typeof SLOT_PREFERENCE)[keyof typeof SLOT_PREFERENCE];
 
-export const TEACHING_DAYS_PER_WEEK = 6 as const;
-export const MAX_SLOT_PREFERENCES = TEACHING_DAYS_PER_WEEK * LAST_PAIR;
+// Teachers rate Monday to Friday only; Saturday classes are compensation days and ignore wishes.
+export const SLOT_PREFERENCE_DAYS_PER_WEEK = 5 as const;
+export const MAX_SLOT_PREFERENCES = SLOT_PREFERENCE_DAYS_PER_WEEK * LAST_PAIR;
 export const PREFERRED_SLOT_HEURISTIC_BONUS = -100 as const;
 export const UNDESIRABLE_SLOT_HEURISTIC_PENALTY = 1000 as const;
 
@@ -245,3 +259,5 @@ export const EUROPE_KYIV_VTIMEZONE = [
   'END:STANDARD',
   'END:VTIMEZONE',
 ].join('\r\n');
+
+export const SATURDAY_ROTATION_TEACHING_WEEKS: readonly number[] = [14, 15];

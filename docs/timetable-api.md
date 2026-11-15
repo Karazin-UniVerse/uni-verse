@@ -20,10 +20,84 @@ This script adds an empty-default array to existing versions; it does not modify
 their events or the shared semester calendar. It is not run automatically by the
 development server.
 
-Automatic compensation searches additional Saturday-date budgets from zero upward.
-Successful candidates therefore use a proven minimum date count; an unfinished
-lower-budget search returns `TIMEOUT`, not a successful candidate or a claim of
-infeasibility. The configured timeout covers all search and preference passes.
+## Study semester, elective slot and compact Saturdays (deployment prerequisite)
+
+`CurriculumPlan.studySemester` is a nullable integer (1–8, counted from the first
+year). It is optional on `POST /timetable/curriculum-plans` and
+`POST /timetable/curriculum-plans/import`; its parity must match `semester`
+(`1` for odd study semesters, `2` for even ones), otherwise the request is
+rejected with HTTP 400. Existing plans keep `NULL` until the value is set.
+
+Apply the additive script and regenerate the client against the explicitly
+selected database before deploying code that reads the column:
+
+```bash
+pnpm --filter @universe/backend exec prisma db execute --file prisma/scripts/add-study-semester.sql
+pnpm --filter @universe/backend db:generate
+```
+
+Rules driven by the study semester:
+
+- **Reserved elective slot.** In study semesters 4–6 Wednesday pair 3 is kept free.
+  The generator never places a class there, and the shared conflict validator
+  reports the hard conflict `RESERVED_SLOT_OCCUPIED`, so draft adjustment,
+  publication and rescheduling reject it too. The rule uses
+  `curriculumPlan.studySemester` of the event's assignment.
+- **Saturday-only training.** The import marks rows of «Основи національного
+  спротиву (Аудиторна підготовка)» as `isSaturdayOnly` only when the study
+  semester is 3. `isSaturdayOnly` on an imported row is an optional boolean.
+
+`POST /timetable/plans/:id/generate` accepts an optional `compactSaturdays`
+boolean. It matters only for semesters shorter than 16 weeks: after normal
+generation the Saturdays with the fewest makeup classes are emptied by moving each
+class to another Saturday of the same candidate when teacher, participant,
+unavailability, late-pair, reserved-slot and lecture-before-practice rules and the
+five-pair Saturday limit still hold. A compact candidate keeps
+`automaticMakeupDates` but has an empty `automaticMakeupDays`.
+
+Teacher slot preferences cover Monday to Friday only (`weekday` 1–5, at most 35
+slots); Saturday rows are not accepted and are hidden from reads.
+
+## Source-day compensation for 14 and 15 weeks
+
+Generation uses a 16-week nominal weekday timetable and moves missing source days
+onto distinct Saturdays inside the actual semester. Days are ordered by source
+teaching week and then Monday through Friday; empty source days need no Saturday.
+Pairs and source-week numerator/denominator are preserved. A Saturday never mixes
+two different source days. Excluded dates, explicit makeup dates, occupancy and
+five-pair teacher/participant limits remain enforced. If a whole day cannot fit,
+the solver tries later Saturdays and other regular slots; it never drops hours.
+There is no promise that every input has a feasible solution or that quality is
+globally optimal. Other semester lengths retain the previous compensation policy.
+
+Dense plans first try a guided target calendar inside half the remaining search
+budget. Missing source occurrences enter the conflict table as Saturday events,
+so ordinary slots are checked against Saturday-only lessons during selection.
+Conservative lecture precedence is also propagated through that table. If the
+guided calendar fails, flexible ordered Saturday placement runs with the remaining
+overall budget. A failed guided calendar alone never proves infeasibility.
+Saturday capacity counts distinct pairs independently per participant resource;
+parallel classes of different groups are not added into one stream-wide load.
+
+Each candidate includes `automaticMakeupDays: Array<{ date; sourceDate }>`.
+`automaticMakeupDates` authorizes the target dates; mappings record their source
+teaching days. Both are saved on the version in the same transaction. Existing
+versions without mappings keep their saved events and date authorizations.
+
+Before deploying code that reads the mappings, apply the additive script and
+regenerate the client against the explicitly selected database:
+
+```bash
+pnpm --filter @universe/backend exec prisma db execute --file prisma/scripts/add-automatic-makeup-days.sql
+pnpm --filter @universe/backend db:generate
+```
+
+The script adds an empty-default JSON array; it never rewrites existing events.
+Publication checks mapping/date consistency and the current calendar. Draft edits
+of assignments with mapped compensation are rejected with
+`SOURCE_DAY_REGENERATION_REQUIRED`; regenerate the draft to change those slots.
+Explicit published rescheduling retains its normal conflict checks and audit;
+the source mapping remains historical provenance.
 
 ## Overview
 
@@ -42,36 +116,36 @@ pnpm --filter @universe/backend db:push
 
 All endpoints except the public `.ics` feed require a valid Bearer JWT (`AtGuard`). Administrative endpoints require the `ADMIN` role (Dean's office / Administrator).
 
-| Method   | Path                                                   | Access                     | Description                                                                                                             |
-| -------- | ------------------------------------------------------ | -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `POST`   | `/timetable/groups`                                    | `ADMIN`                    | Create an academic group with optional subgroups.                                                                       |
-| `GET`    | `/timetable/groups`                                    | Authenticated              | List all academic groups with subgroups.                                                                                |
-| `POST`   | `/timetable/curriculum-plans`                          | `ADMIN`                    | Create a curriculum plan.                                                                                               |
-| `GET`    | `/timetable/curriculum-plans/:id`                      | `ADMIN`                    | Get a curriculum plan with its teaching assignments.                                                                    |
-| `POST`   | `/timetable/assignments`                               | `ADMIN`                    | Create a teaching assignment (`academicHours` even integer `2..400`, requires `groupId`, `subgroupId`, or `streamId`).  |
-| `GET`    | `/timetable/assignments?curriculumPlanId=...`          | `ADMIN`                    | List teaching assignments for a curriculum plan.                                                                        |
-| `GET`    | `/timetable/my/assignments`                            | Authenticated              | List teaching assignments assigned to the current teacher.                                                              |
-| `GET`    | `/timetable/my/slot-preferences/semesters`             | Instructor                 | List available semester calendars for recurring slot preferences.                                                       |
-| `GET`    | `/timetable/my/slot-preferences/:semesterCalendarId`   | Instructor                 | Get current teacher's slot preferences for a specific semester.                                                         |
-| `PUT`    | `/timetable/my/slot-preferences/:semesterCalendarId`   | Instructor                 | Replace current teacher's slot preferences for a semester atomically (max 42 slots).                                    |
-| `PUT`    | `/timetable/assignments/:id/meeting-url`               | Assigned Teacher / `ADMIN` | Update online meeting URL (`http`/`https`, max `2048` chars).                                                           |
-| `POST`   | `/timetable/calendar` (`/timetable/semester-calendar`) | `ADMIN`                    | Configure or upsert a semester calendar.                                                                                |
-| `GET`    | `/timetable/calendar` (`/timetable/semester-calendar`) | `ADMIN`                    | Get a semester calendar by `academicYear` and `semester`.                                                               |
-| `POST`   | `/timetable/teachers/:teacherId/unavailability`        | Self / `ADMIN`             | Submit a teacher unavailability slot request.                                                                           |
-| `PUT`    | `/timetable/unavailability/:id/confirm`                | `ADMIN`                    | Confirm or reject a teacher unavailability request.                                                                     |
-| `POST`   | `/timetable/plans/:id/generate`                        | `ADMIN`                    | Generate up to `maxCandidates` (`1..5`, timeout `1..10000` ms, max `200` demands) draft timetable versions.             |
-| `POST`   | `/timetable/versions/:id/publish`                      | `ADMIN`                    | Atomically validate and publish a draft timetable version.                                                              |
-| `POST`   | `/timetable/reschedule-preview`                        | Instructor / `ADMIN`       | Preview single (`ONCE`) or series (`SERIES`) rescheduling changes and validate conflicts without mutating events.       |
-| `POST`   | `/timetable/my/reschedule-requests`                    | Instructor                 | Submit a rescheduling request for own future published occurrences (`reason` max `1000` chars).                         |
-| `GET`    | `/timetable/my/reschedule-requests`                    | Instructor                 | List current instructor's rescheduling requests (`page` default `1`, `pageSize` default `20`, max `100`).               |
-| `GET`    | `/timetable/reschedule-requests`                       | `ADMIN`                    | List all rescheduling requests for dean's office review (`page`, `pageSize`, optional `status` filter).                 |
-| `POST`   | `/timetable/reschedule-requests/:id/approve`           | `ADMIN`                    | Atomically re-validate snapshot/conflicts, update affected occurrences, record audit rows, and mark request `APPROVED`. |
-| `POST`   | `/timetable/reschedule-requests/:id/reject`            | `ADMIN`                    | Reject a pending request with a required nonblank `explanation` (max `1000` chars).                                     |
-| `PATCH`  | `/timetable/events/:id/reschedule`                     | `ADMIN`                    | Directly reschedule single or series published occurrences with conflict checks and audit logging.                      |
-| `POST`   | `/timetable/calendar/tokens`                           | Authenticated              | Get existing active subscription token or create a new one.                                                             |
-| `POST`   | `/timetable/calendar/tokens/rotate`                    | Authenticated              | Deactivate existing tokens and issue a new token.                                                                       |
-| `DELETE` | `/timetable/calendar/tokens`                           | Authenticated              | Revoke all active subscription tokens for the current user.                                                             |
-| `GET`    | `/timetable/calendar/feed/:token`                      | Public (Token)             | Fetch personal `.ics` calendar feed (`text/calendar; charset=utf-8`).                                                   |
+| Method   | Path                                                   | Access                     | Description                                                                                                                    |
+| -------- | ------------------------------------------------------ | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `POST`   | `/timetable/groups`                                    | `ADMIN`                    | Create an academic group with optional subgroups.                                                                              |
+| `GET`    | `/timetable/groups`                                    | Authenticated              | List all academic groups with subgroups.                                                                                       |
+| `POST`   | `/timetable/curriculum-plans`                          | `ADMIN`                    | Create a curriculum plan (optional `studySemester` 1–8, parity must match `semester`).                                         |
+| `GET`    | `/timetable/curriculum-plans/:id`                      | `ADMIN`                    | Get a curriculum plan with its teaching assignments.                                                                           |
+| `POST`   | `/timetable/assignments`                               | `ADMIN`                    | Create a teaching assignment (`academicHours` even integer `2..400`, requires `groupId`, `subgroupId`, or `streamId`).         |
+| `GET`    | `/timetable/assignments?curriculumPlanId=...`          | `ADMIN`                    | List teaching assignments for a curriculum plan.                                                                               |
+| `GET`    | `/timetable/my/assignments`                            | Authenticated              | List teaching assignments assigned to the current teacher.                                                                     |
+| `GET`    | `/timetable/my/slot-preferences/semesters`             | Instructor                 | List available semester calendars for recurring slot preferences.                                                              |
+| `GET`    | `/timetable/my/slot-preferences/:semesterCalendarId`   | Instructor                 | Get current teacher's slot preferences for a specific semester.                                                                |
+| `PUT`    | `/timetable/my/slot-preferences/:semesterCalendarId`   | Instructor                 | Replace current teacher's slot preferences for a semester atomically (Monday–Friday, max 35 slots).                            |
+| `PUT`    | `/timetable/assignments/:id/meeting-url`               | Assigned Teacher / `ADMIN` | Update online meeting URL (`http`/`https`, max `2048` chars).                                                                  |
+| `POST`   | `/timetable/calendar` (`/timetable/semester-calendar`) | `ADMIN`                    | Configure or upsert a semester calendar.                                                                                       |
+| `GET`    | `/timetable/calendar` (`/timetable/semester-calendar`) | `ADMIN`                    | Get a semester calendar by `academicYear` and `semester`.                                                                      |
+| `POST`   | `/timetable/teachers/:teacherId/unavailability`        | Self / `ADMIN`             | Submit a teacher unavailability slot request.                                                                                  |
+| `PUT`    | `/timetable/unavailability/:id/confirm`                | `ADMIN`                    | Confirm or reject a teacher unavailability request.                                                                            |
+| `POST`   | `/timetable/plans/:id/generate`                        | `ADMIN`                    | Generate up to `maxCandidates` (`1..5`, timeout `1..10000` ms, max `200` demands) draft versions; optional `compactSaturdays`. |
+| `POST`   | `/timetable/versions/:id/publish`                      | `ADMIN`                    | Atomically validate and publish a draft timetable version.                                                                     |
+| `POST`   | `/timetable/reschedule-preview`                        | Instructor / `ADMIN`       | Preview single (`ONCE`) or series (`SERIES`) rescheduling changes and validate conflicts without mutating events.              |
+| `POST`   | `/timetable/my/reschedule-requests`                    | Instructor                 | Submit a rescheduling request for own future published occurrences (`reason` max `1000` chars).                                |
+| `GET`    | `/timetable/my/reschedule-requests`                    | Instructor                 | List current instructor's rescheduling requests (`page` default `1`, `pageSize` default `20`, max `100`).                      |
+| `GET`    | `/timetable/reschedule-requests`                       | `ADMIN`                    | List all rescheduling requests for dean's office review (`page`, `pageSize`, optional `status` filter).                        |
+| `POST`   | `/timetable/reschedule-requests/:id/approve`           | `ADMIN`                    | Atomically re-validate snapshot/conflicts, update affected occurrences, record audit rows, and mark request `APPROVED`.        |
+| `POST`   | `/timetable/reschedule-requests/:id/reject`            | `ADMIN`                    | Reject a pending request with a required nonblank `explanation` (max `1000` chars).                                            |
+| `PATCH`  | `/timetable/events/:id/reschedule`                     | `ADMIN`                    | Directly reschedule single or series published occurrences with conflict checks and audit logging.                             |
+| `POST`   | `/timetable/calendar/tokens`                           | Authenticated              | Get existing active subscription token or create a new one.                                                                    |
+| `POST`   | `/timetable/calendar/tokens/rotate`                    | Authenticated              | Deactivate existing tokens and issue a new token.                                                                              |
+| `DELETE` | `/timetable/calendar/tokens`                           | Authenticated              | Revoke all active subscription tokens for the current user.                                                                    |
+| `GET`    | `/timetable/calendar/feed/:token`                      | Public (Token)             | Fetch personal `.ics` calendar feed (`text/calendar; charset=utf-8`).                                                          |
 
 ## Draft Generation & Publication Rules
 

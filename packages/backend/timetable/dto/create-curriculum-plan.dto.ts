@@ -9,6 +9,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
+import { MAX_STUDY_SEMESTER } from '@universe/core/constants/timetable';
 import type { CreateCurriculumPlanRequest } from '@universe/core/types/timetable';
 
 export class CreateCurriculumPlanDto implements CreateCurriculumPlanRequest {
@@ -37,6 +38,19 @@ export class CreateCurriculumPlanDto implements CreateCurriculumPlanRequest {
   @Min(1)
   @Max(2)
   semester: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Study semester counted from the first year; its parity must match `semester`',
+    minimum: 1,
+    maximum: MAX_STUDY_SEMESTER,
+  })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(MAX_STUDY_SEMESTER)
+  @IsOptional()
+  studySemester?: number;
 
   @ApiPropertyOptional({ description: 'Draft status flag', default: true })
   @IsBoolean()

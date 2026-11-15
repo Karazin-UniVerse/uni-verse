@@ -1,4 +1,12 @@
-import { SLOT_PREFERENCE, type PairNumber, type SlotPreference } from '@core/constants/timetable';
+import {
+  DAYS_PER_WEEK,
+  MS_PER_DAY,
+  TIMETABLE_WEEK_PARITY,
+  type TimetableWeekParity,
+  SLOT_PREFERENCE,
+  type PairNumber,
+  type SlotPreference,
+} from '@core/constants/timetable';
 import type {
   AcademicGroupResponse,
   SlotPreferenceItem,
@@ -240,3 +248,15 @@ export const getPreferenceStateKey = (
     ? 'preferences.undesirable'
     : 'preferences.neutral';
 };
+
+export function getSourceWeekParity(
+  sourceDate: string,
+  semesterStartDate: string,
+): TimetableWeekParity {
+  const week = Math.floor(
+    (Date.parse(sourceDate.slice(0, 10)) - Date.parse(semesterStartDate.slice(0, 10))) /
+      (DAYS_PER_WEEK * MS_PER_DAY),
+  );
+
+  return week % 2 === 0 ? TIMETABLE_WEEK_PARITY.NUMERATOR : TIMETABLE_WEEK_PARITY.DENOMINATOR;
+}

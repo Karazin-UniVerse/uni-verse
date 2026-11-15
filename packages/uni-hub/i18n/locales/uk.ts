@@ -1,4 +1,10 @@
 export const uk = {
+  'timetable.makeupDaysTitle': 'Суботи відпрацювань',
+  'timetable.makeupDayItem': '{date} — за {weekday} ({parity}), початковий день {sourceDate}',
+  'timetable.weekNumerator': 'чисельник',
+  'timetable.weekDenominator': 'знаменник',
+  'timetable.sourceDayRegenerationRequired':
+    'Це навчальне доручення має суботи за шаблоном пропущеного дня. Для зміни дня або пари згенеруйте розклад повторно.',
   'timetable.adjustSlot': 'Змінити слот',
   'timetable.adjustConflict': 'Слот конфліктує з іншим заняттям або обмеженнями розкладу',
   'timetable.currentSlot': 'Поточний слот: {day}, пара {pair}',
@@ -392,6 +398,17 @@ export const uk = {
   'timetable.planAcademicYearHint': 'У форматі 2026/2027',
   'timetable.planSemester': 'Семестр',
   'timetable.planSemesterOption': '{semester} семестр',
+  'timetable.planStudySemester': 'Семестр навчання',
+  'timetable.planStudySemesterNone': 'Не вказано',
+  'timetable.planStudySemesterHint':
+    'У 4–6 семестрах навчання 3-тя пара середи лишається вільною для вибіркових дисциплін.',
+  'timetable.summaryElectiveReserved':
+    '3-тя пара середи вільна для вибіркових дисциплін студентів.',
+  'timetable.compactSaturdays': 'Компактні суботи',
+  'timetable.compactSaturdaysHint':
+    'Менше субот: у суботу можуть бути пари з різних днів, а їхні пари змінюються. Без цього кожна субота повторює один пропущений день.',
+  'timetable.compactSaturdaysNote':
+    'Компактний режим: у суботу можуть бути пари з різних пропущених днів.',
   'timetable.planGroup': 'Група для всіх занять',
   'timetable.planGroupHint':
     'Підгрупи, потоки й викладачів можна змінити в навантаженні після створення.',
@@ -919,7 +936,7 @@ export const uk = {
   'schedule.scopeSeries': 'Це та наступні заняття',
   'timetable.teachingWeeks': 'Навчальних тижнів',
   'timetable.shortSemesterSaturdays':
-    'За потреби генератор залучить мінімальну кількість субот, щоб зберегти всі навчальні години.',
+    'Усі навчальні години мають уміститися в семестрі з урахуванням доступних субот і обмежень розкладу.',
   'timetable.saveSemesterSettings': 'Зберегти налаштування семестру',
   'timetable.calendarPublishedConflict':
     'Семестр уже має опублікований розклад із заняттями поза новими датами. Залиште дати, що охоплюють усі опубліковані заняття.',

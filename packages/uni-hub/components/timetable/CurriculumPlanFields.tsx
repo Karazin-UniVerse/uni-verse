@@ -1,5 +1,7 @@
 import React, { useId } from 'react';
 import { Select, TextInput } from '@una';
+import { MAX_STUDY_SEMESTER } from '@core/constants/timetable';
+import { getSemesterOfYear } from '@core/utils/study-semester';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { CurriculumPlanFieldsProps } from './CurriculumPlanDialog.types';
 import styles from './CurriculumPlanDialog.module.scss';
@@ -15,6 +17,13 @@ export const CurriculumPlanFields: React.FC<CurriculumPlanFieldsProps> = ({
     value: String(semester),
     label: formatMessage('timetable.planSemesterOption', { semester }),
   }));
+  const studySemesterOptions = [
+    { value: '', label: formatMessage('timetable.planStudySemesterNone') },
+    ...Array.from({ length: MAX_STUDY_SEMESTER }, (_, index) => ({
+      value: String(index + 1),
+      label: formatMessage('timetable.planSemesterOption', { semester: index + 1 }),
+    })),
+  ];
 
   return (
     <div className={styles.fieldGrid}>
@@ -53,8 +62,26 @@ export const CurriculumPlanFields: React.FC<CurriculumPlanFieldsProps> = ({
           value={values.semester}
           options={semesterOptions}
           onChange={(semester) => onChange({ semester })}
+          disabled={disabled || values.studySemester !== ''}
+        />
+      </label>
+      <label className={styles.field} htmlFor={`${baseId}-study-semester`}>
+        {formatMessage('timetable.planStudySemester')}
+        <Select
+          id={`${baseId}-study-semester`}
+          value={values.studySemester}
+          options={studySemesterOptions}
+          onChange={(studySemester) =>
+            onChange({
+              studySemester,
+              ...(studySemester
+                ? { semester: String(getSemesterOfYear(Number(studySemester))) }
+                : {}),
+            })
+          }
           disabled={disabled}
         />
+        <span className={styles.hint}>{formatMessage('timetable.planStudySemesterHint')}</span>
       </label>
     </div>
   );

@@ -5,6 +5,7 @@ export type CurriculumPlanFieldValues = {
   faculty: string;
   academicYear: string;
   semester: string;
+  studySemester: string;
 };
 
 export type CurriculumPlanDialogProps = {

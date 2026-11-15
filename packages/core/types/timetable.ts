@@ -157,6 +157,8 @@ export type ScheduledEvent = {
   hasLateSlotAuthorization?: boolean;
   isSaturdayOnly?: boolean;
   isMakeupSaturday?: boolean;
+  /** Study semester (1-8) of the curriculum plan; some semesters reserve a slot for electives. */
+  studySemester?: number;
 };
 
 export type TeacherUnavailability = {
@@ -227,6 +229,7 @@ export type TeachingDemand = {
   parity?: TimetableWeekParity;
   order?: TimetablePhaseOrder;
   studentIds?: string[];
+  studySemester?: number;
 };
 
 export type GenerateTimetableOptions = {
@@ -268,10 +271,16 @@ export type GenerateTimetableParams = {
   preferences?: TeacherSlotPreference[];
 };
 
+export type AutomaticMakeupDay = {
+  date: string;
+  sourceDate: string;
+};
+
 export type TimetableCandidate = {
   events: ScheduledEvent[];
   penaltyScore: number;
   automaticMakeupDates?: string[];
+  automaticMakeupDays?: AutomaticMakeupDay[];
   versionId?: string;
   candidateIndex?: number;
   preferenceViolations?: PreferenceViolation[];
@@ -285,11 +294,23 @@ export type CandidateSlot = {
   pair: number;
   timeKeys: Set<string>;
   weekday: number;
+  missingOccurrences?: ScheduledEvent[];
   layerIndex?: number;
   unitIndex?: number;
 };
 
+export type TimetableSearchParams = GenerateTimetableParams & {
+  rotationMakeupDays?: AutomaticMakeupDay[];
+};
+
+export type DemandWeeklyCountsParams = {
+  demand: TeachingDemand;
+  teachingWeeks: number;
+  nominalWeeks?: number;
+};
+
 export type SchedulableDemandLayer = {
+  nominalWeeklyCounts: number[];
   demand: TeachingDemand;
   demandIndex: number;
   layerIndex: number;
@@ -382,6 +403,8 @@ export type CreateCurriculumPlanRequest = {
   title: string;
   academicYear: string;
   semester: number;
+  /** Study semester 1-8 counted from the first year; must match the parity of `semester`. */
+  studySemester?: number;
   isDraft?: boolean;
 };
 
@@ -389,6 +412,7 @@ export type ImportedTeachingAssignmentRequest = {
   disciplineTitle: string;
   teachingType: TimetableAssignmentTeachingType;
   academicHours: number;
+  isSaturdayOnly?: boolean;
 };
 
 export type ImportCurriculumPlanRequest = CreateCurriculumPlanRequest & {
@@ -430,6 +454,8 @@ export type ParsedCurriculumSheet = {
 export type GenerateTimetableRequest = {
   maxCandidates?: number;
   timeoutMs?: number;
+  /** Short semesters: use as few extra Saturdays as possible, mixing classes of different weekdays. */
+  compactSaturdays?: boolean;
 };
 
 export type UpdateMeetingUrlRequest = {
@@ -532,6 +558,7 @@ export type CurriculumPlanResponse = {
   title: string;
   academicYear: string;
   semester: number;
+  studySemester: number | null;
   isDraft: boolean;
   teachingAssignments?: TeachingAssignmentResponse[];
 };

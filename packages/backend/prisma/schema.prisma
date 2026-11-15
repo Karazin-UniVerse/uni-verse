@@ -303,15 +303,16 @@ model AcademicStream {
 }
 
 model CurriculumPlan {
-  id           String   @id @default(uuid())
-  faculty      String
-  title        String
-  academicYear String
-  semester     Int
-  isDraft      Boolean  @default(true)
-  isArchived   Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String   @id @default(uuid())
+  faculty       String
+  title         String
+  academicYear  String
+  semester      Int
+  studySemester Int?
+  isDraft       Boolean  @default(true)
+  isArchived    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   teachingAssignments TeachingAssignment[]
 
@@ -386,16 +387,17 @@ model TeacherSlotPreference {
 }
 
 model TimetableVersion {
-  automaticMakeupDates String[] @default([])
-  id                 String          @id @default(uuid())
-  semesterCalendarId String
-  status             TimetableStatus @default(DRAFT)
-  candidateIndex     Int?
-  generationId       String?
-  publishedAt        DateTime?
-  createdById        String
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
+  automaticMakeupDays  Json            @default("[]")
+  automaticMakeupDates String[]        @default([])
+  id                   String          @id @default(uuid())
+  semesterCalendarId   String
+  status               TimetableStatus @default(DRAFT)
+  candidateIndex       Int?
+  generationId         String?
+  publishedAt          DateTime?
+  createdById          String
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
 
   semesterCalendar SemesterCalendar @relation(fields: [semesterCalendarId], references: [id], onDelete: Restrict)
   createdBy        User             @relation("TimetableVersionCreator", fields: [createdById], references: [id], onDelete: Restrict)
