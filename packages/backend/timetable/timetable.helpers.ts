@@ -87,6 +87,18 @@ export function parseMakeupSaturdayDates(
   ]);
 }
 
+/** Everything `toScheduledEvent` needs from an assignment: participants and the study semester. */
+export const EVENT_ASSIGNMENT_INCLUDE = {
+  teachingAssignment: {
+    include: {
+      curriculumPlan: { select: { studySemester: true } },
+      group: true,
+      subgroup: true,
+      stream: { include: { groups: true } },
+    },
+  },
+} as const;
+
 export function toScheduledEvent(
   event: TimetableEvent & {
     teachingAssignment?: AssignmentWithRelations | null;
@@ -103,7 +115,7 @@ export function toScheduledEvent(
       event.disciplineTitleSnapshot ?? assignment?.disciplineTitle ?? '',
     teachingType: (event.teachingTypeSnapshot ??
       assignment?.teachingType) as ScheduledEvent['teachingType'],
-    teacherId: event.teacherIdSnapshot ?? assignment?.teacherId ?? undefined,
+    teacherId: event.teacherIdSnapshot ?? undefined,
     groupIds: buildGroupIds(assignment),
     date,
     pair: event.pair,

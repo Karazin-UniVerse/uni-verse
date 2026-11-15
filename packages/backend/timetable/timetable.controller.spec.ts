@@ -57,6 +57,7 @@ describe('TimetableController', () => {
     createAcademicGroup: jest.fn(),
     deleteTeachingAssignment: jest.fn(),
     listAcademicGroups: jest.fn(),
+    listAcademicStreams: jest.fn(),
     createCurriculumPlan: jest.fn(),
     importCurriculumPlan: jest.fn(),
     listSemesterSlotPreferences: jest.fn(),
@@ -234,6 +235,13 @@ describe('TimetableController', () => {
         controller.createAcademicGroup(dto, [Role.OPPORTUNITIES_USER]),
       ).rejects.toThrow(ForbiddenException);
       expect(mockTimetableService.createAcademicGroup).not.toHaveBeenCalled();
+    });
+
+    it('lists lecture streams', async () => {
+      mockTimetableService.listAcademicStreams.mockResolvedValue([]);
+
+      await expect(controller.listAcademicStreams()).resolves.toEqual([]);
+      expect(mockTimetableService.listAcademicStreams).toHaveBeenCalled();
     });
 
     it('lists academic groups', async () => {

@@ -522,7 +522,12 @@ export function getExamInstants(date: string, startPair: number): PairInstantsRe
   };
 }
 
-function getEventSpan(event: ScheduledEvent): number {
+/** Pairs 6-7 are taught only with the dean's late-slot authorization. */
+export function getLastAllowedPair(hasLateSlotAuthorization?: boolean): number {
+  return hasLateSlotAuthorization ? LAST_PAIR : FIRST_LATE_PAIR - 1;
+}
+
+export function getEventSpan(event: ScheduledEvent): number {
   return (
     event.pairSpan ?? (event.teachingType === TIMETABLE_TEACHING_TYPE.EXAM ? EXAM_PAIR_COUNT : 1)
   );
@@ -990,6 +995,11 @@ type SlotHeuristicParams = {
   pair: number;
 };
 
+const PREFERENCE_HEURISTIC_COST: Record<SlotPreference, number> = {
+  [SLOT_PREFERENCE.PREFERRED]: PREFERRED_SLOT_HEURISTIC_BONUS,
+  [SLOT_PREFERENCE.UNDESIRABLE]: UNDESIRABLE_SLOT_HEURISTIC_PENALTY,
+};
+
 function computeSlotHeuristicCost({ demand, pair }: SlotHeuristicParams): number {
   if (demand.isSaturdayOnly) {
     if (pair > LAST_PREFERRED_SATURDAY_PAIR) {
@@ -1212,6 +1222,68 @@ function generateWithPreferences(
   return { ...relaxed, diagnostics };
 }
 
+/**
+ * A practice whose first teaching week is earlier than the first week of every lecture of its
+ * discipline always precedes the lecture, whatever slots are chosen, so no timetable exists.
+ */
+function hasUnavoidableLateLecture(
+  demands: TeachingDemand[],
+  units: SchedulableDemandLayer[],
+  fixedEvents: ScheduledEvent[],
+): boolean {
+  const firstWeekByDemand = new Map<number, number>();
+
+  for (const { demandIndex, weeklyCounts } of units) {
+    const week = weeklyCounts.findIndex((count): boolean => count > 0);
+
+    if (week >= 0) {
+      firstWeekByDemand.set(
+        demandIndex,
+        Math.min(week, firstWeekByDemand.get(demandIndex) ?? week),
+      );
+    }
+  }
+
+  const isLecture = (demand: TeachingDemand): boolean =>
+    demand.teachingType === TIMETABLE_TEACHING_TYPE.LECTURE;
+
+  return demands.some((practice, practiceIndex): boolean => {
+    const practiceWeek = firstWeekByDemand.get(practiceIndex);
+
+    if (isLecture(practice) || practice.teachingType === TIMETABLE_TEACHING_TYPE.EXAM) {
+      return false;
+    }
+
+    return (
+      practiceWeek !== undefined &&
+      practice.groupIds.some((groupId): boolean => {
+        if (
+          fixedEvents.some(
+            (event) =>
+              event.teachingType === TIMETABLE_TEACHING_TYPE.LECTURE &&
+              event.disciplineTitle === practice.disciplineTitle &&
+              event.groupIds.includes(groupId),
+          )
+        )
+          return false;
+
+        const lectureWeeks = demands.flatMap((lecture, lectureIndex): number[] => {
+          const week = firstWeekByDemand.get(lectureIndex);
+
+          return isLecture(lecture) &&
+            lecture.disciplineTitle === practice.disciplineTitle &&
+            lecture.groupIds.includes(groupId) &&
+            week !== undefined
+            ? [week]
+            : [];
+        });
+
+        return lectureWeeks.length > 0 && practiceWeek < Math.min(...lectureWeeks);
+      })
+    );
+  });
+}
+
 function searchTimetableCandidates(
   {
     demands,
@@ -1320,6 +1392,13 @@ function searchTimetableCandidates(
     }
   }
 
+  if (
+    calendar.teachingWeeks >= DEFAULT_NOMINAL_WEEKS &&
+    hasUnavoidableLateLecture(demands, units, fixedEvents)
+  ) {
+    return { ok: false, error: 'NO_FEASIBLE_SOLUTION', diagnostics: getDiagnostics() };
+  }
+
   const confirmedUnavailability = unavailability.filter((entry): boolean => entry.isConfirmed);
   const preferenceMap = new Map<string, SlotPreference>();
 
@@ -1387,7 +1466,7 @@ function searchTimetableCandidates(
             getTeachingWeekdayMs(semesterStartMs, 0, second),
         );
 
-    const maxPair = demand.hasLateSlotAuthorization ? LAST_PAIR : FIRST_LATE_PAIR - 1;
+    const maxPair = getLastAllowedPair(demand.hasLateSlotAuthorization);
     const slots: CandidateSlot[] = [];
 
     for (const weekday of weekdays) {
@@ -1583,12 +1662,7 @@ function searchTimetableCandidates(
           }
         }
 
-        const preferenceCost =
-          preference === SLOT_PREFERENCE.PREFERRED
-            ? PREFERRED_SLOT_HEURISTIC_BONUS
-            : preference === SLOT_PREFERENCE.UNDESIRABLE
-              ? UNDESIRABLE_SLOT_HEURISTIC_PENALTY
-              : 0;
+        const preferenceCost = preference ? PREFERENCE_HEURISTIC_COST[preference] : 0;
         const heuristicCost =
           preferenceCost +
           computeSlotHeuristicCost({
@@ -1825,6 +1899,19 @@ function searchTimetableCandidates(
     return slot === null ? [] : [slot];
   });
 
+  const existingPrecedence = new Set(
+    getPrecedencePenalties(fixedSlots).map((penalty) => penalty.eventIds[0]),
+  );
+
+  function getNewPrecedencePenalties(
+    slots: EventSlot[],
+    pending: TeachingDemand[] = [],
+  ): SoftPenalty[] {
+    return getPrecedencePenalties(slots, pending).filter(
+      (penalty) => !existingPrecedence.has(penalty.eventIds[0]),
+    );
+  }
+
   function search(): void {
     statesExplored += 1;
 
@@ -1876,7 +1963,7 @@ function searchTimetableCandidates(
           }),
     );
 
-    if (getPrecedencePenalties([...fixedSlots, ...partialSlots], pendingLectures).length > 0) {
+    if (getNewPrecedencePenalties([...fixedSlots, ...partialSlots], pendingLectures).length > 0) {
       return;
     }
 
@@ -1893,7 +1980,7 @@ function searchTimetableCandidates(
         event.teachingType === TIMETABLE_TEACHING_TYPE.LECTURE || event.date < firstMakeupDate,
     );
 
-    if (getPrecedencePenalties(slotsBeforeMakeups, unassignedLectures).length > 0) {
+    if (getNewPrecedencePenalties(slotsBeforeMakeups, unassignedLectures).length > 0) {
       return;
     }
 
@@ -1955,7 +2042,7 @@ function searchTimetableCandidates(
         if (index === orderedSourceDays.length) {
           return (
             completeMissing(0) &&
-            getPrecedencePenalties(
+            getNewPrecedencePenalties(
               [...fixedEvents, ...events].flatMap((event): EventSlot[] => {
                 const slot = toEventSlot(event);
 
@@ -2036,7 +2123,7 @@ function searchTimetableCandidates(
         statesExplored += 1;
 
         if (
-          getPrecedencePenalties(
+          getNewPrecedencePenalties(
             [...fixedEvents, ...events].flatMap((event): EventSlot[] => {
               const slot = toEventSlot(event);
 
@@ -2118,7 +2205,7 @@ function searchTimetableCandidates(
 
         if (index === missing.length) {
           return (
-            getPrecedencePenalties(
+            getNewPrecedencePenalties(
               [...fixedEvents, ...events].flatMap((event): EventSlot[] => {
                 const slot = toEventSlot(event);
 
@@ -2129,7 +2216,7 @@ function searchTimetableCandidates(
         }
 
         const demand = missing[index];
-        const maxPair = demand.hasLateSlotAuthorization ? LAST_PAIR : FIRST_LATE_PAIR - 1;
+        const maxPair = getLastAllowedPair(demand.hasLateSlotAuthorization);
         const orderedPairs = Array.from(
           { length: maxPair },
           (_, index): number => index + FIRST_PAIR,
@@ -2261,7 +2348,9 @@ function searchTimetableCandidates(
       });
 
       const hasPracticeBeforeLecture = report.softPenalties.some(
-        ({ code }): boolean => code === TIMETABLE_SOFT_PENALTY_CODE.PRACTICE_BEFORE_LECTURE,
+        ({ code, eventIds }): boolean =>
+          code === TIMETABLE_SOFT_PENALTY_CODE.PRACTICE_BEFORE_LECTURE &&
+          !existingPrecedence.has(eventIds[0]),
       );
 
       if (report.isValid && !hasPracticeBeforeLecture) {

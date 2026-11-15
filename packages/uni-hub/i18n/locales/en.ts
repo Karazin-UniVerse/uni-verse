@@ -302,9 +302,6 @@ export const en = {
   'timetable.subgroupAll': 'Entire group',
   'timetable.subgroup1': 'Subgroup 1',
   'timetable.subgroup2': 'Subgroup 2',
-  'timetable.stream1': 'Stream 1',
-  'timetable.specifyStream': 'Specify stream...',
-  'timetable.streamPlaceholder': 'Stream name',
   'timetable.selectGroupOrStream': 'Select group or stream',
   'timetable.hours': 'Hours',
   'timetable.teacher': 'Teacher',
@@ -320,9 +317,6 @@ export const en = {
   'timetable.deleteRow': 'Delete: {discipline}',
   'timetable.saturdayOnlyRow': 'Saturday only: {discipline}',
   'timetable.lateSlotAuthRow': 'Late slots: {discipline}',
-  'timetable.defaultDiscipline1': 'Parallel and Distributed Computing',
-  'timetable.defaultDiscipline2': 'Algorithms and Data Structures',
-  'timetable.defaultDiscipline3': 'Database Systems',
   'timetable.generateDraft': 'Generate timetable',
   'timetable.generating': 'Generating...',
   'timetable.generateError': 'Failed to generate timetable',
@@ -454,6 +448,10 @@ export const en = {
     'The generator ran out of time. Try again or relax the constraints: Saturday only, late pairs, the number of pairs.',
   'timetable.generateInvalidInput':
     'The generator cannot place some classes: check the group or stream of every class and the semester calendar.',
+  'timetable.generateNoSolution':
+    'No timetable exists for this data: check the hours of lectures and practices of one discipline (a practice cannot come before the first lecture) and the restrictions.',
+  'timetable.workloadLoadError':
+    'The plan workload could not be loaded. Saving and generation are disabled to avoid duplicates: reload the page.',
   'timetable.viewMode': 'Schedule view',
   'timetable.viewWeek': 'Week',
   'timetable.viewDay': 'By day',

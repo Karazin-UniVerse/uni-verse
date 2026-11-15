@@ -1,6 +1,5 @@
 import {
   DEFAULT_TIMEOUT_MS,
-  FIRST_LATE_PAIR,
   FIRST_PAIR,
   LAST_PAIR,
   MAX_PAIRS_PER_SATURDAY,
@@ -17,6 +16,8 @@ import type {
 import {
   checkTimetableConflicts,
   generateTimetableCandidates,
+  getEventSpan,
+  getLastAllowedPair,
   hasStudentIntersection,
 } from './timetable.ts';
 
@@ -35,10 +36,8 @@ type PlacementParams = {
   context: Pick<CompactParams, 'fixedEvents' | 'unavailability'>;
 };
 
-const getSpan = (event: ScheduledEvent): number => event.pairSpan ?? 1;
-
 const sumPairs = (events: ScheduledEvent[]): number =>
-  events.reduce((total, event): number => total + getSpan(event), 0);
+  events.reduce((total, event): number => total + getEventSpan(event), 0);
 
 const countPrecedenceViolations = (events: ScheduledEvent[]): number =>
   checkTimetableConflicts({ events }).softPenalties.filter(
@@ -53,9 +52,9 @@ function tryPlacement({
   working,
   context,
 }: PlacementParams): ScheduledEvent | null {
-  const lastAllowedPair = event.hasLateSlotAuthorization ? LAST_PAIR : FIRST_LATE_PAIR - 1;
+  const lastAllowedPair = getLastAllowedPair(event.hasLateSlotAuthorization);
 
-  if (pair + getSpan(event) - 1 > lastAllowedPair) {
+  if (pair + getEventSpan(event) - 1 > lastAllowedPair) {
     return null;
   }
 
@@ -78,8 +77,8 @@ function tryPlacement({
   );
 
   if (
-    teacherPairs + getSpan(event) > MAX_PAIRS_PER_SATURDAY ||
-    studentPairs + getSpan(event) > MAX_PAIRS_PER_SATURDAY
+    teacherPairs + getEventSpan(event) > MAX_PAIRS_PER_SATURDAY ||
+    studentPairs + getEventSpan(event) > MAX_PAIRS_PER_SATURDAY
   ) {
     return null;
   }

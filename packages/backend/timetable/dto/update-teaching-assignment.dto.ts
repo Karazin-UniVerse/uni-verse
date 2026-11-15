@@ -12,7 +12,7 @@ export class UpdateTeachingAssignmentDto
   @ApiPropertyOptional({ description: 'Target academic group ID' })
   @IsString()
   @IsOptional()
-  override groupId?: string;
+  override groupId?: string | null;
 
   @ApiPropertyOptional({
     description: 'Online meeting URL',

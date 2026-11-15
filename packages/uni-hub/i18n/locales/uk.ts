@@ -301,9 +301,6 @@ export const uk = {
   'timetable.subgroupAll': 'Вся група',
   'timetable.subgroup1': 'Підгрупа 1',
   'timetable.subgroup2': 'Підгрупа 2',
-  'timetable.stream1': 'Потік 1',
-  'timetable.specifyStream': 'Вказати потік...',
-  'timetable.streamPlaceholder': 'Назва потоку',
   'timetable.selectGroupOrStream': 'Оберіть групу або потік',
   'timetable.hours': 'Години',
   'timetable.teacher': 'Викладач',
@@ -319,9 +316,6 @@ export const uk = {
   'timetable.deleteRow': 'Видалити: {discipline}',
   'timetable.saturdayOnlyRow': 'Лише субота: {discipline}',
   'timetable.lateSlotAuthRow': 'Пізні пари: {discipline}',
-  'timetable.defaultDiscipline1': 'Паралельні та розподілені обчислення',
-  'timetable.defaultDiscipline2': 'Алгоритми та структури даних',
-  'timetable.defaultDiscipline3': 'Організація баз даних',
   'timetable.generateDraft': 'Згенерувати розклад',
   'timetable.generating': 'Генерація...',
   'timetable.generateError': 'Не вдалося згенерувати розклад',
@@ -454,6 +448,10 @@ export const uk = {
     'Генератор не встиг скласти розклад за відведений час. Спробуйте ще раз або послабте обмеження: «лише субота», «пізні пари», кількість пар.',
   'timetable.generateInvalidInput':
     'Генератор не може розкласти частину занять: перевірте групу або потік кожного заняття та календар семестру.',
+  'timetable.generateNoSolution':
+    'Розклад неможливий за цими даними: перевірте години лекцій і практик однієї дисципліни (практика не може йти раніше за першу лекцію) та обмеження.',
+  'timetable.workloadLoadError':
+    'Не вдалося завантажити навантаження плану. Збереження й генерацію вимкнено, щоб не створити дублікатів: оновіть сторінку.',
   'timetable.viewMode': 'Вигляд розкладу',
   'timetable.viewWeek': 'Тиждень',
   'timetable.viewDay': 'За днями',

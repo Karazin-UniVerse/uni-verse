@@ -6,6 +6,7 @@ import type {
   RescheduleRequestPage,
   ListRescheduleRequestsQuery,
   AcademicGroupResponse,
+  AcademicStreamResponse,
   TeacherSlotPreference,
   SaveTeacherSlotPreferencesRequest,
   AdjustDraftSlotRequest,
@@ -150,6 +151,10 @@ export class TimetableApi extends ApiClient {
 
   async listAcademicGroups(): Promise<{ data: AcademicGroupResponse[] }> {
     return this.request<AcademicGroupResponse[]>('/timetable/groups');
+  }
+
+  async listAcademicStreams(): Promise<{ data: AcademicStreamResponse[] }> {
+    return this.request<AcademicStreamResponse[]>('/timetable/streams');
   }
 
   async createTeachingAssignment(

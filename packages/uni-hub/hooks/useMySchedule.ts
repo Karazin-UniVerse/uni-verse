@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { IcsCalendarEvent } from '@core/types/timetable';
-import { PAIR_SCHEDULE, type PairNumber } from '@core/constants/timetable';
+import { getPairInstants } from '@core/utils/timetable';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import type { ScheduleEvent } from '@uni-hub/components/schedule/ScheduleView.types';
@@ -32,16 +32,15 @@ export function useMySchedule(): { events: ScheduleEvent[]; isLoading: boolean; 
     queryFn: async (): Promise<ScheduleEvent[]> => {
       const res = await timetableApi.getMyScheduleEvents();
       const mapped: ScheduleEvent[] = res.data.map((e: IcsCalendarEvent) => {
-        const pairNum = (e.pair && e.pair >= 1 && e.pair <= 7 ? e.pair : 1) as PairNumber;
-        const bell = PAIR_SCHEDULE[pairNum];
-        const [startH, startM] = bell.start.split(':').map(Number);
-        const [endH, endM] = bell.end.split(':').map(Number);
+        const instants = getPairInstants(e.date!.slice(0, 10), e.pair!);
+        const endInstants = getPairInstants(e.date!.slice(0, 10), e.pair! + (e.pairSpan ?? 1) - 1);
 
-        const datePart = e.date ? e.date.split('T')[0] : '2026-09-01';
-        const [y, m, d] = datePart.split('-').map(Number);
+        if (!instants.ok || !endInstants.ok) {
+          throw new Error('Invalid timetable event slot');
+        }
 
-        const start = new Date(y, m - 1, d, startH, startM);
-        const end = new Date(y, m - 1, d, endH, endM);
+        const start = instants.start;
+        const end = endInstants.end;
 
         return {
           id: e.id,

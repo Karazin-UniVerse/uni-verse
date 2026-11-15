@@ -366,10 +366,10 @@ export type CreateTeachingAssignmentRequest = {
   disciplineTitle: string;
   teachingType: TimetableAssignmentTeachingType;
   academicHours: number;
-  teacherId?: string;
-  groupId?: string;
-  subgroupId?: string;
-  streamId?: string;
+  teacherId?: string | null;
+  groupId?: string | null;
+  subgroupId?: string | null;
+  streamId?: string | null;
   isSaturdayOnly?: boolean;
   hasLateSlotAuthorization?: boolean;
   meetingUrl?: string;

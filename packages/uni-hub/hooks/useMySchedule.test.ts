@@ -1,25 +1,34 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { timetableApi } from '@uni-hub/services/api.timetable';
-import { createTestQueryClient, withQueryClient } from '@uni-hub/utils/test-utils';
+import { createTestQueryClient, createQueryClientWrapper } from '@uni-hub/utils/test-utils';
 import { useMySchedule } from './useMySchedule';
 
-vi.mock('@uni-hub/hooks/useCurrentUser', () => ({
-  useCurrentUser: vi.fn(),
-}));
+function signIn(userId: string): void {
+  const payload = btoa(JSON.stringify({ sub: userId, roles: ['INSTRUCTOR'] }));
+
+  localStorage.setItem('accessToken', `header.${payload}.signature`);
+}
 
 describe('useMySchedule', () => {
+  const originalTimeZone = process.env.TZ;
+
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
+    localStorage.clear();
   });
 
-  it('scopes cached schedule events per authenticated user and keeps errors visible', async () => {
-    const queryClient = createTestQueryClient();
-    const wrapper = ({ children }: { children: React.ReactNode }) =>
-      withQueryClient(children as React.ReactElement, queryClient);
+  afterEach(() => {
+    if (originalTimeZone === undefined) {
+      delete process.env.TZ;
+    } else {
+      process.env.TZ = originalTimeZone;
+    }
+  });
 
-    vi.mocked(useCurrentUser).mockReturnValue({ userId: null, roles: [] });
+  it('should scope cached schedule events per authenticated user and keep errors visible', async () => {
+    const queryClient = createTestQueryClient();
+    const wrapper = createQueryClientWrapper(queryClient);
     const getEventsSpy = vi.spyOn(timetableApi, 'getMyScheduleEvents');
 
     const unauthenticated = renderHook(() => useMySchedule(), { wrapper });
@@ -27,7 +36,7 @@ describe('useMySchedule', () => {
     expect(getEventsSpy).not.toHaveBeenCalled();
     expect(unauthenticated.result.current.events).toEqual([]);
 
-    vi.mocked(useCurrentUser).mockReturnValue({ userId: 'teacher-a', roles: ['INSTRUCTOR'] });
+    signIn('teacher-a');
     getEventsSpy.mockResolvedValueOnce({
       data: [
         {
@@ -44,7 +53,7 @@ describe('useMySchedule', () => {
     await waitFor(() => expect(userA.result.current.events).toHaveLength(1));
     expect(userA.result.current.events[0].title).toBe('Course A');
 
-    vi.mocked(useCurrentUser).mockReturnValue({ userId: 'teacher-b', roles: ['INSTRUCTOR'] });
+    signIn('teacher-b');
     getEventsSpy.mockRejectedValueOnce(new Error('Network error'));
 
     const userB = renderHook(() => useMySchedule(), { wrapper });
@@ -52,4 +61,56 @@ describe('useMySchedule', () => {
     await waitFor(() => expect(userB.result.current.isError).toBe(true));
     expect(userB.result.current.events).toEqual([]);
   });
+
+  it.each([
+    {
+      date: '2026-01-15',
+      pairSpan: 1,
+      expectedStart: '2026-01-15T06:30:00.000Z',
+      expectedEnd: '2026-01-15T07:50:00.000Z',
+    },
+    {
+      date: '2026-07-15',
+      pairSpan: 1,
+      expectedStart: '2026-07-15T05:30:00.000Z',
+      expectedEnd: '2026-07-15T06:50:00.000Z',
+    },
+    {
+      date: '2026-01-15',
+      pairSpan: 2,
+      expectedStart: '2026-01-15T06:30:00.000Z',
+      expectedEnd: '2026-01-15T09:30:00.000Z',
+    },
+    {
+      date: '2026-07-15',
+      pairSpan: 2,
+      expectedStart: '2026-07-15T05:30:00.000Z',
+      expectedEnd: '2026-07-15T08:30:00.000Z',
+    },
+  ])(
+    'should return Europe/Kyiv instants for $date spanning $pairSpan pairs in a Berlin browser',
+    async ({ date, pairSpan, expectedStart, expectedEnd }) => {
+      process.env.TZ = 'Europe/Berlin';
+      signIn('teacher-a');
+      vi.spyOn(timetableApi, 'getMyScheduleEvents').mockResolvedValueOnce({
+        data: [
+          {
+            id: 'evt-time-zone',
+            disciplineTitle: 'Course in Kyiv',
+            date,
+            pair: 1,
+            pairSpan,
+          },
+        ],
+      });
+
+      const { result } = renderHook(() => useMySchedule(), {
+        wrapper: createQueryClientWrapper(),
+      });
+
+      await waitFor(() => expect(result.current.events).toHaveLength(1));
+      expect(result.current.events[0].start.toISOString()).toBe(expectedStart);
+      expect(result.current.events[0].end.toISOString()).toBe(expectedEnd);
+    },
+  );
 });

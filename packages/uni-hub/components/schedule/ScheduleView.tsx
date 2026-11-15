@@ -6,6 +6,7 @@ import { hasHttpStatus } from '@uni-hub/utils/httpErrors';
 import {
   PAIR_SCHEDULE,
   RESCHEDULE_SCOPE,
+  TIMETABLE_TIME_ZONE,
   type RescheduleScope,
   type PairNumber,
 } from '@core/constants/timetable';
@@ -15,7 +16,14 @@ import { useMySchedule } from '@uni-hub/hooks/useMySchedule';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
-import { addDays, exportToICS, getMonthGridDays, isSafeMeetingUrl, isSameDay } from './helpers';
+import {
+  addDays,
+  exportToICS,
+  getMonthGridDays,
+  isSafeMeetingUrl,
+  isEventOnDate,
+  getPairNumber,
+} from './helpers';
 import { ScheduleDayView } from './ScheduleDayView';
 import { ScheduleLegend } from './ScheduleLegend';
 import { ScheduleMeetingDialog } from './ScheduleMeetingDialog';
@@ -103,23 +111,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     isError: scheduleFailed,
     isLoading: scheduleLoading,
   } = useMySchedule();
-  const [meetingUrlOverrides, setMeetingUrlOverrides] = useState<Map<string, string>>(
-    () => new Map(),
-  );
-
-  const events = useMemo(() => {
-    let base = propEvents;
-
-    if (!base) {
-      base = fetchedEvents;
-    }
-
-    return base.map((event) =>
-      meetingUrlOverrides.has(event.id)
-        ? { ...event, meetingUrl: meetingUrlOverrides.get(event.id) }
-        : event,
-    );
-  }, [fetchedEvents, meetingUrlOverrides, propEvents]);
+  const events = propEvents ?? fetchedEvents;
   const [selectedViewMode, setSelectedViewMode] = useState<ScheduleViewMode | null>(null);
   const viewMode = selectedViewMode ?? (isMobile ? 'day' : 'month');
 
@@ -177,7 +169,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   const getEventsForDate = useCallback(
     (date: Date) =>
       events
-        .filter((event) => isSameDay(event.start, date))
+        .filter((event) => isEventOnDate(event.start, date))
         .sort(
           (firstEvent, secondEvent) => firstEvent.start.getTime() - secondEvent.start.getTime(),
         ),
@@ -251,7 +243,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
     try {
       await timetableApi.updateMeetingUrl(targetId, nextUrl);
-      setMeetingUrlOverrides((prev) => new Map(prev).set(editingEvent.id, nextUrl ?? ''));
+      await queryClient.invalidateQueries({ queryKey: ['timetable', 'myEvents'] });
       toast.success(formatMessage('schedule.meetingUrlSaved'));
       setEditingEvent(null);
     } catch {
@@ -262,7 +254,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     } finally {
       setIsSavingUrl(false);
     }
-  }, [editingEvent, formatMessage, meetingUrlInput, toast]);
+  }, [editingEvent, formatMessage, meetingUrlInput, queryClient, toast]);
 
   const eventActions = {
     getTypeName,
@@ -281,14 +273,16 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     : '';
 
   const handleStartReschedule = (event: ScheduleEvent): void => {
-    const pad = (value: number): string => String(value).padStart(2, '0');
-    const start = `${pad(event.start.getHours())}:${pad(event.start.getMinutes())}`;
-
     setReschedulingEvent(event);
     setNewDate(
-      `${event.start.getFullYear()}-${pad(event.start.getMonth() + 1)}-${pad(event.start.getDate())}`,
+      new Intl.DateTimeFormat('sv-SE', {
+        timeZone: TIMETABLE_TIME_ZONE,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(event.start),
     );
-    setNewPair(Object.entries(PAIR_SCHEDULE).find(([, bell]) => bell.start === start)?.[0] ?? '1');
+    setNewPair(String(getPairNumber(event.start)));
     setReason('');
     setScope(RESCHEDULE_SCOPE.ONCE);
     setPreview(null);

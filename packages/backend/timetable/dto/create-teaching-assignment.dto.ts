@@ -50,7 +50,7 @@ export class CreateTeachingAssignmentDto implements CreateTeachingAssignmentRequ
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  teacherId?: string;
+  teacherId?: string | null;
 
   @ApiPropertyOptional({ description: 'Target academic group ID' })
   @ValidateIf(
@@ -62,19 +62,19 @@ export class CreateTeachingAssignmentDto implements CreateTeachingAssignmentRequ
     message:
       'At least one of groupId, subgroupId, or streamId must be provided',
   })
-  groupId?: string;
+  groupId?: string | null;
 
   @ApiPropertyOptional({ description: 'Target academic subgroup ID' })
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  subgroupId?: string;
+  subgroupId?: string | null;
 
   @ApiPropertyOptional({ description: 'Target academic stream ID' })
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  streamId?: string;
+  streamId?: string | null;
 
   @ApiPropertyOptional({
     default: false,

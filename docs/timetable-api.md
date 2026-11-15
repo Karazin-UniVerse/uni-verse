@@ -29,7 +29,9 @@ year). It is optional on `POST /timetable/curriculum-plans` and
 rejected with HTTP 400. Existing plans keep `NULL` until the value is set.
 
 Apply the additive script and regenerate the client against the explicitly
-selected database before deploying code that reads the column:
+selected database before deploying code that reads the column (the script also adds
+a `CHECK` that keeps the value between 1 and 8). Deploying the code first makes every
+curriculum plan endpoint fail with "column does not exist":
 
 ```bash
 pnpm --filter @universe/backend exec prisma db execute --file prisma/scripts/add-study-semester.sql
@@ -119,6 +121,7 @@ All endpoints except the public `.ics` feed require a valid Bearer JWT (`AtGuard
 | Method   | Path                                                   | Access                     | Description                                                                                                                    |
 | -------- | ------------------------------------------------------ | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `POST`   | `/timetable/groups`                                    | `ADMIN`                    | Create an academic group with optional subgroups.                                                                              |
+| `GET`    | `/timetable/streams`                                   | Authenticated              | List all lecture streams by name.                                                                                              |
 | `GET`    | `/timetable/groups`                                    | Authenticated              | List all academic groups with subgroups.                                                                                       |
 | `POST`   | `/timetable/curriculum-plans`                          | `ADMIN`                    | Create a curriculum plan (optional `studySemester` 1–8, parity must match `semester`).                                         |
 | `GET`    | `/timetable/curriculum-plans/:id`                      | `ADMIN`                    | Get a curriculum plan with its teaching assignments.                                                                           |
@@ -149,6 +152,31 @@ All endpoints except the public `.ics` feed require a valid Bearer JWT (`AtGuard
 
 ## Draft Generation & Publication Rules
 
+### Editing workload after publication
+
+`PUT /timetable/assignments/:id` returns HTTP 409 when the assignment already has
+non-cancelled classes in a `PUBLISHED` version and the request changes its plan,
+teaching type, hours, group, subgroup, stream, `isSaturdayOnly` or
+`hasLateSlotAuthorization`. The teacher, title and meeting link may still change.
+Published classes read their participants from the assignment, so changing them
+would move the classes between calendars without a new publication.
+
+Changing the teacher is allowed and atomic: in one `Serializable` transaction with the
+shared write lock, the teacher snapshot of the assignment's future classes (published and
+draft versions) is replaced after the conflict check, and HTTP 409 is returned if the new
+teacher would collide with another class. Past classes keep their teacher. `teacherId`,
+`groupId`, `subgroupId` and `streamId` accept `null` to clear the value; an omitted field
+keeps the stored one.
+
+Assignment updates take the same calendar write locks as publication inside a
+Serializable transaction. Replacing or clearing a teacher rechecks all future
+occurrences against published occupancy, other lessons in each affected draft and
+confirmed unavailability before updating their teacher snapshots atomically.
+Started and past occurrences retain their saved teacher. Personal event queries,
+subscription ownership and rescheduling use the saved snapshot; a null snapshot
+means that the occurrence has no assigned teacher. Optional assignment fields
+accept an explicit `null` to clear them; omitted fields keep their saved values.
+
 ### Removing workload
 
 `DELETE /timetable/assignments/:id` requires `ADMIN` and a UUID. It sets the nullable
@@ -175,7 +203,8 @@ pnpm db:generate
 1. **Multi-Candidate Persistence**:
    - `POST /timetable/plans/:id/generate` validates solver limits (`maxCandidates` in `1..5`, `timeoutMs` in `1..10000`, demands `<= 200`).
    - Fetches events from already-`PUBLISHED` versions of other curriculum plans in the same semester calendar and passes them as `fixedEvents` to avoid cross-plan teacher and student collisions.
-   - Generates a shared `generationId` and persists every candidate as an independent `DRAFT` `TimetableVersion` with its `candidateIndex` (`0..N-1`).
+   - Generates a shared `generationId` and persists every candidate as an independent `DRAFT` `TimetableVersion` with its `candidateIndex` (`0..N-1`). In the same transaction it deletes the earlier `DRAFT` versions of this plan and semester; `PUBLISHED` and `ARCHIVED` versions are never touched.
+   - Before searching, a practice that always precedes the first lecture of its discipline (for example a weekly practice with a lecture that starts in week 2) is reported at once as `NO_FEASIBLE_SOLUTION`, not as `TIMEOUT`.
    - Each `TimetableEvent` stores a deterministic `stableKey` (`${teachingAssignmentId}:${date}:${pair}`).
 2. **Atomic Publication**:
    - `POST /timetable/versions/:id/publish` executes inside `prisma.$transaction`.

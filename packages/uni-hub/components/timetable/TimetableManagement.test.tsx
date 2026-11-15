@@ -4,6 +4,41 @@ import userEvent from '@testing-library/user-event';
 import { withLanguage, withQueryClient, createTestQueryClient } from '@uni-hub/utils/test-utils';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import { TimetableManagement } from './TimetableManagement';
+import type { WorkloadRow } from './workload';
+
+const createWorkloadFixture = (): WorkloadRow[] => [
+  {
+    id: 'row-1',
+    disciplineTitle: 'Паралельні та розподілені обчислення',
+    teachingType: 'LECTURE',
+    academicHours: 32,
+    teacherId: 'teacher-1',
+    groupId: 'group-1',
+    isSaturdayOnly: false,
+    hasLateSlotAuthorization: false,
+  },
+  {
+    id: 'row-2',
+    disciplineTitle: 'Алгоритми та структури даних',
+    teachingType: 'PRACTICE',
+    academicHours: 32,
+    teacherId: 'teacher-2',
+    groupId: 'group-1',
+    isSaturdayOnly: false,
+    hasLateSlotAuthorization: false,
+  },
+  {
+    id: 'row-3',
+    disciplineTitle: 'Організація баз даних',
+    teachingType: 'LAB',
+    academicHours: 32,
+    teacherId: 'teacher-3',
+    groupId: 'group-1',
+    subgroupId: 'subgroup-1',
+    isSaturdayOnly: false,
+    hasLateSlotAuthorization: true,
+  },
+];
 
 describe('TimetableManagement component', () => {
   it.each(['save', 'generate'])(
@@ -334,6 +369,7 @@ describe('TimetableManagement component', () => {
     vi.clearAllMocks();
     vi.spyOn(timetableApi, 'listTeachingAssignments').mockResolvedValue({ data: [] });
     vi.spyOn(timetableApi, 'listAcademicGroups').mockResolvedValue({ data: [] });
+    vi.spyOn(timetableApi, 'listAcademicStreams').mockResolvedValue({ data: [] });
     vi.spyOn(timetableApi, 'listSemesterSlotPreferences').mockResolvedValue({ data: [] });
     vi.spyOn(timetableApi, 'listCurriculumPlans').mockResolvedValue({
       data: [
@@ -371,7 +407,7 @@ describe('TimetableManagement component', () => {
   };
 
   it('offers existing plans and teachers as choices instead of free text ids', async () => {
-    renderComponent();
+    renderComponent({ initialWorkload: createWorkloadFixture() });
 
     expect(
       screen.getByRole('heading', { level: 2, name: /керування розкладом/i }),
@@ -398,7 +434,7 @@ describe('TimetableManagement component', () => {
   });
 
   it('renders workload table headers and initial workload rows', async () => {
-    renderComponent();
+    renderComponent({ initialWorkload: createWorkloadFixture() });
 
     expect(screen.getAllByLabelText('Дисципліна')).toHaveLength(3);
 
@@ -424,7 +460,7 @@ describe('TimetableManagement component', () => {
   it('adds a workload row inside an existing discipline group', async () => {
     const user = userEvent.setup();
 
-    renderComponent();
+    renderComponent({ initialWorkload: createWorkloadFixture() });
 
     await user.click(
       screen.getByRole('button', {
@@ -439,7 +475,7 @@ describe('TimetableManagement component', () => {
   it('allows adding and removing workload rows', async () => {
     const user = userEvent.setup();
 
-    renderComponent();
+    renderComponent({ initialWorkload: createWorkloadFixture() });
 
     await user.click(screen.getByRole('button', { name: 'Додати дисципліну' }));
 
@@ -717,24 +753,49 @@ describe('TimetableManagement component', () => {
     expect(createSpy).not.toHaveBeenCalled();
   });
 
-  it('deduplicates stream-1 in groupOrStreamOptions when API returns stream-1 in groups list', async () => {
-    vi.spyOn(timetableApi, 'listAcademicGroups').mockResolvedValue({
-      data: [
-        { id: 'group-ks11', code: 'КС11', subgroups: [] },
-        { id: 'stream-1', code: 'Потік 1', subgroups: [] },
-      ],
-    });
+  it('blocks saving and generating when the workload cannot be loaded', async () => {
+    vi.spyOn(timetableApi, 'listTeachingAssignments').mockRejectedValue(new Error('offline'));
+
+    renderComponent({ initialPlanId: 'plan-cs-2026' });
+
+    expect(await screen.findByText(/Не вдалося завантажити навантаження/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /зберегти навантаження/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /згенерувати розклад/i })).toBeDisabled();
+  });
+
+  it('explains an impossible timetable instead of a generic error', async () => {
+    vi.spyOn(timetableApi, 'generateTimetableDraft').mockRejectedValue(
+      new Error('Failed to generate timetable draft: NO_FEASIBLE_SOLUTION'),
+    );
+    const user = userEvent.setup();
 
     renderComponent();
 
-    await screen.findAllByRole('option', { name: 'КС11' });
+    const generateBtn = screen.getByRole('button', { name: /згенерувати розклад/i });
+
+    await waitFor(() => expect(generateBtn).toBeEnabled());
+    await user.click(generateBtn);
+
+    expect(await screen.findByText(/Розклад неможливий за цими даними/)).toBeInTheDocument();
+  });
+
+  it('offers the streams loaded from the API next to the groups', async () => {
+    vi.spyOn(timetableApi, 'listAcademicGroups').mockResolvedValue({
+      data: [{ id: 'group-ks11', code: 'КС11', subgroups: [] }],
+    });
+    vi.spyOn(timetableApi, 'listAcademicStreams').mockResolvedValue({
+      data: [{ id: 'stream-uuid-1', name: 'Потік Web' }],
+    });
+
+    renderComponent({ initialWorkload: createWorkloadFixture() });
 
     const firstSelect = screen.getAllByLabelText('Група / Потік')[0];
-    const streamOptions = Array.from(firstSelect.querySelectorAll('option')).filter(
-      (opt) => (opt as HTMLOptionElement).value === 'stream-1',
-    );
 
-    expect(streamOptions).toHaveLength(1);
+    expect(
+      await within(firstSelect).findByRole('option', { name: 'Потік Web' }),
+    ).toBeInTheDocument();
+    expect(within(firstSelect).getByRole('option', { name: 'КС11' })).toBeInTheDocument();
+    expect(within(firstSelect).queryByRole('option', { name: /вказати потік/i })).toBeNull();
   });
 
   it('displays error message and does not create fake candidates on draft generation failure', async () => {
@@ -796,7 +857,7 @@ describe('TimetableManagement component', () => {
       ],
     });
 
-    renderComponent();
+    renderComponent({ initialWorkload: createWorkloadFixture() });
 
     expect(listGroupsSpy).toHaveBeenCalled();
     expect(await screen.findAllByRole('option', { name: 'КС11' })).not.toHaveLength(0);
@@ -839,7 +900,7 @@ describe('TimetableManagement component', () => {
     });
     const user = userEvent.setup();
 
-    renderComponent();
+    renderComponent({ initialWorkload: createWorkloadFixture() });
 
     await waitFor(() =>
       expect(screen.getAllByRole('option', { name: 'КС12' })[0]).toHaveValue('group-cs-12'),
@@ -861,6 +922,9 @@ describe('TimetableManagement component', () => {
   });
 
   it('allows selecting stream, disables subgroup select, and sends streamId', async () => {
+    vi.spyOn(timetableApi, 'listAcademicStreams').mockResolvedValue({
+      data: [{ id: 'stream-uuid-1', name: 'Потік Web' }],
+    });
     const createSpy = vi.spyOn(timetableApi, 'createTeachingAssignment').mockResolvedValue({
       data: {
         id: 'assign-stream-1',
@@ -869,19 +933,20 @@ describe('TimetableManagement component', () => {
         teachingType: 'LECTURE',
         academicHours: 32,
         teacherId: 'teacher-1',
-        streamId: 'stream-1',
+        streamId: 'stream-uuid-1',
         isSaturdayOnly: false,
         hasLateSlotAuthorization: false,
       },
     });
     const user = userEvent.setup();
 
-    renderComponent();
+    renderComponent({ initialWorkload: createWorkloadFixture() });
 
     const groupSelects = screen.getAllByLabelText('Група / Потік');
     const subgroupSelects = screen.getAllByLabelText('Підгрупа');
 
-    await user.selectOptions(groupSelects[0], 'stream-1');
+    await within(groupSelects[0]).findByRole('option', { name: 'Потік Web' });
+    await user.selectOptions(groupSelects[0], 'stream-uuid-1');
 
     expect(subgroupSelects[0]).toBeDisabled();
 
@@ -889,9 +954,9 @@ describe('TimetableManagement component', () => {
 
     expect(createSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        streamId: 'stream-1',
+        streamId: 'stream-uuid-1',
         groupId: undefined,
-        subgroupId: undefined,
+        subgroupId: null,
       }),
     );
   });

@@ -18,6 +18,7 @@ import { lockTimetableWrites } from './timetable-write-lock';
 import { getPrismaErrorCode } from '../utils/prisma-error';
 import { PRISMA_ERROR_CODE } from '../constants/prisma';
 import {
+  EVENT_ASSIGNMENT_INCLUDE,
   toScheduledEvent,
   parseMakeupSaturdays,
   parseMakeupSaturdayDates,
@@ -25,14 +26,7 @@ import {
 } from './timetable.helpers';
 
 const EVENT_CONTEXT_INCLUDE = {
-  teachingAssignment: {
-    include: {
-      curriculumPlan: { select: { studySemester: true } },
-      group: true,
-      subgroup: true,
-      stream: { include: { groups: true } },
-    },
-  },
+  ...EVENT_ASSIGNMENT_INCLUDE,
   timetableVersion: { include: { semesterCalendar: true } },
 } as const;
 
@@ -149,11 +143,7 @@ export class TimetableReschedulingService {
       throw new NotFoundException('Timetable event not found');
     }
 
-    if (
-      mode === 'INSTRUCTOR' &&
-      (selected.teacherIdSnapshot ?? selected.teachingAssignment.teacherId) !==
-        actorId
-    ) {
+    if (mode === 'INSTRUCTOR' && selected.teacherIdSnapshot !== actorId) {
       throw new ForbiddenException(
         'Only the assigned instructor can request rescheduling',
       );

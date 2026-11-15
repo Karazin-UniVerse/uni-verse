@@ -3,6 +3,7 @@ import test, { describe } from 'node:test';
 import {
   MAX_PAIRS_PER_SATURDAY,
   TIMETABLE_TEACHING_TYPE,
+  TIMETABLE_WEEK_PARITY,
   TIMETABLE_WEEKDAY,
 } from '../../constants/timetable.ts';
 import type {
@@ -23,6 +24,44 @@ const calendar: SemesterCalendarConfig = {
 };
 
 describe('timetable generator', () => {
+  test('keeps unrelated published precedence violations from blocking generation', () => {
+    const fixedEvents: ScheduledEvent[] = [
+      {
+        id: 'old-practice',
+        teachingAssignmentId: 'old-p',
+        disciplineTitle: 'Old',
+        teachingType: 'PRACTICAL',
+        groupIds: ['old-group'],
+        date: '2026-09-07',
+        pair: 1,
+      },
+      {
+        id: 'old-lecture',
+        teachingAssignmentId: 'old-l',
+        disciplineTitle: 'Old',
+        teachingType: 'LECTURE',
+        groupIds: ['old-group'],
+        date: '2026-09-08',
+        pair: 1,
+      },
+    ];
+    const result = generateTimetableCandidates({
+      calendar,
+      fixedEvents,
+      demands: [
+        {
+          id: 'new',
+          disciplineTitle: 'New',
+          teachingType: 'LECTURE',
+          groupIds: ['new-group'],
+          academicHours: 32,
+        },
+      ],
+    });
+
+    assert.ok(result.ok);
+    assert.equal(result.candidates[0].events.length, 16);
+  });
   test('prefers saved teacher slots and returns strict candidates before relaxed alternatives', () => {
     const result = generateTimetableCandidates({
       calendar,
@@ -787,6 +826,43 @@ describe('timetable generator', () => {
     if (!result.ok) {
       assert.strictEqual(result.error, 'INVALID_INPUT');
     }
+  });
+
+  test('reports an impossible lecture order at once instead of searching until the timeout', () => {
+    const lecture: TeachingDemand = {
+      id: 'LATE-LECTURE',
+      disciplineTitle: 'Networks',
+      teachingType: TIMETABLE_TEACHING_TYPE.LECTURE,
+      teacherId: 'TEACHER-A',
+      groupIds: ['GROUP-A'],
+      academicHours: 16,
+      parity: TIMETABLE_WEEK_PARITY.DENOMINATOR,
+    };
+    const practice: TeachingDemand = {
+      id: 'WEEKLY-PRACTICE',
+      disciplineTitle: 'Networks',
+      teachingType: TIMETABLE_TEACHING_TYPE.PRACTICAL,
+      teacherId: 'TEACHER-B',
+      groupIds: ['GROUP-A'],
+      academicHours: 32,
+    };
+    const started = Date.now();
+    const result = generateTimetableCandidates({
+      demands: [lecture, practice],
+      calendar,
+      options: { timeoutMs: 5000 },
+    });
+
+    assert.ok(!result.ok && result.error === 'NO_FEASIBLE_SOLUTION', JSON.stringify(result));
+    assert.ok(Date.now() - started < 1000);
+
+    const fixed = generateTimetableCandidates({
+      demands: [{ ...lecture, parity: TIMETABLE_WEEK_PARITY.NUMERATOR }, practice],
+      calendar,
+      options: { timeoutMs: 5000 },
+    });
+
+    assert.ok(fixed.ok, JSON.stringify(fixed));
   });
 
   test('schedules a 30-hour lecture together with its weekly practice', () => {

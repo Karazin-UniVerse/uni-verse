@@ -8,7 +8,7 @@ describe('useTimetableReferences', () => {
     vi.restoreAllMocks();
   });
 
-  it('loads plans and teachers', async () => {
+  it('loads plans, teachers and streams', async () => {
     vi.spyOn(timetableApi, 'listCurriculumPlans').mockResolvedValue({
       data: [
         {
@@ -25,11 +25,15 @@ describe('useTimetableReferences', () => {
     vi.spyOn(timetableApi, 'listTeachers').mockResolvedValue({
       data: [{ id: 't-1', name: 'Prof' }],
     });
+    vi.spyOn(timetableApi, 'listAcademicStreams').mockResolvedValue({
+      data: [{ id: 's-1', name: 'Stream' }],
+    });
 
     const { result } = renderHook(() => useTimetableReferences());
 
     await waitFor(() => expect(result.current.plans).toHaveLength(1));
     expect(result.current.teachers).toEqual([{ id: 't-1', name: 'Prof' }]);
+    expect(result.current.streams).toEqual([{ id: 's-1', name: 'Stream' }]);
   });
 
   it('keeps the other list when one request fails', async () => {
@@ -37,6 +41,7 @@ describe('useTimetableReferences', () => {
     vi.spyOn(timetableApi, 'listTeachers').mockResolvedValue({
       data: [{ id: 't-1', name: 'Prof' }],
     });
+    vi.spyOn(timetableApi, 'listAcademicStreams').mockResolvedValue({ data: [] });
 
     const { result } = renderHook(() => useTimetableReferences());
 
@@ -47,6 +52,7 @@ describe('useTimetableReferences', () => {
     const listPlans = vi.spyOn(timetableApi, 'listCurriculumPlans').mockResolvedValue({ data: [] });
 
     vi.spyOn(timetableApi, 'listTeachers').mockResolvedValue({ data: [] });
+    vi.spyOn(timetableApi, 'listAcademicStreams').mockResolvedValue({ data: [] });
 
     const { result } = renderHook(() => useTimetableReferences());
 

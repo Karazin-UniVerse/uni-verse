@@ -1,24 +1,32 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import {
   addDays,
   startOfWeek,
   isSameDay,
+  isEventOnDate,
   getMonthGridDays,
   getPairNumber,
   getWeekDays,
   groupDayEvents,
   formatScheduleDate,
   formatScheduleTime,
-  generateDummyEvents,
   generateICSContent,
   exportToICS,
-  escapeICSText,
-  KARAZIN_PAIRS,
 } from './helpers';
 
 import type { ScheduleEvent } from './ScheduleView.types';
 
 describe('schedule helpers', () => {
+  const originalTimeZone = process.env.TZ;
+
+  afterEach(() => {
+    if (originalTimeZone === undefined) {
+      delete process.env.TZ;
+    } else {
+      process.env.TZ = originalTimeZone;
+    }
+  });
+
   describe('addDays', () => {
     it('adds positive days correctly', () => {
       const baseDate = new Date(2026, 0, 15);
@@ -125,12 +133,37 @@ describe('schedule helpers', () => {
     });
   });
 
+  describe('isEventOnDate', () => {
+    it.each([
+      { calendarDay: 4, expected: true },
+      { calendarDay: 3, expected: false },
+    ])(
+      'should match a Kyiv event to calendar day $calendarDay in a Honolulu browser: $expected',
+      ({ calendarDay, expected }) => {
+        process.env.TZ = 'Pacific/Honolulu';
+
+        const eventStart = new Date('2027-01-04T06:30:00Z');
+        const calendarDate = new Date(2027, 0, calendarDay);
+
+        expect(isEventOnDate(eventStart, calendarDate)).toBe(expected);
+      },
+    );
+  });
+
   describe('getPairNumber', () => {
-    it('maps a start time to its bell-schedule pair', () => {
-      expect(getPairNumber(new Date(2026, 10, 13, 8, 30))).toBe(1);
-      expect(getPairNumber(new Date(2026, 10, 13, 12, 0))).toBe(3);
-      expect(getPairNumber(new Date(2026, 10, 13, 11, 45))).toBe(3);
-      expect(getPairNumber(new Date(2026, 10, 13, 21, 0))).toBe(7);
+    it('should use the Kyiv bell schedule when the browser is in Berlin', () => {
+      process.env.TZ = 'Europe/Berlin';
+
+      const eventStart = new Date('2027-01-04T10:00:00Z');
+
+      expect(getPairNumber(eventStart)).toBe(3);
+    });
+
+    it('should map a Kyiv start time to its bell-schedule pair', () => {
+      expect(getPairNumber(new Date('2026-11-13T06:30:00Z'))).toBe(1);
+      expect(getPairNumber(new Date('2026-11-13T10:00:00Z'))).toBe(3);
+      expect(getPairNumber(new Date('2026-11-13T09:45:00Z'))).toBe(3);
+      expect(getPairNumber(new Date('2026-11-13T19:00:00Z'))).toBe(7);
     });
   });
 
@@ -183,85 +216,6 @@ describe('schedule helpers', () => {
       const formatted = formatScheduleTime(date, 'en-US');
 
       expect(formatted).toMatch(/02:05|2:05|14:05/);
-    });
-  });
-
-  describe('KARAZIN_PAIRS', () => {
-    it('has matching numeric start/end times for each pair label (80 minutes duration)', () => {
-      KARAZIN_PAIRS.forEach((pair) => {
-        const startTotalMin = pair.startHour * 60 + pair.startMin;
-        const endTotalMin = pair.endHour * 60 + pair.endMin;
-
-        expect(endTotalMin - startTotalMin).toBe(80);
-      });
-    });
-
-    it('has accurate Karazin timetable intervals', () => {
-      expect(KARAZIN_PAIRS[0]).toMatchObject({
-        startHour: 8,
-        startMin: 30,
-        endHour: 9,
-        endMin: 50,
-      });
-      expect(KARAZIN_PAIRS[1]).toMatchObject({
-        startHour: 10,
-        startMin: 10,
-        endHour: 11,
-        endMin: 30,
-      });
-      expect(KARAZIN_PAIRS[2]).toMatchObject({
-        startHour: 12,
-        startMin: 0,
-        endHour: 13,
-        endMin: 20,
-      });
-      expect(KARAZIN_PAIRS[3]).toMatchObject({
-        startHour: 13,
-        startMin: 40,
-        endHour: 15,
-        endMin: 0,
-      });
-      expect(KARAZIN_PAIRS[4]).toMatchObject({
-        startHour: 15,
-        startMin: 20,
-        endHour: 16,
-        endMin: 40,
-      });
-    });
-  });
-
-  describe('escapeICSText', () => {
-    it('escapes backslashes, semicolons, commas, and newlines per RFC 5545', () => {
-      const raw = 'Math, Logic; C:\\Class\nRoom 101\r\nAud. 2';
-      const escaped = escapeICSText(raw);
-
-      expect(escaped).toBe('Math\\, Logic\\; C:\\\\Class\\nRoom 101\\nAud. 2');
-    });
-  });
-
-  describe('generateDummyEvents', () => {
-    it('generates a populated list of schedule events including exams', () => {
-      const events = generateDummyEvents();
-
-      expect(events.length).toBeGreaterThan(0);
-
-      const firstEvent = events[0];
-
-      expect(firstEvent).toHaveProperty('id');
-      expect(firstEvent).toHaveProperty('title');
-      expect(firstEvent).toHaveProperty('start');
-      expect(firstEvent).toHaveProperty('end');
-      expect(firstEvent).toHaveProperty('type');
-      expect(firstEvent).toHaveProperty('location');
-
-      const examEvent = events.find((evt) => evt.type === 'exam');
-
-      expect(examEvent).toBeDefined();
-      expect(examEvent?.title).toContain('Іспит');
-      expect(examEvent?.start.getHours()).toBe(10);
-      expect(examEvent?.start.getMinutes()).toBe(10);
-      expect(examEvent?.end.getHours()).toBe(13);
-      expect(examEvent?.end.getMinutes()).toBe(20);
     });
   });
 

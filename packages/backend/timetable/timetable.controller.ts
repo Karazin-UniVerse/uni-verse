@@ -19,6 +19,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   Role,
+  type AcademicStream,
   type CalendarSubscriptionToken,
   type CurriculumPlan,
   type SemesterCalendar,
@@ -134,6 +135,13 @@ export class TimetableController {
   @Get('groups')
   async listAcademicGroups(): Promise<AcademicGroupWithSubgroups[]> {
     return this.timetableService.listAcademicGroups();
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List all lecture streams' })
+  @Get('streams')
+  async listAcademicStreams(): Promise<AcademicStream[]> {
+    return this.timetableService.listAcademicStreams();
   }
 
   @ApiBearerAuth()

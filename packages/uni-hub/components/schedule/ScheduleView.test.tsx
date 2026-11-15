@@ -50,6 +50,54 @@ describe('ScheduleView component', () => {
   const renderScheduleView = (props?: Partial<ScheduleViewProps>) =>
     render(withQueryClient(withToast(withLanguage(<ScheduleView {...props} />))));
 
+  it('should refresh every occurrence after changing the assignment meeting link', async () => {
+    vi.mocked(useCurrentUser).mockReturnValue({ userId: 'instructor', roles: ['INSTRUCTOR'] });
+    vi.mocked(useMediaQuery).mockReturnValue(true);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 10, 11, 12));
+    const event = {
+      id: 'one',
+      teachingAssignmentId: 'assignment',
+      disciplineTitle: 'Algorithms',
+      teachingType: 'LECTURE',
+      date: '2026-11-11',
+      pair: 1,
+      meetingUrl: 'https://old.example/',
+    };
+    const getEvents = vi
+      .spyOn(timetableApi, 'getMyScheduleEvents')
+      .mockResolvedValueOnce({ data: [event, { ...event, id: 'two', pair: 2 }] })
+      .mockResolvedValue({
+        data: [
+          { ...event, meetingUrl: 'https://new.example/' },
+          { ...event, id: 'two', pair: 2, meetingUrl: 'https://new.example/' },
+        ],
+      });
+
+    vi.spyOn(timetableApi, 'updateMeetingUrl').mockResolvedValue({
+      data: {
+        id: 'assignment',
+        curriculumPlanId: 'plan',
+        disciplineTitle: 'Algorithms',
+        teachingType: 'LECTURE',
+        academicHours: 32,
+      },
+    });
+    const user = userEvent.setup();
+
+    renderScheduleView();
+    await user.click((await screen.findAllByRole('button', { name: /Змінити посилання/i }))[0]);
+    await user.clear(screen.getByLabelText(/URL/i));
+    await user.type(screen.getByLabelText(/URL/i), 'https://new.example/');
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Зберегти' }));
+    await waitFor(() => expect(getEvents).toHaveBeenCalledTimes(2));
+    expect(
+      screen
+        .getAllByRole('link', { name: /Приєднатися/i })
+        .map((link) => link.getAttribute('href')),
+    ).toEqual(['https://new.example/', 'https://new.example/']);
+  });
+
   it('hides teacher slot preferences for non-instructor roles', () => {
     vi.mocked(useCurrentUser).mockReturnValue({ userId: 'admin', roles: ['ADMIN'] });
 
@@ -65,6 +113,9 @@ describe('ScheduleView component', () => {
   ])('reschedules an admin event and reports conflicts (%o)', async ({ fails, week }) => {
     vi.mocked(useCurrentUser).mockReturnValue({ userId: 'admin', roles: ['ADMIN'] });
     vi.mocked(useMediaQuery).mockReturnValue(true);
+    // A Wednesday, so the class is in the Monday-Saturday week view whatever day the suite runs.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 10, 11, 12));
     const todayIso = toLocalIsoDate(new Date());
     const initialEvent = {
       id: 'event-1',

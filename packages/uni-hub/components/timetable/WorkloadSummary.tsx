@@ -12,7 +12,7 @@ import {
   semesterCalendarQueryOptions,
   semesterSlotPreferencesQueryOptions,
 } from './semesterQueries';
-import type { WorkloadRow } from './TimetableManagement';
+import type { WorkloadRow } from './workload';
 import styles from './TimetableManagement.module.scss';
 
 type WorkloadSummaryProps = {

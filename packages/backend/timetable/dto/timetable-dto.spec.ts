@@ -20,6 +20,16 @@ import {
 describe('Timetable DTOs', () => {
   const pipe = new ValidationPipe({ whitelist: true, transform: true });
 
+  it('should preserve explicit nulls when clearing optional assignment fields', async () => {
+    const result = await pipe.transform(
+      { teacherId: null, subgroupId: null, groupId: 'group-789' },
+      { type: 'body', metatype: UpdateTeachingAssignmentDto },
+    );
+
+    expect(result.teacherId).toBeNull();
+    expect(result.subgroupId).toBeNull();
+  });
+
   describe('CreateTeachingAssignmentDto', () => {
     const validAssignment = {
       curriculumPlanId: 'plan-123',

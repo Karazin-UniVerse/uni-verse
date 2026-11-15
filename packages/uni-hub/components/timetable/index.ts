@@ -1,2 +1,3 @@
 export { TimetableManagement } from './TimetableManagement';
-export type { TimetableManagementProps, WorkloadRow } from './TimetableManagement';
+export type { TimetableManagementProps } from './TimetableManagement';
+export type { WorkloadRow } from './workload';

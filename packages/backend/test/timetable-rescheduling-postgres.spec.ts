@@ -175,6 +175,7 @@ describe('Timetable rescheduling concurrency (PostgreSQL integration)', () => {
             {
               id: ids.evt1,
               teachingAssignmentId: ids.assign1,
+              teacherIdSnapshot: ids.teacher,
               stableKey: `${ids.assign1}:2028-09-04:1`,
               date: new Date('2028-09-04'),
               pair: 1,
@@ -183,6 +184,7 @@ describe('Timetable rescheduling concurrency (PostgreSQL integration)', () => {
             {
               id: ids.evt2,
               teachingAssignmentId: ids.assign2,
+              teacherIdSnapshot: ids.teacher,
               stableKey: `${ids.assign2}:2028-09-05:1`,
               date: new Date('2028-09-05'),
               pair: 1,
@@ -447,6 +449,7 @@ describe('Timetable rescheduling concurrency (PostgreSQL integration)', () => {
             {
               id: ids.evtDraft,
               teachingAssignmentId: ids.assign2,
+              teacherIdSnapshot: ids.teacher,
               stableKey: `${ids.assign2}:2028-09-06:4`,
               date: new Date('2028-09-06'),
               pair: 4,
