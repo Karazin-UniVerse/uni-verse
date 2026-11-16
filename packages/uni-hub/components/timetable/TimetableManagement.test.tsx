@@ -259,6 +259,12 @@ describe('TimetableManagement component', () => {
         diagnostics: { statesExplored: 1, timeMs: 1 },
       },
     });
+    vi.spyOn(timetableApi, 'listTeachers').mockResolvedValue({
+      data: [
+        { id: 'teacher-1', name: 'Подоляка О.М.' },
+        { id: 'teacher-10', name: 'Буткевич М.В.' },
+      ],
+    });
     const adjust = vi.spyOn(timetableApi, 'adjustDraftSlot').mockResolvedValue({
       data: {
         id: 'selected-version',
@@ -289,10 +295,10 @@ describe('TimetableManagement component', () => {
     const unmovedRow = screen.getByText('Physics').closest('tr')!;
 
     expect(movedRow).toHaveTextContent('КС11');
-    expect(movedRow).toHaveTextContent('teacher-1');
+    expect(movedRow).toHaveTextContent('Подоляка О.М.');
     expect(movedRow).toHaveTextContent('ПР');
     expect(unmovedRow).toHaveTextContent('КС12');
-    expect(unmovedRow).toHaveTextContent('teacher-10');
+    expect(unmovedRow).toHaveTextContent('Буткевич М.В.');
     expect(unmovedRow).toHaveTextContent('ЛР');
     await user.click(within(movedRow).getByRole('button', { name: 'Змінити слот' }));
     await user.selectOptions(within(screen.getByRole('dialog')).getByLabelText('Пара'), '4');
@@ -962,6 +968,12 @@ describe('TimetableManagement component', () => {
   });
 
   it('renders weekly schedule preview grid for the selected candidate and supports durationMs fallback', async () => {
+    vi.spyOn(timetableApi, 'listTeachers').mockResolvedValue({
+      data: [
+        { id: 'teacher-cloud', name: 'Коваль О.П.' },
+        { id: 'teacher-sec', name: 'Шевченко І.В.' },
+      ],
+    });
     vi.spyOn(timetableApi, 'generateTimetableDraft').mockResolvedValue({
       data: {
         versionId: 'ver-cand-1',
@@ -1025,7 +1037,7 @@ describe('TimetableManagement component', () => {
     expect(screen.getByText('08:30–09:50')).toBeInTheDocument();
     expect(screen.getByText('Архітектура хмарних систем')).toBeInTheDocument();
     expect(
-      within(screen.getByRole('region', { name: /тижневий розклад/i })).getByText('teacher-cloud'),
+      within(screen.getByRole('region', { name: /тижневий розклад/i })).getByText('Коваль О.П.'),
     ).toBeInTheDocument();
     expect(screen.getByText('Потік: stream-cs')).toBeInTheDocument();
 
@@ -1033,7 +1045,7 @@ describe('TimetableManagement component', () => {
 
     expect(screen.getByText('Безпека мереж')).toBeInTheDocument();
     expect(
-      within(screen.getByRole('region', { name: /тижневий розклад/i })).getByText('teacher-sec'),
+      within(screen.getByRole('region', { name: /тижневий розклад/i })).getByText('Шевченко І.В.'),
     ).toBeInTheDocument();
   });
   it('creates a curriculum plan from the dialog and switches to it', async () => {

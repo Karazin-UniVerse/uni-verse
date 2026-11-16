@@ -68,7 +68,7 @@ export const ScheduleEventCard: React.FC<ScheduleEventCardProps> = ({
           )}
         </div>
       )}
-      <div className={styles.eventMeta}>{event.teacherName || event.teacherId}</div>
+      {event.teacherName && <div className={styles.eventMeta}>{event.teacherName}</div>}
       {event.meetingUrl && (
         <a
           href={event.meetingUrl}

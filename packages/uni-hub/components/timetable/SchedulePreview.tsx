@@ -8,6 +8,20 @@ import { ScheduleWeekGrid } from './ScheduleWeekGrid';
 import type { ScheduleViewMode, SchedulePreviewProps } from './SchedulePreview.types';
 import styles from './SchedulePreview.module.scss';
 
+/** Draft events carry only the teacher id; the name comes from the teacher directory. */
+const withTeacherNames = (
+  events: SchedulePreviewProps['events'],
+  teachers: NonNullable<SchedulePreviewProps['teachers']>,
+): SchedulePreviewProps['events'] => {
+  const names = new Map(teachers.map((teacher) => [teacher.id, teacher.name]));
+
+  return events.map((event) => {
+    const name = event.teacherId ? names.get(event.teacherId) : undefined;
+
+    return name ? { ...event, teacherName: name } : event;
+  });
+};
+
 export const SchedulePreview: React.FC<SchedulePreviewProps> = ({
   events,
   academicGroups,
@@ -18,23 +32,23 @@ export const SchedulePreview: React.FC<SchedulePreviewProps> = ({
   const { formatMessage } = useLanguage();
   const [highlightTeacherId, setHighlightTeacherId] = useState('');
   const preferences = useMemo(() => buildPreferenceIndex(slotPreferences), [slotPreferences]);
+  const namedEvents = useMemo(() => withTeacherNames(events, teachers), [events, teachers]);
   const teacherIds = [
-    ...new Set(events.flatMap((event) => (event.teacherId ? [event.teacherId] : []))),
+    ...new Set(namedEvents.flatMap((event) => (event.teacherId ? [event.teacherId] : []))),
   ];
   const teacherChips = [
     { id: '', name: formatMessage('timetable.allTeachers') },
     ...teacherIds.map((teacherId) => ({
       id: teacherId,
       name:
-        teachers.find((teacher) => teacher.id === teacherId)?.name ??
-        events.find((event) => event.teacherId === teacherId)?.teacherName ??
-        teacherId,
+        namedEvents.find((event) => event.teacherId === teacherId)?.teacherName ??
+        formatMessage('timetable.teacher'),
     })),
   ];
   const viewProps = { academicGroups, preferences, onAdjust, highlightTeacherId };
   const isMobile = useMediaQuery('less', BREAKPOINTS.md);
   const [chosenMode, setChosenMode] = useState<ScheduleViewMode | null>(null);
-  const slots = useMemo(() => buildPreviewSlots(events), [events]);
+  const slots = useMemo(() => buildPreviewSlots(namedEvents), [namedEvents]);
   const mode = chosenMode ?? (isMobile ? 'day' : 'week');
   const modes: Array<{ value: ScheduleViewMode; label: string }> = [
     { value: 'week', label: formatMessage('timetable.viewWeek') },

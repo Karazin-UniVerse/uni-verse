@@ -58,6 +58,22 @@ describe('SchedulePreview', () => {
     expect(screen.getByText('На цей день занять немає')).toBeInTheDocument();
   });
 
+  it('names teachers from the directory instead of showing their ids', () => {
+    render(
+      withLanguage(
+        <SchedulePreview
+          events={events}
+          academicGroups={[]}
+          teachers={[{ id: 'teacher-1', name: 'Маций О.Б.' }]}
+        />,
+      ),
+    );
+
+    expect(screen.getAllByText('Маций О.Б.')).toHaveLength(2);
+    expect(screen.queryByText('teacher-1')).not.toBeInTheDocument();
+    expect(screen.queryByText('teacher-2')).not.toBeInTheDocument();
+  });
+
   it('reports the weekday of the card chosen for adjustment', async () => {
     const onAdjust = vi.fn();
     const user = userEvent.setup();
