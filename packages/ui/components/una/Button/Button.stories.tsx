@@ -14,6 +14,9 @@ type MatrixRow =
   | 'secondary success'
   | 'secondary warning'
   | 'secondary danger'
+  | 'transparent success'
+  | 'transparent warning'
+  | 'transparent danger'
   | 'primary disabled'
   | 'secondary disabled';
 type MatrixSize = NonNullable<ButtonAsButtonProps['size']>;
@@ -31,12 +34,15 @@ const MATRIX_ROWS: Record<
   'secondary success': { variant: 'secondary', tone: 'success' },
   'secondary warning': { variant: 'secondary', tone: 'warning' },
   'secondary danger': { variant: 'secondary', tone: 'danger' },
+  'transparent success': { isTransparent: true, tone: 'success' },
+  'transparent warning': { isTransparent: true, tone: 'warning' },
+  'transparent danger': { isTransparent: true, tone: 'danger' },
   'primary disabled': { variant: 'primary', disabled: true },
   'secondary disabled': { variant: 'secondary', disabled: true },
 };
 const MATRIX_SIZES: readonly MatrixSize[] = ['small', 'medium', 'large'];
 
-const meta: Meta<typeof Button> = {
+const meta = {
   title: 'Una/Buttons/Button',
   component: Button,
   tags: ['autodocs'],
@@ -60,10 +66,10 @@ const meta: Meta<typeof Button> = {
       control: { type: 'boolean' },
     },
   },
-};
+} satisfies Meta<typeof Button>;
 
 export default meta;
-type Story = StoryObj<typeof Button>;
+type Story = StoryObj<typeof meta>;
 
 export const Matrix: Story = {
   parameters: {

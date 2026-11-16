@@ -18,7 +18,9 @@ import css from './Button.module.scss';
  * @param className
  * @param {'small'|'medium'|'large'} [size='medium'] - Size token used for padding and font.
  * @param {boolean} [isLink=false] - Render as an anchor element instead of a button.
- * @param {boolean} [isTransparent=false] - Render a transparent style variant.
+ * @param {boolean} [isTransparent=false] - Render a transparent style variant. It takes precedence over
+ * the variant: with a non-default tone the button has no fill or outline, and its text and hover
+ * background use the tone accent.
  * @param {React.ButtonHTMLAttributes<HTMLButtonElement> | React.AnchorHTMLAttributes<HTMLAnchorElement>} props - Native element attributes forwarded.
  *
  * Examples:
