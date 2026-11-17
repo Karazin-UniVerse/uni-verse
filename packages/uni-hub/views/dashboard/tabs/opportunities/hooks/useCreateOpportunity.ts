@@ -109,10 +109,11 @@ export function useCreateOpportunity({
     event.preventDefault();
 
     const trimmedContact = formData.ownerContactInfo.trim();
-    const hasContactChanged =
-      !editingOpportunity || trimmedContact !== (editingOpportunity.ownerContactInfo ?? '').trim();
+    const isContactModified =
+      trimmedContact !== (editingOpportunity?.ownerContactInfo ?? '').trim();
+    const shouldValidateContact = !editingOpportunity || isContactModified;
 
-    if (hasContactChanged && trimmedContact && !isValidContactInfo(trimmedContact)) {
+    if (shouldValidateContact && trimmedContact && !isValidContactInfo(trimmedContact)) {
       toast.error(formatMessage('opportunities.applyModal.invalidContact'));
 
       return;
@@ -127,7 +128,7 @@ export function useCreateOpportunity({
           request: {
             title: formData.title.trim(),
             description: formData.description.trim(),
-            ...(hasContactChanged && { ownerContactInfo: trimmedContact }),
+            ...(shouldValidateContact && { ownerContactInfo: trimmedContact }),
             paymentType: formData.paymentType,
             paymentDetails:
               (formData.paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID &&
