@@ -1,4 +1,4 @@
-import { OpportunityAvailability } from '@core/constants/opportunity-availability';
+import { OPPORTUNITY_AVAILABILITY } from '@core/constants/opportunity-availability';
 import React from 'react';
 import { act, render, screen } from '@testing-library/react';
 import { notifyManager } from '@tanstack/react-query';
@@ -23,7 +23,7 @@ const opportunity = { ...buildOpportunity('loaded'), status: 'PUBLISHED' as cons
 const unavailable = {
   id: opportunity.id,
   title: '',
-  availability: OpportunityAvailability.TEMPORARY,
+  availability: OPPORTUNITY_AVAILABILITY.TEMPORARY,
 };
 
 describe('OpportunityDetailPage background refresh', () => {

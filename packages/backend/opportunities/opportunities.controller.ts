@@ -75,13 +75,14 @@ export class OpportunitiesController {
   })
   getFavorites(
     @GetUser('sub') userId: string,
+    @GetUser('roles') roles: string[] = [],
     @Res({ passthrough: true }) res?: Response,
   ): Promise<(OpportunityWithOwner | UnavailableOpportunity)[]> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
     setOpportunityCacheControl(res, false);
 
-    return this.opportunitiesService.getFavorites(userId);
+    return this.opportunitiesService.getFavorites(userId, roles);
   }
 
   @ApiBearerAuth()

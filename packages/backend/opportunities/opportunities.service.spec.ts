@@ -110,7 +110,6 @@ describe('OpportunitiesService', () => {
             },
             opportunityFavorite: {
               findMany: jest.fn().mockResolvedValue([]),
-              updateMany: jest.fn().mockResolvedValue({ count: 0 }),
             },
             $transaction: jest.fn(async (callback) =>
               typeof callback === 'function' ? callback(prisma) : callback,

@@ -116,8 +116,6 @@ export class OpportunitiesService {
       data: {
         userId,
         opportunityId,
-        title: opportunity.title,
-        paymentType: opportunity.paymentType,
       },
       skipDuplicates: true,
     });
@@ -140,8 +138,11 @@ export class OpportunitiesService {
   /** Lists saved opportunities, with last-published summaries for unavailable entries. */
   async getFavorites(
     userId: string,
+    userRoles: string[] = [],
   ): Promise<(OpportunityWithOwner | UnavailableOpportunity)[]> {
-    const isModerator = await this.hasCurrentModeratorRole(userId);
+    const isModerator =
+      userRoles.includes(Role.OPPORTUNITIES_MODERATOR) &&
+      (await this.hasCurrentModeratorRole(userId));
     const favorites = await this.prisma.opportunityFavorite.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -152,16 +153,10 @@ export class OpportunitiesService {
       },
     });
 
-    return favorites.map(({ opportunity, title, paymentType }) =>
-      opportunity.status === OpportunityStatus.PUBLISHED ||
-      opportunity.ownerId === userId ||
-      isModerator
+    return favorites.map(({ opportunity }) =>
+      opportunity.status === OpportunityStatus.PUBLISHED || isModerator
         ? opportunity
-        : unavailableOpportunity(
-            opportunity,
-            opportunity.publishedTitle ?? title,
-            opportunity.publishedPaymentType ?? paymentType,
-          ),
+        : unavailableOpportunity(opportunity),
     );
   }
 
@@ -179,21 +174,6 @@ export class OpportunitiesService {
   private async notifySubscribers(opportunity: Opportunity): Promise<void> {
     if (opportunity.status !== OpportunityStatus.PUBLISHED) {
       return;
-    }
-
-    try {
-      await this.prisma.opportunityFavorite.updateMany({
-        where: { opportunityId: opportunity.id },
-        data: {
-          title: opportunity.title,
-          paymentType: opportunity.paymentType,
-        },
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to refresh favorite snapshots for opportunity ${opportunity.id}`,
-        error,
-      );
     }
 
     try {
@@ -403,6 +383,10 @@ export class OpportunitiesService {
         (await this.hasCurrentModeratorRole(userId));
 
       if (!isCurrentModerator) {
+        if (!opportunity.publishedAt) {
+          throw new NotFoundException('Opportunity not found');
+        }
+
         return unavailableOpportunity(opportunity);
       }
     }

@@ -1,4 +1,4 @@
-import { OpportunityAvailability } from '@core/constants/opportunity-availability';
+import { OPPORTUNITY_AVAILABILITY } from '@core/constants/opportunity-availability';
 import { describe, it, expect, vi } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { render, screen } from '@testing-library/react';
@@ -158,7 +158,16 @@ describe('OpportunityCard', () => {
     expect(open).not.toHaveBeenCalled();
   });
 
-  it.each([OpportunityAvailability.TEMPORARY, OpportunityAvailability.PERMANENT])(
+  it('renders a localized heading for an unavailable opportunity with an empty title', () => {
+    render(
+      <OpportunityCard
+        opportunity={{ id: 'saved', title: '', availability: OPPORTUNITY_AVAILABILITY.TEMPORARY }}
+      />,
+    );
+    expect(screen.getByRole('heading', { name: 'Проектна можливість' })).toBeInTheDocument();
+  });
+
+  it.each([OPPORTUNITY_AVAILABILITY.TEMPORARY, OPPORTUNITY_AVAILABILITY.PERMANENT])(
     'keeps %s cards removable without detail navigation',
     async (availability) => {
       const toggle = vi.fn();
@@ -173,7 +182,7 @@ describe('OpportunityCard', () => {
         />,
       );
       expect(screen.getByRole('status')).toHaveTextContent(
-        availability === OpportunityAvailability.TEMPORARY
+        availability === OPPORTUNITY_AVAILABILITY.TEMPORARY
           ? 'Тимчасово недоступна'
           : 'Більше недоступна',
       );

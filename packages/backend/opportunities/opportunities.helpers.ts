@@ -8,7 +8,7 @@ import {
   OPPORTUNITY_MODERATE_ACTION,
   OPPORTUNITY_STATUS,
 } from '@universe/core/constants/opportunities';
-import { OpportunityAvailability } from '@universe/core/constants/opportunity-availability';
+import { OPPORTUNITY_AVAILABILITY } from '@universe/core/constants/opportunity-availability';
 import { isValidContactInfo } from '@universe/core/utils/contacts';
 import { normalizeOpportunityContent } from '@universe/core/utils/opportunities';
 import type {
@@ -26,17 +26,17 @@ export function unavailableOpportunity(
     Opportunity,
     'id' | 'status' | 'publishedTitle' | 'publishedPaymentType'
   >,
-  title = opportunity.publishedTitle ?? '',
-  paymentType = opportunity.publishedPaymentType,
 ): UnavailableOpportunity {
   return {
     id: opportunity.id,
-    title,
-    ...(paymentType ? { paymentType } : {}),
+    title: opportunity.publishedTitle ?? '',
+    ...(opportunity.publishedPaymentType
+      ? { paymentType: opportunity.publishedPaymentType }
+      : {}),
     availability:
       opportunity.status === OPPORTUNITY_STATUS.REJECTED
-        ? OpportunityAvailability.PERMANENT
-        : OpportunityAvailability.TEMPORARY,
+        ? OPPORTUNITY_AVAILABILITY.PERMANENT
+        : OPPORTUNITY_AVAILABILITY.TEMPORARY,
   };
 }
 

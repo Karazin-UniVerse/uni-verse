@@ -56,7 +56,9 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   if (isUnavailableOpportunity(opportunity)) {
     return (
       <article className={styles.card}>
-        <h3 className={styles.cardTitle}>{opportunity.title}</h3>
+        <h3 className={styles.cardTitle}>
+          {opportunity.title || formatMessage('opportunities.myApplications.defaultTitle')}
+        </h3>
         <OpportunityUnavailableNotice availability={opportunity.availability} />
         {favoriteAction}
       </article>

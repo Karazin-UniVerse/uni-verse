@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { withLanguage } from '@uni-hub/utils/test-utils';
-import { OpportunityAvailability } from '@core/constants/opportunity-availability';
+import { OPPORTUNITY_AVAILABILITY } from '@core/constants/opportunity-availability';
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { MyApplicationsTab, type MyApplicationsTabProps } from './MyApplicationsTab';
 
@@ -159,7 +159,7 @@ describe('MyApplicationsTab component', () => {
           opportunity: {
             id: 'opp-1',
             title: 'Last published title',
-            availability: OpportunityAvailability.TEMPORARY,
+            availability: OPPORTUNITY_AVAILABILITY.TEMPORARY,
             paymentType: 'PAID',
           },
         },
