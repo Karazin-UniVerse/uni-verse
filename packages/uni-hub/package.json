@@ -33,7 +33,7 @@
     "@playwright/cli": "^0.1.23",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
-    "@testing-library/user-event": "^14.6.8",
+    "@testing-library/user-event": "^14.6.10",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^25.9.9",
     "@types/react": "^19",
