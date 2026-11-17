@@ -121,6 +121,46 @@ if (process.platform !== 'win32') {
 }
 
 if (process.platform === 'win32') {
+  test('sync explains a Windows symlink permission error without retrying', (context) => {
+    const { root, script, source } = createMirror(context);
+    const preload = join(root, 'deny-symlink.mjs');
+    const sourceLink = join(source, 'skill-link');
+
+    writeFileSync(sourceLink, 'skill-target');
+    writeFileSync(
+      preload,
+      `import fs from 'node:fs';
+import { syncBuiltinESMExports } from 'node:module';
+const sourceLink = ${JSON.stringify(sourceLink)};
+const { lstatSync, readlinkSync } = fs;
+fs.lstatSync = (path, ...args) => path === sourceLink
+  ? { isDirectory: () => false, isSymbolicLink: () => true }
+  : lstatSync(path, ...args);
+fs.readlinkSync = (path, ...args) => path === sourceLink
+  ? fs.readFileSync(path, 'utf8')
+  : readlinkSync(path, ...args);
+fs.symlinkSync = () => {
+  throw Object.assign(new Error('Permission denied'), { code: 'EPERM' });
+};
+syncBuiltinESMExports();
+Atomics.wait = () => {
+  throw new Error('Symlink permission errors must not be retried');
+};
+`,
+    );
+    const result = spawnSync(process.execPath, ['--import', pathToFileURL(preload).href, script], {
+      encoding: 'utf8',
+      timeout: 10_000,
+    });
+
+    assert.ifError(result.error);
+    assert.equal(result.status, 1, result.stderr);
+    assert.match(
+      result.stderr,
+      /Creating symlinks requires Developer Mode or admin rights on Windows: skill-link/,
+    );
+  });
+
   test('sync retries a Windows sharing lock before removing an obsolete file', async (context) => {
     const { root, script, target } = createMirror(context);
     const lockedFile = join(target, 'obsolete.md');

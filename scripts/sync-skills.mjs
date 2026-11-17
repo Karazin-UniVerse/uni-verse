@@ -141,9 +141,20 @@ function reconcileEntry(sourcePath, targetPath) {
           process.platform === 'win32' &&
           statSync(sourcePath, { throwIfNoEntry: false })?.isDirectory();
 
-        writeMirror(() =>
-          symlinkSync(linkTarget, targetPath, isWindowsDirectoryLink ? 'dir' : 'file'),
-        );
+        writeMirror(() => {
+          try {
+            symlinkSync(linkTarget, targetPath, isWindowsDirectoryLink ? 'dir' : 'file');
+          } catch (error) {
+            if (process.platform === 'win32' && error.code === 'EPERM') {
+              throw new Error(
+                'Creating symlinks requires Developer Mode or admin rights on Windows: ' + name,
+                { cause: error },
+              );
+            }
+
+            throw error;
+          }
+        });
       }
     }
 
