@@ -528,8 +528,7 @@ describe('OpportunityDetailContent published opportunity controls', () => {
 describe('OpportunityDetailContent favorites', () => {
   const id = 'favorite-opportunity';
   const opportunity = { ...buildOpportunity(id), status: 'PUBLISHED' as const };
-  const addLabel = 'opportunities.favorites.add';
-  const removeLabel = 'opportunities.favorites.remove';
+  const favoriteLabel = 'opportunities.favorites.toggle';
 
   beforeEach(() => {
     query = new URLSearchParams();
@@ -560,8 +559,7 @@ describe('OpportunityDetailContent favorites', () => {
     userId = opportunity.ownerId;
     renderFavorite();
 
-    expect(screen.queryByRole('button', { name: addLabel })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: removeLabel })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: favoriteLabel })).not.toBeInTheDocument();
   });
 
   it.each([false, true])('toggles favorite state (previously saved: %s)', async (saved) => {
@@ -570,8 +568,9 @@ describe('OpportunityDetailContent favorites', () => {
     const request = vi.spyOn(opportunitiesApi, 'setFavorite').mockReturnValue(response.promise);
     const { queryClient, showFavorite } = renderFavorite(saved);
     const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
-    const button = screen.getByRole('button', { name: saved ? removeLabel : addLabel });
+    const button = screen.getByRole('button', { name: favoriteLabel });
 
+    expect(button).toHaveAttribute('aria-pressed', String(saved));
     await user.click(button);
     await waitFor(() => expect(button).toBeDisabled());
     expect(request).toHaveBeenCalledExactlyOnceWith(id, !saved);
@@ -583,7 +582,10 @@ describe('OpportunityDetailContent favorites', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: opportunityKeys.all }, undefined);
 
     showFavorite(!saved);
-    expect(screen.getByRole('button', { name: saved ? addLabel : removeLabel })).toBeEnabled();
+    const updatedButton = screen.getByRole('button', { name: favoriteLabel });
+
+    expect(updatedButton).toBeEnabled();
+    expect(updatedButton).toHaveAttribute('aria-pressed', String(!saved));
   });
 
   it.each([false, true])('shows a request failure (previously saved: %s)', async (saved) => {
@@ -594,7 +596,7 @@ describe('OpportunityDetailContent favorites', () => {
     );
     const { queryClient } = renderFavorite(saved);
     const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
-    const button = screen.getByRole('button', { name: saved ? removeLabel : addLabel });
+    const button = screen.getByRole('button', { name: favoriteLabel });
 
     await user.click(button);
 

@@ -88,7 +88,6 @@ export const en = {
     'Opportunity "{opportunityTitle}" has been cancelled',
   'notifications.opportunityLifecycle.default':
     'The status of opportunity "{opportunityTitle}" has changed',
-  'header.notifications.action.view': 'View opportunity',
   'header.moodleConnected': 'Connected',
   'header.moodleNotConnected': 'Not connected',
   'header.moodleChange': 'Change account',
@@ -448,6 +447,7 @@ export const en = {
   'opportunities.contactHint': 'Your profile email will be shown automatically.',
   'opportunities.errors.changesRequired':
     'Before resubmitting, change the opportunity title, description, contacts or payment terms.',
+  'opportunities.errors.lifecycleConflict': 'The opportunity was modified. Reload and try again.',
   'opportunities.errors.alreadyApplied': 'You have already applied to this opportunity.',
   'opportunities.errors.phoneUnavailable': 'This phone number is unavailable for this account.',
   'opportunities.errors.phoneAlreadySet':
@@ -461,8 +461,7 @@ export const en = {
   'opportunities.tabs.moderation': 'Moderation',
   'opportunities.tabs.moderationShort': 'Moderation',
   'opportunities.actions.create': 'Create Opportunity',
-  'opportunities.favorites.add': 'Add to favorites',
-  'opportunities.favorites.remove': 'Remove from favorites',
+  'opportunities.favorites.toggle': 'Favorite',
   'opportunities.toast.createdDraft': 'Opportunity successfully created as a draft!',
   'opportunities.toast.createError': 'Error creating opportunity',
   'opportunities.toast.applySuccess': 'Your application was successfully sent to the organizer!',
@@ -489,7 +488,7 @@ export const en = {
   'opportunities.toast.rejected': 'Opportunity rejected',
   'opportunities.toast.requiresChanges': 'Opportunity returned to the author for revision',
   'opportunities.toast.moderateError': 'Moderation error',
-  'opportunities.toast.favoriteAdded': 'You will be notified about updates to this opportunity',
+  'opportunities.toast.favoriteAdded': 'Added to favorites. You will receive updates.',
   'opportunities.toast.favoriteRemoved': 'Removed from favorites.',
   'common.error.load': 'Failed to load data',
   'common.error.retry': 'Try again',

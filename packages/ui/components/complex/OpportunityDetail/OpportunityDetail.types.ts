@@ -53,7 +53,6 @@ export type OpportunityDetailProps = {
   // Subscription
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
-  addFavoriteText?: string;
-  removeFavoriteText?: string;
+  favoriteText?: string;
   isFavoritePending?: boolean;
 };

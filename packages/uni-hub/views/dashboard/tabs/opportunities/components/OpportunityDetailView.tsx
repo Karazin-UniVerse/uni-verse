@@ -156,8 +156,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
         userId && opportunity.status === OPPORTUNITY_STATUS.PUBLISHED ? onToggleFavorite : undefined
       }
       isFavoritePending={isFavoritePending}
-      addFavoriteText={formatMessage('opportunities.favorites.add')}
-      removeFavoriteText={formatMessage('opportunities.favorites.remove')}
+      favoriteText={formatMessage('opportunities.favorites.toggle')}
     />
   );
 };

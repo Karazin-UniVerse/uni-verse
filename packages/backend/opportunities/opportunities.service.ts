@@ -326,7 +326,11 @@ export class OpportunitiesService {
       });
     } catch (error) {
       if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
-        throw new ConflictException(OPPORTUNITY_ERROR.CHANGES_REQUIRED);
+        throw new ConflictException(
+          dto.lifecycleState === undefined
+            ? OPPORTUNITY_ERROR.CHANGES_REQUIRED
+            : OPPORTUNITY_ERROR.LIFECYCLE_CONFLICT,
+        );
       }
 
       throw error;
@@ -833,8 +837,6 @@ export class OpportunitiesService {
       data: {
         userId,
         opportunityId: id,
-        title: opportunity.title,
-        paymentType: opportunity.paymentType,
       },
       skipDuplicates: true,
     });

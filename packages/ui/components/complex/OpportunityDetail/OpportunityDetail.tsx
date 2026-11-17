@@ -79,8 +79,7 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   deleteText,
   className,
   onToggleFavorite,
-  addFavoriteText,
-  removeFavoriteText,
+  favoriteText,
   canDelete = false,
   sendToReviewDisabled = false,
   acceptsApplications = true,
@@ -104,14 +103,19 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   });
 
   const favoriteButton =
-    !isOwner && onToggleFavorite && addFavoriteText && removeFavoriteText ? (
-      <Button variant="secondary" onClick={onToggleFavorite} disabled={isFavoritePending}>
+    !isOwner && onToggleFavorite && favoriteText ? (
+      <Button
+        variant="secondary"
+        onClick={onToggleFavorite}
+        disabled={isFavoritePending}
+        aria-pressed={isFavorite}
+      >
         {isFavorite ? (
           <BellOff size={14} className={styles.btnIcon} />
         ) : (
           <Bell size={14} className={styles.btnIcon} />
         )}
-        {isFavorite ? removeFavoriteText : addFavoriteText}
+        {favoriteText}
       </Button>
     ) : null;
 

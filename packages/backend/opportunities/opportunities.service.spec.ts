@@ -21,6 +21,7 @@ import {
   Role,
   type Prisma,
   type Opportunity,
+  type OpportunityFavorite,
   type OpportunityApplication,
 } from '@universe/database';
 import {
@@ -1377,8 +1378,6 @@ describe('OpportunitiesService', () => {
         {
           userId: 'reader',
           opportunityId: publishedOpportunity.id,
-          title: publishedOpportunity.title,
-          paymentType: publishedOpportunity.paymentType,
           createdAt: publishedOpportunity.createdAt,
         },
       ]);
@@ -1406,12 +1405,32 @@ describe('OpportunitiesService', () => {
   });
 
   describe('changeLifecycleState', () => {
+    it('asks the owner to reload when a concurrent update prevents changing the stage', async () => {
+      jest
+        .spyOn(prisma.opportunity, 'findUnique')
+        .mockResolvedValue(publishedOpportunity);
+      jest
+        .spyOn(prisma.opportunity, 'update')
+        .mockRejectedValue({ code: 'P2025' });
+
+      await expect(
+        service.changeLifecycleState(
+          publishedOpportunity.ownerId,
+          publishedOpportunity.id,
+          OpportunityLifecycleState.PAUSED,
+        ),
+      ).rejects.toThrow(
+        new ConflictException(OPPORTUNITY_ERROR.LIFECYCLE_CONFLICT),
+      );
+    });
+
     it('throws ForbiddenException if not owner', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
-        status: 'PUBLISHED',
+        status: OpportunityStatus.PUBLISHED,
         ownerId: 'other',
-      } as any);
+      });
 
       await expect(
         service.changeLifecycleState(
@@ -1424,21 +1443,29 @@ describe('OpportunitiesService', () => {
 
     it('updates lifecycleState when caller is owner and notifies subscribers', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         title: 'Tech Talk',
-        status: 'PUBLISHED',
-        lifecycleState: OpportunityLifecycleState.START,
         ownerId: 'user-1',
-      } as any);
+        status: OpportunityStatus.PUBLISHED,
+        lifecycleState: OpportunityLifecycleState.START,
+      });
+      const favoriteLookup: {
+        findMany: () => Promise<Pick<OpportunityFavorite, 'userId'>[]>;
+      } = prisma.opportunityFavorite;
+
       jest
-        .spyOn(prisma.opportunityFavorite, 'findMany')
-        .mockResolvedValue([{ userId: 'sub-1' }] as any);
+        .spyOn(favoriteLookup, 'findMany')
+        .mockResolvedValue([{ userId: 'sub-1' }]);
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         title: 'Tech Talk',
-        status: 'PUBLISHED',
+        ownerId: 'user-1',
+        status: OpportunityStatus.PUBLISHED,
         lifecycleState: OpportunityLifecycleState.PAUSED,
-      } as any);
+        acceptsApplications: false,
+      });
 
       const result = await service.changeLifecycleState(
         'user-1',
@@ -1450,7 +1477,7 @@ describe('OpportunitiesService', () => {
         where: {
           id: '1',
           status: OpportunityStatus.PUBLISHED,
-          updatedAt: undefined,
+          updatedAt: publishedOpportunity.updatedAt,
           lifecycleState: OpportunityLifecycleState.START,
         },
         data: {
@@ -1477,20 +1504,24 @@ describe('OpportunitiesService', () => {
 
     it('does not notify subscribers when lifecycleState is unchanged', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         title: 'Tech Talk',
-        status: 'PUBLISHED',
-        lifecycleState: OpportunityLifecycleState.COMPLETED,
         ownerId: 'user-1',
-      } as any);
+        status: OpportunityStatus.PUBLISHED,
+        lifecycleState: OpportunityLifecycleState.COMPLETED,
+      });
       const findFavorites = jest.spyOn(prisma.opportunityFavorite, 'findMany');
 
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         title: 'Tech Talk',
-        status: 'PUBLISHED',
+        ownerId: 'user-1',
+        status: OpportunityStatus.PUBLISHED,
         lifecycleState: OpportunityLifecycleState.COMPLETED,
-      } as any);
+        acceptsApplications: false,
+      });
 
       const result = await service.changeLifecycleState(
         'user-1',
@@ -1505,20 +1536,23 @@ describe('OpportunitiesService', () => {
 
     it('does not notify subscribers when opportunity is not published', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         title: 'Tech Talk',
-        status: 'READY_FOR_REVIEW',
-        lifecycleState: OpportunityLifecycleState.START,
         ownerId: 'user-1',
-      } as any);
+        status: OpportunityStatus.READY_FOR_REVIEW,
+        lifecycleState: OpportunityLifecycleState.START,
+      });
       const findFavorites = jest.spyOn(prisma.opportunityFavorite, 'findMany');
 
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        ...publishedOpportunity,
         id: '1',
         title: 'Tech Talk',
-        status: 'READY_FOR_REVIEW',
+        ownerId: 'user-1',
+        status: OpportunityStatus.READY_FOR_REVIEW,
         lifecycleState: OpportunityLifecycleState.ACTIVE,
-      } as any);
+      });
 
       const result = await service.changeLifecycleState(
         'user-1',
@@ -2434,8 +2468,6 @@ describe('OpportunitiesService', () => {
         data: {
           userId: 'user-2',
           opportunityId: '1',
-          title: publishedOpportunity.title,
-          paymentType: publishedOpportunity.paymentType,
         },
         skipDuplicates: true,
       });

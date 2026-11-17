@@ -82,7 +82,6 @@ export const uk = {
   'notifications.opportunityLifecycle.COMPLETED': 'Можливість «{opportunityTitle}» завершена',
   'notifications.opportunityLifecycle.CANCELLED': 'Можливість «{opportunityTitle}» скасована',
   'notifications.opportunityLifecycle.default': 'Статус можливості «{opportunityTitle}» змінено',
-  'header.notifications.action.view': 'Переглянути можливість',
   'header.moodleConnected': 'Підключено',
   'header.moodleNotConnected': 'Не підключено',
   'header.moodleChange': 'Змінити акаунт',
@@ -443,6 +442,8 @@ export const uk = {
   'opportunities.contactHint': 'Пошту з вашого профілю буде показано автоматично.',
   'opportunities.errors.changesRequired':
     'Перед повторним надсиланням змініть назву, опис, контакти або умови оплати можливості.',
+  'opportunities.errors.lifecycleConflict':
+    'Можливість було змінено. Оновіть сторінку та спробуйте ще раз.',
   'opportunities.errors.alreadyApplied': 'Ви вже подали заявку на цю можливість.',
   'opportunities.errors.phoneUnavailable':
     'Цей номер недоступний для використання цим обліковим записом.',
@@ -457,8 +458,7 @@ export const uk = {
   'opportunities.tabs.moderation': 'Модерація',
   'opportunities.tabs.moderationShort': 'Модерація',
   'opportunities.actions.create': 'Створити можливість',
-  'opportunities.favorites.add': 'Додати до обраного',
-  'opportunities.favorites.remove': 'Видалити з обраного',
+  'opportunities.favorites.toggle': 'Обране',
   'opportunities.toast.createdDraft': 'Можливість успішно створена як чернетка!',
   'opportunities.toast.createError': 'Помилка створення можливості',
   'opportunities.toast.applySuccess': 'Ваш відгук успішно надіслано організатору!',

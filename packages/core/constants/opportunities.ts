@@ -63,6 +63,7 @@ export type OpportunityView = (typeof OPPORTUNITY_VIEW)[keyof typeof OPPORTUNITY
 export const OPPORTUNITY_ERROR = {
   ALREADY_APPLIED: 'opportunities.errors.alreadyApplied',
   CHANGES_REQUIRED: 'opportunities.errors.changesRequired',
+  LIFECYCLE_CONFLICT: 'opportunities.errors.lifecycleConflict',
   PHONE_UNAVAILABLE: 'opportunities.errors.phoneUnavailable',
   PHONE_ALREADY_SET: 'opportunities.errors.phoneAlreadySet',
 } as const;
