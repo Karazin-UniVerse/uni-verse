@@ -82,6 +82,7 @@
   --btn-tone-bg: var(--btn-success-bg);
   --btn-tone-hover: var(--btn-success-hover);
   --btn-tone-active: var(--btn-success-active);
+  --btn-tone-border: var(--btn-success-border);
   --btn-tone-text: var(--btn-success-text);
   --btn-tone-accent: var(--btn-success-accent);
 }
@@ -90,6 +91,7 @@
   --btn-tone-bg: var(--btn-warning-bg);
   --btn-tone-hover: var(--btn-warning-hover);
   --btn-tone-active: var(--btn-warning-active);
+  --btn-tone-border: var(--btn-warning-border);
   --btn-tone-text: var(--btn-warning-text);
   --btn-tone-accent: var(--btn-warning-accent);
 }
@@ -98,6 +100,7 @@
   --btn-tone-bg: var(--btn-danger-bg);
   --btn-tone-hover: var(--btn-danger-hover);
   --btn-tone-active: var(--btn-danger-active);
+  --btn-tone-border: var(--btn-danger-border);
   --btn-tone-text: var(--btn-danger-text);
   --btn-tone-accent: var(--btn-danger-accent);
 }
@@ -105,17 +108,15 @@
 .toned {
   &.primary:not(.is-transparent, :disabled) {
     background-color: var(--btn-tone-bg);
-    border-color: var(--btn-tone-bg);
+    border-color: var(--btn-tone-border);
     color: var(--btn-tone-text);
 
     &:hover {
       background-color: var(--btn-tone-hover);
-      border-color: var(--btn-tone-hover);
     }
 
     &:active {
       background-color: var(--btn-tone-active);
-      border-color: var(--btn-tone-active);
     }
   }
 
