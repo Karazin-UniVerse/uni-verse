@@ -1,8 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { OpportunityStatus, PaymentType } from '@universe/database';
+import {
+  OpportunityStatus,
+  OpportunityTag,
+  PaymentType,
+} from '@universe/database';
 import type { GetOpportunitiesParams } from '@universe/core/types/opportunities';
 import { parseBoolean } from '@universe/core/utils/boolean';
-import { normalizeTags } from '@universe/core/utils/tags';
 import { Transform } from 'class-transformer';
 import {
   IsArray,
@@ -34,22 +37,15 @@ export class FindOpportunitiesDto implements GetOpportunitiesParams {
   search?: string;
 
   @ApiPropertyOptional({
-    type: [String],
-    description: 'Repeat tags for multiple names; commas are part of a name',
+    enum: OpportunityTag,
+    isArray: true,
+    description: 'Repeat the parameter for multiple tags',
   })
-  @Transform(({ value }) => {
-    if (typeof value === 'string') return normalizeTags([value]);
-
-    if (Array.isArray(value) && value.every((tag) => typeof tag === 'string')) {
-      return normalizeTags(value);
-    }
-
-    return value;
-  })
+  @Transform(({ value }) => (typeof value === 'string' ? [value] : value))
   @IsArray()
-  @IsString({ each: true })
+  @IsEnum(OpportunityTag, { each: true })
   @IsOptional()
-  tags?: string[];
+  tags?: OpportunityTag[];
 
   @ApiPropertyOptional()
   @Transform(({ value }) => parseBoolean(value) ?? value)

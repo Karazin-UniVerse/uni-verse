@@ -10,6 +10,7 @@ import { OpportunityOwnerMetaRow } from './opportunities/components/OpportunityO
 import { OpportunityCatalogMetaRow } from './opportunities/components/OpportunityCatalogMetaRow';
 import { OPPORTUNITY_PAYMENT_TYPE } from '@core/constants/opportunities';
 import { OPPORTUNITY_CARD_VARIANT } from './opportunities/constants';
+
 export interface OpportunityCardProps {
   opportunity: Opportunity;
   variant?: 'catalog' | 'owner';
@@ -28,15 +29,16 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   const { formatMessage, localeTag } = useLanguage();
   const isPaid = opportunity.paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID;
   const isOwner = variant === OPPORTUNITY_CARD_VARIANT.OWNER;
+  const isClickable = Boolean(onOpenDetail);
 
   const cardClassName = clsx(
     styles.card,
     isPaid ? styles.paidCard : styles.unpaidCard,
-    !isOwner && styles.clickableCard,
+    isClickable && styles.clickableCard,
   );
 
-  const content = (
-    <>
+  return (
+    <article className={cardClassName}>
       <OpportunityCardTop
         opportunity={opportunity}
         isPaid={isPaid}
@@ -64,22 +66,15 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
           <OpportunityCatalogMetaRow opportunity={opportunity} formatMessage={formatMessage} />
         )}
       </div>
-    </>
-  );
 
-  if (isOwner) {
-    return <article className={cardClassName}>{content}</article>;
-  }
-
-  return (
-    <article className={cardClassName}>
-      {content}
-      <button
-        type="button"
-        className={styles.cardLink}
-        aria-label={formatMessage('opportunities.card.detailsAria', { title: opportunity.title })}
-        onClick={() => onOpenDetail?.(opportunity)}
-      />
+      {isClickable && (
+        <button
+          type="button"
+          className={styles.cardLink}
+          aria-label={formatMessage('opportunities.card.detailsAria', { title: opportunity.title })}
+          onClick={() => onOpenDetail?.(opportunity)}
+        />
+      )}
     </article>
   );
 };

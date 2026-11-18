@@ -71,18 +71,18 @@ describe('OpportunitiesController', () => {
       expect(service.findAll).toHaveBeenCalledWith({}, ['MOODLE_STUDENT']);
     });
 
-    it('sets public Cache-Control header when query is for public catalog', async () => {
+    it('should prevent stale HTTP caches from delaying catalog polling', async () => {
       const mockRes = createMockResponse();
 
       await controller.findAll(['MOODLE_STUDENT'], {}, mockRes);
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         CACHE_CONTROL_HEADER,
-        PUBLIC_CACHE_CONTROL,
+        PRIVATE_CACHE_CONTROL,
       );
     });
 
-    it('sets public Cache-Control header when query status is explicitly PUBLISHED', async () => {
+    it('should prevent stale HTTP caches for an explicitly published catalog', async () => {
       const mockRes = createMockResponse();
 
       await controller.findAll(
@@ -93,7 +93,7 @@ describe('OpportunitiesController', () => {
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         CACHE_CONTROL_HEADER,
-        PUBLIC_CACHE_CONTROL,
+        PRIVATE_CACHE_CONTROL,
       );
     });
 

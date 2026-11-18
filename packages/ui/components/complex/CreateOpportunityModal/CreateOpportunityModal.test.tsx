@@ -79,7 +79,7 @@ describe('CreateOpportunityModal Component', () => {
     expect(screen.getByRole('button', { name: defaultProps.submitText })).toBeInTheDocument();
   });
 
-  it('should save a pending short tag without requiring Enter', async () => {
+  it('should save tags picked from the predefined list', async () => {
     const user = userEvent.setup();
     const onSave = vi.fn();
     const Wrapper = (): React.ReactElement => {
@@ -92,6 +92,16 @@ describe('CreateOpportunityModal Component', () => {
           setFormData={setFormData}
           tagsLabel="Tags"
           removeTagLabel="Remove tag"
+          tagsPlaceholder="Select tags"
+          tagGroups={[
+            {
+              label: 'Field',
+              options: [
+                { value: 'IT', label: 'IT' },
+                { value: 'LAW', label: 'Law' },
+              ],
+            },
+          ]}
           onSubmit={(event) => {
             event.preventDefault();
             onSave(formData.tags);
@@ -102,10 +112,13 @@ describe('CreateOpportunityModal Component', () => {
 
     render(<Wrapper />);
 
-    await user.type(screen.getByLabelText('Tags'), '3D');
+    await user.click(screen.getByRole('button', { name: 'Tags' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Law' }));
+    await user.click(screen.getByRole('checkbox', { name: 'IT' }));
+    await user.keyboard('{Escape}');
     await user.click(screen.getByRole('button', { name: defaultProps.submitText }));
 
-    expect(onSave).toHaveBeenCalledExactlyOnceWith(['3d']);
+    expect(onSave).toHaveBeenCalledExactlyOnceWith(['IT', 'LAW']);
   });
 
   it('should not render when open is false', () => {

@@ -14,6 +14,11 @@ import {
   XCircle,
 } from 'lucide-react';
 import { Button } from '@una';
+import { MAX_APPLICATION_WITHDRAWALS } from '@core/constants/opportunities';
+import {
+  hasReachedApplicationWithdrawalLimit,
+  isWithdrawableApplicationStatus,
+} from '@core/utils/opportunities';
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { ApplicationStatusBadge } from './ApplicationStatusBadge';
@@ -169,16 +174,25 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
               </span>
 
               <div className={styles.applicationActions}>
-                {(app.status === 'SUBMITTED' || app.status === 'UNDER_REVIEW') && (
-                  <Button
-                    variant="secondary"
-                    className={styles.withdrawBtn}
-                    onClick={() => onWithdraw(app.id)}
-                  >
-                    <X size={14} className={styles.btnIcon} />
-                    {formatMessage('opportunities.myApplications.withdrawBtn')}
-                  </Button>
-                )}
+                {isWithdrawableApplicationStatus(app.status) &&
+                  hasReachedApplicationWithdrawalLimit(app.withdrawalCount) && (
+                    <span className={styles.statusNoticeNeutral}>
+                      {formatMessage('opportunities.errors.withdrawalLimitReached', {
+                        limit: MAX_APPLICATION_WITHDRAWALS,
+                      })}
+                    </span>
+                  )}
+                {isWithdrawableApplicationStatus(app.status) &&
+                  !hasReachedApplicationWithdrawalLimit(app.withdrawalCount) && (
+                    <Button
+                      variant="secondary"
+                      className={styles.withdrawBtn}
+                      onClick={() => onWithdraw(app.id)}
+                    >
+                      <X size={14} className={styles.btnIcon} />
+                      {formatMessage('opportunities.myApplications.withdrawBtn')}
+                    </Button>
+                  )}
 
                 {app.status === 'ACCEPTED' && (
                   <span className={styles.statusNoticeSuccess}>

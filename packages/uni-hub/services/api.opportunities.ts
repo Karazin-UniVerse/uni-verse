@@ -4,7 +4,6 @@ import type {
   GetOpportunitiesParams,
   Opportunity,
   OpportunityApplication,
-  OpportunityTag,
   UpdateOpportunityRequest,
 } from '@core/types/opportunities';
 import type {
@@ -31,10 +30,6 @@ export class OpportunitiesApi extends ApiClient {
     const query = searchParams.size ? `?${searchParams}` : '';
 
     return this.request<Opportunity[]>(`/opportunities${query}`);
-  }
-
-  async getTagSuggestions(query: string): Promise<{ data: OpportunityTag[] }> {
-    return this.request<OpportunityTag[]>(`/tags${buildQueryString({ query })}`);
   }
 
   async getOpportunity(id: string): Promise<{ data: Opportunity }> {

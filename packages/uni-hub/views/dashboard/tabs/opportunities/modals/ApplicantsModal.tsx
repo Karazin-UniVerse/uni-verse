@@ -59,12 +59,14 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                       app.applicantName ||
                       formatMessage('opportunities.applicantsModal.defaultApplicant')}
                   </span>
-                  <ContactTags
-                    emailLabel={formatMessage('opportunities.emailLabel')}
-                    alternativeContactLabel={formatMessage('opportunities.alternativeContact')}
-                    email={app.applicant?.email}
-                    alternativeContact={app.contactInfo}
-                  />
+                  <div className={styles.applicantContacts}>
+                    <ContactTags
+                      emailLabel={formatMessage('opportunities.emailLabel')}
+                      alternativeContactLabel={formatMessage('opportunities.alternativeContact')}
+                      email={app.applicant?.email}
+                      alternativeContact={app.contactInfo}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -99,7 +101,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                 {app.status !== OPPORTUNITY_APP_STATUS.ACCEPTED && (
                   <Button
                     variant="primary"
-                    className={styles.approveBtn}
+                    tone="success"
                     onClick={() => onUpdateStatus(app.id, OPPORTUNITY_APP_STATUS.ACCEPTED)}
                   >
                     <CheckCircle2 size={14} className={styles.btnIcon} />
@@ -109,7 +111,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                 {app.status !== OPPORTUNITY_APP_STATUS.UNDER_REVIEW && (
                   <Button
                     variant="secondary"
-                    className={styles.reviseBtn}
+                    tone="warning"
                     onClick={() => onUpdateStatus(app.id, OPPORTUNITY_APP_STATUS.UNDER_REVIEW)}
                   >
                     <Clock size={14} className={styles.btnIcon} />
@@ -119,7 +121,7 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
                 {app.status !== OPPORTUNITY_APP_STATUS.REJECTED && (
                   <Button
                     variant="secondary"
-                    className={styles.rejectBtn}
+                    tone="danger"
                     onClick={() => onUpdateStatus(app.id, OPPORTUNITY_APP_STATUS.REJECTED)}
                   >
                     <XCircle size={14} className={styles.btnIcon} />

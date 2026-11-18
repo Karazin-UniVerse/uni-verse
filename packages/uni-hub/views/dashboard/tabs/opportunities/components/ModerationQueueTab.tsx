@@ -3,7 +3,6 @@
 import React from 'react';
 import { ContactTags, ModerationActions } from '@ui';
 import { Tag } from '@una';
-import { getOpportunityTagNames } from '@core/utils/opportunities';
 import { Clock, Calendar, Coins, Briefcase, AlertCircle, Hash } from 'lucide-react';
 import type { Opportunity } from '@core/types/opportunities';
 import {
@@ -12,10 +11,10 @@ import {
 } from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { TabStateWrapper } from './TabStateWrapper';
+import { getOpportunityTagLabel } from '../tags';
 import styles from '../../OpportunitiesTab.module.scss';
 
 export interface ModerationQueueTabProps {
-  currentUserId: string | null;
   loading: boolean;
   isError: boolean;
   onRetry: () => void;
@@ -25,7 +24,6 @@ export interface ModerationQueueTabProps {
 }
 
 export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
-  currentUserId,
   loading,
   isError,
   onRetry,
@@ -45,8 +43,6 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
     >
       <div className={styles.listStack}>
         {moderationQueue.map((item) => {
-          const isOwnOpportunity = item.ownerId === currentUserId;
-
           return (
             <div key={item.id} className={styles.moderationCard}>
               <div className={styles.moderationHeader}>
@@ -124,15 +120,15 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                 <p className={styles.moderationDescriptionText}>{item.description}</p>
               </div>
 
-              {getOpportunityTagNames(item).length > 0 && (
+              {Boolean(item.tags?.length) && (
                 <div className={styles.moderationTagsRow}>
                   <span className={styles.moderationTagsLabel}>
                     {formatMessage('opportunities.moderation.tagsLabel')}:
                   </span>
                   <div className={styles.moderationTagsList}>
-                    {getOpportunityTagNames(item).map((tag) => (
+                    {item.tags?.map((tag) => (
                       <Tag key={tag} tone="neutral" size="small">
-                        {tag}
+                        {getOpportunityTagLabel(tag, formatMessage)}
                       </Tag>
                     ))}
                   </div>
@@ -151,12 +147,6 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                 </div>
               )}
 
-              {isOwnOpportunity && (
-                <p className={styles.selfModerationNotice}>
-                  {formatMessage('opportunities.moderation.selfModerationForbidden')}
-                </p>
-              )}
-
               <div className={styles.moderationFooter}>
                 <span className={styles.idBadge}>
                   <Hash size={12} />
@@ -167,7 +157,6 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                   approveText={formatMessage('opportunities.moderation.approve')}
                   reviseText={formatMessage('opportunities.moderation.revise')}
                   rejectText={formatMessage('opportunities.moderation.reject')}
-                  disabled={isOwnOpportunity}
                   onApprove={() => onModerate(item.id, 'APPROVE')}
                   onOpenRejectModal={() => onOpenRejectModal(item.id)}
                 />
