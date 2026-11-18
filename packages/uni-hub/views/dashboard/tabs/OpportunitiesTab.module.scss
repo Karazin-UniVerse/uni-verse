@@ -322,18 +322,24 @@
 
 .moderationHeader {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.moderationTopRow {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--space-16);
+  gap: var(--space-12);
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .moderationMainCol {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  flex: 1;
-  min-width: 260px;
+  gap: var(--space-12);
+  width: 100%;
 }
 
 .moderationBadgeRow {
@@ -378,9 +384,9 @@
 
 .authorStrip {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
-  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .ownerRow {
@@ -388,6 +394,7 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .moderationTypeCol {
@@ -495,48 +502,6 @@
   border-radius: var(--border-radius-small);
   border: 1px solid var(--card-border);
   align-self: flex-start;
-}
-
-.approveBtn {
-  background: var(--green-700, #15803d);
-  border-color: var(--green-700, #15803d);
-  color: #fff;
-  font-weight: 600;
-  transition: all 180ms ease;
-
-  &:hover {
-    filter: brightness(1.08);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--green-700, #15803d) 30%, transparent);
-  }
-}
-
-.reviseBtn {
-  color: var(--warning-color, #d97706);
-  border-color: color-mix(in srgb, var(--warning-color, #f59e0b) 45%, var(--card-border));
-  background: color-mix(in srgb, var(--warning-color, #f59e0b) 8%, var(--bg-surface));
-  font-weight: 500;
-  transition: all 180ms ease;
-
-  &:hover {
-    background: color-mix(in srgb, var(--warning-color, #f59e0b) 16%, var(--bg-surface));
-    border-color: var(--warning-color, #f59e0b);
-    transform: translateY(-1px);
-  }
-}
-
-.rejectBtn {
-  color: var(--error-color, #ef4444);
-  border-color: color-mix(in srgb, var(--error-color, #ef4444) 40%, var(--card-border));
-  background: color-mix(in srgb, var(--error-color, #ef4444) 6%, var(--bg-surface));
-  font-weight: 500;
-  transition: all 180ms ease;
-
-  &:hover {
-    background: color-mix(in srgb, var(--error-color, #ef4444) 14%, var(--bg-surface));
-    border-color: var(--error-color, #ef4444);
-    transform: translateY(-1px);
-  }
 }
 
 /* ──────────────────────────────────────────────

@@ -8,6 +8,7 @@
   justify-content: center;
   z-index: var(--z-modal);
   padding: var(--space-24);
+  overscroll-behavior: contain;
 }
 
 .backdrop {
@@ -20,6 +21,7 @@
   padding: 0;
   margin: 0;
   cursor: default;
+  touch-action: pinch-zoom;
   animation: overlay-in var(--transition-medium) var(--ease-standard);
 }
 
@@ -36,6 +38,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  overscroll-behavior: contain;
   animation: dialog-in var(--transition-medium) var(--ease-standard);
 }
 
@@ -111,8 +114,18 @@
 }
 
 .body {
+  flex: 1;
+  min-height: 0;
   padding: var(--space-24);
   overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.footer {
+  flex-shrink: 0;
+  padding: var(--space-16) var(--space-24);
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-color);
 }
 
 @include narrower-than('md') {
@@ -132,6 +145,14 @@
 
   .body {
     padding-bottom: max(var(--space-24), env(safe-area-inset-bottom));
+  }
+
+  .bodyWithFooter {
+    padding-bottom: var(--space-24);
+  }
+
+  .footer {
+    padding-bottom: max(var(--space-16), env(safe-area-inset-bottom));
   }
 }
 

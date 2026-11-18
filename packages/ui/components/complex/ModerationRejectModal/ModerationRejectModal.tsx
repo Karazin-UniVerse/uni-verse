@@ -46,7 +46,7 @@ export const ModerationRejectModal: React.FC<ModerationRejectModalProps> = ({
           </Button>
           <Button
             variant="primary"
-            className={styles.reviseBtn}
+            tone="warning"
             disabled={!comment.trim() || isSubmitting}
             onClick={onRevise}
           >
@@ -54,7 +54,7 @@ export const ModerationRejectModal: React.FC<ModerationRejectModalProps> = ({
           </Button>
           <Button
             variant="secondary"
-            className={styles.rejectBtn}
+            tone="danger"
             disabled={!comment.trim() || isSubmitting}
             onClick={onReject}
           >
