@@ -93,10 +93,10 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
                         .toUpperCase()}
                     </div>
                     <div className={styles.ownerMeta}>
+                      <span className={styles.ownerName}>
+                        {app.opportunity.owner.name || app.opportunity.owner.email}
+                      </span>
                       <div className={styles.ownerRow}>
-                        <span className={styles.ownerName}>
-                          {app.opportunity.owner.name || app.opportunity.owner.email}
-                        </span>
                         <ContactTags
                           emailLabel={formatMessage('opportunities.emailLabel')}
                           alternativeContactLabel={formatMessage(
