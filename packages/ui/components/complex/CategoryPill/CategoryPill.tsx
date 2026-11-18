@@ -1,6 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
-import { Tag } from '../../una/Tag';
+import { Tag } from '@una';
 import type { CategoryPillProps } from './CategoryPill.types';
 import styles from './CategoryPill.module.scss';
 
