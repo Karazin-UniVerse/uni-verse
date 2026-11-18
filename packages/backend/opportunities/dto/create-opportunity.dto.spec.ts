@@ -69,14 +69,36 @@ describe('CreateOpportunityDto', () => {
     },
   );
 
-  it('should retain unrestricted organizer contact text', () => {
-    const dto = plainToInstance(CreateOpportunityDto, {
-      ...validPayload,
-      ownerContactInfo: 'Contact our department reception',
-    });
+  it.each(['@ivan_dev_tg', 'https://t.me/ivan_dev_tg', '+380671234567'])(
+    'should accept a single valid organizer contact %s',
+    (ownerContactInfo) => {
+      const dto = plainToInstance(CreateOpportunityDto, {
+        ...validPayload,
+        ownerContactInfo,
+      });
 
-    expect(validateSync(dto)).toEqual([]);
-  });
+      expect(validateSync(dto)).toEqual([]);
+    },
+  );
+
+  it.each([
+    '@ivan_dev_tg, ivan.project@gmail.com',
+    '@ivan_dev_tg @second_tg',
+    'ivan.project@gmail.com',
+    'Contact our department reception',
+  ])(
+    'should reject multiple or invalid organizer contacts %s',
+    (ownerContactInfo) => {
+      const dto = plainToInstance(CreateOpportunityDto, {
+        ...validPayload,
+        ownerContactInfo,
+      });
+
+      expect(validateSync(dto)).toEqual([
+        expect.objectContaining({ property: 'ownerContactInfo' }),
+      ]);
+    },
+  );
 
   it.each([undefined, '', '   '])(
     'should accept an optional organizer contact %s',

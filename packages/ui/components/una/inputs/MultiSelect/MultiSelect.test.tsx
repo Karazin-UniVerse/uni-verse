@@ -70,6 +70,21 @@ describe('UNA MultiSelect Component', () => {
     expect(screen.getByTestId('value')).toHaveTextContent('APPLE,KALE');
   });
 
+  it('should toggle selection when clicking the tag label row without closing the dropdown', async () => {
+    const user = userEvent.setup();
+
+    render(<ControlledMultiSelect />);
+
+    const trigger = screen.getByRole('button', { name: 'Pick items' });
+
+    await user.click(trigger);
+    await user.click(screen.getByText('Apple'));
+
+    expect(screen.getByTestId('value')).toHaveTextContent('APPLE');
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('checkbox', { name: 'Apple' })).toBeChecked();
+  });
+
   it('should uncheck a selected option and remove a chip', async () => {
     const user = userEvent.setup();
 
