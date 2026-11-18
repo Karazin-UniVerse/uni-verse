@@ -22,9 +22,9 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
-    "lucide-react": "^1.70.0",
+    "lucide-react": "^1.72.0",
     "recharts": "^3.10.1",
-    "sass": "^1.108.1"
+    "sass": "^1.108.2"
   },
   "peerDependencies": {
     "react": "^19.2.8",
@@ -39,15 +39,15 @@
     "@storybook/react-vite": "^10.6.6",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
-    "@testing-library/user-event": "^14.6.8",
+    "@testing-library/user-event": "^14.6.10",
     "@types/react": "^19.3.0",
     "@universe/core": "workspace:*",
-    "@vitest/browser-playwright": "5.0.5",
-    "@vitest/coverage-v8": "5.0.5",
+    "@vitest/browser-playwright": "5.1.0",
+    "@vitest/coverage-v8": "5.1.0",
     "happy-dom": "^21.0.4",
     "playwright": "^1.65.0",
     "storybook": "^10.6.6",
     "typescript": "^6.0.3",
-    "vitest": "5.0.5"
+    "vitest": "5.1.0"
   }
 }
