@@ -45,6 +45,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   lifecycleOptions = [],
   submitting = false,
 }) => {
+  const formId = useId();
   const titleId = useId();
   const descId = useId();
   const contactId = useId();
@@ -56,8 +57,24 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   const canAcceptApplications = isRecruitmentPhase(formData.lifecycleState);
 
   return (
-    <Modal open={open} onClose={onClose} title={title} width={560} className={className}>
-      <form onSubmit={onSubmit} className={styles.modalStack}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={title}
+      width={560}
+      className={className}
+      footer={
+        <div className={styles.modalFooter}>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+            {cancelText}
+          </Button>
+          <Button type="submit" form={formId} variant="primary" disabled={submitting}>
+            {submitting ? savingText : submitText}
+          </Button>
+        </div>
+      }
+    >
+      <form id={formId} onSubmit={onSubmit} className={styles.modalStack}>
         <div className={styles.fieldGroup}>
           <label htmlFor={titleId} className={styles.fieldLabel}>
             {titleLabel}
@@ -205,15 +222,6 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
         )}
 
         {remoderationWarning && <StatusBanner tone="warning">{remoderationWarning}</StatusBanner>}
-
-        <div className={styles.modalFooter}>
-          <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
-            {cancelText}
-          </Button>
-          <Button type="submit" variant="primary" disabled={submitting}>
-            {submitting ? savingText : submitText}
-          </Button>
-        </div>
       </form>
     </Modal>
   );

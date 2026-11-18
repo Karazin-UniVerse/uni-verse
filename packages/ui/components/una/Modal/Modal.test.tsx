@@ -185,4 +185,19 @@ describe('UNA Modal Component', () => {
     unmount();
     expect(document.body.style.overflow).toBe('');
   });
+
+  it('should render footer content when footer prop is provided', () => {
+    render(
+      <Modal
+        open={true}
+        onClose={() => {}}
+        title="Modal With Footer"
+        footer={<button type="button">Save</button>}
+      >
+        <p>Modal Content</p>
+      </Modal>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+  });
 });
