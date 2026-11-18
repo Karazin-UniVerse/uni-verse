@@ -104,6 +104,12 @@
   flex-wrap: wrap;
   gap: var(--space-8) var(--space-12);
   margin-bottom: 2px;
+
+  .compensationPill {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
 }
 
 .cardTitle {

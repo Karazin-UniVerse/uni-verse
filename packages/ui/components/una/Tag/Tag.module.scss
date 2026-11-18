@@ -54,7 +54,7 @@
 :global([data-color-scheme='dark']) .success {
   background: rgb(34 197 94 / 15%);
   color: var(--green-300);
-  border-color: rgb(34 197 94 / 28%);
+  border-color: color-mix(in srgb, var(--green-500) 28%, transparent);
 }
 
 :global([data-color-scheme='dark']) .warning {
@@ -66,11 +66,11 @@
 :global([data-color-scheme='dark']) .info {
   background: rgb(52 102 231 / 20%);
   color: var(--blue-300);
-  border-color: rgb(52 102 231 / 35%);
+  border-color: color-mix(in srgb, var(--blue-500) 35%, transparent);
 }
 
 :global([data-color-scheme='dark']) .danger {
   background: rgb(239 68 68 / 15%);
   color: var(--red-300);
-  border-color: rgb(239 68 68 / 28%);
+  border-color: color-mix(in srgb, var(--red-500) 28%, transparent);
 }
