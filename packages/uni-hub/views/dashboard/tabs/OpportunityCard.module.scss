@@ -21,7 +21,7 @@
 .card {
   background: var(--bg-surface);
   border: 1px solid var(--card-border);
-  border-radius: 20px;
+  border-radius: var(--border-radius-large);
   padding: 24px;
   box-shadow: var(--card-shadow);
   display: flex;
@@ -113,7 +113,7 @@
   font-size: var(--font-xs);
   font-weight: 500;
   padding: 4px 10px;
-  border-radius: 12px;
+  border-radius: var(--border-radius-full);
   border: 1px solid transparent;
 
   &.paidCategory {
@@ -138,7 +138,7 @@
   color: var(--success-color);
   background: color-mix(in srgb, var(--success-color) 10%, transparent);
   padding: 5px 12px;
-  border-radius: 12px;
+  border-radius: var(--border-radius-full);
   border: 1px solid color-mix(in srgb, var(--success-color) 25%, transparent);
 }
 
@@ -151,7 +151,7 @@
   color: var(--text-secondary);
   background: var(--bg-hover);
   padding: 5px 12px;
-  border-radius: 12px;
+  border-radius: var(--border-radius-full);
   border: 1px solid var(--card-border);
 }
 
@@ -165,7 +165,7 @@
   background: var(--bg-hover);
   border: 1px solid var(--border-color);
   padding: 4px 8px;
-  border-radius: 12px;
+  border-radius: var(--border-radius-full);
 }
 
 .cardTitle {
@@ -224,7 +224,7 @@
 .ownerAvatar {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: var(--border-radius-full);
   background: linear-gradient(
     135deg,
     var(--blue-600),
