@@ -21,6 +21,7 @@
     "format:check": "prettier --check .",
     "skills:sync": "node scripts/sync-skills.mjs",
     "skills:check": "node scripts/sync-skills.mjs --check",
+    "test:skills": "node --test scripts/tests/sync-skills.test.mjs",
     "gemini:sync": "node scripts/sync-gemini-context.mjs",
     "gemini:check": "node scripts/sync-gemini-context.mjs --check",
     "prepare": "husky",
