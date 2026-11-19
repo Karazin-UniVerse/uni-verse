@@ -54,6 +54,7 @@ export const en = {
   'theme.karazinClassic': 'Karazin Classic',
   'theme.universeSpace': 'UniVerse Space',
   'theme.karazinGold': 'Karazin Gold',
+  'theme.crimsonSky': 'Crimson Sky',
   'theme.select': 'Theme selection',
 
   // Navigation

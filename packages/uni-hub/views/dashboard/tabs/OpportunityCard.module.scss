@@ -241,3 +241,27 @@
   gap: var(--space-4);
   margin-top: var(--space-8);
 }
+
+:global([data-theme='crimsonSky']) {
+  .card:nth-child(odd):hover {
+    border-color: var(--crimson-600);
+    box-shadow:
+      0 16px 32px -8px rgb(225 29 72 / 22%),
+      0 4px 12px rgb(15 23 42 / 6%);
+
+    .cardTitle {
+      color: var(--crimson-600);
+    }
+  }
+
+  .card:nth-child(even):hover {
+    border-color: var(--electric-blue-600);
+    box-shadow:
+      0 16px 32px -8px rgb(37 99 235 / 22%),
+      0 4px 12px rgb(15 23 42 / 6%);
+
+    .cardTitle {
+      color: var(--electric-blue-600);
+    }
+  }
+}

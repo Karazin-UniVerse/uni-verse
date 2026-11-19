@@ -59,6 +59,7 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
           variant="secondary"
           size="medium"
           isTransparent
+          className={styles.notificationsTrigger}
           aria-label={formatMessage('header.notifications')}
         >
           <Bell size={18} />

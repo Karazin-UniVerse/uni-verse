@@ -35,3 +35,16 @@
   margin-left: auto;
   color: var(--accent-primary);
 }
+
+:global([data-theme='crimsonSky']) {
+  .option.active {
+    color: var(--electric-blue-600);
+    background: rgb(37 99 235 / 8%);
+
+    .check,
+    .icon,
+    svg {
+      color: var(--electric-blue-600);
+    }
+  }
+}

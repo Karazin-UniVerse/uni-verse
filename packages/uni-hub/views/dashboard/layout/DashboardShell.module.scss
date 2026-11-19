@@ -527,6 +527,10 @@ $sidebar-collapsed-width: 88px;
   animation: pulse 1.6s var(--ease-standard) infinite;
 }
 
+.notificationsTrigger {
+  position: relative;
+}
+
 .notificationsPanel {
   @include narrower-than('md') {
     right: calc(-1 * (var(--space-8) + 40px));
@@ -1545,5 +1549,248 @@ $sidebar-collapsed-width: 88px;
 
   @include narrower-than('md') {
     display: block;
+  }
+}
+
+:global([data-theme='crimsonSky']) {
+  .avatar {
+    background: linear-gradient(135deg, #e11d48 0%, #2563eb 100%);
+    color: var(--white-10);
+    box-shadow: 0 2px 8px rgb(225 29 72 / 30%);
+  }
+
+  .headerRight {
+    .desktopOnly {
+      &:hover {
+        color: var(--electric-blue-600);
+        background: rgb(37 99 235 / 10%);
+      }
+
+      &:focus-visible {
+        outline-color: var(--electric-blue-600);
+      }
+    }
+
+    .notificationsTrigger {
+      color: var(--crimson-600);
+
+      &:hover {
+        color: var(--electric-blue-600);
+        background: rgb(37 99 235 / 10%);
+      }
+
+      &:active {
+        color: var(--electric-blue-700);
+        background: rgb(37 99 235 / 16%);
+      }
+
+      &:focus-visible {
+        outline-color: var(--electric-blue-600);
+      }
+    }
+
+    .badge {
+      background: var(--electric-blue-600);
+      box-shadow: 0 0 0 2px rgb(37 99 235 / 25%);
+    }
+  }
+
+  .nav {
+    /* Непарні пункти (1: Стіна, 3: Розклад)
+       - при наведенні: червона підсвітка
+       - при активному стані (кліку): білий однотонний текст та іконка, ОДНОТОННИЙ червоний фон, ЯСКРАВИЙ білий акцент зліва
+    */
+    .navItem:nth-child(odd):not(.connectMoodleNavItem) {
+      &:hover:not(.active) {
+        color: var(--crimson-600);
+        background: rgb(225 29 72 / 8%);
+
+        svg {
+          color: var(--crimson-600);
+        }
+      }
+
+      &.active .activePill {
+        background: linear-gradient(135deg, var(--crimson-600) 0, var(--electric-blue-600) 100%);
+        border-left: 4.5px solid #fff;
+        box-shadow: 0 4px 16px rgb(99 64 160 / 35%);
+      }
+
+      &:hover {
+        color: var(--white-10);
+
+        svg {
+          color: var(--white-10);
+        }
+      }
+    }
+
+    /* Парні пункти (2: Навчання, 4: Можливості)
+       - при наведенні: блакитна підсвітка
+       - при активному стані (кліку): білий однотонний текст та іконка, ОДНОТОННИЙ блакитний фон, ЯСКРАВИЙ білий акцент зліва
+    */
+    .navItem:nth-child(even):not(.connectMoodleNavItem) {
+      &:hover:not(.active) {
+        color: var(--electric-blue-600);
+        background: rgb(37 99 235 / 8%);
+
+        svg {
+          color: var(--electric-blue-600);
+        }
+      }
+
+      &.active .activePill {
+        background: linear-gradient(135deg, var(--electric-blue-600) 0, var(--crimson-600) 100%);
+        border-left: 4.5px solid #fff;
+        box-shadow: 0 4px 12px rgb(147 51 234 / 25%);
+      }
+
+      &:hover {
+        color: var(--white-10);
+
+        svg {
+          color: var(--white-10);
+        }
+      }
+    }
+  }
+
+  .brand {
+    background: linear-gradient(135deg, var(--crimson-600) 0, var(--electric-blue-600) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .statCard {
+    &:nth-child(odd):hover {
+      border-color: var(--crimson-600);
+      box-shadow:
+        0 8px 24px rgb(225 29 72 / 20%),
+        0 2px 6px rgb(15 23 42 / 6%);
+    }
+
+    &:nth-child(even):hover {
+      border-color: var(--electric-blue-600);
+      box-shadow:
+        0 8px 24px rgb(37 99 235 / 20%),
+        0 2px 6px rgb(15 23 42 / 6%);
+    }
+  }
+
+  .courseCard {
+    &:nth-child(odd):hover {
+      border-color: var(--crimson-600);
+      box-shadow:
+        0 8px 24px rgb(225 29 72 / 20%),
+        0 2px 6px rgb(15 23 42 / 6%);
+    }
+
+    &:nth-child(even):hover {
+      border-color: var(--electric-blue-600);
+      box-shadow:
+        0 8px 24px rgb(37 99 235 / 20%),
+        0 2px 6px rgb(15 23 42 / 6%);
+    }
+  }
+
+  .assignmentCard {
+    &:nth-child(odd):hover {
+      border-color: rgb(225 29 72 / 40%);
+      border-left-color: var(--crimson-600);
+      box-shadow:
+        0 8px 24px rgb(225 29 72 / 20%),
+        0 2px 6px rgb(15 23 42 / 6%);
+    }
+
+    &:nth-child(even):hover {
+      border-color: rgb(37 99 235 / 40%);
+      border-left-color: var(--electric-blue-600);
+      box-shadow:
+        0 8px 24px rgb(37 99 235 / 20%),
+        0 2px 6px rgb(15 23 42 / 6%);
+    }
+  }
+
+  .studentCard:hover {
+    border-color: var(--crimson-600);
+    box-shadow:
+      0 8px 24px rgb(225 29 72 / 20%),
+      0 2px 6px rgb(15 23 42 / 6%);
+  }
+
+  .userDropdownBody {
+    color: var(--blue-1300);
+
+    button {
+      color: var(--blue-1300);
+
+      svg {
+        color: var(--blue-1300);
+      }
+    }
+
+    .userDropdownLanguage button,
+    [data-lang-trigger] {
+      color: var(--blue-1300);
+      border: 1px solid var(--border-color);
+
+      svg {
+        color: var(--blue-1300);
+      }
+
+      &:hover {
+        color: var(--blue-1300);
+        background: rgb(225 29 72 / 8%);
+        border-color: transparent;
+        box-shadow: none;
+
+        svg {
+          color: var(--blue-1300);
+        }
+      }
+    }
+
+    .userDropdownTheme {
+      color: var(--blue-1300);
+      border: 1px solid var(--border-color);
+
+      svg {
+        color: var(--blue-1300);
+      }
+
+      &:hover,
+      &[aria-expanded='true'] {
+        color: var(--blue-1300);
+        border-color: transparent;
+        background: rgb(37 99 235 / 8%);
+        box-shadow: none;
+
+        svg {
+          color: var(--blue-1300);
+        }
+      }
+    }
+
+    .userDropdownSound {
+      color: var(--blue-1300);
+      border: 1px solid var(--border-color);
+
+      svg {
+        color: var(--blue-1300);
+      }
+
+      &:hover {
+        color: var(--blue-1300);
+        background: rgb(225 29 72 / 8%);
+        border-color: transparent;
+        box-shadow: none;
+
+        svg {
+          color: var(--blue-1300);
+        }
+      }
+    }
   }
 }
