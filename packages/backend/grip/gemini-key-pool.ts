@@ -1,5 +1,6 @@
 import { HttpStatus } from '@nestjs/common';
 import {
+  GRIP_ALLOWED_MODEL,
   GRIP_KEY_COOLDOWN_MS,
   GRIP_KEY_QUOTA_COOLDOWN_MS,
 } from './grip.constants';
@@ -128,10 +129,14 @@ export class GeminiKeyPool {
       apiKey,
       active: 0,
       availableAfter: 0,
+      modelAvailableAfter: new Map(),
     }));
   }
 
-  private select(excludedSlots: ReadonlySet<number>): number | undefined {
+  private select(
+    excludedSlots: ReadonlySet<number>,
+    model: string,
+  ): number | undefined {
     const now = Date.now();
     let selected: number | undefined;
 
@@ -139,7 +144,11 @@ export class GeminiKeyPool {
       const slot = (this.cursor + offset) % this.keys.length;
       const key = this.keys[slot];
 
-      if (excludedSlots.has(slot) || key.availableAfter > now) {
+      if (
+        excludedSlots.has(slot) ||
+        key.availableAfter > now ||
+        (key.modelAvailableAfter.get(model) ?? 0) > now
+      ) {
         continue;
       }
 
@@ -151,14 +160,18 @@ export class GeminiKeyPool {
     return selected;
   }
 
-  hasAvailable(excludedSlots: ReadonlySet<number>): boolean {
-    return this.select(excludedSlots) !== undefined;
+  hasAvailable(
+    excludedSlots: ReadonlySet<number>,
+    model = GRIP_ALLOWED_MODEL,
+  ): boolean {
+    return this.select(excludedSlots, model) !== undefined;
   }
 
   reserve(
     excludedSlots: ReadonlySet<number>,
+    model = GRIP_ALLOWED_MODEL,
   ): GeminiKeyReservation | undefined {
-    const slot = this.select(excludedSlots);
+    const slot = this.select(excludedSlots, model);
 
     if (slot === undefined) {
       return undefined;
@@ -174,7 +187,12 @@ export class GeminiKeyPool {
     this.keys[slot].active -= 1;
   }
 
-  coolDown({ slot, status, retryAfter }: GeminiKeyCooldownParams): void {
+  coolDown({
+    slot,
+    status,
+    retryAfter,
+    model = GRIP_ALLOWED_MODEL,
+  }: GeminiKeyCooldownParams): void {
     const now = Date.now();
     const isQuota = status === HttpStatus.TOO_MANY_REQUESTS;
     const isAuth =
@@ -183,10 +201,16 @@ export class GeminiKeyPool {
       isQuota || isAuth ? GRIP_KEY_QUOTA_COOLDOWN_MS : GRIP_KEY_COOLDOWN_MS;
     const until = isQuota ? retryAfterTimestamp(retryAfter, now) : now;
 
-    this.keys[slot].availableAfter = Math.max(
-      this.keys[slot].availableAfter,
-      now + duration,
-      until,
-    );
+    const key = this.keys[slot];
+    const availableAfter = Math.max(now + duration, until);
+
+    if (isQuota || isAuth) {
+      key.availableAfter = Math.max(key.availableAfter, availableAfter);
+    } else {
+      key.modelAvailableAfter.set(
+        model,
+        Math.max(key.modelAvailableAfter.get(model) ?? 0, availableAfter),
+      );
+    }
   }
 }

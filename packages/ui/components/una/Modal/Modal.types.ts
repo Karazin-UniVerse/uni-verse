@@ -7,6 +7,7 @@ export type ModalProps = {
   ariaLabel?: string;
   className?: string;
   closeLabel?: string;
+  footer?: ReactNode;
   title?: ReactNode;
   closeButton?: boolean;
   closeOnClickOutside?: boolean;

@@ -1,11 +1,10 @@
 'use client';
 
 import React from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { CreateOpportunityModal as CreateOpportunityModalUI } from '@ui';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { OPPORTUNITY_LIFECYCLE } from '@core/constants/opportunities';
-import { loadTagSuggestions } from '../queries';
+import { getOpportunityTagGroups } from '../tags';
 import type { CreateOpportunityFormData } from '../types';
 
 export interface CreateOpportunityModalProps {
@@ -30,11 +29,6 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   remoderationWarning = false,
 }) => {
   const { formatMessage } = useLanguage();
-  const queryClient = useQueryClient();
-  const loadSuggestions = (query: string): Promise<string[]> =>
-    loadTagSuggestions(queryClient, query);
-  const formatCreateTagLabel = (tag: string): string =>
-    formatMessage('opportunities.tags.create', { tag });
 
   const lifecycleOptions = [
     {
@@ -92,8 +86,7 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
       tagsLabel={formatMessage('opportunities.catalog.filterTagsLabel')}
       tagsPlaceholder={formatMessage('opportunities.catalog.filterTagsPlaceholder')}
       removeTagLabel={formatMessage('opportunities.tags.remove')}
-      formatCreateTagLabel={formatCreateTagLabel}
-      loadTagSuggestions={loadSuggestions}
+      tagGroups={getOpportunityTagGroups(formatMessage)}
       remoderationWarning={
         remoderationWarning
           ? formatMessage('opportunities.createModal.remoderationWarning')

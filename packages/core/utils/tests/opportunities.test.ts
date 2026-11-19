@@ -1,14 +1,36 @@
 import assert from 'node:assert/strict';
 import test, { describe } from 'node:test';
-import { OPPORTUNITY_STATUS } from '../../constants/opportunities.ts';
 import {
-  getOpportunityTagNames,
   hasOpportunityContentChanged,
   isRecruitmentPhase,
   normalizeOpportunityContent,
+  isWithdrawableApplicationStatus,
+  hasReachedApplicationWithdrawalLimit,
 } from '../opportunities.ts';
 
 describe('opportunities utils', () => {
+  test('only submitted and under-review applications have a withdrawable status', () => {
+    for (const status of [
+      'SUBMITTED',
+      'UNDER_REVIEW',
+      'ACCEPTED',
+      'REJECTED',
+      'WITHDRAWN',
+    ] as const) {
+      assert.equal(
+        isWithdrawableApplicationStatus(status),
+        status === 'SUBMITTED' || status === 'UNDER_REVIEW',
+      );
+    }
+  });
+
+  test('withdrawal limit includes the boundary and preserves missing counts as zero', () => {
+    assert.equal(hasReachedApplicationWithdrawalLimit(undefined), false);
+    assert.equal(hasReachedApplicationWithdrawalLimit(0), false);
+    assert.equal(hasReachedApplicationWithdrawalLimit(2), false);
+    assert.equal(hasReachedApplicationWithdrawalLimit(3), true);
+    assert.equal(hasReachedApplicationWithdrawalLimit(4), true);
+  });
   describe('isRecruitmentPhase', () => {
     test('allows recruitment only in START, ACTIVE, or default undefined phase', () => {
       assert.strictEqual(isRecruitmentPhase(undefined), true);
@@ -84,89 +106,8 @@ describe('opportunities utils', () => {
       );
     });
 
-    test('detects changed published tags without remoderating identical normalized tags', () => {
-      const published = {
-        ...baseOpportunity,
-        status: 'PUBLISHED' as const,
-        tags: [
-          { id: 'react', name: 'react' },
-          { id: 'typescript', name: 'typescript' },
-        ],
-        proposedTags: ['outdated'],
-      };
-
-      assert.strictEqual(hasOpportunityContentChanged(published, { tags: ['nodejs'] }), true);
-      assert.strictEqual(hasOpportunityContentChanged(published, { tags: [] }), true);
-      assert.strictEqual(
-        hasOpportunityContentChanged(published, { tags: [' TypeScript ', 'REACT', 'react'] }),
-        false,
-      );
-      assert.strictEqual(hasOpportunityContentChanged(published, {}), false);
-    });
-
-    test('compares proposed tags for unpublished opportunities', () => {
-      const draft = {
-        ...baseOpportunity,
-        status: 'DRAFT' as const,
-        tags: [{ id: 'old', name: 'old' }],
-        proposedTags: ['react'],
-      };
-
-      assert.strictEqual(hasOpportunityContentChanged(draft, { tags: ['nodejs'] }), true);
-      assert.strictEqual(hasOpportunityContentChanged(draft, { tags: [' REACT '] }), false);
-    });
-  });
-
-  describe('getOpportunityTagNames', () => {
-    test('should return published tag names for published opportunity', () => {
-      const opp = {
-        status: OPPORTUNITY_STATUS.PUBLISHED,
-        tags: [
-          { id: '1', name: 'react' },
-          { id: '2', name: 'typescript' },
-        ],
-        proposedTags: ['ignored'],
-      };
-
-      assert.deepStrictEqual(getOpportunityTagNames(opp), ['react', 'typescript']);
-    });
-
-    test('should return proposedTags for non-published opportunity', () => {
-      const opp = {
-        status: OPPORTUNITY_STATUS.DRAFT,
-        tags: [{ id: '1', name: 'old' }],
-        proposedTags: ['new-tag', 'another-tag'],
-      };
-
-      assert.deepStrictEqual(getOpportunityTagNames(opp), ['new-tag', 'another-tag']);
-    });
-
-    test('should return proposed tags for opportunities awaiting moderation', () => {
-      assert.deepStrictEqual(
-        getOpportunityTagNames({
-          status: OPPORTUNITY_STATUS.READY_FOR_REVIEW,
-          tags: [{ id: 'old', name: 'old' }],
-          proposedTags: ['react'],
-        }),
-        ['react'],
-      );
-    });
-
-    test('should return empty array if tags or proposedTags are missing', () => {
-      assert.deepStrictEqual(
-        getOpportunityTagNames({
-          status: OPPORTUNITY_STATUS.PUBLISHED,
-          proposedTags: ['pending'],
-        }),
-        [],
-      );
-      assert.deepStrictEqual(
-        getOpportunityTagNames({
-          status: OPPORTUNITY_STATUS.DRAFT,
-          tags: [{ id: 'old', name: 'old' }],
-        }),
-        [],
-      );
+    test('ignores tag changes because tags are not moderated', () => {
+      assert.strictEqual(hasOpportunityContentChanged(baseOpportunity, { tags: ['IT'] }), false);
     });
   });
 });

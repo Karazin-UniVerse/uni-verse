@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import { render, screen } from '@testing-library/react';
 import type { Opportunity } from '@core/types/opportunities';
 import { OpportunityCard } from './OpportunityCard';
@@ -59,6 +60,49 @@ describe('OpportunityCard component', () => {
     expect(screen.getByText('Опубліковано')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /відгуки/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /управління/i })).toBeInTheDocument();
+  });
+
+  it('should call onOpenDetail when clicking owner card overlay link', async () => {
+    const onOpenDetail = vi.fn();
+
+    render(
+      <OpportunityCard
+        opportunity={mockOpportunity}
+        variant="owner"
+        statusBadge={<span>Опубліковано</span>}
+        onOpenDetail={onOpenDetail}
+      />,
+    );
+
+    const overlayLink = screen.getByRole('button', {
+      name: `Детальніше про ${mockOpportunity.title}`,
+    });
+
+    await userEvent.click(overlayLink);
+
+    expect(onOpenDetail).toHaveBeenCalledWith(mockOpportunity);
+  });
+
+  it('should call onOpenApplicants when clicking applications button without triggering onOpenDetail', async () => {
+    const onOpenDetail = vi.fn();
+    const onOpenApplicants = vi.fn();
+
+    render(
+      <OpportunityCard
+        opportunity={mockOpportunity}
+        variant="owner"
+        statusBadge={<span>Опубліковано</span>}
+        onOpenDetail={onOpenDetail}
+        onOpenApplicants={onOpenApplicants}
+      />,
+    );
+
+    const applicantsButton = screen.getByRole('button', { name: /відгуки/i });
+
+    await userEvent.click(applicantsButton);
+
+    expect(onOpenApplicants).toHaveBeenCalledWith(mockOpportunity);
+    expect(onOpenDetail).not.toHaveBeenCalled();
   });
 
   it('should render applications closed badge when acceptsApplications is false', () => {

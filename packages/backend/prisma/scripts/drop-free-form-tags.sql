@@ -1,0 +1,7 @@
+BEGIN;
+
+DROP TABLE IF EXISTS "_OpportunityToTag";
+DROP TABLE IF EXISTS "Tag";
+ALTER TABLE IF EXISTS "Opportunity" DROP COLUMN IF EXISTS "proposedTags";
+
+COMMIT;

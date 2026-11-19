@@ -13,11 +13,8 @@ import {
   OPPORTUNITY_PAYMENT_TYPE,
   OPPORTUNITY_STATUS,
 } from '@core/constants/opportunities';
-import {
-  getOpportunityTagNames,
-  hasOpportunityContentChanged,
-  isRecruitmentPhase,
-} from '@core/utils/opportunities';
+import { isValidContactInfo } from '@core/utils/contacts';
+import { hasOpportunityContentChanged, isRecruitmentPhase } from '@core/utils/opportunities';
 import { invalidateOpportunities } from '../cache';
 import type { CreateOpportunityFormData } from '../types';
 import { getOpportunityErrorMessage } from '../helpers';
@@ -95,7 +92,7 @@ export function useCreateOpportunity({
       ownerContactInfo: opportunity.ownerContactInfo || '',
       paymentType: opportunity.paymentType,
       paymentDetails: opportunity.paymentDetails || '',
-      tags: getOpportunityTagNames(opportunity),
+      tags: opportunity.tags ?? [],
       acceptsApplications: canAcceptApplications && opportunity.acceptsApplications !== false,
       lifecycleState: opportunity.lifecycleState,
     });
@@ -111,6 +108,17 @@ export function useCreateOpportunity({
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
 
+    const trimmedContact = formData.ownerContactInfo.trim();
+    const isContactModified =
+      trimmedContact !== (editingOpportunity?.ownerContactInfo ?? '').trim();
+    const shouldValidateContact = !editingOpportunity || isContactModified;
+
+    if (shouldValidateContact && trimmedContact && !isValidContactInfo(trimmedContact)) {
+      toast.error(formatMessage('opportunities.applyModal.invalidContact'));
+
+      return;
+    }
+
     const canAcceptApplications = isRecruitmentPhase(formData.lifecycleState);
 
     try {
@@ -120,7 +128,7 @@ export function useCreateOpportunity({
           request: {
             title: formData.title.trim(),
             description: formData.description.trim(),
-            ownerContactInfo: formData.ownerContactInfo.trim(),
+            ...(shouldValidateContact && { ownerContactInfo: trimmedContact }),
             paymentType: formData.paymentType,
             paymentDetails:
               (formData.paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID &&
@@ -138,7 +146,7 @@ export function useCreateOpportunity({
         await createMutation.mutateAsync({
           title: formData.title.trim(),
           description: formData.description.trim(),
-          ownerContactInfo: formData.ownerContactInfo.trim(),
+          ownerContactInfo: trimmedContact,
           paymentType: formData.paymentType,
           paymentDetails: formData.paymentDetails.trim() || undefined,
           tags: formData.tags,

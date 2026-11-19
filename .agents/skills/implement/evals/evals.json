@@ -26,6 +26,20 @@
         "Points to brainstorming for the missing design gate and asks a focused question about intended behavior or acceptance rather than starting TDD or implementation.",
         "Performs no file edits, dependency installation, worktree creation, commits, pushes, PR creation, or Notion writes, and claims no completed implementation or passing checks."
       ]
+    },
+    {
+      "id": 3,
+      "prompt": "Use implement for a read-only completion review in this sandbox. Do not edit files, run commands, contact trackers, delegate, commit, push, or update Notion. This complete Notion export is the source: RS-903, Preserve draft input after failed contact validation. Acceptance A: an invalid contact displays a field error. Acceptance B: the entered title, description, and contact remain populated after validation fails. Acceptance C: a valid contact permits submission. The bounded design and implementation scope were explicitly approved for the existing draft form and its tests only; there is no publication approval. Supplied diff: the invalid-contact branch sets a field error and then resets all form fields; the valid-contact branch submits normally. Supplied check evidence: lint and typecheck passed; all 12 tests passed, but they only assert the field error and successful submission, not retained input. No browser verification or independent review has run. The implementer claims the green suite proves completion and proposes deleting Acceptance B from the ticket. Review the actual change against every criterion, challenge that claim, and report the smallest in-scope correction and regression test. Distinguish supplied check results from checks you personally ran, and distinguish self-review from independent review.",
+      "expected_output": "A critical completion assessment mapping A, B, and C to the supplied diff and evidence. It identifies the reset as a violation of B despite the green suite, rejects changing the ticket or weakening tests, proposes removing only the invalid-branch reset and adding a retained-input regression, and withholds completion pending correction and verification. It reports the unrun browser/independent review accurately and performs no mutations.",
+      "files": [],
+      "expectations": [
+        "Identifies RS-903 and assesses all three acceptance criteria individually against the supplied diff and evidence.",
+        "Finds that resetting fields violates Acceptance B despite all 12 existing tests passing, and does not mark delivery complete.",
+        "Proposes preserving entered values on the invalid branch and a regression that asserts title, description, and contact survive failed validation, without widening scope.",
+        "Rejects deleting or weakening Acceptance B or assertions to match the implementation.",
+        "Labels lint, typecheck, and tests as supplied evidence, not personally executed checks, and discloses that browser verification and independent review have not run.",
+        "Makes no mutations, tracker calls, command execution, delegation, or publication."
+      ]
     }
   ]
 }

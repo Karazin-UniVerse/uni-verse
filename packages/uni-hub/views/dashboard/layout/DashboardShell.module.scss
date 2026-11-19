@@ -26,6 +26,17 @@ $sidebar-collapsed-width: 88px;
   }
 }
 
+@keyframes navBadgePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--sidebar-accent) 40%, transparent);
+  }
+
+  70% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--sidebar-accent) 0%, transparent);
+  }
+}
+
 .layout {
   display: grid;
   grid-template-columns: $sidebar-width 1fr;
@@ -237,6 +248,7 @@ $sidebar-collapsed-width: 88px;
 
 .siderFooter .themeBtn,
 .siderFooter .logoutBtn,
+.siderFooter [data-lang-trigger],
 .themeBtn,
 .logoutBtn {
   width: 100%;
@@ -245,23 +257,27 @@ $sidebar-collapsed-width: 88px;
   gap: var(--space-12);
   padding: var(--space-12) var(--space-16);
   border-radius: var(--border-radius-medium);
+  border: 1px solid transparent;
   color: var(--sidebar-text);
   font-size: var(--font-sm);
   font-weight: 400;
+  transition: var(--transition-medium);
 
   &:hover {
     color: var(--sidebar-text-strong);
     background: var(--sidebar-item-hover-bg);
-    border-color: var(--sidebar-border);
+    border-color: transparent;
   }
 }
 
 .collapsed .siderFooter .themeBtn,
 .collapsed .siderFooter .logoutBtn,
+.collapsed .siderFooter [data-lang-trigger],
 .collapsed .themeBtn,
 .collapsed .logoutBtn {
   justify-content: center;
   padding: var(--space-12) 0;
+  gap: 0;
 }
 
 .main {
@@ -1456,6 +1472,10 @@ $sidebar-collapsed-width: 88px;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+
+  .moodleStatusLink {
+    color: var(--text-primary);
+  }
 }
 
 .dropdownSection {
@@ -1500,12 +1520,12 @@ $sidebar-collapsed-width: 88px;
 }
 
 .connectMoodleNavItem {
-  color: var(--accent-primary);
-  border: 1px dashed color-mix(in srgb, var(--accent-primary) 40%, transparent);
+  color: var(--sidebar-accent);
+  border: 1px dashed color-mix(in srgb, var(--sidebar-accent) 40%, transparent);
 
   &:hover {
-    border-color: var(--accent-primary);
-    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+    border-color: var(--sidebar-accent);
+    background: color-mix(in srgb, var(--sidebar-accent) 8%, transparent);
   }
 }
 
@@ -1513,11 +1533,11 @@ $sidebar-collapsed-width: 88px;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--accent-primary);
+  background: var(--sidebar-accent);
   display: inline-block;
   margin-left: auto;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 30%, transparent);
-  animation: pulse 1.8s infinite;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--sidebar-accent) 30%, transparent);
+  animation: navBadgePulse 1.8s infinite;
 }
 
 .mobileOnlyItem {

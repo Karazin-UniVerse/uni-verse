@@ -3,16 +3,18 @@
 import React from 'react';
 import { ContactTags, ModerationActions } from '@ui';
 import { Tag } from '@una';
-import { getOpportunityTagNames } from '@core/utils/opportunities';
 import { Clock, Calendar, Coins, Briefcase, AlertCircle, Hash } from 'lucide-react';
 import type { Opportunity } from '@core/types/opportunities';
-import type { OpportunityModerateAction } from '@core/constants/opportunities';
+import {
+  OPPORTUNITY_PAYMENT_TYPE,
+  type OpportunityModerateAction,
+} from '@core/constants/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { TabStateWrapper } from './TabStateWrapper';
+import { getOpportunityTagLabel } from '../tags';
 import styles from '../../OpportunitiesTab.module.scss';
 
 export interface ModerationQueueTabProps {
-  currentUserId: string | null;
   loading: boolean;
   isError: boolean;
   onRetry: () => void;
@@ -22,7 +24,6 @@ export interface ModerationQueueTabProps {
 }
 
 export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
-  currentUserId,
   loading,
   isError,
   onRetry,
@@ -42,12 +43,10 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
     >
       <div className={styles.listStack}>
         {moderationQueue.map((item) => {
-          const isOwnOpportunity = item.ownerId === currentUserId;
-
           return (
             <div key={item.id} className={styles.moderationCard}>
               <div className={styles.moderationHeader}>
-                <div className={styles.moderationMainCol}>
+                <div className={styles.moderationTopRow}>
                   <div className={styles.moderationBadgeRow}>
                     <span className={styles.reviewPendingBadge}>
                       <Clock size={12} />
@@ -65,6 +64,28 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                     </span>
                   </div>
 
+                  <div className={styles.moderationTypeCol}>
+                    {item.paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID ? (
+                      <span className={styles.compensationPill}>
+                        <Coins size={13} />
+                        <span>
+                          {item.paymentDetails
+                            ? formatMessage('opportunities.moderation.paidWithAmount', {
+                                amount: item.paymentDetails,
+                              })
+                            : formatMessage('opportunities.moderation.paid')}
+                        </span>
+                      </span>
+                    ) : (
+                      <span className={styles.unpaidPill}>
+                        <Briefcase size={13} />
+                        <span>{formatMessage('opportunities.moderation.practice')}</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.moderationMainCol}>
                   <h3 className={styles.moderationTitle}>{item.title}</h3>
 
                   <div className={styles.authorStrip}>
@@ -72,12 +93,12 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                       {(item.owner?.name || item.owner?.email || 'U').charAt(0).toUpperCase()}
                     </div>
                     <div className={styles.ownerMeta}>
+                      <span className={styles.ownerName}>
+                        {item.owner?.name ||
+                          item.owner?.email ||
+                          formatMessage('opportunities.moderation.unknownOwner')}
+                      </span>
                       <div className={styles.ownerRow}>
-                        <span className={styles.ownerName}>
-                          {item.owner?.name ||
-                            item.owner?.email ||
-                            formatMessage('opportunities.moderation.unknownOwner')}
-                        </span>
                         <ContactTags
                           emailLabel={formatMessage('opportunities.emailLabel')}
                           alternativeContactLabel={formatMessage(
@@ -90,26 +111,6 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                     </div>
                   </div>
                 </div>
-
-                <div className={styles.moderationTypeCol}>
-                  {item.paymentType === 'PAID' ? (
-                    <span className={styles.compensationPill}>
-                      <Coins size={13} />
-                      <span>
-                        {item.paymentDetails
-                          ? formatMessage('opportunities.moderation.paidWithAmount', {
-                              amount: item.paymentDetails,
-                            })
-                          : formatMessage('opportunities.moderation.paid')}
-                      </span>
-                    </span>
-                  ) : (
-                    <span className={styles.unpaidPill}>
-                      <Briefcase size={13} />
-                      <span>{formatMessage('opportunities.moderation.practice')}</span>
-                    </span>
-                  )}
-                </div>
               </div>
 
               <div className={styles.moderationDescriptionBox}>
@@ -119,15 +120,15 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                 <p className={styles.moderationDescriptionText}>{item.description}</p>
               </div>
 
-              {getOpportunityTagNames(item).length > 0 && (
+              {Boolean(item.tags?.length) && (
                 <div className={styles.moderationTagsRow}>
                   <span className={styles.moderationTagsLabel}>
                     {formatMessage('opportunities.moderation.tagsLabel')}:
                   </span>
                   <div className={styles.moderationTagsList}>
-                    {getOpportunityTagNames(item).map((tag) => (
+                    {item.tags?.map((tag) => (
                       <Tag key={tag} tone="neutral" size="small">
-                        {tag}
+                        {getOpportunityTagLabel(tag, formatMessage)}
                       </Tag>
                     ))}
                   </div>
@@ -146,12 +147,6 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                 </div>
               )}
 
-              {isOwnOpportunity && (
-                <p className={styles.selfModerationNotice}>
-                  {formatMessage('opportunities.moderation.selfModerationForbidden')}
-                </p>
-              )}
-
               <div className={styles.moderationFooter}>
                 <span className={styles.idBadge}>
                   <Hash size={12} />
@@ -162,7 +157,6 @@ export const ModerationQueueTab: React.FC<ModerationQueueTabProps> = ({
                   approveText={formatMessage('opportunities.moderation.approve')}
                   reviseText={formatMessage('opportunities.moderation.revise')}
                   rejectText={formatMessage('opportunities.moderation.reject')}
-                  disabled={isOwnOpportunity}
                   onApprove={() => onModerate(item.id, 'APPROVE')}
                   onOpenRejectModal={() => onOpenRejectModal(item.id)}
                 />

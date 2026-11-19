@@ -1,10 +1,29 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
+import type { OpportunityTag } from '@core/constants/tags';
+import type { MultiSelectGroup } from '../../una/inputs/MultiSelect';
 import { VariantColumn } from '../../../storybook/VariantMatrix/VariantColumn';
 import { OpportunityFilterPanel } from './OpportunityFilterPanel';
 import type { OpportunityFilterValue } from './OpportunityFilterPanel.types';
 
-const KNOWN_TAGS = ['react', 'react native', 'typescript', 'research', 'design'];
+const TAG_GROUPS: MultiSelectGroup<OpportunityTag>[] = [
+  {
+    label: 'Field',
+    tone: 'info',
+    options: [
+      { value: 'IT', label: 'IT' },
+      { value: 'LAW', label: 'Law' },
+    ],
+  },
+  {
+    label: 'Location',
+    tone: 'success',
+    options: [
+      { value: 'REMOTE', label: 'Remote' },
+      { value: 'KHARKIV', label: 'Kharkiv' },
+    ],
+  },
+];
 
 type MatrixVariant = 'Default' | 'With active filters';
 
@@ -13,7 +32,7 @@ const MATRIX_VALUES: Record<MatrixVariant, OpportunityFilterValue> = {
   'With active filters': {
     paymentType: 'PAID',
     isRecruiting: true,
-    tags: ['react', 'typescript'],
+    tags: ['IT', 'REMOTE'],
   },
 };
 
@@ -27,7 +46,7 @@ const meta = {
   args: {
     value: { paymentType: '', isRecruiting: false, tags: [] },
     onApply: () => undefined,
-    loadTagSuggestions: async (query: string) => KNOWN_TAGS.filter((tag) => tag.includes(query)),
+    tagGroups: TAG_GROUPS,
     labels: {
       open: 'Open filters',
       close: 'Close filters',
@@ -38,10 +57,9 @@ const meta = {
       paymentUnpaid: 'Unpaid',
       recruiting: 'Recruitment is underway',
       tags: 'Tags',
-      tagsPlaceholder: 'Add a tag',
+      tagsPlaceholder: 'Select tags',
       removeTag: 'Remove',
       apply: 'Apply',
-      formatCreateTag: (tag: string) => `Create "${tag}"`,
     },
   },
 } satisfies Meta<typeof OpportunityFilterPanel>;

@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { OpportunityTag } from '@core/constants/tags';
+import type { MultiSelectGroup } from '../../una/inputs/MultiSelect';
 import { OpportunityFilterPanel } from './OpportunityFilterPanel';
 import type {
   OpportunityFilterPanelLabels,
@@ -17,11 +19,20 @@ const labels: OpportunityFilterPanelLabels = {
   paymentUnpaid: 'Unpaid',
   recruiting: 'Recruitment is underway',
   tags: 'Tags',
-  tagsPlaceholder: 'Add a tag',
+  tagsPlaceholder: 'Select tags',
   removeTag: 'Remove',
   apply: 'Apply',
-  formatCreateTag: (tag) => `Create ${tag}`,
 };
+
+const tagGroups: MultiSelectGroup<OpportunityTag>[] = [
+  {
+    label: 'Field',
+    options: [
+      { value: 'IT', label: 'IT' },
+      { value: 'LAW', label: 'Law' },
+    ],
+  },
+];
 
 const emptyValue: OpportunityFilterValue = { paymentType: '', isRecruiting: false, tags: [] };
 
@@ -29,7 +40,14 @@ describe('OpportunityFilterPanel', () => {
   it('should keep the panel closed until the trigger is clicked', async () => {
     const user = userEvent.setup();
 
-    render(<OpportunityFilterPanel value={emptyValue} onApply={vi.fn()} labels={labels} />);
+    render(
+      <OpportunityFilterPanel
+        value={emptyValue}
+        onApply={vi.fn()}
+        labels={labels}
+        tagGroups={tagGroups}
+      />,
+    );
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
@@ -41,9 +59,10 @@ describe('OpportunityFilterPanel', () => {
   it('should show the number of active filters on the trigger', () => {
     render(
       <OpportunityFilterPanel
-        value={{ paymentType: 'PAID', isRecruiting: true, tags: ['react'] }}
+        value={{ paymentType: 'PAID', isRecruiting: true, tags: ['IT'] }}
         onApply={vi.fn()}
         labels={labels}
+        tagGroups={tagGroups}
       />,
     );
 
@@ -54,47 +73,72 @@ describe('OpportunityFilterPanel', () => {
     const user = userEvent.setup();
     const onApply = vi.fn();
 
-    render(<OpportunityFilterPanel value={emptyValue} onApply={onApply} labels={labels} />);
+    render(
+      <OpportunityFilterPanel
+        value={emptyValue}
+        onApply={onApply}
+        labels={labels}
+        tagGroups={tagGroups}
+      />,
+    );
 
     await user.click(screen.getByRole('button', { name: 'Open filters' }));
     await user.click(screen.getByRole('checkbox', { name: 'Recruitment is underway' }));
-    await user.type(screen.getByLabelText('Tags'), 'react{Enter}');
+    await user.click(screen.getByRole('button', { name: 'Tags' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Law' }));
 
     expect(onApply).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole('button', { name: 'Apply' }));
 
-    expect(onApply).toHaveBeenCalledWith({ paymentType: '', isRecruiting: true, tags: ['react'] });
+    expect(onApply).toHaveBeenCalledExactlyOnceWith({
+      paymentType: '',
+      isRecruiting: true,
+      tags: ['LAW'],
+    });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it.each([
-    { input: '3D', expectedTag: '3d' },
-    { input: '  React   Native  ', expectedTag: 'react native' },
-  ])(
-    'should include the pending tag $input when Apply is clicked without Enter',
-    async ({ input, expectedTag }) => {
-      const user = userEvent.setup();
-      const onApply = vi.fn();
+  it('should select a tag when clicking its label row instead of the checkbox', async () => {
+    const user = userEvent.setup();
+    const onApply = vi.fn();
 
-      render(<OpportunityFilterPanel value={emptyValue} onApply={onApply} labels={labels} />);
+    render(
+      <OpportunityFilterPanel
+        value={emptyValue}
+        onApply={onApply}
+        labels={labels}
+        tagGroups={tagGroups}
+      />,
+    );
 
-      await user.click(screen.getByRole('button', { name: 'Open filters' }));
-      await user.type(screen.getByLabelText('Tags'), input);
-      await user.click(screen.getByRole('button', { name: 'Apply' }));
+    await user.click(screen.getByRole('button', { name: 'Open filters' }));
+    await user.click(screen.getByRole('button', { name: 'Tags' }));
+    await user.click(screen.getByText('Law'));
 
-      expect(onApply).toHaveBeenCalledExactlyOnceWith({
-        paymentType: '',
-        isRecruiting: false,
-        tags: [expectedTag],
-      });
-    },
-  );
+    expect(screen.getByRole('checkbox', { name: 'Law' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Tags' })).toHaveAttribute('aria-expanded', 'true');
+
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(onApply).toHaveBeenCalledExactlyOnceWith({
+      paymentType: '',
+      isRecruiting: false,
+      tags: ['LAW'],
+    });
+  });
 
   it('should discard unapplied changes when the panel is reopened', async () => {
     const user = userEvent.setup();
 
-    render(<OpportunityFilterPanel value={emptyValue} onApply={vi.fn()} labels={labels} />);
+    render(
+      <OpportunityFilterPanel
+        value={emptyValue}
+        onApply={vi.fn()}
+        labels={labels}
+        tagGroups={tagGroups}
+      />,
+    );
 
     await user.click(screen.getByRole('button', { name: 'Open filters' }));
     await user.click(screen.getByRole('checkbox', { name: 'Recruitment is underway' }));

@@ -25,7 +25,7 @@ describe('useOpportunitiesStore', () => {
     setSearch('python');
     setPaymentFilter('PAID');
     setIsRecruiting(true);
-    setTags(['react']);
+    setTags(['IT']);
 
     const state = useOpportunitiesStore.getState();
 
@@ -33,7 +33,7 @@ describe('useOpportunitiesStore', () => {
     expect(state.search).toBe('python');
     expect(state.paymentFilter).toBe('PAID');
     expect(state.isRecruiting).toBe(true);
-    expect(state.tags).toEqual(['react']);
+    expect(state.tags).toEqual(['IT']);
   });
 
   it('sets all filters via setFilters', () => {
@@ -42,14 +42,14 @@ describe('useOpportunitiesStore', () => {
     setFilters({
       paymentType: 'UNPAID',
       isRecruiting: true,
-      tags: ['design'],
+      tags: ['MEDIA_DESIGN'],
     });
 
     const state = useOpportunitiesStore.getState();
 
     expect(state.paymentFilter).toBe('UNPAID');
     expect(state.isRecruiting).toBe(true);
-    expect(state.tags).toEqual(['design']);
+    expect(state.tags).toEqual(['MEDIA_DESIGN']);
   });
 
   it('should reset changed state back to catalog defaults via reset', () => {
@@ -61,7 +61,7 @@ describe('useOpportunitiesStore', () => {
     setPaymentFilter('PAID');
 
     setIsRecruiting(true);
-    setTags(['react']);
+    setTags(['IT']);
 
     reset();
 

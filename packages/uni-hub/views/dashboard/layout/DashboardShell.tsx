@@ -184,7 +184,7 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
           onOpenUnlinkMoodle={openUnlinkModal}
         />
 
-        <main className={styles.content}>
+        <main className={styles.content} data-scroll-container>
           <div className={styles.pageTitleRow}>
             <div className={styles.pageTitleGroup}>
               <h2 className={styles.pageTitle}>{formatMessage(PAGE_TITLE_KEYS[activeKey])}</h2>
