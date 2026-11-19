@@ -440,6 +440,8 @@ export const uk = {
     'Цей номер недоступний для використання цим обліковим записом.',
   'opportunities.errors.phoneAlreadySet':
     'Використайте номер, уже закріплений за вашим обліковим записом, або Telegram.',
+  'opportunities.errors.withdrawalLimitReached':
+    'Ви вже відкликали відгук на цю можливість максимальну кількість разів ({limit}).',
   'opportunities.tabs.favorites': 'Обрані',
   'opportunities.favorites.add': 'Додати до обраного',
   'opportunities.favorites.remove': 'Видалити з обраного',
@@ -470,7 +472,8 @@ export const uk = {
   'opportunities.toast.applicationsOpened': 'Прийом відгуків відкрито',
   'opportunities.toast.applicationsClosed': 'Прийом відгуків закрито',
   'opportunities.toast.statusUpdateError': 'Помилка оновлення статусу',
-  'opportunities.confirm.withdraw': 'Ви впевнені, що бажаєте відкликати свій відгук?',
+  'opportunities.confirm.withdraw':
+    'Ви впевнені, що бажаєте відкликати свій відгук? Відкликати та подати відгук наново на одну можливість можна не більше {limit} разів.',
   'opportunities.confirm.withdrawTitle': 'Відкликання відгуку',
   'opportunities.confirm.withdrawConfirm': 'Відкликати',
   'opportunities.confirm.delete':
@@ -553,7 +556,7 @@ export const uk = {
   'opportunities.createModal.descLabel': 'Опис, завдання та вимоги до кандидата *',
   'opportunities.createModal.descPlaceholder':
     'Детально розкажіть про проект, задачі, очікувану зайнятість та необхідні навички...',
-  'opportunities.createModal.contactPlaceholder': 'Telegram (@username), Email або номер телефону',
+  'opportunities.createModal.contactPlaceholder': 'Telegram (@username) або номер телефону',
   'opportunities.createModal.paymentTypeLabel': 'Тип винагороди',
   'opportunities.createModal.unpaidOption': 'Неоплачувана (Практика, досвід)',
   'opportunities.createModal.paidOption': 'Оплачувана',

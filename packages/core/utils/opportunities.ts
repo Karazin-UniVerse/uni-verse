@@ -1,4 +1,7 @@
 import {
+  MAX_APPLICATION_WITHDRAWALS,
+  OPPORTUNITY_APP_STATUS,
+  type OpportunityAppStatus,
   OPPORTUNITY_LIFECYCLE,
   OPPORTUNITY_PAYMENT_TYPE,
   type OpportunityLifecycle,
@@ -9,6 +12,16 @@ import type {
   UnavailableOpportunity,
   UpdateOpportunityRequest,
 } from '../types/opportunities.ts';
+
+export function isWithdrawableApplicationStatus(status: OpportunityAppStatus): boolean {
+  return (
+    status === OPPORTUNITY_APP_STATUS.SUBMITTED || status === OPPORTUNITY_APP_STATUS.UNDER_REVIEW
+  );
+}
+
+export function hasReachedApplicationWithdrawalLimit(withdrawalCount?: number): boolean {
+  return (withdrawalCount ?? 0) >= MAX_APPLICATION_WITHDRAWALS;
+}
 
 export function isRecruitmentPhase(lifecycleState?: OpportunityLifecycle): boolean {
   return (

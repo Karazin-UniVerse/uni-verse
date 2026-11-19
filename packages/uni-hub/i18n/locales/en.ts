@@ -440,6 +440,8 @@ export const en = {
   'opportunities.errors.phoneUnavailable': 'This phone number is unavailable for this account.',
   'opportunities.errors.phoneAlreadySet':
     'Use the phone number already registered to your account, or Telegram.',
+  'opportunities.errors.withdrawalLimitReached':
+    'You have already withdrawn your application for this opportunity the maximum number of times ({limit}).',
   'opportunities.tabs.favorites': 'Favorites',
   'opportunities.favorites.add': 'Add to favorites',
   'opportunities.favorites.remove': 'Remove from favorites',
@@ -470,7 +472,8 @@ export const en = {
   'opportunities.toast.applicationsOpened': 'Applications acceptance opened',
   'opportunities.toast.applicationsClosed': 'Applications acceptance closed',
   'opportunities.toast.statusUpdateError': 'Error updating status',
-  'opportunities.confirm.withdraw': 'Are you sure you want to withdraw your application?',
+  'opportunities.confirm.withdraw':
+    'Are you sure you want to withdraw your application? You can withdraw and re-apply to the same opportunity at most {limit} times.',
   'opportunities.confirm.withdrawTitle': 'Withdraw application',
   'opportunities.confirm.withdrawConfirm': 'Withdraw',
   'opportunities.confirm.delete':
@@ -553,7 +556,7 @@ export const en = {
   'opportunities.createModal.descLabel': 'Description, tasks, and requirements *',
   'opportunities.createModal.descPlaceholder':
     'Describe the project, tasks, workload, and required skills...',
-  'opportunities.createModal.contactPlaceholder': 'Telegram (@username), Email or phone number',
+  'opportunities.createModal.contactPlaceholder': 'Telegram (@username) or phone number',
   'opportunities.createModal.paymentTypeLabel': 'Reward Type',
   'opportunities.createModal.unpaidOption': 'Unpaid (Practice, experience)',
   'opportunities.createModal.paidOption': 'Paid',

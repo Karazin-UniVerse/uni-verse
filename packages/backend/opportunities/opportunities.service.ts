@@ -39,6 +39,7 @@ import {
   Role,
 } from '@universe/database';
 import {
+  MAX_APPLICATION_WITHDRAWALS,
   OPPORTUNITY_MODERATE_ACTION,
   OPPORTUNITY_VIEW,
   OPPORTUNITY_VIEW_PARAM,
@@ -47,6 +48,8 @@ import {
 import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 import {
   hasOpportunityContentChanged,
+  hasReachedApplicationWithdrawalLimit,
+  isWithdrawableApplicationStatus,
   isRecruitmentPhase,
   isUnavailableOpportunity,
 } from '@universe/core/utils/opportunities';
@@ -171,12 +174,21 @@ export class OpportunitiesService {
   }
 
   /** Delivers published updates to saved recipients in bounded batches. */
-  private async notifySubscribers(opportunity: Opportunity): Promise<void> {
+  private async notifySubscribers(
+    opportunity: Opportunity,
+    hasLifecycleChanged = false,
+  ): Promise<void> {
     if (opportunity.status !== OpportunityStatus.PUBLISHED) {
       return;
     }
 
     try {
+      const message = JSON.stringify({
+        opportunityTitle: opportunity.title,
+        ...(hasLifecycleChanged && {
+          lifecycleState: opportunity.lifecycleState,
+        }),
+      });
       const favorites = await this.prisma.opportunityFavorite.findMany({
         where: { opportunityId: opportunity.id },
         select: { userId: true },
@@ -197,7 +209,7 @@ export class OpportunitiesService {
               userId,
               type: NOTIFICATION_TYPE.OPPORTUNITY_UPDATED,
               title: OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE,
-              message: JSON.stringify({ opportunityTitle: opportunity.title }),
+              message,
               link: `${OPPORTUNITIES_ROUTE}/${opportunity.id}`,
             }),
           ),
@@ -507,7 +519,7 @@ export class OpportunitiesService {
         hasLifecycleChanged ||
         hasTagsChanged)
     ) {
-      await this.notifySubscribers(updated);
+      await this.notifySubscribers(updated, hasLifecycleChanged);
     }
 
     return updated;
@@ -663,12 +675,14 @@ export class OpportunitiesService {
       throw error;
     }
 
+    const hasLifecycleChanged = lifecycleState !== opportunity.lifecycleState;
+
     if (
       opportunity.status === OpportunityStatus.PUBLISHED &&
-      (lifecycleState !== opportunity.lifecycleState ||
+      (hasLifecycleChanged ||
         updated.acceptsApplications !== opportunity.acceptsApplications)
     ) {
-      await this.notifySubscribers(updated);
+      await this.notifySubscribers(updated, hasLifecycleChanged);
     }
 
     return updated;
@@ -822,11 +836,11 @@ export class OpportunitiesService {
     if (app.applicantId !== userId)
       throw new ForbiddenException('Only the applicant can withdraw');
 
-    if (
-      app.status === ApplicationStatus.ACCEPTED ||
-      app.status === ApplicationStatus.REJECTED
-    )
+    if (!isWithdrawableApplicationStatus(app.status))
       throw new BadRequestException('Cannot withdraw completed application');
+
+    if (hasReachedApplicationWithdrawalLimit(app.withdrawalCount))
+      throw new BadRequestException(OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED);
 
     try {
       const updated = await this.prisma.$transaction(async (tx) => {
@@ -836,8 +850,12 @@ export class OpportunitiesService {
             status: {
               in: [ApplicationStatus.SUBMITTED, ApplicationStatus.UNDER_REVIEW],
             },
+            withdrawalCount: { lt: MAX_APPLICATION_WITHDRAWALS },
           },
-          data: { status: ApplicationStatus.WITHDRAWN },
+          data: {
+            status: ApplicationStatus.WITHDRAWN,
+            withdrawalCount: { increment: 1 },
+          },
         });
 
         await tx.notification.deleteMany({
@@ -855,6 +873,16 @@ export class OpportunitiesService {
       return updated;
     } catch (error) {
       if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
+        const current = await this.prisma.opportunityApplication.findUnique({
+          where: { id: applicationId },
+          select: { withdrawalCount: true },
+        });
+
+        if (hasReachedApplicationWithdrawalLimit(current?.withdrawalCount))
+          throw new BadRequestException(
+            OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED,
+          );
+
         throw new BadRequestException('Cannot withdraw completed application');
       }
 

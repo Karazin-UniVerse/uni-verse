@@ -4,6 +4,10 @@ import {
   extractGoogleDisplayName,
   getLinkMoodleContentKeys,
   LinkMoodleMode,
+  resolveGoogleButtonWidth,
+  GOOGLE_BUTTON_FALLBACK_WIDTH,
+  GOOGLE_BUTTON_MIN_WIDTH,
+  GOOGLE_BUTTON_MAX_WIDTH,
 } from './helpers';
 
 describe('getLinkMoodleContentKeys', () => {
@@ -107,5 +111,31 @@ describe('extractGoogleDisplayName', () => {
   it('returns empty string when no name claims are present', () => {
     expect(extractGoogleDisplayName({})).toBe('');
     expect(extractGoogleDisplayName({ email: 'student@karazin.ua' })).toBe('');
+  });
+});
+
+describe('resolveGoogleButtonWidth', () => {
+  it('returns fallback width when measured width is not provided, 0, or negative', () => {
+    expect(resolveGoogleButtonWidth()).toBe(GOOGLE_BUTTON_FALLBACK_WIDTH);
+    expect(resolveGoogleButtonWidth(null)).toBe(GOOGLE_BUTTON_FALLBACK_WIDTH);
+    expect(resolveGoogleButtonWidth(0)).toBe(GOOGLE_BUTTON_FALLBACK_WIDTH);
+    expect(resolveGoogleButtonWidth(-50)).toBe(GOOGLE_BUTTON_FALLBACK_WIDTH);
+    expect(resolveGoogleButtonWidth(Number.NaN)).toBe(GOOGLE_BUTTON_FALLBACK_WIDTH);
+  });
+
+  it('clamps to minimum width (200px) when container is narrower than 200px', () => {
+    expect(resolveGoogleButtonWidth(120)).toBe(GOOGLE_BUTTON_MIN_WIDTH);
+    expect(resolveGoogleButtonWidth(199)).toBe(GOOGLE_BUTTON_MIN_WIDTH);
+  });
+
+  it('clamps to maximum width (400px) when container is wider than 400px', () => {
+    expect(resolveGoogleButtonWidth(401)).toBe(GOOGLE_BUTTON_MAX_WIDTH);
+    expect(resolveGoogleButtonWidth(600)).toBe(GOOGLE_BUTTON_MAX_WIDTH);
+  });
+
+  it('floors fractional widths and returns the exact integer value within range', () => {
+    expect(resolveGoogleButtonWidth(280.7)).toBe(280);
+    expect(resolveGoogleButtonWidth(336)).toBe(336);
+    expect(resolveGoogleButtonWidth(250)).toBe(250);
   });
 });

@@ -14,14 +14,22 @@ import {
   XCircle,
 } from 'lucide-react';
 import { Button } from '@una';
-import { OPPORTUNITY_APP_STATUS, OPPORTUNITY_PAYMENT_TYPE } from '@core/constants/opportunities';
+import {
+  MAX_APPLICATION_WITHDRAWALS,
+  OPPORTUNITY_APP_STATUS,
+  OPPORTUNITY_PAYMENT_TYPE,
+} from '@core/constants/opportunities';
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { ApplicationStatusBadge } from './ApplicationStatusBadge';
 import { ContactTags } from '@ui';
 import styles from '../../OpportunitiesTab.module.scss';
 import { OpportunityUnavailableNotice } from './OpportunityUnavailableNotice';
-import { isUnavailableOpportunity } from '@core/utils/opportunities';
+import {
+  hasReachedApplicationWithdrawalLimit,
+  isUnavailableOpportunity,
+  isWithdrawableApplicationStatus,
+} from '@core/utils/opportunities';
 
 interface MyApplicationCardProps {
   application: OpportunityApplication;
@@ -35,6 +43,10 @@ export function MyApplicationCard({ application, onWithdraw }: MyApplicationCard
   const unavailable = record && isUnavailableOpportunity(record) ? record : undefined;
   const opportunity = record && !isUnavailableOpportunity(record) ? record : undefined;
   const paymentType = record?.paymentType;
+  const isWithdrawable = isWithdrawableApplicationStatus(application.status);
+  const hasReachedWithdrawalLimit = hasReachedApplicationWithdrawalLimit(
+    application.withdrawalCount,
+  );
 
   return (
     <div
@@ -153,8 +165,14 @@ export function MyApplicationCard({ application, onWithdraw }: MyApplicationCard
         </span>
 
         <div className={styles.applicationActions}>
-          {(application.status === OPPORTUNITY_APP_STATUS.SUBMITTED ||
-            application.status === OPPORTUNITY_APP_STATUS.UNDER_REVIEW) && (
+          {isWithdrawable && hasReachedWithdrawalLimit && (
+            <span className={styles.statusNoticeNeutral}>
+              {formatMessage('opportunities.errors.withdrawalLimitReached', {
+                limit: MAX_APPLICATION_WITHDRAWALS,
+              })}
+            </span>
+          )}
+          {isWithdrawable && !hasReachedWithdrawalLimit && (
             <Button
               variant="secondary"
               className={styles.withdrawBtn}

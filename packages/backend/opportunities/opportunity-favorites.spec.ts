@@ -349,6 +349,58 @@ describe('Opportunity favorites and restricted listings', () => {
     },
   );
 
+  it.each(['update', 'lifecycle'] as const)(
+    'notifies each subscriber once when %s completes a published opportunity',
+    async (operation) => {
+      const published = {
+        ...opportunity,
+        status: OpportunityStatus.PUBLISHED,
+        acceptsApplications: true,
+      };
+      const lifecycleState = OpportunityLifecycleState.COMPLETED;
+      const subscribers = [
+        { userId: 'subscriber-1' },
+        { userId: 'subscriber-2' },
+      ];
+
+      prisma.opportunity.findUnique.mockResolvedValue(published);
+      prisma.opportunity.update.mockResolvedValue({
+        ...published,
+        lifecycleState,
+        acceptsApplications: false,
+      });
+      prisma.opportunityFavorite.findMany.mockResolvedValue(subscribers);
+
+      if (operation === 'update') {
+        await service.update('owner', opportunity.id, {
+          lifecycleState,
+          acceptsApplications: false,
+        });
+      } else {
+        await service.changeLifecycleState(
+          'owner',
+          opportunity.id,
+          lifecycleState,
+        );
+      }
+
+      expect(notify).toHaveBeenCalledTimes(subscribers.length);
+
+      for (const { userId } of subscribers) {
+        expect(notify).toHaveBeenCalledWith(
+          expect.objectContaining({
+            userId,
+            type: 'OPPORTUNITY_UPDATED',
+            message: JSON.stringify({
+              opportunityTitle: published.title,
+              lifecycleState,
+            }),
+          }),
+        );
+      }
+    },
+  );
+
   it('does not notify subscribers about unpublished edits', async () => {
     prisma.opportunity.update.mockResolvedValue(opportunity);
     await service.update('owner', opportunity.id, {
