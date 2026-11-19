@@ -105,3 +105,32 @@
   font-weight: 600;
   letter-spacing: 0.02em;
 }
+
+:global([data-theme='crimsonSky']) {
+  .siderTrigger {
+    color: var(--blue-1300);
+
+    svg {
+      color: var(--blue-1300);
+    }
+
+    .chevron {
+      color: var(--blue-1300);
+    }
+
+    &:hover {
+      color: var(--blue-1300);
+      background: rgb(225 29 72 / 8%);
+      border-color: transparent;
+      box-shadow: none;
+
+      svg {
+        color: var(--blue-1300);
+      }
+
+      .chevron {
+        color: var(--blue-1300);
+      }
+    }
+  }
+}

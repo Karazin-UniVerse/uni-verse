@@ -87,3 +87,41 @@
   border-radius: 32px;
   z-index: 1;
 }
+
+:global([data-theme='crimsonSky']) {
+  .navItem.active {
+    color: var(--white-10);
+  }
+
+  .navItemWrapper:nth-child(odd) {
+    .navItem:hover:not(.active) {
+      color: var(--crimson-600);
+      background: rgb(225 29 72 / 10%);
+
+      svg {
+        color: var(--crimson-600);
+      }
+    }
+
+    .navItem.active .activePill {
+      background: linear-gradient(135deg, var(--crimson-600) 0%, var(--electric-blue-600) 100%);
+      box-shadow: 0 4px 18px rgb(225 29 72 / 50%);
+    }
+  }
+
+  .navItemWrapper:nth-child(even) {
+    .navItem:hover:not(.active) {
+      color: var(--electric-blue-600);
+      background: rgb(37 99 235 / 10%);
+
+      svg {
+        color: var(--electric-blue-600);
+      }
+    }
+
+    .navItem.active .activePill {
+      background: linear-gradient(135deg, var(--electric-blue-600) 0%, var(--crimson-600) 100%);
+      box-shadow: 0 4px 18px rgb(37 99 235 / 50%);
+    }
+  }
+}

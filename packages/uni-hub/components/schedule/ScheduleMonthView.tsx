@@ -29,6 +29,7 @@ export const ScheduleMonthView: React.FC<ScheduleMonthViewProps> = ({
           type="button"
           variant="secondary"
           size="small"
+          className={styles.navBtnPrev}
           aria-label={formatMessage('schedule.prevMonth')}
           onClick={() =>
             onSelectDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1))
@@ -41,6 +42,7 @@ export const ScheduleMonthView: React.FC<ScheduleMonthViewProps> = ({
           type="button"
           variant="secondary"
           size="small"
+          className={styles.navBtnNext}
           aria-label={formatMessage('schedule.nextMonth')}
           onClick={() =>
             onSelectDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1))

@@ -30,6 +30,7 @@ export const ScheduleWeekView: React.FC<ScheduleWeekViewProps> = ({
         <Button
           type="button"
           variant="secondary"
+          className={styles.navBtnPrev}
           onClick={() => onSelectDate(addDays(selectedDate, -7))}
         >
           <ChevronLeft size={16} /> {formatMessage('schedule.prevWeek')}
@@ -45,6 +46,7 @@ export const ScheduleWeekView: React.FC<ScheduleWeekViewProps> = ({
         <Button
           type="button"
           variant="secondary"
+          className={styles.navBtnNext}
           onClick={() => onSelectDate(addDays(selectedDate, 7))}
         >
           {formatMessage('schedule.nextWeek')} <ChevronRight size={16} />

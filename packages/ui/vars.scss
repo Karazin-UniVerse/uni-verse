@@ -159,6 +159,7 @@ $space-64: 64px;
   --blue-1000: #60a5fa;
   --blue-1100: #93c5fd;
   --blue-1200: #1e40af;
+  --blue-1300: #0f172a;
 
   /* Red Palette */
   --red-50: #fef2f2;
@@ -798,6 +799,120 @@ $space-64: 64px;
   --scrollbar-track: transparent;
   --scrollbar-thumb: rgb(32 57 121 / 25%);
   --scrollbar-thumb-hover: rgb(20 37 69 / 50%);
+  --scrollbar-radius: var(--border-radius-full);
+}
+
+/* -----------------------------------------
+   Crimson Sky Theme (Light: Vibrant Red & Blue Gradient)
+   ----------------------------------------- */
+[data-theme='crimsonSky'] {
+  /* Crimson & Blue Palette */
+  --crimson-50: #fff1f2;
+  --crimson-100: #ffe4e6;
+  --crimson-200: #fecdd3;
+  --crimson-300: #fda4af;
+  --crimson-400: #fb7185;
+  --crimson-500: #f43f5e;
+  --crimson-600: #e11d48;
+  --crimson-700: #be123c;
+  --crimson-800: #9f1239;
+  --electric-blue-50: #eff6ff;
+  --electric-blue-100: #dbeafe;
+  --electric-blue-200: #bfdbfe;
+  --electric-blue-300: #93c5fd;
+  --electric-blue-400: #60a5fa;
+  --electric-blue-500: #3b82f6;
+  --electric-blue-600: #2563eb;
+  --electric-blue-700: #1d4ed8;
+
+  /* Neutral Colors override */
+  --neutral-bg: var(--white-10);
+  --neutral-surface: var(--white-10);
+  --neutral-border: var(--slate-200);
+  --neutral-text-primary: var(--slate-900);
+  --neutral-text-secondary: var(--slate-700);
+  --neutral-text-disabled: var(--slate-400);
+
+  /* Accent Colors override */
+  --accent-primary: var(--crimson-600);
+  --accent-primary-hover: var(--crimson-700);
+  --accent-primary-active: var(--crimson-800);
+  --accent-text-on-primary: var(--white-10);
+  --accent-secondary: var(--slate-100);
+  --accent-secondary-hover: var(--slate-200);
+  --accent-secondary-active: var(--slate-300);
+  --accent-text-on-secondary: var(--slate-900);
+  --focus-ring-color: rgb(225 29 72 / 35%);
+  --bg-hover: var(--slate-100);
+
+  /* RGB color channels for alpha blending and mesh gradients */
+  --primary-rgb: 225, 29, 72;
+  --secondary-rgb: 37, 99, 235;
+  --surface-rgb: 255, 255, 255;
+  --text-primary-rgb: 15, 23, 42;
+
+  /* Surfaces: white cards on canvas */
+  --bg-surface: var(--white-10);
+  --bg-content: transparent;
+  --bg-card: var(--white-10);
+  --btn-primary-disabled: var(--slate-100);
+
+  /* Button color tokens */
+  --btn-primary-bg: var(--crimson-600);
+  --btn-primary-hover: var(--crimson-700);
+  --btn-primary-active: var(--crimson-800);
+  --btn-primary-text: var(--white-10);
+  --btn-secondary-bg: var(--white-10);
+  --btn-secondary-hover: var(--electric-blue-50);
+  --btn-secondary-active: var(--electric-blue-100);
+  --btn-secondary-text: var(--slate-800);
+
+  /* Alternating Action & Accent Tokens (Red & Blue) */
+  --accent-alt: var(--electric-blue-600);
+  --accent-alt-hover: var(--electric-blue-700);
+  --accent-alt-active: var(--electric-blue-800);
+  --accent-alt-subtle: rgb(37 99 235 / 12%);
+  --accent-primary-subtle: rgb(225 29 72 / 12%);
+
+  /* Vibrant Mesh Canvas (Vivid Red-to-Blue radial gradient blend) */
+  --bg-page:
+    radial-gradient(at 0% 0%, rgb(var(--primary-rgb), 0.28) 0, transparent 55%),
+    radial-gradient(at 100% 100%, rgb(var(--secondary-rgb), 0.3) 0, transparent 55%),
+    radial-gradient(at 100% 0%, rgb(var(--secondary-rgb), 0.2) 0, transparent 50%),
+    radial-gradient(at 0% 100%, rgb(var(--primary-rgb), 0.22) 0, transparent 50%),
+    linear-gradient(135deg, rgb(255 241 242 / 70%) 0%, rgb(239 246 255 / 70%) 100%), #fff;
+
+  /* Sidebar with red-to-blue gradient active item */
+  --sidebar-bg: var(--white-10);
+  --sidebar-border: color-mix(in srgb, var(--accent-primary) 15%, var(--border-color));
+  --sidebar-brand: var(--crimson-600);
+  --sidebar-text: var(--slate-600);
+  --sidebar-text-strong: var(--slate-900);
+  --sidebar-text-active: var(--white-10);
+  --sidebar-item-hover-bg: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --sidebar-item-active-bg: var(--crimson-600);
+  --sidebar-item-active-accent: var(--white-10);
+
+  /* White header with crimson hairline */
+  --header-bg: var(--white-10);
+  --header-border: color-mix(in srgb, var(--accent-primary) 15%, var(--border-color));
+
+  /* Cards */
+  --card-border: rgb(15 23 42 / 8%);
+  --card-shadow: 0 1px 3px rgb(15 23 42 / 5%), 0 6px 16px rgb(37 99 235 / 6%);
+  --card-shadow-hover: 0 4px 12px rgb(15 23 42 / 8%), 0 12px 28px rgb(225 29 72 / 10%);
+
+  /* Chart series */
+  --chart-series-1: var(--crimson-600);
+  --chart-series-2: var(--electric-blue-600);
+  --chart-series-3: var(--chart-warning);
+  --chart-series-4: var(--chart-success);
+  --chart-series-5: var(--purple-500);
+
+  /* Scrollbar: crimson thumb with electric blue hover */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgb(225 29 72 / 25%);
+  --scrollbar-thumb-hover: rgb(37 99 235 / 55%);
   --scrollbar-radius: var(--border-radius-full);
 }
 
