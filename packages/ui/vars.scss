@@ -738,17 +738,30 @@ $space-64: 64px;
   --notion-bg: #121212;
   --notion-sidebar: #161616;
   --notion-surface: #1b1b1b;
-  --notion-surface-hover: #222;
-  --notion-surface-active: #282828;
   --notion-border: rgb(255 255 255 / 8%);
   --notion-text: #dedede;
   --notion-text-muted: #9b9a97;
   --notion-text-dim: #6b6a67;
   --notion-accent: #2383e2;
-  --notion-accent-hover: #2d8ff0;
-  --notion-accent-active: #1b6ec2;
   --notion-link: #529cca;
   --notion-link-hover: #73b4db;
+  --notion-button: #1b6ec2;
+  --notion-button-hover: #175ea8;
+  --notion-button-active: #134d8a;
+  --notion-green: #4dab9a;
+  --notion-yellow: #cb912f;
+  --notion-red: #df5452;
+  --notion-purple: #9a6dd7;
+
+  /* Muted status colors instead of the saturated dark-base palette */
+  --success-color: var(--notion-green);
+  --warning-color: var(--notion-yellow);
+  --error-color: var(--notion-red);
+  --info-color: var(--notion-link);
+
+  /* Tighter Notion-like corners */
+  --border-radius-medium: 6px;
+  --border-radius-large: 8px;
 
   /* Neutral Colors */
   --neutral-bg: var(--notion-bg);
@@ -763,17 +776,17 @@ $space-64: 64px;
   --accent-primary-hover: var(--notion-link-hover);
   --accent-primary-active: var(--notion-accent);
   --accent-text-on-primary: var(--white-10);
-  --accent-secondary: var(--notion-surface);
-  --accent-secondary-hover: var(--notion-surface-hover);
-  --accent-secondary-active: var(--notion-surface-active);
+  --accent-secondary: rgb(255 255 255 / 5.5%);
+  --accent-secondary-hover: rgb(255 255 255 / 8%);
+  --accent-secondary-active: rgb(255 255 255 / 11%);
   --accent-text-on-secondary: var(--notion-text);
   --focus-ring-color: rgb(35 131 226 / 45%);
-  --bg-hover: var(--notion-surface-hover);
+  --bg-hover: rgb(255 255 255 / 5.5%);
 
-  /* Primary Button */
-  --btn-primary-bg: var(--notion-accent);
-  --btn-primary-hover: var(--notion-accent-hover);
-  --btn-primary-active: var(--notion-accent-active);
+  /* Primary button: white text needs >= 4.5:1, so it uses a deeper blue than the accent */
+  --btn-primary-bg: var(--notion-button);
+  --btn-primary-hover: var(--notion-button-hover);
+  --btn-primary-active: var(--notion-button-active);
 
   /* RGB color channels */
   --primary-rgb: 35, 131, 226;
@@ -804,8 +817,8 @@ $space-64: 64px;
   --sidebar-text: var(--notion-text-muted);
   --sidebar-text-strong: var(--notion-text);
   --sidebar-text-active: var(--notion-text);
-  --sidebar-item-hover-bg: var(--notion-surface-hover);
-  --sidebar-item-active-bg: var(--notion-surface-active);
+  --sidebar-item-hover-bg: rgb(255 255 255 / 5.5%);
+  --sidebar-item-active-bg: rgb(255 255 255 / 8%);
   --sidebar-item-active-accent: transparent;
   --sidebar-accent: var(--notion-link);
 
@@ -816,20 +829,28 @@ $space-64: 64px;
   /* Muted matte chart palette */
   --chart-grid: rgb(255 255 255 / 6%);
   --chart-axis: var(--notion-border);
-  --chart-tooltip-bg: var(--notion-sidebar);
+  --chart-tooltip-bg: #252525;
   --chart-tooltip-border: var(--notion-border);
-  --chart-series-1: #529cca;
-  --chart-series-2: #4dab9a;
-  --chart-series-3: #cb912f;
-  --chart-series-4: #e06c75;
-  --chart-series-5: #9a6dd7;
+  --chart-success: var(--notion-green);
+  --chart-warning: var(--notion-yellow);
+  --chart-danger: var(--notion-red);
+  --chart-info: var(--notion-link);
+  --chart-series-1: var(--notion-link);
+  --chart-series-2: var(--notion-green);
+  --chart-series-3: var(--notion-yellow);
+  --chart-series-4: var(--notion-red);
+  --chart-series-5: var(--notion-purple);
   --chart-glow: none;
 
   /* Subtle matte scrollbar */
   --scrollbar-track: transparent;
-  --scrollbar-thumb: rgb(255 255 255 / 14%);
-  --scrollbar-thumb-hover: rgb(255 255 255 / 26%);
+  --scrollbar-thumb: rgb(255 255 255 / 10%);
+  --scrollbar-thumb-hover: rgb(255 255 255 / 22%);
   --scrollbar-radius: var(--border-radius-full);
+}
+
+[data-theme='notionDark'] ::selection {
+  background: rgb(35 131 226 / 35%);
 }
 
 /* -----------------------------------------
