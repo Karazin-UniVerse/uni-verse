@@ -1,0 +1,40 @@
+.backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  overflow: hidden;
+}
+
+:global([data-theme='jinx']) .backdrop {
+  display: block;
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-rubik-dirt), Impact, sans-serif;
+  letter-spacing: 0.04em;
+}
+
+.quoteBlue {
+  fill: var(--jinx-blue-400);
+  opacity: 0.28;
+}
+
+.quoteLime {
+  fill: var(--jinx-lime-400);
+  opacity: 0.26;
+}
+
+.quotePink {
+  fill: var(--jinx-pink-400);
+  opacity: 0.28;
+}
+
+.quoteViolet {
+  fill: var(--purple-400);
+  opacity: 0.28;
+}

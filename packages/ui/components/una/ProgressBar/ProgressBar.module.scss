@@ -29,3 +29,11 @@
 .info {
   background: var(--info-color);
 }
+
+:global([data-theme='jinx']) {
+  .success,
+  .info {
+    background: linear-gradient(90deg, var(--jinx-blue-500), var(--jinx-blue-400));
+    box-shadow: 0 0 10px rgb(var(--secondary-rgb), 0.55);
+  }
+}
