@@ -12,11 +12,13 @@ import { safeStorage } from '@uni-hub/services/api';
 import { endSession } from '@uni-hub/services/api.session';
 import { useGoogleLogin, useLinkMoodle } from '@uni-hub/hooks/useAuthMutations';
 import {
+  type AuthErrorState,
   GoogleLoginButton,
   AuthField,
   parseGoogleClaims,
   extractGoogleDisplayName,
-  getAuthErrorMessage,
+  formatAuthError,
+  resolveAuthError,
 } from '@uni-hub/components/auth';
 import { useFeatures } from '@uni-hub/features';
 import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
@@ -30,7 +32,7 @@ const LoginPage: React.FC = () => {
   const [linkUsername, setLinkUsername] = useState('');
   const [linkPassword, setLinkPassword] = useState('');
   const [googleUserName, setGoogleUserName] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<AuthErrorState>(null);
   const [isLinkingMoodle, setIsLinkingMoodle] = useState(false);
   const router = useRouter();
   const toast = useToast();
@@ -40,7 +42,7 @@ const LoginPage: React.FC = () => {
   const loading = googleLogin.isPending || linkMoodle.isPending;
 
   const handleGoogleSuccess = async (idToken: string): Promise<void> => {
-    setError('');
+    setError(null);
 
     try {
       const claims = parseGoogleClaims(idToken);
@@ -83,24 +85,24 @@ const LoginPage: React.FC = () => {
       setGoogleUserName('');
       safeStorage.removeItem('username');
       safeStorage.removeItem('userEmail');
-      const message = getAuthErrorMessage(err, formatMessage, formatMessage('login.googleError'));
+      const authError = resolveAuthError(err, 'login.googleError');
 
-      setError(message);
-      toast.error(message);
+      setError(authError);
+      toast.error(formatAuthError(authError, formatMessage));
     }
   };
 
   const handleLinkMoodle = async (): Promise<void> => {
-    setError('');
+    setError(null);
 
     if (!linkUsername.trim()) {
-      setError(formatMessage('login.linkMoodleEnterUsername'));
+      setError({ key: 'login.linkMoodleEnterUsername' });
 
       return;
     }
 
     if (!linkPassword) {
-      setError(formatMessage('login.linkMoodleEnterPassword'));
+      setError({ key: 'login.linkMoodleEnterPassword' });
 
       return;
     }
@@ -118,14 +120,10 @@ const LoginPage: React.FC = () => {
       safeStorage.setItem('username', resolvedUserName);
       router.push('/');
     } catch (err: unknown) {
-      const message = getAuthErrorMessage(
-        err,
-        formatMessage,
-        formatMessage('login.linkMoodleError'),
-      );
+      const authError = resolveAuthError(err, 'login.linkMoodleError');
 
-      setError(message);
-      toast.error(message);
+      setError(authError);
+      toast.error(formatAuthError(authError, formatMessage));
     }
   };
 
@@ -150,12 +148,13 @@ const LoginPage: React.FC = () => {
   };
 
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const displayedError = formatAuthError(error, formatMessage);
 
   const ssoAction = googleClientId ? (
     <div className={styles.googleSection}>
       <GoogleLoginButton
         onSuccess={handleGoogleSuccess}
-        onError={(msg) => setError(msg)}
+        onError={(msg) => setError(resolveAuthError(new Error(msg), 'login.googleError'))}
         disabled={loading}
       />
     </div>
@@ -207,7 +206,7 @@ const LoginPage: React.FC = () => {
               icon={<Lock size={16} />}
             />
 
-            {error && <p className={styles.error}>{error}</p>}
+            {displayedError && <p className={styles.error}>{displayedError}</p>}
 
             <div className={styles.cardActions}>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
@@ -262,7 +261,7 @@ const LoginPage: React.FC = () => {
 
             {ssoAction}
 
-            {error && <p className={styles.error}>{error}</p>}
+            {displayedError && <p className={styles.error}>{displayedError}</p>}
           </section>
         )}
       </div>

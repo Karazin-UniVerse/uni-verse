@@ -175,8 +175,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it('should display localized corporate domain error in English without HTTP status code', async () => {
-    window.localStorage.setItem('universe-lang', 'en');
+  it('should display localized corporate domain error and re-translate it when switching language', async () => {
     const user = userEvent.setup();
 
     mockAuthApi.loginWithGoogle.mockRejectedValueOnce(
@@ -189,11 +188,20 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
 
     await waitFor(() => {
       expect(
-        screen.getAllByText('Sign in with a @student.karazin.ua or @karazin.ua email').length,
+        screen.getAllByText('Увійдіть з поштою @student.karazin.ua або @karazin.ua').length,
       ).toBeGreaterThanOrEqual(1);
     });
 
     expect(screen.queryByText(/HTTP 403/i)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /мова інтерфейсу/i }));
+    await user.click(screen.getByText('English'));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Sign in with a @student.karazin.ua or @karazin.ua email'),
+      ).toBeInTheDocument();
+    });
   });
 
   it('should set isLoggedIn = true and redirect to / when isMoodleIntegrationEnabled is true and account is already linked', async () => {
