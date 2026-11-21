@@ -26,6 +26,8 @@ async function bootstrap() {
     bodyParser: false,
   });
 
+  // First, so CORS preflights, parser errors and Swagger responses get the headers too.
+  app.use(helmet());
   configureBodyParsers(app);
   app.enableCors(getCorsConfig());
 
@@ -37,7 +39,6 @@ async function bootstrap() {
     SwaggerModule.setup('api', app, document);
   }
 
-  app.use(helmet());
   app.use(morgan(isProduction ? 'combined' : 'dev'));
   app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));

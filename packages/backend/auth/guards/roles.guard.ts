@@ -10,7 +10,7 @@ import type { Request } from 'express';
 import type { JwtPayload } from '../strategies/at.strategy';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 
-// Relies on AtStrategy, which loads `roles` from the database on every request.
+// Relies on AtStrategy, which loads `roles` from the user store on every request.
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}

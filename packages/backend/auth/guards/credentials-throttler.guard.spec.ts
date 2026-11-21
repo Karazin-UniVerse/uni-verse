@@ -35,6 +35,23 @@ describe('CredentialsThrottlerGuard', () => {
     ).resolves.toBe('victim');
   });
 
+  it.each(['/auth/moodle/link/', '/Auth/Moodle/LINK'])(
+    'treats route variant %j as Moodle link and ignores an injected email',
+    async (path) => {
+      await expect(
+        trackerFor(path, { username: 'victim', email: 'random@example.com' }),
+      ).resolves.toBe('victim');
+    },
+  );
+
+  it('keeps logins made only of non-ASCII characters in separate buckets', async () => {
+    const first = await trackerFor('/auth/login', { email: 'Іван' });
+    const second = await trackerFor('/auth/login', { email: 'петро' });
+
+    expect(first).toBe('іван');
+    expect(second).toBe('петро');
+  });
+
   it('keys login attempts by email and ignores an injected username', async () => {
     await expect(
       trackerFor('/auth/login', { email: 'victim', username: 'random' }),
@@ -61,13 +78,21 @@ describe('CredentialsThrottlerGuard', () => {
     expect(tracker).toBe('victim@karazin.ua');
   });
 
+  it('caps the tracker length', async () => {
+    const tracker = await trackerFor('/auth/login', {
+      email: 'ж'.repeat(10_000),
+    });
+
+    expect(tracker).toHaveLength(256);
+  });
+
   it('puts requests without a usable login into one shared bucket', async () => {
     await expect(trackerFor('/auth/login', { email: 42 })).resolves.toBe(
       'anonymous',
     );
-    await expect(trackerFor('/auth/login', { email: '!!!' })).resolves.toBe(
-      'anonymous',
-    );
+    await expect(
+      trackerFor('/auth/login', { email: ' \u0000 ' }),
+    ).resolves.toBe('anonymous');
     await expect(trackerFor('/auth/login', undefined)).resolves.toBe(
       'anonymous',
     );
