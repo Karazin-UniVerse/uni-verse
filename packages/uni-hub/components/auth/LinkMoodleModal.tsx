@@ -4,10 +4,15 @@ import React, { useState } from 'react';
 import { Lock, User } from 'lucide-react';
 import { Modal, Button, Form, useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { getErrorMessage } from '@uni-hub/services/api';
 import { useLinkMoodle } from '@uni-hub/hooks/useAuthMutations';
 import { AuthField } from './AuthField';
-import { LinkMoodleMode, getLinkMoodleContentKeys } from './helpers';
+import {
+  type AuthErrorState,
+  LinkMoodleMode,
+  formatAuthError,
+  getLinkMoodleContentKeys,
+  resolveAuthError,
+} from './helpers';
 import styles from './LinkMoodleModal.module.scss';
 
 export interface LinkMoodleModalProps {
@@ -26,14 +31,14 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
   const { formatMessage } = useLanguage();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<AuthErrorState>(null);
   const [prevOpen, setPrevOpen] = useState(open);
 
   if (prevOpen !== open) {
     setPrevOpen(open);
 
     if (!open) {
-      setError('');
+      setError(null);
     }
   }
 
@@ -42,7 +47,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
   const toast = useToast();
 
   const handleClose = (): void => {
-    setError('');
+    setError(null);
     onClose();
   };
 
@@ -50,18 +55,19 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
   const title = formatMessage(contentKeys.titleKey);
   const hint = formatMessage(contentKeys.hintKey);
   const submitLabel = formatMessage(contentKeys.submitKey);
+  const displayedError = formatAuthError(error, formatMessage);
 
   const handleLink = async (): Promise<void> => {
-    setError('');
+    setError(null);
 
     if (!username.trim()) {
-      setError(formatMessage('login.linkMoodleEnterUsername'));
+      setError({ key: 'login.linkMoodleEnterUsername' });
 
       return;
     }
 
     if (!password) {
-      setError(formatMessage('login.linkMoodleEnterPassword'));
+      setError({ key: 'login.linkMoodleEnterPassword' });
 
       return;
     }
@@ -70,13 +76,13 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
       await linkMoodle.mutateAsync({ username: username.trim(), password });
 
       toast.success(formatMessage(contentKeys.successKey));
-      setError('');
+      setError(null);
       onSuccess();
     } catch (err: unknown) {
-      const message = getErrorMessage(err, formatMessage('login.linkMoodleError'));
+      const authError = resolveAuthError(err, 'login.linkMoodleError');
 
-      setError(message);
-      toast.error(message);
+      setError(authError);
+      toast.error(formatAuthError(authError, formatMessage));
     }
   };
 
@@ -115,7 +121,7 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
           icon={<Lock size={16} />}
         />
 
-        {error && <p className={styles.error}>{error}</p>}
+        {displayedError && <p className={styles.error}>{displayedError}</p>}
 
         <div className={styles.actions}>
           <Button variant="secondary" onClick={handleClose} disabled={loading}>
