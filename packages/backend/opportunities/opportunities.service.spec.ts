@@ -99,11 +99,6 @@ describe('OpportunitiesService', () => {
               findUnique: jest.fn(),
               findMany: jest.fn(),
             },
-            userPhone: {
-              upsert: jest
-                .fn()
-                .mockResolvedValue({ phoneNumber: '+380501234567' }),
-            },
             notification: {
               deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
             },
@@ -234,7 +229,6 @@ describe('OpportunitiesService', () => {
             status: 'SUBMITTED',
           },
         });
-        expect(prisma.userPhone.upsert).not.toHaveBeenCalled();
       },
     );
 
