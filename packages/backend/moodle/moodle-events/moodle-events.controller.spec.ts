@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { PrismaService } from '../../prisma/prisma.service';
 import { MoodleEventsController } from './moodle-events.controller';
 import { MoodleEventsService } from './moodle-events.service';
 
@@ -12,7 +13,13 @@ describe('MoodleEventsController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MoodleEventsController],
-      providers: [{ provide: MoodleEventsService, useValue: mockService }],
+      providers: [
+        {
+          provide: PrismaService,
+          useValue: { user: { findUnique: jest.fn() } },
+        },
+        { provide: MoodleEventsService, useValue: mockService },
+      ],
     }).compile();
 
     controller = module.get<MoodleEventsController>(MoodleEventsController);

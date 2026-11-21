@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { PrismaService } from '../../prisma/prisma.service';
 import { MoodleStatisticsController } from './moodle-statistics.controller';
 import { MoodleStatisticsService } from './moodle-statistics.service';
 
@@ -12,7 +13,13 @@ describe('MoodleStatisticsController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MoodleStatisticsController],
-      providers: [{ provide: MoodleStatisticsService, useValue: MOCK_SERVICE }],
+      providers: [
+        {
+          provide: PrismaService,
+          useValue: { user: { findUnique: jest.fn() } },
+        },
+        { provide: MoodleStatisticsService, useValue: MOCK_SERVICE },
+      ],
     }).compile();
 
     controller = module.get<MoodleStatisticsController>(
