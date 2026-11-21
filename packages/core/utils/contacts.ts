@@ -2,7 +2,7 @@ const TELEGRAM_REGEX =
   /^(@[a-zA-Z][a-zA-Z0-9_]{3,31}|(https?:\/\/)?(www\.)?(t|telegram)\.me\/[a-zA-Z][a-zA-Z0-9_]{3,31}\/?)$/i;
 
 const PHONE_CHARS_REGEX = /^\+?[0-9\s\-()]+$/;
-const EMAIL_LOCAL_REGEX = /^[^\s@,;<>()[\]\\"]+$/;
+const EMAIL_LOCAL_REGEX = /^[^\s@:,;<>()[\]\\"]+$/;
 const EMAIL_DOMAIN_LABEL_REGEX = /^[a-zA-Z0-9-]+$/;
 
 export function isEmailContact(value: string): boolean {

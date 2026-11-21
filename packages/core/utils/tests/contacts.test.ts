@@ -78,6 +78,8 @@ describe('contacts utils', () => {
       assert.strictEqual(isValidContactInfo('@domain.com'), false);
       assert.strictEqual(isValidContactInfo('user@localhost'), false);
       assert.strictEqual(isValidContactInfo('user..name@example.com'), false);
+      assert.strictEqual(isValidContactInfo('mailto:student@example.com'), false);
+      assert.strictEqual(isValidContactInfo('user:name@example.com'), false);
       assert.strictEqual(isValidContactInfo('123@456.78'), false);
     });
 
