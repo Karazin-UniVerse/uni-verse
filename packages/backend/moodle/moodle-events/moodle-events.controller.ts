@@ -7,12 +7,13 @@ import {
 } from '@nestjs/swagger';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { AtGuard } from '../../auth/guards/at.guard';
+import { MoodleCredentialsGuard } from '../guards/moodle-credentials.guard';
 import { MoodleEventsService } from './moodle-events.service';
 import { CalendarEventDto } from './moodle-events-dto';
 
 @ApiTags('moodle')
 @Controller('moodle')
-@UseGuards(AtGuard)
+@UseGuards(AtGuard, MoodleCredentialsGuard)
 @ApiBearerAuth()
 export class MoodleEventsController {
   constructor(private readonly eventsService: MoodleEventsService) {}

@@ -24,8 +24,6 @@ import {
 export type GetTokensParams = {
   userId: string;
   email: string;
-  moodleToken?: string;
-  moodleId?: string;
   roles?: string[];
 };
 
@@ -85,8 +83,6 @@ export class AuthService {
     const tokens = await this.getTokens({
       userId: user.id,
       email: user.email,
-      moodleToken: user.token ?? undefined,
-      moodleId: user.moodleId ?? undefined,
       roles: user.roles,
     });
 
@@ -142,8 +138,6 @@ export class AuthService {
     const tokens = await this.getTokens({
       userId: user.id,
       email: user.email,
-      moodleToken,
-      moodleId,
       roles: user.roles,
     });
 
@@ -161,8 +155,6 @@ export class AuthService {
     const tokens = await this.getTokens({
       userId: user.id,
       email: user.email,
-      moodleToken: user.token ?? undefined,
-      moodleId: user.moodleId ?? undefined,
       roles: user.roles,
     });
 
@@ -292,8 +284,6 @@ export class AuthService {
     const tokens = await this.getTokens({
       userId: updatedUser.id,
       email: updatedUser.email,
-      moodleToken,
-      moodleId,
       roles: updatedUser.roles,
     });
 
@@ -358,8 +348,6 @@ export class AuthService {
     const tokens = await this.getTokens({
       userId: user.id,
       email: user.email,
-      moodleToken: user.token ?? undefined,
-      moodleId: user.moodleId ?? undefined,
       roles: user.roles,
     });
 
@@ -378,13 +366,7 @@ export class AuthService {
     return bcrypt.hash(data, 10);
   }
 
-  async getTokens({
-    userId,
-    email,
-    moodleToken,
-    moodleId,
-    roles,
-  }: GetTokensParams) {
+  async getTokens({ userId, email, roles }: GetTokensParams) {
     const atSecret = process.env.AT_SECRET;
     const rtSecret = process.env.RT_SECRET;
     const knownPlaceholders = new Set([
@@ -408,8 +390,6 @@ export class AuthService {
         {
           sub: userId,
           email,
-          moodleToken,
-          moodleId,
           roles,
         },
         {

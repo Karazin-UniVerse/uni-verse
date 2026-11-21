@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
+import { MoodleCredentialsGuard } from './guards/moodle-credentials.guard';
 import { MoodleClientService } from './moodle-client/moodle.client.service';
 import { MoodleController } from './moodle.controller';
-import { UserService } from '../user/user.service';
 import { MoodleCoursesService } from './moodle-courses/moodle-courses.service';
 import { MoodleGradesService } from './moodle-grades/moodle-grades.service';
 import { MoodleAssignmentsService } from './moodle-assignments/moodle-assignments.service';
@@ -32,7 +32,7 @@ import { MoodleProfileController } from './moodle-profile/moodle-profile.control
   ],
   providers: [
     MoodleClientService,
-    UserService,
+    MoodleCredentialsGuard,
     MoodleCoursesService,
     MoodleGradesService,
     MoodleAssignmentsService,
