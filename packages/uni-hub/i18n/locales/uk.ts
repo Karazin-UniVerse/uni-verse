@@ -443,6 +443,13 @@ export const uk = {
     'Використайте номер, уже закріплений за вашим обліковим записом, або Telegram.',
   'opportunities.errors.withdrawalLimitReached':
     'Ви вже відкликали відгук на цю можливість максимальну кількість разів ({limit}).',
+  'opportunities.tabs.favorites': 'Обрані',
+  'opportunities.favorites.add': 'Додати до обраного',
+  'opportunities.favorites.remove': 'Видалити з обраного',
+  'opportunities.favorites.empty': 'Ви ще не додали жодної можливості до обраного.',
+  'opportunities.filteredEmpty': 'Можливостей за обраними фільтрами не знайдено.',
+  'opportunities.unavailable.temporary': 'Тимчасово недоступна',
+  'opportunities.unavailable.permanent': 'Більше недоступна',
   'opportunities.tabs.catalog': 'Каталог',
   'opportunities.tabs.catalogShort': 'Каталог',
   'opportunities.tabs.myOpportunities': 'Мої можливості',
@@ -679,6 +686,8 @@ export const uk = {
   'notifications.opportunityReadyForReview.title': 'Нова можливість на модерацію',
   'notifications.opportunityReadyForReview.message':
     'Можливість «{opportunityTitle}» надіслано на перевірку.',
+  'notifications.opportunityUpdated.title': 'Оновлення обраної можливості',
+  'notifications.opportunityUpdated.message': 'Можливість «{opportunityTitle}» оновлено.',
   'notifications.opportunityModerated.title': 'Результат модерації можливості',
   'notifications.opportunityModerated.message': 'Можливість «{opportunityTitle}» {action}.',
   'notifications.opportunityModerated.messageWithComment':
