@@ -69,7 +69,12 @@ describe('CreateOpportunityDto', () => {
     },
   );
 
-  it.each(['@ivan_dev_tg', 'https://t.me/ivan_dev_tg', '+380671234567'])(
+  it.each([
+    '@ivan_dev_tg',
+    'https://t.me/ivan_dev_tg',
+    '+380671234567',
+    'ivan.project@gmail.com',
+  ])(
     'should accept a single valid organizer contact %s',
     (ownerContactInfo) => {
       const dto = plainToInstance(CreateOpportunityDto, {
@@ -84,7 +89,6 @@ describe('CreateOpportunityDto', () => {
   it.each([
     '@ivan_dev_tg, ivan.project@gmail.com',
     '@ivan_dev_tg @second_tg',
-    'ivan.project@gmail.com',
     'Contact our department reception',
   ])(
     'should reject multiple or invalid organizer contacts %s',

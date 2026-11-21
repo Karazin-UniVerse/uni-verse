@@ -71,13 +71,24 @@ describe('contacts utils', () => {
       }
     });
 
-    test('rejects empty or invalid formats', () => {
+    test('validates email addresses', () => {
+      assert.strictEqual(isValidContactInfo('alinavasylchenko586@gmail.com'), true);
+      assert.strictEqual(isValidContactInfo('ivan.project+dev@student.karazin.ua'), true);
+      assert.strictEqual(isValidContactInfo('invalid@'), false);
+      assert.strictEqual(isValidContactInfo('@domain.com'), false);
+      assert.strictEqual(isValidContactInfo('user@localhost'), false);
+      assert.strictEqual(isValidContactInfo('user..name@example.com'), false);
+      assert.strictEqual(isValidContactInfo('123@456.78'), false);
+    });
+
+    test('rejects empty, multiple, or invalid formats', () => {
       assert.strictEqual(isValidContactInfo(''), false);
       assert.strictEqual(isValidContactInfo('   '), false);
       assert.strictEqual(isValidContactInfo(null), false);
       assert.strictEqual(isValidContactInfo(undefined), false);
       assert.strictEqual(isValidContactInfo('random text'), false);
-      assert.strictEqual(isValidContactInfo('email@example.com'), false);
+      assert.strictEqual(isValidContactInfo('@ivan_dev_tg, ivan.project@gmail.com'), false);
+      assert.strictEqual(isValidContactInfo('first@example.com, second@example.com'), false);
     });
   });
 });

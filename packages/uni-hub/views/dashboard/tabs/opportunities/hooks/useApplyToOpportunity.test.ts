@@ -61,6 +61,7 @@ describe('useApplyToOpportunity alternative contact', () => {
     { contact: '', expected: '' },
     { contact: '   ', expected: '' },
     { contact: '  @student_dev  ', expected: '@student_dev' },
+    { contact: '  alinavasylchenko586@gmail.com  ', expected: 'alinavasylchenko586@gmail.com' },
   ])(
     'should submit with alternative contact $contact without copying profile email',
     async ({ contact, expected }) => {
@@ -93,7 +94,9 @@ describe('useApplyToOpportunity alternative contact', () => {
 
     expect(apply).not.toHaveBeenCalled();
     expect(
-      screen.getByText('Вкажіть коректний Telegram (@username або посилання) або номер телефону'),
+      screen.getByText(
+        'Вкажіть коректний Telegram (@username або посилання), електронну пошту або номер телефону',
+      ),
     ).toBeInTheDocument();
   });
 
