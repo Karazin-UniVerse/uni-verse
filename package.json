@@ -21,6 +21,7 @@
     "format:check": "prettier --check .",
     "skills:sync": "node scripts/sync-skills.mjs",
     "skills:check": "node scripts/sync-skills.mjs --check",
+    "test:skills": "node --test scripts/tests/sync-skills.test.mjs",
     "gemini:sync": "node scripts/sync-gemini-context.mjs",
     "gemini:check": "node scripts/sync-gemini-context.mjs --check",
     "prepare": "husky",
@@ -45,26 +46,26 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "husky": "^9.1.7",
-    "knip": "6.44.2",
+    "knip": "6.45.1",
     "lint-staged": "^17.6.0",
     "oxlint": "^1.93.0",
-    "prettier": "^3.9.10",
-    "puppeteer-core": "^25.16.0",
+    "prettier": "^3.10.1",
+    "puppeteer-core": "^25.17.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "sass-embedded": "^1.105.2",
+    "sass-embedded": "^1.108.2",
     "stylelint": "^17.16.0",
     "stylelint-config-standard": "^40.0.0",
     "stylelint-config-standard-scss": "^17.0.0",
-    "turbo": "^2.11.10",
+    "turbo": "^2.11.11",
     "typescript": "^6.0.3",
-    "vitest": "5.0.5"
+    "vitest": "5.1.0"
   },
   "pnpm": {
     "overrides": {
-      "vitest": "5.0.5",
-      "@vitest/browser-playwright": "5.0.5",
-      "@vitest/coverage-v8": "5.0.5"
+      "vitest": "5.1.0",
+      "@vitest/browser-playwright": "5.1.0",
+      "@vitest/coverage-v8": "5.1.0"
     }
   }
 }

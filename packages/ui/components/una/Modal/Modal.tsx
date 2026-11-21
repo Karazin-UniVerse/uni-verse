@@ -1,4 +1,5 @@
 import React, { useId, useRef } from 'react';
+import clsx from 'clsx';
 import { X } from 'lucide-react';
 import { useClickOutside } from '../../../hooks/useClickOutside';
 import { useEscapeKey } from '../../../hooks/useEscapeKey';
@@ -68,7 +69,7 @@ export const Modal: React.FC<ModalProps> = ({
         aria-label={dialogAriaLabel}
         tabIndex={-1}
       >
-        {(title || closeButton) && (
+        {(title || description || closeButton) && (
           <div className={styles.header}>
             {(title || description) && (
               <div className={styles.heading}>
@@ -97,7 +98,7 @@ export const Modal: React.FC<ModalProps> = ({
             )}
           </div>
         )}
-        <div className={styles.body}>{children}</div>
+        <div className={clsx(styles.body, footer && styles.bodyWithFooter)}>{children}</div>
         {footer && <div className={styles.footer}>{footer}</div>}
       </div>
     </div>

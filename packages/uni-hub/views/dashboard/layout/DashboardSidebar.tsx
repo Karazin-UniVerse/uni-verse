@@ -287,6 +287,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             compact
             showLabel={!collapsed || mobileMenuOpen}
             variant="sider"
+            isFullWidth
             placement="top-start"
           />
           <ThemeSwitcher

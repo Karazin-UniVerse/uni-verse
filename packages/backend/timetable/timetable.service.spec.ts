@@ -404,7 +404,7 @@ describe('TimetableService', () => {
       isCancelled: false,
       stableKey: 'assignment-1:2026-09-07:1',
     };
-    const calendar = { id: 'calendar-1', makeupSaturdays: [] };
+    const calendar = { id: 'calendar-1', startDate: new Date('2026-09-07'), teachingWeeks: 16, excludedDates: [], makeupSaturdays: [] };
     const draft = {
       id: 'version-1',
       status: 'DRAFT',
@@ -431,6 +431,59 @@ describe('TimetableService', () => {
       mockTimetableEventPrisma.update.mockImplementation(
         async ({ data, where }) => ({ ...event, id: where.id, ...data }),
       );
+    });
+
+    it('moves a slot within the teaching week starting on Wednesday', async () => {
+      mockTimetableVersionPrisma.findUnique.mockResolvedValue({
+        ...draft,
+        semesterCalendar: { ...calendar, startDate: new Date('2026-09-02') },
+        events: [{ ...event, date: new Date('2026-09-02') }],
+      });
+
+      const result = await service.adjustDraftSlot(draft.id, { ...slot, fromWeekday: 3, toWeekday: 1 });
+
+      expect(result.events[0].date).toBe('2026-09-07');
+    });
+
+    it('rejects an adjustment that puts the first lecture after practice', async () => {
+      mockTimetableVersionPrisma.findUnique.mockResolvedValue({
+        ...draft,
+        events: [event, { ...event, id: 'practice', teachingAssignmentId: 'practice-assignment', teachingTypeSnapshot: TeachingType.PRACTICAL, pair: 3 }],
+      });
+
+      await expect(service.adjustDraftSlot(draft.id, slot)).rejects.toThrow(ConflictException);
+      expect(mockTimetableEventPrisma.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects publication after an assignment has been archived', async () => {
+      mockTimetableVersionPrisma.findUnique.mockResolvedValue({
+        ...draft,
+        events: [{ ...event, teachingAssignment: { ...assignment, curriculumPlanId: 'plan', deletedAt: new Date(), academicHours: 2 } }],
+      });
+
+      await expect(service.publishTimetableVersion(draft.id, 'admin')).rejects.toThrow(/archived/i);
+      expect(mockTimetableVersionPrisma.update).not.toHaveBeenCalled();
+    });
+
+    it('publishes a candidate when confirmed unavailability affects only an external lesson', async () => {
+      mockTimetableEventPrisma.findMany.mockResolvedValue([{ ...event, id: 'external', teacherIdSnapshot: 'other-teacher', date: new Date('2026-09-08') }]);
+      mockTeacherUnavailabilityPrisma.findMany.mockResolvedValue([{ teacherId: 'other-teacher', date: new Date('2026-09-08'), pair: 1, isConfirmed: true }]);
+      mockTimetableVersionPrisma.update.mockResolvedValue({ ...draft, status: 'PUBLISHED' });
+
+      await expect(service.publishTimetableVersion(draft.id, 'admin')).resolves.toMatchObject({ status: 'PUBLISHED' });
+    });
+
+    it('rejects publication of a candidate with practice before its first lecture', async () => {
+      mockTimetableVersionPrisma.findUnique.mockResolvedValue({
+        ...draft,
+        events: [
+          { ...event, pair: 2 },
+          { ...event, id: 'practice', teachingAssignmentId: 'practice-assignment', teachingTypeSnapshot: TeachingType.PRACTICAL },
+        ],
+      });
+
+      await expect(service.publishTimetableVersion(draft.id, 'admin')).rejects.toThrow(ConflictException);
+      expect(mockTimetableVersionPrisma.update).not.toHaveBeenCalled();
     });
 
     it('requires regeneration before editing an assignment with source-day Saturdays', async () => {
@@ -1599,11 +1652,14 @@ describe('TimetableService', () => {
           },
         );
 
+        let mainThreadYielded = false;
+        setImmediate(() => { mainThreadYielded = true; });
         const result = await service.generateTimetableDraft('plan-1', {
           maxCandidates: 2,
           userId: 'admin-1',
         });
 
+        expect(mainThreadYielded).toBe(true);
         expect(result.versionId).toBe('ver-1');
         expect(mockTeachingAssignmentPrisma.findMany).toHaveBeenCalledWith(
           expect.objectContaining({

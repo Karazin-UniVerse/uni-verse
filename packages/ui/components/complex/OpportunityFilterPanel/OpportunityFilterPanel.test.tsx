@@ -99,6 +99,35 @@ describe('OpportunityFilterPanel', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('should select a tag when clicking its label row instead of the checkbox', async () => {
+    const user = userEvent.setup();
+    const onApply = vi.fn();
+
+    render(
+      <OpportunityFilterPanel
+        value={emptyValue}
+        onApply={onApply}
+        labels={labels}
+        tagGroups={tagGroups}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Open filters' }));
+    await user.click(screen.getByRole('button', { name: 'Tags' }));
+    await user.click(screen.getByText('Law'));
+
+    expect(screen.getByRole('checkbox', { name: 'Law' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Tags' })).toHaveAttribute('aria-expanded', 'true');
+
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(onApply).toHaveBeenCalledExactlyOnceWith({
+      paymentType: '',
+      isRecruiting: false,
+      tags: ['LAW'],
+    });
+  });
+
   it('should discard unapplied changes when the panel is reopened', async () => {
     const user = userEvent.setup();
 

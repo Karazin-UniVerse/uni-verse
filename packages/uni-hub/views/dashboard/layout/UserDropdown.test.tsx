@@ -278,4 +278,28 @@ describe('UserDropdown', () => {
 
     expect(screen.getByText('barsukov.rodion@student.karazin.ua')).toBeInTheDocument();
   });
+
+  it('should render mobile items including language and theme switchers when opened', async () => {
+    const user = userEvent.setup();
+
+    render(
+      withAppProviders(
+        <UserDropdown
+          activeStudentProfile={fallbackStudentProfile}
+          soundEnabled={true}
+          onToggleSound={vi.fn()}
+          onLogout={vi.fn()}
+        />,
+      ),
+    );
+
+    const trigger = screen.getByRole('button', { name: /меню профілю користувача/i });
+
+    await user.click(trigger);
+
+    const langTrigger = screen.getByRole('button', { name: /мова інтерфейсу/i });
+
+    expect(langTrigger).toBeInTheDocument();
+    expect(langTrigger.className).toContain('fullWidthTrigger');
+  });
 });

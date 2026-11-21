@@ -1,7 +1,7 @@
 import React from 'react';
-import clsx from 'clsx';
 import { Briefcase } from 'lucide-react';
 import { Tag } from '@una';
+import { CategoryPill } from '@ui';
 import type { Opportunity } from '@core/types/opportunities';
 import styles from '../../OpportunityCard.module.scss';
 import type { FormatMessage } from '@uni-hub/i18n/LanguageContext';
@@ -25,21 +25,20 @@ export const OpportunityCardTop: React.FC<Props> = ({
 }) => (
   <div className={styles.cardTop}>
     <div className={styles.cardBadgeRow}>
-      <div
-        className={clsx(styles.categoryPill, isPaid ? styles.paidCategory : styles.unpaidCategory)}
-      >
-        <Briefcase size={12} />
-        <span>
-          {isPaid
+      <CategoryPill
+        icon={<Briefcase size={12} />}
+        label={
+          isPaid
             ? formatMessage('opportunities.card.vacancy')
-            : formatMessage('opportunities.card.practice')}
-        </span>
-      </div>
+            : formatMessage('opportunities.card.practice')
+        }
+        tone={isPaid ? 'success' : 'info'}
+      />
 
       {opportunity.acceptsApplications === false && (
-        <span className={styles.closedPill}>
+        <Tag tone="neutral" size="small">
           {formatMessage('opportunities.card.applicationsClosedBadge')}
-        </span>
+        </Tag>
       )}
 
       {isOwner ? (
