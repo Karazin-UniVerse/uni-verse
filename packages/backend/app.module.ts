@@ -11,6 +11,7 @@ import { OpportunitiesModule } from './opportunities/opportunities.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { GripModule } from './grip/grip.module';
 import { AtGuard } from './auth/guards/at.guard';
+import { CsrfGuard } from './auth/guards/csrf.guard';
 
 @Module({
   imports: [
@@ -26,6 +27,10 @@ import { AtGuard } from './auth/guards/at.guard';
   controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_GUARD,
+      useClass: CsrfGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: AtGuard,

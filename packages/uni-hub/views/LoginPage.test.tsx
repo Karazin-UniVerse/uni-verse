@@ -88,7 +88,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     const user = userEvent.setup();
 
     mockAuthApi.loginWithGoogle.mockResolvedValueOnce({
-      data: { isLinked: false, access_token: 'mock-token' },
+      data: { isLinked: false },
     });
 
     renderLoginPage();
@@ -117,7 +117,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     const user = userEvent.setup();
 
     mockAuthApi.loginWithGoogle.mockResolvedValueOnce({
-      data: { isLinked: false, access_token: 'mock-token' },
+      data: { isLinked: false },
     });
 
     renderLoginPage();
@@ -138,7 +138,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     const user = userEvent.setup();
 
     mockAuthApi.loginWithGoogle.mockResolvedValueOnce({
-      data: { isLinked: false, access_token: 'mock-token' },
+      data: { isLinked: false },
     });
 
     renderLoginPage();
@@ -177,7 +177,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     const user = userEvent.setup();
 
     mockAuthApi.loginWithGoogle.mockResolvedValueOnce({
-      data: { isLinked: true, access_token: 'mock-token' },
+      data: { isLinked: true },
     });
 
     renderLoginPage();
@@ -200,7 +200,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     const user = userEvent.setup();
 
     mockAuthApi.loginWithGoogle.mockResolvedValueOnce({
-      data: { isLinked: false, access_token: 'mock-token' },
+      data: { isLinked: false },
     });
     mockAuthApi.linkMoodleAccount.mockResolvedValueOnce({});
 
@@ -232,7 +232,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     const user = userEvent.setup();
 
     mockAuthApi.loginWithGoogle.mockResolvedValueOnce({
-      data: { isLinked: false, access_token: 'mock-token' },
+      data: { isLinked: false },
     });
 
     renderLoginPage();
@@ -258,7 +258,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
     const user = userEvent.setup();
 
     mockAuthApi.loginWithGoogle.mockResolvedValueOnce({
-      data: { isLinked: false, access_token: 'mock-token' },
+      data: { isLinked: false },
     });
 
     renderLoginPage();

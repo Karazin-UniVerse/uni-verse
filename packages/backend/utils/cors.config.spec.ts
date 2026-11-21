@@ -1,4 +1,4 @@
-import { getCorsConfig } from './cors.config';
+import { getCorsConfig, isAllowedOrigin } from './cors.config';
 
 describe('getCorsConfig', () => {
   const cors = getCorsConfig();
@@ -41,5 +41,25 @@ describe('getCorsConfig', () => {
       expect(allow).toBe(false);
       done();
     });
+  });
+
+  it('validates origins directly with isAllowedOrigin', () => {
+    expect(isAllowedOrigin('https://universemvp.tech')).toBe(true);
+    expect(isAllowedOrigin('http://universemvp.tech')).toBe(false);
+    expect(isAllowedOrigin('https://evil.example')).toBe(false);
+    expect(isAllowedOrigin('not-a-url')).toBe(false);
+  });
+
+  it('blocks localhost origins in production mode', () => {
+    const originalEnv = process.env.NODE_ENV;
+
+    process.env.NODE_ENV = 'production';
+
+    try {
+      expect(isAllowedOrigin('http://localhost:3000')).toBe(false);
+      expect(isAllowedOrigin('https://universemvp.tech')).toBe(true);
+    } finally {
+      process.env.NODE_ENV = originalEnv;
+    }
   });
 });

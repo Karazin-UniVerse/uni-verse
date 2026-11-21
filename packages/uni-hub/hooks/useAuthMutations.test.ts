@@ -38,7 +38,16 @@ afterEach(() => {
 describe('googleLoginMutationOptions', () => {
   it('drops the cache of the previous user after a successful Google login', async () => {
     vi.spyOn(authApi, 'loginWithGoogle').mockResolvedValue({
-      data: { access_token: 'token', isLinked: false },
+      data: {
+        isLinked: false,
+        user: {
+          id: 'user-1',
+          email: 'student@karazin.ua',
+          name: 'Student',
+          roles: ['OPPORTUNITIES_USER'],
+          isLinked: false,
+        },
+      },
     });
 
     const queryClient = seedPreviousUser();

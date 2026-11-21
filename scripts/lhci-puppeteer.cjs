@@ -1,34 +1,23 @@
 const { mockOpportunities } = require('./lhci-api.cjs');
 
-function buildFakeJwt() {
-  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
-  const payload = Buffer.from(
-    JSON.stringify({
-      sub: 'student-lhci-1',
-      email: 'student.lhci@student.karazin.ua',
-      name: 'Студент Тестовий',
-      roles: ['OPPORTUNITIES_USER'],
-    }),
-  ).toString('base64url');
-
-  return `${header}.${payload}.signature`;
-}
-
-/**
- * @param {import('puppeteer-core').Browser} browser
- */
 module.exports = async (browser) => {
   const page = await browser.newPage();
-  const fakeToken = buildFakeJwt();
+  const sessionUser = {
+    id: 'student-lhci-1',
+    email: 'student.lhci@student.karazin.ua',
+    name: 'Студент Тестовий',
+    roles: ['OPPORTUNITIES_USER'],
+    isLinked: false,
+  };
 
   try {
     await page.goto('http://localhost:3000/login', { waitUntil: 'domcontentloaded' });
-    await page.evaluate((token) => {
+    await page.evaluate((user) => {
       localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('accessToken', token);
+      localStorage.setItem('sessionUser', JSON.stringify(user));
       localStorage.setItem('username', 'Студент Тестовий');
       localStorage.setItem('isMoodleLinked', 'false');
-    }, fakeToken);
+    }, sessionUser);
   } finally {
     await page.close();
   }
