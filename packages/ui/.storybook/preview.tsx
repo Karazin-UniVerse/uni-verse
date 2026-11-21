@@ -10,6 +10,7 @@ const THEME_TITLES: Record<AppTheme, string> = {
   karazinClassic: 'Karazin Classic',
   universeSpace: 'UniVerse Space',
   karazinGold: 'Karazin Gold',
+  jinx: 'Jinx',
 };
 
 const preview: Preview = {

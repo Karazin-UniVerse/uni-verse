@@ -21,6 +21,9 @@ const ThemeConsumer = () => {
       <button type="button" onClick={() => setTheme('karazinClassic')}>
         Set Karazin Classic
       </button>
+      <button type="button" onClick={() => setTheme('jinx')}>
+        Set Jinx
+      </button>
     </div>
   );
 };
@@ -110,6 +113,23 @@ describe('ThemeContext', () => {
     expect(screen.getByTestId('theme-value')).toHaveTextContent('dark');
     expect(document.documentElement.dataset.colorScheme).toBe('dark');
     expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+
+  it('should load and apply the jinx theme with dark color scheme', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ThemeProvider>
+        <ThemeConsumer />
+      </ThemeProvider>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Set Jinx' }));
+
+    expect(screen.getByTestId('theme-value')).toHaveTextContent('jinx');
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('jinx');
+    expect(document.documentElement.dataset.theme).toBe('jinx');
+    expect(document.documentElement.dataset.colorScheme).toBe('dark');
   });
 
   it("should fallback to 'karazinClassic' if stored theme is invalid", () => {

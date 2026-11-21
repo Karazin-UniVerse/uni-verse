@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { ClipboardList, PartyPopper, Search } from 'lucide-react';
 import { Empty } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 
@@ -19,7 +20,7 @@ export const AssignmentsEmptyState: React.FC<AssignmentsEmptyStateProps> = ({
     return (
       <Empty
         description={formatMessage('assignments.emptyNotFound')}
-        icon={<span style={{ fontSize: '48px' }}>📝</span>}
+        icon={<ClipboardList size={48} strokeWidth={1.5} aria-hidden />}
       />
     );
   }
@@ -28,7 +29,7 @@ export const AssignmentsEmptyState: React.FC<AssignmentsEmptyStateProps> = ({
     return (
       <Empty
         description={formatMessage('assignments.emptyDateFilter')}
-        icon={<span style={{ fontSize: '48px' }}>🔍</span>}
+        icon={<Search size={48} strokeWidth={1.5} aria-hidden />}
       />
     );
   }
@@ -36,7 +37,7 @@ export const AssignmentsEmptyState: React.FC<AssignmentsEmptyStateProps> = ({
   return (
     <Empty
       description={formatMessage('assignments.emptyAllDone')}
-      icon={<span style={{ fontSize: '48px' }}>🏖️</span>}
+      icon={<PartyPopper size={48} strokeWidth={1.5} aria-hidden />}
     />
   );
 };
