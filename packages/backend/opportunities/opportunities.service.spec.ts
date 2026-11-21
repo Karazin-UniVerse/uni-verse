@@ -1438,10 +1438,10 @@ describe('OpportunitiesService', () => {
         id: '1',
         status: 'PUBLISHED',
         ownerId: 'other',
-      } as any);
+      });
 
       await expect(
-        service.changeLifecycleState('user-1', '1', 'ACTIVE' as any),
+        service.changeLifecycleState('user-1', '1', 'ACTIVE'),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -1451,12 +1451,12 @@ describe('OpportunitiesService', () => {
         id: '1',
         status: 'PUBLISHED',
         ownerId: 'user-1',
-      } as any);
+      });
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         ...publishedOpportunity,
         id: '1',
         lifecycleState: 'PAUSED',
-      } as any);
+      });
 
       const result = await service.changeLifecycleState(
         'user-1',
@@ -1483,12 +1483,12 @@ describe('OpportunitiesService', () => {
         id: '1',
         status: 'PUBLISHED',
         ownerId: 'user-1',
-      } as any);
+      });
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         ...publishedOpportunity,
         id: '1',
         lifecycleState: 'ACTIVE',
-      } as any);
+      });
 
       const result = await service.changeLifecycleState(
         'user-1',

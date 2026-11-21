@@ -436,6 +436,7 @@ export const en = {
   'opportunities.contactHint': 'Your profile email will be shown automatically.',
   'opportunities.errors.changesRequired':
     'Before resubmitting, change the opportunity title, description, contacts or payment terms.',
+  'opportunities.errors.lifecycleConflict': 'The opportunity was modified. Reload and try again.',
   'opportunities.errors.alreadyApplied': 'You have already applied to this opportunity.',
   'opportunities.errors.phoneUnavailable': 'This phone number is unavailable for this account.',
   'opportunities.errors.phoneAlreadySet':
@@ -444,6 +445,7 @@ export const en = {
     'You have already withdrawn your application for this opportunity the maximum number of times ({limit}).',
   'opportunities.tabs.favorites': 'Favorites',
   'opportunities.favorites.add': 'Add to favorites',
+  'opportunities.favorites.toggle': 'Favorite',
   'opportunities.favorites.remove': 'Remove from favorites',
   'opportunities.favorites.empty': 'You have not saved any opportunities yet.',
   'opportunities.filteredEmpty': 'No opportunities match your filters.',
@@ -485,6 +487,8 @@ export const en = {
   'opportunities.toast.rejected': 'Opportunity rejected',
   'opportunities.toast.requiresChanges': 'Opportunity returned to the author for revision',
   'opportunities.toast.moderateError': 'Moderation error',
+  'opportunities.toast.favoriteAdded': 'Added to favorites. You will receive updates.',
+  'opportunities.toast.favoriteRemoved': 'Removed from favorites.',
   'common.error.load': 'Failed to load data',
   'common.error.retry': 'Try again',
   'opportunities.card.defaultOwner': 'Karazin University',
@@ -685,6 +689,13 @@ export const en = {
     'Opportunity "{opportunityTitle}" has been submitted for moderation.',
   'notifications.opportunityUpdated.title': 'Favorite opportunity updated',
   'notifications.opportunityUpdated.message': 'Opportunity "{opportunityTitle}" has been updated.',
+  'notifications.opportunityLifecycle.START': 'Opportunity "{opportunityTitle}" has started',
+  'notifications.opportunityLifecycle.ACTIVE': 'Opportunity "{opportunityTitle}" is now active',
+  'notifications.opportunityLifecycle.PAUSED': 'Opportunity "{opportunityTitle}" has been paused',
+  'notifications.opportunityLifecycle.COMPLETED':
+    'Opportunity "{opportunityTitle}" has been completed',
+  'notifications.opportunityLifecycle.CANCELLED':
+    'Opportunity "{opportunityTitle}" has been cancelled',
   'notifications.opportunityModerated.title': 'Opportunity Moderation Result',
   'notifications.opportunityModerated.message': 'Opportunity "{opportunityTitle}" {action}.',
   'notifications.opportunityModerated.messageWithComment':

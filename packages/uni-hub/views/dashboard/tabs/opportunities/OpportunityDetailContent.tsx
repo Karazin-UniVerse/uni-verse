@@ -15,6 +15,7 @@ import { useApplicants } from './hooks/useApplicants';
 import { useApplicantsDeepLink } from './hooks/useApplicantsDeepLink';
 import { useApplyToOpportunity } from './hooks/useApplyToOpportunity';
 import { useCreateOpportunity } from './hooks/useCreateOpportunity';
+import { useFavorites } from './hooks/useFavorites';
 import { useOpportunityActions } from './hooks/useOpportunityActions';
 import { ApplicantsModal } from './modals/ApplicantsModal';
 import { ApplyOpportunityModal } from './modals/ApplyOpportunityModal';
@@ -34,6 +35,12 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
   const create = useCreateOpportunity({ currentOpportunity: opportunity });
   const apply = useApplyToOpportunity({ currentUser, opportunity });
   const applicants = useApplicants();
+  const canFavorite =
+    Boolean(currentUser.userId) &&
+    currentUser.userId !== opportunity.ownerId &&
+    opportunity.status === OPPORTUNITY_STATUS.PUBLISHED;
+  const favorites = useFavorites(canFavorite, { notifyOnSuccess: true });
+  const isFavorite = favorites.savedIds.has(opportunity.id);
   const canModerate =
     Boolean(currentUser.userId) &&
     currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR) &&
@@ -76,6 +83,13 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
         onDelete={() => setDeleteConfirmOpen(true)}
         onOpenApply={() => apply.setIsApplyOpen(true)}
         onOpenApplicants={() => applicants.open(opportunity)}
+        isFavorite={isFavorite}
+        onToggleFavorite={
+          canFavorite ? () => favorites.toggle(opportunity.id, isFavorite) : undefined
+        }
+        isFavoritePending={
+          !favorites.query.isSuccess || favorites.pendingIds.includes(opportunity.id)
+        }
       />
 
       {canModerate && (

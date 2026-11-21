@@ -44,12 +44,12 @@ const application: OpportunityApplication = {
   updatedAt: '2026-10-01T10:00:00Z',
 };
 
-function renderDetail(): ReturnType<typeof render> {
+function renderDetail(opportunity = buildOpportunity('opportunity-1')): ReturnType<typeof render> {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
 
-  return render(<OpportunityDetailContent opportunity={buildOpportunity('opportunity-1')} />, {
+  return render(<OpportunityDetailContent opportunity={opportunity} />, {
     wrapper: ({ children }) => (
       <QueryClientProvider client={queryClient}>
         <ToastProvider>{children}</ToastProvider>
@@ -69,6 +69,31 @@ describe('OpportunityDetailContent applicants deep-link', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('toggles a published opportunity in favorites and updates its pressed state', async () => {
+    userId = 'candidate-1';
+    const user = userEvent.setup();
+    const opportunity = { ...buildOpportunity('opportunity-1'), status: 'PUBLISHED' } as const;
+    const listFavorites = vi
+      .spyOn(opportunitiesApi, 'getFavorites')
+      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValue({ data: [opportunity] });
+    const setFavorite = vi
+      .spyOn(opportunitiesApi, 'setFavorite')
+      .mockResolvedValue({ data: { saved: true } });
+
+    renderDetail(opportunity);
+
+    const button = screen.getByRole('button', { name: 'opportunities.favorites.toggle' });
+
+    await waitFor(() => expect(button).toBeEnabled());
+    expect(button).toHaveAttribute('aria-pressed', 'false');
+    await user.click(button);
+
+    expect(setFavorite).toHaveBeenCalledWith(opportunity.id, true);
+    await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'true'));
+    expect(listFavorites).toHaveBeenCalledTimes(2);
   });
 
   it('opens from the URL, stays closed after closing, and allows manual reopening', async () => {

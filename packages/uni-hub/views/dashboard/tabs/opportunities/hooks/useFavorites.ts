@@ -18,7 +18,7 @@ const favoriteRefreshes = new WeakMap<QueryClient, Promise<void>>();
 type FavoriteMutation = { id: string; isFavorite: boolean };
 
 /** Loads saved IDs and tracks pending favorites by opportunity. */
-export function useFavorites(enabled: boolean) {
+export function useFavorites(enabled: boolean, { notifyOnSuccess = false } = {}) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const { formatMessage } = useLanguage();
@@ -28,7 +28,17 @@ export function useFavorites(enabled: boolean) {
     mutationKey: favoriteMutationKey,
     mutationFn: ({ id, isFavorite }: FavoriteMutation) =>
       opportunitiesApi.setFavorite(id, !isFavorite),
-    onSuccess: () => {
+    onSuccess: (_, { isFavorite }) => {
+      if (notifyOnSuccess) {
+        toast.success(
+          formatMessage(
+            isFavorite
+              ? 'opportunities.toast.favoriteRemoved'
+              : 'opportunities.toast.favoriteAdded',
+          ),
+        );
+      }
+
       // Keep overlapping writes from canceling one another's cache refresh.
       const refresh = (favoriteRefreshes.get(queryClient) ?? Promise.resolve()).then(() =>
         queryClient.invalidateQueries({ queryKey: favoriteMutationKey, exact: true }),

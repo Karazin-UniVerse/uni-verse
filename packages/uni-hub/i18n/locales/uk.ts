@@ -435,6 +435,8 @@ export const uk = {
   'opportunities.contactHint': 'Пошту з вашого профілю буде показано автоматично.',
   'opportunities.errors.changesRequired':
     'Перед повторним надсиланням змініть назву, опис, контакти або умови оплати можливості.',
+  'opportunities.errors.lifecycleConflict':
+    'Можливість було змінено. Оновіть сторінку та спробуйте ще раз.',
   'opportunities.errors.alreadyApplied': 'Ви вже подали заявку на цю можливість.',
   'opportunities.errors.phoneUnavailable':
     'Цей номер недоступний для використання цим обліковим записом.',
@@ -444,6 +446,7 @@ export const uk = {
     'Ви вже відкликали відгук на цю можливість максимальну кількість разів ({limit}).',
   'opportunities.tabs.favorites': 'Обрані',
   'opportunities.favorites.add': 'Додати до обраного',
+  'opportunities.favorites.toggle': 'Обране',
   'opportunities.favorites.remove': 'Видалити з обраного',
   'opportunities.favorites.empty': 'Ви ще не додали жодної можливості до обраного.',
   'opportunities.filteredEmpty': 'Можливостей за обраними фільтрами не знайдено.',
@@ -485,6 +488,8 @@ export const uk = {
   'opportunities.toast.rejected': 'Можливість відхилено',
   'opportunities.toast.requiresChanges': 'Можливість повернуто на доопрацювання автору',
   'opportunities.toast.moderateError': 'Помилка модерації',
+  'opportunities.toast.favoriteAdded': 'Додано до обраного. Ви отримуватимете оновлення.',
+  'opportunities.toast.favoriteRemoved': 'Видалено з обраного.',
   'common.error.load': 'Не вдалося завантажити дані',
   'common.error.retry': 'Спробувати знову',
   'opportunities.card.defaultOwner': 'Каразінський університет',
@@ -687,6 +692,11 @@ export const uk = {
     'Можливість «{opportunityTitle}» надіслано на перевірку.',
   'notifications.opportunityUpdated.title': 'Оновлення обраної можливості',
   'notifications.opportunityUpdated.message': 'Можливість «{opportunityTitle}» оновлено.',
+  'notifications.opportunityLifecycle.START': 'Можливість «{opportunityTitle}» розпочалась',
+  'notifications.opportunityLifecycle.ACTIVE': 'Можливість «{opportunityTitle}» тепер активна',
+  'notifications.opportunityLifecycle.PAUSED': 'Можливість «{opportunityTitle}» призупинена',
+  'notifications.opportunityLifecycle.COMPLETED': 'Можливість «{opportunityTitle}» завершена',
+  'notifications.opportunityLifecycle.CANCELLED': 'Можливість «{opportunityTitle}» скасована',
   'notifications.opportunityModerated.title': 'Результат модерації можливості',
   'notifications.opportunityModerated.message': 'Можливість «{opportunityTitle}» {action}.',
   'notifications.opportunityModerated.messageWithComment':

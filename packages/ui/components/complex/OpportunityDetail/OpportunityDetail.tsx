@@ -1,5 +1,5 @@
 import React, { useId } from 'react';
-import { Mail, MessageSquare, Send, Pencil, Users, Trash2 } from 'lucide-react';
+import { Mail, MessageSquare, Send, Pencil, Users, Bell, BellOff, Trash2 } from 'lucide-react';
 import { BackButton } from '../BackButton';
 import { Button } from '../../una/Button';
 import { Tag } from '../../una/Tag';
@@ -78,6 +78,8 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   onDelete,
   deleteText,
   className,
+  onToggleFavorite,
+  favoriteText,
   canDelete = false,
   sendToReviewDisabled = false,
   acceptsApplications = true,
@@ -86,6 +88,8 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   canEdit = false,
   canSendToReview = false,
   canApply = false,
+  isFavorite = false,
+  isFavoritePending = false,
 }) => {
   const reviewHintId = useId();
   const footerButton = getCandidateFooterButton({
@@ -96,6 +100,23 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
     acceptsApplications,
     applicationsClosedText,
   });
+
+  const favoriteButton =
+    !isOwner && onToggleFavorite && favoriteText ? (
+      <Button
+        variant="secondary"
+        onClick={onToggleFavorite}
+        disabled={isFavoritePending}
+        aria-pressed={isFavorite}
+      >
+        {isFavorite ? (
+          <BellOff size={14} className={styles.btnIcon} />
+        ) : (
+          <Bell size={14} className={styles.btnIcon} />
+        )}
+        {favoriteText}
+      </Button>
+    ) : null;
 
   return (
     <div className={className}>
@@ -219,7 +240,12 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
           </div>
         )}
 
-        {footerButton && <div className={styles.footer}>{footerButton}</div>}
+        {(footerButton || favoriteButton) && (
+          <div className={styles.footer}>
+            {favoriteButton}
+            {footerButton}
+          </div>
+        )}
       </div>
     </div>
   );
