@@ -353,8 +353,8 @@ export abstract class ApiClient {
   }
 }
 
-const HTTP_STATUS_SUFFIX_PATTERN = /\s*\(HTTP \d{3}\)$/;
-const HTTP_TRANSPORT_ERROR_PATTERN = /^HTTP error \d{3}(?::\s*.*)?$/i;
+const HTTP_STATUS_SUFFIX_PATTERN = /\(HTTP \d{3}\)$/;
+const HTTP_TRANSPORT_ERROR_PATTERN = /^HTTP error \d{3}(?::|$)/i;
 
 export function getErrorMessage(err: unknown, fallback: string): string {
   const resData = (err as { response?: { data?: { message?: string; error?: string } } })?.response
