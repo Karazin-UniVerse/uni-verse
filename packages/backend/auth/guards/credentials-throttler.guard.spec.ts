@@ -58,7 +58,7 @@ describe('CredentialsThrottlerGuard', () => {
     ).resolves.toBe('victim');
   });
 
-  it.each(['victim!', 'vic#tim', ' VICTIM\u0000\u0000', 'victim!!'])(
+  it.each(['victim!', 'vic#tim', ' VICTIM\u0000\u0000', 'victim!!', 'vic tim'])(
     'folds %j into the bucket Moodle authenticates as "victim"',
     async (spelling) => {
       await expect(
@@ -100,10 +100,23 @@ describe('CredentialsThrottlerGuard', () => {
       expect(second).toBe('олена.коваль');
     });
 
-    it('still folds case, whitespace and NUL variants of one login', async () => {
+    it('still folds case, outer whitespace and NUL variants of one login', async () => {
       await expect(
         trackerFor('/auth/login', { email: ' ІВАН\u0000.петренко ' }),
       ).resolves.toBe('іван.петренко');
+    });
+
+    it('keeps internal spaces so distinct Moodle logins stay in separate buckets', async () => {
+      const spaced = await trackerFor('/auth/login', {
+        email: ' ivan .petrenko ',
+      });
+      const compact = await trackerFor('/auth/login', {
+        email: 'ivan.petrenko',
+      });
+
+      expect(spaced).toBe('ivan .petrenko');
+      expect(compact).toBe('ivan.petrenko');
+      expect(spaced).not.toBe(compact);
     });
   });
 

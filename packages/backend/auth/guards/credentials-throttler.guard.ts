@@ -6,15 +6,17 @@ import type { Request } from 'express';
 type CredentialsBody = { email?: unknown; username?: unknown };
 
 // Mirrors Moodle's PARAM_USERNAME cleaning, so spellings Moodle treats as one login share one bucket.
-// With `extendedusernamechars` on, Moodle keeps non-ASCII characters; off (its default), it strips them.
+// With `extendedusernamechars` on, Moodle keeps non-ASCII characters and internal spaces; off (its default), it strips them.
 function toMoodleLogin(value: string): string {
-  const compact = value.replaceAll(/[\0\s]/g, '').toLowerCase();
+  const cleaned = value.replaceAll('\0', '').trim().toLowerCase();
 
   if (process.env.MOODLE_EXTENDED_USERNAME_CHARS === 'true') {
-    return compact;
+    return cleaned;
   }
 
-  // Logins made only of non-ASCII characters keep their compact form instead of all collapsing to ''.
+  // Non-extended PARAM_USERNAME strips whitespace and non-ASCII; logins made only of non-ASCII keep their compact form instead of all collapsing to ''.
+  const compact = cleaned.replaceAll(/\s+/g, '');
+
   return compact.replaceAll(/[^-.@_a-z0-9]/g, '') || compact;
 }
 
