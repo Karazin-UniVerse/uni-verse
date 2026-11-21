@@ -22,6 +22,7 @@ import * as bcrypt from 'bcrypt';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { BCRYPT_SALT_ROUNDS } from '../constants/auth';
 import { CreateUserDto, SelfUpdateUserDto, UserResponseDto } from './user-dto';
 import { UserService } from './user.service';
 
@@ -64,7 +65,10 @@ export class UserController {
     @Body() createUserDto: CreateUserDto,
   ): Promise<UserResponseDto> {
     if (createUserDto?.password) {
-      createUserDto.password = await bcrypt.hash(createUserDto.password, 10);
+      createUserDto.password = await bcrypt.hash(
+        createUserDto.password,
+        BCRYPT_SALT_ROUNDS,
+      );
     }
 
     const created = await this.userService.createUser(createUserDto);
@@ -105,7 +109,10 @@ export class UserController {
     }
 
     if (updateUserDto.password) {
-      updatePayload.password = await bcrypt.hash(updateUserDto.password, 10);
+      updatePayload.password = await bcrypt.hash(
+        updateUserDto.password,
+        BCRYPT_SALT_ROUNDS,
+      );
     }
 
     const updated = await this.userService.updateUser(id, updatePayload);

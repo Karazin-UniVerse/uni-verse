@@ -1,7 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import type { SessionUser } from '@universe/core/types/auth';
 import type { Response } from 'express';
+import { CREDENTIALS_THROTTLE } from '../constants/auth';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { GoogleAuthDto, LinkMoodleDto, LoginDto, RegisterDto } from './dto';
@@ -44,6 +46,7 @@ describe('AuthController', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
+      imports: [ThrottlerModule.forRoot([CREDENTIALS_THROTTLE])],
       controllers: [AuthController],
       providers: [
         {

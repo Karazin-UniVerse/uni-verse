@@ -4,6 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import cookieParser from 'cookie-parser';
 import { AppModule } from '../app.module';
+import { CREDENTIALS_THROTTLE } from '../constants/auth';
 import { GetCreds } from '../utils/get-creds';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -265,6 +266,20 @@ describe('AuthController (HTTP Integration / E2E)', () => {
         .expect(400);
 
       expect(res.status).toBe(400);
+    });
+
+    it('should throttle repeated login attempts for one account with 429', async () => {
+      const attempt = (email: string) =>
+        request(app.getHttpServer())
+          .post('/auth/login')
+          .send({ email, password: 'invalid-creds' });
+
+      for (let index = 0; index < CREDENTIALS_THROTTLE.limit; index += 1) {
+        await attempt('bruteforce-target@karazin.ua').expect(403);
+      }
+
+      await attempt('BruteForce-Target@karazin.ua').expect(429);
+      await attempt('other-account@karazin.ua').expect(403);
     });
   });
 

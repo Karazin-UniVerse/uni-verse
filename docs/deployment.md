@@ -82,6 +82,9 @@ not end in `/api`: that is the backend Swagger route, not an API prefix.
 The workflow rejects `FRONTEND_URL` with a trailing slash or an explicit
 scheme-default port (`:443` for https, `:80` for http) before building images,
 because the backend compares that value with the browser's slash-free, port-free Origin.
+CORS and the CSRF guard trust only `https://universemvp.tech` and `FRONTEND_URL`
+(plus any localhost origin outside production), so a new frontend address must
+be set as `FRONTEND_URL` or added in `packages/backend/utils/cors.config.ts`.
 
 `GCP_DEPLOY_ENABLED` is a **repository** variable under **Settings → Secrets and
 variables → Actions → Variables**, not an environment variable. Leave it unset
