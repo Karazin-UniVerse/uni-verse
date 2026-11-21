@@ -41,11 +41,6 @@ import {
   OpportunityTag,
 } from '@universe/database';
 import { Public } from '../auth/decorators/public.decorator';
-import { isUnavailableOpportunity } from '@universe/core/utils/opportunities';
-import type {
-  UnavailableOpportunity,
-  OpportunityFavoriteState,
-} from '@universe/core/types/opportunities';
 
 const CACHE_CONTROL_HEADER = 'Cache-Control';
 const PUBLIC_CACHE_CONTROL =
@@ -66,50 +61,6 @@ function setOpportunityCacheControl(
 @Controller('opportunities')
 export class OpportunitiesController {
   constructor(private readonly opportunitiesService: OpportunitiesService) {}
-
-  @ApiBearerAuth()
-  @Get('favorites')
-  @ApiOperation({
-    summary:
-      'Get current user favorite opportunities, including unavailable summaries',
-  })
-  getFavorites(
-    @GetUser('sub') userId: string,
-    @GetUser('roles') roles: string[] = [],
-    @Res({ passthrough: true }) res?: Response,
-  ): Promise<(OpportunityWithOwner | UnavailableOpportunity)[]> {
-    if (!userId) throw new ForbiddenException('User not authenticated');
-
-    setOpportunityCacheControl(res, false);
-
-    return this.opportunitiesService.getFavorites(userId, roles);
-  }
-
-  @ApiBearerAuth()
-  @Put(':id/favorite')
-  @ApiOperation({ summary: 'Save a published opportunity' })
-  addFavorite(
-    @GetUser('sub') userId: string,
-    @Param('id') id: string,
-  ): Promise<OpportunityFavoriteState> {
-    if (!userId) throw new ForbiddenException('User not authenticated');
-
-    return this.opportunitiesService.addFavorite(userId, id);
-  }
-
-  @ApiBearerAuth()
-  @Delete(':id/favorite')
-  @ApiOperation({
-    summary: 'Remove a favorite regardless of moderation status',
-  })
-  removeFavorite(
-    @GetUser('sub') userId: string,
-    @Param('id') id: string,
-  ): Promise<OpportunityFavoriteState> {
-    if (!userId) throw new ForbiddenException('User not authenticated');
-
-    return this.opportunitiesService.removeFavorite(userId, id);
-  }
 
   @ApiBearerAuth()
   @Post()
@@ -143,16 +94,11 @@ export class OpportunitiesController {
     description: 'Repeat the parameter for multiple tags',
   })
   async findAll(
-    @GetUser('sub') userId: string | undefined,
+    @GetUser('roles') roles: string[] | undefined,
     @Query() query: FindOpportunitiesDto,
-    @GetUser('roles') roles?: string[],
     @Res({ passthrough: true }) res?: Response,
   ): Promise<OpportunityWithOwner[]> {
-    const opportunities = await this.opportunitiesService.findAll(
-      query,
-      userId,
-      roles,
-    );
+    const opportunities = await this.opportunitiesService.findAll(query, roles);
 
     setOpportunityCacheControl(res, false);
 
@@ -196,11 +142,10 @@ export class OpportunitiesController {
   @ApiOperation({ summary: 'Get current user applications' })
   getMyApplications(
     @GetUser('sub') userId: string,
-    @GetUser('roles') roles: string[] = [],
   ): Promise<ApplicationWithOpportunity[]> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
-    return this.opportunitiesService.getMyApplications(userId, roles);
+    return this.opportunitiesService.getMyApplications(userId);
   }
 
   @Public()
@@ -215,8 +160,8 @@ export class OpportunitiesController {
     @GetUser('sub') userId?: string,
     @GetUser('roles') roles?: string[],
     @Res({ passthrough: true }) res?: Response,
-  ): Promise<OpportunityWithOwner | UnavailableOpportunity> {
-    const opportunity = await this.opportunitiesService.getDetails(
+  ): Promise<OpportunityWithOwner> {
+    const opportunity = await this.opportunitiesService.findOne(
       id,
       userId,
       roles,
@@ -224,8 +169,7 @@ export class OpportunitiesController {
 
     setOpportunityCacheControl(
       res,
-      !isUnavailableOpportunity(opportunity) &&
-        opportunity.status === OpportunityStatus.PUBLISHED,
+      opportunity.status === OpportunityStatus.PUBLISHED,
     );
 
     return opportunity;

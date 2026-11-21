@@ -94,7 +94,6 @@ const PLATFORM_ACTION_KEYS: Record<string, TranslationKey> = {
 };
 
 const PLATFORM_TITLE_KEYS: Record<string, TranslationKey> = {
-  [OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE]: OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE,
   [OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE]:
     OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE,
   [OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_TITLE]:
@@ -152,10 +151,6 @@ function formatPlatformMessage(
   }
 
   const opportunityTitle = parsed.opportunityTitle ?? '';
-
-  if (subject === OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE) {
-    return formatMessage(OPPORTUNITY_NOTIFICATION_KEY.UPDATED_MESSAGE, { opportunityTitle });
-  }
 
   if (subject === OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE) {
     const status = translateCode(parsed.status, PLATFORM_STATUS_KEYS, formatMessage);

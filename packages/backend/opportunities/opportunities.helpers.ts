@@ -4,11 +4,7 @@ import {
   ValidatorConstraintInterface,
   ValidationArguments,
 } from 'class-validator';
-import {
-  OPPORTUNITY_MODERATE_ACTION,
-  OPPORTUNITY_STATUS,
-} from '@universe/core/constants/opportunities';
-import { OPPORTUNITY_AVAILABILITY } from '@universe/core/constants/opportunity-availability';
+import { OPPORTUNITY_MODERATE_ACTION } from '@universe/core/constants/opportunities';
 import { isValidContactInfo } from '@universe/core/utils/contacts';
 import { normalizeOpportunityContent } from '@universe/core/utils/opportunities';
 import type {
@@ -17,28 +13,6 @@ import type {
   Prisma,
 } from '@universe/database';
 import type { ModerateOpportunityDto } from './dto/moderate-opportunity.dto';
-
-import type { UnavailableOpportunity } from '@universe/core/types/opportunities';
-
-/** Builds the public summary using fields captured at publication. */
-export function unavailableOpportunity(
-  opportunity: Pick<
-    Opportunity,
-    'id' | 'status' | 'publishedTitle' | 'publishedPaymentType'
-  >,
-): UnavailableOpportunity {
-  return {
-    id: opportunity.id,
-    title: opportunity.publishedTitle ?? '',
-    ...(opportunity.publishedPaymentType
-      ? { paymentType: opportunity.publishedPaymentType }
-      : {}),
-    availability:
-      opportunity.status === OPPORTUNITY_STATUS.REJECTED
-        ? OPPORTUNITY_AVAILABILITY.PERMANENT
-        : OPPORTUNITY_AVAILABILITY.TEMPORARY,
-  };
-}
 
 export type ApplyModerationParams = {
   id: string;
@@ -68,8 +42,6 @@ export async function applyModerationInTransaction(
       moderationComment: isApprove ? null : dto.comment,
       ...(isApprove && {
         publishedAt: opportunity.publishedAt ?? new Date(),
-        publishedTitle: opportunity.title,
-        publishedPaymentType: opportunity.paymentType,
       }),
     },
   });
