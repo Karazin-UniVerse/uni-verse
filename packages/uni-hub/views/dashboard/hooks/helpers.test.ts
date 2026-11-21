@@ -290,13 +290,15 @@ describe('applyStoredIdentityToProfile', () => {
     expect(resolved).toEqual(moodleProfile);
   });
 
-  it('should resolve email from session JWT in applyStoredIdentityToProfile when userEmail is absent', () => {
-    const token = `header.${Buffer.from(
-      JSON.stringify({ email: 'melnyk.bogdan@student.karazin.ua' }),
-    ).toString('base64')}.signature`;
-
+  it('should resolve email from stored userEmail or sessionUser in applyStoredIdentityToProfile', () => {
     mockStorage.username = 'Богдан Мельник';
-    mockStorage.accessToken = token;
+    mockStorage.sessionUser = JSON.stringify({
+      id: 'user-1',
+      email: 'melnyk.bogdan@student.karazin.ua',
+      name: null,
+      roles: [],
+      isLinked: true,
+    });
 
     const moodleProfile = {
       ...fallbackStudentProfile,
@@ -309,13 +311,15 @@ describe('applyStoredIdentityToProfile', () => {
     expect(resolved.email).toBe('melnyk.bogdan@student.karazin.ua');
   });
 
-  it('should preserve moodle fullName and profile for credential sessions even if session token contains email', () => {
-    const token = `header.${Buffer.from(
-      JSON.stringify({ email: 'moodle.student@karazin.ua' }),
-    ).toString('base64')}.signature`;
-
+  it('should preserve moodle fullName and profile for credential sessions even if sessionUser contains email', () => {
     mockStorage.username = 'moodle.student';
-    mockStorage.accessToken = token;
+    mockStorage.sessionUser = JSON.stringify({
+      id: 'user-1',
+      email: 'moodle.student@karazin.ua',
+      name: null,
+      roles: [],
+      isLinked: true,
+    });
     mockStorage.authProvider = 'credentials';
 
     const moodleProfile = {
@@ -769,18 +773,16 @@ describe('applyPlatformNotifications', () => {
   });
 });
 
-function createMockJwt(payload: Record<string, unknown>): string {
-  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
-  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
-
-  return `${header}.${body}.mockSignature`;
-}
-
 describe('readSessionIdentity', () => {
-  it('reads session identity from storage and extracts userId from JWT accessToken', () => {
-    const token = createMockJwt({ sub: 'user-456', email: 'test@karazin.ua' });
-
-    mockStorage.accessToken = token;
+  it('reads session identity from non-secret sessionUser storage', () => {
+    mockStorage.isLoggedIn = 'true';
+    mockStorage.sessionUser = JSON.stringify({
+      id: 'user-456',
+      email: 'test@karazin.ua',
+      name: 'Test User',
+      roles: [],
+      isLinked: false,
+    });
     mockStorage.username = 'Test User';
     mockStorage.userEmail = 'test@karazin.ua';
     mockStorage.authProvider = 'google';
@@ -789,22 +791,22 @@ describe('readSessionIdentity', () => {
 
     expect(identity).toEqual({
       userId: 'user-456',
-      token,
+      isLoggedIn: true,
       username: 'Test User',
       userEmail: 'test@karazin.ua',
       authProvider: 'google',
     });
   });
 
-  it('handles missing or malformed token gracefully without throwing', () => {
-    mockStorage.accessToken = 'not-a-jwt';
+  it('handles missing or malformed sessionUser JSON gracefully without throwing', () => {
+    mockStorage.sessionUser = 'not-json';
     mockStorage.username = 'Opaque User';
 
     const identity = readSessionIdentity();
 
     expect(identity).toEqual({
       userId: null,
-      token: 'not-a-jwt',
+      isLoggedIn: false,
       username: 'Opaque User',
       userEmail: null,
       authProvider: null,
@@ -816,7 +818,7 @@ describe('hasSessionChanged', () => {
   it('returns false when both snapshot and current are identical', () => {
     const identity: StoredSessionIdentity = {
       userId: 'u1',
-      token: 'tok-1',
+      isLoggedIn: true,
       username: 'User 1',
       userEmail: 'u1@karazin.ua',
       authProvider: 'google',
@@ -825,17 +827,17 @@ describe('hasSessionChanged', () => {
     expect(hasSessionChanged(identity, identity)).toBe(false);
   });
 
-  it('returns false when token rotates but userId and account identity remain unchanged', () => {
+  it('returns false when userId and account identity remain unchanged', () => {
     const snapshot: StoredSessionIdentity = {
       userId: 'u1',
-      token: 'initial-token',
+      isLoggedIn: true,
       username: 'User 1',
       userEmail: 'u1@karazin.ua',
       authProvider: 'google',
     };
     const current: StoredSessionIdentity = {
       userId: 'u1',
-      token: 'refreshed-token',
+      isLoggedIn: true,
       username: 'User 1',
       userEmail: 'u1@karazin.ua',
       authProvider: 'google',
@@ -847,14 +849,14 @@ describe('hasSessionChanged', () => {
   it('returns true when userId changes (different account login)', () => {
     const snapshot: StoredSessionIdentity = {
       userId: 'u1',
-      token: 'token-u1',
+      isLoggedIn: true,
       username: 'User 1',
       userEmail: 'u1@karazin.ua',
       authProvider: 'google',
     };
     const current: StoredSessionIdentity = {
       userId: 'u2',
-      token: 'token-u2',
+      isLoggedIn: true,
       username: 'User 2',
       userEmail: 'u2@karazin.ua',
       authProvider: 'google',
@@ -866,14 +868,14 @@ describe('hasSessionChanged', () => {
   it('returns true when user logs out while request was in-flight', () => {
     const snapshot: StoredSessionIdentity = {
       userId: 'u1',
-      token: 'token-u1',
+      isLoggedIn: true,
       username: 'User 1',
       userEmail: 'u1@karazin.ua',
       authProvider: 'google',
     };
     const current: StoredSessionIdentity = {
       userId: null,
-      token: null,
+      isLoggedIn: false,
       username: null,
       userEmail: null,
       authProvider: null,
@@ -885,7 +887,7 @@ describe('hasSessionChanged', () => {
   it('returns true when authProvider changes', () => {
     const snapshot: StoredSessionIdentity = {
       userId: 'u1',
-      token: 'tok',
+      isLoggedIn: true,
       username: 'User',
       userEmail: 'u@karazin.ua',
       authProvider: 'google',
@@ -901,7 +903,7 @@ describe('hasSessionChanged', () => {
   it('returns true when userEmail or username changes', () => {
     const snapshot: StoredSessionIdentity = {
       userId: 'u1',
-      token: 'tok',
+      isLoggedIn: true,
       username: 'User A',
       userEmail: 'a@karazin.ua',
       authProvider: 'google',
@@ -920,36 +922,10 @@ describe('hasSessionChanged', () => {
   });
 
   it('returns true when either snapshot or current is null', () => {
-    const snapshot: StoredSessionIdentity = { token: 'tok' };
+    const snapshot: StoredSessionIdentity = { isLoggedIn: true };
 
     expect(hasSessionChanged(snapshot, null)).toBe(true);
     expect(hasSessionChanged(null, snapshot)).toBe(true);
     expect(hasSessionChanged(null, null)).toBe(false);
-  });
-
-  it('handles opaque non-JWT tokens by allowing rotation if user identity matches', () => {
-    const snapshot: StoredSessionIdentity = {
-      token: 'opaque-1',
-      username: 'User A',
-      userEmail: 'a@karazin.ua',
-    };
-    const current: StoredSessionIdentity = {
-      token: 'opaque-2',
-      username: 'User A',
-      userEmail: 'a@karazin.ua',
-    };
-
-    expect(hasSessionChanged(snapshot, current)).toBe(false);
-  });
-
-  it('treats opaque token change as session change if no username or email is available', () => {
-    const snapshot: StoredSessionIdentity = {
-      token: 'opaque-1',
-    };
-    const current: StoredSessionIdentity = {
-      token: 'opaque-2',
-    };
-
-    expect(hasSessionChanged(snapshot, current)).toBe(true);
   });
 });

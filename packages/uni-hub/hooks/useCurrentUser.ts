@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { safeStorage } from '@uni-hub/services/api.storage';
-import { parseJwt, type JwtPayload } from '@uni-hub/utils/jwt';
+import type { SessionUser } from '@core/types/auth';
+import { readSessionUser } from '@uni-hub/services/api.session';
 
 export interface CurrentUser {
   userId: string | null;
@@ -10,16 +10,12 @@ export interface CurrentUser {
 }
 
 export function useCurrentUser(): CurrentUser {
-  const [jwt] = useState<JwtPayload | null>(() => {
-    const token = safeStorage.getItem('accessToken');
-
-    return token ? parseJwt(token) : null;
-  });
+  const [sessionUser] = useState<SessionUser | null>(() => readSessionUser());
 
   return {
-    userId: jwt?.sub ?? null,
-    roles: Array.isArray(jwt?.roles) ? jwt.roles : [],
-    email: jwt?.email,
-    name: jwt?.name,
+    userId: sessionUser?.id ?? null,
+    roles: Array.isArray(sessionUser?.roles) ? sessionUser.roles : [],
+    email: sessionUser?.email || undefined,
+    name: sessionUser?.name ?? undefined,
   };
 }

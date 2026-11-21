@@ -14,7 +14,16 @@ describe('useDashboardData profile refresh', () => {
 
   beforeEach(() => {
     localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('accessToken', 'synthetic-session');
+    localStorage.setItem(
+      'sessionUser',
+      JSON.stringify({
+        id: 'user-1',
+        email: 'student@karazin.ua',
+        name: 'Test Student',
+        roles: ['MOODLE_STUDENT'],
+        isLinked: true,
+      }),
+    );
     localStorage.setItem('authProvider', 'credentials');
     useMoodleStore.getState().setLinked(true);
     setTestFeatureFlags({ isMoodleIntegrationEnabled: true });
