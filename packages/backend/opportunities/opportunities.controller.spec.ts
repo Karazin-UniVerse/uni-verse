@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException } from '@nestjs/common';
 import type { Response } from 'express';
 import { OpportunityStatus } from '@universe/database';
 import { OpportunitiesController } from './opportunities.controller';
@@ -27,7 +27,7 @@ describe('OpportunitiesController', () => {
           useValue: {
             create: jest.fn(),
             findAll: jest.fn(),
-            getDetails: jest.fn(),
+            findOne: jest.fn(),
             update: jest.fn(),
             delete: jest.fn(),
             changeStatus: jest.fn(),
@@ -67,14 +67,14 @@ describe('OpportunitiesController', () => {
 
   describe('findAll', () => {
     it('delegates to service.findAll', async () => {
-      await controller.findAll('user1', {});
-      expect(service.findAll).toHaveBeenCalledWith({}, 'user1', undefined);
+      await controller.findAll(['MOODLE_STUDENT'], {});
+      expect(service.findAll).toHaveBeenCalledWith({}, ['MOODLE_STUDENT']);
     });
 
     it('should prevent stale HTTP caches from delaying catalog polling', async () => {
       const mockRes = createMockResponse();
 
-      await controller.findAll('user1', {}, undefined, mockRes);
+      await controller.findAll(['MOODLE_STUDENT'], {}, mockRes);
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         CACHE_CONTROL_HEADER,
@@ -88,7 +88,6 @@ describe('OpportunitiesController', () => {
       await controller.findAll(
         undefined,
         { status: OpportunityStatus.PUBLISHED },
-        undefined,
         mockRes,
       );
 
@@ -102,9 +101,8 @@ describe('OpportunitiesController', () => {
       const mockRes = createMockResponse();
 
       await controller.findAll(
-        'moderator1',
-        { status: OpportunityStatus.READY_FOR_REVIEW },
         ['OPPORTUNITIES_MODERATOR'],
+        { status: OpportunityStatus.READY_FOR_REVIEW },
         mockRes,
       );
 
@@ -123,9 +121,8 @@ describe('OpportunitiesController', () => {
 
       await expect(
         controller.findAll(
-          'user1',
-          { status: OpportunityStatus.DRAFT },
           ['MOODLE_STUDENT'],
+          { status: OpportunityStatus.DRAFT },
           mockRes,
         ),
       ).rejects.toThrow(ForbiddenException);
@@ -161,73 +158,40 @@ describe('OpportunitiesController', () => {
   });
 
   describe('getMyApplications', () => {
-    it('forwards caller roles for current permission verification', async () => {
-      await controller.getMyApplications('user1', ['OPPORTUNITIES_MODERATOR']);
-      expect(service.getMyApplications).toHaveBeenCalledWith('user1', [
-        'OPPORTUNITIES_MODERATOR',
-      ]);
-    });
-
     it('throws ForbiddenException when userId is empty', () => {
       expect(() => controller.getMyApplications('')).toThrow(
         ForbiddenException,
       );
     });
 
-    it('delegates to service.getMyApplications', async () => {
+    it('delegates to service.getMyApplications with default empty roles', async () => {
       await controller.getMyApplications('user1');
       expect(service.getMyApplications).toHaveBeenCalledWith('user1', []);
+    });
+
+    it('forwards caller roles to service.getMyApplications', async () => {
+      await controller.getMyApplications('user1', ['OPPORTUNITIES_MODERATOR']);
+      expect(service.getMyApplications).toHaveBeenCalledWith('user1', [
+        'OPPORTUNITIES_MODERATOR',
+      ]);
     });
   });
 
   describe('findOne', () => {
-    it('returns a private unavailable preview', async () => {
-      const preview = { id: 'opp1', title: '', availability: 'temporary' };
-      const response = createMockResponse();
-
-      (service.getDetails as jest.Mock).mockResolvedValue(preview);
-      await expect(
-        controller.findOne('opp1', undefined, undefined, response),
-      ).resolves.toEqual(preview);
-      expect(response.setHeader).toHaveBeenCalledWith(
-        CACHE_CONTROL_HEADER,
-        PRIVATE_CACHE_CONTROL,
-      );
-    });
-
-    it('preserves NotFoundException for a missing opportunity', async () => {
-      const response = createMockResponse();
-
-      (service.getDetails as jest.Mock).mockRejectedValue(
-        new NotFoundException(),
-      );
-      await expect(
-        controller.findOne('missing', undefined, undefined, response),
-      ).rejects.toThrow(NotFoundException);
-      expect(response.setHeader).not.toHaveBeenCalled();
-    });
-
-    it('propagates unexpected service errors', async () => {
-      const error = new Error('Database unavailable');
-
-      (service.getDetails as jest.Mock).mockRejectedValue(error);
-      await expect(controller.findOne('opp1')).rejects.toBe(error);
-    });
-
-    it('delegates to service.getDetails', async () => {
-      (service.getDetails as jest.Mock).mockResolvedValue({
+    it('delegates to service.findOne', async () => {
+      (service.findOne as jest.Mock).mockResolvedValue({
         id: 'opp1',
         status: OpportunityStatus.PUBLISHED,
       });
 
       await controller.findOne('opp1', 'user1', ['MOODLE_STUDENT']);
-      expect(service.getDetails).toHaveBeenCalledWith('opp1', 'user1', [
+      expect(service.findOne).toHaveBeenCalledWith('opp1', 'user1', [
         'MOODLE_STUDENT',
       ]);
     });
 
     it('sets public Cache-Control header when opportunity is published', async () => {
-      (service.getDetails as jest.Mock).mockResolvedValue({
+      (service.findOne as jest.Mock).mockResolvedValue({
         id: 'opp1',
         status: OpportunityStatus.PUBLISHED,
       });
@@ -243,7 +207,7 @@ describe('OpportunitiesController', () => {
     });
 
     it('sets public Cache-Control header for anonymous published access', async () => {
-      (service.getDetails as jest.Mock).mockResolvedValue({
+      (service.findOne as jest.Mock).mockResolvedValue({
         id: 'opp1',
         status: OpportunityStatus.PUBLISHED,
       });
@@ -259,7 +223,7 @@ describe('OpportunitiesController', () => {
     });
 
     it('sets private Cache-Control header when opportunity is non-published', async () => {
-      (service.getDetails as jest.Mock).mockResolvedValue({
+      (service.findOne as jest.Mock).mockResolvedValue({
         id: 'opp1',
         status: OpportunityStatus.DRAFT,
       });

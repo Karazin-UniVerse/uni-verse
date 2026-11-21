@@ -1,6 +1,5 @@
 export const OPPORTUNITY_SUB_TAB = {
   Catalog: 'catalog',
-  Favorites: 'favorites',
   MyOpportunities: 'my-opportunities',
   MyApplications: 'my-applications',
   Moderation: 'moderation',

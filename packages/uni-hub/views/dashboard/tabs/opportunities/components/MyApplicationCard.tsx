@@ -19,34 +19,35 @@ import {
   OPPORTUNITY_APP_STATUS,
   OPPORTUNITY_PAYMENT_TYPE,
 } from '@core/constants/opportunities';
+import {
+  hasReachedApplicationWithdrawalLimit,
+  isWithdrawableApplicationStatus,
+} from '@core/utils/opportunities';
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { ApplicationStatusBadge } from './ApplicationStatusBadge';
 import { ContactTags } from '@ui';
 import styles from '../../OpportunitiesTab.module.scss';
-import { OpportunityUnavailableNotice } from './OpportunityUnavailableNotice';
-import {
-  hasReachedApplicationWithdrawalLimit,
-  isUnavailableOpportunity,
-  isWithdrawableApplicationStatus,
-} from '@core/utils/opportunities';
 
-interface MyApplicationCardProps {
+export interface MyApplicationCardProps {
   application: OpportunityApplication;
   onWithdraw: (appId: string) => void;
 }
 
-/** Renders an application with either full opportunity details or its public summary. */
-export function MyApplicationCard({ application, onWithdraw }: MyApplicationCardProps) {
+export function MyApplicationCard({
+  application,
+  onWithdraw,
+}: MyApplicationCardProps): React.JSX.Element {
   const { formatMessage, localeTag } = useLanguage();
-  const record = application.opportunity;
-  const unavailable = record && isUnavailableOpportunity(record) ? record : undefined;
-  const opportunity = record && !isUnavailableOpportunity(record) ? record : undefined;
-  const paymentType = record?.paymentType;
   const isWithdrawable = isWithdrawableApplicationStatus(application.status);
   const hasReachedWithdrawalLimit = hasReachedApplicationWithdrawalLimit(
     application.withdrawalCount,
   );
+  const paidLabel = application.opportunity?.paymentDetails
+    ? formatMessage('opportunities.myApplications.paidWithAmount', {
+        amount: application.opportunity.paymentDetails,
+      })
+    : formatMessage('opportunities.myApplications.paid');
 
   return (
     <div
@@ -75,26 +76,28 @@ export function MyApplicationCard({ application, onWithdraw }: MyApplicationCard
             </span>
           </div>
 
-          {unavailable && <OpportunityUnavailableNotice availability={unavailable.availability} />}
           <h3 className={styles.applicationTitle}>
-            {record?.title || formatMessage('opportunities.myApplications.defaultTitle')}
+            {application.opportunity?.title ||
+              formatMessage('opportunities.myApplications.defaultTitle')}
           </h3>
 
-          {opportunity?.owner && (
+          {application.opportunity?.owner && (
             <div className={styles.authorStrip}>
               <div className={styles.ownerAvatar}>
-                {(opportunity.owner.name || opportunity.owner.email || 'O').charAt(0).toUpperCase()}
+                {(application.opportunity.owner.name || application.opportunity.owner.email || 'O')
+                  .charAt(0)
+                  .toUpperCase()}
               </div>
               <div className={styles.ownerMeta}>
+                <span className={styles.ownerName}>
+                  {application.opportunity.owner.name || application.opportunity.owner.email}
+                </span>
                 <div className={styles.ownerRow}>
-                  <span className={styles.ownerName}>
-                    {opportunity.owner.name || opportunity.owner.email}
-                  </span>
                   <ContactTags
                     emailLabel={formatMessage('opportunities.emailLabel')}
                     alternativeContactLabel={formatMessage('opportunities.alternativeContact')}
-                    email={opportunity.owner.email}
-                    alternativeContact={opportunity.ownerContactInfo}
+                    email={application.opportunity.owner.email}
+                    alternativeContact={application.opportunity.ownerContactInfo}
                   />
                 </div>
               </div>
@@ -102,18 +105,12 @@ export function MyApplicationCard({ application, onWithdraw }: MyApplicationCard
           )}
         </div>
 
-        {paymentType && (
+        {application.opportunity && (
           <div className={styles.applicationTypeCol}>
-            {paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID ? (
+            {application.opportunity.paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID ? (
               <span className={styles.compensationPill}>
                 <Coins size={13} />
-                <span>
-                  {opportunity?.paymentDetails
-                    ? formatMessage('opportunities.myApplications.paidWithAmount', {
-                        amount: opportunity.paymentDetails,
-                      })
-                    : formatMessage('opportunities.myApplications.paid')}
-                </span>
+                <span>{paidLabel}</span>
               </span>
             ) : (
               <span className={styles.unpaidPill}>

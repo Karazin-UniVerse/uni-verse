@@ -7,39 +7,7 @@ import {
   type OpportunityPaymentType,
 } from '@core/constants/opportunities';
 import type { OpportunityTag } from '@core/constants/tags';
-import type { OpportunityListItem } from '@core/types/opportunities';
-import { isUnavailableOpportunity } from '@core/utils/opportunities';
-import type { TranslationKey } from '@uni-hub/i18n/locales/uk';
-
-export function getCatalogEmptyKey({
-  search,
-  paymentFilter,
-  favoritesView,
-  isRecruiting = false,
-  tags = [],
-}: {
-  search: string;
-  paymentFilter: OpportunityPaymentType | '';
-  favoritesView: boolean;
-  isRecruiting?: boolean;
-  tags?: OpportunityTag[];
-}): TranslationKey {
-  if (search.trim() || paymentFilter || isRecruiting || tags.length) {
-    return 'opportunities.filteredEmpty';
-  }
-
-  return favoritesView ? 'opportunities.favorites.empty' : 'opportunities.catalog.emptyDescription';
-}
-
-export function canToggleFavorite(
-  opportunity: OpportunityListItem,
-  currentUserId?: string | null,
-): boolean {
-  return (
-    Boolean(currentUserId) &&
-    (isUnavailableOpportunity(opportunity) || opportunity.ownerId !== currentUserId)
-  );
-}
+import type { Opportunity } from '@core/types/opportunities';
 
 export interface OpportunityPaymentCounts {
   all: number;
@@ -60,11 +28,11 @@ export function getOpportunityErrorMessage(
   return key ? formatMessage(key, { limit: MAX_APPLICATION_WITHDRAWALS }) : message;
 }
 
-export function filterOpportunitiesBySearch<T extends OpportunityListItem>(
-  opportunities: T[],
+export function filterOpportunitiesBySearch(
+  opportunities: Opportunity[],
   search: string,
   getTagLabel: (tag: OpportunityTag) => string,
-): T[] {
+): Opportunity[] {
   if (!search.trim()) {
     return opportunities;
   }
@@ -73,11 +41,6 @@ export function filterOpportunitiesBySearch<T extends OpportunityListItem>(
 
   return opportunities.filter((opportunity) => {
     const titleMatch = opportunity.title.toLowerCase().includes(query);
-
-    if (isUnavailableOpportunity(opportunity)) {
-      return titleMatch;
-    }
-
     const descMatch = opportunity.description.toLowerCase().includes(query);
     const ownerMatch =
       Boolean(opportunity.owner?.name?.toLowerCase().includes(query)) ||
@@ -91,9 +54,7 @@ export function filterOpportunitiesBySearch<T extends OpportunityListItem>(
   });
 }
 
-export function calculatePaymentCounts(
-  opportunities: OpportunityListItem[],
-): OpportunityPaymentCounts {
+export function calculatePaymentCounts(opportunities: Opportunity[]): OpportunityPaymentCounts {
   let all = 0;
   let paid = 0;
   let unpaid = 0;
@@ -111,10 +72,10 @@ export function calculatePaymentCounts(
   return { all, paid, unpaid };
 }
 
-export function filterOpportunitiesByPayment<T extends OpportunityListItem>(
-  opportunities: T[],
+export function filterOpportunitiesByPayment(
+  opportunities: Opportunity[],
   paymentFilter: OpportunityPaymentType | '',
-): T[] {
+): Opportunity[] {
   if (!paymentFilter) {
     return opportunities;
   }
@@ -122,33 +83,29 @@ export function filterOpportunitiesByPayment<T extends OpportunityListItem>(
   return opportunities.filter((opportunity) => opportunity.paymentType === paymentFilter);
 }
 
-export function filterOpportunitiesByRecruiting<T extends OpportunityListItem>(
-  opportunities: T[],
+export function filterOpportunitiesByRecruiting(
+  opportunities: Opportunity[],
   isRecruiting: boolean,
-): T[] {
+): Opportunity[] {
   if (!isRecruiting) {
     return opportunities;
   }
 
   return opportunities.filter(
     (opportunity) =>
-      !isUnavailableOpportunity(opportunity) &&
       opportunity.acceptsApplications === true &&
       (opportunity.lifecycleState === OPPORTUNITY_LIFECYCLE.START ||
         opportunity.lifecycleState === OPPORTUNITY_LIFECYCLE.ACTIVE),
   );
 }
 
-export function filterOpportunitiesByTags<T extends OpportunityListItem>(
-  opportunities: T[],
+export function filterOpportunitiesByTags(
+  opportunities: Opportunity[],
   tags: OpportunityTag[],
-): T[] {
+): Opportunity[] {
   if (!tags.length) {
     return opportunities;
   }
 
-  return opportunities.filter(
-    (opportunity) =>
-      !isUnavailableOpportunity(opportunity) && opportunity.tags?.some((tag) => tags.includes(tag)),
-  );
+  return opportunities.filter((opportunity) => opportunity.tags?.some((tag) => tags.includes(tag)));
 }

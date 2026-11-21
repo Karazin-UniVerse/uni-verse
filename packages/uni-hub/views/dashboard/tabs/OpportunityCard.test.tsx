@@ -1,10 +1,8 @@
-import { OPPORTUNITY_AVAILABILITY } from '@core/constants/opportunity-availability';
 import { describe, it, expect, vi } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { render, screen } from '@testing-library/react';
 import type { Opportunity } from '@core/types/opportunities';
 import { OpportunityCard } from './OpportunityCard';
-import { buildOpportunity } from './opportunities/test-utils';
 
 describe('OpportunityCard component', () => {
   const mockOpportunity: Opportunity = {
@@ -135,60 +133,4 @@ describe('OpportunityCard component', () => {
 
     expect(badgeRow?.children).toHaveLength(3);
   });
-});
-
-describe('OpportunityCard', () => {
-  const opportunity = { ...buildOpportunity('saved'), status: 'PUBLISHED' as const };
-
-  it('toggles the star independently from opening details', async () => {
-    const toggle = vi.fn();
-    const open = vi.fn();
-    const user = userEvent.setup();
-
-    render(
-      <OpportunityCard
-        opportunity={opportunity}
-        isFavorite
-        onToggleFavorite={toggle}
-        onOpenDetail={open}
-      />,
-    );
-    await user.click(screen.getByRole('button', { name: 'Видалити з обраного' }));
-    expect(toggle).toHaveBeenCalledWith(opportunity.id, true);
-    expect(open).not.toHaveBeenCalled();
-  });
-
-  it('renders a localized heading for an unavailable opportunity with an empty title', () => {
-    render(
-      <OpportunityCard
-        opportunity={{ id: 'saved', title: '', availability: OPPORTUNITY_AVAILABILITY.TEMPORARY }}
-      />,
-    );
-    expect(screen.getByRole('heading', { name: 'Проектна можливість' })).toBeInTheDocument();
-  });
-
-  it.each([OPPORTUNITY_AVAILABILITY.TEMPORARY, OPPORTUNITY_AVAILABILITY.PERMANENT])(
-    'keeps %s cards removable without detail navigation',
-    async (availability) => {
-      const toggle = vi.fn();
-      const user = userEvent.setup();
-
-      render(
-        <OpportunityCard
-          opportunity={{ id: 'saved', title: 'Saved title', paymentType: 'UNPAID', availability }}
-          isFavorite
-          onToggleFavorite={toggle}
-          onOpenDetail={vi.fn()}
-        />,
-      );
-      expect(screen.getByRole('status')).toHaveTextContent(
-        availability === OPPORTUNITY_AVAILABILITY.TEMPORARY
-          ? 'Тимчасово недоступна'
-          : 'Більше недоступна',
-      );
-      expect(screen.queryByRole('button', { name: /Детальніше про/ })).not.toBeInTheDocument();
-      await user.click(screen.getByRole('button', { name: 'Видалити з обраного' }));
-      expect(toggle).toHaveBeenCalledWith('saved', true);
-    },
-  );
 });
