@@ -153,10 +153,6 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
     }
   };
 
-  const tokenStr =
-    typeof window !== 'undefined'
-      ? localStorage.getItem('accessToken') || localStorage.getItem('moodleToken')
-      : null;
   const canSubmit = canSubmitAssignment(status);
 
   const statusLabel =
@@ -237,7 +233,7 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
               <h4>{formatMessage('assignmentDetail.attachedFiles')}</h4>
               <ul className={styles.fileList}>
                 {courseModule.contents.map((file, idx: number) => {
-                  const url = (file.fileurl || '') + (tokenStr ? `?token=${tokenStr}` : '');
+                  const url = file.fileurl || '';
 
                   return (
                     <li key={`${file.filename}-${idx}`} className={styles.fileItem}>

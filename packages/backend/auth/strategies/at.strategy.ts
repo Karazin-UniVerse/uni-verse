@@ -5,8 +5,6 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 export type JwtPayload = {
   sub: string;
   email: string;
-  moodleToken?: string;
-  moodleId?: string;
   roles?: string[];
 };
 
@@ -26,6 +24,10 @@ export class AtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   validate(payload: JwtPayload): JwtPayload {
-    return payload;
+    return {
+      sub: payload.sub,
+      email: payload.email,
+      roles: payload.roles,
+    };
   }
 }

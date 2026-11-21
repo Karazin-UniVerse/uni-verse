@@ -27,9 +27,13 @@ async function bootstrap() {
   configureBodyParsers(app);
   app.enableCors(getCorsConfig());
 
-  const document = SwaggerModule.createDocument(app, SWAGGER_CONFIG);
+  const isProduction = process.env.NODE_ENV === 'production';
 
-  SwaggerModule.setup('api', app, document);
+  if (!isProduction) {
+    const document = SwaggerModule.createDocument(app, SWAGGER_CONFIG);
+
+    SwaggerModule.setup('api', app, document);
+  }
 
   app.use(morgan('dev'));
   app.use(cookieParser());
@@ -39,6 +43,11 @@ async function bootstrap() {
 
   await app.listen(port);
   LOGGER.log(`Backend server running on http://localhost:${port}`);
-  LOGGER.log(`Swagger documentation available at http://localhost:${port}/api`);
+
+  if (!isProduction) {
+    LOGGER.log(
+      `Swagger documentation available at http://localhost:${port}/api`,
+    );
+  }
 }
 void bootstrap();

@@ -7,12 +7,13 @@ import {
 } from '@nestjs/swagger';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { AtGuard } from '../../auth/guards/at.guard';
+import { MoodleCredentialsGuard } from '../guards/moodle-credentials.guard';
 import { MoodleStatisticsService } from './moodle-statistics.service';
 import { StatisticsDto } from './moodle-statistics-dto';
 
 @ApiTags('moodle')
 @Controller('moodle')
-@UseGuards(AtGuard)
+@UseGuards(AtGuard, MoodleCredentialsGuard)
 @ApiBearerAuth()
 export class MoodleStatisticsController {
   constructor(private readonly statisticsService: MoodleStatisticsService) {}

@@ -2,16 +2,28 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
-import { UserService } from './user.service';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
-import { CreateUserDto, UpdateUserDto, UserResponseDto } from './user-dto';
-import type { User } from '@universe/database';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { Role, type User } from '@universe/database';
 import * as bcrypt from 'bcrypt';
+import { GetUser } from '../auth/decorators/get-user.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { CreateUserDto, SelfUpdateUserDto, UserResponseDto } from './user-dto';
+import { UserService } from './user.service';
 
 function toUserResponse(user: User): UserResponseDto {
   return {
@@ -25,10 +37,14 @@ function toUserResponse(user: User): UserResponseDto {
   };
 }
 
+@ApiTags('user')
+@ApiBearerAuth()
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ status: 200, type: [UserResponseDto] })
   @Get()
@@ -38,7 +54,9 @@ export class UserController {
     return users.map(toUserResponse);
   }
 
-  @ApiOperation({ summary: 'Create user' })
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Create a new user' })
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 201, type: UserResponseDto })
   @Post()
@@ -54,8 +72,10 @@ export class UserController {
     return toUserResponse(created);
   }
 
-  @ApiOperation({ summary: 'Delete user' })
-  @ApiParam({ name: 'id', description: 'User ID' })
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Delete user by id' })
+  @ApiParam({ name: 'id', type: String })
   @ApiResponse({ status: 200, type: UserResponseDto })
   @Delete(':id')
   async deleteUser(@Param('id') id: string): Promise<UserResponseDto> {
@@ -64,20 +84,31 @@ export class UserController {
     return toUserResponse(deleted);
   }
 
-  @ApiOperation({ summary: 'Update user' })
-  @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiBody({ type: UpdateUserDto })
+  @ApiOperation({ summary: 'Update own user profile' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiBody({ type: SelfUpdateUserDto })
   @ApiResponse({ status: 200, type: UserResponseDto })
   @Patch(':id')
   async updateUser(
+    @GetUser('sub') currentUserId: string,
     @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
+    @Body() updateUserDto: SelfUpdateUserDto,
   ): Promise<UserResponseDto> {
-    if (updateUserDto?.password) {
-      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
+    if (!currentUserId || currentUserId !== id) {
+      throw new ForbiddenException('You can only update your own profile');
     }
 
-    const updated = await this.userService.updateUser(id, updateUserDto);
+    const updatePayload: SelfUpdateUserDto = {};
+
+    if (updateUserDto.name !== undefined) {
+      updatePayload.name = updateUserDto.name;
+    }
+
+    if (updateUserDto.password) {
+      updatePayload.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
+
+    const updated = await this.userService.updateUser(id, updatePayload);
 
     return toUserResponse(updated);
   }
