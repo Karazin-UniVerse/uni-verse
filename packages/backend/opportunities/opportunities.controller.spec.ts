@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import type { Response } from 'express';
 import { OpportunityStatus } from '@universe/database';
 import { OpportunitiesController } from './opportunities.controller';
@@ -27,10 +27,7 @@ describe('OpportunitiesController', () => {
           useValue: {
             create: jest.fn(),
             findAll: jest.fn(),
-            findOne: jest.fn(),
-            findOneWithFavorite: jest.fn(),
-            addFavorite: jest.fn(),
-            removeFavorite: jest.fn(),
+            getDetails: jest.fn(),
             update: jest.fn(),
             delete: jest.fn(),
             changeStatus: jest.fn(),
@@ -70,33 +67,34 @@ describe('OpportunitiesController', () => {
 
   describe('findAll', () => {
     it('delegates to service.findAll', async () => {
-      await controller.findAll(['MOODLE_STUDENT'], {});
-      expect(service.findAll).toHaveBeenCalledWith({}, ['MOODLE_STUDENT']);
+      await controller.findAll('user1', {});
+      expect(service.findAll).toHaveBeenCalledWith({}, 'user1', undefined);
     });
 
-    it('sets public Cache-Control header when query is for public catalog', async () => {
+    it('should prevent stale HTTP caches from delaying catalog polling', async () => {
       const mockRes = createMockResponse();
 
-      await controller.findAll(['MOODLE_STUDENT'], {}, mockRes);
+      await controller.findAll('user1', {}, undefined, mockRes);
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         CACHE_CONTROL_HEADER,
-        PUBLIC_CACHE_CONTROL,
+        PRIVATE_CACHE_CONTROL,
       );
     });
 
-    it('sets public Cache-Control header when query status is explicitly PUBLISHED', async () => {
+    it('should prevent stale HTTP caches for an explicitly published catalog', async () => {
       const mockRes = createMockResponse();
 
       await controller.findAll(
         undefined,
         { status: OpportunityStatus.PUBLISHED },
+        undefined,
         mockRes,
       );
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         CACHE_CONTROL_HEADER,
-        PUBLIC_CACHE_CONTROL,
+        PRIVATE_CACHE_CONTROL,
       );
     });
 
@@ -104,8 +102,9 @@ describe('OpportunitiesController', () => {
       const mockRes = createMockResponse();
 
       await controller.findAll(
-        ['OPPORTUNITIES_MODERATOR'],
+        'moderator1',
         { status: OpportunityStatus.READY_FOR_REVIEW },
+        ['OPPORTUNITIES_MODERATOR'],
         mockRes,
       );
 
@@ -124,8 +123,9 @@ describe('OpportunitiesController', () => {
 
       await expect(
         controller.findAll(
-          ['MOODLE_STUDENT'],
+          'user1',
           { status: OpportunityStatus.DRAFT },
+          ['MOODLE_STUDENT'],
           mockRes,
         ),
       ).rejects.toThrow(ForbiddenException);
@@ -161,6 +161,13 @@ describe('OpportunitiesController', () => {
   });
 
   describe('getMyApplications', () => {
+    it('forwards caller roles for current permission verification', async () => {
+      await controller.getMyApplications('user1', ['OPPORTUNITIES_MODERATOR']);
+      expect(service.getMyApplications).toHaveBeenCalledWith('user1', [
+        'OPPORTUNITIES_MODERATOR',
+      ]);
+    });
+
     it('throws ForbiddenException when userId is empty', () => {
       expect(() => controller.getMyApplications('')).toThrow(
         ForbiddenException,
@@ -169,36 +176,58 @@ describe('OpportunitiesController', () => {
 
     it('delegates to service.getMyApplications', async () => {
       await controller.getMyApplications('user1');
-      expect(service.getMyApplications).toHaveBeenCalledWith('user1');
+      expect(service.getMyApplications).toHaveBeenCalledWith('user1', []);
     });
   });
 
   describe('findOne', () => {
-    it('delegates to service.findOneWithFavorite and returns subscription state', async () => {
-      const mockResult = {
-        id: 'opp1',
-        title: 'Opportunity',
-        status: OpportunityStatus.PUBLISHED,
-        isFavorite: true,
-      };
+    it('returns a private unavailable preview', async () => {
+      const preview = { id: 'opp1', title: '', availability: 'temporary' };
+      const response = createMockResponse();
 
-      (service.findOneWithFavorite as jest.Mock).mockResolvedValue(mockResult);
-
-      const result = await controller.findOne('opp1', 'user1', [
-        'MOODLE_STUDENT',
-      ]);
-
-      expect(service.findOneWithFavorite).toHaveBeenCalledWith(
-        'opp1',
-        'user1',
-        ['MOODLE_STUDENT'],
+      (service.getDetails as jest.Mock).mockResolvedValue(preview);
+      await expect(
+        controller.findOne('opp1', undefined, undefined, response),
+      ).resolves.toEqual(preview);
+      expect(response.setHeader).toHaveBeenCalledWith(
+        CACHE_CONTROL_HEADER,
+        PRIVATE_CACHE_CONTROL,
       );
-      expect(result).toEqual(mockResult);
-      expect(result.isFavorite).toBe(true);
     });
 
-    it('sets private Cache-Control header for authenticated published access', async () => {
-      (service.findOneWithFavorite as jest.Mock).mockResolvedValue({
+    it('preserves NotFoundException for a missing opportunity', async () => {
+      const response = createMockResponse();
+
+      (service.getDetails as jest.Mock).mockRejectedValue(
+        new NotFoundException(),
+      );
+      await expect(
+        controller.findOne('missing', undefined, undefined, response),
+      ).rejects.toThrow(NotFoundException);
+      expect(response.setHeader).not.toHaveBeenCalled();
+    });
+
+    it('propagates unexpected service errors', async () => {
+      const error = new Error('Database unavailable');
+
+      (service.getDetails as jest.Mock).mockRejectedValue(error);
+      await expect(controller.findOne('opp1')).rejects.toBe(error);
+    });
+
+    it('delegates to service.getDetails', async () => {
+      (service.getDetails as jest.Mock).mockResolvedValue({
+        id: 'opp1',
+        status: OpportunityStatus.PUBLISHED,
+      });
+
+      await controller.findOne('opp1', 'user1', ['MOODLE_STUDENT']);
+      expect(service.getDetails).toHaveBeenCalledWith('opp1', 'user1', [
+        'MOODLE_STUDENT',
+      ]);
+    });
+
+    it('sets public Cache-Control header when opportunity is published', async () => {
+      (service.getDetails as jest.Mock).mockResolvedValue({
         id: 'opp1',
         status: OpportunityStatus.PUBLISHED,
       });
@@ -209,12 +238,12 @@ describe('OpportunitiesController', () => {
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         CACHE_CONTROL_HEADER,
-        PRIVATE_CACHE_CONTROL,
+        PUBLIC_CACHE_CONTROL,
       );
     });
 
     it('sets public Cache-Control header for anonymous published access', async () => {
-      (service.findOneWithFavorite as jest.Mock).mockResolvedValue({
+      (service.getDetails as jest.Mock).mockResolvedValue({
         id: 'opp1',
         status: OpportunityStatus.PUBLISHED,
       });
@@ -230,7 +259,7 @@ describe('OpportunitiesController', () => {
     });
 
     it('sets private Cache-Control header when opportunity is non-published', async () => {
-      (service.findOneWithFavorite as jest.Mock).mockResolvedValue({
+      (service.getDetails as jest.Mock).mockResolvedValue({
         id: 'opp1',
         status: OpportunityStatus.DRAFT,
       });
@@ -243,44 +272,6 @@ describe('OpportunitiesController', () => {
         CACHE_CONTROL_HEADER,
         PRIVATE_CACHE_CONTROL,
       );
-    });
-  });
-
-  describe('addFavorite', () => {
-    it('throws ForbiddenException when userId is empty', () => {
-      expect(() => controller.addFavorite('', 'opp1')).toThrow(
-        ForbiddenException,
-      );
-    });
-
-    it('delegates to service.addFavorite', async () => {
-      (service.addFavorite as jest.Mock).mockResolvedValue({
-        saved: true,
-      });
-
-      const result = await controller.addFavorite('user1', 'opp1');
-
-      expect(service.addFavorite).toHaveBeenCalledWith('user1', 'opp1');
-      expect(result).toEqual({ saved: true });
-    });
-  });
-
-  describe('removeFavorite', () => {
-    it('throws ForbiddenException when userId is empty', () => {
-      expect(() => controller.removeFavorite('', 'opp1')).toThrow(
-        ForbiddenException,
-      );
-    });
-
-    it('delegates to service.removeFavorite', async () => {
-      (service.removeFavorite as jest.Mock).mockResolvedValue({
-        saved: false,
-      });
-
-      const result = await controller.removeFavorite('user1', 'opp1');
-
-      expect(service.removeFavorite).toHaveBeenCalledWith('user1', 'opp1');
-      expect(result).toEqual({ saved: false });
     });
   });
 

@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { withLanguage } from '@uni-hub/utils/test-utils';
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { ApplicantsModal, type ApplicantsModalProps } from './ApplicantsModal';
+import styles from '../../OpportunitiesTab.module.scss';
 
 const mockApplications: OpportunityApplication[] = [
   {
@@ -221,5 +222,14 @@ describe('ApplicantsModal component', () => {
     expect(screen.getByText('Прийнято')).toBeInTheDocument();
     expect(screen.queryByText('Супровідне повідомлення:')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Прийняти' })).not.toBeInTheDocument();
+  });
+
+  it('should render candidate contacts grouped inside the applicantContacts container', () => {
+    const { container } = renderApplicantsModal();
+    const contactsContainer = container.querySelector(`.${styles.applicantContacts}`);
+
+    expect(contactsContainer).toBeInTheDocument();
+    expect(contactsContainer).toHaveTextContent('olena@karazin.ua');
+    expect(contactsContainer).toHaveTextContent('@olena_tg');
   });
 });

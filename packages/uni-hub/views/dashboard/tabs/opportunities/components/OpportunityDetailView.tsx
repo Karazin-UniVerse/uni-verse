@@ -4,9 +4,10 @@ import React from 'react';
 import { OpportunityDetail } from '@ui';
 import type { Opportunity } from '@core/types/opportunities';
 import { OPPORTUNITY_STATUS } from '@core/constants/opportunities';
-import { getOpportunityTagNames, isRecruitmentPhase } from '@core/utils/opportunities';
+import { isRecruitmentPhase } from '@core/utils/opportunities';
 import { useLanguage, type FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import { OpportunityStatusBadge } from './OpportunityStatusBadge';
+import { getOpportunityTagLabel } from '../tags';
 
 export interface OpportunityDetailViewProps {
   onBack: () => void;
@@ -16,8 +17,8 @@ export interface OpportunityDetailViewProps {
   onOpenApply: () => void;
   onOpenApplicants?: () => void;
   onEdit?: (opportunity: Opportunity) => void;
-  onToggleAcceptsApplications?: (accepts: boolean) => void;
   onToggleFavorite?: () => void;
+  isFavorite?: boolean;
   isFavoritePending?: boolean;
   onDelete?: () => void;
 }
@@ -83,6 +84,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   onOpenApplicants,
   onEdit,
   onToggleFavorite,
+  isFavorite,
   isFavoritePending,
   onDelete,
 }) => {
@@ -95,6 +97,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       opportunity.status === OPPORTUNITY_STATUS.REQUIRES_CHANGES);
   const canEdit =
     canManageDraft || (isOwner && opportunity.status === OPPORTUNITY_STATUS.PUBLISHED);
+  const canDelete = isOwner && opportunity.status === OPPORTUNITY_STATUS.DRAFT;
   const sendToReviewDisabled =
     opportunity.status === OPPORTUNITY_STATUS.REQUIRES_CHANGES && opportunity.canResubmit !== true;
   const sendToReviewHint = sendToReviewDisabled
@@ -104,7 +107,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   const lifecycleTagText = getLifecycleTagText(opportunity, formatMessage);
   const organizerName = getOrganizerName(opportunity, formatMessage);
   const canApply = canApplyOpportunity(opportunity, isOwner);
-  const tagNames = getOpportunityTagNames(opportunity);
+  const tagNames = opportunity.tags?.map((tag) => getOpportunityTagLabel(tag, formatMessage));
 
   return (
     <OpportunityDetail
@@ -138,7 +141,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       sendToReviewDisabled={sendToReviewDisabled}
       sendToReviewHint={sendToReviewHint}
       sendToReviewText={formatMessage('opportunities.detailModal.sendToReview')}
-      canDelete={canManageDraft}
+      canDelete={canDelete}
       onDelete={onDelete}
       deleteText={formatMessage('opportunities.detailModal.delete')}
       onOpenApplicants={onOpenApplicants}
@@ -151,10 +154,8 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       canApply={canApply}
       applyText={formatMessage('opportunities.detailModal.apply')}
       onOpenApply={onOpenApply}
-      isFavorite={opportunity.isFavorite}
-      onToggleFavorite={
-        userId && opportunity.status === OPPORTUNITY_STATUS.PUBLISHED ? onToggleFavorite : undefined
-      }
+      isFavorite={isFavorite}
+      onToggleFavorite={onToggleFavorite}
       isFavoritePending={isFavoritePending}
       favoriteText={formatMessage('opportunities.favorites.toggle')}
     />

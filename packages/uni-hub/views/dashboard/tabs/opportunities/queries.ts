@@ -1,7 +1,10 @@
-import { queryOptions, type QueryClient } from '@tanstack/react-query';
-import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
+import { queryOptions } from '@tanstack/react-query';
+import type {
+  Opportunity,
+  OpportunityApplication,
+  OpportunityListItem,
+} from '@core/types/opportunities';
 import { OPPORTUNITY_STATUS } from '@core/constants/opportunities';
-import { normalizeTag } from '@core/utils/tags';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { asList } from '@uni-hub/utils/arrays';
 import { opportunityKeys } from './queryKeys';
@@ -39,26 +42,16 @@ export async function loadApplicants(opportunityId: string): Promise<Opportunity
   return asList(response.data);
 }
 
-export function loadTagSuggestions(queryClient: QueryClient, query: string): Promise<string[]> {
-  const normalizedQuery = normalizeTag(query);
-
-  return queryClient.fetchQuery(
-    queryOptions({
-      queryKey: opportunityKeys.tagSuggestions(normalizedQuery),
-      queryFn: async (): Promise<string[]> => {
-        const response = await opportunitiesApi.getTagSuggestions(normalizedQuery);
-
-        return response.data.map((tag) => tag.name);
-      },
-    }),
-  );
-}
-
 export const catalogQueryOptions = queryOptions({
   queryKey: opportunityKeys.catalog(),
   queryFn: loadCatalog,
   staleTime: 0,
   refetchInterval: CATALOG_POLL_INTERVAL_MS,
+});
+
+export const favoritesQueryOptions = queryOptions({
+  queryKey: opportunityKeys.favorites(),
+  queryFn: async () => (await opportunitiesApi.getFavorites()).data,
 });
 
 export const myOpportunitiesQueryOptions = queryOptions({
@@ -79,7 +72,12 @@ export const moderationQueueQueryOptions = queryOptions({
 export const opportunityDetailQueryOptions = (
   opportunityId: string,
 ): ReturnType<
-  typeof queryOptions<Opportunity, Error, Opportunity, ReturnType<typeof opportunityKeys.detail>>
+  typeof queryOptions<
+    OpportunityListItem,
+    Error,
+    OpportunityListItem,
+    ReturnType<typeof opportunityKeys.detail>
+  >
 > =>
   queryOptions({
     queryKey: opportunityKeys.detail(opportunityId),

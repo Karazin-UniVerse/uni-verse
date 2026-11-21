@@ -1,18 +1,19 @@
 'use client';
+import { MAX_APPLICATION_WITHDRAWALS } from '@core/constants/opportunities';
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
-import { Plus, Briefcase, ShieldCheck, Users, FileText } from 'lucide-react';
+import { Plus, Briefcase, ShieldCheck, Users, FileText, Star } from 'lucide-react';
 import { Button } from '@una';
 import { ConfirmModal, SegmentedControl, type SegmentedControlItem } from '@ui';
 import { ROLE } from '@core/constants/roles';
 import type { Opportunity } from '@core/types/opportunities';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { loadTagSuggestions } from './opportunities/queries';
 import { getOpportunityHref } from '../routes';
 import styles from './OpportunitiesTab.module.scss';
+import { useFavorites } from './opportunities/hooks/useFavorites';
+import { hasLoadFailed } from '@uni-hub/queries/load-state';
 import {
   CatalogTab,
   MyOpportunitiesTab,
@@ -32,25 +33,42 @@ import {
 
 export const OpportunitiesTab: React.FC = () => {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { formatMessage } = useLanguage();
   const currentUser = useCurrentUser();
   const isModerator = currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR);
   const data = useOpportunitiesData(isModerator);
   const { activeSubTab, setActiveSubTab } = data;
+  const isFavoritesView = activeSubTab === OPPORTUNITY_SUB_TAB.Favorites;
+  const favorites = useFavorites(activeSubTab === OPPORTUNITY_SUB_TAB.Catalog || isFavoritesView);
   const create = useCreateOpportunity({
     onCreated: () => setActiveSubTab(OPPORTUNITY_SUB_TAB.MyOpportunities),
   });
   const applicants = useApplicants();
   const withdrawal = useWithdrawApplication();
   const moderation = useModeration();
+  const catalogView = isFavoritesView
+    ? {
+        loading: favorites.query.isLoading,
+        isError: hasLoadFailed(favorites.query),
+        refetch: (): void => {
+          void favorites.query.refetch();
+        },
+        items: favorites.query.data ?? [],
+      }
+    : data.catalog;
 
   const openDetail = (opportunity: Opportunity): void =>
     router.push(getOpportunityHref(opportunity.id));
-  const loadSuggestions = (query: string): Promise<string[]> =>
-    loadTagSuggestions(queryClient, query);
+  const moderationItems = data.moderationQueue.items.filter(
+    (item) => item.ownerId !== currentUser.userId,
+  );
 
   const segmentItems: SegmentedControlItem<OpportunitySubTab>[] = [
+    {
+      id: OPPORTUNITY_SUB_TAB.Favorites,
+      label: formatMessage('opportunities.tabs.favorites'),
+      icon: <Star size={16} />,
+    },
     {
       id: OPPORTUNITY_SUB_TAB.Catalog,
       label: formatMessage('opportunities.tabs.catalog'),
@@ -76,7 +94,7 @@ export const OpportunitiesTab: React.FC = () => {
             label: formatMessage('opportunities.tabs.moderation'),
             shortLabel: formatMessage('opportunities.tabs.moderationShort'),
             icon: <ShieldCheck size={16} />,
-            badge: data.moderationQueue.items.length,
+            badge: moderationItems.length,
           },
         ]
       : []),
@@ -106,12 +124,18 @@ export const OpportunitiesTab: React.FC = () => {
 
       {/* SubTab Views */}
       <div role="tabpanel" id={`panel-${activeSubTab}`}>
-        {activeSubTab === OPPORTUNITY_SUB_TAB.Catalog && (
+        {(activeSubTab === OPPORTUNITY_SUB_TAB.Catalog || isFavoritesView) && (
           <CatalogTab
-            loading={data.catalog.loading}
-            isError={data.catalog.isError}
-            onRetry={data.catalog.refetch}
-            opportunities={data.catalog.items}
+            loading={catalogView.loading}
+            isError={catalogView.isError}
+            onRetry={catalogView.refetch}
+            opportunities={catalogView.items}
+            favoriteIds={favorites.savedIds}
+            onToggleFavorite={favorites.toggle}
+            favoritesDisabled={favorites.query.isLoading || hasLoadFailed(favorites.query)}
+            pendingFavoriteIds={favorites.pendingIds}
+            currentUserId={currentUser.userId}
+            favoritesView={isFavoritesView}
             search={data.search}
             onSearchChange={data.setSearch}
             paymentFilter={data.paymentFilter}
@@ -122,7 +146,6 @@ export const OpportunitiesTab: React.FC = () => {
             onTagsChange={data.setTags}
             onFiltersChange={data.setFilters}
             onOpenDetail={openDetail}
-            loadTagSuggestions={loadSuggestions}
           />
         )}
 
@@ -149,11 +172,10 @@ export const OpportunitiesTab: React.FC = () => {
 
         {activeSubTab === OPPORTUNITY_SUB_TAB.Moderation && isModerator && (
           <ModerationQueueTab
-            currentUserId={currentUser.userId}
             loading={data.moderationQueue.loading}
             isError={data.moderationQueue.isError}
             onRetry={data.moderationQueue.refetch}
-            moderationQueue={data.moderationQueue.items}
+            moderationQueue={moderationItems}
             onModerate={moderation.handleModerate}
             onOpenRejectModal={moderation.openRejectModal}
           />
@@ -187,7 +209,9 @@ export const OpportunitiesTab: React.FC = () => {
         onClose={() => withdrawal.setWithdrawApplicationId(null)}
         onConfirm={withdrawal.handleWithdraw}
         title={formatMessage('opportunities.confirm.withdrawTitle')}
-        message={formatMessage('opportunities.confirm.withdraw')}
+        message={formatMessage('opportunities.confirm.withdraw', {
+          limit: MAX_APPLICATION_WITHDRAWALS,
+        })}
         cancelLabel={formatMessage('common.cancel')}
         confirmLabel={formatMessage('opportunities.confirm.withdrawConfirm')}
         closeLabel={formatMessage('modal.close')}

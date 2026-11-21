@@ -5,6 +5,8 @@ import type {
   OpportunityPaymentType,
   OpportunityStatus,
 } from '../constants/opportunities.ts';
+import type { OpportunityAvailability } from '../constants/opportunity-availability.ts';
+import type { OpportunityTag } from '../constants/tags.ts';
 
 export interface OpportunityOwner {
   id: string;
@@ -12,9 +14,15 @@ export interface OpportunityOwner {
   name?: string | null;
 }
 
-export interface OpportunityTag {
-  id: string;
-  name: string;
+export interface UnavailableOpportunity
+  extends Pick<Opportunity, 'id' | 'title'>, Partial<Pick<Opportunity, 'paymentType'>> {
+  availability: OpportunityAvailability;
+}
+
+export type OpportunityListItem = Opportunity | UnavailableOpportunity;
+
+export interface OpportunityFavoriteState {
+  saved: boolean;
 }
 
 export interface Opportunity {
@@ -28,15 +36,14 @@ export interface Opportunity {
   ownerId: string;
   createdAt: string;
   updatedAt: string;
+  publishedAt?: string | null;
   acceptsApplications?: boolean;
   paymentDetails?: string | null;
   moderationComment?: string | null;
   tags?: OpportunityTag[];
-  proposedTags?: string[];
   canResubmit?: boolean;
   owner?: OpportunityOwner;
   applications?: OpportunityApplication[];
-  isFavorite?: boolean;
 }
 
 export interface OpportunityApplication {
@@ -52,7 +59,8 @@ export interface OpportunityApplication {
   briefDescription?: string | null;
   answers?: string | null;
   ownerComment?: string | null;
-  opportunity?: Opportunity;
+  withdrawalCount?: number;
+  opportunity?: Opportunity | UnavailableOpportunity;
   applicant?: Pick<OpportunityOwner, 'name' | 'email'>;
 }
 
@@ -63,7 +71,7 @@ export interface CreateOpportunityRequest {
   ownerContactInfo?: string;
   paymentDetails?: string | null;
   acceptsApplications?: boolean;
-  tags?: string[];
+  tags?: OpportunityTag[];
   lifecycleState?: OpportunityLifecycle;
 }
 
@@ -100,7 +108,7 @@ export interface GetOpportunitiesParams {
   paymentType?: OpportunityPaymentType | '';
   ownerId?: string;
   search?: string;
-  tags?: string[];
+  tags?: OpportunityTag[];
   isRecruiting?: boolean;
 }
 
@@ -110,8 +118,4 @@ export interface OpportunityContentFields {
   ownerContactInfo?: string;
   paymentType?: OpportunityPaymentType;
   paymentDetails?: string | null;
-}
-
-export interface OpportunityFavoriteState {
-  saved: boolean;
 }

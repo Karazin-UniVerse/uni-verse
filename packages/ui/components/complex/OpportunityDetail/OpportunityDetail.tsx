@@ -89,7 +89,6 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   canSendToReview = false,
   canApply = false,
   isFavorite = false,
-
   isFavoritePending = false,
 }) => {
   const reviewHintId = useId();

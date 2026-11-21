@@ -4,7 +4,11 @@ import {
   ValidatorConstraintInterface,
   ValidationArguments,
 } from 'class-validator';
-import { OPPORTUNITY_MODERATE_ACTION } from '@universe/core/constants/opportunities';
+import {
+  OPPORTUNITY_MODERATE_ACTION,
+  OPPORTUNITY_STATUS,
+} from '@universe/core/constants/opportunities';
+import { OPPORTUNITY_AVAILABILITY } from '@universe/core/constants/opportunity-availability';
 import { isValidContactInfo } from '@universe/core/utils/contacts';
 import { normalizeOpportunityContent } from '@universe/core/utils/opportunities';
 import type {
@@ -14,7 +18,27 @@ import type {
 } from '@universe/database';
 import type { ModerateOpportunityDto } from './dto/moderate-opportunity.dto';
 
-export const toTagRecord = (name: string): { name: string } => ({ name });
+import type { UnavailableOpportunity } from '@universe/core/types/opportunities';
+
+/** Builds the public summary using fields captured at publication. */
+export function unavailableOpportunity(
+  opportunity: Pick<
+    Opportunity,
+    'id' | 'status' | 'publishedTitle' | 'publishedPaymentType'
+  >,
+): UnavailableOpportunity {
+  return {
+    id: opportunity.id,
+    title: opportunity.publishedTitle ?? '',
+    ...(opportunity.publishedPaymentType
+      ? { paymentType: opportunity.publishedPaymentType }
+      : {}),
+    availability:
+      opportunity.status === OPPORTUNITY_STATUS.REJECTED
+        ? OPPORTUNITY_AVAILABILITY.PERMANENT
+        : OPPORTUNITY_AVAILABILITY.TEMPORARY,
+  };
+}
 
 export type ApplyModerationParams = {
   id: string;
@@ -28,14 +52,6 @@ export async function applyModerationInTransaction(
   { id, opportunity, newStatus, dto }: ApplyModerationParams,
 ): Promise<Opportunity> {
   const isApprove = dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE;
-  const names = opportunity.proposedTags;
-
-  if (isApprove && names.length) {
-    await tx.tag.createMany({
-      data: names.map(toTagRecord),
-      skipDuplicates: true,
-    });
-  }
 
   return tx.opportunity.update({
     where: {
@@ -51,7 +67,9 @@ export async function applyModerationInTransaction(
           : null,
       moderationComment: isApprove ? null : dto.comment,
       ...(isApprove && {
-        tags: { set: names.map(toTagRecord) },
+        publishedAt: opportunity.publishedAt ?? new Date(),
+        publishedTitle: opportunity.title,
+        publishedPaymentType: opportunity.paymentType,
       }),
     },
   });
@@ -65,18 +83,10 @@ export function getOpportunityContentHash(
     | 'ownerContactInfo'
     | 'paymentType'
     | 'paymentDetails'
-    | 'proposedTags'
   >,
 ): string {
-  const content = normalizeOpportunityContent(opportunity);
-
-  const tags = [...opportunity.proposedTags].sort((firstTag, secondTag) =>
-    firstTag.localeCompare(secondTag),
-  );
-  const hashedContent = tags.length ? [...content, tags] : content;
-
   return createHash('sha256')
-    .update(JSON.stringify(hashedContent))
+    .update(JSON.stringify(normalizeOpportunityContent(opportunity)))
     .digest('hex');
 }
 

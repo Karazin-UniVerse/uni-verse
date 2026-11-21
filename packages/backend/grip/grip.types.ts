@@ -54,6 +54,7 @@ export interface GeminiKeyReservation {
 
 export interface GeminiKeyCooldownParams {
   slot: number;
+  model?: string;
   status?: number;
   retryAfter?: string | null;
 }
@@ -62,6 +63,7 @@ export interface GeminiKeyState {
   apiKey: string;
   active: number;
   availableAfter: number;
+  modelAvailableAfter: Map<string, number>;
 }
 
 export type GeminiAttemptOutcome =
@@ -94,6 +96,7 @@ export interface GeminiFailedAttemptParams {
   attempted: ReadonlySet<number>;
   slot: number;
   attempt: number;
+  model: string;
   startedAt: number;
 }
 
@@ -104,4 +107,5 @@ export interface GeminiExecuteAttemptParams {
   attempted: Set<number>;
   lastFailure?: HttpException;
   attempt?: number;
+  model?: string;
 }

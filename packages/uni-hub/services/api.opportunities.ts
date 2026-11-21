@@ -4,8 +4,8 @@ import type {
   GetOpportunitiesParams,
   Opportunity,
   OpportunityApplication,
+  OpportunityListItem,
   OpportunityFavoriteState,
-  OpportunityTag,
   UpdateOpportunityRequest,
 } from '@core/types/opportunities';
 import type {
@@ -16,6 +16,18 @@ import type {
 import { ApiClient, buildQueryString } from './api.request';
 
 export class OpportunitiesApi extends ApiClient {
+  /** Loads saved opportunities, including unavailable summaries. */
+  async getFavorites(): Promise<{ data: OpportunityListItem[] }> {
+    return this.request<OpportunityListItem[]>('/opportunities/favorites');
+  }
+
+  /** Adds or removes a favorite through the idempotent API. */
+  async setFavorite(id: string, saved: boolean): Promise<{ data: OpportunityFavoriteState }> {
+    return this.request<OpportunityFavoriteState>(`/opportunities/${id}/favorite`, {
+      method: saved ? 'PUT' : 'DELETE',
+    });
+  }
+
   async getOpportunities(params?: GetOpportunitiesParams): Promise<{ data: Opportunity[] }> {
     const { tags, isRecruiting, ...rest } = params ?? {};
     const searchParams = new URLSearchParams(
@@ -34,12 +46,8 @@ export class OpportunitiesApi extends ApiClient {
     return this.request<Opportunity[]>(`/opportunities${query}`);
   }
 
-  async getTagSuggestions(query: string): Promise<{ data: OpportunityTag[] }> {
-    return this.request<OpportunityTag[]>(`/tags${buildQueryString({ query })}`);
-  }
-
-  async getOpportunity(id: string): Promise<{ data: Opportunity }> {
-    return this.request<Opportunity>(`/opportunities/${id}`);
+  async getOpportunity(id: string): Promise<{ data: OpportunityListItem }> {
+    return this.request<OpportunityListItem>(`/opportunities/${id}`);
   }
 
   async createOpportunity(dto: CreateOpportunityRequest): Promise<{ data: Opportunity }> {
@@ -129,12 +137,6 @@ export class OpportunitiesApi extends ApiClient {
     return this.request<Opportunity>(`/opportunities/${id}/moderate`, {
       method: 'POST',
       body: JSON.stringify({ action, comment }),
-    });
-  }
-
-  async setFavorite(id: string, saved: boolean): Promise<{ data: OpportunityFavoriteState }> {
-    return this.request<OpportunityFavoriteState>(`/opportunities/${id}/favorite`, {
-      method: saved ? 'PUT' : 'DELETE',
     });
   }
 }

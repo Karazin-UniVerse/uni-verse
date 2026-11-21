@@ -1,8 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { ConfirmModal } from './ConfirmModal';
+import buttonCss from '../../una/Button/Button.module.scss';
+import { ConfirmModal, type ConfirmModalProps } from './ConfirmModal';
 import styles from './ConfirmModal.module.scss';
+
+type VariantCase = {
+  variant: NonNullable<ConfirmModalProps['variant']>;
+  iconClass: string;
+  toneClass: string;
+};
 
 describe('ConfirmModal Component', () => {
   const defaultProps = {
@@ -70,28 +77,23 @@ describe('ConfirmModal Component', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('should reflect danger/destructive variant styling', () => {
-    const { container } = render(<ConfirmModal {...defaultProps} variant="danger" />);
+  it.each<VariantCase>([
+    { variant: 'danger', iconClass: styles.dangerIcon, toneClass: buttonCss.danger },
+    { variant: 'warning', iconClass: styles.warningIcon, toneClass: buttonCss.warning },
+  ])(
+    'should match the confirm button tone and icon to the $variant variant',
+    ({ variant, iconClass, toneClass }) => {
+      const { container } = render(<ConfirmModal {...defaultProps} variant={variant} />);
 
-    const confirmBtn = screen.getByRole('button', { name: 'Delete' });
+      expect(screen.getByRole('button', { name: 'Delete' })).toHaveClass(toneClass);
+      expect(container.querySelector(`.${styles.icon}`)).toHaveClass(iconClass);
+    },
+  );
 
-    expect(confirmBtn).toHaveClass(styles.dangerBtn);
+  it('should render a neutral confirm button for the primary variant', () => {
+    render(<ConfirmModal {...defaultProps} variant="primary" />);
 
-    const icon = container.querySelector(`.${styles.icon}`);
-
-    expect(icon).toHaveClass(styles.dangerIcon);
-  });
-
-  it('should reflect warning variant styling', () => {
-    const { container } = render(<ConfirmModal {...defaultProps} variant="warning" />);
-
-    const confirmBtn = screen.getByRole('button', { name: 'Delete' });
-
-    expect(confirmBtn).not.toHaveClass(styles.dangerBtn);
-
-    const icon = container.querySelector(`.${styles.icon}`);
-
-    expect(icon).toHaveClass(styles.warningIcon);
+    expect(screen.getByRole('button', { name: 'Delete' })).not.toHaveClass(buttonCss.toned);
   });
 
   it('should disable actions when loading/isPending', async () => {

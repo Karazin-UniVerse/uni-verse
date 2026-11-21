@@ -6,6 +6,7 @@
 
 .trigger {
   position: relative;
+  height: 42px;
 }
 
 .badge {
@@ -26,7 +27,7 @@
   line-height: 16px;
 }
 
-/* The tag suggestions list overflows the popover body, so the clipping has to be lifted. */
+/* The tag dropdown overflows the popover body, so the clipping has to be lifted. */
 .popover.popover {
   overflow: visible;
 }

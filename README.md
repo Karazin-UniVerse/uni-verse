@@ -65,13 +65,17 @@ The wizard prompts you step-by-step, automatically configures environment files,
    - `[2] Remote Cloud Database` (Supabase / Cloud PostgreSQL; prompts for connection string if not in environment)
    - `[3] Custom PostgreSQL Connection String`
    - Automatically writes `.env` and `packages/backend/.env`, generates Prisma Client (`pnpm db:generate`), and optionally syncs schema (`pnpm db:migrate`).
-4. **Grip Gateway Pre-Push Check**:
+4. **Google OAuth Configuration** (optional):
+   - Automatically detects existing `NEXT_PUBLIC_GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_ID` across `.env` files or prompts to enter one.
+5. **SSL / HTTPS Protocol** (only for remote backend):
+   - Prompts to enable self-signed HTTPS via Next.js (`--experimental-https`) or pass `--https` flag directly (`pnpm dev:https`). Local backend always uses standard HTTP (`http://localhost:3000`).
+6. **Grip Gateway Pre-Push Check**:
    - Checks if Grip is enrolled on this computer; prompts to automatically run `pnpm grip:setup` if needed.
-5. **Moodle Authentication Notice**:
+7. **Moodle Authentication Notice**:
    - Displays an in-terminal reminder that user authentication delegates to `https://moodle.universemvp.tech`.
-6. **Instant Launch**:
+8. **Instant Launch**:
    - Prompts `Launch development server now? (Y/n)`:
-     - **Frontend**: immediately starts `pnpm --filter @universe/uni-hub dev` ([http://localhost:3000](http://localhost:3000)).
+     - **Frontend**: immediately starts `pnpm --filter @universe/uni-hub dev` (or `dev:https` for [https://localhost:3000](https://localhost:3000)).
      - **Fullstack**: immediately starts the full Turborepo monorepo `pnpm dev`.
 
 ---
@@ -193,8 +197,8 @@ UniVerse enforces strict institutional security policies:
 AI coding agents can use the shared [Context7 MCP configuration](docs/context7.md) for library documentation. Each developer signs in with their own account; no shared credentials or application dependencies are required. Local codebase structural knowledge graphs can be generated with zero token spend via [Graphify](docs/graphify.md).
 UniVerse provides manual unused-code and dependency auditing via [Knip](docs/knip.md).
 
-UniVerse enforces mandatory [Grip browser push checks](docs/grip.md) backed by an authenticated, quota-limited team Gemini gateway.
-The pre-push check runs Grip in whiteboard mode before code is sent upstream. All contributors must enroll their checkout before pushing (`pnpm grip:setup`).
+UniVerse enforces mandatory [Grip interactive push checks](docs/grip.md) backed by an authenticated, quota-limited team Gemini gateway.
+The pre-push check runs Grip in quiz mode before code is sent upstream. All contributors must enroll their checkout before pushing (`pnpm grip:setup`).
 
 Run linters, style checks, type checks, and automated tests across all monorepo packages:
 

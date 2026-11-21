@@ -1,5 +1,7 @@
 import type { SyntheticEvent, Dispatch, SetStateAction } from 'react';
 import type { OpportunityLifecycle, OpportunityPaymentType } from '@core/constants/opportunities';
+import type { OpportunityTag } from '@core/constants/tags';
+import type { MultiSelectGroup } from '../../una/inputs/MultiSelect';
 import type { OpportunityLifecycleOption } from '../OpportunityDetail/OpportunityDetail.types';
 
 export type CreateOpportunityFormData = {
@@ -8,7 +10,7 @@ export type CreateOpportunityFormData = {
   ownerContactInfo: string;
   paymentType: OpportunityPaymentType;
   paymentDetails: string;
-  tags?: string[];
+  tags?: OpportunityTag[];
   acceptsApplications?: boolean;
   lifecycleState?: OpportunityLifecycle;
 };
@@ -47,16 +49,14 @@ type CreateOpportunityModalTagProps =
   | {
       tagsLabel: string;
       removeTagLabel: string;
-      tagsPlaceholder?: string;
-      formatCreateTagLabel?: (tag: string) => string;
-      loadTagSuggestions?: (query: string) => Promise<string[]>;
+      tagsPlaceholder: string;
+      tagGroups: readonly MultiSelectGroup<OpportunityTag>[];
     }
   | {
       tagsLabel?: undefined;
       removeTagLabel?: undefined;
       tagsPlaceholder?: undefined;
-      formatCreateTagLabel?: undefined;
-      loadTagSuggestions?: undefined;
+      tagGroups?: undefined;
     };
 
 export type CreateOpportunityModalProps = BaseCreateOpportunityModalProps &

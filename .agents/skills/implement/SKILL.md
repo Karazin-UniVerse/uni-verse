@@ -63,9 +63,15 @@ handoffs and their impact instead.
    changes; run focused tests and typechecks during delivery. If unexpected
    behavior changes the approved design, stop and return to the gate.
 3. Critically inspect the diff against the source checklist and non-goals:
-   missing acceptance coverage, accidental domain changes, duplication, and
-   unrequested cleanup. Use `verification-before-completion` for fresh evidence
-   and the checks required by repository workflow, including the full suite.
+   map every acceptance criterion to the actual implementation and its evidence,
+   marking it met, unmet, or unverified. Look for a counterexample that the
+   current tests miss, accidental domain changes, duplication, and unrequested
+   cleanup. A green suite does not prove an untested criterion. Correct in-scope
+   gaps and add the missing regression before claiming completion; do not weaken
+   the source criteria or assertions to fit the diff. Surface ambiguities and
+   out-of-scope fixes for approval. Use `verification-before-completion` for
+   fresh evidence and the checks required by repository workflow, including the
+   full suite.
 4. Use `requesting-code-review` with the exact source, approved scope, changed
    files/diff, and check results. Review must include uncommitted changes, not
    just identical HEAD/base commits. Respect delegation restrictions: if an

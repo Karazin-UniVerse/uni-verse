@@ -1,28 +1,27 @@
 import {
+  MAX_APPLICATION_WITHDRAWALS,
+  OPPORTUNITY_APP_STATUS,
+  type OpportunityAppStatus,
   OPPORTUNITY_LIFECYCLE,
   OPPORTUNITY_PAYMENT_TYPE,
-  OPPORTUNITY_STATUS,
   type OpportunityLifecycle,
   type OpportunityPaymentType,
 } from '../constants/opportunities.ts';
 import type {
-  Opportunity,
   OpportunityContentFields,
+  UnavailableOpportunity,
   UpdateOpportunityRequest,
 } from '../types/opportunities.ts';
-import { normalizeTags } from './tags.ts';
 
-export const getOpportunityTagNames = ({
-  status,
-  tags,
-  proposedTags,
-}: Partial<Pick<Opportunity, 'status' | 'tags' | 'proposedTags'>>): string[] => {
-  if (status === OPPORTUNITY_STATUS.PUBLISHED) {
-    return (tags ?? []).map((tag) => tag.name);
-  }
+export function isWithdrawableApplicationStatus(status: OpportunityAppStatus): boolean {
+  return (
+    status === OPPORTUNITY_APP_STATUS.SUBMITTED || status === OPPORTUNITY_APP_STATUS.UNDER_REVIEW
+  );
+}
 
-  return proposedTags ?? [];
-};
+export function hasReachedApplicationWithdrawalLimit(withdrawalCount?: number): boolean {
+  return (withdrawalCount ?? 0) >= MAX_APPLICATION_WITHDRAWALS;
+}
 
 export function isRecruitmentPhase(lifecycleState?: OpportunityLifecycle): boolean {
   return (
@@ -49,8 +48,7 @@ export function normalizeOpportunityContent(
 }
 
 export function hasOpportunityContentChanged(
-  current: OpportunityContentFields &
-    Partial<Pick<Opportunity, 'status' | 'tags' | 'proposedTags'>>,
+  current: OpportunityContentFields,
   updated: UpdateOpportunityRequest,
 ): boolean {
   const mergedPaymentType = updated.paymentType ?? current.paymentType;
@@ -64,19 +62,11 @@ export function hasOpportunityContentChanged(
       updated.paymentDetails !== undefined ? updated.paymentDetails : current.paymentDetails,
   });
 
-  if (currentTuple.some((value, index) => value !== updatedTuple[index])) {
-    return true;
-  }
+  return currentTuple.some((value, index) => value !== updatedTuple[index]);
+}
 
-  if (updated.tags === undefined) {
-    return false;
-  }
-
-  const currentTags = normalizeTags(getOpportunityTagNames(current));
-  const updatedTags = normalizeTags(updated.tags);
-
-  return (
-    currentTags.length !== updatedTags.length ||
-    currentTags.some((tag) => !updatedTags.includes(tag))
-  );
+export function isUnavailableOpportunity(
+  opportunity: object,
+): opportunity is UnavailableOpportunity {
+  return 'availability' in opportunity;
 }

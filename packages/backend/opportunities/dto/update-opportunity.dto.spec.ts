@@ -1,34 +1,29 @@
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
-import { OpportunityLifecycleState } from '@universe/database';
+import { OpportunityLifecycleState, OpportunityTag } from '@universe/database';
 import { UpdateOpportunityDto } from './update-opportunity.dto';
 
 describe('UpdateOpportunityDto', () => {
-  it.each([42, null, {}, true])(
-    'should reject a non-string tag entry %j on update',
+  it.each(['react', 42, null])(
+    'should reject a tag %j outside the predefined list on update',
     (entry) => {
       const dto = plainToInstance(UpdateOpportunityDto, {
-        tags: ['react', entry],
+        tags: [OpportunityTag.IT, entry],
       });
 
       expect(validateSync(dto)).toEqual([
         expect.objectContaining({
           property: 'tags',
-          constraints: expect.objectContaining({
-            isString: expect.any(String),
-          }),
+          constraints: { isEnum: expect.any(String) },
         }),
       ]);
     },
   );
 
-  it('should retain normalized string tags on update', () => {
-    const dto = plainToInstance(UpdateOpportunityDto, {
-      tags: [' React ', 'react', '   '],
-    });
+  it('should accept clearing tags on update', () => {
+    const dto = plainToInstance(UpdateOpportunityDto, { tags: [] });
 
     expect(validateSync(dto)).toEqual([]);
-    expect(dto.tags).toEqual(['react']);
   });
 
   it.each([null, 123, {}])(
@@ -47,6 +42,17 @@ describe('UpdateOpportunityDto', () => {
 
     expect(validateSync(dto)).toEqual([]);
   });
+
+  it.each(['@ivan_dev_tg, ivan.project@gmail.com', 'ivan.project@gmail.com'])(
+    'should reject multiple or invalid organizer contacts %s on update',
+    (ownerContactInfo) => {
+      const dto = plainToInstance(UpdateOpportunityDto, { ownerContactInfo });
+
+      expect(validateSync(dto)).toEqual([
+        expect.objectContaining({ property: 'ownerContactInfo' }),
+      ]);
+    },
+  );
 
   it('accepts an empty payload', () => {
     const dto = plainToInstance(UpdateOpportunityDto, {});

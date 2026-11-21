@@ -9,7 +9,6 @@ import { OPPORTUNITY_VIEW, OPPORTUNITY_VIEW_PARAM } from '@core/constants/opport
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { OpportunityDetailContent } from './OpportunityDetailContent';
 import { buildOpportunity } from './test-utils';
-import { opportunityKeys } from './queryKeys';
 
 let query = new URLSearchParams(`${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`);
 let userId: string | null = 'owner-1';
@@ -45,12 +44,12 @@ const application: OpportunityApplication = {
   updatedAt: '2026-10-01T10:00:00Z',
 };
 
-function renderDetail(): ReturnType<typeof render> {
+function renderDetail(opportunity = buildOpportunity('opportunity-1')): ReturnType<typeof render> {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
 
-  return render(<OpportunityDetailContent opportunity={buildOpportunity('opportunity-1')} />, {
+  return render(<OpportunityDetailContent opportunity={opportunity} />, {
     wrapper: ({ children }) => (
       <QueryClientProvider client={queryClient}>
         <ToastProvider>{children}</ToastProvider>
@@ -66,11 +65,35 @@ describe('OpportunityDetailContent applicants deep-link', () => {
     vi.spyOn(opportunitiesApi, 'getOpportunityApplications').mockResolvedValue({
       data: [application],
     });
-    vi.spyOn(opportunitiesApi, 'getTagSuggestions').mockResolvedValue({ data: [] });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('toggles a published opportunity in favorites and updates its pressed state', async () => {
+    userId = 'candidate-1';
+    const user = userEvent.setup();
+    const opportunity = { ...buildOpportunity('opportunity-1'), status: 'PUBLISHED' } as const;
+    const listFavorites = vi
+      .spyOn(opportunitiesApi, 'getFavorites')
+      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValue({ data: [opportunity] });
+    const setFavorite = vi
+      .spyOn(opportunitiesApi, 'setFavorite')
+      .mockResolvedValue({ data: { saved: true } });
+
+    renderDetail(opportunity);
+
+    const button = screen.getByRole('button', { name: 'opportunities.favorites.toggle' });
+
+    await waitFor(() => expect(button).toBeEnabled());
+    expect(button).toHaveAttribute('aria-pressed', 'false');
+    await user.click(button);
+
+    expect(setFavorite).toHaveBeenCalledWith(opportunity.id, true);
+    await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'true'));
+    expect(listFavorites).toHaveBeenCalledTimes(2);
   });
 
   it('opens from the URL, stays closed after closing, and allows manual reopening', async () => {
@@ -483,6 +506,50 @@ describe('OpportunityDetailContent published opportunity controls', () => {
     );
   });
 
+  it('omits unchanged legacy ownerContactInfo when editing other fields', async () => {
+    const user = userEvent.setup();
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const opportunity = {
+      ...buildOpportunity('opp-legacy'),
+      ownerContactInfo: 'legacy@example.com',
+      status: 'PUBLISHED' as const,
+      lifecycleState: 'ACTIVE' as const,
+      acceptsApplications: true,
+    };
+
+    const updateSpy = vi.spyOn(opportunitiesApi, 'updateOpportunity').mockResolvedValueOnce({
+      data: {
+        ...opportunity,
+        lifecycleState: 'PAUSED',
+        acceptsApplications: false,
+      },
+    } as never);
+
+    updateSpy.mockClear();
+
+    render(<OpportunityDetailContent opportunity={opportunity} />, {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>{children}</ToastProvider>
+        </QueryClientProvider>
+      ),
+    });
+
+    await user.click(screen.getByRole('button', { name: 'opportunities.detailModal.edit' }));
+    await user.selectOptions(
+      screen.getByLabelText('opportunities.createModal.phaseLabel'),
+      'PAUSED',
+    );
+    await user.click(screen.getByRole('button', { name: 'opportunities.createModal.saveChanges' }));
+
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    const [, payload] = updateSpy.mock.calls[0];
+
+    expect(payload).not.toHaveProperty('ownerContactInfo');
+  });
+
   it('does not render phase select or accepts applications checkbox directly on detail page', () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -522,86 +589,5 @@ describe('OpportunityDetailContent published opportunity controls', () => {
         name: 'opportunities.detailModal.acceptsApplications',
       }),
     ).not.toBeInTheDocument();
-  });
-});
-
-describe('OpportunityDetailContent favorites', () => {
-  const id = 'favorite-opportunity';
-  const opportunity = { ...buildOpportunity(id), status: 'PUBLISHED' as const };
-  const favoriteLabel = 'opportunities.favorites.toggle';
-
-  beforeEach(() => {
-    query = new URLSearchParams();
-    userId = 'reader';
-  });
-
-  afterEach(() => vi.restoreAllMocks());
-
-  function renderFavorite(isFavorite = false) {
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-    });
-    const detail = (saved: boolean) => (
-      <OpportunityDetailContent opportunity={{ ...opportunity, isFavorite: saved }} />
-    );
-    const view = render(detail(isFavorite), {
-      wrapper: ({ children }) => (
-        <QueryClientProvider client={queryClient}>
-          <ToastProvider>{children}</ToastProvider>
-        </QueryClientProvider>
-      ),
-    });
-
-    return { queryClient, showFavorite: (saved: boolean) => view.rerender(detail(saved)) };
-  }
-
-  it('hides the favorite control from the owner', () => {
-    userId = opportunity.ownerId;
-    renderFavorite();
-
-    expect(screen.queryByRole('button', { name: favoriteLabel })).not.toBeInTheDocument();
-  });
-
-  it.each([false, true])('toggles favorite state (previously saved: %s)', async (saved) => {
-    const user = userEvent.setup();
-    const response = Promise.withResolvers<{ data: { saved: boolean } }>();
-    const request = vi.spyOn(opportunitiesApi, 'setFavorite').mockReturnValue(response.promise);
-    const { queryClient, showFavorite } = renderFavorite(saved);
-    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
-    const button = screen.getByRole('button', { name: favoriteLabel });
-
-    expect(button).toHaveAttribute('aria-pressed', String(saved));
-    await user.click(button);
-    await waitFor(() => expect(button).toBeDisabled());
-    expect(request).toHaveBeenCalledExactlyOnceWith(id, !saved);
-    await user.click(button);
-    expect(request).toHaveBeenCalledTimes(1);
-
-    response.resolve({ data: { saved: !saved } });
-    await waitFor(() => expect(button).toBeEnabled());
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: opportunityKeys.all }, undefined);
-
-    showFavorite(!saved);
-    const updatedButton = screen.getByRole('button', { name: favoriteLabel });
-
-    expect(updatedButton).toBeEnabled();
-    expect(updatedButton).toHaveAttribute('aria-pressed', String(!saved));
-  });
-
-  it.each([false, true])('shows a request failure (previously saved: %s)', async (saved) => {
-    const user = userEvent.setup();
-
-    vi.spyOn(opportunitiesApi, 'setFavorite').mockRejectedValue(
-      new Error('Favorite request failed'),
-    );
-    const { queryClient } = renderFavorite(saved);
-    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
-    const button = screen.getByRole('button', { name: favoriteLabel });
-
-    await user.click(button);
-
-    expect(await screen.findByText('Favorite request failed')).toBeInTheDocument();
-    expect(button).toBeEnabled();
-    expect(invalidate).not.toHaveBeenCalled();
   });
 });

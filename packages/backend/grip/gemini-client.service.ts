@@ -17,7 +17,6 @@ import {
   GRIP_ALLOWED_MODEL,
   GRIP_FALLBACK_MODEL,
   GRIP_MAX_OUTPUT_TOKENS,
-  GRIP_MAX_UPSTREAM_ATTEMPTS,
   GRIP_RETRY_BACKOFF_MS,
   GRIP_UPSTREAM_TIMEOUT_MS,
 } from './grip.constants';
@@ -210,6 +209,7 @@ export class GeminiClientService {
     attempted,
     slot,
     attempt,
+    model,
     startedAt,
   }: GeminiFailedAttemptParams): HttpException {
     const failure =
@@ -222,6 +222,7 @@ export class GeminiClientService {
     ) {
       pool.coolDown({
         slot,
+        model,
         status: failure.status,
         retryAfter: failure.retryAfter,
       });
@@ -229,9 +230,10 @@ export class GeminiClientService {
 
     const failover = Boolean(
       failure?.retryable &&
-      attempt < GRIP_MAX_UPSTREAM_ATTEMPTS &&
       !context.signal.aborted &&
-      pool.hasAvailable(attempted),
+      (pool.hasAvailable(attempted, model) ||
+        (model === GRIP_ALLOWED_MODEL &&
+          pool.hasAvailable(new Set(), GRIP_FALLBACK_MODEL))),
     );
     const outcome: GeminiAttemptOutcome = context.callerSignal?.aborted
       ? 'cancelled'
@@ -240,6 +242,7 @@ export class GeminiClientService {
     this.logger.warn('Grip upstream attempt', {
       keySlot: slot + 1,
       attempt,
+      model,
       ...(failure?.status !== undefined ? { status: failure.status } : {}),
       elapsedMs: Date.now() - startedAt,
       outcome: failure?.outcome ?? outcome,
@@ -260,9 +263,16 @@ export class GeminiClientService {
     attempted,
     lastFailure,
     attempt = 1,
+    model = GRIP_ALLOWED_MODEL,
   }: GeminiExecuteAttemptParams): Promise<GripCompletionResponse> {
     checkCancellation(context);
-    const reservation = pool.reserve(attempted);
+    let reservation = pool.reserve(attempted, model);
+
+    if (!reservation && model === GRIP_ALLOWED_MODEL) {
+      model = GRIP_FALLBACK_MODEL;
+      attempted.clear();
+      reservation = pool.reserve(attempted, model);
+    }
 
     if (!reservation) {
       throw (
@@ -275,8 +285,6 @@ export class GeminiClientService {
 
     attempted.add(reservation.slot);
     const startedAt = Date.now();
-
-    const model = attempt === 1 ? GRIP_ALLOWED_MODEL : GRIP_FALLBACK_MODEL;
 
     context.payload = JSON.stringify({
       model,
@@ -308,6 +316,7 @@ export class GeminiClientService {
         attempted,
         slot: reservation.slot,
         attempt,
+        model,
         startedAt,
       });
     } finally {
@@ -328,6 +337,7 @@ export class GeminiClientService {
       pool,
       attempted,
       attempt: attempt + 1,
+      model,
       lastFailure: nextFailure,
     });
   }

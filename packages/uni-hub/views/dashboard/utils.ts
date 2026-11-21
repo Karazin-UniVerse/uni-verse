@@ -99,6 +99,7 @@ const PLATFORM_ACTION_KEYS: Record<string, TranslationKey> = {
 };
 
 const PLATFORM_TITLE_KEYS: Record<string, TranslationKey> = {
+  [OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE]: OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE,
   [OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE]:
     OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE,
   [OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_TITLE]:
@@ -106,8 +107,6 @@ const PLATFORM_TITLE_KEYS: Record<string, TranslationKey> = {
   [OPPORTUNITY_NOTIFICATION_KEY.READY_FOR_REVIEW_TITLE]:
     OPPORTUNITY_NOTIFICATION_KEY.READY_FOR_REVIEW_TITLE,
   [OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE]: OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE,
-  [OPPORTUNITY_NOTIFICATION_KEY.LIFECYCLE_CHANGED_TITLE]:
-    OPPORTUNITY_NOTIFICATION_KEY.LIFECYCLE_CHANGED_TITLE,
 };
 
 const PLATFORM_LIFECYCLE_KEYS: Record<OpportunityLifecycle, TranslationKey> = {
@@ -168,6 +167,17 @@ function formatPlatformMessage(
 
   const opportunityTitle = parsed.opportunityTitle ?? '';
 
+  if (subject === OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE) {
+    const lifecycle = Object.values(OPPORTUNITY_LIFECYCLE).find(
+      (state) => state === parsed.lifecycleState,
+    );
+    const messageKey = lifecycle
+      ? PLATFORM_LIFECYCLE_KEYS[lifecycle]
+      : OPPORTUNITY_NOTIFICATION_KEY.UPDATED_MESSAGE;
+
+    return formatMessage(messageKey, { opportunityTitle });
+  }
+
   if (subject === OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE) {
     const status = translateCode(parsed.status, PLATFORM_STATUS_KEYS, formatMessage);
     const messageKey = parsed.comment
@@ -205,18 +215,6 @@ function formatPlatformMessage(
       action,
       comment: parsed.comment ?? '',
     });
-  }
-
-  if (subject === OPPORTUNITY_NOTIFICATION_KEY.LIFECYCLE_CHANGED_TITLE) {
-    const lifecycle = Object.values(OPPORTUNITY_LIFECYCLE).find(
-      (state) => state === parsed.lifecycleState,
-    );
-    const messageKey =
-      lifecycle === undefined
-        ? 'notifications.opportunityLifecycle.default'
-        : PLATFORM_LIFECYCLE_KEYS[lifecycle];
-
-    return formatMessage(messageKey, { opportunityTitle });
   }
 
   return rawMessage;

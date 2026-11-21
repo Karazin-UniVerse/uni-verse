@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { withLanguage } from '@uni-hub/utils/test-utils';
+import { OPPORTUNITY_AVAILABILITY } from '@core/constants/opportunity-availability';
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { MyApplicationsTab, type MyApplicationsTabProps } from './MyApplicationsTab';
 
@@ -150,6 +151,27 @@ describe('MyApplicationsTab component', () => {
     expect(screen.getByText('Reviewing your portfolio right now.')).toBeInTheDocument();
   });
 
+  it('shows the last published title and compensation for an unavailable opportunity', () => {
+    renderMyApplicationsTab({
+      myApplications: [
+        {
+          ...mockApplications[0],
+          opportunity: {
+            id: 'opp-1',
+            title: 'Last published title',
+            availability: OPPORTUNITY_AVAILABILITY.TEMPORARY,
+            paymentType: 'PAID',
+          },
+        },
+      ],
+    });
+
+    expect(screen.getByRole('heading', { name: 'Last published title' })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Тимчасово недоступна');
+    expect(screen.getByText('Оплачувана')).toBeInTheDocument();
+    expect(screen.queryByText('mentor@example.com')).not.toBeInTheDocument();
+  });
+
   it('should render fallback default title when opportunity title is not provided', () => {
     const appWithoutTitle: OpportunityApplication = {
       ...mockApplications[0],
@@ -211,6 +233,27 @@ describe('MyApplicationsTab component', () => {
     expect(screen.getByText('Організатор відхилив відгук')).toBeInTheDocument();
     expect(screen.getByText('Ви відкликали цей відгук')).toBeInTheDocument();
   });
+
+  it.each(['SUBMITTED', 'UNDER_REVIEW'] as const)(
+    'explains the withdrawal limit for %s applications',
+    (status) => {
+      const maxedOutApplication: OpportunityApplication = {
+        ...mockApplications[0],
+        id: 'app-max-33333333',
+        status,
+        withdrawalCount: 3,
+      };
+
+      renderMyApplicationsTab({ myApplications: [maxedOutApplication] });
+
+      expect(screen.queryByRole('button', { name: /відкликати відгук/i })).not.toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'Ви вже відкликали відгук на цю можливість максимальну кількість разів (3).',
+        ),
+      ).toBeInTheDocument();
+    },
+  );
 
   it('should render empty state when myApplications is empty', () => {
     renderMyApplicationsTab({ myApplications: [] });

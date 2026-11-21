@@ -1,4 +1,6 @@
 export const OPPORTUNITY_NOTIFICATION_KEY = {
+  UPDATED_TITLE: 'notifications.opportunityUpdated.title',
+  UPDATED_MESSAGE: 'notifications.opportunityUpdated.message',
   APPLICATION_STATUS_TITLE: 'notifications.opportunityApplicationStatus.title',
   APPLICATION_STATUS_MESSAGE: 'notifications.opportunityApplicationStatus.message',
   APPLICATION_STATUS_MESSAGE_WITH_COMMENT:
@@ -10,11 +12,10 @@ export const OPPORTUNITY_NOTIFICATION_KEY = {
   MODERATED_TITLE: 'notifications.opportunityModerated.title',
   MODERATED_MESSAGE: 'notifications.opportunityModerated.message',
   MODERATED_MESSAGE_WITH_COMMENT: 'notifications.opportunityModerated.messageWithComment',
-  LIFECYCLE_CHANGED_TITLE: 'notifications.opportunityLifecycle.title',
 } as const;
 
 export const NOTIFICATION_TYPE = {
-  OPPORTUNITY_LIFECYCLE_CHANGED: 'OPPORTUNITY_LIFECYCLE_CHANGED',
+  OPPORTUNITY_UPDATED: 'OPPORTUNITY_UPDATED',
   OPPORTUNITY_READY_FOR_REVIEW: 'OPPORTUNITY_READY_FOR_REVIEW',
   OPPORTUNITY_APPLICATION_STATUS: 'OPPORTUNITY_APPLICATION_STATUS',
   OPPORTUNITY_NEW_APPLICATION: 'OPPORTUNITY_NEW_APPLICATION',

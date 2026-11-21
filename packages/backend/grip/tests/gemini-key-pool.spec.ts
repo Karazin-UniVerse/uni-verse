@@ -197,4 +197,55 @@ describe('GeminiKeyPool', () => {
     now += 1;
     expect(pool.reserve(new Set([1]))?.slot).toBe(0);
   });
+
+  it('should keep transient cooldown local to the model that failed', () => {
+    const pool = new GeminiKeyPool(['first']);
+
+    pool.coolDown({ slot: 0, model: 'gemini-3.5-flash-lite', status: 503 });
+    expect(pool.hasAvailable(excluded, 'gemini-3.5-flash-lite')).toBe(false);
+    expect(pool.reserve(excluded, 'gemini-3.1-flash-lite')?.apiKey).toBe(
+      'first',
+    );
+    pool.release(0);
+    pool.coolDown({ slot: 0, model: 'gemini-3.1-flash-lite', status: 503 });
+    now += 29_999;
+    expect(pool.hasAvailable(excluded, 'gemini-3.1-flash-lite')).toBe(false);
+    now += 1;
+    expect(pool.hasAvailable(excluded, 'gemini-3.1-flash-lite')).toBe(true);
+  });
+
+  it.each([401, 403, 429])(
+    'should preserve cross-model cooldown for HTTP %s',
+    (status) => {
+      const pool = new GeminiKeyPool(['first']);
+
+      pool.coolDown({
+        slot: 0,
+        model: 'gemini-3.5-flash-lite',
+        status,
+        retryAfter: '120',
+      });
+      expect(pool.reserve(excluded, 'gemini-3.1-flash-lite')).toBeUndefined();
+      now += status === 429 ? 120_000 : 60_000;
+      expect(pool.hasAvailable(excluded, 'gemini-3.1-flash-lite')).toBe(true);
+    },
+  );
+
+  it('should not shorten a global cooldown when another model attempt fails later', () => {
+    const pool = new GeminiKeyPool(['first']);
+
+    pool.coolDown({
+      slot: 0,
+      model: 'gemini-3.5-flash-lite',
+      status: 429,
+      retryAfter: '120',
+    });
+    now += 1_000;
+    pool.coolDown({ slot: 0, model: 'gemini-3.1-flash-lite', status: 503 });
+    now += 30_000;
+    expect(pool.hasAvailable(excluded, 'gemini-3.5-flash-lite')).toBe(false);
+    expect(pool.hasAvailable(excluded, 'gemini-3.1-flash-lite')).toBe(false);
+    now += 89_000;
+    expect(pool.hasAvailable(excluded, 'gemini-3.1-flash-lite')).toBe(true);
+  });
 });

@@ -4,7 +4,7 @@ import { Button } from '../../una/Button';
 import { TextInput } from '../../una/inputs/TextInput';
 import { CheckBox } from '../../una/inputs/CheckBox';
 import { Select } from '../../una/Select';
-import { TagInput } from '../../una/inputs/TagInput';
+import { MultiSelect } from '../../una/inputs/MultiSelect';
 import { StatusBanner } from '../StatusBanner';
 import { isRecruitmentPhase } from '@core/utils/opportunities';
 import type { OpportunityLifecycle, OpportunityPaymentType } from '@core/constants/opportunities';
@@ -37,14 +37,14 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   phaseLabel,
   tagsLabel,
   tagsPlaceholder,
-  loadTagSuggestions,
-  formatCreateTagLabel,
+  tagGroups,
   remoderationWarning,
   className,
   removeTagLabel,
   lifecycleOptions = [],
   submitting = false,
 }) => {
+  const formId = useId();
   const titleId = useId();
   const descId = useId();
   const contactId = useId();
@@ -56,8 +56,24 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
   const canAcceptApplications = isRecruitmentPhase(formData.lifecycleState);
 
   return (
-    <Modal open={open} onClose={onClose} title={title} width={560} className={className}>
-      <form onSubmit={onSubmit} className={styles.modalStack}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={title}
+      width={560}
+      className={className}
+      footer={
+        <div className={styles.modalFooter}>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+            {cancelText}
+          </Button>
+          <Button type="submit" form={formId} variant="primary" disabled={submitting}>
+            {submitting ? savingText : submitText}
+          </Button>
+        </div>
+      }
+    >
+      <form id={formId} onSubmit={onSubmit} className={styles.modalStack}>
         <div className={styles.fieldGroup}>
           <label htmlFor={titleId} className={styles.fieldLabel}>
             {titleLabel}
@@ -192,28 +208,18 @@ export const CreateOpportunityModal: React.FC<CreateOpportunityModalProps> = ({
             <label htmlFor={tagsId} className={styles.fieldLabel}>
               {tagsLabel}
             </label>
-            <TagInput
+            <MultiSelect
               id={tagsId}
+              groups={tagGroups}
               value={formData.tags ?? []}
               onChange={(tags) => setFormData((prev) => ({ ...prev, tags }))}
-              loadSuggestions={loadTagSuggestions}
               placeholder={tagsPlaceholder}
-              removeLabel={removeTagLabel ?? ''}
-              formatCreateLabel={formatCreateTagLabel}
+              removeLabel={removeTagLabel}
             />
           </div>
         )}
 
         {remoderationWarning && <StatusBanner tone="warning">{remoderationWarning}</StatusBanner>}
-
-        <div className={styles.modalFooter}>
-          <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
-            {cancelText}
-          </Button>
-          <Button type="submit" variant="primary" disabled={submitting}>
-            {submitting ? savingText : submitText}
-          </Button>
-        </div>
       </form>
     </Modal>
   );

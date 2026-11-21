@@ -47,11 +47,29 @@
   background: transparent;
   color: var(--sidebar-text);
   font-weight: 400;
+  transition: var(--transition-medium);
 
   &:hover {
     color: var(--sidebar-text-strong);
     background: var(--sidebar-item-hover-bg);
     border-color: transparent;
+  }
+}
+
+.fullWidthTrigger {
+  width: 100%;
+  justify-content: flex-start;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--border-radius-medium);
+  border: 1px solid var(--neutral-border);
+  background: transparent;
+  color: var(--neutral-text-primary);
+  font-size: var(--font-sm);
+
+  &:hover {
+    background: var(--bg-hover);
+    border-color: var(--neutral-border);
   }
 }
 

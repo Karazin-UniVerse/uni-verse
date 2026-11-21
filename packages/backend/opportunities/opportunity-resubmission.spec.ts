@@ -12,7 +12,6 @@ describe('opportunity revision requirement', () => {
     ownerContactInfo: '@research_team',
     paymentType: 'UNPAID' as const,
     paymentDetails: null,
-    proposedTags: [] as string[],
   };
 
   async function setup(status = 'READY_FOR_REVIEW') {
@@ -29,7 +28,6 @@ describe('opportunity revision requirement', () => {
     };
     const prisma: any = {
       $transaction: jest.fn(async (callback: any) => callback(prisma)),
-      tag: { createMany: jest.fn() },
       opportunity: {
         findUnique: jest.fn(async () => ({ ...stored })),
         update: jest.fn(async ({ where, data }) => {

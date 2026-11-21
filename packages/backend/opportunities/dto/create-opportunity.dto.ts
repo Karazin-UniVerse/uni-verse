@@ -1,23 +1,22 @@
 import {
-  ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
-  MaxLength,
+  Validate,
   ValidateIf,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PaymentType, OpportunityLifecycleState } from '@universe/database';
-import type { CreateOpportunityRequest } from '@universe/core/types/opportunities';
 import {
-  TAG_MAX_LENGTH,
-  TAG_MAX_PER_OPPORTUNITY,
-} from '@universe/core/constants/tags';
-import { normalizeTags } from '@universe/core/utils/tags';
+  OpportunityLifecycleState,
+  OpportunityTag,
+  PaymentType,
+} from '@universe/database';
+import type { CreateOpportunityRequest } from '@universe/core/types/opportunities';
+import { IsContactInfoConstraint } from '../opportunities.helpers';
 
 export class CreateOpportunityDto implements CreateOpportunityRequest {
   @ApiProperty()
@@ -35,6 +34,7 @@ export class CreateOpportunityDto implements CreateOpportunityRequest {
   @ValidateIf(
     (dto: CreateOpportunityDto): boolean => dto.ownerContactInfo !== undefined,
   )
+  @Validate(IsContactInfoConstraint)
   ownerContactInfo?: string;
 
   @ApiProperty({ enum: PaymentType, default: PaymentType.UNPAID })
@@ -51,19 +51,15 @@ export class CreateOpportunityDto implements CreateOpportunityRequest {
   @IsOptional()
   acceptsApplications?: boolean;
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiPropertyOptional({ enum: OpportunityTag, isArray: true })
   @Transform(({ value }) =>
-    Array.isArray(value) && value.every((tag) => typeof tag === 'string')
-      ? normalizeTags(value)
-      : value,
+    Array.isArray(value) ? [...new Set(value)] : value,
   )
   @IsArray()
-  @ArrayMaxSize(TAG_MAX_PER_OPPORTUNITY)
-  @IsString({ each: true })
-  @IsNotEmpty({ each: true })
-  @MaxLength(TAG_MAX_LENGTH, { each: true })
+  @IsEnum(OpportunityTag, { each: true })
   @IsOptional()
-  tags?: string[];
+  tags?: OpportunityTag[];
+
   @ApiPropertyOptional({
     enum: OpportunityLifecycleState,
     default: OpportunityLifecycleState.START,
