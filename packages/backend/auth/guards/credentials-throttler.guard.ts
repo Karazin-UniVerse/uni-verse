@@ -6,10 +6,15 @@ import type { Request } from 'express';
 type CredentialsBody = { email?: unknown; username?: unknown };
 
 // Mirrors Moodle's PARAM_USERNAME cleaning, so spellings Moodle treats as one login share one bucket.
-// Logins made only of extended (non-ASCII) characters keep their compact form instead of all collapsing to ''.
+// With `extendedusernamechars` on, Moodle keeps non-ASCII characters; off (its default), it strips them.
 function toMoodleLogin(value: string): string {
   const compact = value.replaceAll(/[\0\s]/g, '').toLowerCase();
 
+  if (process.env.MOODLE_EXTENDED_USERNAME_CHARS === 'true') {
+    return compact;
+  }
+
+  // Logins made only of non-ASCII characters keep their compact form instead of all collapsing to ''.
   return compact.replaceAll(/[^-.@_a-z0-9]/g, '') || compact;
 }
 
@@ -18,9 +23,11 @@ function toMoodleLogin(value: string): string {
 export class CredentialsThrottlerGuard extends ThrottlerGuard {
   protected getTracker(request: Request): Promise<string> {
     const body = request.body as CredentialsBody | undefined;
-    // Express matches routes case-insensitively and ignores a trailing slash, so compare the same way.
-    const path = request.path.replace(/\/+$/, '').toLowerCase();
-    const isMoodleLink = path.endsWith(`/${AUTH_ROUTES.MOODLE_LINK}`);
+    // Express matches routes case-insensitively and ignores one trailing slash, so compare the same way.
+    const path = request.path.toLowerCase();
+    const routeSuffix = `/${AUTH_ROUTES.MOODLE_LINK}`;
+    const isMoodleLink =
+      path.endsWith(routeSuffix) || path.endsWith(`${routeSuffix}/`);
     const login = isMoodleLink ? body?.username : body?.email;
     // Guards run before validation, so cap the key length here to bound throttler memory.
     const tracker =

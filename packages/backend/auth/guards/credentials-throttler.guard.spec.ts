@@ -67,6 +67,46 @@ describe('CredentialsThrottlerGuard', () => {
     },
   );
 
+  it('strips appended non-ASCII characters by default, as Moodle does', async () => {
+    await expect(
+      trackerFor('/auth/login', { email: 'victimжж' }),
+    ).resolves.toBe('victim');
+  });
+
+  describe('with MOODLE_EXTENDED_USERNAME_CHARS=true', () => {
+    const originalFlag = process.env.MOODLE_EXTENDED_USERNAME_CHARS;
+
+    beforeEach(() => {
+      process.env.MOODLE_EXTENDED_USERNAME_CHARS = 'true';
+    });
+
+    afterEach(() => {
+      if (originalFlag === undefined) {
+        delete process.env.MOODLE_EXTENDED_USERNAME_CHARS;
+      } else {
+        process.env.MOODLE_EXTENDED_USERNAME_CHARS = originalFlag;
+      }
+    });
+
+    it('keeps mixed Cyrillic and ASCII logins in separate buckets', async () => {
+      const first = await trackerFor('/auth/login', {
+        email: ' Іван.Петренко ',
+      });
+      const second = await trackerFor('/auth/login', {
+        email: 'олена.коваль',
+      });
+
+      expect(first).toBe('іван.петренко');
+      expect(second).toBe('олена.коваль');
+    });
+
+    it('still folds case, whitespace and NUL variants of one login', async () => {
+      await expect(
+        trackerFor('/auth/login', { email: ' ІВАН\u0000.петренко ' }),
+      ).resolves.toBe('іван.петренко');
+    });
+  });
+
   it('ignores spoofable client IP headers', async () => {
     const tracker = await guard.getTracker({
       path: '/auth/login',

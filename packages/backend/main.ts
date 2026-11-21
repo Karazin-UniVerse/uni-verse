@@ -26,12 +26,19 @@ async function bootstrap() {
     bodyParser: false,
   });
 
+  const isProduction = process.env.NODE_ENV === 'production';
+
   // First, so CORS preflights, parser errors and Swagger responses get the headers too.
-  app.use(helmet());
+  // Local dev serves Swagger over plain HTTP, which upgrade-insecure-requests would break.
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: { upgradeInsecureRequests: isProduction ? [] : null },
+      },
+    }),
+  );
   configureBodyParsers(app);
   app.enableCors(getCorsConfig());
-
-  const isProduction = process.env.NODE_ENV === 'production';
 
   if (!isProduction) {
     const document = SwaggerModule.createDocument(app, SWAGGER_CONFIG);

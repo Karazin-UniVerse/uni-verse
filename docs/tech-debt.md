@@ -25,7 +25,6 @@ Known gaps that were consciously left out of a PR. Each item says where it lives
 - **Per instance:** the throttler uses in-memory storage, so the real limit is 10 × the number of Cloud Run instances.
 - **Targeted lockout:** anyone who knows a student's login can send 10 junk attempts a minute and keep that student out until they stop. Counting only failed attempts would not help, because the junk attempts fail too.
 - **No IP limit:** credential stuffing (one guess against many logins) is not limited by the backend.
-- **Extended Moodle usernames:** the key follows Moodle's default username cleaning, which drops non-ASCII characters. If Moodle has `extendedusernamechars` enabled, logins that mix Cyrillic and ASCII (`іван.петренко`, `олена.коваль`) can share one bucket. The fix is to read that Moodle setting (or add an env flag) and keep non-ASCII characters only when it is on.
 - **Why deferred:** fixing these needs shared storage and a trusted client IP, which the current Cloud Run setup does not give.
 - **Fix:** move throttler storage to Redis and put the backend behind Cloudflare (or a Google load balancer) with an IP rate-limit rule on `/auth/*`. Targeted lockout stays open until the team picks a way to let the real user through, such as a challenge after the limit or keying the limit on login plus trusted IP.
 
