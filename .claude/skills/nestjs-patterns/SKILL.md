@@ -7,7 +7,7 @@ description: Use when adding or changing a NestJS module, controller, service, D
 
 Conventions for the UniVerse NestJS gateway. The architecture rules (thin controllers, logic in services, Prisma through DI) live in [architecture](../../../docs/ai/architecture.md#backend-nestjs); this skill adds the practical patterns on top. Where the two disagree, the repository docs win.
 
-Adapted from the `nestjs-patterns` skill of [everything-claude-code](https://github.com/affaan-m/everything-claude-code) (MIT, Copyright (c) 2026 Affaan Mustafa), trimmed to what applies here.
+Adapted from the `nestjs-patterns` skill of [everything-claude-code](https://github.com/affaan-m/everything-claude-code) (MIT, Copyright (c) 2026 Affaan Mustafa), trimmed to what applies here. The "Mistakes that pass tests" section and the global guard note under Testing are adapted from the official [nestjs/agent-skills](https://github.com/nestjs/agent-skills) (MIT, Copyright (c) 2026-present Kamil Mysliwiec).
 
 ## Module layout
 
@@ -48,6 +48,12 @@ opportunities/
 - Throw the matching Nest exception (`NotFoundException`, `ConflictException`, `BadRequestException`, `ForbiddenException`). There is no global exception filter and no custom error envelope; do not introduce one inside a single module.
 - Translate Prisma errors in the service, never in the controller, and never forward the raw Prisma message to the client. Read the error code with `getPrismaErrorCode` from `utils/prisma-error.ts` (see the `prisma-patterns` skill) instead of writing another `'code' in error` check.
 
+## Mistakes that pass tests
+
+- **`import type` on an injected class.** Dependency injection reads constructor parameter types at run time; a type-only import erases them and the app stops at startup with `Nest can't resolve dependencies of X (?)`. Unit tests that build the class with mocks still pass. The opposite holds for plain types in decorated signatures (`Request` from express): with `isolatedModules`, which `packages/backend` enables, TypeScript requires `import type` there (TS1272).
+- **`@Post()` answers 201.** A POST that creates nothing (sign-in, refresh, actions, searches) needs `@HttpCode(HttpStatus.OK)` or the code it means, as `auth.controller.ts` does.
+- **`@IsOptional()` lets `null` through.** class-validator skips every rule for `null`, so `{ "title": null }` reaches Prisma and fails with a 500. For "may be left out, but not null", use `@ValidateIf((_, value) => value !== undefined)` instead, as `opportunities/dto/` does.
+
 ## Configuration
 
 `ConfigModule.forRoot()` loads the environment without a schema. `PrismaService` deliberately keeps the app running when the database is unreachable, so Swagger and the Moodle proxy stay available; keep that behaviour. Its hardcoded fallback connection string breaks the no-fallback-defaults rule in [config and environment](../../../docs/ai/api-and-config.md): do not copy that pattern, and mention it in the PR description if you touch the file. A new environment variable follows the same document.
@@ -55,5 +61,6 @@ opportunities/
 ## Testing
 
 - Jest, with `*.spec.ts` next to the code; [Grip](../../../docs/grip.md#automated-verification) uses a module-local test directory. Mock `PrismaService` and neighbouring services in unit tests, and assert the exception type, not only that something threw.
+- `AtGuard` is registered as `{ provide: APP_GUARD, useClass: AtGuard }`, and neither `.overrideGuard(AtGuard)` nor `.overrideProvider(AtGuard)` replaces a guard registered that way. Keep the real guard in the testing module, as `grip/tests/grip-http.spec.ts` does, and for a protected route sign a test token with the `AT_SECRET` the test sets; do not change `app.module.ts` only to make a guard mockable.
 - End-to-end specs (`*.e2e-spec.ts`) live in `packages/backend/test/`. Build the app with the same `ValidationPipe` options as `main.ts`; a test that skips them passes payloads production would reject.
 - Run unit tests with `pnpm --filter @universe/backend test` and e2e specs with `pnpm --filter @universe/backend test:e2e`. The unit command does not pick up `*.e2e-spec.ts`, and CI runs only `test:cov`, so an e2e spec is not a CI gate. Jest has no coverage threshold; SonarCloud reports coverage of new code, so cover new branches with unit tests.
