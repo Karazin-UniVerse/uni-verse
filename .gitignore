@@ -21,3 +21,12 @@ ux_ui_audit.md
 graphify-out/
 .venv/
 gha-creds-*.json
+# Ignore docs except Superpowers plans and specs.
+docs/
+!/docs/
+/docs/*
+superpowers/
+!/docs/superpowers/
+/docs/superpowers/*
+!/docs/superpowers/plans/
+!/docs/superpowers/specs/
