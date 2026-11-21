@@ -26,7 +26,7 @@ import {
 import { RescheduleEventDto } from './dto/reschedule-event.dto';
 import { TimetableRescheduleRequestsService } from './timetable-reschedule-requests.service';
 import { TimetableReschedulingService } from './timetable-rescheduling.service';
-import { assertAdmin } from './timetable.helpers';
+import { assertAdmin } from '../auth/utils/assert-admin';
 
 @ApiTags('Timetable')
 @ApiBearerAuth()

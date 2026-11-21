@@ -37,6 +37,22 @@ describe('TeacherSlotPreferences', () => {
     });
   });
 
+  it('waits for saved preferences to load before allowing replacement', async () => {
+    api.getMySlotPreferences.mockRejectedValueOnce(new Error('Offline')).mockResolvedValue({
+      data: [{ weekday: 1, pair: 1, preference: 'PREFERRED' }],
+    });
+    const user = userEvent.setup();
+
+    renderPreferences();
+
+    const alert = await screen.findByRole('alert');
+
+    expect(screen.getByRole('button', { name: /Mon.*1.*Neutral/i })).toBeDisabled();
+    await user.click(within(alert).getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByRole('button', { name: /Mon.*1.*Preferred/i })).toBeEnabled();
+    expect(api.saveMySlotPreferences).not.toHaveBeenCalled();
+  });
+
   it('cycles Neutral -> Preferred -> Undesirable -> Neutral and saves', async () => {
     const user = userEvent.setup();
 

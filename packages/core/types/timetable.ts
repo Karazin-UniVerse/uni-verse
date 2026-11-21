@@ -1,6 +1,4 @@
-﻿import type {
-  CurriculumDisciplineNote,
-  CurriculumSheetKind,
+import type {
   RescheduleScope,
   RescheduleRequestStatus,
   SlotPreference,
@@ -170,6 +168,7 @@ export type TeacherUnavailability = {
 
 export type CheckTimetableConflictsParams = {
   events: ScheduledEvent[];
+  fixedEventIds?: ReadonlySet<string>;
   unavailability?: TeacherUnavailability[];
 };
 
@@ -408,49 +407,6 @@ export type CreateCurriculumPlanRequest = {
   isDraft?: boolean;
 };
 
-export type ImportedTeachingAssignmentRequest = {
-  disciplineTitle: string;
-  teachingType: TimetableAssignmentTeachingType;
-  academicHours: number;
-  isSaturdayOnly?: boolean;
-};
-
-export type ImportCurriculumPlanRequest = CreateCurriculumPlanRequest & {
-  assignments: ImportedTeachingAssignmentRequest[];
-  groupId?: string;
-  streamId?: string;
-};
-
-/** Spreadsheet cells by zero-based row and column; empty cells are empty strings. */
-export type SpreadsheetGrid = ReadonlyArray<ReadonlyArray<string>>;
-
-export type SpreadsheetSheet = {
-  name: string;
-  grid: SpreadsheetGrid;
-};
-
-export type CurriculumHoursByType = Record<TimetableAssignmentTeachingType, number>;
-
-export type CurriculumDiscipline = {
-  title: string;
-  hours: CurriculumHoursByType;
-  notes: CurriculumDisciplineNote[];
-  department?: string;
-};
-
-export type CurriculumTerm = {
-  courseYear: number;
-  semester: number;
-  disciplines: CurriculumDiscipline[];
-};
-
-export type ParsedCurriculumSheet = {
-  sheetName: string;
-  kind: CurriculumSheetKind;
-  terms: CurriculumTerm[];
-  specialty?: string;
-};
-
 export type GenerateTimetableRequest = {
   maxCandidates?: number;
   timeoutMs?: number;
@@ -611,3 +567,8 @@ export type CalendarSubscriptionTokenResponse = {
   token: string;
   createdAt?: string;
 };
+
+export interface SetAcademicMembershipRequest {
+  academicGroupId: string | null;
+  academicSubgroupId?: string | null;
+}

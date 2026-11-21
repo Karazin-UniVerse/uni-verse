@@ -23,10 +23,9 @@ development server.
 ## Study semester, elective slot and compact Saturdays (deployment prerequisite)
 
 `CurriculumPlan.studySemester` is a nullable integer (1–8, counted from the first
-year). It is optional on `POST /timetable/curriculum-plans` and
-`POST /timetable/curriculum-plans/import`; its parity must match `semester`
-(`1` for odd study semesters, `2` for even ones), otherwise the request is
-rejected with HTTP 400. Existing plans keep `NULL` until the value is set.
+year). It is optional on `POST /timetable/curriculum-plans`; its parity must match
+`semester` (`1` for odd study semesters, `2` for even ones), otherwise the request
+is rejected with HTTP 400. Existing plans keep `NULL` until the value is set.
 
 Apply the additive script and regenerate the client against the explicitly
 selected database before deploying code that reads the column (the script also adds
@@ -45,9 +44,6 @@ Rules driven by the study semester:
   reports the hard conflict `RESERVED_SLOT_OCCUPIED`, so draft adjustment,
   publication and rescheduling reject it too. The rule uses
   `curriculumPlan.studySemester` of the event's assignment.
-- **Saturday-only training.** The import marks rows of «Основи національного
-  спротиву (Аудиторна підготовка)» as `isSaturdayOnly` only when the study
-  semester is 3. `isSaturdayOnly` on an imported row is an optional boolean.
 
 `POST /timetable/plans/:id/generate` accepts an optional `compactSaturdays`
 boolean. It matters only for semesters shorter than 16 weeks: after normal
@@ -149,6 +145,26 @@ All endpoints except the public `.ics` feed require a valid Bearer JWT (`AtGuard
 | `POST`   | `/timetable/calendar/tokens/rotate`                    | Authenticated              | Deactivate existing tokens and issue a new token.                                                                              |
 | `DELETE` | `/timetable/calendar/tokens`                           | Authenticated              | Revoke all active subscription tokens for the current user.                                                                    |
 | `GET`    | `/timetable/calendar/feed/:token`                      | Public (Token)             | Fetch personal `.ics` calendar feed (`text/calendar; charset=utf-8`).                                                          |
+
+### Assigning student schedules
+
+Administrators can provision new and existing students with
+`PUT /user/:id/academic-membership`. Use a user ID from `GET /user` and
+group and subgroup IDs from `GET /timetable/groups`. The body replaces the
+entire membership atomically:
+
+```json
+{
+  "academicGroupId": "8b9c6391-9d10-430b-bd3a-257d3d211299",
+  "academicSubgroupId": "8840ee36-5762-466c-8656-06a98f7d37a2"
+}
+```
+
+Omit the optional subgroup to receive only group-wide and stream classes.
+Sending `{"academicGroupId": null}` removes the membership. Success returns
+HTTP 204. A missing user, group or subgroup belonging to the specified group
+returns HTTP 404. Invalid IDs and a subgroup supplied without a group return
+HTTP 400. The next personal schedule request or ICS refresh reflects the change.
 
 ## Draft Generation & Publication Rules
 

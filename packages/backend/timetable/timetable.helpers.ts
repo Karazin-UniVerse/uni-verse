@@ -1,10 +1,9 @@
-import { ConflictException, ForbiddenException } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
 import {
   ISO_DATE_LENGTH,
   TIMETABLE_WEEKDAY,
 } from '@universe/core/constants/timetable';
 import {
-  Role,
   type Prisma,
   type AcademicGroup,
   type AcademicStream,
@@ -17,12 +16,6 @@ import type {
   AutomaticMakeupDay,
   ScheduledEvent,
 } from '@universe/core/types/timetable';
-
-export function assertAdmin(roles?: string[]): void {
-  if (!roles?.includes(Role.ADMIN) && !roles?.includes('ADMIN')) {
-    throw new ForbiddenException('Administrative privileges required');
-  }
-}
 
 type AssignmentWithRelations = TeachingAssignment & {
   group?: AcademicGroup | null;

@@ -48,13 +48,14 @@ import { TIMETABLE_WEEKDAY } from '@universe/core/constants/timetable';
 import {
   checkTimetableConflicts,
   generateIcsCalendar,
-  generateTimetableCandidates,
+  getPrecedenceConflicts,
+  moveWithinTeachingWeek,
   getPairsFromAcademicHours,
   getSemesterEndMs,
   getPairInstants,
 } from '@universe/core/utils/timetable';
 import { getSemesterOfYear } from '@universe/core/utils/study-semester';
-import { generateCompactTimetableCandidates } from '@universe/core/utils/timetable-compaction';
+import { runTimetableSolver } from './timetable-solver';
 import { PRISMA_ERROR_CODE } from '../constants/prisma';
 import { PrismaService } from '../prisma/prisma.service';
 import { getPrismaErrorCode } from '../utils/prisma-error';
@@ -66,7 +67,6 @@ import type {
   CreateTeacherUnavailabilityDto,
   CreateTeachingAssignmentDto,
   GenerateTimetableDto,
-  ImportCurriculumPlanDto,
   UpdateTeachingAssignmentDto,
 } from './dto';
 
@@ -131,8 +131,6 @@ const SLOT_PREFERENCE_SELECT = {
   pair: true,
   preference: true,
 } as const;
-
-const MISSING_GROUP_OR_STREAM_MESSAGE = 'Group or stream does not exist';
 
 function toCurriculumPlanData(dto: CreateCurriculumPlanDto): {
   faculty: string;
@@ -339,53 +337,6 @@ export class TimetableService {
     return this.prisma.curriculumPlan.create({
       data: toCurriculumPlanData(dto),
     });
-  }
-
-  /** Creates the plan and all of its teaching assignments in one transaction. */
-  async importCurriculumPlan(
-    dto: ImportCurriculumPlanDto,
-  ): Promise<CurriculumPlan> {
-    if (dto.groupId && dto.streamId) {
-      throw new BadRequestException(
-        'Imported assignments must specify either groupId or streamId, not both',
-      );
-    }
-
-    if (dto.assignments.length > 0 && !dto.groupId && !dto.streamId) {
-      throw new BadRequestException(
-        'Imported assignments must specify a groupId or streamId',
-      );
-    }
-
-    return this.prisma
-      .$transaction(async (tx) => {
-        const plan = await tx.curriculumPlan.create({
-          data: toCurriculumPlanData(dto),
-        });
-
-        if (dto.assignments.length > 0) {
-          await tx.teachingAssignment.createMany({
-            data: dto.assignments.map((assignment) => ({
-              curriculumPlanId: plan.id,
-              disciplineTitle: assignment.disciplineTitle.trim(),
-              teachingType: assignment.teachingType,
-              academicHours: assignment.academicHours,
-              isSaturdayOnly: assignment.isSaturdayOnly ?? false,
-              groupId: dto.groupId,
-              streamId: dto.streamId,
-            })),
-          });
-        }
-
-        return plan;
-      })
-      .catch((error: unknown) => {
-        if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.FOREIGN_KEY) {
-          throw new BadRequestException(MISSING_GROUP_OR_STREAM_MESSAGE);
-        }
-
-        throw error;
-      });
   }
 
   async getCurriculumPlan(id: string): Promise<CurriculumPlanWithAssignments> {
@@ -1147,20 +1098,20 @@ export class TimetableService {
             select: SLOT_PREFERENCE_SELECT,
           })
         : [];
-    const generate = options?.compactSaturdays
-      ? generateCompactTimetableCandidates
-      : generateTimetableCandidates;
-    const result = generate({
-      preferences,
-      demands,
-      calendar: calendarConfig,
-      unavailability: unavailabilityList,
-      fixedEvents,
-      options: {
-        maxCandidates: options?.maxCandidates,
-        timeoutMs: options?.timeoutMs,
+    const result = await runTimetableSolver(
+      {
+        preferences,
+        demands,
+        calendar: calendarConfig,
+        unavailability: unavailabilityList,
+        fixedEvents,
+        options: {
+          maxCandidates: options?.maxCandidates,
+          timeoutMs: options?.timeoutMs,
+        },
       },
-    });
+      options?.compactSaturdays ?? false,
+    );
 
     if (!result.ok) {
       throw new BadRequestException(
@@ -1326,11 +1277,23 @@ export class TimetableService {
 
         const changes = new Map(
           matchingEvents.map((event) => {
-            const date = new Date(event.date);
-
-            date.setUTCDate(
-              date.getUTCDate() + dto.toWeekday - dto.fromWeekday,
+            const date = new Date(
+              moveWithinTeachingWeek(
+                version.semesterCalendar.startDate.getTime(),
+                event.date.getTime(),
+                dto.toWeekday,
+              ),
             );
+
+            if (
+              version.semesterCalendar.excludedDates.includes(
+                toIsoDateString(date),
+              )
+            ) {
+              throw new ConflictException(
+                'Target date is excluded from the semester calendar',
+              );
+            }
 
             return [
               event.id,
@@ -1363,10 +1326,16 @@ export class TimetableService {
           })),
         });
 
-        if (!report.isValid) {
+        const precedence = getPrecedenceConflicts(
+          report,
+          new Set(changes.keys()),
+        );
+
+        if (!report.isValid || precedence.length > 0) {
           throw new ConflictException({
             message: 'Adjusting slot creates conflicts',
             conflicts: report.hardConflicts,
+            precedence,
           });
         }
 
@@ -1430,6 +1399,12 @@ export class TimetableService {
       if (activeEvents.length === 0) {
         throw new ConflictException(
           'Cannot publish an empty timetable version',
+        );
+      }
+
+      if (activeEvents.some((event) => event.teachingAssignment.deletedAt)) {
+        throw new ConflictException(
+          'Draft contains an archived assignment; regenerate before publishing',
         );
       }
 
@@ -1619,12 +1594,20 @@ export class TimetableService {
       const conflictReport = checkTimetableConflicts({
         events: scheduledEvents,
         unavailability: unavailabilityList,
+        fixedEventIds: new Set(
+          otherPublishedEventsRecords.map((event) => event.id),
+        ),
       });
+      const precedence = getPrecedenceConflicts(
+        conflictReport,
+        new Set(activeEvents.map((event) => event.id)),
+      );
 
-      if (!conflictReport.isValid) {
+      if (!conflictReport.isValid || precedence.length > 0) {
         throw new ConflictException({
           message: 'Timetable version has conflicts and cannot be published',
           conflicts: conflictReport.hardConflicts,
+          precedence,
         });
       }
 

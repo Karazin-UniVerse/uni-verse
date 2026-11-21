@@ -54,13 +54,12 @@ import {
   CreateTeachingAssignmentDto,
   GenerateTimetableDto,
   GetSemesterCalendarQueryDto,
-  ImportCurriculumPlanDto,
   ListTeachingAssignmentsQueryDto,
   SaveSlotPreferencesDto,
   UpdateMeetingUrlDto,
   UpdateTeachingAssignmentDto,
 } from './dto';
-import { assertAdmin } from './timetable.helpers';
+import { assertAdmin } from '../auth/utils/assert-admin';
 
 const FEED_TOKEN_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
 
@@ -154,20 +153,6 @@ export class TimetableController {
     assertAdmin(roles);
 
     return this.timetableService.createCurriculumPlan(dto);
-  }
-
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Create a curriculum plan together with its teaching assignments',
-  })
-  @Post('curriculum-plans/import')
-  async importCurriculumPlan(
-    @Body() dto: ImportCurriculumPlanDto,
-    @GetUser('roles') roles?: string[],
-  ): Promise<CurriculumPlan> {
-    assertAdmin(roles);
-
-    return this.timetableService.importCurriculumPlan(dto);
   }
 
   @ApiBearerAuth()

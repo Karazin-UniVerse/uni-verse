@@ -1,7 +1,14 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, ValidationPipe } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import type { NextFunction, Request, Response } from 'express';
+import request from 'supertest';
+import { AtGuard } from '../auth/guards/at.guard';
+import { UserController } from '../user/user.controller';
+import { UserService } from '../user/user.service';
+import { TimetableController } from '../timetable/timetable.controller';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient, Role, TeachingType } from '@universe/database';
-import type { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { TimetableRescheduleRequestsService } from '../timetable/timetable-reschedule-requests.service';
 import { TimetableReschedulingService } from '../timetable/timetable-rescheduling.service';
 import { TimetableService } from '../timetable/timetable.service';
@@ -28,6 +35,7 @@ describe('Timetable rescheduling concurrency (PostgreSQL integration)', () => {
   let timetable1: TimetableService;
 
   const ids = {
+    student: '00000000-0000-4000-8000-000000000071',
     admin: 'pg-test-admin',
     teacher: 'pg-test-teacher',
     group1: '00000000-0000-4000-8000-000000000001',
@@ -70,7 +78,7 @@ describe('Timetable rescheduling concurrency (PostgreSQL integration)', () => {
       where: { id: { in: [ids.group1, ids.group2] } },
     });
     await client1.user.deleteMany({
-      where: { id: { in: [ids.admin, ids.teacher] } },
+      where: { id: { in: [ids.admin, ids.teacher, ids.student] } },
     });
   }
 
@@ -231,6 +239,70 @@ describe('Timetable rescheduling concurrency (PostgreSQL integration)', () => {
     await cleanup();
     await client1.$disconnect();
     await client2.$disconnect();
+  });
+
+  it('serves published group classes to the student after an administrator assigns membership', async () => {
+    await client1.user.create({
+      data: {
+        id: ids.student,
+        email: 'pg-student@example.com',
+        password: '',
+        roles: [Role.MOODLE_STUDENT],
+      },
+    });
+    const subgroup = await client1.academicSubgroup.create({
+      data: { academicGroupId: ids.group1, name: 'Lab A' },
+    });
+    const module = await Test.createTestingModule({
+      controllers: [UserController, TimetableController],
+      providers: [
+        UserService,
+        { provide: PrismaService, useValue: client1 },
+        { provide: TimetableService, useValue: timetable1 },
+      ],
+    })
+      .overrideGuard(AtGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
+    const app = module.createNestApplication();
+
+    app.use((req: Request, _res: Response, next: NextFunction) => {
+      Object.assign(req, {
+        user:
+          req.method === 'PUT'
+            ? { sub: ids.admin, roles: [Role.ADMIN] }
+            : { sub: ids.student, roles: [Role.MOODLE_STUDENT] },
+      });
+      next();
+    });
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
+
+    try {
+      await app.init();
+      const server = request(app.getHttpServer());
+      const path = `/user/${ids.student}/academic-membership`;
+
+      await server.get('/timetable/my/events').expect(200, []);
+      await server
+        .put(path)
+        .send({ academicGroupId: ids.group1, academicSubgroupId: subgroup.id })
+        .expect(204);
+      await server
+        .put(path)
+        .send({ academicGroupId: ids.group2, academicSubgroupId: subgroup.id })
+        .expect(404);
+      const schedule = await server.get('/timetable/my/events').expect(200);
+
+      expect(schedule.body).toEqual([
+        expect.objectContaining({ id: ids.evt1 }),
+      ]);
+      await server.put(path).send({ academicGroupId: null }).expect(204);
+      await server.get('/timetable/my/events').expect(200, []);
+    } finally {
+      await app.close();
+    }
   });
 
   it('allows only one of two concurrent moves into the same teacher slot', async () => {

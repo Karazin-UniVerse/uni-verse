@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { TeachingAssignmentResponse } from '@core/types/timetable';
 import { timetableApi } from '@uni-hub/services/api.timetable';
-import { createLanguageWrapper } from '@uni-hub/utils/test-utils';
+import { createAppProvidersWrapper } from '@uni-hub/utils/test-utils';
 import { useWorkloadEditor } from './useWorkloadEditor';
 import type { WorkloadRow } from './workload';
 
@@ -51,7 +51,7 @@ describe('useWorkloadEditor', () => {
 
     const { result } = renderHook(
       () => useWorkloadEditor({ planId: 'plan-1', streams: [], onError: vi.fn() }),
-      { wrapper: createLanguageWrapper() },
+      { wrapper: createAppProvidersWrapper() },
     );
 
     await waitFor(() => expect(result.current.workload).toEqual([]));
@@ -77,7 +77,7 @@ describe('useWorkloadEditor', () => {
           onError,
           initialWorkload: [{ ...firstRow, id: 'row-new' }, secondRow],
         }),
-      { wrapper: createLanguageWrapper() },
+      { wrapper: createAppProvidersWrapper() },
     );
 
     act(() => {
@@ -116,7 +116,7 @@ describe('useWorkloadEditor', () => {
 
     const { result, rerender } = renderHook(
       ({ planId }) => useWorkloadEditor({ planId, streams: [], onError: vi.fn() }),
-      { initialProps: { planId: 'plan-1' }, wrapper: createLanguageWrapper() },
+      { initialProps: { planId: 'plan-1' }, wrapper: createAppProvidersWrapper() },
     );
 
     await waitFor(() => expect(result.current.isLoadFailed).toBe(true));
@@ -157,7 +157,7 @@ describe('useWorkloadEditor', () => {
           onError: vi.fn(),
           initialWorkload: [firstRow, secondRow],
         }),
-      { wrapper: createLanguageWrapper() },
+      { wrapper: createAppProvidersWrapper() },
     );
 
     act(() => {

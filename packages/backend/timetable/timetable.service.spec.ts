@@ -14,7 +14,6 @@ import type {
   CreateSemesterCalendarDto,
   CreateTeacherUnavailabilityDto,
   CreateTeachingAssignmentDto,
-  ImportCurriculumPlanDto,
 } from './dto';
 
 describe('TimetableService', () => {
@@ -404,7 +403,13 @@ describe('TimetableService', () => {
       isCancelled: false,
       stableKey: 'assignment-1:2026-09-07:1',
     };
-    const calendar = { id: 'calendar-1', startDate: new Date('2026-09-07'), teachingWeeks: 16, excludedDates: [], makeupSaturdays: [] };
+    const calendar = {
+      id: 'calendar-1',
+      startDate: new Date('2026-09-07'),
+      teachingWeeks: 16,
+      excludedDates: [],
+      makeupSaturdays: [],
+    };
     const draft = {
       id: 'version-1',
       status: 'DRAFT',
@@ -440,7 +445,11 @@ describe('TimetableService', () => {
         events: [{ ...event, date: new Date('2026-09-02') }],
       });
 
-      const result = await service.adjustDraftSlot(draft.id, { ...slot, fromWeekday: 3, toWeekday: 1 });
+      const result = await service.adjustDraftSlot(draft.id, {
+        ...slot,
+        fromWeekday: 3,
+        toWeekday: 1,
+      });
 
       expect(result.events[0].date).toBe('2026-09-07');
     });
@@ -448,29 +457,71 @@ describe('TimetableService', () => {
     it('rejects an adjustment that puts the first lecture after practice', async () => {
       mockTimetableVersionPrisma.findUnique.mockResolvedValue({
         ...draft,
-        events: [event, { ...event, id: 'practice', teachingAssignmentId: 'practice-assignment', teachingTypeSnapshot: TeachingType.PRACTICAL, pair: 3 }],
+        events: [
+          event,
+          {
+            ...event,
+            id: 'practice',
+            teachingAssignmentId: 'practice-assignment',
+            teachingTypeSnapshot: TeachingType.PRACTICAL,
+            pair: 3,
+          },
+        ],
       });
 
-      await expect(service.adjustDraftSlot(draft.id, slot)).rejects.toThrow(ConflictException);
+      await expect(service.adjustDraftSlot(draft.id, slot)).rejects.toThrow(
+        ConflictException,
+      );
       expect(mockTimetableEventPrisma.update).not.toHaveBeenCalled();
     });
 
     it('rejects publication after an assignment has been archived', async () => {
       mockTimetableVersionPrisma.findUnique.mockResolvedValue({
         ...draft,
-        events: [{ ...event, teachingAssignment: { ...assignment, curriculumPlanId: 'plan', deletedAt: new Date(), academicHours: 2 } }],
+        events: [
+          {
+            ...event,
+            teachingAssignment: {
+              ...assignment,
+              curriculumPlanId: 'plan',
+              deletedAt: new Date(),
+              academicHours: 2,
+            },
+          },
+        ],
       });
 
-      await expect(service.publishTimetableVersion(draft.id, 'admin')).rejects.toThrow(/archived/i);
+      await expect(
+        service.publishTimetableVersion(draft.id, 'admin'),
+      ).rejects.toThrow(/archived/i);
       expect(mockTimetableVersionPrisma.update).not.toHaveBeenCalled();
     });
 
     it('publishes a candidate when confirmed unavailability affects only an external lesson', async () => {
-      mockTimetableEventPrisma.findMany.mockResolvedValue([{ ...event, id: 'external', teacherIdSnapshot: 'other-teacher', date: new Date('2026-09-08') }]);
-      mockTeacherUnavailabilityPrisma.findMany.mockResolvedValue([{ teacherId: 'other-teacher', date: new Date('2026-09-08'), pair: 1, isConfirmed: true }]);
-      mockTimetableVersionPrisma.update.mockResolvedValue({ ...draft, status: 'PUBLISHED' });
+      mockTimetableEventPrisma.findMany.mockResolvedValue([
+        {
+          ...event,
+          id: 'external',
+          teacherIdSnapshot: 'other-teacher',
+          date: new Date('2026-09-08'),
+        },
+      ]);
+      mockTeacherUnavailabilityPrisma.findMany.mockResolvedValue([
+        {
+          teacherId: 'other-teacher',
+          date: new Date('2026-09-08'),
+          pair: 1,
+          isConfirmed: true,
+        },
+      ]);
+      mockTimetableVersionPrisma.update.mockResolvedValue({
+        ...draft,
+        status: 'PUBLISHED',
+      });
 
-      await expect(service.publishTimetableVersion(draft.id, 'admin')).resolves.toMatchObject({ status: 'PUBLISHED' });
+      await expect(
+        service.publishTimetableVersion(draft.id, 'admin'),
+      ).resolves.toMatchObject({ status: 'PUBLISHED' });
     });
 
     it('rejects publication of a candidate with practice before its first lecture', async () => {
@@ -478,11 +529,18 @@ describe('TimetableService', () => {
         ...draft,
         events: [
           { ...event, pair: 2 },
-          { ...event, id: 'practice', teachingAssignmentId: 'practice-assignment', teachingTypeSnapshot: TeachingType.PRACTICAL },
+          {
+            ...event,
+            id: 'practice',
+            teachingAssignmentId: 'practice-assignment',
+            teachingTypeSnapshot: TeachingType.PRACTICAL,
+          },
         ],
       });
 
-      await expect(service.publishTimetableVersion(draft.id, 'admin')).rejects.toThrow(ConflictException);
+      await expect(
+        service.publishTimetableVersion(draft.id, 'admin'),
+      ).rejects.toThrow(ConflictException);
       expect(mockTimetableVersionPrisma.update).not.toHaveBeenCalled();
     });
 
@@ -775,142 +833,40 @@ describe('TimetableService', () => {
       expect(result).toEqual(created);
     });
 
-    describe('importCurriculumPlan', () => {
-      const importDto: ImportCurriculumPlanDto = {
+    it('trims text fields and persists an optional matching study semester', async () => {
+      mockCurriculumPlanPrisma.create.mockResolvedValue({ id: 'plan-11' });
+
+      await service.createCurriculumPlan({
         faculty: ' ННІ КН та ШІ ',
-        title: 'КН, 2 курс',
-        academicYear: '2026/2027',
+        title: ' КН, 2 курс ',
+        academicYear: ' 2026/2027 ',
         semester: 1,
-        groupId: 'group-1',
-        assignments: [
-          {
-            disciplineTitle: ' Бази даних ',
-            teachingType: TeachingType.LECTURE,
-            academicHours: 32,
-          },
-          {
-            disciplineTitle: 'Бази даних',
-            teachingType: TeachingType.LABORATORY,
-            academicHours: 16,
-          },
-        ],
-      };
-
-      it('creates the plan and its assignments in one transaction', async () => {
-        mockCurriculumPlanPrisma.create.mockResolvedValue({ id: 'plan-9' });
-        mockTeachingAssignmentPrisma.createMany.mockResolvedValue({ count: 2 });
-
-        await expect(service.importCurriculumPlan(importDto)).resolves.toEqual({
-          id: 'plan-9',
-        });
-        expect(mockPrismaService.$transaction).toHaveBeenCalledTimes(1);
-        expect(mockCurriculumPlanPrisma.create).toHaveBeenCalledWith({
-          data: {
-            faculty: 'ННІ КН та ШІ',
-            title: 'КН, 2 курс',
-            academicYear: '2026/2027',
-            semester: 1,
-            studySemester: null,
-            isDraft: true,
-          },
-        });
-        expect(mockTeachingAssignmentPrisma.createMany).toHaveBeenCalledWith({
-          data: [
-            {
-              curriculumPlanId: 'plan-9',
-              disciplineTitle: 'Бази даних',
-              teachingType: TeachingType.LECTURE,
-              academicHours: 32,
-              isSaturdayOnly: false,
-              groupId: 'group-1',
-              streamId: undefined,
-            },
-            {
-              curriculumPlanId: 'plan-9',
-              disciplineTitle: 'Бази даних',
-              teachingType: TeachingType.LABORATORY,
-              academicHours: 16,
-              isSaturdayOnly: false,
-              groupId: 'group-1',
-              streamId: undefined,
-            },
-          ],
-        });
+        studySemester: 3,
       });
 
-      it('keeps the study semester and the Saturday-only flag of imported classes', async () => {
-        mockCurriculumPlanPrisma.create.mockResolvedValue({ id: 'plan-11' });
-        mockTeachingAssignmentPrisma.createMany.mockResolvedValue({ count: 1 });
-
-        await service.importCurriculumPlan({
-          ...importDto,
+      expect(mockCurriculumPlanPrisma.create).toHaveBeenCalledWith({
+        data: {
+          faculty: 'ННІ КН та ШІ',
+          title: 'КН, 2 курс',
+          academicYear: '2026/2027',
+          semester: 1,
           studySemester: 3,
-          assignments: [
-            {
-              disciplineTitle:
-                'Основи національного спротиву (Аудиторна підготовка)',
-              teachingType: TeachingType.PRACTICAL,
-              academicHours: 32,
-              isSaturdayOnly: true,
-            },
-          ],
-        });
-
-        expect(mockCurriculumPlanPrisma.create).toHaveBeenCalledWith({
-          data: expect.objectContaining({ studySemester: 3 }),
-        });
-        expect(mockTeachingAssignmentPrisma.createMany).toHaveBeenCalledWith({
-          data: [expect.objectContaining({ isSaturdayOnly: true })],
-        });
+          isDraft: true,
+        },
       });
+    });
 
-      it('rejects a study semester that does not match the semester of the year', async () => {
-        await expect(
-          service.importCurriculumPlan({
-            ...importDto,
-            semester: 1,
-            studySemester: 4,
-          }),
-        ).rejects.toThrow(BadRequestException);
-        expect(mockCurriculumPlanPrisma.create).not.toHaveBeenCalled();
-      });
-
-      it('creates an empty plan without a target group', async () => {
-        mockCurriculumPlanPrisma.create.mockResolvedValue({ id: 'plan-10' });
-
-        await service.importCurriculumPlan({
-          ...importDto,
-          groupId: undefined,
-          assignments: [],
-        });
-
-        expect(mockTeachingAssignmentPrisma.createMany).not.toHaveBeenCalled();
-      });
-
-      it('rejects assignments without a group or stream', async () => {
-        await expect(
-          service.importCurriculumPlan({ ...importDto, groupId: undefined }),
-        ).rejects.toThrow(BadRequestException);
-        expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
-      });
-
-      it('rejects an ambiguous group and stream target before writing', async () => {
-        await expect(
-          service.importCurriculumPlan({ ...importDto, streamId: 'stream-1' }),
-        ).rejects.toThrow(BadRequestException);
-        expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
-      });
-
-      it('reports an unknown group as a bad request', async () => {
-        mockCurriculumPlanPrisma.create.mockResolvedValue({ id: 'plan-11' });
-        mockTeachingAssignmentPrisma.createMany.mockRejectedValue({
-          code: 'P2003',
-        });
-
-        await expect(service.importCurriculumPlan(importDto)).rejects.toThrow(
-          'Group or stream does not exist',
-        );
-      });
+    it('rejects a study semester that does not match the semester of the year', async () => {
+      await expect(
+        service.createCurriculumPlan({
+          faculty: 'ННІ КН та ШІ',
+          title: 'КН, 2 курс',
+          academicYear: '2026/2027',
+          semester: 1,
+          studySemester: 4,
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockCurriculumPlanPrisma.create).not.toHaveBeenCalled();
     });
 
     it('returns plan when found with safe teacher projection', async () => {
@@ -1653,7 +1609,10 @@ describe('TimetableService', () => {
         );
 
         let mainThreadYielded = false;
-        setImmediate(() => { mainThreadYielded = true; });
+
+        setImmediate(() => {
+          mainThreadYielded = true;
+        });
         const result = await service.generateTimetableDraft('plan-1', {
           maxCandidates: 2,
           userId: 'admin-1',

@@ -1,4 +1,4 @@
-import type { AcademicGroupResponse, CurriculumPlanResponse } from '@core/types/timetable';
+import type { CurriculumPlanResponse } from '@core/types/timetable';
 
 export type CurriculumPlanFieldValues = {
   title: string;
@@ -10,7 +10,6 @@ export type CurriculumPlanFieldValues = {
 
 export type CurriculumPlanDialogProps = {
   open: boolean;
-  academicGroups: AcademicGroupResponse[];
   plans: CurriculumPlanResponse[];
   onClose: () => void;
   onCreated: (plan: CurriculumPlanResponse) => void;

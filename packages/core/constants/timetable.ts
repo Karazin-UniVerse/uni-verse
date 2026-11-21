@@ -66,11 +66,6 @@ export const MAX_STUDY_SEMESTER = 8 as const;
 export const ELECTIVE_RESERVED_STUDY_SEMESTERS = { FIRST: 4, LAST: 6 } as const;
 export const ELECTIVE_RESERVED_SLOT = { WEEKDAY: TIMETABLE_WEEKDAY.WEDNESDAY, PAIR: 3 } as const;
 
-// Only study semester 3 teaches the Saturday-only «Аудиторна підготовка» of national resistance.
-export const SATURDAY_ONLY_STUDY_SEMESTER = 3 as const;
-export const SATURDAY_ONLY_DISCIPLINE_PATTERN =
-  /основи національного спротиву.*аудиторна підготовка/i;
-
 export type TimetableValidationError =
   (typeof TIMETABLE_VALIDATION_ERROR)[keyof typeof TIMETABLE_VALIDATION_ERROR];
 
@@ -159,26 +154,6 @@ export const TIMETABLE_ASSIGNMENT_TEACHING_TYPE = {
 
 export type TimetableAssignmentTeachingType =
   (typeof TIMETABLE_ASSIGNMENT_TEACHING_TYPE)[keyof typeof TIMETABLE_ASSIGNMENT_TEACHING_TYPE];
-
-// WORKING: one academic year per sheet (РНП); PROGRAM: the whole programme with weekly hours (НП).
-export const CURRICULUM_SHEET_KIND = {
-  WORKING: 'WORKING',
-  PROGRAM: 'PROGRAM',
-} as const;
-
-export type CurriculumSheetKind =
-  (typeof CURRICULUM_SHEET_KIND)[keyof typeof CURRICULUM_SHEET_KIND];
-
-// DISTRIBUTED: hours split across semesters by weekly load; ROUNDED: hours rounded to whole pairs.
-export const CURRICULUM_DISCIPLINE_NOTE = {
-  DISTRIBUTED: 'DISTRIBUTED',
-  ROUNDED: 'ROUNDED',
-} as const;
-
-export type CurriculumDisciplineNote =
-  (typeof CURRICULUM_DISCIPLINE_NOTE)[keyof typeof CURRICULUM_DISCIPLINE_NOTE];
-
-export const MAX_IMPORTED_ASSIGNMENTS = 300 as const;
 
 export const TIMETABLE_TEACHING_TYPE = {
   LECTURE: 'LECTURE',

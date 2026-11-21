@@ -51,6 +51,7 @@ describe('useTimetableDraft publication status', () => {
         useTimetableDraft({
           planId: 'plan-1',
           canGenerate: true,
+          semesterStartDate: '2026-09-07',
           compactSaturdays: false,
           saveWorkload: async (): Promise<void> => {},
           onError: vi.fn(),
@@ -80,6 +81,7 @@ describe('useTimetableDraft publication status', () => {
         useTimetableDraft({
           planId: 'plan-1',
           canGenerate: true,
+          semesterStartDate: '2026-09-07',
           compactSaturdays: false,
           saveWorkload: async (): Promise<void> => {},
           onError: vi.fn(),
@@ -140,6 +142,7 @@ describe('useTimetableDraft adjustment context', () => {
         useTimetableDraft({
           planId: 'plan-1',
           canGenerate: true,
+          semesterStartDate: '2026-09-07',
           compactSaturdays: false,
           saveWorkload: async (): Promise<void> => {},
           onError: vi.fn(),

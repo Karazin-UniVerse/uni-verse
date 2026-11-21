@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { BREAKPOINTS } from '@core/constants/breakpoints';
 import { RESPONSE_CODES } from '@core/constants/response-codes';
+import { toLocalDateKey } from '@uni-hub/utils/gamification';
 import { hasHttpStatus } from '@uni-hub/utils/httpErrors';
 import {
   PAIR_SCHEDULE,
@@ -21,7 +22,7 @@ import {
   exportToICS,
   getMonthGridDays,
   isSafeMeetingUrl,
-  isEventOnDate,
+  indexScheduleEvents,
   getPairNumber,
 } from './helpers';
 import { ScheduleDayView } from './ScheduleDayView';
@@ -166,14 +167,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     });
   }, [locale]);
 
+  const eventsByDate = useMemo(() => indexScheduleEvents(events), [events]);
   const getEventsForDate = useCallback(
-    (date: Date) =>
-      events
-        .filter((event) => isEventOnDate(event.start, date))
-        .sort(
-          (firstEvent, secondEvent) => firstEvent.start.getTime() - secondEvent.start.getTime(),
-        ),
-    [events],
+    (date: Date) => eventsByDate.get(toLocalDateKey(date)) ?? [],
+    [eventsByDate],
   );
 
   const monthDays = useMemo(() => getMonthGridDays(selectedDate), [selectedDate]);

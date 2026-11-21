@@ -12,6 +12,7 @@ import type {
   AdjustDraftSlotRequest,
   AdjustDraftSlotResponse,
   CalendarSubscriptionTokenResponse,
+  CreateCurriculumPlanRequest,
   CreateSemesterCalendarRequest,
   CreateTeacherUnavailabilityRequest,
   CreateTeachingAssignmentRequest,
@@ -19,7 +20,6 @@ import type {
   GenerateTimetableDraftResult,
   GenerateTimetableRequest,
   IcsCalendarEvent,
-  ImportCurriculumPlanRequest,
   SafeTeacherResponse,
   SemesterCalendarResponse,
   TeacherUnavailabilityResponse,
@@ -136,10 +136,10 @@ export class TimetableApi extends ApiClient {
     return this.request<CurriculumPlanResponse[]>('/timetable/curriculum-plans');
   }
 
-  async importCurriculumPlan(
-    payload: ImportCurriculumPlanRequest,
+  async createCurriculumPlan(
+    payload: CreateCurriculumPlanRequest,
   ): Promise<{ data: CurriculumPlanResponse }> {
-    return this.request<CurriculumPlanResponse>('/timetable/curriculum-plans/import', {
+    return this.request<CurriculumPlanResponse>('/timetable/curriculum-plans', {
       method: 'POST',
       body: JSON.stringify(payload),
     });

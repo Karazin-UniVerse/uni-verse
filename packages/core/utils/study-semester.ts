@@ -1,8 +1,6 @@
 import {
   ELECTIVE_RESERVED_SLOT,
   ELECTIVE_RESERVED_STUDY_SEMESTERS,
-  SATURDAY_ONLY_DISCIPLINE_PATTERN,
-  SATURDAY_ONLY_STUDY_SEMESTER,
   SEMESTERS_PER_YEAR,
 } from '../constants/timetable.ts';
 
@@ -30,21 +28,7 @@ export function isReservedSlot({
   );
 }
 
-/** Study semester 1-8 from the course year and the semester within that year. */
-export function getStudySemester(courseYear: number, semester: number): number {
-  return (courseYear - 1) * SEMESTERS_PER_YEAR + semester;
-}
-
 /** The semester within the academic year (1 or 2) that a study semester falls into. */
 export function getSemesterOfYear(studySemester: number): number {
   return ((studySemester - 1) % SEMESTERS_PER_YEAR) + 1;
-}
-
-export function isSaturdayOnlyDiscipline(
-  title: string,
-  studySemester: number | undefined,
-): boolean {
-  return (
-    studySemester === SATURDAY_ONLY_STUDY_SEMESTER && SATURDAY_ONLY_DISCIPLINE_PATTERN.test(title)
-  );
 }

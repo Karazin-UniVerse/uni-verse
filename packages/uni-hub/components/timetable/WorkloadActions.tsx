@@ -5,8 +5,8 @@ import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import styles from './TimetableManagement.module.scss';
 
 type WorkloadActionsProps = {
-  isBusy: boolean;
   isGenerating: boolean;
+  isAddDisabled: boolean;
   isSaveDisabled: boolean;
   isGenerateDisabled: boolean;
   showCompactSaturdays: boolean;
@@ -19,8 +19,8 @@ type WorkloadActionsProps = {
 
 /** Add a discipline, save the workload, generate drafts; short semesters also offer compact Saturdays. */
 export const WorkloadActions: React.FC<WorkloadActionsProps> = ({
-  isBusy,
   isGenerating,
+  isAddDisabled,
   isSaveDisabled,
   isGenerateDisabled,
   showCompactSaturdays,
@@ -35,7 +35,12 @@ export const WorkloadActions: React.FC<WorkloadActionsProps> = ({
   return (
     <>
       <div className={styles.tableActions}>
-        <Button type="button" variant="secondary" onClick={onAddDiscipline} disabled={isBusy}>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onAddDiscipline}
+          disabled={isAddDisabled}
+        >
           <Plus size={16} /> {formatMessage('timetable.addDiscipline')}
         </Button>
 

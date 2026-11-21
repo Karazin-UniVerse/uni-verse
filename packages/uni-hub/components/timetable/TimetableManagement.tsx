@@ -52,6 +52,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   const draft = useTimetableDraft({
     planId,
     canGenerate: calendarReady,
+    semesterStartDate: calendarQuery.data?.startDate,
     compactSaturdays: isShortSemester && compactSaturdays,
     saveWorkload: editor.persist,
     onError: setError,
@@ -134,7 +135,6 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
       {isPlanDialogOpen && (
         <CurriculumPlanDialog
           open
-          academicGroups={editor.academicGroups}
           plans={plans}
           onClose={() => setIsPlanDialogOpen(false)}
           onCreated={handlePlanCreated}
@@ -153,9 +153,23 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
       )}
       <section className={styles.section}>
         <h3>{formatMessage('timetable.workloadTitle')}</h3>
+        {editor.groupsQuery.isPending && (
+          <p role="status">{formatMessage('timetable.groupsLoading')}</p>
+        )}
+        {editor.groupsQuery.isError && (
+          <div className={styles.errorBanner} role="alert">
+            {formatMessage('timetable.groupsLoadError')}
+            <Button type="button" onClick={() => void editor.groupsQuery.refetch()}>
+              {formatMessage('common.error.retry')}
+            </Button>
+          </div>
+        )}
+        {editor.groupsQuery.isSuccess && editor.academicGroups.length === 0 && (
+          <p role="status">{formatMessage('timetable.noGroups')}</p>
+        )}
         <WorkloadTable editor={editor} teachers={teachers} streams={streams} disabled={isBusy} />
         <WorkloadActions
-          isBusy={isBusy}
+          isAddDisabled={isBusy || !editor.canAddRow}
           isGenerating={draft.isGenerating}
           isSaveDisabled={isBusy || !planId || editor.isLoadFailed}
           isGenerateDisabled={isBusy || !planId || !calendarReady || editor.isLoadFailed}

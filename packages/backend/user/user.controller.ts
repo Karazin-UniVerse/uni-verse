@@ -3,14 +3,27 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
+  ParseUUIDPipe,
+  Put,
   Param,
   Patch,
   Post,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { CreateUserDto, UpdateUserDto, UserResponseDto } from './user-dto';
 import type { User } from '@universe/database';
+import { GetUser } from '../auth/decorators/get-user.decorator';
+import { assertAdmin } from '../auth/utils/assert-admin';
+import { SetAcademicMembershipDto } from './set-academic-membership.dto';
 import * as bcrypt from 'bcrypt';
 
 function toUserResponse(user: User): UserResponseDto {
@@ -52,6 +65,20 @@ export class UserController {
     const created = await this.userService.createUser(createUserDto);
 
     return toUserResponse(created);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Replace a student's timetable group and subgroup" })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Put(':id/academic-membership')
+  async setAcademicMembership(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() membership: SetAcademicMembershipDto,
+    @GetUser('roles') roles?: string[],
+  ): Promise<void> {
+    assertAdmin(roles);
+
+    await this.userService.setAcademicMembership(id, membership);
   }
 
   @ApiOperation({ summary: 'Delete user' })

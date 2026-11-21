@@ -96,22 +96,31 @@ export const groupDayEvents = (events: ScheduleEvent[]): ScheduleEventGroup[] =>
   return [...groups.values()].sort((left, right) => left.start.getTime() - right.start.getTime());
 };
 
-/** Matches an event instant to the date selected in the university calendar. */
-export const isEventOnDate = (instant: Date, calendarDate: Date): boolean => {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: TIMETABLE_TIME_ZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(instant);
-  const values = Object.fromEntries(parts.map(({ type, value }) => [type, Number(value)]));
+const kyivDateFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: TIMETABLE_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
 
-  return (
-    values.year === calendarDate.getFullYear() &&
-    values.month === calendarDate.getMonth() + 1 &&
-    values.day === calendarDate.getDate()
-  );
-};
+export function indexScheduleEvents(events: ScheduleEvent[]): Map<string, ScheduleEvent[]> {
+  const byDate = new Map<string, ScheduleEvent[]>();
+
+  for (const event of events.toSorted(
+    (first, second) => first.start.getTime() - second.start.getTime(),
+  )) {
+    const key = kyivDateFormatter.format(event.start);
+    const day = byDate.get(key);
+
+    if (day) {
+      day.push(event);
+    } else {
+      byDate.set(key, [event]);
+    }
+  }
+
+  return byDate;
+}
 
 export const isSameDay = (leftDate: Date, rightDate?: Date | null): boolean =>
   leftDate.getFullYear() === rightDate?.getFullYear() &&

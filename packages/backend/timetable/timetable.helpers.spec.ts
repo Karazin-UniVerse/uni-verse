@@ -1,8 +1,8 @@
 import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { Role } from '@universe/database';
 import type { SemesterCalendar } from '@universe/database';
+import { assertAdmin } from '../auth/utils/assert-admin';
 import {
-  assertAdmin,
   parseAutomaticMakeupDays,
   parseMakeupSaturdayDates,
   parseMakeupSaturdays,

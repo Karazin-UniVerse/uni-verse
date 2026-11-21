@@ -59,7 +59,6 @@ describe('TimetableController', () => {
     listAcademicGroups: jest.fn(),
     listAcademicStreams: jest.fn(),
     createCurriculumPlan: jest.fn(),
-    importCurriculumPlan: jest.fn(),
     listSemesterSlotPreferences: jest.fn(),
     getCurriculumPlan: jest.fn(),
     listCurriculumPlans: jest.fn(),
@@ -280,41 +279,6 @@ describe('TimetableController', () => {
       await expect(
         controller.createCurriculumPlan(dto, [Role.INSTRUCTOR]),
       ).rejects.toThrow(ForbiddenException);
-    });
-
-    it('imports a curriculum plan with assignments for admin', async () => {
-      const importDto = {
-        ...dto,
-        groupId: 'group-1',
-        assignments: [
-          {
-            disciplineTitle: 'Бази даних',
-            teachingType: 'LECTURE' as const,
-            academicHours: 32,
-          },
-        ],
-      };
-
-      mockTimetableService.importCurriculumPlan.mockResolvedValue({
-        id: 'plan-2',
-        ...dto,
-      });
-
-      await expect(
-        controller.importCurriculumPlan(importDto, [Role.ADMIN]),
-      ).resolves.toEqual({ id: 'plan-2', ...dto });
-      expect(mockTimetableService.importCurriculumPlan).toHaveBeenCalledWith(
-        importDto,
-      );
-    });
-
-    it('rejects importCurriculumPlan for non-admin', async () => {
-      await expect(
-        controller.importCurriculumPlan({ ...dto, assignments: [] }, [
-          Role.INSTRUCTOR,
-        ]),
-      ).rejects.toThrow(ForbiddenException);
-      expect(mockTimetableService.importCurriculumPlan).not.toHaveBeenCalled();
     });
 
     it('gets curriculum plan by id for admin', async () => {

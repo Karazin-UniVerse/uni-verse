@@ -369,6 +369,12 @@ export function getTeachingWeekdayMs(startMs: number, weekIndex: number, weekday
   return startMs + (weekIndex * DAYS_PER_WEEK + daysFromStart) * MS_PER_DAY;
 }
 
+export function moveWithinTeachingWeek(startMs: number, eventMs: number, weekday: number): number {
+  const teachingWeek = Math.floor((eventMs - startMs) / (DAYS_PER_WEEK * MS_PER_DAY));
+
+  return getTeachingWeekdayMs(startMs, teachingWeek, weekday);
+}
+
 /** The first day after the last teaching week. */
 export function getSemesterEndMs(startMs: number, teachingWeeks: number): number {
   return startMs + teachingWeeks * DAYS_PER_WEEK * MS_PER_DAY;
@@ -533,7 +539,10 @@ export function getEventSpan(event: ScheduledEvent): number {
   );
 }
 
-function hasSaturdayCapacityConflict(events: ScheduledEvent[]): boolean {
+function hasSaturdayCapacityConflict(
+  events: ScheduledEvent[],
+  fixedIds: ReadonlySet<string>,
+): boolean {
   const slots = events.flatMap((event): EventSlot[] => {
     const slot = toEventSlot(event);
 
@@ -541,7 +550,8 @@ function hasSaturdayCapacityConflict(events: ScheduledEvent[]): boolean {
   });
 
   return getDayOccupancies(slots, true).some(
-    ({ date, pairs }) =>
+    ({ date, pairs, eventIds }) =>
+      [...eventIds].some((id) => !fixedIds.has(id)) &&
       new Date(date).getUTCDay() === TIMETABLE_WEEKDAY.SATURDAY &&
       pairs.size > MAX_PAIRS_PER_SATURDAY,
   );
@@ -939,6 +949,7 @@ function getLateSaturdayPenalties(slots: EventSlot[]): SoftPenalty[] {
  */
 export function checkTimetableConflicts({
   events,
+  fixedEventIds,
   unavailability = [],
 }: CheckTimetableConflictsParams): ConflictReport {
   const slots = events.flatMap((event): EventSlot[] => {
@@ -975,7 +986,7 @@ export function checkTimetableConflicts({
     ...getUnavailabilityConflicts(slots, unavailability),
     ...getCalendarRestrictionConflicts(slots),
     ...getExamIntervalConflicts(slots),
-  ];
+  ].filter((conflict) => !fixedEventIds || conflict.eventIds.some((id) => !fixedEventIds.has(id)));
   const softPenalties = [
     ...getLoadAndWindowPenalties(slots),
     ...getPrecedencePenalties(slots),
@@ -988,6 +999,17 @@ export function checkTimetableConflicts({
     softPenalties,
     totalPenaltyScore: softPenalties.reduce((total, { score }): number => total + score, 0),
   };
+}
+
+export function getPrecedenceConflicts(
+  report: ConflictReport,
+  affectedIds: ReadonlySet<string>,
+): SoftPenalty[] {
+  return report.softPenalties.filter(
+    (penalty) =>
+      penalty.code === TIMETABLE_SOFT_PENALTY_CODE.PRACTICE_BEFORE_LECTURE &&
+      penalty.eventIds.some((id) => affectedIds.has(id)),
+  );
 }
 
 type SlotHeuristicParams = {
@@ -1408,6 +1430,7 @@ function searchTimetableCandidates(
     }
   }
 
+  const fixedIds = new Set(fixedEvents.map((event) => event.id));
   const fixedByTimeKey = new Map<string, ScheduledEvent[]>();
 
   for (const fixedEvent of fixedEvents) {
@@ -2069,8 +2092,9 @@ function searchTimetableCandidates(
           const combined = [...fixedEvents, ...events, ...replacements];
 
           if (
-            hasSaturdayCapacityConflict(combined) ||
-            !checkTimetableConflicts({ events: combined, unavailability }).isValid
+            hasSaturdayCapacityConflict(combined, fixedIds) ||
+            !checkTimetableConflicts({ events: combined, unavailability, fixedEventIds: fixedIds })
+              .isValid
           ) {
             continue;
           }
@@ -2267,7 +2291,7 @@ function searchTimetableCandidates(
               (existing): boolean => existing.date === date,
             );
 
-            if (hasSaturdayCapacityConflict([...sameDay, event])) {
+            if (hasSaturdayCapacityConflict([...sameDay, event], fixedIds)) {
               break;
             }
 
@@ -2338,13 +2362,14 @@ function searchTimetableCandidates(
         return;
       }
 
-      if (rotatesSourceDays && hasSaturdayCapacityConflict([...fixedEvents, ...events])) {
+      if (rotatesSourceDays && hasSaturdayCapacityConflict([...fixedEvents, ...events], fixedIds)) {
         return;
       }
 
       const report = checkTimetableConflicts({
         events: [...fixedEvents, ...events],
         unavailability,
+        fixedEventIds: fixedIds,
       });
 
       const hasPracticeBeforeLecture = report.softPenalties.some(

@@ -11,12 +11,7 @@ import type {
   SemesterCalendarConfig,
   TeachingDemand,
 } from '../../types/timetable.ts';
-import {
-  getSemesterOfYear,
-  getStudySemester,
-  isReservedSlot,
-  isSaturdayOnlyDiscipline,
-} from '../study-semester.ts';
+import { getSemesterOfYear, isReservedSlot } from '../study-semester.ts';
 import { generateCompactTimetableCandidates } from '../timetable-compaction.ts';
 import { checkTimetableConflicts, generateTimetableCandidates } from '../timetable.ts';
 
@@ -45,21 +40,8 @@ describe('study semester rules', () => {
     assert.equal(isReservedSlot({ ...base, firstPair: 2, lastPair: 3 }), true);
   });
 
-  test('derives the study semester and the semester of the year', () => {
-    assert.equal(getStudySemester(1, 1), 1);
-    assert.equal(getStudySemester(2, 1), 3);
-    assert.equal(getStudySemester(3, 2), 6);
+  test('derives the semester of the year from the study semester', () => {
     assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8].map(getSemesterOfYear), [1, 2, 1, 2, 1, 2, 1, 2]);
-  });
-
-  test('makes only the audit training of semester 3 Saturday-only', () => {
-    const title = 'Основи національного спротиву (Аудиторна підготовка)';
-
-    assert.equal(isSaturdayOnlyDiscipline(title, 3), true);
-    assert.equal(isSaturdayOnlyDiscipline(title, 2), false);
-    assert.equal(isSaturdayOnlyDiscipline(title, undefined), false);
-    assert.equal(isSaturdayOnlyDiscipline('Основи національного спротиву', 3), false);
-    assert.equal(isSaturdayOnlyDiscipline('Дискретна математика', 3), false);
   });
 });
 

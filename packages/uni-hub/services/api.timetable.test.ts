@@ -81,6 +81,27 @@ describe('TimetableApi', () => {
     );
   });
 
+  it('createCurriculumPlan sends POST to /timetable/curriculum-plans', async () => {
+    const payload = {
+      faculty: 'Faculty of CS and AI',
+      title: 'CS 2026/2027',
+      academicYear: '2026/2027',
+      semester: 1,
+      studySemester: 3,
+    };
+    const mockData = { id: 'plan-1', isDraft: true, ...payload };
+
+    mockFetchResponse(mockData);
+
+    const response = await timetableApi.createCurriculumPlan(payload);
+
+    expect(response.data).toEqual(mockData);
+    expect(vi.mocked(global.fetch)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain('/timetable/curriculum-plans');
+    expect(vi.mocked(global.fetch).mock.calls[0][1]?.method).toBe('POST');
+    expect(JSON.parse(vi.mocked(global.fetch).mock.calls[0][1]?.body as string)).toEqual(payload);
+  });
+
   it('createTeachingAssignment sends POST to /timetable/assignments', async () => {
     const payload = {
       curriculumPlanId: 'plan-1',

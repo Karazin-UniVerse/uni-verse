@@ -374,7 +374,16 @@ describe('TimetableManagement component', () => {
     });
     vi.clearAllMocks();
     vi.spyOn(timetableApi, 'listTeachingAssignments').mockResolvedValue({ data: [] });
-    vi.spyOn(timetableApi, 'listAcademicGroups').mockResolvedValue({ data: [] });
+    vi.spyOn(timetableApi, 'listAcademicGroups').mockResolvedValue({
+      data: [
+        {
+          id: 'group-1',
+          code: 'КС11',
+          subgroups: [{ id: 'subgroup-1', name: 'Підгрупа 1', academicGroupId: 'group-1' }],
+        },
+        { id: 'group-2', code: 'КС12', subgroups: [] },
+      ],
+    });
     vi.spyOn(timetableApi, 'listAcademicStreams').mockResolvedValue({ data: [] });
     vi.spyOn(timetableApi, 'listSemesterSlotPreferences').mockResolvedValue({ data: [] });
     vi.spyOn(timetableApi, 'listCurriculumPlans').mockResolvedValue({
@@ -849,6 +858,21 @@ describe('TimetableManagement component', () => {
     expect(screen.queryByText(/розклад успішно опубліковано/i)).not.toBeInTheDocument();
   });
 
+  it('keeps unavailable groups out of the editor and retries a failed request', async () => {
+    vi.spyOn(timetableApi, 'listAcademicGroups')
+      .mockRejectedValueOnce(new Error('Unavailable'))
+      .mockResolvedValue({ data: [] });
+    const user = userEvent.setup();
+
+    renderComponent({ initialWorkload: createWorkloadFixture() });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Не вдалося завантажити групи');
+    expect(screen.queryByRole('option', { name: 'КС11' })).not.toBeInTheDocument();
+    await user.click(within(screen.getByRole('alert')).getByRole('button'));
+    expect(await screen.findByText('Академічних груп ще немає.')).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'КС11' })).not.toBeInTheDocument();
+  });
+
   it('fetches available academic groups on mount', async () => {
     const listGroupsSpy = vi.spyOn(timetableApi, 'listAcademicGroups').mockResolvedValue({
       data: [
@@ -886,6 +910,7 @@ describe('TimetableManagement component', () => {
           subgroups: [
             { id: 'sub-cs-12-1', name: 'Підгрупа 1', academicGroupId: 'group-cs-12' },
             { id: 'sub-cs-12-2', name: 'Підгрупа 2', academicGroupId: 'group-cs-12' },
+            { id: 'opaque-lab', name: 'Лабораторна секція', academicGroupId: 'group-cs-12' },
           ],
         },
       ],
@@ -899,7 +924,7 @@ describe('TimetableManagement component', () => {
         academicHours: 32,
         teacherId: 'teacher-1',
         groupId: 'group-cs-12',
-        subgroupId: 'sub-cs-12-1',
+        subgroupId: 'opaque-lab',
         isSaturdayOnly: false,
         hasLateSlotAuthorization: false,
       },
@@ -915,14 +940,17 @@ describe('TimetableManagement component', () => {
     const subgroupSelects = screen.getAllByLabelText('Підгрупа');
 
     await user.selectOptions(groupSelects[0], 'group-cs-12');
-    await user.selectOptions(subgroupSelects[0], '1');
+    await user.selectOptions(
+      subgroupSelects[0],
+      within(subgroupSelects[0]).getByRole('option', { name: 'Лабораторна секція' }),
+    );
 
     await user.click(screen.getByRole('button', { name: /зберегти навантаження/i }));
 
     expect(createSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         groupId: 'group-cs-12',
-        subgroupId: 'sub-cs-12-1',
+        subgroupId: 'opaque-lab',
       }),
     );
   });
@@ -1049,7 +1077,7 @@ describe('TimetableManagement component', () => {
     ).toBeInTheDocument();
   });
   it('creates a curriculum plan from the dialog and switches to it', async () => {
-    vi.spyOn(timetableApi, 'importCurriculumPlan').mockResolvedValue({
+    vi.spyOn(timetableApi, 'createCurriculumPlan').mockResolvedValue({
       data: {
         id: 'plan-new',
         faculty: 'ННІ КН та ШІ',

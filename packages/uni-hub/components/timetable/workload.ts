@@ -17,25 +17,6 @@ export interface WorkloadRow {
   streamId?: string;
 }
 
-export const DEFAULT_GROUPS: AcademicGroupResponse[] = [
-  {
-    id: 'group-1',
-    code: 'КС11',
-    subgroups: [
-      { id: 'subgroup-1', name: 'Підгрупа 1', academicGroupId: 'group-1' },
-      { id: 'subgroup-2', name: 'Підгрупа 2', academicGroupId: 'group-1' },
-    ],
-  },
-  {
-    id: 'group-2',
-    code: 'КС12',
-    subgroups: [
-      { id: 'subgroup-3', name: 'Підгрупа 1', academicGroupId: 'group-2' },
-      { id: 'subgroup-4', name: 'Підгрупа 2', academicGroupId: 'group-2' },
-    ],
-  },
-];
-
 export const toUiTeachingType = (type: string): WorkloadRow['teachingType'] => {
   switch (type) {
     case 'PRACTICAL':
@@ -106,36 +87,14 @@ export const withGroupOrStream = ({
   }
 
   const matchedGroup = findGroup(groups, value);
-  let subgroupId: string | undefined;
-
-  if (row.subgroupId) {
-    const subgroupIndex =
-      findGroup(groups, row.groupId)?.subgroups?.findIndex(
-        (subgroup) => subgroup.id === row.subgroupId,
-      ) ?? -1;
-
-    subgroupId = subgroupIndex >= 0 ? matchedGroup?.subgroups?.[subgroupIndex]?.id : undefined;
-  }
+  const previousSubgroup = findGroup(groups, row.groupId)?.subgroups?.find(
+    ({ id }) => id === row.subgroupId,
+  );
+  const subgroupId = matchedGroup?.subgroups?.find(
+    ({ name }) => name === previousSubgroup?.name,
+  )?.id;
 
   return { ...row, groupId: matchedGroup?.id ?? value, streamId: undefined, subgroupId };
-};
-
-/** The row after picking "all", "1" or "2" in the subgroup selector. */
-export const withSubgroup = (
-  row: WorkloadRow,
-  value: string,
-  groups: AcademicGroupResponse[],
-): WorkloadRow => {
-  if (!value) {
-    return { ...row, subgroupId: undefined };
-  }
-
-  const currentGroup = findGroup(groups, row.groupId);
-
-  return {
-    ...row,
-    subgroupId: value === '2' ? currentGroup?.subgroups?.[1]?.id : currentGroup?.subgroups?.[0]?.id,
-  };
 };
 
 export const getSelectedGroupOrStream = (
@@ -151,26 +110,6 @@ export const getSelectedGroupOrStream = (
   }
 
   return groups[0]?.id ?? '';
-};
-
-export const getSubgroupValue = (row: WorkloadRow, groups: AcademicGroupResponse[]): string => {
-  if (!row.subgroupId || row.streamId) {
-    return '';
-  }
-
-  const subgroups = findGroup(groups, row.groupId)?.subgroups;
-
-  if (subgroups && subgroups.length > 0) {
-    if (row.subgroupId === subgroups[0]?.id) {
-      return '1';
-    }
-
-    if (row.subgroupId === subgroups[1]?.id) {
-      return '2';
-    }
-  }
-
-  return '';
 };
 
 export const toAssignmentPayload = (

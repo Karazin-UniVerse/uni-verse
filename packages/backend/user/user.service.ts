@@ -1,6 +1,12 @@
 import { getPrismaErrorCode, getPrismaErrorName } from '../utils/prisma-error';
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { User, Role } from '@universe/database';
+import type { SetAcademicMembershipRequest } from '@universe/core/types/timetable';
+import { PRISMA_ERROR_CODE } from '../constants/prisma';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, UpdateUserDto } from './user-dto';
 import { randomUUID } from 'node:crypto';
@@ -92,6 +98,39 @@ export class UserService {
       this.inMemoryUsers.set(newUser.id, newUser);
 
       return newUser;
+    }
+  }
+
+  async setAcademicMembership(
+    id: string,
+    { academicGroupId, academicSubgroupId }: SetAcademicMembershipRequest,
+  ): Promise<void> {
+    if (academicSubgroupId && !academicGroupId) {
+      throw new BadRequestException('A subgroup requires an academic group');
+    }
+
+    try {
+      await this.prisma.user.update({
+        where: { id },
+        data: {
+          academicGroup: academicGroupId
+            ? { connect: { id: academicGroupId } }
+            : { disconnect: true },
+          academicSubgroup:
+            academicSubgroupId && academicGroupId
+              ? { connect: { id: academicSubgroupId, academicGroupId } }
+              : { disconnect: true },
+        },
+        select: { id: true },
+      });
+    } catch (error) {
+      if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
+        throw new NotFoundException(
+          'User, group or subgroup in that group not found',
+        );
+      }
+
+      throw error;
     }
   }
 

@@ -3,7 +3,7 @@ import {
   addDays,
   startOfWeek,
   isSameDay,
-  isEventOnDate,
+  indexScheduleEvents,
   getMonthGridDays,
   getPairNumber,
   getWeekDays,
@@ -133,21 +133,22 @@ describe('schedule helpers', () => {
     });
   });
 
-  describe('isEventOnDate', () => {
-    it.each([
-      { calendarDay: 4, expected: true },
-      { calendarDay: 3, expected: false },
-    ])(
-      'should match a Kyiv event to calendar day $calendarDay in a Honolulu browser: $expected',
-      ({ calendarDay, expected }) => {
-        process.env.TZ = 'Pacific/Honolulu';
+  it('indexes events in chronological order by the university date across midnight', () => {
+    process.env.TZ = 'Pacific/Honolulu';
+    const early: ScheduleEvent = {
+      id: 'early',
+      title: 'Math',
+      type: 'lecture',
+      start: new Date('2027-01-03T22:30Z'),
+      end: new Date('2027-01-03T23:50Z'),
+      location: '',
+    };
+    const late = { ...early, id: 'late', start: new Date('2027-01-04T10:00Z') };
 
-        const eventStart = new Date('2027-01-04T06:30:00Z');
-        const calendarDate = new Date(2027, 0, calendarDay);
+    const index = indexScheduleEvents([late, early]);
 
-        expect(isEventOnDate(eventStart, calendarDate)).toBe(expected);
-      },
-    );
+    expect(index.get('2027-01-04')).toEqual([early, late]);
+    expect(index.has('2027-01-03')).toBe(false);
   });
 
   describe('getPairNumber', () => {

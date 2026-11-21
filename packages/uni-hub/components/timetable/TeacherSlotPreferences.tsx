@@ -65,6 +65,7 @@ export function TeacherSlotPreferences(): React.JSX.Element {
 
   const isDirty = draftSlots !== null;
   const isBusy = semestersQuery.isLoading || preferencesQuery.isLoading || saveMutation.isPending;
+  const canEdit = preferencesQuery.isSuccess && !isBusy;
   const hasError = semestersQuery.isError || preferencesQuery.isError || saveMutation.isError;
   const displayedSlots = draftSlots ?? preferencesQuery.data ?? [];
   const isMobile = useMediaQuery('less', BREAKPOINTS.md);
@@ -94,7 +95,7 @@ export function TeacherSlotPreferences(): React.JSX.Element {
   const viewProps = {
     slots: displayedSlots,
     weekdays,
-    disabled: isBusy || !activeSemesterId,
+    disabled: !canEdit,
     onChange: handleChange,
   };
 
@@ -109,7 +110,7 @@ export function TeacherSlotPreferences(): React.JSX.Element {
   };
 
   const handleSave = (): void => {
-    if (!activeSemesterId || draftSlots === null) {
+    if (!canEdit || draftSlots === null) {
       return;
     }
 
@@ -142,6 +143,16 @@ export function TeacherSlotPreferences(): React.JSX.Element {
       {hasError && (
         <p role="alert" className={styles.alert}>
           {formatMessage('preferences.error')}
+          {(semestersQuery.isError || preferencesQuery.isError) && (
+            <Button
+              type="button"
+              onClick={() =>
+                void (semestersQuery.isError ? semestersQuery : preferencesQuery).refetch()
+              }
+            >
+              {formatMessage('common.error.retry')}
+            </Button>
+          )}
         </p>
       )}
 
@@ -176,7 +187,12 @@ export function TeacherSlotPreferences(): React.JSX.Element {
       {isMobile ? <SlotPreferenceDays {...viewProps} /> : <SlotPreferenceGrid {...viewProps} />}
 
       <div className={styles.actions}>
-        <Button type="button" variant="primary" disabled={isBusy || !isDirty} onClick={handleSave}>
+        <Button
+          type="button"
+          variant="primary"
+          disabled={!canEdit || !isDirty}
+          onClick={handleSave}
+        >
           {formatMessage('preferences.save')}
         </Button>
         {isDirty && (

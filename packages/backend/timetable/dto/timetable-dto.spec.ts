@@ -4,12 +4,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { TeachingType } from '@universe/database';
 import {
   ConfirmTeacherUnavailabilityDto,
+  CreateCurriculumPlanDto,
   CreateSemesterCalendarDto,
   CreateTeacherUnavailabilityDto,
   CreateTeachingAssignmentDto,
   GenerateTimetableDto,
   GetSemesterCalendarQueryDto,
-  ImportCurriculumPlanDto,
   ListTeachingAssignmentsQueryDto,
   MakeupSaturdayDto,
   SaveSlotPreferencesDto,
@@ -526,90 +526,38 @@ describe('Timetable DTOs', () => {
       expect(errors[0].property).toBe('slots');
     });
   });
-  describe('ImportCurriculumPlanDto', () => {
-    const validImport = {
+  describe('CreateCurriculumPlanDto', () => {
+    const validPlan = {
       faculty: 'ННІ КН та ШІ',
       title: 'КН, 2 курс',
       academicYear: '2026/2027',
       semester: 1,
-      groupId: 'group-1',
-      assignments: [
-        {
-          disciplineTitle: 'Бази даних',
-          teachingType: TeachingType.LECTURE,
-          academicHours: 32,
-        },
-      ],
     };
 
-    it('accepts a plan with assignments', () => {
+    it('accepts a valid curriculum plan', () => {
       expect(
-        validateSync(plainToInstance(ImportCurriculumPlanDto, validImport)),
+        validateSync(plainToInstance(CreateCurriculumPlanDto, validPlan)),
       ).toEqual([]);
     });
 
-    it('accepts a study semester from 1 to 8 and a Saturday-only class', () => {
-      const dto = plainToInstance(ImportCurriculumPlanDto, {
-        ...validImport,
+    it('accepts a study semester from 1 to 8', () => {
+      const dto = plainToInstance(CreateCurriculumPlanDto, {
+        ...validPlan,
         studySemester: 3,
-        assignments: [{ ...validImport.assignments[0], isSaturdayOnly: true }],
       });
 
       expect(validateSync(dto)).toEqual([]);
     });
 
     it.each([0, 9, 1.5])('rejects study semester %d', (studySemester) => {
-      const dto = plainToInstance(ImportCurriculumPlanDto, {
-        ...validImport,
+      const dto = plainToInstance(CreateCurriculumPlanDto, {
+        ...validPlan,
         studySemester,
       });
 
       expect(validateSync(dto)).toEqual([
         expect.objectContaining({ property: 'studySemester' }),
       ]);
-    });
-
-    it('rejects whitespace-only discipline names', () => {
-      const dto = plainToInstance(ImportCurriculumPlanDto, {
-        ...validImport,
-        assignments: [
-          { ...validImport.assignments[0], disciplineTitle: '   ' },
-        ],
-      });
-
-      expect(validateSync(dto)).not.toEqual([]);
-    });
-
-    it.each([
-      { assignments: [[]] },
-      { assignments: [[validImport.assignments[0]]] },
-      { assignments: [null] },
-      { assignments: null },
-    ])('rejects malformed assignment collections: %j', ({ assignments }) => {
-      const dto = plainToInstance(ImportCurriculumPlanDto, {
-        ...validImport,
-        assignments,
-      });
-
-      expect(validateSync(dto, { whitelist: true })).not.toEqual([]);
-    });
-
-    it('validates every imported assignment', () => {
-      const errors = validateSync(
-        plainToInstance(ImportCurriculumPlanDto, {
-          ...validImport,
-          assignments: [
-            { disciplineTitle: '', teachingType: 'EXAM', academicHours: 33 },
-          ],
-        }),
-      );
-
-      expect(errors).toHaveLength(1);
-      expect(errors[0].property).toBe('assignments');
-      expect(
-        Object.keys(errors[0].children?.[0]?.children?.[0]?.constraints ?? {}),
-      ).toContain('isNotEmpty');
-      expect(errors[0].children?.[0]?.children).toHaveLength(3);
     });
   });
 });

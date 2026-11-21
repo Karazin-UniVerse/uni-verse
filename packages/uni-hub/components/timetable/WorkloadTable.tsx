@@ -44,11 +44,6 @@ export const WorkloadTable: React.FC<WorkloadTableProps> = ({
         ...academicGroups.map((group) => ({ value: group.id, label: group.code })),
         ...streams.map((stream) => ({ value: stream.id, label: stream.name })),
       ],
-      subgroup: [
-        { value: '', label: formatMessage('timetable.subgroupAll') },
-        { value: '1', label: formatMessage('timetable.subgroup1') },
-        { value: '2', label: formatMessage('timetable.subgroup2') },
-      ],
       teacher: [
         {
           value: '',
@@ -133,6 +128,7 @@ export const WorkloadTable: React.FC<WorkloadTableProps> = ({
                   type="button"
                   variant="secondary"
                   size="small"
+                  disabled={!editor.canAddRow}
                   onClick={() => editor.addRow(group.title)}
                   aria-label={formatMessage('timetable.addWorkloadToDiscipline', {
                     discipline: label,
@@ -152,7 +148,6 @@ export const WorkloadTable: React.FC<WorkloadTableProps> = ({
                         academicGroups={academicGroups}
                         onUpdate={editor.updateRow}
                         onGroupOrStreamChange={editor.changeGroupOrStream}
-                        onSubgroupChange={editor.changeSubgroup}
                         onRemove={editor.removeRow}
                       />
                     ))}

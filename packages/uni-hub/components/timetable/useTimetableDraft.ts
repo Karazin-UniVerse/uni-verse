@@ -1,6 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { GenerateTimetableDraftResult } from '@core/types/timetable';
-import { checkTimetableConflicts } from '@core/utils/timetable';
+import {
+  checkTimetableConflicts,
+  getPrecedenceConflicts,
+  moveWithinTeachingWeek,
+} from '@core/utils/timetable';
 import { useLanguage, type FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import { getEventWeekday, PREVIEW_DAYS } from './helpers';
@@ -19,6 +23,7 @@ type DraftResultWithSummaries = GenerateTimetableDraftResult & {
 type UseTimetableDraftParams = {
   planId: string;
   canGenerate: boolean;
+  semesterStartDate: string | undefined;
   compactSaturdays: boolean;
   saveWorkload: () => Promise<void>;
   onError: (message: string | null) => void;
@@ -49,6 +54,7 @@ const describeGenerationError = (failure: unknown, formatMessage: FormatMessage)
 export function useTimetableDraft({
   planId,
   canGenerate,
+  semesterStartDate,
   compactSaturdays,
   saveWorkload,
   onError,
@@ -125,10 +131,11 @@ export function useTimetableDraft({
   }));
 
   const adjustmentConflict = useMemo(() => {
-    if (!adjustingEvent || !selectedCandidate) {
+    if (!adjustingEvent || !selectedCandidate || !semesterStartDate) {
       return false;
     }
 
+    const affectedIds = new Set<string>();
     const projected = selectedCandidate.events.map((event) => {
       if (
         event.teachingAssignmentId !== adjustingEvent.teachingAssignmentId ||
@@ -138,15 +145,22 @@ export function useTimetableDraft({
         return event;
       }
 
-      const date = new Date(event.date);
-
-      date.setUTCDate(date.getUTCDate() + Number(targetWeekday) - getEventWeekday(adjustingEvent)!);
+      affectedIds.add(event.id);
+      const date = new Date(
+        moveWithinTeachingWeek(
+          Date.parse(semesterStartDate),
+          Date.parse(event.date),
+          Number(targetWeekday),
+        ),
+      );
 
       return { ...event, date: date.toISOString().slice(0, 10), pair: Number(targetPair) };
     });
 
-    return !checkTimetableConflicts({ events: projected }).isValid;
-  }, [adjustingEvent, selectedCandidate, targetWeekday, targetPair]);
+    const report = checkTimetableConflicts({ events: projected });
+
+    return !report.isValid || getPrecedenceConflicts(report, affectedIds).length > 0;
+  }, [adjustingEvent, selectedCandidate, semesterStartDate, targetWeekday, targetPair]);
 
   const startAdjust = useCallback((event: PreviewEvent, weekday: number): void => {
     setAdjustingEvent(event);

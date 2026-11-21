@@ -1,13 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
-import type { AcademicGroupResponse, AcademicStreamResponse } from '@core/types/timetable';
+import { useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { AcademicStreamResponse } from '@core/types/timetable';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { timetableApi } from '@uni-hub/services/api.timetable';
 import {
-  DEFAULT_GROUPS,
   toAssignmentPayload,
   toUiTeachingType,
   withGroupOrStream,
-  withSubgroup,
   type WorkloadRow,
 } from './workload';
 
@@ -36,33 +35,16 @@ export function useWorkloadEditor({
   initialWorkload,
 }: UseWorkloadEditorParams) {
   const { formatMessage } = useLanguage();
-  const [academicGroups, setAcademicGroups] = useState<AcademicGroupResponse[]>(
-    () => DEFAULT_GROUPS,
-  );
+  const groupsQuery = useQuery({
+    queryKey: ['timetable', 'academicGroups'],
+    queryFn: async () => (await timetableApi.listAcademicGroups()).data,
+  });
+  const academicGroups = useMemo(() => groupsQuery.data ?? [], [groupsQuery.data]);
   const [workload, setWorkload] = useState<WorkloadRow[]>(() => initialWorkload ?? []);
   const [dirtyRowIds, setDirtyRowIds] = useState<Set<string>>(() => new Set());
   const [deletedRowIds, setDeletedRowIds] = useState<Set<string>>(() => new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [failedLoadPlanId, setFailedLoadPlanId] = useState<string | null>(null);
-
-  useEffect(() => {
-    let isActive = true;
-
-    timetableApi
-      .listAcademicGroups()
-      .then((response) => {
-        if (isActive && Array.isArray(response?.data) && response.data.length > 0) {
-          setAcademicGroups(response.data);
-        }
-      })
-      .catch(() => {
-        // Keep current/default groups when offline or unmocked
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, []);
 
   useEffect(() => {
     if (initialWorkload || !planId.trim()) {
@@ -127,13 +109,13 @@ export function useWorkloadEditor({
     [academicGroups, editRow, streams],
   );
 
-  const changeSubgroup = useCallback(
-    (id: string, value: string) => editRow(id, (row) => withSubgroup(row, value, academicGroups)),
-    [academicGroups, editRow],
-  );
-
   const addRow = useCallback(
     (disciplineTitle = '') => {
+      const groupId = academicGroups[0]?.id;
+      const streamId = groupId ? undefined : streams[0]?.id;
+
+      if (!groupId && !streamId) return;
+
       const id = `row-${Date.now()}`;
 
       setWorkload((rows) => [
@@ -144,16 +126,16 @@ export function useWorkloadEditor({
           teachingType: 'LECTURE',
           academicHours: 32,
           teacherId: undefined,
-          groupId: academicGroups[0]?.id ?? 'group-1',
+          groupId,
           subgroupId: undefined,
-          streamId: undefined,
+          streamId,
           isSaturdayOnly: false,
           hasLateSlotAuthorization: false,
         },
       ]);
       setDirtyRowIds((ids) => withId(ids, id));
     },
-    [academicGroups],
+    [academicGroups, streams],
   );
 
   const removeRow = useCallback((id: string) => {
@@ -230,7 +212,8 @@ export function useWorkloadEditor({
     updateRow,
     renameDiscipline,
     changeGroupOrStream,
-    changeSubgroup,
+    groupsQuery,
+    canAddRow: academicGroups.length > 0 || streams.length > 0,
     persist,
     save,
     clear,

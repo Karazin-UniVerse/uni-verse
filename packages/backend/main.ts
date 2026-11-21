@@ -3,7 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
-import morgan from 'morgan';
+import { createAccessLogger } from './utils/access-logger';
 import { AppModule } from './app.module';
 import { configureBodyParsers } from './utils/body-parsers';
 import { getCorsConfig } from './utils/cors.config';
@@ -31,7 +31,7 @@ async function bootstrap() {
 
   SwaggerModule.setup('api', app, document);
 
-  app.use(morgan('dev'));
+  app.use(createAccessLogger());
   app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 

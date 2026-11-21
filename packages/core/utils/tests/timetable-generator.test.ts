@@ -24,6 +24,38 @@ const calendar: SemesterCalendarConfig = {
 };
 
 describe('timetable generator', () => {
+  test('generates a candidate despite an unrelated published teacher absence', () => {
+    const result = generateTimetableCandidates({
+      calendar,
+      fixedEvents: [
+        {
+          id: 'existing',
+          teachingAssignmentId: 'old',
+          disciplineTitle: 'Other',
+          teachingType: 'LECTURE',
+          teacherId: 'unavailable',
+          groupIds: ['other'],
+          date: calendar.startDate,
+          pair: 1,
+        },
+      ],
+      unavailability: [
+        { teacherId: 'unavailable', date: calendar.startDate, pair: 1, isConfirmed: true },
+      ],
+      demands: [
+        {
+          id: 'new',
+          disciplineTitle: 'New',
+          teachingType: 'LECTURE',
+          groupIds: ['group'],
+          academicHours: 32,
+        },
+      ],
+      options: { timeoutMs: 250 },
+    });
+
+    assert.ok(result.ok);
+  });
   test('keeps unrelated published precedence violations from blocking generation', () => {
     const fixedEvents: ScheduledEvent[] = [
       {

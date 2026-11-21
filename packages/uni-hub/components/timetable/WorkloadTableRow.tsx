@@ -3,7 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { Button, CheckBox, Select, TextInput } from '@una';
 import type { AcademicGroupResponse } from '@core/types/timetable';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { getSelectedGroupOrStream, getSubgroupValue, type WorkloadRow } from './workload';
+import { getSelectedGroupOrStream, type WorkloadRow } from './workload';
 import styles from './TimetableManagement.module.scss';
 
 type Option = { value: string; label: string };
@@ -11,7 +11,6 @@ type Option = { value: string; label: string };
 export type WorkloadRowOptions = {
   teachingType: Option[];
   groupOrStream: Option[];
-  subgroup: Option[];
   teacher: Option[];
 };
 
@@ -21,7 +20,6 @@ type WorkloadTableRowProps = {
   academicGroups: AcademicGroupResponse[];
   onUpdate: <K extends keyof WorkloadRow>(id: string, key: K, value: WorkloadRow[K]) => void;
   onGroupOrStreamChange: (id: string, value: string) => void;
-  onSubgroupChange: (id: string, value: string) => void;
   onRemove: (id: string) => void;
 };
 
@@ -32,10 +30,13 @@ export const WorkloadTableRow: React.FC<WorkloadTableRowProps> = ({
   academicGroups,
   onUpdate,
   onGroupOrStreamChange,
-  onSubgroupChange,
   onRemove,
 }) => {
   const { formatMessage } = useLanguage();
+  const selectedGroup = academicGroups.find(
+    (group) => group.id === row.groupId || group.code === row.groupId,
+  );
+  const subgroups = selectedGroup?.subgroups ?? [];
   const discipline = row.disciplineTitle || formatMessage('timetable.disciplineTitle');
 
   return (
@@ -63,10 +64,13 @@ export const WorkloadTableRow: React.FC<WorkloadTableRowProps> = ({
       <td data-label={formatMessage('timetable.subgroup')}>
         <div className={styles.subgroupCell}>
           <Select
-            value={getSubgroupValue(row, academicGroups)}
-            options={options.subgroup}
-            onChange={(value) => onSubgroupChange(row.id, value)}
-            disabled={Boolean(row.streamId)}
+            value={row.subgroupId ?? ''}
+            options={[
+              { value: '', label: formatMessage('timetable.subgroupAll') },
+              ...subgroups.map(({ id, name }) => ({ value: id, label: name })),
+            ]}
+            onChange={(value) => onUpdate(row.id, 'subgroupId', value || undefined)}
+            disabled={Boolean(row.streamId) || subgroups.length === 0}
             aria-label={formatMessage('timetable.subgroup')}
           />
         </div>

@@ -88,7 +88,9 @@ function tryPlacement({
     unavailability: context.unavailability,
   });
 
-  return report.hardConflicts.length === 0 ? moved : null;
+  return report.hardConflicts.some((conflict) => conflict.eventIds.includes(moved.id))
+    ? null
+    : moved;
 }
 
 type RelocateParams = Pick<CompactParams, 'fixedEvents' | 'unavailability'> & {

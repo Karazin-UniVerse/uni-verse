@@ -2,11 +2,9 @@ import { describe, expect, it } from 'vitest';
 import type { AcademicGroupResponse } from '@core/types/timetable';
 import {
   getSelectedGroupOrStream,
-  getSubgroupValue,
   groupWorkloadByTitle,
   toAssignmentPayload,
   withGroupOrStream,
-  withSubgroup,
   type WorkloadRow,
 } from './workload';
 
@@ -92,14 +90,6 @@ describe('workload helpers', () => {
     const next = withGroupOrStream({ row, value: 'g-2', groups, streams: [] });
 
     expect(next).toMatchObject({ groupId: 'g-2', streamId: undefined, subgroupId: 'sg-4' });
-  });
-
-  it('maps the subgroup selector to the group subgroups and back', () => {
-    expect(withSubgroup(row, '1', groups).subgroupId).toBe('sg-1');
-    expect(withSubgroup(row, '', groups).subgroupId).toBeUndefined();
-    expect(getSubgroupValue({ ...row, subgroupId: 'sg-1' }, groups)).toBe('1');
-    expect(getSubgroupValue(row, groups)).toBe('2');
-    expect(getSubgroupValue({ ...row, streamId: 's' }, groups)).toBe('');
   });
 
   it('shows the stream, then the group, then the first group', () => {
