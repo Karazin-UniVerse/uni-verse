@@ -8,7 +8,7 @@ import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { useQueryClient } from '@tanstack/react-query';
-import { getErrorMessage, safeStorage } from '@uni-hub/services/api';
+import { safeStorage } from '@uni-hub/services/api';
 import { endSession } from '@uni-hub/services/api.session';
 import { useGoogleLogin, useLinkMoodle } from '@uni-hub/hooks/useAuthMutations';
 import {
@@ -16,6 +16,7 @@ import {
   AuthField,
   parseGoogleClaims,
   extractGoogleDisplayName,
+  getAuthErrorMessage,
 } from '@uni-hub/components/auth';
 import { useFeatures } from '@uni-hub/features';
 import { useMoodleStore } from '@uni-hub/store/useMoodleStore';
@@ -82,7 +83,7 @@ const LoginPage: React.FC = () => {
       setGoogleUserName('');
       safeStorage.removeItem('username');
       safeStorage.removeItem('userEmail');
-      const message = getErrorMessage(err, formatMessage('login.googleError'));
+      const message = getAuthErrorMessage(err, formatMessage, formatMessage('login.googleError'));
 
       setError(message);
       toast.error(message);
@@ -117,7 +118,11 @@ const LoginPage: React.FC = () => {
       safeStorage.setItem('username', resolvedUserName);
       router.push('/');
     } catch (err: unknown) {
-      const message = getErrorMessage(err, formatMessage('login.linkMoodleError'));
+      const message = getAuthErrorMessage(
+        err,
+        formatMessage,
+        formatMessage('login.linkMoodleError'),
+      );
 
       setError(message);
       toast.error(message);

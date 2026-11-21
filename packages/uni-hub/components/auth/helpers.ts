@@ -1,4 +1,31 @@
+import { AUTH_ERROR } from '@core/constants/auth';
+import type { FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
+import { getErrorMessage } from '@uni-hub/services/api';
+
+// Matches the legacy Ukrainian backend message when running against an older API build.
+const LEGACY_CORPORATE_DOMAIN_ERROR =
+  'Доступ дозволено лише для облікових записів @student.karazin.ua та @karazin.ua';
+
+const AUTH_ERROR_KEY_MAP: Record<string, TranslationKey> = {
+  [AUTH_ERROR.CORPORATE_DOMAIN_REQUIRED]: AUTH_ERROR.CORPORATE_DOMAIN_REQUIRED,
+  [LEGACY_CORPORATE_DOMAIN_ERROR]: AUTH_ERROR.CORPORATE_DOMAIN_REQUIRED,
+  [AUTH_ERROR.MOODLE_ALREADY_LINKED]: AUTH_ERROR.MOODLE_ALREADY_LINKED,
+};
+
+/**
+ * Resolves a human-readable, localized error message for auth mutations.
+ */
+export function getAuthErrorMessage(
+  error: unknown,
+  formatMessage: FormatMessage,
+  fallback: string,
+): string {
+  const message = getErrorMessage(error, fallback);
+  const translationKey = AUTH_ERROR_KEY_MAP[message];
+
+  return translationKey ? formatMessage(translationKey) : message;
+}
 
 export const LinkMoodleMode = {
   CONNECT: 'connect',

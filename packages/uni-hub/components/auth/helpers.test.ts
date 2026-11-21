@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
+import { AUTH_ERROR } from '@core/constants/auth';
+import type { FormatMessage } from '@uni-hub/i18n/LanguageContext';
+import { en, uk } from '@uni-hub/i18n/translations';
 import {
   parseGoogleClaims,
   extractGoogleDisplayName,
+  getAuthErrorMessage,
   getLinkMoodleContentKeys,
   LinkMoodleMode,
   resolveGoogleButtonWidth,
@@ -137,5 +141,59 @@ describe('resolveGoogleButtonWidth', () => {
     expect(resolveGoogleButtonWidth(280.7)).toBe(280);
     expect(resolveGoogleButtonWidth(336)).toBe(336);
     expect(resolveGoogleButtonWidth(250)).toBe(250);
+  });
+});
+
+describe('getAuthErrorMessage', () => {
+  const formatEn: FormatMessage = (key) => en[key];
+  const formatUk: FormatMessage = (key) => uk[key];
+
+  it('translates corporate domain error and strips HTTP status in both English and Ukrainian', () => {
+    const error = new Error(`${AUTH_ERROR.CORPORATE_DOMAIN_REQUIRED} (HTTP 403)`);
+
+    expect(getAuthErrorMessage(error, formatEn, en['login.googleError'])).toBe(
+      en['login.errors.corporateDomainRequired'],
+    );
+    expect(getAuthErrorMessage(error, formatUk, uk['login.googleError'])).toBe(
+      uk['login.errors.corporateDomainRequired'],
+    );
+  });
+
+  it('translates legacy Ukrainian corporate domain error into the active language', () => {
+    const legacyError = new Error(
+      'Доступ дозволено лише для облікових записів @student.karazin.ua та @karazin.ua (HTTP 403)',
+    );
+
+    expect(getAuthErrorMessage(legacyError, formatEn, en['login.googleError'])).toBe(
+      en['login.errors.corporateDomainRequired'],
+    );
+  });
+
+  it('translates moodleAlreadyLinked error without transport suffix', () => {
+    const error = new Error(`${AUTH_ERROR.MOODLE_ALREADY_LINKED} (HTTP 409)`);
+
+    expect(getAuthErrorMessage(error, formatEn, en['login.linkMoodleError'])).toBe(
+      en['login.errors.moodleAlreadyLinked'],
+    );
+    expect(getAuthErrorMessage(error, formatUk, uk['login.linkMoodleError'])).toBe(
+      uk['login.errors.moodleAlreadyLinked'],
+    );
+  });
+
+  it('uses localized fallback for bare transport errors and strips HTTP suffix on other errors', () => {
+    expect(
+      getAuthErrorMessage(
+        new Error('HTTP error 500: Internal Server Error'),
+        formatEn,
+        en['login.googleError'],
+      ),
+    ).toBe(en['login.googleError']);
+    expect(
+      getAuthErrorMessage(
+        new Error('Invalid credentials (HTTP 401)'),
+        formatEn,
+        en['login.linkMoodleError'],
+      ),
+    ).toBe('Invalid credentials');
   });
 });

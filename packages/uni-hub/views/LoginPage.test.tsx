@@ -71,6 +71,10 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
   afterEach(() => {
     delete process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     delete (window as unknown as { google?: unknown }).google;
+    window.localStorage.setItem('universe-lang', 'uk');
+    act(() => {
+      window.dispatchEvent(new Event('language-change'));
+    });
     window.localStorage.clear();
   });
 
@@ -169,6 +173,27 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
 
     expect(window.localStorage.getItem('isLoggedIn')).toBeNull();
     expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('should display localized corporate domain error in English without HTTP status code', async () => {
+    window.localStorage.setItem('universe-lang', 'en');
+    const user = userEvent.setup();
+
+    mockAuthApi.loginWithGoogle.mockRejectedValueOnce(
+      new Error('login.errors.corporateDomainRequired (HTTP 403)'),
+    );
+
+    renderLoginPage();
+
+    await user.click(screen.getByTestId('google-btn'));
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText('Sign in with a @student.karazin.ua or @karazin.ua email').length,
+      ).toBeGreaterThanOrEqual(1);
+    });
+
+    expect(screen.queryByText(/HTTP 403/i)).not.toBeInTheDocument();
   });
 
   it('should set isLoggedIn = true and redirect to / when isMoodleIntegrationEnabled is true and account is already linked', async () => {

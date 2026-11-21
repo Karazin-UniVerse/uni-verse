@@ -4,10 +4,9 @@ import React, { useState } from 'react';
 import { Lock, User } from 'lucide-react';
 import { Modal, Button, Form, useToast } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { getErrorMessage } from '@uni-hub/services/api';
 import { useLinkMoodle } from '@uni-hub/hooks/useAuthMutations';
 import { AuthField } from './AuthField';
-import { LinkMoodleMode, getLinkMoodleContentKeys } from './helpers';
+import { LinkMoodleMode, getAuthErrorMessage, getLinkMoodleContentKeys } from './helpers';
 import styles from './LinkMoodleModal.module.scss';
 
 export interface LinkMoodleModalProps {
@@ -73,7 +72,11 @@ export const LinkMoodleModal: React.FC<LinkMoodleModalProps> = ({
       setError('');
       onSuccess();
     } catch (err: unknown) {
-      const message = getErrorMessage(err, formatMessage('login.linkMoodleError'));
+      const message = getAuthErrorMessage(
+        err,
+        formatMessage,
+        formatMessage('login.linkMoodleError'),
+      );
 
       setError(message);
       toast.error(message);
