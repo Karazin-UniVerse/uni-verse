@@ -28,8 +28,14 @@ describe('opportunity detail moderation', () => {
   beforeEach(() => {
     localStorage.setItem('universe-lang', 'uk');
     safeStorage.setItem(
-      'accessToken',
-      `header.${btoa(JSON.stringify({ sub: 'moderator-1', roles: [ROLE.OPPORTUNITIES_MODERATOR] }))}.signature`,
+      'sessionUser',
+      JSON.stringify({
+        id: 'moderator-1',
+        email: 'mod@karazin.ua',
+        name: 'Moderator',
+        roles: [ROLE.OPPORTUNITIES_MODERATOR],
+        isLinked: false,
+      }),
     );
     vi.spyOn(opportunitiesApi, 'moderate').mockResolvedValue({
       data: { ...buildOpportunity('opportunity-1'), status: OPPORTUNITY_STATUS.PUBLISHED },
@@ -38,7 +44,7 @@ describe('opportunity detail moderation', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-    safeStorage.removeItem('accessToken');
+    safeStorage.removeItem('sessionUser');
   });
 
   it('should approve the notified opportunity directly from its details', async () => {
@@ -78,8 +84,14 @@ describe('opportunity detail moderation', () => {
 
   it('should not expose moderation to a user without the moderator role', () => {
     safeStorage.setItem(
-      'accessToken',
-      `header.${btoa(JSON.stringify({ sub: 'student-1', roles: [ROLE.OPPORTUNITIES_USER] }))}.signature`,
+      'sessionUser',
+      JSON.stringify({
+        id: 'student-1',
+        email: 'student@karazin.ua',
+        name: 'Student',
+        roles: [ROLE.OPPORTUNITIES_USER],
+        isLinked: false,
+      }),
     );
     renderDetail();
 

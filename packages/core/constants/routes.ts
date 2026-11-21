@@ -4,6 +4,7 @@ export const AUTH_ROUTES = {
   GOOGLE: 'google',
   MOODLE_LINK: 'moodle/link',
   MOODLE_UNLINK: 'moodle/unlink',
+  ME: 'me',
   LOGOUT: 'logout',
   REFRESH: 'refresh',
 } as const;

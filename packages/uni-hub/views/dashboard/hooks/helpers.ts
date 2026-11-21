@@ -1,8 +1,8 @@
 import type { PlatformNotification } from '@uni-hub/services/api.notifications';
 import { asList } from '@uni-hub/utils/arrays';
 import { isBrowser } from '@uni-hub/utils/browser';
+import { readSessionUser } from '@uni-hub/services/api.session';
 import { safeStorage } from '@uni-hub/services/api.storage';
-import { parseJwt } from '@uni-hub/utils/jwt';
 import type {
   Grade,
   Assignment,
@@ -276,34 +276,32 @@ export interface StoredSessionIdentity {
   userId?: string | null;
   username?: string | null;
   userEmail?: string | null;
-  token?: string | null;
+  isLoggedIn?: boolean;
   authProvider?: string | null;
 }
 
 /**
- * Reads the current session identity from client storage and extracts the user ID from the access token.
+ * Reads the current session identity from non-secret client session storage.
  */
 export function readSessionIdentity(): StoredSessionIdentity | null {
   if (!isBrowser) {
     return null;
   }
 
-  const token = safeStorage.getItem('accessToken');
-  const payload = token ? parseJwt(token) : null;
-  const userId = typeof payload?.sub === 'string' ? payload.sub : null;
+  const sessionUser = readSessionUser();
+  const userId = sessionUser?.id ?? null;
 
   return {
     userId,
-    token,
+    isLoggedIn: safeStorage.getItem('isLoggedIn') === 'true',
     username: safeStorage.getItem('username'),
-    userEmail: safeStorage.getItem('userEmail'),
+    userEmail: safeStorage.getItem('userEmail') ?? sessionUser?.email ?? null,
     authProvider: safeStorage.getItem('authProvider'),
   };
 }
 
 /**
  * Determines whether a session change occurred between a pre-request snapshot and current storage.
- * Distinguishes normal access-token rotation from genuine account switches or logouts.
  */
 export function hasSessionChanged(
   snapshot: StoredSessionIdentity | null,
@@ -313,7 +311,7 @@ export function hasSessionChanged(
     return snapshot !== current;
   }
 
-  if (Boolean(snapshot.token) !== Boolean(current.token)) {
+  if (Boolean(snapshot.isLoggedIn) !== Boolean(current.isLoggedIn)) {
     return true;
   }
 
@@ -333,38 +331,18 @@ export function hasSessionChanged(
     return snapshot.userId !== current.userId;
   }
 
-  if (snapshot.token === current.token) {
-    return false;
-  }
-
-  if (snapshot.userEmail || snapshot.username) {
-    return false;
-  }
-
-  return snapshot.token !== current.token;
+  return false;
 }
 
 /**
- * Extracts corporate email from the session JWT stored in localStorage.
+ * Extracts corporate email from stored session metadata.
  */
 export function getSessionEmail(): string | null {
   if (!isBrowser) {
     return null;
   }
 
-  try {
-    const token = safeStorage.getItem('accessToken');
-
-    if (!token) {
-      return null;
-    }
-
-    const payload = parseJwt(token);
-
-    return payload?.email ?? null;
-  } catch {
-    return null;
-  }
+  return safeStorage.getItem('userEmail') ?? readSessionUser()?.email ?? null;
 }
 
 /**

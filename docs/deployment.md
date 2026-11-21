@@ -26,11 +26,19 @@ Deployment is disabled until the repository variable `GCP_DEPLOY_ENABLED` is
 ### Existing data and startup behavior
 
 The backend Dockerfile runs `node dist/main` without automatic `prisma db push`
-on container start. CI does not apply schema changes automatically or pass
-database credentials to the build. Take a database backup, review Prisma schema
-changes, and apply schema updates in a controlled pre-deploy step before
-deploying code that relies on them. Deployments are **not** database backups or a
-migration system.
+on container start. Schema history is tracked via Prisma migrations under
+`packages/backend/prisma/migrations/` (`00000000000000_init` baseline).
+
+Before deploying schema changes:
+
+- Take a database backup and review new Prisma migration SQL.
+- On an existing pre-migrations database, mark the baseline applied **once**:
+  `pnpm --filter @universe/backend db:migrate:resolve-init`
+- Apply reviewed pending migrations in a controlled release step:
+  `pnpm --filter @universe/backend db:migrate:deploy`
+
+CI does not apply schema changes automatically or pass database credentials to
+the build. Deployments are **not** database backups.
 
 Backend and frontend updates are sequential, not an atomic pair, so changes must
 remain compatible across revisions. New revisions are created with no traffic;

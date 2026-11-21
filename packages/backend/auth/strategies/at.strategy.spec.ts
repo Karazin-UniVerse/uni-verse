@@ -1,3 +1,4 @@
+import type { Request } from 'express';
 import { AtStrategy, JwtPayload } from './at.strategy';
 
 describe('AtStrategy', () => {
@@ -61,5 +62,25 @@ describe('AtStrategy', () => {
     expect(
       (result as unknown as Record<string, unknown>).moodleId,
     ).toBeUndefined();
+  });
+
+  it('should extract JWT from httpOnly accessToken cookie first, falling back to Bearer header', () => {
+    process.env.AT_SECRET = 'a-secure-production-ready-secret-key-12345';
+
+    const strategy = new AtStrategy() as unknown as {
+      _jwtFromRequest: (req: Request) => string | null;
+    };
+
+    const cookieReq = {
+      cookies: { accessToken: 'cookie-jwt-token' },
+      headers: { authorization: 'Bearer header-jwt-token' },
+    } as unknown as Request;
+    const headerOnlyReq = {
+      cookies: {},
+      headers: { authorization: 'Bearer header-jwt-token' },
+    } as unknown as Request;
+
+    expect(strategy._jwtFromRequest(cookieReq)).toBe('cookie-jwt-token');
+    expect(strategy._jwtFromRequest(headerOnlyReq)).toBe('header-jwt-token');
   });
 });

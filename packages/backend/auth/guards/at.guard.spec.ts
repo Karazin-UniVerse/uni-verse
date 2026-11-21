@@ -180,5 +180,28 @@ describe('AtGuard', () => {
         guard.handleRequest('string error', null, null, context),
       ).toThrow();
     });
+
+    it('delegates to super.canActivate on public route when accessToken cookie is present', () => {
+      const context = {
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+        switchToHttp: () => ({
+          getRequest: () => ({
+            headers: {},
+            cookies: { accessToken: 'cookie-jwt' },
+          }),
+        }),
+      } as unknown as ExecutionContext;
+
+      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(true);
+      const superCanActivateSpy = jest
+        .spyOn(AuthGuard('jwt').prototype, 'canActivate')
+        .mockReturnValue(true);
+
+      const result = guard.canActivate(context);
+
+      expect(result).toBe(true);
+      expect(superCanActivateSpy).toHaveBeenCalledWith(context);
+    });
   });
 });
