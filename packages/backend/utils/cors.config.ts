@@ -1,39 +1,24 @@
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 
-export function isAllowedOrigin(origin: string): boolean {
-  const isProduction = process.env.NODE_ENV === 'production';
-  const allowedOrigins = [
-    process.env.FRONTEND_URL,
-    ...(!isProduction
-      ? ['http://localhost:3000', 'http://localhost:3001']
-      : []),
-    'https://universemvp.tech',
-  ].filter(Boolean) as string[];
+const PRODUCTION_ORIGIN = 'https://universemvp.tech';
 
+function isLocalDevOrigin(origin: string): boolean {
   try {
-    const parsed = new URL(origin);
-    const host = parsed.hostname;
-    const isLocal = host === 'localhost' || host === '127.0.0.1';
-    const isSecure = parsed.protocol === 'https:';
+    const { hostname, protocol } = new URL(origin);
+    const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
 
-    if (
-      (!isProduction &&
-        isLocal &&
-        (parsed.protocol === 'http:' || parsed.protocol === 'https:')) ||
-      (isSecure &&
-        (host === 'universemvp.tech' ||
-          host.endsWith('.universemvp.tech') ||
-          host === 'karazin.ua' ||
-          host.endsWith('.karazin.ua'))) ||
-      allowedOrigins.includes(origin)
-    ) {
-      return true;
-    }
+    return isLocalHost && (protocol === 'http:' || protocol === 'https:');
   } catch {
     return false;
   }
+}
 
-  return false;
+export function isAllowedOrigin(origin: string): boolean {
+  if (origin === PRODUCTION_ORIGIN || origin === process.env.FRONTEND_URL) {
+    return true;
+  }
+
+  return process.env.NODE_ENV !== 'production' && isLocalDevOrigin(origin);
 }
 
 export const getCorsConfig = (): CorsOptions => {

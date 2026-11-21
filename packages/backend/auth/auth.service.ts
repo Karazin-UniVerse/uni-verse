@@ -12,6 +12,7 @@ import * as bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import { randomBytes } from 'node:crypto';
 import { UserService } from '../user/user.service';
+import { BCRYPT_SALT_ROUNDS, JWT_ALGORITHM } from '../constants/auth';
 import { GetCreds } from '../utils/get-creds';
 import { GoogleAuthDto, LinkMoodleDto, LoginDto, RegisterDto } from './dto';
 import {
@@ -141,7 +142,7 @@ export class AuthService {
         (await this.userService.findByEmail(emailToUse));
 
       if (!existing) {
-        const hash = await bcrypt.hash(dto.password, 10);
+        const hash = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
 
         return await this.userService.createUser({
           email: emailToUse,
@@ -249,7 +250,7 @@ export class AuthService {
 
     const randomPassword = await bcrypt.hash(
       randomBytes(32).toString('hex'),
-      10,
+      BCRYPT_SALT_ROUNDS,
     );
 
     try {
@@ -442,7 +443,7 @@ export class AuthService {
   }
 
   hashData(data: string) {
-    return bcrypt.hash(data, 10);
+    return bcrypt.hash(data, BCRYPT_SALT_ROUNDS);
   }
 
   async getTokens({ userId, email, roles }: GetTokensParams) {
@@ -473,6 +474,7 @@ export class AuthService {
         },
         {
           secret: atSecret,
+          algorithm: JWT_ALGORITHM,
           expiresIn: 60 * 15,
         },
       ),
@@ -483,6 +485,7 @@ export class AuthService {
         },
         {
           secret: rtSecret,
+          algorithm: JWT_ALGORITHM,
           expiresIn: 60 * 60 * 24 * 7,
         },
       ),

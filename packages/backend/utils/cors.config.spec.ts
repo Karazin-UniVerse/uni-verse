@@ -22,18 +22,25 @@ describe('getCorsConfig', () => {
     });
   });
 
-  it('allows secure https karazin.ua and subdomains', (done) => {
-    originValidator('https://moodle.karazin.ua', (err, allow) => {
-      expect(allow).toBe(true);
-      done();
-    });
+  it.each([
+    'https://karazin.ua',
+    'https://moodle.karazin.ua',
+    'https://moodle.universemvp.tech',
+    'https://evil.universemvp.tech',
+  ])('rejects %s because only exact app origins are trusted', (origin) => {
+    expect(isAllowedOrigin(origin)).toBe(false);
   });
 
-  it('allows secure https universemvp.tech and subdomains', (done) => {
-    originValidator('https://moodle.universemvp.tech', (err, allow) => {
-      expect(allow).toBe(true);
-      done();
-    });
+  it('allows the configured FRONTEND_URL', () => {
+    const originalFrontendUrl = process.env.FRONTEND_URL;
+
+    process.env.FRONTEND_URL = 'https://staging.universemvp.tech';
+
+    try {
+      expect(isAllowedOrigin('https://staging.universemvp.tech')).toBe(true);
+    } finally {
+      process.env.FRONTEND_URL = originalFrontendUrl;
+    }
   });
 
   it('rejects untrusted domains', (done) => {
