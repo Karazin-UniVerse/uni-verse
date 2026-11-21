@@ -57,12 +57,12 @@ export const ScheduleEventCard: React.FC<ScheduleEventCardProps> = ({
       {(targetBadges.length > 0 || event.isSaturdayOnly) && (
         <div className={styles.eventBadges}>
           {targetBadges.map((badge) => (
-            <Tag key={badge} size="small" tone="neutral">
+            <Tag key={badge} size="small" tone="neutral" className={styles.eventBadge}>
               {badge}
             </Tag>
           ))}
           {event.isSaturdayOnly && (
-            <Tag size="small" tone="warning">
+            <Tag size="small" tone="warning" className={styles.eventBadge}>
               {formatMessage('timetable.saturdayOnly')}
             </Tag>
           )}

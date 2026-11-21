@@ -131,7 +131,7 @@
 
   table {
     width: 100%;
-    min-width: 800px;
+    min-width: 960px;
     border-collapse: collapse;
     table-layout: fixed;
     font-size: var(--font-xs);
@@ -149,7 +149,7 @@
     text-align: center;
 
     &:first-child {
-      width: 112px;
+      width: 88px;
       left: 0;
       z-index: 3;
     }
@@ -239,9 +239,11 @@
 
 .eventHeader {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-8);
+  gap: var(--space-4);
+  min-width: 0;
 }
 
 .typeLabel {
@@ -251,6 +253,7 @@
   color: var(--text-primary);
   font-size: var(--font-xs);
   font-weight: var(--font-weight-bold);
+  white-space: nowrap;
 }
 
 .eventTitle {
@@ -265,6 +268,14 @@
   flex-wrap: wrap;
   gap: var(--space-4);
   align-items: center;
+  min-width: 0;
+
+  .eventBadge {
+    box-sizing: border-box;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
 }
 
 .eventMeta {
