@@ -194,6 +194,7 @@ describe('DashboardHeader', () => {
     const user = userEvent.setup();
 
     window.localStorage.setItem('accessToken', 'test-token');
+    window.localStorage.setItem('sessionUser', JSON.stringify({ id: 'u1' }));
     window.localStorage.setItem('isLoggedIn', 'true');
     window.localStorage.setItem('moodleToken', 'test-moodle');
     window.localStorage.setItem('universe_student_profile_v2', '{"fullName":"Previous Account"}');
@@ -217,6 +218,7 @@ describe('DashboardHeader', () => {
     });
 
     expect(window.localStorage.getItem('accessToken')).toBeNull();
+    expect(window.localStorage.getItem('sessionUser')).toBeNull();
     expect(window.localStorage.getItem('isLoggedIn')).toBeNull();
     expect(window.localStorage.getItem('moodleToken')).toBeNull();
     expect(window.localStorage.getItem('universe_student_profile_v2')).toBeNull();

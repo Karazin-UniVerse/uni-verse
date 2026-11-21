@@ -95,12 +95,14 @@ describe('loadDashboardData', () => {
   it('clears the session storage and rethrows when the session is unauthorized', async () => {
     mockMoodleResponses();
     vi.spyOn(moodleApi, 'getCourses').mockRejectedValue(new Error('HTTP error 401: Unauthorized'));
-    storage.accessToken = 'token';
+    storage.isLoggedIn = 'true';
+    storage.sessionUser = '{"id":"u1"}';
     storage.universe_dashboard_data = '{}';
 
     await expect(loadDashboardData(filters)).rejects.toThrow('401');
 
-    expect(storage.accessToken).toBeUndefined();
+    expect(storage.isLoggedIn).toBeUndefined();
+    expect(storage.sessionUser).toBeUndefined();
     expect(storage.universe_dashboard_data).toBeUndefined();
   });
 
@@ -117,12 +119,14 @@ describe('loadDashboardData', () => {
   it('keeps the stored snapshot when the request fails for another reason', async () => {
     mockMoodleResponses();
     vi.spyOn(moodleApi, 'getCourses').mockRejectedValue(new Error('HTTP error 500'));
-    storage.accessToken = 'token';
+    storage.isLoggedIn = 'true';
+    storage.sessionUser = '{"id":"u1"}';
     storage.universe_dashboard_data = '{"courses":[]}';
 
     await expect(loadDashboardData(filters)).rejects.toThrow('500');
 
-    expect(storage.accessToken).toBe('token');
+    expect(storage.isLoggedIn).toBe('true');
+    expect(storage.sessionUser).toBe('{"id":"u1"}');
     expect(storage.universe_dashboard_data).toBe('{"courses":[]}');
   });
 
@@ -178,13 +182,15 @@ describe('loadPlatformNotifications', () => {
   });
 
   it('clears session storage and throws on 401 error', async () => {
-    storage.accessToken = 'token';
+    storage.isLoggedIn = 'true';
+    storage.sessionUser = '{"id":"u1"}';
     vi.spyOn(notificationsApi, 'getMyNotifications').mockRejectedValue(
       new Error('HTTP error 401: Unauthorized'),
     );
 
     await expect(loadPlatformNotifications()).rejects.toThrow('401');
-    expect(storage.accessToken).toBeUndefined();
+    expect(storage.isLoggedIn).toBeUndefined();
+    expect(storage.sessionUser).toBeUndefined();
   });
 });
 
@@ -247,7 +253,14 @@ describe('profileQueryOptions', () => {
   });
 
   it('does not overlay or sync stale profile response if session changed while request was in-flight', async () => {
-    storage.accessToken = 'token-A';
+    storage.isLoggedIn = 'true';
+    storage.sessionUser = JSON.stringify({
+      id: 'user-A',
+      email: 'a@student.karazin.ua',
+      name: 'Account A',
+      roles: [],
+      isLinked: true,
+    });
     storage.username = 'Account A';
     storage.userEmail = 'a@student.karazin.ua';
 
@@ -262,7 +275,13 @@ describe('profileQueryOptions', () => {
     const queryPromise = queryClient.fetchQuery(profileQueryOptions);
 
     // Switch session to Account B before response arrives
-    storage.accessToken = 'token-B';
+    storage.sessionUser = JSON.stringify({
+      id: 'user-B',
+      email: 'b@student.karazin.ua',
+      name: 'Account B',
+      roles: [],
+      isLinked: true,
+    });
     storage.username = 'Account B';
     storage.userEmail = 'b@student.karazin.ua';
     delete storage[STUDENT_PROFILE_STORAGE_KEY];
@@ -291,7 +310,14 @@ describe('profileQueryOptions', () => {
   });
 
   it('does not sync profile to cache when query signal is aborted', async () => {
-    storage.accessToken = 'token-A';
+    storage.isLoggedIn = 'true';
+    storage.sessionUser = JSON.stringify({
+      id: 'user-A',
+      email: 'a@student.karazin.ua',
+      name: 'Account A',
+      roles: [],
+      isLinked: true,
+    });
     storage.username = 'Account A';
     storage.userEmail = 'a@student.karazin.ua';
 
@@ -322,27 +348,22 @@ describe('profileQueryOptions', () => {
     queryClient.clear();
   });
 
-  it('applies corporate overlay and syncs cache when access token rotates for the same user', async () => {
-    const createMockJwt = (payload: Record<string, unknown>): string => {
-      const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString(
-        'base64url',
-      );
-      const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
-
-      return `${header}.${body}.mockSignature`;
+  it('applies corporate overlay and syncs cache when session remains for the same user', async () => {
+    const sessionUser = {
+      id: 'user-123',
+      email: 'melnyk.bogdan@student.karazin.ua',
+      name: 'Богдан Мельник',
+      roles: ['MOODLE_STUDENT'],
+      isLinked: true,
     };
 
-    const token1 = createMockJwt({ sub: 'user-123', email: 'melnyk.bogdan@student.karazin.ua' });
-    const token2 = createMockJwt({ sub: 'user-123', email: 'melnyk.bogdan@student.karazin.ua' });
-
-    storage.accessToken = token1;
+    storage.isLoggedIn = 'true';
+    storage.sessionUser = JSON.stringify(sessionUser);
     storage.username = 'Богдан Мельник';
     storage.userEmail = 'melnyk.bogdan@student.karazin.ua';
     storage.authProvider = 'google';
 
     vi.spyOn(moodleApi, 'getProfile').mockImplementation(async () => {
-      storage.accessToken = token2;
-
       return {
         data: {
           ...fallbackStudentProfile,

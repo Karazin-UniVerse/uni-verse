@@ -22,6 +22,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
@@ -58,6 +59,14 @@ describe('AuthService', () => {
     refreshToken: 'hashed-rt-token',
     createdAt: new Date(),
     updatedAt: new Date(),
+  };
+
+  const sampleSessionUser = {
+    id: 'user-uuid-1',
+    email: 'student@student.karazin.ua',
+    name: 'Test Student',
+    roles: [Role.OPPORTUNITIES_USER],
+    isLinked: true,
   };
 
   beforeEach(() => {
@@ -101,6 +110,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         access_token: 'new-access-token',
         refresh_token: 'new-refresh-token',
+        user: sampleSessionUser,
       });
       expect(mockUserService.findByEmail).toHaveBeenCalledWith(
         registerDto.email,
@@ -195,6 +205,7 @@ describe('AuthService', () => {
       expect(tokens).toEqual({
         access_token: 'at-123',
         refresh_token: 'rt-123',
+        user: sampleSessionUser,
       });
       expect(mockUserService.updateUser).toHaveBeenCalledWith(sampleUser.id, {
         token: 'fresh-moodle-token',
@@ -250,6 +261,7 @@ describe('AuthService', () => {
       expect(tokens).toEqual({
         access_token: 'at-123',
         refresh_token: 'rt-123',
+        user: sampleSessionUser,
       });
     });
 
@@ -276,6 +288,7 @@ describe('AuthService', () => {
       expect(tokens).toEqual({
         access_token: 'at-123',
         refresh_token: 'rt-123',
+        user: sampleSessionUser,
       });
     });
   });
@@ -307,6 +320,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         access_token: 'fresh-at',
         refresh_token: 'fresh-rt',
+        user: sampleSessionUser,
       });
       expect(mockUserService.updateUser).toHaveBeenCalledWith(
         'user-uuid-1',
@@ -331,6 +345,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         access_token: 'fresh-at',
         refresh_token: 'fresh-rt',
+        user: sampleSessionUser,
       });
     });
 
@@ -352,6 +367,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         access_token: 'fresh-at',
         refresh_token: 'fresh-rt',
+        user: { ...sampleSessionUser, isLinked: false },
       });
     });
 
@@ -448,6 +464,7 @@ describe('AuthService', () => {
         access_token: 'google-at',
         refresh_token: 'google-rt',
         isLinked: true,
+        user: sampleSessionUser,
       });
       expect(mockUserService.findByEmail).toHaveBeenCalledWith(
         'student@student.karazin.ua',
@@ -484,6 +501,13 @@ describe('AuthService', () => {
         access_token: 'google-at',
         refresh_token: 'google-rt',
         isLinked: false,
+        user: {
+          id: 'unlinked-user-1',
+          email: 'unlinked@student.karazin.ua',
+          name: 'Test Student',
+          roles: [Role.OPPORTUNITIES_USER],
+          isLinked: false,
+        },
       });
     });
 
@@ -519,6 +543,13 @@ describe('AuthService', () => {
         access_token: 'new-google-at',
         refresh_token: 'new-google-rt',
         isLinked: false,
+        user: {
+          id: 'new-google-user',
+          email: 'newuser@student.karazin.ua',
+          name: 'Test Student',
+          roles: [Role.OPPORTUNITIES_USER],
+          isLinked: false,
+        },
       });
       expect(mockUserService.createUser).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -697,6 +728,11 @@ describe('AuthService', () => {
         access_token: 'lecturer-at',
         refresh_token: 'lecturer-rt',
         isLinked: true,
+        user: {
+          ...sampleSessionUser,
+          id: 'lecturer-id',
+          email: 'lecturer@karazin.ua',
+        },
       });
     });
   });
@@ -766,6 +802,7 @@ describe('AuthService', () => {
         access_token: 'updated-at',
         refresh_token: 'updated-rt',
         isLinked: true,
+        user: sampleSessionUser,
       });
       expect(mockUserService.updateUser).toHaveBeenCalledWith(sampleUser.id, {
         token: 'linked-moodle-token',
@@ -800,6 +837,7 @@ describe('AuthService', () => {
         access_token: 'relinked-at',
         refresh_token: 'relinked-rt',
         isLinked: true,
+        user: sampleSessionUser,
       });
     });
   });
@@ -833,6 +871,7 @@ describe('AuthService', () => {
         access_token: 'unlinked-at',
         refresh_token: 'unlinked-rt',
         isLinked: false,
+        user: { ...sampleSessionUser, isLinked: false },
       });
       expect(mockUserService.updateUser).toHaveBeenCalledWith(sampleUser.id, {
         token: null,
@@ -948,6 +987,24 @@ describe('AuthService', () => {
           email: 'test@karazin.ua',
         },
         expect.any(Object),
+      );
+    });
+  });
+
+  describe('getSessionUser', () => {
+    it('should return safe session metadata for an existing user', async () => {
+      mockUserService.findById.mockResolvedValue(sampleUser);
+
+      const sessionUser = await authService.getSessionUser(sampleUser.id);
+
+      expect(sessionUser).toEqual(sampleSessionUser);
+    });
+
+    it('should throw UnauthorizedException when user is not found', async () => {
+      mockUserService.findById.mockResolvedValue(null);
+
+      await expect(authService.getSessionUser('missing-id')).rejects.toThrow(
+        UnauthorizedException,
       );
     });
   });
