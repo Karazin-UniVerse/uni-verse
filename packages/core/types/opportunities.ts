@@ -5,24 +5,12 @@ import type {
   OpportunityPaymentType,
   OpportunityStatus,
 } from '../constants/opportunities.ts';
-import type { OpportunityAvailability } from '../constants/opportunity-availability.ts';
 import type { OpportunityTag } from '../constants/tags.ts';
 
 export interface OpportunityOwner {
   id: string;
   email: string;
   name?: string | null;
-}
-
-export interface UnavailableOpportunity
-  extends Pick<Opportunity, 'id' | 'title'>, Partial<Pick<Opportunity, 'paymentType'>> {
-  availability: OpportunityAvailability;
-}
-
-export type OpportunityListItem = Opportunity | UnavailableOpportunity;
-
-export interface OpportunityFavoriteState {
-  saved: boolean;
 }
 
 export interface Opportunity {
@@ -60,7 +48,7 @@ export interface OpportunityApplication {
   answers?: string | null;
   ownerComment?: string | null;
   withdrawalCount?: number;
-  opportunity?: Opportunity | UnavailableOpportunity;
+  opportunity?: Opportunity;
   applicant?: Pick<OpportunityOwner, 'name' | 'email'>;
 }
 
