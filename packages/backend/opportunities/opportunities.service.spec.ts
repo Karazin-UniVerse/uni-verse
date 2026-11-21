@@ -978,6 +978,50 @@ describe('OpportunitiesService', () => {
       );
       expect(notificationsService.createNotification).not.toHaveBeenCalled();
     });
+
+    it('still returns moderated opportunity and logs when notification delivery fails', async () => {
+      const errorSpy = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation();
+
+      try {
+        jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+          id: 'moderator-1',
+          roles: [Role.OPPORTUNITIES_MODERATOR],
+        } as any);
+        jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+          ...publishedOpportunity,
+          id: 'opp1',
+          ownerId: 'owner1',
+          status: OpportunityStatus.READY_FOR_REVIEW,
+        } as any);
+        const moderatedOpportunity = {
+          ...publishedOpportunity,
+          id: 'opp1',
+          ownerId: 'owner1',
+          status: OpportunityStatus.PUBLISHED,
+        };
+
+        jest
+          .spyOn(prisma.opportunity, 'update')
+          .mockResolvedValue(moderatedOpportunity as any);
+        jest
+          .spyOn(notificationsService, 'createNotification')
+          .mockRejectedValue(new Error('Notification transport down'));
+
+        const result = await service.moderate('moderator-1', 'opp1', {
+          action: OPPORTUNITY_MODERATE_ACTION.APPROVE,
+        });
+
+        expect(result).toEqual(moderatedOpportunity);
+        expect(errorSpy).toHaveBeenCalledWith(
+          'Failed to deliver moderation notification for opportunity opp1',
+          expect.any(String),
+        );
+      } finally {
+        errorSpy.mockRestore();
+      }
+    });
   });
 
   describe('create', () => {
@@ -2188,6 +2232,39 @@ describe('OpportunitiesService', () => {
       const res = await service.getMyApplications('user-1');
 
       expect(res).toHaveLength(1);
+    });
+
+    it('omits unpublished opportunity details from applicants unless owner or moderator', async () => {
+      const unpublishedOpportunity = {
+        ...publishedOpportunity,
+        id: 'opp-unpublished',
+        ownerId: 'other-owner',
+        status: OpportunityStatus.READY_FOR_REVIEW,
+      };
+      const ownUnpublishedOpportunity = {
+        ...publishedOpportunity,
+        id: 'opp-own',
+        ownerId: 'applicant-1',
+        status: OpportunityStatus.READY_FOR_REVIEW,
+      };
+
+      jest.spyOn(prisma.opportunityApplication, 'findMany').mockResolvedValue([
+        { id: 'app-pub', opportunity: publishedOpportunity },
+        { id: 'app-unpub', opportunity: unpublishedOpportunity },
+        { id: 'app-own', opportunity: ownUnpublishedOpportunity },
+      ] as any);
+
+      const studentResults = await service.getMyApplications('applicant-1');
+
+      expect(studentResults[0].opportunity).toEqual(publishedOpportunity);
+      expect(studentResults[1].opportunity).toBeUndefined();
+      expect(studentResults[2].opportunity).toEqual(ownUnpublishedOpportunity);
+
+      const moderatorResults = await service.getMyApplications('applicant-1', [
+        Role.OPPORTUNITIES_MODERATOR,
+      ]);
+
+      expect(moderatorResults[1].opportunity).toEqual(unpublishedOpportunity);
     });
 
     it('returns opportunities owned by user', async () => {

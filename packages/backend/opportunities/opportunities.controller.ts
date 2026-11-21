@@ -142,10 +142,11 @@ export class OpportunitiesController {
   @ApiOperation({ summary: 'Get current user applications' })
   getMyApplications(
     @GetUser('sub') userId: string,
+    @GetUser('roles') roles: string[] = [],
   ): Promise<ApplicationWithOpportunity[]> {
     if (!userId) throw new ForbiddenException('User not authenticated');
 
-    return this.opportunitiesService.getMyApplications(userId);
+    return this.opportunitiesService.getMyApplications(userId, roles);
   }
 
   @Public()
