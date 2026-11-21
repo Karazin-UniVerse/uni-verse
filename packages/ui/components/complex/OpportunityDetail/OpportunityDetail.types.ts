@@ -49,4 +49,10 @@ export type OpportunityDetailProps = {
   applyText?: string;
   onOpenApply?: () => void;
   className?: string;
+
+  // Subscription
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
+  favoriteText?: string;
+  isFavoritePending?: boolean;
 };

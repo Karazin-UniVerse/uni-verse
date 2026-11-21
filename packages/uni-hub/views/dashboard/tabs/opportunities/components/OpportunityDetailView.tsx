@@ -17,6 +17,9 @@ export interface OpportunityDetailViewProps {
   onOpenApply: () => void;
   onOpenApplicants?: () => void;
   onEdit?: (opportunity: Opportunity) => void;
+  onToggleFavorite?: () => void;
+  isFavorite?: boolean;
+  isFavoritePending?: boolean;
   onDelete?: () => void;
 }
 
@@ -80,6 +83,9 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   onOpenApply,
   onOpenApplicants,
   onEdit,
+  onToggleFavorite,
+  isFavorite,
+  isFavoritePending,
   onDelete,
 }) => {
   const { formatMessage, language } = useLanguage();
@@ -148,6 +154,10 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       canApply={canApply}
       applyText={formatMessage('opportunities.detailModal.apply')}
       onOpenApply={onOpenApply}
+      isFavorite={isFavorite}
+      onToggleFavorite={onToggleFavorite}
+      isFavoritePending={isFavoritePending}
+      favoriteText={formatMessage('opportunities.favorites.toggle')}
     />
   );
 };

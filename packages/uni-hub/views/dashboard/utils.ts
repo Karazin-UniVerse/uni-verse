@@ -1,6 +1,11 @@
 import { CONTROL_TYPES, TRADITIONAL_GRADES } from '@core/constants/grades';
 import { OPPORTUNITY_NOTIFICATION_KEY } from '@core/constants/notifications';
-import { OPPORTUNITY_APP_STATUS, OPPORTUNITY_MODERATE_ACTION } from '@core/constants/opportunities';
+import {
+  OPPORTUNITY_APP_STATUS,
+  OPPORTUNITY_LIFECYCLE,
+  OPPORTUNITY_MODERATE_ACTION,
+  type OpportunityLifecycle,
+} from '@core/constants/opportunities';
 import type { ControlType } from '@core/utils/grades';
 import type { NotificationListItem } from '@ui';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
@@ -104,6 +109,14 @@ const PLATFORM_TITLE_KEYS: Record<string, TranslationKey> = {
   [OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE]: OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE,
 };
 
+const PLATFORM_LIFECYCLE_KEYS: Record<OpportunityLifecycle, TranslationKey> = {
+  [OPPORTUNITY_LIFECYCLE.START]: 'notifications.opportunityLifecycle.START',
+  [OPPORTUNITY_LIFECYCLE.ACTIVE]: 'notifications.opportunityLifecycle.ACTIVE',
+  [OPPORTUNITY_LIFECYCLE.PAUSED]: 'notifications.opportunityLifecycle.PAUSED',
+  [OPPORTUNITY_LIFECYCLE.COMPLETED]: 'notifications.opportunityLifecycle.COMPLETED',
+  [OPPORTUNITY_LIFECYCLE.CANCELLED]: 'notifications.opportunityLifecycle.CANCELLED',
+};
+
 type MessageFormatter = (key: TranslationKey, values?: Record<string, string | number>) => string;
 
 type PlatformNotificationPayload = {
@@ -112,6 +125,7 @@ type PlatformNotificationPayload = {
   status?: string;
   action?: string;
   comment?: string | null;
+  lifecycleState?: string;
 };
 
 function parsePlatformPayload(rawMessage: string): PlatformNotificationPayload | null {
@@ -154,7 +168,14 @@ function formatPlatformMessage(
   const opportunityTitle = parsed.opportunityTitle ?? '';
 
   if (subject === OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE) {
-    return formatMessage(OPPORTUNITY_NOTIFICATION_KEY.UPDATED_MESSAGE, { opportunityTitle });
+    const lifecycle = Object.values(OPPORTUNITY_LIFECYCLE).find(
+      (state) => state === parsed.lifecycleState,
+    );
+    const messageKey = lifecycle
+      ? PLATFORM_LIFECYCLE_KEYS[lifecycle]
+      : OPPORTUNITY_NOTIFICATION_KEY.UPDATED_MESSAGE;
+
+    return formatMessage(messageKey, { opportunityTitle });
   }
 
   if (subject === OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE) {
