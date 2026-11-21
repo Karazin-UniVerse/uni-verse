@@ -21,3 +21,5 @@ ux_ui_audit.md
 graphify-out/
 .venv/
 gha-creds-*.json
+docs/
+superpowers/
