@@ -475,6 +475,40 @@ describe('TimetableService', () => {
       expect(mockTimetableEventPrisma.update).not.toHaveBeenCalled();
     });
 
+    it('rejects moving the earlier of two weekly lectures past an intermediate practice', async () => {
+      mockTimetableVersionPrisma.findUnique.mockResolvedValue({
+        ...draft,
+        events: [
+          event,
+          {
+            ...event,
+            id: 'practice-tue',
+            teachingAssignmentId: 'practice-assignment',
+            teachingTypeSnapshot: TeachingType.PRACTICAL,
+            date: new Date('2026-09-08'),
+            pair: 1,
+          },
+          {
+            ...event,
+            id: 'lecture-wed',
+            date: new Date('2026-09-09'),
+            pair: 1,
+          },
+        ],
+      });
+
+      await expect(
+        service.adjustDraftSlot(draft.id, {
+          ...slot,
+          fromWeekday: 1,
+          fromPair: 1,
+          toWeekday: 4,
+          toPair: 1,
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(mockTimetableEventPrisma.update).not.toHaveBeenCalled();
+    });
+
     it('rejects publication after an assignment has been archived', async () => {
       mockTimetableVersionPrisma.findUnique.mockResolvedValue({
         ...draft,

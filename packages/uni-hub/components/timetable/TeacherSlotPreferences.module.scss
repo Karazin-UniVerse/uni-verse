@@ -315,6 +315,10 @@
 }
 
 .alert {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-8);
   margin-bottom: var(--space-12);
   color: var(--error-color);
   font-size: var(--font-sm);

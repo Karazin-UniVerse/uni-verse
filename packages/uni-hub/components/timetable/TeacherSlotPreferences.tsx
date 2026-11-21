@@ -141,11 +141,12 @@ export function TeacherSlotPreferences(): React.JSX.Element {
       </div>
 
       {hasError && (
-        <p role="alert" className={styles.alert}>
-          {formatMessage('preferences.error')}
+        <div role="alert" className={styles.alert}>
+          <span>{formatMessage('preferences.error')}</span>
           {(semestersQuery.isError || preferencesQuery.isError) && (
             <Button
               type="button"
+              disabled={semestersQuery.isFetching || preferencesQuery.isFetching}
               onClick={() =>
                 void (semestersQuery.isError ? semestersQuery : preferencesQuery).refetch()
               }
@@ -153,7 +154,7 @@ export function TeacherSlotPreferences(): React.JSX.Element {
               {formatMessage('common.error.retry')}
             </Button>
           )}
-        </p>
+        </div>
       )}
 
       <div className={styles.legendRow}>

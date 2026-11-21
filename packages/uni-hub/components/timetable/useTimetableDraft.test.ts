@@ -240,4 +240,72 @@ describe('useTimetableDraft adjustment context', () => {
     });
     expect(result.current.isAdjusting).toBe(false);
   });
+
+  it('flags a conflict when moving the earlier of two weekly lectures past a practice', async () => {
+    const practiceTue: ScheduledEvent = {
+      ...originalEvent,
+      id: 'practice-tue',
+      teachingAssignmentId: 'assignment-practice',
+      teachingType: 'PRACTICAL',
+      date: '2026-09-08',
+      pair: 1,
+    };
+    const lectureWed: ScheduledEvent = {
+      ...originalEvent,
+      id: 'lecture-wed',
+      date: '2026-09-09',
+      pair: 1,
+    };
+
+    generateTimetableDraft.mockResolvedValueOnce({
+      data: {
+        ...originalDraft,
+        candidates: [
+          {
+            versionId: 'version-original',
+            events: [originalEvent, practiceTue, lectureWed],
+            penaltyScore: 0,
+          },
+        ],
+      },
+    });
+
+    const { result } = renderDraft();
+
+    await act(async () => {
+      await result.current.generate();
+    });
+    act(() => {
+      result.current.startAdjust(originalEvent, 1);
+      result.current.changeTargetWeekday('4');
+    });
+
+    expect(result.current.adjustmentConflict).toBe(true);
+  });
+
+  it('flags a conflict when an adjusted occurrence lands on an excluded calendar date', async () => {
+    const { result } = renderHook(
+      () =>
+        useTimetableDraft({
+          planId: 'plan-1',
+          canGenerate: true,
+          semesterStartDate: '2026-09-07',
+          excludedDates: ['2026-09-08'],
+          compactSaturdays: false,
+          saveWorkload: async (): Promise<void> => {},
+          onError: vi.fn(),
+        }),
+      { wrapper: createLanguageWrapper() },
+    );
+
+    await act(async () => {
+      await result.current.generate();
+    });
+    act(() => {
+      result.current.startAdjust(originalEvent, 1);
+      result.current.changeTargetWeekday('2');
+    });
+
+    expect(result.current.adjustmentConflict).toBe(true);
+  });
 });

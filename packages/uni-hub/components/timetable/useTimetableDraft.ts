@@ -27,6 +27,7 @@ type UseTimetableDraftParams = {
   compactSaturdays: boolean;
   saveWorkload: () => Promise<void>;
   onError: (message: string | null) => void;
+  excludedDates?: string[];
 };
 
 /** Solver failures the dean can act on get their own explanation; the rest keep the server text. */
@@ -58,6 +59,7 @@ export function useTimetableDraft({
   compactSaturdays,
   saveWorkload,
   onError,
+  excludedDates,
 }: UseTimetableDraftParams) {
   const { formatMessage, localeTag } = useLanguage();
   const [draftResult, setDraftResult] = useState<GenerateTimetableDraftResult | null>(null);
@@ -135,7 +137,7 @@ export function useTimetableDraft({
       return false;
     }
 
-    const affectedIds = new Set<string>();
+    const excluded = new Set(excludedDates);
     const projected = selectedCandidate.events.map((event) => {
       if (
         event.teachingAssignmentId !== adjustingEvent.teachingAssignmentId ||
@@ -145,7 +147,6 @@ export function useTimetableDraft({
         return event;
       }
 
-      affectedIds.add(event.id);
       const date = new Date(
         moveWithinTeachingWeek(
           Date.parse(semesterStartDate),
@@ -157,10 +158,28 @@ export function useTimetableDraft({
       return { ...event, date: date.toISOString().slice(0, 10), pair: Number(targetPair) };
     });
 
+    if (
+      projected.some(
+        (event, index) => event !== selectedCandidate.events[index] && excluded.has(event.date),
+      )
+    ) {
+      return true;
+    }
+
     const report = checkTimetableConflicts({ events: projected });
 
-    return !report.isValid || getPrecedenceConflicts(report, affectedIds).length > 0;
-  }, [adjustingEvent, selectedCandidate, semesterStartDate, targetWeekday, targetPair]);
+    return (
+      !report.isValid ||
+      getPrecedenceConflicts(report, new Set(projected.map((event) => event.id))).length > 0
+    );
+  }, [
+    adjustingEvent,
+    excludedDates,
+    selectedCandidate,
+    semesterStartDate,
+    targetWeekday,
+    targetPair,
+  ]);
 
   const startAdjust = useCallback((event: PreviewEvent, weekday: number): void => {
     setAdjustingEvent(event);

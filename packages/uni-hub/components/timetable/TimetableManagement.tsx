@@ -53,6 +53,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
     planId,
     canGenerate: calendarReady,
     semesterStartDate: calendarQuery.data?.startDate,
+    excludedDates: calendarQuery.data?.excludedDates,
     compactSaturdays: isShortSemester && compactSaturdays,
     saveWorkload: editor.persist,
     onError: setError,

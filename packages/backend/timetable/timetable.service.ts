@@ -1316,10 +1316,11 @@ export class TimetableService {
         const unavailability = await tx.teacherUnavailability.findMany({
           where: { isConfirmed: true },
         });
+        const activeProjected = projected.filter((event) => !event.isCancelled);
         const report = checkTimetableConflicts({
-          events: projected
-            .filter((event) => !event.isCancelled)
-            .map((event) => toScheduledEvent(event, makeupDates)),
+          events: activeProjected.map((event) =>
+            toScheduledEvent(event, makeupDates),
+          ),
           unavailability: unavailability.map((entry) => ({
             ...entry,
             date: toIsoDateString(entry.date),
@@ -1328,7 +1329,7 @@ export class TimetableService {
 
         const precedence = getPrecedenceConflicts(
           report,
-          new Set(changes.keys()),
+          new Set(activeProjected.map((event) => event.id)),
         );
 
         if (!report.isValid || precedence.length > 0) {
