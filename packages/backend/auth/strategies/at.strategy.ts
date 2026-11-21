@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import type { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { PrismaService } from '../../prisma/prisma.service';
+import { JWT_ALGORITHM } from '../../constants/auth';
 
 export type JwtPayload = {
   sub: string;
@@ -11,7 +13,7 @@ export type JwtPayload = {
 
 @Injectable()
 export class AtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor() {
+  constructor(private readonly prisma: PrismaService) {
     const secret = process.env.AT_SECRET;
 
     if (!secret || secret === 'your-access-token-secret-key') {
@@ -25,14 +27,25 @@ export class AtStrategy extends PassportStrategy(Strategy, 'jwt') {
         ExtractJwt.fromAuthHeaderAsBearerToken(),
       ]),
       secretOrKey: secret,
+      algorithms: [JWT_ALGORITHM],
     });
   }
 
-  validate(payload: JwtPayload): JwtPayload {
+  // Roles come from the database so a revoked role or deleted user stops working before the token expires.
+  async validate(payload: JwtPayload): Promise<JwtPayload> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { roles: true },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
     return {
       sub: payload.sub,
       email: payload.email,
-      roles: payload.roles,
+      roles: user.roles,
     };
   }
 }

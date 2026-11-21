@@ -30,6 +30,7 @@ import {
   RegisterDto,
   SessionUserDto,
 } from './dto';
+import { CredentialsThrottlerGuard } from './guards/credentials-throttler.guard';
 import { RtGuard } from './guards/rt.guard';
 
 const ACCESS_TOKEN_MAX_AGE_MS = 15 * 60 * 1000;
@@ -41,6 +42,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  @UseGuards(CredentialsThrottlerGuard)
   @Post(AUTH_ROUTES.REGISTER)
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({
@@ -61,6 +63,7 @@ export class AuthController {
   }
 
   @Public()
+  @UseGuards(CredentialsThrottlerGuard)
   @Post(AUTH_ROUTES.LOGIN)
   @ApiOperation({ summary: 'Login user' })
   @ApiResponse({
@@ -105,6 +108,7 @@ export class AuthController {
 
   @ApiBearerAuth()
   @ApiCookieAuth('accessToken')
+  @UseGuards(CredentialsThrottlerGuard)
   @Post(AUTH_ROUTES.MOODLE_LINK)
   @ApiOperation({ summary: 'Link Moodle account to authenticated user' })
   @ApiResponse({
