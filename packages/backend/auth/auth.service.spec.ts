@@ -915,5 +915,37 @@ describe('AuthService', () => {
         authService.getTokens({ userId: 'u1', email: 'test@example.com' }),
       ).rejects.toThrow('JWT secrets are not configured securely');
     });
+
+    it('should omit moodleToken and moodleId from signed JWT payloads', async () => {
+      process.env.AT_SECRET = 'valid-production-at-secret';
+      process.env.RT_SECRET = 'valid-production-rt-secret';
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('at-token')
+        .mockResolvedValueOnce('rt-token');
+
+      await authService.getTokens({
+        userId: 'u1',
+        email: 'test@karazin.ua',
+        roles: [Role.MOODLE_STUDENT],
+      });
+
+      expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
+        1,
+        {
+          sub: 'u1',
+          email: 'test@karazin.ua',
+          roles: [Role.MOODLE_STUDENT],
+        },
+        expect.any(Object),
+      );
+      expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
+        2,
+        {
+          sub: 'u1',
+          email: 'test@karazin.ua',
+        },
+        expect.any(Object),
+      );
+    });
   });
 });

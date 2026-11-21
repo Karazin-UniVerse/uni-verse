@@ -36,19 +36,30 @@ describe('AtStrategy', () => {
     expect(strategy).toBeDefined();
   });
 
-  it('validate() should return payload unchanged', () => {
+  it('validate() should return identity fields and strip any Moodle token claims', () => {
     process.env.AT_SECRET = 'a-secure-production-ready-secret-key-12345';
 
     const strategy = new AtStrategy();
-    const payload: JwtPayload = {
+    const payload = {
       sub: 'user-123',
       email: 'student@karazin.ua',
-      moodleToken: 'token-abc',
+      roles: ['MOODLE_STUDENT'],
+      moodleToken: 'legacy-token-abc',
       moodleId: 'moodle-999',
-    };
+    } as JwtPayload;
 
     const result = strategy.validate(payload);
 
-    expect(result).toEqual(payload);
+    expect(result).toEqual({
+      sub: 'user-123',
+      email: 'student@karazin.ua',
+      roles: ['MOODLE_STUDENT'],
+    });
+    expect(
+      (result as unknown as Record<string, unknown>).moodleToken,
+    ).toBeUndefined();
+    expect(
+      (result as unknown as Record<string, unknown>).moodleId,
+    ).toBeUndefined();
   });
 });

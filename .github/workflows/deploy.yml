@@ -191,7 +191,7 @@ jobs:
 
           curl --fail --silent --show-error --location \
             --connect-timeout 10 --max-time 60 --retry 3 \
-            --output /dev/null "${NEXT_PUBLIC_API_URL}/api"
+            --output /dev/null "${NEXT_PUBLIC_API_URL}/"
 
           gcloud run services update "$GCP_FRONTEND_SERVICE" \
             --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \

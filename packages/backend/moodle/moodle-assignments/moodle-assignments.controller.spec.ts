@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
+import { PrismaService } from '../../prisma/prisma.service';
 import { MoodleAssignmentsController } from './moodle-assignments.controller';
 import { MoodleAssignmentsService } from './moodle-assignments.service';
 import {
@@ -22,7 +23,13 @@ describe('MoodleAssignmentsController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MoodleAssignmentsController],
-      providers: [{ provide: MoodleAssignmentsService, useValue: mockService }],
+      providers: [
+        {
+          provide: PrismaService,
+          useValue: { user: { findUnique: jest.fn() } },
+        },
+        { provide: MoodleAssignmentsService, useValue: mockService },
+      ],
     }).compile();
 
     controller = module.get<MoodleAssignmentsController>(

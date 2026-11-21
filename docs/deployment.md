@@ -25,11 +25,12 @@ Deployment is disabled until the repository variable `GCP_DEPLOY_ENABLED` is
 
 ### Existing data and startup behavior
 
-The backend Dockerfile runs `pnpm db:push` on every container start. CI does not
-change this behavior, pass database credentials to the build, or set
-`PRISMA_ACCEPT_DATA_LOSS`. Ensure that variable is absent or `false` in the
-existing service. Take a database backup and review Prisma schema changes before
-merging them. Deployments are **not** database backups or a migration system.
+The backend Dockerfile runs `node dist/main` without automatic `prisma db push`
+on container start. CI does not apply schema changes automatically or pass
+database credentials to the build. Take a database backup, review Prisma schema
+changes, and apply schema updates in a controlled pre-deploy step before
+deploying code that relies on them. Deployments are **not** database backups or a
+migration system.
 
 Backend and frontend updates are sequential, not an atomic pair, so changes must
 remain compatible across revisions. New revisions are created with no traffic;
@@ -207,8 +208,8 @@ Wait several minutes for IAM propagation. No service account JSON key,
    always skips deployment, even for a branch in this repository.
 4. Confirm both services and image digests in the deployment job summary.
 5. Test login and a real database-backed flow separately. The workflow's HTTP
-   probes check only frontend/Swagger availability, not database correctness,
-   Google login, or CORS behavior.
+   probes check only frontend and backend root endpoint availability, not
+   database correctness, Google login, or CORS behavior.
 
 Images use the checked-out commit SHA as their tag; Cloud Run receives immutable
 image digests. Deployment concurrency prevents overlapping deployments. Immediately
@@ -254,8 +255,8 @@ apply; Google login does not allow personal Gmail accounts.
   service account of each service, not just the deploy account.
 - **`403` on the availability probe:** an administrator must configure public
   invocation separately. CI deliberately lacks `run.services.setIamPolicy`.
-- **New revision fails at startup:** read Cloud Run logs, including Prisma
-  output. Do not enable `PRISMA_ACCEPT_DATA_LOSS` to force a deployment through.
+- **New revision fails at startup:** read Cloud Run logs for startup or
+  database connection errors. Keep `db push` out of container startup commands.
 - **Old revision still serves traffic:** CI explicitly routes traffic to the
   named revision created by the job after each successful update. A later manual rollback is
   overwritten by the next enabled deployment.

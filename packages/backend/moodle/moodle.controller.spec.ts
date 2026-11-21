@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { PrismaService } from '../prisma/prisma.service';
 import { MoodleController } from './moodle.controller';
 import { MoodleCoursesService } from './moodle-courses/moodle-courses.service';
 import { MoodleGradesService } from './moodle-grades/moodle-grades.service';
@@ -20,6 +21,10 @@ describe('MoodleController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MoodleController],
       providers: [
+        {
+          provide: PrismaService,
+          useValue: { user: { findUnique: jest.fn() } },
+        },
         {
           provide: MoodleCoursesService,
           useValue: mockCoursesService,
