@@ -93,6 +93,11 @@
   .slider {
     background: rgb(var(--primary-rgb), 0.36);
 
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--focus-ring-color);
+      outline-offset: var(--focus-ring-offset);
+    }
+
     &::-webkit-slider-thumb {
       background: var(--jinx-cyan-400);
       border: 2px solid var(--jinx-pink-400);
