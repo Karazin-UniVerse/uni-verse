@@ -1,29 +1,10 @@
 'use client';
 
 import React from 'react';
-import clsx from 'clsx';
-import {
-  Calendar,
-  Coins,
-  Briefcase,
-  MessageSquare,
-  AlertCircle,
-  Hash,
-  X,
-  CheckCircle2,
-  XCircle,
-} from 'lucide-react';
-import { Button } from '@una';
-import { MAX_APPLICATION_WITHDRAWALS } from '@core/constants/opportunities';
-import {
-  hasReachedApplicationWithdrawalLimit,
-  isWithdrawableApplicationStatus,
-} from '@core/utils/opportunities';
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { ApplicationStatusBadge } from './ApplicationStatusBadge';
+import { MyApplicationCard } from './MyApplicationCard';
 import { TabStateWrapper } from './TabStateWrapper';
-import { ContactTags } from '@ui';
 import styles from '../../OpportunitiesTab.module.scss';
 
 export interface MyApplicationsTabProps {
@@ -41,7 +22,7 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
   myApplications,
   onWithdraw,
 }) => {
-  const { formatMessage, localeTag } = useLanguage();
+  const { formatMessage } = useLanguage();
 
   return (
     <TabStateWrapper
@@ -52,170 +33,12 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
       emptyDescription={formatMessage('opportunities.myApplications.empty')}
     >
       <div className={styles.listStack}>
-        {myApplications.map((app) => (
-          <div
-            key={app.id}
-            className={clsx(
-              styles.applicationCard,
-              app.status === 'ACCEPTED' && styles.statusAccepted,
-              app.status === 'UNDER_REVIEW' && styles.statusReview,
-              app.status === 'REJECTED' && styles.statusRejected,
-              app.status === 'SUBMITTED' && styles.statusSubmitted,
-              app.status === 'WITHDRAWN' && styles.statusWithdrawn,
-            )}
-          >
-            <div className={styles.applicationHeader}>
-              <div className={styles.applicationMainCol}>
-                <div className={styles.applicationBadgeRow}>
-                  <ApplicationStatusBadge status={app.status} />
-                  <span className={styles.submissionDate}>
-                    <Calendar size={12} />
-                    {formatMessage('opportunities.myApplications.submittedOn', {
-                      date: new Date(app.createdAt).toLocaleDateString(localeTag, {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      }),
-                    })}
-                  </span>
-                </div>
-
-                <h3 className={styles.applicationTitle}>
-                  {app.opportunity?.title ||
-                    formatMessage('opportunities.myApplications.defaultTitle')}
-                </h3>
-
-                {app.opportunity?.owner && (
-                  <div className={styles.authorStrip}>
-                    <div className={styles.ownerAvatar}>
-                      {(app.opportunity.owner.name || app.opportunity.owner.email || 'O')
-                        .charAt(0)
-                        .toUpperCase()}
-                    </div>
-                    <div className={styles.ownerMeta}>
-                      <span className={styles.ownerName}>
-                        {app.opportunity.owner.name || app.opportunity.owner.email}
-                      </span>
-                      <div className={styles.ownerRow}>
-                        <ContactTags
-                          emailLabel={formatMessage('opportunities.emailLabel')}
-                          alternativeContactLabel={formatMessage(
-                            'opportunities.alternativeContact',
-                          )}
-                          email={app.opportunity.owner.email}
-                          alternativeContact={app.opportunity.ownerContactInfo}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {app.opportunity && (
-                <div className={styles.applicationTypeCol}>
-                  {app.opportunity.paymentType === 'PAID' ? (
-                    <span className={styles.compensationPill}>
-                      <Coins size={13} />
-                      <span>
-                        {app.opportunity.paymentDetails
-                          ? formatMessage('opportunities.myApplications.paidWithAmount', {
-                              amount: app.opportunity.paymentDetails,
-                            })
-                          : formatMessage('opportunities.myApplications.paid')}
-                      </span>
-                    </span>
-                  ) : (
-                    <span className={styles.unpaidPill}>
-                      <Briefcase size={13} />
-                      <span>{formatMessage('opportunities.myApplications.unpaid')}</span>
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {app.motivation && (
-              <div className={styles.motivationBox}>
-                <div className={styles.motivationLabel}>
-                  <MessageSquare size={13} />
-                  {formatMessage('opportunities.myApplications.motivationLabel')}
-                </div>
-                <p className={styles.motivationText}>{app.motivation}</p>
-              </div>
-            )}
-
-            {(app.applicant?.email || app.contactInfo.trim()) && (
-              <div className={styles.authorStrip}>
-                <ContactTags
-                  email={app.applicant?.email}
-                  alternativeContact={app.contactInfo}
-                  emailLabel={formatMessage('opportunities.emailLabel')}
-                  alternativeContactLabel={formatMessage('opportunities.alternativeContact')}
-                />
-              </div>
-            )}
-
-            {app.ownerComment && (
-              <div className={styles.ownerFeedbackBox}>
-                <AlertCircle size={15} className={styles.feedbackIcon} />
-                <div>
-                  <span className={styles.feedbackLabel}>
-                    {formatMessage('opportunities.myApplications.ownerFeedbackLabel')}{' '}
-                  </span>
-                  <span className={styles.feedbackText}>{app.ownerComment}</span>
-                </div>
-              </div>
-            )}
-
-            <div className={styles.applicationFooter}>
-              <span className={styles.idBadge}>
-                <Hash size={12} />
-                {app.id.slice(0, 8)}
-              </span>
-
-              <div className={styles.applicationActions}>
-                {isWithdrawableApplicationStatus(app.status) &&
-                  hasReachedApplicationWithdrawalLimit(app.withdrawalCount) && (
-                    <span className={styles.statusNoticeNeutral}>
-                      {formatMessage('opportunities.errors.withdrawalLimitReached', {
-                        limit: MAX_APPLICATION_WITHDRAWALS,
-                      })}
-                    </span>
-                  )}
-                {isWithdrawableApplicationStatus(app.status) &&
-                  !hasReachedApplicationWithdrawalLimit(app.withdrawalCount) && (
-                    <Button
-                      variant="secondary"
-                      className={styles.withdrawBtn}
-                      onClick={() => onWithdraw(app.id)}
-                    >
-                      <X size={14} className={styles.btnIcon} />
-                      {formatMessage('opportunities.myApplications.withdrawBtn')}
-                    </Button>
-                  )}
-
-                {app.status === 'ACCEPTED' && (
-                  <span className={styles.statusNoticeSuccess}>
-                    <CheckCircle2 size={14} />
-                    {formatMessage('opportunities.myApplications.statusAccepted')}
-                  </span>
-                )}
-
-                {app.status === 'REJECTED' && (
-                  <span className={styles.statusNoticeDanger}>
-                    <XCircle size={14} />
-                    {formatMessage('opportunities.myApplications.statusRejected')}
-                  </span>
-                )}
-
-                {app.status === 'WITHDRAWN' && (
-                  <span className={styles.statusNoticeNeutral}>
-                    {formatMessage('opportunities.myApplications.statusWithdrawn')}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
+        {myApplications.map((application) => (
+          <MyApplicationCard
+            key={application.id}
+            application={application}
+            onWithdraw={onWithdraw}
+          />
         ))}
       </div>
     </TabStateWrapper>
