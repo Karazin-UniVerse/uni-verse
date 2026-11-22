@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -94,21 +93,11 @@ export class UserController {
     @Param('id') id: string,
     @Body() updateUserDto: SelfUpdateUserDto,
   ): Promise<UserResponseDto> {
-    if (!currentUserId || currentUserId !== id) {
-      throw new ForbiddenException('You can only update your own profile');
-    }
-
-    const updatePayload: SelfUpdateUserDto = {};
-
-    if (updateUserDto.name !== undefined) {
-      updatePayload.name = updateUserDto.name;
-    }
-
-    if (updateUserDto.password) {
-      updatePayload.password = await bcrypt.hash(updateUserDto.password, 10);
-    }
-
-    const updated = await this.userService.updateUser(id, updatePayload);
+    const updated = await this.userService.updateOwnProfile(
+      currentUserId,
+      id,
+      updateUserDto,
+    );
 
     return toUserResponse(updated);
   }

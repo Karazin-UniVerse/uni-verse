@@ -39,6 +39,10 @@ export class MoodleClientService {
     }
   }
 
+  getBaseUrl(): string {
+    return this.baseUrl;
+  }
+
   /**
    * Low-level request to a path under the Moodle base URL. Redirects are
    * refused unless the caller overrides `redirect`.

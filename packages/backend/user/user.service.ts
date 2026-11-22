@@ -1,9 +1,36 @@
 import { getPrismaErrorCode, getPrismaErrorName } from '../utils/prisma-error';
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { User, Role } from '@universe/database';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserDto, UpdateUserDto } from './user-dto';
+import { CreateUserDto, SelfUpdateUserDto, UpdateUserDto } from './user-dto';
 import { randomUUID } from 'node:crypto';
+
+function assertPairedMoodleCredentials(
+  token: string | null | undefined,
+  moodleId: string | null | undefined,
+): void {
+  if (token === undefined && moodleId === undefined) {
+    return;
+  }
+
+  const hasToken = Boolean(token?.trim());
+  const hasMoodleId = Boolean(moodleId?.trim());
+
+  if (
+    token === undefined ||
+    moodleId === undefined ||
+    hasToken !== hasMoodleId
+  ) {
+    throw new BadRequestException(
+      'Moodle token and moodleId must be set or cleared together',
+    );
+  }
+}
 
 @Injectable()
 export class UserService {
@@ -57,6 +84,8 @@ export class UserService {
   }
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
+    assertPairedMoodleCredentials(createUserDto.token, createUserDto.moodleId);
+
     try {
       return await this.prisma.user.create({
         data: {
@@ -115,6 +144,8 @@ export class UserService {
       UpdateUserDto & { refreshToken?: string | null; roles?: Role[] }
     >,
   ): Promise<User> {
+    assertPairedMoodleCredentials(updateUserDto.token, updateUserDto.moodleId);
+
     try {
       return await this.prisma.user.update({
         where: { id },
@@ -141,6 +172,28 @@ export class UserService {
 
       return updated;
     }
+  }
+
+  async updateOwnProfile(
+    currentUserId: string,
+    targetUserId: string,
+    dto: SelfUpdateUserDto,
+  ): Promise<User> {
+    if (!currentUserId || currentUserId !== targetUserId) {
+      throw new ForbiddenException('You can only update your own profile');
+    }
+
+    const updatePayload: SelfUpdateUserDto = {};
+
+    if (dto.name !== undefined) {
+      updatePayload.name = dto.name;
+    }
+
+    if (dto.password) {
+      updatePayload.password = await bcrypt.hash(dto.password, 10);
+    }
+
+    return this.updateUser(targetUserId, updatePayload);
   }
 
   async getUserTokenFromDB(email: string): Promise<string | null> {

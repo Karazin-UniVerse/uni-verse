@@ -2,7 +2,6 @@ jest.mock('bcrypt', () => ({
   hash: jest.fn(),
 }));
 
-import { ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Role, User } from '@universe/database';
 import * as bcrypt from 'bcrypt';
@@ -38,6 +37,7 @@ describe('UserController', () => {
       createUser: jest.fn(),
       deleteUser: jest.fn(),
       updateUser: jest.fn(),
+      updateOwnProfile: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -158,23 +158,13 @@ describe('UserController', () => {
   });
 
   describe('updateUser', () => {
-    it('should forbid updating another user profile', async () => {
-      await expect(
-        controller.updateUser('other-user-uuid', 'user-uuid-1', {
-          name: 'Hacked',
-        }),
-      ).rejects.toThrow(ForbiddenException);
-      expect(userService.updateUser).not.toHaveBeenCalled();
-    });
-
-    it('should hash password when updating own profile and return sanitized response', async () => {
+    it('should delegate self profile update to userService.updateOwnProfile and return sanitized response', async () => {
       const dto: SelfUpdateUserDto = {
         name: 'Updated Name',
         password: 'newPassword456',
       };
 
-      (bcrypt.hash as jest.Mock).mockResolvedValue('updated-bcrypt-password');
-      userService.updateUser.mockResolvedValue({
+      userService.updateOwnProfile.mockResolvedValue({
         ...mockDbUser,
         name: 'Updated Name',
         password: 'updated-bcrypt-password',
@@ -186,42 +176,18 @@ describe('UserController', () => {
         dto,
       );
 
-      expect(bcrypt.hash).toHaveBeenCalledWith('newPassword456', 10);
-      expect(userService.updateUser).toHaveBeenCalledWith('user-uuid-1', {
-        name: 'Updated Name',
-        password: 'updated-bcrypt-password',
-      });
+      expect(userService.updateOwnProfile).toHaveBeenCalledWith(
+        'user-uuid-1',
+        'user-uuid-1',
+        dto,
+      );
       expect(result.name).toBe('Updated Name');
       expect(
         (result as unknown as Record<string, unknown>).password,
       ).toBeUndefined();
-    });
-
-    it('should update own user without hashing when password is omitted and ignore disallowed fields', async () => {
-      const dto = {
-        name: 'Updated Name Only',
-        email: 'spoofed@evil.com',
-        moodleId: 'spoofed-moodle',
-        token: 'spoofed-token',
-        roles: [Role.ADMIN],
-      } as unknown as SelfUpdateUserDto;
-
-      userService.updateUser.mockResolvedValue({
-        ...mockDbUser,
-        name: 'Updated Name Only',
-      });
-
-      const result = await controller.updateUser(
-        'user-uuid-1',
-        'user-uuid-1',
-        dto,
-      );
-
-      expect(bcrypt.hash).not.toHaveBeenCalled();
-      expect(userService.updateUser).toHaveBeenCalledWith('user-uuid-1', {
-        name: 'Updated Name Only',
-      });
-      expect(result.name).toBe('Updated Name Only');
+      expect(
+        (result as unknown as Record<string, unknown>).token,
+      ).toBeUndefined();
     });
   });
 });
