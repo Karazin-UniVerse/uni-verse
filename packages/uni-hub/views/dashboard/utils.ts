@@ -1,6 +1,10 @@
 import { CONTROL_TYPES, TRADITIONAL_GRADES } from '@core/constants/grades';
 import { OPPORTUNITY_NOTIFICATION_KEY } from '@core/constants/notifications';
-import { OPPORTUNITY_APP_STATUS, OPPORTUNITY_MODERATE_ACTION } from '@core/constants/opportunities';
+import {
+  OPPORTUNITY_APP_STATUS,
+  OPPORTUNITY_LIFECYCLE,
+  OPPORTUNITY_MODERATE_ACTION,
+} from '@core/constants/opportunities';
 import type { ControlType } from '@core/utils/grades';
 import type { NotificationListItem } from '@ui';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
@@ -93,7 +97,16 @@ const PLATFORM_ACTION_KEYS: Record<string, TranslationKey> = {
   [OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES]: 'notifications.action.REQUIRE_CHANGES',
 };
 
+const PLATFORM_LIFECYCLE_KEYS: Record<string, TranslationKey> = {
+  [OPPORTUNITY_LIFECYCLE.START]: 'opportunities.detailModal.phaseStart',
+  [OPPORTUNITY_LIFECYCLE.ACTIVE]: 'opportunities.detailModal.phaseActive',
+  [OPPORTUNITY_LIFECYCLE.PAUSED]: 'opportunities.detailModal.phasePaused',
+  [OPPORTUNITY_LIFECYCLE.COMPLETED]: 'opportunities.detailModal.phaseCompleted',
+  [OPPORTUNITY_LIFECYCLE.CANCELLED]: 'opportunities.detailModal.phaseCancelled',
+};
+
 const PLATFORM_TITLE_KEYS: Record<string, TranslationKey> = {
+  [OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE]: OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE,
   [OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE]:
     OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE,
   [OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_TITLE]:
@@ -108,6 +121,7 @@ type MessageFormatter = (key: TranslationKey, values?: Record<string, string | n
 type PlatformNotificationPayload = {
   opportunityTitle?: string;
   applicantName?: string;
+  lifecycleState?: string;
   status?: string;
   action?: string;
   comment?: string | null;
@@ -151,6 +165,23 @@ function formatPlatformMessage(
   }
 
   const opportunityTitle = parsed.opportunityTitle ?? '';
+
+  if (subject === OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE) {
+    if (parsed.lifecycleState) {
+      const lifecycleState = translateCode(
+        parsed.lifecycleState,
+        PLATFORM_LIFECYCLE_KEYS,
+        formatMessage,
+      );
+
+      return formatMessage(OPPORTUNITY_NOTIFICATION_KEY.UPDATED_MESSAGE_WITH_LIFECYCLE, {
+        opportunityTitle,
+        lifecycleState,
+      });
+    }
+
+    return formatMessage(OPPORTUNITY_NOTIFICATION_KEY.UPDATED_MESSAGE, { opportunityTitle });
+  }
 
   if (subject === OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE) {
     const status = translateCode(parsed.status, PLATFORM_STATUS_KEYS, formatMessage);

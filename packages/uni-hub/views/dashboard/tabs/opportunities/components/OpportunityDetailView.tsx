@@ -18,6 +18,7 @@ export interface OpportunityDetailViewProps {
   onOpenApplicants?: () => void;
   onEdit?: (opportunity: Opportunity) => void;
   onDelete?: () => void;
+  favoriteAction?: React.ReactNode;
 }
 
 const lifecycleLabelKey = {
@@ -81,6 +82,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   onOpenApplicants,
   onEdit,
   onDelete,
+  favoriteAction,
 }) => {
   const { formatMessage, language } = useLanguage();
 
@@ -148,6 +150,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       canApply={canApply}
       applyText={formatMessage('opportunities.detailModal.apply')}
       onOpenApply={onOpenApply}
+      headerAction={favoriteAction}
     />
   );
 };
