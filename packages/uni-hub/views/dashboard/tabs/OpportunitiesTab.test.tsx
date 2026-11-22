@@ -117,7 +117,6 @@ describe('OpportunitiesTab component', () => {
 
       await act(async () => secondWrite.resolve({ data: { saved: true } }));
       await waitFor(() => expect(opportunitiesApi.getFavorites).toHaveBeenCalledTimes(2));
-      expect(secondButton).toBeDisabled();
 
       await act(async () => finalRefresh.resolve({ data: [first, second] }));
       await waitFor(() => {
@@ -132,6 +131,54 @@ describe('OpportunitiesTab component', () => {
       firstWrite.resolve({ data: { saved: true } });
       secondWrite.resolve({ data: { saved: true } });
       finalRefresh.resolve({ data: [first, second] });
+    }
+  });
+
+  it('refetches favorites when a second save settles during an in-flight favorites refresh', async () => {
+    const user = userEvent.setup();
+    const first = buildOpportunity('first');
+    const second = buildOpportunity('second');
+
+    vi.mocked(opportunitiesApi.getOpportunities).mockResolvedValue({ data: [first, second] });
+    const staleRefresh =
+      Promise.withResolvers<Awaited<ReturnType<typeof opportunitiesApi.getFavorites>>>();
+    const freshRefresh =
+      Promise.withResolvers<Awaited<ReturnType<typeof opportunitiesApi.getFavorites>>>();
+
+    vi.spyOn(opportunitiesApi, 'setFavorite').mockResolvedValue({ data: { saved: true } });
+
+    renderOpportunitiesTab();
+
+    const [firstCard, secondCard] = await screen.findAllByRole('article');
+    const firstButton = within(firstCard).getByRole('button', { name: /додати до обраного/i });
+    const secondButton = within(secondCard).getByRole('button', { name: /додати до обраного/i });
+
+    await waitFor(() => expect(firstButton).toBeEnabled());
+    vi.mocked(opportunitiesApi.getFavorites)
+      .mockReturnValueOnce(staleRefresh.promise)
+      .mockReturnValueOnce(freshRefresh.promise);
+
+    try {
+      await user.click(firstButton);
+      await waitFor(() => expect(opportunitiesApi.getFavorites).toHaveBeenCalledTimes(2));
+
+      await user.click(secondButton);
+      await waitFor(() => expect(opportunitiesApi.getFavorites).toHaveBeenCalledTimes(3));
+
+      await act(async () => freshRefresh.resolve({ data: [first, second] }));
+      await act(async () => staleRefresh.resolve({ data: [first] }));
+
+      await waitFor(() => {
+        expect(
+          within(firstCard).getByRole('button', { name: /видалити з обраного/i }),
+        ).toBeEnabled();
+        expect(
+          within(secondCard).getByRole('button', { name: /видалити з обраного/i }),
+        ).toBeEnabled();
+      });
+    } finally {
+      staleRefresh.resolve({ data: [first] });
+      freshRefresh.resolve({ data: [first, second] });
     }
   });
 

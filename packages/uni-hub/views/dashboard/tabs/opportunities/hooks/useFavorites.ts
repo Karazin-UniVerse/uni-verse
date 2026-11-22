@@ -56,7 +56,7 @@ export function useFavorites(enabled: boolean): UseFavoritesResult {
     onError: () => toast.error(formatMessage('opportunities.toast.genericError')),
     onSettled: () => {
       if (isLastPendingFavorite(queryClient)) {
-        return invalidateFavorites(queryClient);
+        void invalidateFavorites(queryClient);
       }
     },
   });
