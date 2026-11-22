@@ -65,8 +65,8 @@ export type ApplicationWithApplicant = OpportunityApplication & {
 };
 
 export type ApplicationWithOpportunity = OpportunityApplication & {
-  opportunity: OpportunityWithOwner;
   applicant: ApplicationWithApplicant['applicant'];
+  opportunity?: OpportunityWithOwner;
 };
 
 export type UpdateApplicationStatusParams = {
@@ -667,8 +667,12 @@ export class OpportunitiesService {
    */
   async getMyApplications(
     userId: string,
+    userRoles: string[] = [],
   ): Promise<ApplicationWithOpportunity[]> {
-    return this.prisma.opportunityApplication.findMany({
+    const isModerator = Boolean(
+      userRoles?.includes(Role.OPPORTUNITIES_MODERATOR),
+    );
+    const applications = await this.prisma.opportunityApplication.findMany({
       where: { applicantId: userId },
       include: {
         applicant: { select: { name: true, email: true } },
@@ -676,6 +680,17 @@ export class OpportunitiesService {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    return (applications ?? []).map(({ opportunity, ...application }) => ({
+      ...application,
+      opportunity:
+        opportunity &&
+        (opportunity.status === OpportunityStatus.PUBLISHED ||
+          opportunity.ownerId === userId ||
+          isModerator)
+          ? opportunity
+          : undefined,
+    }));
   }
 
   /**
@@ -764,17 +779,24 @@ export class OpportunitiesService {
       throw error;
     }
 
-    await this.notificationsService.createNotification({
-      userId: opp.ownerId,
-      type: NOTIFICATION_TYPE.OPPORTUNITY_MODERATED,
-      title: OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE,
-      message: JSON.stringify({
-        opportunityTitle: opp.title,
-        action: dto.action,
-        comment: dto.comment || null,
-      }),
-      link: `${OPPORTUNITIES_ROUTE}/${opp.id}`,
-    });
+    try {
+      await this.notificationsService.createNotification({
+        userId: opp.ownerId,
+        type: NOTIFICATION_TYPE.OPPORTUNITY_MODERATED,
+        title: OPPORTUNITY_NOTIFICATION_KEY.MODERATED_TITLE,
+        message: JSON.stringify({
+          opportunityTitle: opp.title,
+          action: dto.action,
+          comment: dto.comment || null,
+        }),
+        link: `${OPPORTUNITIES_ROUTE}/${opp.id}`,
+      });
+    } catch (error: unknown) {
+      this.logger.error(
+        `Failed to deliver moderation notification for opportunity ${opp.id}`,
+        error instanceof Error ? error.stack : error,
+      );
+    }
 
     return opp;
   }
