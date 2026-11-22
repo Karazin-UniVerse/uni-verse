@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import type { SessionUser } from '@core/types/auth';
-import { readSessionUser } from '@uni-hub/services/api.session';
+import { getSessionUserSnapshot, subscribeSessionUser } from '@uni-hub/services/api.session';
 
 export interface CurrentUser {
   userId: string | null;
@@ -9,8 +9,16 @@ export interface CurrentUser {
   name?: string;
 }
 
+function getServerSessionUserSnapshot(): SessionUser | null {
+  return null;
+}
+
 export function useCurrentUser(): CurrentUser {
-  const [sessionUser] = useState<SessionUser | null>(() => readSessionUser());
+  const sessionUser = useSyncExternalStore(
+    subscribeSessionUser,
+    getSessionUserSnapshot,
+    getServerSessionUserSnapshot,
+  );
 
   return {
     userId: sessionUser?.id ?? null,

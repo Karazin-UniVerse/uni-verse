@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { ROLE } from '@core/constants/roles';
 import { safeStorage } from '@uni-hub/services/api.storage';
+import { clearUserSessionStorage, saveSessionUser } from '@uni-hub/services/api.session';
 import { useCurrentUser } from './useCurrentUser';
 
 describe('useCurrentUser hook', () => {
@@ -67,6 +68,40 @@ describe('useCurrentUser hook', () => {
     safeStorage.setItem('sessionUser', 'not-valid-json');
 
     const { result } = renderHook(() => useCurrentUser());
+
+    expect(result.current).toEqual({
+      userId: null,
+      roles: [],
+      email: undefined,
+      name: undefined,
+    });
+  });
+
+  it('should reactively update when saveSessionUser and clearUserSessionStorage are called', () => {
+    const { result } = renderHook(() => useCurrentUser());
+
+    expect(result.current.userId).toBeNull();
+
+    act(() => {
+      saveSessionUser({
+        id: 'live-user',
+        email: 'live@karazin.ua',
+        name: 'Live User',
+        roles: [ROLE.MOODLE_STUDENT],
+        isLinked: true,
+      });
+    });
+
+    expect(result.current).toEqual({
+      userId: 'live-user',
+      roles: [ROLE.MOODLE_STUDENT],
+      email: 'live@karazin.ua',
+      name: 'Live User',
+    });
+
+    act(() => {
+      clearUserSessionStorage();
+    });
 
     expect(result.current).toEqual({
       userId: null,

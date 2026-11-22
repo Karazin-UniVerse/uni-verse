@@ -147,8 +147,9 @@ async function refreshAccessToken(): Promise<void> {
 
       if (!response.ok) {
         if (
-          response.status === RESPONSE_CODES.UNAUTHORIZED ||
-          response.status === RESPONSE_CODES.FORBIDDEN
+          (response.status === RESPONSE_CODES.UNAUTHORIZED ||
+            response.status === RESPONSE_CODES.FORBIDDEN) &&
+          startGeneration === getSessionGeneration()
         ) {
           clearUserSessionStorage();
         }
@@ -161,15 +162,22 @@ async function refreshAccessToken(): Promise<void> {
       const data = (await response.json()) as Partial<AuthResponse>;
 
       if (!data.user) {
-        clearUserSessionStorage();
+        if (startGeneration === getSessionGeneration()) {
+          clearUserSessionStorage();
+        }
 
-        throw new Error('Refresh response missing user session');
+        throw new Error(
+          `Refresh response missing user session (HTTP ${RESPONSE_CODES.UNAUTHORIZED})`,
+        );
       }
 
-      if (startGeneration === getSessionGeneration()) {
-        saveSessionUser(data.user);
+      if (startGeneration !== getSessionGeneration()) {
+        throw new Error(
+          `Session changed during token refresh (HTTP ${RESPONSE_CODES.UNAUTHORIZED})`,
+        );
       }
 
+      saveSessionUser(data.user);
       refreshEpoch += 1;
     } finally {
       clearTimeout(timeoutId);
@@ -223,6 +231,7 @@ async function executeRequestWithRefresh<T>({
   requestOptions,
 }: ExecuteRequestParams): Promise<{ data: T }> {
   const attemptEpoch = refreshEpoch;
+  const attemptGeneration = getSessionGeneration();
   const initialResponse = await executeAttempt({ url, options, headers, timeoutMs });
 
   if (initialResponse.ok) {
@@ -235,8 +244,16 @@ async function executeRequestWithRefresh<T>({
     initialResponse.status === RESPONSE_CODES.UNAUTHORIZED &&
     isRefreshCandidate(endpoint, requestOptions)
   ) {
+    if (attemptGeneration !== getSessionGeneration()) {
+      throw new Error(`Session changed during request (HTTP ${RESPONSE_CODES.UNAUTHORIZED})`);
+    }
+
     if (attemptEpoch === refreshEpoch) {
       await refreshAccessToken();
+    }
+
+    if (attemptGeneration !== getSessionGeneration()) {
+      throw new Error(`Session changed during request (HTTP ${RESPONSE_CODES.UNAUTHORIZED})`);
     }
 
     const retryResponse = await executeAttempt({
@@ -247,7 +264,10 @@ async function executeRequestWithRefresh<T>({
     });
 
     if (!retryResponse.ok) {
-      if (retryResponse.status === RESPONSE_CODES.UNAUTHORIZED) {
+      if (
+        retryResponse.status === RESPONSE_CODES.UNAUTHORIZED &&
+        attemptGeneration === getSessionGeneration()
+      ) {
         clearUserSessionStorage();
       }
 
@@ -261,7 +281,10 @@ async function executeRequestWithRefresh<T>({
     return { data: retryData };
   }
 
-  if (initialResponse.status === RESPONSE_CODES.UNAUTHORIZED) {
+  if (
+    initialResponse.status === RESPONSE_CODES.UNAUTHORIZED &&
+    attemptGeneration === getSessionGeneration()
+  ) {
     clearUserSessionStorage();
   }
 

@@ -64,23 +64,23 @@ describe('AtStrategy', () => {
     ).toBeUndefined();
   });
 
-  it('should extract JWT from httpOnly accessToken cookie first, falling back to Bearer header', () => {
+  it('should extract JWT from Authorization Bearer header first, falling back to httpOnly accessToken cookie', () => {
     process.env.AT_SECRET = 'a-secure-production-ready-secret-key-12345';
 
     const strategy = new AtStrategy() as unknown as {
       _jwtFromRequest: (req: Request) => string | null;
     };
 
-    const cookieReq = {
+    const bothReq = {
       cookies: { accessToken: 'cookie-jwt-token' },
       headers: { authorization: 'Bearer header-jwt-token' },
     } as unknown as Request;
-    const headerOnlyReq = {
-      cookies: {},
-      headers: { authorization: 'Bearer header-jwt-token' },
+    const cookieOnlyReq = {
+      cookies: { accessToken: 'cookie-jwt-token' },
+      headers: {},
     } as unknown as Request;
 
-    expect(strategy._jwtFromRequest(cookieReq)).toBe('cookie-jwt-token');
-    expect(strategy._jwtFromRequest(headerOnlyReq)).toBe('header-jwt-token');
+    expect(strategy._jwtFromRequest(bothReq)).toBe('header-jwt-token');
+    expect(strategy._jwtFromRequest(cookieOnlyReq)).toBe('cookie-jwt-token');
   });
 });

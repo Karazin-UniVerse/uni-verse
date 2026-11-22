@@ -371,6 +371,43 @@ export class AuthService {
     await this.userService.updateUser(userId, { refreshToken: null });
   }
 
+  async logoutByRefreshToken(refreshToken: string): Promise<boolean> {
+    const rtSecret = process.env.RT_SECRET;
+
+    if (!rtSecret || rtSecret === 'your-refresh-token-secret-key') {
+      return false;
+    }
+
+    try {
+      const payload = await this.jwtService.verifyAsync<{ sub?: string }>(
+        refreshToken,
+        { secret: rtSecret },
+      );
+
+      if (!payload?.sub) {
+        return false;
+      }
+
+      const user = await this.userService.findById(payload.sub);
+
+      if (!user?.refreshToken) {
+        return false;
+      }
+
+      const rtMatches = await bcrypt.compare(refreshToken, user.refreshToken);
+
+      if (!rtMatches) {
+        return false;
+      }
+
+      await this.userService.updateUser(user.id, { refreshToken: null });
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async refreshTokens(userId: string, rt: string) {
     const user = await this.userService.findById(userId);
 

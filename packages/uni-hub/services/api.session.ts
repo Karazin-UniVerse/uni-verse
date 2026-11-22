@@ -19,6 +19,15 @@ export const USER_SESSION_STORAGE_KEYS = [
 ] as const;
 
 let sessionGeneration = 0;
+let cachedSessionUserRaw: string | null = null;
+let cachedSessionUser: SessionUser | null = null;
+const sessionUserListeners = new Set<() => void>();
+
+function notifySessionUserListeners(): void {
+  for (const listener of sessionUserListeners) {
+    listener();
+  }
+}
 
 export function getSessionGeneration(): number {
   return sessionGeneration;
@@ -50,16 +59,63 @@ export function readSessionUser(): SessionUser | null {
   }
 }
 
+export function getSessionUserSnapshot(): SessionUser | null {
+  const raw = safeStorage.getItem('sessionUser');
+
+  if (raw === cachedSessionUserRaw) {
+    return cachedSessionUser;
+  }
+
+  cachedSessionUserRaw = raw;
+  cachedSessionUser = readSessionUser();
+
+  return cachedSessionUser;
+}
+
+export function subscribeSessionUser(listener: () => void): () => void {
+  sessionUserListeners.add(listener);
+
+  const handleStorage = (event: StorageEvent): void => {
+    if (event.key === null || event.key === 'sessionUser') {
+      listener();
+    }
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', handleStorage);
+  }
+
+  return (): void => {
+    sessionUserListeners.delete(listener);
+
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('storage', handleStorage);
+    }
+  };
+}
+
 export function saveSessionUser(user?: SessionUser | null): void {
   if (!user || typeof user.id !== 'string') {
     return;
   }
 
-  safeStorage.setItem('sessionUser', JSON.stringify(user));
+  const previousUser = readSessionUser();
+
+  if (previousUser && previousUser.id !== user.id) {
+    sessionGeneration += 1;
+  }
+
+  const serialized = JSON.stringify(user);
+
+  safeStorage.setItem('sessionUser', serialized);
 
   if (user.email) {
     safeStorage.setItem('userEmail', user.email);
   }
+
+  cachedSessionUserRaw = serialized;
+  cachedSessionUser = readSessionUser();
+  notifySessionUserListeners();
 }
 
 export function clearUserSessionStorage(): void {
@@ -69,6 +125,10 @@ export function clearUserSessionStorage(): void {
   for (const key of USER_SESSION_STORAGE_KEYS) {
     safeStorage.removeItem(key);
   }
+
+  cachedSessionUserRaw = null;
+  cachedSessionUser = null;
+  notifySessionUserListeners();
 }
 
 export function endSession(queryClient: QueryClient): void {

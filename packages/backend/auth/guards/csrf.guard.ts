@@ -48,7 +48,7 @@ export class CsrfGuard implements CanActivate {
     );
     const hasBearerAuth =
       typeof request.headers.authorization === 'string' &&
-      request.headers.authorization.startsWith('Bearer ');
+      /^Bearer\s+\S+/i.test(request.headers.authorization.trim());
 
     if (hasAuthCookie && !hasBearerAuth) {
       if (request.headers['x-requested-with'] !== 'XMLHttpRequest') {
