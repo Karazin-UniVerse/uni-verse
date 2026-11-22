@@ -187,6 +187,18 @@ describe('UserController (HTTP Integration / E2E)', () => {
         .expect(401);
     });
 
+    it('should reject a JWT signed with a non-HS256 algorithm with 401', async () => {
+      const hs512Token = await jwtService.signAsync(
+        { sub: 'test-admin', email: 'admin@karazin.ua', roles: ['ADMIN'] },
+        { secret: process.env.AT_SECRET, algorithm: 'HS512' },
+      );
+
+      await request(app.getHttpServer())
+        .get('/user')
+        .set('Authorization', `Bearer ${hs512Token}`)
+        .expect(401);
+    });
+
     it('should return list of users with sensitive fields stripped for ADMIN', async () => {
       mockUsers.set('u1', {
         id: 'u1',

@@ -39,7 +39,27 @@ describe('getCorsConfig', () => {
     try {
       expect(isAllowedOrigin('https://staging.universemvp.tech')).toBe(true);
     } finally {
-      process.env.FRONTEND_URL = originalFrontendUrl;
+      if (originalFrontendUrl === undefined) {
+        delete process.env.FRONTEND_URL;
+      } else {
+        process.env.FRONTEND_URL = originalFrontendUrl;
+      }
+    }
+  });
+
+  it('rejects empty origin even when FRONTEND_URL is an empty string', () => {
+    const originalFrontendUrl = process.env.FRONTEND_URL;
+
+    process.env.FRONTEND_URL = '';
+
+    try {
+      expect(isAllowedOrigin('')).toBe(false);
+    } finally {
+      if (originalFrontendUrl === undefined) {
+        delete process.env.FRONTEND_URL;
+      } else {
+        process.env.FRONTEND_URL = originalFrontendUrl;
+      }
     }
   });
 

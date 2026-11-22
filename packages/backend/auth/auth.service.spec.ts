@@ -12,6 +12,7 @@ jest.mock('bcrypt', () => ({
 }));
 
 import { AuthService } from './auth.service';
+import { JWT_ALGORITHM } from '../constants/auth';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { GetCreds } from '../utils/get-creds';
@@ -976,7 +977,7 @@ describe('AuthService', () => {
           email: 'test@karazin.ua',
           roles: [Role.MOODLE_STUDENT],
         },
-        expect.any(Object),
+        expect.objectContaining({ algorithm: JWT_ALGORITHM }),
       );
       expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
         2,
@@ -984,7 +985,7 @@ describe('AuthService', () => {
           sub: 'u1',
           email: 'test@karazin.ua',
         },
-        expect.any(Object),
+        expect.objectContaining({ algorithm: JWT_ALGORITHM }),
       );
     });
   });
@@ -1018,6 +1019,7 @@ describe('AuthService', () => {
       expect(revoked).toBe(true);
       expect(mockJwtService.verifyAsync).toHaveBeenCalledWith('valid-rt', {
         secret: 'valid-production-rt-secret',
+        algorithms: [JWT_ALGORITHM],
       });
       expect(mockUserService.updateUser).toHaveBeenCalledWith(sampleUser.id, {
         refreshToken: null,

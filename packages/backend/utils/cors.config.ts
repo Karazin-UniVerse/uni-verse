@@ -14,6 +14,10 @@ function isLocalDevOrigin(origin: string): boolean {
 }
 
 export function isAllowedOrigin(origin: string): boolean {
+  if (!origin) {
+    return false;
+  }
+
   if (origin === PRODUCTION_ORIGIN || origin === process.env.FRONTEND_URL) {
     return true;
   }

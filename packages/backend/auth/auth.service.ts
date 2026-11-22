@@ -382,7 +382,7 @@ export class AuthService {
     try {
       const payload = await this.jwtService.verifyAsync<{ sub?: string }>(
         refreshToken,
-        { secret: rtSecret },
+        { secret: rtSecret, algorithms: [JWT_ALGORITHM] },
       );
 
       if (!payload?.sub) {
