@@ -243,4 +243,63 @@ describe('OpportunitiesTab component', () => {
 
     expect(screen.getByRole('dialog', { name: /створити нову можливість/i })).toBeInTheDocument();
   });
+
+  it('keeps an acknowledged favorite removal even if the post-mutation refetch fails', async () => {
+    const user = userEvent.setup();
+    const saved = {
+      ...buildOpportunity('saved'),
+      status: 'PUBLISHED' as const,
+      title: 'Saved placement',
+    };
+
+    vi.mocked(opportunitiesApi.getOpportunities).mockResolvedValue({ data: [saved] });
+    vi.mocked(opportunitiesApi.getFavorites).mockResolvedValueOnce({ data: [saved] });
+    vi.spyOn(opportunitiesApi, 'setFavorite').mockResolvedValue({ data: { saved: false } });
+
+    renderOpportunitiesTab();
+
+    const removeButton = await screen.findByRole('button', { name: /видалити з обраного/i });
+
+    await waitFor(() => expect(removeButton).toBeEnabled());
+    vi.mocked(opportunitiesApi.getFavorites).mockRejectedValueOnce(new Error('Refetch failed'));
+
+    await user.click(removeButton);
+
+    await waitFor(() => {
+      const addButton = screen.getByRole('button', { name: /додати до обраного/i });
+
+      expect(addButton).toHaveAttribute('aria-pressed', 'false');
+      expect(addButton).toBeEnabled();
+    });
+  });
+
+  it('shows a retry banner in Catalog when favorites fail to load without hiding catalog items', async () => {
+    const user = userEvent.setup();
+    const item = {
+      ...buildOpportunity('catalog-1'),
+      status: 'PUBLISHED' as const,
+      title: 'Visible catalog item',
+    };
+
+    vi.mocked(opportunitiesApi.getOpportunities).mockResolvedValue({ data: [item] });
+    vi.mocked(opportunitiesApi.getFavorites)
+      .mockRejectedValueOnce(new Error('Favorites unavailable'))
+      .mockResolvedValueOnce({ data: [item] });
+
+    renderOpportunitiesTab();
+
+    expect(await screen.findByRole('heading', { name: item.title })).toBeInTheDocument();
+
+    const banner = await screen.findByRole('status');
+
+    expect(banner).toHaveTextContent('Не вдалося завантажити обрані можливості.');
+    expect(screen.getByRole('button', { name: /додати до обраного/i })).toBeDisabled();
+
+    await user.click(within(banner).getByRole('button', { name: /спробувати знову/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /видалити з обраного/i })).toBeEnabled();
+    });
+  });
 });

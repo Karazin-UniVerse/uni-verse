@@ -523,6 +523,7 @@ describe('OpportunitiesService', () => {
           status: 'PUBLISHED',
           updatedAt: publishedOpportunity.updatedAt,
           acceptsApplications: true,
+          lifecycleState: publishedOpportunity.lifecycleState,
         },
         data: { acceptsApplications: false },
       });

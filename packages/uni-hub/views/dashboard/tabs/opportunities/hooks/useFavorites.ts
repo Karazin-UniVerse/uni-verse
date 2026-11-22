@@ -53,7 +53,31 @@ export function useFavorites(enabled: boolean): UseFavoritesResult {
     mutationKey: favoriteMutationKey,
     mutationFn: ({ id, isFavorite }: FavoriteMutation) =>
       opportunitiesApi.setFavorite(id, !isFavorite),
-    onSuccess: () => {
+    onSuccess: (_response, { id, isFavorite }) => {
+      queryClient.setQueryData<OpportunityListItem[]>(favoriteMutationKey, (current) => {
+        if (!current) {
+          return current;
+        }
+
+        if (isFavorite) {
+          return current.filter((item) => item.id !== id);
+        }
+
+        if (current.some((item) => item.id === id)) {
+          return current;
+        }
+
+        const catalogItem = queryClient
+          .getQueryData<OpportunityListItem[]>(opportunityKeys.catalog())
+          ?.find((item) => item.id === id);
+        const detailItem = queryClient.getQueryData<OpportunityListItem>(
+          opportunityKeys.detail(id),
+        );
+        const itemToAdd = catalogItem ?? detailItem;
+
+        return itemToAdd ? [itemToAdd, ...current] : current;
+      });
+
       // Keep overlapping writes from canceling one another's cache refresh.
       const refresh = (favoriteRefreshes.get(queryClient) ?? Promise.resolve()).then(() =>
         queryClient.invalidateQueries({ queryKey: favoriteMutationKey, exact: true }),

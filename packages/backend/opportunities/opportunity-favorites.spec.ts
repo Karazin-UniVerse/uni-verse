@@ -859,4 +859,32 @@ describe('Opportunity favorites and restricted listings', () => {
       }),
     ).resolves.toBeDefined();
   });
+
+  it('guards acceptance-only updates on the loaded lifecycleState', async () => {
+    const publishedPaused = {
+      ...opportunity,
+      status: OpportunityStatus.PUBLISHED,
+      lifecycleState: 'ACTIVE' as const,
+      acceptsApplications: false,
+    };
+
+    prisma.opportunity.findUnique.mockResolvedValue(publishedPaused);
+    prisma.opportunity.update.mockResolvedValue({
+      ...publishedPaused,
+      acceptsApplications: true,
+    });
+
+    await service.update('owner', opportunity.id, {
+      acceptsApplications: true,
+    });
+
+    expect(prisma.opportunity.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          lifecycleState: 'ACTIVE',
+          acceptsApplications: false,
+        }),
+      }),
+    );
+  });
 });

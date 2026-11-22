@@ -470,7 +470,8 @@ export class OpportunitiesService {
           ...(data.acceptsApplications !== undefined
             ? { acceptsApplications: opportunity.acceptsApplications }
             : {}),
-          ...(dto.lifecycleState !== undefined
+          ...(data.acceptsApplications !== undefined ||
+          dto.lifecycleState !== undefined
             ? { lifecycleState: opportunity.lifecycleState }
             : {}),
         },

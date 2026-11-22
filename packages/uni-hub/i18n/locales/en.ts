@@ -447,6 +447,7 @@ export const en = {
   'opportunities.favorites.add': 'Add to favorites',
   'opportunities.favorites.remove': 'Remove from favorites',
   'opportunities.favorites.empty': 'You have not saved any opportunities yet.',
+  'opportunities.favorites.loadError': 'Could not load saved opportunities.',
   'opportunities.filteredEmpty': 'No opportunities match your filters.',
   'opportunities.unavailable.temporary': 'Temporarily unavailable',
   'opportunities.unavailable.permanent': 'Permanently unavailable',

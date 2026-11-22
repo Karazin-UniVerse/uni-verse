@@ -447,6 +447,7 @@ export const uk = {
   'opportunities.favorites.add': 'Додати до обраного',
   'opportunities.favorites.remove': 'Видалити з обраного',
   'opportunities.favorites.empty': 'Ви ще не додали жодної можливості до обраного.',
+  'opportunities.favorites.loadError': 'Не вдалося завантажити обрані можливості.',
   'opportunities.filteredEmpty': 'Можливостей за обраними фільтрами не знайдено.',
   'opportunities.unavailable.temporary': 'Тимчасово недоступна',
   'opportunities.unavailable.permanent': 'Більше недоступна',
