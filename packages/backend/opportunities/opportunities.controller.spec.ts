@@ -25,6 +25,9 @@ describe('OpportunitiesController', () => {
         {
           provide: OpportunitiesService,
           useValue: {
+            getFavorites: jest.fn(),
+            addFavorite: jest.fn(),
+            removeFavorite: jest.fn(),
             create: jest.fn(),
             findAll: jest.fn(),
             getDetails: jest.fn(),
@@ -50,6 +53,72 @@ describe('OpportunitiesController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  describe('getFavorites', () => {
+    it('throws ForbiddenException when userId is empty', () => {
+      expect(() => controller.getFavorites('')).toThrow(ForbiddenException);
+    });
+
+    it('delegates with default empty roles when res is omitted', async () => {
+      (service.getFavorites as jest.Mock).mockResolvedValue([]);
+
+      await expect(controller.getFavorites('user1')).resolves.toEqual([]);
+      expect(service.getFavorites).toHaveBeenCalledWith('user1', []);
+    });
+
+    it('forwards roles and sets private Cache-Control header', async () => {
+      const mockRes = createMockResponse();
+
+      (service.getFavorites as jest.Mock).mockResolvedValue([{ id: 'opp1' }]);
+
+      await expect(
+        controller.getFavorites('user1', ['OPPORTUNITIES_MODERATOR'], mockRes),
+      ).resolves.toEqual([{ id: 'opp1' }]);
+      expect(service.getFavorites).toHaveBeenCalledWith('user1', [
+        'OPPORTUNITIES_MODERATOR',
+      ]);
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        CACHE_CONTROL_HEADER,
+        PRIVATE_CACHE_CONTROL,
+      );
+    });
+  });
+
+  describe('addFavorite', () => {
+    it('throws ForbiddenException when userId is empty', () => {
+      expect(() => controller.addFavorite('', 'opp1')).toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('delegates to service.addFavorite', async () => {
+      (service.addFavorite as jest.Mock).mockResolvedValue({ saved: true });
+
+      await expect(controller.addFavorite('user1', 'opp1')).resolves.toEqual({
+        saved: true,
+      });
+      expect(service.addFavorite).toHaveBeenCalledWith('user1', 'opp1');
+    });
+  });
+
+  describe('removeFavorite', () => {
+    it('throws ForbiddenException when userId is empty', () => {
+      expect(() => controller.removeFavorite('', 'opp1')).toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('delegates to service.removeFavorite', async () => {
+      (service.removeFavorite as jest.Mock).mockResolvedValue({ saved: false });
+
+      await expect(controller.removeFavorite('user1', 'opp1')).resolves.toEqual(
+        {
+          saved: false,
+        },
+      );
+      expect(service.removeFavorite).toHaveBeenCalledWith('user1', 'opp1');
+    });
   });
 
   describe('create', () => {

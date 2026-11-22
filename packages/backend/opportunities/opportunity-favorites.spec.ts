@@ -732,4 +732,131 @@ describe('Opportunity favorites and restricted listings', () => {
       }),
     );
   });
+
+  it('preserves existing publishedTitle when remoderating an already snapshotted published opportunity', async () => {
+    prisma.opportunity.findUnique.mockResolvedValue({
+      ...opportunity,
+      status: OpportunityStatus.PUBLISHED,
+      title: 'Already Snapshotted Title',
+      paymentType: 'UNPAID',
+      publishedTitle: 'Already Snapshotted Title',
+      publishedPaymentType: 'UNPAID',
+    });
+    prisma.opportunity.update.mockResolvedValue({
+      ...opportunity,
+      status: OpportunityStatus.READY_FOR_REVIEW,
+      title: 'Edited Title',
+      publishedTitle: 'Already Snapshotted Title',
+      publishedPaymentType: 'UNPAID',
+    });
+
+    await service.update('owner', opportunity.id, {
+      title: 'Edited Title',
+    });
+
+    const updateArgs = prisma.opportunity.update.mock.calls[0][0];
+
+    expect(updateArgs.data.status).toBe(OpportunityStatus.READY_FOR_REVIEW);
+    expect(updateArgs.data).not.toHaveProperty('publishedTitle');
+    expect(updateArgs.data).not.toHaveProperty('publishedPaymentType');
+  });
+
+  it('redacts unpublished favorites when user record is missing during moderator role verification', async () => {
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.opportunityFavorite.findMany.mockResolvedValue([
+      {
+        opportunity: {
+          ...opportunity,
+          status: OpportunityStatus.READY_FOR_REVIEW,
+          publishedTitle: 'Published Snapshot',
+          publishedPaymentType: 'PAID',
+        },
+      },
+    ]);
+
+    const favorites = await service.getFavorites('missing-mod', [
+      Role.OPPORTUNITIES_MODERATOR,
+    ]);
+
+    expect(favorites).toEqual([
+      {
+        id: opportunity.id,
+        title: 'Published Snapshot',
+        paymentType: 'PAID',
+        availability: 'temporary',
+      },
+    ]);
+  });
+
+  it('logs instead of throwing when loading subscribers fails in notifySubscribers', async () => {
+    const published = {
+      ...opportunity,
+      status: OpportunityStatus.PUBLISHED,
+      acceptsApplications: true,
+    };
+
+    prisma.opportunity.findUnique.mockResolvedValue(published);
+    prisma.opportunity.update.mockResolvedValue({
+      ...published,
+      acceptsApplications: false,
+    });
+    prisma.opportunityFavorite.findMany.mockRejectedValue(
+      new Error('Subscribers query failed'),
+    );
+
+    const result = await service.update('owner', opportunity.id, {
+      acceptsApplications: false,
+    });
+
+    expect(result.acceptsApplications).toBe(false);
+    expect(notify).not.toHaveBeenCalled();
+  });
+
+  it('throws NotFoundException in findOne when caller only receives an unavailable summary', async () => {
+    prisma.opportunity.findUnique.mockResolvedValue({
+      ...opportunity,
+      status: OpportunityStatus.DRAFT,
+      publishedAt: new Date('2026-01-01T00:00:00Z'),
+      publishedTitle: 'Previous Title',
+    });
+
+    await expect(
+      service.findOne(opportunity.id, 'viewer'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('handles non-Error rejections in notifyModerators gracefully', async () => {
+    prisma.user.findMany
+      .mockResolvedValueOnce([{ id: 'mod-1' }])
+      .mockRejectedValueOnce('moderator lookup failed');
+    notify.mockRejectedValueOnce('delivery string error');
+
+    prisma.opportunity.findUnique.mockResolvedValue({
+      ...opportunity,
+      status: OpportunityStatus.PUBLISHED,
+      publishedAt: new Date('2026-01-01T00:00:00Z'),
+      publishedTitle: 'Published Title',
+    });
+    prisma.opportunity.update.mockResolvedValue({
+      ...opportunity,
+      status: OpportunityStatus.READY_FOR_REVIEW,
+      title: 'Trigger Moderator Notify 1',
+    });
+
+    await service.update('owner', opportunity.id, {
+      title: 'Trigger Moderator Notify 1',
+    });
+
+    prisma.opportunity.update.mockResolvedValue({
+      ...opportunity,
+      status: OpportunityStatus.READY_FOR_REVIEW,
+      title: 'Trigger Moderator Notify 2',
+    });
+
+    await expect(
+      service.update('owner', opportunity.id, {
+        title: 'Trigger Moderator Notify 2',
+      }),
+    ).resolves.toBeDefined();
+  });
 });
