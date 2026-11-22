@@ -68,13 +68,13 @@ describe('OpportunitiesTab component', () => {
 
     expect(await screen.findByRole('heading', { name: saved.title })).toBeInTheDocument();
 
-    expect(screen.getByRole('button', { name: /видалити з обраного/i })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    const removeButton = screen.getByRole('button', { name: /видалити з обраного/i });
+
+    expect(removeButton).toBeInTheDocument();
+    expect(removeButton).not.toHaveAttribute('aria-pressed');
   });
 
-  it('only disables the favorite button for the card being saved', async () => {
+  it('only disables the favorite button for the card being saved and invalidates once when overlapping writes finish', async () => {
     const user = userEvent.setup();
     const first = buildOpportunity('first');
     const second = buildOpportunity('second');
@@ -84,7 +84,7 @@ describe('OpportunitiesTab component', () => {
       Promise.withResolvers<Awaited<ReturnType<typeof opportunitiesApi.setFavorite>>>();
     const secondWrite =
       Promise.withResolvers<Awaited<ReturnType<typeof opportunitiesApi.setFavorite>>>();
-    const firstRefresh =
+    const finalRefresh =
       Promise.withResolvers<Awaited<ReturnType<typeof opportunitiesApi.getFavorites>>>();
     const save = vi
       .spyOn(opportunitiesApi, 'setFavorite')
@@ -99,7 +99,7 @@ describe('OpportunitiesTab component', () => {
 
     await waitFor(() => expect(firstButton).toBeEnabled());
     vi.mocked(opportunitiesApi.getFavorites)
-      .mockReturnValueOnce(firstRefresh.promise)
+      .mockReturnValueOnce(finalRefresh.promise)
       .mockResolvedValue({ data: [first, second] });
     await user.click(firstButton);
 
@@ -111,24 +111,27 @@ describe('OpportunitiesTab component', () => {
       expect(save).toHaveBeenCalledWith(second.id, true);
 
       await act(async () => firstWrite.resolve({ data: { saved: true } }));
-      await waitFor(() => expect(opportunitiesApi.getFavorites).toHaveBeenCalledTimes(2));
-      await act(async () => secondWrite.resolve({ data: { saved: true } }));
-
-      expect(firstButton).toBeDisabled();
+      await waitFor(() => expect(firstButton).toBeEnabled());
       expect(secondButton).toBeDisabled();
-      expect(opportunitiesApi.getFavorites).toHaveBeenCalledTimes(2);
+      expect(opportunitiesApi.getFavorites).toHaveBeenCalledTimes(1);
 
-      await act(async () => firstRefresh.resolve({ data: [first] }));
+      await act(async () => secondWrite.resolve({ data: { saved: true } }));
+      await waitFor(() => expect(opportunitiesApi.getFavorites).toHaveBeenCalledTimes(2));
+      expect(secondButton).toBeDisabled();
+
+      await act(async () => finalRefresh.resolve({ data: [first, second] }));
       await waitFor(() => {
-        expect(firstButton).toHaveAttribute('aria-pressed', 'true');
-        expect(secondButton).toHaveAttribute('aria-pressed', 'true');
-        expect(firstButton).toBeEnabled();
-        expect(secondButton).toBeEnabled();
+        expect(
+          within(firstCard).getByRole('button', { name: /видалити з обраного/i }),
+        ).toBeEnabled();
+        expect(
+          within(secondCard).getByRole('button', { name: /видалити з обраного/i }),
+        ).toBeEnabled();
       });
     } finally {
       firstWrite.resolve({ data: { saved: true } });
       secondWrite.resolve({ data: { saved: true } });
-      firstRefresh.resolve({ data: [first] });
+      finalRefresh.resolve({ data: [first, second] });
     }
   });
 
@@ -268,7 +271,7 @@ describe('OpportunitiesTab component', () => {
     await waitFor(() => {
       const addButton = screen.getByRole('button', { name: /додати до обраного/i });
 
-      expect(addButton).toHaveAttribute('aria-pressed', 'false');
+      expect(addButton).not.toHaveAttribute('aria-pressed');
       expect(addButton).toBeEnabled();
     });
   });

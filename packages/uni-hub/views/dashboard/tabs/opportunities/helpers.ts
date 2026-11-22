@@ -9,7 +9,15 @@ import {
 import type { OpportunityTag } from '@core/constants/tags';
 import type { OpportunityListItem } from '@core/types/opportunities';
 import { isUnavailableOpportunity } from '@core/utils/opportunities';
-import type { TranslationKey } from '@uni-hub/i18n/locales/uk';
+import type { TranslationKey } from '@uni-hub/i18n/translations';
+
+export interface CatalogEmptyKeyParams {
+  search: string;
+  paymentFilter: OpportunityPaymentType | '';
+  favoritesView: boolean;
+  isRecruiting?: boolean;
+  tags?: OpportunityTag[];
+}
 
 export function getCatalogEmptyKey({
   search,
@@ -17,13 +25,7 @@ export function getCatalogEmptyKey({
   favoritesView,
   isRecruiting = false,
   tags = [],
-}: {
-  search: string;
-  paymentFilter: OpportunityPaymentType | '';
-  favoritesView: boolean;
-  isRecruiting?: boolean;
-  tags?: OpportunityTag[];
-}): TranslationKey {
+}: CatalogEmptyKeyParams): TranslationKey {
   if (search.trim() || paymentFilter || isRecruiting || tags.length) {
     return 'opportunities.filteredEmpty';
   }

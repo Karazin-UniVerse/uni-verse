@@ -4,18 +4,15 @@ import {
   useMutationState,
   useQuery,
   useQueryClient,
-  type QueryClient,
   type UseQueryResult,
 } from '@tanstack/react-query';
 import { useToast } from '@una';
 import type { OpportunityListItem } from '@core/types/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
+import { applyFavoriteChange, invalidateFavorites, isLastPendingFavorite } from '../cache';
 import { favoritesQueryOptions } from '../queries';
-import { opportunityKeys } from '../queryKeys';
-
-const favoriteMutationKey = opportunityKeys.favorites();
-const favoriteRefreshes = new WeakMap<QueryClient, Promise<void>>();
+import { favoriteMutationKey } from '../queryKeys';
 
 type FavoriteMutation = { id: string; isFavorite: boolean };
 
@@ -54,40 +51,14 @@ export function useFavorites(enabled: boolean): UseFavoritesResult {
     mutationFn: ({ id, isFavorite }: FavoriteMutation) =>
       opportunitiesApi.setFavorite(id, !isFavorite),
     onSuccess: (_response, { id, isFavorite }) => {
-      queryClient.setQueryData<OpportunityListItem[]>(favoriteMutationKey, (current) => {
-        if (!current) {
-          return current;
-        }
-
-        if (isFavorite) {
-          return current.filter((item) => item.id !== id);
-        }
-
-        if (current.some((item) => item.id === id)) {
-          return current;
-        }
-
-        const catalogItem = queryClient
-          .getQueryData<OpportunityListItem[]>(opportunityKeys.catalog())
-          ?.find((item) => item.id === id);
-        const detailItem = queryClient.getQueryData<OpportunityListItem>(
-          opportunityKeys.detail(id),
-        );
-        const itemToAdd = catalogItem ?? detailItem;
-
-        return itemToAdd ? [itemToAdd, ...current] : current;
-      });
-
-      // Keep overlapping writes from canceling one another's cache refresh.
-      const refresh = (favoriteRefreshes.get(queryClient) ?? Promise.resolve()).then(() =>
-        queryClient.invalidateQueries({ queryKey: favoriteMutationKey, exact: true }),
-      );
-
-      favoriteRefreshes.set(queryClient, refresh);
-
-      return refresh;
+      applyFavoriteChange(queryClient, id, isFavorite);
     },
     onError: () => toast.error(formatMessage('opportunities.toast.genericError')),
+    onSettled: () => {
+      if (isLastPendingFavorite(queryClient)) {
+        return invalidateFavorites(queryClient);
+      }
+    },
   });
   const pendingIds = useMemo(() => pendingMutations.map(({ id }) => id), [pendingMutations]);
 

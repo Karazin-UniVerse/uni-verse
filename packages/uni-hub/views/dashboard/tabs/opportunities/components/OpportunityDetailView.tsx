@@ -7,6 +7,7 @@ import { OPPORTUNITY_STATUS } from '@core/constants/opportunities';
 import { isRecruitmentPhase } from '@core/utils/opportunities';
 import { useLanguage, type FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import { OpportunityStatusBadge } from './OpportunityStatusBadge';
+import { OPPORTUNITY_LIFECYCLE_LABEL_KEYS } from '../constants';
 import { getOpportunityTagLabel } from '../tags';
 
 export interface OpportunityDetailViewProps {
@@ -20,14 +21,6 @@ export interface OpportunityDetailViewProps {
   onDelete?: () => void;
   favoriteAction?: React.ReactNode;
 }
-
-const lifecycleLabelKey = {
-  START: 'opportunities.detailModal.phaseStart',
-  ACTIVE: 'opportunities.detailModal.phaseActive',
-  PAUSED: 'opportunities.detailModal.phasePaused',
-  COMPLETED: 'opportunities.detailModal.phaseCompleted',
-  CANCELLED: 'opportunities.detailModal.phaseCancelled',
-} as const;
 
 function getPaymentTagText(opportunity: Opportunity, formatMessage: FormatMessage): string {
   if (opportunity.paymentType !== 'PAID') {
@@ -49,7 +42,8 @@ function getLifecycleTagText(
   }
 
   const key =
-    lifecycleLabelKey[opportunity.lifecycleState] ?? 'opportunities.detailModal.phaseActive';
+    OPPORTUNITY_LIFECYCLE_LABEL_KEYS[opportunity.lifecycleState] ??
+    'opportunities.detailModal.phaseActive';
   const label = formatMessage(key);
 
   return `${formatMessage('opportunities.detailModal.phaseLabel')} ${label}`;

@@ -1,10 +1,6 @@
 import { CONTROL_TYPES, TRADITIONAL_GRADES } from '@core/constants/grades';
 import { OPPORTUNITY_NOTIFICATION_KEY } from '@core/constants/notifications';
-import {
-  OPPORTUNITY_APP_STATUS,
-  OPPORTUNITY_LIFECYCLE,
-  OPPORTUNITY_MODERATE_ACTION,
-} from '@core/constants/opportunities';
+import { OPPORTUNITY_APP_STATUS, OPPORTUNITY_MODERATE_ACTION } from '@core/constants/opportunities';
 import type { ControlType } from '@core/utils/grades';
 import type { NotificationListItem } from '@ui';
 import type { TranslationKey } from '@uni-hub/i18n/translations';
@@ -12,6 +8,7 @@ import type { Notification } from '@core/types/moodle';
 import { getGradeRawValue } from '@uni-hub/utils/grades';
 import type { FeatureFlagKey, FeatureFlags } from '@core/constants/features';
 import { NAV_KEY, STUDY_VIEWS, type NavKey, type StudyView } from './constants';
+import { OPPORTUNITY_LIFECYCLE_LABEL_KEYS } from './tabs/opportunities/constants';
 
 const NOTIFICATION_MESSAGE_MAX_LENGTH = 100;
 
@@ -97,14 +94,6 @@ const PLATFORM_ACTION_KEYS: Record<string, TranslationKey> = {
   [OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES]: 'notifications.action.REQUIRE_CHANGES',
 };
 
-const PLATFORM_LIFECYCLE_KEYS: Record<string, TranslationKey> = {
-  [OPPORTUNITY_LIFECYCLE.START]: 'opportunities.detailModal.phaseStart',
-  [OPPORTUNITY_LIFECYCLE.ACTIVE]: 'opportunities.detailModal.phaseActive',
-  [OPPORTUNITY_LIFECYCLE.PAUSED]: 'opportunities.detailModal.phasePaused',
-  [OPPORTUNITY_LIFECYCLE.COMPLETED]: 'opportunities.detailModal.phaseCompleted',
-  [OPPORTUNITY_LIFECYCLE.CANCELLED]: 'opportunities.detailModal.phaseCancelled',
-};
-
 const PLATFORM_TITLE_KEYS: Record<string, TranslationKey> = {
   [OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE]: OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE,
   [OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE]:
@@ -141,7 +130,7 @@ function parsePlatformPayload(rawMessage: string): PlatformNotificationPayload |
 
 function translateCode(
   code: string | undefined,
-  keyMap: Record<string, TranslationKey>,
+  keyMap: Partial<Record<string, TranslationKey>>,
   formatMessage: MessageFormatter,
 ): string {
   if (!code) {
@@ -170,7 +159,7 @@ function formatPlatformMessage(
     if (parsed.lifecycleState) {
       const lifecycleState = translateCode(
         parsed.lifecycleState,
-        PLATFORM_LIFECYCLE_KEYS,
+        OPPORTUNITY_LIFECYCLE_LABEL_KEYS,
         formatMessage,
       );
 

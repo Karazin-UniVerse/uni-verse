@@ -121,6 +121,7 @@ describe('OpportunitiesService', () => {
           provide: NotificationsService,
           useValue: {
             createNotification: jest.fn(),
+            createNotifications: jest.fn(),
           },
         },
       ],

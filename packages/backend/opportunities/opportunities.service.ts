@@ -23,7 +23,6 @@ import type {
 } from '@universe/core/types/opportunities';
 import { PRISMA_ERROR_CODE } from '../constants/prisma';
 import { PROMISE_STATUS } from '@universe/core/constants/promises';
-import { SUBSCRIBER_NOTIFICATION_BATCH_SIZE } from './opportunities.constants';
 import { persistOpportunityApplication } from './opportunity-application.persistence';
 import {
   CreateOpportunityDto,
@@ -175,35 +174,7 @@ export class OpportunitiesService {
     return user?.roles.includes(Role.OPPORTUNITIES_MODERATOR) ?? false;
   }
 
-  /** Delivers one bounded batch of subscriber notifications. */
-  private async deliverSubscriberBatch(
-    batch: { userId: string }[],
-    opportunityId: string,
-    message: string,
-  ): Promise<void> {
-    const deliveries = await Promise.allSettled(
-      batch.map(({ userId }) =>
-        this.notificationsService.createNotification({
-          userId,
-          type: NOTIFICATION_TYPE.OPPORTUNITY_UPDATED,
-          title: OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE,
-          message,
-          link: `${OPPORTUNITIES_ROUTE}/${opportunityId}`,
-        }),
-      ),
-    );
-
-    for (const delivery of deliveries) {
-      if (delivery.status === PROMISE_STATUS.REJECTED) {
-        this.logger.error(
-          `Failed to notify subscriber for opportunity ${opportunityId}`,
-          delivery.reason,
-        );
-      }
-    }
-  }
-
-  /** Delivers published updates to saved recipients in bounded batches. */
+  /** Delivers published updates to saved recipients in a single batch insert. */
   private async notifySubscribers(
     opportunity: Opportunity,
     hasLifecycleChanged = false,
@@ -213,35 +184,30 @@ export class OpportunitiesService {
     }
 
     try {
+      const favorites = await this.prisma.opportunityFavorite.findMany({
+        where: { opportunityId: opportunity.id },
+        select: { userId: true },
+      });
+
+      if (favorites.length === 0) {
+        return;
+      }
+
       const message = JSON.stringify({
         opportunityTitle: opportunity.title,
         ...(hasLifecycleChanged && {
           lifecycleState: opportunity.lifecycleState,
         }),
       });
-      const favorites = await this.prisma.opportunityFavorite.findMany({
-        where: { opportunityId: opportunity.id },
-        select: { userId: true },
-      });
-      const batches = Array.from(
-        {
-          length: Math.ceil(
-            favorites.length / SUBSCRIBER_NOTIFICATION_BATCH_SIZE,
-          ),
-        },
-        (_, batchIndex) =>
-          favorites.slice(
-            batchIndex * SUBSCRIBER_NOTIFICATION_BATCH_SIZE,
-            (batchIndex + 1) * SUBSCRIBER_NOTIFICATION_BATCH_SIZE,
-          ),
-      );
 
-      await batches.reduce<Promise<void>>(
-        (chain, batch) =>
-          chain.then(() =>
-            this.deliverSubscriberBatch(batch, opportunity.id, message),
-          ),
-        Promise.resolve(),
+      await this.notificationsService.createNotifications(
+        favorites.map(({ userId }) => ({
+          userId,
+          type: NOTIFICATION_TYPE.OPPORTUNITY_UPDATED,
+          title: OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE,
+          message,
+          link: `${OPPORTUNITIES_ROUTE}/${opportunity.id}`,
+        })),
       );
     } catch (error) {
       this.logger.error(
@@ -926,9 +892,7 @@ export class OpportunitiesService {
     id: string,
     dto: ModerateOpportunityDto,
   ): Promise<Opportunity> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-
-    if (!user?.roles?.includes(Role.OPPORTUNITIES_MODERATOR)) {
+    if (!(await this.hasCurrentModeratorRole(userId))) {
       throw new ForbiddenException(
         'Only OPPORTUNITIES_MODERATOR can moderate opportunities',
       );

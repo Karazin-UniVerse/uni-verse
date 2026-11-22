@@ -56,6 +56,7 @@ describe('Opportunity favorites and restricted listings', () => {
   };
   let service: OpportunitiesService;
   const notify = jest.fn();
+  const notifyMany = jest.fn();
 
   beforeEach(async () => {
     jest.resetAllMocks();
@@ -69,13 +70,17 @@ describe('Opportunity favorites and restricted listings', () => {
         { provide: PrismaService, useValue: prisma },
         {
           provide: NotificationsService,
-          useValue: { createNotification: notify },
+          useValue: {
+            createNotification: notify,
+            createNotifications: notifyMany,
+          },
         },
       ],
     }).compile();
 
     service = module.get(OpportunitiesService);
     prisma.opportunity.findUnique.mockResolvedValue(opportunity);
+    prisma.opportunityFavorite.findMany.mockResolvedValue([]);
     prisma.user.findUnique.mockResolvedValue({ roles: [] });
     prisma.user.findMany.mockResolvedValue([]);
   });
@@ -277,7 +282,7 @@ describe('Opportunity favorites and restricted listings', () => {
 
       await service.update('owner', opportunity.id, { tags });
 
-      expect(notify).toHaveBeenCalledTimes(notifications);
+      expect(notifyMany).toHaveBeenCalledTimes(notifications);
     },
   );
 
@@ -299,7 +304,7 @@ describe('Opportunity favorites and restricted listings', () => {
     await service.update('owner', opportunity.id, {
       acceptsApplications: false,
     });
-    expect(notify).toHaveBeenCalledWith(
+    expect(notifyMany).toHaveBeenCalledWith([
       expect.objectContaining({
         userId: 'subscriber',
         type: 'OPPORTUNITY_UPDATED',
@@ -307,7 +312,7 @@ describe('Opportunity favorites and restricted listings', () => {
         message: JSON.stringify({ opportunityTitle: opportunity.title }),
         link: '/opportunities/opportunity',
       }),
-    );
+    ]);
   });
 
   it.each(['update', 'lifecycle'] as const)(
@@ -341,12 +346,12 @@ describe('Opportunity favorites and restricted listings', () => {
         );
       }
 
-      expect(notify).toHaveBeenCalledWith(
+      expect(notifyMany).toHaveBeenCalledWith([
         expect.objectContaining({
           userId: 'subscriber',
           type: 'OPPORTUNITY_UPDATED',
         }),
-      );
+      ]);
     },
   );
 
@@ -385,10 +390,9 @@ describe('Opportunity favorites and restricted listings', () => {
         );
       }
 
-      expect(notify).toHaveBeenCalledTimes(subscribers.length);
-
-      for (const { userId } of subscribers) {
-        expect(notify).toHaveBeenCalledWith(
+      expect(notifyMany).toHaveBeenCalledTimes(1);
+      expect(notifyMany).toHaveBeenCalledWith(
+        subscribers.map(({ userId }) =>
           expect.objectContaining({
             userId,
             type: 'OPPORTUNITY_UPDATED',
@@ -397,8 +401,8 @@ describe('Opportunity favorites and restricted listings', () => {
               lifecycleState,
             }),
           }),
-        );
-      }
+        ),
+      );
     },
   );
 
@@ -407,7 +411,7 @@ describe('Opportunity favorites and restricted listings', () => {
     await service.update('owner', opportunity.id, {
       acceptsApplications: false,
     });
-    expect(notify).not.toHaveBeenCalled();
+    expect(notifyMany).not.toHaveBeenCalled();
   });
 
   it('does not expose revisions if a concurrent update returns an unpublished opportunity', async () => {
@@ -420,7 +424,7 @@ describe('Opportunity favorites and restricted listings', () => {
     await service.update('owner', opportunity.id, {
       acceptsApplications: false,
     });
-    expect(notify).not.toHaveBeenCalled();
+    expect(notifyMany).not.toHaveBeenCalled();
   });
 
   it('does not notify subscribers for a published no-op update', async () => {
@@ -433,7 +437,7 @@ describe('Opportunity favorites and restricted listings', () => {
     await service.update('owner', opportunity.id, {
       acceptsApplications: true,
     });
-    expect(notify).not.toHaveBeenCalled();
+    expect(notifyMany).not.toHaveBeenCalled();
   });
 
   it('notifies current subscribers after approval and refreshes the safe snapshot', async () => {
@@ -456,7 +460,7 @@ describe('Opportunity favorites and restricted listings', () => {
         }),
       }),
     );
-    expect(notify).toHaveBeenCalledWith(
+    expect(notifyMany).toHaveBeenCalledWith([
       expect.objectContaining({
         userId: 'subscriber',
         type: 'OPPORTUNITY_UPDATED',
@@ -464,7 +468,7 @@ describe('Opportunity favorites and restricted listings', () => {
         message: JSON.stringify({ opportunityTitle: opportunity.title }),
         link: '/opportunities/opportunity',
       }),
-    );
+    ]);
   });
 
   it('notifies subscribers even if the owner notification fails after approval', async () => {
@@ -487,7 +491,7 @@ describe('Opportunity favorites and restricted listings', () => {
       await service.moderate('moderator', opportunity.id, {
         action: 'APPROVE',
       });
-      expect(notify).toHaveBeenCalledWith(
+      expect(notifyMany).toHaveBeenCalledWith([
         expect.objectContaining({
           userId: 'subscriber',
           type: 'OPPORTUNITY_UPDATED',
@@ -495,7 +499,7 @@ describe('Opportunity favorites and restricted listings', () => {
           message: JSON.stringify({ opportunityTitle: opportunity.title }),
           link: '/opportunities/opportunity',
         }),
-      );
+      ]);
     } finally {
       log.mockRestore();
     }
@@ -531,7 +535,7 @@ describe('Opportunity favorites and restricted listings', () => {
     prisma.opportunityFavorite.findMany.mockResolvedValue([
       { userId: 'subscriber' },
     ]);
-    notify.mockRejectedValueOnce(new Error('Delivery unavailable'));
+    notifyMany.mockRejectedValueOnce(new Error('Delivery unavailable'));
     const log = jest
       .spyOn(Logger.prototype, 'error')
       .mockImplementation(() => undefined);
@@ -662,43 +666,60 @@ describe('Opportunity favorites and restricted listings', () => {
         status: 'rejected',
         reason: expect.any(ConflictException),
       });
-      expect(notify).toHaveBeenCalledTimes(1);
+      expect(notifyMany).toHaveBeenCalledTimes(1);
     },
   );
 
-  it('bounds concurrent subscriber deliveries while notifying every favorite', async () => {
+  it('delivers all subscriber notifications in a single bulk insert', async () => {
     const published = {
       ...opportunity,
       status: OpportunityStatus.PUBLISHED,
       acceptsApplications: true,
     };
-    let active = 0;
-    let peak = 0;
-    const recipients: string[] = [];
+    const favorites = Array.from({ length: 45 }, (_, index) => ({
+      userId: `subscriber-${index}`,
+    }));
 
     prisma.opportunity.findUnique.mockResolvedValue(published);
     prisma.opportunity.update.mockResolvedValue({
       ...published,
       acceptsApplications: false,
     });
-    prisma.opportunityFavorite.findMany.mockResolvedValue(
-      Array.from({ length: 45 }, (_, index) => ({
-        userId: `subscriber-${index}`,
-      })),
-    );
-    notify.mockImplementation(async ({ userId }: { userId: string }) => {
-      active += 1;
-      peak = Math.max(peak, active);
-      recipients.push(userId);
-      await Promise.resolve();
-      active -= 1;
-    });
+    prisma.opportunityFavorite.findMany.mockResolvedValue(favorites);
     await service.update('owner', opportunity.id, {
       acceptsApplications: false,
     });
 
-    expect(peak).toBeLessThanOrEqual(20);
-    expect(new Set(recipients).size).toBe(45);
+    expect(notifyMany).toHaveBeenCalledTimes(1);
+    expect(notifyMany.mock.calls[0][0]).toHaveLength(45);
+    expect(
+      new Set(
+        (notifyMany.mock.calls[0][0] as { userId: string }[]).map(
+          ({ userId }) => userId,
+        ),
+      ).size,
+    ).toBe(45);
+  });
+
+  it('skips bulk notification insert when there are no subscribers', async () => {
+    const published = {
+      ...opportunity,
+      status: OpportunityStatus.PUBLISHED,
+      acceptsApplications: true,
+    };
+
+    prisma.opportunity.findUnique.mockResolvedValue(published);
+    prisma.opportunity.update.mockResolvedValue({
+      ...published,
+      acceptsApplications: false,
+    });
+    prisma.opportunityFavorite.findMany.mockResolvedValue([]);
+
+    await service.update('owner', opportunity.id, {
+      acceptsApplications: false,
+    });
+
+    expect(notifyMany).not.toHaveBeenCalled();
   });
 
   it('snapshots legacy publishedTitle and publishedPaymentType when edited content triggers remoderation', async () => {
@@ -809,7 +830,7 @@ describe('Opportunity favorites and restricted listings', () => {
     });
 
     expect(result.acceptsApplications).toBe(false);
-    expect(notify).not.toHaveBeenCalled();
+    expect(notifyMany).not.toHaveBeenCalled();
   });
 
   it('throws NotFoundException in findOne when caller only receives an unavailable summary', async () => {

@@ -26,7 +26,6 @@ export function FavoriteToggleButton({
       variant="secondary"
       className={className}
       disabled={disabled}
-      aria-pressed={isFavorite}
       aria-label={formatMessage(
         isFavorite ? 'opportunities.favorites.remove' : 'opportunities.favorites.add',
       )}
