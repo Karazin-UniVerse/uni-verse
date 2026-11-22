@@ -37,6 +37,18 @@ describe('MoodleCredentialsGuard', () => {
     expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
   });
 
+  it('should throw UnauthorizedException when user no longer exists in database', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue(null);
+
+    await expect(
+      guard.canActivate(createContext({ sub: 'deleted-user' })),
+    ).rejects.toThrow(UnauthorizedException);
+    expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+      where: { id: 'deleted-user' },
+      select: { token: true, moodleId: true },
+    });
+  });
+
   it('should throw BadRequestException when user has no linked Moodle credentials', async () => {
     mockPrisma.user.findUnique.mockResolvedValue({
       token: null,

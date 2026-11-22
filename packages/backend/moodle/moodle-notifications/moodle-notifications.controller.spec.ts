@@ -18,10 +18,6 @@ describe('MoodleNotificationsController', () => {
           provide: PrismaService,
           useValue: { user: { findUnique: jest.fn() } },
         },
-        {
-          provide: PrismaService,
-          useValue: { user: { findUnique: jest.fn() } },
-        },
         { provide: MoodleNotificationsService, useValue: mockService },
       ],
     }).compile();

@@ -18,10 +18,6 @@ describe('MoodleCourseContentsController', () => {
           provide: PrismaService,
           useValue: { user: { findUnique: jest.fn() } },
         },
-        {
-          provide: PrismaService,
-          useValue: { user: { findUnique: jest.fn() } },
-        },
         { provide: MoodleCourseContentsService, useValue: mockService },
       ],
     }).compile();

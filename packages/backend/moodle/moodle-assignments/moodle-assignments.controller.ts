@@ -16,7 +16,6 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
-import { AtGuard } from '../../auth/guards/at.guard';
 import { MoodleCredentialsGuard } from '../guards/moodle-credentials.guard';
 import { MoodleAssignmentsService } from './moodle-assignments.service';
 import {
@@ -28,7 +27,7 @@ import {
 
 @ApiTags('moodle')
 @Controller('moodle')
-@UseGuards(AtGuard, MoodleCredentialsGuard)
+@UseGuards(MoodleCredentialsGuard)
 @ApiBearerAuth()
 export class MoodleAssignmentsController {
   constructor(private readonly assignmentsService: MoodleAssignmentsService) {}

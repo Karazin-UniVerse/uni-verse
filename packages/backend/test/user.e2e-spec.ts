@@ -303,6 +303,32 @@ describe('UserController (HTTP Integration / E2E)', () => {
       );
     });
 
+    it('should reject null or too-short password on self PATCH with 400', async () => {
+      await request(app.getHttpServer())
+        .patch('/user/test-student')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({ password: null })
+        .expect(400);
+
+      await request(app.getHttpServer())
+        .patch('/user/test-student')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({ password: '12345' })
+        .expect(400);
+    });
+
+    it('should reject stale ADMIN JWT claim after DB role downgrade with 403', async () => {
+      mockUsers.set('test-admin', {
+        ...mockUsers.get('test-admin'),
+        roles: ['OPPORTUNITIES_USER'],
+      });
+
+      await request(app.getHttpServer())
+        .get('/user')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(403);
+    });
+
     it('should reject non-admin deletion with 403', async () => {
       await request(app.getHttpServer())
         .delete('/user/test-admin')

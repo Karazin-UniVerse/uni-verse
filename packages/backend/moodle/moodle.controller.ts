@@ -4,7 +4,6 @@ import { MoodleCoursesDto } from './moodle-courses/moodle-courses-dto';
 import { MoodleGradesService } from './moodle-grades/moodle-grades.service';
 import { MoodleGradesResponseDto } from './moodle-grades/moodle-grades-dto';
 import { GetUser } from '../auth/decorators/get-user.decorator';
-import { AtGuard } from '../auth/guards/at.guard';
 import { MoodleCredentialsGuard } from './guards/moodle-credentials.guard';
 import {
   ApiBearerAuth,
@@ -16,7 +15,7 @@ import {
 import { filterCourses, CourseStatus } from '../utils/moodleFilters';
 
 @ApiTags('moodle')
-@UseGuards(AtGuard, MoodleCredentialsGuard)
+@UseGuards(MoodleCredentialsGuard)
 @Controller('moodle')
 export class MoodleController {
   constructor(
