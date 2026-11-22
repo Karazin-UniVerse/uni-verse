@@ -306,6 +306,7 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
 
     await user.click(screen.getByRole('button', { name: /повернутися до входу/i }));
 
+    expect(mockAuthApi.logout).toHaveBeenCalledTimes(1);
     expect(screen.queryByPlaceholderText('Логін у Moodle')).not.toBeInTheDocument();
     expect(screen.getByRole('note')).toHaveTextContent(/корпоративним акаунтом/i);
     expect(screen.getByTestId('google-btn')).toBeInTheDocument();

@@ -97,4 +97,34 @@ describe('CsrfGuard', () => {
       ),
     ).toBe(true);
   });
+
+  it('should reject empty Bearer header when auth cookies are present and X-Requested-With is missing', () => {
+    expect(() =>
+      guard.canActivate(
+        createContext({
+          method: 'POST',
+          headers: {
+            origin: 'https://universemvp.tech',
+            authorization: 'Bearer   ',
+          },
+          cookies: { accessToken: 'cookie-jwt' },
+        }),
+      ),
+    ).toThrow(ForbiddenException);
+  });
+
+  it('should reject Origin: null on state-changing requests', () => {
+    expect(() =>
+      guard.canActivate(
+        createContext({
+          method: 'POST',
+          headers: {
+            origin: 'null',
+            'x-requested-with': 'XMLHttpRequest',
+          },
+          cookies: { accessToken: 'cookie-jwt' },
+        }),
+      ),
+    ).toThrow(ForbiddenException);
+  });
 });

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { buildQueryString, authApi, moodleApi, ApiClient, getErrorMessage } from './api';
 import { resetRefreshPromiseForTests } from './api.request';
+import { clearUserSessionStorage, saveSessionUser } from './api.session';
 
 describe('UniHub API Service', () => {
   const originalFetch = global.fetch;
@@ -521,6 +522,11 @@ describe('UniHub API Service', () => {
       mockStorage.isLoggedIn = 'true';
 
       let refreshCallCount = 0;
+      let gradesCallCount = 0;
+      let releaseTrailingGrades401!: () => void;
+      const trailingGrades401Gate = new Promise<void>((resolve) => {
+        releaseTrailingGrades401 = resolve;
+      });
       let cookieRefreshed = false;
 
       global.fetch = vi.fn().mockImplementation(async (url: string) => {
@@ -532,6 +538,27 @@ describe('UniHub API Service', () => {
             ok: true,
             status: 200,
             json: async () => ({ user: refreshedSessionUser }),
+          } as Response;
+        }
+
+        if (url.includes('/moodle/grades')) {
+          gradesCallCount += 1;
+
+          if (gradesCallCount === 1) {
+            await trailingGrades401Gate;
+
+            return {
+              ok: false,
+              status: 401,
+              statusText: 'Unauthorized',
+              json: async () => ({ statusCode: 401, message: 'Unauthorized' }),
+            } as Response;
+          }
+
+          return {
+            ok: true,
+            status: 200,
+            json: async () => [],
           } as Response;
         }
 
@@ -551,14 +578,102 @@ describe('UniHub API Service', () => {
         } as Response;
       });
 
-      // First request refreshes the cookie session
-      await moodleApi.getCourses();
+      // Start both requests before refresh completes so trailing request enters with stale epoch
+      const coursesPromise = moodleApi.getCourses();
+      const trailingGradesPromise = moodleApi.getGrades();
+
+      await coursesPromise;
       expect(refreshCallCount).toBe(1);
 
-      const trailingResult = await moodleApi.getGrades();
+      // Now let the trailing request receive its initial 401 after refresh already bumped refreshEpoch
+      releaseTrailingGrades401();
+
+      const trailingResult = await trailingGradesPromise;
 
       expect(trailingResult.data).toEqual([]);
+      expect(gradesCallCount).toBe(2);
       expect(refreshCallCount).toBe(1);
+    });
+
+    it('does not repopulate session or replay request if user logs out while refresh is in flight', async () => {
+      mockStorage.isLoggedIn = 'true';
+      mockStorage.sessionUser = JSON.stringify(refreshedSessionUser);
+
+      let coursesCallCount = 0;
+      let releaseRefresh!: () => void;
+      const refreshGate = new Promise<void>((resolve) => {
+        releaseRefresh = resolve;
+      });
+      let refreshStarted!: () => void;
+      const refreshStartedPromise = new Promise<void>((resolve) => {
+        refreshStarted = resolve;
+      });
+
+      global.fetch = vi.fn().mockImplementation(async (url: string) => {
+        if (url.includes('/auth/refresh')) {
+          refreshStarted();
+          await refreshGate;
+
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ user: refreshedSessionUser }),
+          } as Response;
+        }
+
+        coursesCallCount += 1;
+
+        return {
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized',
+          json: async () => ({ statusCode: 401, message: 'Unauthorized' }),
+        } as Response;
+      });
+
+      const coursesPromise = moodleApi.getCourses();
+
+      await refreshStartedPromise;
+      clearUserSessionStorage();
+      releaseRefresh();
+
+      await expect(coursesPromise).rejects.toThrow('Session changed during token refresh');
+      expect(mockStorage.sessionUser).toBeUndefined();
+      expect(coursesCallCount).toBe(1);
+    });
+
+    it('does not wipe a newly logged-in user session when a stale 401 fails', async () => {
+      const userA = { ...refreshedSessionUser, id: 'user-a', email: 'a@karazin.ua' };
+      const userB = { ...refreshedSessionUser, id: 'user-b', email: 'b@karazin.ua' };
+
+      saveSessionUser(userA);
+      mockStorage.isLoggedIn = 'true';
+
+      let releaseStaleResponse!: () => void;
+      const staleGate = new Promise<void>((resolve) => {
+        releaseStaleResponse = resolve;
+      });
+
+      global.fetch = vi.fn().mockImplementation(async () => {
+        await staleGate;
+
+        return {
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized',
+          json: async () => ({ statusCode: 401, message: 'Unauthorized' }),
+        } as Response;
+      });
+
+      const staleRequest = moodleApi.getCourses();
+
+      clearUserSessionStorage();
+      saveSessionUser(userB);
+      mockStorage.isLoggedIn = 'true';
+      releaseStaleResponse();
+
+      await expect(staleRequest).rejects.toThrow('Session changed during request');
+      expect(JSON.parse(mockStorage.sessionUser)).toEqual(userB);
     });
 
     it('does not refresh token when skipAuthRefresh option is passed', async () => {

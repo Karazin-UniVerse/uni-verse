@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { AUTH_ERROR } from '@universe/core/constants/auth';
 import type { SessionUser } from '@universe/core/types/auth';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { GoogleAuthDto, LinkMoodleDto, LoginDto, RegisterDto } from './dto';
@@ -32,11 +32,20 @@ describe('AuthController', () => {
     } as unknown as jest.Mocked<Response>;
   };
 
+  const createMockRequest = (
+    cookies: Record<string, string | undefined> = {},
+  ): Request => {
+    return {
+      cookies,
+    } as unknown as Request;
+  };
+
   beforeEach(async () => {
     const mockAuthService = {
       register: jest.fn(),
       login: jest.fn(),
       logout: jest.fn(),
+      logoutByRefreshToken: jest.fn(),
       refreshTokens: jest.fn(),
       loginWithGoogle: jest.fn(),
       linkMoodleAccount: jest.fn(),
@@ -156,11 +165,12 @@ describe('AuthController', () => {
   describe('logout', () => {
     it('should logout user, clear both httpOnly cookies, and return confirmation message', async () => {
       const userId = 'user-uuid-123';
+      const request = createMockRequest();
       const response = createMockResponse();
 
       authService.logout.mockResolvedValue(undefined);
 
-      const result = await controller.logout(userId, response);
+      const result = await controller.logout(userId, request, response);
 
       expect(authService.logout).toHaveBeenCalledWith(userId);
       expect(response.clearCookie).toHaveBeenCalledWith(
@@ -178,6 +188,58 @@ describe('AuthController', () => {
         }),
       );
       expect(result).toEqual({ message: 'Logged out successfully' });
+    });
+
+    it('should revoke session via refreshToken cookie when accessToken is expired or absent', async () => {
+      const request = createMockRequest({ refreshToken: 'valid-rt-cookie' });
+      const response = createMockResponse();
+
+      authService.logoutByRefreshToken.mockResolvedValue(true);
+
+      const result = await controller.logout(undefined, request, response);
+
+      expect(authService.logout).not.toHaveBeenCalled();
+      expect(authService.logoutByRefreshToken).toHaveBeenCalledWith(
+        'valid-rt-cookie',
+      );
+      expect(response.clearCookie).toHaveBeenCalledWith(
+        'accessToken',
+        expect.objectContaining({ httpOnly: true, sameSite: 'lax' }),
+      );
+      expect(response.clearCookie).toHaveBeenCalledWith(
+        'refreshToken',
+        expect.objectContaining({ httpOnly: true, sameSite: 'lax' }),
+      );
+      expect(result).toEqual({ message: 'Logged out successfully' });
+    });
+
+    it('should clear stale cookies and throw UnauthorizedException when refreshToken cookie is invalid', async () => {
+      const request = createMockRequest({ refreshToken: 'expired-rt-cookie' });
+      const response = createMockResponse();
+
+      authService.logoutByRefreshToken.mockResolvedValue(false);
+
+      await expect(
+        controller.logout(undefined, request, response),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(response.clearCookie).toHaveBeenCalledWith(
+        'accessToken',
+        expect.objectContaining({ httpOnly: true }),
+      );
+      expect(response.clearCookie).toHaveBeenCalledWith(
+        'refreshToken',
+        expect.objectContaining({ httpOnly: true }),
+      );
+    });
+
+    it('should throw UnauthorizedException without clearing cookies when no credentials are present', async () => {
+      const request = createMockRequest();
+      const response = createMockResponse();
+
+      await expect(
+        controller.logout(undefined, request, response),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(response.clearCookie).not.toHaveBeenCalled();
     });
   });
 
@@ -389,11 +451,12 @@ describe('AuthController', () => {
       process.env.NODE_ENV = 'production';
 
       try {
+        const request = createMockRequest();
         const response = createMockResponse();
 
         authService.logout.mockResolvedValue(undefined);
 
-        await controller.logout('user-123', response);
+        await controller.logout('user-123', request, response);
 
         expect(response.clearCookie).toHaveBeenCalledWith(
           'accessToken',

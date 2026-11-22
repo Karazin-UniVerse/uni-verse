@@ -48,6 +48,7 @@ describe('getCorsConfig', () => {
     expect(isAllowedOrigin('http://universemvp.tech')).toBe(false);
     expect(isAllowedOrigin('https://evil.example')).toBe(false);
     expect(isAllowedOrigin('not-a-url')).toBe(false);
+    expect(isAllowedOrigin('null')).toBe(false);
   });
 
   it('blocks localhost origins in production mode', () => {

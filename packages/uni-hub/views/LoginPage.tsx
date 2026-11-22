@@ -37,7 +37,7 @@ const LoginPage: React.FC = () => {
   const googleLogin = useGoogleLogin();
   const linkMoodle = useLinkMoodle();
   const logout = useLogout();
-  const loading = googleLogin.isPending || linkMoodle.isPending;
+  const loading = googleLogin.isPending || linkMoodle.isPending || logout.isPending;
 
   const handleGoogleSuccess = async (idToken: string): Promise<void> => {
     setError(null);

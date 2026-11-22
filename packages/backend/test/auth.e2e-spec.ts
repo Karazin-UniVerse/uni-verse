@@ -368,5 +368,46 @@ describe('AuthController (HTTP Integration / E2E)', () => {
 
       expect(res.status).toBe(401);
     });
+
+    it('should revoke DB refresh token and clear cookies on logout when accessToken is expired or absent', async () => {
+      const loginRes = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: 'expiredlogout@karazin.ua',
+          password: 'ValidPassword123!',
+        })
+        .expect(200);
+
+      const cookies = loginRes.headers['set-cookie'] as unknown as
+        string[] | undefined;
+      const refreshCookie = extractCookiePair(cookies, 'refreshToken');
+
+      expect(refreshCookie).toBeDefined();
+
+      // Simulate >15min idle logout: accessToken is missing/expired, refreshToken is still valid
+      const logoutRes = await request(app.getHttpServer())
+        .post('/auth/logout')
+        .set('X-Requested-With', 'XMLHttpRequest')
+        .set('Cookie', ['accessToken=expired.invalid.jwt', refreshCookie!])
+        .expect(200);
+
+      expect(logoutRes.body.message).toContain('Logged out');
+      const clearedCookies = logoutRes.headers['set-cookie'] as unknown as
+        string[] | undefined;
+
+      expect(
+        clearedCookies?.some((cookie) => cookie.startsWith('accessToken=;')),
+      ).toBe(true);
+      expect(
+        clearedCookies?.some((cookie) => cookie.startsWith('refreshToken=;')),
+      ).toBe(true);
+
+      // Replaying the revoked refreshToken must now be rejected
+      await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .set('X-Requested-With', 'XMLHttpRequest')
+        .set('Cookie', [refreshCookie!])
+        .expect(403);
+    });
   });
 });

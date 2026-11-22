@@ -2,10 +2,13 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -16,7 +19,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AUTH_ROUTES } from '@universe/core/constants/routes';
-import type { CookieOptions, Response } from 'express';
+import type { CookieOptions, Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { GetUser } from './decorators/get-user.decorator';
 import { Public } from './decorators/public.decorator';
@@ -154,6 +157,7 @@ export class AuthController {
 
   @ApiBearerAuth()
   @ApiCookieAuth('accessToken')
+  @Header('Cache-Control', 'no-store')
   @Get(AUTH_ROUTES.ME)
   @ApiOperation({ summary: 'Get current authenticated user session' })
   @ApiResponse({
@@ -165,8 +169,10 @@ export class AuthController {
     return this.authService.getSessionUser(userId);
   }
 
+  @Public()
   @ApiBearerAuth()
   @ApiCookieAuth('accessToken')
+  @ApiCookieAuth('refreshToken')
   @Post(AUTH_ROUTES.LOGOUT)
   @ApiOperation({ summary: 'Logout user' })
   @ApiResponse({
@@ -176,13 +182,41 @@ export class AuthController {
   })
   @HttpCode(HttpStatus.OK)
   async logout(
-    @GetUser('sub') userId: string,
+    @GetUser('sub') userId: string | undefined,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LogoutResponseDto> {
-    await this.authService.logout(userId);
-    this.clearAuthCookies(res);
+    if (userId) {
+      await this.authService.logout(userId);
+      this.clearAuthCookies(res);
 
-    return { message: 'Logged out successfully' };
+      return { message: 'Logged out successfully' };
+    }
+
+    const cookies = req.cookies as Record<string, unknown> | undefined;
+    const refreshToken =
+      typeof cookies?.refreshToken === 'string'
+        ? cookies.refreshToken
+        : undefined;
+    const hasAccessCookie = typeof cookies?.accessToken === 'string';
+
+    if (refreshToken) {
+      const revoked = await this.authService.logoutByRefreshToken(refreshToken);
+
+      this.clearAuthCookies(res);
+
+      if (revoked) {
+        return { message: 'Logged out successfully' };
+      }
+
+      throw new UnauthorizedException();
+    }
+
+    if (hasAccessCookie) {
+      this.clearAuthCookies(res);
+    }
+
+    throw new UnauthorizedException();
   }
 
   @Public()

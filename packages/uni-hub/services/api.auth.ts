@@ -1,4 +1,4 @@
-import type { AuthResponse, GoogleAuthResponse, SessionUser } from '@core/types/auth';
+import type { AuthResponse, GoogleAuthResponse } from '@core/types/auth';
 import { AUTH_ROUTES } from '@core/constants/routes';
 import { safeStorage } from './api.storage';
 import { ApiClient } from './api.request';
@@ -79,18 +79,6 @@ export class AuthApi extends ApiClient {
       safeStorage.removeItem('moodleToken');
       safeStorage.removeItem('universe_dashboard_data');
       safeStorage.removeItem('universe_last_sync_time');
-    }
-
-    return response;
-  }
-
-  async getMe(): Promise<{ data: SessionUser }> {
-    const response = await this.request<SessionUser>(`/auth/${AUTH_ROUTES.ME}`, {
-      retries: 0,
-    });
-
-    if (response.data) {
-      saveSessionUser(response.data);
     }
 
     return response;

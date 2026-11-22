@@ -43,6 +43,7 @@ describe('AuthService', () => {
 
   const mockJwtService = {
     signAsync: jest.fn(),
+    verifyAsync: jest.fn(),
   } as unknown as jest.Mocked<JwtService>;
 
   let authService: AuthService;
@@ -1006,6 +1007,44 @@ describe('AuthService', () => {
       await expect(authService.getSessionUser('missing-id')).rejects.toThrow(
         UnauthorizedException,
       );
+    });
+  });
+
+  describe('logoutByRefreshToken', () => {
+    it('should revoke stored refresh token when cookie token matches DB hash', async () => {
+      mockJwtService.verifyAsync.mockResolvedValue({ sub: sampleUser.id });
+      mockUserService.findById.mockResolvedValue(sampleUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+      const revoked = await authService.logoutByRefreshToken('valid-rt');
+
+      expect(revoked).toBe(true);
+      expect(mockJwtService.verifyAsync).toHaveBeenCalledWith('valid-rt', {
+        secret: 'valid-production-rt-secret',
+      });
+      expect(mockUserService.updateUser).toHaveBeenCalledWith(sampleUser.id, {
+        refreshToken: null,
+      });
+    });
+
+    it('should return false without clearing DB hash when refresh token hash does not match', async () => {
+      mockJwtService.verifyAsync.mockResolvedValue({ sub: sampleUser.id });
+      mockUserService.findById.mockResolvedValue(sampleUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      const revoked = await authService.logoutByRefreshToken('stale-rt');
+
+      expect(revoked).toBe(false);
+      expect(mockUserService.updateUser).not.toHaveBeenCalled();
+    });
+
+    it('should return false when refresh token verification throws', async () => {
+      mockJwtService.verifyAsync.mockRejectedValue(new Error('jwt expired'));
+
+      const revoked = await authService.logoutByRefreshToken('expired-rt');
+
+      expect(revoked).toBe(false);
+      expect(mockUserService.findById).not.toHaveBeenCalled();
     });
   });
 });
