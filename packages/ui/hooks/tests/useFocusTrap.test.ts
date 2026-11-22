@@ -160,4 +160,61 @@ describe('useFocusTrap', () => {
     document.dispatchEvent(backwardEvent);
     expect(backwardEvent.defaultPrevented).toBe(false);
   });
+
+  it('should wrap Tab to first button when only a button with tabIndex=-1 follows the focused panel', async () => {
+    const focusedPanel = document.createElement('div');
+    const nonTabbableButton = document.createElement('button');
+
+    focusedPanel.tabIndex = -1;
+    nonTabbableButton.tabIndex = -1;
+    nonTabbableButton.textContent = 'Skipped';
+    container.appendChild(focusedPanel);
+    container.appendChild(nonTabbableButton);
+
+    const ref = { current: container };
+
+    renderHook(() => useFocusTrap(ref, { enabled: true }));
+
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    focusedPanel.focus();
+    expect(document.activeElement).toBe(focusedPanel);
+
+    const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+
+    document.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(btn1);
+  });
+
+  it('should wrap Shift+Tab to last button when only a button with tabIndex=-1 precedes the focused panel', async () => {
+    const nonTabbableButton = document.createElement('button');
+    const focusedPanel = document.createElement('div');
+
+    nonTabbableButton.tabIndex = -1;
+    nonTabbableButton.textContent = 'Skipped';
+    focusedPanel.tabIndex = -1;
+    container.insertBefore(focusedPanel, btn1);
+    container.insertBefore(nonTabbableButton, focusedPanel);
+
+    const ref = { current: container };
+
+    renderHook(() => useFocusTrap(ref, { enabled: true }));
+
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    focusedPanel.focus();
+    expect(document.activeElement).toBe(focusedPanel);
+
+    const event = new KeyboardEvent('keydown', {
+      key: 'Tab',
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+
+    document.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(btn2);
+  });
 });

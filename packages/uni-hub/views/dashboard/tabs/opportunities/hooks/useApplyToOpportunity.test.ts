@@ -61,7 +61,7 @@ describe('useApplyToOpportunity alternative contact', () => {
     { contact: '', expected: '' },
     { contact: '   ', expected: '' },
     { contact: '  @student_dev  ', expected: '@student_dev' },
-    { contact: '  alinavasylchenko586@gmail.com  ', expected: 'alinavasylchenko586@gmail.com' },
+    { contact: '  student@example.com  ', expected: 'student@example.com' },
   ])(
     'should submit with alternative contact $contact without copying profile email',
     async ({ contact, expected }) => {

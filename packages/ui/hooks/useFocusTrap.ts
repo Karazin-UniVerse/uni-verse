@@ -1,10 +1,8 @@
 import { useEffect, useRef, type RefObject } from 'react';
-
-const FOCUSABLE_SELECTOR =
-  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+import { tabbable } from 'tabbable';
 
 function hasTabbableInDirection(
-  focusableElements: HTMLElement[],
+  focusableElements: (HTMLElement | SVGElement)[],
   activeElement: HTMLElement,
   direction: 'previous' | 'next',
 ): boolean {
@@ -41,7 +39,7 @@ export function useFocusTrap(
         return;
       }
 
-      const firstFocusable = container.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+      const [firstFocusable] = tabbable(container);
 
       if (firstFocusable) {
         firstFocusable.focus();
@@ -55,9 +53,7 @@ export function useFocusTrap(
         return;
       }
 
-      const focusableElements = Array.from(
-        container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-      );
+      const focusableElements = tabbable(container);
 
       if (focusableElements.length === 0) {
         event.preventDefault();

@@ -1,47 +1,12 @@
+import isEmail from 'validator/lib/isEmail.js';
+
 const TELEGRAM_REGEX =
   /^(@[a-zA-Z][a-zA-Z0-9_]{3,31}|(https?:\/\/)?(www\.)?(t|telegram)\.me\/[a-zA-Z][a-zA-Z0-9_]{3,31}\/?)$/i;
 
 const PHONE_CHARS_REGEX = /^\+?[0-9\s\-()]+$/;
-const EMAIL_LOCAL_REGEX = /^[^\s@:,;<>()[\]\\"]+$/;
-const EMAIL_DOMAIN_LABEL_REGEX = /^[a-zA-Z0-9-]+$/;
 
 export function isEmailContact(value: string): boolean {
-  const trimmed = value.trim();
-
-  if (!trimmed || /[\s,]/.test(trimmed)) {
-    return false;
-  }
-
-  const parts = trimmed.split('@');
-
-  if (parts.length !== 2) {
-    return false;
-  }
-
-  const [localPart, domain] = parts;
-
-  if (
-    !localPart ||
-    !domain ||
-    localPart.startsWith('.') ||
-    localPart.endsWith('.') ||
-    localPart.includes('..') ||
-    !EMAIL_LOCAL_REGEX.test(localPart)
-  ) {
-    return false;
-  }
-
-  const labels = domain.split('.');
-  const tld = labels.at(-1) ?? '';
-
-  if (labels.length < 2 || tld.length < 2 || !/[a-zA-Z]/.test(tld)) {
-    return false;
-  }
-
-  return labels.every(
-    (label) =>
-      EMAIL_DOMAIN_LABEL_REGEX.test(label) && !label.startsWith('-') && !label.endsWith('-'),
-  );
+  return isEmail(value.trim());
 }
 
 export function normalizeContactPhone(value: string): string | null {
