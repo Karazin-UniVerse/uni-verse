@@ -109,7 +109,7 @@ export const DashboardShell: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const handleLogout = (): void => {
     logout.mutate(undefined, {
-      onSettled: () => {
+      onSuccess: () => {
         router.push('/login');
       },
     });

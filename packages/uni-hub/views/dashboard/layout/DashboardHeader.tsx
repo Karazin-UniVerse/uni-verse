@@ -31,7 +31,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
   const handleLogout = (): void => {
     logout.mutate(undefined, {
-      onSettled: () => {
+      onSuccess: () => {
         window.location.href = '/login';
       },
     });

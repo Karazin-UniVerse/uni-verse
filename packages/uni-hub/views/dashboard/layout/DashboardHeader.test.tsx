@@ -190,7 +190,7 @@ describe('DashboardHeader', () => {
     });
   });
 
-  it('should clear localStorage fallback and redirect to /login when logout API call fails', async () => {
+  it('should keep localStorage and the current page when logout API call fails', async () => {
     const user = userEvent.setup();
 
     window.localStorage.setItem('accessToken', 'test-token');
@@ -201,7 +201,10 @@ describe('DashboardHeader', () => {
     window.localStorage.setItem('universe_dashboard_data', '{"courses":[]}');
     window.localStorage.setItem('universe_last_sync_time', '123456789');
 
-    vi.spyOn(authApi, 'logout').mockRejectedValue(new Error('Logout network error'));
+    const originalUrl = window.location.href;
+    const logoutSpy = vi
+      .spyOn(authApi, 'logout')
+      .mockRejectedValue(new Error('Logout network error'));
 
     renderHeader();
 
@@ -214,16 +217,17 @@ describe('DashboardHeader', () => {
     await user.click(logoutButton);
 
     await waitFor(() => {
-      expect(window.location.href).toContain('/login');
+      expect(logoutSpy).toHaveBeenCalledTimes(1);
     });
 
-    expect(window.localStorage.getItem('accessToken')).toBeNull();
-    expect(window.localStorage.getItem('sessionUser')).toBeNull();
-    expect(window.localStorage.getItem('isLoggedIn')).toBeNull();
-    expect(window.localStorage.getItem('moodleToken')).toBeNull();
-    expect(window.localStorage.getItem('universe_student_profile_v2')).toBeNull();
-    expect(window.localStorage.getItem('universe_dashboard_data')).toBeNull();
-    expect(window.localStorage.getItem('universe_last_sync_time')).toBeNull();
+    expect(window.location.href).toBe(originalUrl);
+    expect(window.localStorage.getItem('accessToken')).not.toBeNull();
+    expect(window.localStorage.getItem('sessionUser')).not.toBeNull();
+    expect(window.localStorage.getItem('isLoggedIn')).not.toBeNull();
+    expect(window.localStorage.getItem('moodleToken')).not.toBeNull();
+    expect(window.localStorage.getItem('universe_student_profile_v2')).not.toBeNull();
+    expect(window.localStorage.getItem('universe_dashboard_data')).not.toBeNull();
+    expect(window.localStorage.getItem('universe_last_sync_time')).not.toBeNull();
   });
 
   it('should pass moodle link and unlink callbacks to user dropdown', async () => {

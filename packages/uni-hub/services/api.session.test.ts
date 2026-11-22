@@ -10,6 +10,7 @@ import {
   getSessionUserSnapshot,
   readSessionUser,
   saveSessionUser,
+  startSession,
   subscribeSessionUser,
 } from './api.session';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
@@ -108,7 +109,10 @@ describe('sessionUser helpers', () => {
       isLinked: true,
     };
 
-    saveSessionUser(user);
+    startSession(user);
+    const activeGeneration = getSessionGeneration();
+
+    expect(activeGeneration).not.toBe(generationBefore);
 
     expect(readSessionUser()).toEqual(user);
     expect(storage.userEmail).toBe('student@karazin.ua');
@@ -120,13 +124,13 @@ describe('sessionUser helpers', () => {
     expect(firstSnapshot).toEqual(user);
     expect(secondSnapshot).toBe(firstSnapshot);
 
-    // Switching to another account increments sessionGeneration
-    saveSessionUser({ ...user, id: 'user-2' });
-    expect(getSessionGeneration()).toBe(generationBefore + 1);
+    // Metadata writes preserve ownership
+    saveSessionUser({ ...user, name: 'Updated' });
+    expect(getSessionGeneration()).toBe(activeGeneration);
     expect(listener).toHaveBeenCalledTimes(2);
 
     clearUserSessionStorage();
-    expect(getSessionGeneration()).toBe(generationBefore + 2);
+    expect(getSessionGeneration()).not.toBe(activeGeneration);
     expect(getSessionUserSnapshot()).toBeNull();
     expect(listener).toHaveBeenCalledTimes(3);
 

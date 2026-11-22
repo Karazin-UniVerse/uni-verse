@@ -375,34 +375,36 @@ export class AuthService {
       return false;
     }
 
+    let payload: { sub?: string };
+
     try {
-      const payload = await this.jwtService.verifyAsync<{ sub?: string }>(
+      payload = await this.jwtService.verifyAsync<{ sub?: string }>(
         refreshToken,
         { secret: rtSecret },
       );
-
-      if (!payload?.sub) {
-        return false;
-      }
-
-      const user = await this.userService.findById(payload.sub);
-
-      if (!user?.refreshToken) {
-        return false;
-      }
-
-      const rtMatches = await bcrypt.compare(refreshToken, user.refreshToken);
-
-      if (!rtMatches) {
-        return false;
-      }
-
-      await this.userService.updateUser(user.id, { refreshToken: null });
-
-      return true;
     } catch {
       return false;
     }
+
+    if (!payload?.sub) {
+      return false;
+    }
+
+    const user = await this.userService.findById(payload.sub);
+
+    if (!user?.refreshToken) {
+      return false;
+    }
+
+    const rtMatches = await bcrypt.compare(refreshToken, user.refreshToken);
+
+    if (!rtMatches) {
+      return false;
+    }
+
+    await this.userService.updateUser(user.id, { refreshToken: null });
+
+    return true;
   }
 
   async refreshTokens(userId: string, rt: string) {
@@ -424,7 +426,7 @@ export class AuthService {
       roles: user.roles,
     });
 
-    await this.updateRtHash(user.id, tokens.refresh_token);
+    await this.updateRtHash(user.id, tokens.refresh_token, user.refreshToken);
 
     return {
       ...tokens,
@@ -432,8 +434,18 @@ export class AuthService {
     };
   }
 
-  async updateRtHash(userId: string, rt: string) {
+  async updateRtHash(userId: string, rt: string, expectedHash?: string) {
     const hash = await this.hashData(rt);
+
+    if (expectedHash !== undefined) {
+      if (
+        !(await this.userService.replaceRefreshHash(userId, expectedHash, hash))
+      ) {
+        throw new ForbiddenException('Access Denied');
+      }
+
+      return;
+    }
 
     await this.userService.updateUser(userId, { refreshToken: hash });
   }

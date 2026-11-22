@@ -198,6 +198,27 @@ describe('UniHub API Service', () => {
       expect(global.fetch).toHaveBeenCalledTimes(4);
     });
 
+    it.each(['linkMoodleAccount', 'unlinkMoodleAccount'] as const)(
+      '%s discards responses belonging to a previous session',
+      async (method) => {
+        global.fetch = vi.fn().mockImplementation(async () => {
+          mockStorage.sessionRevision = 'new-tab-revision';
+
+          return { ok: true, json: async () => ({ user: sampleSessionUser, isLinked: true }) };
+        });
+        await expect(authApi[method]('student', 'password')).rejects.toThrow('Session changed');
+        expect(mockStorage.sessionUser).toBeUndefined();
+        expect(mockStorage.isMoodleLinked).toBeUndefined();
+      },
+    );
+
+    it('preserves local metadata when logout returns 401', async () => {
+      mockStorage.isLoggedIn = 'true';
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 401 });
+      await expect(authApi.logout()).rejects.toThrow('401');
+      expect(mockStorage.isLoggedIn).toBe('true');
+    });
+
     it('linkMoodleAccount should send POST to /auth/moodle/link and store updated sessionUser', async () => {
       const mockLinkResponse = {
         isLinked: true,
@@ -642,6 +663,24 @@ describe('UniHub API Service', () => {
       expect(coursesCallCount).toBe(1);
     });
 
+    it('preserves a replacement session when an in-flight refresh is rejected', async () => {
+      mockStorage.isLoggedIn = 'true';
+      global.fetch = vi.fn().mockImplementation(async (url: string) => {
+        if (url.endsWith('/auth/refresh')) {
+          mockStorage.sessionRevision = 'another-tab-login';
+          mockStorage.sessionUser = JSON.stringify(refreshedSessionUser);
+        }
+
+        return { ok: false, status: 401, json: async () => ({ message: 'Unauthorized' }) };
+      });
+
+      await expect(moodleApi.getCourses()).rejects.toThrow(
+        /^Session changed during token refresh$/,
+      );
+      expect(JSON.parse(mockStorage.sessionUser)).toEqual(refreshedSessionUser);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    });
+
     it('does not wipe a newly logged-in user session when a stale 401 fails', async () => {
       const userA = { ...refreshedSessionUser, id: 'user-a', email: 'a@karazin.ua' };
       const userB = { ...refreshedSessionUser, id: 'user-b', email: 'b@karazin.ua' };
@@ -667,7 +706,8 @@ describe('UniHub API Service', () => {
 
       const staleRequest = moodleApi.getCourses();
 
-      clearUserSessionStorage();
+      // Another tab starts a session before storage events reach this tab.
+      mockStorage.sessionRevision = 'new-tab-revision';
       saveSessionUser(userB);
       mockStorage.isLoggedIn = 'true';
       releaseStaleResponse();

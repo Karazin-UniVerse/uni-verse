@@ -32,6 +32,7 @@ describe('AuthService', () => {
     findByMoodleId: jest.fn(),
     createUser: jest.fn(),
     updateUser: jest.fn(),
+    replaceRefreshHash: jest.fn(),
     findById: jest.fn(),
   } as unknown as jest.Mocked<UserService>;
 
@@ -314,7 +315,7 @@ describe('AuthService', () => {
         .mockResolvedValueOnce('fresh-at')
         .mockResolvedValueOnce('fresh-rt');
       (bcrypt.hash as jest.Mock).mockResolvedValue('new-rt-hash');
-      mockUserService.updateUser.mockResolvedValue(sampleUser);
+      mockUserService.replaceRefreshHash.mockResolvedValue(true);
 
       const result = await authService.refreshTokens('user-uuid-1', 'valid-rt');
 
@@ -323,9 +324,10 @@ describe('AuthService', () => {
         refresh_token: 'fresh-rt',
         user: sampleSessionUser,
       });
-      expect(mockUserService.updateUser).toHaveBeenCalledWith(
+      expect(mockUserService.replaceRefreshHash).toHaveBeenCalledWith(
         'user-uuid-1',
-        expect.objectContaining({ refreshToken: 'new-rt-hash' }),
+        sampleUser.refreshToken,
+        'new-rt-hash',
       );
     });
 
@@ -339,7 +341,7 @@ describe('AuthService', () => {
         .mockResolvedValueOnce('fresh-at')
         .mockResolvedValueOnce('fresh-rt');
       (bcrypt.hash as jest.Mock).mockResolvedValue('new-rt-hash');
-      mockUserService.updateUser.mockResolvedValue(sampleUser);
+      mockUserService.replaceRefreshHash.mockResolvedValue(true);
 
       const result = await authService.refreshTokens('user-uuid-1', 'valid-rt');
 
@@ -361,7 +363,7 @@ describe('AuthService', () => {
         .mockResolvedValueOnce('fresh-at')
         .mockResolvedValueOnce('fresh-rt');
       (bcrypt.hash as jest.Mock).mockResolvedValue('new-rt-hash');
-      mockUserService.updateUser.mockResolvedValue(sampleUser);
+      mockUserService.replaceRefreshHash.mockResolvedValue(true);
 
       const result = await authService.refreshTokens('user-uuid-1', 'valid-rt');
 
@@ -370,6 +372,16 @@ describe('AuthService', () => {
         refresh_token: 'fresh-rt',
         user: { ...sampleSessionUser, isLinked: false },
       });
+    });
+
+    it('denies rotation if the validated hash has since changed', async () => {
+      mockUserService.findById.mockResolvedValue(sampleUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      mockUserService.replaceRefreshHash.mockResolvedValue(false);
+
+      await expect(
+        authService.refreshTokens(sampleUser.id, 'valid-rt'),
+      ).rejects.toThrow('Access Denied');
     });
 
     it('should throw ForbiddenException if user not found or has no refresh token', async () => {
@@ -1011,6 +1023,19 @@ describe('AuthService', () => {
   });
 
   describe('logoutByRefreshToken', () => {
+    it('propagates a persistence failure after verification', async () => {
+      mockJwtService.verifyAsync.mockResolvedValue({ sub: sampleUser.id });
+      mockUserService.findById.mockResolvedValue(sampleUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      mockUserService.updateUser.mockRejectedValueOnce(
+        new Error('write failed'),
+      );
+
+      await expect(
+        authService.logoutByRefreshToken('valid-rt'),
+      ).rejects.toThrow('write failed');
+    });
+
     it('should revoke stored refresh token when cookie token matches DB hash', async () => {
       mockJwtService.verifyAsync.mockResolvedValue({ sub: sampleUser.id });
       mockUserService.findById.mockResolvedValue(sampleUser);

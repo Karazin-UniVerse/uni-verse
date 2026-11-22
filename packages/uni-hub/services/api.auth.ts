@@ -2,7 +2,13 @@ import type { AuthResponse, GoogleAuthResponse } from '@core/types/auth';
 import { AUTH_ROUTES } from '@core/constants/routes';
 import { safeStorage } from './api.storage';
 import { ApiClient } from './api.request';
-import { clearUserSessionStorage, saveSessionUser } from './api.session';
+import {
+  assertSessionGeneration,
+  clearUserSessionStorage,
+  getSessionGeneration,
+  saveSessionUser,
+  startSession,
+} from './api.session';
 
 export class AuthApi extends ApiClient {
   async login(email: string, password: string): Promise<{ data: AuthResponse }> {
@@ -13,7 +19,7 @@ export class AuthApi extends ApiClient {
     });
 
     if (response.data?.user) {
-      saveSessionUser(response.data.user);
+      startSession(response.data.user);
       safeStorage.setItem('isLoggedIn', 'true');
       safeStorage.setItem('isMoodleLinked', String(response.data.user.isLinked));
       safeStorage.setItem('userEmail', response.data.user.email || email);
@@ -30,7 +36,7 @@ export class AuthApi extends ApiClient {
     });
 
     if (response.data?.user) {
-      saveSessionUser(response.data.user);
+      startSession(response.data.user);
 
       if (response.data.isLinked) {
         safeStorage.setItem('isLoggedIn', 'true');
@@ -47,11 +53,14 @@ export class AuthApi extends ApiClient {
     username: string,
     password: string,
   ): Promise<{ data: GoogleAuthResponse }> {
+    const generation = getSessionGeneration();
     const response = await this.request<GoogleAuthResponse>(`/auth/${AUTH_ROUTES.MOODLE_LINK}`, {
       method: 'POST',
       body: JSON.stringify({ username, password }),
       retries: 0,
     });
+
+    assertSessionGeneration(generation);
 
     if (response.data?.user) {
       saveSessionUser(response.data.user);
@@ -68,10 +77,13 @@ export class AuthApi extends ApiClient {
   }
 
   async unlinkMoodleAccount(): Promise<{ data: GoogleAuthResponse }> {
+    const generation = getSessionGeneration();
     const response = await this.request<GoogleAuthResponse>(`/auth/${AUTH_ROUTES.MOODLE_UNLINK}`, {
       method: 'POST',
       retries: 0,
     });
+
+    assertSessionGeneration(generation);
 
     if (response.data?.user) {
       saveSessionUser(response.data.user);
@@ -85,11 +97,11 @@ export class AuthApi extends ApiClient {
   }
 
   async logout(): Promise<void> {
-    try {
-      await this.request(`/auth/${AUTH_ROUTES.LOGOUT}`, { method: 'POST', retries: 0 });
-    } finally {
-      clearUserSessionStorage();
-    }
+    const generation = getSessionGeneration();
+
+    await this.request(`/auth/${AUTH_ROUTES.LOGOUT}`, { method: 'POST', retries: 0 });
+    assertSessionGeneration(generation);
+    clearUserSessionStorage();
   }
 }
 

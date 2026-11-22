@@ -18,7 +18,13 @@ export const USER_SESSION_STORAGE_KEYS = [
   'universe_last_sync_time',
 ] as const;
 
-let sessionGeneration = 0;
+const SESSION_REVISION_KEY = 'sessionRevision';
+let localGeneration = 0;
+
+function advanceSessionGeneration(): void {
+  localGeneration += 1;
+  safeStorage.setItem(SESSION_REVISION_KEY, crypto.getRandomValues(new Uint32Array(4)).join('-'));
+}
 let cachedSessionUserRaw: string | null = null;
 let cachedSessionUser: SessionUser | null = null;
 const sessionUserListeners = new Set<() => void>();
@@ -29,8 +35,14 @@ function notifySessionUserListeners(): void {
   }
 }
 
-export function getSessionGeneration(): number {
-  return sessionGeneration;
+export function getSessionGeneration(): string {
+  return `${localGeneration}:${safeStorage.getItem(SESSION_REVISION_KEY) ?? ''}`;
+}
+
+export function assertSessionGeneration(generation: string, operation = 'request'): void {
+  if (generation !== getSessionGeneration()) {
+    throw new Error(`Session changed during ${operation}`);
+  }
 }
 
 export function readSessionUser(): SessionUser | null {
@@ -94,15 +106,14 @@ export function subscribeSessionUser(listener: () => void): () => void {
   };
 }
 
+export function startSession(user: SessionUser): void {
+  advanceSessionGeneration();
+  saveSessionUser(user);
+}
+
 export function saveSessionUser(user?: SessionUser | null): void {
   if (!user || typeof user.id !== 'string') {
     return;
-  }
-
-  const previousUser = readSessionUser();
-
-  if (previousUser && previousUser.id !== user.id) {
-    sessionGeneration += 1;
   }
 
   const serialized = JSON.stringify(user);
@@ -119,7 +130,7 @@ export function saveSessionUser(user?: SessionUser | null): void {
 }
 
 export function clearUserSessionStorage(): void {
-  sessionGeneration += 1;
+  advanceSessionGeneration();
   useGamificationStore.getState().setActiveUser(null);
 
   for (const key of USER_SESSION_STORAGE_KEYS) {
