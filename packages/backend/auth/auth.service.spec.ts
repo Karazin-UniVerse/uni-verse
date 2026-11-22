@@ -1046,5 +1046,41 @@ describe('AuthService', () => {
       expect(revoked).toBe(false);
       expect(mockUserService.findById).not.toHaveBeenCalled();
     });
+
+    it('should return false when RT_SECRET is missing or uses the default placeholder', async () => {
+      delete process.env.RT_SECRET;
+      await expect(authService.logoutByRefreshToken('valid-rt')).resolves.toBe(
+        false,
+      );
+
+      process.env.RT_SECRET = 'your-refresh-token-secret-key';
+      await expect(authService.logoutByRefreshToken('valid-rt')).resolves.toBe(
+        false,
+      );
+
+      expect(mockJwtService.verifyAsync).not.toHaveBeenCalled();
+    });
+
+    it('should return false when verified refresh token payload has no sub', async () => {
+      mockJwtService.verifyAsync.mockResolvedValue({});
+
+      const revoked = await authService.logoutByRefreshToken('rt-without-sub');
+
+      expect(revoked).toBe(false);
+      expect(mockUserService.findById).not.toHaveBeenCalled();
+    });
+
+    it('should return false when user has no stored refresh token hash', async () => {
+      mockJwtService.verifyAsync.mockResolvedValue({ sub: sampleUser.id });
+      mockUserService.findById.mockResolvedValue({
+        ...sampleUser,
+        refreshToken: null,
+      });
+
+      const revoked = await authService.logoutByRefreshToken('valid-rt');
+
+      expect(revoked).toBe(false);
+      expect(bcrypt.compare).not.toHaveBeenCalled();
+    });
   });
 });

@@ -223,6 +223,38 @@ type ExecuteRequestParams<T> = {
   parseResponse?: (response: Response) => Promise<T>;
 };
 
+async function throwHttpError(response: Response, attemptGeneration: number): Promise<never> {
+  if (
+    response.status === RESPONSE_CODES.UNAUTHORIZED &&
+    attemptGeneration === getSessionGeneration()
+  ) {
+    clearUserSessionStorage();
+  }
+
+  const errorDetail = await buildHttpErrorMessage(response);
+
+  throw new Error(errorDetail);
+}
+
+async function ensureFreshSessionForRetry(
+  attemptEpoch: number,
+  attemptGeneration: number,
+): Promise<void> {
+  const assertSameGeneration = (): void => {
+    if (attemptGeneration !== getSessionGeneration()) {
+      throw new Error(`Session changed during request (HTTP ${RESPONSE_CODES.UNAUTHORIZED})`);
+    }
+  };
+
+  assertSameGeneration();
+
+  if (attemptEpoch === refreshEpoch) {
+    await refreshAccessToken();
+  }
+
+  assertSameGeneration();
+}
+
 async function executeRequestWithRefresh<T>({
   endpoint,
   url,
@@ -245,56 +277,28 @@ async function executeRequestWithRefresh<T>({
   }
 
   if (
-    initialResponse.status === RESPONSE_CODES.UNAUTHORIZED &&
-    isRefreshCandidate(endpoint, requestOptions)
+    initialResponse.status !== RESPONSE_CODES.UNAUTHORIZED ||
+    !isRefreshCandidate(endpoint, requestOptions)
   ) {
-    if (attemptGeneration !== getSessionGeneration()) {
-      throw new Error(`Session changed during request (HTTP ${RESPONSE_CODES.UNAUTHORIZED})`);
-    }
-
-    if (attemptEpoch === refreshEpoch) {
-      await refreshAccessToken();
-    }
-
-    if (attemptGeneration !== getSessionGeneration()) {
-      throw new Error(`Session changed during request (HTTP ${RESPONSE_CODES.UNAUTHORIZED})`);
-    }
-
-    const retryResponse = await executeAttempt({
-      url,
-      options,
-      headers,
-      timeoutMs,
-    });
-
-    if (!retryResponse.ok) {
-      if (
-        retryResponse.status === RESPONSE_CODES.UNAUTHORIZED &&
-        attemptGeneration === getSessionGeneration()
-      ) {
-        clearUserSessionStorage();
-      }
-
-      const retryErrorDetail = await buildHttpErrorMessage(retryResponse);
-
-      throw new Error(retryErrorDetail);
-    }
-
-    const retryData = await parse(retryResponse);
-
-    return { data: retryData };
+    return throwHttpError(initialResponse, attemptGeneration);
   }
 
-  if (
-    initialResponse.status === RESPONSE_CODES.UNAUTHORIZED &&
-    attemptGeneration === getSessionGeneration()
-  ) {
-    clearUserSessionStorage();
+  await ensureFreshSessionForRetry(attemptEpoch, attemptGeneration);
+
+  const retryResponse = await executeAttempt({
+    url,
+    options,
+    headers,
+    timeoutMs,
+  });
+
+  if (!retryResponse.ok) {
+    return throwHttpError(retryResponse, attemptGeneration);
   }
 
-  const errorDetail = await buildHttpErrorMessage(initialResponse);
+  const retryData = await parse(retryResponse);
 
-  throw new Error(errorDetail);
+  return { data: retryData };
 }
 
 async function executeRequest<T>(

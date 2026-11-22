@@ -127,4 +127,43 @@ describe('CsrfGuard', () => {
       ),
     ).toThrow(ForbiddenException);
   });
+
+  it('should reject malformed Referer header when Origin is absent', () => {
+    expect(() =>
+      guard.canActivate(
+        createContext({
+          method: 'POST',
+          headers: { referer: 'not-a-valid-url' },
+          cookies: { accessToken: 'cookie-jwt' },
+        }),
+      ),
+    ).toThrow(ForbiddenException);
+  });
+
+  it('should allow valid Referer header without Origin when X-Requested-With is set', () => {
+    expect(
+      guard.canActivate(
+        createContext({
+          method: 'POST',
+          headers: {
+            referer: 'https://universemvp.tech/dashboard',
+            'x-requested-with': 'XMLHttpRequest',
+          },
+          cookies: { accessToken: 'cookie-jwt' },
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it('should enforce X-Requested-With when only refreshToken cookie is present', () => {
+    expect(() =>
+      guard.canActivate(
+        createContext({
+          method: 'POST',
+          headers: { origin: 'https://universemvp.tech' },
+          cookies: { refreshToken: 'refresh-cookie-jwt' },
+        }),
+      ),
+    ).toThrow(ForbiddenException);
+  });
 });

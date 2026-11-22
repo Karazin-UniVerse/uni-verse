@@ -241,6 +241,24 @@ describe('AuthController', () => {
       ).rejects.toThrow(UnauthorizedException);
       expect(response.clearCookie).not.toHaveBeenCalled();
     });
+
+    it('should clear stale accessToken cookie and throw UnauthorizedException when only accessToken cookie is present', async () => {
+      const request = createMockRequest({ accessToken: 'expired-at-cookie' });
+      const response = createMockResponse();
+
+      await expect(
+        controller.logout(undefined, request, response),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(authService.logoutByRefreshToken).not.toHaveBeenCalled();
+      expect(response.clearCookie).toHaveBeenCalledWith(
+        'accessToken',
+        expect.objectContaining({ httpOnly: true, sameSite: 'lax' }),
+      );
+      expect(response.clearCookie).toHaveBeenCalledWith(
+        'refreshToken',
+        expect.objectContaining({ httpOnly: true, sameSite: 'lax' }),
+      );
+    });
   });
 
   describe('refreshTokens', () => {
