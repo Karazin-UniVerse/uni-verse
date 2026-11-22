@@ -13,14 +13,13 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
-import { AtGuard } from '../../auth/guards/at.guard';
 import { MoodleCredentialsGuard } from '../guards/moodle-credentials.guard';
 import { MoodleCourseContentsService } from './moodle-course-contents.service';
 import { CourseContentDto } from './moodle-course-contents-dto';
 
 @ApiTags('moodle')
 @Controller('moodle/courses')
-@UseGuards(AtGuard, MoodleCredentialsGuard)
+@UseGuards(MoodleCredentialsGuard)
 @ApiBearerAuth()
 export class MoodleCourseContentsController {
   constructor(private readonly contentsService: MoodleCourseContentsService) {}

@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -63,7 +64,7 @@ export class UpdateUserDto {
 
 export class SelfUpdateUserDto {
   @ApiProperty({ required: false })
-  @IsOptional()
+  @ValidateIf((_, value: unknown) => value !== undefined)
   @IsString()
   @MinLength(6)
   password?: string;

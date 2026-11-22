@@ -25,7 +25,11 @@ export class MoodleCredentialsGuard implements CanActivate {
       select: { token: true, moodleId: true },
     });
 
-    if (!dbUser?.token || !dbUser.moodleId) {
+    if (!dbUser) {
+      throw new UnauthorizedException('User account not found');
+    }
+
+    if (!dbUser.token || !dbUser.moodleId) {
       throw new BadRequestException('Moodle account is not linked');
     }
 

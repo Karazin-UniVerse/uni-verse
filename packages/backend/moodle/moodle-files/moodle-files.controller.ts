@@ -7,14 +7,13 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
-import { AtGuard } from '../../auth/guards/at.guard';
 import { MoodleCredentialsGuard } from '../guards/moodle-credentials.guard';
 import { MoodleFilesService } from './moodle-files.service';
 import { UploadFileDto } from './moodle-files-dto';
 
 @ApiTags('moodle')
 @Controller('moodle/files')
-@UseGuards(AtGuard, MoodleCredentialsGuard)
+@UseGuards(MoodleCredentialsGuard)
 @ApiBearerAuth()
 export class MoodleFilesController {
   constructor(private readonly filesService: MoodleFilesService) {}
