@@ -4,16 +4,15 @@ import React from 'react';
 import clsx from 'clsx';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { Opportunity, OpportunityListItem } from '@core/types/opportunities';
-import { Star } from 'lucide-react';
-import { Button } from '@una';
-import { OpportunityUnavailableNotice } from './opportunities/components/OpportunityUnavailableNotice';
-import styles from './OpportunityCard.module.scss';
-import { OpportunityCardTop } from './opportunities/components/OpportunityCardTop';
-import { OpportunityOwnerMetaRow } from './opportunities/components/OpportunityOwnerMetaRow';
-import { OpportunityCatalogMetaRow } from './opportunities/components/OpportunityCatalogMetaRow';
 import { OPPORTUNITY_PAYMENT_TYPE } from '@core/constants/opportunities';
-import { OPPORTUNITY_CARD_VARIANT } from './opportunities/constants';
 import { isUnavailableOpportunity } from '@core/utils/opportunities';
+import { FavoriteToggleButton } from './opportunities/components/FavoriteToggleButton';
+import { OpportunityCardTop } from './opportunities/components/OpportunityCardTop';
+import { OpportunityCatalogMetaRow } from './opportunities/components/OpportunityCatalogMetaRow';
+import { OpportunityOwnerMetaRow } from './opportunities/components/OpportunityOwnerMetaRow';
+import { OpportunityUnavailableNotice } from './opportunities/components/OpportunityUnavailableNotice';
+import { OPPORTUNITY_CARD_VARIANT } from './opportunities/constants';
+import styles from './OpportunityCard.module.scss';
 
 export interface OpportunityCardProps {
   opportunity: OpportunityListItem;
@@ -39,28 +38,24 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   const { formatMessage, localeTag } = useLanguage();
   const favoriteAction = onToggleFavorite && (
     <div className={styles.favoriteAction}>
-      <Button
-        variant="secondary"
+      <FavoriteToggleButton
+        isFavorite={isFavorite}
         disabled={favoriteDisabled}
-        aria-pressed={isFavorite}
-        aria-label={formatMessage(
-          isFavorite ? 'opportunities.favorites.remove' : 'opportunities.favorites.add',
-        )}
-        onClick={() => onToggleFavorite(opportunity.id, isFavorite)}
-      >
-        <Star size={18} fill={isFavorite ? 'currentColor' : 'none'} aria-hidden="true" />
-      </Button>
+        onToggle={() => onToggleFavorite(opportunity.id, isFavorite)}
+      />
     </div>
   );
 
   if (isUnavailableOpportunity(opportunity)) {
     return (
       <article className={styles.card}>
-        <h3 className={styles.cardTitle}>
-          {opportunity.title || formatMessage('opportunities.myApplications.defaultTitle')}
-        </h3>
+        <div className={styles.unavailableHeader}>
+          <h3 className={styles.cardTitle}>
+            {opportunity.title || formatMessage('opportunities.myApplications.defaultTitle')}
+          </h3>
+          {favoriteAction}
+        </div>
         <OpportunityUnavailableNotice availability={opportunity.availability} />
-        {favoriteAction}
       </article>
     );
   }
@@ -103,9 +98,9 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
         ) : (
           <OpportunityCatalogMetaRow opportunity={opportunity} formatMessage={formatMessage} />
         )}
+        {favoriteAction}
       </div>
 
-      {favoriteAction}
       {isClickable && (
         <button
           type="button"

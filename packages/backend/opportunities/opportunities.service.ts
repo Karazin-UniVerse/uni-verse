@@ -11,7 +11,10 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { getPrismaErrorCode } from '../utils/prisma-error';
 import {
   applyModerationInTransaction,
+  buildOpportunityUpdateData,
   getOpportunityContentHash,
+  getSubscriberUpdateMeta,
+  resolveModerationTargetStatus,
   unavailableOpportunity,
 } from './opportunities.helpers';
 import type {
@@ -20,7 +23,6 @@ import type {
 } from '@universe/core/types/opportunities';
 import { PRISMA_ERROR_CODE } from '../constants/prisma';
 import { PROMISE_STATUS } from '@universe/core/constants/promises';
-import { SUBSCRIBER_NOTIFICATION_BATCH_SIZE } from './opportunities.constants';
 import { persistOpportunityApplication } from './opportunity-application.persistence';
 import {
   CreateOpportunityDto,
@@ -40,7 +42,6 @@ import {
 } from '@universe/database';
 import {
   MAX_APPLICATION_WITHDRAWALS,
-  OPPORTUNITY_MODERATE_ACTION,
   OPPORTUNITY_VIEW,
   OPPORTUNITY_VIEW_PARAM,
   OPPORTUNITY_ERROR,
@@ -73,8 +74,8 @@ export type ApplicationWithApplicant = OpportunityApplication & {
 };
 
 export type ApplicationWithOpportunity = OpportunityApplication & {
-  opportunity: OpportunityWithOwner | UnavailableOpportunity;
   applicant: ApplicationWithApplicant['applicant'];
+  opportunity?: OpportunityWithOwner | UnavailableOpportunity;
 };
 
 export type UpdateApplicationStatusParams = {
@@ -111,7 +112,7 @@ export class OpportunitiesService {
       throw new BadRequestException('Cannot save your own opportunity');
     }
 
-    if (!opportunity || opportunity.status !== OpportunityStatus.PUBLISHED) {
+    if (opportunity?.status !== OpportunityStatus.PUBLISHED) {
       throw new NotFoundException('Opportunity not found');
     }
 
@@ -173,7 +174,7 @@ export class OpportunitiesService {
     return user?.roles.includes(Role.OPPORTUNITIES_MODERATOR) ?? false;
   }
 
-  /** Delivers published updates to saved recipients in bounded batches. */
+  /** Delivers published updates to saved recipients in a single batch insert. */
   private async notifySubscribers(
     opportunity: Opportunity,
     hasLifecycleChanged = false,
@@ -183,47 +184,31 @@ export class OpportunitiesService {
     }
 
     try {
+      const favorites = await this.prisma.opportunityFavorite.findMany({
+        where: { opportunityId: opportunity.id },
+        select: { userId: true },
+      });
+
+      if (favorites.length === 0) {
+        return;
+      }
+
       const message = JSON.stringify({
         opportunityTitle: opportunity.title,
         ...(hasLifecycleChanged && {
           lifecycleState: opportunity.lifecycleState,
         }),
       });
-      const favorites = await this.prisma.opportunityFavorite.findMany({
-        where: { opportunityId: opportunity.id },
-        select: { userId: true },
-      });
 
-      for (
-        let offset = 0;
-        offset < favorites.length;
-        offset += SUBSCRIBER_NOTIFICATION_BATCH_SIZE
-      ) {
-        const batch = favorites.slice(
-          offset,
-          offset + SUBSCRIBER_NOTIFICATION_BATCH_SIZE,
-        );
-        const deliveries = await Promise.allSettled(
-          batch.map(({ userId }) =>
-            this.notificationsService.createNotification({
-              userId,
-              type: NOTIFICATION_TYPE.OPPORTUNITY_UPDATED,
-              title: OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE,
-              message,
-              link: `${OPPORTUNITIES_ROUTE}/${opportunity.id}`,
-            }),
-          ),
-        );
-
-        for (const delivery of deliveries) {
-          if (delivery.status === PROMISE_STATUS.REJECTED) {
-            this.logger.error(
-              `Failed to notify subscriber for opportunity ${opportunity.id}`,
-              delivery.reason,
-            );
-          }
-        }
-      }
+      await this.notificationsService.createNotifications(
+        favorites.map(({ userId }) => ({
+          userId,
+          type: NOTIFICATION_TYPE.OPPORTUNITY_UPDATED,
+          title: OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE,
+          message,
+          link: `${OPPORTUNITIES_ROUTE}/${opportunity.id}`,
+        })),
+      );
     } catch (error) {
       this.logger.error(
         `Failed to notify subscribers for opportunity ${opportunity.id}`,
@@ -434,39 +419,13 @@ export class OpportunitiesService {
     }
 
     const hasContentChanges = hasOpportunityContentChanged(opportunity, dto);
+    const data = buildOpportunityUpdateData(
+      opportunity,
+      dto,
+      hasContentChanges,
+    );
 
-    const data: Prisma.OpportunityUpdateInput = { ...dto };
-
-    const nextLifecycleState = dto.lifecycleState ?? opportunity.lifecycleState;
-
-    if (
-      !isRecruitmentPhase(nextLifecycleState) &&
-      (dto.lifecycleState !== undefined ||
-        dto.acceptsApplications !== undefined)
-    ) {
-      data.acceptsApplications = false;
-    }
-
-    if (dto.ownerContactInfo !== undefined) {
-      data.ownerContactInfo = dto.ownerContactInfo.trim();
-    }
-
-    if (
-      opportunity.status === OpportunityStatus.REQUIRES_CHANGES &&
-      !opportunity.moderationContentHash
-    ) {
-      data.moderationContentHash = getOpportunityContentHash(opportunity);
-    }
-
-    if (
-      opportunity.status === OpportunityStatus.PUBLISHED &&
-      hasContentChanges
-    ) {
-      data.status = OpportunityStatus.READY_FOR_REVIEW;
-      data.moderationComment = null;
-    }
-
-    let updated;
+    let updated: Opportunity;
 
     try {
       updated = await this.prisma.opportunity.update({
@@ -477,7 +436,8 @@ export class OpportunitiesService {
           ...(data.acceptsApplications !== undefined
             ? { acceptsApplications: opportunity.acceptsApplications }
             : {}),
-          ...(dto.lifecycleState !== undefined
+          ...(data.acceptsApplications !== undefined ||
+          dto.lifecycleState !== undefined
             ? { lifecycleState: opportunity.lifecycleState }
             : {}),
         },
@@ -502,27 +462,14 @@ export class OpportunitiesService {
       await this.notifyModerators(id, updated.title);
     }
 
-    const hasApplicationAvailabilityChanged =
-      data.acceptsApplications !== undefined &&
-      data.acceptsApplications !== opportunity.acceptsApplications;
-    const hasLifecycleChanged =
-      dto.lifecycleState !== undefined &&
-      dto.lifecycleState !== opportunity.lifecycleState;
+    const { shouldNotify, hasLifecycleChanged } = getSubscriberUpdateMeta({
+      opportunity,
+      dto,
+      data,
+      hasContentChanges,
+    });
 
-    const previousTags = new Set(opportunity.tags);
-    const currentTags = new Set(dto.tags);
-    const hasTagsChanged =
-      dto.tags !== undefined &&
-      (previousTags.size !== currentTags.size ||
-        [...currentTags].some((tag) => !previousTags.has(tag)));
-
-    if (
-      opportunity.status === OpportunityStatus.PUBLISHED &&
-      !hasContentChanges &&
-      (hasApplicationAvailabilityChanged ||
-        hasLifecycleChanged ||
-        hasTagsChanged)
-    ) {
+    if (shouldNotify) {
       await this.notifySubscribers(updated, hasLifecycleChanged);
     }
 
@@ -911,15 +858,21 @@ export class OpportunitiesService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return applications.map((application) => ({
-      ...application,
-      opportunity:
-        application.opportunity.status === OpportunityStatus.PUBLISHED ||
-        application.opportunity.ownerId === userId ||
-        isModerator
-          ? application.opportunity
-          : unavailableOpportunity(application.opportunity),
-    }));
+    return (applications ?? []).map(({ opportunity, ...application }) => {
+      if (!opportunity) {
+        return { ...application, opportunity: undefined };
+      }
+
+      return {
+        ...application,
+        opportunity:
+          opportunity.status === OpportunityStatus.PUBLISHED ||
+          opportunity.ownerId === userId ||
+          isModerator
+            ? opportunity
+            : unavailableOpportunity(opportunity),
+      };
+    });
   }
 
   /**
@@ -941,9 +894,7 @@ export class OpportunitiesService {
     id: string,
     dto: ModerateOpportunityDto,
   ): Promise<Opportunity> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-
-    if (!user?.roles?.includes(Role.OPPORTUNITIES_MODERATOR)) {
+    if (!(await this.hasCurrentModeratorRole(userId))) {
       throw new ForbiddenException(
         'Only OPPORTUNITIES_MODERATOR can moderate opportunities',
       );
@@ -961,29 +912,7 @@ export class OpportunitiesService {
       );
     }
 
-    let newStatus: OpportunityStatus;
-
-    if (dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE) {
-      newStatus = OpportunityStatus.PUBLISHED;
-    } else if (dto.action === OPPORTUNITY_MODERATE_ACTION.REJECT) {
-      if (!dto.comment?.trim()) {
-        throw new BadRequestException(
-          'Comment is required when rejecting an opportunity',
-        );
-      }
-
-      newStatus = OpportunityStatus.REJECTED;
-    } else if (dto.action === OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES) {
-      if (!dto.comment?.trim()) {
-        throw new BadRequestException(
-          'Comment is required when requesting changes',
-        );
-      }
-
-      newStatus = OpportunityStatus.REQUIRES_CHANGES;
-    } else {
-      throw new BadRequestException('Unknown moderation action');
-    }
+    const newStatus = resolveModerationTargetStatus(dto);
 
     let opp: Opportunity;
 
@@ -1018,10 +947,10 @@ export class OpportunitiesService {
         }),
         link: `${OPPORTUNITIES_ROUTE}/${opp.id}`,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(
-        `Failed to notify owner for opportunity ${opp.id}`,
-        error,
+        `Failed to deliver moderation notification for opportunity ${opp.id}`,
+        error instanceof Error ? error.stack : error,
       );
     }
 

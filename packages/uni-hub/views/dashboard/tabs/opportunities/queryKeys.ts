@@ -11,3 +11,4 @@ export const opportunityKeys = {
 };
 
 export const moderateMutationKey = [...opportunityKeys.all, 'moderate'] as const;
+export const favoriteMutationKey = [...opportunityKeys.all, 'favorite'] as const;

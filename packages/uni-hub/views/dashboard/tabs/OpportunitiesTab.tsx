@@ -5,7 +5,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Briefcase, ShieldCheck, Users, FileText, Star } from 'lucide-react';
 import { Button } from '@una';
-import { ConfirmModal, SegmentedControl, type SegmentedControlItem } from '@ui';
+import { ConfirmModal, SegmentedControl, StatusBanner, type SegmentedControlItem } from '@ui';
 import { ROLE } from '@core/constants/roles';
 import type { Opportunity } from '@core/types/opportunities';
 import { useCurrentUser } from '@uni-hub/hooks/useCurrentUser';
@@ -124,6 +124,24 @@ export const OpportunitiesTab: React.FC = () => {
 
       {/* SubTab Views */}
       <div role="tabpanel" id={`panel-${activeSubTab}`}>
+        {activeSubTab === OPPORTUNITY_SUB_TAB.Catalog &&
+          !catalogView.isError &&
+          hasLoadFailed(favorites.query) && (
+            <StatusBanner tone="warning" className={styles.favoritesErrorBanner}>
+              <div className={styles.favoritesErrorContent}>
+                <span>{formatMessage('opportunities.favorites.loadError')}</span>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="small"
+                  onClick={() => void favorites.query.refetch()}
+                >
+                  {formatMessage('common.error.retry')}
+                </Button>
+              </div>
+            </StatusBanner>
+          )}
+
         {(activeSubTab === OPPORTUNITY_SUB_TAB.Catalog || isFavoritesView) && (
           <CatalogTab
             loading={catalogView.loading}

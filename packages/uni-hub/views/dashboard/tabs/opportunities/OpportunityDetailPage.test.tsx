@@ -76,6 +76,66 @@ describe('OpportunityDetailPage background refresh', () => {
     expect(screen.queryByRole('heading', { name: opportunity.title })).not.toBeInTheDocument();
   });
 
+  it('allows removing a saved unavailable opportunity from its detail page', async () => {
+    const savedUnavailable = {
+      id: opportunity.id,
+      title: 'Previous Title',
+      availability: OPPORTUNITY_AVAILABILITY.PERMANENT,
+    };
+
+    vi.spyOn(opportunitiesApi, 'getFavorites').mockResolvedValue({ data: [savedUnavailable] });
+
+    let resolveToggle!: (value: { data: { saved: boolean } }) => void;
+    const setFavorite = vi.spyOn(opportunitiesApi, 'setFavorite').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveToggle = resolve;
+        }),
+    );
+
+    vi.spyOn(opportunitiesApi, 'getOpportunity').mockResolvedValue({ data: savedUnavailable });
+
+    const { default: userEvent } = await import('@testing-library/user-event');
+    const user = userEvent.setup();
+
+    render(withAppProviders(<OpportunityDetailPage opportunityId={opportunity.id} />));
+
+    expect(
+      await screen.findByRole('heading', { level: 3, name: 'Previous Title' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Більше недоступна');
+
+    await user.click(await screen.findByRole('button', { name: 'Видалити з обраного' }));
+
+    expect(setFavorite).toHaveBeenCalledWith(opportunity.id, false);
+    expect(screen.getByRole('button', { name: 'Додати до обраного' })).toBeDisabled();
+
+    await act(async () => {
+      resolveToggle({ data: { saved: false } });
+    });
+  });
+
+  it('allows toggling favorite on a published opportunity detail page', async () => {
+    vi.spyOn(opportunitiesApi, 'getFavorites').mockResolvedValue({ data: [] });
+
+    const setFavorite = vi
+      .spyOn(opportunitiesApi, 'setFavorite')
+      .mockResolvedValue({ data: { saved: true } });
+
+    vi.spyOn(opportunitiesApi, 'getOpportunity').mockResolvedValue({ data: opportunity });
+
+    const { default: userEvent } = await import('@testing-library/user-event');
+    const user = userEvent.setup();
+
+    render(withAppProviders(<OpportunityDetailPage opportunityId={opportunity.id} />));
+
+    const favButton = await screen.findByRole('button', { name: 'Додати до обраного' });
+
+    await user.click(favButton);
+
+    expect(setFavorite).toHaveBeenCalledWith(opportunity.id, true);
+  });
+
   it('should show the error screen when the first request fails without cached data', async () => {
     vi.spyOn(opportunitiesApi, 'getOpportunity').mockRejectedValue(new Error('Load unavailable'));
     render(withAppProviders(<OpportunityDetailPage opportunityId={opportunity.id} />));

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { buildQueryString, authApi, moodleApi, ApiClient } from './api';
+import { buildQueryString, authApi, moodleApi, ApiClient, getErrorMessage } from './api';
 import { resetRefreshPromiseForTests } from './api.request';
 
 describe('UniHub API Service', () => {
@@ -603,6 +603,27 @@ describe('UniHub API Service', () => {
       const calledUrls = vi.mocked(global.fetch).mock.calls.map((call) => call[0]);
 
       expect(calledUrls.some((url) => String(url).includes('/auth/refresh'))).toBe(false);
+    });
+  });
+
+  describe('getErrorMessage', () => {
+    it('strips trailing HTTP status codes from error messages', () => {
+      expect(getErrorMessage(new Error('Access denied (HTTP 403)'), 'Fallback')).toBe(
+        'Access denied',
+      );
+      expect(
+        getErrorMessage(
+          { response: { data: { message: 'Already exists (HTTP 409)' } } },
+          'Fallback',
+        ),
+      ).toBe('Already exists');
+    });
+
+    it('returns localized fallback when only a transport HTTP error string is available', () => {
+      expect(getErrorMessage(new Error('HTTP error 403: Forbidden'), 'Sign in failed')).toBe(
+        'Sign in failed',
+      );
+      expect(getErrorMessage(null, 'Sign in failed')).toBe('Sign in failed');
     });
   });
 });

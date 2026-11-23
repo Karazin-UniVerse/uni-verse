@@ -100,14 +100,6 @@ describe('getOpportunityErrorMessage', () => {
       'translated:opportunities.errors.alreadyApplied',
     ],
     [
-      'opportunities.errors.phoneUnavailable (HTTP 409)',
-      'translated:opportunities.errors.phoneUnavailable',
-    ],
-    [
-      'opportunities.errors.phoneAlreadySet (HTTP 409)',
-      'translated:opportunities.errors.phoneAlreadySet',
-    ],
-    [
       'opportunities.errors.changesRequired (HTTP 400)',
       'translated:opportunities.errors.changesRequired',
     ],

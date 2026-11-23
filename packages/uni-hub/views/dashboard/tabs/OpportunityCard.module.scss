@@ -3,8 +3,15 @@
 .favoriteAction {
   position: relative;
   z-index: 2;
-  align-self: flex-end;
-  margin-top: var(--space-12);
+  flex-shrink: 0;
+}
+
+.unavailableHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-12);
+  margin-bottom: var(--space-12);
 }
 
 .unavailableNotice {

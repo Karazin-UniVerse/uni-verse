@@ -1,5 +1,5 @@
 import React, { useId } from 'react';
-import { Mail, MessageSquare, Send, Pencil, Users, Bell, BellOff, Trash2 } from 'lucide-react';
+import { Mail, MessageSquare, Send, Pencil, Users, Trash2 } from 'lucide-react';
 import { BackButton } from '../BackButton';
 import { Button } from '../../una/Button';
 import { Tag } from '../../una/Tag';
@@ -77,9 +77,8 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   viewApplicantsText,
   onDelete,
   deleteText,
+  headerAction,
   className,
-  onToggleFavorite,
-  favoriteText,
   canDelete = false,
   sendToReviewDisabled = false,
   acceptsApplications = true,
@@ -88,8 +87,6 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   canEdit = false,
   canSendToReview = false,
   canApply = false,
-  isFavorite = false,
-  isFavoritePending = false,
 }) => {
   const reviewHintId = useId();
   const footerButton = getCandidateFooterButton({
@@ -101,27 +98,13 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
     applicationsClosedText,
   });
 
-  const favoriteButton =
-    !isOwner && onToggleFavorite && favoriteText ? (
-      <Button
-        variant="secondary"
-        onClick={onToggleFavorite}
-        disabled={isFavoritePending}
-        aria-pressed={isFavorite}
-      >
-        {isFavorite ? (
-          <BellOff size={14} className={styles.btnIcon} />
-        ) : (
-          <Bell size={14} className={styles.btnIcon} />
-        )}
-        {favoriteText}
-      </Button>
-    ) : null;
-
   return (
     <div className={className}>
       <div className={styles.stack}>
-        <BackButton label={backText} onClick={onBack} />
+        <div className={styles.topBar}>
+          <BackButton label={backText} onClick={onBack} />
+          {headerAction}
+        </div>
 
         <h3 className={styles.title}>{title}</h3>
 
@@ -240,12 +223,7 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
           </div>
         )}
 
-        {(footerButton || favoriteButton) && (
-          <div className={styles.footer}>
-            {favoriteButton}
-            {footerButton}
-          </div>
-        )}
+        {footerButton && <div className={styles.footer}>{footerButton}</div>}
       </div>
     </div>
   );

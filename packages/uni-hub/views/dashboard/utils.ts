@@ -122,10 +122,10 @@ type MessageFormatter = (key: TranslationKey, values?: Record<string, string | n
 type PlatformNotificationPayload = {
   opportunityTitle?: string;
   applicantName?: string;
+  lifecycleState?: string;
   status?: string;
   action?: string;
   comment?: string | null;
-  lifecycleState?: string;
 };
 
 function parsePlatformPayload(rawMessage: string): PlatformNotificationPayload | null {
@@ -142,7 +142,7 @@ function parsePlatformPayload(rawMessage: string): PlatformNotificationPayload |
 
 function translateCode(
   code: string | undefined,
-  keyMap: Record<string, TranslationKey>,
+  keyMap: Partial<Record<string, TranslationKey>>,
   formatMessage: MessageFormatter,
 ): string {
   if (!code) {

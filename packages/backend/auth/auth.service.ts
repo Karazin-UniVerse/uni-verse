@@ -11,6 +11,7 @@ import { randomBytes } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import { Role } from '@universe/database';
+import { AUTH_ERROR } from '@universe/core/constants/auth';
 import { RegisterDto, LoginDto, GoogleAuthDto, LinkMoodleDto } from './dto';
 import {
   normalizeEmail,
@@ -211,9 +212,7 @@ export class AuthService {
     const email = payload.email.toLowerCase();
 
     if (!isAllowedCorporateDomain(email, payload.hd)) {
-      throw new ForbiddenException(
-        'Доступ дозволено лише для облікових записів @student.karazin.ua та @karazin.ua',
-      );
+      throw new ForbiddenException(AUTH_ERROR.CORPORATE_DOMAIN_REQUIRED);
     }
 
     const name = extractGoogleUserName(payload);
@@ -277,9 +276,7 @@ export class AuthService {
     const existingMoodleUser = await this.userService.findByMoodleId(moodleId);
 
     if (existingMoodleUser && existingMoodleUser.id !== userId) {
-      throw new ConflictException(
-        'Moodle account is already linked to another user',
-      );
+      throw new ConflictException(AUTH_ERROR.MOODLE_ALREADY_LINKED);
     }
 
     const roles: Role[] = Array.from(

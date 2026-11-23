@@ -31,6 +31,24 @@ export class NotificationsService {
     });
   }
 
+  async createNotifications(
+    notifications: CreateNotificationParams[],
+  ): Promise<{ count: number }> {
+    if (notifications.length === 0) {
+      return { count: 0 };
+    }
+
+    return this.prisma.notification.createMany({
+      data: notifications.map(({ userId, title, message, link, type }) => ({
+        userId,
+        title,
+        message,
+        link,
+        type,
+      })),
+    });
+  }
+
   async getMyNotifications(userId: string) {
     return this.prisma.notification.findMany({
       where: { userId },

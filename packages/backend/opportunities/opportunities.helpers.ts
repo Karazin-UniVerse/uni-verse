@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { BadRequestException } from '@nestjs/common';
 import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
@@ -10,15 +11,128 @@ import {
 } from '@universe/core/constants/opportunities';
 import { OPPORTUNITY_AVAILABILITY } from '@universe/core/constants/opportunity-availability';
 import { isValidContactInfo } from '@universe/core/utils/contacts';
-import { normalizeOpportunityContent } from '@universe/core/utils/opportunities';
-import type {
-  Opportunity,
+import {
+  isRecruitmentPhase,
+  normalizeOpportunityContent,
+} from '@universe/core/utils/opportunities';
+import {
   OpportunityStatus,
-  Prisma,
+  type Opportunity,
+  type Prisma,
 } from '@universe/database';
 import type { ModerateOpportunityDto } from './dto/moderate-opportunity.dto';
+import type { UpdateOpportunityDto } from './dto/update-opportunity.dto';
 
 import type { UnavailableOpportunity } from '@universe/core/types/opportunities';
+
+export function buildOpportunityUpdateData(
+  opportunity: Opportunity,
+  dto: UpdateOpportunityDto,
+  hasContentChanges: boolean,
+): Prisma.OpportunityUpdateInput {
+  const data: Prisma.OpportunityUpdateInput = { ...dto };
+  const nextLifecycleState = dto.lifecycleState ?? opportunity.lifecycleState;
+
+  if (
+    !isRecruitmentPhase(nextLifecycleState) &&
+    (dto.lifecycleState !== undefined || dto.acceptsApplications !== undefined)
+  ) {
+    data.acceptsApplications = false;
+  }
+
+  if (dto.ownerContactInfo !== undefined) {
+    data.ownerContactInfo = dto.ownerContactInfo.trim();
+  }
+
+  if (
+    opportunity.status === OpportunityStatus.REQUIRES_CHANGES &&
+    !opportunity.moderationContentHash
+  ) {
+    data.moderationContentHash = getOpportunityContentHash(opportunity);
+  }
+
+  if (opportunity.status === OpportunityStatus.PUBLISHED && hasContentChanges) {
+    data.status = OpportunityStatus.READY_FOR_REVIEW;
+    data.moderationComment = null;
+
+    if (!opportunity.publishedTitle) {
+      data.publishedTitle = opportunity.title;
+      data.publishedPaymentType = opportunity.paymentType;
+    }
+  }
+
+  return data;
+}
+
+export type SubscriberUpdateMetaParams = {
+  opportunity: Opportunity;
+  dto: UpdateOpportunityDto;
+  data: Prisma.OpportunityUpdateInput;
+  hasContentChanges: boolean;
+};
+
+export function getSubscriberUpdateMeta({
+  opportunity,
+  dto,
+  data,
+  hasContentChanges,
+}: SubscriberUpdateMetaParams): {
+  shouldNotify: boolean;
+  hasLifecycleChanged: boolean;
+} {
+  const hasLifecycleChanged =
+    dto.lifecycleState !== undefined &&
+    dto.lifecycleState !== opportunity.lifecycleState;
+
+  if (opportunity.status !== OpportunityStatus.PUBLISHED || hasContentChanges) {
+    return { shouldNotify: false, hasLifecycleChanged };
+  }
+
+  const hasApplicationAvailabilityChanged =
+    data.acceptsApplications !== undefined &&
+    data.acceptsApplications !== opportunity.acceptsApplications;
+  const previousTags = new Set(opportunity.tags);
+  const currentTags = new Set(dto.tags);
+  const hasTagsChanged =
+    dto.tags !== undefined &&
+    (previousTags.size !== currentTags.size ||
+      [...currentTags].some((tag) => !previousTags.has(tag)));
+
+  return {
+    shouldNotify:
+      hasApplicationAvailabilityChanged ||
+      hasLifecycleChanged ||
+      hasTagsChanged,
+    hasLifecycleChanged,
+  };
+}
+
+export function resolveModerationTargetStatus(
+  dto: ModerateOpportunityDto,
+): OpportunityStatus {
+  if (dto.action === OPPORTUNITY_MODERATE_ACTION.APPROVE) {
+    return OpportunityStatus.PUBLISHED;
+  }
+
+  if (
+    dto.action === OPPORTUNITY_MODERATE_ACTION.REJECT ||
+    dto.action === OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES
+  ) {
+    if (!dto.comment?.trim()) {
+      throw new BadRequestException(
+        dto.action === OPPORTUNITY_MODERATE_ACTION.REJECT
+          ? 'Comment is required when rejecting an opportunity'
+          : 'Comment is required when requesting changes',
+      );
+    }
+
+    return dto.action === OPPORTUNITY_MODERATE_ACTION.REJECT
+      ? OpportunityStatus.REJECTED
+      : OpportunityStatus.REQUIRES_CHANGES;
+  }
+
+  throw new BadRequestException('Unknown moderation action');
+}
 
 /** Builds the public summary using fields captured at publication. */
 export function unavailableOpportunity(
@@ -99,6 +213,6 @@ export class IsContactInfoConstraint implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments): string {
-    return `${args.property} must be a valid Telegram username (@username, t.me/...) or phone number (+380...)`;
+    return `${args.property} must be a valid Telegram username (@username, t.me/...), email address, or phone number (+380...)`;
   }
 }

@@ -68,13 +68,13 @@ describe('OpportunitiesTab component', () => {
 
     expect(await screen.findByRole('heading', { name: saved.title })).toBeInTheDocument();
 
-    expect(screen.getByRole('button', { name: /видалити з обраного/i })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    const removeButton = screen.getByRole('button', { name: /видалити з обраного/i });
+
+    expect(removeButton).toBeInTheDocument();
+    expect(removeButton).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('only disables the favorite button for the card being saved', async () => {
+  it('only disables the favorite button for the card being saved and invalidates once when overlapping writes finish', async () => {
     const user = userEvent.setup();
     const first = buildOpportunity('first');
     const second = buildOpportunity('second');
@@ -84,7 +84,7 @@ describe('OpportunitiesTab component', () => {
       Promise.withResolvers<Awaited<ReturnType<typeof opportunitiesApi.setFavorite>>>();
     const secondWrite =
       Promise.withResolvers<Awaited<ReturnType<typeof opportunitiesApi.setFavorite>>>();
-    const firstRefresh =
+    const finalRefresh =
       Promise.withResolvers<Awaited<ReturnType<typeof opportunitiesApi.getFavorites>>>();
     const save = vi
       .spyOn(opportunitiesApi, 'setFavorite')
@@ -99,7 +99,7 @@ describe('OpportunitiesTab component', () => {
 
     await waitFor(() => expect(firstButton).toBeEnabled());
     vi.mocked(opportunitiesApi.getFavorites)
-      .mockReturnValueOnce(firstRefresh.promise)
+      .mockReturnValueOnce(finalRefresh.promise)
       .mockResolvedValue({ data: [first, second] });
     await user.click(firstButton);
 
@@ -111,24 +111,74 @@ describe('OpportunitiesTab component', () => {
       expect(save).toHaveBeenCalledWith(second.id, true);
 
       await act(async () => firstWrite.resolve({ data: { saved: true } }));
-      await waitFor(() => expect(opportunitiesApi.getFavorites).toHaveBeenCalledTimes(2));
-      await act(async () => secondWrite.resolve({ data: { saved: true } }));
-
-      expect(firstButton).toBeDisabled();
+      await waitFor(() => expect(firstButton).toBeEnabled());
       expect(secondButton).toBeDisabled();
-      expect(opportunitiesApi.getFavorites).toHaveBeenCalledTimes(2);
+      expect(opportunitiesApi.getFavorites).toHaveBeenCalledTimes(1);
 
-      await act(async () => firstRefresh.resolve({ data: [first] }));
+      await act(async () => secondWrite.resolve({ data: { saved: true } }));
+      await waitFor(() => expect(opportunitiesApi.getFavorites).toHaveBeenCalledTimes(2));
+
+      await act(async () => finalRefresh.resolve({ data: [first, second] }));
       await waitFor(() => {
-        expect(firstButton).toHaveAttribute('aria-pressed', 'true');
-        expect(secondButton).toHaveAttribute('aria-pressed', 'true');
-        expect(firstButton).toBeEnabled();
-        expect(secondButton).toBeEnabled();
+        expect(
+          within(firstCard).getByRole('button', { name: /видалити з обраного/i }),
+        ).toBeEnabled();
+        expect(
+          within(secondCard).getByRole('button', { name: /видалити з обраного/i }),
+        ).toBeEnabled();
       });
     } finally {
       firstWrite.resolve({ data: { saved: true } });
       secondWrite.resolve({ data: { saved: true } });
-      firstRefresh.resolve({ data: [first] });
+      finalRefresh.resolve({ data: [first, second] });
+    }
+  });
+
+  it('refetches favorites when a second save settles during an in-flight favorites refresh', async () => {
+    const user = userEvent.setup();
+    const first = buildOpportunity('first');
+    const second = buildOpportunity('second');
+
+    vi.mocked(opportunitiesApi.getOpportunities).mockResolvedValue({ data: [first, second] });
+    const staleRefresh =
+      Promise.withResolvers<Awaited<ReturnType<typeof opportunitiesApi.getFavorites>>>();
+    const freshRefresh =
+      Promise.withResolvers<Awaited<ReturnType<typeof opportunitiesApi.getFavorites>>>();
+
+    vi.spyOn(opportunitiesApi, 'setFavorite').mockResolvedValue({ data: { saved: true } });
+
+    renderOpportunitiesTab();
+
+    const [firstCard, secondCard] = await screen.findAllByRole('article');
+    const firstButton = within(firstCard).getByRole('button', { name: /додати до обраного/i });
+    const secondButton = within(secondCard).getByRole('button', { name: /додати до обраного/i });
+
+    await waitFor(() => expect(firstButton).toBeEnabled());
+    vi.mocked(opportunitiesApi.getFavorites)
+      .mockReturnValueOnce(staleRefresh.promise)
+      .mockReturnValueOnce(freshRefresh.promise);
+
+    try {
+      await user.click(firstButton);
+      await waitFor(() => expect(opportunitiesApi.getFavorites).toHaveBeenCalledTimes(2));
+
+      await user.click(secondButton);
+      await waitFor(() => expect(opportunitiesApi.getFavorites).toHaveBeenCalledTimes(3));
+
+      await act(async () => freshRefresh.resolve({ data: [first, second] }));
+      await act(async () => staleRefresh.resolve({ data: [first] }));
+
+      await waitFor(() => {
+        expect(
+          within(firstCard).getByRole('button', { name: /видалити з обраного/i }),
+        ).toBeEnabled();
+        expect(
+          within(secondCard).getByRole('button', { name: /видалити з обраного/i }),
+        ).toBeEnabled();
+      });
+    } finally {
+      staleRefresh.resolve({ data: [first] });
+      freshRefresh.resolve({ data: [first, second] });
     }
   });
 
@@ -242,5 +292,64 @@ describe('OpportunitiesTab component', () => {
     await user.click(createButton);
 
     expect(screen.getByRole('dialog', { name: /створити нову можливість/i })).toBeInTheDocument();
+  });
+
+  it('keeps an acknowledged favorite removal even if the post-mutation refetch fails', async () => {
+    const user = userEvent.setup();
+    const saved = {
+      ...buildOpportunity('saved'),
+      status: 'PUBLISHED' as const,
+      title: 'Saved placement',
+    };
+
+    vi.mocked(opportunitiesApi.getOpportunities).mockResolvedValue({ data: [saved] });
+    vi.mocked(opportunitiesApi.getFavorites).mockResolvedValueOnce({ data: [saved] });
+    vi.spyOn(opportunitiesApi, 'setFavorite').mockResolvedValue({ data: { saved: false } });
+
+    renderOpportunitiesTab();
+
+    const removeButton = await screen.findByRole('button', { name: /видалити з обраного/i });
+
+    await waitFor(() => expect(removeButton).toBeEnabled());
+    vi.mocked(opportunitiesApi.getFavorites).mockRejectedValueOnce(new Error('Refetch failed'));
+
+    await user.click(removeButton);
+
+    await waitFor(() => {
+      const addButton = screen.getByRole('button', { name: /додати до обраного/i });
+
+      expect(addButton).toHaveAttribute('aria-pressed', 'false');
+      expect(addButton).toBeEnabled();
+    });
+  });
+
+  it('shows a retry banner in Catalog when favorites fail to load without hiding catalog items', async () => {
+    const user = userEvent.setup();
+    const item = {
+      ...buildOpportunity('catalog-1'),
+      status: 'PUBLISHED' as const,
+      title: 'Visible catalog item',
+    };
+
+    vi.mocked(opportunitiesApi.getOpportunities).mockResolvedValue({ data: [item] });
+    vi.mocked(opportunitiesApi.getFavorites)
+      .mockRejectedValueOnce(new Error('Favorites unavailable'))
+      .mockResolvedValueOnce({ data: [item] });
+
+    renderOpportunitiesTab();
+
+    expect(await screen.findByRole('heading', { name: item.title })).toBeInTheDocument();
+
+    const banner = await screen.findByRole('status');
+
+    expect(banner).toHaveTextContent('Не вдалося завантажити обрані можливості.');
+    expect(screen.getByRole('button', { name: /додати до обраного/i })).toBeDisabled();
+
+    await user.click(within(banner).getByRole('button', { name: /спробувати знову/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /видалити з обраного/i })).toBeEnabled();
+    });
   });
 });

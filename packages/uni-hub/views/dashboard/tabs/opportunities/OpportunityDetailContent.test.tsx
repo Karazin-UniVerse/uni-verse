@@ -85,7 +85,7 @@ describe('OpportunityDetailContent applicants deep-link', () => {
 
     renderDetail(opportunity);
 
-    const button = screen.getByRole('button', { name: 'opportunities.favorites.toggle' });
+    const button = screen.getByRole('button', { name: 'opportunities.favorites.add' });
 
     await waitFor(() => expect(button).toBeEnabled());
     expect(button).toHaveAttribute('aria-pressed', 'false');
@@ -93,7 +93,7 @@ describe('OpportunityDetailContent applicants deep-link', () => {
 
     expect(setFavorite).toHaveBeenCalledWith(opportunity.id, true);
     await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'true'));
-    expect(listFavorites).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(listFavorites).toHaveBeenCalledTimes(2));
   });
 
   it('opens from the URL, stays closed after closing, and allows manual reopening', async () => {
