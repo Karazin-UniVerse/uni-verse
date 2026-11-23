@@ -44,7 +44,7 @@ const meta = {
     motivationLabel: 'Мотиваційний лист / коментар',
     motivationPlaceholder: 'Опишіть, чому вас зацікавила ця можливість та ваш досвід...',
     contactLabel: 'Альтернативний контакт',
-    contactPlaceholder: '@username або +380...',
+    contactPlaceholder: '@username, email або +380...',
     contactHint: 'Пошту з вашого профілю буде показано автоматично.',
     cancelText: 'Скасувати',
     submitText: 'Подати заявку',

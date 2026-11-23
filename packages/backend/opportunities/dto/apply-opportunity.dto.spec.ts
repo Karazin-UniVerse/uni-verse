@@ -3,20 +3,24 @@ import { validateSync } from 'class-validator';
 import { ApplyOpportunityDto } from './apply-opportunity.dto';
 
 describe('ApplyOpportunityDto alternative contact', () => {
-  it.each([undefined, '', '   ', '@student_dev', '+380671234567'])(
-    'should accept an optional contact %s',
-    (contactInfo) => {
-      const dto = plainToInstance(ApplyOpportunityDto, {
-        applicantName: 'Student',
-        contactInfo,
-        motivation: 'I would like to participate.',
-      });
+  it.each([
+    undefined,
+    '',
+    '   ',
+    '@student_dev',
+    '+380671234567',
+    'student@example.com',
+  ])('should accept an optional contact %s', (contactInfo) => {
+    const dto = plainToInstance(ApplyOpportunityDto, {
+      applicantName: 'Student',
+      contactInfo,
+      motivation: 'I would like to participate.',
+    });
 
-      expect(validateSync(dto)).toEqual([]);
-    },
-  );
+    expect(validateSync(dto)).toEqual([]);
+  });
 
-  it.each([null, 123, 'not-a-contact', 'student@example.com'])(
+  it.each([null, 123, 'not-a-contact', '@student_dev, student@example.com'])(
     'should reject an invalid supplied contact %s',
     (contactInfo) => {
       const dto = plainToInstance(ApplyOpportunityDto, {
