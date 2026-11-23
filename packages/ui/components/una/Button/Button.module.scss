@@ -202,13 +202,13 @@
     }
   }
 
-  .btn.secondary:not(.is-transparent, .toned, :disabled):where(:nth-of-type(odd)):hover {
+  .btn.secondary:where(:not(.is-transparent, .toned, :disabled):nth-of-type(odd)):hover {
     color: var(--blue-1300);
     border-color: var(--white-10);
     background-color: var(--electric-blue-50);
   }
 
-  .btn.secondary:not(.is-transparent, .toned, :disabled):where(:nth-of-type(even)):hover {
+  .btn.secondary:where(:not(.is-transparent, .toned, :disabled):nth-of-type(even)):hover {
     color: var(--blue-1300);
     border-color: var(--white-10);
     background-color: var(--crimson-50);
