@@ -20,7 +20,7 @@ const ALLOWED_PLUGINFILE_PREFIXES = [
 ];
 
 function extractSafeFilename(pathname: string): string {
-  const rawSegment = pathname.split('/').filter(Boolean).at(-1) ?? '';
+  const rawSegment = pathname.split('/').findLast(Boolean) ?? '';
 
   if (!rawSegment) {
     return 'attachment';
