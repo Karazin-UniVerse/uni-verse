@@ -71,6 +71,10 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
   afterEach(() => {
     delete process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     delete (window as unknown as { google?: unknown }).google;
+    window.localStorage.setItem('universe-lang', 'uk');
+    act(() => {
+      window.dispatchEvent(new Event('language-change'));
+    });
     window.localStorage.clear();
   });
 
@@ -169,6 +173,35 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
 
     expect(window.localStorage.getItem('isLoggedIn')).toBeNull();
     expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('should display localized corporate domain error and re-translate it when switching language', async () => {
+    const user = userEvent.setup();
+
+    mockAuthApi.loginWithGoogle.mockRejectedValueOnce(
+      new Error('login.errors.corporateDomainRequired (HTTP 403)'),
+    );
+
+    renderLoginPage();
+
+    await user.click(screen.getByTestId('google-btn'));
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText('Увійдіть з поштою @student.karazin.ua або @karazin.ua').length,
+      ).toBeGreaterThanOrEqual(1);
+    });
+
+    expect(screen.queryByText(/HTTP 403/i)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /мова інтерфейсу/i }));
+    await user.click(screen.getByText('English'));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Sign in with a @student.karazin.ua or @karazin.ua email'),
+      ).toBeInTheDocument();
+    });
   });
 
   it('should set isLoggedIn = true and redirect to / when isMoodleIntegrationEnabled is true and account is already linked', async () => {

@@ -19,6 +19,8 @@ export const en = {
   'login.hidePassword': 'Hide password',
   'login.success': 'Signed in successfully',
   'login.googleError': 'Google sign-in error',
+  'login.errors.corporateDomainRequired': 'Sign in with a @student.karazin.ua or @karazin.ua email',
+  'login.errors.moodleAlreadyLinked': 'This Moodle account is already linked to another user.',
   'login.linkMoodleTitle': 'Link Moodle Account',
   'login.linkMoodleHint':
     'To load your courses, schedule, and grades, enter your Moodle username and password. You only need to do this once — future logins will use Google in one click.',

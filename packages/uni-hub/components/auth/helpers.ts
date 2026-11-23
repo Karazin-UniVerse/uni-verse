@@ -1,4 +1,57 @@
-import type { TranslationKey } from '@uni-hub/i18n/translations';
+import { AUTH_ERROR } from '@core/constants/auth';
+import type { FormatMessage } from '@uni-hub/i18n/LanguageContext';
+import { en, uk, type TranslationKey } from '@uni-hub/i18n/translations';
+import { getErrorMessage } from '@uni-hub/services/api';
+
+// Matches the legacy Ukrainian backend message when running against an older API build.
+const LEGACY_CORPORATE_DOMAIN_ERROR =
+  'Доступ дозволено лише для облікових записів @student.karazin.ua та @karazin.ua';
+
+const AUTH_ERROR_KEY_MAP: Record<string, TranslationKey> = {
+  [AUTH_ERROR.CORPORATE_DOMAIN_REQUIRED]: AUTH_ERROR.CORPORATE_DOMAIN_REQUIRED,
+  [LEGACY_CORPORATE_DOMAIN_ERROR]: AUTH_ERROR.CORPORATE_DOMAIN_REQUIRED,
+  [AUTH_ERROR.MOODLE_ALREADY_LINKED]: AUTH_ERROR.MOODLE_ALREADY_LINKED,
+  [uk['login.googleError']]: 'login.googleError',
+  [en['login.googleError']]: 'login.googleError',
+  [uk['login.linkMoodleError']]: 'login.linkMoodleError',
+  [en['login.linkMoodleError']]: 'login.linkMoodleError',
+};
+
+export type AuthErrorState = { readonly key: TranslationKey } | { readonly message: string } | null;
+
+/**
+ * Resolves an auth error into a translation-key state when possible so UI errors track language switches.
+ */
+export function resolveAuthError(error: unknown, fallbackKey: TranslationKey): AuthErrorState {
+  const rawMessage = getErrorMessage(error, '');
+
+  if (!rawMessage) {
+    return { key: fallbackKey };
+  }
+
+  const translationKey = AUTH_ERROR_KEY_MAP[rawMessage];
+
+  if (translationKey) {
+    return { key: translationKey };
+  }
+
+  return { message: rawMessage };
+}
+
+/**
+ * Formats a stored auth error state using the active locale translator.
+ */
+export function formatAuthError(error: AuthErrorState, formatMessage: FormatMessage): string {
+  if (!error) {
+    return '';
+  }
+
+  if ('key' in error) {
+    return formatMessage(error.key);
+  }
+
+  return error.message;
+}
 
 export const LinkMoodleMode = {
   CONNECT: 'connect',
