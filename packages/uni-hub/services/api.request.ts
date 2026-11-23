@@ -353,13 +353,24 @@ export abstract class ApiClient {
   }
 }
 
-export function getErrorMessage(err: unknown, fallback: string): string {
-  if (err instanceof Error && err.message) {
-    return err.message;
-  }
+const HTTP_STATUS_SUFFIX_PATTERN = /\(HTTP \d{3}\)$/;
+const HTTP_TRANSPORT_ERROR_PATTERN = /^HTTP error \d{3}(?::|$)/i;
 
+export function getErrorMessage(err: unknown, fallback: string): string {
   const resData = (err as { response?: { data?: { message?: string; error?: string } } })?.response
     ?.data;
+  const rawMessage =
+    err instanceof Error && err.message ? err.message : resData?.message || resData?.error;
 
-  return resData?.message || resData?.error || fallback;
+  if (!rawMessage) {
+    return fallback;
+  }
+
+  const trimmed = rawMessage.trim();
+
+  if (HTTP_TRANSPORT_ERROR_PATTERN.test(trimmed)) {
+    return fallback;
+  }
+
+  return trimmed.replace(HTTP_STATUS_SUFFIX_PATTERN, '').trim() || fallback;
 }

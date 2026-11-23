@@ -19,6 +19,8 @@ export const en = {
   'login.hidePassword': 'Hide password',
   'login.success': 'Signed in successfully',
   'login.googleError': 'Google sign-in error',
+  'login.errors.corporateDomainRequired': 'Sign in with a @student.karazin.ua or @karazin.ua email',
+  'login.errors.moodleAlreadyLinked': 'This Moodle account is already linked to another user.',
   'login.linkMoodleTitle': 'Link Moodle Account',
   'login.linkMoodleHint':
     'To load your courses, schedule, and grades, enter your Moodle username and password. You only need to do this once — future logins will use Google in one click.',
@@ -55,6 +57,7 @@ export const en = {
   'theme.universeSpace': 'UniVerse Space',
   'theme.karazinGold': 'Karazin Gold',
   'theme.crimsonSky': 'Crimson Sky',
+  'theme.notionDark': 'Notion Dark',
   'theme.select': 'Theme selection',
 
   // Navigation
@@ -438,11 +441,16 @@ export const en = {
   'opportunities.errors.changesRequired':
     'Before resubmitting, change the opportunity title, description, contacts or payment terms.',
   'opportunities.errors.alreadyApplied': 'You have already applied to this opportunity.',
-  'opportunities.errors.phoneUnavailable': 'This phone number is unavailable for this account.',
-  'opportunities.errors.phoneAlreadySet':
-    'Use the phone number already registered to your account, or Telegram.',
   'opportunities.errors.withdrawalLimitReached':
     'You have already withdrawn your application for this opportunity the maximum number of times ({limit}).',
+  'opportunities.tabs.favorites': 'Favorites',
+  'opportunities.favorites.add': 'Add to favorites',
+  'opportunities.favorites.remove': 'Remove from favorites',
+  'opportunities.favorites.empty': 'You have not saved any opportunities yet.',
+  'opportunities.favorites.loadError': 'Could not load saved opportunities.',
+  'opportunities.filteredEmpty': 'No opportunities match your filters.',
+  'opportunities.unavailable.temporary': 'Temporarily unavailable',
+  'opportunities.unavailable.permanent': 'Permanently unavailable',
   'opportunities.tabs.catalog': 'Catalog',
   'opportunities.tabs.catalogShort': 'Catalog',
   'opportunities.tabs.myOpportunities': 'My Opportunities',
@@ -550,7 +558,7 @@ export const en = {
   'opportunities.createModal.descLabel': 'Description, tasks, and requirements *',
   'opportunities.createModal.descPlaceholder':
     'Describe the project, tasks, workload, and required skills...',
-  'opportunities.createModal.contactPlaceholder': 'Telegram (@username) or phone number',
+  'opportunities.createModal.contactPlaceholder': 'Telegram (@username), email or phone number',
   'opportunities.createModal.paymentTypeLabel': 'Reward Type',
   'opportunities.createModal.unpaidOption': 'Unpaid (Practice, experience)',
   'opportunities.createModal.paidOption': 'Paid',
@@ -607,9 +615,9 @@ export const en = {
     'Cover letter (why you are interested in this project) *',
   'opportunities.applyModal.motivationPlaceholder':
     'Briefly describe your experience, stack, and motivation...',
-  'opportunities.applyModal.contactPlaceholder': '@username or +380...',
+  'opportunities.applyModal.contactPlaceholder': '@username, email or +380...',
   'opportunities.applyModal.invalidContact':
-    'Please provide a valid Telegram username (@username or link) or phone number',
+    'Please provide a valid Telegram username (@username or link), email address, or phone number',
   'opportunities.applyModal.defaultApplicantName': 'Student',
   'opportunities.applyModal.cancel': 'Cancel',
   'opportunities.applyModal.submitting': 'Submitting...',
@@ -677,6 +685,10 @@ export const en = {
   'notifications.opportunityReadyForReview.title': 'Opportunity Ready for Review',
   'notifications.opportunityReadyForReview.message':
     'Opportunity "{opportunityTitle}" has been submitted for moderation.',
+  'notifications.opportunityUpdated.title': 'Favorite opportunity updated',
+  'notifications.opportunityUpdated.message': 'Opportunity "{opportunityTitle}" has been updated.',
+  'notifications.opportunityUpdated.messageWithLifecycle':
+    'Opportunity "{opportunityTitle}" updated: {lifecycleState}.',
   'notifications.opportunityModerated.title': 'Opportunity Moderation Result',
   'notifications.opportunityModerated.message': 'Opportunity "{opportunityTitle}" {action}.',
   'notifications.opportunityModerated.messageWithComment':

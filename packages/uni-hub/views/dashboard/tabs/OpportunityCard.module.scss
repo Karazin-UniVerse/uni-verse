@@ -1,5 +1,30 @@
 @use '@universe/ui/breakpoints.scss' as *;
 
+.favoriteAction {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.unavailableHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-12);
+  margin-bottom: var(--space-12);
+}
+
+.unavailableNotice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-16);
+  border-radius: var(--border-radius-medium);
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  font-size: var(--font-sm);
+}
+
 .cardLink {
   position: absolute;
   inset: 0;

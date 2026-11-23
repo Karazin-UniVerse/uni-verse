@@ -384,7 +384,7 @@
 
 .authorStrip {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   min-width: 0;
 }
@@ -906,6 +906,7 @@
 .btnIcon {
   flex-shrink: 0;
   margin-right: var(--space-8);
+  transform: translateY(1px);
 }
 
 .moderationTagsRow {
@@ -926,4 +927,16 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
+}
+
+.favoritesErrorBanner {
+  margin-bottom: var(--space-16);
+}
+
+.favoritesErrorContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-12);
 }

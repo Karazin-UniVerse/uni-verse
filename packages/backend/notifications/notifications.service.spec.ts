@@ -16,6 +16,7 @@ describe('NotificationsService', () => {
           useValue: {
             notification: {
               create: jest.fn(),
+              createMany: jest.fn(),
               findMany: jest.fn(),
               findFirst: jest.fn(),
               update: jest.fn(),
@@ -86,6 +87,45 @@ describe('NotificationsService', () => {
       expect(prismaService.notification.create).toHaveBeenCalledWith({
         data: dto,
       });
+    });
+  });
+
+  describe('createNotifications', () => {
+    it('should bulk-insert notifications with createMany', async () => {
+      const items = [
+        {
+          userId: '1',
+          title: 'Title',
+          message: 'Message',
+          link: '/opportunities/1',
+          type: 'OPPORTUNITY_UPDATED',
+        },
+        {
+          userId: '2',
+          title: 'Title',
+          message: 'Message',
+          link: '/opportunities/1',
+          type: 'OPPORTUNITY_UPDATED',
+        },
+      ];
+
+      jest
+        .mocked(prismaService.notification.createMany)
+        .mockResolvedValue({ count: 2 });
+
+      const result = await service.createNotifications(items);
+
+      expect(result).toEqual({ count: 2 });
+      expect(prismaService.notification.createMany).toHaveBeenCalledWith({
+        data: items,
+      });
+    });
+
+    it('should skip createMany when given an empty list', async () => {
+      const result = await service.createNotifications([]);
+
+      expect(result).toEqual({ count: 0 });
+      expect(prismaService.notification.createMany).not.toHaveBeenCalled();
     });
   });
 

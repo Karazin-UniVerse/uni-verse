@@ -77,6 +77,7 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   viewApplicantsText,
   onDelete,
   deleteText,
+  headerAction,
   className,
   canDelete = false,
   sendToReviewDisabled = false,
@@ -100,7 +101,10 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   return (
     <div className={className}>
       <div className={styles.stack}>
-        <BackButton label={backText} onClick={onBack} />
+        <div className={styles.topBar}>
+          <BackButton label={backText} onClick={onBack} />
+          {headerAction}
+        </div>
 
         <h3 className={styles.title}>{title}</h3>
 

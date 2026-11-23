@@ -17,6 +17,8 @@ export const uk = {
   'login.hidePassword': 'Сховати пароль',
   'login.success': 'Вхід виконано успішно',
   'login.googleError': 'Помилка входу через Google',
+  'login.errors.corporateDomainRequired': 'Увійдіть з поштою @student.karazin.ua або @karazin.ua',
+  'login.errors.moodleAlreadyLinked': 'Цей акаунт Moodle вже прив’язаний до іншого користувача.',
   'login.linkMoodleTitle': "Прив'язка акаунта Moodle",
   'login.linkMoodleHint':
     'Щоб завантажити ваші курси, розклад та оцінки, введіть логін і пароль від Moodle. Це необхідно зробити лише один раз — надалі вхід виконуватиметься через Google в один клік.',
@@ -53,6 +55,7 @@ export const uk = {
   'theme.universeSpace': 'UniVerse Space',
   'theme.karazinGold': 'Karazin Gold',
   'theme.crimsonSky': 'Crimson Sky',
+  'theme.notionDark': 'Notion Dark',
   'theme.select': 'Вибір теми',
 
   // Navigation
@@ -437,12 +440,16 @@ export const uk = {
   'opportunities.errors.changesRequired':
     'Перед повторним надсиланням змініть назву, опис, контакти або умови оплати можливості.',
   'opportunities.errors.alreadyApplied': 'Ви вже подали заявку на цю можливість.',
-  'opportunities.errors.phoneUnavailable':
-    'Цей номер недоступний для використання цим обліковим записом.',
-  'opportunities.errors.phoneAlreadySet':
-    'Використайте номер, уже закріплений за вашим обліковим записом, або Telegram.',
   'opportunities.errors.withdrawalLimitReached':
     'Ви вже відкликали відгук на цю можливість максимальну кількість разів ({limit}).',
+  'opportunities.tabs.favorites': 'Обрані',
+  'opportunities.favorites.add': 'Додати до обраного',
+  'opportunities.favorites.remove': 'Видалити з обраного',
+  'opportunities.favorites.empty': 'Ви ще не додали жодної можливості до обраного.',
+  'opportunities.favorites.loadError': 'Не вдалося завантажити обрані можливості.',
+  'opportunities.filteredEmpty': 'Можливостей за обраними фільтрами не знайдено.',
+  'opportunities.unavailable.temporary': 'Тимчасово недоступна',
+  'opportunities.unavailable.permanent': 'Більше недоступна',
   'opportunities.tabs.catalog': 'Каталог',
   'opportunities.tabs.catalogShort': 'Каталог',
   'opportunities.tabs.myOpportunities': 'Мої можливості',
@@ -550,7 +557,7 @@ export const uk = {
   'opportunities.createModal.descLabel': 'Опис, завдання та вимоги до кандидата *',
   'opportunities.createModal.descPlaceholder':
     'Детально розкажіть про проект, задачі, очікувану зайнятість та необхідні навички...',
-  'opportunities.createModal.contactPlaceholder': 'Telegram (@username) або номер телефону',
+  'opportunities.createModal.contactPlaceholder': 'Telegram (@username), email або номер телефону',
   'opportunities.createModal.paymentTypeLabel': 'Тип винагороди',
   'opportunities.createModal.unpaidOption': 'Неоплачувана (Практика, досвід)',
   'opportunities.createModal.paidOption': 'Оплачувана',
@@ -609,9 +616,9 @@ export const uk = {
     'Супровідне повідомлення (чому вам цікавий цей проект) *',
   'opportunities.applyModal.motivationPlaceholder':
     'Коротко опишіть ваш досвід, стек та чому ви хочете взяти участь...',
-  'opportunities.applyModal.contactPlaceholder': '@username або +380...',
+  'opportunities.applyModal.contactPlaceholder': '@username, email або +380...',
   'opportunities.applyModal.invalidContact':
-    'Вкажіть коректний Telegram (@username або посилання) або номер телефону',
+    'Вкажіть коректний Telegram (@username або посилання), електронну пошту або номер телефону',
   'opportunities.applyModal.defaultApplicantName': 'Студент',
   'opportunities.applyModal.cancel': 'Скасувати',
   'opportunities.applyModal.submitting': 'Відправка...',
@@ -679,6 +686,10 @@ export const uk = {
   'notifications.opportunityReadyForReview.title': 'Нова можливість на модерацію',
   'notifications.opportunityReadyForReview.message':
     'Можливість «{opportunityTitle}» надіслано на перевірку.',
+  'notifications.opportunityUpdated.title': 'Оновлення обраної можливості',
+  'notifications.opportunityUpdated.message': 'Можливість «{opportunityTitle}» оновлено.',
+  'notifications.opportunityUpdated.messageWithLifecycle':
+    'Можливість «{opportunityTitle}» оновлено: {lifecycleState}.',
   'notifications.opportunityModerated.title': 'Результат модерації можливості',
   'notifications.opportunityModerated.message': 'Можливість «{opportunityTitle}» {action}.',
   'notifications.opportunityModerated.messageWithComment':

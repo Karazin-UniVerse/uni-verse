@@ -42,6 +42,8 @@ const THEME_INIT_SCRIPT = `
   var KEY = 'universe-theme';
   var VALID = ['light','dark','cyberpunk','karazinClassic','universeSpace','karazinGold','crimsonSky'];
   var LIGHT_THEMES = ['light','karazinClassic','crimsonSky'];
+  var VALID = ['light','dark','cyberpunk','karazinClassic','universeSpace','karazinGold','notionDark'];
+  var LIGHT_THEMES = ['light','karazinClassic'];
   var stored = localStorage.getItem(KEY);
   var prefersDark = typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-color-scheme: dark)').matches;

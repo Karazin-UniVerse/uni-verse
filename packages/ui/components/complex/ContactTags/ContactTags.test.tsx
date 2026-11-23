@@ -48,6 +48,19 @@ describe('ContactTags', () => {
     expect(container.querySelector('img')).toBeNull();
   });
 
+  it('should render email alternative contact text', () => {
+    render(
+      <ContactTags
+        email="profile@karazin.ua"
+        alternativeContact="personal@gmail.com"
+        emailLabel="Email"
+        alternativeContactLabel="Alternative contact"
+      />,
+    );
+
+    expect(screen.getByTitle('Alternative contact')).toHaveTextContent('personal@gmail.com');
+  });
+
   it('should render contact text wrapped in a span for vertical alignment', () => {
     render(
       <ContactTags
