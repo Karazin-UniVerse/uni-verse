@@ -384,6 +384,10 @@ describe('UserService', () => {
   describe('updateOwnProfile', () => {
     it('should forbid updating another user profile', async () => {
       await expect(
+        service.updateOwnProfile('', 'user-1', { name: 'Missing Identity' }),
+      ).rejects.toThrow(ForbiddenException);
+
+      await expect(
         service.updateOwnProfile('other-user', 'user-1', { name: 'Hacked' }),
       ).rejects.toThrow(ForbiddenException);
       expect(mockUserPrisma.update).not.toHaveBeenCalled();
@@ -404,7 +408,7 @@ describe('UserService', () => {
 
       const updated = await service.updateOwnProfile('user-1', 'user-1', dto);
 
-      expect(bcrypt.hash).toHaveBeenCalledWith('newPassword456', 10);
+      expect(bcrypt.hash).toHaveBeenCalledWith('newPassword456', 12);
       expect(mockUserPrisma.update).toHaveBeenCalledWith({
         where: { id: 'user-1' },
         data: {
@@ -413,6 +417,24 @@ describe('UserService', () => {
         },
       });
       expect(updated.name).toBe('Updated Name');
+    });
+
+    it('should update only password when name is omitted', async () => {
+      (bcrypt.hash as jest.Mock).mockResolvedValue('password-only-hash');
+      mockUserPrisma.update.mockResolvedValue({
+        ...sampleUser,
+        password: 'password-only-hash',
+      });
+
+      await service.updateOwnProfile('user-1', 'user-1', {
+        password: 'newPassword456',
+      });
+
+      expect(bcrypt.hash).toHaveBeenCalledWith('newPassword456', 12);
+      expect(mockUserPrisma.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { password: 'password-only-hash' },
+      });
     });
 
     it('should ignore disallowed fields when password is omitted', async () => {

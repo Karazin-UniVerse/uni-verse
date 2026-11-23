@@ -133,4 +133,81 @@ describe('AssignmentDetail component', () => {
     expect(await screen.findByText('Не вдалося завантажити файл')).toBeInTheDocument();
     expect(consoleErrorSpy).toHaveBeenCalled();
   });
+
+  it('disables all attachment download buttons while any download is pending', async () => {
+    const user = userEvent.setup();
+    let resolveDownload: ((value: Blob) => void) | undefined;
+
+    vi.spyOn(moodleApi, 'getCourseContents').mockResolvedValue({
+      data: [
+        {
+          id: 1,
+          name: 'Week 1',
+          summary: '',
+          modules: [
+            {
+              id: 42,
+              instance: 99,
+              modname: 'assign',
+              name: 'Practical 1',
+              contents: [
+                {
+                  filename: 'first.pdf',
+                  fileurl: 'https://moodle.test/webservice/pluginfile.php/15/first.pdf',
+                },
+                {
+                  filename: 'second.pdf',
+                  fileurl: 'https://moodle.test/webservice/pluginfile.php/15/second.pdf',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    vi.spyOn(moodleApi, 'getAssignmentStatus').mockResolvedValue({
+      data: { status: 'new', grade: '' },
+    });
+    vi.spyOn(moodleApi, 'downloadFile').mockImplementation(
+      () =>
+        new Promise<Blob>((resolve) => {
+          resolveDownload = resolve;
+        }),
+    );
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:first');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+
+    render(
+      withAppProviders(
+        <AssignmentDetail
+          assignmentId={99}
+          courseId={10}
+          assignment={{
+            id: 99,
+            name: 'Practical 1',
+            courseName: 'Algorithms',
+            duedate: 1735689600,
+            description: '',
+          }}
+        />,
+      ),
+    );
+
+    const buttons = await screen.findAllByRole('button', { name: /завантажити/i });
+
+    expect(buttons).toHaveLength(2);
+
+    await user.click(buttons[0]);
+
+    expect(buttons[0]).toBeDisabled();
+    expect(buttons[1]).toBeDisabled();
+
+    resolveDownload?.(new Blob(['pdf'], { type: 'application/pdf' }));
+
+    await waitFor(() => {
+      expect(buttons[0]).not.toBeDisabled();
+      expect(buttons[1]).not.toBeDisabled();
+    });
+  });
 });

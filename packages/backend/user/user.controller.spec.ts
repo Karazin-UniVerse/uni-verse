@@ -2,6 +2,8 @@ jest.mock('bcrypt', () => ({
   hash: jest.fn(),
 }));
 
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Role, User } from '@universe/database';
 import * as bcrypt from 'bcrypt';
@@ -141,6 +143,15 @@ describe('UserController', () => {
       expect(userService.createUser).toHaveBeenCalledWith(dto);
       expect(result.email).toBe('nopass@karazin.ua');
     });
+
+    it('should handle empty body gracefully when checking password', async () => {
+      userService.createUser.mockResolvedValue(mockDbUser);
+
+      await controller.createUser(undefined as unknown as CreateUserDto);
+
+      expect(bcrypt.hash).not.toHaveBeenCalled();
+      expect(userService.createUser).toHaveBeenCalledWith(undefined);
+    });
   });
 
   describe('deleteUser', () => {
@@ -188,6 +199,28 @@ describe('UserController', () => {
       expect(
         (result as unknown as Record<string, unknown>).token,
       ).toBeUndefined();
+    });
+  });
+
+  describe('SelfUpdateUserDto validation', () => {
+    it('validates password only when provided', () => {
+      const nameOnly = plainToInstance(SelfUpdateUserDto, {
+        name: 'Valid Name',
+      });
+
+      expect(validateSync(nameOnly)).toHaveLength(0);
+
+      const shortPassword = plainToInstance(SelfUpdateUserDto, {
+        password: '123',
+      });
+
+      expect(validateSync(shortPassword).length).toBeGreaterThan(0);
+
+      const validPassword = plainToInstance(SelfUpdateUserDto, {
+        password: 'strongPassword1',
+      });
+
+      expect(validateSync(validPassword)).toHaveLength(0);
     });
   });
 });

@@ -76,5 +76,51 @@ describe('MoodleFilesController', () => {
       );
       expect(res.send).toHaveBeenCalledWith(fileBuffer);
     });
+
+    it('falls back to "attachment" when filename is empty', async () => {
+      const fileBuffer = Buffer.from('bytes');
+
+      MOCK_SERVICE.downloadFile.mockResolvedValue({
+        buffer: fileBuffer,
+        contentType: 'application/octet-stream',
+        filename: '',
+      });
+
+      const res = {
+        setHeader: jest.fn(),
+        send: jest.fn(),
+      } as unknown as Response;
+
+      await controller.downloadFile(
+        'moodle-token',
+        { url: 'https://moodle.test/webservice/pluginfile.php/' },
+        res,
+      );
+
+      expect(res.setHeader).toHaveBeenCalledWith(
+        'Content-Disposition',
+        'attachment; filename="attachment"; filename*=UTF-8\'\'',
+      );
+    });
+  });
+
+  describe('uploadFile', () => {
+    it('delegates file upload to MoodleFilesService with user Moodle token', async () => {
+      const uploaded = [{ filename: 'notes.txt', itemid: 42 }];
+
+      MOCK_SERVICE.uploadFile.mockResolvedValue(uploaded);
+
+      const result = await controller.uploadFile('moodle-token', {
+        filename: 'notes.txt',
+        filebase64: 'aGVsbG8=',
+      });
+
+      expect(MOCK_SERVICE.uploadFile).toHaveBeenCalledWith(
+        'moodle-token',
+        'notes.txt',
+        'aGVsbG8=',
+      );
+      expect(result).toEqual(uploaded);
+    });
   });
 });

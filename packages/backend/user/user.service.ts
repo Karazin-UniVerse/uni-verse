@@ -10,6 +10,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, SelfUpdateUserDto, UpdateUserDto } from './user-dto';
 import { randomUUID } from 'node:crypto';
 
+const BCRYPT_SALT_ROUNDS = 12;
+
 function assertPairedMoodleCredentials(
   token: string | null | undefined,
   moodleId: string | null | undefined,
@@ -190,7 +192,10 @@ export class UserService {
     }
 
     if (dto.password) {
-      updatePayload.password = await bcrypt.hash(dto.password, 10);
+      updatePayload.password = await bcrypt.hash(
+        dto.password,
+        BCRYPT_SALT_ROUNDS,
+      );
     }
 
     return this.updateUser(targetUserId, updatePayload);

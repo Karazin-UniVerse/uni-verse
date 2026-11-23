@@ -30,8 +30,11 @@ describe('MoodleCredentialsGuard', () => {
     jest.clearAllMocks();
   });
 
-  it('should throw UnauthorizedException when user sub is missing', async () => {
+  it('should throw UnauthorizedException when user sub is missing or empty', async () => {
     await expect(guard.canActivate(createContext())).rejects.toThrow(
+      UnauthorizedException,
+    );
+    await expect(guard.canActivate(createContext({ sub: '' }))).rejects.toThrow(
       UnauthorizedException,
     );
     expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
@@ -49,9 +52,18 @@ describe('MoodleCredentialsGuard', () => {
     });
   });
 
-  it('should throw BadRequestException when user has no linked Moodle credentials', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue({
+  it('should throw BadRequestException when user lacks token or moodleId', async () => {
+    mockPrisma.user.findUnique.mockResolvedValueOnce({
       token: null,
+      moodleId: null,
+    });
+
+    await expect(
+      guard.canActivate(createContext({ sub: 'user-1' })),
+    ).rejects.toThrow(BadRequestException);
+
+    mockPrisma.user.findUnique.mockResolvedValueOnce({
+      token: 'db-moodle-token',
       moodleId: null,
     });
 

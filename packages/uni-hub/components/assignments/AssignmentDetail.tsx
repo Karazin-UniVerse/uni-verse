@@ -272,7 +272,7 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
                         type="button"
                         variant="primary"
                         size="small"
-                        disabled={!fileUrl || downloadingFileUrl === fileUrl}
+                        disabled={!fileUrl || downloadingFileUrl !== null}
                         onClick={() => {
                           if (fileUrl) {
                             void handleDownloadFile(fileUrl, file.filename);

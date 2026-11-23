@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  PayloadTooLargeException,
   RequestTimeoutException,
 } from '@nestjs/common';
 import { MoodleClientService } from '../moodle-client/moodle.client.service';
@@ -14,29 +15,33 @@ export interface MoodleDownloadedFile {
 }
 
 const DOWNLOAD_TIMEOUT_MS = 15000;
+const MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024;
 const ALLOWED_PLUGINFILE_PREFIXES = [
   '/webservice/pluginfile.php/',
   '/pluginfile.php/',
 ];
 
 function extractSafeFilename(pathname: string): string {
-  const rawSegment = pathname.split('/').findLast(Boolean) ?? '';
+  const rawSegment = pathname.split('/').at(-1) ?? '';
 
   if (!rawSegment) {
     return 'attachment';
   }
 
-  let decoded = rawSegment;
-
-  try {
-    decoded = decodeURIComponent(rawSegment);
-  } catch {
-    decoded = rawSegment;
-  }
-
+  const decoded = decodeURIComponent(rawSegment);
   const sanitized = decoded.replace(/[\\/\r\n"\0]/g, '_').trim();
 
   return sanitized || 'attachment';
+}
+
+function stripBasePath(pathname: string, basePath: string): string | null {
+  if (!basePath) {
+    return pathname;
+  }
+
+  return pathname.startsWith(`${basePath}/`)
+    ? pathname.slice(basePath.length)
+    : null;
 }
 
 function isMoodleJsonError(contentType: string, buffer: Buffer): string | null {
@@ -48,19 +53,81 @@ function isMoodleJsonError(contentType: string, buffer: Buffer): string | null {
     const parsed = JSON.parse(buffer.toString('utf8')) as unknown;
 
     if (
-      typeof parsed === 'object' &&
-      parsed !== null &&
-      'exception' in parsed
+      typeof parsed !== 'object' ||
+      parsed === null ||
+      Array.isArray(parsed)
     ) {
-      const message = (parsed as { message?: unknown }).message;
+      return null;
+    }
 
-      return typeof message === 'string' ? message : 'Download failed';
+    const record = parsed as Record<string, unknown>;
+
+    if (
+      typeof record.exception === 'string' &&
+      record.exception.length > 0 &&
+      typeof record.errorcode === 'string' &&
+      record.errorcode.length > 0 &&
+      typeof record.message === 'string' &&
+      record.message.length > 0
+    ) {
+      return record.message;
     }
   } catch {
     // Non-JSON payload labeled as JSON: treat as binary download
   }
 
   return null;
+}
+
+async function readBoundedResponseBuffer(
+  response: Response,
+  maxBytes: number,
+): Promise<Buffer> {
+  const contentLength = Number(response.headers.get('content-length'));
+
+  if (Number.isFinite(contentLength) && contentLength > maxBytes) {
+    await response.body?.cancel().catch(() => undefined);
+    throw new PayloadTooLargeException(
+      'Downloaded file exceeds maximum allowed size',
+    );
+  }
+
+  if (!response.body) {
+    const buffer = Buffer.from(await response.arrayBuffer());
+
+    if (buffer.byteLength > maxBytes) {
+      throw new PayloadTooLargeException(
+        'Downloaded file exceeds maximum allowed size',
+      );
+    }
+
+    return buffer;
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Buffer[] = [];
+  let totalBytes = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+
+    if (done) {
+      break;
+    }
+
+    totalBytes += value.byteLength;
+
+    if (totalBytes > maxBytes) {
+      await reader.cancel().catch(() => undefined);
+      throw new PayloadTooLargeException(
+        'Downloaded file exceeds maximum allowed size',
+      );
+    }
+
+    chunks.push(Buffer.from(value));
+  }
+
+  return Buffer.concat(chunks, totalBytes);
 }
 
 @Injectable()
@@ -71,7 +138,8 @@ export class MoodleFilesService {
     rawUrl: string,
     moodleToken: string,
   ): { path: string; filename: string } {
-    const moodleOrigin = new URL(this.moodleClient.getBaseUrl()).origin;
+    const moodleUrl = new URL(this.moodleClient.getBaseUrl());
+    const basePath = moodleUrl.pathname.replace(/\/+$/, '');
 
     let parsed: URL;
 
@@ -83,7 +151,7 @@ export class MoodleFilesService {
 
     if (
       parsed.protocol !== 'https:' ||
-      parsed.origin !== moodleOrigin ||
+      parsed.origin !== moodleUrl.origin ||
       parsed.username !== '' ||
       parsed.password !== ''
     ) {
@@ -98,13 +166,19 @@ export class MoodleFilesService {
       throw new BadRequestException('Invalid file URL');
     }
 
-    const hasTraversalSegment = decodedPathname.split(/[\\/]/).includes('..');
+    const relativePathname = stripBasePath(parsed.pathname, basePath);
+    const relativeDecodedPathname = stripBasePath(decodedPathname, basePath);
+    const hasTraversalSegment =
+      relativeDecodedPathname !== null &&
+      relativeDecodedPathname.split(/[\\/]/).includes('..');
     const isAllowedPath =
+      relativePathname !== null &&
+      relativeDecodedPathname !== null &&
       !hasTraversalSegment &&
       ALLOWED_PLUGINFILE_PREFIXES.some(
         (prefix) =>
-          parsed.pathname.startsWith(prefix) &&
-          decodedPathname.startsWith(prefix),
+          relativePathname.startsWith(prefix) &&
+          relativeDecodedPathname.startsWith(prefix),
       );
 
     if (!isAllowedPath) {
@@ -118,8 +192,8 @@ export class MoodleFilesService {
     searchParams.set('token', moodleToken);
 
     return {
-      path: `${parsed.pathname}?${searchParams.toString()}`,
-      filename: extractSafeFilename(parsed.pathname),
+      path: `${relativePathname}?${searchParams.toString()}`,
+      filename: extractSafeFilename(relativePathname),
     };
   }
 
@@ -151,7 +225,10 @@ export class MoodleFilesService {
       throw new InternalServerErrorException('Download failed');
     }
 
-    const buffer = Buffer.from(await response.arrayBuffer());
+    const buffer = await readBoundedResponseBuffer(
+      response,
+      MAX_DOWNLOAD_BYTES,
+    );
     const contentType =
       response.headers.get('content-type') || 'application/octet-stream';
     const moodleError = isMoodleJsonError(contentType, buffer);

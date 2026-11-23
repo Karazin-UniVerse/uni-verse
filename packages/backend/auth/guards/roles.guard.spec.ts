@@ -42,12 +42,24 @@ describe('RolesGuard', () => {
     expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
   });
 
-  it('should deny access when authenticated user sub is missing', async () => {
+  it('should allow access when required roles array is empty', async () => {
+    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([]);
+
+    const allowed = await guard.canActivate(createExecutionContext());
+
+    expect(allowed).toBe(true);
+    expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('should deny access when authenticated user sub is missing or empty', async () => {
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([Role.ADMIN]);
 
     await expect(guard.canActivate(createExecutionContext({}))).rejects.toThrow(
       ForbiddenException,
     );
+    await expect(
+      guard.canActivate(createExecutionContext({ sub: '' })),
+    ).rejects.toThrow(ForbiddenException);
     expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
   });
 
