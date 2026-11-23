@@ -928,3 +928,15 @@
   flex-wrap: wrap;
   gap: var(--space-4);
 }
+
+.favoritesErrorBanner {
+  margin-bottom: var(--space-16);
+}
+
+.favoritesErrorContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+}

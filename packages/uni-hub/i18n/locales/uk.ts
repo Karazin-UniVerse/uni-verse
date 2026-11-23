@@ -441,6 +441,14 @@ export const uk = {
   'opportunities.errors.alreadyApplied': 'Ви вже подали заявку на цю можливість.',
   'opportunities.errors.withdrawalLimitReached':
     'Ви вже відкликали відгук на цю можливість максимальну кількість разів ({limit}).',
+  'opportunities.tabs.favorites': 'Обрані',
+  'opportunities.favorites.add': 'Додати до обраного',
+  'opportunities.favorites.remove': 'Видалити з обраного',
+  'opportunities.favorites.empty': 'Ви ще не додали жодної можливості до обраного.',
+  'opportunities.favorites.loadError': 'Не вдалося завантажити обрані можливості.',
+  'opportunities.filteredEmpty': 'Можливостей за обраними фільтрами не знайдено.',
+  'opportunities.unavailable.temporary': 'Тимчасово недоступна',
+  'opportunities.unavailable.permanent': 'Більше недоступна',
   'opportunities.tabs.catalog': 'Каталог',
   'opportunities.tabs.catalogShort': 'Каталог',
   'opportunities.tabs.myOpportunities': 'Мої можливості',
@@ -677,6 +685,10 @@ export const uk = {
   'notifications.opportunityReadyForReview.title': 'Нова можливість на модерацію',
   'notifications.opportunityReadyForReview.message':
     'Можливість «{opportunityTitle}» надіслано на перевірку.',
+  'notifications.opportunityUpdated.title': 'Оновлення обраної можливості',
+  'notifications.opportunityUpdated.message': 'Можливість «{opportunityTitle}» оновлено.',
+  'notifications.opportunityUpdated.messageWithLifecycle':
+    'Можливість «{opportunityTitle}» оновлено: {lifecycleState}.',
   'notifications.opportunityModerated.title': 'Результат модерації можливості',
   'notifications.opportunityModerated.message': 'Можливість «{opportunityTitle}» {action}.',
   'notifications.opportunityModerated.messageWithComment':

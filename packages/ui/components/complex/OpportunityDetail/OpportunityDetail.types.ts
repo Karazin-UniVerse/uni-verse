@@ -48,5 +48,6 @@ export type OpportunityDetailProps = {
   canApply?: boolean;
   applyText?: string;
   onOpenApply?: () => void;
+  headerAction?: ReactNode;
   className?: string;
 };

@@ -6,6 +6,14 @@
   gap: var(--space-20);
 }
 
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+}
+
 .tagsRow {
   display: flex;
   gap: var(--space-8);

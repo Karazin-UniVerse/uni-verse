@@ -8,6 +8,7 @@ import type { Notification } from '@core/types/moodle';
 import { getGradeRawValue } from '@uni-hub/utils/grades';
 import type { FeatureFlagKey, FeatureFlags } from '@core/constants/features';
 import { NAV_KEY, STUDY_VIEWS, type NavKey, type StudyView } from './constants';
+import { OPPORTUNITY_LIFECYCLE_LABEL_KEYS } from './tabs/opportunities/constants';
 
 const NOTIFICATION_MESSAGE_MAX_LENGTH = 100;
 
@@ -94,6 +95,7 @@ const PLATFORM_ACTION_KEYS: Record<string, TranslationKey> = {
 };
 
 const PLATFORM_TITLE_KEYS: Record<string, TranslationKey> = {
+  [OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE]: OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE,
   [OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE]:
     OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE,
   [OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_TITLE]:
@@ -108,6 +110,7 @@ type MessageFormatter = (key: TranslationKey, values?: Record<string, string | n
 type PlatformNotificationPayload = {
   opportunityTitle?: string;
   applicantName?: string;
+  lifecycleState?: string;
   status?: string;
   action?: string;
   comment?: string | null;
@@ -127,7 +130,7 @@ function parsePlatformPayload(rawMessage: string): PlatformNotificationPayload |
 
 function translateCode(
   code: string | undefined,
-  keyMap: Record<string, TranslationKey>,
+  keyMap: Partial<Record<string, TranslationKey>>,
   formatMessage: MessageFormatter,
 ): string {
   if (!code) {
@@ -151,6 +154,23 @@ function formatPlatformMessage(
   }
 
   const opportunityTitle = parsed.opportunityTitle ?? '';
+
+  if (subject === OPPORTUNITY_NOTIFICATION_KEY.UPDATED_TITLE) {
+    if (parsed.lifecycleState) {
+      const lifecycleState = translateCode(
+        parsed.lifecycleState,
+        OPPORTUNITY_LIFECYCLE_LABEL_KEYS,
+        formatMessage,
+      );
+
+      return formatMessage(OPPORTUNITY_NOTIFICATION_KEY.UPDATED_MESSAGE_WITH_LIFECYCLE, {
+        opportunityTitle,
+        lifecycleState,
+      });
+    }
+
+    return formatMessage(OPPORTUNITY_NOTIFICATION_KEY.UPDATED_MESSAGE, { opportunityTitle });
+  }
 
   if (subject === OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE) {
     const status = translateCode(parsed.status, PLATFORM_STATUS_KEYS, formatMessage);

@@ -19,6 +19,10 @@ import { useOpportunityActions } from './hooks/useOpportunityActions';
 import { ApplicantsModal } from './modals/ApplicantsModal';
 import { ApplyOpportunityModal } from './modals/ApplyOpportunityModal';
 import { CreateOpportunityModal } from './modals/CreateOpportunityModal';
+import { FavoriteToggleButton } from './components/FavoriteToggleButton';
+import { canToggleFavorite } from './helpers';
+import { hasLoadFailed } from '@uni-hub/queries/load-state';
+import { useFavorites } from './hooks/useFavorites';
 
 export interface OpportunityDetailContentProps {
   opportunity: Opportunity;
@@ -34,6 +38,15 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
   const create = useCreateOpportunity({ currentOpportunity: opportunity });
   const apply = useApplyToOpportunity({ currentUser, opportunity });
   const applicants = useApplicants();
+  const canFavorite =
+    opportunity.status === OPPORTUNITY_STATUS.PUBLISHED &&
+    canToggleFavorite(opportunity, currentUser.userId);
+  const favorites = useFavorites(canFavorite);
+  const isFavorite = favorites.savedIds.has(opportunity.id);
+  const favoriteDisabled =
+    favorites.query.isLoading ||
+    hasLoadFailed(favorites.query) ||
+    favorites.pendingIds.includes(opportunity.id);
   const canModerate =
     Boolean(currentUser.userId) &&
     currentUser.roles.includes(ROLE.OPPORTUNITIES_MODERATOR) &&
@@ -76,6 +89,15 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
         onDelete={() => setDeleteConfirmOpen(true)}
         onOpenApply={() => apply.setIsApplyOpen(true)}
         onOpenApplicants={() => applicants.open(opportunity)}
+        favoriteAction={
+          canFavorite ? (
+            <FavoriteToggleButton
+              isFavorite={isFavorite}
+              disabled={favoriteDisabled}
+              onToggle={() => favorites.toggle(opportunity.id, isFavorite)}
+            />
+          ) : undefined
+        }
       />
 
       {canModerate && (

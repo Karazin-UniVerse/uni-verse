@@ -1,6 +1,7 @@
 export const opportunityKeys = {
   all: ['opportunities'] as const,
   catalog: () => [...opportunityKeys.all, 'catalog'] as const,
+  favorites: () => [...opportunityKeys.all, 'favorites'] as const,
   mine: () => [...opportunityKeys.all, 'mine'] as const,
   detail: (opportunityId: string) => [...opportunityKeys.all, 'detail', opportunityId] as const,
   applications: () => [...opportunityKeys.all, 'applications'] as const,
@@ -10,3 +11,4 @@ export const opportunityKeys = {
 };
 
 export const moderateMutationKey = [...opportunityKeys.all, 'moderate'] as const;
+export const favoriteMutationKey = [...opportunityKeys.all, 'favorite'] as const;

@@ -442,6 +442,14 @@ export const en = {
   'opportunities.errors.alreadyApplied': 'You have already applied to this opportunity.',
   'opportunities.errors.withdrawalLimitReached':
     'You have already withdrawn your application for this opportunity the maximum number of times ({limit}).',
+  'opportunities.tabs.favorites': 'Favorites',
+  'opportunities.favorites.add': 'Add to favorites',
+  'opportunities.favorites.remove': 'Remove from favorites',
+  'opportunities.favorites.empty': 'You have not saved any opportunities yet.',
+  'opportunities.favorites.loadError': 'Could not load saved opportunities.',
+  'opportunities.filteredEmpty': 'No opportunities match your filters.',
+  'opportunities.unavailable.temporary': 'Temporarily unavailable',
+  'opportunities.unavailable.permanent': 'Permanently unavailable',
   'opportunities.tabs.catalog': 'Catalog',
   'opportunities.tabs.catalogShort': 'Catalog',
   'opportunities.tabs.myOpportunities': 'My Opportunities',
@@ -676,6 +684,10 @@ export const en = {
   'notifications.opportunityReadyForReview.title': 'Opportunity Ready for Review',
   'notifications.opportunityReadyForReview.message':
     'Opportunity "{opportunityTitle}" has been submitted for moderation.',
+  'notifications.opportunityUpdated.title': 'Favorite opportunity updated',
+  'notifications.opportunityUpdated.message': 'Opportunity "{opportunityTitle}" has been updated.',
+  'notifications.opportunityUpdated.messageWithLifecycle':
+    'Opportunity "{opportunityTitle}" updated: {lifecycleState}.',
   'notifications.opportunityModerated.title': 'Opportunity Moderation Result',
   'notifications.opportunityModerated.message': 'Opportunity "{opportunityTitle}" {action}.',
   'notifications.opportunityModerated.messageWithComment':
