@@ -6,7 +6,6 @@ import {
 } from '@universe/database';
 import { OPPORTUNITY_ERROR } from '@universe/core/constants/opportunities';
 import { NOTIFICATION_TYPE } from '@universe/core/constants/notifications';
-import { normalizeContactPhone } from '@universe/core/utils/contacts';
 import type { ApplyOpportunityDto } from './dto/apply-opportunity.dto';
 import type { PrismaService } from '../prisma/prisma.service';
 import { PRISMA_ERROR_CODE } from '../constants/prisma';
@@ -18,33 +17,6 @@ interface ApplicationWrite {
   opportunityId: string;
   request: ApplyOpportunityDto;
   ownerId?: string;
-}
-
-async function claimPhone(
-  tx: Prisma.TransactionClient,
-  userId: string,
-  phoneNumber: string,
-): Promise<void> {
-  let claimed;
-
-  try {
-    claimed = await tx.userPhone.upsert({
-      where: { userId },
-      create: { userId, phoneNumber },
-      update: {},
-      select: { phoneNumber: true },
-    });
-  } catch (error) {
-    if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.UNIQUE_CONSTRAINT) {
-      throw new ConflictException(OPPORTUNITY_ERROR.PHONE_UNAVAILABLE);
-    }
-
-    throw error;
-  }
-
-  if (claimed.phoneNumber !== phoneNumber) {
-    throw new ConflictException(OPPORTUNITY_ERROR.PHONE_ALREADY_SET);
-  }
 }
 
 export async function persistOpportunityApplication({
@@ -104,17 +76,10 @@ export async function persistOpportunityApplication({
       },
     });
   };
-  const phoneNumber = normalizeContactPhone(contactInfo);
 
   try {
-    if (phoneNumber || existing) {
-      return await prisma.$transaction(async (tx) => {
-        if (phoneNumber) {
-          await claimPhone(tx, userId, phoneNumber);
-        }
-
-        return writeApplication(tx);
-      });
+    if (existing) {
+      return await prisma.$transaction((tx) => writeApplication(tx));
     }
 
     return await writeApplication(prisma);

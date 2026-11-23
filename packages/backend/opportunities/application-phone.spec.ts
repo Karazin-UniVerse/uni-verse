@@ -1,4 +1,3 @@
-import { ConflictException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -114,18 +113,7 @@ describe('application phone ownership', () => {
     contactInfo,
   });
 
-  it('claims a normalized phone on the first successful application', async () => {
-    const { service, users } = await setup();
-
-    await service.apply(
-      'candidate-a',
-      'opportunity-1',
-      request('067 123 45 67'),
-    );
-    expect(users.get('candidate-a')).toBe('+380671234567');
-  });
-
-  it('allows the same account to reuse equivalent phone formats across opportunities', async () => {
+  it('allows the same account to submit different phone numbers across opportunities', async () => {
     const { service, applications } = await setup();
 
     await service.apply(
@@ -133,39 +121,31 @@ describe('application phone ownership', () => {
       'opportunity-1',
       request('+380671234567'),
     );
-    await service.apply('candidate-a', 'opportunity-2', request('0671234567'));
+    await service.apply(
+      'candidate-a',
+      'opportunity-2',
+      request('+380501234567'),
+    );
+
+    expect(applications).toHaveLength(2);
+    expect(applications[0].contactInfo).toBe('+380671234567');
+    expect(applications[1].contactInfo).toBe('+380501234567');
+  });
+
+  it('allows different accounts to use the same phone number', async () => {
+    const { service, applications } = await setup();
+
+    await service.apply(
+      'candidate-a',
+      'opportunity-1',
+      request('+380671234567'),
+    );
+    await service.apply('candidate-b', 'opportunity-2', request('0671234567'));
+
     expect(applications).toHaveLength(2);
   });
 
-  it('prevents another account from claiming an equivalent phone', async () => {
-    const { service, applications } = await setup();
-
-    await service.apply(
-      'candidate-a',
-      'opportunity-1',
-      request('+380671234567'),
-    );
-    await expect(
-      service.apply('candidate-b', 'opportunity-2', request('0671234567')),
-    ).rejects.toThrow(ConflictException);
-    expect(applications).toHaveLength(1);
-  });
-
-  it('prevents the same account from registering a second phone', async () => {
-    const { service, users } = await setup();
-
-    await service.apply(
-      'candidate-a',
-      'opportunity-1',
-      request('+380671234567'),
-    );
-    await expect(
-      service.apply('candidate-a', 'opportunity-2', request('+380501234567')),
-    ).rejects.toThrow(ConflictException);
-    expect(users.get('candidate-a')).toBe('+380671234567');
-  });
-
-  it('keeps the phone requirement when reapplying after withdrawal', async () => {
+  it('allows changing the phone number when reapplying after withdrawal', async () => {
     const { service, applications } = await setup();
 
     await service.apply(
@@ -174,20 +154,15 @@ describe('application phone ownership', () => {
       request('+380671234567'),
     );
     applications[0].status = 'WITHDRAWN';
-    await expect(
-      service.apply('candidate-a', 'opportunity-1', request('+380501234567')),
-    ).rejects.toThrow(ConflictException);
-    expect(applications[0].status).toBe('WITHDRAWN');
-    await service.apply('candidate-a', 'opportunity-1', request('0671234567'));
+
+    await service.apply(
+      'candidate-a',
+      'opportunity-1',
+      request('+380501234567'),
+    );
+
     expect(applications[0].status).toBe('SUBMITTED');
-  });
-
-  it('does not claim or restrict a phone for Telegram applications', async () => {
-    const { service, users } = await setup();
-
-    await service.apply('candidate-a', 'opportunity-1', request('@student_tg'));
-    await service.apply('candidate-b', 'opportunity-1', request('@student_tg'));
-    expect([...users.values()]).toEqual([null, null]);
+    expect(applications[0].contactInfo).toBe('+380501234567');
   });
 
   it('does not retain a phone claim when application creation fails', async () => {

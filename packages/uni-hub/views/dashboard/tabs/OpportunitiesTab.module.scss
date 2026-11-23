@@ -384,7 +384,7 @@
 
 .authorStrip {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   min-width: 0;
 }
@@ -906,6 +906,7 @@
 .btnIcon {
   flex-shrink: 0;
   margin-right: var(--space-8);
+  transform: translateY(1px);
 }
 
 .moderationTagsRow {

@@ -52,6 +52,7 @@ export const uk = {
   'theme.karazinClassic': 'Karazin Classic',
   'theme.universeSpace': 'UniVerse Space',
   'theme.karazinGold': 'Karazin Gold',
+  'theme.notionDark': 'Notion Dark',
   'theme.select': 'Вибір теми',
 
   // Navigation
@@ -436,10 +437,6 @@ export const uk = {
   'opportunities.errors.changesRequired':
     'Перед повторним надсиланням змініть назву, опис, контакти або умови оплати можливості.',
   'opportunities.errors.alreadyApplied': 'Ви вже подали заявку на цю можливість.',
-  'opportunities.errors.phoneUnavailable':
-    'Цей номер недоступний для використання цим обліковим записом.',
-  'opportunities.errors.phoneAlreadySet':
-    'Використайте номер, уже закріплений за вашим обліковим записом, або Telegram.',
   'opportunities.errors.withdrawalLimitReached':
     'Ви вже відкликали відгук на цю можливість максимальну кількість разів ({limit}).',
   'opportunities.tabs.catalog': 'Каталог',
@@ -549,7 +546,7 @@ export const uk = {
   'opportunities.createModal.descLabel': 'Опис, завдання та вимоги до кандидата *',
   'opportunities.createModal.descPlaceholder':
     'Детально розкажіть про проект, задачі, очікувану зайнятість та необхідні навички...',
-  'opportunities.createModal.contactPlaceholder': 'Telegram (@username) або номер телефону',
+  'opportunities.createModal.contactPlaceholder': 'Telegram (@username), email або номер телефону',
   'opportunities.createModal.paymentTypeLabel': 'Тип винагороди',
   'opportunities.createModal.unpaidOption': 'Неоплачувана (Практика, досвід)',
   'opportunities.createModal.paidOption': 'Оплачувана',
@@ -608,9 +605,9 @@ export const uk = {
     'Супровідне повідомлення (чому вам цікавий цей проект) *',
   'opportunities.applyModal.motivationPlaceholder':
     'Коротко опишіть ваш досвід, стек та чому ви хочете взяти участь...',
-  'opportunities.applyModal.contactPlaceholder': '@username або +380...',
+  'opportunities.applyModal.contactPlaceholder': '@username, email або +380...',
   'opportunities.applyModal.invalidContact':
-    'Вкажіть коректний Telegram (@username або посилання) або номер телефону',
+    'Вкажіть коректний Telegram (@username або посилання), електронну пошту або номер телефону',
   'opportunities.applyModal.defaultApplicantName': 'Студент',
   'opportunities.applyModal.cancel': 'Скасувати',
   'opportunities.applyModal.submitting': 'Відправка...',
