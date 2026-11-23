@@ -169,7 +169,13 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
             </div>
 
             <div className={styles.mobileOnlyItem} style={{ marginBottom: 6 }}>
-              <ThemeSwitcher compact isFullWidth showLabel placement="bottom-start" />
+              <ThemeSwitcher
+                className={styles.userDropdownTheme}
+                compact
+                isFullWidth
+                showLabel
+                placement="bottom-start"
+              />
             </div>
 
             <div className={styles.mobileOnlyItem}>
@@ -177,6 +183,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
                 type="button"
                 variant="secondary"
                 size="medium"
+                className={styles.userDropdownSound}
                 onClick={onToggleSound}
                 style={{ width: '100%', justifyContent: 'flex-start' }}
               >

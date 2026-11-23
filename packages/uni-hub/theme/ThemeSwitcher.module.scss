@@ -106,9 +106,9 @@
 
     &:hover,
     &[aria-expanded='true'] {
-      color: #0f172a;
+      color: var(--blue-1300);
       border-color: transparent;
-      background: rgb(37 99 235 / 8%);
+      background: color-mix(in srgb, var(--electric-blue-600) 8%, transparent);
       box-shadow: none;
 
       svg {
@@ -137,7 +137,7 @@
     &[aria-expanded='true'] {
       color: var(--blue-1300);
       border-color: transparent;
-      background: rgb(37 99 235 / 8%);
+      background: color-mix(in srgb, var(--electric-blue-600) 8%, transparent);
       box-shadow: none;
 
       svg {

@@ -175,15 +175,11 @@
 :global([data-theme='crimsonSky']) {
   .actionCard:nth-child(odd):hover {
     border-color: var(--crimson-600);
-    box-shadow:
-      0 8px 24px rgb(225 29 72 / 20%),
-      0 2px 6px rgb(15 23 42 / 6%);
+    box-shadow: var(--card-shadow-hover);
   }
 
   .actionCard:nth-child(even):hover {
     border-color: var(--electric-blue-600);
-    box-shadow:
-      0 8px 24px rgb(37 99 235 / 20%),
-      0 2px 6px rgb(15 23 42 / 6%);
+    box-shadow: var(--card-shadow-hover);
   }
 }

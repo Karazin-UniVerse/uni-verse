@@ -229,9 +229,7 @@
         color: var(--blue-1300);
         border-color: var(--electric-blue-600);
         background-color: var(--electric-blue-50);
-        box-shadow:
-          0 0 0 2px rgb(37 99 235 / 30%),
-          0 4px 12px rgb(37 99 235 / 20%);
+        box-shadow: var(--box-shadow-medium);
       }
 
       &:active {
@@ -247,9 +245,7 @@
         color: var(--blue-1300);
         border-color: var(--crimson-600);
         background-color: var(--crimson-50);
-        box-shadow:
-          0 0 0 2px rgb(225 29 72 / 30%),
-          0 4px 12px rgb(225 29 72 / 20%);
+        box-shadow: var(--box-shadow-medium);
       }
 
       &:active {
@@ -313,9 +309,9 @@
 
   .monthCell {
     transition:
-      box-shadow var(--transition-fast) var(--ease-standard),
-      border-color var(--transition-fast) var(--ease-standard),
-      transform var(--transition-fast) var(--ease-standard);
+      box-shadow var(--transition-fast),
+      border-color var(--transition-fast),
+      transform var(--transition-fast);
 
     &:nth-child(odd):hover {
       border-color: var(--crimson-600);
@@ -348,7 +344,7 @@
     }
 
     ul li {
-      transition: box-shadow var(--transition-fast) var(--ease-standard);
+      transition: box-shadow var(--transition-fast);
 
       &:nth-child(odd):hover {
         border-radius: var(--border-radius-small);

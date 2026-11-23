@@ -830,7 +830,7 @@ $space-64: 64px;
   --neutral-surface: var(--white-10);
   --neutral-border: var(--slate-200);
   --neutral-text-primary: var(--slate-900);
-  --neutral-text-secondary: var(--slate-700);
+  --neutral-text-secondary: var(--slate-500);
   --neutral-text-disabled: var(--slate-400);
 
   /* Accent Colors override */
@@ -865,12 +865,12 @@ $space-64: 64px;
   --btn-secondary-bg: var(--white-10);
   --btn-secondary-hover: var(--electric-blue-50);
   --btn-secondary-active: var(--electric-blue-100);
-  --btn-secondary-text: var(--slate-800);
+  --btn-secondary-text: var(--slate-900);
 
   /* Alternating Action & Accent Tokens (Red & Blue) */
   --accent-alt: var(--electric-blue-600);
   --accent-alt-hover: var(--electric-blue-700);
-  --accent-alt-active: var(--electric-blue-800);
+  --accent-alt-active: var(--blue-1200);
   --accent-alt-subtle: rgb(37 99 235 / 12%);
   --accent-primary-subtle: rgb(225 29 72 / 12%);
 
@@ -886,7 +886,7 @@ $space-64: 64px;
   --sidebar-bg: var(--white-10);
   --sidebar-border: color-mix(in srgb, var(--accent-primary) 15%, var(--border-color));
   --sidebar-brand: var(--crimson-600);
-  --sidebar-text: var(--slate-600);
+  --sidebar-text: var(--slate-500);
   --sidebar-text-strong: var(--slate-900);
   --sidebar-text-active: var(--white-10);
   --sidebar-item-hover-bg: color-mix(in srgb, var(--accent-primary) 8%, transparent);
