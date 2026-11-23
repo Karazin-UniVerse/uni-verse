@@ -1,8 +1,17 @@
 'use client';
 
 import React, { useSyncExternalStore } from 'react';
-import { Sun, Moon, Zap, GraduationCap, Orbit, Crown, ChevronDown, Sunset } from 'lucide-react';
-import { Sun, Moon, Zap, GraduationCap, Orbit, Crown, FileText, ChevronDown } from 'lucide-react';
+import {
+  Sun,
+  Moon,
+  Zap,
+  GraduationCap,
+  Orbit,
+  Crown,
+  FileText,
+  ChevronDown,
+  Sunset,
+} from 'lucide-react';
 import clsx from 'clsx';
 import { Dropdown, DropdownOption, type PopoverPlacement } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
