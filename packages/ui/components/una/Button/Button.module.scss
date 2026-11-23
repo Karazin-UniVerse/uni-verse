@@ -216,11 +216,11 @@
 
   .btn.is-transparent:not(.toned, :disabled):where(:nth-of-type(odd)):hover {
     color: var(--blue-1300);
-    background-color: rgb(225 29 72 / 10%);
+    background-color: color-mix(in srgb, var(--crimson-600) 10%, transparent);
   }
 
   .btn.is-transparent:not(.toned, :disabled):where(:nth-of-type(even)):hover {
     color: var(--blue-1300);
-    background-color: rgb(37 99 235 / 10%);
+    background-color: color-mix(in srgb, var(--electric-blue-600) 10%, transparent);
   }
 }

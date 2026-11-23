@@ -39,7 +39,7 @@
 :global([data-theme='crimsonSky']) {
   .option.active {
     color: var(--electric-blue-600);
-    background: rgb(37 99 235 / 8%);
+    background: color-mix(in srgb, var(--electric-blue-600) 8%, transparent);
 
     .check,
     .icon,

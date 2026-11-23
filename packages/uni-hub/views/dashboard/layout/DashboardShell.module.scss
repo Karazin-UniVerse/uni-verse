@@ -1554,16 +1554,16 @@ $sidebar-collapsed-width: 88px;
 
 :global([data-theme='crimsonSky']) {
   .avatar {
-    background: linear-gradient(135deg, #e11d48 0%, #2563eb 100%);
+    background: linear-gradient(135deg, var(--crimson-600) 0%, var(--electric-blue-600) 100%);
     color: var(--white-10);
-    box-shadow: 0 2px 8px rgb(225 29 72 / 30%);
+    box-shadow: var(--box-shadow-small);
   }
 
   .headerRight {
     .desktopOnly {
       &:hover {
         color: var(--electric-blue-600);
-        background: rgb(37 99 235 / 10%);
+        background: color-mix(in srgb, var(--electric-blue-600) 10%, transparent);
       }
 
       &:focus-visible {
@@ -1576,12 +1576,12 @@ $sidebar-collapsed-width: 88px;
 
       &:hover {
         color: var(--electric-blue-600);
-        background: rgb(37 99 235 / 10%);
+        background: color-mix(in srgb, var(--electric-blue-600) 10%, transparent);
       }
 
       &:active {
         color: var(--electric-blue-700);
-        background: rgb(37 99 235 / 16%);
+        background: color-mix(in srgb, var(--electric-blue-600) 16%, transparent);
       }
 
       &:focus-visible {
@@ -1591,7 +1591,7 @@ $sidebar-collapsed-width: 88px;
 
     .badge {
       background: var(--electric-blue-600);
-      box-shadow: 0 0 0 2px rgb(37 99 235 / 25%);
+      box-shadow: var(--box-shadow-small);
     }
   }
 
@@ -1612,8 +1612,8 @@ $sidebar-collapsed-width: 88px;
 
       &.active .activePill {
         background: linear-gradient(135deg, var(--crimson-600) 0, var(--electric-blue-600) 100%);
-        border-left: 4.5px solid #fff;
-        box-shadow: 0 4px 16px rgb(99 64 160 / 35%);
+        border-left: 4.5px solid var(--white-10);
+        box-shadow: var(--box-shadow-medium);
       }
 
       &:hover {
@@ -1632,7 +1632,7 @@ $sidebar-collapsed-width: 88px;
     .navItem:nth-child(even):not(.connectMoodleNavItem) {
       &:hover:not(.active) {
         color: var(--electric-blue-600);
-        background: rgb(37 99 235 / 8%);
+        background: color-mix(in srgb, var(--electric-blue-600) 8%, transparent);
 
         svg {
           color: var(--electric-blue-600);
@@ -1641,8 +1641,8 @@ $sidebar-collapsed-width: 88px;
 
       &.active .activePill {
         background: linear-gradient(135deg, var(--electric-blue-600) 0, var(--crimson-600) 100%);
-        border-left: 4.5px solid #fff;
-        box-shadow: 0 4px 12px rgb(147 51 234 / 25%);
+        border-left: 4.5px solid var(--white-10);
+        box-shadow: var(--box-shadow-medium);
       }
 
       &:hover {
