@@ -24,7 +24,7 @@
 
 .default {
   background: var(--accent-secondary);
-  border-color: var(--neutral-border);
+  border-color: color-mix(in srgb, var(--text-primary) 16%, transparent);
 }
 
 .success {

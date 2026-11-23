@@ -71,6 +71,6 @@ export class IsContactInfoConstraint implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments): string {
-    return `${args.property} must be a valid Telegram username (@username, t.me/...) or phone number (+380...)`;
+    return `${args.property} must be a valid Telegram username (@username, t.me/...), email address, or phone number (+380...)`;
   }
 }

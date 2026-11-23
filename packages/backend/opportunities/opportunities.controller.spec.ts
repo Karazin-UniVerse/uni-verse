@@ -164,9 +164,16 @@ describe('OpportunitiesController', () => {
       );
     });
 
-    it('delegates to service.getMyApplications', async () => {
+    it('delegates to service.getMyApplications with default empty roles', async () => {
       await controller.getMyApplications('user1');
-      expect(service.getMyApplications).toHaveBeenCalledWith('user1');
+      expect(service.getMyApplications).toHaveBeenCalledWith('user1', []);
+    });
+
+    it('forwards caller roles to service.getMyApplications', async () => {
+      await controller.getMyApplications('user1', ['OPPORTUNITIES_MODERATOR']);
+      expect(service.getMyApplications).toHaveBeenCalledWith('user1', [
+        'OPPORTUNITIES_MODERATOR',
+      ]);
     });
   });
 
