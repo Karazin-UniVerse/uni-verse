@@ -224,6 +224,7 @@
   .monthNav,
   .dayNav {
     button.navBtnPrev,
+    .btn.navBtnPrev,
     button:first-of-type {
       &:hover {
         color: var(--blue-1300);
@@ -240,6 +241,7 @@
     }
 
     button.navBtnNext,
+    .btn.navBtnNext,
     button:last-of-type {
       &:hover {
         color: var(--blue-1300);

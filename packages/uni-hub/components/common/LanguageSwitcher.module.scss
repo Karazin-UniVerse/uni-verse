@@ -120,7 +120,7 @@
 
     &:hover {
       color: var(--blue-1300);
-      background: rgb(225 29 72 / 8%);
+      background: color-mix(in srgb, var(--crimson-600) 8%, transparent);
       border-color: transparent;
       box-shadow: none;
 

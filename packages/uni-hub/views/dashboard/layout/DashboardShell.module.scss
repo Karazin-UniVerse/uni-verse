@@ -1603,7 +1603,7 @@ $sidebar-collapsed-width: 88px;
     .navItem:nth-child(odd):not(.connectMoodleNavItem) {
       &:hover:not(.active) {
         color: var(--crimson-600);
-        background: rgb(225 29 72 / 8%);
+        background: color-mix(in srgb, var(--crimson-600) 8%, transparent);
 
         svg {
           color: var(--crimson-600);
@@ -1666,32 +1666,24 @@ $sidebar-collapsed-width: 88px;
   .statCard {
     &:nth-child(odd):hover {
       border-color: var(--crimson-600);
-      box-shadow:
-        0 8px 24px rgb(225 29 72 / 20%),
-        0 2px 6px rgb(15 23 42 / 6%);
+      box-shadow: var(--card-shadow-hover);
     }
 
     &:nth-child(even):hover {
       border-color: var(--electric-blue-600);
-      box-shadow:
-        0 8px 24px rgb(37 99 235 / 20%),
-        0 2px 6px rgb(15 23 42 / 6%);
+      box-shadow: var(--card-shadow-hover);
     }
   }
 
   .courseCard {
     &:nth-child(odd):hover {
       border-color: var(--crimson-600);
-      box-shadow:
-        0 8px 24px rgb(225 29 72 / 20%),
-        0 2px 6px rgb(15 23 42 / 6%);
+      box-shadow: var(--card-shadow-hover);
     }
 
     &:nth-child(even):hover {
       border-color: var(--electric-blue-600);
-      box-shadow:
-        0 8px 24px rgb(37 99 235 / 20%),
-        0 2px 6px rgb(15 23 42 / 6%);
+      box-shadow: var(--card-shadow-hover);
     }
   }
 
@@ -1714,23 +1706,17 @@ $sidebar-collapsed-width: 88px;
     }
 
     &:nth-child(odd):hover {
-      box-shadow:
-        0 8px 24px rgb(225 29 72 / 20%),
-        0 2px 6px rgb(15 23 42 / 6%);
+      box-shadow: var(--card-shadow-hover);
     }
 
     &:nth-child(even):hover {
-      box-shadow:
-        0 8px 24px rgb(37 99 235 / 20%),
-        0 2px 6px rgb(15 23 42 / 6%);
+      box-shadow: var(--card-shadow-hover);
     }
   }
 
   .studentCard:hover {
     border-color: var(--crimson-600);
-    box-shadow:
-      0 8px 24px rgb(225 29 72 / 20%),
-      0 2px 6px rgb(15 23 42 / 6%);
+    box-shadow: var(--card-shadow-hover);
   }
 
   .userDropdownBody {
@@ -1755,7 +1741,7 @@ $sidebar-collapsed-width: 88px;
 
       &:hover {
         color: var(--blue-1300);
-        background: rgb(225 29 72 / 8%);
+        background: color-mix(in srgb, var(--crimson-600) 8%, transparent);
         border-color: transparent;
         box-shadow: none;
 
@@ -1777,7 +1763,7 @@ $sidebar-collapsed-width: 88px;
       &[aria-expanded='true'] {
         color: var(--blue-1300);
         border-color: transparent;
-        background: rgb(37 99 235 / 8%);
+        background: color-mix(in srgb, var(--electric-blue-600) 8%, transparent);
         box-shadow: none;
 
         svg {
@@ -1796,7 +1782,7 @@ $sidebar-collapsed-width: 88px;
 
       &:hover {
         color: var(--blue-1300);
-        background: rgb(225 29 72 / 8%);
+        background: color-mix(in srgb, var(--crimson-600) 8%, transparent);
         border-color: transparent;
         box-shadow: none;
 
