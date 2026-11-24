@@ -121,35 +121,6 @@
     }
   }
 
-  /* fullWidthBtn — у UserDropdown мобіль */
-  .fullWidthBtn {
-    color: var(--blue-1300);
-
-    svg {
-      color: var(--blue-1300);
-    }
-
-    .chevron {
-      color: var(--blue-1300);
-    }
-
-    &:hover,
-    &[aria-expanded='true'] {
-      color: var(--blue-1300);
-      border-color: transparent;
-      background: color-mix(in srgb, var(--electric-blue-600) 8%, transparent);
-      box-shadow: none;
-
-      svg {
-        color: var(--blue-1300);
-      }
-
-      .chevron {
-        color: var(--blue-1300);
-      }
-    }
-  }
-
   .menuScroll {
     [class*='active'] {
       color: var(--electric-blue-600);

@@ -1560,6 +1560,7 @@ $sidebar-collapsed-width: 88px;
   }
 
   .headerRight {
+    button.btn.desktopOnly,
     .desktopOnly {
       &:hover {
         color: var(--electric-blue-600);
@@ -1571,6 +1572,7 @@ $sidebar-collapsed-width: 88px;
       }
     }
 
+    button.btn.notificationsTrigger,
     .notificationsTrigger {
       color: var(--crimson-600);
 
@@ -1695,12 +1697,12 @@ $sidebar-collapsed-width: 88px;
       .assignmentCardInProgress
     ) {
       &:nth-child(odd):hover {
-        border-color: rgb(225 29 72 / 40%);
+        border-color: color-mix(in srgb, var(--crimson-600) 40%, transparent);
         border-left-color: var(--crimson-600);
       }
 
       &:nth-child(even):hover {
-        border-color: rgb(37 99 235 / 40%);
+        border-color: color-mix(in srgb, var(--electric-blue-600) 40%, transparent);
         border-left-color: var(--electric-blue-600);
       }
     }

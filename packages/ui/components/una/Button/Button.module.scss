@@ -202,24 +202,28 @@
     }
   }
 
-  .btn.secondary:where(:not(.is-transparent, .toned, :disabled):nth-of-type(odd)):hover {
+  .btn.secondary:where(:not(.is-transparent, .toned, :disabled):nth-of-type(odd)):hover:not(
+      :active
+    ) {
     color: var(--blue-1300);
     border-color: var(--white-10);
     background-color: var(--electric-blue-50);
   }
 
-  .btn.secondary:where(:not(.is-transparent, .toned, :disabled):nth-of-type(even)):hover {
+  .btn.secondary:where(:not(.is-transparent, .toned, :disabled):nth-of-type(even)):hover:not(
+      :active
+    ) {
     color: var(--blue-1300);
     border-color: var(--white-10);
     background-color: var(--crimson-50);
   }
 
-  .btn.is-transparent:not(.toned, :disabled):where(:nth-of-type(odd)):hover {
+  .btn.is-transparent:not(.toned, :disabled):where(:nth-of-type(odd)):hover:not(:active) {
     color: var(--blue-1300);
     background-color: color-mix(in srgb, var(--crimson-600) 10%, transparent);
   }
 
-  .btn.is-transparent:not(.toned, :disabled):where(:nth-of-type(even)):hover {
+  .btn.is-transparent:not(.toned, :disabled):where(:nth-of-type(even)):hover:not(:active) {
     color: var(--blue-1300);
     background-color: color-mix(in srgb, var(--electric-blue-600) 10%, transparent);
   }
