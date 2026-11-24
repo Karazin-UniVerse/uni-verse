@@ -1559,8 +1559,10 @@ $sidebar-collapsed-width: 88px;
     box-shadow: var(--box-shadow-small);
   }
 
+  .header .headerRight,
   .headerRight {
-    button.btn.desktopOnly,
+    button.desktopOnly,
+    :global(.btn).desktopOnly,
     .desktopOnly {
       &:hover {
         color: var(--electric-blue-600);
@@ -1572,7 +1574,8 @@ $sidebar-collapsed-width: 88px;
       }
     }
 
-    button.btn.notificationsTrigger,
+    button.notificationsTrigger,
+    :global(.btn).notificationsTrigger,
     .notificationsTrigger {
       color: var(--crimson-600);
 

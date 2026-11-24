@@ -218,12 +218,12 @@
     background-color: var(--crimson-50);
   }
 
-  .btn.is-transparent:not(.toned, :disabled):where(:nth-of-type(odd)):hover:not(:active) {
+  .btn.is-transparent:where(:not(.toned, :disabled):nth-of-type(odd)):hover:not(:active) {
     color: var(--blue-1300);
     background-color: color-mix(in srgb, var(--crimson-600) 10%, transparent);
   }
 
-  .btn.is-transparent:not(.toned, :disabled):where(:nth-of-type(even)):hover:not(:active) {
+  .btn.is-transparent:where(:not(.toned, :disabled):nth-of-type(even)):hover:not(:active) {
     color: var(--blue-1300);
     background-color: color-mix(in srgb, var(--electric-blue-600) 10%, transparent);
   }
