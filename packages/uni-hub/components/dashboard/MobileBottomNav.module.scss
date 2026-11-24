@@ -95,11 +95,11 @@
 
   .navItemWrapper:nth-child(odd) {
     .navItem:hover:not(.active) {
-      color: var(--crimson-600);
+      color: var(--crimson-700);
       background: color-mix(in srgb, var(--crimson-600) 10%, transparent);
 
       svg {
-        color: var(--crimson-600);
+        color: var(--crimson-700);
       }
     }
 
