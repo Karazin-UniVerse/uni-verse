@@ -277,6 +277,31 @@ describe('MoodleFilesService', () => {
           'https://moodle.test/moodle-evil/webservice/pluginfile.php/12/spec.pdf',
         ),
       ).rejects.toThrow(BadRequestException);
+
+      process.env.MOODLE_BASEURL = 'https://moodle.test/my%20moodle';
+
+      const encodedSubModule = await Test.createTestingModule({
+        providers: [MoodleFilesService, MoodleClientService],
+      }).compile();
+      const encodedSubService =
+        encodedSubModule.get<MoodleFilesService>(MoodleFilesService);
+
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ 'content-type': 'application/pdf' }),
+        arrayBuffer: () => Promise.resolve(Uint8Array.from([6, 7]).buffer),
+      } as unknown as Response);
+
+      const encodedDownloaded = await encodedSubService.downloadFile(
+        'secret-tok',
+        'https://moodle.test/my%20moodle/webservice/pluginfile.php/12/spec.pdf',
+      );
+
+      expect(fetchSpy).toHaveBeenCalledWith(
+        'https://moodle.test/my%20moodle/webservice/pluginfile.php/12/spec.pdf?token=secret-tok',
+        expect.objectContaining({ redirect: 'error' }),
+      );
+      expect(encodedDownloaded.filename).toBe('spec.pdf');
     });
 
     it('streams bounded response bodies and rejects files exceeding maximum byte limit', async () => {

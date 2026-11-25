@@ -158,27 +158,29 @@ export class MoodleFilesService {
       throw new BadRequestException('File URL origin is not allowed');
     }
 
-    let decodedPathname: string;
+    const relativePathname = stripBasePath(parsed.pathname, basePath);
+
+    if (relativePathname === null) {
+      throw new BadRequestException('File URL path is not allowed');
+    }
+
+    let decodedRelativePathname: string;
 
     try {
-      decodedPathname = decodeURIComponent(parsed.pathname);
+      decodedRelativePathname = decodeURIComponent(relativePathname);
     } catch {
       throw new BadRequestException('Invalid file URL');
     }
 
-    const relativePathname = stripBasePath(parsed.pathname, basePath);
-    const relativeDecodedPathname = stripBasePath(decodedPathname, basePath);
-    const hasTraversalSegment =
-      relativeDecodedPathname !== null &&
-      relativeDecodedPathname.split(/[\\/]/).includes('..');
+    const hasTraversalSegment = decodedRelativePathname
+      .split(/[\\/]/)
+      .includes('..');
     const isAllowedPath =
-      relativePathname !== null &&
-      relativeDecodedPathname !== null &&
       !hasTraversalSegment &&
       ALLOWED_PLUGINFILE_PREFIXES.some(
         (prefix) =>
           relativePathname.startsWith(prefix) &&
-          relativeDecodedPathname.startsWith(prefix),
+          decodedRelativePathname.startsWith(prefix),
       );
 
     if (!isAllowedPath) {
