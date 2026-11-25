@@ -647,7 +647,10 @@
 .applicationTypeCol {
   display: flex;
   align-items: center;
-  flex-shrink: 0;
+
+  // Allow shrinking so the pill can truncate; was flex-shrink: 0
+  min-width: 0;
+  max-width: 100%;
 }
 
 .motivationBox {
