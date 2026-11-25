@@ -55,6 +55,7 @@ export const uk = {
   'theme.universeSpace': 'UniVerse Space',
   'theme.karazinGold': 'Karazin Gold',
   'theme.notionDark': 'Notion Dark',
+  'theme.neonGraffiti': 'Neon Graffiti',
   'theme.select': 'Вибір теми',
 
   // Navigation

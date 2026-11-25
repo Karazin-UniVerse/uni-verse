@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { Geist, Geist_Mono, Source_Serif_4 } from 'next/font/google';
+import { Geist, Geist_Mono, Rubik_Spray_Paint, Source_Serif_4 } from 'next/font/google';
 import { Providers } from './providers';
 import './globals.css';
 import '@uni-hub/index.css';
@@ -18,6 +18,13 @@ const geistMono = Geist_Mono({
 
 const sourceSerif = Source_Serif_4({
   variable: '--font-source-serif',
+  subsets: ['latin', 'cyrillic'],
+  preload: false,
+});
+
+const rubikSprayPaint = Rubik_Spray_Paint({
+  variable: '--font-rubik-spray-paint',
+  weight: '400',
   subsets: ['latin', 'cyrillic'],
   preload: false,
 });
@@ -40,7 +47,7 @@ export const metadata: Metadata = {
 const THEME_INIT_SCRIPT = `
 (function () {
   var KEY = 'universe-theme';
-  var VALID = ['light','dark','cyberpunk','karazinClassic','universeSpace','karazinGold','notionDark'];
+  var VALID = ['light','dark','cyberpunk','karazinClassic','universeSpace','karazinGold','notionDark','neonGraffiti'];
   var LIGHT_THEMES = ['light','karazinClassic'];
   var stored = localStorage.getItem(KEY);
   var prefersDark = typeof window.matchMedia === 'function' &&
@@ -65,7 +72,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     <html
       lang="uk"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} ${rubikSprayPaint.variable}`}
     >
       <head>
         {/* intentional: dangerouslySetInnerHTML is safe – THEME_INIT_SCRIPT contains no user input */}

@@ -408,7 +408,8 @@ $space-64: 64px;
 [data-theme='dark'],
 [data-theme='universeSpace'],
 [data-theme='karazinGold'],
-[data-theme='notionDark'] {
+[data-theme='notionDark'],
+[data-theme='neonGraffiti'] {
   --btn-warning-border: var(--yellow-400);
   --btn-success-accent: var(--green-400);
   --btn-warning-accent: var(--yellow-400);
@@ -728,6 +729,119 @@ $space-64: 64px;
   --scrollbar-thumb: rgb(224 176 74 / 30%);
   --scrollbar-thumb-hover: rgb(224 176 74 / 65%);
   --scrollbar-radius: var(--border-radius-full);
+}
+
+/* -----------------------------------------
+   Neon Graffiti Theme (midnight-navy base + electric blue, hot pink & acid lime)
+   ----------------------------------------- */
+[data-theme='neonGraffiti'] {
+  /* Neon Graffiti Palette */
+  --graffiti-void: #070b18;
+  --graffiti-surface: #0e1529;
+  --graffiti-text: #f0f6ff;
+  --graffiti-text-muted: #9eb6d9;
+  --graffiti-text-dim: #62789e;
+  --graffiti-pink-300: #ff7ab8;
+  --graffiti-pink-400: #ff2e88;
+  --graffiti-pink-500: #cc1466;
+  --graffiti-pink-550: #e31b74;
+  --graffiti-pink-600: #a60f52;
+  --graffiti-blue-300: #5ce1ff;
+  --graffiti-blue-400: #18b8ff;
+  --graffiti-cyan-400: #00f0ff;
+  --graffiti-lime-400: #c4ff1a;
+
+  /* Neutral Colors: deep midnight-navy blue surfaces */
+  --neutral-bg: var(--graffiti-void);
+  --neutral-surface: var(--graffiti-surface);
+  --neutral-border: rgb(24 184 255 / 34%);
+  --neutral-text-primary: var(--graffiti-text);
+  --neutral-text-secondary: var(--graffiti-text-muted);
+  --neutral-text-disabled: var(--graffiti-text-dim);
+
+  /* Accent Colors: blazing hot pink primary, electric blue secondary */
+  --accent-primary: var(--graffiti-pink-400);
+  --accent-primary-hover: var(--graffiti-pink-300);
+  --accent-primary-active: var(--graffiti-pink-600);
+  --accent-text-on-primary: var(--white-10);
+  --accent-secondary: rgb(24 184 255 / 14%);
+  --accent-secondary-hover: rgb(24 184 255 / 24%);
+  --accent-secondary-active: rgb(255 46 136 / 26%);
+  --accent-text-on-secondary: var(--graffiti-blue-300);
+  --focus-ring-color: rgb(24 184 255 / 65%);
+  --bg-hover: rgb(24 184 255 / 14%);
+
+  /* Primary button: saturated neon magenta-pink with WCAG AA white text */
+  --btn-primary-bg: var(--graffiti-pink-500);
+  --btn-primary-hover: var(--graffiti-pink-550);
+  --btn-primary-active: var(--graffiti-pink-600);
+
+  /* RGB color channels for alpha blending and mesh gradients */
+  --primary-rgb: 255, 46, 136;
+  --secondary-rgb: 24, 184, 255;
+  --surface-rgb: 14, 21, 41;
+  --text-primary-rgb: 240, 246, 255;
+
+  /* Edgy industrial corners for street-art graffiti frames */
+  --border-radius-small: 2px;
+  --border-radius-medium: 4px;
+  --border-radius-large: 8px;
+
+  /* Dual-corner neon backdrop + street-art geometric graffiti wall */
+  --bg-page:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900' preserveAspectRatio='xMidYMid slice'%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%2318b8ff' stroke-width='3.5' opacity='0.28'%3E%3Cpath d='M165 95l-48 68h44l-24 58 68-78h-44z'/%3E%3Ccircle cx='1455' cy='375' r='38'/%3E%3Ccircle cx='1455' cy='375' r='16'/%3E%3Cpath d='M1455 322v106M1402 375h106'/%3E%3Cpath d='M255 815l75-34 58 26 68-30m-22-12l24 10-10 24'/%3E%3Cg transform='rotate(-10 1320 745)'%3E%3Cpolygon points='1320,673 1338,721 1388,723 1349,754 1362,803 1320,775 1278,803 1291,754 1252,723 1302,721' fill='%2318b8ff' fill-opacity='0.1'/%3E%3C/g%3E%3Cpath d='M1470 625l-24 54h36l-18 52 50-68h-36z'/%3E%3C/g%3E%3Cg stroke='%23ff2e88' stroke-width='3.5' opacity='0.26'%3E%3Cpath d='M452 46v44m16-46v46m16-44v44m16-46v46M440 76l74-20'/%3E%3Cg transform='rotate(-12 1355 145)'%3E%3Cpath d='M1308 176h94l10-58-34 26-23-38-23 38-34-26z'/%3E%3C/g%3E%3Ccircle cx='148' cy='485' r='44'/%3E%3Ccircle cx='148' cy='485' r='20'/%3E%3Cpath d='M148 428v114M91 485h114'/%3E%3Cpolygon points='135,696 178,750 135,804 92,750'/%3E%3Cpath d='M123 738l24 24m0-24l-24 24'/%3E%3Cpath d='M755 795l48-30 36 28 54-32m-20-8l22 7-8 22'/%3E%3Cpolygon points='1495,198 1518,225 1495,252 1472,225'/%3E%3C/g%3E%3Cg stroke='%23c4ff1a' stroke-width='3' opacity='0.25'%3E%3Cpolygon points='385,180 391,196 408,197 395,208 399,224 385,215 371,224 375,208 362,197 379,196'/%3E%3Cpolygon points='1155,250 1161,266 1178,267 1165,278 1169,294 1155,285 1141,294 1145,278 1132,267 1149,266'/%3E%3Cpolygon points='1110,775 1116,791 1133,792 1120,803 1124,819 1110,810 1096,819 1100,803 1087,792 1104,791'/%3E%3Cpolygon points='230,282 248,304 230,326 212,304'/%3E%3Cpath d='M960 726l-18 32h22l-14 34 32-42h-22z'/%3E%3C/g%3E%3Cg stroke='%23a855f7' stroke-width='3' opacity='0.25'%3E%3Cpath d='M1050 96l16-24 16 20 16-24 14 28zM445 615l22 22m0-22l-22 22M1140 495l20 20m0-20l-20 20M570 765l18 18m0-18l-18 18M660 118l18 18m0-18l-18 18'/%3E%3Cpath d='M1206 570v34m13-36v36m13-34v34m13-36v36M1196 594l58-16'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
+      center / cover fixed no-repeat,
+    radial-gradient(at 100% 100%, rgb(var(--secondary-rgb), 0.36) 0, transparent 55%),
+    radial-gradient(at 100% 0%, rgb(0 136 255 / 28%) 0, transparent 52%),
+    radial-gradient(at 0% 0%, rgb(var(--primary-rgb), 0.3) 0, transparent 50%),
+    radial-gradient(at 0% 100%, rgb(0 136 255 / 18%) 0, transparent 48%), var(--graffiti-void);
+
+  /* Neon-framed sapphire glass cards: electric blue rim + pink/blue dual bloom on hover */
+  --bg-card: rgb(13 21 42 / 82%);
+  --card-backdrop: blur(14px);
+  --card-border: rgb(24 184 255 / 44%);
+  --card-shadow:
+    0 0 18px rgb(24 184 255 / 18%), 0 4px 16px rgb(0 0 0 / 55%), inset 0 1px 0 rgb(24 184 255 / 32%);
+  --card-shadow-hover:
+    0 0 26px rgb(24 184 255 / 40%), 0 0 14px rgb(255 46 136 / 34%),
+    inset 0 1px 0 rgb(255 46 136 / 40%);
+
+  /* Deep cobalt header and sidebar with electric blue hairlines & pink-to-blue active plate */
+  --header-bg: rgb(7 11 24 / 80%);
+  --header-border: rgb(24 184 255 / 40%);
+  --sidebar-bg: rgb(9 15 32 / 90%);
+  --sidebar-border: rgb(24 184 255 / 34%);
+  --sidebar-brand: var(--graffiti-blue-400);
+  --sidebar-text: var(--graffiti-text-muted);
+  --sidebar-text-strong: var(--graffiti-text);
+  --sidebar-text-active: var(--graffiti-text);
+  --sidebar-item-hover-bg: rgb(24 184 255 / 16%);
+  --sidebar-item-active-bg: linear-gradient(90deg, rgb(255 46 136 / 38%), rgb(24 184 255 / 28%));
+  --sidebar-item-active-accent: var(--graffiti-pink-400);
+  --sidebar-accent: var(--graffiti-blue-400);
+
+  /* Spray-paint graffiti headings in electric cyan matching the neon graffiti palette */
+  --font-family-heading: var(--font-rubik-spray-paint), 'Impact', 'Arial Black', sans-serif;
+  --heading-color: var(--graffiti-cyan-400);
+  --heading-shadow: none;
+
+  /* Chart tokens led by electric blue, hot pink and acid lime */
+  --chart-grid: rgb(24 184 255 / 16%);
+  --chart-axis: rgb(24 184 255 / 44%);
+  --chart-tooltip-bg: var(--graffiti-surface);
+  --chart-tooltip-border: var(--graffiti-blue-400);
+  --chart-series-1: var(--graffiti-blue-400);
+  --chart-series-2: var(--graffiti-pink-400);
+  --chart-series-3: var(--graffiti-lime-400);
+  --chart-series-4: var(--graffiti-cyan-400);
+  --chart-series-5: var(--purple-400);
+  --chart-glow: 0 0 20px rgb(24 184 255 / 24%);
+
+  /* Scrollbar: electric blue thumb shifting to hot pink on hover */
+  --scrollbar-track: rgb(9 15 32 / 65%);
+  --scrollbar-thumb: rgb(24 184 255 / 50%);
+  --scrollbar-thumb-hover: var(--graffiti-pink-400);
+  --scrollbar-radius: var(--border-radius-small);
 }
 
 /* -----------------------------------------

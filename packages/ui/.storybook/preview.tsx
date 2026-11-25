@@ -11,6 +11,7 @@ const THEME_TITLES: Record<AppTheme, string> = {
   universeSpace: 'UniVerse Space',
   karazinGold: 'Karazin Gold',
   notionDark: 'Notion Dark',
+  neonGraffiti: 'Neon Graffiti',
 };
 
 const preview: Preview = {
