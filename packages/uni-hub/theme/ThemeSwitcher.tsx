@@ -17,7 +17,7 @@ const THEME_ICONS: Record<AppTheme, React.ReactNode> = {
   karazinClassic: <GraduationCap size={18} />,
   universeSpace: <Orbit size={18} />,
   karazinGold: <Crown size={18} />,
-  viceCityDark: <TreePalm size={18} />,
+  neonDusk: <TreePalm size={18} />,
 };
 
 const subscribe = (): (() => void) => () => {};
@@ -31,7 +31,7 @@ const THEME_KEYS: Record<AppTheme, TranslationKey> = {
   karazinClassic: 'theme.karazinClassic',
   universeSpace: 'theme.universeSpace',
   karazinGold: 'theme.karazinGold',
-  viceCityDark: 'theme.viceCityDark',
+  neonDusk: 'theme.neonDusk',
 };
 
 type ThemeSwitcherProps = {
