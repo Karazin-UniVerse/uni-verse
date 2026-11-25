@@ -96,11 +96,14 @@ describe('ThemeSwitcher component', () => {
 
     const darkOption = screen.getByRole('button', { name: 'Темна' });
     const cyberpunkOption = screen.getByRole('button', { name: 'Cyberpunk' });
+    const crimsonSkyOption = screen.getByRole('button', { name: 'Crimson Sky' });
     const notionDarkOption = screen.getByRole('button', { name: 'Notion Dark' });
 
     expect(darkOption).toBeInTheDocument();
     expect(darkOption).toHaveAttribute('aria-pressed', 'false');
     expect(cyberpunkOption).toBeInTheDocument();
+    expect(crimsonSkyOption).toBeInTheDocument();
+    expect(crimsonSkyOption).toHaveAttribute('aria-pressed', 'false');
     expect(notionDarkOption).toBeInTheDocument();
     expect(notionDarkOption).toHaveAttribute('aria-pressed', 'false');
   });
@@ -126,6 +129,23 @@ describe('ThemeSwitcher component', () => {
     expect(screen.queryByRole('button', { name: 'Cyberpunk' })).not.toBeInTheDocument();
     expect(localStorage.getItem('universe-theme')).toBe('dark');
     expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+
+  it('should select the Crimson Sky theme and update dataset attributes', async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(<ThemeSwitcher compact />);
+
+    await user.click(screen.getByRole('button', { name: 'Вибір теми: Світла' }));
+    await user.click(screen.getByRole('button', { name: 'Crimson Sky' }));
+
+    const updatedTrigger = screen.getByRole('button', { name: 'Вибір теми: Crimson Sky' });
+
+    expect(updatedTrigger).toBeInTheDocument();
+    expect(updatedTrigger).toHaveAttribute('title', 'Crimson Sky');
+    expect(localStorage.getItem('universe-theme')).toBe('crimsonSky');
+    expect(document.documentElement.dataset.theme).toBe('crimsonSky');
+    expect(document.documentElement.dataset.colorScheme).toBe('light');
   });
 
   it('should select the Notion Dark theme and update dataset attributes', async () => {
