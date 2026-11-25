@@ -17,9 +17,3 @@
 .empty p {
   margin: 0;
 }
-
-:global([data-theme='jinx']) .icon,
-:global([data-theme='jinx']) .empty > svg {
-  color: var(--jinx-blue-400);
-  filter: drop-shadow(0 0 10px rgb(var(--secondary-rgb), 0.45));
-}

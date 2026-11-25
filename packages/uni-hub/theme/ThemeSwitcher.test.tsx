@@ -96,13 +96,13 @@ describe('ThemeSwitcher component', () => {
 
     const darkOption = screen.getByRole('button', { name: 'Темна' });
     const cyberpunkOption = screen.getByRole('button', { name: 'Cyberpunk' });
-    const jinxOption = screen.getByRole('button', { name: 'Jinx' });
+    const neonGraffitiOption = screen.getByRole('button', { name: 'Neon Graffiti' });
 
     expect(darkOption).toBeInTheDocument();
     expect(darkOption).toHaveAttribute('aria-pressed', 'false');
     expect(cyberpunkOption).toBeInTheDocument();
-    expect(jinxOption).toBeInTheDocument();
-    expect(jinxOption).toHaveAttribute('aria-pressed', 'false');
+    expect(neonGraffitiOption).toBeInTheDocument();
+    expect(neonGraffitiOption).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('should call setTheme and update active theme when a theme option is clicked', async () => {
@@ -128,20 +128,20 @@ describe('ThemeSwitcher component', () => {
     expect(document.documentElement.dataset.theme).toBe('dark');
   });
 
-  it('should select the Jinx theme and update dataset attributes', async () => {
+  it('should select the Neon Graffiti theme and update dataset attributes', async () => {
     const user = userEvent.setup();
 
     renderWithProviders(<ThemeSwitcher compact />);
 
     await user.click(screen.getByRole('button', { name: 'Вибір теми: Світла' }));
-    await user.click(screen.getByRole('button', { name: 'Jinx' }));
+    await user.click(screen.getByRole('button', { name: 'Neon Graffiti' }));
 
-    const updatedTrigger = screen.getByRole('button', { name: 'Вибір теми: Jinx' });
+    const updatedTrigger = screen.getByRole('button', { name: 'Вибір теми: Neon Graffiti' });
 
     expect(updatedTrigger).toBeInTheDocument();
-    expect(updatedTrigger).toHaveAttribute('title', 'Jinx');
-    expect(localStorage.getItem('universe-theme')).toBe('jinx');
-    expect(document.documentElement.dataset.theme).toBe('jinx');
+    expect(updatedTrigger).toHaveAttribute('title', 'Neon Graffiti');
+    expect(localStorage.getItem('universe-theme')).toBe('neonGraffiti');
+    expect(document.documentElement.dataset.theme).toBe('neonGraffiti');
     expect(document.documentElement.dataset.colorScheme).toBe('dark');
   });
 

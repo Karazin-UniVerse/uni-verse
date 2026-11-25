@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { Geist, Geist_Mono, Rubik_Dirt, Rubik_Spray_Paint, Source_Serif_4 } from 'next/font/google';
-import { JinxGraffitiBackdrop } from '@uni-hub/theme/JinxGraffitiBackdrop';
+import { Geist, Geist_Mono, Rubik_Spray_Paint, Source_Serif_4 } from 'next/font/google';
 import { Providers } from './providers';
 import './globals.css';
 import '@uni-hub/index.css';
@@ -30,13 +29,6 @@ const rubikSprayPaint = Rubik_Spray_Paint({
   preload: false,
 });
 
-const rubikDirt = Rubik_Dirt({
-  variable: '--font-rubik-dirt',
-  weight: '400',
-  subsets: ['latin', 'cyrillic'],
-  preload: false,
-});
-
 export const metadata: Metadata = {
   title: 'UniHub | Karazin UniVerse',
   description: 'Студентський навчальний портал Karazin UniHub',
@@ -55,7 +47,7 @@ export const metadata: Metadata = {
 const THEME_INIT_SCRIPT = `
 (function () {
   var KEY = 'universe-theme';
-  var VALID = ['light','dark','cyberpunk','karazinClassic','universeSpace','karazinGold','jinx'];
+  var VALID = ['light','dark','cyberpunk','karazinClassic','universeSpace','karazinGold','neonGraffiti'];
   var LIGHT_THEMES = ['light','karazinClassic'];
   var stored = localStorage.getItem(KEY);
   var prefersDark = typeof window.matchMedia === 'function' &&
@@ -80,7 +72,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     <html
       lang="uk"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} ${rubikSprayPaint.variable} ${rubikDirt.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} ${rubikSprayPaint.variable}`}
     >
       <head>
         {/* intentional: dangerouslySetInnerHTML is safe – THEME_INIT_SCRIPT contains no user input */}
@@ -88,7 +80,6 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body>
-        <JinxGraffitiBackdrop />
         <Providers>{children}</Providers>
       </body>
     </html>

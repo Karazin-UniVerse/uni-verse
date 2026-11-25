@@ -157,21 +157,3 @@
     filter: drop-shadow(0 0 4px rgb(0 240 255 / 45%));
   }
 }
-
-:global([data-theme='jinx']) {
-  .wrap {
-    background-image:
-      linear-gradient(135deg, rgb(var(--primary-rgb), 0.08), transparent 42%),
-      linear-gradient(315deg, rgb(var(--secondary-rgb), 0.08), transparent 42%);
-  }
-
-  .title {
-    letter-spacing: 0.04em;
-    text-shadow: var(--heading-shadow);
-  }
-
-  .chart :global(.recharts-bar-rectangle),
-  .chart :global(.recharts-sector) {
-    filter: drop-shadow(0 0 5px rgb(var(--primary-rgb), 0.45));
-  }
-}

@@ -52,7 +52,7 @@ export const uk = {
   'theme.karazinClassic': 'Karazin Classic',
   'theme.universeSpace': 'UniVerse Space',
   'theme.karazinGold': 'Karazin Gold',
-  'theme.jinx': 'Jinx',
+  'theme.neonGraffiti': 'Neon Graffiti',
   'theme.select': 'Вибір теми',
 
   // Navigation

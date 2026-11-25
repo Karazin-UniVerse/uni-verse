@@ -171,19 +171,3 @@
     box-shadow: 0 0 0 0 rgb(239 68 68 / 0%);
   }
 }
-
-:global([data-theme='jinx']) {
-  .actionCard:nth-child(odd):hover {
-    border-color: var(--jinx-pink-400);
-    box-shadow:
-      0 0 22px rgb(var(--primary-rgb), 0.42),
-      0 0 8px rgb(var(--secondary-rgb), 0.2);
-  }
-
-  .actionCard:nth-child(even):hover {
-    border-color: var(--jinx-cyan-400);
-    box-shadow:
-      0 0 22px rgb(var(--secondary-rgb), 0.42),
-      0 0 8px rgb(var(--primary-rgb), 0.2);
-  }
-}

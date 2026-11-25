@@ -21,8 +21,8 @@ const ThemeConsumer = () => {
       <button type="button" onClick={() => setTheme('karazinClassic')}>
         Set Karazin Classic
       </button>
-      <button type="button" onClick={() => setTheme('jinx')}>
-        Set Jinx
+      <button type="button" onClick={() => setTheme('neonGraffiti')}>
+        Set Neon Graffiti
       </button>
     </div>
   );
@@ -115,7 +115,7 @@ describe('ThemeContext', () => {
     expect(document.documentElement.dataset.theme).toBe('dark');
   });
 
-  it('should load and apply the jinx theme with dark color scheme', async () => {
+  it('should load and apply the neonGraffiti theme with dark color scheme', async () => {
     const user = userEvent.setup();
 
     render(
@@ -124,11 +124,11 @@ describe('ThemeContext', () => {
       </ThemeProvider>,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Set Jinx' }));
+    await user.click(screen.getByRole('button', { name: 'Set Neon Graffiti' }));
 
-    expect(screen.getByTestId('theme-value')).toHaveTextContent('jinx');
-    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('jinx');
-    expect(document.documentElement.dataset.theme).toBe('jinx');
+    expect(screen.getByTestId('theme-value')).toHaveTextContent('neonGraffiti');
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('neonGraffiti');
+    expect(document.documentElement.dataset.theme).toBe('neonGraffiti');
     expect(document.documentElement.dataset.colorScheme).toBe('dark');
   });
 
