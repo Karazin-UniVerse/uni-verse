@@ -96,11 +96,14 @@ describe('ThemeSwitcher component', () => {
 
     const darkOption = screen.getByRole('button', { name: 'Темна' });
     const cyberpunkOption = screen.getByRole('button', { name: 'Cyberpunk' });
+    const notionDarkOption = screen.getByRole('button', { name: 'Notion Dark' });
     const neonDuskOption = screen.getByRole('button', { name: 'Neon Dusk' });
 
     expect(darkOption).toBeInTheDocument();
     expect(darkOption).toHaveAttribute('aria-pressed', 'false');
     expect(cyberpunkOption).toBeInTheDocument();
+    expect(notionDarkOption).toBeInTheDocument();
+    expect(notionDarkOption).toHaveAttribute('aria-pressed', 'false');
     expect(neonDuskOption).toBeInTheDocument();
     expect(neonDuskOption).toHaveAttribute('aria-pressed', 'false');
   });
@@ -126,6 +129,23 @@ describe('ThemeSwitcher component', () => {
     expect(screen.queryByRole('button', { name: 'Cyberpunk' })).not.toBeInTheDocument();
     expect(localStorage.getItem('universe-theme')).toBe('dark');
     expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+
+  it('should select the Notion Dark theme and update dataset attributes', async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(<ThemeSwitcher compact />);
+
+    await user.click(screen.getByRole('button', { name: 'Вибір теми: Світла' }));
+    await user.click(screen.getByRole('button', { name: 'Notion Dark' }));
+
+    const updatedTrigger = screen.getByRole('button', { name: 'Вибір теми: Notion Dark' });
+
+    expect(updatedTrigger).toBeInTheDocument();
+    expect(updatedTrigger).toHaveAttribute('title', 'Notion Dark');
+    expect(localStorage.getItem('universe-theme')).toBe('notionDark');
+    expect(document.documentElement.dataset.theme).toBe('notionDark');
+    expect(document.documentElement.dataset.colorScheme).toBe('dark');
   });
 
   it('should select the Neon Dusk theme and update dataset attributes', async () => {

@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException } from '@nestjs/common';
+import { AUTH_ERROR } from '@universe/core/constants/auth';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, GoogleAuthDto, LinkMoodleDto } from './dto';
@@ -206,9 +207,7 @@ describe('AuthController', () => {
       const response = createMockResponse();
 
       authService.loginWithGoogle.mockRejectedValue(
-        new ForbiddenException(
-          'Доступ дозволено лише для облікових записів @student.karazin.ua та @karazin.ua',
-        ),
+        new ForbiddenException(AUTH_ERROR.CORPORATE_DOMAIN_REQUIRED),
       );
 
       await expect(controller.loginWithGoogle(dto, response)).rejects.toThrow(
