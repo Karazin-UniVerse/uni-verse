@@ -400,7 +400,15 @@
 .moderationTypeCol {
   display: flex;
   align-items: center;
-  flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
+
+  // Moderators must read the full payment text, so wrap instead of truncating
+  .compensationPill {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
 }
 
 .unpaidPill {
