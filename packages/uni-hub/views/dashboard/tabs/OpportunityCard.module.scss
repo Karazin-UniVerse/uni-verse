@@ -44,6 +44,7 @@
 }
 
 .card {
+  container: opp-card / inline-size;
   background: var(--bg-surface);
   border: 1px solid var(--card-border);
   border-radius: var(--border-radius-large);
@@ -126,14 +127,30 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-8) var(--space-12);
+  flex-wrap: nowrap;
+  gap: var(--space-8);
   margin-bottom: 2px;
 
+  > :not(.compensationPill) {
+    flex-shrink: 0;
+  }
+
   .compensationPill {
-    max-width: 100%;
-    white-space: normal;
-    overflow-wrap: anywhere;
+    flex: 0 1 auto;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    overflow: hidden;
+
+    > span:last-child {
+      min-inline-size: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  @container opp-card (inline-size < 280px) {
+    flex-wrap: wrap;
   }
 }
 
