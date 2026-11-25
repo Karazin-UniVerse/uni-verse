@@ -25,4 +25,5 @@ export type DropdownOptionProps = {
   onSelect: () => void;
   icon?: ReactNode;
   tabIndex?: number;
+  tooltip?: string;
 };

@@ -53,6 +53,7 @@ export const uk = {
   'theme.universeSpace': 'UniVerse Space',
   'theme.karazinGold': 'Karazin Gold',
   'theme.jinx': 'Jinx',
+  'theme.jinxTooltip': 'Натхненно League of Legends',
   'theme.select': 'Вибір теми',
 
   // Navigation

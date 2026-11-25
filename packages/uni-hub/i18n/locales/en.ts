@@ -55,6 +55,7 @@ export const en = {
   'theme.universeSpace': 'UniVerse Space',
   'theme.karazinGold': 'Karazin Gold',
   'theme.jinx': 'Jinx',
+  'theme.jinxTooltip': 'Inspired by League of Legends',
   'theme.select': 'Theme selection',
 
   // Navigation

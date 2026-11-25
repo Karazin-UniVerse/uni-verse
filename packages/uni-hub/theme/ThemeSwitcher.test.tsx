@@ -145,6 +145,26 @@ describe('ThemeSwitcher component', () => {
     expect(document.documentElement.dataset.colorScheme).toBe('dark');
   });
 
+  it('should show inspiration tooltip on hover for Jinx in dropdown', async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(<ThemeSwitcher compact />);
+
+    await user.click(screen.getByRole('button', { name: 'Вибір теми: Світла' }));
+
+    const jinxOption = screen.getByRole('button', { name: 'Jinx' });
+
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+
+    await user.hover(jinxOption);
+
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Натхненно League of Legends');
+
+    await user.unhover(jinxOption);
+
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
   it('should apply custom className', () => {
     const { container: fullContainer } = renderWithProviders(
       <ThemeSwitcher className="custom-full-switcher" />,

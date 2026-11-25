@@ -34,6 +34,10 @@ const THEME_KEYS: Record<AppTheme, TranslationKey> = {
   jinx: 'theme.jinx',
 };
 
+const THEME_TOOLTIP_KEYS: Partial<Record<AppTheme, TranslationKey>> = {
+  jinx: 'theme.jinxTooltip',
+};
+
 type ThemeSwitcherProps = {
   compact?: boolean;
   showLabel?: boolean;
@@ -101,19 +105,24 @@ export const ThemeSwitcher: React.FC<Readonly<ThemeSwitcherProps>> = ({
       >
         {(close) => (
           <div className={styles.menuScroll}>
-            {APP_THEMES.map((themeOption) => (
-              <DropdownOption
-                key={themeOption}
-                icon={THEME_ICONS[themeOption]}
-                isSelected={theme === themeOption}
-                onSelect={() => {
-                  setTheme(themeOption);
-                  close();
-                }}
-              >
-                {formatMessage(THEME_KEYS[themeOption])}
-              </DropdownOption>
-            ))}
+            {APP_THEMES.map((themeOption) => {
+              const tooltipKey = THEME_TOOLTIP_KEYS[themeOption];
+
+              return (
+                <DropdownOption
+                  key={themeOption}
+                  icon={THEME_ICONS[themeOption]}
+                  isSelected={theme === themeOption}
+                  tooltip={tooltipKey ? formatMessage(tooltipKey) : undefined}
+                  onSelect={() => {
+                    setTheme(themeOption);
+                    close();
+                  }}
+                >
+                  {formatMessage(THEME_KEYS[themeOption])}
+                </DropdownOption>
+              );
+            })}
           </div>
         )}
       </Dropdown>
