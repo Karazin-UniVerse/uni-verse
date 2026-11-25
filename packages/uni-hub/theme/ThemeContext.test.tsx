@@ -24,6 +24,9 @@ const ThemeConsumer = () => {
       <button type="button" onClick={() => setTheme('notionDark')}>
         Set Notion Dark
       </button>
+      <button type="button" onClick={() => setTheme('viceCityDark')}>
+        Set Vice City Dark
+      </button>
     </div>
   );
 };
@@ -129,6 +132,23 @@ describe('ThemeContext', () => {
     expect(screen.getByTestId('theme-value')).toHaveTextContent('notionDark');
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe('notionDark');
     expect(document.documentElement.dataset.theme).toBe('notionDark');
+    expect(document.documentElement.dataset.colorScheme).toBe('dark');
+  });
+
+  it('should load and apply the viceCityDark theme with dark color scheme', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ThemeProvider>
+        <ThemeConsumer />
+      </ThemeProvider>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Set Vice City Dark' }));
+
+    expect(screen.getByTestId('theme-value')).toHaveTextContent('viceCityDark');
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('viceCityDark');
+    expect(document.documentElement.dataset.theme).toBe('viceCityDark');
     expect(document.documentElement.dataset.colorScheme).toBe('dark');
   });
 
