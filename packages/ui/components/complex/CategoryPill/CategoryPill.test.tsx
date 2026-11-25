@@ -26,4 +26,18 @@ describe('CategoryPill', () => {
 
     expect(container.firstChild).toHaveClass('custom-pill');
   });
+
+  it('keeps the full label in the DOM when truncate is enabled', () => {
+    const longLabel = 'Оплачувана (15 000 грн за кожен етап завершеної роботи)';
+
+    render(<CategoryPill label={longLabel} truncate />);
+
+    expect(screen.getByText(longLabel)).toBeInTheDocument();
+  });
+
+  it('does not change the label markup when truncate is off', () => {
+    const { container } = render(<CategoryPill label="Досвід" />);
+
+    expect(container.querySelectorAll('span > span')).toHaveLength(1);
+  });
 });
