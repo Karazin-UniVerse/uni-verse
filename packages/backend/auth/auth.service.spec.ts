@@ -17,6 +17,7 @@ import { UserService } from '../user/user.service';
 import { GetCreds } from '../utils/get-creds';
 import { RegisterDto, LoginDto, GoogleAuthDto, LinkMoodleDto } from './dto';
 import { User, Role } from '@universe/database';
+import { AUTH_ERROR } from '@universe/core/constants/auth';
 import {
   BadRequestException,
   ConflictException,
@@ -634,7 +635,7 @@ describe('AuthService', () => {
       });
 
       await expect(authService.loginWithGoogle(googleDto)).rejects.toThrow(
-        ForbiddenException,
+        new ForbiddenException(AUTH_ERROR.CORPORATE_DOMAIN_REQUIRED),
       );
     });
 
@@ -649,7 +650,7 @@ describe('AuthService', () => {
       });
 
       await expect(authService.loginWithGoogle(googleDto)).rejects.toThrow(
-        ForbiddenException,
+        new ForbiddenException(AUTH_ERROR.CORPORATE_DOMAIN_REQUIRED),
       );
     });
 
@@ -664,7 +665,7 @@ describe('AuthService', () => {
       });
 
       await expect(authService.loginWithGoogle(googleDto)).rejects.toThrow(
-        ForbiddenException,
+        new ForbiddenException(AUTH_ERROR.CORPORATE_DOMAIN_REQUIRED),
       );
     });
 
@@ -734,7 +735,9 @@ describe('AuthService', () => {
 
       await expect(
         authService.linkMoodleAccount(sampleUser.id, linkDto),
-      ).rejects.toThrow(ConflictException);
+      ).rejects.toThrow(
+        new ConflictException(AUTH_ERROR.MOODLE_ALREADY_LINKED),
+      );
     });
 
     it('should successfully link moodle account and return isLinked=true with new tokens', async () => {

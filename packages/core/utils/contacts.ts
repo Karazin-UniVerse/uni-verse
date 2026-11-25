@@ -1,7 +1,13 @@
+import isEmail from 'validator/lib/isEmail.js';
+
 const TELEGRAM_REGEX =
   /^(@[a-zA-Z][a-zA-Z0-9_]{3,31}|(https?:\/\/)?(www\.)?(t|telegram)\.me\/[a-zA-Z][a-zA-Z0-9_]{3,31}\/?)$/i;
 
 const PHONE_CHARS_REGEX = /^\+?[0-9\s\-()]+$/;
+
+export function isEmailContact(value: string): boolean {
+  return isEmail(value.trim());
+}
 
 export function normalizeContactPhone(value: string): string | null {
   const trimmed = value.trim();
@@ -60,8 +66,8 @@ function isValidPhoneNumber(trimmed: string): boolean {
 }
 
 /**
- * Validates that the provided contact string is either a valid Telegram handle/link
- * or a valid phone number.
+ * Validates that the provided contact string is a single valid Telegram handle/link,
+ * email address, or phone number.
  */
 export function isValidContactInfo(value?: string | null): boolean {
   const trimmed = value?.trim();
@@ -70,7 +76,7 @@ export function isValidContactInfo(value?: string | null): boolean {
     return false;
   }
 
-  if (TELEGRAM_REGEX.test(trimmed)) {
+  if (TELEGRAM_REGEX.test(trimmed) || isEmailContact(trimmed)) {
     return true;
   }
 

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Phone, Send } from 'lucide-react';
+import { Mail, Phone, Send } from 'lucide-react';
+import { isEmailContact } from '@core/utils/contacts';
 
 const PHONE_PATTERN = /^\+?[\d\s()-]{7,}$/;
 
@@ -10,9 +11,17 @@ interface ContactIconProps {
   readonly size?: number;
 }
 
+function getContactIcon(value: string, size: number): React.ReactElement {
+  if (isEmailContact(value)) {
+    return <Mail size={size} aria-hidden="true" />;
+  }
+
+  if (isPhoneContact(value)) {
+    return <Phone size={size} aria-hidden="true" />;
+  }
+
+  return <Send size={size} aria-hidden="true" />;
+}
+
 export const ContactIcon: React.FC<ContactIconProps> = ({ value, size = 12 }) =>
-  isPhoneContact(value) ? (
-    <Phone size={size} aria-hidden="true" />
-  ) : (
-    <Send size={size} aria-hidden="true" />
-  );
+  getContactIcon(value, size);

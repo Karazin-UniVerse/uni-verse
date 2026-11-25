@@ -5,6 +5,7 @@ export const APP_THEMES = [
   'karazinClassic',
   'universeSpace',
   'karazinGold',
+  'notionDark',
   'neonGraffiti',
 ] as const;
 
@@ -17,5 +18,6 @@ export const THEME_COLOR_SCHEME: Record<AppTheme, 'light' | 'dark'> = {
   karazinClassic: 'light',
   universeSpace: 'dark',
   karazinGold: 'dark',
+  notionDark: 'dark',
   neonGraffiti: 'dark',
 };

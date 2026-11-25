@@ -49,7 +49,7 @@ describe('ApplyOpportunityModal component', () => {
 
     expect(contactInput).toBeInTheDocument();
     expect(contactInput).toHaveValue(defaultProps.contactInfo);
-    expect(contactInput).toHaveAttribute('placeholder', '@username або +380...');
+    expect(contactInput).toHaveAttribute('placeholder', '@username, email або +380...');
 
     expect(screen.getByRole('button', { name: 'Скасувати' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Надіслати відгук' })).toBeInTheDocument();
