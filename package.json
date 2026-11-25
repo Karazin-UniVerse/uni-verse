@@ -59,11 +59,11 @@
     "stylelint-config-standard-scss": "^17.0.0",
     "turbo": "^2.11.13",
     "typescript": "^6.0.3",
-    "vitest": "5.1.0"
+    "vitest": "5.1.1"
   },
   "pnpm": {
     "overrides": {
-      "vitest": "5.1.0",
+      "vitest": "5.1.1",
       "@vitest/browser-playwright": "5.1.0",
       "@vitest/coverage-v8": "5.1.0"
     }
