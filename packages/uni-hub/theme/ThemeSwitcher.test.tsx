@@ -165,6 +165,26 @@ describe('ThemeSwitcher component', () => {
     expect(document.documentElement.dataset.colorScheme).toBe('dark');
   });
 
+  it('should show inspiration tooltip on hover for Vice City Dark in dropdown', async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(<ThemeSwitcher compact />);
+
+    await user.click(screen.getByRole('button', { name: 'Вибір теми: Світла' }));
+
+    const viceCityDarkOption = screen.getByRole('button', { name: 'Vice City Dark' });
+
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+
+    await user.hover(viceCityDarkOption);
+
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Натхненно GTA Vice City');
+
+    await user.unhover(viceCityDarkOption);
+
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
   it('should apply custom className', () => {
     const { container: fullContainer } = renderWithProviders(
       <ThemeSwitcher className="custom-full-switcher" />,

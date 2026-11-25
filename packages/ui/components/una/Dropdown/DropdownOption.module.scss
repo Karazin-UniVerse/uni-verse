@@ -35,3 +35,26 @@
   margin-left: auto;
   color: var(--accent-primary);
 }
+
+.tooltip {
+  position: fixed;
+  z-index: var(--z-toast);
+  padding: var(--space-4) var(--space-8);
+  border: 1px solid var(--neutral-border);
+  border-radius: var(--border-radius-small);
+  background: var(--neutral-surface);
+  color: var(--text-primary);
+  box-shadow: var(--box-shadow-medium);
+  font-size: var(--font-xs);
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tooltipLeft {
+  transform: translate(-100%, -50%);
+}
+
+.tooltipTop {
+  transform: translateY(-100%);
+}

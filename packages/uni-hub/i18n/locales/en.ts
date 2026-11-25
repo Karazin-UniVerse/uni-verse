@@ -58,6 +58,7 @@ export const en = {
   'theme.karazinGold': 'Karazin Gold',
   'theme.notionDark': 'Notion Dark',
   'theme.viceCityDark': 'Vice City Dark',
+  'theme.viceCityDarkTooltip': 'Inspired by GTA Vice City',
   'theme.select': 'Theme selection',
 
   // Navigation
