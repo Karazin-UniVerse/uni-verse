@@ -444,8 +444,7 @@ export const uk = {
   'opportunities.errors.withdrawalLimitReached':
     'Ви вже відкликали відгук на цю можливість максимальну кількість разів ({limit}).',
   'opportunities.tabs.favorites': 'Обрані',
-  'opportunities.favorites.add': 'Додати до обраного',
-  'opportunities.favorites.remove': 'Видалити з обраного',
+  'opportunities.favorites.toggle': 'Зберегти в обране',
   'opportunities.favorites.empty': 'Ви ще не додали жодної можливості до обраного.',
   'opportunities.favorites.loadError': 'Не вдалося завантажити обрані можливості.',
   'opportunities.filteredEmpty': 'Можливостей за обраними фільтрами не знайдено.',

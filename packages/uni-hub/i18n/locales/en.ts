@@ -444,8 +444,7 @@ export const en = {
   'opportunities.errors.withdrawalLimitReached':
     'You have already withdrawn your application for this opportunity the maximum number of times ({limit}).',
   'opportunities.tabs.favorites': 'Favorites',
-  'opportunities.favorites.add': 'Add to favorites',
-  'opportunities.favorites.remove': 'Remove from favorites',
+  'opportunities.favorites.toggle': 'Save to favorites',
   'opportunities.favorites.empty': 'You have not saved any opportunities yet.',
   'opportunities.favorites.loadError': 'Could not load saved opportunities.',
   'opportunities.filteredEmpty': 'No opportunities match your filters.',

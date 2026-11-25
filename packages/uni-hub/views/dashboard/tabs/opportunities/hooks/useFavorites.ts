@@ -24,10 +24,7 @@ interface UseFavoritesResult {
 }
 
 /** Loads saved IDs and tracks pending favorites by opportunity. */
-export function useFavorites(
-  enabled: boolean,
-  { notifyOnSuccess = false } = {},
-): UseFavoritesResult {
+export function useFavorites(enabled: boolean): UseFavoritesResult {
   const queryClient = useQueryClient();
   const toast = useToast();
   const { formatMessage } = useLanguage();
@@ -56,15 +53,11 @@ export function useFavorites(
     onSuccess: (_response, { id, isFavorite }) => {
       applyFavoriteChange(queryClient, id, isFavorite);
 
-      if (notifyOnSuccess) {
-        toast.success(
-          formatMessage(
-            isFavorite
-              ? 'opportunities.toast.favoriteRemoved'
-              : 'opportunities.toast.favoriteAdded',
-          ),
-        );
-      }
+      toast.success(
+        formatMessage(
+          isFavorite ? 'opportunities.toast.favoriteRemoved' : 'opportunities.toast.favoriteAdded',
+        ),
+      );
     },
     onError: () => toast.error(formatMessage('opportunities.toast.genericError')),
     onSettled: () => {

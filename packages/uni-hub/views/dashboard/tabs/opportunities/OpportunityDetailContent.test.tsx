@@ -85,7 +85,7 @@ describe('OpportunityDetailContent applicants deep-link', () => {
 
     renderDetail(opportunity);
 
-    const button = screen.getByRole('button', { name: 'opportunities.favorites.add' });
+    const button = screen.getByRole('button', { name: 'opportunities.favorites.toggle' });
 
     await waitFor(() => expect(button).toBeEnabled());
     expect(button).toHaveAttribute('aria-pressed', 'false');
@@ -93,6 +93,9 @@ describe('OpportunityDetailContent applicants deep-link', () => {
 
     expect(setFavorite).toHaveBeenCalledWith(opportunity.id, true);
     await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'true'));
+    expect(
+      screen.getByRole('button', { name: 'opportunities.favorites.toggle', pressed: true }),
+    ).toBe(button);
     await waitFor(() => expect(listFavorites).toHaveBeenCalledTimes(2));
   });
 

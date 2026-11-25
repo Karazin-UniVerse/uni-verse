@@ -41,7 +41,7 @@ export const OpportunityDetailContent: React.FC<OpportunityDetailContentProps> =
   const canFavorite =
     opportunity.status === OPPORTUNITY_STATUS.PUBLISHED &&
     canToggleFavorite(opportunity, currentUser.userId);
-  const favorites = useFavorites(canFavorite, { notifyOnSuccess: true });
+  const favorites = useFavorites(canFavorite);
   const isFavorite = favorites.savedIds.has(opportunity.id);
   const favoriteDisabled =
     favorites.query.isLoading ||

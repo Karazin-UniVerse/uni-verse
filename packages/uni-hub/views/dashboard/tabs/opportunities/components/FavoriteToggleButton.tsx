@@ -27,9 +27,7 @@ export function FavoriteToggleButton({
       className={className}
       disabled={disabled}
       aria-pressed={isFavorite}
-      aria-label={formatMessage(
-        isFavorite ? 'opportunities.favorites.remove' : 'opportunities.favorites.add',
-      )}
+      aria-label={formatMessage('opportunities.favorites.toggle')}
       onClick={onToggle}
     >
       <Star size={18} fill={isFavorite ? 'currentColor' : 'none'} aria-hidden="true" />

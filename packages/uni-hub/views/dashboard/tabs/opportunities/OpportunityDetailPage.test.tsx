@@ -105,14 +105,19 @@ describe('OpportunityDetailPage background refresh', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Більше недоступна');
 
-    await user.click(await screen.findByRole('button', { name: 'Видалити з обраного' }));
+    await user.click(
+      await screen.findByRole('button', { name: 'Зберегти в обране', pressed: true }),
+    );
 
     expect(setFavorite).toHaveBeenCalledWith(opportunity.id, false);
-    expect(screen.getByRole('button', { name: 'Додати до обраного' })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Зберегти в обране', pressed: false }),
+    ).toBeDisabled();
 
     await act(async () => {
       resolveToggle({ data: { saved: false } });
     });
+    expect(await screen.findByText('Видалено з обраного.')).toBeInTheDocument();
   });
 
   it('allows toggling favorite on a published opportunity detail page', async () => {
@@ -129,11 +134,17 @@ describe('OpportunityDetailPage background refresh', () => {
 
     render(withAppProviders(<OpportunityDetailPage opportunityId={opportunity.id} />));
 
-    const favButton = await screen.findByRole('button', { name: 'Додати до обраного' });
+    const favButton = await screen.findByRole('button', {
+      name: 'Зберегти в обране',
+      pressed: false,
+    });
 
     await user.click(favButton);
 
     expect(setFavorite).toHaveBeenCalledWith(opportunity.id, true);
+    expect(
+      await screen.findByText('Додано до обраного. Ви отримуватимете оновлення.'),
+    ).toBeInTheDocument();
   });
 
   it('should show the error screen when the first request fails without cached data', async () => {
