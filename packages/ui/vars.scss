@@ -159,7 +159,6 @@ $space-64: 64px;
   --blue-1000: #60a5fa;
   --blue-1100: #93c5fd;
   --blue-1200: #1e40af;
-  --blue-1300: #0f172a;
 
   /* Red Palette */
   --red-50: #fef2f2;
@@ -932,22 +931,13 @@ $space-64: 64px;
 [data-theme='crimsonSky'] {
   /* Crimson & Blue Palette */
   --crimson-50: #fff1f2;
-  --crimson-100: #ffe4e6;
-  --crimson-200: #fecdd3;
-  --crimson-300: #fda4af;
-  --crimson-400: #fb7185;
-  --crimson-500: #f43f5e;
   --crimson-600: #e11d48;
   --crimson-700: #be123c;
   --crimson-800: #9f1239;
   --electric-blue-50: #eff6ff;
   --electric-blue-100: #dbeafe;
   --electric-blue-200: #bfdbfe;
-  --electric-blue-300: #93c5fd;
-  --electric-blue-400: #60a5fa;
-  --electric-blue-500: #3b82f6;
   --electric-blue-600: #2563eb;
-  --electric-blue-700: #1d4ed8;
 
   /* Neutral Colors override */
   --neutral-bg: var(--white-10);
@@ -962,12 +952,13 @@ $space-64: 64px;
   --accent-primary-hover: var(--crimson-700);
   --accent-primary-active: var(--crimson-800);
   --accent-text-on-primary: var(--white-10);
-  --accent-secondary: var(--slate-100);
-  --accent-secondary-hover: var(--slate-200);
-  --accent-secondary-active: var(--slate-300);
+  --accent-secondary: var(--electric-blue-50);
+  --accent-secondary-hover: var(--electric-blue-100);
+  --accent-secondary-active: var(--electric-blue-200);
   --accent-text-on-secondary: var(--slate-900);
   --focus-ring-color: rgb(225 29 72 / 35%);
-  --bg-hover: var(--slate-100);
+  --bg-hover: var(--electric-blue-50);
+  --bg-active: rgb(37 99 235 / 10%);
 
   /* RGB color channels for alpha blending and mesh gradients */
   --primary-rgb: 225, 29, 72;
@@ -979,24 +970,17 @@ $space-64: 64px;
   --bg-surface: var(--white-10);
   --bg-content: transparent;
   --bg-card: var(--white-10);
-  --btn-primary-disabled: var(--slate-100);
 
   /* Button color tokens */
   --btn-primary-bg: var(--crimson-600);
   --btn-primary-hover: var(--crimson-700);
   --btn-primary-active: var(--crimson-800);
   --btn-primary-text: var(--white-10);
+  --btn-primary-disabled: var(--slate-100);
   --btn-secondary-bg: var(--white-10);
   --btn-secondary-hover: var(--electric-blue-50);
   --btn-secondary-active: var(--electric-blue-100);
   --btn-secondary-text: var(--slate-900);
-
-  /* Alternating Action & Accent Tokens (Red & Blue) */
-  --accent-alt: var(--electric-blue-600);
-  --accent-alt-hover: var(--electric-blue-700);
-  --accent-alt-active: var(--blue-1200);
-  --accent-alt-subtle: rgb(37 99 235 / 12%);
-  --accent-primary-subtle: rgb(225 29 72 / 12%);
 
   /* Vibrant Mesh Canvas (Vivid Red-to-Blue radial gradient blend) */
   --bg-page:
@@ -1004,7 +988,12 @@ $space-64: 64px;
     radial-gradient(at 100% 100%, rgb(var(--secondary-rgb), 0.3) 0, transparent 55%),
     radial-gradient(at 100% 0%, rgb(var(--secondary-rgb), 0.2) 0, transparent 50%),
     radial-gradient(at 0% 100%, rgb(var(--primary-rgb), 0.22) 0, transparent 50%),
-    linear-gradient(135deg, rgb(255 241 242 / 70%) 0%, rgb(239 246 255 / 70%) 100%), #fff;
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--crimson-50) 70%, transparent) 0%,
+      color-mix(in srgb, var(--electric-blue-50) 70%, transparent) 100%
+    ),
+    var(--white-10);
 
   /* Sidebar with red-to-blue gradient active item */
   --sidebar-bg: var(--white-10);
@@ -1014,8 +1003,13 @@ $space-64: 64px;
   --sidebar-text-strong: var(--slate-900);
   --sidebar-text-active: var(--white-10);
   --sidebar-item-hover-bg: color-mix(in srgb, var(--accent-primary) 8%, transparent);
-  --sidebar-item-active-bg: var(--crimson-600);
+  --sidebar-item-active-bg: linear-gradient(
+    135deg,
+    var(--crimson-600) 0%,
+    var(--electric-blue-600) 100%
+  );
   --sidebar-item-active-accent: var(--white-10);
+  --sidebar-accent: var(--electric-blue-600);
 
   /* White header with crimson hairline */
   --header-bg: var(--white-10);

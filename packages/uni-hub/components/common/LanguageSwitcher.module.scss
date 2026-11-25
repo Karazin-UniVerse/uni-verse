@@ -105,32 +105,3 @@
   font-weight: 600;
   letter-spacing: 0.02em;
 }
-
-:global([data-theme='crimsonSky']) {
-  .siderTrigger {
-    color: var(--blue-1300);
-
-    svg {
-      color: var(--blue-1300);
-    }
-
-    .chevron {
-      color: var(--blue-1300);
-    }
-
-    &:hover {
-      color: var(--blue-1300);
-      background: color-mix(in srgb, var(--crimson-600) 8%, transparent);
-      border-color: transparent;
-      box-shadow: none;
-
-      svg {
-        color: var(--blue-1300);
-      }
-
-      .chevron {
-        color: var(--blue-1300);
-      }
-    }
-  }
-}

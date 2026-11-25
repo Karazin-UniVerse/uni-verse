@@ -23,7 +23,6 @@ export const ScheduleDayView: React.FC<ScheduleDayViewProps> = ({
           type="button"
           variant="secondary"
           size="small"
-          className={styles.navBtnPrev}
           onClick={() => onSelectDate(addDays(selectedDate, -1))}
           aria-label={formatMessage('schedule.prevDay')}
         >
@@ -43,7 +42,6 @@ export const ScheduleDayView: React.FC<ScheduleDayViewProps> = ({
           type="button"
           variant="secondary"
           size="small"
-          className={styles.navBtnNext}
           onClick={() => onSelectDate(addDays(selectedDate, 1))}
           aria-label={formatMessage('schedule.nextDay')}
         >

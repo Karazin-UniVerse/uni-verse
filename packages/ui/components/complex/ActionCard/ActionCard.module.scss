@@ -171,15 +171,3 @@
     box-shadow: 0 0 0 0 rgb(239 68 68 / 0%);
   }
 }
-
-:global([data-theme='crimsonSky']) {
-  .actionCard:nth-child(odd):hover {
-    border-color: var(--crimson-600);
-    box-shadow: var(--card-shadow-hover);
-  }
-
-  .actionCard:nth-child(even):hover {
-    border-color: var(--electric-blue-600);
-    box-shadow: var(--card-shadow-hover);
-  }
-}
