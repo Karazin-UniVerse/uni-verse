@@ -15,12 +15,13 @@ import {
 } from 'lucide-react';
 import { Button } from '@una';
 import {
-  MAX_APPLICATION_WITHDRAWALS,
+  MAX_APPLICATION_REAPPLIES,
   OPPORTUNITY_APP_STATUS,
   OPPORTUNITY_PAYMENT_TYPE,
 } from '@core/constants/opportunities';
 import {
-  hasReachedApplicationWithdrawalLimit,
+  hasReachedApplicationReapplyLimit,
+  isReapplicableApplicationStatus,
   isUnavailableOpportunity,
   isWithdrawableApplicationStatus,
 } from '@core/utils/opportunities';
@@ -47,9 +48,9 @@ export function MyApplicationCard({
   const opportunity = record && !isUnavailableOpportunity(record) ? record : undefined;
   const paymentType = record?.paymentType;
   const isWithdrawable = isWithdrawableApplicationStatus(application.status);
-  const hasReachedWithdrawalLimit = hasReachedApplicationWithdrawalLimit(
-    application.withdrawalCount,
-  );
+  const isReapplyBlocked =
+    isReapplicableApplicationStatus(application.status) &&
+    hasReachedApplicationReapplyLimit(application.reapplyCount);
   const paidLabel = opportunity?.paymentDetails
     ? formatMessage('opportunities.myApplications.paidWithAmount', {
         amount: opportunity.paymentDetails,
@@ -167,14 +168,14 @@ export function MyApplicationCard({
         </span>
 
         <div className={styles.applicationActions}>
-          {isWithdrawable && hasReachedWithdrawalLimit && (
+          {isReapplyBlocked && (
             <span className={styles.statusNoticeNeutral}>
-              {formatMessage('opportunities.errors.withdrawalLimitReached', {
-                limit: MAX_APPLICATION_WITHDRAWALS,
+              {formatMessage('opportunities.errors.reapplyLimitReached', {
+                limit: MAX_APPLICATION_REAPPLIES,
               })}
             </span>
           )}
-          {isWithdrawable && !hasReachedWithdrawalLimit && (
+          {isWithdrawable && (
             <Button
               variant="secondary"
               className={styles.withdrawBtn}

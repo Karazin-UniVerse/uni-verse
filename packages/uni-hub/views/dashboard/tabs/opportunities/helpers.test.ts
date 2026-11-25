@@ -3,7 +3,7 @@ import type { Opportunity } from '@core/types/opportunities';
 import type { FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import { en } from '@uni-hub/i18n/locales/en';
 import { uk } from '@uni-hub/i18n/locales/uk';
-import { MAX_APPLICATION_WITHDRAWALS, OPPORTUNITY_ERROR } from '@core/constants/opportunities';
+import { MAX_APPLICATION_REAPPLIES, OPPORTUNITY_ERROR } from '@core/constants/opportunities';
 import {
   calculatePaymentCounts,
   filterOpportunitiesByPayment,
@@ -73,7 +73,7 @@ const sampleOpportunities: Opportunity[] = [
 ];
 
 describe('getOpportunityErrorMessage', () => {
-  it.each([en, uk])('interpolates the withdrawal limit in the localized error', (messages) => {
+  it.each([en, uk])('interpolates the re-apply limit in the localized error', (messages) => {
     const formatMessage: FormatMessage = (key, values) =>
       messages[key].replace(/\{(\w+)\}/g, (placeholder, name: string) =>
         String(values?.[name] ?? placeholder),
@@ -81,17 +81,17 @@ describe('getOpportunityErrorMessage', () => {
 
     expect(
       getOpportunityErrorMessage(
-        new Error(OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED),
+        new Error(OPPORTUNITY_ERROR.REAPPLY_LIMIT_REACHED),
         formatMessage,
         'fallback',
       ),
     ).toBe(
-      messages[OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED].replace(
+      messages[OPPORTUNITY_ERROR.REAPPLY_LIMIT_REACHED].replace(
         '{limit}',
-        String(MAX_APPLICATION_WITHDRAWALS),
+        String(MAX_APPLICATION_REAPPLIES),
       ),
     );
-    expect(messages[OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED]).toContain('{limit}');
+    expect(messages[OPPORTUNITY_ERROR.REAPPLY_LIMIT_REACHED]).toContain('{limit}');
     expect(messages['opportunities.confirm.withdraw']).toContain('{limit}');
   });
   it.each([
@@ -104,8 +104,12 @@ describe('getOpportunityErrorMessage', () => {
       'translated:opportunities.errors.changesRequired',
     ],
     [
-      'opportunities.errors.withdrawalLimitReached (HTTP 400)',
-      'translated:opportunities.errors.withdrawalLimitReached',
+      'opportunities.errors.reapplyLimitReached (HTTP 400)',
+      'translated:opportunities.errors.reapplyLimitReached',
+    ],
+    [
+      'opportunities.errors.invalidStatusTransition (HTTP 409)',
+      'translated:opportunities.errors.invalidStatusTransition',
     ],
   ])(
     'should translate the domain error %s without exposing transport suffixes',

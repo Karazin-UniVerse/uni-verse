@@ -1,5 +1,5 @@
 'use client';
-import { MAX_APPLICATION_WITHDRAWALS } from '@core/constants/opportunities';
+import { MAX_APPLICATION_REAPPLIES } from '@core/constants/opportunities';
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
@@ -228,7 +228,7 @@ export const OpportunitiesTab: React.FC = () => {
         onConfirm={withdrawal.handleWithdraw}
         title={formatMessage('opportunities.confirm.withdrawTitle')}
         message={formatMessage('opportunities.confirm.withdraw', {
-          limit: MAX_APPLICATION_WITHDRAWALS,
+          limit: MAX_APPLICATION_REAPPLIES,
         })}
         cancelLabel={formatMessage('common.cancel')}
         confirmLabel={formatMessage('opportunities.confirm.withdrawConfirm')}

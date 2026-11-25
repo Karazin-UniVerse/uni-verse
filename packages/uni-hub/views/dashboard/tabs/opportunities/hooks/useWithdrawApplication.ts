@@ -22,7 +22,7 @@ export function useWithdrawApplication(): UseWithdrawApplicationResult {
 
   const withdrawMutation = useMutation({
     mutationFn: (applicationId: string) => opportunitiesApi.withdrawApplication(applicationId),
-    onSuccess: () => invalidateOpportunities(queryClient),
+    onSettled: () => invalidateOpportunities(queryClient),
   });
 
   const handleWithdraw = async (): Promise<void> => {

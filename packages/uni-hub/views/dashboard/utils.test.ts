@@ -197,6 +197,24 @@ describe('dashboard utils', () => {
       expect(newAppItem.message).toContain('notifications.opportunityNewApplication.message');
       expect(newAppItem.message).toContain('AI Lab');
 
+      const withdrawnItem = toNotificationListItem(
+        {
+          id: 'plat-3',
+          subject: 'notifications.opportunityApplicationWithdrawn.title',
+          message: JSON.stringify({ opportunityTitle: 'AI Lab', applicantName: 'Oleh' }),
+          timecreated: 1_788_000_000,
+          read: false,
+        },
+        'en-US',
+        formatter,
+      );
+
+      expect(withdrawnItem.title).toContain('notifications.opportunityApplicationWithdrawn.title');
+      expect(withdrawnItem.message).toContain(
+        'notifications.opportunityApplicationWithdrawn.message',
+      );
+      expect(withdrawnItem.message).toContain('AI Lab');
+
       const moderatedItem = toNotificationListItem(
         {
           id: 'plat-3',

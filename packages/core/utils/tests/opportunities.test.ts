@@ -5,32 +5,66 @@ import {
   isRecruitmentPhase,
   normalizeOpportunityContent,
   isWithdrawableApplicationStatus,
-  hasReachedApplicationWithdrawalLimit,
+  hasReachedApplicationReapplyLimit,
+  canChangeApplicationStatus,
+  isReapplicableApplicationStatus,
+  isOwnerTrackedWithdrawalStatus,
 } from '../opportunities.ts';
 
 describe('opportunities utils', () => {
-  test('only submitted and under-review applications have a withdrawable status', () => {
-    for (const status of [
-      'SUBMITTED',
-      'UNDER_REVIEW',
-      'ACCEPTED',
-      'REJECTED',
-      'WITHDRAWN',
-    ] as const) {
+  const ALL_STATUSES = ['SUBMITTED', 'UNDER_REVIEW', 'ACCEPTED', 'REJECTED', 'WITHDRAWN'] as const;
+
+  test('submitted, under-review and accepted applications are withdrawable', () => {
+    for (const status of ALL_STATUSES) {
       assert.equal(
         isWithdrawableApplicationStatus(status),
-        status === 'SUBMITTED' || status === 'UNDER_REVIEW',
+        status === 'SUBMITTED' || status === 'UNDER_REVIEW' || status === 'ACCEPTED',
       );
     }
   });
 
-  test('withdrawal limit includes the boundary and preserves missing counts as zero', () => {
-    assert.equal(hasReachedApplicationWithdrawalLimit(undefined), false);
-    assert.equal(hasReachedApplicationWithdrawalLimit(0), false);
-    assert.equal(hasReachedApplicationWithdrawalLimit(2), false);
-    assert.equal(hasReachedApplicationWithdrawalLimit(3), true);
-    assert.equal(hasReachedApplicationWithdrawalLimit(4), true);
+  test('withdrawn and rejected applications are reapplicable', () => {
+    for (const status of ALL_STATUSES) {
+      assert.equal(
+        isReapplicableApplicationStatus(status),
+        status === 'WITHDRAWN' || status === 'REJECTED',
+      );
+    }
   });
+
+  test('only under-review and accepted withdrawals are tracked for the owner', () => {
+    for (const status of ALL_STATUSES) {
+      assert.equal(
+        isOwnerTrackedWithdrawalStatus(status),
+        status === 'UNDER_REVIEW' || status === 'ACCEPTED',
+      );
+    }
+  });
+
+  test('status transitions follow the agreed table for every pair', () => {
+    const allowed: Record<string, string[]> = {
+      SUBMITTED: ['UNDER_REVIEW', 'ACCEPTED', 'REJECTED'],
+      UNDER_REVIEW: ['ACCEPTED', 'REJECTED'],
+      ACCEPTED: [],
+      REJECTED: [],
+      WITHDRAWN: [],
+    };
+
+    for (const from of ALL_STATUSES) {
+      for (const to of ALL_STATUSES) {
+        assert.equal(canChangeApplicationStatus(from, to), allowed[from].includes(to));
+      }
+    }
+  });
+
+  test('reapply limit includes the boundary and preserves missing counts as zero', () => {
+    assert.equal(hasReachedApplicationReapplyLimit(undefined), false);
+    assert.equal(hasReachedApplicationReapplyLimit(0), false);
+    assert.equal(hasReachedApplicationReapplyLimit(2), false);
+    assert.equal(hasReachedApplicationReapplyLimit(3), true);
+    assert.equal(hasReachedApplicationReapplyLimit(4), true);
+  });
+
   describe('isRecruitmentPhase', () => {
     test('allows recruitment only in START, ACTIVE, or default undefined phase', () => {
       assert.strictEqual(isRecruitmentPhase(undefined), true);

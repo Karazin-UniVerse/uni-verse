@@ -1,7 +1,7 @@
 import { getErrorMessage } from '@uni-hub/services/api';
 import type { FormatMessage } from '@uni-hub/i18n/LanguageContext';
 import {
-  MAX_APPLICATION_WITHDRAWALS,
+  MAX_APPLICATION_REAPPLIES,
   OPPORTUNITY_ERROR,
   OPPORTUNITY_LIFECYCLE,
   type OpportunityPaymentType,
@@ -59,7 +59,7 @@ export function getOpportunityErrorMessage(
     (value) => message === value || message.startsWith(`${value} (HTTP `),
   );
 
-  return key ? formatMessage(key, { limit: MAX_APPLICATION_WITHDRAWALS }) : message;
+  return key ? formatMessage(key, { limit: MAX_APPLICATION_REAPPLIES }) : message;
 }
 
 export function filterOpportunitiesBySearch<T extends OpportunityListItem>(

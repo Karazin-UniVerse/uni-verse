@@ -1,10 +1,17 @@
-import { ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import {
   ApplicationStatus,
   type OpportunityApplication,
   type Prisma,
 } from '@universe/database';
-import { OPPORTUNITY_ERROR } from '@universe/core/constants/opportunities';
+import {
+  MAX_APPLICATION_REAPPLIES,
+  OPPORTUNITY_ERROR,
+} from '@universe/core/constants/opportunities';
+import {
+  hasReachedApplicationReapplyLimit,
+  isReapplicableApplicationStatus,
+} from '@universe/core/utils/opportunities';
 import { NOTIFICATION_TYPE } from '@universe/core/constants/notifications';
 import type { ApplyOpportunityDto } from './dto/apply-opportunity.dto';
 import type { PrismaService } from '../prisma/prisma.service';
@@ -30,8 +37,12 @@ export async function persistOpportunityApplication({
     where: { applicantId: userId, opportunityId },
   });
 
-  if (existing && existing.status !== ApplicationStatus.WITHDRAWN) {
+  if (existing && !isReapplicableApplicationStatus(existing.status)) {
     throw new ConflictException(OPPORTUNITY_ERROR.ALREADY_APPLIED);
+  }
+
+  if (existing && hasReachedApplicationReapplyLimit(existing.reapplyCount)) {
+    throw new BadRequestException(OPPORTUNITY_ERROR.REAPPLY_LIMIT_REACHED);
   }
 
   const contactInfo = request.contactInfo?.trim() ?? '';
@@ -41,7 +52,11 @@ export async function persistOpportunityApplication({
   ): Promise<OpportunityApplication> => {
     if (existing) {
       const updated = await tx.opportunityApplication.update({
-        where: { id: existing.id, status: ApplicationStatus.WITHDRAWN },
+        where: {
+          id: existing.id,
+          status: existing.status,
+          reapplyCount: { lt: MAX_APPLICATION_REAPPLIES },
+        },
         data: {
           applicantName: request.applicantName,
           contactInfo,
@@ -50,6 +65,8 @@ export async function persistOpportunityApplication({
           answers: request.answers ?? null,
           status: ApplicationStatus.SUBMITTED,
           ownerComment: null,
+          reapplyCount: { increment: 1 },
+          withdrawnFromStatus: null,
           createdAt: new Date(),
         },
       });
@@ -87,7 +104,16 @@ export async function persistOpportunityApplication({
     const errorCode = getPrismaErrorCode(error);
 
     if (existing && errorCode === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
-      throw new ConflictException('Application is no longer withdrawn');
+      const current = await prisma.opportunityApplication.findUnique({
+        where: { id: existing.id },
+        select: { reapplyCount: true },
+      });
+
+      if (hasReachedApplicationReapplyLimit(current?.reapplyCount)) {
+        throw new BadRequestException(OPPORTUNITY_ERROR.REAPPLY_LIMIT_REACHED);
+      }
+
+      throw new ConflictException(OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION);
     }
 
     if (!existing && errorCode === PRISMA_ERROR_CODE.UNIQUE_CONSTRAINT) {

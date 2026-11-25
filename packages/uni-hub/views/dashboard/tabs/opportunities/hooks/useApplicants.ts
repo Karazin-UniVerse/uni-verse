@@ -1,12 +1,12 @@
 import { useState, useCallback } from 'react';
 import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@una';
-import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import type { OpportunityAppStatus } from '@core/constants/opportunities';
 import { hasLoadFailed } from '@uni-hub/queries/load-state';
+import { getOpportunityErrorMessage } from '../helpers';
 import { invalidateOpportunities } from '../cache';
 import { loadApplicants } from '../queries';
 import { opportunityKeys } from '../queryKeys';
@@ -42,7 +42,7 @@ export function useApplicants(): UseApplicantsResult {
   const updateStatusMutation = useMutation({
     mutationFn: ({ applicationId, status }: ApplicationStatusChange) =>
       opportunitiesApi.updateApplicationStatus(applicationId, status),
-    onSuccess: () => invalidateOpportunities(queryClient),
+    onSettled: () => invalidateOpportunities(queryClient),
   });
 
   const open = useCallback(
@@ -59,7 +59,13 @@ export function useApplicants(): UseApplicantsResult {
     try {
       await updateStatusMutation.mutateAsync({ applicationId, status });
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, formatMessage('opportunities.toast.statusUpdateError')));
+      toast.error(
+        getOpportunityErrorMessage(
+          err,
+          formatMessage,
+          formatMessage('opportunities.toast.statusUpdateError'),
+        ),
+      );
     }
   };
 

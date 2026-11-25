@@ -41,15 +41,16 @@ import {
   Role,
 } from '@universe/database';
 import {
-  MAX_APPLICATION_WITHDRAWALS,
   OPPORTUNITY_VIEW,
   OPPORTUNITY_VIEW_PARAM,
   OPPORTUNITY_ERROR,
+  OWNER_TRACKED_WITHDRAWAL_STATUSES,
 } from '@universe/core/constants/opportunities';
 import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 import {
   hasOpportunityContentChanged,
-  hasReachedApplicationWithdrawalLimit,
+  canChangeApplicationStatus,
+  isOwnerTrackedWithdrawalStatus,
   isWithdrawableApplicationStatus,
   isRecruitmentPhase,
   isUnavailableOpportunity,
@@ -650,7 +651,12 @@ export class OpportunitiesService {
     return this.prisma.opportunityApplication.findMany({
       where: {
         opportunityId: id,
-        status: { not: ApplicationStatus.WITHDRAWN },
+        OR: [
+          { status: { not: ApplicationStatus.WITHDRAWN } },
+          {
+            withdrawnFromStatus: { in: [...OWNER_TRACKED_WITHDRAWAL_STATUSES] },
+          },
+        ],
       },
       include: { applicant: { select: { name: true, email: true } } },
       orderBy: { createdAt: 'desc' },
@@ -677,24 +683,26 @@ export class OpportunitiesService {
       throw new ForbiddenException('Only the owner can manage this');
     }
 
-    if (app.status === ApplicationStatus.WITHDRAWN) {
-      throw new BadRequestException('Cannot change a withdrawn application');
+    if (!canChangeApplicationStatus(app.status, status)) {
+      throw new ConflictException(OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION);
     }
 
-    const allowedStatuses: ApplicationStatus[] = [
-      ApplicationStatus.UNDER_REVIEW,
-      ApplicationStatus.ACCEPTED,
-      ApplicationStatus.REJECTED,
-    ];
+    let updated: OpportunityApplication;
 
-    if (!allowedStatuses.includes(status)) {
-      throw new BadRequestException('Invalid target status');
+    try {
+      updated = await this.prisma.opportunityApplication.update({
+        where: { id: applicationId, status: app.status },
+        data: { status, ownerComment },
+      });
+    } catch (error) {
+      if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
+        throw new ConflictException(
+          OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION,
+        );
+      }
+
+      throw error;
     }
-
-    const updated = await this.prisma.opportunityApplication.update({
-      where: { id: applicationId },
-      data: { status, ownerComment },
-    });
 
     await this.notificationsService.createNotification({
       userId: app.applicantId,
@@ -786,22 +794,15 @@ export class OpportunitiesService {
     if (!isWithdrawableApplicationStatus(app.status))
       throw new BadRequestException('Cannot withdraw completed application');
 
-    if (hasReachedApplicationWithdrawalLimit(app.withdrawalCount))
-      throw new BadRequestException(OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED);
+    let updated: OpportunityApplication;
 
     try {
-      const updated = await this.prisma.$transaction(async (tx) => {
+      updated = await this.prisma.$transaction(async (tx) => {
         const withdrawn = await tx.opportunityApplication.update({
-          where: {
-            id: applicationId,
-            status: {
-              in: [ApplicationStatus.SUBMITTED, ApplicationStatus.UNDER_REVIEW],
-            },
-            withdrawalCount: { lt: MAX_APPLICATION_WITHDRAWALS },
-          },
+          where: { id: applicationId, status: app.status },
           data: {
             status: ApplicationStatus.WITHDRAWN,
-            withdrawalCount: { increment: 1 },
+            withdrawnFromStatus: app.status,
           },
         });
 
@@ -816,25 +817,31 @@ export class OpportunitiesService {
 
         return withdrawn;
       });
-
-      return updated;
     } catch (error) {
       if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
-        const current = await this.prisma.opportunityApplication.findUnique({
-          where: { id: applicationId },
-          select: { withdrawalCount: true },
-        });
-
-        if (hasReachedApplicationWithdrawalLimit(current?.withdrawalCount))
-          throw new BadRequestException(
-            OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED,
-          );
-
-        throw new BadRequestException('Cannot withdraw completed application');
+        throw new ConflictException(
+          OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION,
+        );
       }
 
       throw error;
     }
+
+    if (isOwnerTrackedWithdrawalStatus(app.status)) {
+      await this.notificationsService.createNotification({
+        userId: app.opportunity.ownerId,
+        type: NOTIFICATION_TYPE.OPPORTUNITY_APPLICATION_WITHDRAWN,
+        title: OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_WITHDRAWN_TITLE,
+        message: JSON.stringify({
+          opportunityTitle: app.opportunity.title,
+          applicantName: app.applicantName,
+          applicationId,
+        }),
+        link: `${OPPORTUNITIES_ROUTE}/${app.opportunityId}?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
+      });
+    }
+
+    return updated;
   }
 
   /**

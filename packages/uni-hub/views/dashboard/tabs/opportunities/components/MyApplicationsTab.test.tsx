@@ -207,13 +207,22 @@ describe('MyApplicationsTab component', () => {
     expect(onWithdraw).toHaveBeenCalledWith('app-rev-23456789');
   });
 
-  it('should not render withdraw button when application status is terminal (ACCEPTED, REJECTED, WITHDRAWN)', () => {
+  it('should render withdraw button for an ACCEPTED application', async () => {
+    const user = userEvent.setup();
+    const onWithdraw = vi.fn();
+
+    renderMyApplicationsTab({
+      onWithdraw,
+      myApplications: [{ ...mockApplications[0], id: 'app-acc-11111111', status: 'ACCEPTED' }],
+    });
+
+    await user.click(screen.getByRole('button', { name: /відкликати відгук/i }));
+
+    expect(onWithdraw).toHaveBeenCalledWith('app-acc-11111111');
+  });
+
+  it('should not render withdraw button when application status is terminal (REJECTED, WITHDRAWN)', () => {
     const terminalApplications: OpportunityApplication[] = [
-      {
-        ...mockApplications[0],
-        id: 'app-acc-11111111',
-        status: 'ACCEPTED',
-      },
       {
         ...mockApplications[0],
         id: 'app-rej-22222222',
@@ -229,31 +238,38 @@ describe('MyApplicationsTab component', () => {
     renderMyApplicationsTab({ myApplications: terminalApplications });
 
     expect(screen.queryByRole('button', { name: /відкликати відгук/i })).not.toBeInTheDocument();
-    expect(screen.getByText('Вашу кандидатуру схвалено організатором')).toBeInTheDocument();
     expect(screen.getByText('Організатор відхилив відгук')).toBeInTheDocument();
     expect(screen.getByText('Ви відкликали цей відгук')).toBeInTheDocument();
   });
 
-  it.each(['SUBMITTED', 'UNDER_REVIEW'] as const)(
-    'explains the withdrawal limit for %s applications',
+  it.each(['REJECTED', 'WITHDRAWN'] as const)(
+    'explains the re-apply limit for %s applications',
     (status) => {
       const maxedOutApplication: OpportunityApplication = {
         ...mockApplications[0],
         id: 'app-max-33333333',
         status,
-        withdrawalCount: 3,
+        reapplyCount: 3,
       };
 
       renderMyApplicationsTab({ myApplications: [maxedOutApplication] });
 
-      expect(screen.queryByRole('button', { name: /відкликати відгук/i })).not.toBeInTheDocument();
       expect(
         screen.getByText(
-          'Ви вже відкликали відгук на цю можливість максимальну кількість разів (3).',
+          'Ви вже подавали відгук на цю можливість повторно максимальну кількість разів (3).',
         ),
       ).toBeInTheDocument();
     },
   );
+
+  it('should keep the withdraw button for active applications that used all re-applies', () => {
+    renderMyApplicationsTab({
+      myApplications: [{ ...mockApplications[0], status: 'SUBMITTED', reapplyCount: 3 }],
+    });
+
+    expect(screen.getByRole('button', { name: /відкликати відгук/i })).toBeInTheDocument();
+    expect(screen.queryByText(/повторно максимальну кількість/)).not.toBeInTheDocument();
+  });
 
   it('should render empty state when myApplications is empty', () => {
     renderMyApplicationsTab({ myApplications: [] });

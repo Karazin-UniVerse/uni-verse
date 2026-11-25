@@ -441,8 +441,10 @@ export const en = {
   'opportunities.errors.changesRequired':
     'Before resubmitting, change the opportunity title, description, contacts or payment terms.',
   'opportunities.errors.alreadyApplied': 'You have already applied to this opportunity.',
-  'opportunities.errors.withdrawalLimitReached':
-    'You have already withdrawn your application for this opportunity the maximum number of times ({limit}).',
+  'opportunities.errors.reapplyLimitReached':
+    'You have already re-applied to this opportunity the maximum number of times ({limit}).',
+  'opportunities.errors.invalidStatusTransition':
+    "This application's status has already changed. Refresh the list.",
   'opportunities.tabs.favorites': 'Favorites',
   'opportunities.favorites.add': 'Add to favorites',
   'opportunities.favorites.remove': 'Remove from favorites',
@@ -475,9 +477,17 @@ export const en = {
   'opportunities.toast.applicationsClosed': 'Applications acceptance closed',
   'opportunities.toast.statusUpdateError': 'Error updating status',
   'opportunities.confirm.withdraw':
-    'Are you sure you want to withdraw your application? You can withdraw and re-apply to the same opportunity at most {limit} times.',
+    'Are you sure you want to withdraw your application? You can re-apply to the same opportunity at most {limit} times.',
   'opportunities.confirm.withdrawTitle': 'Withdraw application',
   'opportunities.confirm.withdrawConfirm': 'Withdraw',
+  'opportunities.confirm.acceptTitle': 'Accept applicant',
+  'opportunities.confirm.accept':
+    'Are you sure you want to accept this applicant? The decision is final and cannot be changed.',
+  'opportunities.confirm.acceptConfirm': 'Accept',
+  'opportunities.confirm.rejectTitle': 'Reject applicant',
+  'opportunities.confirm.reject':
+    'Are you sure you want to reject this applicant? The decision is final and cannot be changed.',
+  'opportunities.confirm.rejectConfirm': 'Reject',
   'opportunities.confirm.delete':
     'Are you sure you want to delete this opportunity draft? This action cannot be undone.',
   'opportunities.confirm.deleteTitle': 'Delete draft',
@@ -633,6 +643,7 @@ export const en = {
   'opportunities.applicantsModal.underReview': 'Under Review',
   'opportunities.applicantsModal.reject': 'Reject',
   'opportunities.applicantsModal.close': 'Close',
+  'opportunities.applicantsModal.withdrawnByCandidate': 'The applicant withdrew this application',
 
   // Filters & Tags
   'opportunities.catalog.filtersButton': 'Filters',
@@ -682,6 +693,9 @@ export const en = {
   'notifications.opportunityNewApplication.title': 'New Applicant for Opportunity',
   'notifications.opportunityNewApplication.message':
     'New application for "{opportunityTitle}" from {applicantName}.',
+  'notifications.opportunityApplicationWithdrawn.title': 'Applicant Withdrew',
+  'notifications.opportunityApplicationWithdrawn.message':
+    '{applicantName} withdrew their application for “{opportunityTitle}”.',
   'notifications.opportunityReadyForReview.title': 'Opportunity Ready for Review',
   'notifications.opportunityReadyForReview.message':
     'Opportunity "{opportunityTitle}" has been submitted for moderation.',

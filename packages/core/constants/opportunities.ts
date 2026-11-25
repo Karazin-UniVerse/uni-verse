@@ -60,10 +60,34 @@ export const OPPORTUNITY_VIEW = {
 
 export type OpportunityView = (typeof OPPORTUNITY_VIEW)[keyof typeof OPPORTUNITY_VIEW];
 
-export const MAX_APPLICATION_WITHDRAWALS = 3 as const;
+export const MAX_APPLICATION_REAPPLIES = 3 as const;
 
 export const OPPORTUNITY_ERROR = {
   ALREADY_APPLIED: 'opportunities.errors.alreadyApplied',
   CHANGES_REQUIRED: 'opportunities.errors.changesRequired',
-  WITHDRAWAL_LIMIT_REACHED: 'opportunities.errors.withdrawalLimitReached',
+  REAPPLY_LIMIT_REACHED: 'opportunities.errors.reapplyLimitReached',
+  INVALID_STATUS_TRANSITION: 'opportunities.errors.invalidStatusTransition',
 } as const;
+
+export const APPLICATION_STATUS_TRANSITIONS: Record<
+  OpportunityAppStatus,
+  readonly OpportunityAppStatus[]
+> = {
+  [OPPORTUNITY_APP_STATUS.SUBMITTED]: [
+    OPPORTUNITY_APP_STATUS.UNDER_REVIEW,
+    OPPORTUNITY_APP_STATUS.ACCEPTED,
+    OPPORTUNITY_APP_STATUS.REJECTED,
+  ],
+  [OPPORTUNITY_APP_STATUS.UNDER_REVIEW]: [
+    OPPORTUNITY_APP_STATUS.ACCEPTED,
+    OPPORTUNITY_APP_STATUS.REJECTED,
+  ],
+  [OPPORTUNITY_APP_STATUS.ACCEPTED]: [],
+  [OPPORTUNITY_APP_STATUS.REJECTED]: [],
+  [OPPORTUNITY_APP_STATUS.WITHDRAWN]: [],
+};
+
+export const OWNER_TRACKED_WITHDRAWAL_STATUSES = [
+  OPPORTUNITY_APP_STATUS.UNDER_REVIEW,
+  OPPORTUNITY_APP_STATUS.ACCEPTED,
+] as const;
