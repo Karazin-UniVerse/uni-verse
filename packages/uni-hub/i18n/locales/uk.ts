@@ -17,6 +17,8 @@ export const uk = {
   'login.hidePassword': 'Сховати пароль',
   'login.success': 'Вхід виконано успішно',
   'login.googleError': 'Помилка входу через Google',
+  'login.errors.corporateDomainRequired': 'Увійдіть з поштою @student.karazin.ua або @karazin.ua',
+  'login.errors.moodleAlreadyLinked': 'Цей акаунт Moodle вже прив’язаний до іншого користувача.',
   'login.linkMoodleTitle': "Прив'язка акаунта Moodle",
   'login.linkMoodleHint':
     'Щоб завантажити ваші курси, розклад та оцінки, введіть логін і пароль від Moodle. Це необхідно зробити лише один раз — надалі вхід виконуватиметься через Google в один клік.',
@@ -52,6 +54,7 @@ export const uk = {
   'theme.karazinClassic': 'Karazin Classic',
   'theme.universeSpace': 'UniVerse Space',
   'theme.karazinGold': 'Karazin Gold',
+  'theme.crimsonSky': 'Crimson Sky',
   'theme.notionDark': 'Notion Dark',
   'theme.select': 'Вибір теми',
 
@@ -439,6 +442,14 @@ export const uk = {
   'opportunities.errors.alreadyApplied': 'Ви вже подали заявку на цю можливість.',
   'opportunities.errors.withdrawalLimitReached':
     'Ви вже відкликали відгук на цю можливість максимальну кількість разів ({limit}).',
+  'opportunities.tabs.favorites': 'Обрані',
+  'opportunities.favorites.add': 'Додати до обраного',
+  'opportunities.favorites.remove': 'Видалити з обраного',
+  'opportunities.favorites.empty': 'Ви ще не додали жодної можливості до обраного.',
+  'opportunities.favorites.loadError': 'Не вдалося завантажити обрані можливості.',
+  'opportunities.filteredEmpty': 'Можливостей за обраними фільтрами не знайдено.',
+  'opportunities.unavailable.temporary': 'Тимчасово недоступна',
+  'opportunities.unavailable.permanent': 'Більше недоступна',
   'opportunities.tabs.catalog': 'Каталог',
   'opportunities.tabs.catalogShort': 'Каталог',
   'opportunities.tabs.myOpportunities': 'Мої можливості',
@@ -675,6 +686,10 @@ export const uk = {
   'notifications.opportunityReadyForReview.title': 'Нова можливість на модерацію',
   'notifications.opportunityReadyForReview.message':
     'Можливість «{opportunityTitle}» надіслано на перевірку.',
+  'notifications.opportunityUpdated.title': 'Оновлення обраної можливості',
+  'notifications.opportunityUpdated.message': 'Можливість «{opportunityTitle}» оновлено.',
+  'notifications.opportunityUpdated.messageWithLifecycle':
+    'Можливість «{opportunityTitle}» оновлено: {lifecycleState}.',
   'notifications.opportunityModerated.title': 'Результат модерації можливості',
   'notifications.opportunityModerated.message': 'Можливість «{opportunityTitle}» {action}.',
   'notifications.opportunityModerated.messageWithComment':

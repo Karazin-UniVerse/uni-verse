@@ -925,6 +925,115 @@ $space-64: 64px;
   --scrollbar-radius: var(--border-radius-full);
 }
 
+/* -----------------------------------------
+   Crimson Sky Theme (Light: Vibrant Red & Blue Gradient)
+   ----------------------------------------- */
+[data-theme='crimsonSky'] {
+  /* Crimson & Blue Palette */
+  --crimson-50: #fff1f2;
+  --crimson-600: #e11d48;
+  --crimson-700: #be123c;
+  --crimson-800: #9f1239;
+  --electric-blue-50: #eff6ff;
+  --electric-blue-100: #dbeafe;
+  --electric-blue-200: #bfdbfe;
+  --electric-blue-600: #2563eb;
+
+  /* Neutral Colors override */
+  --neutral-bg: var(--white-10);
+  --neutral-surface: var(--white-10);
+  --neutral-border: var(--slate-200);
+  --neutral-text-primary: var(--slate-900);
+  --neutral-text-secondary: var(--slate-500);
+  --neutral-text-disabled: var(--slate-400);
+
+  /* Accent Colors override */
+  --accent-primary: var(--crimson-600);
+  --accent-primary-hover: var(--crimson-700);
+  --accent-primary-active: var(--crimson-800);
+  --accent-text-on-primary: var(--white-10);
+  --accent-secondary: var(--electric-blue-50);
+  --accent-secondary-hover: var(--electric-blue-100);
+  --accent-secondary-active: var(--electric-blue-200);
+  --accent-text-on-secondary: var(--slate-900);
+  --focus-ring-color: rgb(225 29 72 / 35%);
+  --bg-hover: var(--electric-blue-50);
+  --bg-active: rgb(37 99 235 / 10%);
+
+  /* RGB color channels for alpha blending and mesh gradients */
+  --primary-rgb: 225, 29, 72;
+  --secondary-rgb: 37, 99, 235;
+  --surface-rgb: 255, 255, 255;
+  --text-primary-rgb: 15, 23, 42;
+
+  /* Surfaces: white cards on canvas */
+  --bg-surface: var(--white-10);
+  --bg-content: transparent;
+  --bg-card: var(--white-10);
+
+  /* Button color tokens */
+  --btn-primary-bg: var(--crimson-600);
+  --btn-primary-hover: var(--crimson-700);
+  --btn-primary-active: var(--crimson-800);
+  --btn-primary-text: var(--white-10);
+  --btn-primary-disabled: var(--slate-100);
+  --btn-secondary-bg: var(--white-10);
+  --btn-secondary-hover: var(--electric-blue-50);
+  --btn-secondary-active: var(--electric-blue-100);
+  --btn-secondary-text: var(--slate-900);
+
+  /* Vibrant Mesh Canvas (Vivid Red-to-Blue radial gradient blend) */
+  --bg-page:
+    radial-gradient(at 0% 0%, rgb(var(--primary-rgb), 0.28) 0, transparent 55%),
+    radial-gradient(at 100% 100%, rgb(var(--secondary-rgb), 0.3) 0, transparent 55%),
+    radial-gradient(at 100% 0%, rgb(var(--secondary-rgb), 0.2) 0, transparent 50%),
+    radial-gradient(at 0% 100%, rgb(var(--primary-rgb), 0.22) 0, transparent 50%),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--crimson-50) 70%, transparent) 0%,
+      color-mix(in srgb, var(--electric-blue-50) 70%, transparent) 100%
+    ),
+    var(--white-10);
+
+  /* Sidebar with red-to-blue gradient active item */
+  --sidebar-bg: var(--white-10);
+  --sidebar-border: color-mix(in srgb, var(--accent-primary) 15%, var(--border-color));
+  --sidebar-brand: var(--crimson-600);
+  --sidebar-text: var(--slate-500);
+  --sidebar-text-strong: var(--slate-900);
+  --sidebar-text-active: var(--white-10);
+  --sidebar-item-hover-bg: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --sidebar-item-active-bg: linear-gradient(
+    135deg,
+    var(--crimson-600) 0%,
+    var(--electric-blue-600) 100%
+  );
+  --sidebar-item-active-accent: var(--white-10);
+  --sidebar-accent: var(--electric-blue-600);
+
+  /* White header with crimson hairline */
+  --header-bg: var(--white-10);
+  --header-border: color-mix(in srgb, var(--accent-primary) 15%, var(--border-color));
+
+  /* Cards */
+  --card-border: rgb(15 23 42 / 8%);
+  --card-shadow: 0 1px 3px rgb(15 23 42 / 5%), 0 6px 16px rgb(37 99 235 / 6%);
+  --card-shadow-hover: 0 4px 12px rgb(15 23 42 / 8%), 0 12px 28px rgb(225 29 72 / 10%);
+
+  /* Chart series */
+  --chart-series-1: var(--crimson-600);
+  --chart-series-2: var(--electric-blue-600);
+  --chart-series-3: var(--chart-warning);
+  --chart-series-4: var(--chart-success);
+  --chart-series-5: var(--purple-500);
+
+  /* Scrollbar: crimson thumb with electric blue hover */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgb(225 29 72 / 25%);
+  --scrollbar-thumb-hover: rgb(37 99 235 / 55%);
+  --scrollbar-radius: var(--border-radius-full);
+}
+
 /* ==========================================================================
    5. GLOBAL BASE STYLES
    ========================================================================== */
