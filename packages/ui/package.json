@@ -22,10 +22,10 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
-    "lucide-react": "^1.72.0",
-    "recharts": "^3.10.1",
+    "lucide-react": "^1.77.0",
+    "recharts": "^3.11.0",
     "sass": "^1.108.2",
-    "tabbable": "^6.5.0"
+    "tabbable": "^6.5.2"
   },
   "peerDependencies": {
     "react": "^19.2.8",
