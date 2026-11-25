@@ -1777,7 +1777,7 @@ $sidebar-collapsed-width: 88px;
       }
     }
 
-    .userDropdownSound {
+    button.userDropdownSound {
       color: var(--blue-1300);
       border: 1px solid var(--border-color);
 
@@ -1785,7 +1785,7 @@ $sidebar-collapsed-width: 88px;
         color: var(--blue-1300);
       }
 
-      &:hover {
+      &:hover:not(:active) {
         color: var(--blue-1300);
         background: color-mix(in srgb, var(--crimson-600) 8%, transparent);
         border-color: transparent;
