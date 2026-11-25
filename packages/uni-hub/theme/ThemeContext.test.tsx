@@ -24,8 +24,8 @@ const ThemeConsumer = () => {
       <button type="button" onClick={() => setTheme('notionDark')}>
         Set Notion Dark
       </button>
-      <button type="button" onClick={() => setTheme('neonDusk')}>
-        Set Neon Dusk
+      <button type="button" onClick={() => setTheme('viceCityDark')}>
+        Set Vice City Dark
       </button>
     </div>
   );
@@ -135,7 +135,7 @@ describe('ThemeContext', () => {
     expect(document.documentElement.dataset.colorScheme).toBe('dark');
   });
 
-  it('should load and apply the neonDusk theme with dark color scheme', async () => {
+  it('should load and apply the viceCityDark theme with dark color scheme', async () => {
     const user = userEvent.setup();
 
     render(
@@ -144,11 +144,11 @@ describe('ThemeContext', () => {
       </ThemeProvider>,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Set Neon Dusk' }));
+    await user.click(screen.getByRole('button', { name: 'Set Vice City Dark' }));
 
-    expect(screen.getByTestId('theme-value')).toHaveTextContent('neonDusk');
-    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('neonDusk');
-    expect(document.documentElement.dataset.theme).toBe('neonDusk');
+    expect(screen.getByTestId('theme-value')).toHaveTextContent('viceCityDark');
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('viceCityDark');
+    expect(document.documentElement.dataset.theme).toBe('viceCityDark');
     expect(document.documentElement.dataset.colorScheme).toBe('dark');
   });
 

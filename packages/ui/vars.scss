@@ -409,7 +409,7 @@ $space-64: 64px;
 [data-theme='universeSpace'],
 [data-theme='karazinGold'],
 [data-theme='notionDark'],
-[data-theme='neonDusk'] {
+[data-theme='viceCityDark'] {
   --btn-warning-border: var(--yellow-400);
   --btn-success-accent: var(--green-400);
   --btn-warning-accent: var(--yellow-400);
@@ -732,48 +732,48 @@ $space-64: 64px;
 }
 
 /* -----------------------------------------
-   Neon Dusk Theme (midnight-plum base + neon hot pink & electric cyan)
+   Vice City Dark Theme (midnight-plum base + neon hot pink & electric cyan)
    ----------------------------------------- */
-[data-theme='neonDusk'] {
-  /* Neon Dusk Palette */
-  --dusk-void: #0b0a14;
-  --dusk-surface: #141224;
-  --dusk-text: #f4f1ff;
-  --dusk-text-muted: #b3abc9;
-  --dusk-text-dim: #7c7394;
-  --dusk-pink-300: #ff7ab8;
-  --dusk-pink-400: #ff4d9e;
-  --dusk-pink-500: #c91468;
-  --dusk-pink-550: #e01e77;
-  --dusk-pink-600: #a81056;
-  --dusk-cyan-300: #6ef3ff;
-  --dusk-cyan-400: #1ee3f5;
-  --dusk-lime-400: #b8f230;
+[data-theme='viceCityDark'] {
+  /* Vice City Dark Palette */
+  --vice-void: #0b0a14;
+  --vice-surface: #141224;
+  --vice-text: #f4f1ff;
+  --vice-text-muted: #b3abc9;
+  --vice-text-dim: #7c7394;
+  --vice-pink-300: #ff7ab8;
+  --vice-pink-400: #ff4d9e;
+  --vice-pink-500: #c91468;
+  --vice-pink-550: #e01e77;
+  --vice-pink-600: #a81056;
+  --vice-cyan-300: #6ef3ff;
+  --vice-cyan-400: #1ee3f5;
+  --vice-lime-400: #b8f230;
 
   /* Neutral Colors */
-  --neutral-bg: var(--dusk-void);
-  --neutral-surface: var(--dusk-surface);
+  --neutral-bg: var(--vice-void);
+  --neutral-surface: var(--vice-surface);
   --neutral-border: rgb(255 77 158 / 26%);
-  --neutral-text-primary: var(--dusk-text);
-  --neutral-text-secondary: var(--dusk-text-muted);
-  --neutral-text-disabled: var(--dusk-text-dim);
+  --neutral-text-primary: var(--vice-text);
+  --neutral-text-secondary: var(--vice-text-muted);
+  --neutral-text-disabled: var(--vice-text-dim);
 
   /* Accent Colors: neon hot pink primary, electric cyan secondary */
-  --accent-primary: var(--dusk-pink-400);
-  --accent-primary-hover: var(--dusk-pink-300);
-  --accent-primary-active: var(--dusk-pink-600);
+  --accent-primary: var(--vice-pink-400);
+  --accent-primary-hover: var(--vice-pink-300);
+  --accent-primary-active: var(--vice-pink-600);
   --accent-text-on-primary: var(--white-10);
   --accent-secondary: rgb(30 227 245 / 10%);
   --accent-secondary-hover: rgb(30 227 245 / 18%);
   --accent-secondary-active: rgb(255 77 158 / 22%);
-  --accent-text-on-secondary: var(--dusk-cyan-300);
+  --accent-text-on-secondary: var(--vice-cyan-300);
   --focus-ring-color: rgb(30 227 245 / 55%);
   --bg-hover: rgb(255 77 158 / 10%);
 
   /* Primary button: saturated magenta-pink with WCAG AA white text */
-  --btn-primary-bg: var(--dusk-pink-500);
-  --btn-primary-hover: var(--dusk-pink-550);
-  --btn-primary-active: var(--dusk-pink-600);
+  --btn-primary-bg: var(--vice-pink-500);
+  --btn-primary-hover: var(--vice-pink-550);
+  --btn-primary-active: var(--vice-pink-600);
 
   /* RGB color channels for alpha blending and mesh gradients */
   --primary-rgb: 255, 77, 158;
@@ -786,7 +786,7 @@ $space-64: 64px;
     radial-gradient(at 0% 0%, rgb(var(--primary-rgb), 0.24) 0, transparent 50%),
     radial-gradient(at 100% 100%, rgb(var(--secondary-rgb), 0.22) 0, transparent 50%),
     radial-gradient(at 100% 0%, rgb(147 51 234 / 16%) 0, transparent 48%),
-    radial-gradient(at 0% 100%, rgb(var(--primary-rgb), 0.12) 0, transparent 48%), var(--dusk-void);
+    radial-gradient(at 0% 100%, rgb(var(--primary-rgb), 0.12) 0, transparent 48%), var(--vice-void);
 
   /* Glass cards with neon pink hairline and pink/cyan hover aura */
   --bg-card: rgb(20 18 36 / 68%);
@@ -800,27 +800,27 @@ $space-64: 64px;
   --header-border: rgb(30 227 245 / 20%);
   --sidebar-bg: rgb(14 12 26 / 82%);
   --sidebar-border: rgb(255 77 158 / 24%);
-  --sidebar-brand: var(--dusk-cyan-300);
-  --sidebar-text: var(--dusk-text-muted);
-  --sidebar-text-strong: var(--dusk-text);
-  --sidebar-text-active: var(--dusk-text);
+  --sidebar-brand: var(--vice-cyan-300);
+  --sidebar-text: var(--vice-text-muted);
+  --sidebar-text-strong: var(--vice-text);
+  --sidebar-text-active: var(--vice-text);
   --sidebar-item-hover-bg: rgb(30 227 245 / 10%);
   --sidebar-item-active-bg: linear-gradient(90deg, rgb(255 77 158 / 30%), rgb(30 227 245 / 16%));
-  --sidebar-item-active-accent: var(--dusk-pink-400);
-  --sidebar-accent: var(--dusk-cyan-400);
+  --sidebar-item-active-accent: var(--vice-pink-400);
+  --sidebar-accent: var(--vice-cyan-400);
 
   /* Crisp neon-lit headings */
-  --heading-color: var(--dusk-text);
+  --heading-color: var(--vice-text);
   --heading-shadow: 0 0 18px rgb(255 77 158 / 38%);
 
   /* Chart tokens led by pink, electric cyan and lime */
   --chart-grid: rgb(30 227 245 / 10%);
   --chart-axis: rgb(255 77 158 / 32%);
-  --chart-tooltip-bg: var(--dusk-surface);
+  --chart-tooltip-bg: var(--vice-surface);
   --chart-tooltip-border: rgb(255 77 158 / 45%);
-  --chart-series-1: var(--dusk-pink-400);
-  --chart-series-2: var(--dusk-cyan-400);
-  --chart-series-3: var(--dusk-lime-400);
+  --chart-series-1: var(--vice-pink-400);
+  --chart-series-2: var(--vice-cyan-400);
+  --chart-series-3: var(--vice-lime-400);
   --chart-series-4: var(--purple-400);
   --chart-series-5: var(--blue-400);
   --chart-glow: 0 0 18px rgb(255 77 158 / 14%);

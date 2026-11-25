@@ -40,7 +40,7 @@ export const metadata: Metadata = {
 const THEME_INIT_SCRIPT = `
 (function () {
   var KEY = 'universe-theme';
-  var VALID = ['light','dark','cyberpunk','karazinClassic','universeSpace','karazinGold','notionDark','neonDusk'];
+  var VALID = ['light','dark','cyberpunk','karazinClassic','universeSpace','karazinGold','notionDark','viceCityDark'];
   var LIGHT_THEMES = ['light','karazinClassic'];
   var stored = localStorage.getItem(KEY);
   var prefersDark = typeof window.matchMedia === 'function' &&

@@ -6,7 +6,7 @@ export const APP_THEMES = [
   'universeSpace',
   'karazinGold',
   'notionDark',
-  'neonDusk',
+  'viceCityDark',
 ] as const;
 
 export type AppTheme = (typeof APP_THEMES)[number];
@@ -19,5 +19,5 @@ export const THEME_COLOR_SCHEME: Record<AppTheme, 'light' | 'dark'> = {
   universeSpace: 'dark',
   karazinGold: 'dark',
   notionDark: 'dark',
-  neonDusk: 'dark',
+  viceCityDark: 'dark',
 };

@@ -57,7 +57,7 @@ export const en = {
   'theme.universeSpace': 'UniVerse Space',
   'theme.karazinGold': 'Karazin Gold',
   'theme.notionDark': 'Notion Dark',
-  'theme.neonDusk': 'Neon Dusk',
+  'theme.viceCityDark': 'Vice City Dark',
   'theme.select': 'Theme selection',
 
   // Navigation
