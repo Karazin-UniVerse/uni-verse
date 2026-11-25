@@ -7,4 +7,6 @@ export type CategoryPillProps = {
   icon?: ReactNode;
   size?: TagSize;
   tone?: TagTone;
+  /** Keep the label on one line and end it with an ellipsis when it does not fit. */
+  truncate?: boolean;
 };
