@@ -1,18 +1,18 @@
 import { useState, useCallback } from 'react';
 import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@una';
-import { getErrorMessage } from '@uni-hub/services/api';
 import { opportunitiesApi } from '@uni-hub/services/api.opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
 import type { Opportunity, OpportunityApplication } from '@core/types/opportunities';
 import type { OpportunityAppStatus } from '@core/constants/opportunities';
 import { hasLoadFailed } from '@uni-hub/queries/load-state';
+import { getOpportunityErrorMessage } from '../helpers';
 import { invalidateOpportunities } from '../cache';
 import { loadApplicants } from '../queries';
 import { opportunityKeys } from '../queryKeys';
 
 interface ApplicationStatusChange {
-  applicationId: string;
+  application: OpportunityApplication;
   status: OpportunityAppStatus;
 }
 
@@ -24,7 +24,10 @@ interface UseApplicantsResult {
   refetch: () => void;
   open: (opportunity: Opportunity) => void;
   close: () => void;
-  handleUpdateStatus: (applicationId: string, status: OpportunityAppStatus) => Promise<void>;
+  handleUpdateStatus: (
+    application: OpportunityApplication,
+    status: OpportunityAppStatus,
+  ) => Promise<void>;
 }
 
 export function useApplicants(): UseApplicantsResult {
@@ -40,9 +43,12 @@ export function useApplicants(): UseApplicantsResult {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ applicationId, status }: ApplicationStatusChange) =>
-      opportunitiesApi.updateApplicationStatus(applicationId, status),
-    onSuccess: () => invalidateOpportunities(queryClient),
+    mutationFn: ({ application, status }: ApplicationStatusChange) =>
+      opportunitiesApi.updateApplicationStatus(application.id, {
+        status,
+        reapplyCount: application.reapplyCount ?? 0,
+      }),
+    onSettled: () => invalidateOpportunities(queryClient),
   });
 
   const open = useCallback(
@@ -53,13 +59,19 @@ export function useApplicants(): UseApplicantsResult {
   const close = useCallback((): void => setOpportunityId(null), []);
 
   const handleUpdateStatus = async (
-    applicationId: string,
+    application: OpportunityApplication,
     status: OpportunityAppStatus,
   ): Promise<void> => {
     try {
-      await updateStatusMutation.mutateAsync({ applicationId, status });
+      await updateStatusMutation.mutateAsync({ application, status });
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, formatMessage('opportunities.toast.statusUpdateError')));
+      toast.error(
+        getOpportunityErrorMessage(
+          err,
+          formatMessage,
+          formatMessage('opportunities.toast.statusUpdateError'),
+        ),
+      );
     }
   };
 

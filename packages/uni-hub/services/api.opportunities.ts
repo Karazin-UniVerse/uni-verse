@@ -6,10 +6,10 @@ import type {
   OpportunityApplication,
   OpportunityListItem,
   OpportunityFavoriteState,
+  UpdateApplicationStatusRequest,
   UpdateOpportunityRequest,
 } from '@core/types/opportunities';
 import type {
-  OpportunityAppStatus,
   OpportunityLifecycle,
   OpportunityModerateAction,
 } from '@core/constants/opportunities';
@@ -100,12 +100,11 @@ export class OpportunitiesApi extends ApiClient {
 
   async updateApplicationStatus(
     appId: string,
-    status: OpportunityAppStatus,
-    comment?: string,
+    request: UpdateApplicationStatusRequest,
   ): Promise<{ data: OpportunityApplication }> {
     return this.request<OpportunityApplication>(`/opportunities/applications/${appId}/status`, {
       method: 'PUT',
-      body: JSON.stringify({ status, comment }),
+      body: JSON.stringify(request),
     });
   }
 

@@ -45,7 +45,7 @@ export function useApplyToOpportunity({
   const applyMutation = useMutation({
     mutationFn: ({ opportunityId, request }: ApplicationSubmission) =>
       opportunitiesApi.apply(opportunityId, request),
-    onSuccess: () => invalidateOpportunities(queryClient),
+    onSettled: () => invalidateOpportunities(queryClient),
   });
 
   const handleApplySubmit = async (event: React.SyntheticEvent<HTMLFormElement>): Promise<void> => {

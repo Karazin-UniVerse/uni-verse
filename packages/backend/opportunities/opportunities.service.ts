@@ -41,15 +41,16 @@ import {
   Role,
 } from '@universe/database';
 import {
-  MAX_APPLICATION_WITHDRAWALS,
   OPPORTUNITY_VIEW,
   OPPORTUNITY_VIEW_PARAM,
   OPPORTUNITY_ERROR,
+  OWNER_TRACKED_WITHDRAWAL_STATUSES,
 } from '@universe/core/constants/opportunities';
 import { OPPORTUNITIES_ROUTE } from '@universe/core/constants/routes';
 import {
   hasOpportunityContentChanged,
-  hasReachedApplicationWithdrawalLimit,
+  canChangeApplicationStatus,
+  isOwnerTrackedWithdrawalStatus,
   isWithdrawableApplicationStatus,
   isRecruitmentPhase,
   isUnavailableOpportunity,
@@ -82,6 +83,7 @@ export type UpdateApplicationStatusParams = {
   userId: string;
   applicationId: string;
   status: ApplicationStatus;
+  reapplyCount: number;
   ownerComment?: string;
 };
 
@@ -89,6 +91,14 @@ const RECRUITING_LIFECYCLE_STATES: OpportunityLifecycleState[] = [
   OpportunityLifecycleState.START,
   OpportunityLifecycleState.ACTIVE,
 ];
+
+function rethrowAsStatusConflict(error: unknown): never {
+  if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
+    throw new ConflictException(OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION);
+  }
+
+  throw error;
+}
 
 @Injectable()
 export class OpportunitiesService {
@@ -650,7 +660,12 @@ export class OpportunitiesService {
     return this.prisma.opportunityApplication.findMany({
       where: {
         opportunityId: id,
-        status: { not: ApplicationStatus.WITHDRAWN },
+        OR: [
+          { status: { not: ApplicationStatus.WITHDRAWN } },
+          {
+            withdrawnFromStatus: { in: [...OWNER_TRACKED_WITHDRAWAL_STATUSES] },
+          },
+        ],
       },
       include: { applicant: { select: { name: true, email: true } } },
       orderBy: { createdAt: 'desc' },
@@ -664,6 +679,7 @@ export class OpportunitiesService {
     userId,
     applicationId,
     status,
+    reapplyCount,
     ownerComment,
   }: UpdateApplicationStatusParams): Promise<OpportunityApplication> {
     const app = await this.prisma.opportunityApplication.findUnique({
@@ -677,38 +693,36 @@ export class OpportunitiesService {
       throw new ForbiddenException('Only the owner can manage this');
     }
 
-    if (app.status === ApplicationStatus.WITHDRAWN) {
-      throw new BadRequestException('Cannot change a withdrawn application');
+    if (!canChangeApplicationStatus(app.status, status)) {
+      throw new ConflictException(OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION);
     }
 
-    const allowedStatuses: ApplicationStatus[] = [
-      ApplicationStatus.UNDER_REVIEW,
-      ApplicationStatus.ACCEPTED,
-      ApplicationStatus.REJECTED,
-    ];
+    return this.prisma.$transaction(async (tx) => {
+      // reapplyCount is the attempt the owner reviewed: a withdraw and reapply since then is a 409
+      const updated = await tx.opportunityApplication
+        .update({
+          where: { id: applicationId, status: app.status, reapplyCount },
+          data: { status, ownerComment },
+        })
+        .catch(rethrowAsStatusConflict);
 
-    if (!allowedStatuses.includes(status)) {
-      throw new BadRequestException('Invalid target status');
-    }
+      await this.notificationsService.createNotification(
+        {
+          userId: app.applicantId,
+          type: NOTIFICATION_TYPE.OPPORTUNITY_APPLICATION_STATUS,
+          title: OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE,
+          message: JSON.stringify({
+            opportunityTitle: app.opportunity.title,
+            status,
+            comment: ownerComment || null,
+          }),
+          link: `${OPPORTUNITIES_ROUTE}/${app.opportunityId}`,
+        },
+        tx,
+      );
 
-    const updated = await this.prisma.opportunityApplication.update({
-      where: { id: applicationId },
-      data: { status, ownerComment },
+      return updated;
     });
-
-    await this.notificationsService.createNotification({
-      userId: app.applicantId,
-      type: NOTIFICATION_TYPE.OPPORTUNITY_APPLICATION_STATUS,
-      title: OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE,
-      message: JSON.stringify({
-        opportunityTitle: app.opportunity.title,
-        status,
-        comment: ownerComment || null,
-      }),
-      link: `${OPPORTUNITIES_ROUTE}/${app.opportunityId}`,
-    });
-
-    return updated;
   }
 
   /**
@@ -743,27 +757,32 @@ export class OpportunitiesService {
       );
     }
 
-    const opportunityApplication = await persistOpportunityApplication({
-      prisma: this.prisma,
-      userId,
-      opportunityId: id,
-      request: dto,
-      ownerId: opportunity.ownerId,
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const opportunityApplication = await persistOpportunityApplication({
+        tx,
+        userId,
+        opportunityId: id,
+        request: dto,
+        ownerId: opportunity.ownerId,
+      });
 
-    await this.notificationsService.createNotification({
-      userId: opportunity.ownerId,
-      type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
-      title: OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_TITLE,
-      message: JSON.stringify({
-        opportunityTitle: opportunity.title,
-        applicantName: dto.applicantName,
-        applicationId: opportunityApplication.id,
-      }),
-      link: `${OPPORTUNITIES_ROUTE}/${id}?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
-    });
+      await this.notificationsService.createNotification(
+        {
+          userId: opportunity.ownerId,
+          type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
+          title: OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_TITLE,
+          message: JSON.stringify({
+            opportunityTitle: opportunity.title,
+            applicantName: dto.applicantName,
+            applicationId: opportunityApplication.id,
+          }),
+          link: `${OPPORTUNITIES_ROUTE}/${id}?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
+        },
+        tx,
+      );
 
-    return opportunityApplication;
+      return opportunityApplication;
+    });
   }
 
   /**
@@ -786,55 +805,50 @@ export class OpportunitiesService {
     if (!isWithdrawableApplicationStatus(app.status))
       throw new BadRequestException('Cannot withdraw completed application');
 
-    if (hasReachedApplicationWithdrawalLimit(app.withdrawalCount))
-      throw new BadRequestException(OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED);
-
-    try {
-      const updated = await this.prisma.$transaction(async (tx) => {
-        const withdrawn = await tx.opportunityApplication.update({
+    return this.prisma.$transaction(async (tx) => {
+      // reapplyCount identifies the attempt: a stale request cannot withdraw a later one
+      const withdrawn = await tx.opportunityApplication
+        .update({
           where: {
             id: applicationId,
-            status: {
-              in: [ApplicationStatus.SUBMITTED, ApplicationStatus.UNDER_REVIEW],
-            },
-            withdrawalCount: { lt: MAX_APPLICATION_WITHDRAWALS },
+            status: app.status,
+            reapplyCount: app.reapplyCount,
           },
           data: {
             status: ApplicationStatus.WITHDRAWN,
-            withdrawalCount: { increment: 1 },
+            withdrawnFromStatus: app.status,
           },
-        });
+        })
+        .catch(rethrowAsStatusConflict);
 
-        await tx.notification.deleteMany({
-          where: {
-            userId: app.opportunity.ownerId,
-            type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
-            link: { contains: app.opportunityId },
-            message: { contains: `"applicationId":"${applicationId}"` },
-          },
-        });
-
-        return withdrawn;
+      await tx.notification.deleteMany({
+        where: {
+          userId: app.opportunity.ownerId,
+          type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
+          link: { contains: app.opportunityId },
+          message: { contains: `"applicationId":"${applicationId}"` },
+        },
       });
 
-      return updated;
-    } catch (error) {
-      if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
-        const current = await this.prisma.opportunityApplication.findUnique({
-          where: { id: applicationId },
-          select: { withdrawalCount: true },
-        });
-
-        if (hasReachedApplicationWithdrawalLimit(current?.withdrawalCount))
-          throw new BadRequestException(
-            OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED,
-          );
-
-        throw new BadRequestException('Cannot withdraw completed application');
+      if (isOwnerTrackedWithdrawalStatus(app.status)) {
+        await this.notificationsService.createNotification(
+          {
+            userId: app.opportunity.ownerId,
+            type: NOTIFICATION_TYPE.OPPORTUNITY_APPLICATION_WITHDRAWN,
+            title: OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_WITHDRAWN_TITLE,
+            message: JSON.stringify({
+              opportunityTitle: app.opportunity.title,
+              applicantName: app.applicantName,
+              applicationId,
+            }),
+            link: `${OPPORTUNITIES_ROUTE}/${app.opportunityId}?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
+          },
+          tx,
+        );
       }
 
-      throw error;
-    }
+      return withdrawn;
+    });
   }
 
   /**

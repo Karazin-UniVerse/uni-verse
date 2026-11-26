@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { withLanguage } from '@uni-hub/utils/test-utils';
 import type { OpportunityApplication } from '@core/types/opportunities';
@@ -99,39 +99,107 @@ describe('ApplicantsModal component', () => {
     expect(screen.getByRole('button', { name: 'Закрити' })).toBeInTheDocument();
   });
 
-  it("should call onUpdateStatus with 'ACCEPTED' when clicking Accept button", async () => {
-    const user = userEvent.setup();
-    const onUpdateStatus = vi.fn();
+  it.each([
+    ['SUBMITTED', ['Прийняти', 'На розгляд', 'Відхилити']],
+    ['UNDER_REVIEW', ['Прийняти', 'Відхилити']],
+    ['ACCEPTED', []],
+    ['REJECTED', []],
+    ['WITHDRAWN', []],
+  ] as const)('should render only the allowed action buttons for %s', (status, expected) => {
+    renderApplicantsModal({ applications: [{ ...mockApplications[0], status }] });
 
-    renderApplicantsModal({ onUpdateStatus });
+    for (const name of ['Прийняти', 'На розгляд', 'Відхилити']) {
+      const button = screen.queryByRole('button', { name });
 
-    const acceptButtons = screen.getAllByRole('button', { name: 'Прийняти' });
-
-    expect(acceptButtons.length).toBeGreaterThan(0);
-
-    await user.click(acceptButtons[0]);
-
-    expect(onUpdateStatus).toHaveBeenCalledTimes(1);
-    expect(onUpdateStatus).toHaveBeenCalledWith('app-1', 'ACCEPTED');
+      if ((expected as readonly string[]).includes(name)) {
+        expect(button).toBeInTheDocument();
+      } else {
+        expect(button).not.toBeInTheDocument();
+      }
+    }
   });
 
-  it("should call onUpdateStatus with 'REJECTED' when clicking Reject button", async () => {
-    const user = userEvent.setup();
-    const onUpdateStatus = vi.fn();
+  it('should show a neutral notice instead of buttons for a withdrawn application', () => {
+    renderApplicantsModal({ applications: [{ ...mockApplications[0], status: 'WITHDRAWN' }] });
 
-    renderApplicantsModal({ onUpdateStatus });
-
-    const rejectButtons = screen.getAllByRole('button', { name: 'Відхилити' });
-
-    expect(rejectButtons.length).toBeGreaterThan(0);
-
-    await user.click(rejectButtons[0]);
-
-    expect(onUpdateStatus).toHaveBeenCalledTimes(1);
-    expect(onUpdateStatus).toHaveBeenCalledWith('app-1', 'REJECTED');
+    expect(screen.getByText('Кандидат відкликав відгук')).toBeInTheDocument();
   });
 
-  it("should call onUpdateStatus with 'UNDER_REVIEW' when clicking Under Review button", async () => {
+  it.each([
+    ['Прийняти', 'Прийняти кандидата', 'ACCEPTED'],
+    ['Відхилити', 'Відхилити кандидата', 'REJECTED'],
+  ] as const)(
+    'should ask for confirmation before %s and call onUpdateStatus only after confirming',
+    async (buttonName, dialogName, status) => {
+      const user = userEvent.setup();
+      const onUpdateStatus = vi.fn();
+
+      renderApplicantsModal({ onUpdateStatus });
+
+      await user.click(screen.getAllByRole('button', { name: buttonName })[0]);
+
+      expect(onUpdateStatus).not.toHaveBeenCalled();
+
+      const confirmDialog = screen.getByRole('dialog', { name: dialogName });
+
+      expect(confirmDialog).toHaveTextContent('Рішення остаточне');
+
+      await user.click(within(confirmDialog).getByRole('button', { name: buttonName }));
+
+      expect(onUpdateStatus).toHaveBeenCalledTimes(1);
+      expect(onUpdateStatus).toHaveBeenCalledWith(mockApplications[0], status);
+      expect(screen.queryByRole('dialog', { name: dialogName })).not.toBeInTheDocument();
+    },
+  );
+
+  it.each([
+    ['Прийняти', 'Прийняти кандидата'],
+    ['Відхилити', 'Відхилити кандидата'],
+  ])(
+    'should not call onUpdateStatus when the %s confirmation is cancelled',
+    async (buttonName, dialogName) => {
+      const user = userEvent.setup();
+      const onUpdateStatus = vi.fn();
+
+      renderApplicantsModal({ onUpdateStatus });
+
+      await user.click(screen.getAllByRole('button', { name: buttonName })[0]);
+      await user.click(
+        within(screen.getByRole('dialog', { name: dialogName })).getByRole('button', {
+          name: 'Скасувати',
+        }),
+      );
+
+      expect(onUpdateStatus).not.toHaveBeenCalled();
+      expect(screen.queryByRole('dialog', { name: dialogName })).not.toBeInTheDocument();
+    },
+  );
+
+  it.each([
+    ['Прийняти', 'Прийняти кандидата', 'Прийняти'],
+    ['Відхилити', 'Відхилити кандидата', 'Відхилити'],
+    ['Прийняти', 'Прийняти кандидата', 'Скасувати'],
+    ['Відхилити', 'Відхилити кандидата', 'Скасувати'],
+  ])(
+    'should keep the applicants list open after "%s" confirmation (%s) is answered with "%s"',
+    async (buttonName, dialogName, answerName) => {
+      const user = userEvent.setup();
+      const onClose = vi.fn();
+
+      renderApplicantsModal({ onClose });
+
+      await user.click(screen.getAllByRole('button', { name: buttonName })[0]);
+      await user.click(
+        within(screen.getByRole('dialog', { name: dialogName })).getByRole('button', {
+          name: answerName,
+        }),
+      );
+
+      expect(onClose).not.toHaveBeenCalled();
+    },
+  );
+
+  it("should call onUpdateStatus with 'UNDER_REVIEW' directly without confirmation", async () => {
     const user = userEvent.setup();
     const onUpdateStatus = vi.fn();
 
@@ -139,12 +207,12 @@ describe('ApplicantsModal component', () => {
 
     const underReviewButtons = screen.getAllByRole('button', { name: 'На розгляд' });
 
-    expect(underReviewButtons.length).toBe(1);
+    expect(underReviewButtons).toHaveLength(1);
 
     await user.click(underReviewButtons[0]);
 
     expect(onUpdateStatus).toHaveBeenCalledTimes(1);
-    expect(onUpdateStatus).toHaveBeenCalledWith('app-1', 'UNDER_REVIEW');
+    expect(onUpdateStatus).toHaveBeenCalledWith(mockApplications[0], 'UNDER_REVIEW');
   });
 
   it('should render empty state when applications array is empty', () => {

@@ -29,7 +29,10 @@ import {
   OPPORTUNITY_VIEW_PARAM,
   OPPORTUNITY_ERROR,
 } from '@universe/core/constants/opportunities';
-import { NOTIFICATION_TYPE } from '@universe/core/constants/notifications';
+import {
+  NOTIFICATION_TYPE,
+  OPPORTUNITY_NOTIFICATION_KEY,
+} from '@universe/core/constants/notifications';
 
 const publishedOpportunity: Opportunity = {
   id: 'race-opportunity',
@@ -64,7 +67,8 @@ const withdrawnApplication: OpportunityApplication = {
   motivation: null,
   answers: null,
   ownerComment: null,
-  withdrawalCount: 1,
+  reapplyCount: 1,
+  withdrawnFromStatus: null,
   status: 'WITHDRAWN',
   createdAt: new Date('2026-10-01T10:00:00Z'),
   updatedAt: new Date('2026-10-01T10:00:00Z'),
@@ -260,7 +264,11 @@ describe('OpportunitiesService', () => {
       );
 
       expect(prisma.opportunityApplication.update).toHaveBeenCalledWith({
-        where: { id: withdrawnApplication.id, status: 'WITHDRAWN' },
+        where: {
+          id: withdrawnApplication.id,
+          status: 'WITHDRAWN',
+          reapplyCount: 1,
+        },
         data: {
           applicantName: 'Candidate',
           contactInfo: '',
@@ -269,6 +277,8 @@ describe('OpportunitiesService', () => {
           answers: null,
           status: 'SUBMITTED',
           ownerComment: null,
+          reapplyCount: { increment: 1 },
+          withdrawnFromStatus: null,
           createdAt: expect.any(Date),
         },
       });
@@ -1710,7 +1720,7 @@ describe('OpportunitiesService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('returns non-withdrawn applications when caller is owner', async () => {
+    it('returns non-withdrawn and owner-tracked withdrawn applications when caller is owner', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         id: '1',
         status: 'PUBLISHED',
@@ -1725,7 +1735,10 @@ describe('OpportunitiesService', () => {
       expect(prisma.opportunityApplication.findMany).toHaveBeenCalledWith({
         where: {
           opportunityId: '1',
-          status: { not: ApplicationStatus.WITHDRAWN },
+          OR: [
+            { status: { not: ApplicationStatus.WITHDRAWN } },
+            { withdrawnFromStatus: { in: ['UNDER_REVIEW', 'ACCEPTED'] } },
+          ],
         },
         include: { applicant: { select: { name: true, email: true } } },
         orderBy: { createdAt: 'desc' },
@@ -1745,6 +1758,7 @@ describe('OpportunitiesService', () => {
           userId: 'user-1',
           applicationId: 'app-1',
           status: 'ACCEPTED' as any,
+          reapplyCount: 1,
         }),
       ).rejects.toThrow(NotFoundException);
     });
@@ -1762,18 +1776,29 @@ describe('OpportunitiesService', () => {
           userId: 'user-1',
           applicationId: 'app-1',
           status: 'ACCEPTED' as any,
+          reapplyCount: 1,
         }),
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('updates status and sends notification with Ukrainian status', async () => {
+    const statusApp = (status: string) => ({
+      ...withdrawnApplication,
+      id: 'app-1',
+      status: status as ApplicationStatus,
+      applicantId: 'applicant-1',
+      opportunityId: 'opp-1',
+      opportunity: {
+        ...publishedOpportunity,
+        id: 'opp-1',
+        title: 'React dev',
+        ownerId: 'user-1',
+      },
+    });
+
+    it('updates status conditionally and notifies the applicant', async () => {
       jest
         .spyOn(prisma.opportunityApplication, 'findUnique')
-        .mockResolvedValue({
-          id: 'app-1',
-          applicantId: 'applicant-1',
-          opportunity: { id: 'opp-1', title: 'React dev', ownerId: 'user-1' },
-        } as any);
+        .mockResolvedValue(statusApp('UNDER_REVIEW'));
       jest.spyOn(prisma.opportunityApplication, 'update').mockResolvedValue({
         id: 'app-1',
         status: 'ACCEPTED',
@@ -1782,103 +1807,213 @@ describe('OpportunitiesService', () => {
       const result = await service.updateApplicationStatus({
         userId: 'user-1',
         applicationId: 'app-1',
-        status: 'ACCEPTED' as any,
+        status: 'ACCEPTED',
+        reapplyCount: 1,
         ownerComment: 'Вітаємо',
       });
 
       expect(prisma.opportunityApplication.update).toHaveBeenCalledWith({
-        where: { id: 'app-1' },
+        where: { id: 'app-1', status: 'UNDER_REVIEW', reapplyCount: 1 },
         data: { status: 'ACCEPTED', ownerComment: 'Вітаємо' },
       });
       expect(result.status).toBe('ACCEPTED');
-    });
-
-    it('throws BadRequestException if application is already WITHDRAWN', async () => {
-      jest
-        .spyOn(prisma.opportunityApplication, 'findUnique')
-        .mockResolvedValue({
-          id: 'app-1',
-          status: 'WITHDRAWN',
-          opportunity: { ownerId: 'user-1' },
-        } as any);
-
-      await expect(
-        service.updateApplicationStatus({
-          userId: 'user-1',
-          applicationId: 'app-1',
-          status: 'ACCEPTED' as any,
-        }),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('throws BadRequestException if target status is not allowed for owner', async () => {
-      jest
-        .spyOn(prisma.opportunityApplication, 'findUnique')
-        .mockResolvedValue({
-          id: 'app-1',
-          status: 'SUBMITTED',
-          opportunity: { ownerId: 'user-1' },
-        } as any);
-
-      await expect(
-        service.updateApplicationStatus({
-          userId: 'user-1',
-          applicationId: 'app-1',
-          status: 'WITHDRAWN' as any,
-        }),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('throws BadRequestException if status is not allowed', async () => {
-      jest
-        .spyOn(prisma.opportunityApplication, 'findUnique')
-        .mockResolvedValue({
-          id: 'app-1',
-          opportunity: { ownerId: 'owner-1', title: 'Opp' },
-        } as any);
-
-      await expect(
-        service.updateApplicationStatus({
-          userId: 'owner-1',
-          applicationId: 'app-1',
-          status: 'INVALID_STATUS' as any,
-        }),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('updates status and sends notification without comment', async () => {
-      jest
-        .spyOn(prisma.opportunityApplication, 'findUnique')
-        .mockResolvedValue({
-          id: 'app-1',
-          applicantId: 'applicant-1',
-          opportunityId: 'opp-1',
-          opportunity: { ownerId: 'owner-1', title: 'Opp' },
-        } as any);
-      const mockUpdated = { id: 'app-1', status: 'REJECTED' };
-
-      jest
-        .spyOn(prisma.opportunityApplication, 'update')
-        .mockResolvedValue(mockUpdated as any);
-
-      const result = await service.updateApplicationStatus({
-        userId: 'owner-1',
-        applicationId: 'app-1',
-        status: 'REJECTED',
-      });
-
-      expect(result).toBe(mockUpdated);
       expect(notificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'applicant-1',
           link: '/opportunities/opp-1',
         }),
+        prisma,
       );
+    });
+
+    it('writes the decision and the notification in one transaction', async () => {
+      const tx = {
+        opportunityApplication: {
+          update: jest
+            .fn()
+            .mockResolvedValue({ id: 'app-1', status: 'ACCEPTED' }),
+        },
+      };
+
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue(statusApp('SUBMITTED'));
+      jest
+        .spyOn(prisma, '$transaction')
+        .mockImplementation(async (callback: any) => callback(tx));
+
+      await service.updateApplicationStatus({
+        userId: 'user-1',
+        applicationId: 'app-1',
+        status: 'ACCEPTED',
+        reapplyCount: 1,
+      });
+
+      expect(tx.opportunityApplication.update).toHaveBeenCalledTimes(1);
+      expect(prisma.opportunityApplication.update).not.toHaveBeenCalled();
+      expect(notificationsService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'applicant-1' }),
+        tx,
+      );
+    });
+
+    it.each([
+      ['SUBMITTED', 'UNDER_REVIEW'],
+      ['SUBMITTED', 'ACCEPTED'],
+      ['SUBMITTED', 'REJECTED'],
+      ['UNDER_REVIEW', 'ACCEPTED'],
+      ['UNDER_REVIEW', 'REJECTED'],
+    ])('allows %s -> %s', async (from, to) => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue(statusApp(from));
+      jest.spyOn(prisma.opportunityApplication, 'update').mockResolvedValue({
+        ...withdrawnApplication,
+        id: 'app-1',
+        status: to as ApplicationStatus,
+      });
+
+      await service.updateApplicationStatus({
+        userId: 'user-1',
+        applicationId: 'app-1',
+        status: to as ApplicationStatus,
+        reapplyCount: 1,
+      });
+
+      expect(prisma.opportunityApplication.update).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      ['SUBMITTED', 'SUBMITTED'],
+      ['SUBMITTED', 'WITHDRAWN'],
+      ['UNDER_REVIEW', 'SUBMITTED'],
+      ['UNDER_REVIEW', 'UNDER_REVIEW'],
+      ['UNDER_REVIEW', 'WITHDRAWN'],
+      ['ACCEPTED', 'REJECTED'],
+      ['ACCEPTED', 'UNDER_REVIEW'],
+      ['ACCEPTED', 'ACCEPTED'],
+      ['REJECTED', 'ACCEPTED'],
+      ['REJECTED', 'REJECTED'],
+      ['WITHDRAWN', 'ACCEPTED'],
+      ['WITHDRAWN', 'UNDER_REVIEW'],
+    ])(
+      'denies %s -> %s with 409 and no write or notification',
+      async (from, to) => {
+        jest
+          .spyOn(prisma.opportunityApplication, 'findUnique')
+          .mockResolvedValue(statusApp(from));
+
+        await expect(
+          service.updateApplicationStatus({
+            userId: 'user-1',
+            applicationId: 'app-1',
+            status: to as ApplicationStatus,
+            reapplyCount: 1,
+          }),
+        ).rejects.toThrow(
+          new ConflictException(OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION),
+        );
+
+        expect(prisma.opportunityApplication.update).not.toHaveBeenCalled();
+        expect(notificationsService.createNotification).not.toHaveBeenCalled();
+      },
+    );
+
+    it('returns 409 and does not notify when the status changed concurrently', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue(statusApp('SUBMITTED'));
+      jest
+        .spyOn(prisma.opportunityApplication, 'update')
+        .mockRejectedValue({ code: 'P2025' });
+
+      await expect(
+        service.updateApplicationStatus({
+          userId: 'user-1',
+          applicationId: 'app-1',
+          status: 'ACCEPTED',
+          reapplyCount: 1,
+        }),
+      ).rejects.toThrow(
+        new ConflictException(OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION),
+      );
+
+      expect(notificationsService.createNotification).not.toHaveBeenCalled();
+    });
+
+    it('returns 409 when the candidate reapplied after the owner reviewed the attempt', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue({ ...statusApp('SUBMITTED'), reapplyCount: 2 });
+      jest
+        .spyOn(prisma.opportunityApplication, 'update')
+        .mockRejectedValue({ code: 'P2025' });
+
+      await expect(
+        service.updateApplicationStatus({
+          userId: 'user-1',
+          applicationId: 'app-1',
+          status: 'ACCEPTED',
+          reapplyCount: 1,
+        }),
+      ).rejects.toThrow(
+        new ConflictException(OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION),
+      );
+
+      expect(prisma.opportunityApplication.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'app-1', status: 'SUBMITTED', reapplyCount: 1 },
+        }),
+      );
+      expect(notificationsService.createNotification).not.toHaveBeenCalled();
+    });
+
+    it('rethrows unexpected database errors without notifying', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue(statusApp('SUBMITTED'));
+      const databaseError = new Error('Connection lost');
+
+      jest
+        .spyOn(prisma.opportunityApplication, 'update')
+        .mockRejectedValue(databaseError);
+
+      await expect(
+        service.updateApplicationStatus({
+          userId: 'user-1',
+          applicationId: 'app-1',
+          status: 'ACCEPTED',
+          reapplyCount: 1,
+        }),
+      ).rejects.toBe(databaseError);
+
+      expect(notificationsService.createNotification).not.toHaveBeenCalled();
+    });
+
+    it('does not map a notification failure to a status conflict', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue(statusApp('SUBMITTED'));
+      jest
+        .spyOn(prisma.opportunityApplication, 'update')
+        .mockResolvedValue(statusApp('ACCEPTED'));
+      jest
+        .spyOn(notificationsService, 'createNotification')
+        .mockRejectedValue({ code: 'P2025' });
+
+      await expect(
+        service.updateApplicationStatus({
+          userId: 'user-1',
+          applicationId: 'app-1',
+          status: 'ACCEPTED',
+          reapplyCount: 1,
+        }),
+      ).rejects.toEqual({ code: 'P2025' });
     });
   });
 
   describe('apply', () => {
-    it.each(['SUBMITTED', 'UNDER_REVIEW', 'ACCEPTED', 'REJECTED'] as const)(
+    it.each(['SUBMITTED', 'UNDER_REVIEW', 'ACCEPTED'] as const)(
       'rejects resubmission of an application in %s status',
       async (status) => {
         jest
@@ -2129,6 +2264,7 @@ describe('OpportunitiesService', () => {
       jest.spyOn(prisma.opportunityApplication, 'findFirst').mockResolvedValue({
         id: 'app-withdrawn-1',
         status: 'WITHDRAWN',
+        reapplyCount: 0,
         applicantId: 'user-1',
         opportunityId: '1',
       } as any);
@@ -2146,7 +2282,11 @@ describe('OpportunitiesService', () => {
       });
 
       expect(prisma.opportunityApplication.update).toHaveBeenCalledWith({
-        where: { id: 'app-withdrawn-1', status: 'WITHDRAWN' },
+        where: {
+          id: 'app-withdrawn-1',
+          status: 'WITHDRAWN',
+          reapplyCount: 0,
+        },
         data: {
           applicantName: 'Іван Оновлений',
           contactInfo: '+380501234567',
@@ -2155,6 +2295,8 @@ describe('OpportunitiesService', () => {
           answers: null,
           status: 'SUBMITTED',
           ownerComment: null,
+          reapplyCount: { increment: 1 },
+          withdrawnFromStatus: null,
           createdAt: expect.any(Date),
         },
       });
@@ -2173,6 +2315,115 @@ describe('OpportunitiesService', () => {
           userId: 'owner-1',
           link: `/opportunities/1?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
         }),
+        prisma,
+      );
+    });
+
+    it('lets a rejected application be re-applied and counts the re-apply', async () => {
+      jest
+        .spyOn(prisma.opportunity, 'findUnique')
+        .mockResolvedValue(publishedOpportunity);
+      jest.spyOn(prisma.opportunityApplication, 'findFirst').mockResolvedValue({
+        ...withdrawnApplication,
+        status: 'REJECTED',
+        reapplyCount: 2,
+      });
+      jest
+        .spyOn(prisma.opportunityApplication, 'update')
+        .mockResolvedValue({ ...withdrawnApplication, status: 'SUBMITTED' });
+
+      await service.apply('candidate', publishedOpportunity.id, {
+        applicantName: 'Candidate',
+        contactInfo: '@candidate',
+      });
+
+      expect(prisma.opportunityApplication.update).toHaveBeenCalledWith({
+        where: {
+          id: withdrawnApplication.id,
+          status: 'REJECTED',
+          reapplyCount: 2,
+        },
+        data: expect.objectContaining({
+          status: 'SUBMITTED',
+          reapplyCount: { increment: 1 },
+          withdrawnFromStatus: null,
+        }),
+      });
+    });
+
+    it.each(['WITHDRAWN', 'REJECTED'] as const)(
+      'rejects re-apply from %s once the limit of 3 is reached',
+      async (status) => {
+        jest
+          .spyOn(prisma.opportunity, 'findUnique')
+          .mockResolvedValue(publishedOpportunity);
+        jest
+          .spyOn(prisma.opportunityApplication, 'findFirst')
+          .mockResolvedValue({
+            ...withdrawnApplication,
+            status,
+            reapplyCount: 3,
+          });
+
+        await expect(
+          service.apply('candidate', publishedOpportunity.id, {
+            applicantName: 'Candidate',
+            contactInfo: '@candidate',
+          }),
+        ).rejects.toThrow(
+          new BadRequestException(OPPORTUNITY_ERROR.REAPPLY_LIMIT_REACHED),
+        );
+
+        expect(prisma.opportunityApplication.update).not.toHaveBeenCalled();
+        expect(notificationsService.createNotification).not.toHaveBeenCalled();
+      },
+    );
+
+    it('reports the limit when a concurrent re-apply consumed the last slot', async () => {
+      jest
+        .spyOn(prisma.opportunity, 'findUnique')
+        .mockResolvedValue(publishedOpportunity);
+      jest
+        .spyOn(prisma.opportunityApplication, 'findFirst')
+        .mockResolvedValue({ ...withdrawnApplication, reapplyCount: 2 });
+      jest
+        .spyOn(prisma.opportunityApplication, 'update')
+        .mockRejectedValue({ code: 'P2025' });
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue({ ...withdrawnApplication, reapplyCount: 3 });
+
+      await expect(
+        service.apply('candidate', publishedOpportunity.id, {
+          applicantName: 'Candidate',
+          contactInfo: '@candidate',
+        }),
+      ).rejects.toThrow(
+        new BadRequestException(OPPORTUNITY_ERROR.REAPPLY_LIMIT_REACHED),
+      );
+    });
+
+    it('reports a status conflict when the re-apply lost a race below the limit', async () => {
+      jest
+        .spyOn(prisma.opportunity, 'findUnique')
+        .mockResolvedValue(publishedOpportunity);
+      jest
+        .spyOn(prisma.opportunityApplication, 'findFirst')
+        .mockResolvedValue({ ...withdrawnApplication, reapplyCount: 1 });
+      jest
+        .spyOn(prisma.opportunityApplication, 'update')
+        .mockRejectedValue({ code: 'P2025' });
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue({ ...withdrawnApplication, reapplyCount: 1 });
+
+      await expect(
+        service.apply('candidate', publishedOpportunity.id, {
+          applicantName: 'Candidate',
+          contactInfo: '@candidate',
+        }),
+      ).rejects.toThrow(
+        new ConflictException(OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION),
       );
     });
 
@@ -2206,6 +2457,41 @@ describe('OpportunitiesService', () => {
           userId: 'owner-1',
           link: `/opportunities/1?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
         }),
+        prisma,
+      );
+    });
+
+    it('writes the application and the owner notification in one transaction', async () => {
+      const tx = {
+        opportunityApplication: {
+          findFirst: jest.fn().mockResolvedValue(withdrawnApplication),
+          update: jest.fn().mockResolvedValue({
+            ...withdrawnApplication,
+            status: 'SUBMITTED',
+          }),
+        },
+        notification: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
+      };
+
+      jest
+        .spyOn(prisma.opportunity, 'findUnique')
+        .mockResolvedValue(publishedOpportunity);
+      jest
+        .spyOn(prisma, '$transaction')
+        .mockImplementation(async (callback: any) => callback(tx));
+
+      await service.apply('candidate', publishedOpportunity.id, {
+        applicantName: 'Candidate',
+        contactInfo: '@candidate',
+      });
+
+      expect(tx.opportunityApplication.update).toHaveBeenCalledTimes(1);
+      expect(prisma.opportunityApplication.update).not.toHaveBeenCalled();
+      expect(tx.notification.deleteMany).toHaveBeenCalledTimes(1);
+      expect(prisma.notification.deleteMany).not.toHaveBeenCalled();
+      expect(notificationsService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: publishedOpportunity.ownerId }),
+        tx,
       );
     });
 
@@ -2288,51 +2574,49 @@ describe('OpportunitiesService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('throws BadRequestException if application already ACCEPTED or REJECTED', async () => {
-      jest
-        .spyOn(prisma.opportunityApplication, 'findUnique')
-        .mockResolvedValue({
-          id: 'app-1',
-          applicantId: 'user-1',
-          status: 'ACCEPTED',
-        } as any);
-
-      await expect(
-        service.withdrawApplication('user-1', 'app-1'),
-      ).rejects.toThrow(BadRequestException);
+    const withdrawApp = (status: string) => ({
+      ...withdrawnApplication,
+      id: 'app-1',
+      applicantId: 'user-1',
+      applicantName: 'Applicant One',
+      opportunityId: 'opp-1',
+      opportunity: {
+        ...publishedOpportunity,
+        ownerId: 'owner-1',
+        title: 'Junior QA',
+      },
+      status: status as ApplicationStatus,
+      reapplyCount: 3,
     });
 
-    it('withdraws application successfully and cleans up owner notification', async () => {
+    it.each(['REJECTED', 'WITHDRAWN'])(
+      'throws BadRequestException if application is %s',
+      async (status) => {
+        jest
+          .spyOn(prisma.opportunityApplication, 'findUnique')
+          .mockResolvedValue(withdrawApp(status));
+
+        await expect(
+          service.withdrawApplication('user-1', 'app-1'),
+        ).rejects.toThrow(BadRequestException);
+      },
+    );
+
+    it('withdraws a SUBMITTED application without a limit, saves the origin status and does not notify the owner', async () => {
       jest
         .spyOn(prisma.opportunityApplication, 'findUnique')
-        .mockResolvedValue({
-          id: 'app-1',
-          applicantId: 'user-1',
-          applicantName: 'Applicant One',
-          opportunityId: 'opp-1',
-          opportunity: { ownerId: 'owner-1' },
-          status: 'SUBMITTED',
-        } as any);
+        .mockResolvedValue(withdrawApp('SUBMITTED'));
       jest.spyOn(prisma.opportunityApplication, 'update').mockResolvedValue({
+        ...withdrawnApplication,
         id: 'app-1',
-        status: 'WITHDRAWN',
-      } as any);
+      });
       const deleteSpy = jest.spyOn(prisma.notification, 'deleteMany');
 
       const result = await service.withdrawApplication('user-1', 'app-1');
 
       expect(prisma.opportunityApplication.update).toHaveBeenCalledWith({
-        where: {
-          id: 'app-1',
-          status: {
-            in: [ApplicationStatus.SUBMITTED, ApplicationStatus.UNDER_REVIEW],
-          },
-          withdrawalCount: { lt: 3 },
-        },
-        data: {
-          status: 'WITHDRAWN',
-          withdrawalCount: { increment: 1 },
-        },
+        where: { id: 'app-1', status: 'SUBMITTED', reapplyCount: 3 },
+        data: { status: 'WITHDRAWN', withdrawnFromStatus: 'SUBMITTED' },
       });
       expect(result.status).toBe('WITHDRAWN');
       expect(deleteSpy).toHaveBeenCalledWith({
@@ -2343,82 +2627,109 @@ describe('OpportunitiesService', () => {
           message: { contains: '"applicationId":"app-1"' },
         },
       });
+      expect(notificationsService.createNotification).not.toHaveBeenCalled();
     });
 
-    it('throws BadRequestException if application was completed concurrently before withdrawal update', async () => {
-      jest
-        .spyOn(prisma.opportunityApplication, 'findUnique')
-        .mockResolvedValue({
+    it.each(['UNDER_REVIEW', 'ACCEPTED'])(
+      'withdraws from %s and notifies the owner',
+      async (status) => {
+        jest
+          .spyOn(prisma.opportunityApplication, 'findUnique')
+          .mockResolvedValue(withdrawApp(status));
+        jest.spyOn(prisma.opportunityApplication, 'update').mockResolvedValue({
           id: 'app-1',
-          applicantId: 'user-1',
-          applicantName: 'Applicant One',
-          opportunityId: 'opp-1',
-          opportunity: { ownerId: 'owner-1' },
-          status: 'SUBMITTED',
-        } as any);
-      jest.spyOn(prisma.opportunityApplication, 'update').mockRejectedValue({
-        code: 'P2025',
-      });
-
-      await expect(
-        service.withdrawApplication('user-1', 'app-1'),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('reports the limit when a concurrent withdrawal consumed the last slot', async () => {
-      jest
-        .spyOn(prisma.opportunityApplication, 'findUnique')
-        .mockResolvedValueOnce({
-          id: 'app-1',
-          applicantId: 'user-1',
-          status: 'SUBMITTED',
-          withdrawalCount: 2,
-          opportunityId: 'opp-1',
-          opportunity: { ownerId: 'owner-1' },
-        } as any)
-        .mockResolvedValueOnce({ withdrawalCount: 3 } as any);
-      jest.spyOn(prisma.opportunityApplication, 'update').mockRejectedValue({
-        code: 'P2025',
-      });
-
-      await expect(
-        service.withdrawApplication('user-1', 'app-1'),
-      ).rejects.toThrow(
-        new BadRequestException(OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED),
-      );
-    });
-
-    it('throws BadRequestException when application was already withdrawn 3 times', async () => {
-      jest
-        .spyOn(prisma.opportunityApplication, 'findUnique')
-        .mockResolvedValue({
-          id: 'app-1',
-          applicantId: 'user-1',
-          status: 'SUBMITTED',
-          withdrawalCount: 3,
-          opportunityId: 'opp-1',
-          opportunity: { ownerId: 'owner-1' },
+          status: 'WITHDRAWN',
         } as any);
 
-      await expect(
-        service.withdrawApplication('user-1', 'app-1'),
-      ).rejects.toThrow(
-        new BadRequestException(OPPORTUNITY_ERROR.WITHDRAWAL_LIMIT_REACHED),
-      );
+        await service.withdrawApplication('user-1', 'app-1');
+
+        expect(prisma.opportunityApplication.update).toHaveBeenCalledWith({
+          where: { id: 'app-1', status, reapplyCount: 3 },
+          data: { status: 'WITHDRAWN', withdrawnFromStatus: status },
+        });
+        expect(notificationsService.createNotification).toHaveBeenCalledWith(
+          {
+            userId: 'owner-1',
+            type: NOTIFICATION_TYPE.OPPORTUNITY_APPLICATION_WITHDRAWN,
+            title: OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_WITHDRAWN_TITLE,
+            message: JSON.stringify({
+              opportunityTitle: 'Junior QA',
+              applicantName: 'Applicant One',
+              applicationId: 'app-1',
+            }),
+            link: `/opportunities/opp-1?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
+          },
+          prisma,
+        );
+      },
+    );
+
+    it('writes the withdrawal and the owner notification in one transaction', async () => {
+      const tx = {
+        opportunityApplication: {
+          update: jest
+            .fn()
+            .mockResolvedValue({ id: 'app-1', status: 'WITHDRAWN' }),
+        },
+        notification: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
+      };
+
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue(withdrawApp('ACCEPTED'));
+      jest
+        .spyOn(prisma, '$transaction')
+        .mockImplementation(async (callback: any) => callback(tx));
+
+      await service.withdrawApplication('user-1', 'app-1');
+
+      expect(tx.opportunityApplication.update).toHaveBeenCalledTimes(1);
       expect(prisma.opportunityApplication.update).not.toHaveBeenCalled();
+      expect(tx.notification.deleteMany).toHaveBeenCalledTimes(1);
+      expect(prisma.notification.deleteMany).not.toHaveBeenCalled();
+      expect(notificationsService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'owner-1' }),
+        tx,
+      );
+    });
+
+    it('throws ConflictException and does not notify if the status changed concurrently', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue(withdrawApp('UNDER_REVIEW'));
+      jest.spyOn(prisma.opportunityApplication, 'update').mockRejectedValue({
+        code: 'P2025',
+      });
+
+      await expect(
+        service.withdrawApplication('user-1', 'app-1'),
+      ).rejects.toThrow(
+        new ConflictException(OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION),
+      );
+
+      expect(notificationsService.createNotification).not.toHaveBeenCalled();
+    });
+
+    it('does not map a notification failure to a status conflict', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue(withdrawApp('UNDER_REVIEW'));
+      jest
+        .spyOn(prisma.opportunityApplication, 'update')
+        .mockResolvedValue(withdrawnApplication);
+      jest
+        .spyOn(notificationsService, 'createNotification')
+        .mockRejectedValue({ code: 'P2025' });
+
+      await expect(
+        service.withdrawApplication('user-1', 'app-1'),
+      ).rejects.toEqual({ code: 'P2025' });
     });
 
     it('rethrows unexpected database errors during withdrawApplication', async () => {
       jest
         .spyOn(prisma.opportunityApplication, 'findUnique')
-        .mockResolvedValue({
-          id: 'app-1',
-          applicantId: 'user-1',
-          status: 'SUBMITTED',
-          withdrawalCount: 0,
-          opportunityId: 'opp-1',
-          opportunity: { ownerId: 'owner-1' },
-        } as any);
+        .mockResolvedValue(withdrawApp('SUBMITTED'));
       jest
         .spyOn(prisma.opportunityApplication, 'update')
         .mockRejectedValue(new Error('Withdraw DB error'));

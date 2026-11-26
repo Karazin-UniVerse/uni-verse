@@ -59,7 +59,8 @@ export interface OpportunityApplication {
   briefDescription?: string | null;
   answers?: string | null;
   ownerComment?: string | null;
-  withdrawalCount?: number;
+  reapplyCount?: number;
+  withdrawnFromStatus?: OpportunityAppStatus | null;
   opportunity?: Opportunity | UnavailableOpportunity;
   applicant?: Pick<OpportunityOwner, 'name' | 'email'>;
 }
@@ -100,6 +101,8 @@ export interface ChangeOpportunityStatusRequest {
 
 export interface UpdateApplicationStatusRequest {
   status: OpportunityAppStatus;
+  /** reapplyCount of the application attempt the owner reviewed. */
+  reapplyCount: number;
   comment?: string;
 }
 

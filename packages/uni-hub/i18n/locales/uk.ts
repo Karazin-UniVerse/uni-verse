@@ -440,8 +440,10 @@ export const uk = {
   'opportunities.errors.changesRequired':
     'Перед повторним надсиланням змініть назву, опис, контакти або умови оплати можливості.',
   'opportunities.errors.alreadyApplied': 'Ви вже подали заявку на цю можливість.',
-  'opportunities.errors.withdrawalLimitReached':
-    'Ви вже відкликали відгук на цю можливість максимальну кількість разів ({limit}).',
+  'opportunities.errors.reapplyLimitReached':
+    'Ви вже подавали відгук на цю можливість повторно максимальну кількість разів ({limit}).',
+  'opportunities.errors.invalidStatusTransition':
+    'Статус цього відгуку вже змінено, оновіть список.',
   'opportunities.tabs.favorites': 'Обрані',
   'opportunities.favorites.add': 'Додати до обраного',
   'opportunities.favorites.remove': 'Видалити з обраного',
@@ -474,9 +476,17 @@ export const uk = {
   'opportunities.toast.applicationsClosed': 'Прийом відгуків закрито',
   'opportunities.toast.statusUpdateError': 'Помилка оновлення статусу',
   'opportunities.confirm.withdraw':
-    'Ви впевнені, що бажаєте відкликати свій відгук? Відкликати та подати відгук наново на одну можливість можна не більше {limit} разів.',
+    'Ви впевнені, що бажаєте відкликати свій відгук? Повторно подати відгук на цю саму можливість можна не більше {limit} разів.',
   'opportunities.confirm.withdrawTitle': 'Відкликання відгуку',
   'opportunities.confirm.withdrawConfirm': 'Відкликати',
+  'opportunities.confirm.acceptTitle': 'Прийняти кандидата',
+  'opportunities.confirm.accept':
+    'Ви впевнені, що бажаєте прийняти цього кандидата? Рішення остаточне, його не можна змінити.',
+  'opportunities.confirm.acceptConfirm': 'Прийняти',
+  'opportunities.confirm.rejectTitle': 'Відхилити кандидата',
+  'opportunities.confirm.reject':
+    'Ви впевнені, що бажаєте відхилити цього кандидата? Рішення остаточне, його не можна змінити.',
+  'opportunities.confirm.rejectConfirm': 'Відхилити',
   'opportunities.confirm.delete':
     'Ви впевнені, що бажаєте видалити цю чернетку можливості? Цю дію неможливо скасувати.',
   'opportunities.confirm.deleteTitle': 'Видалення чернетки',
@@ -634,6 +644,7 @@ export const uk = {
   'opportunities.applicantsModal.underReview': 'На розгляд',
   'opportunities.applicantsModal.reject': 'Відхилити',
   'opportunities.applicantsModal.close': 'Закрити',
+  'opportunities.applicantsModal.withdrawnByCandidate': 'Кандидат відкликав відгук',
 
   // Filters & Tags
   'opportunities.catalog.filtersButton': 'Фільтри',
@@ -683,6 +694,9 @@ export const uk = {
   'notifications.opportunityNewApplication.title': 'Новий відгук на можливість',
   'notifications.opportunityNewApplication.message':
     'Новий відгук на можливість «{opportunityTitle}» від {applicantName}.',
+  'notifications.opportunityApplicationWithdrawn.title': 'Кандидат відкликав відгук',
+  'notifications.opportunityApplicationWithdrawn.message':
+    '{applicantName} відкликав(-ла) відгук на можливість «{opportunityTitle}».',
   'notifications.opportunityReadyForReview.title': 'Нова можливість на модерацію',
   'notifications.opportunityReadyForReview.message':
     'Можливість «{opportunityTitle}» надіслано на перевірку.',

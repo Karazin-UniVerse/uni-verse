@@ -1,5 +1,7 @@
 import {
-  MAX_APPLICATION_WITHDRAWALS,
+  APPLICATION_STATUS_TRANSITIONS,
+  MAX_APPLICATION_REAPPLIES,
+  OWNER_TRACKED_WITHDRAWAL_STATUSES,
   OPPORTUNITY_APP_STATUS,
   type OpportunityAppStatus,
   OPPORTUNITY_LIFECYCLE,
@@ -15,12 +17,29 @@ import type {
 
 export function isWithdrawableApplicationStatus(status: OpportunityAppStatus): boolean {
   return (
-    status === OPPORTUNITY_APP_STATUS.SUBMITTED || status === OPPORTUNITY_APP_STATUS.UNDER_REVIEW
+    status === OPPORTUNITY_APP_STATUS.SUBMITTED ||
+    status === OPPORTUNITY_APP_STATUS.UNDER_REVIEW ||
+    status === OPPORTUNITY_APP_STATUS.ACCEPTED
   );
 }
 
-export function hasReachedApplicationWithdrawalLimit(withdrawalCount?: number): boolean {
-  return (withdrawalCount ?? 0) >= MAX_APPLICATION_WITHDRAWALS;
+export function hasReachedApplicationReapplyLimit(reapplyCount?: number): boolean {
+  return (reapplyCount ?? 0) >= MAX_APPLICATION_REAPPLIES;
+}
+
+export function canChangeApplicationStatus(
+  from: OpportunityAppStatus,
+  to: OpportunityAppStatus,
+): boolean {
+  return APPLICATION_STATUS_TRANSITIONS[from].includes(to);
+}
+
+export function isReapplicableApplicationStatus(status: OpportunityAppStatus): boolean {
+  return status === OPPORTUNITY_APP_STATUS.WITHDRAWN || status === OPPORTUNITY_APP_STATUS.REJECTED;
+}
+
+export function isOwnerTrackedWithdrawalStatus(status: OpportunityAppStatus): boolean {
+  return (OWNER_TRACKED_WITHDRAWAL_STATUSES as readonly OpportunityAppStatus[]).includes(status);
 }
 
 export function isRecruitmentPhase(lifecycleState?: OpportunityLifecycle): boolean {
