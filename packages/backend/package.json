@@ -29,12 +29,12 @@
     "test:grip:postgres": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./test/jest-grip-postgres.json --runInBand"
   },
   "dependencies": {
-    "@nestjs/common": "^12.5.0",
+    "@nestjs/common": "^12.5.1",
     "@nestjs/config": "^12.1.1",
-    "@nestjs/core": "^12.5.0",
+    "@nestjs/core": "^12.5.1",
     "@nestjs/jwt": "^12.0.5",
     "@nestjs/passport": "^12.0.2",
-    "@nestjs/platform-express": "^12.5.0",
+    "@nestjs/platform-express": "^12.5.1",
     "@nestjs/swagger": "^12.1.2",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
@@ -58,9 +58,9 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.7",
     "@eslint/js": "^10.0.1",
-    "@nestjs/cli": "^12.0.13",
-    "@nestjs/schematics": "^12.0.13",
-    "@nestjs/testing": "^12.5.0",
+    "@nestjs/cli": "^12.0.15",
+    "@nestjs/schematics": "^12.0.15",
+    "@nestjs/testing": "^12.5.1",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
@@ -71,7 +71,7 @@
     "@types/pg": "^8.11.11",
     "@types/proxy-addr": "^2.0.3",
     "@types/supertest": "^7.0.0",
-    "eslint": "^10.14.0",
+    "eslint": "^10.15.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.5.7",
     "globals": "^17.14.0",
@@ -85,7 +85,7 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.72.2"
+    "typescript-eslint": "^8.73.0"
   },
   "jest": {
     "moduleFileExtensions": [
