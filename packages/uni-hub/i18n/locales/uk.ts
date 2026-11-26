@@ -55,6 +55,7 @@ export const uk = {
   'theme.karazinClassic': 'Karazin Classic',
   'theme.universeSpace': 'UniVerse Space',
   'theme.karazinGold': 'Karazin Gold',
+  'theme.crimsonSky': 'Crimson Sky',
   'theme.notionDark': 'Notion Dark',
   'theme.select': 'Вибір теми',
 
