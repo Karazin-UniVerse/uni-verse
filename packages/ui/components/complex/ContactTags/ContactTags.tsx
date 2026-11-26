@@ -15,7 +15,7 @@ export function ContactTags({
     <>
       {email && (
         <span className={styles.contactTag} title={emailLabel}>
-          <Mail size={12} />
+          <Mail size={12} aria-hidden="true" />
           <span className={styles.contactText}>{email}</span>
         </span>
       )}
