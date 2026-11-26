@@ -76,10 +76,14 @@ describe('ContactTags', () => {
 
     const emailSpan = emailTag.querySelector('span');
     const contactSpan = contactTag.querySelector('span');
+    const emailIcon = emailTag.querySelector('svg');
+    const contactIcon = contactTag.querySelector('svg');
 
     expect(emailSpan).toBeInTheDocument();
     expect(emailSpan).toHaveTextContent('student@karazin.ua');
     expect(contactSpan).toBeInTheDocument();
     expect(contactSpan).toHaveTextContent('+380671234567');
+    expect(emailIcon).toHaveAttribute('aria-hidden', 'true');
+    expect(contactIcon).toHaveAttribute('aria-hidden', 'true');
   });
 });
