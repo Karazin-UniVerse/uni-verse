@@ -21,6 +21,9 @@ const ThemeConsumer = () => {
       <button type="button" onClick={() => setTheme('karazinClassic')}>
         Set Karazin Classic
       </button>
+      <button type="button" onClick={() => setTheme('crimsonSky')}>
+        Set Crimson Sky
+      </button>
       <button type="button" onClick={() => setTheme('notionDark')}>
         Set Notion Dark
       </button>
@@ -113,6 +116,23 @@ describe('ThemeContext', () => {
     expect(screen.getByTestId('theme-value')).toHaveTextContent('dark');
     expect(document.documentElement.dataset.colorScheme).toBe('dark');
     expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+
+  it('should load and apply the crimsonSky theme with light color scheme', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ThemeProvider>
+        <ThemeConsumer />
+      </ThemeProvider>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Set Crimson Sky' }));
+
+    expect(screen.getByTestId('theme-value')).toHaveTextContent('crimsonSky');
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('crimsonSky');
+    expect(document.documentElement.dataset.theme).toBe('crimsonSky');
+    expect(document.documentElement.dataset.colorScheme).toBe('light');
   });
 
   it('should load and apply the notionDark theme with dark color scheme', async () => {

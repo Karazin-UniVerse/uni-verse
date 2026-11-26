@@ -1,7 +1,17 @@
 'use client';
 
 import React, { useSyncExternalStore } from 'react';
-import { Sun, Moon, Zap, GraduationCap, Orbit, Crown, FileText, ChevronDown } from 'lucide-react';
+import {
+  Sun,
+  Moon,
+  Zap,
+  GraduationCap,
+  Orbit,
+  Crown,
+  FileText,
+  ChevronDown,
+  Sunset,
+} from 'lucide-react';
 import clsx from 'clsx';
 import { Dropdown, DropdownOption, type PopoverPlacement } from '@una';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
@@ -17,6 +27,7 @@ const THEME_ICONS: Record<AppTheme, React.ReactNode> = {
   karazinClassic: <GraduationCap size={18} />,
   universeSpace: <Orbit size={18} />,
   karazinGold: <Crown size={18} />,
+  crimsonSky: <Sunset size={18} />,
   notionDark: <FileText size={18} />,
 };
 
@@ -31,6 +42,7 @@ const THEME_KEYS: Record<AppTheme, TranslationKey> = {
   karazinClassic: 'theme.karazinClassic',
   universeSpace: 'theme.universeSpace',
   karazinGold: 'theme.karazinGold',
+  crimsonSky: 'theme.crimsonSky',
   notionDark: 'theme.notionDark',
 };
 
