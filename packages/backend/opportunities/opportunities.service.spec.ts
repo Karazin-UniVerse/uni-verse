@@ -267,7 +267,7 @@ describe('OpportunitiesService', () => {
         where: {
           id: withdrawnApplication.id,
           status: 'WITHDRAWN',
-          reapplyCount: { lt: 3 },
+          reapplyCount: 1,
         },
         data: {
           applicantName: 'Candidate',
@@ -1810,7 +1810,7 @@ describe('OpportunitiesService', () => {
       });
 
       expect(prisma.opportunityApplication.update).toHaveBeenCalledWith({
-        where: { id: 'app-1', status: 'UNDER_REVIEW' },
+        where: { id: 'app-1', status: 'UNDER_REVIEW', reapplyCount: 1 },
         data: { status: 'ACCEPTED', ownerComment: 'Вітаємо' },
       });
       expect(result.status).toBe('ACCEPTED');
@@ -1819,6 +1819,37 @@ describe('OpportunitiesService', () => {
           userId: 'applicant-1',
           link: '/opportunities/opp-1',
         }),
+        prisma,
+      );
+    });
+
+    it('writes the decision and the notification in one transaction', async () => {
+      const tx = {
+        opportunityApplication: {
+          update: jest
+            .fn()
+            .mockResolvedValue({ id: 'app-1', status: 'ACCEPTED' }),
+        },
+      };
+
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue(statusApp('SUBMITTED'));
+      jest
+        .spyOn(prisma, '$transaction')
+        .mockImplementation(async (callback: any) => callback(tx));
+
+      await service.updateApplicationStatus({
+        userId: 'user-1',
+        applicationId: 'app-1',
+        status: 'ACCEPTED',
+      });
+
+      expect(tx.opportunityApplication.update).toHaveBeenCalledTimes(1);
+      expect(prisma.opportunityApplication.update).not.toHaveBeenCalled();
+      expect(notificationsService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'applicant-1' }),
+        tx,
       );
     });
 
@@ -1922,6 +1953,26 @@ describe('OpportunitiesService', () => {
       ).rejects.toBe(databaseError);
 
       expect(notificationsService.createNotification).not.toHaveBeenCalled();
+    });
+
+    it('does not map a notification failure to a status conflict', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue(statusApp('SUBMITTED'));
+      jest
+        .spyOn(prisma.opportunityApplication, 'update')
+        .mockResolvedValue(statusApp('ACCEPTED'));
+      jest
+        .spyOn(notificationsService, 'createNotification')
+        .mockRejectedValue({ code: 'P2025' });
+
+      await expect(
+        service.updateApplicationStatus({
+          userId: 'user-1',
+          applicationId: 'app-1',
+          status: 'ACCEPTED',
+        }),
+      ).rejects.toEqual({ code: 'P2025' });
     });
   });
 
@@ -2177,6 +2228,7 @@ describe('OpportunitiesService', () => {
       jest.spyOn(prisma.opportunityApplication, 'findFirst').mockResolvedValue({
         id: 'app-withdrawn-1',
         status: 'WITHDRAWN',
+        reapplyCount: 0,
         applicantId: 'user-1',
         opportunityId: '1',
       } as any);
@@ -2197,7 +2249,7 @@ describe('OpportunitiesService', () => {
         where: {
           id: 'app-withdrawn-1',
           status: 'WITHDRAWN',
-          reapplyCount: { lt: 3 },
+          reapplyCount: 0,
         },
         data: {
           applicantName: 'Іван Оновлений',
@@ -2227,6 +2279,7 @@ describe('OpportunitiesService', () => {
           userId: 'owner-1',
           link: `/opportunities/1?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
         }),
+        prisma,
       );
     });
 
@@ -2252,7 +2305,7 @@ describe('OpportunitiesService', () => {
         where: {
           id: withdrawnApplication.id,
           status: 'REJECTED',
-          reapplyCount: { lt: 3 },
+          reapplyCount: 2,
         },
         data: expect.objectContaining({
           status: 'SUBMITTED',
@@ -2368,6 +2421,39 @@ describe('OpportunitiesService', () => {
           userId: 'owner-1',
           link: `/opportunities/1?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
         }),
+        prisma,
+      );
+    });
+
+    it('writes the application and the owner notification in one transaction', async () => {
+      const tx = {
+        opportunityApplication: {
+          findFirst: jest.fn().mockResolvedValue(withdrawnApplication),
+          update: jest.fn().mockResolvedValue({
+            ...withdrawnApplication,
+            status: 'SUBMITTED',
+          }),
+        },
+        notification: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
+      };
+
+      jest
+        .spyOn(prisma.opportunity, 'findUnique')
+        .mockResolvedValue(publishedOpportunity);
+      jest
+        .spyOn(prisma, '$transaction')
+        .mockImplementation(async (callback: any) => callback(tx));
+
+      await service.apply('candidate', publishedOpportunity.id, {
+        applicantName: 'Candidate',
+        contactInfo: '@candidate',
+      });
+
+      expect(tx.opportunityApplication.update).toHaveBeenCalledTimes(1);
+      expect(prisma.opportunityApplication.update).not.toHaveBeenCalled();
+      expect(notificationsService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: publishedOpportunity.ownerId }),
+        tx,
       );
     });
 
@@ -2491,7 +2577,7 @@ describe('OpportunitiesService', () => {
       const result = await service.withdrawApplication('user-1', 'app-1');
 
       expect(prisma.opportunityApplication.update).toHaveBeenCalledWith({
-        where: { id: 'app-1', status: 'SUBMITTED' },
+        where: { id: 'app-1', status: 'SUBMITTED', reapplyCount: 3 },
         data: { status: 'WITHDRAWN', withdrawnFromStatus: 'SUBMITTED' },
       });
       expect(result.status).toBe('WITHDRAWN');
@@ -2520,22 +2606,52 @@ describe('OpportunitiesService', () => {
         await service.withdrawApplication('user-1', 'app-1');
 
         expect(prisma.opportunityApplication.update).toHaveBeenCalledWith({
-          where: { id: 'app-1', status },
+          where: { id: 'app-1', status, reapplyCount: 3 },
           data: { status: 'WITHDRAWN', withdrawnFromStatus: status },
         });
-        expect(notificationsService.createNotification).toHaveBeenCalledWith({
-          userId: 'owner-1',
-          type: NOTIFICATION_TYPE.OPPORTUNITY_APPLICATION_WITHDRAWN,
-          title: OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_WITHDRAWN_TITLE,
-          message: JSON.stringify({
-            opportunityTitle: 'Junior QA',
-            applicantName: 'Applicant One',
-            applicationId: 'app-1',
-          }),
-          link: `/opportunities/opp-1?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
-        });
+        expect(notificationsService.createNotification).toHaveBeenCalledWith(
+          {
+            userId: 'owner-1',
+            type: NOTIFICATION_TYPE.OPPORTUNITY_APPLICATION_WITHDRAWN,
+            title: OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_WITHDRAWN_TITLE,
+            message: JSON.stringify({
+              opportunityTitle: 'Junior QA',
+              applicantName: 'Applicant One',
+              applicationId: 'app-1',
+            }),
+            link: `/opportunities/opp-1?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
+          },
+          prisma,
+        );
       },
     );
+
+    it('writes the withdrawal and the owner notification in one transaction', async () => {
+      const tx = {
+        opportunityApplication: {
+          update: jest
+            .fn()
+            .mockResolvedValue({ id: 'app-1', status: 'WITHDRAWN' }),
+        },
+        notification: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
+      };
+
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue(withdrawApp('ACCEPTED'));
+      jest
+        .spyOn(prisma, '$transaction')
+        .mockImplementation(async (callback: any) => callback(tx));
+
+      await service.withdrawApplication('user-1', 'app-1');
+
+      expect(tx.opportunityApplication.update).toHaveBeenCalledTimes(1);
+      expect(prisma.opportunityApplication.update).not.toHaveBeenCalled();
+      expect(notificationsService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'owner-1' }),
+        tx,
+      );
+    });
 
     it('throws ConflictException and does not notify if the status changed concurrently', async () => {
       jest

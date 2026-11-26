@@ -91,6 +91,14 @@ const RECRUITING_LIFECYCLE_STATES: OpportunityLifecycleState[] = [
   OpportunityLifecycleState.ACTIVE,
 ];
 
+function rethrowAsStatusConflict(error: unknown): never {
+  if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
+    throw new ConflictException(OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION);
+  }
+
+  throw error;
+}
+
 @Injectable()
 export class OpportunitiesService {
   private readonly logger = new Logger(OpportunitiesService.name);
@@ -687,36 +695,36 @@ export class OpportunitiesService {
       throw new ConflictException(OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION);
     }
 
-    let updated: OpportunityApplication;
+    return this.prisma.$transaction(async (tx) => {
+      // reapplyCount identifies the attempt: a withdraw and reapply in between is a 409
+      const updated = await tx.opportunityApplication
+        .update({
+          where: {
+            id: applicationId,
+            status: app.status,
+            reapplyCount: app.reapplyCount,
+          },
+          data: { status, ownerComment },
+        })
+        .catch(rethrowAsStatusConflict);
 
-    try {
-      updated = await this.prisma.opportunityApplication.update({
-        where: { id: applicationId, status: app.status },
-        data: { status, ownerComment },
-      });
-    } catch (error) {
-      if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
-        throw new ConflictException(
-          OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION,
-        );
-      }
+      await this.notificationsService.createNotification(
+        {
+          userId: app.applicantId,
+          type: NOTIFICATION_TYPE.OPPORTUNITY_APPLICATION_STATUS,
+          title: OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE,
+          message: JSON.stringify({
+            opportunityTitle: app.opportunity.title,
+            status,
+            comment: ownerComment || null,
+          }),
+          link: `${OPPORTUNITIES_ROUTE}/${app.opportunityId}`,
+        },
+        tx,
+      );
 
-      throw error;
-    }
-
-    await this.notificationsService.createNotification({
-      userId: app.applicantId,
-      type: NOTIFICATION_TYPE.OPPORTUNITY_APPLICATION_STATUS,
-      title: OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_STATUS_TITLE,
-      message: JSON.stringify({
-        opportunityTitle: app.opportunity.title,
-        status,
-        comment: ownerComment || null,
-      }),
-      link: `${OPPORTUNITIES_ROUTE}/${app.opportunityId}`,
+      return updated;
     });
-
-    return updated;
   }
 
   /**
@@ -751,27 +759,32 @@ export class OpportunitiesService {
       );
     }
 
-    const opportunityApplication = await persistOpportunityApplication({
-      prisma: this.prisma,
-      userId,
-      opportunityId: id,
-      request: dto,
-      ownerId: opportunity.ownerId,
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const opportunityApplication = await persistOpportunityApplication({
+        tx,
+        userId,
+        opportunityId: id,
+        request: dto,
+        ownerId: opportunity.ownerId,
+      });
 
-    await this.notificationsService.createNotification({
-      userId: opportunity.ownerId,
-      type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
-      title: OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_TITLE,
-      message: JSON.stringify({
-        opportunityTitle: opportunity.title,
-        applicantName: dto.applicantName,
-        applicationId: opportunityApplication.id,
-      }),
-      link: `${OPPORTUNITIES_ROUTE}/${id}?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
-    });
+      await this.notificationsService.createNotification(
+        {
+          userId: opportunity.ownerId,
+          type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
+          title: OPPORTUNITY_NOTIFICATION_KEY.NEW_APPLICATION_TITLE,
+          message: JSON.stringify({
+            opportunityTitle: opportunity.title,
+            applicantName: dto.applicantName,
+            applicationId: opportunityApplication.id,
+          }),
+          link: `${OPPORTUNITIES_ROUTE}/${id}?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
+        },
+        tx,
+      );
 
-    return opportunityApplication;
+      return opportunityApplication;
+    });
   }
 
   /**
@@ -794,54 +807,50 @@ export class OpportunitiesService {
     if (!isWithdrawableApplicationStatus(app.status))
       throw new BadRequestException('Cannot withdraw completed application');
 
-    let updated: OpportunityApplication;
-
-    try {
-      updated = await this.prisma.$transaction(async (tx) => {
-        const withdrawn = await tx.opportunityApplication.update({
-          where: { id: applicationId, status: app.status },
+    return this.prisma.$transaction(async (tx) => {
+      // reapplyCount identifies the attempt: a stale request cannot withdraw a later one
+      const withdrawn = await tx.opportunityApplication
+        .update({
+          where: {
+            id: applicationId,
+            status: app.status,
+            reapplyCount: app.reapplyCount,
+          },
           data: {
             status: ApplicationStatus.WITHDRAWN,
             withdrawnFromStatus: app.status,
           },
-        });
+        })
+        .catch(rethrowAsStatusConflict);
 
-        await tx.notification.deleteMany({
-          where: {
-            userId: app.opportunity.ownerId,
-            type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
-            link: { contains: app.opportunityId },
-            message: { contains: `"applicationId":"${applicationId}"` },
-          },
-        });
-
-        return withdrawn;
+      await tx.notification.deleteMany({
+        where: {
+          userId: app.opportunity.ownerId,
+          type: NOTIFICATION_TYPE.OPPORTUNITY_NEW_APPLICATION,
+          link: { contains: app.opportunityId },
+          message: { contains: `"applicationId":"${applicationId}"` },
+        },
       });
-    } catch (error) {
-      if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
-        throw new ConflictException(
-          OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION,
+
+      if (isOwnerTrackedWithdrawalStatus(app.status)) {
+        await this.notificationsService.createNotification(
+          {
+            userId: app.opportunity.ownerId,
+            type: NOTIFICATION_TYPE.OPPORTUNITY_APPLICATION_WITHDRAWN,
+            title: OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_WITHDRAWN_TITLE,
+            message: JSON.stringify({
+              opportunityTitle: app.opportunity.title,
+              applicantName: app.applicantName,
+              applicationId,
+            }),
+            link: `${OPPORTUNITIES_ROUTE}/${app.opportunityId}?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
+          },
+          tx,
         );
       }
 
-      throw error;
-    }
-
-    if (isOwnerTrackedWithdrawalStatus(app.status)) {
-      await this.notificationsService.createNotification({
-        userId: app.opportunity.ownerId,
-        type: NOTIFICATION_TYPE.OPPORTUNITY_APPLICATION_WITHDRAWN,
-        title: OPPORTUNITY_NOTIFICATION_KEY.APPLICATION_WITHDRAWN_TITLE,
-        message: JSON.stringify({
-          opportunityTitle: app.opportunity.title,
-          applicantName: app.applicantName,
-          applicationId,
-        }),
-        link: `${OPPORTUNITIES_ROUTE}/${app.opportunityId}?${OPPORTUNITY_VIEW_PARAM}=${OPPORTUNITY_VIEW.APPLICANTS}`,
-      });
-    }
-
-    return updated;
+      return withdrawn;
+    });
   }
 
   /**

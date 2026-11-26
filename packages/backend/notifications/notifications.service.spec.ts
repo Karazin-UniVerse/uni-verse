@@ -88,6 +88,16 @@ describe('NotificationsService', () => {
         data: dto,
       });
     });
+
+    it('should write through the given transaction client', async () => {
+      const dto = { userId: '1', title: 'Test', message: 'Test Msg' };
+      const tx = { notification: { create: jest.fn() } };
+
+      await service.createNotification(dto, tx as any);
+
+      expect(tx.notification.create).toHaveBeenCalledWith({ data: dto });
+      expect(prismaService.notification.create).not.toHaveBeenCalled();
+    });
   });
 
   describe('createNotifications', () => {
