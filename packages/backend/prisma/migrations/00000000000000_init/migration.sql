@@ -83,11 +83,22 @@ CREATE TABLE "Opportunity" (
     "moderationContentHash" TEXT,
     "tags" "OpportunityTag"[] DEFAULT ARRAY[]::"OpportunityTag"[],
     "publishedAt" TIMESTAMP(3),
+    "publishedTitle" TEXT,
+    "publishedPaymentType" "PaymentType",
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "ownerId" TEXT NOT NULL,
 
     CONSTRAINT "Opportunity_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "OpportunityFavorite" (
+    "userId" TEXT NOT NULL,
+    "opportunityId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "OpportunityFavorite_pkey" PRIMARY KEY ("userId","opportunityId")
 );
 
 -- CreateTable
@@ -179,6 +190,9 @@ CREATE UNIQUE INDEX "Enrollment_userId_courseId_key" ON "Enrollment"("userId", "
 CREATE INDEX "Opportunity_status_publishedAt_createdAt_id_idx" ON "Opportunity"("status", "publishedAt" DESC, "createdAt" DESC, "id" DESC);
 
 -- CreateIndex
+CREATE INDEX "OpportunityFavorite_opportunityId_idx" ON "OpportunityFavorite"("opportunityId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "OpportunityApplication_applicantId_opportunityId_key" ON "OpportunityApplication"("applicantId", "opportunityId");
 
 -- CreateIndex
@@ -210,6 +224,12 @@ ALTER TABLE "Enrollment" ADD CONSTRAINT "Enrollment_courseId_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "Opportunity" ADD CONSTRAINT "Opportunity_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "OpportunityFavorite" ADD CONSTRAINT "OpportunityFavorite_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "OpportunityFavorite" ADD CONSTRAINT "OpportunityFavorite_opportunityId_fkey" FOREIGN KEY ("opportunityId") REFERENCES "Opportunity"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "OpportunityApplication" ADD CONSTRAINT "OpportunityApplication_opportunityId_fkey" FOREIGN KEY ("opportunityId") REFERENCES "Opportunity"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

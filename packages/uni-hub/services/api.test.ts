@@ -783,7 +783,6 @@ describe('UniHub API Service', () => {
     });
 
     it('downloads Moodle attachments as blobs through the authenticated backend proxy', async () => {
-      mockStorage.accessToken = 'jwt-access-token';
       const expectedBlob = new Blob(['pdf-content'], { type: 'application/pdf' });
 
       global.fetch = vi.fn().mockResolvedValue({
@@ -800,11 +799,15 @@ describe('UniHub API Service', () => {
         expect.stringContaining(`/moodle/files/download?url=${encodeURIComponent(fileUrl)}`),
         expect.objectContaining({
           headers: expect.objectContaining({
-            Authorization: 'Bearer jwt-access-token',
+            'X-Requested-With': 'XMLHttpRequest',
           }),
           credentials: 'include',
         }),
       );
+
+      const [, init] = vi.mocked(global.fetch).mock.calls[0];
+
+      expect((init?.headers as Record<string, string> | undefined)?.Authorization).toBeUndefined();
     });
   });
 
