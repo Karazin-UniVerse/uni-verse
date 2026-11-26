@@ -17,7 +17,8 @@ export const uk = {
   'login.hidePassword': 'Сховати пароль',
   'login.success': 'Вхід виконано успішно',
   'login.googleError': 'Помилка входу через Google',
-  'login.errors.corporateDomainRequired': 'Увійдіть з поштою @student.karazin.ua або @karazin.ua',
+  'login.errors.corporateDomainRequired':
+    'Увійдіть із корпоративної пошти під доменом @student.karazin.ua або @karazin.ua',
   'login.errors.moodleAlreadyLinked': 'Цей акаунт Moodle вже прив’язаний до іншого користувача.',
   'login.linkMoodleTitle': "Прив'язка акаунта Moodle",
   'login.linkMoodleHint':
