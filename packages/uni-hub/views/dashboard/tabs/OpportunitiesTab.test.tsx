@@ -68,10 +68,41 @@ describe('OpportunitiesTab component', () => {
 
     expect(await screen.findByRole('heading', { name: saved.title })).toBeInTheDocument();
 
-    const removeButton = screen.getByRole('button', { name: /видалити з обраного/i });
+    const removeButton = screen.getByRole('button', { name: /зберегти в обране/i, pressed: true });
 
     expect(removeButton).toBeInTheDocument();
-    expect(removeButton).not.toHaveAttribute('aria-pressed');
+    expect(removeButton).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('shows success toasts when saving and removing a catalog opportunity', async () => {
+    const user = userEvent.setup();
+    const opportunity = buildOpportunity('catalog-favorite');
+
+    vi.mocked(opportunitiesApi.getOpportunities).mockResolvedValue({ data: [opportunity] });
+    vi.mocked(opportunitiesApi.getFavorites)
+      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValueOnce({ data: [opportunity] })
+      .mockResolvedValue({ data: [] });
+    vi.spyOn(opportunitiesApi, 'setFavorite').mockImplementation(async (_id, saved) => ({
+      data: { saved },
+    }));
+
+    renderOpportunitiesTab();
+
+    const card = await screen.findByRole('article');
+    const button = within(card).getByRole('button', { pressed: false });
+
+    await waitFor(() => expect(button).toBeEnabled());
+    await user.click(button);
+
+    expect(
+      await screen.findByText('Додано до обраного. Ви отримуватимете оновлення.'),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(button).toBeEnabled());
+    expect(button).toHaveAttribute('aria-pressed', 'true');
+    await user.click(button);
+
+    expect(await screen.findByText('Видалено з обраного.')).toBeInTheDocument();
   });
 
   it('only disables the favorite button for the card being saved and invalidates once when overlapping writes finish', async () => {
@@ -94,8 +125,14 @@ describe('OpportunitiesTab component', () => {
     renderOpportunitiesTab();
 
     const [firstCard, secondCard] = await screen.findAllByRole('article');
-    const firstButton = within(firstCard).getByRole('button', { name: /додати до обраного/i });
-    const secondButton = within(secondCard).getByRole('button', { name: /додати до обраного/i });
+    const firstButton = within(firstCard).getByRole('button', {
+      name: /зберегти в обране/i,
+      pressed: false,
+    });
+    const secondButton = within(secondCard).getByRole('button', {
+      name: /зберегти в обране/i,
+      pressed: false,
+    });
 
     await waitFor(() => expect(firstButton).toBeEnabled());
     vi.mocked(opportunitiesApi.getFavorites)
@@ -121,10 +158,10 @@ describe('OpportunitiesTab component', () => {
       await act(async () => finalRefresh.resolve({ data: [first, second] }));
       await waitFor(() => {
         expect(
-          within(firstCard).getByRole('button', { name: /видалити з обраного/i }),
+          within(firstCard).getByRole('button', { name: /зберегти в обране/i, pressed: true }),
         ).toBeEnabled();
         expect(
-          within(secondCard).getByRole('button', { name: /видалити з обраного/i }),
+          within(secondCard).getByRole('button', { name: /зберегти в обране/i, pressed: true }),
         ).toBeEnabled();
       });
     } finally {
@@ -150,8 +187,14 @@ describe('OpportunitiesTab component', () => {
     renderOpportunitiesTab();
 
     const [firstCard, secondCard] = await screen.findAllByRole('article');
-    const firstButton = within(firstCard).getByRole('button', { name: /додати до обраного/i });
-    const secondButton = within(secondCard).getByRole('button', { name: /додати до обраного/i });
+    const firstButton = within(firstCard).getByRole('button', {
+      name: /зберегти в обране/i,
+      pressed: false,
+    });
+    const secondButton = within(secondCard).getByRole('button', {
+      name: /зберегти в обране/i,
+      pressed: false,
+    });
 
     await waitFor(() => expect(firstButton).toBeEnabled());
     vi.mocked(opportunitiesApi.getFavorites)
@@ -170,10 +213,10 @@ describe('OpportunitiesTab component', () => {
 
       await waitFor(() => {
         expect(
-          within(firstCard).getByRole('button', { name: /видалити з обраного/i }),
+          within(firstCard).getByRole('button', { name: /зберегти в обране/i, pressed: true }),
         ).toBeEnabled();
         expect(
-          within(secondCard).getByRole('button', { name: /видалити з обраного/i }),
+          within(secondCard).getByRole('button', { name: /зберегти в обране/i, pressed: true }),
         ).toBeEnabled();
       });
     } finally {
@@ -308,7 +351,10 @@ describe('OpportunitiesTab component', () => {
 
     renderOpportunitiesTab();
 
-    const removeButton = await screen.findByRole('button', { name: /видалити з обраного/i });
+    const removeButton = await screen.findByRole('button', {
+      name: /зберегти в обране/i,
+      pressed: true,
+    });
 
     await waitFor(() => expect(removeButton).toBeEnabled());
     vi.mocked(opportunitiesApi.getFavorites).mockRejectedValueOnce(new Error('Refetch failed'));
@@ -316,9 +362,9 @@ describe('OpportunitiesTab component', () => {
     await user.click(removeButton);
 
     await waitFor(() => {
-      const addButton = screen.getByRole('button', { name: /додати до обраного/i });
+      const addButton = screen.getByRole('button', { name: /зберегти в обране/i, pressed: false });
 
-      expect(addButton).not.toHaveAttribute('aria-pressed');
+      expect(addButton).toHaveAttribute('aria-pressed', 'false');
       expect(addButton).toBeEnabled();
     });
   });
@@ -343,13 +389,17 @@ describe('OpportunitiesTab component', () => {
     const banner = await screen.findByRole('status');
 
     expect(banner).toHaveTextContent('Не вдалося завантажити обрані можливості.');
-    expect(screen.getByRole('button', { name: /додати до обраного/i })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /зберегти в обране/i, pressed: false }),
+    ).toBeDisabled();
 
     await user.click(within(banner).getByRole('button', { name: /спробувати знову/i }));
 
     await waitFor(() => {
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /видалити з обраного/i })).toBeEnabled();
+      expect(
+        screen.getByRole('button', { name: /зберегти в обране/i, pressed: true }),
+      ).toBeEnabled();
     });
   });
 });

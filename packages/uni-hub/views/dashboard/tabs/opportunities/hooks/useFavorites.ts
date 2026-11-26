@@ -52,6 +52,12 @@ export function useFavorites(enabled: boolean): UseFavoritesResult {
       opportunitiesApi.setFavorite(id, !isFavorite),
     onSuccess: (_response, { id, isFavorite }) => {
       applyFavoriteChange(queryClient, id, isFavorite);
+
+      toast.success(
+        formatMessage(
+          isFavorite ? 'opportunities.toast.favoriteRemoved' : 'opportunities.toast.favoriteAdded',
+        ),
+      );
     },
     onError: () => toast.error(formatMessage('opportunities.toast.genericError')),
     onSettled: () => {

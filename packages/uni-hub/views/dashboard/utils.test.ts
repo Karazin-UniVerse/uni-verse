@@ -141,6 +141,27 @@ describe('dashboard utils', () => {
       expect(item.message).toBe('a'.repeat(100));
     });
 
+    it.each([
+      ['PAUSED', 'notifications.opportunityLifecycle.PAUSED'],
+      ['COMPLETED', 'notifications.opportunityLifecycle.COMPLETED'],
+      [undefined, 'notifications.opportunityUpdated.message'],
+      ['UNKNOWN', 'notifications.opportunityUpdated.message'],
+    ])('formats opportunity updates with lifecycle state %s', (lifecycleState, messageKey) => {
+      const item = toNotificationListItem(
+        {
+          id: 'plat-update',
+          subject: 'notifications.opportunityUpdated.title',
+          message: JSON.stringify({ opportunityTitle: 'Frontend Intern', lifecycleState }),
+          timecreated: 1_788_000_000,
+          read: false,
+        },
+        'en-US',
+        (key, values) => (values ? `${key}: ${values.opportunityTitle}` : key),
+      );
+
+      expect(item.message).toBe(`${messageKey}: Frontend Intern`);
+    });
+
     it('translates platform notification subject and JSON message using formatMessage', () => {
       const platformNotif = {
         id: 'plat-1',
@@ -224,23 +245,6 @@ describe('dashboard utils', () => {
       );
 
       expect(updatedItem.message).toContain('notifications.opportunityUpdated.message');
-
-      const lifecycleItem = toNotificationListItem(
-        {
-          id: 'plat-lifecycle',
-          subject: 'notifications.opportunityUpdated.title',
-          message: JSON.stringify({ opportunityTitle: 'AI Lab', lifecycleState: 'PAUSED' }),
-          timecreated: 1_788_000_000,
-          read: false,
-        },
-        'en-US',
-        (key, values): string =>
-          key === 'notifications.opportunityUpdated.messageWithLifecycle'
-            ? `${values?.opportunityTitle}:${values?.lifecycleState}`
-            : key,
-      );
-
-      expect(lifecycleItem.message).toBe('AI Lab:opportunities.detailModal.phasePaused');
 
       const invalidJsonItem = toNotificationListItem(
         {

@@ -391,6 +391,26 @@ describe('OpportunitiesService', () => {
   });
 
   describe('update', () => {
+    it('returns the lifecycle conflict message for a stale update that changes the lifecycle state', async () => {
+      jest.spyOn(service, 'findOne').mockResolvedValue({
+        ...publishedOpportunity,
+        owner: { id: 'owner', name: 'Organizer', email: 'owner@example.com' },
+        tags: [],
+      });
+      jest
+        .spyOn(prisma.opportunity, 'update')
+        .mockRejectedValue({ code: 'P2025' });
+
+      await expect(
+        service.update('owner', publishedOpportunity.id, {
+          lifecycleState: 'PAUSED',
+        }),
+      ).rejects.toMatchObject({
+        constructor: ConflictException,
+        message: OPPORTUNITY_ERROR.LIFECYCLE_CONFLICT,
+      });
+    });
+
     it.each(Object.values(OpportunityStatus))(
       'should reject a stale owner edit from %s without bypassing moderation',
       async (status) => {
@@ -412,9 +432,10 @@ describe('OpportunitiesService', () => {
             title: 'Unreviewed title',
             tags: [OpportunityTag.IT],
           }),
-        ).rejects.toThrow(
-          new ConflictException(OPPORTUNITY_ERROR.CHANGES_REQUIRED),
-        );
+        ).rejects.toMatchObject({
+          constructor: ConflictException,
+          message: OPPORTUNITY_ERROR.CHANGES_REQUIRED,
+        });
         expect(prisma.opportunity.update).toHaveBeenCalledWith(
           expect.objectContaining({
             where: {
@@ -1565,10 +1586,10 @@ describe('OpportunitiesService', () => {
         id: '1',
         status: 'PUBLISHED',
         ownerId: 'other',
-      } as any);
+      });
 
       await expect(
-        service.changeLifecycleState('user-1', '1', 'ACTIVE' as any),
+        service.changeLifecycleState('user-1', '1', 'ACTIVE'),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -1578,12 +1599,12 @@ describe('OpportunitiesService', () => {
         id: '1',
         status: 'PUBLISHED',
         ownerId: 'user-1',
-      } as any);
+      });
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         ...publishedOpportunity,
         id: '1',
         lifecycleState: 'PAUSED',
-      } as any);
+      });
 
       const result = await service.changeLifecycleState(
         'user-1',
@@ -1610,12 +1631,12 @@ describe('OpportunitiesService', () => {
         id: '1',
         status: 'PUBLISHED',
         ownerId: 'user-1',
-      } as any);
+      });
       jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
         ...publishedOpportunity,
         id: '1',
         lifecycleState: 'ACTIVE',
-      } as any);
+      });
 
       const result = await service.changeLifecycleState(
         'user-1',
@@ -1648,7 +1669,10 @@ describe('OpportunitiesService', () => {
 
       await expect(
         service.changeLifecycleState('user-1', '1', 'PAUSED'),
-      ).rejects.toThrow(ConflictException);
+      ).rejects.toMatchObject({
+        constructor: ConflictException,
+        message: OPPORTUNITY_ERROR.LIFECYCLE_CONFLICT,
+      });
     });
 
     it('rethrows unexpected database errors during lifecycle change', async () => {

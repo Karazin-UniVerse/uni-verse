@@ -65,5 +65,6 @@ export const MAX_APPLICATION_WITHDRAWALS = 3 as const;
 export const OPPORTUNITY_ERROR = {
   ALREADY_APPLIED: 'opportunities.errors.alreadyApplied',
   CHANGES_REQUIRED: 'opportunities.errors.changesRequired',
+  LIFECYCLE_CONFLICT: 'opportunities.errors.lifecycleConflict',
   WITHDRAWAL_LIMIT_REACHED: 'opportunities.errors.withdrawalLimitReached',
 } as const;

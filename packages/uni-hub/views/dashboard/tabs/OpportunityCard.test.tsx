@@ -153,7 +153,7 @@ describe('OpportunityCard', () => {
         onOpenDetail={open}
       />,
     );
-    await user.click(screen.getByRole('button', { name: 'Видалити з обраного' }));
+    await user.click(screen.getByRole('button', { name: 'Зберегти в обране', pressed: true }));
     expect(toggle).toHaveBeenCalledWith(opportunity.id, true);
     expect(open).not.toHaveBeenCalled();
   });
@@ -187,7 +187,7 @@ describe('OpportunityCard', () => {
           : 'Більше недоступна',
       );
       expect(screen.queryByRole('button', { name: /Детальніше про/ })).not.toBeInTheDocument();
-      await user.click(screen.getByRole('button', { name: 'Видалити з обраного' }));
+      await user.click(screen.getByRole('button', { name: 'Зберегти в обране', pressed: true }));
       expect(toggle).toHaveBeenCalledWith('saved', true);
     },
   );

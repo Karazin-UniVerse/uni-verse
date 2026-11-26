@@ -445,7 +445,11 @@ export class OpportunitiesService {
       });
     } catch (error) {
       if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
-        throw new ConflictException(OPPORTUNITY_ERROR.CHANGES_REQUIRED);
+        throw new ConflictException(
+          dto.lifecycleState === undefined
+            ? OPPORTUNITY_ERROR.CHANGES_REQUIRED
+            : OPPORTUNITY_ERROR.LIFECYCLE_CONFLICT,
+        );
       }
 
       throw error;
@@ -580,7 +584,7 @@ export class OpportunitiesService {
   }
 
   /**
-   * Update the lifecycle state of an opportunity (e.g., ACTIVE, CLOSED).
+   * Update the lifecycle state of an opportunity.
    */
   async changeLifecycleState(
     userId: string,
@@ -614,9 +618,7 @@ export class OpportunitiesService {
       });
     } catch (error) {
       if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
-        throw new ConflictException(
-          'Opportunity was modified. Reload and retry.',
-        );
+        throw new ConflictException(OPPORTUNITY_ERROR.LIFECYCLE_CONFLICT);
       }
 
       throw error;
