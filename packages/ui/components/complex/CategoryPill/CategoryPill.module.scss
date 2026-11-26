@@ -10,3 +10,16 @@
   justify-content: center;
   flex-shrink: 0;
 }
+
+// Truncation is opt-in so other pills keep their current layout.
+.truncate {
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.label {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

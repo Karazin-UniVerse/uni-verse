@@ -26,7 +26,7 @@ import {
 } from '@core/utils/opportunities';
 import type { OpportunityApplication } from '@core/types/opportunities';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { ContactTags } from '@ui';
+import { CategoryPill, ContactTags } from '@ui';
 import { ApplicationStatusBadge } from './ApplicationStatusBadge';
 import { OpportunityUnavailableNotice } from './OpportunityUnavailableNotice';
 import styles from '../../OpportunitiesTab.module.scss';
@@ -113,10 +113,7 @@ export function MyApplicationCard({
         {paymentType && (
           <div className={styles.applicationTypeCol}>
             {paymentType === OPPORTUNITY_PAYMENT_TYPE.PAID ? (
-              <span className={styles.compensationPill}>
-                <Coins size={13} />
-                <span>{paidLabel}</span>
-              </span>
+              <CategoryPill tone="success" truncate icon={<Coins size={13} />} label={paidLabel} />
             ) : (
               <span className={styles.unpaidPill}>
                 <Briefcase size={13} />

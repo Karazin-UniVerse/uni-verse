@@ -14,14 +14,19 @@ export const CategoryPill: React.FC<CategoryPillProps> = ({
   icon,
   size = 'small',
   tone = 'neutral',
+  truncate = false,
 }) => (
-  <Tag tone={tone} size={size} className={clsx(styles.categoryPill, className)}>
+  <Tag
+    tone={tone}
+    size={size}
+    className={clsx(styles.categoryPill, truncate && styles.truncate, className)}
+  >
     {icon && (
       <span className={styles.icon} aria-hidden="true">
         {icon}
       </span>
     )}
-    <span>{label}</span>
+    <span className={truncate ? styles.label : undefined}>{label}</span>
   </Tag>
 );
 
