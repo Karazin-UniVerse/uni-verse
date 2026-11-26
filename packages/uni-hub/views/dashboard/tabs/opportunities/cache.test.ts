@@ -1,13 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MutationObserver, QueryClient } from '@tanstack/react-query';
-import type { Opportunity } from '@core/types/opportunities';
+import type { Opportunity, OpportunityListItem } from '@core/types/opportunities';
 import {
+  applyFavoriteChange,
+  invalidateFavorites,
   invalidateOpportunities,
+  isLastPendingFavorite,
   isLastPendingModeration,
   removeFromModerationQueue,
   restoreModerationQueue,
 } from './cache';
-import { moderateMutationKey, opportunityKeys } from './queryKeys';
+import { favoriteMutationKey, moderateMutationKey, opportunityKeys } from './queryKeys';
 import { buildOpportunity } from './test-utils';
 import { noop } from '@core/utils/fn';
 
@@ -141,6 +144,99 @@ describe('opportunities cache', () => {
       await first.finish();
 
       expect(isLastPendingModeration(queryClient)).toBe(true);
+
+      await second.finish();
+    });
+  });
+
+  describe('invalidateFavorites', () => {
+    it('marks only the favorites query stale', async () => {
+      queryClient.setQueryData(opportunityKeys.favorites(), []);
+      queryClient.setQueryData(opportunityKeys.catalog(), []);
+
+      await invalidateFavorites(queryClient);
+
+      expect(queryClient.getQueryState(opportunityKeys.favorites())?.isInvalidated).toBe(true);
+      expect(queryClient.getQueryState(opportunityKeys.catalog())?.isInvalidated).toBe(false);
+    });
+  });
+
+  describe('applyFavoriteChange', () => {
+    it('removes an opportunity when it was already saved', () => {
+      const first = buildOpportunity('opp-1');
+      const second = buildOpportunity('opp-2');
+
+      queryClient.setQueryData<OpportunityListItem[]>(opportunityKeys.favorites(), [first, second]);
+
+      applyFavoriteChange(queryClient, 'opp-1', true);
+
+      expect(queryClient.getQueryData(opportunityKeys.favorites())).toEqual([second]);
+    });
+
+    it('prepends an opportunity from catalog or detail cache when saving', () => {
+      const catalogItem = buildOpportunity('opp-1');
+      const detailItem = buildOpportunity('opp-2');
+
+      queryClient.setQueryData<OpportunityListItem[]>(opportunityKeys.favorites(), []);
+      queryClient.setQueryData<OpportunityListItem[]>(opportunityKeys.catalog(), [catalogItem]);
+      queryClient.setQueryData<OpportunityListItem>(opportunityKeys.detail('opp-2'), detailItem);
+
+      applyFavoriteChange(queryClient, 'opp-1', false);
+      applyFavoriteChange(queryClient, 'opp-2', false);
+      applyFavoriteChange(queryClient, 'opp-1', false);
+
+      expect(queryClient.getQueryData(opportunityKeys.favorites())).toEqual([
+        detailItem,
+        catalogItem,
+      ]);
+    });
+
+    it('leaves the cache untouched when favorites have not been loaded or the item is uncached', () => {
+      applyFavoriteChange(queryClient, 'opp-1', false);
+      expect(queryClient.getQueryData(opportunityKeys.favorites())).toBeUndefined();
+
+      queryClient.setQueryData<OpportunityListItem[]>(opportunityKeys.favorites(), []);
+      applyFavoriteChange(queryClient, 'missing', false);
+
+      expect(queryClient.getQueryData(opportunityKeys.favorites())).toEqual([]);
+    });
+  });
+
+  describe('isLastPendingFavorite', () => {
+    function startFavorite(): { finish: () => Promise<void> } {
+      let resolveRequest: () => void = noop;
+      const request = new Promise<void>((resolve) => {
+        resolveRequest = resolve;
+      });
+      const observer = new MutationObserver(queryClient, {
+        mutationKey: favoriteMutationKey,
+        mutationFn: () => request,
+      });
+      const settled = observer.mutate();
+
+      return {
+        finish: async () => {
+          resolveRequest();
+          await settled;
+        },
+      };
+    }
+
+    function pendingFavorites(): number {
+      return queryClient.isMutating({ mutationKey: favoriteMutationKey });
+    }
+
+    it('is true only when one or fewer favorite mutations are in flight', async () => {
+      const first = startFavorite();
+      const second = startFavorite();
+
+      await vi.waitFor(() => expect(pendingFavorites()).toBe(2));
+
+      expect(isLastPendingFavorite(queryClient)).toBe(false);
+
+      await first.finish();
+
+      expect(isLastPendingFavorite(queryClient)).toBe(true);
 
       await second.finish();
     });

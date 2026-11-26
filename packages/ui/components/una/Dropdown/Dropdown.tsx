@@ -84,6 +84,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
       {isOpen && (
         <div
           id={panelId}
+          tabIndex={-1}
           className={clsx(
             styles.panel,
             styles[resolvedPlacement],

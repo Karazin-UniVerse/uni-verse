@@ -102,6 +102,41 @@ describe('UNA Dropdown Component', () => {
     expect(wrapper).toHaveClass('custom-wrapper');
     expect(wrapper?.className).toContain('fullWidth');
   });
+
+  it('should make the panel focusable with tabIndex -1 so label clicks inside dialogs do not blur out', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <div tabIndex={-1} data-testid="modal-container">
+        <Dropdown
+          renderTrigger={(triggerProps) => (
+            <button type="button" {...triggerProps}>
+              Tags
+            </button>
+          )}
+        >
+          <label>
+            <input type="checkbox" />
+            <span>IT</span>
+          </label>
+        </Dropdown>
+      </div>,
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Tags' });
+
+    await user.click(trigger);
+
+    const panelId = trigger.getAttribute('aria-controls');
+
+    expect(panelId).toBeTruthy();
+    expect(document.getElementById(panelId as string)).toHaveAttribute('tabindex', '-1');
+
+    await user.click(screen.getByText('IT'));
+
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('checkbox', { name: 'IT' })).toBeChecked();
+  });
 });
 
 describe('UNA DropdownOption Component', () => {

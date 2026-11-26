@@ -78,4 +78,143 @@ describe('useFocusTrap', () => {
 
     expect(document.activeElement).toBe(btn2);
   });
+
+  it('should wrap Tab to first element when focus is on a non-tabbable element at the end of the container', async () => {
+    const trailingPanel = document.createElement('div');
+
+    trailingPanel.tabIndex = -1;
+    container.appendChild(trailingPanel);
+
+    const ref = { current: container };
+
+    renderHook(() => useFocusTrap(ref, { enabled: true }));
+
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    trailingPanel.focus();
+    expect(document.activeElement).toBe(trailingPanel);
+
+    const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+
+    document.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(btn1);
+  });
+
+  it('should wrap Shift+Tab to last element when focus is on a non-tabbable element before any tabbable child', async () => {
+    const leadingPanel = document.createElement('div');
+
+    leadingPanel.tabIndex = -1;
+    container.insertBefore(leadingPanel, btn1);
+
+    const ref = { current: container };
+
+    renderHook(() => useFocusTrap(ref, { enabled: true }));
+
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    leadingPanel.focus();
+    expect(document.activeElement).toBe(leadingPanel);
+
+    const event = new KeyboardEvent('keydown', {
+      key: 'Tab',
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+
+    document.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(btn2);
+  });
+
+  it('should keep default Tab/Shift+Tab order when a tabbable element exists in that direction from a non-tabbable element', async () => {
+    const middlePanel = document.createElement('div');
+
+    middlePanel.tabIndex = -1;
+    container.insertBefore(middlePanel, btn2);
+
+    const ref = { current: container };
+
+    renderHook(() => useFocusTrap(ref, { enabled: true }));
+
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    middlePanel.focus();
+
+    const forwardEvent = new KeyboardEvent('keydown', {
+      key: 'Tab',
+      bubbles: true,
+      cancelable: true,
+    });
+
+    document.dispatchEvent(forwardEvent);
+    expect(forwardEvent.defaultPrevented).toBe(false);
+
+    const backwardEvent = new KeyboardEvent('keydown', {
+      key: 'Tab',
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+
+    document.dispatchEvent(backwardEvent);
+    expect(backwardEvent.defaultPrevented).toBe(false);
+  });
+
+  it('should wrap Tab to first button when only a button with tabIndex=-1 follows the focused panel', async () => {
+    const focusedPanel = document.createElement('div');
+    const nonTabbableButton = document.createElement('button');
+
+    focusedPanel.tabIndex = -1;
+    nonTabbableButton.tabIndex = -1;
+    nonTabbableButton.textContent = 'Skipped';
+    container.appendChild(focusedPanel);
+    container.appendChild(nonTabbableButton);
+
+    const ref = { current: container };
+
+    renderHook(() => useFocusTrap(ref, { enabled: true }));
+
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    focusedPanel.focus();
+    expect(document.activeElement).toBe(focusedPanel);
+
+    const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+
+    document.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(btn1);
+  });
+
+  it('should wrap Shift+Tab to last button when only a button with tabIndex=-1 precedes the focused panel', async () => {
+    const nonTabbableButton = document.createElement('button');
+    const focusedPanel = document.createElement('div');
+
+    nonTabbableButton.tabIndex = -1;
+    nonTabbableButton.textContent = 'Skipped';
+    focusedPanel.tabIndex = -1;
+    container.insertBefore(focusedPanel, btn1);
+    container.insertBefore(nonTabbableButton, focusedPanel);
+
+    const ref = { current: container };
+
+    renderHook(() => useFocusTrap(ref, { enabled: true }));
+
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    focusedPanel.focus();
+    expect(document.activeElement).toBe(focusedPanel);
+
+    const event = new KeyboardEvent('keydown', {
+      key: 'Tab',
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+
+    document.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(btn2);
+  });
 });

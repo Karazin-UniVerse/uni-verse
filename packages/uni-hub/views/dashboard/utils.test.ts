@@ -211,6 +211,37 @@ describe('dashboard utils', () => {
 
       expect(moderatedItem.message).toContain('notifications.opportunityModerated.message');
 
+      const updatedItem = toNotificationListItem(
+        {
+          id: 'plat-updated',
+          subject: 'notifications.opportunityUpdated.title',
+          message: JSON.stringify({ opportunityTitle: 'AI Lab' }),
+          timecreated: 1_788_000_000,
+          read: false,
+        },
+        'en-US',
+        formatter,
+      );
+
+      expect(updatedItem.message).toContain('notifications.opportunityUpdated.message');
+
+      const lifecycleItem = toNotificationListItem(
+        {
+          id: 'plat-lifecycle',
+          subject: 'notifications.opportunityUpdated.title',
+          message: JSON.stringify({ opportunityTitle: 'AI Lab', lifecycleState: 'PAUSED' }),
+          timecreated: 1_788_000_000,
+          read: false,
+        },
+        'en-US',
+        (key, values): string =>
+          key === 'notifications.opportunityUpdated.messageWithLifecycle'
+            ? `${values?.opportunityTitle}:${values?.lifecycleState}`
+            : key,
+      );
+
+      expect(lifecycleItem.message).toBe('AI Lab:opportunities.detailModal.phasePaused');
+
       const invalidJsonItem = toNotificationListItem(
         {
           id: 'plat-4',
