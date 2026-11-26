@@ -135,6 +135,25 @@ describe('OpportunityCard component', () => {
 
     expect(badgeRow?.children).toHaveLength(3);
   });
+
+  it('should keep all 3 top badges in cardBadgeRow order and preserve full long payment text in DOM', () => {
+    const longPaymentDetails = '15 000 грн за повністю завершений та задеплоєний проєкт.';
+    const closedLongPaidOpp: Opportunity = {
+      ...mockOpportunity,
+      acceptsApplications: false,
+      paymentDetails: longPaymentDetails,
+    };
+
+    const { container } = render(<OpportunityCard opportunity={closedLongPaidOpp} />);
+    const badgeRow = container.querySelector('[class*="cardBadgeRow"]');
+    const badges = Array.from(badgeRow?.children ?? []);
+
+    expect(badges).toHaveLength(3);
+    expect(badges[0]).toHaveTextContent('Вакансія');
+    expect(badges[1]).toHaveTextContent('Набір закрито');
+    expect(badges[2].className).toMatch(/compensationPill/);
+    expect(badges[2]).toHaveTextContent(longPaymentDetails);
+  });
 });
 
 describe('OpportunityCard', () => {
