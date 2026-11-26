@@ -138,6 +138,21 @@ describe('OpportunitiesService', () => {
     jest.restoreAllMocks();
   });
 
+  const mockModeratorLookup = (moderatorIds: string[]): void => {
+    jest.spyOn(prisma.user, 'findMany').mockImplementation(((
+      args: Prisma.UserFindManyArgs,
+    ) => {
+      const excludedId = (args.where?.id as Prisma.StringFilter | undefined)
+        ?.not;
+
+      return Promise.resolve(
+        moderatorIds
+          .filter((moderatorId) => moderatorId !== excludedId)
+          .map((moderatorId) => ({ id: moderatorId })),
+      );
+    }) as unknown as typeof prisma.user.findMany);
+  };
+
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
@@ -501,6 +516,31 @@ describe('OpportunitiesService', () => {
       );
     });
 
+    it('does not send READY_FOR_REVIEW to an owner who is also a moderator after editing a published opportunity', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
+        title: 'old',
+      });
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        ...publishedOpportunity,
+        title: 'new',
+        status: 'READY_FOR_REVIEW',
+      });
+      mockModeratorLookup(['owner', 'other-moderator']);
+
+      await service.update('owner', publishedOpportunity.id, {
+        title: 'new',
+      });
+
+      expect(notificationsService.createNotification).toHaveBeenCalledTimes(1);
+      expect(notificationsService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'other-moderator',
+          type: 'OPPORTUNITY_READY_FOR_REVIEW',
+        }),
+      );
+    });
+
     it('does not reset status if only acceptsApplications changed on published opportunity', async () => {
       jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
         ...publishedOpportunity,
@@ -684,6 +724,39 @@ describe('OpportunitiesService', () => {
   });
 
   describe('moderate', () => {
+    it.each(Object.values(OPPORTUNITY_MODERATE_ACTION))(
+      'notifies an owner who is also a moderator when another moderator applies %s',
+      async (action) => {
+        jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+          roles: [Role.OPPORTUNITIES_MODERATOR],
+        } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+        jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+          ...publishedOpportunity,
+          status: OpportunityStatus.READY_FOR_REVIEW,
+        });
+        jest
+          .spyOn(prisma.opportunity, 'update')
+          .mockResolvedValue(publishedOpportunity);
+
+        await service.moderate('other-moderator', publishedOpportunity.id, {
+          action,
+          comment: 'Moderator comment',
+        });
+
+        expect(notificationsService.createNotification).toHaveBeenCalledWith({
+          userId: publishedOpportunity.ownerId,
+          type: NOTIFICATION_TYPE.OPPORTUNITY_MODERATED,
+          title: 'notifications.opportunityModerated.title',
+          message: JSON.stringify({
+            opportunityTitle: publishedOpportunity.title,
+            action,
+            comment: 'Moderator comment',
+          }),
+          link: `/opportunities/${publishedOpportunity.id}`,
+        });
+      },
+    );
+
     it.each([
       OPPORTUNITY_MODERATE_ACTION.REJECT,
       OPPORTUNITY_MODERATE_ACTION.REQUIRE_CHANGES,
@@ -1527,7 +1600,10 @@ describe('OpportunitiesService', () => {
         data: { status: 'READY_FOR_REVIEW', moderationComment: null },
       });
       expect(prisma.user.findMany).toHaveBeenCalledWith({
-        where: { roles: { has: Role.OPPORTUNITIES_MODERATOR } },
+        where: {
+          roles: { has: Role.OPPORTUNITIES_MODERATOR },
+          id: { not: 'user-1' },
+        },
         select: { id: true },
       });
       expect(notificationsService.createNotification).toHaveBeenCalledTimes(2);
@@ -1555,6 +1631,32 @@ describe('OpportunitiesService', () => {
       await expect(
         service.changeStatus('user-1', '1', 'READY_FOR_REVIEW'),
       ).rejects.toThrow('Status DB error');
+    });
+
+    it('does not send READY_FOR_REVIEW to an owner who is also a moderator', async () => {
+      jest.spyOn(prisma.opportunity, 'findUnique').mockResolvedValue({
+        ...publishedOpportunity,
+        status: 'DRAFT',
+      });
+      jest.spyOn(prisma.opportunity, 'update').mockResolvedValue({
+        ...publishedOpportunity,
+        status: 'READY_FOR_REVIEW',
+      });
+      mockModeratorLookup(['owner', 'other-moderator']);
+
+      await service.changeStatus(
+        'owner',
+        publishedOpportunity.id,
+        'READY_FOR_REVIEW',
+      );
+
+      expect(notificationsService.createNotification).toHaveBeenCalledTimes(1);
+      expect(notificationsService.createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'other-moderator',
+          type: 'OPPORTUNITY_READY_FOR_REVIEW',
+        }),
+      );
     });
   });
 
