@@ -76,6 +76,7 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
   const [text, setText] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [formError, setFormError] = useState('');
+  const [downloadingFileUrl, setDownloadingFileUrl] = useState<string | null>(null);
 
   const courseContentsQuery = useQuery({
     ...courseContentsQueryOptions(courseId ?? 0),
@@ -113,6 +114,35 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
   };
 
   const handleBack = (): void => router.push(getStudyHref(STUDY_VIEW.Assignments));
+
+  const handleDownloadFile = async (fileUrl: string, filename?: string): Promise<void> => {
+    setDownloadingFileUrl(fileUrl);
+
+    let objectUrl: string | null = null;
+
+    try {
+      const blob = await moodleApi.downloadFile(fileUrl);
+
+      objectUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+
+      link.href = objectUrl;
+      link.download = filename || 'attachment';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error(error);
+      toast.error(formatMessage('assignmentDetail.downloadError'));
+    } finally {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+
+      setDownloadingFileUrl(null);
+    }
+  };
 
   const handleSubmit = async (): Promise<void> => {
     if (!text.trim() && files.length === 0) {
@@ -153,10 +183,6 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
     }
   };
 
-  const tokenStr =
-    typeof window !== 'undefined'
-      ? localStorage.getItem('accessToken') || localStorage.getItem('moodleToken')
-      : null;
   const canSubmit = canSubmitAssignment(status);
 
   const statusLabel =
@@ -237,18 +263,21 @@ export const AssignmentDetail: React.FC<AssignmentDetailProps> = ({
               <h4>{formatMessage('assignmentDetail.attachedFiles')}</h4>
               <ul className={styles.fileList}>
                 {courseModule.contents.map((file, idx: number) => {
-                  const url = (file.fileurl || '') + (tokenStr ? `?token=${tokenStr}` : '');
+                  const fileUrl = file.fileurl;
 
                   return (
                     <li key={`${file.filename}-${idx}`} className={styles.fileItem}>
                       <span>{file.filename}</span>
                       <Button
-                        isLink
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        type="button"
                         variant="primary"
                         size="small"
+                        disabled={!fileUrl || downloadingFileUrl !== null}
+                        onClick={() => {
+                          if (fileUrl) {
+                            void handleDownloadFile(fileUrl, file.filename);
+                          }
+                        }}
                       >
                         <Download size={14} /> {formatMessage('assignmentDetail.download')}
                       </Button>

@@ -78,6 +78,10 @@ export class MoodleApi extends ApiClient {
       body: JSON.stringify({ filename, filebase64 }),
     });
   }
+
+  downloadFile(fileUrl: string): Promise<Blob> {
+    return this.requestBlob(`/moodle/files/download${buildQueryString({ url: fileUrl })}`);
+  }
 }
 
 export const moodleApi = new MoodleApi();

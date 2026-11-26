@@ -1,7 +1,13 @@
+jest.mock('bcrypt', () => ({
+  hash: jest.fn(),
+}));
+
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Role, User } from '@universe/database';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserDto, UpdateUserDto } from './user-dto';
+import { CreateUserDto, SelfUpdateUserDto, UpdateUserDto } from './user-dto';
 import { UserService } from './user.service';
 
 describe('UserService', () => {
@@ -133,6 +139,7 @@ describe('UserService', () => {
 
       await service.createUser({
         email: 'moodleuser@karazin.ua',
+        token: 'moodle-token-456',
         moodleId: 'moodle-456',
       });
 
@@ -250,6 +257,22 @@ describe('UserService', () => {
       expect(created.name).toBe(dto.name);
       expect(created.roles).toEqual([Role.OPPORTUNITIES_USER]);
     });
+
+    it('should reject creating user with unpaired token or moodleId', async () => {
+      await expect(
+        service.createUser({
+          email: 'half@karazin.ua',
+          token: 'only-token',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        service.createUser({
+          email: 'half@karazin.ua',
+          moodleId: 'only-moodle-id',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
   });
 
   describe('deleteUser', () => {
@@ -335,6 +358,106 @@ describe('UserService', () => {
       await expect(
         service.updateUser('not-in-memory', { name: 'Name' }),
       ).rejects.toThrow('Database unreachable');
+    });
+
+    it('should reject updating user with unpaired token or moodleId', async () => {
+      await expect(
+        service.updateUser('user-1', { token: 'only-token' }),
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        service.updateUser('user-1', { moodleId: null }),
+      ).rejects.toThrow(BadRequestException);
+
+      mockUserPrisma.update.mockResolvedValue({
+        ...sampleUser,
+        token: null,
+        moodleId: null,
+      });
+
+      await expect(
+        service.updateUser('user-1', { token: null, moodleId: null }),
+      ).resolves.toMatchObject({ token: null, moodleId: null });
+    });
+  });
+
+  describe('updateOwnProfile', () => {
+    it('should forbid updating another user profile', async () => {
+      await expect(
+        service.updateOwnProfile('', 'user-1', { name: 'Missing Identity' }),
+      ).rejects.toThrow(ForbiddenException);
+
+      await expect(
+        service.updateOwnProfile('other-user', 'user-1', { name: 'Hacked' }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockUserPrisma.update).not.toHaveBeenCalled();
+    });
+
+    it('should hash password and persist allowed self-update fields', async () => {
+      const dto: SelfUpdateUserDto = {
+        name: 'Updated Name',
+        password: 'newPassword456',
+      };
+
+      (bcrypt.hash as jest.Mock).mockResolvedValue('updated-bcrypt-password');
+      mockUserPrisma.update.mockResolvedValue({
+        ...sampleUser,
+        name: 'Updated Name',
+        password: 'updated-bcrypt-password',
+      });
+
+      const updated = await service.updateOwnProfile('user-1', 'user-1', dto);
+
+      expect(bcrypt.hash).toHaveBeenCalledWith('newPassword456', 12);
+      expect(mockUserPrisma.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: {
+          name: 'Updated Name',
+          password: 'updated-bcrypt-password',
+        },
+      });
+      expect(updated.name).toBe('Updated Name');
+    });
+
+    it('should update only password when name is omitted', async () => {
+      (bcrypt.hash as jest.Mock).mockResolvedValue('password-only-hash');
+      mockUserPrisma.update.mockResolvedValue({
+        ...sampleUser,
+        password: 'password-only-hash',
+      });
+
+      await service.updateOwnProfile('user-1', 'user-1', {
+        password: 'newPassword456',
+      });
+
+      expect(bcrypt.hash).toHaveBeenCalledWith('newPassword456', 12);
+      expect(mockUserPrisma.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { password: 'password-only-hash' },
+      });
+    });
+
+    it('should ignore disallowed fields when password is omitted', async () => {
+      const dto = {
+        name: 'Safe Name',
+        email: 'spoofed@evil.com',
+        moodleId: 'spoofed-id',
+        token: 'spoofed-token',
+        roles: [Role.ADMIN],
+      } as unknown as SelfUpdateUserDto;
+
+      mockUserPrisma.update.mockResolvedValue({
+        ...sampleUser,
+        name: 'Safe Name',
+      });
+
+      await service.updateOwnProfile('user-1', 'user-1', dto);
+
+      expect(bcrypt.hash).not.toHaveBeenCalled();
+      expect(mockUserPrisma.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { name: 'Safe Name' },
+      });
     });
   });
 

@@ -6,7 +6,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
-import { AtGuard } from '../../auth/guards/at.guard';
+import { MoodleCredentialsGuard } from '../guards/moodle-credentials.guard';
 import { MoodleProfileService } from './moodle-profile.service';
 import { StudentProfileDto } from './moodle-profile-dto';
 
@@ -22,7 +22,7 @@ interface ProfileResponse extends Promise<StudentProfileDto> {}
 
 @ApiTags('moodle')
 @Controller('moodle')
-@UseGuards(AtGuard)
+@UseGuards(MoodleCredentialsGuard)
 @ApiBearerAuth()
 export class MoodleProfileController {
   constructor(

@@ -604,6 +604,31 @@ describe('UniHub API Service', () => {
 
       expect(calledUrls.some((url) => String(url).includes('/auth/refresh'))).toBe(false);
     });
+
+    it('downloads Moodle attachments as blobs through the authenticated backend proxy', async () => {
+      mockStorage.accessToken = 'jwt-access-token';
+      const expectedBlob = new Blob(['pdf-content'], { type: 'application/pdf' });
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        blob: async () => expectedBlob,
+      } as Response);
+
+      const fileUrl = 'https://moodle.test/webservice/pluginfile.php/12/task.pdf';
+      const result = await moodleApi.downloadFile(fileUrl);
+
+      expect(result).toBe(expectedBlob);
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining(`/moodle/files/download?url=${encodeURIComponent(fileUrl)}`),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer jwt-access-token',
+          }),
+          credentials: 'include',
+        }),
+      );
+    });
   });
 
   describe('getErrorMessage', () => {

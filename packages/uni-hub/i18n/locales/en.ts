@@ -264,6 +264,7 @@ export const en = {
   'assignmentDetail.description': 'Description',
   'assignmentDetail.attachedFiles': 'Attached files',
   'assignmentDetail.download': 'Download',
+  'assignmentDetail.downloadError': 'Failed to download file',
   'assignmentDetail.submissionStatus': 'Submission status',
   'assignmentDetail.status': 'Status',
   'assignmentDetail.grade': 'Grade',

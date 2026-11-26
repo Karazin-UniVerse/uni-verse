@@ -39,7 +39,7 @@ Handles API security and access control.
 
 - **Endpoints** (`/auth/...`, names come from `AUTH_ROUTES`): `register`, `login`, `google` (Google SSO), `moodle/link` (link a Moodle account to an existing user), `logout`, `refresh`.
 - **Tokens:** Passport.js with two JWT strategies, access token (`AT_SECRET`) and refresh token (`RT_SECRET`). `AtGuard` is registered globally; mark open endpoints with `@Public()`.
-- **Decorators:** `@GetUser('<field>')` extracts a field from the payload set by the guard on the route. Under `AtGuard` that is the access-token payload (`sub`, `email`, `moodleId`, `moodleToken`); under `RtGuard` (`refresh`) it is the refresh-token payload plus `refreshToken` taken from the cookie (`sub`, `refreshToken`).
+- **Decorators:** `@GetUser('<field>')` extracts a field from the payload set by the guard on the route. Under `AtGuard` that is the access-token payload (`sub`, `email`, `roles`); `MoodleCredentialsGuard` additionally resolves `moodleId` and `moodleToken` server-side from the database on `/moodle/*` routes; under `RtGuard` (`refresh`) it is the refresh-token payload plus `refreshToken` taken from the cookie (`sub`, `refreshToken`).
 
 ### 2. `UserModule` (User Management)
 

@@ -10,7 +10,8 @@ import { PrismaService } from '../prisma/prisma.service';
 describe('UserController (HTTP Integration / E2E)', () => {
   let app: INestApplication<App>;
   let jwtService: JwtService;
-  let authToken: string;
+  let adminToken: string;
+  let studentToken: string;
 
   const mockUsers = new Map<string, any>();
 
@@ -97,8 +98,16 @@ describe('UserController (HTTP Integration / E2E)', () => {
     await app.init();
 
     jwtService = moduleFixture.get(JwtService);
-    authToken = await jwtService.signAsync(
-      { sub: 'test-admin', email: 'admin@karazin.ua' },
+    adminToken = await jwtService.signAsync(
+      { sub: 'test-admin', email: 'admin@karazin.ua', roles: ['ADMIN'] },
+      { secret: process.env.AT_SECRET },
+    );
+    studentToken = await jwtService.signAsync(
+      {
+        sub: 'test-student',
+        email: 'student@karazin.ua',
+        roles: ['MOODLE_STUDENT'],
+      },
       { secret: process.env.AT_SECRET },
     );
   });
@@ -111,6 +120,30 @@ describe('UserController (HTTP Integration / E2E)', () => {
 
   beforeEach(() => {
     mockUsers.clear();
+    mockUsers.set('test-admin', {
+      id: 'test-admin',
+      email: 'admin@karazin.ua',
+      name: 'Admin User',
+      roles: ['ADMIN'],
+      password: 'hashed-admin-password',
+      token: null,
+      refreshToken: null,
+      moodleId: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    mockUsers.set('test-student', {
+      id: 'test-student',
+      email: 'student@karazin.ua',
+      name: 'Student User',
+      roles: ['MOODLE_STUDENT'],
+      password: 'hashed-student-password',
+      token: 'secret-student-moodle-token',
+      refreshToken: null,
+      moodleId: 'initial-moodle-id',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
   });
 
   describe('GET /user', () => {
@@ -120,16 +153,16 @@ describe('UserController (HTTP Integration / E2E)', () => {
       expect(res.status).toBe(401);
     });
 
-    it('should return empty list when no users exist', async () => {
+    it('should reject non-admin users with 403', async () => {
       const res = await request(app.getHttpServer())
         .get('/user')
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
+        .set('Authorization', `Bearer ${studentToken}`)
+        .expect(403);
 
-      expect(res.body).toEqual([]);
+      expect(res.status).toBe(403);
     });
 
-    it('should return list of users with sensitive fields stripped', async () => {
+    it('should return list of users with sensitive fields stripped for ADMIN', async () => {
       mockUsers.set('u1', {
         id: 'u1',
         email: 'user1@karazin.ua',
@@ -145,14 +178,18 @@ describe('UserController (HTTP Integration / E2E)', () => {
 
       const res = await request(app.getHttpServer())
         .get('/user')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(res.body).toHaveLength(1);
-      expect(res.body[0].email).toBe('user1@karazin.ua');
-      expect(res.body[0].password).toBeUndefined();
-      expect(res.body[0].token).toBeUndefined();
-      expect(res.body[0].refreshToken).toBeUndefined();
+      const userOne = res.body.find(
+        (item: Record<string, unknown>) => item.id === 'u1',
+      );
+
+      expect(userOne).toBeDefined();
+      expect(userOne.email).toBe('user1@karazin.ua');
+      expect(userOne.password).toBeUndefined();
+      expect(userOne.token).toBeUndefined();
+      expect(userOne.refreshToken).toBeUndefined();
     });
   });
 
@@ -166,10 +203,20 @@ describe('UserController (HTTP Integration / E2E)', () => {
       expect(res.status).toBe(401);
     });
 
-    it('should create new user with hashed password and return sanitized user', async () => {
+    it('should reject non-admin user creation with 403', async () => {
       const res = await request(app.getHttpServer())
         .post('/user')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({ email: 'new@karazin.ua', password: 'Password123' })
+        .expect(403);
+
+      expect(res.status).toBe(403);
+    });
+
+    it('should create new user with hashed password and return sanitized user for ADMIN', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/user')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({
           email: 'created@karazin.ua',
           name: 'Created User',
@@ -195,7 +242,7 @@ describe('UserController (HTTP Integration / E2E)', () => {
     it('should reject user creation when required email is missing or invalid', async () => {
       const res = await request(app.getHttpServer())
         .post('/user')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Only Name Provided',
         })
@@ -206,7 +253,7 @@ describe('UserController (HTTP Integration / E2E)', () => {
   });
 
   describe('PATCH /user/:id and DELETE /user/:id', () => {
-    it('should update user and return sanitized object', async () => {
+    it('should forbid updating another user profile (IDOR blocked for non-owner and admin)', async () => {
       mockUsers.set('u-target', {
         id: 'u-target',
         email: 'target@karazin.ua',
@@ -218,17 +265,80 @@ describe('UserController (HTTP Integration / E2E)', () => {
         updatedAt: new Date().toISOString(),
       });
 
-      const res = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .patch('/user/u-target')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ moodleId: 'updated-moodle-id' })
-        .expect(200);
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({ name: 'Hacked' })
+        .expect(403);
 
-      expect(res.body.moodleId).toBe('updated-moodle-id');
-      expect(res.body.password).toBeUndefined();
+      await request(app.getHttpServer())
+        .patch('/user/u-target')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ name: 'Admin Cannot Overwrite' })
+        .expect(403);
+
+      expect(mockUsers.get('u-target').name).toBe('Target User');
     });
 
-    it('should delete existing user with 200', async () => {
+    it('should allow user to update only their own name/password and strip privileged fields', async () => {
+      const res = await request(app.getHttpServer())
+        .patch('/user/test-student')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({
+          name: 'Updated Self Name',
+          email: 'spoofed@evil.com',
+          moodleId: 'spoofed-moodle-id',
+          token: 'spoofed-moodle-token',
+          roles: ['ADMIN'],
+        })
+        .expect(200);
+
+      expect(res.body.name).toBe('Updated Self Name');
+      expect(res.body.email).toBe('student@karazin.ua');
+      expect(res.body.moodleId).toBe('initial-moodle-id');
+      expect(res.body.roles).toEqual(['MOODLE_STUDENT']);
+      expect(res.body.password).toBeUndefined();
+      expect(mockUsers.get('test-student').token).toBe(
+        'secret-student-moodle-token',
+      );
+    });
+
+    it('should reject null or too-short password on self PATCH with 400', async () => {
+      await request(app.getHttpServer())
+        .patch('/user/test-student')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({ password: null })
+        .expect(400);
+
+      await request(app.getHttpServer())
+        .patch('/user/test-student')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({ password: '12345' })
+        .expect(400);
+    });
+
+    it('should reject stale ADMIN JWT claim after DB role downgrade with 403', async () => {
+      mockUsers.set('test-admin', {
+        ...mockUsers.get('test-admin'),
+        roles: ['OPPORTUNITIES_USER'],
+      });
+
+      await request(app.getHttpServer())
+        .get('/user')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(403);
+    });
+
+    it('should reject non-admin deletion with 403', async () => {
+      await request(app.getHttpServer())
+        .delete('/user/test-admin')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .expect(403);
+
+      expect(mockUsers.has('test-admin')).toBe(true);
+    });
+
+    it('should allow ADMIN to delete existing user with 200', async () => {
       mockUsers.set('u-del', {
         id: 'u-del',
         email: 'del@karazin.ua',
@@ -241,7 +351,7 @@ describe('UserController (HTTP Integration / E2E)', () => {
 
       const res = await request(app.getHttpServer())
         .delete('/user/u-del')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
       expect(res.body.id).toBe('u-del');

@@ -263,6 +263,7 @@ export const uk = {
   'assignmentDetail.description': 'Опис',
   'assignmentDetail.attachedFiles': 'Прикріплені файли',
   'assignmentDetail.download': 'Завантажити',
+  'assignmentDetail.downloadError': 'Не вдалося завантажити файл',
   'assignmentDetail.submissionStatus': 'Статус здачі',
   'assignmentDetail.status': 'Статус',
   'assignmentDetail.grade': 'Оцінка',

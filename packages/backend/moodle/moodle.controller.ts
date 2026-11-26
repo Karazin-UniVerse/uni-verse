@@ -1,9 +1,10 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { MoodleCoursesService } from './moodle-courses/moodle-courses.service';
 import { MoodleCoursesDto } from './moodle-courses/moodle-courses-dto';
 import { MoodleGradesService } from './moodle-grades/moodle-grades.service';
 import { MoodleGradesResponseDto } from './moodle-grades/moodle-grades-dto';
 import { GetUser } from '../auth/decorators/get-user.decorator';
+import { MoodleCredentialsGuard } from './guards/moodle-credentials.guard';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -14,6 +15,7 @@ import {
 import { filterCourses, CourseStatus } from '../utils/moodleFilters';
 
 @ApiTags('moodle')
+@UseGuards(MoodleCredentialsGuard)
 @Controller('moodle')
 export class MoodleController {
   constructor(

@@ -209,13 +209,14 @@ export type RequestOptions = RequestInit & {
   skipAuthRefresh?: boolean;
 };
 
-type ExecuteRequestParams = {
+type ExecuteRequestParams<T> = {
   endpoint: string;
   url: string;
   options: RequestInit;
   headers: Record<string, string>;
   timeoutMs: number;
   requestOptions: RequestOptions;
+  parseResponse?: (response: Response) => Promise<T>;
 };
 
 async function executeRequestWithRefresh<T>({
@@ -225,11 +226,14 @@ async function executeRequestWithRefresh<T>({
   headers,
   timeoutMs,
   requestOptions,
-}: ExecuteRequestParams): Promise<{ data: T }> {
+  parseResponse,
+}: ExecuteRequestParams<T>): Promise<{ data: T }> {
+  const parse =
+    parseResponse ?? ((response: Response): Promise<T> => response.json() as Promise<T>);
   const initialResponse = await executeAttempt({ url, options, headers, timeoutMs });
 
   if (initialResponse.ok) {
-    const data = (await initialResponse.json()) as T;
+    const data = await parse(initialResponse);
 
     return { data };
   }
@@ -269,7 +273,7 @@ async function executeRequestWithRefresh<T>({
       throw new Error(retryErrorDetail);
     }
 
-    const retryData = (await retryResponse.json()) as T;
+    const retryData = await parse(retryResponse);
 
     return { data: retryData };
   }
@@ -286,6 +290,7 @@ async function executeRequestWithRefresh<T>({
 async function executeRequest<T>(
   endpoint: string,
   requestOptions: RequestOptions = {},
+  parseResponse?: (response: Response) => Promise<T>,
 ): Promise<{ data: T }> {
   const {
     retries = DEFAULT_RETRIES,
@@ -319,6 +324,7 @@ async function executeRequest<T>(
         headers,
         timeoutMs,
         requestOptions,
+        parseResponse,
       });
     } catch (error) {
       const isUnauthorized =
@@ -350,6 +356,17 @@ export abstract class ApiClient {
     requestOptions: RequestOptions = {},
   ): Promise<{ data: T }> {
     return executeRequest<T>(endpoint, requestOptions);
+  }
+
+  protected async requestBlob(
+    endpoint: string,
+    requestOptions: RequestOptions = {},
+  ): Promise<Blob> {
+    const { data } = await executeRequest<Blob>(endpoint, requestOptions, (response) =>
+      response.blob(),
+    );
+
+    return data;
   }
 }
 

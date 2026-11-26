@@ -2,12 +2,15 @@ jest.mock('bcrypt', () => ({
   hash: jest.fn(),
 }));
 
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Role, User } from '@universe/database';
 import * as bcrypt from 'bcrypt';
+import { PrismaService } from '../prisma/prisma.service';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { CreateUserDto, UpdateUserDto } from './user-dto';
+import { CreateUserDto, SelfUpdateUserDto } from './user-dto';
 
 describe('UserController', () => {
   let controller: UserController;
@@ -36,6 +39,7 @@ describe('UserController', () => {
       createUser: jest.fn(),
       deleteUser: jest.fn(),
       updateUser: jest.fn(),
+      updateOwnProfile: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -44,6 +48,10 @@ describe('UserController', () => {
         {
           provide: UserService,
           useValue: mockUserService,
+        },
+        {
+          provide: PrismaService,
+          useValue: { user: { findUnique: jest.fn() } },
         },
       ],
     }).compile();
@@ -135,6 +143,15 @@ describe('UserController', () => {
       expect(userService.createUser).toHaveBeenCalledWith(dto);
       expect(result.email).toBe('nopass@karazin.ua');
     });
+
+    it('should handle empty body gracefully when checking password', async () => {
+      userService.createUser.mockResolvedValue(mockDbUser);
+
+      await controller.createUser(undefined as unknown as CreateUserDto);
+
+      expect(bcrypt.hash).not.toHaveBeenCalled();
+      expect(userService.createUser).toHaveBeenCalledWith(undefined);
+    });
   });
 
   describe('deleteUser', () => {
@@ -152,47 +169,58 @@ describe('UserController', () => {
   });
 
   describe('updateUser', () => {
-    it('should hash password when updating password and return sanitized response', async () => {
-      const dto: UpdateUserDto = {
+    it('should delegate self profile update to userService.updateOwnProfile and return sanitized response', async () => {
+      const dto: SelfUpdateUserDto = {
         name: 'Updated Name',
         password: 'newPassword456',
       };
 
-      (bcrypt.hash as jest.Mock).mockResolvedValue('updated-bcrypt-password');
-      userService.updateUser.mockResolvedValue({
+      userService.updateOwnProfile.mockResolvedValue({
         ...mockDbUser,
         name: 'Updated Name',
         password: 'updated-bcrypt-password',
       });
 
-      const result = await controller.updateUser('user-uuid-1', dto);
+      const result = await controller.updateUser(
+        'user-uuid-1',
+        'user-uuid-1',
+        dto,
+      );
 
-      expect(bcrypt.hash).toHaveBeenCalledWith('newPassword456', 10);
-      expect(userService.updateUser).toHaveBeenCalledWith('user-uuid-1', {
-        name: 'Updated Name',
-        password: 'updated-bcrypt-password',
-      });
+      expect(userService.updateOwnProfile).toHaveBeenCalledWith(
+        'user-uuid-1',
+        'user-uuid-1',
+        dto,
+      );
       expect(result.name).toBe('Updated Name');
       expect(
         (result as unknown as Record<string, unknown>).password,
       ).toBeUndefined();
+      expect(
+        (result as unknown as Record<string, unknown>).token,
+      ).toBeUndefined();
     });
+  });
 
-    it('should update user without hashing when password is omitted', async () => {
-      const dto: UpdateUserDto = {
-        name: 'Updated Name Only',
-      };
-
-      userService.updateUser.mockResolvedValue({
-        ...mockDbUser,
-        name: 'Updated Name Only',
+  describe('SelfUpdateUserDto validation', () => {
+    it('validates password only when provided', () => {
+      const nameOnly = plainToInstance(SelfUpdateUserDto, {
+        name: 'Valid Name',
       });
 
-      const result = await controller.updateUser('user-uuid-1', dto);
+      expect(validateSync(nameOnly)).toHaveLength(0);
 
-      expect(bcrypt.hash).not.toHaveBeenCalled();
-      expect(userService.updateUser).toHaveBeenCalledWith('user-uuid-1', dto);
-      expect(result.name).toBe('Updated Name Only');
+      const shortPassword = plainToInstance(SelfUpdateUserDto, {
+        password: '123',
+      });
+
+      expect(validateSync(shortPassword).length).toBeGreaterThan(0);
+
+      const validPassword = plainToInstance(SelfUpdateUserDto, {
+        password: 'strongPassword1',
+      });
+
+      expect(validateSync(validPassword)).toHaveLength(0);
     });
   });
 });

@@ -1,6 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Matches } from 'class-validator';
 
+export class DownloadFileQueryDto {
+  @ApiProperty({
+    example:
+      'https://moodle.universemvp.tech/webservice/pluginfile.php/1/mod_assign/introattachment/0/assignment.pdf',
+  })
+  @IsString()
+  @IsNotEmpty()
+  url: string;
+}
+
 export class UploadFileDto {
   @ApiProperty({ example: 'assignment.pdf' })
   @IsString()
