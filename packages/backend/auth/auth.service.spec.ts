@@ -22,6 +22,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
@@ -31,6 +32,7 @@ describe('AuthService', () => {
     findByMoodleId: jest.fn(),
     createUser: jest.fn(),
     updateUser: jest.fn(),
+    replaceRefreshHash: jest.fn(),
     findById: jest.fn(),
   } as unknown as jest.Mocked<UserService>;
 
@@ -42,6 +44,7 @@ describe('AuthService', () => {
 
   const mockJwtService = {
     signAsync: jest.fn(),
+    verifyAsync: jest.fn(),
   } as unknown as jest.Mocked<JwtService>;
 
   let authService: AuthService;
@@ -58,6 +61,14 @@ describe('AuthService', () => {
     refreshToken: 'hashed-rt-token',
     createdAt: new Date(),
     updatedAt: new Date(),
+  };
+
+  const sampleSessionUser = {
+    id: 'user-uuid-1',
+    email: 'student@student.karazin.ua',
+    name: 'Test Student',
+    roles: [Role.OPPORTUNITIES_USER],
+    isLinked: true,
   };
 
   beforeEach(() => {
@@ -101,6 +112,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         access_token: 'new-access-token',
         refresh_token: 'new-refresh-token',
+        user: sampleSessionUser,
       });
       expect(mockUserService.findByEmail).toHaveBeenCalledWith(
         registerDto.email,
@@ -195,6 +207,7 @@ describe('AuthService', () => {
       expect(tokens).toEqual({
         access_token: 'at-123',
         refresh_token: 'rt-123',
+        user: sampleSessionUser,
       });
       expect(mockUserService.updateUser).toHaveBeenCalledWith(sampleUser.id, {
         token: 'fresh-moodle-token',
@@ -250,6 +263,7 @@ describe('AuthService', () => {
       expect(tokens).toEqual({
         access_token: 'at-123',
         refresh_token: 'rt-123',
+        user: sampleSessionUser,
       });
     });
 
@@ -276,6 +290,7 @@ describe('AuthService', () => {
       expect(tokens).toEqual({
         access_token: 'at-123',
         refresh_token: 'rt-123',
+        user: sampleSessionUser,
       });
     });
   });
@@ -300,17 +315,19 @@ describe('AuthService', () => {
         .mockResolvedValueOnce('fresh-at')
         .mockResolvedValueOnce('fresh-rt');
       (bcrypt.hash as jest.Mock).mockResolvedValue('new-rt-hash');
-      mockUserService.updateUser.mockResolvedValue(sampleUser);
+      mockUserService.replaceRefreshHash.mockResolvedValue(true);
 
       const result = await authService.refreshTokens('user-uuid-1', 'valid-rt');
 
       expect(result).toEqual({
         access_token: 'fresh-at',
         refresh_token: 'fresh-rt',
+        user: sampleSessionUser,
       });
-      expect(mockUserService.updateUser).toHaveBeenCalledWith(
+      expect(mockUserService.replaceRefreshHash).toHaveBeenCalledWith(
         'user-uuid-1',
-        expect.objectContaining({ refreshToken: 'new-rt-hash' }),
+        sampleUser.refreshToken,
+        'new-rt-hash',
       );
     });
 
@@ -324,13 +341,14 @@ describe('AuthService', () => {
         .mockResolvedValueOnce('fresh-at')
         .mockResolvedValueOnce('fresh-rt');
       (bcrypt.hash as jest.Mock).mockResolvedValue('new-rt-hash');
-      mockUserService.updateUser.mockResolvedValue(sampleUser);
+      mockUserService.replaceRefreshHash.mockResolvedValue(true);
 
       const result = await authService.refreshTokens('user-uuid-1', 'valid-rt');
 
       expect(result).toEqual({
         access_token: 'fresh-at',
         refresh_token: 'fresh-rt',
+        user: sampleSessionUser,
       });
     });
 
@@ -345,14 +363,25 @@ describe('AuthService', () => {
         .mockResolvedValueOnce('fresh-at')
         .mockResolvedValueOnce('fresh-rt');
       (bcrypt.hash as jest.Mock).mockResolvedValue('new-rt-hash');
-      mockUserService.updateUser.mockResolvedValue(sampleUser);
+      mockUserService.replaceRefreshHash.mockResolvedValue(true);
 
       const result = await authService.refreshTokens('user-uuid-1', 'valid-rt');
 
       expect(result).toEqual({
         access_token: 'fresh-at',
         refresh_token: 'fresh-rt',
+        user: { ...sampleSessionUser, isLinked: false },
       });
+    });
+
+    it('denies rotation if the validated hash has since changed', async () => {
+      mockUserService.findById.mockResolvedValue(sampleUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      mockUserService.replaceRefreshHash.mockResolvedValue(false);
+
+      await expect(
+        authService.refreshTokens(sampleUser.id, 'valid-rt'),
+      ).rejects.toThrow('Access Denied');
     });
 
     it('should throw ForbiddenException if user not found or has no refresh token', async () => {
@@ -448,6 +477,7 @@ describe('AuthService', () => {
         access_token: 'google-at',
         refresh_token: 'google-rt',
         isLinked: true,
+        user: sampleSessionUser,
       });
       expect(mockUserService.findByEmail).toHaveBeenCalledWith(
         'student@student.karazin.ua',
@@ -484,6 +514,13 @@ describe('AuthService', () => {
         access_token: 'google-at',
         refresh_token: 'google-rt',
         isLinked: false,
+        user: {
+          id: 'unlinked-user-1',
+          email: 'unlinked@student.karazin.ua',
+          name: 'Test Student',
+          roles: [Role.OPPORTUNITIES_USER],
+          isLinked: false,
+        },
       });
     });
 
@@ -519,6 +556,13 @@ describe('AuthService', () => {
         access_token: 'new-google-at',
         refresh_token: 'new-google-rt',
         isLinked: false,
+        user: {
+          id: 'new-google-user',
+          email: 'newuser@student.karazin.ua',
+          name: 'Test Student',
+          roles: [Role.OPPORTUNITIES_USER],
+          isLinked: false,
+        },
       });
       expect(mockUserService.createUser).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -697,6 +741,11 @@ describe('AuthService', () => {
         access_token: 'lecturer-at',
         refresh_token: 'lecturer-rt',
         isLinked: true,
+        user: {
+          ...sampleSessionUser,
+          id: 'lecturer-id',
+          email: 'lecturer@karazin.ua',
+        },
       });
     });
   });
@@ -766,6 +815,7 @@ describe('AuthService', () => {
         access_token: 'updated-at',
         refresh_token: 'updated-rt',
         isLinked: true,
+        user: sampleSessionUser,
       });
       expect(mockUserService.updateUser).toHaveBeenCalledWith(sampleUser.id, {
         token: 'linked-moodle-token',
@@ -800,6 +850,7 @@ describe('AuthService', () => {
         access_token: 'relinked-at',
         refresh_token: 'relinked-rt',
         isLinked: true,
+        user: sampleSessionUser,
       });
     });
   });
@@ -833,6 +884,7 @@ describe('AuthService', () => {
         access_token: 'unlinked-at',
         refresh_token: 'unlinked-rt',
         isLinked: false,
+        user: { ...sampleSessionUser, isLinked: false },
       });
       expect(mockUserService.updateUser).toHaveBeenCalledWith(sampleUser.id, {
         token: null,
@@ -949,6 +1001,111 @@ describe('AuthService', () => {
         },
         expect.any(Object),
       );
+    });
+  });
+
+  describe('getSessionUser', () => {
+    it('should return safe session metadata for an existing user', async () => {
+      mockUserService.findById.mockResolvedValue(sampleUser);
+
+      const sessionUser = await authService.getSessionUser(sampleUser.id);
+
+      expect(sessionUser).toEqual(sampleSessionUser);
+    });
+
+    it('should throw UnauthorizedException when user is not found', async () => {
+      mockUserService.findById.mockResolvedValue(null);
+
+      await expect(authService.getSessionUser('missing-id')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe('logoutByRefreshToken', () => {
+    it('propagates a persistence failure after verification', async () => {
+      mockJwtService.verifyAsync.mockResolvedValue({ sub: sampleUser.id });
+      mockUserService.findById.mockResolvedValue(sampleUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      mockUserService.updateUser.mockRejectedValueOnce(
+        new Error('write failed'),
+      );
+
+      await expect(
+        authService.logoutByRefreshToken('valid-rt'),
+      ).rejects.toThrow('write failed');
+    });
+
+    it('should revoke stored refresh token when cookie token matches DB hash', async () => {
+      mockJwtService.verifyAsync.mockResolvedValue({ sub: sampleUser.id });
+      mockUserService.findById.mockResolvedValue(sampleUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+      const revoked = await authService.logoutByRefreshToken('valid-rt');
+
+      expect(revoked).toBe(true);
+      expect(mockJwtService.verifyAsync).toHaveBeenCalledWith('valid-rt', {
+        secret: 'valid-production-rt-secret',
+      });
+      expect(mockUserService.updateUser).toHaveBeenCalledWith(sampleUser.id, {
+        refreshToken: null,
+      });
+    });
+
+    it('should return false without clearing DB hash when refresh token hash does not match', async () => {
+      mockJwtService.verifyAsync.mockResolvedValue({ sub: sampleUser.id });
+      mockUserService.findById.mockResolvedValue(sampleUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      const revoked = await authService.logoutByRefreshToken('stale-rt');
+
+      expect(revoked).toBe(false);
+      expect(mockUserService.updateUser).not.toHaveBeenCalled();
+    });
+
+    it('should return false when refresh token verification throws', async () => {
+      mockJwtService.verifyAsync.mockRejectedValue(new Error('jwt expired'));
+
+      const revoked = await authService.logoutByRefreshToken('expired-rt');
+
+      expect(revoked).toBe(false);
+      expect(mockUserService.findById).not.toHaveBeenCalled();
+    });
+
+    it('should return false when RT_SECRET is missing or uses the default placeholder', async () => {
+      delete process.env.RT_SECRET;
+      await expect(authService.logoutByRefreshToken('valid-rt')).resolves.toBe(
+        false,
+      );
+
+      process.env.RT_SECRET = 'your-refresh-token-secret-key';
+      await expect(authService.logoutByRefreshToken('valid-rt')).resolves.toBe(
+        false,
+      );
+
+      expect(mockJwtService.verifyAsync).not.toHaveBeenCalled();
+    });
+
+    it('should return false when verified refresh token payload has no sub', async () => {
+      mockJwtService.verifyAsync.mockResolvedValue({});
+
+      const revoked = await authService.logoutByRefreshToken('rt-without-sub');
+
+      expect(revoked).toBe(false);
+      expect(mockUserService.findById).not.toHaveBeenCalled();
+    });
+
+    it('should return false when user has no stored refresh token hash', async () => {
+      mockJwtService.verifyAsync.mockResolvedValue({ sub: sampleUser.id });
+      mockUserService.findById.mockResolvedValue({
+        ...sampleUser,
+        refreshToken: null,
+      });
+
+      const revoked = await authService.logoutByRefreshToken('valid-rt');
+
+      expect(revoked).toBe(false);
+      expect(bcrypt.compare).not.toHaveBeenCalled();
     });
   });
 });

@@ -7,10 +7,8 @@ import { Button, Form, useToast } from '@una';
 import { ThemeSwitcher } from '@uni-hub/theme/ThemeSwitcher';
 import { LanguageSwitcher } from '@uni-hub/components/common/LanguageSwitcher';
 import { useLanguage } from '@uni-hub/i18n/LanguageContext';
-import { useQueryClient } from '@tanstack/react-query';
 import { safeStorage } from '@uni-hub/services/api';
-import { endSession } from '@uni-hub/services/api.session';
-import { useGoogleLogin, useLinkMoodle } from '@uni-hub/hooks/useAuthMutations';
+import { useGoogleLogin, useLinkMoodle, useLogout } from '@uni-hub/hooks/useAuthMutations';
 import {
   type AuthErrorState,
   GoogleLoginButton,
@@ -36,10 +34,10 @@ const LoginPage: React.FC = () => {
   const [isLinkingMoodle, setIsLinkingMoodle] = useState(false);
   const router = useRouter();
   const toast = useToast();
-  const queryClient = useQueryClient();
   const googleLogin = useGoogleLogin();
   const linkMoodle = useLinkMoodle();
-  const loading = googleLogin.isPending || linkMoodle.isPending;
+  const logout = useLogout();
+  const loading = googleLogin.isPending || linkMoodle.isPending || logout.isPending;
 
   const handleGoogleSuccess = async (idToken: string): Promise<void> => {
     setError(null);
@@ -144,7 +142,7 @@ const LoginPage: React.FC = () => {
     setGoogleUserName('');
     setLinkUsername('');
     setLinkPassword('');
-    endSession(queryClient);
+    logout.mutate();
   };
 
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;

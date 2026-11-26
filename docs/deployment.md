@@ -26,11 +26,29 @@ Deployment is disabled until the repository variable `GCP_DEPLOY_ENABLED` is
 ### Existing data and startup behavior
 
 The backend Dockerfile runs `node dist/main` without automatic `prisma db push`
-on container start. CI does not apply schema changes automatically or pass
-database credentials to the build. Take a database backup, review Prisma schema
-changes, and apply schema updates in a controlled pre-deploy step before
-deploying code that relies on them. Deployments are **not** database backups or a
-migration system.
+on container start. Schema history is tracked via Prisma migrations under
+`packages/backend/prisma/migrations/` (`00000000000000_init` baseline).
+
+Before deploying schema changes:
+
+- Take a database backup and review new Prisma migration SQL.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:00a96cc105d75efec2a1259df22afcf5414c083f2eadcc09018fec44228a94bb -->
+
+- For an existing pre-migrations database, compare its tables, columns, types,
+  defaults, indexes, and constraints with the baseline migration SQL. If anything
+  differs, stop and reconcile the differences through reviewed changes that
+  preserve existing data. Verify again before proceeding.
+- Only when the schema matches, mark the baseline applied **once**:
+  `pnpm --filter @universe/backend db:migrate:resolve-init`
+
+<!-- /coderabbit-ai-generated:v1 -->
+- Apply reviewed pending migrations in a controlled release step:
+  `pnpm --filter @universe/backend db:migrate:deploy`
+
+CI does not apply schema changes automatically or pass database credentials to
+the build. Deployments are **not** database backups.
 
 Backend and frontend updates are sequential, not an atomic pair, so changes must
 remain compatible across revisions. New revisions are created with no traffic;
@@ -69,11 +87,24 @@ variables**, not secrets:
 | `FRONTEND_URL`                   | `https://universe-frontend-1038900190823.europe-west3.run.app` |
 | `GOOGLE_CLIENT_ID`               | Optional web OAuth client ID; ask the Project coordinator      |
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:f379733c49ba31bfa013b0321727ceb3a1735e1ab02f6f933ac081bd43d968ba -->
+
+The Cloud Run URLs above put the portal and API on separate sites. Credentialed
+requests therefore depend on production access and refresh cookies using
+`SameSite=None; Secure; HttpOnly`. Obtain security approval for this exception
+before deploying. Keep the exact frontend origin allowlist and the CSRF checks
+for cookie-authenticated requests. Reassess the exception if both services
+move to the same site.
+
 Use origins without trailing slashes for both URLs. `NEXT_PUBLIC_API_URL` must
 not end in `/api`: that is the backend Swagger route, not an API prefix.
 The workflow rejects `FRONTEND_URL` with a trailing slash or an explicit
 scheme-default port (`:443` for https, `:80` for http) before building images,
 because the backend compares that value with the browser's slash-free, port-free Origin.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 `GCP_DEPLOY_ENABLED` is a **repository** variable under **Settings → Secrets and
 variables → Actions → Variables**, not an environment variable. Leave it unset

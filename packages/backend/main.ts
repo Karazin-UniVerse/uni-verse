@@ -16,6 +16,7 @@ const SWAGGER_CONFIG = new DocumentBuilder()
   )
   .setVersion('1.0')
   .addBearerAuth()
+  .addCookieAuth('accessToken', undefined, 'accessToken')
   .addCookieAuth('refreshToken')
   .build();
 

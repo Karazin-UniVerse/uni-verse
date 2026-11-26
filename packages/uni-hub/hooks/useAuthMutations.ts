@@ -7,7 +7,6 @@ import {
 } from '@tanstack/react-query';
 import type { GoogleAuthResponse } from '@core/types/auth';
 import { authApi } from '@uni-hub/services/api.auth';
-import { endSession } from '@uni-hub/services/api.session';
 
 export interface MoodleCredentials {
   username: string;
@@ -29,7 +28,7 @@ export function logoutMutationOptions(
   return {
     mutationFn: () => authApi.logout(),
     onMutate: () => void queryClient.cancelQueries(),
-    onSettled: () => endSession(queryClient),
+    onSuccess: () => queryClient.clear(),
   };
 }
 

@@ -19,8 +19,8 @@ describe('useAuthProtection', () => {
     localStorage.clear();
     replace.mockClear();
     vi.spyOn(safeStorage, 'getItem').mockImplementation((key) =>
-      key === 'accessToken'
-        ? `header.${btoa(JSON.stringify({ sub: 'alice' }))}.signature`
+      key === 'sessionUser'
+        ? JSON.stringify({ id: 'alice', email: 'alice@karazin.ua', roles: [], isLinked: false })
         : localStorage.getItem(key),
     );
     useGamificationStore.setState(useGamificationStore.getInitialState());
@@ -30,7 +30,7 @@ describe('useAuthProtection', () => {
     vi.restoreAllMocks();
   });
 
-  it('does not redirect when user is authenticated with matching token', () => {
+  it('does not redirect when user is authenticated with matching session user', () => {
     renderHook(() => useAuthProtection('alice'));
 
     expect(replace).not.toHaveBeenCalled();
@@ -46,7 +46,7 @@ describe('useAuthProtection', () => {
     expect(useGamificationStore.getState().activeUserId).toBeNull();
   });
 
-  it('redirects to /login and clears active user when token is missing', () => {
+  it('redirects to /login and clears active user when sessionUser is missing', () => {
     vi.mocked(safeStorage.getItem).mockReturnValue(null);
     useGamificationStore.getState().setActiveUser('alice');
 
@@ -63,9 +63,9 @@ describe('useAuthProtection', () => {
     expect(useGamificationStore.getState().activeUserId).toBeNull();
   });
 
-  it('redirects to /login and clears active user when token sub mismatches userId', () => {
+  it('redirects to /login and clears active user when sessionUser id mismatches userId', () => {
     vi.mocked(safeStorage.getItem).mockReturnValue(
-      `header.${btoa(JSON.stringify({ sub: 'bob' }))}.signature`,
+      JSON.stringify({ id: 'bob', email: 'bob@karazin.ua', roles: [], isLinked: false }),
     );
     useGamificationStore.getState().setActiveUser('alice');
 
@@ -75,14 +75,14 @@ describe('useAuthProtection', () => {
     expect(useGamificationStore.getState().activeUserId).toBeNull();
   });
 
-  it('redirects to /login on cross-tab storage change when token owner changes', () => {
+  it('redirects to /login on cross-tab storage change when session owner changes', () => {
     renderHook(() => useAuthProtection('alice'));
 
     vi.mocked(safeStorage.getItem).mockReturnValue(
-      `header.${btoa(JSON.stringify({ sub: 'bob' }))}.signature`,
+      JSON.stringify({ id: 'bob', email: 'bob@karazin.ua', roles: [], isLinked: false }),
     );
     act(() => {
-      window.dispatchEvent(new StorageEvent('storage', { key: 'accessToken' }));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'sessionUser' }));
     });
 
     expect(replace).toHaveBeenCalledWith('/login');
@@ -94,7 +94,7 @@ describe('useAuthProtection', () => {
 
     loggedIn = false;
     act(() => {
-      window.dispatchEvent(new StorageEvent('storage', { key: 'accessToken' }));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'sessionUser' }));
     });
 
     expect(replace).toHaveBeenCalledWith('/login');
@@ -107,7 +107,7 @@ describe('useAuthProtection', () => {
     unmount();
     loggedIn = false;
     act(() => {
-      window.dispatchEvent(new StorageEvent('storage', { key: 'accessToken' }));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'sessionUser' }));
     });
 
     expect(replace).not.toHaveBeenCalled();

@@ -3,22 +3,24 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from '../user/user.service';
-import { GetCreds } from '../utils/get-creds';
-import { randomBytes } from 'node:crypto';
+import { Role, type User } from '@universe/database';
+import type { SessionUser } from '@universe/core/types/auth';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
-import { Role } from '@universe/database';
 import { AUTH_ERROR } from '@universe/core/constants/auth';
-import { RegisterDto, LoginDto, GoogleAuthDto, LinkMoodleDto } from './dto';
+import { randomBytes } from 'node:crypto';
+import { UserService } from '../user/user.service';
+import { GetCreds } from '../utils/get-creds';
+import { GoogleAuthDto, LinkMoodleDto, LoginDto, RegisterDto } from './dto';
 import {
-  normalizeEmail,
   buildEmailWithDomain,
-  isPrismaUniqueConstraintError,
-  isAllowedCorporateDomain,
   extractGoogleUserName,
+  isAllowedCorporateDomain,
+  isPrismaUniqueConstraintError,
+  normalizeEmail,
 } from './utils/auth.utils';
 
 export type GetTokensParams = {
@@ -34,6 +36,26 @@ export class AuthService {
     private readonly getCreds: GetCreds,
     private readonly jwtService: JwtService,
   ) {}
+
+  private toSessionUser(user: User): SessionUser {
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      roles: user.roles,
+      isLinked: Boolean(user.token && user.moodleId),
+    };
+  }
+
+  async getSessionUser(userId: string): Promise<SessionUser> {
+    const user = await this.userService.findById(userId);
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return this.toSessionUser(user);
+  }
 
   async register(dto: RegisterDto) {
     const normalizedEmail = normalizeEmail(dto.email);
@@ -88,7 +110,10 @@ export class AuthService {
 
     await this.updateRtHash(user.id, tokens.refresh_token);
 
-    return tokens;
+    return {
+      ...tokens,
+      user: this.toSessionUser(user),
+    };
   }
 
   async login(dto: LoginDto) {
@@ -127,12 +152,10 @@ export class AuthService {
         });
       }
 
-      await this.userService.updateUser(existing.id, {
+      return await this.userService.updateUser(existing.id, {
         token: moodleToken,
         moodleId: moodleId,
       });
-
-      return existing;
     })();
 
     const tokens = await this.getTokens({
@@ -143,7 +166,10 @@ export class AuthService {
 
     await this.updateRtHash(user.id, tokens.refresh_token);
 
-    return tokens;
+    return {
+      ...tokens,
+      user: this.toSessionUser(user),
+    };
   }
 
   async loginWithGoogle(dto: GoogleAuthDto) {
@@ -164,6 +190,7 @@ export class AuthService {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       isLinked,
+      user: this.toSessionUser(user),
     };
   }
 
@@ -293,6 +320,7 @@ export class AuthService {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       isLinked: true,
+      user: this.toSessionUser(updatedUser),
     };
   }
 
@@ -321,15 +349,62 @@ export class AuthService {
       roles,
     });
 
+    const unlinkedSessionUser = this.toSessionUser({
+      ...user,
+      token: null,
+      moodleId: null,
+      roles,
+    });
+
     return {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       isLinked: false,
+      user: unlinkedSessionUser,
     };
   }
 
   async logout(userId: string) {
     await this.userService.updateUser(userId, { refreshToken: null });
+  }
+
+  async logoutByRefreshToken(refreshToken: string): Promise<boolean> {
+    const rtSecret = process.env.RT_SECRET;
+
+    if (!rtSecret || rtSecret === 'your-refresh-token-secret-key') {
+      return false;
+    }
+
+    let payload: { sub?: string };
+
+    try {
+      payload = await this.jwtService.verifyAsync<{ sub?: string }>(
+        refreshToken,
+        { secret: rtSecret },
+      );
+    } catch {
+      return false;
+    }
+
+    if (!payload?.sub) {
+      return false;
+    }
+
+    const user = await this.userService.findById(payload.sub);
+
+    if (!user?.refreshToken) {
+      return false;
+    }
+
+    const rtMatches = await bcrypt.compare(refreshToken, user.refreshToken);
+
+    if (!rtMatches) {
+      return false;
+    }
+
+    await this.userService.updateUser(user.id, { refreshToken: null });
+
+    return true;
   }
 
   async refreshTokens(userId: string, rt: string) {
@@ -351,13 +426,26 @@ export class AuthService {
       roles: user.roles,
     });
 
-    await this.updateRtHash(user.id, tokens.refresh_token);
+    await this.updateRtHash(user.id, tokens.refresh_token, user.refreshToken);
 
-    return tokens;
+    return {
+      ...tokens,
+      user: this.toSessionUser(user),
+    };
   }
 
-  async updateRtHash(userId: string, rt: string) {
+  async updateRtHash(userId: string, rt: string, expectedHash?: string) {
     const hash = await this.hashData(rt);
+
+    if (expectedHash !== undefined) {
+      if (
+        !(await this.userService.replaceRefreshHash(userId, expectedHash, hash))
+      ) {
+        throw new ForbiddenException('Access Denied');
+      }
+
+      return;
+    }
 
     await this.userService.updateUser(userId, { refreshToken: hash });
   }

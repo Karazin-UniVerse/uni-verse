@@ -17,13 +17,21 @@ export interface LinkMoodleRequest {
   password: string;
 }
 
+export interface SessionUser {
+  id: string;
+  email: string;
+  name: string | null;
+  roles: string[];
+  isLinked: boolean;
+}
+
 export interface AuthResponse {
-  access_token: string;
+  user: SessionUser;
 }
 
 export interface GoogleAuthResponse {
-  access_token: string;
   isLinked: boolean;
+  user: SessionUser;
 }
 
 export interface LogoutResponse {

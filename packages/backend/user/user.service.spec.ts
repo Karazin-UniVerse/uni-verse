@@ -20,6 +20,7 @@ describe('UserService', () => {
     create: jest.fn(),
     delete: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
   };
 
   const mockPrismaService = {
@@ -476,6 +477,64 @@ describe('UserService', () => {
       const token = await service.getUserTokenFromDB('unknown@karazin.ua');
 
       expect(token).toBeNull();
+    });
+  });
+
+  describe('replaceRefreshHash', () => {
+    it('returns true when Prisma updateMany atomically replaces a matching hash and false otherwise', async () => {
+      mockUserPrisma.updateMany.mockResolvedValueOnce({ count: 1 });
+
+      await expect(
+        service.replaceRefreshHash('user-1', 'old-hash', 'new-hash'),
+      ).resolves.toBe(true);
+      expect(mockUserPrisma.updateMany).toHaveBeenCalledWith({
+        where: { id: 'user-1', refreshToken: 'old-hash' },
+        data: { refreshToken: 'new-hash' },
+      });
+
+      mockUserPrisma.updateMany.mockResolvedValueOnce({ count: 0 });
+
+      await expect(
+        service.replaceRefreshHash('user-1', 'stale-hash', 'new-hash'),
+      ).resolves.toBe(false);
+    });
+
+    it('rethrows Prisma errors when user is absent from in-memory fallback', async () => {
+      mockUserPrisma.updateMany.mockRejectedValueOnce(
+        new Error('Database unreachable'),
+      );
+
+      await expect(
+        service.replaceRefreshHash('missing-user', 'old-hash', 'new-hash'),
+      ).rejects.toThrow('Database unreachable');
+    });
+
+    it('falls back to in-memory store when Prisma fails and enforces expected hash', async () => {
+      const offlineError = new Error('Database unreachable');
+
+      mockUserPrisma.create.mockRejectedValueOnce(offlineError);
+
+      const created = await service.createUser({
+        email: 'offline-rt@karazin.ua',
+      });
+
+      mockUserPrisma.updateMany.mockRejectedValueOnce(offlineError);
+      await expect(
+        service.replaceRefreshHash(created.id, 'wrong-hash', 'next-hash'),
+      ).resolves.toBe(false);
+
+      mockUserPrisma.update.mockRejectedValueOnce(offlineError);
+      await service.updateUser(created.id, { refreshToken: 'hash-1' });
+
+      mockUserPrisma.updateMany.mockRejectedValueOnce(offlineError);
+      await expect(
+        service.replaceRefreshHash(created.id, 'hash-1', 'hash-2'),
+      ).resolves.toBe(true);
+
+      mockUserPrisma.findUnique.mockRejectedValueOnce(offlineError);
+      await expect(service.findById(created.id)).resolves.toMatchObject({
+        refreshToken: 'hash-2',
+      });
     });
   });
 });

@@ -13,33 +13,13 @@ describe('auth utilities', () => {
 
   test('isLoggedIn checks session correctly', () => {
     const validStore = {
-      getItem: (key: string) => {
-        if (key === 'isLoggedIn') {
-          return 'true';
-        }
-
-        if (key === 'accessToken') {
-          return 'test-token';
-        }
-
-        return null;
-      },
+      getItem: (key: string) => (key === 'isLoggedIn' ? 'true' : null),
     };
 
     assert.strictEqual(isLoggedIn(validStore), true);
 
     const invalidStore = {
-      getItem: (key: string) => {
-        if (key === 'isLoggedIn') {
-          return 'false';
-        }
-
-        if (key === 'accessToken') {
-          return 'test-token';
-        }
-
-        return null;
-      },
+      getItem: (key: string) => (key === 'isLoggedIn' ? 'false' : null),
     };
 
     assert.strictEqual(isLoggedIn(invalidStore), false);

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { buildQueryString, authApi, moodleApi, ApiClient, getErrorMessage } from './api';
 import { resetRefreshPromiseForTests } from './api.request';
+import { clearUserSessionStorage, saveSessionUser } from './api.session';
 
 describe('UniHub API Service', () => {
   const originalFetch = global.fetch;
@@ -70,10 +71,17 @@ describe('UniHub API Service', () => {
   });
 
   describe('AuthApi', () => {
-    it('login should send POST to /auth/login and save tokens to localStorage', async () => {
+    const sampleSessionUser = {
+      id: 'user-1',
+      email: 'student@karazin.ua',
+      name: 'Test Student',
+      roles: ['MOODLE_STUDENT'],
+      isLinked: true,
+    };
+
+    it('login should send POST to /auth/login and save non-secret session metadata without storing accessToken', async () => {
       const mockResponseData = {
-        access_token: 'jwt-access-token-12345',
-        refresh_token: 'jwt-refresh-token-12345',
+        user: sampleSessionUser,
       };
 
       global.fetch = vi.fn().mockResolvedValue({
@@ -85,12 +93,14 @@ describe('UniHub API Service', () => {
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(response.data).toEqual(mockResponseData);
-      expect(mockStorage.accessToken).toBe('jwt-access-token-12345');
+      expect(mockStorage.accessToken).toBeUndefined();
+      expect(JSON.parse(mockStorage.sessionUser)).toEqual(sampleSessionUser);
       expect(mockStorage.isLoggedIn).toBe('true');
+      expect(mockStorage.userEmail).toBe('student@karazin.ua');
     });
 
-    it('logout should call /auth/logout and clear tokens from localStorage', async () => {
-      mockStorage.accessToken = 'jwt-token-to-remove';
+    it('logout should call /auth/logout and clear session metadata from localStorage', async () => {
+      mockStorage.sessionUser = JSON.stringify(sampleSessionUser);
       mockStorage.isLoggedIn = 'true';
 
       global.fetch = vi.fn().mockResolvedValue({
@@ -100,15 +110,16 @@ describe('UniHub API Service', () => {
 
       await authApi.logout();
 
+      expect(mockStorage.sessionUser).toBeUndefined();
       expect(mockStorage.accessToken).toBeUndefined();
       expect(mockStorage.isLoggedIn).toBeUndefined();
       expect(mockStorage.isMoodleLinked).toBeUndefined();
     });
 
-    it('loginWithGoogle should send POST to /auth/google with idToken', async () => {
+    it('loginWithGoogle should send POST to /auth/google with idToken and store sessionUser', async () => {
       const mockGoogleResponse = {
-        access_token: 'google-jwt-access-token',
         isLinked: true,
+        user: sampleSessionUser,
       };
 
       global.fetch = vi.fn().mockResolvedValue({
@@ -120,7 +131,8 @@ describe('UniHub API Service', () => {
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(response.data).toEqual(mockGoogleResponse);
-      expect(mockStorage.accessToken).toBe('google-jwt-access-token');
+      expect(mockStorage.accessToken).toBeUndefined();
+      expect(JSON.parse(mockStorage.sessionUser)).toEqual(sampleSessionUser);
       expect(mockStorage.isLoggedIn).toBe('true');
       expect(mockStorage.isMoodleLinked).toBe('true');
 
@@ -130,10 +142,11 @@ describe('UniHub API Service', () => {
       expect(call[1]?.body).toBe(JSON.stringify({ idToken: 'mock-id-token-abc' }));
     });
 
-    it('loginWithGoogle with isLinked: false should store token and mark isMoodleLinked as false', async () => {
+    it('loginWithGoogle with isLinked: false should store sessionUser and mark isMoodleLinked as false', async () => {
+      const unlinkedUser = { ...sampleSessionUser, isLinked: false };
       const mockGoogleResponse = {
-        access_token: 'unlinked-jwt-token',
         isLinked: false,
+        user: unlinkedUser,
       };
 
       global.fetch = vi.fn().mockResolvedValue({
@@ -144,7 +157,8 @@ describe('UniHub API Service', () => {
       const response = await authApi.loginWithGoogle('mock-id-token-unlinked');
 
       expect(response.data).toEqual(mockGoogleResponse);
-      expect(mockStorage.accessToken).toBe('unlinked-jwt-token');
+      expect(mockStorage.accessToken).toBeUndefined();
+      expect(JSON.parse(mockStorage.sessionUser)).toEqual(unlinkedUser);
       expect(mockStorage.isLoggedIn).toBeUndefined();
       expect(mockStorage.isMoodleLinked).toBe('false');
     });
@@ -184,10 +198,31 @@ describe('UniHub API Service', () => {
       expect(global.fetch).toHaveBeenCalledTimes(4);
     });
 
-    it('linkMoodleAccount should send POST to /auth/moodle/link with credentials', async () => {
+    it.each(['linkMoodleAccount', 'unlinkMoodleAccount'] as const)(
+      '%s discards responses belonging to a previous session',
+      async (method) => {
+        global.fetch = vi.fn().mockImplementation(async () => {
+          mockStorage.sessionRevision = 'new-tab-revision';
+
+          return { ok: true, json: async () => ({ user: sampleSessionUser, isLinked: true }) };
+        });
+        await expect(authApi[method]('student', 'password')).rejects.toThrow('Session changed');
+        expect(mockStorage.sessionUser).toBeUndefined();
+        expect(mockStorage.isMoodleLinked).toBeUndefined();
+      },
+    );
+
+    it('preserves local metadata when logout returns 401', async () => {
+      mockStorage.isLoggedIn = 'true';
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 401 });
+      await expect(authApi.logout()).rejects.toThrow('401');
+      expect(mockStorage.isLoggedIn).toBe('true');
+    });
+
+    it('linkMoodleAccount should send POST to /auth/moodle/link and store updated sessionUser', async () => {
       const mockLinkResponse = {
-        access_token: 'linked-jwt-token',
         isLinked: true,
+        user: sampleSessionUser,
       };
 
       global.fetch = vi.fn().mockResolvedValue({
@@ -198,7 +233,8 @@ describe('UniHub API Service', () => {
       const response = await authApi.linkMoodleAccount('moodle.student', 'SecretPassword');
 
       expect(response.data).toEqual(mockLinkResponse);
-      expect(mockStorage.accessToken).toBe('linked-jwt-token');
+      expect(mockStorage.accessToken).toBeUndefined();
+      expect(JSON.parse(mockStorage.sessionUser)).toEqual(sampleSessionUser);
       expect(mockStorage.isLoggedIn).toBe('true');
       expect(mockStorage.isMoodleLinked).toBe('true');
 
@@ -340,24 +376,38 @@ describe('UniHub API Service', () => {
   });
 
   describe('Token Refresh and Session Handling', () => {
-    it('automatically refreshes token on 401 and retries original request with new access token', async () => {
-      mockStorage.accessToken = 'expired-token';
+    const refreshedSessionUser = {
+      id: 'user-1',
+      email: 'student@karazin.ua',
+      name: 'Test Student',
+      roles: ['MOODLE_STUDENT'],
+      isLinked: true,
+    };
+
+    it('automatically refreshes cookie session on 401 and retries original request', async () => {
+      mockStorage.isLoggedIn = 'true';
 
       const mockCourses = [{ id: 101, fullname: 'Основи програмування' }];
+      let cookieRefreshed = false;
 
       global.fetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+        expect(init?.credentials).toBe('include');
+        expect((init?.headers as Record<string, string>)?.['X-Requested-With']).toBe(
+          'XMLHttpRequest',
+        );
+
         if (url.includes('/auth/refresh')) {
+          cookieRefreshed = true;
+
           return Promise.resolve({
             ok: true,
             status: 200,
-            json: async () => ({ access_token: 'fresh-token' }),
+            json: async () => ({ user: refreshedSessionUser }),
           } as Response);
         }
 
         if (url.includes('/moodle/courses')) {
-          const authHeader = (init?.headers as Record<string, string>)?.Authorization;
-
-          if (authHeader === 'Bearer fresh-token') {
+          if (cookieRefreshed) {
             return Promise.resolve({
               ok: true,
               status: 200,
@@ -379,7 +429,8 @@ describe('UniHub API Service', () => {
       const response = await moodleApi.getCourses();
 
       expect(response.data).toEqual(mockCourses);
-      expect(mockStorage.accessToken).toBe('fresh-token');
+      expect(mockStorage.accessToken).toBeUndefined();
+      expect(JSON.parse(mockStorage.sessionUser)).toEqual(refreshedSessionUser);
 
       const fetchCalls = vi.mocked(global.fetch).mock.calls;
 
@@ -387,31 +438,28 @@ describe('UniHub API Service', () => {
       expect(fetchCalls[0][0]).toContain('/moodle/courses');
       expect(fetchCalls[1][0]).toContain('/auth/refresh');
       expect(fetchCalls[2][0]).toContain('/moodle/courses');
-      expect((fetchCalls[2][1]?.headers as Record<string, string>)?.Authorization).toBe(
-        'Bearer fresh-token',
-      );
     });
 
     it('deduplicates concurrent 401 requests to a single /auth/refresh call', async () => {
-      mockStorage.accessToken = 'expired-token';
+      mockStorage.isLoggedIn = 'true';
 
       let refreshCallCount = 0;
+      let cookieRefreshed = false;
 
-      global.fetch = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+      global.fetch = vi.fn().mockImplementation(async (url: string) => {
         if (url.includes('/auth/refresh')) {
           refreshCallCount += 1;
           await new Promise((resolve) => setTimeout(resolve, 20));
+          cookieRefreshed = true;
 
           return {
             ok: true,
             status: 200,
-            json: async () => ({ access_token: 'concurrent-fresh-token' }),
+            json: async () => ({ user: refreshedSessionUser }),
           } as Response;
         }
 
-        const authHeader = (init?.headers as Record<string, string>)?.Authorization;
-
-        if (authHeader === 'Bearer concurrent-fresh-token') {
+        if (cookieRefreshed) {
           return {
             ok: true,
             status: 200,
@@ -435,12 +483,11 @@ describe('UniHub API Service', () => {
       expect(coursesRes.data).toEqual([]);
       expect(gradesRes.data).toEqual([]);
       expect(refreshCallCount).toBe(1);
-      expect(mockStorage.accessToken).toBe('concurrent-fresh-token');
     });
 
     it('clears session storage and throws 401 when /auth/refresh returns 401', async () => {
-      mockStorage.accessToken = 'expired-token';
       mockStorage.isLoggedIn = 'true';
+      mockStorage.sessionUser = JSON.stringify(refreshedSessionUser);
 
       global.fetch = vi.fn().mockImplementation((url: string) => {
         if (url.includes('/auth/refresh')) {
@@ -461,13 +508,13 @@ describe('UniHub API Service', () => {
       });
 
       await expect(moodleApi.getCourses()).rejects.toThrow('Refresh token expired (HTTP 401)');
-      expect(mockStorage.accessToken).toBeUndefined();
+      expect(mockStorage.sessionUser).toBeUndefined();
       expect(mockStorage.isLoggedIn).toBeUndefined();
     });
 
     it('clears session storage and throws 403 when /auth/refresh returns 403 Forbidden', async () => {
-      mockStorage.accessToken = 'invalidated-token';
       mockStorage.isLoggedIn = 'true';
+      mockStorage.sessionUser = JSON.stringify(refreshedSessionUser);
 
       global.fetch = vi.fn().mockImplementation((url: string) => {
         if (url.includes('/auth/refresh')) {
@@ -488,29 +535,55 @@ describe('UniHub API Service', () => {
       });
 
       await expect(moodleApi.getCourses()).rejects.toThrow('Refresh token revoked (HTTP 403)');
-      expect(mockStorage.accessToken).toBeUndefined();
+      expect(mockStorage.sessionUser).toBeUndefined();
       expect(mockStorage.isLoggedIn).toBeUndefined();
     });
 
-    it('reuses refreshed token from storage when a trailing 401 request completes after refresh', async () => {
-      mockStorage.accessToken = 'expired-token';
+    it('reuses refreshed cookie session when a trailing 401 request completes after refresh', async () => {
+      mockStorage.isLoggedIn = 'true';
 
       let refreshCallCount = 0;
+      let gradesCallCount = 0;
+      let releaseTrailingGrades401!: () => void;
+      const trailingGrades401Gate = new Promise<void>((resolve) => {
+        releaseTrailingGrades401 = resolve;
+      });
+      let cookieRefreshed = false;
 
-      global.fetch = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+      global.fetch = vi.fn().mockImplementation(async (url: string) => {
         if (url.includes('/auth/refresh')) {
           refreshCallCount += 1;
+          cookieRefreshed = true;
 
           return {
             ok: true,
             status: 200,
-            json: async () => ({ access_token: 'trailing-fresh-token' }),
+            json: async () => ({ user: refreshedSessionUser }),
           } as Response;
         }
 
-        const authHeader = (init?.headers as Record<string, string>)?.Authorization;
+        if (url.includes('/moodle/grades')) {
+          gradesCallCount += 1;
 
-        if (authHeader === 'Bearer trailing-fresh-token') {
+          if (gradesCallCount === 1) {
+            await trailingGrades401Gate;
+
+            return {
+              ok: false,
+              status: 401,
+              statusText: 'Unauthorized',
+              json: async () => ({ statusCode: 401, message: 'Unauthorized' }),
+            } as Response;
+          }
+
+          return {
+            ok: true,
+            status: 200,
+            json: async () => [],
+          } as Response;
+        }
+
+        if (cookieRefreshed) {
           return {
             ok: true,
             status: 200,
@@ -526,21 +599,125 @@ describe('UniHub API Service', () => {
         } as Response;
       });
 
-      // First request refreshes the token to 'trailing-fresh-token'
-      await moodleApi.getCourses();
-      expect(refreshCallCount).toBe(1);
-      expect(mockStorage.accessToken).toBe('trailing-fresh-token');
+      // Start both requests before refresh completes so trailing request enters with stale epoch
+      const coursesPromise = moodleApi.getCourses();
+      const trailingGradesPromise = moodleApi.getGrades();
 
-      // Now a trailing in-flight request arrives whose initial attempt carried 'expired-token'
-      const trailingResult = await moodleApi.getGrades();
+      await coursesPromise;
+      expect(refreshCallCount).toBe(1);
+
+      // Now let the trailing request receive its initial 401 after refresh already bumped refreshEpoch
+      releaseTrailingGrades401();
+
+      const trailingResult = await trailingGradesPromise;
 
       expect(trailingResult.data).toEqual([]);
-      // Should NOT have triggered a second refresh call
+      expect(gradesCallCount).toBe(2);
       expect(refreshCallCount).toBe(1);
     });
 
+    it('does not repopulate session or replay request if user logs out while refresh is in flight', async () => {
+      mockStorage.isLoggedIn = 'true';
+      mockStorage.sessionUser = JSON.stringify(refreshedSessionUser);
+
+      let coursesCallCount = 0;
+      let releaseRefresh!: () => void;
+      const refreshGate = new Promise<void>((resolve) => {
+        releaseRefresh = resolve;
+      });
+      let refreshStarted!: () => void;
+      const refreshStartedPromise = new Promise<void>((resolve) => {
+        refreshStarted = resolve;
+      });
+
+      global.fetch = vi.fn().mockImplementation(async (url: string) => {
+        if (url.includes('/auth/refresh')) {
+          refreshStarted();
+          await refreshGate;
+
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ user: refreshedSessionUser }),
+          } as Response;
+        }
+
+        coursesCallCount += 1;
+
+        return {
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized',
+          json: async () => ({ statusCode: 401, message: 'Unauthorized' }),
+        } as Response;
+      });
+
+      const coursesPromise = moodleApi.getCourses();
+
+      await refreshStartedPromise;
+      clearUserSessionStorage();
+      releaseRefresh();
+
+      await expect(coursesPromise).rejects.toThrow('Session changed during token refresh');
+      expect(mockStorage.sessionUser).toBeUndefined();
+      expect(coursesCallCount).toBe(1);
+    });
+
+    it('preserves a replacement session when an in-flight refresh is rejected', async () => {
+      mockStorage.isLoggedIn = 'true';
+      global.fetch = vi.fn().mockImplementation(async (url: string) => {
+        if (url.endsWith('/auth/refresh')) {
+          mockStorage.sessionRevision = 'another-tab-login';
+          mockStorage.sessionUser = JSON.stringify(refreshedSessionUser);
+        }
+
+        return { ok: false, status: 401, json: async () => ({ message: 'Unauthorized' }) };
+      });
+
+      await expect(moodleApi.getCourses()).rejects.toThrow(
+        /^Session changed during token refresh$/,
+      );
+      expect(JSON.parse(mockStorage.sessionUser)).toEqual(refreshedSessionUser);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not wipe a newly logged-in user session when a stale 401 fails', async () => {
+      const userA = { ...refreshedSessionUser, id: 'user-a', email: 'a@karazin.ua' };
+      const userB = { ...refreshedSessionUser, id: 'user-b', email: 'b@karazin.ua' };
+
+      saveSessionUser(userA);
+      mockStorage.isLoggedIn = 'true';
+
+      let releaseStaleResponse!: () => void;
+      const staleGate = new Promise<void>((resolve) => {
+        releaseStaleResponse = resolve;
+      });
+
+      global.fetch = vi.fn().mockImplementation(async () => {
+        await staleGate;
+
+        return {
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized',
+          json: async () => ({ statusCode: 401, message: 'Unauthorized' }),
+        } as Response;
+      });
+
+      const staleRequest = moodleApi.getCourses();
+
+      // Another tab starts a session before storage events reach this tab.
+      mockStorage.sessionRevision = 'new-tab-revision';
+      saveSessionUser(userB);
+      mockStorage.isLoggedIn = 'true';
+      releaseStaleResponse();
+
+      await expect(staleRequest).rejects.toThrow('Session changed during request');
+      expect(JSON.parse(mockStorage.sessionUser)).toEqual(userB);
+    });
+
     it('does not refresh token when skipAuthRefresh option is passed', async () => {
-      mockStorage.accessToken = 'expired-token';
+      mockStorage.isLoggedIn = 'true';
 
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
@@ -567,7 +744,7 @@ describe('UniHub API Service', () => {
     });
 
     it('does not clear session storage when /auth/refresh fails due to network error', async () => {
-      mockStorage.accessToken = 'valid-token-before-offline';
+      mockStorage.sessionUser = JSON.stringify(refreshedSessionUser);
       mockStorage.isLoggedIn = 'true';
 
       global.fetch = vi.fn().mockImplementation((url: string) => {
@@ -584,7 +761,7 @@ describe('UniHub API Service', () => {
       });
 
       await expect(moodleApi.getCourses()).rejects.toThrow('Network offline');
-      expect(mockStorage.accessToken).toBe('valid-token-before-offline');
+      expect(JSON.parse(mockStorage.sessionUser)).toEqual(refreshedSessionUser);
       expect(mockStorage.isLoggedIn).toBe('true');
     });
 
@@ -606,7 +783,6 @@ describe('UniHub API Service', () => {
     });
 
     it('downloads Moodle attachments as blobs through the authenticated backend proxy', async () => {
-      mockStorage.accessToken = 'jwt-access-token';
       const expectedBlob = new Blob(['pdf-content'], { type: 'application/pdf' });
 
       global.fetch = vi.fn().mockResolvedValue({
@@ -623,11 +799,15 @@ describe('UniHub API Service', () => {
         expect.stringContaining(`/moodle/files/download?url=${encodeURIComponent(fileUrl)}`),
         expect.objectContaining({
           headers: expect.objectContaining({
-            Authorization: 'Bearer jwt-access-token',
+            'X-Requested-With': 'XMLHttpRequest',
           }),
           credentials: 'include',
         }),
       );
+
+      const [, init] = vi.mocked(global.fetch).mock.calls[0];
+
+      expect((init?.headers as Record<string, string> | undefined)?.Authorization).toBeUndefined();
     });
   });
 

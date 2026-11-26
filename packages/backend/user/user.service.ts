@@ -140,6 +140,39 @@ export class UserService {
     }
   }
 
+  async replaceRefreshHash(
+    id: string,
+    expected: string,
+    next: string,
+  ): Promise<boolean> {
+    try {
+      const result = await this.prisma.user.updateMany({
+        where: { id, refreshToken: expected },
+        data: { refreshToken: next },
+      });
+
+      return result.count === 1;
+    } catch (error) {
+      const user = this.inMemoryUsers.get(id);
+
+      if (!user) {
+        throw error;
+      }
+
+      if (user.refreshToken !== expected) {
+        return false;
+      }
+
+      this.inMemoryUsers.set(id, {
+        ...user,
+        refreshToken: next,
+        updatedAt: new Date(),
+      });
+
+      return true;
+    }
+  }
+
   async updateUser(
     id: string,
     updateUserDto: Partial<

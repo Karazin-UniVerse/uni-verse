@@ -7,6 +7,17 @@ import { AppModule } from '../app.module';
 import { GetCreds } from '../utils/get-creds';
 import { PrismaService } from '../prisma/prisma.service';
 
+function extractCookiePair(
+  rawCookies: string[] | undefined,
+  cookieName: string,
+): string | undefined {
+  const match = rawCookies?.find((cookie) =>
+    cookie.startsWith(`${cookieName}=`),
+  );
+
+  return match?.split(';')[0];
+}
+
 describe('AuthController (HTTP Integration / E2E)', () => {
   let app: INestApplication<App>;
 
@@ -133,7 +144,7 @@ describe('AuthController (HTTP Integration / E2E)', () => {
   });
 
   describe('POST /auth/register', () => {
-    it('should successfully register a new user and set refreshToken cookie', async () => {
+    it('should register a new user, set httpOnly accessToken & refreshToken cookies, and omit raw tokens from JSON', async () => {
       const res = await request(app.getHttpServer())
         .post('/auth/register')
         .send({
@@ -142,15 +153,28 @@ describe('AuthController (HTTP Integration / E2E)', () => {
         })
         .expect(201);
 
-      expect(res.body).toHaveProperty('access_token');
-      expect(typeof res.body.access_token).toBe('string');
+      expect(res.body.access_token).toBeUndefined();
+      expect(res.body.user).toEqual(
+        expect.objectContaining({
+          email: 'newstudent@karazin.ua',
+          isLinked: true,
+        }),
+      );
 
       const cookies = res.headers['set-cookie'] as unknown as
         string[] | undefined;
 
-      expect(cookies).toBeDefined();
       expect(
-        cookies?.some((cookie) => cookie.startsWith('refreshToken=')),
+        cookies?.some(
+          (cookie) =>
+            cookie.startsWith('accessToken=') && cookie.includes('HttpOnly'),
+        ),
+      ).toBe(true);
+      expect(
+        cookies?.some(
+          (cookie) =>
+            cookie.startsWith('refreshToken=') && cookie.includes('HttpOnly'),
+        ),
       ).toBe(true);
     });
 
@@ -188,7 +212,7 @@ describe('AuthController (HTTP Integration / E2E)', () => {
   });
 
   describe('POST /auth/login', () => {
-    it('should log in existing user and return access_token with cookie', async () => {
+    it('should log in existing user and set both httpOnly cookies', async () => {
       await request(app.getHttpServer())
         .post('/auth/register')
         .send({
@@ -205,11 +229,15 @@ describe('AuthController (HTTP Integration / E2E)', () => {
         })
         .expect(200);
 
-      expect(res.body).toHaveProperty('access_token');
+      expect(res.body.access_token).toBeUndefined();
+      expect(res.body.user.email).toBe('loginuser@karazin.ua');
 
       const cookies = res.headers['set-cookie'] as unknown as
         string[] | undefined;
 
+      expect(cookies?.some((cookie) => cookie.startsWith('accessToken='))).toBe(
+        true,
+      );
       expect(
         cookies?.some((cookie) => cookie.startsWith('refreshToken=')),
       ).toBe(true);
@@ -240,8 +268,8 @@ describe('AuthController (HTTP Integration / E2E)', () => {
     });
   });
 
-  describe('POST /auth/refresh and POST /auth/logout flow', () => {
-    it('should perform full token refresh and logout lifecycle', async () => {
+  describe('GET /auth/me, POST /auth/refresh, CSRF protection, and POST /auth/logout flow', () => {
+    it('should authenticate GET /auth/me via httpOnly cookie, block CSRF without header/origin, refresh, and logout', async () => {
       const registerRes = await request(app.getHttpServer())
         .post('/auth/register')
         .send({
@@ -250,33 +278,79 @@ describe('AuthController (HTTP Integration / E2E)', () => {
         })
         .expect(201);
 
-      expect(registerRes.body.access_token).toBeDefined();
-      const rawCookies = registerRes.headers[
-        'set-cookie'
-      ] as unknown as string[];
-      const refreshCookie = rawCookies.find((cookie) =>
-        cookie.startsWith('refreshToken='),
-      );
+      const rawCookies = registerRes.headers['set-cookie'] as unknown as
+        string[] | undefined;
+      const accessCookie = extractCookiePair(rawCookies, 'accessToken');
+      const refreshCookie = extractCookiePair(rawCookies, 'refreshToken');
 
+      expect(accessCookie).toBeDefined();
       expect(refreshCookie).toBeDefined();
 
+      // GET /auth/me works with httpOnly accessToken cookie
+      const meRes = await request(app.getHttpServer())
+        .get('/auth/me')
+        .set('Cookie', [accessCookie!])
+        .expect(200);
+
+      expect(meRes.body).toEqual(
+        expect.objectContaining({
+          email: 'sessionuser@karazin.ua',
+          isLinked: true,
+        }),
+      );
+      expect(meRes.body.password).toBeUndefined();
+      expect(meRes.body.token).toBeUndefined();
+
+      // Cookie-authenticated POST without X-Requested-With is blocked by CSRF guard
+      await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .set('Cookie', [refreshCookie!])
+        .expect(403);
+
+      // Cookie-authenticated POST from untrusted Origin is blocked by CSRF guard
+      await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .set('Origin', 'https://evil.example')
+        .set('X-Requested-With', 'XMLHttpRequest')
+        .set('Cookie', [refreshCookie!])
+        .expect(403);
+
+      // Valid CSRF header rotates both cookies
       const refreshRes = await request(app.getHttpServer())
         .post('/auth/refresh')
+        .set('X-Requested-With', 'XMLHttpRequest')
         .set('Cookie', [refreshCookie!])
         .expect(200);
 
-      expect(refreshRes.body).toHaveProperty('access_token');
-      expect(typeof refreshRes.body.access_token).toBe('string');
+      expect(refreshRes.body.access_token).toBeUndefined();
+      expect(refreshRes.body.user.email).toBe('sessionuser@karazin.ua');
 
-      const newAccessToken = refreshRes.body.access_token;
+      const rotatedCookies = refreshRes.headers['set-cookie'] as unknown as
+        string[] | undefined;
+      const rotatedAccessCookie = extractCookiePair(
+        rotatedCookies,
+        'accessToken',
+      );
 
-      // Logout with the refreshed access token
+      expect(rotatedAccessCookie).toBeDefined();
+
+      // Logout via rotated cookie + CSRF header clears cookies
       const logoutRes = await request(app.getHttpServer())
         .post('/auth/logout')
-        .set('Authorization', `Bearer ${newAccessToken}`)
+        .set('X-Requested-With', 'XMLHttpRequest')
+        .set('Cookie', [rotatedAccessCookie!])
         .expect(200);
 
       expect(logoutRes.body.message).toContain('Logged out');
+      const clearedCookies = logoutRes.headers['set-cookie'] as unknown as
+        string[] | undefined;
+
+      expect(
+        clearedCookies?.some((cookie) => cookie.startsWith('accessToken=;')),
+      ).toBe(true);
+      expect(
+        clearedCookies?.some((cookie) => cookie.startsWith('refreshToken=;')),
+      ).toBe(true);
     });
 
     it('should reject refresh without cookie', async () => {
@@ -287,12 +361,53 @@ describe('AuthController (HTTP Integration / E2E)', () => {
       expect(res.status).toBe(401);
     });
 
-    it('should reject logout without Bearer token', async () => {
+    it('should reject logout without cookie or Bearer token', async () => {
       const res = await request(app.getHttpServer())
         .post('/auth/logout')
         .expect(401);
 
       expect(res.status).toBe(401);
+    });
+
+    it('should revoke DB refresh token and clear cookies on logout when accessToken is expired or absent', async () => {
+      const loginRes = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: 'expiredlogout@karazin.ua',
+          password: 'ValidPassword123!',
+        })
+        .expect(200);
+
+      const cookies = loginRes.headers['set-cookie'] as unknown as
+        string[] | undefined;
+      const refreshCookie = extractCookiePair(cookies, 'refreshToken');
+
+      expect(refreshCookie).toBeDefined();
+
+      // Simulate >15min idle logout: accessToken is missing/expired, refreshToken is still valid
+      const logoutRes = await request(app.getHttpServer())
+        .post('/auth/logout')
+        .set('X-Requested-With', 'XMLHttpRequest')
+        .set('Cookie', ['accessToken=expired.invalid.jwt', refreshCookie!])
+        .expect(200);
+
+      expect(logoutRes.body.message).toContain('Logged out');
+      const clearedCookies = logoutRes.headers['set-cookie'] as unknown as
+        string[] | undefined;
+
+      expect(
+        clearedCookies?.some((cookie) => cookie.startsWith('accessToken=;')),
+      ).toBe(true);
+      expect(
+        clearedCookies?.some((cookie) => cookie.startsWith('refreshToken=;')),
+      ).toBe(true);
+
+      // Replaying the revoked refreshToken must now be rejected
+      await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .set('X-Requested-With', 'XMLHttpRequest')
+        .set('Cookie', [refreshCookie!])
+        .expect(403);
     });
   });
 });

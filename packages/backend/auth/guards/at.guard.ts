@@ -25,8 +25,11 @@ export class AtGuard extends AuthGuard('jwt') {
     if (isPublic) {
       const request = context.switchToHttp?.()?.getRequest?.();
       const authHeader = request?.headers?.authorization;
+      const accessCookie = (
+        request?.cookies as Record<string, unknown> | undefined
+      )?.accessToken;
 
-      if (!authHeader) {
+      if (!authHeader && !accessCookie) {
         return true;
       }
     }

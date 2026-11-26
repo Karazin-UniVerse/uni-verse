@@ -2,7 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient } from '@tanstack/react-query';
 import { moodleKeys } from '@uni-hub/queries/moodle/queryKeys';
 import { opportunityKeys } from '@uni-hub/views/dashboard/tabs/opportunities/queryKeys';
-import { USER_SESSION_STORAGE_KEYS, clearUserSessionStorage, endSession } from './api.session';
+import {
+  USER_SESSION_STORAGE_KEYS,
+  clearUserSessionStorage,
+  endSession,
+  getSessionGeneration,
+  getSessionUserSnapshot,
+  readSessionUser,
+  saveSessionUser,
+  startSession,
+  subscribeSessionUser,
+} from './api.session';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
 
 const storage: Record<string, string> = {};
@@ -83,5 +93,57 @@ describe('endSession', () => {
 
     expect(storage.accessToken).toBeUndefined();
     expect(queryClient.getQueryCache().getAll()).toEqual([]);
+  });
+});
+
+describe('sessionUser helpers', () => {
+  it('saves, reads, and caches sessionUser snapshots while notifying subscribers', () => {
+    const listener = vi.fn();
+    const unsubscribe = subscribeSessionUser(listener);
+    const generationBefore = getSessionGeneration();
+    const user = {
+      id: 'user-1',
+      email: 'student@karazin.ua',
+      name: 'Student',
+      roles: ['MOODLE_STUDENT'],
+      isLinked: true,
+    };
+
+    startSession(user);
+    const activeGeneration = getSessionGeneration();
+
+    expect(activeGeneration).not.toBe(generationBefore);
+
+    expect(readSessionUser()).toEqual(user);
+    expect(storage.userEmail).toBe('student@karazin.ua');
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    const firstSnapshot = getSessionUserSnapshot();
+    const secondSnapshot = getSessionUserSnapshot();
+
+    expect(firstSnapshot).toEqual(user);
+    expect(secondSnapshot).toBe(firstSnapshot);
+
+    // Metadata writes preserve ownership
+    saveSessionUser({ ...user, name: 'Updated' });
+    expect(getSessionGeneration()).toBe(activeGeneration);
+    expect(listener).toHaveBeenCalledTimes(2);
+
+    clearUserSessionStorage();
+    expect(getSessionGeneration()).not.toBe(activeGeneration);
+    expect(getSessionUserSnapshot()).toBeNull();
+    expect(listener).toHaveBeenCalledTimes(3);
+
+    unsubscribe();
+  });
+
+  it('returns null from readSessionUser on missing, invalid, or incomplete JSON', () => {
+    expect(readSessionUser()).toBeNull();
+
+    storage.sessionUser = 'not-json';
+    expect(readSessionUser()).toBeNull();
+
+    storage.sessionUser = JSON.stringify({ email: 'missing-id@karazin.ua' });
+    expect(readSessionUser()).toBeNull();
   });
 });

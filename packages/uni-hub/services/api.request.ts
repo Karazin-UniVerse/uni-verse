@@ -1,28 +1,18 @@
 import { RESPONSE_CODES } from '@core/constants/response-codes';
 import { AUTH_ROUTES } from '@core/constants/routes';
+import type { AuthResponse } from '@core/types/auth';
 import { safeStorage, API_BASE_URL } from './api.storage';
-import { clearUserSessionStorage } from './api.session';
+import {
+  assertSessionGeneration,
+  clearUserSessionStorage,
+  getSessionGeneration,
+  readSessionUser,
+  saveSessionUser,
+} from './api.session';
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 const DEFAULT_RETRIES = 2;
 const RETRY_DELAY_FACTOR_MS = 500;
-
-function isSecureOrLoopback(targetUrl: string): boolean {
-  try {
-    const isBrowserEnv = typeof window !== 'undefined';
-    const fallbackOrigin = isBrowserEnv ? window.location.origin : 'http://localhost';
-    const parsed = new URL(targetUrl, fallbackOrigin);
-
-    return (
-      parsed.protocol === 'https:' ||
-      parsed.hostname === 'localhost' ||
-      parsed.hostname === '127.0.0.1' ||
-      parsed.hostname === '::1'
-    );
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Builds a query string from a parameters dictionary, omitting undefined, null, or empty string fields.
@@ -125,16 +115,20 @@ async function executeAttempt({
   }
 }
 
-let refreshPromise: Promise<string> | null = null;
+let refreshPromise: Promise<void> | null = null;
+let refreshEpoch = 0;
 
 export function resetRefreshPromiseForTests(): void {
   refreshPromise = null;
+  refreshEpoch = 0;
 }
 
-async function refreshAccessToken(): Promise<string> {
+async function refreshAccessToken(): Promise<void> {
   if (refreshPromise) {
     return refreshPromise;
   }
+
+  const startGeneration = getSessionGeneration();
 
   refreshPromise = (async () => {
     const controller = new AbortController();
@@ -146,12 +140,17 @@ async function refreshAccessToken(): Promise<string> {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
         },
         credentials: 'include',
         signal: controller.signal,
       });
 
       if (!response.ok) {
+        const errorDetail = await buildHttpErrorMessage(response);
+
+        assertSessionGeneration(startGeneration, 'token refresh');
+
         if (
           response.status === RESPONSE_CODES.UNAUTHORIZED ||
           response.status === RESPONSE_CODES.FORBIDDEN
@@ -159,22 +158,23 @@ async function refreshAccessToken(): Promise<string> {
           clearUserSessionStorage();
         }
 
-        const errorDetail = await buildHttpErrorMessage(response);
-
         throw new Error(errorDetail);
       }
 
-      const data = (await response.json()) as { access_token?: string };
+      const data = (await response.json()) as Partial<AuthResponse>;
 
-      if (!data.access_token) {
+      assertSessionGeneration(startGeneration, 'token refresh');
+
+      if (!data.user) {
         clearUserSessionStorage();
 
-        throw new Error('Refresh response missing access token');
+        throw new Error(
+          `Refresh response missing user session (HTTP ${RESPONSE_CODES.UNAUTHORIZED})`,
+        );
       }
 
-      safeStorage.setItem('accessToken', data.access_token);
-
-      return data.access_token;
+      saveSessionUser(data.user);
+      refreshEpoch += 1;
     } finally {
       clearTimeout(timeoutId);
       refreshPromise = null;
@@ -200,7 +200,7 @@ function isRefreshCandidate(endpoint: string, options: RequestOptions): boolean 
     return false;
   }
 
-  return Boolean(safeStorage.getItem('accessToken'));
+  return safeStorage.getItem('isLoggedIn') === 'true' || Boolean(readSessionUser());
 }
 
 export type RequestOptions = RequestInit & {
@@ -216,8 +216,34 @@ type ExecuteRequestParams<T> = {
   headers: Record<string, string>;
   timeoutMs: number;
   requestOptions: RequestOptions;
+  attemptGeneration: string;
   parseResponse?: (response: Response) => Promise<T>;
 };
+
+async function throwHttpError(response: Response, attemptGeneration: string): Promise<never> {
+  const errorDetail = await buildHttpErrorMessage(response);
+
+  assertSessionGeneration(attemptGeneration);
+
+  if (response.status === RESPONSE_CODES.UNAUTHORIZED) {
+    clearUserSessionStorage();
+  }
+
+  throw new Error(errorDetail);
+}
+
+async function ensureFreshSessionForRetry(
+  attemptEpoch: number,
+  attemptGeneration: string,
+): Promise<void> {
+  assertSessionGeneration(attemptGeneration);
+
+  if (attemptEpoch === refreshEpoch) {
+    await refreshAccessToken();
+  }
+
+  assertSessionGeneration(attemptGeneration);
+}
 
 async function executeRequestWithRefresh<T>({
   endpoint,
@@ -226,10 +252,14 @@ async function executeRequestWithRefresh<T>({
   headers,
   timeoutMs,
   requestOptions,
+  attemptGeneration,
   parseResponse,
 }: ExecuteRequestParams<T>): Promise<{ data: T }> {
+  const attemptEpoch = refreshEpoch;
   const parse =
     parseResponse ?? ((response: Response): Promise<T> => response.json() as Promise<T>);
+
+  assertSessionGeneration(attemptGeneration);
   const initialResponse = await executeAttempt({ url, options, headers, timeoutMs });
 
   if (initialResponse.ok) {
@@ -239,52 +269,32 @@ async function executeRequestWithRefresh<T>({
   }
 
   if (
-    initialResponse.status === RESPONSE_CODES.UNAUTHORIZED &&
-    isRefreshCandidate(endpoint, requestOptions)
+    initialResponse.status !== RESPONSE_CODES.UNAUTHORIZED ||
+    !isRefreshCandidate(endpoint, requestOptions)
   ) {
-    const storedToken = safeStorage.getItem('accessToken');
-    const sentToken = headers.Authorization?.replace('Bearer ', '');
-
-    const newToken =
-      storedToken && storedToken !== sentToken ? storedToken : await refreshAccessToken();
-
-    const retryHeaders: Record<string, string> = {
-      ...headers,
-    };
-
-    if (isSecureOrLoopback(url)) {
-      retryHeaders.Authorization = `Bearer ${newToken}`;
+    if (endpoint === `/auth/${AUTH_ROUTES.LOGOUT}`) {
+      throw new Error(await buildHttpErrorMessage(initialResponse));
     }
 
-    const retryResponse = await executeAttempt({
-      url,
-      options,
-      headers: retryHeaders,
-      timeoutMs,
-    });
-
-    if (!retryResponse.ok) {
-      if (retryResponse.status === RESPONSE_CODES.UNAUTHORIZED) {
-        clearUserSessionStorage();
-      }
-
-      const retryErrorDetail = await buildHttpErrorMessage(retryResponse);
-
-      throw new Error(retryErrorDetail);
-    }
-
-    const retryData = await parse(retryResponse);
-
-    return { data: retryData };
+    return throwHttpError(initialResponse, attemptGeneration);
   }
 
-  if (initialResponse.status === RESPONSE_CODES.UNAUTHORIZED) {
-    clearUserSessionStorage();
+  await ensureFreshSessionForRetry(attemptEpoch, attemptGeneration);
+
+  const retryResponse = await executeAttempt({
+    url,
+    options,
+    headers,
+    timeoutMs,
+  });
+
+  if (!retryResponse.ok) {
+    return throwHttpError(retryResponse, attemptGeneration);
   }
 
-  const errorDetail = await buildHttpErrorMessage(initialResponse);
+  const retryData = await parse(retryResponse);
 
-  throw new Error(errorDetail);
+  return { data: retryData };
 }
 
 async function executeRequest<T>(
@@ -299,19 +309,13 @@ async function executeRequest<T>(
   } = requestOptions;
   const url = `${API_BASE_URL}${endpoint}`;
 
-  const buildAttemptHeaders = (): Record<string, string> => {
-    const token = safeStorage.getItem('accessToken');
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...(options.headers as Record<string, string>),
-    };
+  const buildAttemptHeaders = (): Record<string, string> => ({
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+    ...(options.headers as Record<string, string>),
+  });
 
-    if (token && isSecureOrLoopback(url)) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
-    return headers;
-  };
+  const attemptGeneration = getSessionGeneration();
 
   const attemptRequest = async (currentAttempt: number): Promise<{ data: T }> => {
     try {
@@ -324,6 +328,7 @@ async function executeRequest<T>(
         headers,
         timeoutMs,
         requestOptions,
+        attemptGeneration,
         parseResponse,
       });
     } catch (error) {
@@ -334,7 +339,12 @@ async function executeRequest<T>(
           error.message.includes(`HTTP error ${RESPONSE_CODES.FORBIDDEN}`) ||
           error.message.includes(`(HTTP ${RESPONSE_CODES.FORBIDDEN})`));
 
-      if (isUnauthorized || options.signal?.aborted || currentAttempt >= retries) {
+      if (
+        attemptGeneration !== getSessionGeneration() ||
+        isUnauthorized ||
+        options.signal?.aborted ||
+        currentAttempt >= retries
+      ) {
         throw error;
       }
 

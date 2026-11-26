@@ -1,6 +1,6 @@
 export { RegisterDto } from './register.dto';
 export { LoginDto } from './login.dto';
-export { AuthResponseDto } from './auth-response.dto';
+export { AuthResponseDto, SessionUserDto } from './auth-response.dto';
 export { LogoutResponseDto } from './logout-response.dto';
 export { GoogleAuthDto } from './google-auth.dto';
 export { LinkMoodleDto } from './link-moodle.dto';

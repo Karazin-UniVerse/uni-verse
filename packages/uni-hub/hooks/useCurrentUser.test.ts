@@ -1,20 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
+import { ROLE } from '@core/constants/roles';
 import { safeStorage } from '@uni-hub/services/api.storage';
+import { clearUserSessionStorage, saveSessionUser } from '@uni-hub/services/api.session';
 import { useCurrentUser } from './useCurrentUser';
-
-function createMockToken(payload: Record<string, unknown>): string {
-  const base64Payload = btoa(JSON.stringify(payload));
-
-  return `header.${base64Payload}.signature`;
-}
 
 describe('useCurrentUser hook', () => {
   beforeEach(() => {
-    safeStorage.removeItem('accessToken');
+    safeStorage.removeItem('sessionUser');
   });
 
-  it('should return null userId and empty roles when no access token exists', () => {
+  it('should return null userId and empty roles when no session user is stored', () => {
     const { result } = renderHook(() => useCurrentUser());
 
     expect(result.current).toEqual({
@@ -25,52 +21,87 @@ describe('useCurrentUser hook', () => {
     });
   });
 
-  it('should return user details (userId, roles, email, name) when valid JWT token is stored', () => {
-    const payload = {
-      sub: 'user-123',
-      roles: ['admin', 'student'],
-      email: 'test@example.com',
-      name: 'Test User',
-    };
-    const token = createMockToken(payload);
-
-    safeStorage.setItem('accessToken', token);
+  it('should return user details (userId, roles, email, name) when valid sessionUser is stored', () => {
+    safeStorage.setItem(
+      'sessionUser',
+      JSON.stringify({
+        id: 'user-123',
+        roles: [ROLE.ADMIN, ROLE.MOODLE_STUDENT],
+        email: 'test@karazin.ua',
+        name: 'Test User',
+        isLinked: true,
+      }),
+    );
 
     const { result } = renderHook(() => useCurrentUser());
 
     expect(result.current).toEqual({
       userId: 'user-123',
-      roles: ['admin', 'student'],
-      email: 'test@example.com',
+      roles: [ROLE.ADMIN, ROLE.MOODLE_STUDENT],
+      email: 'test@karazin.ua',
       name: 'Test User',
     });
   });
 
-  it('should handle non-array roles in JWT by defaulting to empty array', () => {
-    const payload = {
-      sub: 'user-456',
-      roles: 'not-an-array',
-      email: 'user@example.com',
-      name: 'Sample User',
-    };
-    const token = createMockToken(payload);
-
-    safeStorage.setItem('accessToken', token);
+  it('should handle non-array roles in sessionUser by defaulting to empty array', () => {
+    safeStorage.setItem(
+      'sessionUser',
+      JSON.stringify({
+        id: 'user-456',
+        roles: 'not-an-array',
+        email: 'user@karazin.ua',
+        name: 'Sample User',
+      }),
+    );
 
     const { result } = renderHook(() => useCurrentUser());
 
     expect(result.current).toEqual({
       userId: 'user-456',
       roles: [],
-      email: 'user@example.com',
+      email: 'user@karazin.ua',
       name: 'Sample User',
     });
   });
 
-  it('should handle malformed or corrupted JWT token safely', () => {
-    safeStorage.setItem('accessToken', 'malformed-jwt-token');
+  it('should handle malformed sessionUser JSON safely', () => {
+    safeStorage.setItem('sessionUser', 'not-valid-json');
 
     const { result } = renderHook(() => useCurrentUser());
+
+    expect(result.current).toEqual({
+      userId: null,
+      roles: [],
+      email: undefined,
+      name: undefined,
+    });
+  });
+
+  it('should reactively update when saveSessionUser and clearUserSessionStorage are called', () => {
+    const { result } = renderHook(() => useCurrentUser());
+
+    expect(result.current.userId).toBeNull();
+
+    act(() => {
+      saveSessionUser({
+        id: 'live-user',
+        email: 'live@karazin.ua',
+        name: 'Live User',
+        roles: [ROLE.MOODLE_STUDENT],
+        isLinked: true,
+      });
+    });
+
+    expect(result.current).toEqual({
+      userId: 'live-user',
+      roles: [ROLE.MOODLE_STUDENT],
+      email: 'live@karazin.ua',
+      name: 'Live User',
+    });
+
+    act(() => {
+      clearUserSessionStorage();
+    });
 
     expect(result.current).toEqual({
       userId: null,

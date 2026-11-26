@@ -38,7 +38,16 @@ afterEach(() => {
 describe('googleLoginMutationOptions', () => {
   it('drops the cache of the previous user after a successful Google login', async () => {
     vi.spyOn(authApi, 'loginWithGoogle').mockResolvedValue({
-      data: { access_token: 'token', isLinked: false },
+      data: {
+        isLinked: false,
+        user: {
+          id: 'user-1',
+          email: 'student@karazin.ua',
+          name: 'Student',
+          roles: ['OPPORTUNITIES_USER'],
+          isLinked: false,
+        },
+      },
     });
 
     const queryClient = seedPreviousUser();
@@ -64,7 +73,7 @@ describe('googleLoginMutationOptions', () => {
 });
 
 describe('logoutMutationOptions', () => {
-  it('immediately cancels active queries on mutate and clears session storage upon settlement', async () => {
+  it('immediately cancels active queries on mutate and clears the cache on success', async () => {
     let capturedStorageToken: string | undefined = 'initial';
     let signalAborted = false;
     let finishLogout: () => void = () => {};
@@ -103,11 +112,10 @@ describe('logoutMutationOptions', () => {
     await inFlightFetch.catch(() => {});
 
     expect(capturedStorageToken).toBe('token-to-clear');
-    expect(storage.accessToken).toBeUndefined();
     expect(queryClient.getQueryData(opportunityKeys.mine())).toBeUndefined();
   });
 
-  it('clears the session storage and the cache even when the logout request fails', async () => {
+  it('preserves session storage and the cache when the logout request fails', async () => {
     vi.spyOn(authApi, 'logout').mockRejectedValue(new Error('Network failure'));
     storage.accessToken = 'token';
 
@@ -116,7 +124,9 @@ describe('logoutMutationOptions', () => {
 
     await expect(observer.mutate(undefined)).rejects.toThrow('Network failure');
 
-    expect(storage.accessToken).toBeUndefined();
-    expect(queryClient.getQueryData(opportunityKeys.mine())).toBeUndefined();
+    expect(storage.accessToken).toBe('token');
+    expect(queryClient.getQueryData(opportunityKeys.mine())).toEqual([
+      { id: 'opp-of-previous-user' },
+    ]);
   });
 });

@@ -1,18 +1,17 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { isLoggedIn } from '@core/utils/auth';
-import { safeStorage } from '@uni-hub/services/api.storage';
+import { readSessionUser } from '@uni-hub/services/api.session';
 import { useGamificationStore } from '@uni-hub/store/useGamificationStore';
-import { parseJwt } from '@uni-hub/utils/jwt';
 
 export function useAuthProtection(userId: string | null): void {
   const router = useRouter();
 
   useEffect(() => {
     const verifySession = (): boolean => {
-      const token = safeStorage.getItem('accessToken');
+      const sessionUser = readSessionUser();
 
-      if (!isLoggedIn() || !token || !userId || parseJwt(token)?.sub !== userId) {
+      if (!isLoggedIn() || !sessionUser || !userId || sessionUser.id !== userId) {
         useGamificationStore.getState().setActiveUser(null);
         router.replace('/login');
 
@@ -25,7 +24,7 @@ export function useAuthProtection(userId: string | null): void {
     verifySession();
 
     const onStorage = (event: StorageEvent): void => {
-      if (!event.key || event.key === 'accessToken' || event.key === 'isLoggedIn') {
+      if (!event.key || event.key === 'sessionUser' || event.key === 'isLoggedIn') {
         verifySession();
       }
     };
