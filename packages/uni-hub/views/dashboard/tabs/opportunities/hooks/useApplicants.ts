@@ -12,7 +12,7 @@ import { loadApplicants } from '../queries';
 import { opportunityKeys } from '../queryKeys';
 
 interface ApplicationStatusChange {
-  applicationId: string;
+  application: OpportunityApplication;
   status: OpportunityAppStatus;
 }
 
@@ -24,7 +24,10 @@ interface UseApplicantsResult {
   refetch: () => void;
   open: (opportunity: Opportunity) => void;
   close: () => void;
-  handleUpdateStatus: (applicationId: string, status: OpportunityAppStatus) => Promise<void>;
+  handleUpdateStatus: (
+    application: OpportunityApplication,
+    status: OpportunityAppStatus,
+  ) => Promise<void>;
 }
 
 export function useApplicants(): UseApplicantsResult {
@@ -40,8 +43,11 @@ export function useApplicants(): UseApplicantsResult {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ applicationId, status }: ApplicationStatusChange) =>
-      opportunitiesApi.updateApplicationStatus(applicationId, status),
+    mutationFn: ({ application, status }: ApplicationStatusChange) =>
+      opportunitiesApi.updateApplicationStatus(application.id, {
+        status,
+        reapplyCount: application.reapplyCount ?? 0,
+      }),
     onSettled: () => invalidateOpportunities(queryClient),
   });
 
@@ -53,11 +59,11 @@ export function useApplicants(): UseApplicantsResult {
   const close = useCallback((): void => setOpportunityId(null), []);
 
   const handleUpdateStatus = async (
-    applicationId: string,
+    application: OpportunityApplication,
     status: OpportunityAppStatus,
   ): Promise<void> => {
     try {
-      await updateStatusMutation.mutateAsync({ applicationId, status });
+      await updateStatusMutation.mutateAsync({ application, status });
     } catch (err: unknown) {
       toast.error(
         getOpportunityErrorMessage(

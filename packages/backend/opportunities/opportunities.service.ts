@@ -83,6 +83,7 @@ export type UpdateApplicationStatusParams = {
   userId: string;
   applicationId: string;
   status: ApplicationStatus;
+  reapplyCount: number;
   ownerComment?: string;
 };
 
@@ -678,6 +679,7 @@ export class OpportunitiesService {
     userId,
     applicationId,
     status,
+    reapplyCount,
     ownerComment,
   }: UpdateApplicationStatusParams): Promise<OpportunityApplication> {
     const app = await this.prisma.opportunityApplication.findUnique({
@@ -696,14 +698,10 @@ export class OpportunitiesService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      // reapplyCount identifies the attempt: a withdraw and reapply in between is a 409
+      // reapplyCount is the attempt the owner reviewed: a withdraw and reapply since then is a 409
       const updated = await tx.opportunityApplication
         .update({
-          where: {
-            id: applicationId,
-            status: app.status,
-            reapplyCount: app.reapplyCount,
-          },
+          where: { id: applicationId, status: app.status, reapplyCount },
           data: { status, ownerComment },
         })
         .catch(rethrowAsStatusConflict);

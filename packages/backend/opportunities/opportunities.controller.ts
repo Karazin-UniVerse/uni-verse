@@ -329,6 +329,7 @@ export class OpportunitiesController {
       userId,
       applicationId: appId,
       status: dto.status,
+      reapplyCount: dto.reapplyCount,
       ownerComment: dto.comment,
     });
   }

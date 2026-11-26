@@ -17,11 +17,11 @@ export interface ApplicantsModalProps {
   loading: boolean;
   isError: boolean;
   onRetry: () => void;
-  onUpdateStatus: (appId: string, status: OpportunityAppStatus) => void;
+  onUpdateStatus: (application: OpportunityApplication, status: OpportunityAppStatus) => void;
 }
 
 interface PendingDecision {
-  applicationId: string;
+  application: OpportunityApplication;
   status: OpportunityAppStatus;
 }
 
@@ -37,19 +37,22 @@ export const ApplicantsModal: React.FC<ApplicantsModalProps> = ({
   const { formatMessage } = useLanguage();
   const [pendingDecision, setPendingDecision] = useState<PendingDecision | null>(null);
 
-  const handleChangeStatus = (applicationId: string, status: OpportunityAppStatus): void => {
+  const handleChangeStatus = (
+    application: OpportunityApplication,
+    status: OpportunityAppStatus,
+  ): void => {
     if (status === OPPORTUNITY_APP_STATUS.UNDER_REVIEW) {
-      onUpdateStatus(applicationId, status);
+      onUpdateStatus(application, status);
 
       return;
     }
 
-    setPendingDecision({ applicationId, status });
+    setPendingDecision({ application, status });
   };
 
   const handleConfirmDecision = (): void => {
     if (pendingDecision) {
-      onUpdateStatus(pendingDecision.applicationId, pendingDecision.status);
+      onUpdateStatus(pendingDecision.application, pendingDecision.status);
     }
 
     setPendingDecision(null);

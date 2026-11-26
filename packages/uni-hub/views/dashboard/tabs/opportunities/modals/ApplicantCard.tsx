@@ -13,7 +13,7 @@ import styles from '../../OpportunitiesTab.module.scss';
 
 export interface ApplicantCardProps {
   application: OpportunityApplication;
-  onChangeStatus: (applicationId: string, status: OpportunityAppStatus) => void;
+  onChangeStatus: (application: OpportunityApplication, status: OpportunityAppStatus) => void;
 }
 
 export function ApplicantCard({
@@ -87,7 +87,7 @@ export function ApplicantCard({
             <Button
               variant="primary"
               tone="success"
-              onClick={() => onChangeStatus(application.id, OPPORTUNITY_APP_STATUS.ACCEPTED)}
+              onClick={() => onChangeStatus(application, OPPORTUNITY_APP_STATUS.ACCEPTED)}
             >
               <CheckCircle2 size={14} className={styles.btnIcon} />
               {formatMessage('opportunities.applicantsModal.accept')}
@@ -97,7 +97,7 @@ export function ApplicantCard({
             <Button
               variant="secondary"
               tone="warning"
-              onClick={() => onChangeStatus(application.id, OPPORTUNITY_APP_STATUS.UNDER_REVIEW)}
+              onClick={() => onChangeStatus(application, OPPORTUNITY_APP_STATUS.UNDER_REVIEW)}
             >
               <Clock size={14} className={styles.btnIcon} />
               {formatMessage('opportunities.applicantsModal.underReview')}
@@ -107,7 +107,7 @@ export function ApplicantCard({
             <Button
               variant="secondary"
               tone="danger"
-              onClick={() => onChangeStatus(application.id, OPPORTUNITY_APP_STATUS.REJECTED)}
+              onClick={() => onChangeStatus(application, OPPORTUNITY_APP_STATUS.REJECTED)}
             >
               <XCircle size={14} className={styles.btnIcon} />
               {formatMessage('opportunities.applicantsModal.reject')}

@@ -101,6 +101,8 @@ export interface ChangeOpportunityStatusRequest {
 
 export interface UpdateApplicationStatusRequest {
   status: OpportunityAppStatus;
+  /** reapplyCount of the application attempt the owner reviewed. */
+  reapplyCount: number;
   comment?: string;
 }
 

@@ -22,40 +22,41 @@ interface ApplicationWrite {
   ownerId?: string;
 }
 
-export async function persistOpportunityApplication({
+interface ApplicationWriteData extends ApplicationWrite {
+  contactInfo: string;
+}
+
+async function createApplication({
   tx,
   userId,
   opportunityId,
   request,
-  ownerId,
-}: ApplicationWrite): Promise<OpportunityApplication> {
-  const existing = await tx.opportunityApplication.findFirst({
-    where: { applicantId: userId, opportunityId },
-  });
-
-  if (existing && !isReapplicableApplicationStatus(existing.status)) {
-    throw new ConflictException(OPPORTUNITY_ERROR.ALREADY_APPLIED);
-  }
-
-  if (existing && hasReachedApplicationReapplyLimit(existing.reapplyCount)) {
-    throw new BadRequestException(OPPORTUNITY_ERROR.REAPPLY_LIMIT_REACHED);
-  }
-
-  const contactInfo = request.contactInfo?.trim() ?? '';
-
+  contactInfo,
+}: ApplicationWriteData): Promise<OpportunityApplication> {
   try {
-    if (!existing) {
-      return await tx.opportunityApplication.create({
-        data: {
-          ...request,
-          contactInfo,
-          applicantId: userId,
-          opportunityId,
-          status: ApplicationStatus.SUBMITTED,
-        },
-      });
+    return await tx.opportunityApplication.create({
+      data: {
+        ...request,
+        contactInfo,
+        applicantId: userId,
+        opportunityId,
+        status: ApplicationStatus.SUBMITTED,
+      },
+    });
+  } catch (error) {
+    if (getPrismaErrorCode(error) === PRISMA_ERROR_CODE.UNIQUE_CONSTRAINT) {
+      throw new ConflictException(OPPORTUNITY_ERROR.ALREADY_APPLIED);
     }
 
+    throw error;
+  }
+}
+
+async function reapplyApplication(
+  { tx, opportunityId, request, contactInfo, ownerId }: ApplicationWriteData,
+  existing: OpportunityApplication,
+): Promise<OpportunityApplication> {
+  try {
     const updated = await tx.opportunityApplication.update({
       where: {
         id: existing.id,
@@ -87,25 +88,45 @@ export async function persistOpportunityApplication({
 
     return updated;
   } catch (error) {
-    const errorCode = getPrismaErrorCode(error);
-
-    if (existing && errorCode === PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
-      const current = await tx.opportunityApplication.findUnique({
-        where: { id: existing.id },
-        select: { reapplyCount: true },
-      });
-
-      if (hasReachedApplicationReapplyLimit(current?.reapplyCount)) {
-        throw new BadRequestException(OPPORTUNITY_ERROR.REAPPLY_LIMIT_REACHED);
-      }
-
-      throw new ConflictException(OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION);
+    if (getPrismaErrorCode(error) !== PRISMA_ERROR_CODE.RECORD_NOT_FOUND) {
+      throw error;
     }
 
-    if (!existing && errorCode === PRISMA_ERROR_CODE.UNIQUE_CONSTRAINT) {
-      throw new ConflictException(OPPORTUNITY_ERROR.ALREADY_APPLIED);
+    const current = await tx.opportunityApplication.findUnique({
+      where: { id: existing.id },
+      select: { reapplyCount: true },
+    });
+
+    if (hasReachedApplicationReapplyLimit(current?.reapplyCount)) {
+      throw new BadRequestException(OPPORTUNITY_ERROR.REAPPLY_LIMIT_REACHED);
     }
 
-    throw error;
+    throw new ConflictException(OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION);
   }
+}
+
+export async function persistOpportunityApplication(
+  write: ApplicationWrite,
+): Promise<OpportunityApplication> {
+  const { tx, userId, opportunityId, request } = write;
+  const existing = await tx.opportunityApplication.findFirst({
+    where: { applicantId: userId, opportunityId },
+  });
+
+  if (existing && !isReapplicableApplicationStatus(existing.status)) {
+    throw new ConflictException(OPPORTUNITY_ERROR.ALREADY_APPLIED);
+  }
+
+  if (existing && hasReachedApplicationReapplyLimit(existing.reapplyCount)) {
+    throw new BadRequestException(OPPORTUNITY_ERROR.REAPPLY_LIMIT_REACHED);
+  }
+
+  const applicationWrite = {
+    ...write,
+    contactInfo: request.contactInfo?.trim() ?? '',
+  };
+
+  return existing
+    ? reapplyApplication(applicationWrite, existing)
+    : createApplication(applicationWrite);
 }

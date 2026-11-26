@@ -438,12 +438,14 @@ describe('OpportunitiesController', () => {
     it('delegates to service.updateApplicationStatus', async () => {
       await controller.updateApplicationStatus('user1', 'app1', {
         status: 'ACCEPTED',
+        reapplyCount: 2,
         comment: 'Welcome',
       } as any);
       expect(service.updateApplicationStatus).toHaveBeenCalledWith({
         userId: 'user1',
         applicationId: 'app1',
         status: 'ACCEPTED',
+        reapplyCount: 2,
         ownerComment: 'Welcome',
       });
     });

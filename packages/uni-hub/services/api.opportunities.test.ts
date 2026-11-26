@@ -191,6 +191,24 @@ describe('OpportunitiesApi', () => {
     expect(call[1]?.body).toBe(JSON.stringify({ action: 'APPROVE', comment: 'Looks good' }));
   });
 
+  it('updateApplicationStatus should send the reviewed reapply count', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'app1' }),
+    } as Response);
+
+    await opportunitiesApi.updateApplicationStatus('app1', {
+      status: 'ACCEPTED',
+      reapplyCount: 2,
+    });
+
+    const call = vi.mocked(global.fetch).mock.calls[0];
+
+    expect(call[0]).toContain('/opportunities/applications/app1/status');
+    expect(call[1]?.method).toBe('PUT');
+    expect(call[1]?.body).toBe(JSON.stringify({ status: 'ACCEPTED', reapplyCount: 2 }));
+  });
+
   it('withdrawApplication should send PUT to withdraw endpoint', async () => {
     const mockData = { id: 'app1' };
 

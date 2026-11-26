@@ -1758,6 +1758,7 @@ describe('OpportunitiesService', () => {
           userId: 'user-1',
           applicationId: 'app-1',
           status: 'ACCEPTED' as any,
+          reapplyCount: 1,
         }),
       ).rejects.toThrow(NotFoundException);
     });
@@ -1775,6 +1776,7 @@ describe('OpportunitiesService', () => {
           userId: 'user-1',
           applicationId: 'app-1',
           status: 'ACCEPTED' as any,
+          reapplyCount: 1,
         }),
       ).rejects.toThrow(ForbiddenException);
     });
@@ -1806,6 +1808,7 @@ describe('OpportunitiesService', () => {
         userId: 'user-1',
         applicationId: 'app-1',
         status: 'ACCEPTED',
+        reapplyCount: 1,
         ownerComment: 'Вітаємо',
       });
 
@@ -1843,6 +1846,7 @@ describe('OpportunitiesService', () => {
         userId: 'user-1',
         applicationId: 'app-1',
         status: 'ACCEPTED',
+        reapplyCount: 1,
       });
 
       expect(tx.opportunityApplication.update).toHaveBeenCalledTimes(1);
@@ -1873,6 +1877,7 @@ describe('OpportunitiesService', () => {
         userId: 'user-1',
         applicationId: 'app-1',
         status: to as ApplicationStatus,
+        reapplyCount: 1,
       });
 
       expect(prisma.opportunityApplication.update).toHaveBeenCalledTimes(1);
@@ -1903,6 +1908,7 @@ describe('OpportunitiesService', () => {
             userId: 'user-1',
             applicationId: 'app-1',
             status: to as ApplicationStatus,
+            reapplyCount: 1,
           }),
         ).rejects.toThrow(
           new ConflictException(OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION),
@@ -1926,11 +1932,39 @@ describe('OpportunitiesService', () => {
           userId: 'user-1',
           applicationId: 'app-1',
           status: 'ACCEPTED',
+          reapplyCount: 1,
         }),
       ).rejects.toThrow(
         new ConflictException(OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION),
       );
 
+      expect(notificationsService.createNotification).not.toHaveBeenCalled();
+    });
+
+    it('returns 409 when the candidate reapplied after the owner reviewed the attempt', async () => {
+      jest
+        .spyOn(prisma.opportunityApplication, 'findUnique')
+        .mockResolvedValue({ ...statusApp('SUBMITTED'), reapplyCount: 2 });
+      jest
+        .spyOn(prisma.opportunityApplication, 'update')
+        .mockRejectedValue({ code: 'P2025' });
+
+      await expect(
+        service.updateApplicationStatus({
+          userId: 'user-1',
+          applicationId: 'app-1',
+          status: 'ACCEPTED',
+          reapplyCount: 1,
+        }),
+      ).rejects.toThrow(
+        new ConflictException(OPPORTUNITY_ERROR.INVALID_STATUS_TRANSITION),
+      );
+
+      expect(prisma.opportunityApplication.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'app-1', status: 'SUBMITTED', reapplyCount: 1 },
+        }),
+      );
       expect(notificationsService.createNotification).not.toHaveBeenCalled();
     });
 
@@ -1949,6 +1983,7 @@ describe('OpportunitiesService', () => {
           userId: 'user-1',
           applicationId: 'app-1',
           status: 'ACCEPTED',
+          reapplyCount: 1,
         }),
       ).rejects.toBe(databaseError);
 
@@ -1971,6 +2006,7 @@ describe('OpportunitiesService', () => {
           userId: 'user-1',
           applicationId: 'app-1',
           status: 'ACCEPTED',
+          reapplyCount: 1,
         }),
       ).rejects.toEqual({ code: 'P2025' });
     });
@@ -2451,6 +2487,8 @@ describe('OpportunitiesService', () => {
 
       expect(tx.opportunityApplication.update).toHaveBeenCalledTimes(1);
       expect(prisma.opportunityApplication.update).not.toHaveBeenCalled();
+      expect(tx.notification.deleteMany).toHaveBeenCalledTimes(1);
+      expect(prisma.notification.deleteMany).not.toHaveBeenCalled();
       expect(notificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({ userId: publishedOpportunity.ownerId }),
         tx,
@@ -2647,6 +2685,8 @@ describe('OpportunitiesService', () => {
 
       expect(tx.opportunityApplication.update).toHaveBeenCalledTimes(1);
       expect(prisma.opportunityApplication.update).not.toHaveBeenCalled();
+      expect(tx.notification.deleteMany).toHaveBeenCalledTimes(1);
+      expect(prisma.notification.deleteMany).not.toHaveBeenCalled();
       expect(notificationsService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({ userId: 'owner-1' }),
         tx,

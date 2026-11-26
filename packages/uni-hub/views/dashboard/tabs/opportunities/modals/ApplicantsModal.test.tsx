@@ -147,7 +147,7 @@ describe('ApplicantsModal component', () => {
       await user.click(within(confirmDialog).getByRole('button', { name: buttonName }));
 
       expect(onUpdateStatus).toHaveBeenCalledTimes(1);
-      expect(onUpdateStatus).toHaveBeenCalledWith('app-1', status);
+      expect(onUpdateStatus).toHaveBeenCalledWith(mockApplications[0], status);
       expect(screen.queryByRole('dialog', { name: dialogName })).not.toBeInTheDocument();
     },
   );
@@ -212,7 +212,7 @@ describe('ApplicantsModal component', () => {
     await user.click(underReviewButtons[0]);
 
     expect(onUpdateStatus).toHaveBeenCalledTimes(1);
-    expect(onUpdateStatus).toHaveBeenCalledWith('app-1', 'UNDER_REVIEW');
+    expect(onUpdateStatus).toHaveBeenCalledWith(mockApplications[0], 'UNDER_REVIEW');
   });
 
   it('should render empty state when applications array is empty', () => {
