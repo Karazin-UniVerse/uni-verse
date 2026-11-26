@@ -188,7 +188,9 @@ describe('LoginPage Google SSO Moodle integration bypass and authentication', ()
 
     await waitFor(() => {
       expect(
-        screen.getAllByText('Увійдіть з поштою @student.karazin.ua або @karazin.ua').length,
+        screen.getAllByText(
+          'Увійдіть із корпоративної пошти під доменом @student.karazin.ua або @karazin.ua',
+        ).length,
       ).toBeGreaterThanOrEqual(1);
     });
 
