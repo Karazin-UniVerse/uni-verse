@@ -220,10 +220,14 @@ export class OpportunitiesService {
   private async notifyModerators(
     opportunityId: string,
     opportunityTitle: string,
+    ownerId: string,
   ): Promise<void> {
     try {
       const moderators = await this.prisma.user.findMany({
-        where: { roles: { has: Role.OPPORTUNITIES_MODERATOR } },
+        where: {
+          roles: { has: Role.OPPORTUNITIES_MODERATOR },
+          id: { not: ownerId },
+        },
         select: { id: true },
       });
 
@@ -455,7 +459,7 @@ export class OpportunitiesService {
       opportunity.status === OpportunityStatus.PUBLISHED &&
       hasContentChanges
     ) {
-      await this.notifyModerators(id, updated.title);
+      await this.notifyModerators(id, updated.title, opportunity.ownerId);
     }
 
     const { shouldNotify, hasLifecycleChanged } = getSubscriberUpdateMeta({
@@ -574,7 +578,11 @@ export class OpportunitiesService {
       throw error;
     }
 
-    await this.notifyModerators(id, updatedOpportunity.title);
+    await this.notifyModerators(
+      id,
+      updatedOpportunity.title,
+      opportunity.ownerId,
+    );
 
     return updatedOpportunity;
   }
