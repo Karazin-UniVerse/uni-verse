@@ -37,25 +37,11 @@ import { GetUser } from '../auth/decorators/get-user.decorator';
 import {
   Opportunity,
   OpportunityApplication,
-  OpportunityStatus,
   OpportunityTag,
 } from '@universe/database';
-import { Public } from '../auth/decorators/public.decorator';
 
 const CACHE_CONTROL_HEADER = 'Cache-Control';
-const PUBLIC_CACHE_CONTROL =
-  'public, max-age=30, s-maxage=60, stale-while-revalidate=120';
 const PRIVATE_CACHE_CONTROL = 'private, no-cache, no-store, must-revalidate';
-
-function setOpportunityCacheControl(
-  res: Response | undefined,
-  isPublic: boolean,
-): void {
-  res?.setHeader(
-    CACHE_CONTROL_HEADER,
-    isPublic ? PUBLIC_CACHE_CONTROL : PRIVATE_CACHE_CONTROL,
-  );
-}
 
 @ApiTags('Opportunities')
 @Controller('opportunities')
@@ -77,7 +63,6 @@ export class OpportunitiesController {
     return this.opportunitiesService.create(userId, dto);
   }
 
-  @Public()
   @ApiBearerAuth()
   @Get()
   /**
@@ -100,7 +85,7 @@ export class OpportunitiesController {
   ): Promise<OpportunityWithOwner[]> {
     const opportunities = await this.opportunitiesService.findAll(query, roles);
 
-    setOpportunityCacheControl(res, false);
+    res?.setHeader(CACHE_CONTROL_HEADER, PRIVATE_CACHE_CONTROL);
 
     return opportunities;
   }
@@ -149,7 +134,6 @@ export class OpportunitiesController {
     return this.opportunitiesService.getMyApplications(userId, roles);
   }
 
-  @Public()
   @ApiBearerAuth()
   @Get(':id')
   /**
@@ -158,7 +142,7 @@ export class OpportunitiesController {
   @ApiOperation({ summary: 'Get opportunity by ID' })
   async findOne(
     @Param('id') id: string,
-    @GetUser('sub') userId?: string,
+    @GetUser('sub') userId: string,
     @GetUser('roles') roles?: string[],
     @Res({ passthrough: true }) res?: Response,
   ): Promise<OpportunityWithOwner> {
@@ -168,10 +152,8 @@ export class OpportunitiesController {
       roles,
     );
 
-    setOpportunityCacheControl(
-      res,
-      opportunity.status === OpportunityStatus.PUBLISHED,
-    );
+    // Authenticated payload (owner email): a shared cache must never store it.
+    res?.setHeader(CACHE_CONTROL_HEADER, PRIVATE_CACHE_CONTROL);
 
     return opportunity;
   }
