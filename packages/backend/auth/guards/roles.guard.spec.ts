@@ -54,9 +54,15 @@ describe('RolesGuard', () => {
   it('should deny access when authenticated user sub is missing or empty', async () => {
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([Role.ADMIN]);
 
+    await expect(guard.canActivate(createExecutionContext())).rejects.toThrow(
+      ForbiddenException,
+    );
     await expect(guard.canActivate(createExecutionContext({}))).rejects.toThrow(
       ForbiddenException,
     );
+    await expect(
+      guard.canActivate(createExecutionContext({ sub: 123 })),
+    ).rejects.toThrow(ForbiddenException);
     await expect(
       guard.canActivate(createExecutionContext({ sub: '' })),
     ).rejects.toThrow(ForbiddenException);

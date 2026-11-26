@@ -22,7 +22,7 @@ const ALLOWED_PLUGINFILE_PREFIXES = [
 ];
 
 function extractSafeFilename(pathname: string): string {
-  const rawSegment = pathname.split('/').at(-1) ?? '';
+  const rawSegment = pathname.slice(pathname.lastIndexOf('/') + 1);
 
   if (!rawSegment) {
     return 'attachment';
@@ -32,6 +32,16 @@ function extractSafeFilename(pathname: string): string {
   const sanitized = decoded.replace(/[\\/\r\n"\0]/g, '_').trim();
 
   return sanitized || 'attachment';
+}
+
+function trimTrailingSlashes(pathname: string): string {
+  let end = pathname.length;
+
+  while (end > 0 && pathname[end - 1] === '/') {
+    end -= 1;
+  }
+
+  return pathname.slice(0, end);
 }
 
 function stripBasePath(pathname: string, basePath: string): string | null {
@@ -79,6 +89,37 @@ function isMoodleJsonError(contentType: string, buffer: Buffer): string | null {
   return null;
 }
 
+async function readStreamWithinLimit(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  maxBytes: number,
+): Promise<Buffer> {
+  const chunks: Buffer[] = [];
+  let totalBytes = 0;
+
+  const readNextChunk = async (): Promise<Buffer> => {
+    const { done, value } = await reader.read();
+
+    if (done) {
+      return Buffer.concat(chunks, totalBytes);
+    }
+
+    totalBytes += value.byteLength;
+
+    if (totalBytes > maxBytes) {
+      await reader.cancel().catch(() => undefined);
+      throw new PayloadTooLargeException(
+        'Downloaded file exceeds maximum allowed size',
+      );
+    }
+
+    chunks.push(Buffer.from(value));
+
+    return readNextChunk();
+  };
+
+  return readNextChunk();
+}
+
 async function readBoundedResponseBuffer(
   response: Response,
   maxBytes: number,
@@ -104,30 +145,7 @@ async function readBoundedResponseBuffer(
     return buffer;
   }
 
-  const reader = response.body.getReader();
-  const chunks: Buffer[] = [];
-  let totalBytes = 0;
-
-  while (true) {
-    const { done, value } = await reader.read();
-
-    if (done) {
-      break;
-    }
-
-    totalBytes += value.byteLength;
-
-    if (totalBytes > maxBytes) {
-      await reader.cancel().catch(() => undefined);
-      throw new PayloadTooLargeException(
-        'Downloaded file exceeds maximum allowed size',
-      );
-    }
-
-    chunks.push(Buffer.from(value));
-  }
-
-  return Buffer.concat(chunks, totalBytes);
+  return readStreamWithinLimit(response.body.getReader(), maxBytes);
 }
 
 @Injectable()
@@ -139,7 +157,7 @@ export class MoodleFilesService {
     moodleToken: string,
   ): { path: string; filename: string } {
     const moodleUrl = new URL(this.moodleClient.getBaseUrl());
-    const basePath = moodleUrl.pathname.replace(/\/+$/, '');
+    const basePath = trimTrailingSlashes(moodleUrl.pathname);
 
     let parsed: URL;
 

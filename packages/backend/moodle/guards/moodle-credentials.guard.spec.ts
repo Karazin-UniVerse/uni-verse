@@ -34,6 +34,12 @@ describe('MoodleCredentialsGuard', () => {
     await expect(guard.canActivate(createContext())).rejects.toThrow(
       UnauthorizedException,
     );
+    await expect(
+      guard.canActivate(createContext({ sub: 123 })),
+    ).rejects.toThrow(UnauthorizedException);
+    await expect(
+      guard.canActivate(createContext({ sub: 123 })),
+    ).rejects.toThrow(UnauthorizedException);
     await expect(guard.canActivate(createContext({ sub: '' }))).rejects.toThrow(
       UnauthorizedException,
     );

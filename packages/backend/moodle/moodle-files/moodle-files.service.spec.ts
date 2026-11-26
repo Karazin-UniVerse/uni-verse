@@ -345,6 +345,21 @@ describe('MoodleFilesService', () => {
       ).rejects.toThrow(PayloadTooLargeException);
       expect(cancelMock).toHaveBeenCalled();
 
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({
+          'content-type': 'application/octet-stream',
+          'content-length': String(30 * 1024 * 1024),
+        }),
+      } as unknown as Response);
+
+      await expect(
+        service.downloadFile(
+          'secret-moodle-tok',
+          'https://moodle.test/webservice/pluginfile.php/42/huge-header-no-body.bin',
+        ),
+      ).rejects.toThrow(PayloadTooLargeException);
+
       const streamCancelMock = jest.fn().mockResolvedValue(undefined);
       let chunkReads = 0;
 
