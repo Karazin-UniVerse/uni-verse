@@ -1,6 +1,10 @@
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 
 export function isAllowedOrigin(origin: string): boolean {
+  if (!origin) {
+    return false;
+  }
+
   const isProduction = process.env.NODE_ENV === 'production';
   const allowedOrigins = [
     process.env.FRONTEND_URL,

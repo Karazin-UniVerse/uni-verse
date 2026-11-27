@@ -11,8 +11,9 @@ import type { SessionUser } from '@universe/core/types/auth';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import { AUTH_ERROR } from '@universe/core/constants/auth';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { UserService } from '../user/user.service';
+import { BCRYPT_SALT_ROUNDS, JWT_ALGORITHM } from '../constants/auth';
 import { GetCreds } from '../utils/get-creds';
 import { GoogleAuthDto, LinkMoodleDto, LoginDto, RegisterDto } from './dto';
 import {
@@ -28,6 +29,21 @@ export type GetTokensParams = {
   email: string;
   roles?: string[];
 };
+
+// Not bcrypt: it reads only the first 72 bytes, which all refresh JWTs of one user share, so a rotated token still matched.
+function hashRefreshToken(refreshToken: string): string {
+  return createHash('sha256').update(refreshToken).digest('hex');
+}
+
+function isRefreshTokenMatch(
+  refreshToken: string,
+  storedHash: string,
+): boolean {
+  const actual = Buffer.from(hashRefreshToken(refreshToken), 'hex');
+  const expected = Buffer.from(storedHash, 'hex');
+
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
+}
 
 @Injectable()
 export class AuthService {
@@ -78,7 +94,7 @@ export class AuthService {
       }
     })();
 
-    const passwordHash = await this.hashData(dto.password);
+    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
 
     const user = await (async () => {
       try {
@@ -142,7 +158,7 @@ export class AuthService {
         (await this.userService.findByEmail(emailToUse));
 
       if (!existing) {
-        const hash = await bcrypt.hash(dto.password, 10);
+        const hash = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
 
         return await this.userService.createUser({
           email: emailToUse,
@@ -248,7 +264,7 @@ export class AuthService {
 
     const randomPassword = await bcrypt.hash(
       randomBytes(32).toString('hex'),
-      10,
+      BCRYPT_SALT_ROUNDS,
     );
 
     try {
@@ -340,12 +356,11 @@ export class AuthService {
       email: user.email,
       roles,
     });
-    const refreshTokenHash = await this.hashData(tokens.refresh_token);
 
     await this.userService.updateUser(userId, {
       token: null,
       moodleId: null,
-      refreshToken: refreshTokenHash,
+      refreshToken: hashRefreshToken(tokens.refresh_token),
       roles,
     });
 
@@ -380,7 +395,7 @@ export class AuthService {
     try {
       payload = await this.jwtService.verifyAsync<{ sub?: string }>(
         refreshToken,
-        { secret: rtSecret },
+        { secret: rtSecret, algorithms: [JWT_ALGORITHM] },
       );
     } catch {
       return false;
@@ -396,9 +411,7 @@ export class AuthService {
       return false;
     }
 
-    const rtMatches = await bcrypt.compare(refreshToken, user.refreshToken);
-
-    if (!rtMatches) {
+    if (!isRefreshTokenMatch(refreshToken, user.refreshToken)) {
       return false;
     }
 
@@ -414,9 +427,7 @@ export class AuthService {
       throw new ForbiddenException('Access Denied');
     }
 
-    const rtMatches = await bcrypt.compare(rt, user.refreshToken);
-
-    if (!rtMatches) {
+    if (!isRefreshTokenMatch(rt, user.refreshToken)) {
       throw new ForbiddenException('Access Denied');
     }
 
@@ -435,7 +446,7 @@ export class AuthService {
   }
 
   async updateRtHash(userId: string, rt: string, expectedHash?: string) {
-    const hash = await this.hashData(rt);
+    const hash = hashRefreshToken(rt);
 
     if (expectedHash !== undefined) {
       if (
@@ -448,10 +459,6 @@ export class AuthService {
     }
 
     await this.userService.updateUser(userId, { refreshToken: hash });
-  }
-
-  hashData(data: string) {
-    return bcrypt.hash(data, 10);
   }
 
   async getTokens({ userId, email, roles }: GetTokensParams) {
@@ -482,6 +489,7 @@ export class AuthService {
         },
         {
           secret: atSecret,
+          algorithm: JWT_ALGORITHM,
           expiresIn: 60 * 15,
         },
       ),
@@ -492,6 +500,7 @@ export class AuthService {
         },
         {
           secret: rtSecret,
+          algorithm: JWT_ALGORITHM,
           expiresIn: 60 * 60 * 24 * 7,
         },
       ),

@@ -18,6 +18,7 @@ import { AtGuard } from '../../auth/guards/at.guard';
 import { AtStrategy } from '../../auth/strategies/at.strategy';
 import { configureBodyParsers } from '../../utils/body-parsers';
 import { PrismaService } from '../../prisma/prisma.service';
+import { UserService } from '../../user/user.service';
 import { GripModule } from '../grip.module';
 import { GithubClientService } from '../github-client.service';
 import { GeminiClientService } from '../gemini-client.service';
@@ -118,6 +119,7 @@ describe('Grip HTTP Gateway (real Nest/Express parsing & guards)', () => {
       controllers: [PortalFixtureController],
       providers: [
         AtStrategy,
+        { provide: UserService, useValue: { findById: jest.fn() } },
         {
           provide: APP_GUARD,
           useClass: AtGuard,

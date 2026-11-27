@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import morgan from 'morgan';
 import { AppModule } from './app.module';
 import { configureBodyParsers } from './utils/body-parsers';
@@ -25,10 +26,19 @@ async function bootstrap() {
     bodyParser: false,
   });
 
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // First, so CORS preflights, parser errors and Swagger responses get the headers too.
+  // Local dev serves Swagger over plain HTTP, which upgrade-insecure-requests would break.
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: { upgradeInsecureRequests: isProduction ? [] : null },
+      },
+    }),
+  );
   configureBodyParsers(app);
   app.enableCors(getCorsConfig());
-
-  const isProduction = process.env.NODE_ENV === 'production';
 
   if (!isProduction) {
     const document = SwaggerModule.createDocument(app, SWAGGER_CONFIG);
@@ -36,7 +46,7 @@ async function bootstrap() {
     SwaggerModule.setup('api', app, document);
   }
 
-  app.use(morgan('dev'));
+  app.use(morgan(isProduction ? 'combined' : 'dev'));
   app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 

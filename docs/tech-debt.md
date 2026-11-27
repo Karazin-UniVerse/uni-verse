@@ -18,12 +18,15 @@ Known gaps that were consciously left out of a PR. Each item says where it lives
 - **Why deferred:** removing it is only safe after every environment (dev, staging, prod) has started once with the new schema.
 - **Fix:** when that is true, delete `prisma/scripts/backfill-roles.sql`, the `db:backfill-roles` script and its calls in `db:push` and `db:push:force`.
 
-### Role is trusted from the token on read paths
+### Credential rate limit is per instance and counts every attempt
 
-`GET /opportunities` and `GET /opportunities/:id` use the `roles` claim from the access token. A demoted moderator keeps access to unpublished opportunities until the token expires (about 15 minutes). `moderate` already re-checks the role in the database.
+`CredentialsThrottlerGuard` limits `POST /auth/register`, `/auth/login` and `/auth/moodle/link` to 10 attempts a minute per Moodle login, shared across the three routes. It keys on the login, not the IP, because browsers call the Cloud Run URL directly and the client IP cannot be trusted there.
 
-- **Why deferred:** an extra user lookup on every read for a short window. Accepted trade-off, listed here so it is a decision and not a surprise.
-- **Fix, if it matters:** resolve the moderator role from the database in `findOne` and `findAll`, or shorten the token lifetime.
+- **Per instance:** the throttler uses in-memory storage, so the real limit is 10 × the number of Cloud Run instances.
+- **Targeted lockout:** anyone who knows a student's login can send 10 junk attempts a minute and keep that student out until they stop. Counting only failed attempts would not help, because the junk attempts fail too.
+- **No IP limit:** credential stuffing (one guess against many logins) is not limited by the backend.
+- **Why deferred:** fixing these needs shared storage and a trusted client IP, which the current Cloud Run setup does not give.
+- **Fix:** move throttler storage to Redis and put the backend behind Cloudflare (or a Google load balancer) with an IP rate-limit rule on `/auth/*`. Targeted lockout stays open until the team picks a way to let the real user through, such as a challenge after the limit or keying the limit on login plus trusted IP.
 
 ## Frontend (uni-hub)
 

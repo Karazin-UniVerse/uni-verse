@@ -23,14 +23,45 @@ describe('getCorsConfig', () => {
   });
 
   it.each([
+    'https://karazin.ua',
     'https://moodle.karazin.ua',
     'https://moodle.universemvp.tech',
+    'https://evil.universemvp.tech',
     'http://localhost:8080',
-  ])('rejects unconfigured origin %s', (origin) => {
-    const callback = jest.fn();
+  ])('rejects %s because only exact app origins are trusted', (origin) => {
+    expect(isAllowedOrigin(origin)).toBe(false);
+  });
 
-    originValidator(origin, callback);
-    expect(callback).toHaveBeenCalledWith(null, false);
+  it('allows the configured FRONTEND_URL', () => {
+    const originalFrontendUrl = process.env.FRONTEND_URL;
+
+    process.env.FRONTEND_URL = 'https://staging.universemvp.tech';
+
+    try {
+      expect(isAllowedOrigin('https://staging.universemvp.tech')).toBe(true);
+    } finally {
+      if (originalFrontendUrl === undefined) {
+        delete process.env.FRONTEND_URL;
+      } else {
+        process.env.FRONTEND_URL = originalFrontendUrl;
+      }
+    }
+  });
+
+  it('rejects empty origin even when FRONTEND_URL is an empty string', () => {
+    const originalFrontendUrl = process.env.FRONTEND_URL;
+
+    process.env.FRONTEND_URL = '';
+
+    try {
+      expect(isAllowedOrigin('')).toBe(false);
+    } finally {
+      if (originalFrontendUrl === undefined) {
+        delete process.env.FRONTEND_URL;
+      } else {
+        process.env.FRONTEND_URL = originalFrontendUrl;
+      }
+    }
   });
 
   it('rejects untrusted domains', (done) => {

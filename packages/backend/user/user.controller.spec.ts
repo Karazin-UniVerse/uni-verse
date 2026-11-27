@@ -112,7 +112,7 @@ describe('UserController', () => {
 
       const result = await controller.createUser(dto);
 
-      expect(bcrypt.hash).toHaveBeenCalledWith('rawPassword123!', 10);
+      expect(bcrypt.hash).toHaveBeenCalledWith('rawPassword123!', 12);
       expect(userService.createUser).toHaveBeenCalledWith({
         email: 'new@karazin.ua',
         name: 'New Student',

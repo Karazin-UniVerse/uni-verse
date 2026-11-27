@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import type { Request } from 'express';
+import { JWT_ALGORITHM } from '../../constants/auth';
 
 @Injectable()
 export class RtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
@@ -25,6 +26,7 @@ export class RtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
         },
       ]),
       secretOrKey: secret,
+      algorithms: [JWT_ALGORITHM],
       passReqToCallback: true,
     });
   }
