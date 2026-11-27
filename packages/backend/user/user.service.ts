@@ -6,11 +6,10 @@ import {
 } from '@nestjs/common';
 import { User, Role } from '@universe/database';
 import * as bcrypt from 'bcrypt';
+import { BCRYPT_SALT_ROUNDS } from '../constants/auth';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, SelfUpdateUserDto, UpdateUserDto } from './user-dto';
 import { randomUUID } from 'node:crypto';
-
-const BCRYPT_SALT_ROUNDS = 12;
 
 function assertPairedMoodleCredentials(
   token: string | null | undefined,
@@ -31,6 +30,13 @@ function assertPairedMoodleCredentials(
     throw new BadRequestException(
       'Moodle token and moodleId must be set or cleared together',
     );
+  }
+}
+
+// The in-memory store only serves offline demos and tests; in production a database failure must surface instead of creating ghost users.
+function rethrowInProduction(error: unknown): void {
+  if (process.env.NODE_ENV === 'production') {
+    throw error;
   }
 }
 
@@ -56,7 +62,9 @@ export class UserService {
   async getAllUsers(): Promise<User[]> {
     try {
       return await this.prisma.user.findMany();
-    } catch {
+    } catch (error: unknown) {
+      rethrowInProduction(error);
+
       return Array.from(this.inMemoryUsers.values());
     }
   }
@@ -64,7 +72,9 @@ export class UserService {
   async findByEmail(email: string): Promise<User | null> {
     try {
       return await this.prisma.user.findUnique({ where: { email } });
-    } catch {
+    } catch (error: unknown) {
+      rethrowInProduction(error);
+
       return this.findInMemoryBy('email', email);
     }
   }
@@ -72,7 +82,9 @@ export class UserService {
   async findByMoodleId(moodleId: string): Promise<User | null> {
     try {
       return await this.prisma.user.findFirst({ where: { moodleId } });
-    } catch {
+    } catch (error: unknown) {
+      rethrowInProduction(error);
+
       return this.findInMemoryBy('moodleId', moodleId);
     }
   }
@@ -80,7 +92,9 @@ export class UserService {
   async findById(id: string): Promise<User | null> {
     try {
       return await this.prisma.user.findUnique({ where: { id } });
-    } catch {
+    } catch (error: unknown) {
+      rethrowInProduction(error);
+
       return this.inMemoryUsers.get(id) ?? null;
     }
   }
@@ -102,6 +116,8 @@ export class UserService {
       if (code === 'P2002' || name === 'PrismaClientValidationError') {
         throw err;
       }
+
+      rethrowInProduction(err);
 
       // Fallback: When Prisma/PostgreSQL is disconnected (offline demo/testing),
       // store user in-memory with generated UUID and current timestamp.
@@ -127,7 +143,9 @@ export class UserService {
   async deleteUser(id: string): Promise<User> {
     try {
       return await this.prisma.user.delete({ where: { id } });
-    } catch {
+    } catch (error: unknown) {
+      rethrowInProduction(error);
+
       const existing = this.inMemoryUsers.get(id);
 
       if (!existing) {
@@ -190,6 +208,8 @@ export class UserService {
       if (getPrismaErrorCode(err) === 'P2025') {
         throw err;
       }
+
+      rethrowInProduction(err);
 
       const existing = this.inMemoryUsers.get(id);
 

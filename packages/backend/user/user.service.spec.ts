@@ -274,6 +274,24 @@ describe('UserService', () => {
         }),
       ).rejects.toThrow(BadRequestException);
     });
+
+    it('should surface database errors in production instead of creating an in-memory user', async () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      const connectionError = new Error('Connection lost');
+
+      process.env.NODE_ENV = 'production';
+      mockUserPrisma.create.mockRejectedValue(connectionError);
+      mockUserPrisma.findUnique.mockRejectedValue(connectionError);
+
+      try {
+        await expect(
+          service.createUser({ email: 'ghost@karazin.ua' }),
+        ).rejects.toBe(connectionError);
+        await expect(service.findById('any-id')).rejects.toBe(connectionError);
+      } finally {
+        process.env.NODE_ENV = originalNodeEnv;
+      }
+    });
   });
 
   describe('deleteUser', () => {

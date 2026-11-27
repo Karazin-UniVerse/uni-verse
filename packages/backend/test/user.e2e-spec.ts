@@ -162,6 +162,43 @@ describe('UserController (HTTP Integration / E2E)', () => {
       expect(res.status).toBe(403);
     });
 
+    it('should ignore a stale ADMIN claim when the database no longer grants it', async () => {
+      const staleAdminToken = await jwtService.signAsync(
+        {
+          sub: 'test-student',
+          email: 'student@karazin.ua',
+          roles: ['ADMIN'],
+        },
+        { secret: process.env.AT_SECRET },
+      );
+
+      await request(app.getHttpServer())
+        .get('/user')
+        .set('Authorization', `Bearer ${staleAdminToken}`)
+        .expect(403);
+    });
+
+    it('should reject a valid token whose user was deleted', async () => {
+      mockUsers.delete('test-student');
+
+      await request(app.getHttpServer())
+        .get('/user')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .expect(401);
+    });
+
+    it('should reject a JWT signed with a non-HS256 algorithm with 401', async () => {
+      const hs512Token = await jwtService.signAsync(
+        { sub: 'test-admin', email: 'admin@karazin.ua', roles: ['ADMIN'] },
+        { secret: process.env.AT_SECRET, algorithm: 'HS512' },
+      );
+
+      await request(app.getHttpServer())
+        .get('/user')
+        .set('Authorization', `Bearer ${hs512Token}`)
+        .expect(401);
+    });
+
     it('should return list of users with sensitive fields stripped for ADMIN', async () => {
       mockUsers.set('u1', {
         id: 'u1',
